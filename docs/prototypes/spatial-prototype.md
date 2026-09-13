@@ -67,6 +67,8 @@ text utanför rymdytan behåller vanlig textmarkering.
 9. Slå på och av Universumsbakgrund och bedöm läsbarheten.
 10. Jämför Följ systemet med Egen riktning för panoreringen. Vänd vågrät
     och lodrät riktning var för sig. Kontrollera att zoom fungerar likadant.
+11. Pröva axelvisaren direkt i rymden och välj mellan de fyra hörnen.
+    Bedöm om riktningarna är läsbara utan att skymma objekt eller samband.
 
 ## Krav och antaganden
 
@@ -95,11 +97,16 @@ Upp- och nedknapparna använder också rummets höjdaxel och visar höjdhjälpen
 Hjälpen kan lämnas synlig när vyn roteras och skymmer inte klickytorna.
 
 Beställaren vill även pröva tre riktningspilar som stöd när vyn börjar
-röra sig. En axelvisare i rymdvyns nedre högra hörn visar X för sidled,
-Y för höjd och Z för djup, med både färger och bokstäver. Pilarna följer
-kamerans rotation men behåller sin storlek och plats vid panorering och
-zoom. Stödet visas under dragning och kamerarörelser och ligger kvar
-ungefär 1,6 sekunder efteråt. Visa axlar hela tiden håller det synligt.
+röra sig. Axelvisaren prövas direkt i rymden utan en separat ruta. Nedre
+högra hörnet är standard. Användaren kan välja nedre vänstra, nedre högra,
+övre vänstra eller övre högra hörnet. Utformningen och valet av hörn är
+pågående prototypval för användarprövning.
+
+Axelvisaren visar X för sidled, Y för höjd och Z för djup, med både färger
+och bokstäver. Pilarna följer kamerans rotation men behåller sin storlek
+och plats vid panorering och zoom. Stödet visas under dragning och
+kamerarörelser och ligger kvar ungefär 1,6 sekunder efteråt.
+Visa axlar hela tiden håller det synligt.
 En axel som pekar nästan rakt mot eller från betraktaren visas med en
 punkt eller ett kryss i en ring. När två axlar sammanfaller i projektionen
 separeras deras bokstäver så att båda går att läsa. Axelvisaren visar
@@ -179,6 +186,8 @@ Axelvisarens riktningar är kontrollerade efter rotation och lutning.
 Dragning visar stödet automatiskt. Vid överlappande X- och Z-riktningar
 är båda bokstäverna läsbara. Reglaget för ständig visning och storleken
 i smal vy är också kontrollerade i webbläsaren.
+Den avskalade visningen saknar bakgrund och ram. Samtliga fyra hörnval
+är kontrollerade med rätt avstånd till rymdvyns kanter.
 
 Rymden är en enkel perspektivprojektion till SVG. Objekt djupsorteras men
 linjer har ingen fullständig skymning. Etiketter kan överlappa linjer och
