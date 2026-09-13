@@ -64,7 +64,8 @@ text utanför rymdytan behåller vanlig textmarkering.
    från en person. Spara hela förslaget, kasta förslag och ångra sparande.
 8. Jämför typikonerna i kartan och listan. Välj en person och byt mellan
    personikon och påhittade profilbilder. Granska förslaget och spara det.
-9. Slå på och av Universumsbakgrund och bedöm läsbarheten.
+9. Slå på och av Universumsbakgrund och bedöm läsbarheten. Rotera och
+   luta vyn för att pröva om stjärnornas rörelse ger rumskänsla.
 10. Jämför Följ systemet med Egen riktning för panoreringen. Vänd vågrät
     och lodrät riktning var för sig. Kontrollera att zoom fungerar likadant.
 11. Pröva axelvisaren direkt i rymden och välj mellan de fyra hörnen.
@@ -145,9 +146,15 @@ med olika storlek, färgton och ljusstyrka på ett separat canvaslager.
 Lagret fyller hela rymdytan även när kartans proportioner eller
 fönsterstorleken ändras. Ingen bakgrundsbild läses in.
 
-Stjärnhimlen är dekorativ och stilla. Samma utgångsvärde håller stjärnorna
-stabila mellan omritningar. Panorering och objektflyttning påverkar inte
-stjärnhimlen. Ikoner och exempelprofilbilder är lokala vektorformer.
+Beställaren önskar att universumsbakgrunden följer med när vyn roteras.
+Stjärnorna har därför fasta riktningar över en hel sfär runt vyn. De
+projiceras med samma rotationsriktning och perspektiv som objekten.
+En hel rotation återvänder till samma stjärnor utan en bildskarv eller
+slumpmässigt nya punkter. Även kamerans zoom påverkar utsnittet.
+Stjärnhimlen representerar mycket stort avstånd, så panorering och
+flyttning av enskilda objekt påverkar inte stjärnorna. Samma utgångsvärde
+håller dem stabila mellan omritningar. Ikoner och exempelprofilbilder är
+lokala vektorformer.
 
 Följande är prototypförslag som behöver användarens återkoppling:
 
@@ -170,6 +177,11 @@ Typikoner, byte till en exempelprofilbild och dess ändringsförslag samt
 universumsbakgrunden är kontrollerade i webbläsaren. Vågrät och lodrät
 panorering via rullningshändelser ändrar kameran utan att ändra objektens
 koordinater. Fysiska flerfingergester är ännu inte verifierade.
+
+Stjärnhimlens rörelse vid rotation och lutning är visuellt kontrollerad
+med musdragning. Återställd kamera återger samma stjärnhimmel. Av- och
+påslag efter rotation samt bakgrundens täckning i smal vy är också
+kontrollerade. Webbläsaren rapporterar inga JavaScript-fel i provet.
 
 Ctrl-klick och Ctrl med högerklick fokuserar objektet i webbläsarprovet.
 Val av en koppling behåller fokusobjektet. Escape och Visa hela rymden
