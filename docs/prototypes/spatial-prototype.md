@@ -21,15 +21,21 @@ Alla uppgifter är påhittade. Prototypen använder inga externa resurser,
 mikrofoner, modeller eller lagringstjänster. Även bekräftat sparande
 försvinner vid omladdning.
 
-## Tre alternativ
+## Samlad rymdvy med objektfokus
 
-- `?variant=A`: hela rymdkartan med detaljpanel bredvid.
-- `?variant=B`: det valda objektets direkta samband, med detaljpanelen först.
-- `?variant=C`: sökbar objektlista först, med en mindre rumslig vy.
+Beställaren föredrar A hittills och väljer att C ska utgå. Funktionen från
+B ingår i A: Ctrl-klick på en ikon visar det objektets direkta kopplingar.
+Knappen Visa objektets kopplingar gör samma sak för det valda objektet,
+även på pekskärm. Ctrl+Enter på en ikon ger ett tangentbordsalternativ.
 
-Växla med knapparna längst ned eller vänster/höger piltangent utanför
-inmatningsfält. Objekt, förslag och placeringar följer med mellan vyerna.
-Tillståndspanelen visar hela det relevanta tillståndet vid varje åtgärd.
+Escape eller Visa hela rymden lämnar fokus och rensar sökning och typfilter.
+Kamerans vinkel, zoom och panorering behålls. Återställ vy återställer också
+kameran. Objektens placeringar och hushållets ändringsförslag påverkas inte.
+Vanligt klick väljer ett objekt eller samband utan att byta fokusobjekt.
+
+Det finns en huvudvy och ingen variantväxlare. Länkar med `?variant=A`,
+`?variant=B` eller `?variant=C` öppnar samma samlade vy. Objektlistan finns
+som komplement till rymdkartan. Tillståndspanelen visar aktuellt tillstånd.
 
 ## Pröva
 
@@ -42,13 +48,16 @@ Tillståndspanelen visar hela det relevanta tillståndet vid varje åtgärd.
 5. Nyp med två fingrar i kartan för att zooma in och ut. Flytta fingrarna
    tillsammans för att panorera åt alla håll. Pröva även tvåfingersscroll
    på en styrplatta. Håll Shift och dra ett objekt uppåt eller nedåt för
-   enbart höjdled, även efter rotation. Pröva fokus och översikt.
+   enbart höjdled, även efter rotation. Ctrl-klicka på en ikon, välj ett
+   samband och återgå med Escape respektive Visa hela rymden.
 6. Lös samma uppgifter genom listan och detaljpanelen utan rotation.
 7. Pröva namnändring, borttagning och att lägga till användning av en tjänst
    från en person. Spara hela förslaget, kasta förslag och ångra sparande.
 8. Jämför typikonerna i kartan och listan. Välj en person och byt mellan
    personikon och påhittade profilbilder. Granska förslaget och spara det.
 9. Slå på och av Universumsbakgrund och bedöm läsbarheten.
+10. Jämför Följ systemet med Egen riktning för panoreringen. Vänd vågrät
+    och lodrät riktning var för sig. Kontrollera att zoom fungerar likadant.
 
 ## Krav och antaganden
 
@@ -69,7 +78,15 @@ Enfingersflyttning eller rotation upphör när det andra fingret sätts ned.
 Båda fingrarna måste lyftas innan nästa dragning börjar. Nypning på
 styrplattor som skickar Ctrl-hjulhändelser zoomar också kartan.
 Vanliga hjulhändelser över kartan panorerar vågrätt och lodrätt. Utanför
-kartan fungerar sidans vanliga rullning. Översikt återställer kameran.
+kartan fungerar sidans vanliga rullning. Återställ vy återställer kameran.
+
+Beställaren bekräftar att tvåfingerspanorering fungerar och vill kunna
+vända riktningen både vågrätt och lodrätt, eller följa exempelvis Mac.
+Följ systemet använder webbläsarens rullningshändelser med vanlig
+rullningsriktning. Prototypen läser inte operativsystemets inställning
+direkt. Egen riktning kan vända varje axel separat. På pekskärm följer
+panorering fingrarnas gemensamma rörelse om axeln inte är vänd.
+Riktningsinställningarna påverkar inte nypzoom, rotation eller objektflyttning.
 
 Beställaren önskar skilda typikoner, möjlighet till en liten profilbild på
 en person och en universumsbakgrund som kan slås av och på. Prototypen
@@ -91,8 +108,7 @@ Följande är prototypförslag som behöver användarens återkoppling:
 
 - Placering och avstånd ordnar presentationen utan egen domänbetydelse.
 - Flyttning ändrar vyn direkt, separat från förslag om hushållets uppgifter.
-- Fokus behåller koordinaterna och visar direkta grannar.
-- Sökning och typfilter begränsar synliga objekt. Översikt rensar dem.
+- Sökning och typfilter begränsar synliga objekt. Visa hela rymden rensar dem.
 - Etikettkollisioner minskas genom att dölja etiketter; listan ger alla namn.
 
 Personlig eller gemensam placering och beständig lagring av layouten är
@@ -109,6 +125,12 @@ Typikoner, byte till en exempelprofilbild och dess ändringsförslag samt
 universumsbakgrunden är kontrollerade i webbläsaren. Vågrät och lodrät
 panorering via rullningshändelser ändrar kameran utan att ändra objektens
 koordinater. Fysiska flerfingergester är ännu inte verifierade.
+
+Ctrl-klick och Ctrl med högerklick fokuserar objektet i webbläsarprovet.
+Val av en koppling behåller fokusobjektet. Escape och Visa hela rymden
+visar hela urvalet igen; återgångsknappen behåller kamerans läge.
+Rullningsprov visar att Egen riktning kan vända varje axel separat medan
+zoom och den andra axeln behåller sina värden.
 
 Rymden är en enkel perspektivprojektion till SVG. Objekt djupsorteras men
 linjer har ingen fullständig skymning. Etiketter kan överlappa linjer och
@@ -129,5 +151,6 @@ Pågående ändringsförslag följer med. Börja om återställer exempelkartan.
 
 ## Status
 
-Ingen variant är vald och beslutet är öppet. Användarens återkoppling och
-slutliga beslut hör hemma i ärendet; denna fil beskriver underlaget.
+A är beställarens föredragna huvudvy, med B:s fokusfunktion inkluderad och
+C bortvald. Beslutet om hela utformningen är fortsatt öppet. Användarens
+återkoppling och slutliga beslut hör hemma i ärendet.
