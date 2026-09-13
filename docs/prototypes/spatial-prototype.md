@@ -30,13 +30,19 @@ Knappen Visa objektets kopplingar gör samma sak för det valda objektet,
 
 Klick eller Ctrl-klick på tom rymd visar hela rymden igen. Escape och
 Visa hela rymden gör samma sak: lämnar fokus och rensar sökning och typfilter.
-Kamerans vinkel, zoom och panorering behålls. Återställ vy återställer också
-kameran. Objektens placeringar och hushållets ändringsförslag påverkas inte.
+Kamerans vinkel, zoom och panorering behålls. Återställ vy återställer
+kameravinkeln och anpassar inramningen till alla objekt. Objektens
+placeringar och hushållets ändringsförslag påverkas inte.
 Vanligt klick väljer ett objekt eller samband utan att byta fokusobjekt.
+Utan valt objekt eller samband är kopplingslinjerna nedtonade. Ett valt
+objekt framhäver sina direkta kopplingar; en vald koppling framhävs för
+sig. Återgång till hela rymden framhäver inte samtliga linjer.
 Drag på tom yta roterar vyn och lämnar kvar det aktuella objektfokuset.
 Klick, Ctrl-klick och Ctrl med högerklick på tom rymd är kontrollerade i
 webbläsaren. De visar hela urvalet och behåller kamerans läge; drag lämnar
 kvar objektfokuset.
+Klick på tom rymd efter objektval är också kontrollerat i den utökade
+kartan: alla 27 objekt visas och samtliga kopplingslinjer är nedtonade.
 
 Det finns en huvudvy och ingen variantväxlare. Länkar med `?variant=A`,
 `?variant=B` eller `?variant=C` öppnar samma samlade vy. Objektlistan finns
@@ -50,7 +56,7 @@ text utanför rymdytan behåller vanlig textmarkering.
 
 1. Hitta Tonmoln familj och skilj betalare, användare och betalningsmedel.
 2. Välj betalningssambandet, byt Alex till Kim och granska ändringslistan.
-3. Slå på tätare karta, sök efter extrakortet och följ dess samband.
+3. Slå på Fler exempelobjekt, sök efter extrakortet och följ dess samband.
 4. Flytta ett befintligt objekt genom att dra det. Lägg till det simulerade
    AI-förslaget och flytta även ett nytt objekt. Använd Närmare och Längre
    bort för att pröva djupled. Kontrollera att andra objekt ligger kvar.
@@ -118,6 +124,21 @@ Vanlig dragning sker i kamerans bildplan. Knapparna erbjuder flyttning i
 alla tre riktningar. Kopplingarna följer objekten. AI-förslag ändrar inte
 befintliga placeringar eller kameran.
 
+Fler exempelobjekt lägger till åtta tjänster med varsitt abonnemang.
+Paren får en rymligare tredimensionell startlayout med fyra höjdrader på
+vardera sidan av ursprungsobjekten och varierande djup framför och bakom
+kartans mitt. Även tjänsten och abonnemanget i ett par har olika djup.
+Första gången reglaget aktiveras sprids också de ursprungsobjekt som
+fortfarande har sin startposition i sidled, höjdled och djupled. Objekt
+som användaren flyttar behåller sin placering. Exempelobjektens
+placeringar behålls när reglaget slås av och på igen.
+
+Första utökningen lämnar objektfokus, rensar sökning och typfilter och
+anpassar kamerans avstånd, zoom och panorering till alla objekt.
+Den utökade kartans startvy är vriden och lutad för att framhäva djupet.
+Återställ vy gör också en ny inramning. Vanlig redigering, objektflyttning
+och återgång från fokus behåller kamerans läge.
+
 Två fingrar i kartan zoomar kameran genom avståndet mellan fingrarna och
 panorerar genom fingrarnas gemensamma rörelse. Zoomningen utgår från
 fingrarnas mittpunkt. Objektens egna koordinater ändras inte.
@@ -125,7 +146,11 @@ Enfingersflyttning eller rotation upphör när det andra fingret sätts ned.
 Båda fingrarna måste lyftas innan nästa dragning börjar. Nypning på
 styrplattor som skickar Ctrl-hjulhändelser zoomar också kartan.
 Vanliga hjulhändelser över kartan panorerar vågrätt och lodrätt. Utanför
-kartan fungerar sidans vanliga rullning. Återställ vy återställer kameran.
+kartan fungerar sidans vanliga rullning.
+
+Zoomområdet är 10–400 procent. Zoomknapparna ökar eller minskar nivån
+proportionellt, och den aktuella nivån visas som en procentsiffra vid
+knapparna. Samma gränser gäller för knappar, nypzoom och Ctrl-hjulhändelser.
 
 Beställaren bekräftar att tvåfingerspanorering fungerar och vill kunna
 vända riktningen både vågrätt och lodrätt, eller följa exempelvis Mac.
@@ -176,8 +201,14 @@ Personlig eller gemensam placering och beständig lagring av layouten är
 
 JavaScript-syntax, byte av betalare, ändringslista, simulerat sparande,
 rörelse med knappar, dragning av ett nytt objekt, stabil befintlig placering
-vid AI-förslag, fokus på tätare karta och sökning i smal listvy är
+vid AI-förslag, objektfokus och sökning i smal listvy är
 kontrollerade i lokal webbläsare. Användarprövningen återstår.
+
+Den utökade startlayouten är visuellt kontrollerad med 27 objekt och
+varierande djupnivåer. Zoomknapparnas gränser på 10 och 400 procent samt
+bevarad objektplacering vid av- och påslag av Fler exempelobjekt är
+kontrollerade. Ett långt flyttat objekt kan döljas bakom kameran vid
+rotation och återfinnas med Återställ vy utan ogiltig SVG-geometri.
 
 Typikoner, byte till en exempelprofilbild och dess ändringsförslag samt
 universumsbakgrunden är kontrollerade i webbläsaren. Vågrät och lodrät
@@ -221,7 +252,7 @@ tjänst kan läggas till från en person. Prototypen erbjuder inte en komplett
 relationseditor för alla begrepp. Tal och nätverksfel prövas i den separata
 samtalsprototypen.
 
-Tätare karta byter exempelunderlag och börjar om ångra-historiken.
+Fler exempelobjekt byter exempelunderlag och börjar om ångra-historiken.
 Pågående ändringsförslag följer med. Börja om återställer exempelkartan.
 
 ## Status
