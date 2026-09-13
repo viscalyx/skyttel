@@ -76,6 +76,24 @@ Shift tillsammans med musrörelse uppåt eller nedåt för flyttning i höjdled.
 Prototypen tolkar det som Shift-dragning av ett objekt längs rummets
 höjdaxel. Sidled och djup är då fasta även när kameran är roterad.
 
+Beställaren har svårt att uppfatta höjdförflyttningen och vill pröva
+hjälplinjer som gör den rumsliga rörelsen tydligare. Följande förslag visas
+när Shift hålls nere för ett valt objekt eller Visa höjdhjälp är aktiverat:
+
+- En blå höjdaxel med markeringar går genom objektet.
+- En streckad ring anger starten på höjdförflyttningen och en starkare
+  linje visar sträckan till den aktuella positionen.
+- En hjälplinje går till objektets fotpunkt på ett litet perspektivritat
+  rutnät. Rutnätet är ett visuellt hjälpplan, inte ett verkligt golv.
+- En ruta anger hur många steg högre eller lägre objektet ligger jämfört
+  med starten. Stegen gäller endast visuell placering, inte meter.
+
+Hjälplinjerna följer samma projektion som objektet när kameran vrids.
+Shift låser sidled och djup. Startmarkeringen börjar om när en ny
+höjdförflyttning inleds, även om Shift trycks ned mitt i ett vanligt drag.
+Upp- och nedknapparna använder också rummets höjdaxel och visar höjdhjälpen.
+Hjälpen kan lämnas synlig när vyn roteras och skymmer inte klickytorna.
+
 Vanlig dragning sker i kamerans bildplan. Knapparna erbjuder flyttning i
 alla tre riktningar. Kopplingarna följer objekten. AI-förslag ändrar inte
 befintliga placeringar eller kameran.
@@ -140,6 +158,11 @@ Val av en koppling behåller fokusobjektet. Escape och Visa hela rymden
 visar hela urvalet igen; återgångsknappen behåller kamerans läge.
 Rullningsprov visar att Egen riktning kan vända varje axel separat medan
 zoom och den andra axeln behåller sina värden.
+
+Höjdhjälpen är kontrollerad i en lutad vy med uppknapparna: rutan visar
+50 steg högre än start efter två steg, med oförändrad sidled och djup.
+Startmarkering, hjälpplan och indikator följer projektionen. Känslan i
+själva Shift-dragningen behöver fortsatt användarprövning.
 
 Rymden är en enkel perspektivprojektion till SVG. Objekt djupsorteras men
 linjer har ingen fullständig skymning. Etiketter kan överlappa linjer och

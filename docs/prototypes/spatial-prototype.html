@@ -31,10 +31,10 @@
 <div id="spaceArea"><div class="legend"><span>● Befintligt</span><span class="new">+ Nytt / ~ Ändrat förslag</span><span class="removed">− Föreslås tas bort</span></div>
 <div class="space"><canvas id="starfield" aria-hidden="true" hidden></canvas><svg id="space" viewBox="0 0 1000 650" role="group" aria-label="Rymdvy med valbara objekt och kopplingar"></svg></div>
 <div class="row toolbar" id="viewControls"><button data-camera="left" aria-label="Rotera vänster">↶</button><button data-camera="right" aria-label="Rotera höger">↷</button><button data-camera="up">Luta ↑</button><button data-camera="down">Luta ↓</button><button data-camera="out" aria-label="Zooma ut">−</button><button data-camera="in" aria-label="Zooma in">+</button><button id="overview">Återställ vy</button><button id="focus">Visa objektets kopplingar</button><button id="showAll">Visa hela rymden</button></div>
-<div class="row"><label><input id="allLabels" type="checkbox"> Alla etiketter (pröva överlapp)</label><label><input id="flat" type="checkbox"> Stillbild framifrån</label><label><input id="universe" type="checkbox"> Universumsbakgrund</label></div>
+<div class="row"><label><input id="allLabels" type="checkbox"> Alla etiketter (pröva överlapp)</label><label><input id="flat" type="checkbox"> Stillbild framifrån</label><label><input id="universe" type="checkbox"> Universumsbakgrund</label><label><input id="heightGuide" type="checkbox"> Visa höjdhjälp</label></div>
 <div class="row toolbar"><label>Panoreringsriktning <select id="panDirection"><option value="system">Följ systemet</option><option value="custom">Egen riktning</option></select></label><label><input id="reverseX" type="checkbox" disabled> Vänd vänster/höger</label><label><input id="reverseY" type="checkbox" disabled> Vänd upp/ned</label></div>
 <p class="hint">Följ systemet använder styrplattans rullningsriktning som webbläsaren får den. Välj Egen riktning för att vända varje axel separat. På pekskärm följer kartan fingrarna om axeln inte är vänd.</p>
-<p id="visibility" class="hint"></p><p class="hint">Flytta två fingrar tillsammans för att panorera kartan åt alla håll; nyp för att zooma. Ctrl-klicka på en ikon för att visa dess kopplingar. Klick på tom rymd eller Escape visar hela rymden. Tvåfingersscroll på styrplatta panorerar också. Dra tom yta med ett finger eller musen för att rotera. Dra ett objekt för att flytta det; håll Shift och dra uppåt eller nedåt för enbart höjdled.</p></div>
+<p id="visibility" class="hint"></p><p class="hint">Flytta två fingrar tillsammans för att panorera kartan åt alla håll; nyp för att zooma. Ctrl-klicka på en ikon för att visa dess kopplingar. Klick på tom rymd eller Escape visar hela rymden. Tvåfingersscroll på styrplatta panorerar också. Dra tom yta med ett finger eller musen för att rotera. Dra ett objekt för att flytta det; håll Shift och dra uppåt eller nedåt för enbart höjdled. En blå höjdaxel, en startring och ett hjälpplan visar rörelsen. Visa höjdhjälp håller stödet synligt.</p></div>
 <section id="listPanel"><h3>Hitta och välj objekt <span id="count" class="badge"></span></h3><div id="objects"></div></section>
 </section>
 <aside class="panel" id="detailPanel"><h2>Val och redigering</h2><div id="detail" class="detail"></div>
@@ -108,12 +108,31 @@ function drawStarfield(){
 
 function deltas(){let out=[];for(const kind of ['objects','relations'])for(const id of new Set([...Object.keys(saved[kind]),...Object.keys(draft[kind])])){const a=saved[kind][id],b=draft[kind][id];if(same(a,b))continue;const show=v=>kind==='objects'?`${v.name} (${v.type}${v.type==='Person'?', profilbild: '+(v.portrait?'exempelbild '+({one:1,two:2,three:3}[v.portrait]||'?'):'ingen'):''})`:describe(v);out.push(`${!a?'+ Lägg till':!b?'− Ta bort':'~ Ändra'}: ${a?show(a):''}${a&&b?' ⇒ ':''}${b?show(b):''}`);}return out;}
 function notice(s){$('status').textContent=s;}
-function selectNode(id){selected={node:id};render();}
+function selectNode(id){if(selected.node!==id)heightTrace=null;selected={node:id};render();}
 function focusNode(id){if(!draft.objects[id])return;selected={node:id};focus=id;$('search').value='';$('type').value='';render();notice('Visar kopplingarna för '+name(id)+'. Escape eller Visa hela rymden återgår till alla objekt.');}
-function showAll(){focus=null;selected={};$('search').value='';$('type').value='';render();notice('Hela rymden visas. Kameran behåller sin vinkel, zoom och panorering.');}
+function showAll(){heightTrace=null;focus=null;selected={};$('search').value='';$('type').value='';render();notice('Hela rymden visas. Kameran behåller sin vinkel, zoom och panorering.');}
 function selectEdge(id,removed=false){selected={edge:id,removed};render();}
 function scope(){let all=Object.keys({...saved.objects,...draft.objects});const anchor=focus;if(anchor){const ids=new Set([anchor]);for(const r of [...Object.values(saved.relations),...Object.values(draft.relations)])if(r.from===anchor||r.to===anchor){ids.add(r.from);ids.add(r.to);}all=all.filter(id=>ids.has(id));}const q=$('search').value.toLocaleLowerCase('sv'),type=$('type').value;return all.filter(id=>{const o=draft.objects[id]||saved.objects[id];return(!type||o.type===type)&&(!q||`${o.name} ${o.type}`.toLocaleLowerCase('sv').includes(q));});}
 function project(pos){const [x,y,z]=pos;const yaw=$('flat').checked?0:view.yaw,pitch=$('flat').checked?0:view.pitch;const xx=x*Math.cos(yaw)+z*Math.sin(yaw),zz=-x*Math.sin(yaw)+z*Math.cos(yaw),yy=y*Math.cos(pitch)-zz*Math.sin(pitch),depth=y*Math.sin(pitch)+zz*Math.cos(pitch);const scale=1050/(1050+depth)*view.zoom;return{x:500+view.panX+xx*scale,y:325+view.panY+yy*scale,z:depth,scale};}
+function heightHelp(unit,visible){
+ const id=drag?.node||selected.node;
+ if(!(shiftHeld||$('heightGuide').checked)||!id||!draft.objects[id]||!visible.includes(id))return null;
+ const current=positions[id],start=heightTrace?.id===id?heightTrace.start:current;
+ const [x,y,z]=current,planeY=220,point=project(current),origin=project(start),foot=project([x,planeY,z]);
+ const top=Math.min(y,start[1],planeY)-110,bottom=Math.max(y,start[1],planeY)+65;
+ const line=(a,b,stroke,width=1,dash='')=>{const p=project(a),q=project(b);return `<path d="M${p.x},${p.y} L${q.x},${q.y}" fill="none" stroke="${stroke}" stroke-width="${width*unit}" ${dash?`stroke-dasharray="${dash}"`:''}/>`;};
+ let grid='';
+ for(let offset=-80;offset<=80;offset+=40){grid+=line([x+offset,planeY,z-80],[x+offset,planeY,z+80],'#507d89');grid+=line([x-80,planeY,z+offset],[x+80,planeY,z+offset],'#507d89');}
+ const footprint=Array.from({length:25},(_,i)=>{const a=i*Math.PI/12,p=project([x+15*Math.cos(a),planeY,z+15*Math.sin(a)]);return `${i?'L':'M'}${p.x},${p.y}`;}).join(' ')+' Z';
+ let ticks='';for(let level=Math.ceil(top/50)*50;level<bottom;level+=50)ticks+=line([x-7,level,z],[x+7,level,z],'#81c9dc');
+ const upper=project([x,top,z]),lower=project([x,bottom,z]);
+ const change=Math.round(start[1]-y),description=change===0?'Startläge':`${change>0?'↑':'↓'} ${Math.abs(change)} steg ${change>0?'högre':'lägre'} än start`;
+ const boxWidth=Math.min(920,310*unit);
+ return {
+  back:`<g id="height-guide" pointer-events="none" aria-label="Höjdaxel och visuellt hjälpplan">${grid}<path d="${footprint}" fill="#62d8ff" fill-opacity=".12" stroke="#81c9dc" stroke-width="${unit}"/>${line(current,[x,planeY,z],'#8ad0e1',1.5,'5 6')}${line([x,top,z],[x,bottom,z],'#549aac',1,'3 7')}${ticks}${line(start,current,'#6de4ff',3)}<circle cx="${upper.x}" cy="${upper.y}" r="${3*unit}" fill="#6de4ff"/><circle cx="${lower.x}" cy="${lower.y}" r="${3*unit}" fill="#6de4ff"/></g>`,
+  front:`<g id="height-feedback" pointer-events="none"><circle cx="${origin.x}" cy="${origin.y}" r="${21*unit}" fill="none" stroke="#b6d6e2" stroke-width="${unit}" stroke-dasharray="4 5"/><circle cx="${point.x}" cy="${point.y}" r="${25*unit}" fill="none" stroke="#6de4ff" stroke-width="${2*unit}"/><text x="${origin.x+27*unit}" y="${origin.y-12*unit}" fill="#b6d6e2" font-size="${11*unit}">Start</text><text x="${foot.x+18*unit}" y="${foot.y+16*unit}" fill="#8fbcca" font-size="${11*unit}">Hjälpplan</text><rect x="${12*unit}" y="${12*unit}" width="${boxWidth}" height="${72*unit}" rx="${7*unit}" fill="#0a202b" fill-opacity=".96" stroke="#549aac"/><text x="${24*unit}" y="${34*unit}" fill="#8ae6f8" font-size="${13*unit}">Höjdled · ${esc(name(id))}</text><text x="${24*unit}" y="${55*unit}" fill="#e4f7fc" font-size="${13*unit}">${description}</text><text x="${24*unit}" y="${74*unit}" fill="#a6c6d1" font-size="${11*unit}">Shift låser sidled och djup. Stegen gäller vyn.</text></g>`
+ };
+}
 function draw(){drawStarfield();const visible=scope(),ids=new Set(visible),points=Object.fromEntries(visible.map(id=>[id,project(positions[id])]));const unit=Math.max(1,1000/$('space').clientWidth,650/$('space').clientHeight);const selectedNode=focus||selected.node;let lines='',circles='',labels='',hidden=0,occupied=[];
  const edges=[];for(const [id,r]of Object.entries(draft.relations))edges.push({id,r,status:stateOf('relations',id)});for(const [id,r]of Object.entries(saved.relations))if(!same(r,draft.relations[id]))edges.push({id,r,status:'removed'});
  const nearby=new Set([selectedNode]);for(const {r}of edges)if(r.from===selectedNode||r.to===selectedNode){nearby.add(r.from);nearby.add(r.to);}
@@ -125,7 +144,8 @@ function draw(){drawStarfield();const visible=scope(),ids=new Set(visible),point
  if(takeLabel(x,y,w,38*unit,chosen)){labels+=`<g pointer-events="none"><rect x="${x}" y="${y}" width="${w}" height="${38*unit}" rx="5" fill="#122a23" fill-opacity=".96"/><text x="${x+w/2}" y="${y+15*unit}" text-anchor="middle" fill="#f4f7f0" font-size="${13*unit}">${esc(o.name)}</text><text x="${x+w/2}" y="${y+31*unit}" text-anchor="middle" fill="${color}" font-size="${11*unit}">${esc(status==='existing'?o.type:tags[status])}</text></g>`;}else hidden++;
  }
  for(const id of [...visible].sort((a,b)=>points[b].z-points[a].z)){const p=points[id],o=draft.objects[id]||saved.objects[id],status=stateOf('objects',id),chosen=id===selectedNode,color=colors[status],r=Math.max(12,Math.min(22,17*p.scale))*unit;circles+=`<g class="node" data-node="${id}" tabindex="0" role="button" aria-label="${esc(o.name+' · '+o.type+' · '+tags[status])}" opacity="${!selectedNode||nearby.has(id)?1:.48}"><title>${esc(o.name+' · '+o.type+' · '+tags[status])}</title>${status==='new'?`<circle cx="${p.x}" cy="${p.y}" r="${r+6}" fill="none" stroke="${color}"/>`:''}<circle class="orb" cx="${p.x}" cy="${p.y}" r="${r}" fill="${chosen?color:'#214638'}" stroke="${color}" stroke-width="${chosen?4:2}" ${status==='removed'?'stroke-dasharray="4 4"':''}/><g pointer-events="none" transform="translate(${p.x-r*.73} ${p.y-r*.73}) scale(${r*1.46/24})" color="${chosen?'#122a23':color}">${objectSymbol(o)}</g>${status!=='existing'?`<g pointer-events="none"><circle cx="${p.x+r*.8}" cy="${p.y-r*.8}" r="${7*unit}" fill="#122a23" stroke="${color}"/><text x="${p.x+r*.8}" y="${p.y-r*.8+4*unit}" text-anchor="middle" fill="${color}" font-size="${11*unit}">${status==='new'?'+':status==='changed'?'~':'−'}</text></g>`:''}</g>`;}
- $('space').innerHTML=`<ellipse cx="500" cy="520" rx="380" ry="82" fill="none" stroke="#2a4b3d" stroke-dasharray="3 9"/>${lines}${circles}${labels}`;
+ const guide=heightHelp(unit,visible);
+ $('space').innerHTML=`${guide?'':'<ellipse cx="500" cy="520" rx="380" ry="82" fill="none" stroke="#2a4b3d" stroke-dasharray="3 9"/>'}${lines}${guide?.back||''}${circles}${labels}${guide?.front||''}`;
  $('visibility').textContent=`${visible.length} av ${Object.keys(draft.objects).length} objekt i urvalet. ${hidden?hidden+' etiketter döljs för att minska överlapp. Välj objekt via listan eller visa alla etiketter.':'Etiketter kan fortfarande överlappa punkter eller linjer; pröva fokus och listan.'}${focus?' Fokus: '+name(focus)+'.':''}`;
  $('space').querySelectorAll('[data-node],[data-edge]').forEach(el=>{const action=e=>el.dataset.node?(e.ctrlKey?focusNode(el.dataset.node):selectNode(el.dataset.node)):selectEdge(el.dataset.edge,el.dataset.removed==='true');el.onclick=e=>{if(!dragged)action(e);};el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();action(e);}};});
 }
@@ -146,7 +166,7 @@ function detail(){let html='';if(selected.node){const id=selected.node,o=draft.o
  if(selected.node&&draft.objects[selected.node])html+=`<h3>Flytta objektet i rymden</h3><div class="row"><button data-move="left" aria-label="Flytta objekt vänster">←</button><button data-move="right" aria-label="Flytta objekt höger">→</button><button data-move="up" aria-label="Flytta objekt uppåt">↑</button><button data-move="down" aria-label="Flytta objekt nedåt">↓</button><button data-move="near">Närmare</button><button data-move="far">Längre bort</button></div><p class="hint">Du kan flytta både befintliga objekt och nya förslag. Kopplingarna följer med. Placering ordnar vyn och ändrar inga hushållsuppgifter. Placeringar finns kvar på den öppna sidan; gemensam eller personlig lagring återstår att besluta.</p>`;
  $('detail').innerHTML=html||'<p>Välj ett objekt i kartan eller listan. Välj sedan ett riktat samband för att ändra det.</p>';
  $('detail').querySelectorAll('[data-portrait]').forEach(b=>b.onclick=()=>{if(b.dataset.portrait)draft.objects[selected.node].portrait=b.dataset.portrait;else delete draft.objects[selected.node].portrait;notice('Profilbilden visas som ett förslag.');render();});
- $('detail').querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>{const a=b.dataset.move;moveObject(selected.node,a==='left'?-25:a==='right'?25:0,a==='up'?-25:a==='down'?25:0,a==='near'?-30:a==='far'?30:0);notice(name(selected.node)+' har flyttats. Sambanden är oförändrade.');render();});
+ $('detail').querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>{const a=b.dataset.move;if(a==='up'||a==='down'){if(heightTrace?.id!==selected.node)heightTrace={id:selected.node,start:[...positions[selected.node]]};positions[selected.node][1]+=a==='up'?-25:25;$('heightGuide').checked=true;}else{heightTrace=null;moveObject(selected.node,a==='left'?-25:a==='right'?25:0,0,a==='near'?-30:a==='far'?30:0);}notice(name(selected.node)+' har flyttats. Sambanden är oförändrade.');render();});
  $('detail').querySelectorAll('[data-link]').forEach(b=>b.onclick=()=>selectEdge(b.dataset.link,b.dataset.removed==='true'));
  $('detail').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>selectNode(b.dataset.go));
  if($('rename'))$('rename').onsubmit=e=>{e.preventDefault();const val=new FormData(e.target).get('name').trim();if(!val)return;draft.objects[selected.node].name=val;notice('Namnändringen ingår nu i förslaget.');render();};
@@ -158,17 +178,19 @@ function detail(){let html='';if(selected.node){const id=selected.node,o=draft.o
 function render(){$('main').classList.toggle('narrow',$('narrow').checked);$('viewTitle').textContent=focus?'Kopplingar för '+name(focus):'Hela rymdkartan';
  const visible=scope();$('count').textContent=visible.length;$('objects').innerHTML=visible.map(id=>{const o=draft.objects[id]||saved.objects[id];return `<button class="object" data-id="${id}" aria-pressed="${selected.node===id}"><span class="list-name">${iconSvg(o)}<b>${esc(o.name)}</b></span><small>${esc(o.type+' · '+tags[stateOf('objects',id)])}</small></button>`;}).join('')||'<p>Inga träffar. Rensa sökning, typfilter eller fokus med Visa hela rymden.</p>';$('objects').querySelectorAll('button').forEach(b=>b.onclick=()=>selectNode(b.dataset.id));
  draw();detail();const delta=deltas();$('changes').innerHTML=delta.length?`<ol class="delta">${delta.map(s=>'<li>'+esc(s)+'</li>').join('')}</ol>`:'<p class="hint">Inga föreslagna ändringar.</p>';$('save').disabled=$('discard').disabled=!delta.length;$('undo').disabled=!history.length;$('focus').disabled=!selected.node||!draft.objects[selected.node];$('ai').disabled=!!draft.objects.aiService||!draft.objects.kim;
- $('state').textContent=JSON.stringify({view:'rymdkarta',selection:selected,focus,camera:view,universe:$('universe').checked,panPreference:{mode:$('panDirection').value,reverseX:$('reverseX').checked,reverseY:$('reverseY').checked},filters:{query:$('search').value,type:$('type').value},visible,positions,saved,draft},null,2);
+ $('state').textContent=JSON.stringify({view:'rymdkarta',selection:selected,focus,camera:view,universe:$('universe').checked,heightIndicator:{shown:shiftHeld||$('heightGuide').checked,trace:heightTrace},panPreference:{mode:$('panDirection').value,reverseX:$('reverseX').checked,reverseY:$('reverseY').checked},filters:{query:$('search').value,type:$('type').value},visible,positions,saved,draft},null,2);
 }
 let counter=0;
-function overview(){focus=null;selected={};view={yaw:.16,pitch:-.12,zoom:1,panX:0,panY:0};$('search').value='';$('type').value='';render();notice('Översikt återställd. Alla objekt visas.');}
+function overview(){heightTrace=null;focus=null;selected={};view={yaw:.16,pitch:-.12,zoom:1,panX:0,panY:0};$('search').value='';$('type').value='';render();notice('Översikt återställd. Alla objekt visas.');}
 function types(){const current=$('type').value;$('type').innerHTML='<option value="">Alla typer</option>'+[...new Set(Object.values(draft.objects).map(o=>o.type))].sort().map(t=>`<option>${esc(t)}</option>`).join('');$('type').value=current;}
 function denseData(){for(let i=0;i<8;i++){const a=i*2.399;const service='service'+i,sub='sub'+i;const label=['Bildglimt','Bokvinden','Molnfack','Spelgläntan','Tidningsrummet','Filmängen','Lärstigen','Träningsspåret'][i];saved.objects[service]={name:label,type:'Tjänst'};saved.objects[sub]={name:label+' abonnemang',type:'Abonnemang'};positions[service]=[Math.cos(a)*350,Math.sin(a)*240,Math.sin(a*.7)*250];positions[sub]=[Math.cos(a+.2)*240,Math.sin(a+.2)*180,Math.cos(a)*200];saved.relations['denseOffer'+i]={from:sub,kind:'ger tillgång till',to:service};saved.relations['densePay'+i]={from:i%2?'alex':'kim',kind:'betalar',to:sub};saved.relations['denseCard'+i]={from:sub,kind:'betalas med',to:i%2?'card2':'card1'};saved.relations['denseUse'+i]={from:i%3?'lo':'kim',kind:'använder',to:service};}}
-function reset(){for(const key of Object.keys(positions))delete positions[key];for(const [id,,,x,y,z]of nodes)positions[id]=[x,y,z];saved=base();if(dense)denseData();draft=clone(saved);history=[];selected={node:'family'};focus=null;view={yaw:.16,pitch:-.12,zoom:1,panX:0,panY:0};$('search').value='';types();render();}
+function reset(){heightTrace=null;for(const key of Object.keys(positions))delete positions[key];for(const [id,,,x,y,z]of nodes)positions[id]=[x,y,z];saved=base();if(dense)denseData();draft=clone(saved);history=[];selected={node:'family'};focus=null;view={yaw:.16,pitch:-.12,zoom:1,panX:0,panY:0};$('search').value='';types();render();}
  $('search').oninput=()=>{if(focus){focus=null;}render();};$('type').onchange=()=>{focus=null;render();};$('narrow').onchange=render;$('allLabels').onchange=render;$('flat').onchange=render;$('universe').onchange=render;
  $('dense').onchange=()=>{const old=clone(saved),proposal=clone(draft);dense=$('dense').checked;for(const id of Object.keys(saved.objects))if(/^(service|sub)\d+$/.test(id))delete saved.objects[id];for(const id of Object.keys(saved.relations))if(id.startsWith('dense'))delete saved.relations[id];if(dense)denseData();draft=clone(saved);for(const kind of ['objects','relations'])for(const id of new Set([...Object.keys(old[kind]),...Object.keys(proposal[kind])]))if(!same(old[kind][id],proposal[kind][id])){if(proposal[kind][id])draft[kind][id]=proposal[kind][id];else delete draft[kind][id];}for(const [id,r]of Object.entries(draft.relations))if(!draft.objects[r.from]||!draft.objects[r.to])delete draft.relations[id];history=[];if(selected.node&&!draft.objects[selected.node])selected={};if(focus&&!draft.objects[focus])focus=null;types();notice('Exempelunderlaget är nu '+(dense?'tätare':'mindre')+'. Dina förslag behålls. Ångra-historiken börjar om för detta underlag.');render();};
  $('overview').onclick=overview;$('focus').onclick=()=>focusNode(selected.node);$('showAll').onclick=showAll;
- window.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();showAll();}};
+ window.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();heightTrace=null;showAll();}else if(e.key==='Shift'&&!e.target.closest('input,textarea,select,[contenteditable]')){shiftHeld=true;draw();}};
+ window.addEventListener('keyup',e=>{if(e.key==='Shift'){shiftHeld=false;draw();}});
+ window.addEventListener('blur',()=>{shiftHeld=false;heightTrace=null;drag=null;draw();});
  $('ai').onclick=()=>{draft.objects.aiService={name:'Ljudstrimma',type:'Tjänst'};draft.objects.aiSub={name:'Ljudstrimma familj',type:'Abonnemang'};positions.aiService=[145,-280,-200];positions.aiSub=[-80,-270,-140];draft.relations.aiOffer={from:'aiSub',kind:'ger tillgång till',to:'aiService'};draft.relations.aiPayer={from:'kim',kind:'betalar',to:'aiSub'};types();notice('Simulerat förslag: Kim betalar ett nytt familjeabonnemang hos Ljudstrimma. Befintliga positioner och kameran ligger kvar. Förslaget kan ligga utanför aktivt fokus eller filter; ändringslistan visar allt.');render();};
  $('save').onclick=()=>{history.push(clone(saved));saved=clone(draft);if(selected.removed)selected={};notice('Hela förslaget är bekräftat sparat i prototypens minne.');render();};
  $('discard').onclick=()=>{draft=clone(saved);selected={};if(focus&&!draft.objects[focus])focus=null;types();notice('Förslagen är kastade. Sparad exempelkarta visas.');render();};
@@ -176,8 +198,9 @@ function reset(){for(const key of Object.keys(positions))delete positions[key];f
  $('reset').onclick=()=>{reset();notice('Exempelkartan börjar om. Alla ändringar och sparanden är borttagna från prototypens minne.');};
  $('viewControls').querySelectorAll('[data-camera]').forEach(b=>b.onclick=()=>{const a=b.dataset.camera;if(a==='left')view.yaw-=.2;if(a==='right')view.yaw+=.2;if(a==='up')view.pitch=Math.max(-1,view.pitch-.15);if(a==='down')view.pitch=Math.min(1,view.pitch+.15);if(a==='in')view.zoom=Math.min(1.6,view.zoom+.1);if(a==='out')view.zoom=Math.max(.45,view.zoom-.1);render();});
  function moveObject(id,dx,dy,dz){const yaw=$('flat').checked?0:view.yaw,pitch=$('flat').checked?0:view.pitch;const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);const yy=dy*cp+dz*sp,zz=-dy*sp+dz*cp;const world=[dx*cy-zz*sy,yy,dx*sy+zz*cy];positions[id]=positions[id].map((v,i)=>v+world[i]);}
- let drag=null,dragged=false,pinch=null,controlTarget=null;
+ let drag=null,dragged=false,pinch=null,controlTarget=null,shiftHeld=false,heightTrace=null;
  const svg=$('space'),touches=new Map();
+ $('heightGuide').onchange=render;
  svg.addEventListener('selectstart',e=>e.preventDefault());
  const limitZoom=z=>Math.max(.45,Math.min(1.6,z));
  function panDirections(){const custom=$('panDirection').value==='custom';return{x:custom&&$('reverseX').checked?-1:1,y:custom&&$('reverseY').checked?-1:1};}
@@ -212,6 +235,7 @@ function reset(){for(const key of Object.keys(positions))delete positions[key];f
   const node=e.target.closest('[data-node]')?.dataset.node;
   const edge=e.target.closest('[data-edge]');
   drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,...view,node,edge:edge?.dataset.edge,removed:edge?.dataset.removed==='true'};
+  if(node){heightTrace={id:node,start:[...positions[node]]};shiftHeld=e.shiftKey;}
  };
  svg.onpointermove=e=>{
   if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -238,9 +262,11 @@ function reset(){for(const key of Object.keys(positions))delete positions[key];f
    const vertical=(e.clientY-drag.lastY)/matrix.d/scale;
    if(e.shiftKey){
     // World height only: horizontal position and depth stay fixed even after rotation.
+    if(!drag.heightActive)heightTrace={id:drag.node,start:[...positions[drag.node]]};
+    drag.heightActive=true;shiftHeld=true;
     const pitch=$('flat').checked?0:view.pitch;
     positions[drag.node][1]+=vertical/Math.cos(pitch);
-   }else moveObject(drag.node,horizontal,vertical,0);
+   }else{drag.heightActive=false;shiftHeld=false;heightTrace=null;moveObject(drag.node,horizontal,vertical,0);}
    drag.lastX=e.clientX;drag.lastY=e.clientY;
   }else if(!drag.edge&&!$('flat').checked){
    view.yaw=drag.yaw+dx*.006;view.pitch=Math.max(-1,Math.min(1,drag.pitch+dy*.006));
@@ -248,6 +274,7 @@ function reset(){for(const key of Object.keys(positions))delete positions[key];f
   draw();
  };
  function finishPointer(e){
+  if(e.type==='pointercancel'){shiftHeld=false;heightTrace=null;}
   touches.delete(e.pointerId);
   if(pinch){
    // The remaining finger must lift before a new drag can start.
