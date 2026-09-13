@@ -2,8 +2,9 @@
 
 Prototypen ger underlag till
 [Hur gör 3D-vyn hushållets samband tydliga och redigerbara?](https://github.com/viscalyx/skyttel/issues/8).
-Den är ett diskussionsunderlag. Den avgör inte produktionsbibliotek,
-plattform eller lagring.
+Beställaren godkänner prototypen som färdigt beslutsunderlag den
+13 september 2026. Den avgör inte produktionsbibliotek, plattform eller
+lagring. Beslut och avgränsningar hör hemma i det länkade ärendet.
 
 ## Kör
 
@@ -23,7 +24,7 @@ försvinner vid omladdning.
 
 ## Samlad rymdvy med objektfokus
 
-Beställaren föredrar A hittills och väljer att C ska utgå. Funktionen från
+Beställaren väljer A som huvudvy och C ska utgå. Funktionen från
 B ingår i A: Ctrl-klick på en ikon visar det objektets direkta kopplingar.
 Knappen Visa objektets kopplingar gör samma sak för det valda objektet,
 även på pekskärm. Ctrl+Enter på en ikon ger ett tangentbordsalternativ.
@@ -110,8 +111,8 @@ Rymden visas utan en statisk ellips.
 Beställaren vill även pröva tre riktningspilar som stöd när vyn börjar
 röra sig. Axelvisaren prövas direkt i rymden utan en separat ruta. Nedre
 högra hörnet är standard. Användaren kan välja nedre vänstra, nedre högra,
-övre vänstra eller övre högra hörnet. Utformningen och valet av hörn är
-pågående prototypval för användarprövning.
+övre vänstra eller övre högra hörnet. Utformningen och valet av hörn ingår
+i den godkända prototypen.
 
 Axelvisaren visar X för sidled, Y för höjd och Z för djup, med både färger
 och bokstäver. Pilarna följer kamerans rotation men behåller sin storlek
@@ -126,6 +127,11 @@ riktning; den är inte ett reglage för att flytta objekt.
 Vanlig dragning sker i kamerans bildplan. Knapparna erbjuder flyttning i
 alla tre riktningar. Kopplingarna följer objekten. AI-förslag ändrar inte
 befintliga placeringar eller kameran.
+
+Produktens standardvy ska omfatta hushållets samtliga objekt och samband.
+Sökning, typfilter och objektfokus begränsar vyn när användaren väljer det.
+Fler exempelobjekt är en växling mellan två fasta, påhittade underlag i
+prototypen, inte en detaljnivå som döljer delar av hushållets innehåll.
 
 Fler exempelobjekt lägger till åtta tjänster med varsitt abonnemang.
 Paren får en rymligare tredimensionell startlayout med fyra höjdrader på
@@ -213,7 +219,7 @@ flyttning av enskilda objekt påverkar inte stjärnorna. Samma utgångsvärde
 håller dem stabila mellan omritningar. Ikoner och exempelprofilbilder är
 lokala vektorformer.
 
-Följande är prototypförslag som behöver användarens återkoppling:
+Följande ingår i prototypens godkända arbetssätt:
 
 - Placering och avstånd ordnar presentationen utan egen domänbetydelse.
 - Flyttning ändrar vyn direkt, separat från förslag om hushållets uppgifter.
@@ -229,7 +235,9 @@ Personlig eller gemensam placering och beständig lagring av layouten är
 JavaScript-syntax, byte av betalare, ändringslista, simulerat sparande,
 rörelse med knappar, dragning av ett nytt objekt, stabil befintlig placering
 vid AI-förslag, objektfokus och sökning i smal listvy är
-kontrollerade i lokal webbläsare. Användarprövningen återstår.
+kontrollerade i lokal webbläsare. Beställarens löpande återkoppling och
+slutliga godkännande avslutar prototyparbetet. Det innebär inte att varje
+föreslagen uppgift eller fysisk enhet är verifierad.
 
 Alla etiketter tillsammans med Fler exempelobjekt är visuellt kontrollerat
 i arbetsutsnittet. I provet ryms 47 etiketter helt i utsnittet och två par
@@ -246,7 +254,8 @@ rotation och återfinnas med Återställ vy utan ogiltig SVG-geometri.
 Typikoner, byte till en exempelprofilbild och dess ändringsförslag samt
 universumsbakgrunden är kontrollerade i webbläsaren. Vågrät och lodrät
 panorering via rullningshändelser ändrar kameran utan att ändra objektens
-koordinater. Fysiska flerfingergester är ännu inte verifierade.
+koordinater. Beställaren bekräftar fungerande tvåfingerspanorering på
+styrplatta. Flerfingergester på fysisk pekplatta är ännu inte verifierade.
 
 Stjärnhimlens rörelse vid rotation och lutning är visuellt kontrollerad
 med musdragning. Återställd kamera återger samma stjärnhimmel. Av- och
@@ -261,8 +270,8 @@ zoom och den andra axeln behåller sina värden.
 
 Höjdhjälpen är kontrollerad i en lutad vy med uppknapparna: rutan visar
 50 steg högre än start efter två steg, med oförändrad sidled och djup.
-Startmarkering, hjälpplan och indikator följer projektionen. Känslan i
-själva Shift-dragningen behöver fortsatt användarprövning.
+Startmarkering, hjälpplan och indikator följer projektionen. Precision
+och känsla i Shift-dragningen behöver verifieras på vald målplattform.
 
 Axelvisarens riktningar är kontrollerade efter rotation och lutning.
 Dragning visar stödet automatiskt. Vid överlappande X- och Z-riktningar
@@ -275,10 +284,10 @@ Rymden är en enkel perspektivprojektion till SVG. Objekt djupsorteras men
 linjer har ingen fullständig skymning. Etiketter kan överlappa linjer och
 punkter. Textalternativet ger samma redigering, men full tillgänglighet och
 verklig mobil användning är inte verifierade. Nypzoom och panorering
-behöver prövas på en fysisk platta och Shift-dragning behöver användarens
-prövning. Ingen automatisk rörelse ingår. Handplacerade exempel prövar
-interaktionen;
-de verifierar inte generell placering eller prestanda för stora kartor.
+behöver prövas på en fysisk platta. Shift-dragning behöver verifieras på
+vald målplattform. Ingen automatisk rörelse ingår. Handplacerade exempel
+prövar interaktionen; de verifierar inte generell placering eller
+prestanda för stora kartor.
 
 Relationens parter kan bytas till objekt av samma typ. Ny användning av en
 tjänst kan läggas till från en person. Prototypen erbjuder inte en komplett
@@ -290,6 +299,15 @@ Pågående ändringsförslag följer med. Börja om återställer exempelkartan.
 
 ## Status
 
-A är beställarens föredragna huvudvy, med B:s fokusfunktion inkluderad och
-C bortvald. Beslutet om hela utformningen är fortsatt öppet. Användarens
-återkoppling och slutliga beslut hör hemma i ärendet.
+Prototypen är färdig och godkänd som beslutsunderlag. A är vald huvudvy,
+med B:s fokusfunktion inkluderad och C bortvald. Den kastbara koden finns
+kvar på grenen `codex/prototype-spatial-map` som källa till beslutet.
+
+Lagring och delning av placeringar samt privata profilbilder hör till
+[Vilken information ska sparas, ändras över tid och kunna återställas?](https://github.com/viscalyx/skyttel/issues/9).
+Enheter, inmatning och tillgänglighet hör till
+[Vilka enheter och distributionsformer behöver första Skyttel?](https://github.com/viscalyx/skyttel/issues/11).
+Teknikval hör till
+[Vilken sammanhängande teknik och lagring uppfyller de prövade behoven?](https://github.com/viscalyx/skyttel/issues/12).
+Omfattning, stora kartor och acceptanskriterier hör till
+[Vad ska första användbara Skyttel innehålla och hur vet vi att det räcker?](https://github.com/viscalyx/skyttel/issues/13).
