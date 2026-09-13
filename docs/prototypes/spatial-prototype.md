@@ -105,6 +105,7 @@ Shift låser sidled och djup. Startmarkeringen börjar om när en ny
 höjdförflyttning inleds, även om Shift trycks ned mitt i ett vanligt drag.
 Upp- och nedknapparna använder också rummets höjdaxel och visar höjdhjälpen.
 Hjälpen kan lämnas synlig när vyn roteras och skymmer inte klickytorna.
+Rymden visas utan en statisk ellips.
 
 Beställaren vill även pröva tre riktningspilar som stöd när vyn börjar
 röra sig. Axelvisaren prövas direkt i rymden utan en separat ruta. Nedre
@@ -153,8 +154,9 @@ utsnittet. Avstängning av Alla etiketter behåller utsnittet; Återställ vy
 
 Objektnamn placeras före relationsetiketter. Prototypen prövar flera
 etikettlägen kring varje objekt och längs varje samband för att
-undvika objekt och andra etiketter. En kort ledarlinje binder texten till
-objektet eller sambandet. Placeringen av etiketter flyttar inga objekt.
+undvika objekt och andra etiketter. En kort streckad ledarlinje binder
+texten till objektet eller sambandet och skiljer etikettstödet från
+kopplingar mellan objekt. Placeringen av etiketter flyttar inga objekt.
 Om inget ledigt läge finns väljer Alla etiketter ett reservläge med minst
 överlapp. Läget döljer inte text på grund av en kollision, men etiketter
 kan fortfarande överlappa. Utan Alla etiketter kan ovalda etiketter döljas
