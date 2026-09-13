@@ -62,6 +62,7 @@ text utanför rymdytan behåller vanlig textmarkering.
 6. Lös samma uppgifter genom listan och detaljpanelen utan rotation.
 7. Pröva namnändring, borttagning och att lägga till användning av en tjänst
    från en person. Spara hela förslaget, kasta förslag och ångra sparande.
+   Jämför × för borttagning med gul ~ för ändring.
 8. Jämför typikonerna i kartan och listan. Välj en person och byt mellan
    personikon och påhittade profilbilder. Granska förslaget och spara det.
 9. Slå på och av Universumsbakgrund och bedöm läsbarheten. Rotera och
@@ -133,6 +134,11 @@ rullningsriktning. Prototypen läser inte operativsystemets inställning
 direkt. Egen riktning kan vända varje axel separat. På pekskärm följer
 panorering fingrarnas gemensamma rörelse om axeln inte är vänd.
 Riktningsinställningarna påverkar inte nypzoom, rotation eller objektflyttning.
+
+Beställaren väljer × som markering för föreslagen borttagning. Krysset
+visas för objekt och kopplingar samt i teckenförklaringen och ändringslistan.
+Gul ~ markerar föreslagen ändring. De olika symbolerna ska göra borttagning
+och ändring lättare att skilja åt i prototypen.
 
 Beställaren önskar skilda typikoner, möjlighet till en liten profilbild på
 en person och en universumsbakgrund som kan slås av och på. Prototypen
