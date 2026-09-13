@@ -37,6 +37,10 @@ Det finns en huvudvy och ingen variantväxlare. Länkar med `?variant=A`,
 `?variant=B` eller `?variant=C` öppnar samma samlade vy. Objektlistan finns
 som komplement till rymdkartan. Tillståndspanelen visar aktuellt tillstånd.
 
+Klick och drag i rymdytan väljer objekt, samband eller styr vyn. Etiketternas
+text är inte markerbar, även när Alla etiketter är aktiverat. Textfält och
+text utanför rymdytan behåller vanlig textmarkering.
+
 ## Pröva
 
 1. Hitta Tonmoln familj och skilj betalare, användare och betalningsmedel.
