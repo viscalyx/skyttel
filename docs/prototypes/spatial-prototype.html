@@ -34,7 +34,7 @@
 <div class="row"><label><input id="allLabels" type="checkbox"> Alla etiketter (pröva överlapp)</label><label><input id="flat" type="checkbox"> Stillbild framifrån</label><label><input id="universe" type="checkbox"> Universumsbakgrund</label></div>
 <div class="row toolbar"><label>Panoreringsriktning <select id="panDirection"><option value="system">Följ systemet</option><option value="custom">Egen riktning</option></select></label><label><input id="reverseX" type="checkbox" disabled> Vänd vänster/höger</label><label><input id="reverseY" type="checkbox" disabled> Vänd upp/ned</label></div>
 <p class="hint">Följ systemet använder styrplattans rullningsriktning som webbläsaren får den. Välj Egen riktning för att vända varje axel separat. På pekskärm följer kartan fingrarna om axeln inte är vänd.</p>
-<p id="visibility" class="hint"></p><p class="hint">Flytta två fingrar tillsammans för att panorera kartan åt alla håll; nyp för att zooma. Ctrl-klicka på en ikon för att visa dess kopplingar. Escape visar hela rymden. Tvåfingersscroll på styrplatta panorerar också. Dra tom yta med ett finger eller musen för att rotera. Dra ett objekt för att flytta det; håll Shift och dra uppåt eller nedåt för enbart höjdled.</p></div>
+<p id="visibility" class="hint"></p><p class="hint">Flytta två fingrar tillsammans för att panorera kartan åt alla håll; nyp för att zooma. Ctrl-klicka på en ikon för att visa dess kopplingar. Klick på tom rymd eller Escape visar hela rymden. Tvåfingersscroll på styrplatta panorerar också. Dra tom yta med ett finger eller musen för att rotera. Dra ett objekt för att flytta det; håll Shift och dra uppåt eller nedåt för enbart höjdled.</p></div>
 <section id="listPanel"><h3>Hitta och välj objekt <span id="count" class="badge"></span></h3><div id="objects"></div></section>
 </section>
 <aside class="panel" id="detailPanel"><h2>Val och redigering</h2><div id="detail" class="detail"></div>
@@ -176,7 +176,7 @@ function reset(){for(const key of Object.keys(positions))delete positions[key];f
  $('reset').onclick=()=>{reset();notice('Exempelkartan börjar om. Alla ändringar och sparanden är borttagna från prototypens minne.');};
  $('viewControls').querySelectorAll('[data-camera]').forEach(b=>b.onclick=()=>{const a=b.dataset.camera;if(a==='left')view.yaw-=.2;if(a==='right')view.yaw+=.2;if(a==='up')view.pitch=Math.max(-1,view.pitch-.15);if(a==='down')view.pitch=Math.min(1,view.pitch+.15);if(a==='in')view.zoom=Math.min(1.6,view.zoom+.1);if(a==='out')view.zoom=Math.max(.45,view.zoom-.1);render();});
  function moveObject(id,dx,dy,dz){const yaw=$('flat').checked?0:view.yaw,pitch=$('flat').checked?0:view.pitch;const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);const yy=dy*cp+dz*sp,zz=-dy*sp+dz*cp;const world=[dx*cy-zz*sy,yy,dx*sy+zz*cy];positions[id]=positions[id].map((v,i)=>v+world[i]);}
- let drag=null,dragged=false,pinch=null;
+ let drag=null,dragged=false,pinch=null,controlTarget=null;
  const svg=$('space'),touches=new Map();
  svg.addEventListener('selectstart',e=>e.preventDefault());
  const limitZoom=z=>Math.max(.45,Math.min(1.6,z));
@@ -186,10 +186,17 @@ function reset(){for(const key of Object.keys(positions))delete positions[key];f
  function fingerDistance(){const [a,b]=[...touches.values()];return Math.hypot(b.x-a.x,b.y-a.y);}
  function localPoint(x,y){const m=svg.getScreenCTM();return{x:(x-m.e)/m.a,y:(y-m.f)/m.d};}
  function fingerCenter(){const [a,b]=[...touches.values()];return localPoint((a.x+b.x)/2,(a.y+b.y)/2);}
- svg.oncontextmenu=e=>{if(e.ctrlKey){e.preventDefault();const id=e.target.closest('[data-node]')?.dataset.node;if(id)focusNode(id);}};
+ svg.oncontextmenu=e=>{
+  if(!e.ctrlKey)return;
+  e.preventDefault();
+  const hit=controlTarget||{node:e.target.closest('[data-node]')?.dataset.node,edge:e.target.closest('[data-edge]')?.dataset.edge};
+  if(hit.node)focusNode(hit.node);else if(!hit.edge&&!dragged)showAll();
+ };
  svg.onpointerdown=e=>{
-  const controlledNode=e.ctrlKey&&e.target.closest('[data-node]')?.dataset.node;
+  controlTarget=e.ctrlKey?{node:e.target.closest('[data-node]')?.dataset.node,edge:e.target.closest('[data-edge]')?.dataset.edge}:null;
+  const controlledNode=controlTarget?.node;
   if(controlledNode){e.preventDefault();drag=null;dragged=true;focusNode(controlledNode);return;}
+  if(e.ctrlKey)dragged=false;
   if(e.button!==0)return;
   if(e.pointerType==='touch'){
    touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -252,6 +259,8 @@ function reset(){for(const key of Object.keys(positions))delete positions[key];f
   if(dragged){
    if(ended.node)notice(name(ended.node)+' har flyttats'+(e.shiftKey?' i höjdled':'')+'. Övriga objekt ligger kvar.');
    render();
+  }else if(!ended.node&&!ended.edge&&e.type!=='pointercancel'){
+   showAll();
   }else if(e.pointerType==='touch'&&e.type!=='pointercancel'){
    // Touch capture targets the SVG, so handle taps explicitly.
    dragged=true;

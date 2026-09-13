@@ -28,10 +28,15 @@ B ingår i A: Ctrl-klick på en ikon visar det objektets direkta kopplingar.
 Knappen Visa objektets kopplingar gör samma sak för det valda objektet,
 även på pekskärm. Ctrl+Enter på en ikon ger ett tangentbordsalternativ.
 
-Escape eller Visa hela rymden lämnar fokus och rensar sökning och typfilter.
+Klick eller Ctrl-klick på tom rymd visar hela rymden igen. Escape och
+Visa hela rymden gör samma sak: lämnar fokus och rensar sökning och typfilter.
 Kamerans vinkel, zoom och panorering behålls. Återställ vy återställer också
 kameran. Objektens placeringar och hushållets ändringsförslag påverkas inte.
 Vanligt klick väljer ett objekt eller samband utan att byta fokusobjekt.
+Drag på tom yta roterar vyn och lämnar kvar det aktuella objektfokuset.
+Klick, Ctrl-klick och Ctrl med högerklick på tom rymd är kontrollerade i
+webbläsaren. De visar hela urvalet och behåller kamerans läge; drag lämnar
+kvar objektfokuset.
 
 Det finns en huvudvy och ingen variantväxlare. Länkar med `?variant=A`,
 `?variant=B` eller `?variant=C` öppnar samma samlade vy. Objektlistan finns
