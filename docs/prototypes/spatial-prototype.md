@@ -154,9 +154,12 @@ utsnittet. Avstängning av Alla etiketter behåller utsnittet; Återställ vy
 
 Objektnamn placeras före relationsetiketter. Prototypen prövar flera
 etikettlägen kring varje objekt och längs varje samband för att
-undvika objekt och andra etiketter. En kort streckad ledarlinje binder
-texten till objektet eller sambandet och skiljer etikettstödet från
-kopplingar mellan objekt. Placeringen av etiketter flyttar inga objekt.
+undvika objekt och andra etiketter. En ledarlinje binder texten till
+objektet eller sambandet. Korta synliga stödlinjer är heldragna. Längre
+stödlinjer är streckade när minst två tydliga streck ryms; mellanrummen
+anpassas så att linjens båda ändar visar hela streck. För objekt räknas
+sträckan från ikonens kant till etikettens kant. Linjernas utformning
+påverkar inte placeringen av etiketter eller objekt.
 Om inget ledigt läge finns väljer Alla etiketter ett reservläge med minst
 överlapp. Läget döljer inte text på grund av en kollision, men etiketter
 kan fortfarande överlappa. Utan Alla etiketter kan ovalda etiketter döljas
