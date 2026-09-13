@@ -7,6 +7,7 @@
 *{box-sizing:border-box}body{margin:0;background:#f3f4ef;color:#263c33;font:15px/1.5 system-ui,sans-serif}header,main{max-width:1600px;margin:auto;padding:22px 28px}header{padding-bottom:0}h1{font-size:30px;margin:4px 0}h2{font-size:19px;margin:0 0 10px}h3{font-size:16px;margin:16px 0 6px}p{margin:8px 0}small,.hint{font-size:13px;color:#63766b}.eyebrow{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}button,input,select{font:inherit;color:inherit;border:1px solid #b9c9bd;border-radius:7px;padding:8px 10px;background:#fff;max-width:100%}button{cursor:pointer}button:hover{background:#e8eee5}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #ba7900;outline-offset:3px}.primary{background:#315b44;color:white}.primary:hover{background:#234a35}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.toolbar{margin:12px 0}.panel{background:#fff;border:1px solid #dae2d8;border-radius:12px;padding:18px;min-width:0}.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}.space{border-radius:9px;background:#122a23;overflow:hidden}.space svg{display:block;width:100%;height:540px;touch-action:none}.space text{pointer-events:none;font-family:system-ui,sans-serif}.node,.edge{cursor:pointer}.node:focus .orb,.edge:focus .wire{stroke:white;stroke-width:4}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:8px 0}.legend span{padding:3px 7px;background:#edf3ea;border-radius:4px}.legend .new{background:#fff0bd}.legend .removed{background:#ffe3d8}.notice{border-left:4px solid #547c60;background:#e4ede1;padding:10px 14px;margin:12px 0}#objects{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;max-height:320px;overflow:auto}.object{text-align:left}.object small{display:block}.object[aria-pressed=true]{border:2px solid #315b44;background:#e8efe3}.detail label{display:block;margin:10px 0}.detail label input,.detail label select{display:block;width:100%;margin-top:4px}.links{display:flex;flex-direction:column;gap:6px}.links button{text-align:left;font-size:13px}.delta{font-size:13px;padding-left:20px}.delta li{margin:7px 0}.badge{font-size:12px;padding:3px 8px;background:#e9efdf;border-radius:15px}details{margin:14px 0}summary{cursor:pointer;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:350px;overflow:auto;background:#edf1ea;padding:12px}main{padding-bottom:28px}.tasks{margin-bottom:16px}.tasks ol{padding-left:22px;margin-bottom:0}.tasks li{margin:7px 0}#listPanel{margin-top:14px}.narrow{max-width:430px;margin:0 auto}.narrow .layout{display:flex;flex-direction:column}.narrow .panel{width:100%}.narrow .space svg{height:360px}.narrow #objects{grid-template-columns:1fr}.narrow .object{display:block}.narrow #detailPanel{order:2}.narrow .toolbar{display:flex;flex-direction:column;align-items:stretch}.narrow .toolbar label{width:100%}@media(max-width:850px){header,main{padding:16px}main{padding-bottom:28px}.layout{display:flex;flex-direction:column}.panel{width:100%}.space svg{height:400px}#detailPanel{order:2}}
 .space{position:relative;isolation:isolate}.space canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:-1}.space svg{position:relative}.list-name{display:flex;align-items:center;gap:8px}.type-icon{width:26px;height:26px;flex:none;vertical-align:middle}.portraits{border:0;padding:0;margin:12px 0}.portraits legend{font-weight:600}.portraits button[aria-pressed=true]{outline:2px solid #315b44}.portrait-choice svg{width:40px;height:40px;display:block;margin:auto}.portrait-choice{font-size:12px;text-align:center}
 .space,.space *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.orientation{position:absolute;right:12px;bottom:12px;z-index:2;width:176px;padding:8px;border:1px solid #527064;border-radius:10px;background:#10251fec;pointer-events:none;color:#e7f2e9;font-size:11px;line-height:1.4}.orientation[hidden]{display:none}#orientationSvg{display:block;width:160px;height:140px;touch-action:auto}.orientation strong{display:block;font-size:12px}.orientation p{margin:2px 0}.orientation .x{color:#ffa397}.orientation .y{color:#a8e6ac}.orientation .z{color:#95cfff}
 </style>
 <header>
 <div class="eyebrow">Skyttel / kastbar prototyp</div>
@@ -29,9 +30,9 @@
 <div class="layout">
 <section class="panel" id="mapPanel"><h2 id="viewTitle"></h2>
 <div id="spaceArea"><div class="legend"><span>● Befintligt</span><span class="new">+ Nytt / ~ Ändrat förslag</span><span class="removed">− Föreslås tas bort</span></div>
-<div class="space"><canvas id="starfield" aria-hidden="true" hidden></canvas><svg id="space" viewBox="0 0 1000 650" role="group" aria-label="Rymdvy med valbara objekt och kopplingar"></svg></div>
+<div class="space"><canvas id="starfield" aria-hidden="true" hidden></canvas><svg id="space" viewBox="0 0 1000 650" role="group" aria-label="Rymdvy med valbara objekt och kopplingar"></svg><div id="orientation" class="orientation" hidden><strong>Riktningar i rymden</strong><svg id="orientationSvg" viewBox="0 0 160 140" role="img" aria-label="X sidled, Y höjdled, Z djup"></svg><p><span class="x">X sidled</span> · <span class="y">Y höjd</span> · <span class="z">Z djup</span></p><p id="axisFacing"></p></div></div>
 <div class="row toolbar" id="viewControls"><button data-camera="left" aria-label="Rotera vänster">↶</button><button data-camera="right" aria-label="Rotera höger">↷</button><button data-camera="up">Luta ↑</button><button data-camera="down">Luta ↓</button><button data-camera="out" aria-label="Zooma ut">−</button><button data-camera="in" aria-label="Zooma in">+</button><button id="overview">Återställ vy</button><button id="focus">Visa objektets kopplingar</button><button id="showAll">Visa hela rymden</button></div>
-<div class="row"><label><input id="allLabels" type="checkbox"> Alla etiketter (pröva överlapp)</label><label><input id="flat" type="checkbox"> Stillbild framifrån</label><label><input id="universe" type="checkbox"> Universumsbakgrund</label><label><input id="heightGuide" type="checkbox"> Visa höjdhjälp</label></div>
+<div class="row"><label><input id="allLabels" type="checkbox"> Alla etiketter (pröva överlapp)</label><label><input id="flat" type="checkbox"> Stillbild framifrån</label><label><input id="universe" type="checkbox"> Universumsbakgrund</label><label><input id="heightGuide" type="checkbox"> Visa höjdhjälp</label><label><input id="keepAxes" type="checkbox"> Visa axlar hela tiden</label></div>
 <div class="row toolbar"><label>Panoreringsriktning <select id="panDirection"><option value="system">Följ systemet</option><option value="custom">Egen riktning</option></select></label><label><input id="reverseX" type="checkbox" disabled> Vänd vänster/höger</label><label><input id="reverseY" type="checkbox" disabled> Vänd upp/ned</label></div>
 <p class="hint">Följ systemet använder styrplattans rullningsriktning som webbläsaren får den. Välj Egen riktning för att vända varje axel separat. På pekskärm följer kartan fingrarna om axeln inte är vänd.</p>
 <p id="visibility" class="hint"></p><p class="hint">Flytta två fingrar tillsammans för att panorera kartan åt alla håll; nyp för att zooma. Ctrl-klicka på en ikon för att visa dess kopplingar. Klick på tom rymd eller Escape visar hela rymden. Tvåfingersscroll på styrplatta panorerar också. Dra tom yta med ett finger eller musen för att rotera. Dra ett objekt för att flytta det; håll Shift och dra uppåt eller nedåt för enbart höjdled. En blå höjdaxel, en startring och ett hjälpplan visar rörelsen. Visa höjdhjälp håller stödet synligt.</p></div>
@@ -133,7 +134,27 @@ function heightHelp(unit,visible){
   front:`<g id="height-feedback" pointer-events="none"><circle cx="${origin.x}" cy="${origin.y}" r="${21*unit}" fill="none" stroke="#b6d6e2" stroke-width="${unit}" stroke-dasharray="4 5"/><circle cx="${point.x}" cy="${point.y}" r="${25*unit}" fill="none" stroke="#6de4ff" stroke-width="${2*unit}"/><text x="${origin.x+27*unit}" y="${origin.y-12*unit}" fill="#b6d6e2" font-size="${11*unit}">Start</text><text x="${foot.x+18*unit}" y="${foot.y+16*unit}" fill="#8fbcca" font-size="${11*unit}">Hjälpplan</text><rect x="${12*unit}" y="${12*unit}" width="${boxWidth}" height="${72*unit}" rx="${7*unit}" fill="#0a202b" fill-opacity=".96" stroke="#549aac"/><text x="${24*unit}" y="${34*unit}" fill="#8ae6f8" font-size="${13*unit}">Höjdled · ${esc(name(id))}</text><text x="${24*unit}" y="${55*unit}" fill="#e4f7fc" font-size="${13*unit}">${description}</text><text x="${24*unit}" y="${74*unit}" fill="#a6c6d1" font-size="${11*unit}">Shift låser sidled och djup. Stegen gäller vyn.</text></g>`
  };
 }
-function draw(){drawStarfield();const visible=scope(),ids=new Set(visible),points=Object.fromEntries(visible.map(id=>[id,project(positions[id])]));const unit=Math.max(1,1000/$('space').clientWidth,650/$('space').clientHeight);const selectedNode=focus||selected.node;let lines='',circles='',labels='',hidden=0,occupied=[];
+function drawOrientation(){
+ const visible=$('keepAxes').checked||!!drag||!!pinch||Date.now()<axesUntil;
+ $('orientation').hidden=!visible;if(!visible)return;
+ const yaw=$('flat').checked?0:view.yaw,pitch=$('flat').checked?0:view.pitch;
+ const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+ // Rotation only: the orientation guide stays fixed in the viewport during pan/zoom.
+ const axes=[{key:'X',color:'#ffa397',v:[cy,sy*sp,-sy*cp]},{key:'Y',color:'#a8e6ac',v:[0,-cp,-sp]},{key:'Z',color:'#95cfff',v:[sy,-cy*sp,cy*cp]}];
+ let arrows='<circle cx="80" cy="75" r="3" fill="#e7f2e9"/>';const labels=[];
+ for(const {key,color,v:[x,y,z]}of [...axes].sort((a,b)=>b.v[2]-a.v[2])){
+  const length=Math.hypot(x,y),dx=length?x/length:.7,dy=length?y/length:.7,tx=80+x*48,ty=75+y*48;
+  const head=length<.24?`<circle cx="${tx}" cy="${ty}" r="7" fill="#10251f" stroke="${color}" stroke-width="2"/>${z>0?`<path d="M${tx-3},${ty-3}l6 6m-6 0l6-6" stroke="${color}"/>`:`<circle cx="${tx}" cy="${ty}" r="2.5" fill="${color}"/>`}`:`<path d="M${tx-dx*8-dy*4},${ty-dy*8+dx*4} L${tx},${ty} L${tx-dx*8+dy*4},${ty-dy*8-dx*4}" fill="none" stroke="${color}" stroke-width="2.5"/>`;
+  const lx=tx+dx*14;let ly=ty+dy*14+4;
+  if(labels.some(p=>Math.abs(p.x-lx)<18&&Math.abs(p.y-ly)<17))ly+=ly>112?-18:18;
+  labels.push({x:lx,y:ly});
+  arrows+=`<g data-axis="${key}"><path d="M80 75 L${tx} ${ty}" stroke="${color}" stroke-width="2.5"/>${head}<text x="${lx}" y="${ly}" text-anchor="middle" font-size="13" font-weight="700" fill="${color}" stroke="#10251f" stroke-width="3" paint-order="stroke">${key}</text></g>`;
+ }
+ $('orientationSvg').innerHTML=arrows;
+ $('axisFacing').textContent=axes.filter(a=>Math.hypot(a.v[0],a.v[1])<.24).map(a=>`${a.key}: ${a.v[2]>0?'⊗ från dig':'⊙ mot dig'}`).join(' · ');
+}
+function showOrientation(){axesUntil=Date.now()+1600;clearTimeout(axesTimer);axesTimer=setTimeout(drawOrientation,1650);drawOrientation();}
+function draw(){drawStarfield();drawOrientation();const visible=scope(),ids=new Set(visible),points=Object.fromEntries(visible.map(id=>[id,project(positions[id])]));const unit=Math.max(1,1000/$('space').clientWidth,650/$('space').clientHeight);const selectedNode=focus||selected.node;let lines='',circles='',labels='',hidden=0,occupied=[];
  const edges=[];for(const [id,r]of Object.entries(draft.relations))edges.push({id,r,status:stateOf('relations',id)});for(const [id,r]of Object.entries(saved.relations))if(!same(r,draft.relations[id]))edges.push({id,r,status:'removed'});
  const nearby=new Set([selectedNode]);for(const {r}of edges)if(r.from===selectedNode||r.to===selectedNode){nearby.add(r.from);nearby.add(r.to);}
  const takeLabel=(x,y,w,h,force=false)=>{const rect={x,y,w,h};if(!force&&!$('allLabels').checked&&occupied.some(a=>x<a.x+a.w&&x+w>a.x&&y<a.y+a.h&&y+h>a.y))return false;occupied.push(rect);return true;};
@@ -178,7 +199,7 @@ function detail(){let html='';if(selected.node){const id=selected.node,o=draft.o
 function render(){$('main').classList.toggle('narrow',$('narrow').checked);$('viewTitle').textContent=focus?'Kopplingar för '+name(focus):'Hela rymdkartan';
  const visible=scope();$('count').textContent=visible.length;$('objects').innerHTML=visible.map(id=>{const o=draft.objects[id]||saved.objects[id];return `<button class="object" data-id="${id}" aria-pressed="${selected.node===id}"><span class="list-name">${iconSvg(o)}<b>${esc(o.name)}</b></span><small>${esc(o.type+' · '+tags[stateOf('objects',id)])}</small></button>`;}).join('')||'<p>Inga träffar. Rensa sökning, typfilter eller fokus med Visa hela rymden.</p>';$('objects').querySelectorAll('button').forEach(b=>b.onclick=()=>selectNode(b.dataset.id));
  draw();detail();const delta=deltas();$('changes').innerHTML=delta.length?`<ol class="delta">${delta.map(s=>'<li>'+esc(s)+'</li>').join('')}</ol>`:'<p class="hint">Inga föreslagna ändringar.</p>';$('save').disabled=$('discard').disabled=!delta.length;$('undo').disabled=!history.length;$('focus').disabled=!selected.node||!draft.objects[selected.node];$('ai').disabled=!!draft.objects.aiService||!draft.objects.kim;
- $('state').textContent=JSON.stringify({view:'rymdkarta',selection:selected,focus,camera:view,universe:$('universe').checked,heightIndicator:{shown:shiftHeld||$('heightGuide').checked,trace:heightTrace},panPreference:{mode:$('panDirection').value,reverseX:$('reverseX').checked,reverseY:$('reverseY').checked},filters:{query:$('search').value,type:$('type').value},visible,positions,saved,draft},null,2);
+ $('state').textContent=JSON.stringify({view:'rymdkarta',selection:selected,focus,camera:view,universe:$('universe').checked,orientationIndicator:{pinned:$('keepAxes').checked,visible:!$('orientation').hidden},heightIndicator:{shown:shiftHeld||$('heightGuide').checked,trace:heightTrace},panPreference:{mode:$('panDirection').value,reverseX:$('reverseX').checked,reverseY:$('reverseY').checked},filters:{query:$('search').value,type:$('type').value},visible,positions,saved,draft},null,2);
 }
 let counter=0;
 function overview(){heightTrace=null;focus=null;selected={};view={yaw:.16,pitch:-.12,zoom:1,panX:0,panY:0};$('search').value='';$('type').value='';render();notice('Översikt återställd. Alla objekt visas.');}
@@ -190,17 +211,18 @@ function reset(){heightTrace=null;for(const key of Object.keys(positions))delete
  $('overview').onclick=overview;$('focus').onclick=()=>focusNode(selected.node);$('showAll').onclick=showAll;
  window.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();heightTrace=null;showAll();}else if(e.key==='Shift'&&!e.target.closest('input,textarea,select,[contenteditable]')){shiftHeld=true;draw();}};
  window.addEventListener('keyup',e=>{if(e.key==='Shift'){shiftHeld=false;draw();}});
- window.addEventListener('blur',()=>{shiftHeld=false;heightTrace=null;drag=null;draw();});
+ window.addEventListener('blur',()=>{shiftHeld=false;heightTrace=null;drag=null;pinch=null;touches.clear();axesUntil=0;clearTimeout(axesTimer);draw();});
  $('ai').onclick=()=>{draft.objects.aiService={name:'Ljudstrimma',type:'Tjänst'};draft.objects.aiSub={name:'Ljudstrimma familj',type:'Abonnemang'};positions.aiService=[145,-280,-200];positions.aiSub=[-80,-270,-140];draft.relations.aiOffer={from:'aiSub',kind:'ger tillgång till',to:'aiService'};draft.relations.aiPayer={from:'kim',kind:'betalar',to:'aiSub'};types();notice('Simulerat förslag: Kim betalar ett nytt familjeabonnemang hos Ljudstrimma. Befintliga positioner och kameran ligger kvar. Förslaget kan ligga utanför aktivt fokus eller filter; ändringslistan visar allt.');render();};
  $('save').onclick=()=>{history.push(clone(saved));saved=clone(draft);if(selected.removed)selected={};notice('Hela förslaget är bekräftat sparat i prototypens minne.');render();};
  $('discard').onclick=()=>{draft=clone(saved);selected={};if(focus&&!draft.objects[focus])focus=null;types();notice('Förslagen är kastade. Sparad exempelkarta visas.');render();};
  $('undo').onclick=()=>{if(deltas().length){notice('Spara eller kasta pågående förslag före ångring av ett sparande.');return;}saved=history.pop();draft=clone(saved);selected={};if(focus&&!draft.objects[focus])focus=null;types();notice('Senaste sparandet är ångrat i prototypens minne.');render();};
  $('reset').onclick=()=>{reset();notice('Exempelkartan börjar om. Alla ändringar och sparanden är borttagna från prototypens minne.');};
- $('viewControls').querySelectorAll('[data-camera]').forEach(b=>b.onclick=()=>{const a=b.dataset.camera;if(a==='left')view.yaw-=.2;if(a==='right')view.yaw+=.2;if(a==='up')view.pitch=Math.max(-1,view.pitch-.15);if(a==='down')view.pitch=Math.min(1,view.pitch+.15);if(a==='in')view.zoom=Math.min(1.6,view.zoom+.1);if(a==='out')view.zoom=Math.max(.45,view.zoom-.1);render();});
+ $('viewControls').querySelectorAll('[data-camera]').forEach(b=>b.onclick=()=>{const a=b.dataset.camera;if(a==='left')view.yaw-=.2;if(a==='right')view.yaw+=.2;if(a==='up')view.pitch=Math.max(-1,view.pitch-.15);if(a==='down')view.pitch=Math.min(1,view.pitch+.15);if(a==='in')view.zoom=Math.min(1.6,view.zoom+.1);if(a==='out')view.zoom=Math.max(.45,view.zoom-.1);showOrientation();render();});
  function moveObject(id,dx,dy,dz){const yaw=$('flat').checked?0:view.yaw,pitch=$('flat').checked?0:view.pitch;const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);const yy=dy*cp+dz*sp,zz=-dy*sp+dz*cp;const world=[dx*cy-zz*sy,yy,dx*sy+zz*cy];positions[id]=positions[id].map((v,i)=>v+world[i]);}
- let drag=null,dragged=false,pinch=null,controlTarget=null,shiftHeld=false,heightTrace=null;
+ let drag=null,dragged=false,pinch=null,controlTarget=null,shiftHeld=false,heightTrace=null,axesUntil=0,axesTimer=null;
  const svg=$('space'),touches=new Map();
  $('heightGuide').onchange=render;
+ $('keepAxes').onchange=render;
  svg.addEventListener('selectstart',e=>e.preventDefault());
  const limitZoom=z=>Math.max(.45,Math.min(1.6,z));
  function panDirections(){const custom=$('panDirection').value==='custom';return{x:custom&&$('reverseX').checked?-1:1,y:custom&&$('reverseY').checked?-1:1};}
@@ -216,6 +238,7 @@ function reset(){heightTrace=null;for(const key of Object.keys(positions))delete
   if(hit.node)focusNode(hit.node);else if(!hit.edge&&!dragged)showAll();
  };
  svg.onpointerdown=e=>{
+  if(e.button===0||e.ctrlKey)showOrientation();
   controlTarget=e.ctrlKey?{node:e.target.closest('[data-node]')?.dataset.node,edge:e.target.closest('[data-edge]')?.dataset.edge}:null;
   const controlledNode=controlTarget?.node;
   if(controlledNode){e.preventDefault();drag=null;dragged=true;focusNode(controlledNode);return;}
@@ -238,6 +261,7 @@ function reset(){heightTrace=null;for(const key of Object.keys(positions))delete
   if(node){heightTrace={id:node,start:[...positions[node]]};shiftHeld=e.shiftKey;}
  };
  svg.onpointermove=e=>{
+  if(drag||pinch)showOrientation();
   if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch){
    if(touches.size>=2){
@@ -274,6 +298,7 @@ function reset(){heightTrace=null;for(const key of Object.keys(positions))delete
   draw();
  };
  function finishPointer(e){
+  if(drag||pinch)showOrientation();
   if(e.type==='pointercancel'){shiftHeld=false;heightTrace=null;}
   touches.delete(e.pointerId);
   if(pinch){
@@ -294,8 +319,9 @@ function reset(){heightTrace=null;for(const key of Object.keys(positions))delete
    if(ended.node)selectNode(ended.node);else if(ended.edge)selectEdge(ended.edge,ended.removed);
   }
  }
- svg.onpointerup=finishPointer;svg.onpointercancel=finishPointer;
+ window.addEventListener('pointerup',finishPointer);window.addEventListener('pointercancel',finishPointer);
  svg.addEventListener('wheel',e=>{
+  showOrientation();
   e.preventDefault();
   const unit=e.deltaMode===1?16:e.deltaMode===2?svg.clientHeight:1;
   if(e.ctrlKey){

@@ -94,6 +94,17 @@ höjdförflyttning inleds, även om Shift trycks ned mitt i ett vanligt drag.
 Upp- och nedknapparna använder också rummets höjdaxel och visar höjdhjälpen.
 Hjälpen kan lämnas synlig när vyn roteras och skymmer inte klickytorna.
 
+Beställaren vill även pröva tre riktningspilar som stöd när vyn börjar
+röra sig. En axelvisare i rymdvyns nedre högra hörn visar X för sidled,
+Y för höjd och Z för djup, med både färger och bokstäver. Pilarna följer
+kamerans rotation men behåller sin storlek och plats vid panorering och
+zoom. Stödet visas under dragning och kamerarörelser och ligger kvar
+ungefär 1,6 sekunder efteråt. Visa axlar hela tiden håller det synligt.
+En axel som pekar nästan rakt mot eller från betraktaren visas med en
+punkt eller ett kryss i en ring. När två axlar sammanfaller i projektionen
+separeras deras bokstäver så att båda går att läsa. Axelvisaren visar
+riktning; den är inte ett reglage för att flytta objekt.
+
 Vanlig dragning sker i kamerans bildplan. Knapparna erbjuder flyttning i
 alla tre riktningar. Kopplingarna följer objekten. AI-förslag ändrar inte
 befintliga placeringar eller kameran.
@@ -163,6 +174,11 @@ Höjdhjälpen är kontrollerad i en lutad vy med uppknapparna: rutan visar
 50 steg högre än start efter två steg, med oförändrad sidled och djup.
 Startmarkering, hjälpplan och indikator följer projektionen. Känslan i
 själva Shift-dragningen behöver fortsatt användarprövning.
+
+Axelvisarens riktningar är kontrollerade efter rotation och lutning.
+Dragning visar stödet automatiskt. Vid överlappande X- och Z-riktningar
+är båda bokstäverna läsbara. Reglaget för ständig visning och storleken
+i smal vy är också kontrollerade i webbläsaren.
 
 Rymden är en enkel perspektivprojektion till SVG. Objekt djupsorteras men
 linjer har ingen fullständig skymning. Etiketter kan överlappa linjer och
