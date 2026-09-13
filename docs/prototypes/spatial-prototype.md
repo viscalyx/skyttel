@@ -77,6 +77,8 @@ text utanför rymdytan behåller vanlig textmarkering.
     och lodrät riktning var för sig. Kontrollera att zoom fungerar likadant.
 11. Pröva axelvisaren direkt i rymden och välj mellan de fyra hörnen.
     Bedöm om riktningarna är läsbara utan att skymma objekt eller samband.
+12. Slå på Fler exempelobjekt och Alla etiketter. Panorera i det rymligare
+    utsnittet, följ etiketternas ledarlinjer och jämför med Återställ vy.
 
 ## Krav och antaganden
 
@@ -127,7 +129,9 @@ befintliga placeringar eller kameran.
 Fler exempelobjekt lägger till åtta tjänster med varsitt abonnemang.
 Paren får en rymligare tredimensionell startlayout med fyra höjdrader på
 vardera sidan av ursprungsobjekten och varierande djup framför och bakom
-kartans mitt. Även tjänsten och abonnemanget i ett par har olika djup.
+kartans mitt. Stora startavstånd i alla tre axlar ger utrymme att zooma in
+och arbeta med delar av kartan. Även tjänsten och abonnemanget i ett par
+har olika djup.
 Första gången reglaget aktiveras sprids också de ursprungsobjekt som
 fortfarande har sin startposition i sidled, höjdled och djupled. Objekt
 som användaren flyttar behåller sin placering. Exempelobjektens
@@ -138,6 +142,23 @@ anpassar kamerans avstånd, zoom och panorering till alla objekt.
 Den utökade kartans startvy är vriden och lutad för att framhäva djupet.
 Återställ vy gör också en ny inramning. Vanlig redigering, objektflyttning
 och återgång från fokus behåller kamerans läge.
+
+Alla etiketter öppnar vid behov ett närmare arbetsutsnitt med sikte på
+2,2 gånger den zoomnivå som rymmer hela kartan med aktuell kameravinkel.
+Smalare eller lägre rymdytor får ytterligare förstoring för läsbarhet.
+Zoomgränsen på 400 procent gäller fortfarande. Om användaren redan har
+zoomat in mer behålls nivån. Panorering ger tillgång till delar utanför
+utsnittet. Avstängning av Alla etiketter behåller utsnittet; Återställ vy
+återgår till en översikt över alla objekt även när Alla etiketter är på.
+
+Objektnamn placeras före relationsetiketter. Prototypen prövar flera
+etikettlägen kring varje objekt och längs varje samband för att
+undvika objekt och andra etiketter. En kort ledarlinje binder texten till
+objektet eller sambandet. Placeringen av etiketter flyttar inga objekt.
+Om inget ledigt läge finns väljer Alla etiketter ett reservläge med minst
+överlapp. Läget döljer inte text på grund av en kollision, men etiketter
+kan fortfarande överlappa. Utan Alla etiketter kan ovalda etiketter döljas
+när inget ledigt läge finns. Objektlistan ger alla namn i urvalet.
 
 Två fingrar i kartan zoomar kameran genom avståndet mellan fingrarna och
 panorerar genom fingrarnas gemensamma rörelse. Zoomningen utgår från
@@ -192,7 +213,8 @@ Följande är prototypförslag som behöver användarens återkoppling:
 - Placering och avstånd ordnar presentationen utan egen domänbetydelse.
 - Flyttning ändrar vyn direkt, separat från förslag om hushållets uppgifter.
 - Sökning och typfilter begränsar synliga objekt. Visa hela rymden rensar dem.
-- Etikettkollisioner minskas genom att dölja etiketter; listan ger alla namn.
+- Etikettkollisioner minskas genom alternativa placeringar. Alla etiketter
+  tillåter överlapp som reservlösning; annars kan etiketter döljas.
 
 Personlig eller gemensam placering och beständig lagring av layouten är
 öppna frågor. Prototypen avgör dem inte genom sin minnesmodell.
@@ -203,6 +225,12 @@ JavaScript-syntax, byte av betalare, ändringslista, simulerat sparande,
 rörelse med knappar, dragning av ett nytt objekt, stabil befintlig placering
 vid AI-förslag, objektfokus och sökning i smal listvy är
 kontrollerade i lokal webbläsare. Användarprövningen återstår.
+
+Alla etiketter tillsammans med Fler exempelobjekt är visuellt kontrollerat
+i arbetsutsnittet. I provet ryms 47 etiketter helt i utsnittet och två par
+av etikettytor överlappar fortfarande. Återställ vy visar alla 27
+objektnamn utan att flytta objekten. Båda ordningarna för aktivering av
+de två reglagen ger arbetsutsnittet. Provet ger inga JavaScript-fel.
 
 Den utökade startlayouten är visuellt kontrollerad med 27 objekt och
 varierande djupnivåer. Zoomknapparnas gränser på 10 och 400 procent samt
