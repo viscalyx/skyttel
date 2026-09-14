@@ -330,15 +330,17 @@ på enheten.
 [WebKits beskrivning av Visual Viewport](https://webkit.org/blog/9674/new-webkit-features-in-safari-13/#visual-viewport-api)
 stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 
-## Beställarens prov på iPad
+## Beställarens prov på iPad Pro 10,5 tum
 
 Beställaren bekräftar att rymdkartan fungerar i både stående och
 liggande läge på fysisk iPad. Provet omfattar objektflyttning, nypzoom
 och panorering med två fingrar. Det är positiv fysisk återkoppling
 på dessa grundgester i båda orienteringarna.
 
-iPad-modell, operativsystem, webbläsare och versioner är ännu inte
-angivna. Resultatet tillskrivs därför ingen viss webbläsare.
+Beställaren anger en äldre iPad Pro med 10,5-tumsskärm, Safari och
+version 17 av operativsystemet, benämnt iOS 17 i återkopplingen.
+Exakt systemversion och Safari-version är inte angivna. Resultatet
+gäller denna provmiljö och belägger inte Chrome-stöd på iPad.
 Höjdgest, långtrycksmeny, redigering med skärmtangentbord och
 skärmläsare är inte bekräftade på iPad.
 
@@ -350,7 +352,7 @@ skärmläsare är inte bekräftade på iPad.
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
 | iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
-| iPad | Pekskärm, skärmtangentbord, skärmläsare | Objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Modell och webbläsare behöver anges; övriga prov återstår |
+| iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Övriga prov återstår |
 <!-- markdownlint-enable MD013 -->
 
 Målenheternas operativsystem, webbläsare och versioner ska anges när de
