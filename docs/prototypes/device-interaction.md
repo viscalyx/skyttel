@@ -198,8 +198,12 @@ med fri nederkant. När höjden är liten rullar även dialogens överkant
 så att den inte upptar plats framför fältet. Vid fokus och ändrad
 synlig yta rullas enbart dialogen för att visa det aktiva fältet.
 I det fysiska omprovet går namnfältet att rulla fram, men beställaren
-bedömer fortfarande redigeringen som för trång och obekväm. Detta är
-ett kvarvarande användbarhetshinder i liggande orientering.
+bedömer redigeringen som trång och obekväm. Beställaren accepterar
+den nuvarande lösningen och väljer att gå vidare: telefonen kan vändas
+till stående läge för bekvämare textredigering och användas liggande
+för kartarbete. Det är ett accepterat arbetssätt och en känd begränsning,
+inte ett krav på ett mindre eller eget tangentbord. Ingen ny
+redigeringslayout eller låsning av skärmriktningen ingår i detta prov.
 
 Namnfältet begär nu `autocomplete="off"`, liksom fältet för nytt objekt.
 Det är en begäran om att avstå lagrad autofyllnad för ett objektnamn,
@@ -229,7 +233,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Gester fungerar på 12 Pro; namnfält går att rulla fram men liggande redigering känns för trång |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Gester fungerar på 12 Pro; trång liggande redigering accepteras med stående läge som alternativ; övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
