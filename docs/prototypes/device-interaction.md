@@ -349,8 +349,11 @@ Exakt systemversion och Safari-version är inte angivna. Resultatet
 gäller denna provmiljö och belägger inte Chrome-stöd på iPad.
 Beställaren bedömer också att namnfältet ser bra ut med
 skärmtangentbordet öppet i liggande läge. Det ger positiv återkoppling
-på redigeringsutrymmet i denna miljö. Svaret bekräftar inte separat
-hela kedjan med ändring, sparande och ångring på iPad.
+på redigeringsutrymmet i denna miljö. Beställaren betonar att
+redigeringsflödet ska fungera likadant som på iPhone. Prototypen delar
+redigeringslogiken mellan enheterna. Fortsatt manuell prövning riktas
+mot enhetsskillnader i inmatning, synligt utrymme och hjälpmedel.
+Förväntat gemensamt beteende skiljs från separat verifierat enhetsstöd.
 Skärmläsare är inte bekräftad på iPad; långtrycksmenyns samtliga
 åtgärder är inte heller separat redovisade.
 
@@ -369,6 +372,11 @@ Målenheternas operativsystem, webbläsare och versioner ska anges när de
 prövas. De emulerade storlekarna ovan ersätter ingen rad i matrisen.
 
 ## Avgränsad fortsatt prövning
+
+Använd resultaten ovan för att välja återstående prov. Upprepa
+gemensamma redigeringsuppgifter när ett konkret enhets- eller
+hjälpmedelshinder behöver prövas, inte som nya designfrågor på varje
+enhet. Dokumentera fortfarande faktiskt verifierat stöd per miljö.
 
 1. På telefon och iPad: välj objekt och samband, rotera tom rymd,
    panorera och nypzooma. Håll ett objekt med första fingret och lägg
