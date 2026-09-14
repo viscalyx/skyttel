@@ -2,8 +2,9 @@
 
 Prototypen ger underlag till
 [Kan Skyttels kartarbete fungera på valda enheter med pekgester och tillgängliga alternativ?](https://github.com/viscalyx/skyttel/issues/16).
-Ärendet är öppet. Beställarens egen prövning, återkoppling och kontroller på
-fysiska målenheter återstår. Dokumentet innehåller ingen resolution.
+Ärendet är öppet. Beställarens prövning på iPhone 12 Pro ger de första
+fysiska gestresultaten nedan. Ytterligare kontroller och återkoppling
+återstår. Dokumentet innehåller ingen resolution.
 
 ## Kör lokalt
 
@@ -67,8 +68,18 @@ Efter en tvåfingersgest kan ett kvarvarande finger inte börja flytta ett
 objekt. Alla fingrar måste lyftas före nästa enfingersdragning. Gesten
 håller ett stabilt fingerpar; ett tredje finger påverkar inte kameran.
 Om paret byts ut får gesten en ny utgångspunkt från den aktuella kameran.
-Ändringarna bygger på kodgranskning. Fysiska flerfingergester återstår
-att verifiera.
+Övergångar mellan fingerantal och fingerpar återstår att verifiera
+fysiskt. Beställarens resultat för grundgesterna finns nedan.
+
+Hela den mörka HTML-ytan runt SVG-bilden tar emot pekhändelser och håller
+pekfångsten. SVG-bilden ger fortfarande koordinatsystemet för kamera och
+objekt. `touch-action: none` gäller den mörka ytan; formulär och övrig
+sida har vanlig zoom och rullning.
+
+[W3C:s regler för touch-action](https://www.w3.org/TR/pointerevents3/#determining-supported-touch-behavior)
+anger att webbläsarens zoomhantering beror på den träffade ytan och dess
+föräldrar. Regeln finns därför på kartans HTML-yta före gestens början.
+Det är en teknisk grund för ändringen, inte bevis för effekten på iPhone.
 
 ## Kontroller i Codex inbyggda webbläsare
 
@@ -108,6 +119,29 @@ Detta är körning i Chrome på den fysiska Macen med programstyrd inmatning.
 Det verifierar inte känslan i fysisk mus eller styrplatta, Shift-dragning,
 skärmläsarens uppläsning eller åtkomst från andra enheter.
 
+Ett kompletterande programstyrt prov med 390 × 844 pixlar visar att
+dragning långt ned i den mörka ytan roterar kameran och behåller objektens
+placeringar. Sidzoomens inställningar är oförändrade utanför kartan.
+Det tidigare sidzoomsproblemet på iPhone är inte reproducerat i detta
+datorprov.
+
+## Beställarens prov på iPhone 12 Pro
+
+Beställaren anger den 14 september 2026 en fysisk iPhone 12 Pro med iOS
+och bekräftar att objektflyttning, nypzoom och panorering med två fingrar
+fungerar. Webbläsaren och exakta versioner för iOS och webbläsare behöver
+fortfarande anges.
+
+Ett hinder finns i stående orientering: nypning långt ned zoomar hela
+webbsidan även när båda fingrarna börjar inne i den mörka kartytan.
+Det är ett kvarvarande interaktionsfel som behöver prövas, inte ett
+godkänt undantag för första versionen.
+
+Ändringen till en gemensam HTML-yta för alla kartgester ovan är avsedd
+att omfatta också den nedre mörka marginalen. Orsakssambandet är en
+hypotes; datorprovet fastställer inte hur iPhone hanterar träffytan.
+Beställaren behöver ladda om provet och kontrollera nypning nedtill igen.
+
 ## Målenheter som återstår
 
 <!-- markdownlint-disable MD013 -->
@@ -115,7 +149,7 @@ skärmläsarens uppläsning eller åtkomst från andra enheter.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Grundgester prövade på 12 Pro; sidzoom återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
