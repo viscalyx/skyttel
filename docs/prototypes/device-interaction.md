@@ -182,6 +182,11 @@ Detta är körning i Chrome på den fysiska Macen med programstyrd inmatning.
 Det verifierar inte känslan i fysisk mus eller styrplatta, Shift-dragning,
 skärmläsarens uppläsning eller åtkomst från andra enheter.
 
+Beställarens kompletterande fysiska prov i Chrome på Mac bekräftar att
+Shift och dragning uppåt eller nedåt flyttar objektet enbart i höjdled.
+Beställaren använder styrplatta och bekräftar också att panorering
+och zoom fungerar. Verklig skärmläsarprövning återstår.
+
 Ett kompletterande programstyrt prov med 390 × 844 pixlar visar att
 dragning långt ned i den mörka ytan roterar kameran och behåller objektens
 placeringar. Sidzoomens inställningar är oförändrade utanför kartan.
@@ -363,7 +368,7 @@ Skärmläsare är inte bekräftad på iPad; långtrycksmenyns samtliga
 | Mål | Inmatning att pröva | Status |
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
-| macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
+| macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan. Beställaren bekräftar fysisk Shift-dragning i höjdled, panorering och zoom med styrplatta. Verklig skärmläsarprövning och övriga prov återstår |
 | iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, A1709, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Höjdgest med stilla ankarfinger fungerar. Namnfält med skärmtangentbord i liggande läge ser bra ut. Övriga prov återstår |
 <!-- markdownlint-enable MD013 -->
