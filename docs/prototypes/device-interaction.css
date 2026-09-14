@@ -1,0 +1,65 @@
+/* Throwaway interaction study; the approved spatial presentation is reused. */
+[hidden]{display:none!important}
+button,input,select,summary{min-height:44px}
+input,select{font-size:16px}
+input[type=checkbox]{min-height:24px;min-width:24px;vertical-align:middle}
+.skip{position:fixed;left:12px;top:-100px;z-index:50;background:white;padding:12px}
+.skip:focus{top:12px}
+.device-nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.device-nav button[aria-pressed=true]{background:#315b44;color:white}
+.trial-note{font-size:14px;color:#425b4b}
+.tasks{margin:12px 0;padding:12px 16px}
+.tasks summary{display:flex;align-items:center}
+#listPanel{margin:0;min-width:0}
+#listPanel h2{scroll-margin-top:20px}
+#objects{grid-template-columns:1fr;max-height:65vh}
+.layout{grid-template-columns:minmax(230px,300px) minmax(0,1fr) 340px}
+#listPanel{grid-column:1}
+#mapPanel{grid-column:2}
+#detailPanel{grid-column:3}
+.list-mode .layout{grid-template-columns:minmax(230px,1fr) minmax(300px,1.3fr)}
+.list-mode #mapPanel{display:none}
+.list-mode #detailPanel{grid-column:2}
+#changesHeading:focus,#detailHeading:focus,#status:focus{outline:3px solid #ba7900;outline-offset:3px}
+#changesHeading,#detailHeading{scroll-margin-top:20px}
+#newObject label,#newRelation label{display:block;margin:8px 0}
+#newObject input,#newObject select,#newRelation select{display:block;width:100%}
+.quick-actions{margin:12px 0}
+.quick-actions button{width:100%;text-align:left;margin-bottom:6px}
+#mapShellBar{display:none}
+#editorDialog{width:min(580px,calc(100vw - 24px));max-height:calc(var(--visual-height,100dvh) - 24px);border:1px solid #b9c9bd;border-radius:12px;padding:0;color:#263c33;background:#f3f4ef}
+#editorDialog::backdrop{background:#06171099}
+#editorDialog .dialog-bar{position:sticky;top:0;z-index:3;background:#f3f4ef;padding:8px 14px;border-bottom:1px solid #dae2d8}
+#editorDialog #detailPanel{border:0;border-radius:0}
+.map-mode{overflow:hidden}
+.map-mode>header,.map-mode>.skip,.map-mode #main>:not(.layout):not(#status){display:none}
+.map-mode #mapPanel{position:fixed;inset:var(--visual-top,0px) 0 auto;height:var(--visual-height,100dvh);padding:0;border:0;border-radius:0;z-index:10;display:block;background:#122a23}
+.map-mode #mapShellBar{display:flex;position:absolute;top:0;left:0;right:0;z-index:3;padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left));gap:6px;flex-wrap:wrap;background:#f3f4ef}
+.map-mode #viewTitle,.map-mode #spaceArea>.legend{display:none}
+.map-mode #spaceArea{height:100%}
+.map-mode .space{height:100%;border-radius:0}
+.map-mode #space{height:100%;width:100%}
+.map-mode #cameraTools{position:absolute;bottom:0;left:0;right:0;max-height:45%;overflow:auto;background:#f3f4ef;padding:8px max(12px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));z-index:3}
+.map-mode #cameraTools[hidden]{display:none}
+.map-mode #mapPanel .orientation{bottom:72px}
+.map-mode #status{position:fixed;top:calc(var(--visual-top,0px) + var(--map-bar-height,64px));left:10px;right:10px;z-index:11;margin:0;pointer-events:none;max-width:700px;font-size:13px;padding:6px 10px;max-height:70px;overflow:hidden}
+.map-mode #main>.layout>#listPanel,.map-mode #main>.layout>#detailPanel{display:none}
+.map-mode #mapSelection{align-self:center;color:#263c33;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map-mode #status:focus{pointer-events:auto}
+#motionNote{font-size:13px}
+@media(max-width:1200px){.layout{grid-template-columns:minmax(0,1fr) 320px}#listPanel{grid-column:1;grid-row:2}#mapPanel{grid-column:1;grid-row:1}#detailPanel{grid-column:2;grid-row:1 / span 2}}
+@media(max-width:850px){
+ header,main{padding:12px}h1{font-size:24px}
+ .layout,.list-mode .layout{display:flex;flex-direction:column}
+ #listPanel{order:0}#mapPanel{order:1}#detailPanel{order:2}
+ .list-mode #objects{max-height:50vh}
+ #objects{grid-template-columns:1fr}
+ .panel{padding:14px}
+ .device-nav button{flex:1 1 auto}
+ .map-mode #mapShellBar button{padding:6px 9px}
+ .map-mode #mapSelection{display:none}
+ .map-mode #status{max-height:57px}
+ .map-mode #cameraTools{max-height:48%}
+ #editorDialog{margin:12px auto;top:var(--visual-top,0px)}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

@@ -9,6 +9,7 @@
 .space,.space *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .orientation{position:absolute;right:12px;bottom:12px;z-index:2;width:160px;height:140px;pointer-events:none}.orientation[hidden]{display:none}.orientation[data-corner="bottom-left"]{left:12px;right:auto}.orientation[data-corner="top-right"]{top:12px;bottom:auto}.orientation[data-corner="top-left"]{top:12px;left:12px;bottom:auto;right:auto}#orientationSvg{display:block;width:160px;height:140px;touch-action:auto;filter:drop-shadow(0 1px 2px #10251f)}
 </style>
+<link rel="stylesheet" href="device-interaction.css">
 <header>
 <div class="eyebrow">Skyttel / kastbar prototyp</div>
 <h1>Hitta sambandet. Ändra rätt sak.</h1>
@@ -232,7 +233,7 @@ function detail(){let html='';if(selected.node){const id=selected.node,o=draft.o
   const o=draft.objects[selected.node];
   html+=`<fieldset class="portraits"><legend>Profilbild</legend><p class="hint">Pröva med påhittade exempelbilder.</p><div class="row"><button data-portrait="" aria-pressed="${!o.portrait}">Personikon</button>${['one','two','three'].map((choice,i)=>`<button class="portrait-choice" data-portrait="${choice}" aria-pressed="${o.portrait===choice}"><svg viewBox="0 0 24 24" aria-hidden="true">${portraitImage(choice)}</svg>Exempelbild ${i+1}</button>`).join('')}</div></fieldset>`;
  }
- if(selected.node&&draft.objects[selected.node])html+=`<h3>Flytta objektet i rymden</h3><div class="row"><button data-move="left" aria-label="Flytta objekt vänster">←</button><button data-move="right" aria-label="Flytta objekt höger">→</button><button data-move="up" aria-label="Flytta objekt uppåt">↑</button><button data-move="down" aria-label="Flytta objekt nedåt">↓</button><button data-move="near">Närmare</button><button data-move="far">Längre bort</button></div><p class="hint">Du kan flytta både befintliga objekt och nya förslag. Kopplingarna följer med. Placering ordnar vyn och ändrar inga hushållsuppgifter. Placeringar finns kvar på den öppna sidan; gemensam eller personlig lagring återstår att besluta.</p>`;
+ if(selected.node&&draft.objects[selected.node])html+=`<h3>Flytta objektet i rymden</h3><div class="row"><button data-move="left" aria-label="Flytta objekt vänster">←</button><button data-move="right" aria-label="Flytta objekt höger">→</button><button data-move="up" aria-label="Flytta objekt uppåt">↑</button><button data-move="down" aria-label="Flytta objekt nedåt">↓</button><button data-move="near">Närmare</button><button data-move="far">Längre bort</button></div><p class="hint">Du kan flytta både befintliga objekt och nya förslag. Kopplingarna följer med. Placering ordnar vyn och ändrar inga hushållsuppgifter. Placeringarna är personliga vyuppgifter. I detta prov finns de bara på den öppna sidan.</p>`;
  $('detail').innerHTML=html||'<p>Välj ett objekt i kartan eller listan. Välj sedan ett riktat samband för att ändra det.</p>';
  $('detail').querySelectorAll('[data-portrait]').forEach(b=>b.onclick=()=>{if(b.dataset.portrait)draft.objects[selected.node].portrait=b.dataset.portrait;else delete draft.objects[selected.node].portrait;notice('Profilbilden visas som ett förslag.');render();});
  $('detail').querySelectorAll('[data-move]').forEach(b=>b.onclick=()=>{const a=b.dataset.move;if(a==='up'||a==='down'){if(heightTrace?.id!==selected.node)heightTrace={id:selected.node,start:[...positions[selected.node]]};positions[selected.node][1]+=a==='up'?-25:25;$('heightGuide').checked=true;}else{heightTrace=null;moveObject(selected.node,a==='left'?-25:a==='right'?25:0,0,a==='near'?-30:a==='far'?30:0);}notice(name(selected.node)+' har flyttats. Sambanden är oförändrade.');render();});
@@ -297,9 +298,10 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
  function panDirections(){const custom=$('panDirection').value==='custom';return{x:custom&&$('reverseX').checked?-1:1,y:custom&&$('reverseY').checked?-1:1};}
  function panPreferenceChanged(){const custom=$('panDirection').value==='custom';$('reverseX').disabled=$('reverseY').disabled=!custom;render();}
  $('panDirection').onchange=panPreferenceChanged;$('reverseX').onchange=panPreferenceChanged;$('reverseY').onchange=panPreferenceChanged;
- function fingerDistance(){const [a,b]=[...touches.values()];return Math.hypot(b.x-a.x,b.y-a.y);}
+ function fingerDistance(ids){const [a,b]=ids.map(id=>touches.get(id));return Math.hypot(b.x-a.x,b.y-a.y);}
  function localPoint(x,y){const m=svg.getScreenCTM();return{x:(x-m.e)/m.a,y:(y-m.f)/m.d};}
- function fingerCenter(){const [a,b]=[...touches.values()];return localPoint((a.x+b.x)/2,(a.y+b.y)/2);}
+ function fingerCenter(ids){const [a,b]=ids.map(id=>touches.get(id));return localPoint((a.x+b.x)/2,(a.y+b.y)/2);}
+ function beginPinch(){const ids=[...touches.keys()].slice(0,2);pinch={ids,distance:Math.max(1,fingerDistance(ids)),zoom:view.zoom,center:fingerCenter(ids),panX:view.panX,panY:view.panY};}
  svg.oncontextmenu=e=>{
   if(!e.ctrlKey)return;
   e.preventDefault();
@@ -317,8 +319,11 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
    touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
    svg.setPointerCapture(e.pointerId);
    if(touches.size>=2){
-    // End the single-finger action before starting camera zoom.
-    if(!pinch)pinch={distance:Math.max(1,fingerDistance()),zoom:view.zoom,center:fingerCenter(),panX:view.panX,panY:view.panY};
+    // A two-finger gesture must not retain a move made by its first finger.
+    if(!pinch){
+     if(drag?.node&&drag.startPosition)positions[drag.node]=[...drag.startPosition];
+     shiftHeld=false;heightTrace=null;beginPinch();draw();
+    }else if(pinch.ids.some(id=>!touches.has(id)))beginPinch();
     drag=null;dragged=true;return;
    }
   }
@@ -326,16 +331,16 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
   dragged=false;
   const node=e.target.closest('[data-node]')?.dataset.node;
   const edge=e.target.closest('[data-edge]');
-  drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,...view,node,edge:edge?.dataset.edge,removed:edge?.dataset.removed==='true'};
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,...view,node,startPosition:node?[...positions[node]]:null,edge:edge?.dataset.edge,removed:edge?.dataset.removed==='true'};
   if(node){heightTrace={id:node,start:[...positions[node]]};shiftHeld=e.shiftKey;}
  };
  svg.onpointermove=e=>{
   if(drag||pinch)showOrientation();
   if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch){
-   if(touches.size>=2){
-    const center=fingerCenter(),direction=panDirections();
-    view.zoom=limitZoom(pinch.zoom*fingerDistance()/pinch.distance);
+   if(touches.size>=2&&pinch.ids.includes(e.pointerId)){
+    const center=fingerCenter(pinch.ids),direction=panDirections();
+    view.zoom=limitZoom(pinch.zoom*fingerDistance(pinch.ids)/pinch.distance);
     const ratio=view.zoom/pinch.zoom;
     view.panX=(500+pinch.panX-pinch.center.x)*ratio+pinch.center.x-500+(center.x-pinch.center.x)*direction.x;
     view.panY=(325+pinch.panY-pinch.center.y)*ratio+pinch.center.y-325+(center.y-pinch.center.y)*direction.y;
@@ -371,6 +376,8 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
   if(e.type==='pointercancel'){shiftHeld=false;heightTrace=null;}
   touches.delete(e.pointerId);
   if(pinch){
+   // Keep the active pair stable; rebase only when one of its fingers leaves.
+   if(touches.size>=2&&pinch.ids.some(id=>!touches.has(id)))beginPinch();
    // The remaining finger must lift before a new drag can start.
    if(touches.size===0){pinch=null;notice('Kartan är panorerad och zoomad till '+Math.round(view.zoom*100)+' %. Objektens placeringar är oförändrade.');render();}
    return;
@@ -406,4 +413,5 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
  },{passive:false});
  new ResizeObserver(()=>draw()).observe(svg);window.addEventListener('resize',()=>draw());types();render();
 </script>
+<script src="device-interaction.js"></script>
 </html>
