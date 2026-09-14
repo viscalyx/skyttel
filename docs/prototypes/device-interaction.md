@@ -170,7 +170,11 @@ rapporterar att X/Y/Z-visaren sitter för högt i stående orientering.
 Den föreslagna höjdgesten använder ett andra stilla finger enligt
 beställarens beskrivning ovan. Axelvisarens nedre placering följer nu
 den synliga kartytans nederkant med hänsyn till enhetens säkra kant.
-Båda ändringarnas känsla och placering på iPhone återstår att bekräfta.
+Efter uppdateringen återkopplar beställaren att det verkar fungera bra.
+Det ger ett positivt fysiskt prov av höjdgesten på iPhone 12 Pro.
+Återkopplingen redovisar inte ankartröskel, avbrutna gester eller
+axelvisarens placering var för sig. Det tidigare sidzoomsfelet behöver
+fortfarande följas upp uttryckligen.
 
 ## Målenheter som återstår
 
@@ -179,7 +183,7 @@ Båda ändringarnas känsla och placering på iPhone återstår att bekräfta.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Grundgester prövade på 12 Pro; sidzoom återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Grundgester och höjdgest prövade på 12 Pro; sidzoom återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
