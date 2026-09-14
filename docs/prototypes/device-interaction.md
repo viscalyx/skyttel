@@ -337,6 +337,11 @@ liggande läge på fysisk iPad. Provet omfattar objektflyttning, nypzoom
 och panorering med två fingrar. Det är positiv fysisk återkoppling
 på dessa grundgester i båda orienteringarna.
 
+Beställaren bekräftar även höjdgesten på iPad: ett andra finger hålls
+stilla medan det första dras uppåt och nedåt, och objektet flyttas
+enbart i höjdled. Avbrott och övergångar mellan fingerpar är inte
+separat redovisade i detta svar.
+
 Beställaren anger en äldre iPad Pro med 10,5-tumsskärm, modellnummer
 A1709, Safari och version 17 av operativsystemet, benämnt iOS 17
 i återkopplingen.
@@ -346,8 +351,8 @@ Beställaren bedömer också att namnfältet ser bra ut med
 skärmtangentbordet öppet i liggande läge. Det ger positiv återkoppling
 på redigeringsutrymmet i denna miljö. Svaret bekräftar inte separat
 hela kedjan med ändring, sparande och ångring på iPad.
-Höjdgest och skärmläsare är inte bekräftade på iPad; långtrycksmenyns
-samtliga åtgärder är inte heller separat redovisade.
+Skärmläsare är inte bekräftad på iPad; långtrycksmenyns samtliga
+åtgärder är inte heller separat redovisade.
 
 ## Målenheter som återstår
 
@@ -357,7 +362,7 @@ samtliga åtgärder är inte heller separat redovisade.
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
 | iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
-| iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, A1709, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Namnfält med skärmtangentbord i liggande läge ser bra ut. Övriga prov återstår |
+| iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, A1709, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Höjdgest med stilla ankarfinger fungerar. Namnfält med skärmtangentbord i liggande läge ser bra ut. Övriga prov återstår |
 <!-- markdownlint-enable MD013 -->
 
 Målenheternas operativsystem, webbläsare och versioner ska anges när de
