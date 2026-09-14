@@ -155,15 +155,16 @@ och bekräftar att objektflyttning, nypzoom och panorering med två fingrar
 fungerar. Webbläsaren och exakta versioner för iOS och webbläsare behöver
 fortfarande anges.
 
-Ett hinder finns i stående orientering: nypning långt ned zoomar hela
-webbsidan även när båda fingrarna börjar inne i den mörka kartytan.
-Det är ett kvarvarande interaktionsfel som behöver prövas, inte ett
-godkänt undantag för första versionen.
+Ett tidigare hinder i stående orientering var att nypning långt ned
+zoomade hela webbsidan även när båda fingrarna började inne i den mörka
+kartytan. Efter uppdateringen bekräftar beställaren uttryckligen att
+även nypzoom längst ned fungerar. Felet är därmed inte längre
+kvarvarande i beställarens prov på iPhone 12 Pro.
 
 Ändringen till en gemensam HTML-yta för alla kartgester ovan är avsedd
 att omfatta också den nedre mörka marginalen. Orsakssambandet är en
-hypotes; datorprovet fastställer inte hur iPhone hanterar träffytan.
-Beställaren behöver ladda om provet och kontrollera nypning nedtill igen.
+hypotes; det positiva fysiska omprovet bekräftar beteendet men isolerar
+inte den tekniska orsaken.
 
 Beställaren efterfrågar också direkt höjdflyttning med pekgester och
 rapporterar att X/Y/Z-visaren sitter för högt i stående orientering.
@@ -173,8 +174,7 @@ den synliga kartytans nederkant med hänsyn till enhetens säkra kant.
 Efter uppdateringen återkopplar beställaren att det verkar fungera bra.
 Det ger ett positivt fysiskt prov av höjdgesten på iPhone 12 Pro.
 Återkopplingen redovisar inte ankartröskel, avbrutna gester eller
-axelvisarens placering var för sig. Det tidigare sidzoomsfelet behöver
-fortfarande följas upp uttryckligen.
+axelvisarens placering var för sig.
 
 ## Målenheter som återstår
 
@@ -183,7 +183,7 @@ fortfarande följas upp uttryckligen.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Grundgester och höjdgest prövade på 12 Pro; sidzoom återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Grundgester, höjdgest och nypzoom nedtill fungerar på 12 Pro; övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
