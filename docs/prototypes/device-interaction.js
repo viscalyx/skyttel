@@ -49,6 +49,7 @@ function openEditor(review=false){
   if(!$('editorDialog').open)$('editorDialog').showModal();
  }
  (review?$('changesHeading'):$('detailHeading')).focus();
+ queueEditorFocusVisibility();
 }
 function closeEditor(){if($('editorDialog').open)$('editorDialog').close();}
 $('editorDialog').addEventListener('close',()=>{document.querySelector('.layout').append($('detailPanel'));if(lastDetailReturn?.isConnected&&!lastDetailReturn.disabled&&lastDetailReturn.getClientRects().length)lastDetailReturn.focus();else if(presentation==='map')$('backToList').focus();});
@@ -105,7 +106,30 @@ const originalKeydown=window.onkeydown;
 window.onkeydown=e=>{if(e.key==='Escape'&&($('editorDialog').open||e.target.closest('input,textarea,select,[contenteditable]')))return;originalKeydown(e);};
 function applyMotionPreference(){if(motionPreference.matches)$('universe').checked=false;$('universe').disabled=motionPreference.matches;$('motionNote').textContent=motionPreference.matches?'Minskad rörelse är på i systemet. Stjärnbakgrunden är avstängd. Kameran byter läge utan animation; allt kartarbete går via listan.':'Kameran byter läge direkt, utan animation. Listläget kräver ingen rumslig navigering.';draw();}
 motionPreference.addEventListener('change',applyMotionPreference);
-function syncViewport(){const viewport=window.visualViewport;document.documentElement.style.setProperty('--visual-height',(viewport?.height||innerHeight)+'px');document.documentElement.style.setProperty('--visual-top',(viewport?.offsetTop||0)+'px');}
+let editorFocusFrame;
+function queueEditorFocusVisibility(){
+ cancelAnimationFrame(editorFocusFrame);
+ editorFocusFrame=requestAnimationFrame(()=>{
+  const dialog=$('editorDialog'),active=document.activeElement;
+  if(!dialog.open||!dialog.contains(active)||active===dialog)return;
+  const rect=dialog.getBoundingClientRect(),bar=dialog.querySelector('.dialog-bar');
+  // Scroll this dialog only; scrolling the document can fight iOS keyboard panning.
+  const top=rect.top+5+(dialog.classList.contains('compact-editor')||bar.contains(active)?0:bar.offsetHeight),bottom=rect.bottom-5;
+  let target=active.getBoundingClientRect();
+  const label=active.closest('label')?.getBoundingClientRect();
+  if(label&&label.height<=bottom-top)target=label;
+  if(target.top<top)dialog.scrollTop+=target.top-top;
+  else if(target.bottom>bottom)dialog.scrollTop+=target.bottom-bottom;
+ });
+}
+$('editorDialog').addEventListener('focusin',queueEditorFocusVisibility);
+function syncViewport(){
+ const viewport=window.visualViewport,height=viewport?.height||innerHeight,style=document.documentElement.style;
+ style.setProperty('--visual-height',height+'px');style.setProperty('--visual-top',(viewport?.offsetTop||0)+'px');
+ style.setProperty('--visual-width',(viewport?.width||innerWidth)+'px');style.setProperty('--visual-left',(viewport?.offsetLeft||0)+'px');
+ $('editorDialog').classList.toggle('compact-editor',height<260);
+ queueEditorFocusVisibility();
+}
 window.visualViewport?.addEventListener('resize',syncViewport);window.visualViewport?.addEventListener('scroll',syncViewport);window.addEventListener('resize',syncViewport);
 syncViewport();applyMotionPreference();
 new ResizeObserver(()=>document.documentElement.style.setProperty('--map-bar-height',shellBar.getBoundingClientRect().height+'px')).observe(shellBar);

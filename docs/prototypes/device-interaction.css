@@ -27,10 +27,13 @@ input[type=checkbox]{min-height:24px;min-width:24px;vertical-align:middle}
 .quick-actions{margin:12px 0}
 .quick-actions button{width:100%;text-align:left;margin-bottom:6px}
 #mapShellBar{display:none}
-#editorDialog{width:min(580px,calc(100vw - 24px));max-height:calc(var(--visual-height,100dvh) - 24px);border:1px solid #b9c9bd;border-radius:12px;padding:0;color:#263c33;background:#f3f4ef}
+#editorDialog{--dialog-gap:12px;position:fixed;inset:calc(var(--visual-top,0px) + var(--dialog-gap)) auto auto calc(var(--visual-left,0px) + var(--visual-width,100vw)/2);transform:translateX(-50%);margin:0;width:min(580px,calc(var(--visual-width,100vw) - 2*var(--dialog-gap)));height:min(720px,calc(var(--visual-height,100dvh) - 2*var(--dialog-gap)));min-height:0;max-height:none;overflow:auto;overscroll-behavior:contain;scroll-behavior:auto;border:1px solid #b9c9bd;border-radius:12px;padding:0;color:#263c33;background:#f3f4ef}
 #editorDialog::backdrop{background:#06171099}
 #editorDialog .dialog-bar{position:sticky;top:0;z-index:3;background:#f3f4ef;padding:8px 14px;border-bottom:1px solid #dae2d8}
 #editorDialog #detailPanel{border:0;border-radius:0}
+#editorDialog.compact-editor{--dialog-gap:4px}
+#editorDialog.compact-editor .dialog-bar{position:static;padding:4px 8px}
+#editorDialog.compact-editor #detailPanel{padding:8px}
 .map-mode{overflow:hidden}
 .map-mode>header,.map-mode>.skip,.map-mode #main>:not(.layout):not(#status){display:none}
 .map-mode #mapPanel{position:fixed;inset:var(--visual-top,0px) 0 auto;height:var(--visual-height,100dvh);padding:0;border:0;border-radius:0;z-index:10;display:block;background:#122a23}
@@ -60,6 +63,5 @@ input[type=checkbox]{min-height:24px;min-width:24px;vertical-align:middle}
  .map-mode #mapSelection{display:none}
  .map-mode #status{max-height:57px}
  .map-mode #cameraTools{max-height:48%}
- #editorDialog{margin:12px auto;top:var(--visual-top,0px)}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

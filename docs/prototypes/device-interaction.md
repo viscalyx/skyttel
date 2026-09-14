@@ -148,6 +148,17 @@ vanlig nypning med extra finger samt Shift. Dessa kontroller använder
 ersättningar för ritning och DOM; de bevisar inte hur iOS levererar
 pekhändelser eller hur gesten känns med två fingrar.
 
+Dialogprovet omfattar också minskning av den synliga höjden från
+844 × 390 till 844 × 140 medan namnfältet har fokus. Med den uppdaterade
+layouten ryms etikett och fält i dialogen; Tab rullar fram formulärets
+knapp och en namnändring kan föreslås. Fältet ryms även vid 390 × 100.
+Texten bevaras vid återgång till 390 × 844 och när kartdialogen stängs
+och öppnas. Fokus återgår till Redigera val efter stängning.
+
+Detta är ändringar av Chromes visningsutrymme. De efterliknar mindre
+utrymme men återskapar inte iOS-tangentbordet eller dess förskjutning
+av den synliga ytan.
+
 ## Beställarens prov på iPhone 12 Pro
 
 Beställaren anger den 14 september 2026 en fysisk iPhone 12 Pro med iOS
@@ -176,6 +187,26 @@ Det ger ett positivt fysiskt prov av höjdgesten på iPhone 12 Pro.
 Återkopplingen redovisar inte ankartröskel, avbrutna gester eller
 axelvisarens placering var för sig.
 
+I liggande orientering rapporterar beställaren ett redigeringshinder:
+namnfältet syns inte när skärmtangentbordet är öppet. Det går att
+stänga tangentbordet och återgå till kartan. Bilden visar dialogen som
+en tunn remsa ovanför tangentbordet. Bildens personliga autofyllnadsdata
+ingår inte i prototypen eller repositoryt.
+
+Dialogen har nu uttrycklig höjd och position efter den synliga ytan,
+med fri nederkant. När höjden är liten rullar även dialogens överkant
+så att den inte upptar plats framför fältet. Vid fokus och ändrad
+synlig yta rullas enbart dialogen för att visa det aktiva fältet.
+Det fysiska iPhone-omprovet av denna ändring återstår.
+
+[WebKits standardstil för dialoger](https://github.com/WebKit/WebKit/blob/main/Source/WebCore/css/html.css)
+anger innehållsanpassad höjd och positionering mot båda kanterna.
+Kombinationen med prototypens tidigare övre förskjutning och enbart
+maxhöjd är en möjlig förklaring till remsan; orsaken är inte isolerad
+på enheten.
+[WebKits beskrivning av Visual Viewport](https://webkit.org/blog/9674/new-webkit-features-in-safari-13/#visual-viewport-api)
+stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
+
 ## Målenheter som återstår
 
 <!-- markdownlint-disable MD013 -->
@@ -183,7 +214,7 @@ axelvisarens placering var för sig.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Grundgester, höjdgest och nypzoom nedtill fungerar på 12 Pro; övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Gester fungerar på 12 Pro; dolt namnfält med liggande tangentbord väntar på omprov |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
