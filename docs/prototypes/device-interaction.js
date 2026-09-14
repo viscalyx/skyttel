@@ -53,16 +53,18 @@ function openObjectActions(id){
  if(!$('objectActions').open)$('objectActions').showModal();
  $('actionEdit').focus({preventScroll:true});
 }
-function chooseObjectAction(action){
- const id=objectActionsNode;closeObjectActions(false);
+function chooseObjectAction(action,id=objectActionsNode){
+ closeObjectActions(false);
  if(!id||!draft.objects[id])return;
  selected={node:id};render();
  if(action==='focus'){focusNode(id);(presentation==='map'?$('editMapSelection'):$('detailHeading')).focus({preventScroll:true});return;}
  openEditor();
+ if(action==='edit'&&!$('editorDialog').open)$('detailHeading').scrollIntoView({block:'start'});
  if(action==='remove'){
   const button=$('removeNode'),section=button.closest('details');
   section.open=true;section.querySelector('summary').focus({preventScroll:true});
-  queueEditorFocusVisibility();
+  if($('editorDialog').open)queueEditorFocusVisibility();
+  else section.scrollIntoView({block:'center'});
  }
 }
 $('actionEdit').onclick=()=>chooseObjectAction('edit');$('actionFocus').onclick=()=>chooseObjectAction('focus');$('actionRemove').onclick=()=>chooseObjectAction('remove');$('actionCancel').onclick=()=>closeObjectActions();
@@ -124,6 +126,20 @@ render=function(){
  for(const field of fields){const el=$(field.form)?.elements[field.name];if(el)el.value=field.value;}
  lastRenderedSelection=JSON.stringify(selected);
  for(const d of $('detail').querySelectorAll('details'))d.open=open.includes(d.querySelector('summary').textContent);
+ $('objects').querySelectorAll('.object').forEach(button=>{
+  const id=button.dataset.id;button.onclick=()=>selectNode(id,true);
+  if(id!==selected.node||!draft.objects[id])return;
+  const row=document.createElement('div');row.className='selected-object-row';
+  button.before(row);row.append(button);
+  const actions=document.createElement('div');actions.className='list-object-actions';
+  actions.setAttribute('role','group');actions.setAttribute('aria-label','Åtgärder för '+name(id));
+  for(const [action,label,buttonId]of [['edit','Redigera','listEditObject'],['remove','Ta bort…','listRemoveObject']]){
+   const shortcut=document.createElement('button');shortcut.id=buttonId;shortcut.textContent=label;
+   shortcut.setAttribute('aria-label',(action==='edit'?'Redigera ':'Ta bort ')+name(id));
+   shortcut.onclick=()=>chooseObjectAction(action,id);actions.append(shortcut);
+  }
+  row.append(actions);
+ });
  populateRelationForm();
  $('editMapSelection').disabled=!selected.node&&!selected.edge;
  $('mapSelection').textContent=selected.node?name(selected.node):selected.edge?'Samband valt':'Inget valt';
@@ -131,7 +147,17 @@ render=function(){
  $('state').textContent=JSON.stringify({presentation,historyCount:history.length,...JSON.parse($('state').textContent)},null,2);
 };
 const originalSelectNode=selectNode,originalSelectEdge=selectEdge;
-selectNode=function(id){originalSelectNode(id);notice(name(id)+' är valt. Detaljer och samband finns i redigeringspanelen.');if(presentation!=='map')$('detailHeading').focus();};
+selectNode=function(id,fromList=false){
+ originalSelectNode(id);
+ if(fromList&&draft.objects[id]){
+  notice(name(id)+' är valt. Välj Redigera eller Ta bort direkt under objektet.');
+  const button=$('objects').querySelector('[data-id="'+CSS.escape(id)+'"]');
+  button.focus({preventScroll:true});button.closest('.selected-object-row').scrollIntoView({block:'nearest'});
+ }else{
+  notice(name(id)+' är valt. Detaljer och samband finns i redigeringspanelen.');
+  if(presentation!=='map')$('detailHeading').focus();
+ }
+};
 selectEdge=function(id,removed=false){originalSelectEdge(id,removed);notice('Valt samband: '+describe((removed?saved:draft).relations[id])+'.');if(presentation!=='map')$('detailHeading').focus();};
 $('newObject').onsubmit=e=>{e.preventDefault();const values=new FormData(e.target),objectName=values.get('name').trim();if(!objectName)return;const id='added'+(++counter);draft.objects[id]={name:objectName,type:values.get('type')};positions[id]=[100,0,0];selected={node:id};$('search').value='';$('type').value='';focus=null;types();render();notice(objectName+' finns nu som ett nytt förslag. Inget är sparat.');$('detailHeading').focus();};
 $('newRelation').onsubmit=e=>{e.preventDefault();const values=new FormData(e.target),r=Object.fromEntries(values);if(!r.from||!r.to)return;if(Object.values(draft.relations).some(x=>same(x,r))){notice('Sambandet finns redan.');$('status').focus();return;}const id='addedRelation'+(++counter);draft.relations[id]=r;selected={edge:id};render();notice('Nytt samband föreslås: '+describe(r)+'.');$('detailHeading').focus();};

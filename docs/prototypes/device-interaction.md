@@ -43,6 +43,10 @@ i de olika presentationerna.
   objektet öppnar samma meny på datorn. Listan och Redigera val
   behåller motsvarande vanliga åtgärder utan långtryck.
 - Listan erbjuder sökning, typfilter, nytt objekt och nytt samband.
+  Valt objekt visar Redigera och Ta bort direkt under sin listrad.
+  Fokus stannar på raden och Tab når åtgärderna. Redigera rullar fram
+  formuläret; Ta bort öppnar och visar beskedet om berörda kopplingar.
+  Åtgärderna visas bara för objekt som fortfarande finns i utkastet.
   Detaljpanelen erbjuder namnändring, redigering av samband och föreslagen
   borttagning. Den erbjuder också knappar för objektens placering.
 - Ändringslistan samlar utkastet. Spara ändringarna godkänner hela listan
@@ -152,6 +156,16 @@ Agentens programstyrda prov genom Chrome-tillägget omfattar:
 - Fokus efter Spara, Ångra och Kasta förslag återgår till ändringslistans
   fasta rubrik. Rubrikens identifierare sitter på rätt element även
   när den valda detaljen ritas om. Inga nya JavaScript-fel i omprovet.
+- Listans snabbåtgärder vid 390 × 844: radval behåller fokus och Tab
+  når Redigera samt Ta bort. Även sista radens båda 44 pixlar höga
+  knappar ryms i listans rullyta. Redigera visar rätt namnformulär högt
+  på sidan och oskickad namntext bevaras vid nytt val av samma objekt.
+- Listans Ta bort visar först beskedet utan att ändra utkastet.
+  Föreslagen borttagning av Tonmoln familj tar med fyra kopplingar;
+  Kasta förslag återställer objektet. Borttagning av ett osparat
+  Bokljus-förslag lämnar ingen ändring mot den sparade exempelkartan.
+  Snabbåtgärderna ryms även vid 844 × 390 utan vågrät överströmning.
+  Kartmenyns borttagningsväg fungerar i det kompletterande omprovet.
 
 Borttagningsvalet rullar fram hela det öppna beskedet och dess knapp när
 utrymmet räcker. Menyprovet använder högerklick i Chrome på Mac;
@@ -221,6 +235,13 @@ Det framgår att tjänsten och dess samband föreslås tas bort tillsammans.
 Beställaren efterfrågar därefter en meny via långtryck på kartobjekt,
 med redigering och borttagning direkt åtkomliga från rymdkartan.
 Objektmenyn ovan prövar detta önskemål; fysisk återkoppling återstår.
+
+Beställaren bedömer att borttagning är svår att hitta efter objektval
+i listan och efterfrågar snabb åtkomst till redigering och borttagning.
+De synliga åtgärderna under vald listrad prövar detta önskemål.
+Den tidigare bedömningen av borttagningens innebörd kvarstår, men
+hittbarheten är inte godkänd. Fysisk återkoppling på snabbåtgärderna
+återstår.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka

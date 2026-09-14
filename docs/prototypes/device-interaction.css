@@ -13,6 +13,11 @@ input[type=checkbox]{min-height:24px;min-width:24px;vertical-align:middle}
 #listPanel{margin:0;min-width:0}
 #listPanel h2{scroll-margin-top:20px}
 #objects{grid-template-columns:1fr;max-height:65vh}
+.selected-object-row{padding:6px;border:1px solid #b9c9bd;border-radius:9px;background:#e8efe3}
+.selected-object-row>.object{width:100%}
+.list-object-actions{display:flex;gap:6px;margin-top:6px}
+.list-object-actions button{flex:1;min-width:0}
+#listRemoveObject{color:#8b2d26}
 .layout{grid-template-columns:minmax(230px,300px) minmax(0,1fr) 340px}
 #listPanel{grid-column:1}
 #mapPanel{grid-column:2}
