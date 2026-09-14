@@ -337,8 +337,9 @@ liggande läge på fysisk iPad. Provet omfattar objektflyttning, nypzoom
 och panorering med två fingrar. Det är positiv fysisk återkoppling
 på dessa grundgester i båda orienteringarna.
 
-Beställaren anger en äldre iPad Pro med 10,5-tumsskärm, Safari och
-version 17 av operativsystemet, benämnt iOS 17 i återkopplingen.
+Beställaren anger en äldre iPad Pro med 10,5-tumsskärm, modellnummer
+A1709, Safari och version 17 av operativsystemet, benämnt iOS 17
+i återkopplingen.
 Exakt systemversion och Safari-version är inte angivna. Resultatet
 gäller denna provmiljö och belägger inte Chrome-stöd på iPad.
 Höjdgest, långtrycksmeny, redigering med skärmtangentbord och
@@ -352,7 +353,7 @@ skärmläsare är inte bekräftade på iPad.
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
 | iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
-| iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Övriga prov återstår |
+| iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, A1709, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Övriga prov återstår |
 <!-- markdownlint-enable MD013 -->
 
 Målenheternas operativsystem, webbläsare och versioner ska anges när de
