@@ -239,9 +239,10 @@ Objektmenyn ovan prövar detta önskemål; fysisk återkoppling återstår.
 Beställaren bedömer att borttagning är svår att hitta efter objektval
 i listan och efterfrågar snabb åtkomst till redigering och borttagning.
 De synliga åtgärderna under vald listrad prövar detta önskemål.
-Den tidigare bedömningen av borttagningens innebörd kvarstår, men
-hittbarheten är inte godkänd. Fysisk återkoppling på snabbåtgärderna
-återstår.
+Beställaren återkopplar att detta ser ut att fungera i iPhone-provet.
+Det ger positiv återkoppling på snabbåtgärderna och deras placering
+vid listval. Återkopplingen redovisar inte varje åtgärd separat.
+Kartans långtrycksmeny behöver fortfarande bekräftas fysiskt.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka
@@ -313,7 +314,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar; objektmeny och övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval; kartans långtrycksmeny och övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
