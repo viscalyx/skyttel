@@ -2,8 +2,8 @@
 
 Prototypen ger underlag till
 [Kan Skyttels kartarbete fungera på valda enheter med pekgester och tillgängliga alternativ?](https://github.com/viscalyx/skyttel/issues/16).
-Ärendet är öppet. Beställarens prövning på iPhone 12 Pro ger de första
-fysiska gestresultaten nedan. Ytterligare kontroller och återkoppling
+Ärendet är öppet. Beställarens prövning på iPhone 12 Pro och iPad ger
+fysiska gestresultat nedan. Ytterligare kontroller och återkoppling
 återstår. Dokumentet innehåller ingen resolution.
 
 ## Kör lokalt
@@ -330,6 +330,18 @@ på enheten.
 [WebKits beskrivning av Visual Viewport](https://webkit.org/blog/9674/new-webkit-features-in-safari-13/#visual-viewport-api)
 stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 
+## Beställarens prov på iPad
+
+Beställaren bekräftar att rymdkartan fungerar i både stående och
+liggande läge på fysisk iPad. Provet omfattar objektflyttning, nypzoom
+och panorering med två fingrar. Det är positiv fysisk återkoppling
+på dessa grundgester i båda orienteringarna.
+
+iPad-modell, operativsystem, webbläsare och versioner är ännu inte
+angivna. Resultatet tillskrivs därför ingen viss webbläsare.
+Höjdgest, långtrycksmeny, redigering med skärmtangentbord och
+skärmläsare är inte bekräftade på iPad.
+
 ## Målenheter som återstår
 
 <!-- markdownlint-disable MD013 -->
@@ -338,7 +350,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
 | iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
-| iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
+| iPad | Pekskärm, skärmtangentbord, skärmläsare | Objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Modell och webbläsare behöver anges; övriga prov återstår |
 <!-- markdownlint-enable MD013 -->
 
 Målenheternas operativsystem, webbläsare och versioner ska anges när de
