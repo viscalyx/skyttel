@@ -166,11 +166,16 @@ av den synliga ytan.
 
 Beställaren anger den 14 september 2026 en fysisk iPhone 12 Pro med iOS
 och Safari och bekräftar att objektflyttning, nypzoom och panorering
-med två fingrar fungerar. Chrome är inte installerat på telefonen.
-Exakta versioner för iOS och Safari behöver fortfarande anges.
-Detta är kompletterande Safari-resultat; den beslutade målwebbläsaren
-Chrome på iPhone är ännu oprövad. Safari-provet ändrar inte i sig
-plattformsbeslutet eller verifierar Chrome-stöd.
+med två fingrar fungerar. Beställaren prövar även Chrome på samma
+iPhone och visar namnfältet med tangentbordet öppet i liggande läge.
+Exakta versioner för iOS, Safari och Chrome behöver fortfarande anges.
+Gestresultaten gäller Safari; motsvarande gester är inte separat
+bekräftade i Chrome. Safari-provet ändrar inte i sig plattformsbeslutet.
+
+Beställaren bekräftar att listprovet går att genomföra och förstå
+tydligt: välj Tonmoln familj, öppna sambandet Alex betalar Tonmoln
+familj, byt Från till Kim och föreslå ändringen. Fysiskt prov av
+samlat sparande och ångring av detta byte återstår.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka
@@ -210,6 +215,9 @@ till stående läge för bekvämare textredigering och användas liggande
 för kartarbete. Det är ett accepterat arbetssätt och en känd begränsning,
 inte ett krav på ett mindre eller eget tangentbord. Ingen ny
 redigeringslayout eller låsning av skärmriktningen ingår i detta prov.
+Beställarens bild från Chrome på iPhone visar också mycket litet
+utrymme för namnfältet när tangentbordet är öppet i liggande läge.
+Det accepterade arbetssättet med stående textredigering behålls.
 
 Namnfältet begär nu `autocomplete="off"`, liksom fältet för nytt objekt.
 Det är en begäran om att avstå lagrad autofyllnad för ett objektnamn,
@@ -239,7 +247,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari på 12 Pro: gester fungerar, stående textredigering accepteras; Chrome och övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Byte av betalare är tydligt; sparande, ångring och övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
