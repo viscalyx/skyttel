@@ -234,7 +234,10 @@ lägg till Lo använder Bokljus, spara och föreslå borttagning av Bokljus.
 Det framgår att tjänsten och dess samband föreslås tas bort tillsammans.
 Beställaren efterfrågar därefter en meny via långtryck på kartobjekt,
 med redigering och borttagning direkt åtkomliga från rymdkartan.
-Objektmenyn ovan prövar detta önskemål; fysisk återkoppling återstår.
+Beställaren bekräftar att långtryck öppnar menyn på iPhone och att
+objektet ligger stilla. Menyn förblir öppen när fingret lyfts, utan
+att något alternativ väljs automatiskt. Det ger ett positivt fysiskt
+prov av öppning och släpp. Menyvalens flöden återstår att bekräfta.
 
 Beställaren bedömer att borttagning är svår att hitta efter objektval
 i listan och efterfrågar snabb åtkomst till redigering och borttagning.
@@ -242,7 +245,7 @@ De synliga åtgärderna under vald listrad prövar detta önskemål.
 Beställaren återkopplar att detta ser ut att fungera i iPhone-provet.
 Det ger positiv återkoppling på snabbåtgärderna och deras placering
 vid listval. Återkopplingen redovisar inte varje åtgärd separat.
-Kartans långtrycksmeny behöver fortfarande bekräftas fysiskt.
+Kartmenyns öppning och släpp är bekräftade enligt ovan.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka
@@ -314,7 +317,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval; kartans långtrycksmeny och övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval och kartmenyns öppning/släpp; menyvalens flöden och övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
