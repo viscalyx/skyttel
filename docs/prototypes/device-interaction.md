@@ -244,7 +244,8 @@ med redigering och borttagning direkt åtkomliga från rymdkartan.
 Beställaren bekräftar att långtryck öppnar menyn på iPhone och att
 objektet ligger stilla. Menyn förblir öppen när fingret lyfts, utan
 att något alternativ väljs automatiskt. Det ger ett positivt fysiskt
-prov av öppning och släpp. Menyvalens flöden återstår att bekräfta.
+prov av öppning och släpp. Återkoppling på borttagningsflödet finns nedan.
+Redigera och Visa kopplingar från menyn är inte separat fysiskt bekräftade.
 
 Beställaren bedömer att borttagning är svår att hitta efter objektval
 i listan och efterfrågar snabb åtkomst till redigering och borttagning.
@@ -262,7 +263,9 @@ Sparat tillstånd ändras först med Spara ändringarna; det gemensamma
 sparandet och återgången behålls.
 Detaljpanelens relationsknapp heter också Ta bort samband.
 Detta ersätter upplägget med ett separat borttagningsbesked och en
-andra knapp. Fysisk återkoppling på den direkta åtgärden återstår.
+andra knapp. Beställaren återkopplar att det uppdaterade flödet ser bra
+ut. Det ger positiv återkoppling på borttagning direkt till utkastet
+med separat sparande. Svaret redovisar inte varje ingång separat.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka
@@ -334,7 +337,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval och kartmenyns öppning/släpp; menyvalens flöden och övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
