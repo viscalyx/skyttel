@@ -25,8 +25,138 @@ Historiken har inga spargrupper. Varken förslags- eller sparverktyget
 anropas. Kims privata anteckning finns inte i något av de tre
 verktygssvaren till Alex.
 
-Beställarens val mellan Lo Lind och Lo Berg behövs för nästa omgång.
-Det finns ännu inget mänskligt sparbesked eller omdöme om hela flödet.
+Beställaren väljer att föra provdialogen genom det pågående samtalet och
+anger att båda personerna ska läggas till. Startaren förmedlar detta svar
+till samma externa klientsamtal genom `exec resume`.
+
+Klienten anropar `propose_changes` och föreslår två separata samband:
+Lo Lind använder Tonrum och Lo Berg använder Tonrum. Den återger därefter
+hela utkastet: båda sambanden och den befintliga prisändringen 149 till
+179 kr per månad. Den säger att ändringarna ännu inte är sparade och
+inväntar ett uttryckligt sparbesked eller en rättelse.
+
+Efter tillägget är kartversionen fortsatt 1, utkastversionen 2 och
+historiken saknar spargrupper.
+
+Beställaren rättar priset till 189 kronor per månad och säger i det
+förmedlade textmeddelandet att ”Loberg använder inte”. Klienten tolkar
+det som Lo Berg, tar bort det föreslagna användningssambandet och låter
+Lo Lind vara kvar. Personen Lo Berg finns kvar i kartan.
+
+Ett nytt `propose_changes` ändrar prisförslaget och tar bort just det
+föreslagna sambandet. Klientens sammanställning visar 149 till 189 kr
+per månad, att Lo Lind läggs till och att Lo Berg inte läggs till.
+Den säger åter att inget är sparat och inväntar ett nytt besked.
+
+Efter rättelsen är kartversionen fortsatt 1, utkastversionen 3 och
+historiken saknar spargrupper. Namntolkningen prövas med text, inte med
+egen ljudbehandling.
+
+Beställaren svarar ”Jag kan spara det.” efter sammanställningen.
+Klienten anropar då `save_draft` separat med utkastversion 3 och granskad
+kartversion 1. Den bekräftar sparandet efter serverns kvitto för
+`change-0001`: priset är 189 kr per månad och Lo Lind använder Tonrum.
+Lo Berg läggs inte till. Kartversionen är 2, utkastversionen 4 och
+utkastet är tomt. Historiken har exakt en spargrupp med båda ändringarna.
+
+Det vanliga flödet har därmed ett faktiskt mänskligt sparbesked och ett
+verifierat separat sparanrop. Beställarens samlade omdöme och de
+återstående felsituationerna i klienten är ännu inte prövade.
+
+Beställaren ber därefter att ta bort den senaste ändringen. Klienten
+läser aktuell karta med `read_map` och anropar `undo_as_draft` för den
+nyss kvitterade gruppen `change-0001`. Den använder grupp-ID från
+samtalet; denna omgång prövar inte att hitta en äldre grupp genom
+historikverktyget.
+
+Ångraförslaget ändrar priset från 189 till 149 kr per månad och tar bort
+Lo Linds användningssamband. Personen Lo Lind finns kvar. Klienten
+återger båda ändringarna och inväntar ett separat besked om att spara
+ångringen. Sparad karta och historik är oförändrade, med kartversion 2
+och en spargrupp. Det nya utkastet har version 5.
+
+Beställaren ger sparbeskedet ”Jasparar det.”. Provledaren meddelar att
+kvittobortfall ska simuleras och aktiverar `lose-next-receipt` utanför
+MCP. Klienten tolkar texten som ”Ja, spara det” och anropar `save_draft`
+för utkastversion 5 och granskad kartversion 2.
+
+Servern genomför sparandet och stänger stdio utan svar. Klienten säger
+att utfallet är okänt och anropar `get_save_receipt` med det ursprungliga
+spar-ID:t. Även det anropet misslyckas eftersom transporten är stängd.
+Klienten gör inget nytt sparförsök och påstår inte att ångringen är
+sparad.
+
+Provledaren återstartar anslutningen genom en ny körning av `exec resume`
+och ber klienten slutföra kvittokontrollen för det redan godkända
+sparandet. Klienten anropar enbart `get_save_receipt` med samma spar-ID
+och bekräftar därefter återställningen till 149 kr per månad och
+borttagningen av Lo Linds användningssamband.
+
+Kvittot gäller `change-0002`. Kartversionen är 3, utkastversionen 6 och
+utkastet tomt. Historiken innehåller exakt två grupper: ursprungligt
+sparande och ångring. Ingen dubblerad sparning sker. Provet verifierar
+återhämtning med provledarens återanslutning, inte automatisk
+återanslutning i Codex CLI eller ett fjärranslutet produktionssystem.
+
+Inför samtidighetsprovet ber beställaren om priset ”tvåhundratjugonio
+kronor”. Klienten läser kartan och föreslår 229 kr per månad genom
+`propose_changes`. Den återger hela utkastet, 149 till 229 kr per månad,
+och inväntar ett sparbesked. Kartversionen är fortsatt 3,
+utkastversionen är 7 och historiken har fortsatt två spargrupper.
+Tolkningen av beloppet prövas från textmeddelandet, inte från ljud.
+
+Beställaren godkänner att spara prisförslaget 229 kr. Provledaren
+annonserar en ändring från ett annat fönster och aktiverar
+`draft-price-edit`: samma användares utkast ändras till 239 kr och
+utkastversionen blir 8. Den sparade kartan ändras inte.
+
+Klienten anropar `save_draft` med den faktiskt granskade utkastversionen
+7 och kartversion 3. Servern avvisar anropet. Klienten säger att inget
+sparas eftersom utkastet ändras efter granskningen, återger hela det
+aktuella förslaget 149 till 239 kr per månad och frågar om beställaren
+vill spara 239 kr eller ändra tillbaka till 229 kr. Den gör inget nytt
+sparanrop och använder inte det tidigare godkännandet för version 8.
+
+Kartversionen är fortsatt 3 och historiken har två spargrupper. Det
+faktiska klientsamtalet verifierar därmed ett avvisat sparanrop för en
+inaktuell utkastversion och krav på förnyat beslut efter ny sammanställning.
+
+Beställaren säger att förslaget ska ändras tillbaka till 229 kronor och
+sparas. Klienten anropar endast `propose_changes`, återställer priset
+till 229 kr och ger utkastversion 9. Den återger förslaget men kräver
+ytterligare bekräftelse eftersom rättelsen ger en ny version, trots
+beställarens uttryckliga kombinerade rättelse och sparbegäran.
+
+Inget sparas i denna omgång: kartversionen är 3, sparat pris 149 kr och
+historiken har fortsatt två grupper. Provet visar att det ovillkorliga
+kravet på ännu ett ja efter en uttrycklig rättelse och sparbegäran blir
+en extra dialogomgång.
+
+Beställaren beslutar att en entydig rättelse och ”spara” i samma besked
+ska räcka. Beställaren preciserar att detta även gäller när andra
+ändringar pågår: ”spara” omfattar alla hittills gjorda ändringar i det
+egna utkastet. Begränsningen till ett ensamt förslag gäller alltså inte.
+
+Beställaren föreslår också en intern kontroll av att ändringarna
+motsvarar begäran samt en bekräftelse av vad som faktiskt sparas.
+Prototypens klientinstruktioner och verktygstexter använder därför en
+intern kontroll av hela förslaget före sparandet och en kontroll av
+kvittots faktiska ändringar efteråt. Aktuella instruktioner skickas även
+när klientsamtalet återupptas, så den tidigare regeln inte lever kvar.
+Serverns versions- och konfliktkontroller ändras inte.
+
+Provledaren förmedlar beställarens fastställda regel och det tidigare
+uttryckliga beskedet att återställa prisförslaget till 229 kr och spara.
+Klienten använder det redan returnerade fullständiga utkastet med
+version 9 och anropar `save_draft` mot kartversion 3. Kvittot visar
+`change-0003`, pris 149 till 229 kr per månad. Klienten bekräftar detta
+utfall utan att kräva ännu ett ja. Kartversionen är 4, utkastversionen
+10 och utkastet är tomt. Historiken innehåller tre grupper.
+
+Denna omgång verifierar slutförandet med den nya regeln. Själva rättelsen
+finns redan i utkastet från föregående omgång; ett nytt kombinerat
+rättelse- och sparanrop med ett ytterligare oberoende förslag behöver
+fortfarande prövas i ett och samma klientsvar.
 
 ## Separata tekniska kontroller
 
@@ -61,11 +191,8 @@ provet, inte ett beslutat produktbeteende.
 
 ## Kvar i användarprovet
 
-- Förtydligande, ändringsförslag, rättelse och begriplig återgivning av
-  hela utkastet, följt av människans sparbesked och separat sparanrop.
-- Klientens faktiska återkoppling vid ändrat underlag, konflikt och
-  saknat sparkvitto.
-- Klientens hantering av ångring och administrativa önskemål.
+- Klientens faktiska återkoppling vid konflikt mot en annan sparad ändring.
+- Klientens hantering av administrativa önskemål.
 - Beställarens bedömning och rekommendationen till teknikvalet.
 
 Inloggning, återkallelse av åtkomst, fjärranslutning, andra enheter och

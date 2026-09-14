@@ -17,6 +17,23 @@ Assistenten får uttryckliga instruktioner om Skyttels gransknings- och
 sparregler. Ett lyckat prov gäller denna konfigurerade klient. Det visar
 inte att varje MCP-klient följer reglerna utan sådana instruktioner.
 
+Ett uttryckligt ”spara” gäller hela det aktuella privata utkastet. Det
+omfattar både tidigare förslag och en entydig rättelse i samma mening.
+”Ändra priset till 229 kronor och spara” ska därför inte leda till ännu
+ett ja enbart för att rättelsen ger en ny version eller för att andra
+ändringar också väntar. Klienten återger hela sammanställningen och
+anropar sparverktyget separat i samma samtalsomgång. Utan sparbesked
+stannar ändringarna i utkastet.
+
+Klienten kontrollerar internt att hela verktygssvaret motsvarar de begärda
+ändringarna och bevarar övriga förslag. Efter sparandet kontrollerar den
+kvittot och bekräftar alla ändringar som faktiskt sparas. Bekräftelsen
+bygger på kvittot, inte enbart på det avsedda förslaget.
+
+Olösta identitetsfrågor, konflikter och samtidighetskontroller gäller
+fortfarande. Ett nytt oväntat underlag får inte omfattas av ett tidigare
+besked. Startaren skickar aktuella provregler även när samtalet återupptas.
+
 Endast påhittade hushållsuppgifter får användas. Prototypen använder en
 lokal scratchfil som simulerar gemensam lagring mellan samtalsomgångar.
 Användaren väljs av startkommandot. Det simulerar identifierad åtkomst,

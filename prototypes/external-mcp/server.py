@@ -19,6 +19,16 @@ from pathlib import Path
 ABSENT = {"$prototype_absent": True}
 COLLECTIONS = ("objects", "relations")
 USERS = ("alex", "kim")
+SAVE_POLICY = (
+    "An explicit human save command authorizes ALL changes in the current private draft, "
+    "including existing proposals and an unambiguous correction in the same message. "
+    "Apply requested changes, summarize ALL full_diff, and call save_draft separately in the same turn; "
+    "do not require another yes merely because the requested correction creates a new draft version. "
+    "Internally check that ALL full_diff matches the human's requested changes and preserves other pending proposals. "
+    "Without an explicit save command, only propose and wait. Unresolved identities or conflicts block the whole save. "
+    "Use the exact current draft_version and map_version. Unexpected concurrent changes or a stale-version rejection "
+    "require presenting the changed draft and a new human decision; never silently overwrite a conflict."
+)
 
 
 def clone(value):
@@ -140,8 +150,7 @@ def view(state, user, include_map=False):
               "draft_base_map_version": draft["base_map_version"],
               "full_diff": full_diff, "conflicts": conflicts, "blockers": blockers,
               "ready_to_save": bool(full_diff) and not blockers,
-              "save_policy": "Summarize ALL full_diff, then wait for explicit human save instruction. "
-                             "Save requires this draft_version and this reviewed map_version."}
+              "save_policy": SAVE_POLICY}
     if include_map:
         result.update(saved_map=clone(state["map"]), draft_map=candidate)
     return result
@@ -364,27 +373,26 @@ TOOLS = [
     tool("propose_changes", "Atomically propose or correct a batch in the same private draft. Does not save. "
          "Use known explicit IDs; create=true is required for new IDs. Upsert merges fields, unset removes fields. "
          "Deleting an object does not silently delete relations: dangling relations block save. "
-         "Returns entire current diff/version/readiness. Summarize ALL changes and wait for human save instruction.",
+         "Returns entire current diff/version/readiness. " + SAVE_POLICY,
          {**EXPECTED, "operations": {"type": "array", "minItems": 1, "items": OPERATION}},
          ("request_id", "expected_draft_version", "operations")),
     tool("resolve_conflicts", "Explicitly choose draft or saved value for each listed conflict. Does not save. "
-         "Use exact collection/id/field from conflicts; '*' means the whole record. Re-review entire diff afterward.",
+         "Use exact collection/id/field from conflicts; '*' means the whole record. " + SAVE_POLICY,
          {**EXPECTED, "resolutions": {"type": "array", "minItems": 1, "items": schema({
              "collection": {"type": "string", "enum": list(COLLECTIONS)}, "id": STR, "field": STR,
              "choice": {"type": "string", "enum": ["draft", "saved"]}}, ("collection", "id", "field", "choice"))}},
          ("request_id", "expected_draft_version", "resolutions")),
-    tool("save_draft", "SAVE the entire reviewed private draft into shared household map. ONLY call after the human "
-         "explicitly asks to save following a summary of ALL full_diff. Proposal or correction is never permission to save. "
-         "Pass exact reviewed draft_version and map_version. On stale version, review entire diff again and ask for new save "
-         "instruction. On transport loss query get_save_receipt with this request_id before retrying; identical retries are safe.",
+    tool("save_draft", "SAVE the entire private draft into the shared household map. " + SAVE_POLICY +
+         " On transport loss query get_save_receipt with this request_id before retrying; identical retries are safe. "
+         "Check receipt.saved_diff against the intended whole draft and confirm what ACTUALLY saved from the receipt.",
          {**REQUEST, "draft_version": INT, "reviewed_map_version": INT},
          ("request_id", "draft_version", "reviewed_map_version")),
     tool("read_history", "Read saved change groups with actor, date, and exact diff. Other people's private drafts are excluded.",
          {}, read_only=True),
-    tool("undo_as_draft", "Propose reversal of one saved change group in your private draft; never immediately save. "
+    tool("undo_as_draft", "Propose reversal of one saved change group in your private draft; this tool does not save. "
          "Keep unrelated later changes. Later changes to affected fields become explicit conflicts. "
          "If a current private proposal overlaps, reject without changing the draft; resolve that proposal first. "
-         "Review ALL resulting draft changes and wait for human save instruction.",
+         + SAVE_POLICY,
          {**EXPECTED, "group_id": STR}, ("request_id", "expected_draft_version", "group_id")),
     tool("get_save_receipt", "After a missing save response, look up durable save receipt by original request ID. "
          "Returns change group, actor, date, exact saved diff; read-only and limited to your own save requests.",
@@ -413,10 +421,13 @@ def inject(state, user, scenario):
     if scenario == "lose-next-receipt":
         state["lose_next_receipt"] = True
         return {"scenario": scenario, "effect": "Next successful save commits then closes MCP stdout without returning receipt"}
-    if scenario == "draft-edit":
+    if scenario in ("draft-edit", "draft-price-edit"):
         draft = state["drafts"][user]
         rebase(state, user)
-        draft["target"]["objects"]["subscription-tonrum"]["note"] = "Ändrad av samma användare i annan klient"
+        if scenario == "draft-price-edit":
+            draft["target"]["objects"]["subscription-tonrum"]["price"] = 239
+        else:
+            draft["target"]["objects"]["subscription-tonrum"]["note"] = "Ändrad av samma användare i annan klient"
         draft["version"] += 1
         return {"scenario": scenario, **view(state, user)}
     other = "kim" if user == "alex" else "alex"
@@ -440,7 +451,7 @@ def main():
     parser.add_argument("--state", required=True, help="Scratch JSON path; use a clearly PROTOTYPE-named path")
     parser.add_argument("--user", choices=USERS, default="alex", help="Authenticated prototype identity; fixed outside MCP")
     parser.add_argument("--reset", action="store_true", help="Replace ONLY this scratch state with synthetic fixture and exit")
-    parser.add_argument("--inject", choices=("draft-edit", "independent-save", "conflicting-save", "lose-next-receipt"))
+    parser.add_argument("--inject", choices=("draft-edit", "draft-price-edit", "independent-save", "conflicting-save", "lose-next-receipt"))
     args = parser.parse_args()
     storage = StateFile(args.state)
     if args.reset:
@@ -465,11 +476,10 @@ def main():
                 supported = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
                 result = {"protocolVersion": requested if requested in supported else "2025-11-25",
                           "capabilities": {"tools": {"listChanged": False}},
-                          "serverInfo": {"name": "skyttel-THROWAWAY-PROTOTYPE", "version": "0.0.1"},
+                          "serverInfo": {"name": "skyttel-THROWAWAY-PROTOTYPE", "version": "0.0.2"},
                           "instructions": "SYNTHETIC HOUSEHOLD PROTOTYPE. Read saved map and entire own existing draft first. "
                           "Ask human to disambiguate people. All modifications except save_draft are private proposals. "
-                          "Summarize ALL full_diff, not only your latest changes; then await explicit human instruction to save. "
-                          "A correction does not imply save. Never claim saved without a receipt. Identity is fixed by host process."}
+                          + SAVE_POLICY + " Never claim saved without a receipt. Identity is fixed by host process."}
             elif method == "ping":
                 result = {}
             elif method == "tools/list":

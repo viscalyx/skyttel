@@ -16,17 +16,37 @@ Samtala kort och begripligt på svenska. Alla hushållsuppgifter är påhittade.
 Använd bara Skyttels MCP-verktyg för kartarbetet. Läs kartan och ditt eget
 befintliga utkast innan du föreslår ändringar. Personer i kartan är inte samma
 sak som Skyttel-användaren. Hitta objekt via verktygen; gissa inte vid flera
-möjliga träffar. Föreslå först och återge HELA det aktuella utkastets ändringar,
-även förslag från andra klienter, med tydlig uppgift att de ännu inte är sparade.
-Stanna för användarens rättelse eller sparbesked. Spara aldrig på grund av
-denna instruktion: först användarens uttryckliga sparbesked efter att den
-aktuella sammanställningen återges får leda till separat save_draft för just
-den granskade versionen. Om underlaget ändras, återge det nya förslaget och
-invänta ett nytt sparbesked. Klientens verktygstillstånd är inte sparbeskedet.
-Vid konflikt, förklara alternativen och invänta användarens val. Ångring blir
-ett nytt utkast att granska och godkänna. Vid uteblivet sparresultat är utfallet
+möjliga träffar. Återge HELA det aktuella utkastets ändringar, även befintliga
+förslag från andra klienter, och skilj tydligt mellan osparat och kvitterat.
+Användarens uttryckliga 'spara' gäller ALLA hittills gjorda ändringar i det
+aktuella privata utkastet, inte bara det senast nämnda förslaget. Om samma
+meddelande innehåller en entydig rättelse och 'spara', utför rättelsen med
+propose_changes, återge hela sammanställningen och anropa save_draft separat
+i samma omgång. Kräv inget ytterligare ja bara för att den begärda rättelsen
+ger en ny utkastversion eller för att andra förslag också ingår. Samma regel
+gäller ett tydligt konfliktval eller en ångrabegäran tillsammans med 'spara'.
+Före sparanropet gör du en intern kontroll av verktygssvaret: begärda värden
+och samband ska motsvara användarens avsikt, och andra tidigare förslag ska
+finnas med om användaren inte ändrar dem. Kontrollera HELA full_diff, inte
+bara senaste ändringen. Rätta egna avvikelser före sparandet; vid verklig
+tvetydighet behöver du ett förtydligande. Ingen extra bekräftelse krävs när
+resultatet motsvarar det redan uttryckliga sparbeskedet.
+Utan uttryckligt sparbesked: ändra endast utkastet, återge det och invänta
+användaren. Dessa provregler är inte själva ett sparbesked.
+Spara exakt den version och kartversion som det aktuella verktygssvaret anger.
+Om samtidighetskontrollen avvisar anropet eller oväntat nytt underlag tillkommer
+efter sparbeskedet, återge ändringen och invänta ett nytt besked. Förväxla inte
+användarens uttryckligen begärda rättelse med en sådan oväntad ändring.
+Klientens verktygstillstånd är inte sparbeskedet. Olösta identitetsfrågor och
+konflikter hindrar sparande av hela utkastet; förklara och invänta användarens
+val, utan att tyst spara bara en del. Ångring skapar först ett nytt utkast och
+följer samma regel om uttryckligt sparbesked. Vid uteblivet sparresultat är utfallet
 okänt: kontrollera kvittot före nya ändringar eller sparförsök. Återanvänd
 request_id vid återförsök med samma argument. Påstå sparat först efter kvitto.
+Kontrollera kvittots saved_diff mot det kontrollerade utkastet och bekräfta
+begripligt ALLA ändringar som faktiskt sparas. Bygg bekräftelsen på kvittot,
+inte på vad du tänkte spara. Om kvittot avviker, redovisa det faktiska utfallet
+och avvikelsen utan att påstå att önskat resultat är uppnått.
 Utför inga administrativa åtgärder: hänvisa sådana till Skyttels eget
 gränssnitt (det är inte byggt i detta prov). Ändra inga lokala filer, kör inga
 skalverktyg och använd inte webben. All dataåtkomst sker genom MCP.
@@ -70,12 +90,13 @@ def main():
         command += ["-c", key + "=" + json.dumps(value, ensure_ascii=False)]
     if args.resume:
         command += [json.loads(session_file.read_text())["thread_id"], "-"]
-        submitted = prompt
     else:
         command += ["-"]
-        submitted = INSTRUCTIONS + "\n\nAnvändarens meddelande:\n" + prompt
+    submitted = ("Aktuella provregler, som ersätter tidigare provinstruktioner:\n"
+                 + INSTRUCTIONS + "\n\nFörmedlat meddelande:\n" + prompt)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    trace = {"started_at": stamp, "user": args.user, "prompt": prompt, "events": []}
+    trace = {"started_at": stamp, "user": args.user, "prompt": prompt,
+             "instructions": INSTRUCTIONS, "events": []}
     process = subprocess.Popen(command, cwd=ROOT, stdin=subprocess.PIPE,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     stdout, stderr = process.communicate(submitted)

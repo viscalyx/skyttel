@@ -26,10 +26,23 @@ Sparbeskedet är en regel för AI-klienten och människans samtal. Servern kan
 kontrollera versioner och blockerare, men autentiserar inte själva
 sparbeskedet. Provet avgör hur klienten hanterar den gränsen.
 
+”Spara” omfattar alla hittills gjorda ändringar i det egna utkastet.
+En entydig rättelse och ett sparbesked i samma meddelande kräver inte
+ytterligare ja, även om andra förslag ingår. Klienten uppdaterar utkastet,
+återger hela sammanställningen och sparar den aktuella versionen genom
+ett separat anrop. Den nya regeln ändrar klientens instruktioner;
+serverns versionskontroller, atomiska sparande och konflikthinder består.
+
 JSON-filen och `fcntl`-låset simulerar beständighet och samtidighet på samma
 dator. De ger inga produktionsgarantier för behörigheter, lagring eller
 nätverksfel. Kör bara med syntetiska uppgifter. Fixture och scenariokontroller
 är processargument utanför MCP, inte administratörsverktyg för modellen.
+
+`--inject draft-price-edit` simulerar att samma användare ändrar
+utkastets pris till 239 kr i ett annat fönster. Det höjer utkastversionen
+utan att spara kartan. `--inject conflicting-save` simulerar att en
+annan användare sparar priset 199 kr. Dessa scenarier används av
+provledaren för att pröva inaktuell granskning och konflikt.
 
 Objektborttagning tar inte automatiskt bort samband. Ett förslag som tar bort
 ett objekt behöver också ange vilka samband som ska tas bort eller rättas;
