@@ -34,6 +34,14 @@ input[type=checkbox]{min-height:24px;min-width:24px;vertical-align:middle}
 #editorDialog.compact-editor{--dialog-gap:4px}
 #editorDialog.compact-editor .dialog-bar{position:static;padding:4px 8px}
 #editorDialog.compact-editor #detailPanel{padding:8px}
+#objectActions{position:fixed;inset:calc(var(--visual-top,0px) + var(--visual-height,100dvh) - 8px) auto auto calc(var(--visual-left,0px) + var(--visual-width,100vw)/2);transform:translate(-50%,-100%);margin:0;width:min(360px,calc(var(--visual-width,100vw) - 16px));max-height:calc(var(--visual-height,100dvh) - 16px);height:auto;overflow:auto;overscroll-behavior:contain;padding:14px;border:1px solid #b9c9bd;border-radius:14px;background:#f3f4ef;color:#263c33}
+#objectActions::backdrop{background:#06171099}
+#objectActions h2{overflow-wrap:anywhere;margin:0 0 4px}
+#objectActions p{font-size:13px;margin:0 0 10px}
+#objectActions button{display:block;width:100%;margin-top:6px;text-align:left}
+#objectActions .remove-action{color:#8b2d26}
+#objectActions #actionCancel{text-align:center;margin-top:12px}
+.space{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .map-mode{overflow:hidden}
 .map-mode>header,.map-mode>.skip,.map-mode #main>:not(.layout):not(#status){display:none}
 .map-mode #mapPanel{position:fixed;inset:var(--visual-top,0px) 0 auto;height:var(--visual-height,100dvh);padding:0;border:0;border-radius:0;z-index:10;display:block;background:#122a23}

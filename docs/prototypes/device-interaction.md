@@ -36,6 +36,12 @@ i de olika presentationerna.
 - Öppna karta över hela webbytan fyller webbläsarens synliga arbetsyta.
   Redigera val öppnar samma detaljpanel i en dialog. Till listan återgår
   till listläget; webbläsarens egen helskärmsfunktion behövs inte.
+- Håll fingret stilla på ett objekt i kartan för att öppna objektmenyn.
+  Menyn erbjuder Redigera objekt, Visa kopplingar och Ta bort objekt.
+  Borttagning öppnar detaljpanelens befintliga beskrivning av objektet
+  och berörda samband, följd av Föreslå borttagning. Högerklick på
+  objektet öppnar samma meny på datorn. Listan och Redigera val
+  behåller motsvarande vanliga åtgärder utan långtryck.
 - Listan erbjuder sökning, typfilter, nytt objekt och nytt samband.
   Detaljpanelen erbjuder namnändring, redigering av samband och föreslagen
   borttagning. Den erbjuder också knappar för objektens placering.
@@ -58,6 +64,14 @@ och gör dess reglage otillgängligt. Kameran byter läge direkt utan
 animation. Listläget kräver ingen kamerarörelse.
 
 ## Pekgester och avbrutna drag
+
+Ett stilla tryck på ett objekt öppnar menyn efter 550 millisekunder.
+Vanlig dragning börjar direkt efter sin befintliga rörelsetröskel och
+avbryter väntan på menyn. Ett andra finger, släpp, avbruten pekhändelse,
+förlorad pekfångst eller fönsterfokus avbryter också väntan. När menyn
+öppnas måste alla fingrar lyftas innan ett menyval kan göras. Släppet
+från långtrycket ska inte aktivera eller stänga menyn av misstag.
+Tidsgränsen och rörelsetröskeln är hypoteser att pröva på iPhone.
 
 Ett finger kan välja, flytta ett objekt i kamerans bildplan eller rotera
 tom rymd. När första fingret håller ett objekt och ett andra finger
@@ -127,6 +141,21 @@ Agentens programstyrda prov genom Chrome-tillägget omfattar:
 - Att oskickad namntext och valt objekt bevaras när Tab flyttar fokus
   till formulärknappen och Escape trycks. Escape-skyddet omfattar hela
   formuläret, även knapparna.
+- Objektmenyn via högerklick vid 390 × 844 och 844 × 390 pixlar. Alla
+  menyknappar ryms i den synliga ytan och har minst 44 pixlars höjd.
+- Menyns namnändring och Visa kopplingar, samt borttagning med besked om
+  Tonmoln familj och fyra kopplingar. Förslaget tar bort dessa ur utkastet
+  och behåller dem i sparat tillstånd. Kasta förslag återställer dem.
+- Menyn stängs med Avbryt, Escape eller tryck på bakgrunden. Valet
+  behålls och fokus återgår till Redigera val. Vanlig objektdragning
+  fungerar efteråt utan att ändra hushållsuppgifter eller kamera.
+- Fokus efter Spara, Ångra och Kasta förslag återgår till ändringslistans
+  fasta rubrik. Rubrikens identifierare sitter på rätt element även
+  när den valda detaljen ritas om. Inga nya JavaScript-fel i omprovet.
+
+Borttagningsvalet rullar fram hela det öppna beskedet och dess knapp när
+utrymmet räcker. Menyprovet använder högerklick i Chrome på Mac;
+långtryckets händelseföljd i iOS och känslan med finger är inte verifierade.
 
 Detta är körning i Chrome på den fysiska Macen med programstyrd inmatning.
 Det verifierar inte känslan i fysisk mus eller styrplatta, Shift-dragning,
@@ -150,6 +179,13 @@ kamera med återställd placering, lyft av respektive finger, avbrott,
 vanlig nypning med extra finger samt Shift. Dessa kontroller använder
 ersättningar för ritning och DOM; de bevisar inte hur iOS levererar
 pekhändelser eller hur gesten känns med två fingrar.
+
+Efter tillägget av objektmenyn passerar 34 logikkontroller: de nio
+gestfallen ovan och 25 fall för långtryck, tidsgräns, avbrott, släpp,
+efterföljande klick, nytt tryck, tangentbordsklick och högerklick.
+Den tillfälliga Node-kontrollen använder verkliga händelsehanterare
+med simulerad timer och angiven händelseordning. Den verifierar inte
+webbläsarens pekfångst, dialogfokus eller klicksyntes på iOS.
 
 Dialogprovet omfattar också minskning av den synliga höjden från
 844 × 390 till 844 × 140 medan namnfältet har fokus. Med den uppdaterade
@@ -178,6 +214,13 @@ familj, byt Från till Kim och föreslå ändringen. Beställaren bekräftar
 också att samlat sparande behåller Kim som betalare och att Ångra
 senaste sparandet återför betalaren till Alex. Resultat och
 bekräftelser bedöms fungera i det fysiska provet.
+
+Beställaren bekräftar att nästa prov är tydligt: skapa tjänsten Bokljus,
+lägg till Lo använder Bokljus, spara och föreslå borttagning av Bokljus.
+Det framgår att tjänsten och dess samband föreslås tas bort tillsammans.
+Beställaren efterfrågar därefter en meny via långtryck på kartobjekt,
+med redigering och borttagning direkt åtkomliga från rymdkartan.
+Objektmenyn ovan prövar detta önskemål; fysisk återkoppling återstår.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka
@@ -249,7 +292,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Byte av betalare, samlat sparande och ångring fungerar; övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar; objektmeny och övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
@@ -281,6 +324,10 @@ prövas. De emulerade storlekarna ovan ersätter ingen rad i matrisen.
 6. Växla mellan lista, karta och dialog under ett pågående utkast.
    Kontrollera formulärtext, ändringslista och objektplaceringar.
    Samla beställarens bedömning innan ärendet kan avgöras.
+7. Håll ett objekt stilla i drygt en halv sekund. Lyft fingret och välj
+   Redigera objekt, Visa kopplingar eller Ta bort objekt. Kontrollera att
+   släppet inte väljer något av misstag, att Avbryt fungerar och att
+   vanlig dragning samt ett andra finger avbryter väntan på menyn.
 
 ## Preliminär komplexitetsbedömning
 

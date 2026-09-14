@@ -15,7 +15,7 @@ document.querySelector('.layout').prepend($('listPanel'));
 $('listPanel').classList.add('panel');
 $('listPanel').querySelector('h3').outerHTML='<h2 id="listHeading" tabindex="-1">Hitta och välj objekt <span id="count" class="badge"></span></h2>';
 $('detailPanel').querySelector('h2').id='detailHeading';$('detailHeading').tabIndex=-1;
-$('detailPanel').querySelector('h3').id='changesHeading';$('changesHeading').tabIndex=-1;
+$('detailPanel').querySelector(':scope > h3').id='changesHeading';$('changesHeading').tabIndex=-1;
 $('detailPanel').setAttribute('aria-labelledby','detailHeading');
 $('listPanel').insertAdjacentHTML('beforeend',`<div class="quick-actions"><details id="addObjectDetails"><summary>Lägg till objekt</summary><form id="newObject"><label>Namn<input name="name" required placeholder="Exempel: Bokljus" autocomplete="off"></label><label>Typ<select name="type">${['Person','Tjänst','Abonnemang','Tjänstekonto','Kort','Bankkonto','E-postadress'].map(t=>'<option>'+t+'</option>').join('')}</select></label><button class="primary">Föreslå nytt objekt</button></form></details><details id="addRelationDetails"><summary>Lägg till samband</summary><form id="newRelation"><label>Från<select name="from"></select></label><label>Samband<select name="kind">${['använder','betalar','äger','betalas med','hör till','gäller tjänstekonto','inloggningsadress','kontaktadress','ger tillgång till'].map(t=>'<option>'+t+'</option>').join('')}</select></label><label>Till<select name="to"></select></label><button class="primary">Föreslå nytt samband</button></form><p class="hint">Provet erbjuder exempel på samband. Det prövar redigeringen, inte hela domänens regler.</p></details></div>`);
 // Search belongs to the list route and remains available without spatial navigation.
@@ -30,11 +30,44 @@ const cameraTools=document.createElement('div');cameraTools.id='cameraTools';
 let cameraChild=$('viewControls');while(cameraChild){const next=cameraChild.nextSibling;cameraTools.append(cameraChild);cameraChild=next;}
 $('spaceArea').append(cameraTools);
 $('viewControls').insertAdjacentHTML('beforeend','<button data-pan="left">Panorera ←</button><button data-pan="right">Panorera →</button><button data-pan="up">Panorera ↑</button><button data-pan="down">Panorera ↓</button>');
-cameraTools.insertAdjacentHTML('beforeend','<p id="motionNote">Kameran byter läge direkt, utan animation. Listläget kräver ingen rumslig navigering.</p>');
+cameraTools.insertAdjacentHTML('beforeend','<p>Håll fingret stilla på ett objekt i drygt en halv sekund för att öppna menyn. Lyft fingret och välj Redigera objekt, Visa kopplingar eller Ta bort objekt. På datorn kan du högerklicka.</p><p id="motionNote">Kameran byter läge direkt, utan animation. Listläget kräver ingen rumslig navigering.</p>');
 const shellBar=document.createElement('div');shellBar.id='mapShellBar';
 shellBar.innerHTML='<button id="backToList">Till listan</button><button id="editMapSelection">Redigera val</button><button id="toggleCamera" aria-expanded="false">Kartreglage</button><button id="mapReview">Ändringar</button><span id="mapSelection"></span>';
 $('mapPanel').prepend(shellBar);
 document.body.insertAdjacentHTML('beforeend','<dialog id="editorDialog" aria-labelledby="detailHeading"><div class="dialog-bar"><button id="closeEditor">Tillbaka till kartan</button></div><p id="dialogStatus" class="notice" role="status" aria-live="polite" aria-atomic="true"></p></dialog>');
+document.body.insertAdjacentHTML('beforeend','<dialog id="objectActions" aria-labelledby="objectActionsTitle" aria-describedby="objectActionsHint"><h2 id="objectActionsTitle"></h2><p id="objectActionsHint">Välj vad du vill göra med objektet.</p><button id="actionEdit">Redigera objekt</button><button id="actionFocus">Visa kopplingar</button><button id="actionRemove" class="remove-action">Ta bort objekt…</button><button id="actionCancel">Avbryt</button></dialog>');
+let objectActionsNode=null;
+function closeObjectActions(restoreFocus=true){
+ if(typeof cancelMapLongPress==='function')cancelMapLongPress();
+ if(!$('objectActions').open)return;
+ $('objectActions').close();objectActionsNode=null;
+ if(restoreFocus){
+  const target=presentation==='map'?$('editMapSelection'):$('detailHeading');
+  if(!target.disabled)target.focus({preventScroll:true});
+ }
+}
+function openObjectActions(id){
+ if(!draft.objects[id]||$('editorDialog').open||presentation==='list')return;
+ objectActionsNode=id;selected={node:id};render();
+ $('objectActionsTitle').textContent=name(id);
+ if(!$('objectActions').open)$('objectActions').showModal();
+ $('actionEdit').focus({preventScroll:true});
+}
+function chooseObjectAction(action){
+ const id=objectActionsNode;closeObjectActions(false);
+ if(!id||!draft.objects[id])return;
+ selected={node:id};render();
+ if(action==='focus'){focusNode(id);(presentation==='map'?$('editMapSelection'):$('detailHeading')).focus({preventScroll:true});return;}
+ openEditor();
+ if(action==='remove'){
+  const button=$('removeNode'),section=button.closest('details');
+  section.open=true;section.querySelector('summary').focus({preventScroll:true});
+  queueEditorFocusVisibility();
+ }
+}
+$('actionEdit').onclick=()=>chooseObjectAction('edit');$('actionFocus').onclick=()=>chooseObjectAction('focus');$('actionRemove').onclick=()=>chooseObjectAction('remove');$('actionCancel').onclick=()=>closeObjectActions();
+$('objectActions').addEventListener('cancel',e=>{e.preventDefault();closeObjectActions();});
+$('objectActions').addEventListener('click',e=>{if(e.target!==$('objectActions'))return;const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeObjectActions();});
 const originalNotice=notice;
 notice=function(message){originalNotice(message);$('dialogStatus').textContent=message;};
 // The list/detail route supplies all content to keyboard and screen-reader users.
@@ -42,6 +75,7 @@ notice=function(message){originalNotice(message);$('dialogStatus').textContent=m
 $('space').setAttribute('aria-hidden','true');
 let lastDetailReturn=null;
 function openEditor(review=false){
+ closeObjectActions(false);
  if(presentation==='map'){
   lastDetailReturn=document.activeElement;
   $('editorDialog').append($('detailPanel'));
@@ -55,6 +89,7 @@ function closeEditor(){if($('editorDialog').open)$('editorDialog').close();}
 $('editorDialog').addEventListener('close',()=>{document.querySelector('.layout').append($('detailPanel'));if(lastDetailReturn?.isConnected&&!lastDetailReturn.disabled&&lastDetailReturn.getClientRects().length)lastDetailReturn.focus();else if(presentation==='map')$('backToList').focus();});
 $('closeEditor').onclick=closeEditor;
 function setPresentation(mode){
+ closeObjectActions(false);
  closeEditor();presentation=mode;
  document.body.classList.toggle('list-mode',mode==='list');document.body.classList.toggle('map-mode',mode==='map');
  $('listMode').setAttribute('aria-pressed',String(mode==='list'));$('combinedMode').setAttribute('aria-pressed',String(mode==='combined'));
@@ -103,7 +138,7 @@ $('newRelation').onsubmit=e=>{e.preventDefault();const values=new FormData(e.tar
 for(const id of ['save','discard','undo']){const action=$(id).onclick;$(id).onclick=()=>{action();if($('editorDialog').open)$('changesHeading').focus();else $('status').focus();};}
 // Escape inside a form or modal must not discard field text or reset map selection.
 const originalKeydown=window.onkeydown;
-window.onkeydown=e=>{if(e.key==='Escape'&&($('editorDialog').open||e.target.closest('form,input,textarea,select,[contenteditable]')))return;originalKeydown(e);};
+window.onkeydown=e=>{if(e.key==='Escape'&&($('editorDialog').open||$('objectActions').open||e.target.closest('form,input,textarea,select,[contenteditable]')))return;originalKeydown(e);};
 function applyMotionPreference(){if(motionPreference.matches)$('universe').checked=false;$('universe').disabled=motionPreference.matches;$('motionNote').textContent=motionPreference.matches?'Minskad rörelse är på i systemet. Stjärnbakgrunden är avstängd. Kameran byter läge utan animation; allt kartarbete går via listan.':'Kameran byter läge direkt, utan animation. Listläget kräver ingen rumslig navigering.';draw();}
 motionPreference.addEventListener('change',applyMotionPreference);
 let editorFocusFrame;
@@ -118,6 +153,8 @@ function queueEditorFocusVisibility(){
   let target=active.getBoundingClientRect();
   const label=active.closest('label')?.getBoundingClientRect();
   if(label&&label.height<=bottom-top)target=label;
+  const section=active.matches('summary')&&active.closest('details[open]')?.getBoundingClientRect();
+  if(section&&section.height<=bottom-top)target=section;
   if(target.top<top)dialog.scrollTop+=target.top-top;
   else if(target.bottom>bottom)dialog.scrollTop+=target.bottom-bottom;
  });

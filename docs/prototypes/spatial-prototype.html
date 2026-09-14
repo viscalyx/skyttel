@@ -282,7 +282,7 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
  $('overview').onclick=overview;$('focus').onclick=()=>focusNode(selected.node);$('showAll').onclick=showAll;
  window.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();heightTrace=null;showAll();}else if(e.key==='Shift'&&!e.target.closest('input,textarea,select,[contenteditable]')){shiftHeld=true;draw();}};
  window.addEventListener('keyup',e=>{if(e.key==='Shift'){shiftHeld=false;draw();}});
- window.addEventListener('blur',()=>{shiftHeld=false;heightTrace=null;drag=null;anchorDrag=null;pinch=null;touches.clear();axesUntil=0;clearTimeout(axesTimer);draw();});
+ window.addEventListener('blur',()=>{cancelMapLongPress();consumedMapPointers.clear();shiftHeld=false;heightTrace=null;drag=null;anchorDrag=null;pinch=null;touches.clear();axesUntil=0;clearTimeout(axesTimer);draw();});
  $('ai').onclick=()=>{draft.objects.aiService={name:'Ljudstrimma',type:'Tjänst'};draft.objects.aiSub={name:'Ljudstrimma familj',type:'Abonnemang'};positions.aiService=[145,-280,-200];positions.aiSub=[-80,-270,-140];draft.relations.aiOffer={from:'aiSub',kind:'ger tillgång till',to:'aiService'};draft.relations.aiPayer={from:'kim',kind:'betalar',to:'aiSub'};types();notice('Simulerat förslag: Kim betalar ett nytt familjeabonnemang hos Ljudstrimma. Befintliga positioner och kameran ligger kvar. Förslaget kan ligga utanför aktivt fokus eller filter; ändringslistan visar allt.');render();};
  $('save').onclick=()=>{history.push(clone(saved));saved=clone(draft);if(selected.removed)selected={};notice('Hela förslaget är bekräftat sparat i prototypens minne.');render();};
  $('discard').onclick=()=>{draft=clone(saved);selected={};if(focus&&!draft.objects[focus])focus=null;types();notice('Förslagen är kastade. Sparad exempelkarta visas.');render();};
@@ -292,6 +292,56 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
  function moveObject(id,dx,dy,dz){const yaw=$('flat').checked?0:view.yaw,pitch=$('flat').checked?0:view.pitch;const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);const yy=dy*cp+dz*sp,zz=-dy*sp+dz*cp;const world=[dx*cy-zz*sy,yy,dx*sy+zz*cy];positions[id]=positions[id].map((v,i)=>v+world[i]);}
  let drag=null,dragged=false,anchorDrag=null,pinch=null,controlTarget=null,shiftHeld=false,heightTrace=null,axesUntil=0,axesTimer=null;
  const svg=$('space'),gestureSurface=svg.parentElement,touches=new Map();
+ let mapLongPressTimer=null,mapLongPressCandidate=null,suppressMapCompatibilityClick=false;
+ const consumedMapPointers=new Set(),consumedMapClicks=new Set();
+ // Cancel only the pending hold; menu transitions must keep a consumed touch latched.
+ function cancelMapLongPress(){clearTimeout(mapLongPressTimer);mapLongPressTimer=null;mapLongPressCandidate=null;}
+ function isConsumedMapPointer(e){
+  if(e.type==='click'&&e.detail===0&&e.pointerType!=='touch')return false;
+  return consumedMapPointers.has(e.pointerId)||consumedMapClicks.has(e.pointerId)||(e.type==='click'&&suppressMapCompatibilityClick&&e.detail>0&&!('pointerId' in e));
+ }
+ function consumeMapEvent(e){e.preventDefault();e.stopImmediatePropagation();}
+ function tryOpenObjectActions(nodeId,consumeTouch=false){
+  if(!draft.objects[nodeId]||typeof openObjectActions!=='function')return false;
+  cancelMapLongPress();
+  if(consumeTouch){
+   for(const id of touches.keys()){consumedMapPointers.add(id);consumedMapClicks.add(id);}
+   suppressMapCompatibilityClick=true;
+  }
+  drag=null;anchorDrag=null;pinch=null;shiftHeld=false;heightTrace=null;dragged=true;touches.clear();
+  openObjectActions(nodeId);return true;
+ }
+ function startMapLongPress(e,nodeId){
+  if(e.pointerType!=='touch'||!draft.objects[nodeId]||typeof openObjectActions!=='function')return;
+  const candidate={id:e.pointerId,nodeId,x:e.clientX,y:e.clientY};mapLongPressCandidate=candidate;
+  mapLongPressTimer=setTimeout(()=>{
+   if(mapLongPressCandidate!==candidate)return;
+   cancelMapLongPress();
+   if(drag?.id===candidate.id&&!dragged&&!anchorDrag&&!pinch&&touches.size===1&&touches.has(candidate.id))tryOpenObjectActions(candidate.nodeId,true);
+  },550);
+ }
+ // A held finger may be released over the newly opened native dialog.
+ window.addEventListener('pointerdown',e=>{
+  if(mapLongPressCandidate&&e.pointerType==='touch'&&e.pointerId!==mapLongPressCandidate.id)cancelMapLongPress();
+  if(consumedMapPointers.size){
+   if(e.pointerType==='touch'){consumedMapPointers.add(e.pointerId);consumedMapClicks.add(e.pointerId);consumeMapEvent(e);}
+   return;
+  }
+  consumedMapClicks.clear();suppressMapCompatibilityClick=false;
+ },{capture:true,passive:false});
+ window.addEventListener('pointermove',e=>{if(consumedMapPointers.has(e.pointerId))consumeMapEvent(e);},{capture:true,passive:false});
+ function finishConsumedMapPointer(e){
+  if(mapLongPressCandidate?.id===e.pointerId)cancelMapLongPress();
+  if(!isConsumedMapPointer(e))return;
+  consumedMapPointers.delete(e.pointerId);touches.delete(e.pointerId);consumeMapEvent(e);
+ }
+ window.addEventListener('pointerup',finishConsumedMapPointer,{capture:true,passive:false});
+ window.addEventListener('pointercancel',finishConsumedMapPointer,{capture:true,passive:false});
+ window.addEventListener('click',e=>{
+  if(!isConsumedMapPointer(e))return;
+  consumedMapClicks.delete(e.pointerId);suppressMapCompatibilityClick=false;consumeMapEvent(e);
+ },{capture:true,passive:false});
+ gestureSurface.addEventListener('lostpointercapture',cancelMapLongPress);
  $('heightGuide').onchange=render;
  $('keepAxes').onchange=render;
  $('axesCorner').onchange=()=>{showOrientation();render();};
@@ -305,12 +355,15 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
  function fingerCenter(ids){const [a,b]=ids.map(id=>touches.get(id));return localPoint((a.x+b.x)/2,(a.y+b.y)/2);}
  function beginPinch(){const ids=[...touches.keys()].slice(0,2);pinch={ids,distance:Math.max(1,fingerDistance(ids)),zoom:view.zoom,center:fingerCenter(ids),panX:view.panX,panY:view.panY};}
  gestureSurface.oncontextmenu=e=>{
-  if(!e.ctrlKey)return;
-  e.preventDefault();
   const hit=controlTarget||{node:e.target.closest('[data-node]')?.dataset.node,edge:e.target.closest('[data-edge]')?.dataset.edge};
-  if(hit.node)focusNode(hit.node);else if(!hit.edge&&!dragged)showAll();
+  if(e.ctrlKey){e.preventDefault();if(hit.node)focusNode(hit.node);else if(!hit.edge&&!dragged)showAll();return;}
+  if(hit.node||e.pointerType==='touch'||touches.size){
+   e.preventDefault();
+   if(hit.node&&e.pointerType!=='touch'&&!touches.size&&!consumedMapPointers.size&&!suppressMapCompatibilityClick)tryOpenObjectActions(hit.node);
+  }
  };
  gestureSurface.onpointerdown=e=>{
+  cancelMapLongPress();
   if(e.button===0||e.ctrlKey)showOrientation();
   controlTarget=e.ctrlKey?{node:e.target.closest('[data-node]')?.dataset.node,edge:e.target.closest('[data-edge]')?.dataset.edge}:null;
   const controlledNode=controlTarget?.node;
@@ -343,8 +396,10 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
   const edge=e.target.closest('[data-edge]');
   drag={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,...view,node,startPosition:node?[...positions[node]]:null,edge:edge?.dataset.edge,removed:edge?.dataset.removed==='true'};
   if(node){heightTrace={id:node,start:[...positions[node]]};shiftHeld=!!e.shiftKey;drag.heightActive=shiftHeld;}
+  if(node)startMapLongPress(e,node);
  };
  gestureSurface.onpointermove=e=>{
+  if(mapLongPressCandidate?.id===e.pointerId&&Math.hypot(e.clientX-mapLongPressCandidate.x,e.clientY-mapLongPressCandidate.y)>8)cancelMapLongPress();
   if(drag||anchorDrag||pinch)showOrientation();
   if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(anchorDrag){
@@ -375,6 +430,7 @@ function reset(){heightTrace=null;expandedLayoutReady=false;for(const key of Obj
   if(!drag||drag.id!==e.pointerId)return;
   const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
   if(!dragged&&Math.abs(dx)+Math.abs(dy)<=4)return;
+  cancelMapLongPress();
   if(!dragged)gestureSurface.setPointerCapture(e.pointerId);
   dragged=true;
   if(drag.node&&draft.objects[drag.node]){
