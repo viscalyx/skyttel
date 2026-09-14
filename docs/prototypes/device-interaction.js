@@ -35,7 +35,7 @@ const shellBar=document.createElement('div');shellBar.id='mapShellBar';
 shellBar.innerHTML='<button id="backToList">Till listan</button><button id="editMapSelection">Redigera val</button><button id="toggleCamera" aria-expanded="false">Kartreglage</button><button id="mapReview">Ändringar</button><span id="mapSelection"></span>';
 $('mapPanel').prepend(shellBar);
 document.body.insertAdjacentHTML('beforeend','<dialog id="editorDialog" aria-labelledby="detailHeading"><div class="dialog-bar"><button id="closeEditor">Tillbaka till kartan</button></div><p id="dialogStatus" class="notice" role="status" aria-live="polite" aria-atomic="true"></p></dialog>');
-document.body.insertAdjacentHTML('beforeend','<dialog id="objectActions" aria-labelledby="objectActionsTitle" aria-describedby="objectActionsHint"><h2 id="objectActionsTitle"></h2><p id="objectActionsHint">Välj vad du vill göra med objektet.</p><button id="actionEdit">Redigera objekt</button><button id="actionFocus">Visa kopplingar</button><button id="actionRemove" class="remove-action">Ta bort objekt…</button><button id="actionCancel">Avbryt</button></dialog>');
+document.body.insertAdjacentHTML('beforeend','<dialog id="objectActions" aria-labelledby="objectActionsTitle" aria-describedby="objectActionsHint"><h2 id="objectActionsTitle"></h2><p id="objectActionsHint">Välj vad du vill göra med objektet.</p><button id="actionEdit">Redigera objekt</button><button id="actionFocus">Visa kopplingar</button><button id="actionRemove" class="remove-action" aria-describedby="menuRemovalHint">Ta bort objekt</button><p id="menuRemovalHint" class="hint"></p><button id="actionCancel">Avbryt</button></dialog>');
 let objectActionsNode=null;
 function closeObjectActions(restoreFocus=true){
  if(typeof cancelMapLongPress==='function')cancelMapLongPress();
@@ -50,22 +50,26 @@ function openObjectActions(id){
  if(!draft.objects[id]||$('editorDialog').open||presentation==='list')return;
  objectActionsNode=id;selected={node:id};render();
  $('objectActionsTitle').textContent=name(id);
+ $('menuRemovalHint').textContent='Borttagningen omfattar också '+Object.values(draft.relations).filter(r=>r.from===id||r.to===id).length+' kopplingar och läggs i utkastet.';
  if(!$('objectActions').open)$('objectActions').showModal();
  $('actionEdit').focus({preventScroll:true});
 }
 function chooseObjectAction(action,id=objectActionsNode){
  closeObjectActions(false);
  if(!id||!draft.objects[id])return;
+ if(action==='remove'){
+  removeObject(id);
+  if(presentation==='map')$('mapReview').focus({preventScroll:true});
+  else{
+   const row=$('objects').querySelector('[data-id="'+CSS.escape(id)+'"]');
+   (row||$('listHeading')).focus({preventScroll:true});
+  }
+  return;
+ }
  selected={node:id};render();
  if(action==='focus'){focusNode(id);(presentation==='map'?$('editMapSelection'):$('detailHeading')).focus({preventScroll:true});return;}
  openEditor();
  if(action==='edit'&&!$('editorDialog').open)$('detailHeading').scrollIntoView({block:'start'});
- if(action==='remove'){
-  const button=$('removeNode'),section=button.closest('details');
-  section.open=true;section.querySelector('summary').focus({preventScroll:true});
-  if($('editorDialog').open)queueEditorFocusVisibility();
-  else section.scrollIntoView({block:'center'});
- }
 }
 $('actionEdit').onclick=()=>chooseObjectAction('edit');$('actionFocus').onclick=()=>chooseObjectAction('focus');$('actionRemove').onclick=()=>chooseObjectAction('remove');$('actionCancel').onclick=()=>closeObjectActions();
 $('objectActions').addEventListener('cancel',e=>{e.preventDefault();closeObjectActions();});
@@ -133,12 +137,15 @@ render=function(){
   button.before(row);row.append(button);
   const actions=document.createElement('div');actions.className='list-object-actions';
   actions.setAttribute('role','group');actions.setAttribute('aria-label','Åtgärder för '+name(id));
-  for(const [action,label,buttonId]of [['edit','Redigera','listEditObject'],['remove','Ta bort…','listRemoveObject']]){
+  for(const [action,label,buttonId]of [['edit','Redigera','listEditObject'],['remove','Ta bort','listRemoveObject']]){
    const shortcut=document.createElement('button');shortcut.id=buttonId;shortcut.textContent=label;
    shortcut.setAttribute('aria-label',(action==='edit'?'Redigera ':'Ta bort ')+name(id));
    shortcut.onclick=()=>chooseObjectAction(action,id);actions.append(shortcut);
   }
   row.append(actions);
+  const hint=document.createElement('p');hint.id='listRemovalHint';hint.className='hint';
+  hint.textContent='Borttagningen omfattar också '+Object.values(draft.relations).filter(r=>r.from===id||r.to===id).length+' kopplingar och läggs i utkastet.';
+  row.append(hint);$('listRemoveObject').setAttribute('aria-describedby',hint.id);
  });
  populateRelationForm();
  $('editMapSelection').disabled=!selected.node&&!selected.edge;

@@ -38,17 +38,19 @@ i de olika presentationerna.
   till listläget; webbläsarens egen helskärmsfunktion behövs inte.
 - Håll fingret stilla på ett objekt i kartan för att öppna objektmenyn.
   Menyn erbjuder Redigera objekt, Visa kopplingar och Ta bort objekt.
-  Borttagning öppnar detaljpanelens befintliga beskrivning av objektet
-  och berörda samband, följd av Föreslå borttagning. Högerklick på
-  objektet öppnar samma meny på datorn. Listan och Redigera val
+  Ta bort objekt lägger direkt borttagningen av objektet och dess
+  kopplingar i utkastet och stänger menyn. Sparat tillstånd behålls
+  tills Spara ändringarna används. Inget extra bekräftelsesteg visas.
+  Antalet kopplingar framgår vid knappen. Högerklick på objektet
+  öppnar samma meny på datorn. Listan och Redigera val
   behåller motsvarande vanliga åtgärder utan långtryck.
 - Listan erbjuder sökning, typfilter, nytt objekt och nytt samband.
   Valt objekt visar Redigera och Ta bort direkt under sin listrad.
   Fokus stannar på raden och Tab når åtgärderna. Redigera rullar fram
-  formuläret; Ta bort öppnar och visar beskedet om berörda kopplingar.
+  formuläret; Ta bort ändrar utkastet direkt och behåller fokus i listan.
   Åtgärderna visas bara för objekt som fortfarande finns i utkastet.
-  Detaljpanelen erbjuder namnändring, redigering av samband och föreslagen
-  borttagning. Den erbjuder också knappar för objektens placering.
+  Detaljpanelen erbjuder namnändring, redigering av samband och direkt
+  borttagning ur utkastet. Den erbjuder också knappar för placering.
 - Ändringslistan samlar utkastet. Spara ändringarna godkänner hela listan
   i prototypens minne. Kasta förslag och Ångra senaste sparandet prövar
   återgång. Objektens placeringar är separat presentationstillstånd.
@@ -160,16 +162,21 @@ Agentens programstyrda prov genom Chrome-tillägget omfattar:
   når Redigera samt Ta bort. Även sista radens båda 44 pixlar höga
   knappar ryms i listans rullyta. Redigera visar rätt namnformulär högt
   på sidan och oskickad namntext bevaras vid nytt val av samma objekt.
-- Listans Ta bort visar först beskedet utan att ändra utkastet.
-  Föreslagen borttagning av Tonmoln familj tar med fyra kopplingar;
-  Kasta förslag återställer objektet. Borttagning av ett osparat
-  Bokljus-förslag lämnar ingen ändring mot den sparade exempelkartan.
+- Listans Ta bort, aktiverad med Enter, tar direkt bort Tonmoln familj
+  och fyra kopplingar ur utkastet. Sparat tillstånd och placeringar
+  behålls. Kasta förslag återställer objektet och kopplingarna.
   Snabbåtgärderna ryms även vid 844 × 390 utan vågrät överströmning.
-  Kartmenyns borttagningsväg fungerar i det kompletterande omprovet.
+- Kartmenyns Ta bort stänger menyn, ändrar utkastet direkt och öppnar
+  ingen editor. Fokus återgår till Ändringar och kameran ligger kvar.
+  Spara följt av Ångra återställer objektet, fyra kopplingar och dess
+  placering. Ett borttaget objekt ligger inte kvar som valt efter Spara.
+- Detaljpanelens Ta bort tar direkt bort ett nytt osparat Bokljus
+  tillsammans med ett nytt samband från Lo. Det lämnar ingen ändring
+  mot sparat tillstånd, inga snabbknappar eller ogiltigt objektval.
+  Omprovet ger inga JavaScript-fel.
 
-Borttagningsvalet rullar fram hela det öppna beskedet och dess knapp när
-utrymmet räcker. Menyprovet använder högerklick i Chrome på Mac;
-långtryckets händelseföljd i iOS och känslan med finger är inte verifierade.
+Det programstyrda menyprovet använder högerklick i Chrome på Mac.
+Beställarens fysiska resultat för långtryck på iPhone redovisas nedan.
 
 Detta är körning i Chrome på den fysiska Macen med programstyrd inmatning.
 Det verifierar inte känslan i fysisk mus eller styrplatta, Shift-dragning,
@@ -246,6 +253,16 @@ Beställaren återkopplar att detta ser ut att fungera i iPhone-provet.
 Det ger positiv återkoppling på snabbåtgärderna och deras placering
 vid listval. Återkopplingen redovisar inte varje åtgärd separat.
 Kartmenyns öppning och släpp är bekräftade enligt ovan.
+
+Beställaren avvisar mellansteget Ta bort följt av Föreslå borttagning:
+Ta bort ska lägga borttagningen i utkastet direkt. Beställaren
+förtydligar att det sparade objektet inte ska tas bort direkt.
+Prototypen följer detta för objekt i listan, kartmenyn och detaljpanelen.
+Sparat tillstånd ändras först med Spara ändringarna; det gemensamma
+sparandet och återgången behålls.
+Detaljpanelens relationsknapp heter också Ta bort samband.
+Detta ersätter upplägget med ett separat borttagningsbesked och en
+andra knapp. Fysisk återkoppling på den direkta åtgärden återstår.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka

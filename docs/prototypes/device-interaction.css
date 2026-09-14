@@ -18,6 +18,9 @@ input[type=checkbox]{min-height:24px;min-width:24px;vertical-align:middle}
 .list-object-actions{display:flex;gap:6px;margin-top:6px}
 .list-object-actions button{flex:1;min-width:0}
 #listRemoveObject{color:#8b2d26}
+.object-removal{margin:16px 0}
+#removeNode,#removeEdge{color:#8b2d26}
+.selected-object-row>.hint{margin:6px 0 0}
 .layout{grid-template-columns:minmax(230px,300px) minmax(0,1fr) 340px}
 #listPanel{grid-column:1}
 #mapPanel{grid-column:2}
