@@ -41,7 +41,7 @@ input[type=checkbox]{min-height:24px;min-width:24px;vertical-align:middle}
 .map-mode #space{height:100%;width:100%}
 .map-mode #cameraTools{position:absolute;bottom:0;left:0;right:0;max-height:45%;overflow:auto;background:#f3f4ef;padding:8px max(12px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));z-index:3}
 .map-mode #cameraTools[hidden]{display:none}
-.map-mode #mapPanel .orientation{bottom:72px}
+.map-mode #mapPanel .orientation[data-corner^="bottom-"]{bottom:max(4px,env(safe-area-inset-bottom))}
 .map-mode #status{position:fixed;top:calc(var(--visual-top,0px) + var(--map-bar-height,64px));left:10px;right:10px;z-index:11;margin:0;pointer-events:none;max-width:700px;font-size:13px;padding:6px 10px;max-height:70px;overflow:hidden}
 .map-mode #main>.layout>#listPanel,.map-mode #main>.layout>#detailPanel{display:none}
 .map-mode #mapSelection{align-self:center;color:#263c33;font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

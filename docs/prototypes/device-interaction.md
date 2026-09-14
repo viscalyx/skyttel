@@ -59,15 +59,25 @@ animation. Listläget kräver ingen kamerarörelse.
 
 ## Pekgester och avbrutna drag
 
-Ett finger kan välja, flytta ett objekt eller rotera tom rymd. Två fingrar
-panorerar genom gemensam rörelse och zoomar genom ändrat avstånd.
-Om det första fingret hinner flytta ett objekt innan det andra landar
-återgår objektet till dragningens startposition när tvåfingersgesten börjar.
+Ett finger kan välja, flytta ett objekt i kamerans bildplan eller rotera
+tom rymd. När första fingret håller ett objekt och ett andra finger
+landar blir det andra fingret ett ankare. Första fingrets rörelse uppåt
+och nedåt ändrar då enbart objektets höjd, Y. X och Z behåller värdena
+från när ankaret landade. Objektet hoppar inte vid övergången.
+
+Om ankaret flyttas mer än 12 CSS-pixlar byter gesten till kamerans
+panorering och zoom. Objektet återgår då till placeringen före hela
+dragningen och kameragesten får en ny utgångspunkt utan kamerahopp.
+Två fingrar som börjar i tom rymd styr kameran direkt: gemensam rörelse
+panorerar och ändrat avstånd zoomar. Tröskeln för ankarfingrets rörelse
+är en prototyphypotes som behöver prövas på fysisk pekskärm.
 
 Efter en tvåfingersgest kan ett kvarvarande finger inte börja flytta ett
 objekt. Alla fingrar måste lyftas före nästa enfingersdragning. Gesten
-håller ett stabilt fingerpar; ett tredje finger påverkar inte kameran.
-Om paret byts ut får gesten en ny utgångspunkt från den aktuella kameran.
+håller ett stabilt fingerpar; ett tredje finger påverkar inte gesten.
+Höjdgesten stannar om något av dess två fingrar lyfts. Kameragesten
+kan byta par när minst två fingrar finns kvar och får då en ny
+utgångspunkt från den aktuella kameran.
 Övergångar mellan fingerantal och fingerpar återstår att verifiera
 fysiskt. Beställarens resultat för grundgesterna finns nedan.
 
@@ -125,6 +135,19 @@ placeringar. Sidzoomens inställningar är oförändrade utanför kartan.
 Det tidigare sidzoomsproblemet på iPhone är inte reproducerat i detta
 datorprov.
 
+Efter ändringen av höjdgesten fungerar vanlig objektdragning fortsatt
+i Chrome. Vid 390 × 844 ligger axelvisarens behållare fyra pixlar från
+den synliga kartytans nederkant och sidan har ingen vågrät överströmning.
+JavaScript-kontrollerna hittar inga syntaxfel.
+
+Nio separata logikkontroller med syntetiska pekhändelser mot prototypens
+händelsehanterare i Node passerar: vanlig dragning, höjdlås från aktuell
+placering, vågrät rörelse utan höjdändring, ankarjitter, övergång till
+kamera med återställd placering, lyft av respektive finger, avbrott,
+vanlig nypning med extra finger samt Shift. Dessa kontroller använder
+ersättningar för ritning och DOM; de bevisar inte hur iOS levererar
+pekhändelser eller hur gesten känns med två fingrar.
+
 ## Beställarens prov på iPhone 12 Pro
 
 Beställaren anger den 14 september 2026 en fysisk iPhone 12 Pro med iOS
@@ -141,6 +164,13 @@ godkänt undantag för första versionen.
 att omfatta också den nedre mörka marginalen. Orsakssambandet är en
 hypotes; datorprovet fastställer inte hur iPhone hanterar träffytan.
 Beställaren behöver ladda om provet och kontrollera nypning nedtill igen.
+
+Beställaren efterfrågar också direkt höjdflyttning med pekgester och
+rapporterar att X/Y/Z-visaren sitter för högt i stående orientering.
+Den föreslagna höjdgesten använder ett andra stilla finger enligt
+beställarens beskrivning ovan. Axelvisarens nedre placering följer nu
+den synliga kartytans nederkant med hänsyn till enhetens säkra kant.
+Båda ändringarnas känsla och placering på iPhone återstår att bekräfta.
 
 ## Målenheter som återstår
 
@@ -159,10 +189,13 @@ prövas. De emulerade storlekarna ovan ersätter ingen rad i matrisen.
 ## Avgränsad fortsatt prövning
 
 1. På telefon och iPad: välj objekt och samband, rotera tom rymd,
-   panorera och nypzooma. Börja på ett objekt med ett finger, flytta
-   något och lägg till ett andra. Lyft ett finger och fortsätt rörelsen.
-   Kontrollera att objektet återgår och sedan ligger kvar. Pröva också
-   ett tredje finger och byte av fingerpar utan kamerahopp.
+   panorera och nypzooma. Håll ett objekt med första fingret och lägg
+   till ett stilla ankarfinger. Dra första fingret uppåt och nedåt;
+   kontrollera att bara Y ändras, även med roterad kamera. Flytta sedan
+   även ankaret och kontrollera övergången till kamera och återgången
+   till objektets ursprungliga placering. Lyft ett finger och fortsätt
+   rörelsen; objektet ska ligga kvar. Pröva också ett tredje finger,
+   byte av kamerans fingerpar och axelvisaren vid telefonens nederkant.
 2. Med mus och styrplatta: pröva val, dragning, rotation, panorering,
    zoom och Shift-dragning i höjdled. Kontrollera att övriga objekt och
    hushållets uppgifter är oförändrade vid objektflyttning.
