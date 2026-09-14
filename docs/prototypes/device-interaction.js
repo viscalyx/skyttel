@@ -103,7 +103,7 @@ $('newRelation').onsubmit=e=>{e.preventDefault();const values=new FormData(e.tar
 for(const id of ['save','discard','undo']){const action=$(id).onclick;$(id).onclick=()=>{action();if($('editorDialog').open)$('changesHeading').focus();else $('status').focus();};}
 // Escape inside a form or modal must not discard field text or reset map selection.
 const originalKeydown=window.onkeydown;
-window.onkeydown=e=>{if(e.key==='Escape'&&($('editorDialog').open||e.target.closest('input,textarea,select,[contenteditable]')))return;originalKeydown(e);};
+window.onkeydown=e=>{if(e.key==='Escape'&&($('editorDialog').open||e.target.closest('form,input,textarea,select,[contenteditable]')))return;originalKeydown(e);};
 function applyMotionPreference(){if(motionPreference.matches)$('universe').checked=false;$('universe').disabled=motionPreference.matches;$('motionNote').textContent=motionPreference.matches?'Minskad rörelse är på i systemet. Stjärnbakgrunden är avstängd. Kameran byter läge utan animation; allt kartarbete går via listan.':'Kameran byter läge direkt, utan animation. Listläget kräver ingen rumslig navigering.';draw();}
 motionPreference.addEventListener('change',applyMotionPreference);
 let editorFocusFrame;

@@ -124,6 +124,9 @@ Agentens programstyrda prov genom Chrome-tillägget omfattar:
 - Ny tjänst Bokljus och ett nytt samband där Lo använder Bokljus.
 - Föreslagen borttagning av tjänsten tillsammans med dess samband.
 - Att den avgränsade nätverkslänken går att öppna från Macen.
+- Att oskickad namntext och valt objekt bevaras när Tab flyttar fokus
+  till formulärknappen och Escape trycks. Escape-skyddet omfattar hela
+  formuläret, även knapparna.
 
 Detta är körning i Chrome på den fysiska Macen med programstyrd inmatning.
 Det verifierar inte känslan i fysisk mus eller styrplatta, Shift-dragning,
@@ -162,9 +165,12 @@ av den synliga ytan.
 ## Beställarens prov på iPhone 12 Pro
 
 Beställaren anger den 14 september 2026 en fysisk iPhone 12 Pro med iOS
-och bekräftar att objektflyttning, nypzoom och panorering med två fingrar
-fungerar. Webbläsaren och exakta versioner för iOS och webbläsare behöver
-fortfarande anges.
+och Safari och bekräftar att objektflyttning, nypzoom och panorering
+med två fingrar fungerar. Chrome är inte installerat på telefonen.
+Exakta versioner för iOS och Safari behöver fortfarande anges.
+Detta är kompletterande Safari-resultat; den beslutade målwebbläsaren
+Chrome på iPhone är ännu oprövad. Safari-provet ändrar inte i sig
+plattformsbeslutet eller verifierar Chrome-stöd.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka
@@ -233,7 +239,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Gester fungerar på 12 Pro; trång liggande redigering accepteras med stående läge som alternativ; övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari på 12 Pro: gester fungerar, stående textredigering accepteras; Chrome och övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
@@ -272,6 +278,12 @@ En gemensam editor begränsar dubblering av logik för hushållets uppgifter.
 De extra delarna gäller fokus, växlande synligt skärmutrymme, dialoger och
 samordning mellan enfingersdragning och flerfingergester. Dessa delar
 kräver verifiering även om själva redigeringen delas mellan vyerna.
+
+Kodgranskningen pekar också ut sådant som behöver prövas med verklig
+skärmläsare: återgång från detaljpanelen till rätt plats i listan,
+förklaring av kvarvarande kartfokus som begränsar listan och uppläsning
+av träffantal och status. Sidstruktur och programstyrda kontroller
+avgör inte om uppläsning och läsposition fungerar genom hela flödet.
 
 Prototypen belägger ingen uppskattning i persontimmar. Ramverk,
 produktionslösning och teknikval avgörs separat i
