@@ -197,7 +197,22 @@ Dialogen har nu uttrycklig höjd och position efter den synliga ytan,
 med fri nederkant. När höjden är liten rullar även dialogens överkant
 så att den inte upptar plats framför fältet. Vid fokus och ändrad
 synlig yta rullas enbart dialogen för att visa det aktiva fältet.
-Det fysiska iPhone-omprovet av denna ändring återstår.
+I det fysiska omprovet går namnfältet att rulla fram, men beställaren
+bedömer fortfarande redigeringen som för trång och obekväm. Detta är
+ett kvarvarande användbarhetshinder i liggande orientering.
+
+Namnfältet begär nu `autocomplete="off"`, liksom fältet för nytt objekt.
+Det är en begäran om att avstå lagrad autofyllnad för ett objektnamn,
+inte en kontroll över tangentbordets höjd. Safari kan åsidosätta
+begäran; effekten på raden Autofyll kontakt är inte fysiskt verifierad.
+[HTML:s regler för autofyllnad](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill)
+beskriver attributet och webbläsarens möjlighet att åsidosätta det.
+
+[HTML:s tangentbordskontroller](https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute)
+ger önskemål om inmatningstyp, inte systemtangentbordets höjd.
+[Apples tangentbordsinställningar](https://support.apple.com/sv-se/104995)
+låter personen stänga av textförslag. Detta garanterar inte mer
+arbetsutrymme för prototypen och är inget krav för att använda Skyttel.
 
 [WebKits standardstil för dialoger](https://github.com/WebKit/WebKit/blob/main/Source/WebCore/css/html.css)
 anger innehållsanpassad höjd och positionering mot båda kanterna.
@@ -214,7 +229,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Gester fungerar på 12 Pro; dolt namnfält med liggande tangentbord väntar på omprov |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Gester fungerar på 12 Pro; namnfält går att rulla fram men liggande redigering känns för trång |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
