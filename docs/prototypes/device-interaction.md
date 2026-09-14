@@ -342,8 +342,12 @@ A1709, Safari och version 17 av operativsystemet, benämnt iOS 17
 i återkopplingen.
 Exakt systemversion och Safari-version är inte angivna. Resultatet
 gäller denna provmiljö och belägger inte Chrome-stöd på iPad.
-Höjdgest, långtrycksmeny, redigering med skärmtangentbord och
-skärmläsare är inte bekräftade på iPad.
+Beställaren bedömer också att namnfältet ser bra ut med
+skärmtangentbordet öppet i liggande läge. Det ger positiv återkoppling
+på redigeringsutrymmet i denna miljö. Svaret bekräftar inte separat
+hela kedjan med ändring, sparande och ångring på iPad.
+Höjdgest och skärmläsare är inte bekräftade på iPad; långtrycksmenyns
+samtliga åtgärder är inte heller separat redovisade.
 
 ## Målenheter som återstår
 
@@ -353,7 +357,7 @@ skärmläsare är inte bekräftade på iPad.
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
 | iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
-| iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, A1709, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Övriga prov återstår |
+| iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, A1709, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Namnfält med skärmtangentbord i liggande läge ser bra ut. Övriga prov återstår |
 <!-- markdownlint-enable MD013 -->
 
 Målenheternas operativsystem, webbläsare och versioner ska anges när de
