@@ -174,8 +174,10 @@ bekräftade i Chrome. Safari-provet ändrar inte i sig plattformsbeslutet.
 
 Beställaren bekräftar att listprovet går att genomföra och förstå
 tydligt: välj Tonmoln familj, öppna sambandet Alex betalar Tonmoln
-familj, byt Från till Kim och föreslå ändringen. Fysiskt prov av
-samlat sparande och ångring av detta byte återstår.
+familj, byt Från till Kim och föreslå ändringen. Beställaren bekräftar
+också att samlat sparande behåller Kim som betalare och att Ångra
+senaste sparandet återför betalaren till Alex. Resultat och
+bekräftelser bedöms fungera i det fysiska provet.
 
 Ett tidigare hinder i stående orientering var att nypning långt ned
 zoomade hela webbsidan även när båda fingrarna började inne i den mörka
@@ -247,7 +249,7 @@ stödjer att använda den synliga ytan för innehåll ovanför tangentbordet.
 | --- | --- | --- |
 | Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
 | macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan; eget prov återstår |
-| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Byte av betalare är tydligt; sparande, ångring och övriga prov återstår |
+| iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Byte av betalare, samlat sparande och ångring fungerar; övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | Fysisk prövning återstår |
 <!-- markdownlint-enable MD013 -->
 
