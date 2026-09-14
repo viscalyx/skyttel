@@ -61,7 +61,7 @@ utkastet är tomt. Historiken har exakt en spargrupp med båda ändringarna.
 
 Det vanliga flödet har därmed ett faktiskt mänskligt sparbesked och ett
 verifierat separat sparanrop. Beställarens samlade omdöme och de
-återstående felsituationerna i klienten är ännu inte prövade.
+följande prövningarna hålls isär; felsituationerna redovisas nedan.
 
 Beställaren ber därefter att ta bort den senaste ändringen. Klienten
 läser aktuell karta med `read_map` och anropar `undo_as_draft` för den
@@ -154,9 +154,63 @@ utfall utan att kräva ännu ett ja. Kartversionen är 4, utkastversionen
 10 och utkastet är tomt. Historiken innehåller tre grupper.
 
 Denna omgång verifierar slutförandet med den nya regeln. Själva rättelsen
-finns redan i utkastet från föregående omgång; ett nytt kombinerat
-rättelse- och sparanrop med ett ytterligare oberoende förslag behöver
-fortfarande prövas i ett och samma klientsvar.
+finns redan i utkastet från föregående omgång. Den särskilda prövningen
+av ett kombinerat rättelse- och sparbesked med ett ytterligare oberoende
+förslag följer i konfliktfallet nedan.
+
+Beställaren ber om priset 79 kronor och att ”Lolin” ska läggas till som
+användare. Klienten läser kartan och söker efter namnet. Den säger att
+”Lolin” inte finns och ber om förtydligande mellan Lo Lind och Lo Berg.
+Den väntar med både prisförslaget och sambandet tills personen är
+identifierad. Inga ändrings- eller sparverktyg anropas; kartversion 4,
+utkastversion 10 och tre historikgrupper består.
+
+Beställaren förtydligar att personen är Lo Lind. Klienten föreslår då
+båda ändringarna i ett `propose_changes`: pris 229 till 79 kr per månad
+och Lo Lind som användare av Tonrum. Den återger hela det osparade
+utkastet och inväntar sparbesked. Utkastversionen är 11, medan
+kartversion 4 och tre historikgrupper består.
+
+Beställaren svarar ja till att spara hela utkastet. Provledaren
+annonserar konfliktprovet och låter den simulerade andra användaren Kim
+spara priset 199 kr genom `conflicting-save`. Kartversionen blir 5 och
+historikgruppen `change-0004` hör till Kim. Alex utkastversion är
+fortsatt 11 med förslagen 79 kr och Lo Lind som användare.
+
+Klienten anropar `save_draft` med den granskade utkastversionen 11 och
+kartversion 4. Servern avvisar anropet med
+`stale_reviewed_map_version`. Klienten säger att inget av utkastet
+sparas, återger båda väntande ändringarna och förklarar konflikten
+mellan sparade 199 kr och utkastets 79 kr. Den ber beställaren välja
+pris och förklarar att valet kan kombineras med ”spara” för hela
+utkastet. Den väljer inget pris själv och sparar inte Lo Lind separat.
+
+Efter denna omgång är priset i kartan 199 kr och Lo Lind ännu inte
+tillagd som användare. De båda förslagen finns kvar i Alex utkast.
+
+Beställaren svarar ”Hundranittionio. Spara.”. Klienten anropar
+`resolve_conflicts` med valet att behålla kartans sparade värde 199 kr.
+Det ger utkastversion 12. Prisförslaget försvinner, medan det oberoende
+förslaget att lägga till Lo Lind finns kvar.
+
+I samma samtalsomgång återger klienten hela återstående utkastet och
+anropar `save_draft` med utkastversion 12 och kartversion 5, utan att
+kräva ytterligare ja. Kvittot för `change-0005` innehåller endast
+tillägget av Lo Linds användningssamband. Klienten säger uttryckligen
+att priset 199 kr redan är sparat och inte ändras av detta sparande.
+Kartversionen är 6, utkastversionen 13 och utkastet är tomt.
+
+Detta prövar ett kombinerat konfliktval och sparande av hela återstående
+utkastet i samma samtalsomgång. Den senast nämnda prisuppgiften ger
+ingen ny sparad ändring, men det tidigare oberoende förslaget sparas.
+Provet visar inte varje möjlig variant av kombinerade tillägg och
+rättelser eller två nya ändringar i denna spargrupp.
+
+Provledaren ställer därefter en läsande kontrollfråga om fullständig
+hushållsexport. Klienten säger att den saknar ett sådant verktyg och
+hänvisar till Skyttels eget administrativa gränssnitt. Den säger också
+att gränssnittet inte finns i provet och ger ingen påhittad URL.
+Inget MCP-anrop, ingen export och ingen ändring sker i denna omgång.
 
 ## Separata tekniska kontroller
 
@@ -191,11 +245,39 @@ provet, inte ett beslutat produktbeteende.
 
 ## Kvar i användarprovet
 
-- Klientens faktiska återkoppling vid konflikt mot en annan sparad ändring.
-- Klientens hantering av administrativa önskemål.
-- Beställarens bedömning och rekommendationen till teknikvalet.
+De konkreta provfallen är genomförda. Beställarens samlade bedömning och
+fastställandet av rekommendationen till teknikvalet återstår.
+
+## Tolkning och begränsningar
+
+Provet stödjer att det gemensamma MCP-flödet är genomförbart i den valda
+externa textklienten med tydliga instruktioner. Det besvarar inte vilka
+garantier en produktionslösning eller alla externa klienter kan ge.
 
 Inloggning, återkallelse av åtkomst, fjärranslutning, andra enheter och
 produktionslagring är inte verifierade. Textprovet omfattar inte tal
 eller desktopklientens godkännandedialoger. Startarens instruktioner och
 verktygsbeskrivningar är en del av den prövade konfigurationen.
+
+Provledaren förmedlar beställarens text och återger klientens svar i
+det pågående samtalet. Det är inte ett direkt användarprov av Codex CLI:s
+terminalpresentation. Skild egen ljudbehandling, talförståelse och
+talåterkoppling ingår inte, även när texten innehåller vardagligt tal.
+
+Servern validerar versioner och konflikter. Att kontrollera ett
+sparbesked mot användarens avsikt är fortfarande klientens ansvar;
+verktygsargumenten är inget oberoende bevis för vad människan säger.
+Intern modellkontroll kan instrueras och bedömas genom verktygsval och
+utfall, men är ingen verifierad garanti mot feltolkning.
+
+Återanslutningen efter kvittobortfall sker genom provledaren. De
+identiska återförsökens idempotens har separata direkta MCP-kontroller;
+det levande klientsamtalet väljer kvittokontroll utan nytt sparförsök.
+Prototypens kontroll av hela kartversionen är konservativ och väljer
+inte produktionslösningens detaljnivå för samtidighetskontroller.
+
+Ångring av senaste kända spargrupp prövas i samtalet. Äldre historik
+och ångring med senare överlappande ändringar har tekniska kontroller,
+inte ett uttömmande mänskligt prov. Prototypens stopp vid överlapp med
+ett eget osparat förslag är en uttrycklig begränsning, inte en ny
+produktregel om att ångring alltid kräver ett tomt utkast.
