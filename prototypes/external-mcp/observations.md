@@ -1,7 +1,9 @@
 # Observationer från det externa MCP-provet
 
-Provdatum: 2026-09-14. Ärendet är öppet. Detta underlag är inte en
-resolution eller ett godkännande av det fullständiga arbetsflödet.
+Provdatum: 2026-09-14. Beställaren godkänner det prövade textflödet och
+rekommendationen efter de redovisade provfallen. Det kanoniska beslutet
+hör hemma i resolutionen till
+[Kan en extern assistent genomföra Skyttels gemensamma MCP-flöde?](https://github.com/viscalyx/skyttel/issues/15).
 
 ## Faktisk extern assistent
 
@@ -243,10 +245,18 @@ skulle ersätta ett överlappande osparat förslag. Prototypen avvisar det
 fallet och bevarar utkastet. Det är ett förslag till begränsning i
 provet, inte ett beslutat produktbeteende.
 
-## Kvar i användarprovet
+## Beställarens bedömning
 
-De konkreta provfallen är genomförda. Beställarens samlade bedömning och
-fastställandet av rekommendationen till teknikvalet återstår.
+Efter de konkreta provfallen får beställaren en sammanfattning av det
+faktiska sparutfallet och rekommendationen inför teknikvalet: hela
+utkastet sparas, klienten kontrollerar förslaget internt och återkopplar
+kvittots faktiska ändringar. Tal, fjärranslutning och riktig inloggning
+återstår att pröva i sina respektive frågor.
+
+På frågan om flödet är begripligt och tillräckligt smidigt för att
+avsluta provet svarar beställaren: ”Ja, det fungerar.” Provet och
+[rekommendationen](recommendation.md) är därmed godkända som underlag
+för teknikvalet, med begränsningarna nedan.
 
 ## Tolkning och begränsningar
 

@@ -1,10 +1,11 @@
-# Förslag till rekommendation inför teknikvalet
+# Rekommendation inför teknikvalet
 
-Status: tekniskt prov genomfört; beställarens samlade omdöme återstår.
+Status: provet och rekommendationen godkända av beställaren 2026-09-14
+med svaret ”Ja, det fungerar.”
 Underlag för
 [Kan en extern assistent genomföra Skyttels gemensamma MCP-flöde?](https://github.com/viscalyx/skyttel/issues/15).
 
-## Föreslagen slutsats
+## Slutsats
 
 Det gemensamma MCP-flödet är genomförbart i den prövade externa
 textklienten: Codex CLI 0.153.0 på macOS 26.6.2, arm64, med lokal stdio.
