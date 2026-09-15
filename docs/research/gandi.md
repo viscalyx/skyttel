@@ -1,9 +1,9 @@
 # Gandi för första Skyttel
 
 Kontrolldatum: 2026-09-16. Forskningsunderlag till
-[Gandi-frågan](https://github.com/viscalyx/skyttel/issues/21)
+[Vad kan Gandi erbjuda för Skyttels drift och lagring?](https://github.com/viscalyx/skyttel/issues/21)
 och
-[teknikbeslutet](https://github.com/viscalyx/skyttel/issues/12).
+[Vilken sammanhängande teknik och lagring uppfyller de prövade behoven?](https://github.com/viscalyx/skyttel/issues/12).
 Inget leverantörs- eller teknikval är låst.
 
 ## Samlad bedömning
@@ -91,8 +91,12 @@ beständig lokal SQLite-fil.
 
 Samma dokumentation säger uttryckligen att WebSockets inte stöds.
 Den preciserar inte om detta endast gäller inkommande anslutningar.
-WebRTC-ljudet går direkt mellan webbläsaren och OpenAI, men Skyttels
-server behöver en utgående sideband-WebSocket. Därför är begränsningen
+WebRTC-ljudet går direkt mellan webbläsaren och OpenAI. Prototypen
+använder dessutom en utgående sideband-WebSocket för slutlig
+användningsmätning. Ett produktionsupplägg med samma koppling behöver
+stöd för den. Client-delegering kräver inte i sig sideband; ett annat
+upplägg måste bevara säker serverstyrning och kostnadsuppföljning.
+Därför är begränsningen
 ett verifieringsbehov, inte bevis för att hela talflödet är omöjligt.
 Även SSE/HTTP-strömning, proxytimeout, privata svar genom cache och
 bakgrundsjobb efter avslutat HTTP-anrop behöver bekräftas.
@@ -148,7 +152,7 @@ Räknekursen är 10 SEK/USD och 11 SEK/EUR, med hypotetiskt
 25 procent skattepåslag på hela beloppet. Det är varken aktuell
 valutakurs eller skattebesked. AI-exemplet är 4,47 USD per timme:
 3 USD Live plus 1,47 USD Terra enligt
-[AI-underlaget](https://github.com/viscalyx/skyttel/issues/19).
+[Vilka villkor och klientstöd gäller för Skyttels valda AI- och MCP-flöden?](https://github.com/viscalyx/skyttel/issues/19).
 Det antar 30 kartuppdrag per timme, två anrop per uppdrag, 5 000
 indatatoken och 1 000 utdata-/resonemangstoken per anrop, med antagen
 cacheskrivning och utan cacheträffar. Faktisk förbrukning kan avvika.
