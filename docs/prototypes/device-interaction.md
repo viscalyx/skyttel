@@ -185,7 +185,23 @@ skärmläsarens uppläsning eller åtkomst från andra enheter.
 Beställarens kompletterande fysiska prov i Chrome på Mac bekräftar att
 Shift och dragning uppåt eller nedåt flyttar objektet enbart i höjdled.
 Beställaren använder styrplatta och bekräftar också att panorering
-och zoom fungerar. Verklig skärmläsarprövning återstår.
+och zoom fungerar.
+
+Den 15 september 2026 påbörjar beställaren ett verkligt prov med
+VoiceOver i Chrome på Mac. Beställaren bekräftar att uppläsningen är
+igång, att objektets namn läses upp och att objektet går att välja i
+listan. Provet instruerar navigering med Control och Option samt
+högerpil, följt av aktivering med Control, Option och mellanslag.
+Detta bekräftar det första objektvalet med skärmläsare. Redigering,
+samband, statusmeddelanden, sparande, ångring och återgång i flödet
+är ännu inte bekräftade med VoiceOver.
+
+Beställaren väljer därefter att lämna fortsatt VoiceOver-prövning till
+framtiden och tills vidare utgå från att stödet fungerar. Den fortsatta
+planeringen använder detta som ett accepterat arbetsantagande.
+Återstående VoiceOver-prov skjuts därför upp och behöver inte slutföras
+för att gå vidare med prototypbeslutet. Tillgänglighetskravet kvarstår;
+de uppskjutna kontrollerna ska följas upp senare.
 
 Ett kompletterande programstyrt prov med 390 × 844 pixlar visar att
 dragning långt ned i den mörka ytan roterar kameran och behåller objektens
@@ -362,13 +378,23 @@ Förväntat gemensamt beteende skiljs från separat verifierat enhetsstöd.
 Skärmläsare är inte bekräftad på iPad; långtrycksmenyns samtliga
 åtgärder är inte heller separat redovisade.
 
+## Beställarens avgränsning för Windows
+
+Den 15 september 2026 anger beställaren att en Windowsdator finns
+tillgänglig, men väljer att tills vidare utgå från att beteendet är
+detsamma som på macOS. Den fortsatta planeringen använder detta som ett
+accepterat arbetsantagande. Det fysiska Windows-provet skjuts upp och
+behöver inte slutföras för att gå vidare med prototypbeslutet.
+Windows, dess inmatning och hjälpmedelsstöd är därmed ännu inte
+verifierade i denna prototypomgång.
+
 ## Målenheter som återstår
 
 <!-- markdownlint-disable MD013 -->
 | Mål | Inmatning att pröva | Status |
 | --- | --- | --- |
-| Windows | Mus, tangentbord, skärmläsare | Fysisk prövning återstår |
-| macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan. Beställaren bekräftar fysisk Shift-dragning i höjdled, panorering och zoom med styrplatta. Verklig skärmläsarprövning och övriga prov återstår |
+| Windows | Mus, tangentbord, skärmläsare | Fysisk prövning är uppskjuten på beställarens begäran. Samma beteende som på macOS är ett accepterat arbetsantagande |
+| macOS | Mus, styrplatta, tangentbord, skärmläsare | Chrome-kontroll ovan. Beställaren bekräftar fysisk Shift-dragning i höjdled, panorering och zoom med styrplatta. VoiceOver läser upp objektnamnet och objektval i listan fungerar. Fortsatt VoiceOver-prövning är uppskjuten; fungerande stöd är ett accepterat arbetsantagande. Övriga prov återstår |
 | iPhone | Pekskärm, skärmtangentbord, skärmläsare | Safari: gester fungerar. Chrome: liggande tangentbord prövat. Listans relationsändring, sparande, ångring, tillägg och borttagning fungerar. Positiv återkoppling på snabbåtgärder vid listval, kartmenyns öppning/släpp och borttagning direkt till utkastet; övriga prov återstår |
 | iPad | Pekskärm, skärmtangentbord, skärmläsare | iPad Pro 10,5 tum, A1709, Safari, systemversion 17 enligt beställaren: objektflyttning, nypzoom och tvåfingerspanorering fungerar stående och liggande. Höjdgest med stilla ankarfinger fungerar. Namnfält med skärmtangentbord i liggande läge ser bra ut. Övriga prov återstår |
 <!-- markdownlint-enable MD013 -->
@@ -382,6 +408,9 @@ Använd resultaten ovan för att välja återstående prov. Upprepa
 gemensamma redigeringsuppgifter när ett konkret enhets- eller
 hjälpmedelshinder behöver prövas, inte som nya designfrågor på varje
 enhet. Dokumentera fortfarande faktiskt verifierat stöd per miljö.
+VoiceOver-delen av punkt 3 är uppskjuten enligt beställarens avgränsning
+ovan och tas inte vidare i den pågående manuella prövningen.
+Detsamma gäller de fysiska Windows-proven i punkt 2 och 3.
 
 1. På telefon och iPad: välj objekt och samband, rotera tom rymd,
    panorera och nypzooma. Håll ett objekt med första fingret och lägg
@@ -411,12 +440,31 @@ enhet. Dokumentera fortfarande faktiskt verifierat stöd per miljö.
    släppet inte väljer något av misstag, att Avbryt fungerar och att
    vanlig dragning samt ett andra finger avbryter väntan på menyn.
 
-## Preliminär komplexitetsbedömning
+## Komplexitetsbedömning inför beslut
 
 En gemensam editor begränsar dubblering av logik för hushållets uppgifter.
 De extra delarna gäller fokus, växlande synligt skärmutrymme, dialoger och
 samordning mellan enfingersdragning och flerfingergester. Dessa delar
 kräver verifiering även om själva redigeringen delas mellan vyerna.
+
+Bedömningen är att omfattningen är rimligt avgränsad för att gå vidare
+med samma redigering och karta på målplattformarna. Produktionslösningen
+behöver särskilt hantera följande:
+
+- Skilja val, långtryck, objektdragning, höjdgest och kameragest åt samt
+  hantera avbrott och byte av fingrar.
+- Anpassa karta och dialoger till rotation, skärmtangentbord och ändrad
+  synlig webbläsaryta.
+- Ge hela arbetsflödet via listan, med stabil fokusåtergång, begripliga
+  statusmeddelanden och stöd för minskad rörelse.
+- Bevara oskickad formulärtext, utkast, val och placeringar mellan vyerna.
+
+Detta stödjer ett positivt genomförbarhetsbeslut med redovisade
+avgränsningar. Windows och fortsatt VoiceOver-stöd är arbetsantaganden.
+Mobilernas Chrome-stöd, exakta mobilversioner och vissa gestövergångar
+har fortfarande begränsat eller saknat fysiskt underlag enligt matrisen.
+Liggande textredigering på iPhone är en accepterad begränsning.
+Ingen ändring av det valda plattformsstödet föreslås.
 
 Kodgranskningen pekar också ut sådant som behöver prövas med verklig
 skärmläsare: återgång från detaljpanelen till rätt plats i listan,
