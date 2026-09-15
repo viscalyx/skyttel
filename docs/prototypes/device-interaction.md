@@ -2,9 +2,11 @@
 
 Prototypen ger underlag till
 [Kan Skyttels kartarbete fungera på valda enheter med pekgester och tillgängliga alternativ?](https://github.com/viscalyx/skyttel/issues/16).
-Ärendet är öppet. Beställarens prövning på iPhone 12 Pro och iPad ger
-fysiska gestresultat nedan. Ytterligare kontroller och återkoppling
-återstår. Dokumentet innehåller ingen resolution.
+Beställaren godkänner upplägget och avslutar prototypprövningen den
+15 september 2026. Beslutet finns i ärendets resolution. Dokumentet
+samlar prototypens beteende, konkreta prov och accepterade avgränsningar.
+Återstående enhets- och hjälpmedelskontroller följer med till senare
+verifiering och är inte villkor för det avslutade prototypbeslutet.
 
 ## Kör lokalt
 
@@ -25,7 +27,7 @@ Alla uppgifter är påhittade. Prototypen använder varken mikrofon,
 AI-tjänst eller beständig lagring. Omladdning tar bort hela tillståndet,
 även simulerat sparande. Använd inga verkliga hushållsuppgifter.
 
-## Arbetssätt som prövas
+## Prototypens arbetssätt
 
 `device-interaction.js` och `device-interaction.css` utökar den godkända
 [rymdprototypen](spatial-prototype.md). Samma karta och redigering används
@@ -388,7 +390,18 @@ behöver inte slutföras för att gå vidare med prototypbeslutet.
 Windows, dess inmatning och hjälpmedelsstöd är därmed ännu inte
 verifierade i denna prototypomgång.
 
-## Målenheter som återstår
+## Avslutad prototypprövning
+
+Beställaren godkänner den 15 september 2026 att även återstående
+Chrome-prov på iPhone och iPad lämnas till senare och att den samlade
+prototypprövningen avslutas. Upplägget bedöms genomförbart med rimlig
+komplexitet enligt bedömningen nedan. Plattformsvalet kvarstår.
+
+Matrisens kvarvarande prov är underlag för senare verifiering av
+lösningen. De uppskjutna kontrollerna ändrar inte skillnaden mellan
+vad som är faktiskt prövat och vad som är ett accepterat arbetsantagande.
+
+## Provmiljöer och verifieringsstatus
 
 <!-- markdownlint-disable MD013 -->
 | Mål | Inmatning att pröva | Status |
@@ -402,15 +415,14 @@ verifierade i denna prototypomgång.
 Målenheternas operativsystem, webbläsare och versioner ska anges när de
 prövas. De emulerade storlekarna ovan ersätter ingen rad i matrisen.
 
-## Avgränsad fortsatt prövning
+## Underlag för senare verifiering
 
-Använd resultaten ovan för att välja återstående prov. Upprepa
+Prototypprövningen är avslutad. Följande punkter bevarar kvarvarande
+verifieringsbehov för den fortsatta lösningen. Använd resultaten ovan
+för att välja återstående prov. Upprepa
 gemensamma redigeringsuppgifter när ett konkret enhets- eller
 hjälpmedelshinder behöver prövas, inte som nya designfrågor på varje
 enhet. Dokumentera fortfarande faktiskt verifierat stöd per miljö.
-VoiceOver-delen av punkt 3 är uppskjuten enligt beställarens avgränsning
-ovan och tas inte vidare i den pågående manuella prövningen.
-Detsamma gäller de fysiska Windows-proven i punkt 2 och 3.
 
 1. På telefon och iPad: välj objekt och samband, rotera tom rymd,
    panorera och nypzooma. Håll ett objekt med första fingret och lägg
@@ -434,13 +446,14 @@ Detsamma gäller de fysiska Windows-proven i punkt 2 och 3.
    aktiva fältet, formulärets knapp och vägen tillbaka går att nå.
 6. Växla mellan lista, karta och dialog under ett pågående utkast.
    Kontrollera formulärtext, ändringslista och objektplaceringar.
-   Samla beställarens bedömning innan ärendet kan avgöras.
+   Återför avgörande hinder till berörda beslut om plattform och
+   interaktion om den senare verifieringen visar sådana.
 7. Håll ett objekt stilla i drygt en halv sekund. Lyft fingret och välj
    Redigera objekt, Visa kopplingar eller Ta bort objekt. Kontrollera att
    släppet inte väljer något av misstag, att Avbryt fungerar och att
    vanlig dragning samt ett andra finger avbryter väntan på menyn.
 
-## Komplexitetsbedömning inför beslut
+## Komplexitetsbedömning
 
 En gemensam editor begränsar dubblering av logik för hushållets uppgifter.
 De extra delarna gäller fokus, växlande synligt skärmutrymme, dialoger och
