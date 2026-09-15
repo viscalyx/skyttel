@@ -138,6 +138,16 @@ från hushållsmedlemmarnas Google/Microsoft-inloggning till Skyttel.
 [Git-integration](https://render.com/docs/git-provider),
 [Egna domäner och TLS](https://render.com/docs/custom-domains).
 
+För exempelvis `skyttel.example.com` läggs namnet först till som
+Custom Domain i Render. Hos Cloudflare pekar en CNAME med namnet
+`skyttel` mot appens tilldelade `onrender.com`-adress. DNS och
+namnservrar kan ligga kvar hos Cloudflare. Börja med DNS only och
+verifiera sedan domänen i Render, som ordnar HTTPS-certifikatet.
+Efter giltigt certifikat är Cloudflare-proxy valfri. Huvuddomänen
+kan använda CNAME med namnet `@` genom Cloudflares flattening.
+Det är ett dokumenterat upplägg, inte en utförd DNS-konfiguration.
+[Cloudflare och Render](https://render.com/docs/configure-cloudflare-dns).
+
 Gratis compute, **Free**, har andra egenskaper:
 
 - Ingen beständig disk. Lokala filer och SQLite-data försvinner vid
