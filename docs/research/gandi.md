@@ -190,5 +190,6 @@ Web Hosting är intressant om den lägsta tjänstekostnaden motiverar
 de kvarvarande klarläggandena. Viktigast är utgående sideband,
 MCP/HTTP-strömning, runtimeversioner och faktiskt förnyelsepris.
 VPS kräver främst ett litet kapacitetsprov av bildomkodning, import
-och samtidiga jobb. Ingen del av denna research skapar resurser,
-använder hemligheter eller inför nya backupkrav.
+och samtidiga jobb under implementationen. Rapporten inför inget nytt
+krav på förhandsprov i beslutskartan. Ingen del av denna research
+skapar resurser, använder hemligheter eller inför nya backupkrav.
