@@ -28,12 +28,17 @@ Ingen resurs behöver skapas för att fatta nästa beslut.
 
 ## Förutsättningar och kostnadsjämförelse
 
-Liten löpande arbetsinsats prioriteras. Cirka 200 kr per månad för drift,
-lagring, tal och AI är ett mjukt riktmärke. Internet och åtkomst utanför
-hemmet krävs. I teknikvalets samtal anger beställaren att upp till en
-veckas förlust av bekräftade data vid större lagringshaveri är acceptabelt,
-liksom flera dygn för återställning. Kostnadsexempel ska omfatta 1, 4
-och 10 timmars tal per månad enligt
+Bekräftad planeringsinriktning från beställaren: låg kostnad väger tyngre
+än extra skydd mot driftfel. Egen fullständig export räcker tills vidare;
+första versionen behöver ingen tillagd automatisk säkerhetskopiering.
+Vid större haveri accepteras förlust av allt som saknas i den egna
+exporten. Därmed finns inget krav på högst en veckas dataförlust och
+ingen beslutad backupretention. Kraven på privat innehåll, inloggning,
+fullständig export och korrekt återimport gäller fortfarande.
+
+Cirka 200 kr per månad för drift, lagring, tal och AI är ett mjukt
+riktmärke. Internet och åtkomst utanför hemmet krävs. Kostnadsexempel
+ska omfatta 1, 4 och 10 timmars tal per månad enligt
 [teknikbeslutets pågående samtal](https://github.com/viscalyx/skyttel/issues/12#issuecomment-5688442400).
 Exakt återställningsrutin och faktisk användningsvolym återstår.
 Innehåll och åtkomst följer
@@ -49,26 +54,24 @@ Detta är inga aktuella valutakurser eller besked om fakturans skatt.
 <!-- markdownlint-disable MD013 -->
 | Kandidat | Grundkostnad per månad | SEK-exempel | Kvar av 200 kr före övriga tillägg |
 | --- | --- | --- | --- |
-| Hetzner CX23, IPv4, serverbackup | 5,49 + 0,50 + 1,098 = 7,088 EUR | cirka 97 kr | cirka 103 kr |
+| Hetzner CX23 och IPv4 | 5,49 + 0,50 = 5,99 EUR | cirka 82 kr | cirka 118 kr |
 | Render app och PostgreSQL, 1 GB databasdisk | 7 + 6 + 0,30 = 13,30 USD | cirka 166 kr | cirka 34 kr |
 | Render app och Supabase Pro | 7 + 25 = 32 USD | cirka 400 kr | över riktmärket före AI |
 <!-- markdownlint-enable MD013 -->
 
 Hetzners priser följer
 [prislistan från juni 2026](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/),
-[IPv4-priset](https://docs.hetzner.com/general/infrastructure-and-availability/ipv4-pricing/)
-och [backupavgiften på 20 procent](https://docs.hetzner.com/cloud/billing/faq/).
+[IPv4-priset](https://docs.hetzner.com/general/infrastructure-and-availability/ipv4-pricing/).
 Renderpriserna kommer från [prislistan](https://render.com/pricing).
 Supabase Pro kostar 25 USD med en Micro-instans täckt av inkluderad
 compute-kredit; det är inte 25 + 10 USD för denna enda databas.
 Se [Supabases faktureringsexempel](https://supabase.com/docs/guides/platform/billing-faq).
 
-Tabellen är ett jämförelsegolv. Ett separat backupjobb på Render ger
-ytterligare minst 1 USD per månad enligt backupavsnittet nedan:
-Render-kandidaten blir då 14,30 USD, cirka 179 kr i samma räkneexempel,
-och Supabase-kandidaten 33 USD, cirka 413 kr. Domän, e-postleverantör,
-fristående säkerhetskopior, större instanser, överföring och testmiljöer
-kan tillkomma. Reserven till AI är alltså högst skillnaden i sista
+Tabellen är ett jämförelsegolv utan köpt serverbackup, separat backupjobb
+eller R2. Backuper som redan ingår i en leverantörs betalda tjänst är
+fortfarande tillgängliga enligt leverantörens villkor. Domän, eventuell
+e-postleverantör, större instanser, överföring och testmiljöer kan
+tillkomma. Reserven till AI är alltså högst skillnaden i sista
 kolumnen, inte ett löfte om vad tal och AI kommer att kosta.
 
 ## Kandidat: egen server hos Hetzner
@@ -89,10 +92,13 @@ Detta är driftbedömningen för den egenförvaltade kandidaten, inte ett
 löfte om ett visst antal arbetstimmar.
 [Hetzners serverplattform och orter](https://www.hetzner.com/cloud/).
 
-Serverbackup ger sju dagliga kopior. Hetzner rekommenderar avstängning
+Valfri serverbackup ger sju dagliga kopior och kostar 20 procent extra.
+Den ingår inte i första versionens kostnadsgrund.
+[Backupavgiften](https://docs.hetzner.com/cloud/billing/faq/).
+Hetzner rekommenderar avstängning
 för säker diskkonsistens; en kopia av en körande server är därför inte
-i sig en verifierad databasbackup. Säkerhetskopiera dessutom databasen
-med databasens egna verktyg. Backuper försvinner när servern tas bort,
+i sig en verifierad databasbackup. En framtida backupplan behöver
+databasens egna verktyg. Backuper försvinner när servern tas bort,
 medan manuella snapshots finns kvar tills de tas bort separat.
 [Hetzners backupregler](https://docs.hetzner.com/cloud/servers/backups-snapshots/faq/).
 
@@ -146,8 +152,9 @@ Här ligger appen på samma Render-nivå medan Supabase sköter PostgreSQL,
 Auth och, om det behövs, Storage. Pro omfattar 8 GB databasdisk,
 100 GB filer och 250 GB utgående trafik. Free har 500 MB databas,
 1 GB filer, 5 GB trafik och kan pausas efter en veckas inaktivitet.
-Free saknar inkluderad automatisk backup; det gör nivån olämplig som
-obevakad driftplan utan eget backup- och återstartsarbete.
+Free saknar inkluderad automatisk backup. Avsaknaden av backup är
+accepterad i första versionen; pausning och återstart behöver ändå
+bedömas innan Free väljs som driftplan.
 [Priser och gränser](https://supabase.com/pricing).
 
 Välj en bestämd region, exempelvis Frankfurt. Stockholm finns också.
@@ -186,8 +193,9 @@ nedladdning enklare att resonera om.
 
 Pro ger daglig databasbackup med sju dagars historik. Bildobjekt i Storage
 ingår inte, endast deras metadata. En återställd databas återför alltså
-inte en raderad bild. Separat bildbackup behövs, eller databaslagring av
-de små bilderna. PITR är ett separat tillägg från cirka 100 USD per
+inte en raderad bild. Om leverantörsbackupen ska täcka bilder behövs
+separat bildbackup eller databaslagring av de små bilderna. PITR är
+ett separat tillägg från cirka 100 USD per
 månad; tätare återställningspunkter behöver därför jämföras separat.
 [Backupens omfattning](https://supabase.com/docs/guides/platform/backups).
 Databasuppgraderingar kräver fortfarande planerad avbrottstid och
@@ -198,6 +206,56 @@ En statisk klient med Supabase Edge Functions kan undvika den separata
 appserveravgiften, men den varianten är inte verifierad här mot tal,
 strömmande svar och externa assistenter. Den får inte räknas som en
 färdig helhetslösning utan den prövningen.
+
+## Google och Microsoft som inloggning
+
+Beställarens planeringspreferens är Google och Microsoft i första hand.
+Egen e-post och lösenord är reservvägen om ett konkret hinder gör
+leverantörsinloggningen för komplicerad. Detta är en produktpreferens;
+följande är verifierade integrationsmöjligheter, inte en genomförd
+inloggningsprövning.
+
+- Better Auth har inbyggda Google- och Microsoft-provider. Google kräver
+  ett Cloud-projekt, OAuth-klient, klienthemlighet och registrerad
+  returadress. Microsoft kräver en Entra-appregistrering, returadress
+  och klientautentisering. Biblioteket kan köras i Skyttels egen app,
+  vilket passar både egen server och Render.
+  [Google i Better Auth](https://better-auth.com/docs/authentication/google),
+  [Microsoft i Better Auth](https://better-auth.com/docs/authentication/microsoft).
+- Supabase har motsvarande provider. Även här behöver förvaltaren
+  registrera egna OAuth-appar; Supabase ersätter inte registreringarna.
+  Microsoft-integrationen begär `email` och kräver giltig e-postadress.
+  Microsoft-hemlighetens utgångsdatum innebär återkommande förvaltning.
+  [Google i Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google),
+  [Microsoft i Supabase](https://supabase.com/docs/guides/auth/social-login/auth-azure).
+- Privata Microsoft-konton stöds. Appregistreringens tillåtna kontotyper
+  måste omfatta dem; `common` kan användas för organisationskonton och
+  privata konton tillsammans. Better Auth visar `tenantId: 'common'`;
+  Supabase använder motsvarande adress som standard och dokumenterar
+  också `consumers` för en app med endast privata konton.
+  [Microsofts kontotyper](https://learn.microsoft.com/en-us/entra/identity-platform/v2-supported-account-types),
+  [Microsofts common-adress](https://learn.microsoft.com/en-us/entra/identity-platform/howto-convert-app-to-be-multi-tenant).
+
+Förvaltaren behöver åtkomst till en Entra-tenant och rätt att registrera
+appen. Det är skilt från hushållsmedlemmens vanliga privata Microsoft-konto.
+Kontot och registreringsåtkomsten är inte verifierade i denna research.
+[Microsofts registreringskrav](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app).
+
+Skyttel behöver en stabil egen användaridentitet som olika inloggningar
+kan kopplas till; en e-postadress ensam ska inte ge hushållstillgång.
+Better Auth skiljer användare från provider-konton och erbjuder
+kontolänkning. Regler för länkar och inbjudningar behöver prövas så att
+Google och Microsoft inte skapar två oavsiktliga hushållsidentiteter.
+[Användare och konton](https://better-auth.com/docs/concepts/users-accounts).
+
+Google/Microsoft bevisar vem som loggar in i Skyttel. ChatGPT/Codex
+behöver därefter separat medgivande och tokens för Skyttels MCP-server.
+Better Auth erbjuder ett OAuth-provider-tillägg; Supabases motsvarande
+stöd beskrivs ovan. Ingen av inloggningsknapparna ger automatiskt en
+extern assistent rätt att läsa eller ändra kartan.
+[Better Auth OAuth-provider](https://better-auth.com/docs/plugins/oauth-provider).
+Bedömning: inget dokumenterat hinder kräver lösenordsreservvägen nu;
+faktisk appregistrering och ett prov med båda kontotyperna återstår.
 
 ## Hur databaserna passar Skyttels innehåll
 
@@ -305,7 +363,9 @@ ange backupers livslängd och vad som händer om en äldre backup måste
 En separat, minimalt innehållande raderingsjournal är en möjlig mekanism.
 Nedladdade privata användarexporter följer undantaget i informationsbeslutet.
 
-Oberoende, krypterade kopior skyddar mot förlust av leverantörskontot.
+Följande är valfria framtida möjligheter och ingår inte i första
+versionens beslutade kostnadsgrund. Oberoende, krypterade kopior kan
+användas om kraven på skydd mot förlust av leverantörskontot skärps.
 Cloudflare R2 Standard är ett möjligt mål: 10 GB-månader lagring,
 en miljon skrivoperationer och tio miljoner läsoperationer ingår gratis;
 därefter kostar lagring 0,015 USD per GB-månad plus operationer.
@@ -314,30 +374,16 @@ bevarade kopior tillsammans, inte varje kopia.
 [R2-priser](https://developers.cloudflare.com/r2/pricing/).
 EU-jurisdiktion går att välja för lagrade objekt.
 [R2-placering](https://developers.cloudflare.com/r2/reference/data-location/).
-En konkret rutin att ta ställning till är en krypterad databasexport
-varje dygn, bevarad i 28 dagar. Täta försök ger marginal till den
-accepterade veckans dataförlust och en längre historik hjälper om ett
-fel upptäcks sent. Larma när en förväntad kopia uteblir och kontrollera
-återläsning regelbundet; ett schema ensamt garanterar inte dataskyddet.
-Enbart Render PITR med tre dagars fönster ger inte den längre historiken.
-
-På en egen server kan operativsystemet köra jobbet utan en extra
-jobbtjänst. Render Cron tar minst 1 USD per månad och jobb, därefter
-efter körtid. Det kan ansluta till PostgreSQL och skicka den krypterade
-exporten till R2 utan beständig lokal disk. Spara återställningsnyckeln
-åtkomligt även om driftkontot försvinner. Databasdump, konfiguration och
-alla eventuella separata bildobjekt måste omfattas av återställningsprovet.
+Render Cron kan vid ett senare behov köra ett separat backupjobb från
+1 USD per månad, debiterat efter körtid över minimibeloppet.
 [Render Cron](https://render.com/docs/cronjobs).
-
-28 kopior à 100 MB är ett påhittat exempel på cirka 2,8 GB; 28 kopior
-à 1 GB kräver cirka 28 GB före komprimering. Korta upp- och nedladdningar
-av små kopior kan rymmas inom R2:s gratisnivå, men storlek och jobbets
-körtid måste mätas. R2 kan radera objekt enligt åldersregler; radering
+R2 kan radera objekt enligt åldersregler; radering
 sker typiskt inom 24 timmar efter utgång, vilket inte är en exakt
 garanterad tidsgräns.
 [R2:s livscykelregler](https://developers.cloudflare.com/r2/buckets/object-lifecycles/).
-Destination, 28 dagars retention, nyckelförvaring och provad återläsning
-är ännu ett förslag, inte ett beslutat tillägg.
+Ingen frekvens, retention eller extern backupdestination är ett krav
+för första versionen. Den egna exportens innehåll avgör vad som går
+att återställa om driftens data försvinner.
 
 ## Leverantörsbyte och återstående avvägningar
 
@@ -352,11 +398,10 @@ en komplett kopia av plattformen.
 
 Före teknikbeslutet återstår följande mänskliga avvägningar:
 
-- Hur mycket merkostnad är mindre eget driftarbete värt? Render minskar
+- Vilket billigt alternativ har acceptabelt eget arbete? Render minskar
   serverarbete; Supabase minskar även arbete med inloggningstjänsten.
-- Vilken konkret rutin uppfyller en veckas högsta accepterade dataförlust
-  och återställning inom flera dygn? Det behöver prövas med återläsning;
-  dessa toleranser kräver inte i sig hög tillgänglighet eller jouravtal.
+- Hur görs egen export och återimport tillräckligt enkla? Automatisk
+  backup, hög tillgänglighet och jouravtal ingår inte i första kravet.
 - Hur länge får permanent raderat innehåll finnas i otillgängliga
   säkerhetskopior, och hur ska spärrar överleva en återställning?
 - Vem kan återställa tjänsten om den ordinarie förvaltaren inte kan?
