@@ -151,8 +151,9 @@ höja kostnaden. Återanvänd cache eller färre kartuppdrag kan sänka
 den. Textarbete utanför röstsamtal tillkommer separat.
 Riktmärket 200 kr lämnar därför olika utrymme för drift beroende på
 användningen; fyra timmars exemplet lämnar cirka 21 kr före påslag.
-Det mjuka riktmärket är inget skäl att automatiskt välja bort ett
-alternativ som kräver mindre driftarbete.
+Det mjuka riktmärket är inget hårt tak. Beställaren prioriterar låg
+driftkostnad framför starkare skydd mot driftfel; arbetet med drift
+och skillnaden i tjänstekostnad ska därför redovisas var för sig.
 
 ## Data, lagring och region
 
@@ -299,7 +300,7 @@ Lokal kontroll: Codex CLI 0.153.0, `codex mcp --help` och
 `codex mcp logout --help`; inga anslutningar ändras i undersökningen.
 
 **Konsekvens för Skyttel:** koppla användare och hushåll till en
-betrodd identitet. Kontrollera även aktuell medlemskap/åtkomst i
+betrodd identitet. Kontrollera även aktuellt medlemskap och åtkomst i
 Skyttel. Återkallelse behöver göra fortsatt läsning och sparande
 omöjligt på servern, även om klienten behåller en token eller en
 öppen anslutning. Exakt mekanism beror på identitetssystemet och
@@ -322,7 +323,7 @@ en annan möjlig transportvariant; den behövs inte för att dela
 domänregler. Produktionsvägen behöver bevara följande prövade krav:
 
 1. Läsningar begränsas till användarens tillåtna hushåll.
-2. Förslag ändrar personens eget utkast, inte den sparade kartan.
+2. Förslag ändrar Skyttel-användarens eget utkast, inte den sparade kartan.
 3. Sparande kontrollerar granskad kartversion och exakt utkastversion.
 4. Samma spar-ID ger samma beständiga kvitto, utan dubblerad ändring.
 5. Vid osäkert svar hämtas kvittot innan en ny ändring görs.
