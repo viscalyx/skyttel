@@ -159,7 +159,7 @@ bevisar Skyttels fulla kombination med båda externa klienterna.
 [OAuth-provider](https://better-auth.com/docs/plugins/oauth-provider),
 [MCP-auktorisering på Workers](https://developers.cloudflare.com/agents/model-context-protocol/protocol/authorization/).
 
-Före slutligt Cloudflare-val behöver samma prov täcka båda
+Vid implementation behöver ett sammanhängande prov täcka båda
 inloggningsleverantörerna, OAuth-upptäckt och registrering, rätt
 returadresser, medgivande, tokenförnyelse och indraget medlemskap.
 Skyttels egen assistent och externa textklienter ska använda samma
@@ -204,18 +204,19 @@ per anrop, med antagen cacheskrivning och utan cacheträffar.
 | 10 timmar | 62,50 kr | 621,25 kr | 649,38 kr |
 <!-- markdownlint-enable MD013 -->
 
-Domän och DNS finns redan hos Cloudflare och kostnaden räknas separat
-för båda driftalternativen; samma domän kan användas med Render.
+Domän och DNS finns redan hos Cloudflare och Gandi och räknas separat
+för samtliga driftalternativ; samma domän kan användas med Render.
 Eventuella e-postutskick, kvotöverskott och extra textarbete tillkommer.
 Befintliga abonnemang ingår inte. Vid fyra och tio timmar
 är AI-kostnaden större än skillnaden mellan driftalternativen.
 
-## Kvar före val och leverantörsbyte
+## Verifiering och leverantörsbyte
 
-Ett avgränsat prov behöver visa konkurrerande sparanden, tappat kvitto,
-atomär återimport, privata utkast och bildexport; dessutom längre
+Implementationens avgränsade prov behöver visa konkurrerande sparanden,
+tappat kvitto, atomär återimport, privata utkast och bildexport; längre
 Live-sideband och OAuth i de två valda klienterna. Inga resurser,
 konton, betalda API-anrop eller hemligheter ingår i denna research.
+Rapporten inför inget nytt krav på produktionsprov i beslutskartan.
 
 Portabiliteten blir bättre med en fristående domänmodell och ett
 versionerat eget exportformat. Cloudflare-bindningar, DO-transaktioner,
