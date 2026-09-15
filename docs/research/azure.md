@@ -219,10 +219,10 @@ ChatGPT-/Codex-abonnemang räknas separat för alla alternativen.
 Cirka 200 kr är ett mjukt riktmärke.
 
 Kalkylens AI-antaganden och jämförelsebaser finns i
-[AI och externa klienter](https://github.com/viscalyx/skyttel/issues/19),
-[Cloudflare-jämförelsen](https://github.com/viscalyx/skyttel/issues/20)
+[Vilka villkor och klientstöd gäller för Skyttels valda AI- och MCP-flöden?](https://github.com/viscalyx/skyttel/issues/19),
+[Kan Cloudflare ge Skyttel billigare sammanhängande drift?](https://github.com/viscalyx/skyttel/issues/20)
 och
-[drift- och lagringsjämförelsen](https://github.com/viscalyx/skyttel/issues/18).
+[Vilka drift- och lagringsalternativ passar Skyttels krav och kostnadsram?](https://github.com/viscalyx/skyttel/issues/18).
 
 ## Utvecklingsarbete och flyttbarhet
 
