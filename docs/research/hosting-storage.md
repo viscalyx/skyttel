@@ -11,9 +11,10 @@ inför
 
 - En liten egen server har lägst tjänstekostnad men lämnar operativsystem,
   databas, inloggning, övervakning och återställning till Skyttels förvaltare.
-- Render med förvaltad PostgreSQL är en mellanväg nära kostnadsriktmärket.
-  Supabase tillför även förvaltad inloggning och bildlagring, men dess
-  betalda grundnivå plus appserver kostar mer.
+- Render med en appinstans, SQLite och beständig disk är ett billigt
+  alternativ med mindre serverarbete. Förvaltad PostgreSQL kostar mer
+  och ger andra driftmöjligheter. Supabase tillför även förvaltad
+  inloggning och bildlagring, men dess betalda grundnivå kostar mer.
 - PostgreSQL och SQLite kan båda bära kraven. Historik, utkast,
   konflikthantering och säker återimport måste utformas i Skyttel oavsett
   leverantör. Nätverket i gränssnittet kräver inte en grafdatabas.
@@ -55,6 +56,7 @@ Detta är inga aktuella valutakurser eller besked om fakturans skatt.
 | Kandidat | Grundkostnad per månad | SEK-exempel | Kvar av 200 kr före övriga tillägg |
 | --- | --- | --- | --- |
 | Hetzner CX23 och IPv4 | 5,49 + 0,50 = 5,99 EUR | cirka 82 kr | cirka 118 kr |
+| Render app, SQLite och 1 GB beständig disk | 7 + 0,25 = 7,25 USD | cirka 91 kr | cirka 109 kr |
 | Render app och PostgreSQL, 1 GB databasdisk | 7 + 6 + 0,30 = 13,30 USD | cirka 166 kr | cirka 34 kr |
 | Render app och Supabase Pro | 7 + 25 = 32 USD | cirka 400 kr | över riktmärket före AI |
 <!-- markdownlint-enable MD013 -->
@@ -104,6 +106,33 @@ medan manuella snapshots finns kvar tills de tas bort separat.
 
 Denna kandidat lämnar mest pengar till AI, förutsatt tillgängligt
 lågprisalternativ. Den lämnar också mest arbete vid driftfel.
+
+## Kandidat: Render med SQLite på beständig disk
+
+En betald appinstans för 7 USD och 1 GB beständig disk för 0,25 USD
+ger 7,25 USD per månad. Render dokumenterar upplägget med SQLite i
+sin Strapi-guide som ett enkelt och billigt alternativ. Guiden är
+belägg för driftmöjligheten; Skyttel behöver inte använda Strapi.
+[Diskpris](https://render.com/articles/how-much-does-cloud-application-hosting-cost-for-small-businesses),
+[SQLite på Render](https://render.com/docs/deploy-strapi).
+
+Databasen måste ligga under diskens monterade sökväg. Disken överlever
+omstarter och driftsättningar men hör till en enda appinstans. Ny
+driftsättning innebär ett kort avbrott; flera parallella instanser
+med samma disk stöds inte. Render tar automatiska disksnapshots men
+avråder från diskåterställning för egna databasinstanser på grund av
+korruptionsrisk. De räknas därför inte som ett löfte om återställning
+av Skyttels databas.
+[Beständighet och begränsningar](https://render.com/docs/disks).
+
+Better Auth stöder SQLite, så Google/Microsoft och MCP-komponenten
+behöver inte en separat databasprodukt av det skälet.
+[Better Auths SQLite-adapter](https://better-auth.com/docs/adapters/sqlite).
+Bedömning: detta är en sammanhängande kandidat när låg kostnad, en
+appinstans och egen export räcker. Appens 512 MB minne och 1 GB disk
+är utgångspunkter att mäta, inte verifierad kapacitet för Skyttel.
+Appberoenden, migreringar, fullständig export och återimport är eget
+arbete även när Render sköter värdmiljön.
 
 ## Kandidat: Render med förvaltad PostgreSQL
 
