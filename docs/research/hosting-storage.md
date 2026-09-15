@@ -1,6 +1,7 @@
 # Drift och lagring för första Skyttel
 
 Kontrolldatum: 2026-09-15. Underlag, inte ett teknikbeslut.
+Render Hobby och Free kontrolleras även 2026-09-16.
 
 Frågan är
 [Vilka drift- och lagringsalternativ passar Skyttels krav och kostnadsram?](https://github.com/viscalyx/skyttel/issues/18)
@@ -9,8 +10,9 @@ inför
 
 ## Slutsatser för beslutet
 
-- En liten egen server har lägst tjänstekostnad men lämnar operativsystem,
-  databas, inloggning, övervakning och återställning till Skyttels förvaltare.
+- Bland tabellens kandidater har egen server lägst tjänstekostnad men
+  lämnar operativsystem, databas, inloggning, övervakning och återställning
+  till Skyttels förvaltare.
 - Render med en appinstans, SQLite och beständig disk är ett billigt
   alternativ med mindre serverarbete. Förvaltad PostgreSQL kostar mer
   och ger andra driftmöjligheter. Supabase tillför även förvaltad
@@ -71,10 +73,11 @@ Se [Supabases faktureringsexempel](https://supabase.com/docs/guides/platform/bil
 
 Tabellen är ett jämförelsegolv utan köpt serverbackup, separat backupjobb
 eller R2. Backuper som redan ingår i en leverantörs betalda tjänst är
-fortfarande tillgängliga enligt leverantörens villkor. Domän, eventuell
-e-postleverantör, större instanser, överföring och testmiljöer kan
-tillkomma. Reserven till AI är alltså högst skillnaden i sista
-kolumnen, inte ett löfte om vad tal och AI kommer att kosta.
+fortfarande tillgängliga enligt leverantörens villkor. Befintlig domän,
+DNS och befintliga ChatGPT-/Codex-abonnemang räknas separat för alla
+kandidater. Eventuell e-postleverantör, större instanser, överföring och
+testmiljöer kan tillkomma. Reserven till AI är alltså högst skillnaden
+i sista kolumnen, inte ett löfte om vad tal och AI kommer att kosta.
 
 ## Kandidat: egen server hos Hetzner
 
@@ -104,8 +107,67 @@ databasens egna verktyg. Backuper försvinner när servern tas bort,
 medan manuella snapshots finns kvar tills de tas bort separat.
 [Hetzners backupregler](https://docs.hetzner.com/cloud/servers/backups-snapshots/faq/).
 
-Denna kandidat lämnar mest pengar till AI, förutsatt tillgängligt
-lågprisalternativ. Den lämnar också mest arbete vid driftfel.
+Denna kandidat lämnar mest pengar till AI bland alternativen i tabellen,
+förutsatt tillgängligt lågprisalternativ. Jämförelsen omfattar inte
+Cloudflare, Gandi eller andra separata forskningsunderlag. Kandidaten
+lämnar också mest arbete vid driftfel.
+
+## Render Hobby är arbetsytan; Free är servernivån
+
+Hobby kostar 0 USD per månad för själva arbetsytan. Compute, disk och
+annan förbrukning debiteras separat. Hobby kan alltså använda betalda
+apptjänster och beständig disk utan Pro. Gränsen på en medlem gäller
+operatören i Renders kontrollpanel, inte antalet hushållsmedlemmar i
+Skyttel. Hobby tillåter 25 tjänster.
+[Arbetsytans nivåer](https://render.com/docs/platform-features-by-plan).
+
+Minsta betalda appnivå är `0.5c-512mb`, med 0,5 CPU och 512 MB RAM.
+Det äldre namnet Starter avser samma resurser och pris. Kombinationen
+är därför **Hobby 0 + app 7 + disk 0,25 = 7,25 USD per månad** för
+1 GB disk, före skatt och kvotöverskott. Den behöver ingen Pro-avgift.
+Det motsvarar 90,63 kr med rapportens räkneantaganden.
+[Compute-namn](https://render.com/docs/compute-plans),
+[Prislista](https://render.com/pricing),
+[Disk för betalda tjänster](https://render.com/docs/disks).
+
+Hobby stöder GitHub-anslutning och automatisk driftsättning från vald
+gren. Två egna domäner och automatiska TLS-certifikat ingår. Befintlig
+DNS hos Gandi eller Cloudflare kan peka mot tjänsten; domänen behöver
+inte flyttas till Render. GitHub-inloggningen till Render är separat
+från hushållsmedlemmarnas Google/Microsoft-inloggning till Skyttel.
+[Git-integration](https://render.com/docs/git-provider),
+[Egna domäner och TLS](https://render.com/docs/custom-domains).
+
+Gratis compute, **Free**, har andra egenskaper:
+
+- Ingen beständig disk. Lokala filer och SQLite-data försvinner vid
+  driftsättning, omstart och vila.
+- Vila efter 15 minuter utan inkommande trafik; uppvakning tar ungefär
+  en minut. 750 instanstimmar delas av arbetsytans gratistjänster varje
+  månad. Förbrukad kvot stoppar dem till nästa månad.
+- Render Free Postgres har 1 GB och upphör efter 30 dagar. Uppgradering
+  krävs för åtkomst; efter ytterligare 14 dagar raderas databasen.
+- Ovanligt stor tjänsteinitierad trafik till externa API:er, databaser
+  eller objektlager kan ge avstängning. Ingen numerisk tröskel anges.
+  Betald compute krävs då för att återaktivera tjänsten.
+- Förbrukad inkluderad utgående trafik ger tilläggsdebitering, eller
+  avstängning månaden ut om betalningsmetod saknas.
+
+[Free-begränsningar](https://render.com/docs/free).
+
+**Bedömning:** accepterad dataförlust vid större haveri innebär inte
+att data får försvinna vid vanlig vila eller driftsättning. Free med
+lokal SQLite uppfyller därför inte beständig lagring i den föreslagna
+Skyttel-modellen. Betald Hobby-app med disk gör den skillnaden.
+
+Free-app med extern gratisdatabas är däremot tekniskt möjlig. Supabase
+Free ger exempelvis 500 MB databas men pausar efter en veckas
+inaktivitet. Då behöver även bilder, utkast och jobbstatus ligga
+externt; appens vila, återuppvakning och externa trafikgräns kvarstår.
+Det är en möjlig separat kostnadsvariant om begränsningarna accepteras,
+inte samma enkla SQLite-lösning. Ingen extern gratishelhet är verifierad
+här mot längre taljobb eller båda MCP-klienterna.
+[Supabase Free](https://supabase.com/pricing).
 
 ## Kandidat: Render med SQLite på beständig disk
 
@@ -439,7 +501,6 @@ Före teknikbeslutet återstår följande mänskliga avvägningar:
   minne eller databasens storlek ökas? Detta kräver volymexempel eller
   mätning, inte antagandet att den billigaste instansen alltid räcker.
 
-Render Free är endast en provväg här: webbtjänster somnar efter
-inaktivitet och gratisdatabaser upphör efter 30 dagar. Det är inte en
-likvärdig ersättare för de betalda driftkandidaterna.
-[Gratisnivåns begränsningar](https://render.com/docs/free).
+Hobby med betald app är fortfarande en kandidat, och Free med extern
+lagring kräver en annan bedömning enligt avsnittet ovan. Inget av dessa
+alternativ innebär ett låst teknikval eller ett nytt förhandsprov.
