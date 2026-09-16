@@ -254,10 +254,14 @@ men lagringskvoter och framtida prisändringar behöver följas upp.
 
 ## Inriktning för teknikförslaget
 
-Beställaren anger att automatiska uppdateringsförslag och tester ska följas
-av manuellt godkänd sammanslagning och driftsättning. Övriga tekniska
-rekommendationer konkretiseras i teknikförslaget. Researchen fastställer
-varken en genomförd implementation eller att den samlade stacken är godkänd.
+Beställaren anger automatiska uppdateringsförslag och tester samt manuellt
+godkänd sammanslagning till `main`. Godkänd kod på `main` ska därefter införas
+automatiskt i Render när releasekontrollerna lyckas, utan ett extra manuellt
+steg. Detta kan genomföras i GitHub Actions med Renders deploy-hook eller API.
+En bildbaserad Render-tjänst reagerar inte själv på en ny registertagg;
+arbetsflödet behöver uttryckligen begära införande av den kontrollerade bilden.
+Övriga tekniska rekommendationer konkretiseras i teknikförslaget. Researchen
+fastställer varken en genomförd implementation eller att stacken är godkänd.
 
 ## Begränsningar i källunderlaget
 
