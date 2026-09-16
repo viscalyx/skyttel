@@ -249,8 +249,8 @@ the saved **Web** entry. Add it only if it is missing.
 
 Leave the front-channel logout URL empty. This setup uses an authorization
 code flow with a server credential; it does not require enabling implicit
-grant or public-client authentication. If you already entered this callback
-as a **Web** redirect during registration, check the saved entry instead of
+grant or public-client authentication. If this callback already exists as a
+**Web** redirect, check the saved entry instead of
 adding a duplicate.
 
 Reference: Microsoft's
@@ -322,8 +322,8 @@ try the old value if the replacement fails.
    curl --fail http://localhost:3000/healthz
    ```
 
-   Use the same Compose project and files as the original startup. If you
-   started with `-p` or `-f` options, include those same options here. The
+   Use the same Compose project and files as the original startup. If your
+   startup command uses `-p` or `-f` options, include those options here. The
    recreation briefly interrupts the service and preserves its named volume.
    Do not remove the volume or create a new project during renewal. A plain
    `docker compose restart` does not load changed environment variables.
@@ -346,7 +346,7 @@ environment reload. An unexpired old value saved in a password manager can
 be restored to `.env.local` and loaded with the same recreation command if
 needed; Entra cannot show its full value again.
 
-If the secret has already expired, create and load a replacement using these
+If the secret is already expired, create and load a replacement using these
 same steps. New Microsoft sign-ins can fail until this is done. Creating a
 new app registration or deleting household data is not part of the repair.
 For a hosted installation, update its private environment setting and use
