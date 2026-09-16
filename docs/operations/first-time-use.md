@@ -135,6 +135,15 @@ these are stored in a file named `.env.local` in the Skyttel project folder.
 That file is private configuration: Git ignores it, so it is not included in
 commits. It still contains readable secrets and must stay on your computer.
 
+The command steps in this guide require Unix tools and a POSIX-compatible
+shell, such as Bash or Zsh on macOS or Linux. On Windows, use a Linux shell in
+[Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install).
+The commands, including the later `<<'JS'` block, do not run as written in
+PowerShell or Command Prompt. In WSL, keep the project in its Linux filesystem,
+such as `~/skyttel`, so `chmod` uses Linux file permissions. Windows-mounted
+paths such as `/mnt/c` have different
+[permission behavior](https://learn.microsoft.com/en-us/windows/wsl/file-permissions).
+
 If `.env.local` already exists, keep it and edit the two Google entries below.
 If it does not exist, open a terminal in the Skyttel project folder and run:
 
