@@ -1,0 +1,7 @@
+*
+!Dockerfile
+!install-tools.sh
+!install-extension.sh
+!tools/
+!tools/package.json
+!tools/package-lock.json

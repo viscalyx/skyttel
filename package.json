@@ -10,10 +10,11 @@
   "scripts": {
     "dev": "tsx watch src/server/index.ts",
     "dev:client": "vite --host 127.0.0.1",
+    "dev:all": "node scripts/develop.mjs",
     "build": "tsc -p tsconfig.server.json && vite build",
     "start": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",
-    "lint:docs": "node scripts/check-docs.mjs && cspell --no-progress docs/operations/first-time-use.md docs/operations/installation.md docs/operations/operator-upgrade-notes.md docs/development/testing.md",
+    "lint:docs": "node scripts/check-docs.mjs && cspell --no-progress docs/operations/first-time-use.md docs/operations/installation.md docs/operations/operator-upgrade-notes.md docs/development/testing.md docs/development/devcontainer.md",
     "test": "npm run build && playwright test",
     "test:gates": "node --test scripts/release/__tests__/*.test.mjs scripts/security/__tests__/*.test.mjs",
     "test:integration": "playwright test",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@cspell/dict-sv": "2.3.2",
+    "@devcontainers/cli": "0.89.0",
     "@playwright/test": "1.63.0",
     "@types/better-sqlite3": "9.6.0",
     "@types/node": "24.13.5",
@@ -38,6 +40,7 @@
     "@vitejs/plugin-react": "6.1.1",
     "cspell": "10.3.3",
     "markdownlint": "0.41.1",
+    "sharp": "0.35.4",
     "tsx": "4.23.13",
     "typescript": "7.0.2",
     "vite": "8.3.0"

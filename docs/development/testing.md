@@ -4,6 +4,11 @@ Use Node.js 24 LTS and the committed npm lockfile. Native `better-sqlite3`
 installation requires a supported prebuilt binary or Python, a C/C++ compiler,
 and Make. The Docker build supplies these tools in its build stage.
 
+The [devcontainer guide](devcontainer.md) provides the complete Linux
+development environment, client/server startup, persistent development data,
+and Codex configuration. Container startup installs dependencies and prepares
+development tools; it does not run CI checks or project tests.
+
 ## Install and build
 
 ```sh
@@ -126,7 +131,8 @@ security-sensitive change must fail until the assessment is complete.
 ## Dependency updates
 
 `.github/dependabot.yml` enables weekly version-update checks for the root
-npm project and GitHub Actions. Each dependency gets a separate pull request.
+npm project, `.devcontainer/tools`, and GitHub Actions. Each dependency gets
+a separate pull request.
 The configuration takes effect on `main`. GitHub supplies the Dependabot
 update workflow, so no custom workflow file is needed. See GitHub's
 [Dependabot configuration guide](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-version-updates).
@@ -137,11 +143,29 @@ do not need the template declarations. Reviewers must still assess operational
 impact and commit meaningful operator notes when needed. Updates do not merge
 automatically.
 
-The source project's nested npm projects and devcontainer configuration do
-not exist in Skyttel, so they are not included. Runtime Node.js and Docker
-image updates remain coordinated maintenance: keep `.node-version`, the
-`package.json` engine range, and both pinned Dockerfile base references
-compatible, then run the production-container checks.
+The root npm lockfile includes the Dev Containers CLI and Playwright. The
+devcontainer tool lockfile separately pins Codex CLI and Playwright for the
+image. Runtime Node.js and Docker image updates remain coordinated
+maintenance: keep `.node-version`, the `package.json` engine range, both
+pinned production Dockerfile base references, and the devcontainer base
+reference compatible. Keep Playwright's package version and image browser
+installation aligned. Rebuild and start the devcontainer after updating these
+tools, and run the production-container checks when production inputs change.
+
+## Devcontainer development
+
+Open the repository with **Dev Containers: Reopen in Container** in VS Code.
+Use `npm run dev:all` in its terminal to start the client and server. Normal
+build, startup, and application use verify the development configuration;
+there are no dedicated devcontainer unit or integration tests. Run the
+existing application checks above explicitly when verifying a code change.
+Neither container creation nor startup runs CI checks or project tests.
+
+Successful environment startup does not establish authenticated Codex CLI or
+VS Code extension behavior. The
+[devcontainer guide](devcontainer.md#codex-permissions-and-remaining-verification)
+describes the separate client and minimum-permissions investigation in
+issue #25.
 
 ## Production-container checks
 
