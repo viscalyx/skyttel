@@ -7,7 +7,10 @@ then select **Dev Containers: Reopen in Container**. The repository appears
 at `/workspaces/skyttel` inside the container.
 
 The normal profile runs as `vscode`, with UID/GID 1000. It does not mount the
-host Docker socket or request additional Linux capabilities. Automatic UID
+host Docker socket or request additional Linux capabilities. Like the
+reference development environment, it provides passwordless `sudo` inside
+the container so Playwright can install its Linux libraries. Applications
+and developer tools run as `vscode`. Automatic UID
 remapping is disabled so that the named volumes retain consistent ownership.
 On Linux, the host checkout must permit UID/GID 1000 to write; check that
 permission before opening the container.
@@ -28,7 +31,9 @@ Authenticated Codex client verification remains in issue #25.
 ## Start the application
 
 Creating the container installs the project's exact locked dependencies with
-`npm ci`. Starting it prepares private configuration and the editor extension.
+`npm ci`, the latest Playwright tooling and browsers, and the latest stable
+Codex standalone release. Starting it prepares private configuration and the
+editor extension.
 Neither lifecycle step runs the CI checks or project tests. Start the client
 and application server explicitly from a container terminal:
 
@@ -79,9 +84,11 @@ npm run test:gates
 dotnet-gitversion /output json
 ```
 
-The image includes the Playwright browser binaries and their Linux libraries.
-`npm test` builds the application and runs the existing browser and public
-HTTP checks with isolated synthetic data. Focused test commands and the
+Container creation installs Playwright browsers and their Linux libraries.
+The application's locked Playwright test runner also receives its matching
+browser binaries. `npm test` builds the application and runs the existing
+browser and public HTTP checks with isolated synthetic data. Focused test
+commands and the
 separate production-image check are described in
 [development testing](testing.md).
 
@@ -120,7 +127,9 @@ Volume names include the Dev Containers identifier. Reopening, restarting,
 or using **Dev Containers: Rebuild Container** for the same workspace retains
 these volumes. Rebuild after changing the image, tool versions, or container
 configuration; `npm ci` refreshes dependencies from the lockfile during
-creation. Rebuilding the image does not reset the database or Codex settings.
+creation. The same creation step resolves the latest Codex and Playwright
+tool releases, even when Docker reuses image layers. Rebuilding the image
+does not reset the database or Codex settings.
 
 Changing the workspace's host location can change its identifier and select
 new volumes. Removing volumes explicitly, including a broad Docker volume
@@ -142,21 +151,50 @@ digest as the production Dockerfile. npm 11.19.0 comes from that pinned
 Node image.
 Debian packages resolve against snapshot `20260915T000000Z`, including
 Python, Make, a C/C++ compiler, SQLite tools, Git, and browser libraries.
-The remaining pins are:
+The tool versions are:
 
 <!-- markdownlint-disable MD013 -->
 | Tool | Version and source |
 | --- | --- |
 | Dev Containers CLI | 0.89.0 in the root npm lockfile. |
-| Playwright | 1.63.0 in both npm projects; Chromium, Firefox, and WebKit in the image. |
+| Playwright browser tooling | Latest npm release, resolved on every container creation/rebuild. |
+| Application Playwright tests | 1.63.0 in the root npm lockfile, with matching browsers. |
 | Sharp | 0.35.4 in the root npm lockfile. |
-| Codex CLI | 0.154.0 in `.devcontainer/tools/package-lock.json`. |
+| Codex CLI | Latest stable standalone release, resolved on every container creation/rebuild. |
 | Codex VS Code extension | 26.908.40401, with architecture-specific VSIX checksums. |
 | GitHub CLI | 2.101.0, with archive checksums. |
 | .NET SDK | 8.0.425, with archive checksums. |
 | GitVersion | 6.8.2 from the versioned .NET tool package. |
 | VS Code Server installer CLI | 1.138.0 at a fixed commit, with archive checksums. |
 <!-- markdownlint-enable MD013 -->
+
+Codex follows Kravhantering's `scripts/azure-dev/templates/install-codex.sh`
+installation approach. `.devcontainer/install-codex.sh` resolves the latest
+stable GitHub release, downloads its `install.sh`, verifies the SHA-256
+digest from that release's metadata, and runs the verified installer for
+that exact release. The standalone package lives under the persistent
+`/home/vscode/.codex` directory, with its launcher in
+`/home/vscode/.local/bin`. Installation runs as `vscode` after mounts are
+available, so existing Codex volumes receive the package too. Authentication,
+sessions, and personal configuration remain in place.
+
+Playwright tooling is installed with
+`npm install --global --prefix "$HOME/.local" playwright@latest`.
+Its `install --with-deps` command supplies Chromium, Firefox, WebKit, and
+their Linux libraries. The browser cache is
+`/home/vscode/.cache/ms-playwright`. The setup links that tool version's
+Chromium executable at `/opt/google/chrome/chrome`, following the reference
+environment's browser integration. It then installs the browsers required
+by the application's locked test runner into the same cache. The two
+versions can coexist; rebuilding does not edit `package.json` or its lockfile.
+
+Codex and Playwright tooling intentionally follow current releases rather
+than committed version pins. Creation/rebuild needs network access and
+reports installed versions in its output. `codex --version` and
+`playwright --version` show the current tooling versions;
+`npx --no-install playwright --version` shows the application's version.
+An ordinary restart keeps the installed versions. To refresh tools in the
+same container, rerun `bash .devcontainer/post-create.sh`.
 
 The pinned VS Code Server provides the extension installation command in the
 image. The user's VS Code application manages its own remote server when
@@ -173,16 +211,17 @@ expose image handling.
 
 Keep the Node version in `.node-version`, the package engine range, both
 production-image base references, and the devcontainer base reference
-compatible. Update the Playwright package, lockfile, and image browser
-installation together in both npm projects so the driver and browser
-revisions match. Update other image tool pins and artifact checksums
+compatible. Update the Playwright package and lockfile when changing
+application tests; the creation script installs the corresponding browser
+revisions. Update image tool pins and artifact checksums
 together, and advance the Debian snapshot when updating OS packages. Rebuild
 the devcontainer, start the app, and run the relevant existing application
 checks before accepting a base-image or native-toolchain update. Run
 `npm run test:container` separately when production-image inputs change.
 
-The build context contains only `.devcontainer` files. Project dependencies
-are installed from the workspace after the image is built. Neither source
+The build context contains only the allowed `.devcontainer` files. Project
+dependencies and rolling tools are installed after the image is built.
+Neither source
 checkout secrets nor personal configuration are copied into the image.
 
 ## Troubleshoot startup
@@ -198,7 +237,8 @@ bash .devcontainer/post-create.sh
 bash .devcontainer/post-start.sh
 ```
 
-The first command reinstalls dependencies. The second preserves the private
+The first command reinstalls dependencies, refreshes Codex and Playwright,
+and installs the matching browser binaries. The second preserves the private
 environment file, checks writable state directories, and installs the pinned
 extension. Errors remain in lifecycle output. Do not clear a persistent
 volume to hide a startup failure.

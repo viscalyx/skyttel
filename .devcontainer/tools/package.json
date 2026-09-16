@@ -1,9 +1,0 @@
-{
-  "name": "skyttel-devcontainer-tools",
-  "private": true,
-  "version": "1.0.0",
-  "dependencies": {
-    "@openai/codex": "0.154.0",
-    "playwright": "1.63.0"
-  }
-}

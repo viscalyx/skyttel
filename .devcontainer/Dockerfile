@@ -1,6 +1,6 @@
 FROM node:24.21.0-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
 
-# The timestamp fixes the complete Debian dependency graph, including browsers.
+# The timestamp fixes the Debian dependency graph, including browser libraries.
 # Update it together with the reviewed tool pins, then rebuild and start normally.
 ARG DEBIAN_SNAPSHOT=20260915T000000Z
 # Node slim omits the OS CA bundle. Bootstrap it from the pinned Node trust
@@ -12,33 +12,29 @@ RUN mkdir -p /etc/ssl/certs \
     && apt-get install --no-install-recommends -y \
         bash-completion bubblewrap build-essential ca-certificates curl file \
         git jq less libicu72 libssl3 openssh-client procps python3 ripgrep \
-        sqlite3 unzip xz-utils zlib1g \
+        sqlite3 sudo unzip xz-utils zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_ROOT=/usr/share/dotnet \
     DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    PLAYWRIGHT_BROWSERS_PATH=/home/vscode/.cache/ms-playwright \
+    PATH=/home/vscode/.local/bin:${PATH}
 
 COPY install-tools.sh install-extension.sh /usr/local/share/skyttel/
 RUN bash /usr/local/share/skyttel/install-tools.sh
 
-COPY tools/package.json tools/package-lock.json /opt/devcontainer-tools/
-RUN cd /opt/devcontainer-tools \
-    && npm ci \
-    && ln -s /opt/devcontainer-tools/node_modules/@openai/codex/bin/codex.js /usr/local/bin/codex \
-    && ln -s /opt/devcontainer-tools/node_modules/playwright/cli.js /usr/local/bin/playwright \
-    && playwright install --with-deps chromium firefox webkit \
-    && chmod -R a+rX /ms-playwright \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN usermod --login vscode --home /home/vscode --move-home node \
     && groupmod --new-name vscode node \
     && mkdir -p /data /home/vscode/.codex /home/vscode/.config \
-        /home/vscode/.vscode-server /home/vscode/worktrees \
-        /workspaces/skyttel/node_modules \
-    && chown -R vscode:vscode /data /home/vscode /workspaces \
+        /home/vscode/.vscode-server /home/vscode/.local/bin \
+        /home/vscode/.cache/ms-playwright /home/vscode/worktrees \
+        /workspaces/skyttel/node_modules /opt/google/chrome \
+    && chown -R vscode:vscode /data /home/vscode /workspaces /opt/google/chrome \
+    && printf 'vscode ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/vscode \
+    && chmod 0440 /etc/sudoers.d/vscode \
+    && visudo --check --file /etc/sudoers.d/vscode \
     && git config --system --add safe.directory /workspaces/skyttel
 
 USER vscode

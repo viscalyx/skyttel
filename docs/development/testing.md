@@ -131,8 +131,7 @@ security-sensitive change must fail until the assessment is complete.
 ## Dependency updates
 
 `.github/dependabot.yml` enables weekly version-update checks for the root
-npm project, `.devcontainer/tools`, and GitHub Actions. Each dependency gets
-a separate pull request.
+npm project and GitHub Actions. Each dependency gets a separate pull request.
 The configuration takes effect on `main`. GitHub supplies the Dependabot
 update workflow, so no custom workflow file is needed. See GitHub's
 [Dependabot configuration guide](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-version-updates).
@@ -143,13 +142,16 @@ do not need the template declarations. Reviewers must still assess operational
 impact and commit meaningful operator notes when needed. Updates do not merge
 automatically.
 
-The root npm lockfile includes the Dev Containers CLI and Playwright. The
-devcontainer tool lockfile separately pins Codex CLI and Playwright for the
-image. Runtime Node.js and Docker image updates remain coordinated
+The root npm lockfile includes the Dev Containers CLI and the application
+Playwright test runner. Codex and the separate Playwright browser tooling
+follow their latest stable releases on each devcontainer creation/rebuild;
+they do not modify the application's lockfile. Runtime Node.js and Docker
+image updates remain coordinated
 maintenance: keep `.node-version`, the `package.json` engine range, both
 pinned production Dockerfile base references, and the devcontainer base
-reference compatible. Keep Playwright's package version and image browser
-installation aligned. Rebuild and start the devcontainer after updating these
+reference compatible. The creation script also installs browsers matching
+the application's locked Playwright version. Rebuild and start the
+devcontainer after updating these
 tools, and run the production-container checks when production inputs change.
 
 ## Devcontainer development
