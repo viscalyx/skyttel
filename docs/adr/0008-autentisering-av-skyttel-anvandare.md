@@ -1,8 +1,7 @@
 # Autentisering av Skyttel-användare
 
-Skyttel-användare autentiserar sig i första hand via Google eller
-Microsoft med Better Auth; egna lösenord är en reserv om ett konkret hinder gör
-leverantörsinloggningen för svår.
+Skyttel-användare autentiserar sig via Google eller Microsoft med
+Better Auth.
 Inloggningarna kopplas till en stabil Skyttel-användare, och länkning av
 två inloggningssätt kräver att båda identiteterna bevisas så att en
 gemensam e-postadress inte automatiskt slår ihop användare.
