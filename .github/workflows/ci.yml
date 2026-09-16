@@ -18,10 +18,14 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+      - run: node scripts/install-repository-npm.mjs
       - run: npm ci
       - run: npm run test:gates
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm run lint:docs
       - run: npx playwright install --with-deps chromium
-      - run: npm test
+      - run: npm run build
+      - run: npm run test:unit:coverage
+      - run: npm run test:integration
       - run: npm run test:container

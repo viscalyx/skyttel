@@ -12,7 +12,9 @@ const result = lint({
 });
 for (const [file, errors] of Object.entries(result)) {
   for (const error of errors) {
-    console.error(`${file}:${error.lineNumber} ${error.ruleNames[0]} ${error.ruleDescription}: ${error.errorDetail ?? ''}`);
+    console.error(
+      `${file}:${error.lineNumber} ${error.ruleNames[0]} ${error.ruleDescription}: ${error.errorDetail ?? ''}`,
+    );
     process.exitCode = 1;
   }
 }

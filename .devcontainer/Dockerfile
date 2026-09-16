@@ -9,8 +9,15 @@ RUN apt-get update && \
         build-essential \
         bubblewrap \
         jq \
+        libnss3-tools \
+        mkcert \
+        python-is-python3 \
         python3 \
+        python3-pip \
+        python3-venv \
+        python3-yaml \
         ripgrep \
+        socat \
         sqlite3 && \
     rm -rf /var/lib/apt/lists/*
 
@@ -40,7 +47,7 @@ WORKDIR /workspace
 RUN git config --system --add safe.directory /workspace
 
 # Expose the ports that Skyttel and Playwright use
-EXPOSE 3000 5173 9323
+EXPOSE 3000 3001 5173 9323
 
 # Run the long-lived container process as the same non-root user VS Code uses.
 USER vscode

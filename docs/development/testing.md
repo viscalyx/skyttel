@@ -1,6 +1,8 @@
 # Develop and verify the first installation
 
-Use Node.js 24 LTS and the committed npm lockfile. Native `better-sqlite3`
+Use Node.js 24 LTS, npm 12, and the committed npm lockfile.
+`packageManager` pins the npm release used by development, CI, and builds.
+Native `better-sqlite3`
 installation requires a supported prebuilt binary or Python, a C/C++ compiler,
 and Make. The Docker build supplies these tools in its build stage.
 
@@ -12,8 +14,10 @@ development tools; it does not run CI checks or project tests.
 ## Install and build
 
 ```sh
+node scripts/install-repository-npm.mjs
 npm ci
 npm run typecheck
+npm run lint
 npm run lint:docs
 npm run build
 ```
@@ -29,6 +33,30 @@ node --env-file=.env.local dist/server/index.js
 The database directory must be writable. The server serves the Vite client
 build and the API from the same origin.
 
+## Application unit tests and lint
+
+Vitest exercises public application functions, rendered React screens, and
+HTTP handlers. SQLite-backed behavior uses temporary real databases;
+external provider responses and browser network requests use synthetic
+fixtures. Coverage includes every TypeScript and TSX file under `src`,
+including entry points. Tests do not reach into private application helpers.
+The server process entry point is verified by Playwright startup and shutdown
+checks and remains visible in the unit coverage report. Coverage gates require
+85% of statements, lines, and functions, and 90% of branches.
+
+```sh
+npm run test:unit
+npm run test:unit -- tests/unit/server/config.test.ts
+npm run test:unit:coverage
+npm run lint
+npm run lint:fix
+```
+
+Biome checks application and test code, scripts, CSS, and root configuration.
+The project keeps single quotes and semicolons. Markdown lint and cSpell
+remain separate checks. CI enforces these checks and the application suites;
+container creation and startup do not run them.
+
 ## Isolated application checks
 
 ```sh
@@ -36,7 +64,8 @@ npx playwright install chromium
 npm test
 ```
 
-The suite drives the running application through the browser and public HTTP
+`npm test` builds the application and runs Vitest followed by Playwright.
+The Playwright suite drives the application through the browser and public HTTP
 endpoints, uses real SQLite databases in temporary directories, and supplies
 only synthetic users and households. Each installation has independent
 storage and a configured first administrator. The test identity substitute
@@ -65,11 +94,11 @@ Do not replace SQLite with an in-memory repository mock. Membership fixtures
 arrange scenarios for administration features that belong to later issues;
 all assertions observe the public HTTP interface, not internal database rows.
 
-Verification status on 2026-09-16: all 14 application tests and all 31 workflow
-gate tests pass on macOS ARM64 with Node.js 24.19.0,
-Playwright 1.63.0, and Chromium 153. Typechecking, Markdown lint, spelling,
-and the dependency audit also pass. Browser viewport emulation covers keyboard
-use and widths of 320 pixels; it does not verify a physical iPhone or iPad.
+The Playwright suite covers keyboard use and widths of 320 pixels through
+browser viewport emulation. This does not verify a physical iPhone or iPad.
+Run `npm run check` for typechecking, Biome, documentation checks, workflow
+gate tests, the build, Vitest coverage, and Playwright. Production image
+changes also require the separate `npm run test:container` check.
 
 ## Pull request gates
 
@@ -136,6 +165,20 @@ The configuration takes effect on `main`. GitHub supplies the Dependabot
 update workflow, so no custom workflow file is needed. See GitHub's
 [Dependabot configuration guide](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-version-updates).
 
+Use `npm run purge:install` explicitly during dependency maintenance. It
+preserves Kravhantering's two-phase installation: empty `node_modules`,
+clean the npm cache, install, remove the lockfile, and install again. The
+mounted `node_modules` directory itself stays in place. The second install
+regenerates the lockfile with native optional packages already available.
+This command does not change dependency version declarations; the package
+update workflow selects new versions before purging. Inspect both manifest
+and lockfile changes, then run `npm run check`.
+
+npm 12 requires reviewed dependency installation scripts. The committed
+`allowScripts` entries approve exact versions, and `.npmrc` rejects
+unreviewed scripts. Review changed lifecycle scripts before updating an
+approval. Use `npm ci` for ordinary setup and CI; purge is never automatic.
+
 Review each update and let application CI validate it. Dependabot pull
 requests skip the Operator Upgrade and SSDLC gates, so their descriptions
 do not need the template declarations. Reviewers must still assess operational
@@ -160,7 +203,10 @@ Prepare the private environment and host Codex mounts described in the
 [devcontainer guide](devcontainer.md), then use **Dev Containers: Reopen in
 Container** in VS Code. Docker Compose starts the application's development
 container with the repository at `/workspace`.
-Use `npm run dev:all` in its terminal to start the client and server. Normal
+Use `npm run dev:all` in its terminal to start the client and server, or
+`npm run dev:prodlike` for the compiled application on port 3001 using the
+same development data. Agents can use the host Docker engine to start
+throwaway containers. Normal
 build, startup, and application use verify the development configuration;
 there are no dedicated devcontainer unit or integration tests. Run the
 existing application checks above explicitly when verifying a code change.

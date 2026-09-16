@@ -3,6 +3,9 @@
 !Dockerfile
 !package.json
 !package-lock.json
+!.npmrc
+!scripts/
+!scripts/install-repository-npm.mjs
 !tsconfig.json
 !tsconfig.server.json
 !vite.config.ts

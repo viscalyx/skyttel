@@ -42,7 +42,12 @@
     "worktrees",
     "worktree",
     "återupptagningstoken",
-    "åtkomsttoken"
+    "åtkomsttoken",
+    "Buildx",
+    "prodlike",
+    "socat",
+    "unreviewed",
+    "venv"
   ],
   "useGitignore": true,
   "ignorePaths": [".git/**", "node_modules/**"]

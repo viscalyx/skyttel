@@ -1,10 +1,11 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
-const environmentFile = process.env.SKYTTEL_DEV_ENV_FILE
-  ?? '.devcontainer/.env';
+const environmentFile = process.env.SKYTTEL_DEV_ENV_FILE ?? '.devcontainer/.env';
 if (!existsSync(environmentFile)) {
-  console.error('Development configuration is missing. Set SKYTTEL_DEV_ENV_FILE to your private environment file; see docs/development/devcontainer.md.');
+  console.error(
+    'Development configuration is missing. Set SKYTTEL_DEV_ENV_FILE to your private environment file; see docs/development/devcontainer.md.',
+  );
   process.exit(1);
 }
 process.loadEnvFile(environmentFile);

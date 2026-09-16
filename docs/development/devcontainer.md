@@ -4,7 +4,9 @@ The configuration copies Kravhantering's devcontainer and adapts it to
 Skyttel's Node.js and SQLite stack. Docker Compose runs one `app` service,
 with the repository mounted at `/workspace`. The development image is
 separate from the production image. SQLTools uses its SQLite driver;
-unrelated reference services, Podman, and host Docker access are excluded.
+SQL Server, Keycloak, HSA, Kong, and Podman are excluded. The reference
+Docker feature provides Docker CLI, Compose, and Buildx through the host
+Docker engine, so developers and agents can run temporary containers.
 
 ## Agreed verification scope
 
@@ -12,8 +14,10 @@ The scope agreed on 2026-09-16 excludes automated devcontainer unit,
 integration, and lifecycle tests and a dedicated CI smoke workflow. Ordinary
 developer build, startup, and application use are sufficient validation.
 This narrows the original automated environment-verification criterion in
-[issue #33](https://github.com/viscalyx/skyttel/issues/33). Existing application
-tests and CI remain independent. Creation and startup never run those checks.
+[issue #33](https://github.com/viscalyx/skyttel/issues/33).
+Application unit tests use Vitest; application integration tests use
+Playwright. These tests and CI remain independent. Creation and startup
+never run those checks.
 Authenticated Codex client verification remains in issue #25.
 
 ## Prepare and start
@@ -57,14 +61,30 @@ npm run dev:all
 
 Open [the development client](http://localhost:5173). Vite proxies `/api`
 and `/healthz` to the server on container port 3000. VS Code forwards ports
-3000 for the API, 5173 for the client, and 9323 for Playwright reports.
+3000 for the API, 3001 for the compiled application, 5173 for the client,
+and 9323 for Playwright reports.
 Keep host port 5173 free because the sign-in origin uses that port. Ctrl+C
 stops both development processes; source edits reload them.
+
+To build and run the compiled application on port 3001, use:
+
+```sh
+npm run dev:prodlike
+```
+
+This command builds once, then serves the Vite client and API through the
+production Hono server at [port 3001](http://localhost:3001). It uses the same
+database and provider credentials as normal development. Its public origin
+uses the configured host and protocol with port 3001. For real sign-in, add
+the corresponding port-3001 callback URLs to the dedicated provider
+registrations. Source edits require another build. Keep host port 3001 free.
 
 `SKYTTEL_DEV_ENV_FILE` selects another private environment file. Exported
 environment values take precedence over file values. Compose also loads
 `.devcontainer/.env`, so recreate the container after changing a value it
-exports. The default database is `/data/skyttel.sqlite`.
+exports. `NODE_ENV` and the three .NET telemetry/workload settings retain
+the reference defaults and support host environment overrides. The default
+database is `/data/skyttel.sqlite`.
 SQLite runs inside the app and migrates when the app starts; there is no
 separate database service or startup database script.
 
@@ -111,16 +131,30 @@ Use `/home/vscode/worktrees` for additional worktrees and install their
 dependencies separately. Keep the main `/workspace` path stable because
 worktree metadata refers to it. Applications and tools run as `vscode`;
 the reference supplies passwordless `sudo` for development installations.
-UID remapping is disabled; Linux host files must be writable by UID/GID 1000.
+On Linux hosts, Dev Containers can match the container user ID and group ID
+to the developer. Creation repairs ownership in container-owned volumes
+without following symbolic links or changing the host Codex mounts. The
+current full `codex-state` volume is retained for normal developer use; no
+Codex state migration or volume deletion is part of this change.
 
 ## Tools and updates
 
 The base is `mcr.microsoft.com/devcontainers/base:2.0.5-ubuntu-24.04`.
 The reference Git, common-utils, and Zsh features and generic editor settings
-are retained. Python, a C/C++ compiler, Make, SQLite tools, and Bubblewrap
-support the native packages and sandbox tools.
+are retained. Python with pip, venv, YAML support, and the `python` alias,
+a C/C++ compiler,
+Make, SQLite tools, Bubblewrap, and socat support application and agent work.
+The Biome and Vitest editor extensions support the project lint and unit
+test commands.
 
-Node.js 24.21.0 and npm 11.19.0 are selected through the Node feature.
+The image also includes mkcert and NSS tools for future local HTTPS work,
+such as microphone development on a phone. These tools alone do not create
+an HTTPS endpoint or install a trusted certificate on the host or phone.
+Normal development still uses HTTP on localhost. dotenv-linter and Lychee
+remain excluded because this project has no checks that use them. Markdown
+lint and spelling checks remain available.
+
+Node.js 24.21.0 and npm 12.0.2 are selected through the Node feature.
 The .NET feature selects 8.0; `.config/dotnet-tools.json` pins GitVersion
 6.8.2. GitHub CLI and Git use their feature update policies. The root npm
 lockfile pins Dev Containers CLI 0.89.0, application Playwright 1.63.0, and
@@ -141,13 +175,35 @@ checks explicitly. Inside the container:
 
 ```sh
 npm run typecheck
+npm run lint
 npm run lint:docs
 npm test
 npm run test:gates
 dotnet gitversion /output json
 ```
 
-See [development testing](testing.md) for focused application checks.
+See [development testing](testing.md) for focused application checks and
+the explicit `npm run purge:install` dependency-maintenance command.
+
+## Temporary containers
+
+The reference Docker feature connects to the host engine. For example:
+
+```sh
+docker run --rm alpine echo ready
+docker compose version
+docker buildx version
+```
+
+The temporary container is removed when its process exits. Containers and
+images use the host engine and appear in Docker Desktop. Bind-mount paths
+refer to the Docker host, so use named volumes or `docker cp` for files that
+exist only inside the devcontainer. The application `test:container` command
+uses Docker copy and exec to work in both environments.
+
+Only `.devcontainer` image inputs are sent to its image builder. The whole
+repository remains available at `/workspace`, including for application
+`docker build` commands.
 
 ## Codex permissions and remaining verification
 
@@ -158,16 +214,19 @@ workspace writes and local networking; its domain list contains only
 `localhost`, `127.0.0.1`, and `::1`. The managed approval policy is `never`.
 Repository Codex configuration is layered on top of this user configuration.
 
-Use the normal profile first. Its container has no extra capabilities,
-device mappings, or host Docker socket. The copied elevated configuration
+Use the normal profile first. It includes the host Docker socket through
+the reference feature. Host Docker access lets commands manage host
+containers; use it for trusted development work. The normal container has
+no added Linux capabilities or device mappings. The copied elevated configuration
 is an explicit opt-in for investigating container restrictions, not the
 recommended starting profile. It adds `SYS_ADMIN` and relaxed sandbox-related
 Linux settings `seccomp=unconfined` and `systempaths=unconfined`.
 Do not disable the Codex sandbox to work around a failure.
 
 Docker/Linux privileges, Codex command permissions, and Codex approvals are
-separate controls. Neither a command approval nor its absence grants host
-Docker access or additional Linux capabilities. An expected denial of an
+separate controls. The mounted Docker socket supplies host engine access;
+a Codex command
+approval does not change Linux capabilities. An expected denial of an
 out-of-scope write does not justify switching profiles.
 
 [Issue #25](https://github.com/viscalyx/skyttel/issues/25) owns signed-in CLI
