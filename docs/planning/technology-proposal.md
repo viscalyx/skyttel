@@ -31,6 +31,9 @@ Första implementationen bygger ett av alternativen. Inget teknikval
 - GHCR lagrar den publicerade containerbilden. Releasen kopplar ihop
   källkodscommit, version och bildens digest. Render kör exakt den
   publicerade bilden från GHCR.
+- GitVersion beräknar versioner enligt Kravhanterings releaseprinciper.
+  GitHub Releases dokumenterar version, ändringslogg och kopplingen till
+  den bestämda containerbilden i GHCR.
 - Chrome på Windows, macOS, iPhone och iPad är målplattformar. Tidigare
   avgränsningar av faktisk verifiering kvarstår; offlinearbete ingår inte.
 
@@ -530,9 +533,9 @@ viss ändring måste vara uttrycklig. Rapporter sparas även vid fel.
    körs. Underhållaren granskar resultatet och godkänner sammanslagning.
    Automatiska förslag är inte automatiskt godkända ändringar.
 4. Push till `main` startar en betrodd releasekörning som bygger en
-   versionsbunden container från den godkända koden. Bilden testas och
-   skannas, får SBOM och ursprungsattestering och publiceras i GHCR.
-   Releaseversion,
+   versionsbunden container från den godkända koden. GitVersion
+   beräknar versionen före bygget. Bilden testas och skannas, får SBOM
+   och ursprungsattestering och publiceras i GHCR. Releaseversion,
    källkodens commit och bildens digest binds samman. En digest är
    bildens innehållsidentifierare; tidigare releaser skrivs inte om.
 5. När releasekontrollerna lyckas verifierar arbetsflödet ursprunget
@@ -569,11 +572,83 @@ accepterade korta driftavbrott.
 ```mermaid
 flowchart LR
   PR[Granskad PR] --> MAIN[Merge till main]
-  MAIN --> CI[Bygg, tester och säkerhetskontroller]
+  MAIN --> VERSION[GitVersion]
+  VERSION --> CI[Bygg, tester och säkerhetskontroller]
   CI --> GHCR[Releasebild i GHCR med digest]
-  GHCR --> RENDER[Automatisk driftsättning av samma bild]
+  GHCR --> RELEASE[GitHub Release med version och ändringslogg]
+  RELEASE --> RENDER[Automatisk driftsättning av samma bild]
   RENDER --> VERIFY[Kontroll och registrering av körande version]
 ```
+
+### GitVersion, releaseversion och ändringslogg
+
+Beställaren väljer samma principer som Kravhantering. GitVersion körs
+med full Git-historik och taggar, låst verktygsversion och incheckad
+konfiguration. Dess .NET-verktyg behövs i byggmiljön, inte i appcontainern.
+
+- `main` använder ContinuousDelivery och etiketten `preview`, exempelvis
+  `1.2.0-preview.4`. Dessa releaser markeras som pre-release i GitHub.
+  De är ändå de betrodda main-versioner som automatiskt körs i Render.
+- Stabila releaser använder taggen `vX.Y.Z` och dokumenteras som vanliga
+  GitHub Releases. Git-taggen och releaseplanen ska avse samma commit.
+  En äldre stabil tagg får inte automatiskt ersätta en nyare main-version
+  i Render; `main` styr den löpande automatiska driftsättningen.
+- Standardhöjningen för main är patch. Kravhanterings regler för
+  `+semver:`, `feat`, `fix`, `perf` och `BREAKING CHANGE` är utgångspunkt.
+  Branchmönster anpassas till Skyttels faktiska namn, inklusive `codex/`.
+  PR-etiketter kategoriserar ändringsloggen; de styr inte själva
+  GitVersion-höjningen.
+- GitVersions byggmetadata efter `+` tas bort ur Docker-taggen och
+  GitHub-release-taggen enligt Kravhanterings modell. Full version och
+  källkodscommit behålls i byggmetadata. Versionsnamn är läsbara alias;
+  digest är den exakta identitet som används vid driftsättning.
+- Semantisk version är bildens primära tagg. Main-releaser får även
+  alias med kort och full commitidentitet. Samma version får inte
+  flyttas till ett annat bildinnehåll vid ett återförsök.
+
+GitHub genererar ändringsloggen med kategorier i `.github/release.yml`.
+Kravhanterings kategorier återanvänds och anpassas till Skyttels etiketter:
+bland annat säkerhet, funktioner, rättningar, data, MCP/AI, containerdrift,
+CI, beroenden och dokumentation. En restkategori fångar oetiketterade
+PR:er; bara uttryckligt `ignore-for-release` utesluter en PR.
+Preview jämförs med föregående publicerade preview och stabil release
+med föregående stabila release. Saknas föregående release i kanalen
+hoppar genereringen över jämförelsen med ett förklarande besked; den
+får inte tyst använda den andra kanalen.
+
+Releasesidan visar containerpaket, versionstaggar, exakt digest,
+källkodscommit, ändringslogg, SBOM och verifierbart byggursprung.
+Om GitHubs genererade ändringslogg inte kan hämtas används samma
+reservprincip som Kravhantering: releaseinformationen om bilden och
+dess underlag kan publiceras, medan bortfallet redovisas uttryckligen.
+Oklar eller motstridig koppling mellan version, commit och bild stoppar
+publicering och driftsättning. Ett återförsök bevarar redan verifierade
+taggar och filer och slutför endast saknade, förenliga steg.
+
+Driftpåverkande ändringar får versionsbunden vägledning i
+`docs/operations/operator-upgrade-notes.md` under `Unreleased`.
+PR:en anger om vägledningen uppdateras eller inte behövs. Releasen tar
+med tillämplig vägledning från sin exakta källkodsrevision. Preview
+tömmer inte `Unreleased`; en stabil release arkiverar bara de levererade
+avsnitten via en separat PR och bevarar nyare anteckningar.
+Åtgärder som måste göras före automatiskt införande ska vara klara före
+merge, eller förändringen delas upp så att main-versionen kan införas.
+
+Kravhantering filtrerar vissa dokumentations- och teständringar från
+automatisk preview-publicering. Skyttels begärda huvudregel är att
+push till `main` startar release- och införandekedjan; dessa filter
+kopieras därför inte automatiskt. En inaktuell väntande kandidat kan
+fortfarande hoppas över till förmån för en nyare main-version.
+Preview-taggar som skapas av main-körningen ska inte starta en andra
+releasekörning. En stabil release kan bygga en egen bild; samma digest
+lovas inom en releasekedja, inte mellan separata preview- och stabilbyggen.
+
+Källor:
+[GitVersion-konfiguration](https://github.com/viscalyx/Kravhantering/blob/562f9d2eccc85a316cf30eaa01a9e4e85c4fbb88/GitVersion.yml),
+[releaseplan](https://github.com/viscalyx/Kravhantering/blob/562f9d2eccc85a316cf30eaa01a9e4e85c4fbb88/scripts/release/container-release.mjs),
+[release- och ändringsloggflöde](https://github.com/viscalyx/Kravhantering/blob/562f9d2eccc85a316cf30eaa01a9e4e85c4fbb88/docs/development/trusted-container-publishing.md#release-evidence),
+[kategorier](https://github.com/viscalyx/Kravhantering/blob/562f9d2eccc85a316cf30eaa01a9e4e85c4fbb88/.github/release.yml)
+och [publiceringskontroller](https://github.com/viscalyx/Kravhantering/blob/562f9d2eccc85a316cf30eaa01a9e4e85c4fbb88/scripts/release/publish-github-release.mjs).
 
 Skannade komponenter i containerbilden uppdateras genom en ny release.
 Render sköter värdplattformen, men uppdaterar inte automatiskt vår
