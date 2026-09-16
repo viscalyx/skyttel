@@ -34,6 +34,9 @@ Första implementationen bygger ett av alternativen. Inget teknikval
 - GitVersion beräknar versioner enligt Kravhanterings releaseprinciper.
   GitHub Releases dokumenterar version, ändringslogg och kopplingen till
   den bestämda containerbilden i GHCR.
+- Utvecklingsmiljön ska levereras som en devcontainer anpassad till
+  Skyttels valda stack. Codex ska fungera där, med Kravhantering som
+  referens och ett aktuellt prov av behovet av förhöjda rättigheter.
 - Chrome på Windows, macOS, iPhone och iPad är målplattformar. Tidigare
   avgränsningar av faktisk verifiering kvarstår; offlinearbete ingår inte.
 
@@ -713,6 +716,105 @@ kasta inte deras underlag genom allmän städning av tillfälliga CI-filer.
 Kraven ovan inför ingen automatisk säkerhetskopiering av hushållsdata.
 Egen export och återimport är fortsatt återställnings- och flyttvägen.
 
+## Devcontainer för utveckling
+
+Beställaren kräver en devcontainer för fortsatt utveckling, inklusive
+fungerande Codex. Nedan föreslås upplägget för Render-alternativets
+Node.js-, TypeScript- och SQLite-stack. Utvecklingsbilden är separat
+från den mindre produktionsbild som publiceras i GHCR och körs i Render.
+
+### Verktyg och beständigt arbetsläge
+
+- En utvecklingscontainer kör som en vanlig användare, med källkoden
+  monterad i `/workspace`. SQLite kräver ingen andra tjänst.
+- Node och npm följer projektets versionsval och CI. `npm ci` använder
+  låsfilen. Kompilatorverktyg, Python och relevanta systembibliotek
+  möjliggör installation av better-sqlite3 och Sharp.
+- Git, GitHub CLI, .NET för GitVersion, Playwright med webbläsare och
+  projektets lint- och testverktyg ingår. .NET behövs i utveckling och
+  releasebygge, men inte i appens produktionsbild.
+- Vite och Hono får dokumenterade startkommandon och vidarebefordrade
+  utvecklingsportar. SQLite-data och Codex arbetsläge bevaras vid
+  omstart och ombyggnad, i skilda kataloger eller volymer.
+- Codex CLI och dess VS Code-tillägg ingår. Installationen verifierar
+  den valda utgåvan; version och uppdateringsväg dokumenteras. Codex
+  har ett skrivbart eget arbetsområde. Startflödet startar dess lokala
+  app-server när vald version behöver den och visar fel vid misslyckande.
+- Codex-inloggning görs i utvecklingsmiljön och bevaras utanför bilden
+  och Git. Device-inloggning används när kontot medger den. Återbruk av
+  värddatorns inloggning är en dokumenterad möjlighet; en befintlig
+  `auth.json` förutsätts inte. Personliga inställningar skrivs inte över.
+- Kontroller av produktionsbilden ska kunna köras från utvecklingsflödet.
+  Åtkomst till värdens Docker-motor dokumenteras separat från Codex
+  sandboxrättigheter. Den ger bredare värdåtkomst och följer inte
+  automatiskt av att en Codex-profil kallas vanlig eller förhöjd.
+
+Kravhanterings SQL Server, Keycloak, Kong, HSA-tjänster och certifikat-
+flöden hör inte till denna stack. Deras portar, uppstartsskript och
+nästlade Podman-miljö kopieras inte till Skyttels grundmiljö. Codex
+egen SQLite-lagring är skild från Skyttels utvecklingsdatabas.
+
+### Codex sandbox och förhöjd profil
+
+Två rättighetsnivåer måste fungera tillsammans: Codex bestämmer vilka
+kommandon som behöver godkännande utanför dess arbetsgräns, medan
+containerkonfigurationen bestämmer vilka Linux-funktioner som finns
+tillgängliga. Ett godkännande i Codex ger inte containern nya
+Linux-rättigheter. Körning utanför Codex sandbox sker fortfarande
+inom devcontainerns gränser.
+
+Kravhanterings förhöjda profil lägger till `SYS_ADMIN`,
+`seccomp=unconfined` och `systempaths=unconfined`. Dess kommentarer
+kopplar dessa till nästlad Bubblewrap/unshare och montering av `/proc`.
+Syftet är att möjliggöra sandboxad kommandokörning inne i containern.
+`/dev/fuse` och `/dev/net/tun` finns däremot i båda profilerna för
+Podman och är inte belagda Codex-krav.
+
+Beställaren förtydligar att förhöjningen är framtagen för Codex-tillägget
+i VS Code. Behovet är aldrig prövat för Codex CLI. Klienternas behov
+ska därför undersökas separat, med deras faktiska backendversioner.
+
+[Kravhanterings förhöjda profil](https://github.com/viscalyx/Kravhantering/blob/562f9d2eccc85a316cf30eaa01a9e4e85c4fbb88/.devcontainer/elevated/docker-compose.yml#L75-L100)
+och [officiell Codex-dokumentation om sandbox](https://learn.chatgpt.com/docs/sandboxing)
+är underlag. Dokumentationen rekommenderar fortfarande Bubblewrap
+på Linux och beskriver beroenden till användarnamnrymder. Den visar
+inte att varje Docker-miljö behöver just Kravhanterings tre undantag.
+
+Förslaget är därför att prova vanlig profil först och behålla en
+uttryckligt vald förhöjd profil om aktuella körprov kräver den.
+Endast rättigheter som behövs för det konstaterade felet ska ingå.
+Codex ska kunna köra vanliga projektkommandon inom sin sandbox och
+begära tillåtelse för andra kommandon enligt vald policy. Kravhanterings
+`approval_policy = "never"` kopieras inte som ett tekniskt krav.
+Att stänga av sandboxen är inte det föreslagna sättet att få den att
+fungera i containern.
+
+### Verifiering innan utvecklingsmiljön räknas som färdig
+
+Efter första implementationen körs det separata genomförandeärendet
+[Funktionstesta Codex CLI och VS Code-tillägget i devcontainern](https://github.com/viscalyx/skyttel/issues/25).
+Det ligger utanför Wayfinder-kartan och kan köras av beställaren med
+Codex inne i den verkliga devcontainern. Det blockerar inte teknikvalet.
+
+Ärendet provar båda klienterna var för sig: vanlig profil först,
+förhöjd profil vid behov, verkligt projektarbete, sandboxens nekning,
+godkänd avgränsad körning utanför sandboxen samt omstart och ombyggnad.
+Resultatet anger minsta rättigheter per klient, de faktiskt provade
+versionerna och värdarna, och uppdaterar utvecklingsinstruktionerna.
+Tillägget får inte antas använda terminalens Codex-binär.
+
+Implementationen ska dessutom bygga hela devcontainern, inklusive
+features och startskript, och kontrollera installation via låsfil,
+GitVersion, native-paket, appstart och relevanta Playwright-prov.
+CI bygger miljön och provar verktyg och sandboxkommandon utan
+personliga hemligheter. Inloggade sessioner följer det separata ärendet;
+enbart `codex --version` räcker inte som funktionstest.
+
+Detta är krav på implementationens leverans, inte ett genomfört körprov.
+Den lokala Docker-klienten finns men ingen Docker-motor är tillgänglig
+vid undersökningen. Behovet av förhöjd profil är därför ännu inte
+avgjort. Devcontainer och instruktioner sätts upp när stacken införs.
+
 ## Verifiering och avgränsning
 
 Detta underlag föreslår en lösning att bedöma; inget är låst och ingen
@@ -732,6 +834,7 @@ Ingen produktionsdel, tjänstbeställning eller driftsättning ingår här.
 - [AI, tal och MCP](https://github.com/viscalyx/skyttel/blob/64fddd101e4e1ca3437e183f056a113d773c959c/docs/research/ai-mcp-production.md)
 - [Cloudflare](https://github.com/viscalyx/skyttel/blob/9964630664215caec5204c4d3999d1527f922d5b/docs/research/cloudflare.md)
 - [Säkerhetskontroller och uppdateringar](https://github.com/viscalyx/skyttel/blob/a590d9b6cdd06bdfc3e61c86f04df7dc3dd1babc/docs/research/security-maintenance.md)
+- [Devcontainer och Codex](https://github.com/viscalyx/skyttel/blob/dc82219845092331dafe90b2dbc1b7ea968d96c4/docs/research/devcontainer-codex.md)
 - [React: möjliga projektupplägg](https://react.dev/learn/creating-a-react-app)
 - [Vite: backendintegration](https://vite.dev/guide/backend-integration)
 - [Three.js WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html)
