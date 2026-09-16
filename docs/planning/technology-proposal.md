@@ -24,6 +24,9 @@ Första implementationen bygger ett av alternativen. Inget teknikval
   reservväg om ett konkret hinder gör leverantörsinloggningen för svår.
 - Extern text i ChatGPT på webben och Codex-appen ingår. Externt tal
   ingår inte. Skyttels eget svenska talflöde kvarstår.
+- Säkerhets- och sårbarhetskontroller samt en underhållen väg för
+  uppdateringar ska ingå. Beställaren väljer automatiska förslag och
+  tester, med manuellt godkänd sammanslagning och driftsättning.
 - Chrome på Windows, macOS, iPhone och iPad är målplattformar. Tidigare
   avgränsningar av faktisk verifiering kvarstår; offlinearbete ingår inte.
 
@@ -446,6 +449,159 @@ Faktisk skatt, växelkurs, modellbruk, lagring, textarbete och trafik
 kan ändra beloppen. Cloudflare-siffrorna förutsätter att grundkvoterna
 räcker. Befintlig domän/DNS och befintliga abonnemang ingår inte.
 
+## Säkerhet och uppdateringar
+
+Säkerhetskontroller och löpande uppdateringar är ett uttryckligt krav.
+Kravhantering är referens för arbetssättet. Nedan föreslås en anpassning
+till Skyttels enda appcontainer. Beställarens val är automatiska
+uppdateringsförslag och tester, följda av manuellt godkänd sammanslagning
+och driftsättning. Övriga detaljer ingår i det samlade teknikförslaget.
+
+[Källgranskning av Kravhantering och GitHubs stöd](https://github.com/viscalyx/skyttel/blob/8323e32f9528dfb000417e00a6bb0cf5f64bd5ba/docs/research/security-maintenance.md)
+beskriver återanvändning, begränsningar och observerade inställningar.
+
+### Kontroller före införande
+
+<!-- markdownlint-disable MD013 -->
+| Yta | Föreslagen kontroll |
+| --- | --- |
+| Källkod och arbetsflöden | GitHub CodeQL för TypeScript/JavaScript och GitHub Actions. |
+| Incheckade hemligheter | GitHub secret scanning och repositoryts push protection. Upptäckta riktiga nycklar återkallas. |
+| Ändrade beroenden | GitHub dependency review i PR:er, Dependabot-varningar och npm audit mot låsfilen. |
+| Bygg- och driftkonfiguration | Trivy config för Dockerfile och annan relevant konfiguration. |
+| Färdig container | Syft skapar SPDX-SBOM; Grype skannar bildens faktiska komponenter med aktuell sårbarhetsdatabas. |
+| Körande testinstallation | ZAP-baseline samt egna tester av inloggning, hushållsgränser, roller, återkallelse, MCP, bildhantering och import. |
+<!-- markdownlint-enable MD013 -->
+
+En SBOM är en lista över bildens komponenter. Allmänna skannrar
+kompletterar tester av Skyttels egna regler. Säkerhetsproven körs mot
+en isolerad installation med påhittade data och testidentiteter.
+Produktionsnycklar, hushållsexporter och riktiga AI-anrop behövs inte
+för dessa automatiska säkerhetsprov. Testinloggning får inte bli en
+åtkomstväg i produktionsbygget.
+
+Kravhanterings hela uppsättning Nuclei-, roll-, API- och aktiva ZAP-prov
+kopieras inte automatiskt. Första nivån ovan täcker de viktigaste
+ytorna; ytterligare skannrar läggs till där konkreta täckningsluckor
+motiverar dem. Trivys dubbla paket- och hemlighetsskanning behövs inte
+som ytterligare standardkontroll när dessa ytor redan har tydliga ägare.
+
+Förslaget är att High och Critical blockerar sammanslagning och ny
+leverans tills fyndet är åtgärdat eller har ett granskat, avgränsat
+undantag. Fynd utan tillgänglig fix försvinner inte ur bedömningen.
+Detta är striktare än Kravhanterings containergräns för enbart fixbara
+High/Critical. Lägre nivåer följs upp och prioriteras efter faktisk risk.
+Läckta hemligheter och misslyckade behörighetstester blockerar också.
+ZAP-regler behöver en uttrycklig granskningsbar felpolicy; ett valt
+severity-värde ersätter inte verktygets regelbaserade beteende.
+
+Ett undantag anger fynd eller regel, berört paket och version, berörd
+bild eller yta, motivering, ansvarig, källunderlag, åtgärdsplan och
+gransknings-/utgångsdatum. Utgångna eller felaktiga undantag stoppar
+kontrollen. Tyst global ignorering av en sårbarhetstyp föreslås inte.
+
+GitHubs obligatoriska kontroller och releaseflödets slutkontroll ska
+upprätthålla detta. Att ladda upp en rapport är inte samma sak som
+att stoppa införande. Verktygsfel, saknad rapport eller en obligatorisk
+skanning som inte körts ska ge fel; anpassning av kontroller för en
+viss ändring måste vara uttrycklig. Rapporter sparas även vid fel.
+
+### Från uppdateringsförslag till driftsatt version
+
+1. Dependabot föreslår versionsuppdateringar varje vecka för npm,
+   GitHub Actions och Dockerbasen. Säkerhetsuppdateringar hanteras när
+   varningar kommer och väntar inte på veckans ordinarie genomgång.
+   Större versionsbyten granskas separat; kompatibla mindre uppdateringar
+   kan grupperas så att varje förslag förblir begripligt.
+2. Node LTS, pakethanteraren, basbilden och fristående skanningsverktyg
+   får en dokumenterad uppdateringsväg och ansvarig. Komponenter som
+   Dependabot inte uppdaterar kontrolleras vid veckogenomgången.
+   Versionslås, låsfil och referenser hålls samstämmiga. Native-paketen
+   better-sqlite3 och Sharp samt installationsskript granskas särskilt
+   vid byte av Node, operativsystem eller processorarkitektur.
+3. PR:en beskriver ändring, kompatibilitet, säkerhetsfynd och eventuell
+   datamigration. Typkontroll, relevanta tester och säkerhetskontroller
+   körs. Underhållaren granskar resultatet och godkänner sammanslagning.
+   Automatiska förslag är inte automatiskt godkända ändringar.
+4. En betrodd releasekörning bygger en versionsbunden container från
+   den godkända koden. Den slutliga bilden testas och skannas, får
+   SBOM och ursprungsattestering och publiceras i GHCR. Releaseversion,
+   källkodens commit och bildens digest binds samman. En digest är
+   bildens innehållsidentifierare; tidigare releaser skrivs inte om.
+5. Underhållaren godkänner införandet av den exakta bilden. Render kör
+   den färdigbyggda bilden med dess digest; ett nytt separat bygge på
+   Render ska inte ersätta den kontrollerade leveransen. Tjänstens
+   sparade bildreferens och införandet hålls samstämmiga, även vid
+   senare omstart. Byggproveniens verifieras före införande.
+6. Hälsa, version och grundläggande funktion kontrolleras efter byte.
+   Först när införandet har lyckats registreras bilden som driftsatt.
+   Om byte misslyckas markeras det som misslyckat och faktisk version
+   fastställs. Återgång kräver att äldre appkod passar aktuell
+   databasstruktur, enligt avsnittet om containerbyte.
+
+Skannade komponenter i containerbilden uppdateras genom en ny release.
+Render sköter värdplattformen, men uppdaterar inte automatiskt vår
+inbyggda Node-version, våra npm-paket eller containerbildens OS-paket.
+En mindre runtime-bild med underhållen Node-bas och en app som kör utan
+root minskar ytan. Beständig disk måste fortfarande vara skrivbar för
+appen. Versionsval och kompatibilitet verifieras i implementationen.
+
+### Återkommande kontroll och åtgärder
+
+Den faktiskt driftsatta bildens digest skannas dagligen med aktuell
+sårbarhetsdatabas, även om ingen kod ändras. Detsamma gäller eventuell
+kvarhållen version för återgång. Daglig kontroll bygger inte om bilden
+och byter inte versionen. En ny lyckad byggkörning bevisar inte att
+den körande versionen är uppdaterad.
+
+För varje resultat sparas bildens identitet, skanningstid, verktygs-
+och databasversion samt policyutfall. Ett fynd förblir aktuellt tills
+det är åtgärdat i drift eller hanterat genom ett giltigt undantag.
+Kontrollen bör ge ett samlat aktuellt ärende per bildversion och
+meningsfulla uppdateringar, utan dagliga dubbletter. Misslyckad skanning
+markeras som okänd status och får inte beskrivas som att bilden är ren.
+
+Underhållaren får GitHubs larm och ansvarar för bedömning och införande.
+Mottagare och faktisk leverans av larmen kontrolleras när flödet sätts
+upp. Hemliga eller ännu inte offentliga säkerhetsuppgifter rapporteras
+privat; publika rapporter får inte innehålla hushållsdata eller token.
+En SECURITY.md beskriver kontaktväg, supportomfattning och arbetsgång.
+Fixar levereras i en ny version; inget generellt löfte om stöd till alla
+äldre releaser eller oavbruten säkerhetsbevakning ingår.
+
+GitHub kan avaktivera schemalagda körningar efter 60 dagars inaktivitet
+i publika projekt. Underhållaren kontrollerar därför senaste lyckade
+skanning minst månadsvis och före införande, och återaktiverar vid behov.
+Detta lägger inte till en extern betald övervakningstjänst.
+
+### Skydd av själva leveranskedjan
+
+- Externa Actions låses till full commit med läsbar versionskommentar.
+  Containerbasen låses till vald version och digest. Första automatiska
+  uppdateringen av dessa referenser kontrolleras vid uppsättningen.
+- PR-kod körs med minsta rättigheter och utan publicerings- eller
+  produktionshemligheter. Betrodda release- och införandejobb har
+  separata, snäva rättigheter. Ogranskad PR-kod ska inte köras med
+  förhöjda rättigheter genom pull_request_target eller motsvarande.
+- SHA-låsta Actions kan versionsuppdateras av Dependabot, men får inte
+  antas täckas av dess vanliga Action-sårbarhetsvarningar. Underhållet
+  omfattar även säkerhetsmeddelanden för CI-verktygen.
+- Docker-stödet i Dependabot föreslår versioner men ger inte samma
+  säkerhetsuppdateringar som npm. Därför behövs den färdiga bildens
+  skanning och en väg från upptäckt till nytt basimage och ny release.
+- Reglerna för sammanslagning verifieras även för underhållaren och
+  Dependabot. Ingen extra extern granskare förutsätts för detta
+  enpersonsprojekt, men kontrollerna ska vara obligatoriska.
+
+GitHubs säkerhetsfunktioner och standardrunners för ett publikt projekt
+samt publik GHCR-lagring kan bära detta utan en ny betald säkerhetslicens.
+Lagringskvoter, rapporters lagringstid och framtida prisändringar behöver
+följas upp. Behåll bilder som används för drift och planerad återgång;
+kasta inte deras underlag genom allmän städning av tillfälliga CI-filer.
+
+Kraven ovan inför ingen automatisk säkerhetskopiering av hushållsdata.
+Egen export och återimport är fortsatt återställnings- och flyttvägen.
+
 ## Verifiering och avgränsning
 
 Detta underlag föreslår en lösning att bedöma; inget är låst och ingen
@@ -464,6 +620,7 @@ Ingen produktionsdel, tjänstbeställning eller driftsättning ingår här.
 - [Drift och lagring](https://github.com/viscalyx/skyttel/blob/96c641dbf5d9f34944f8f285212bb44c7b959c9b/docs/research/hosting-storage.md)
 - [AI, tal och MCP](https://github.com/viscalyx/skyttel/blob/64fddd101e4e1ca3437e183f056a113d773c959c/docs/research/ai-mcp-production.md)
 - [Cloudflare](https://github.com/viscalyx/skyttel/blob/9964630664215caec5204c4d3999d1527f922d5b/docs/research/cloudflare.md)
+- [Säkerhetskontroller och uppdateringar](https://github.com/viscalyx/skyttel/blob/8323e32f9528dfb000417e00a6bb0cf5f64bd5ba/docs/research/security-maintenance.md)
 - [React: möjliga projektupplägg](https://react.dev/learn/creating-a-react-app)
 - [Vite: backendintegration](https://vite.dev/guide/backend-integration)
 - [Three.js WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html)
