@@ -1,6 +1,6 @@
-# En portabel appcontainer med SQLite och små bilder i databasen
+# En portabel applikationscontainer med SQLite och små bilder i databasen
 
-Första Skyttel använder en vanlig Node-appcontainer på Render med
+Första Skyttel använder en applikationscontainer med Node.js på Render,
 SQLite på beständig disk och små omkodade bildversioner i databasen,
 vilket ger en sammanhängande server- och lagringsmodell och förenklar
 framtida flytt.
