@@ -1,5 +1,5 @@
 {
-  "name": "Skyttel Development",
+  "name": "Skyttel Development (Elevated)",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "runServices": ["app"],

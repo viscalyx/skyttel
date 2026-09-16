@@ -146,17 +146,20 @@ The root npm lockfile includes the Dev Containers CLI and the application
 Playwright test runner. Codex and the separate Playwright browser tooling
 follow their latest stable releases on each devcontainer creation/rebuild;
 they do not modify the application's lockfile. Runtime Node.js and Docker
-image updates remain coordinated
-maintenance: keep `.node-version`, the `package.json` engine range, both
-pinned production Dockerfile base references, and the devcontainer base
-reference compatible. The creation script also installs browsers matching
-the application's locked Playwright version. Rebuild and start the
-devcontainer after updating these
-tools, and run the production-container checks when production inputs change.
+image updates remain coordinated maintenance: keep `.node-version`, the
+`package.json` engine range, both
+pinned production Dockerfile base references, and the devcontainer Node
+feature selection compatible. Container creation also installs browsers
+matching the application's locked Playwright version. Rebuild and start the
+devcontainer after updating these tools, and run the production-container
+checks when production inputs change.
 
 ## Devcontainer development
 
-Open the repository with **Dev Containers: Reopen in Container** in VS Code.
+Prepare the private environment and host Codex mounts described in the
+[devcontainer guide](devcontainer.md), then use **Dev Containers: Reopen in
+Container** in VS Code. Docker Compose starts the application's development
+container with the repository at `/workspace`.
 Use `npm run dev:all` in its terminal to start the client and server. Normal
 build, startup, and application use verify the development configuration;
 there are no dedicated devcontainer unit or integration tests. Run the

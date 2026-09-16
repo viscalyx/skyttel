@@ -1,10 +1,8 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
 
 const environmentFile = process.env.SKYTTEL_DEV_ENV_FILE
-  ?? join(homedir(), '.config/skyttel/development.env');
+  ?? '.devcontainer/.env';
 if (!existsSync(environmentFile)) {
   console.error('Development configuration is missing. Set SKYTTEL_DEV_ENV_FILE to your private environment file; see docs/development/devcontainer.md.');
   process.exit(1);
