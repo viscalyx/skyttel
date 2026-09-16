@@ -26,7 +26,11 @@ Första implementationen bygger ett av alternativen. Inget teknikval
   ingår inte. Skyttels eget svenska talflöde kvarstår.
 - Säkerhets- och sårbarhetskontroller samt en underhållen väg för
   uppdateringar ska ingå. Beställaren väljer automatiska förslag och
-  tester, med manuellt godkänd sammanslagning och driftsättning.
+  tester, manuellt godkänd merge till `main` och därefter automatisk
+  driftsättning i Render när releasekontrollerna lyckas.
+- GHCR lagrar den publicerade containerbilden. Releasen kopplar ihop
+  källkodscommit, version och bildens digest. Render kör exakt den
+  publicerade bilden från GHCR.
 - Chrome på Windows, macOS, iPhone och iPad är målplattformar. Tidigare
   avgränsningar av faktisk verifiering kvarstår; offlinearbete ingår inte.
 
@@ -454,10 +458,12 @@ räcker. Befintlig domän/DNS och befintliga abonnemang ingår inte.
 Säkerhetskontroller och löpande uppdateringar är ett uttryckligt krav.
 Kravhantering är referens för arbetssättet. Nedan föreslås en anpassning
 till Skyttels enda appcontainer. Beställarens val är automatiska
-uppdateringsförslag och tester, följda av manuellt godkänd sammanslagning
-och driftsättning. Övriga detaljer ingår i det samlade teknikförslaget.
+uppdateringsförslag och tester samt manuellt godkänd merge till `main`.
+Det som går in i `main` är avsett att köras och driftsätts automatiskt
+när releasekontrollerna lyckas. Inget extra manuellt godkännande krävs
+efter merge. Övriga detaljer ingår i det samlade teknikförslaget.
 
-[Källgranskning av Kravhantering och GitHubs stöd](https://github.com/viscalyx/skyttel/blob/8323e32f9528dfb000417e00a6bb0cf5f64bd5ba/docs/research/security-maintenance.md)
+[Källgranskning av Kravhantering och GitHubs stöd](https://github.com/viscalyx/skyttel/blob/a590d9b6cdd06bdfc3e61c86f04df7dc3dd1babc/docs/research/security-maintenance.md)
 beskriver återanvändning, begränsningar och observerade inställningar.
 
 ### Kontroller före införande
@@ -523,21 +529,51 @@ viss ändring måste vara uttrycklig. Rapporter sparas även vid fel.
    datamigration. Typkontroll, relevanta tester och säkerhetskontroller
    körs. Underhållaren granskar resultatet och godkänner sammanslagning.
    Automatiska förslag är inte automatiskt godkända ändringar.
-4. En betrodd releasekörning bygger en versionsbunden container från
-   den godkända koden. Den slutliga bilden testas och skannas, får
-   SBOM och ursprungsattestering och publiceras i GHCR. Releaseversion,
+4. Push till `main` startar en betrodd releasekörning som bygger en
+   versionsbunden container från den godkända koden. Bilden testas och
+   skannas, får SBOM och ursprungsattestering och publiceras i GHCR.
+   Releaseversion,
    källkodens commit och bildens digest binds samman. En digest är
    bildens innehållsidentifierare; tidigare releaser skrivs inte om.
-5. Underhållaren godkänner införandet av den exakta bilden. Render kör
-   den färdigbyggda bilden med dess digest; ett nytt separat bygge på
-   Render ska inte ersätta den kontrollerade leveransen. Tjänstens
-   sparade bildreferens och införandet hålls samstämmiga, även vid
-   senare omstart. Byggproveniens verifieras före införande.
+5. När releasekontrollerna lyckas verifierar arbetsflödet ursprunget
+   och begär automatiskt införande av den exakta bilden i Render via
+   API eller deploy-hook. Render kör bilden från GHCR med dess digest.
+   Tjänstens sparade bildreferens och införandet hålls samstämmiga,
+   även vid senare omstart. En ny registertagg ensam utlöser inte
+   införande för en bildbaserad Render-tjänst.
 6. Hälsa, version och grundläggande funktion kontrolleras efter byte.
    Först när införandet har lyckats registreras bilden som driftsatt.
    Om byte misslyckas markeras det som misslyckat och faktisk version
    fastställs. Återgång kräver att äldre appkod passar aktuell
    databasstruktur, enligt avsnittet om containerbyte.
+
+Varje lyckad release har en oföränderlig version och en GitHub Release
+med källkodscommit, GHCR-referens med digest, SBOM och verifierbart
+byggursprung. GHCR-bilden är leveransen som Render hämtar. Ingen
+ombyggnad på Render ingår. Den körande versionens identitet finns
+tillgänglig för kontroll efter införande och för sårbarhetsbevakningen.
+
+Införandejobbet får bara använda betrodd kod från `main`. Bygg- eller
+kontrollfel startar ingen driftsättning och lämnar den tidigare
+versionen i drift. Begärd driftsättning är inte samma sak som lyckad
+driftsättning: arbetsflödet följer resultat och hälsokontroll, registrerar
+faktisk version och larmar vid fel.
+
+Införanden serialiseras. En äldre byggkörning får inte skriva över en
+nyare driftsatt version. Inaktuella väntande kandidater hoppas över,
+medan en pågående datamigration inte avbryts godtyckligt. Vid fel under
+själva versionsbytet fastställs faktisk app- och databasstatus innan
+återförsök eller återgång. Detta är förenligt med den enda appinstansens
+accepterade korta driftavbrott.
+
+```mermaid
+flowchart LR
+  PR[Granskad PR] --> MAIN[Merge till main]
+  MAIN --> CI[Bygg, tester och säkerhetskontroller]
+  CI --> GHCR[Releasebild i GHCR med digest]
+  GHCR --> RENDER[Automatisk driftsättning av samma bild]
+  RENDER --> VERIFY[Kontroll och registrering av körande version]
+```
 
 Skannade komponenter i containerbilden uppdateras genom en ny release.
 Render sköter värdplattformen, men uppdaterar inte automatiskt vår
@@ -620,7 +656,7 @@ Ingen produktionsdel, tjänstbeställning eller driftsättning ingår här.
 - [Drift och lagring](https://github.com/viscalyx/skyttel/blob/96c641dbf5d9f34944f8f285212bb44c7b959c9b/docs/research/hosting-storage.md)
 - [AI, tal och MCP](https://github.com/viscalyx/skyttel/blob/64fddd101e4e1ca3437e183f056a113d773c959c/docs/research/ai-mcp-production.md)
 - [Cloudflare](https://github.com/viscalyx/skyttel/blob/9964630664215caec5204c4d3999d1527f922d5b/docs/research/cloudflare.md)
-- [Säkerhetskontroller och uppdateringar](https://github.com/viscalyx/skyttel/blob/8323e32f9528dfb000417e00a6bb0cf5f64bd5ba/docs/research/security-maintenance.md)
+- [Säkerhetskontroller och uppdateringar](https://github.com/viscalyx/skyttel/blob/a590d9b6cdd06bdfc3e61c86f04df7dc3dd1babc/docs/research/security-maintenance.md)
 - [React: möjliga projektupplägg](https://react.dev/learn/creating-a-react-app)
 - [Vite: backendintegration](https://vite.dev/guide/backend-integration)
 - [Three.js WebGLRenderer](https://threejs.org/docs/pages/WebGLRenderer.html)
