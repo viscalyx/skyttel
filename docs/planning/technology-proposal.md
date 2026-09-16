@@ -1,12 +1,15 @@
-# Förslag till Skyttels teknikbeslut
+# Skyttels teknikbeslut
 
-Detta är ett granskningsunderlag, inte en avslutad resolution.
-Beställaren lutar åt Render som första driftvärd, framför allt för
-att en vanlig appcontainer och SQLite minskar arbetet vid ett senare
-leverantörsbyte. Det samlade teknikbeslutet är ännu inte fastställt.
-Gemensam grund och två kompletta driftalternativ föreslås nedan.
-Första implementationen bygger ett av alternativen. Inget teknikval
-är godkänt genom att det står i detta underlag.
+Beställaren godkänner det samlade Render-förslaget den 16 september 2026:
+teknikpaketet, säkerhetspolicyn och villkoret för leverantörens interna
+kopior. Detta är det godkända detaljunderlaget till
+[Vilken sammanhängande teknik och lagring uppfyller de prövade behoven?](https://github.com/viscalyx/skyttel/issues/12).
+
+Render är första driftvärd. En vanlig appcontainer och SQLite minskar
+arbetet vid ett senare leverantörsbyte. Cloudflare finns kvar som
+jämförelseunderlag; första implementationen bygger Render-lösningen.
+Godkännandet fastställer lösningen men innebär inte att den fulla
+kombinationen redan är implementerad eller produktionsverifierad.
 
 ## Ramar
 
@@ -40,24 +43,24 @@ Första implementationen bygger ett av alternativen. Inget teknikval
 - Chrome på Windows, macOS, iPhone och iPad är målplattformar. Tidigare
   avgränsningar av faktisk verifiering kvarstår; offlinearbete ingår inte.
 
-## Föreslagen gemensam grund
+## Vald teknikgrund
 
 <!-- markdownlint-disable MD013 -->
-| Del | Förslag och skäl |
+| Del | Val och skäl |
 | --- | --- |
 | Webbgränssnitt | TypeScript, React och Vite, med React Router för sidvägar. Delad redigeringslogik för lista, detaljer och karta. |
 | Rymdvy | Three.js med WebGL 2 för kamera, objekt, linjer och träfftestning. HTML/SVG för läsbara etiketter och vanliga kontroller. |
-| Serverkod | TypeScript med Hono för HTTP och anslutning till inloggning, administrations-API och MCP. Körmiljön följer driftalternativet. |
+| Serverkod | TypeScript med Hono på Node.js LTS för HTTP och anslutning till inloggning, administrations-API och MCP. |
 | Identitet | Better Auth med Google och Microsoft samt dess OAuth-provider för externa MCP-klienter. |
-| Kartlagring | Relationsmodell i SQLite, med versionsstyrda SQL-migreringar. Databasåtkomst och transaktioner följer driftalternativet. |
+| Kartlagring | Relationsmodell i SQLite via better-sqlite3, med versionsstyrda SQL-migreringar och korta transaktioner. |
 | Bilder | Omkodade bildversioner som BLOB i hushållets databas. Endast slutbilden sparas, högst 300 × 300 bildpunkter och en kontrollerad bytegräns. |
 | AI | GPT-Live-1 med marin, WebRTC och client-delegering; GPT-5.6 Terra low för kartarbete, enligt det godkända talprovet. |
 | MCP | Officiellt TypeScript-SDK, Streamable HTTP över HTTPS. Samma verktyg används av egen assistent och externa klienter. |
 | Flyttbarhet | Eget versionerat exportformat och tydlig gräns mellan kartregler och leverantörens lagring. |
 <!-- markdownlint-enable MD013 -->
 
-Detta är ett förslag om bibliotek och struktur. Den fulla kombinationen
-är inte produktionsverifierad. Paketens stödversioner fastställs vid
+Biblioteken och strukturen är valda. Den fulla kombinationen är inte
+produktionsverifierad. Paketens stödversioner fastställs vid
 implementationen; prototypens versionsnummer blir inte produktkrav.
 
 Python kan bära servern och används i prototypen, men TypeScript ger
@@ -74,31 +77,31 @@ etiketter eller tillgänglighet. Dess CSS2DRenderer väljs inte som
 obearbetad etikettslösning, eftersom den dokumenterar en begränsning
 till 100 procents webbläsarzoom.
 
-## Två driftalternativ
+## Vald drift och jämförelsealternativ
 
-### A: Render Hobby med betald app och SQLite
+### Val: Render Hobby med betald app och SQLite
 
 - En Node.js LTS-app i en portabel container levererar webbklient,
   HTTP-API, inloggning, MCP och talets serverarbete.
 - Hobby-arbetsytan kostar 0 USD. Betald app kostar 7 USD och 1 GB
-  beständig disk 0,25 USD per månad. Startstorleken är ett mätbart
-  förslag; större faktisk förbrukning kan kräva högre kostnad.
+  beständig disk 0,25 USD per månad. Detta är vald startstorlek;
+  större faktisk förbrukning kan kräva högre kostnad.
 - SQLite nås genom better-sqlite3. Auth, medlemskap, privata utkast,
   karta, historik, kvitton och bilder kan ligga i samma databas.
 - Sharp validerar och omkodar bilder på servern.
-- Frankfurt föreslås. Domän och DNS ligger kvar hos Cloudflare och
+- Frankfurt är utgångspunkt. Domän och DNS ligger kvar hos Cloudflare och
   pekar mot Render; HTTPS ingår. En ensam driftoperatör ryms i Hobby.
 - Appen har en instans. Uppdatering ger ett kort avbrott och disken
   kan inte delas av flera parallella instanser.
 
-Detta ger enklast server- och lagringsmodell av de två förslagen.
+Detta ger enklast server- och lagringsmodell av de två alternativen.
 En vanlig container och databasfil förenklar en senare flytt till
 en annan appvärd eller egen server. Ingen separat köserver, databas-
 tjänst eller backuptjänst ingår.
 
 ### Container, databas och byte av driftvärd
 
-Render-förslaget har en appcontainer och en separat beständig disk.
+Render-lösningen har en appcontainer och en separat beständig disk.
 SQLite är en databasmotor som körs som bibliotek i Node-processen.
 Det finns därför ingen separat databasserver eller databascontainer.
 Applikationskoden ligger i containerbilden; databasfilen och dess
@@ -201,7 +204,10 @@ Cloudflare-jämförelsen utgår från
 [Durable Objects och D1](https://developers.cloudflare.com/durable-objects/best-practices/access-durable-objects-storage/)
 och [Node.js-stödet i Workers](https://developers.cloudflare.com/workers/runtime-apis/nodejs/).
 
-### B: Cloudflare Workers Paid med D1 och Durable Objects
+### Jämförelse: Cloudflare Workers Paid med D1 och Durable Objects
+
+Detta alternativ ingår inte i första implementationen. Beskrivningen
+bevarar jämförelseunderlaget och skälen till att välja Render.
 
 - En Worker levererar webbklient, HTTP-API, inloggning och MCP.
   Grundpriset är 5 USD per månad med inkluderade användningskvoter.
@@ -230,9 +236,9 @@ objekt ska inte behöva en gemensam transaktion för ett kartbeslut.
 
 ### Gemensam avgränsning
 
-Gemensamma datatyper och exportformat föreslås. Två färdiga driftvägar
+Gemensamma datatyper och exportformat används. Två färdiga driftvägar
 eller ett generellt ramverk för alla leverantörer ingår inte i första
-implementationen. Den valda lösningen byggs och verifieras.
+implementationen. Render-lösningen byggs och verifieras.
 
 ## Gränser mellan delarna
 
@@ -381,10 +387,10 @@ vid en senare uttrycklig import, enligt tidigare informationsbeslut.
 Leverantören kan ta interna kopior även utan ett backupval i Skyttel.
 Render dokumenterar dagliga disksnapshots med minst sju dagars retention;
 det anger ingen verifierad övre gräns. Cloudflares återställningsfunktioner
-har också egna lagringstider. Förslaget är att använda leverantörernas
+har också egna lagringstider. Beställaren accepterar leverantörernas
 vanliga villkor: permanent radering tar bort åtkomligt innehåll i
 Skyttel, men lovar inte omedelbar fysisk radering ur alla interna kopior.
-Den begränsningen ingår i förslaget som beställaren behöver bedöma.
+Den begränsningen ingår i det godkända beslutet.
 
 ## Avbrott och återupptagning
 
@@ -417,7 +423,7 @@ Befintliga personliga placeringar flyttas inte automatiskt när AI
 föreslår ändringar. Användaren kan
 flytta objekten. Etiketter, täthet och läsbarhet får samma begränsningar
 och verifieringsbehov som tidigare beslut anger; biblioteket bevisar
-inte dessa kvaliteter. För personliga placeringar föreslås versionskontroll
+inte dessa kvaliteter. För personliga placeringar används versionskontroll
 per objekt så att oberoende flyttar kan sparas. En föråldrad flytt av
 samma objekt avvisas med synligt besked och aktuell placering visas;
 användaren kan göra om flytten. Visningsinställningar får motsvarande
@@ -462,12 +468,12 @@ räcker. Befintlig domän/DNS och befintliga abonnemang ingår inte.
 ## Säkerhet och uppdateringar
 
 Säkerhetskontroller och löpande uppdateringar är ett uttryckligt krav.
-Kravhantering är referens för arbetssättet. Nedan föreslås en anpassning
+Kravhantering är referens för arbetssättet. Nedan anges anpassningen
 till Skyttels enda appcontainer. Beställarens val är automatiska
 uppdateringsförslag och tester samt manuellt godkänd merge till `main`.
 Det som går in i `main` är avsett att köras och driftsätts automatiskt
 när releasekontrollerna lyckas. Inget extra manuellt godkännande krävs
-efter merge. Övriga detaljer ingår i det samlade teknikförslaget.
+efter merge. Detaljerna nedan ingår i det godkända teknikbeslutet.
 
 [Källgranskning av Kravhantering och GitHubs stöd](https://github.com/viscalyx/skyttel/blob/a590d9b6cdd06bdfc3e61c86f04df7dc3dd1babc/docs/research/security-maintenance.md)
 beskriver återanvändning, begränsningar och observerade inställningar.
@@ -475,7 +481,7 @@ beskriver återanvändning, begränsningar och observerade inställningar.
 ### Kontroller före införande
 
 <!-- markdownlint-disable MD013 -->
-| Yta | Föreslagen kontroll |
+| Yta | Vald kontroll |
 | --- | --- |
 | Källkod och arbetsflöden | GitHub CodeQL för TypeScript/JavaScript och GitHub Actions. |
 | Incheckade hemligheter | GitHub secret scanning och repositoryts push protection. Upptäckta riktiga nycklar återkallas. |
@@ -498,9 +504,9 @@ ytorna; ytterligare skannrar läggs till där konkreta täckningsluckor
 motiverar dem. Trivys dubbla paket- och hemlighetsskanning behövs inte
 som ytterligare standardkontroll när dessa ytor redan har tydliga ägare.
 
-Förslaget är att High och Critical blockerar sammanslagning och ny
-leverans tills fyndet är åtgärdat eller har ett granskat, avgränsat
-undantag. Fynd utan tillgänglig fix försvinner inte ur bedömningen.
+High och Critical blockerar sammanslagning och ny leverans tills
+fyndet är åtgärdat eller har ett granskat, avgränsat och tidsbegränsat
+undantag. Detta gäller även fynd utan tillgänglig fix.
 Detta är striktare än Kravhanterings containergräns för enbart fixbara
 High/Critical. Lägre nivåer följs upp och prioriteras efter faktisk risk.
 Läckta hemligheter och misslyckade behörighetstester blockerar också.
@@ -510,7 +516,7 @@ severity-värde ersätter inte verktygets regelbaserade beteende.
 Ett undantag anger fynd eller regel, berört paket och version, berörd
 bild eller yta, motivering, ansvarig, källunderlag, åtgärdsplan och
 gransknings-/utgångsdatum. Utgångna eller felaktiga undantag stoppar
-kontrollen. Tyst global ignorering av en sårbarhetstyp föreslås inte.
+kontrollen. Tyst global ignorering av en sårbarhetstyp är inte tillåten.
 
 GitHubs obligatoriska kontroller och releaseflödets slutkontroll ska
 upprätthålla detta. Att ladda upp en rapport är inte samma sak som
@@ -719,7 +725,7 @@ Egen export och återimport är fortsatt återställnings- och flyttvägen.
 ## Devcontainer för utveckling
 
 Beställaren kräver en devcontainer för fortsatt utveckling, inklusive
-fungerande Codex. Nedan föreslås upplägget för Render-alternativets
+fungerande Codex. Nedan anges upplägget för Render-lösningens
 Node.js-, TypeScript- och SQLite-stack. Utvecklingsbilden är separat
 från den mindre produktionsbild som publiceras i GHCR och körs i Render.
 
@@ -780,14 +786,14 @@ och [officiell Codex-dokumentation om sandbox](https://learn.chatgpt.com/docs/sa
 på Linux och beskriver beroenden till användarnamnrymder. Den visar
 inte att varje Docker-miljö behöver just Kravhanterings tre undantag.
 
-Förslaget är därför att prova vanlig profil först och behålla en
+Vanlig profil provas därför först. Det ska finnas möjlighet till en
 uttryckligt vald förhöjd profil om aktuella körprov kräver den.
 Endast rättigheter som behövs för det konstaterade felet ska ingå.
 Codex ska kunna köra vanliga projektkommandon inom sin sandbox och
 begära tillåtelse för andra kommandon enligt vald policy. Kravhanterings
 `approval_policy = "never"` kopieras inte som ett tekniskt krav.
-Att stänga av sandboxen är inte det föreslagna sättet att få den att
-fungera i containern.
+Att stänga av sandboxen är inte lösningen för att få den att fungera
+i containern.
 
 ### Verifiering innan utvecklingsmiljön räknas som färdig
 
@@ -817,8 +823,8 @@ avgjort. Devcontainer och instruktioner sätts upp när stacken införs.
 
 ## Verifiering och avgränsning
 
-Detta underlag föreslår en lösning att bedöma; inget är låst och ingen
-produktionsverifiering påstås. Implementationen behöver kontrollera framför
+Teknikbeslutet är godkänt; produktionsverifiering återstår.
+Implementationen behöver kontrollera framför
 allt samtidiga klienter, tappade kvitton, importfel, radering, riktiga
 inloggningar, externa MCP-klienter, minnesbehov och grafikrutinens
 beteenden på målplattformarna. Tidigare accepterade uppskjutna prov
