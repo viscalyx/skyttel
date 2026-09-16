@@ -7,5 +7,5 @@ framtida flytt.
 Detta väljs framför det billigare Cloudflare-alternativets större
 beroende av leverantörens körmodell och lagringsgränssnitt; SQLite körs
 som bibliotek i appen och behöver ingen separat databasserver.
-En enda appinstans och korta uppdateringsavbrott accepteras, och
+En enda applikationsinstans och korta uppdateringsavbrott accepteras, och
 hushållets planerade flyttväg är fullständig export och återimport.
