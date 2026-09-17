@@ -17,7 +17,6 @@ RUN apt-get update && \
         python3-venv \
         python3-yaml \
         ripgrep \
-        socat \
         sqlite3 && \
     rm -rf /var/lib/apt/lists/*
 
