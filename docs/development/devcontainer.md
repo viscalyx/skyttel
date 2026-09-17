@@ -10,11 +10,11 @@ Docker engine, so developers and agents can run temporary containers.
 
 ## Agreed verification scope
 
-The scope agreed on 2026-09-16 excludes automated devcontainer unit,
-integration, and lifecycle tests and a dedicated CI smoke workflow. Ordinary
-developer build, startup, and application use are sufficient validation.
-This narrows the original automated environment-verification criterion in
-[issue #33](https://github.com/viscalyx/skyttel/issues/33).
+The scope in [issue #33](https://github.com/viscalyx/skyttel/issues/33)
+excludes automated devcontainer unit, integration, and lifecycle tests and
+a dedicated CI smoke workflow. Developers manually verify rebuilds,
+startup, tools, persistence, and application use in their normal development
+workflow to cover the environment's practical nuances.
 Application unit tests use Vitest; application integration tests use
 Playwright. These tests and CI remain independent. Creation and startup
 never run those checks.
@@ -154,7 +154,17 @@ Normal development still uses HTTP on localhost. dotenv-linter and Lychee
 remain excluded because this project has no checks that use them. Markdown
 lint and spelling checks remain available.
 
-Node.js 24.21.0 and npm 12.0.2 are selected through the Node feature.
+Both profiles install Node and npm during the image build. The Dockerfile
+reads the exact Node version from `.node-version`, downloads the official
+Linux binary for AMD64 or ARM64, and checks its release SHA-256 checksum.
+The shared `scripts/install-repository-npm.mjs` installer reads
+`packageManager` from `package.json` and installs that exact npm version.
+The versions are currently Node.js 24.21.0 and npm 12.0.2. The tools are
+available on the system PATH before any lifecycle commands run; creation
+only installs project dependencies with `npm ci`. Neither profile duplicates
+the version pins or installs a Node version manager.
+Rebuild after changing either version source. CI uses the same version
+sources, and production builds use the shared npm installer.
 The .NET feature selects 8.0; `.config/dotnet-tools.json` pins GitVersion
 6.8.2. GitHub CLI and Git use their feature update policies. The root npm
 lockfile pins Dev Containers CLI 0.89.0, application Playwright 1.63.0, and
@@ -167,9 +177,13 @@ Creation also installs global `playwright@latest`, Chromium, Firefox, WebKit,
 and Linux browser libraries, then the browsers matching the application's
 locked Playwright version. The reference Chrome executable link is retained.
 
-Rolling tools can change on rebuild; record actual installed versions when
+Codex CLI, its VS Code extension, and global Playwright intentionally use
+the latest available releases on rebuild. Identical versions of these
+rolling tools across rebuilds are not required; application dependencies
+and application Playwright continue to use the committed npm lockfile.
+Record actual installed versions when
 reporting problems. Keep `.node-version`, the package engine range,
-production Node images, and the Node feature compatible with application CI.
+and production Node images compatible with application CI.
 After tool updates, rebuild and start normally, then run relevant application
 checks explicitly. Inside the container:
 
@@ -181,6 +195,12 @@ npm test
 npm run test:gates
 dotnet gitversion /output json
 ```
+
+Check rolling tool versions with `codex --version` and
+`"$HOME/.local/bin/playwright" --version`. Use
+`npx --no-install playwright --version` for the project's locked Playwright
+version. In VS Code's
+Extensions view, select the installed Codex extension to see its version.
 
 See [development testing](testing.md) for focused application checks and
 the explicit `npm run purge:install` dependency-maintenance command.
@@ -201,9 +221,13 @@ refer to the Docker host, so use named volumes or `docker cp` for files that
 exist only inside the devcontainer. The application `test:container` command
 uses Docker copy and exec to work in both environments.
 
-Only `.devcontainer` image inputs are sent to its image builder. The whole
-repository remains available at `/workspace`, including for application
-`docker build` commands.
+Both profiles use the repository root as their build context.
+`.devcontainer/Dockerfile.dockerignore` restricts it to the development
+Dockerfile, installers, `.node-version`, and `package.json`. Dev Containers
+generates a Dockerfile for features and uses the root `.dockerignore`, which
+also permits application build inputs. Both allowlists exclude private
+environment files and Codex state. The whole repository remains
+available at `/workspace`, including for application `docker build` commands.
 
 ## Codex permissions and remaining verification
 

@@ -2,6 +2,10 @@
 
 Use Node.js 24 LTS, npm 12, and the committed npm lockfile.
 `packageManager` pins the npm release used by development, CI, and builds.
+CI first sets up Node with automatic npm caching disabled, runs
+`node scripts/install-repository-npm.mjs`, and then enables npm caching.
+This ensures cache initialization uses the required npm version before
+`npm ci` enforces the project's package manager requirements.
 Native `better-sqlite3`
 installation requires a supported prebuilt binary or Python, a C/C++ compiler,
 and Make. The Docker build supplies these tools in its build stage.
@@ -191,8 +195,9 @@ follow their latest stable releases on each devcontainer creation/rebuild;
 they do not modify the application's lockfile. Runtime Node.js and Docker
 image updates remain coordinated maintenance: keep `.node-version`, the
 `package.json` engine range, both
-pinned production Dockerfile base references, and the devcontainer Node
-feature selection compatible. Container creation also installs browsers
+pinned production Dockerfile base references compatible. Both devcontainer
+profiles read `.node-version` and `packageManager` during image build.
+Container creation also installs browsers
 matching the application's locked Playwright version. Rebuild and start the
 devcontainer after updating these tools, and run the production-container
 checks when production inputs change.

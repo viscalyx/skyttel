@@ -1,7 +1,7 @@
 # Cross-platform devcontainer base image
 # Supports both AMD64 (Intel/AMD) and ARM64 (Apple Silicon)
 # Includes: git, curl, wget, sudo, zsh, and the vscode user
-FROM mcr.microsoft.com/devcontainers/base:2.0.5-ubuntu-24.04 AS codex-ready
+FROM mcr.microsoft.com/devcontainers/base:2.0.5-ubuntu-24.04 AS node-ready
 
 # Install system dependencies needed for npm native modules and SQLite.
 RUN apt-get update && \
@@ -17,13 +17,24 @@ RUN apt-get update && \
         python3-venv \
         python3-yaml \
         ripgrep \
-        sqlite3 && \
+        sqlite3 \
+        xz-utils && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PATH=/home/vscode/.local/bin:${PATH}
 
+# Install the repository's Node and npm versions before container creation.
+COPY .node-version package.json /usr/local/share/skyttel/
+COPY .devcontainer/install-node.sh /usr/local/share/skyttel/install-node.sh
+COPY scripts/install-repository-npm.mjs /usr/local/share/skyttel/scripts/install-repository-npm.mjs
+RUN bash /usr/local/share/skyttel/install-node.sh /usr/local/share/skyttel/.node-version && \
+    node /usr/local/share/skyttel/scripts/install-repository-npm.mjs && \
+    rm -rf /root/.npm
+
+FROM node-ready AS codex-ready
+
 # Use the same verified standalone installer as Kravhantering.
-COPY install-codex.sh /usr/local/share/skyttel/install-codex.sh
+COPY .devcontainer/install-codex.sh /usr/local/share/skyttel/install-codex.sh
 RUN install -d -o vscode -g vscode -m 0755 /home/vscode/.codex && \
     CODEX_HOME=/home/vscode/.codex \
     CODEX_INSTALL_DIR=/usr/local/bin \
