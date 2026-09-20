@@ -8,9 +8,9 @@ before upgrading Skyttel.
 ### Production runtime base
 
 The production container uses Alpine Linux 3.24. Rebuild the complete image
-so native dependencies match the runtime. Before rollout, verify database access and
-restart recovery on the deployment architecture. Keep the previous image and
-its database backup available until these checks pass.
+so native dependencies match the runtime. Before rollout, verify database
+access and restart recovery on the deployment architecture. Keep the
+previous image and its database backup available until these checks pass.
 
 The running container has no operating-system or JavaScript package manager.
 Install or update dependencies through an image build. Security findings at

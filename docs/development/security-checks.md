@@ -91,8 +91,8 @@ package manager and its dependencies, retaining the certificate trust store.
 Native SQLite is installed for this base during the build; never copy a
 development installation's native modules into the production image.
 Dependabot checks npm, Actions, and the production Dockerfile weekly. Review
-update diffs, lifecycle
-scripts, native compilation, and test evidence before merging. No update is
+update diffs, lifecycle scripts, native compilation, and test evidence before
+merging. No update is
 automatically accepted.
 
 The initial scanner choices are CodeQL Action 4.38.1, dependency review 5.0.0,

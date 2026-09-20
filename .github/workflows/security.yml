@@ -121,7 +121,7 @@ jobs:
           docker save skyttel-security -o "$RUNNER_TEMP/security-image.tar"
           config=$(tar -xOf "$RUNNER_TEMP/security-image.tar" manifest.json | jq -er 'if length == 1 then .[0].Config else error("Expected one image") end')
           tar -xOf "$RUNNER_TEMP/security-image.tar" "$config" | sha256sum | awk '{print "sha256:" $1}' > reports/image-id.txt
-      - uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
+      - uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
           image: docker-archive:${{ runner.temp }}/security-image.tar
           syft-version: v1.52.0
@@ -129,7 +129,7 @@ jobs:
           output-file: reports/sbom.spdx.json
           upload-artifact: false
           upload-release-assets: false
-      - uses: anchore/scan-action@8576240a41341d866dbd7ebc72cd9fc0ef023f54 # v7.4.2
+      - uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: docker-archive:${{ runner.temp }}/security-image.tar
           grype-version: v0.119.0
