@@ -136,7 +136,7 @@ describe('household administration interface', () => {
 
   test('creates an invitation for the entered identity and hides its code after acceptance', async () => {
     const fetch = serve({
-      '/api/bootstrap': [{ data: ready }],
+      '/api/bootstrap': [{ data: ready }, { data: ready }],
       [administrationPath]: [
         { data: administration },
         { data: { ...administration, invitations: [invitation] } },
@@ -288,18 +288,16 @@ describe('household administration interface', () => {
   ])('explains a failed access change and permits another attempt', async (failure) => {
     serve({
       '/api/bootstrap': [{ data: ready }],
-      [administrationPath]: [{ data: administration }],
-      '/api/households/linden/members/alex/role': [failure],
+      [administrationPath]: [{ data: administrationWithTwoAdministrators }],
+      '/api/households/linden/members/lo/role': [failure],
     });
     mount();
-    await screen.findByRole('heading', { name: 'Alex Exempel (du)' });
-    await userEvent.click(
-      member('Alex Exempel (du)').getByRole('button', { name: 'Gör till medlem' }),
-    );
+    await screen.findByRole('heading', { name: 'Lo Exempel' });
+    await userEvent.click(member('Lo Exempel').getByRole('button', { name: 'Gör till medlem' }));
     expect((await screen.findByRole('alert')).textContent).toContain(failure.message);
     expect(
       (
-        member('Alex Exempel (du)').getByRole('button', {
+        member('Lo Exempel').getByRole('button', {
           name: 'Gör till medlem',
         }) as HTMLButtonElement
       ).disabled,
@@ -322,25 +320,23 @@ describe('household administration interface', () => {
     ).toBeDefined();
   });
 
-  test('loses administration access immediately after changing its own role to member', async () => {
+  test('changes another administrator to a member and retains its own access', async () => {
     const fetch = serve({
-      '/api/bootstrap': [
-        { data: ready },
-        { data: { ...ready, household: { ...household, role: 'member' } } },
+      '/api/bootstrap': [{ data: ready }],
+      [administrationPath]: [
+        { data: administrationWithTwoAdministrators },
+        { data: administration },
       ],
-      [administrationPath]: [{ data: administrationWithTwoAdministrators }, { status: 403 }],
-      '/api/households/linden/members/alex/role': [{ data: {} }],
+      '/api/households/linden/members/lo/role': [{ data: {} }],
     });
     mount();
-    await screen.findByRole('heading', { name: 'Alex Exempel (du)' });
-    await userEvent.click(
-      member('Alex Exempel (du)').getByRole('button', { name: 'Gör till medlem' }),
-    );
-    expect(
-      await screen.findByRole('heading', { name: 'Du kan inte administrera hushållet' }),
-    ).toBeDefined();
+    await screen.findByRole('heading', { name: 'Lo Exempel' });
+    await userEvent.click(member('Lo Exempel').getByRole('button', { name: 'Gör till medlem' }));
+    expect(await screen.findByText('Rollen har ändrats.')).toBeDefined();
+    expect(member('Lo Exempel').getByText('Medlem')).toBeDefined();
+    expect(member('Alex Exempel (du)').getByText('Administratör')).toBeDefined();
     const [, request] =
-      fetch.mock.calls.find(([path]) => path === '/api/households/linden/members/alex/role') ?? [];
+      fetch.mock.calls.find(([path]) => path === '/api/households/linden/members/lo/role') ?? [];
     expect(JSON.parse((request as RequestInit).body as string)).toEqual({ role: 'member' });
   });
 
@@ -375,26 +371,32 @@ describe('household administration interface', () => {
     expect(screen.queryByRole('heading', { name: 'Lo Exempel' })).toBeNull();
   });
 
-  test('explains self-revocation and closes household access when confirmed', async () => {
-    serve({
-      '/api/bootstrap': [{ data: ready }, { data: forbidden }],
-      [administrationPath]: [{ data: administrationWithTwoAdministrators }],
-      '/api/households/linden/members/alex/revoke': [{ data: {} }],
-    });
-    mount();
-    await screen.findByRole('heading', { name: 'Alex Exempel (du)' });
-    await userEvent.click(
-      member('Alex Exempel (du)').getByRole('button', { name: 'Återkalla tillgång' }),
-    );
-    expect(
-      screen.getByRole('group', { name: 'Återkalla tillgång för Alex Exempel' }).textContent,
-    ).toContain('(dig själv)');
-    await userEvent.click(screen.getByRole('button', { name: 'Bekräfta återkallelse' }));
-    expect(
-      await screen.findByRole('heading', { name: 'Du har inte tillgång till hushållet' }),
-    ).toBeDefined();
-    expect(screen.queryByRole('heading', { name: 'Administrera tillgång' })).toBeNull();
-  });
+  test.each([administration, administrationWithTwoAdministrators])(
+    'keeps own membership actions visible but disabled regardless of other administrators',
+    async (data) => {
+      serve({
+        '/api/bootstrap': [{ data: ready }],
+        [administrationPath]: [{ data }],
+      });
+      mount();
+      await screen.findByRole('heading', { name: 'Alex Exempel (du)' });
+      const ownRow = member('Alex Exempel (du)');
+      for (const name of ['Gör till medlem', 'Återkalla tillgång']) {
+        const button = ownRow.getByRole('button', { name }) as HTMLButtonElement;
+        expect(button.disabled).toBe(true);
+        await userEvent.click(button);
+      }
+      expect(
+        ownRow.getByText('Din roll och tillgång ändras av en annan administratör.'),
+      ).toBeDefined();
+      expect(
+        screen.queryByRole('group', { name: 'Återkalla tillgång för Alex Exempel' }),
+      ).toBeNull();
+      for (const button of member('Lo Exempel').getAllByRole('button')) {
+        expect((button as HTMLButtonElement).disabled).toBe(false);
+      }
+    },
+  );
 
   test('allows canceling and then revoking a pending invitation', async () => {
     serve({
@@ -503,10 +505,26 @@ describe('invitation acceptance interface', () => {
 });
 
 describe('current household access', () => {
+  test('keeps loaded membership visible after a temporary background failure', async () => {
+    serve({
+      '/api/bootstrap': [{ data: ready }, { status: 503 }],
+      [administrationPath]: [{ data: administration }, { status: 503 }],
+    });
+    mount();
+    expect(await screen.findByRole('heading', { name: 'Administrera tillgång' })).toBeDefined();
+    await act(async () => window.dispatchEvent(new Event('focus')));
+    expect(member('Lo Exempel').getByText('Medlem')).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Skyttel kunde inte öppnas' })).toBeNull();
+  });
+
   test('updates a changed role and revoked access while the household stays open', async () => {
     vi.useFakeTimers();
     serve({
-      '/api/bootstrap': [{ data: ready }],
+      '/api/bootstrap': [
+        { data: ready },
+        { data: { ...ready, household: { ...household, role: 'member' } } },
+        { data: forbidden },
+      ],
       '/api/households/linden': [
         { data: { household } },
         { data: { household: { ...household, role: 'member' } } },
@@ -515,20 +533,24 @@ describe('current household access', () => {
     });
     await act(async () => mount('/'));
     expect(screen.getByRole('link', { name: 'Administrera tillgång' })).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Din Skyttel-användare' })).toBeDefined();
+    expect(screen.queryByRole('textbox', { name: 'Inbjudningskod' })).toBeNull();
     await act(async () => vi.advanceTimersByTimeAsync(5_000));
     expect(screen.getByText('Medlem')).toBeDefined();
     expect(screen.queryByRole('link', { name: 'Administrera tillgång' })).toBeNull();
+    expect(screen.getByRole('textbox', { name: 'Inbjudningskod' })).toBeDefined();
     await act(async () => vi.advanceTimersByTimeAsync(5_000));
     expect(
       screen.getByRole('heading', { name: 'Du har inte tillgång till hushållet' }),
     ).toBeDefined();
+    expect(screen.getByRole('textbox', { name: 'Inbjudningskod' })).toBeDefined();
   });
 
   test('refreshes current access when a hidden page becomes visible', async () => {
     const visibility = vi.spyOn(document, 'visibilityState', 'get');
     visibility.mockReturnValue('hidden');
     serve({
-      '/api/bootstrap': [{ data: ready }],
+      '/api/bootstrap': [{ data: ready }, { data: forbidden }],
       '/api/households/linden': [{ data: { household } }, { status: 403 }],
     });
     mount('/');
@@ -545,7 +567,7 @@ describe('current household access', () => {
   test('keeps opening the membership list while a focus event arrives during its request', async () => {
     const request = deferredResponse();
     serve({
-      '/api/bootstrap': [{ data: ready }],
+      '/api/bootstrap': [{ data: ready }, { data: ready }],
       [administrationPath]: [{ response: request.response }],
     });
     await act(async () => mount());

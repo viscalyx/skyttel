@@ -64,6 +64,10 @@ member. A member can use the shared map but cannot manage invitations,
 membership, or roles. The server checks the current role for each request,
 including requests from a page that is already open.
 
+The role and access controls on your own row, marked **(du)**, stay visible
+but are disabled. Ask another administrator to change your role or revoke
+your access through **Administrera tillgång**.
+
 ## Revoke access
 
 An administrator can remove a member's access from **Medlemmar**. Check the

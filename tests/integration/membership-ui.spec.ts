@@ -172,6 +172,14 @@ test('administrators share responsibility and open clients lose revoked access w
 
     const secondPage = await second.newPage();
     await secondPage.goto(`${installation.origin}/households/${household.id}/administration`);
+    const ownRow = secondPage
+      .getByRole('list', { name: 'Medlemmar' })
+      .getByRole('listitem')
+      .filter({ hasText: `${robin.name} (du)` });
+    await expect(ownRow.getByRole('button', { name: 'Gör till medlem' })).toBeVisible();
+    await expect(ownRow.getByRole('button', { name: 'Gör till medlem' })).toBeDisabled();
+    await expect(ownRow.getByRole('button', { name: 'Återkalla tillgång' })).toBeVisible();
+    await expect(ownRow.getByRole('button', { name: 'Återkalla tillgång' })).toBeDisabled();
     const alexRow = secondPage
       .getByRole('list', { name: 'Medlemmar' })
       .getByRole('listitem')
@@ -184,14 +192,8 @@ test('administrators share responsibility and open clients lose revoked access w
     await page.getByRole('link', { name: 'Till startsidan' }).click();
     await expect(page.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Administrera tillgång' })).toHaveCount(0);
-    const ownRow = secondPage
-      .getByRole('list', { name: 'Medlemmar' })
-      .getByRole('listitem')
-      .filter({ hasText: `${robin.name} (du)` });
-    await ownRow.getByRole('button', { name: 'Gör till medlem' }).click();
-    await expect(secondPage.getByRole('alert')).toContainText(
-      'Hushållet måste ha minst en administratör',
-    );
+    await expect(ownRow.getByRole('button', { name: 'Gör till medlem' })).toBeDisabled();
+    await expect(ownRow.getByRole('button', { name: 'Återkalla tillgång' })).toBeDisabled();
     await alexRow.getByRole('button', { name: 'Återkalla tillgång' }).click();
     await expect(alexRow).toContainText('Personer och innehåll i kartan finns kvar');
     await alexRow.getByRole('button', { name: 'Avbryt' }).click();

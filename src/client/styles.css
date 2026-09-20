@@ -30,6 +30,9 @@ button:disabled {
   cursor: wait;
   opacity: 0.65;
 }
+.own-membership button:disabled {
+  cursor: not-allowed;
+}
 a {
   color: #145b4c;
   text-underline-offset: 0.2em;

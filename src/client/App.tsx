@@ -59,12 +59,16 @@ function useResource<T>(path: string, revision = 0, refreshAccess = false): Load
         if (!controller.signal.aborted) setResult({ key, state: { status: 'loaded', data } });
       } catch (error) {
         if (!controller.signal.aborted)
-          setResult({
-            key,
-            state: {
-              status: 'error',
-              code: error instanceof RequestError ? error.status : undefined,
-            },
+          setResult((previous) => {
+            const code = error instanceof RequestError ? error.status : undefined;
+            if (
+              previous.key === key &&
+              previous.state.status === 'loaded' &&
+              code !== 401 &&
+              code !== 403
+            )
+              return previous;
+            return { key, state: { status: 'error', code } };
           });
       } finally {
         pending = false;
@@ -311,10 +315,12 @@ function Forbidden() {
 
 function InvitationEntry({
   userId,
+  showInvitation,
   onAccepted,
   onReload,
 }: {
   userId: string;
+  showInvitation: boolean;
   onAccepted: (household: Household) => void;
   onReload: () => void;
 }) {
@@ -346,41 +352,50 @@ function InvitationEntry({
     <section className="panel invitation-panel">
       <h2>Din Skyttel-användare</h2>
       <label htmlFor="own-user-id">Ditt Skyttel-användar-ID</label>
-      <input id="own-user-id" readOnly value={userId} aria-describedby="user-id-hint" />
-      <p id="user-id-hint" className="muted">
-        Dela detta ID med administratören som ska bjuda in dig. Namn och e-postadress ger inte
-        tillgång.
-      </p>
-      <form onSubmit={(event) => void accept(event)} aria-busy={pending}>
-        <h2>Har du en inbjudan?</h2>
-        <label htmlFor="invitation-code">Inbjudningskod</label>
-        <input
-          id="invitation-code"
-          autoComplete="off"
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
-          required
-          readOnly={pending}
-        />
-        <button type="submit" disabled={pending}>
-          {pending ? 'Accepterar inbjudan…' : 'Acceptera inbjudan'}
-        </button>
-        {pending && (
-          <p className="form-status" role="status">
-            Kontrollerar din inbjudan…
+      <input
+        id="own-user-id"
+        readOnly
+        value={userId}
+        aria-describedby={showInvitation ? 'user-id-hint' : undefined}
+      />
+      {showInvitation && (
+        <>
+          <p id="user-id-hint" className="muted">
+            Dela detta ID med administratören som ska bjuda in dig. Namn och e-postadress ger inte
+            tillgång.
           </p>
-        )}
-        {error && (
-          <div className="form-status">
-            <p className="error" role="alert">
-              {error}
-            </p>
-            <button type="button" onClick={onReload}>
-              Kontrollera tillgång
+          <form onSubmit={(event) => void accept(event)} aria-busy={pending}>
+            <h2>Har du en inbjudan?</h2>
+            <label htmlFor="invitation-code">Inbjudningskod</label>
+            <input
+              id="invitation-code"
+              autoComplete="off"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              required
+              readOnly={pending}
+            />
+            <button type="submit" disabled={pending}>
+              {pending ? 'Accepterar inbjudan…' : 'Acceptera inbjudan'}
             </button>
-          </div>
-        )}
-      </form>
+            {pending && (
+              <p className="form-status" role="status">
+                Kontrollerar din inbjudan…
+              </p>
+            )}
+            {error && (
+              <div className="form-status">
+                <p className="error" role="alert">
+                  {error}
+                </p>
+                <button type="button" onClick={onReload}>
+                  Kontrollera tillgång
+                </button>
+              </div>
+            )}
+          </form>
+        </>
+      )}
     </section>
   );
 }
@@ -438,7 +453,7 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
       setPending(false);
     }
   }
-  async function changeAccess(suffix: string, body: unknown, success: string, self = false) {
+  async function changeAccess(suffix: string, body: unknown, success: string) {
     setPending(true);
     setError(null);
     setNotice(null);
@@ -447,8 +462,7 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
       setConfirmMember(null);
       setConfirmInvitation(null);
       setNotice(success);
-      if (self) onReload();
-      else setRevision((value) => value + 1);
+      setRevision((value) => value + 1);
     } catch (failure) {
       if (failure instanceof RequestError && [401, 403].includes(failure.status)) onReload();
       else
@@ -529,7 +543,10 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
       <h2 className="section-heading">Medlemmar</h2>
       <ul className="access-list" aria-label="Medlemmar">
         {result.data.members.map((member) => (
-          <li key={member.userId}>
+          <li
+            key={member.userId}
+            className={member.userId === userId ? 'own-membership' : undefined}
+          >
             <h3>
               {member.name}
               {member.userId === userId ? ' (du)' : ''}
@@ -539,13 +556,13 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
             <div className="access-actions">
               <button
                 type="button"
-                disabled={pending}
+                disabled={pending || member.userId === userId}
+                aria-describedby={member.userId === userId ? 'own-access-hint' : undefined}
                 onClick={() =>
                   void changeAccess(
                     `members/${encodeURIComponent(member.userId)}/role`,
                     { role: member.role === 'administrator' ? 'member' : 'administrator' },
                     'Rollen har ändrats.',
-                    member.userId === userId,
                   )
                 }
               >
@@ -553,21 +570,26 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
               </button>
               <button
                 type="button"
-                disabled={pending}
+                disabled={pending || member.userId === userId}
+                aria-describedby={member.userId === userId ? 'own-access-hint' : undefined}
                 onClick={() => setConfirmMember(member.userId)}
               >
                 Återkalla tillgång
               </button>
             </div>
+            {member.userId === userId && (
+              <p id="own-access-hint" className="muted">
+                Din roll och tillgång ändras av en annan administratör.
+              </p>
+            )}
             {confirmMember === member.userId && (
               <fieldset
                 className="confirmation"
                 aria-label={`Återkalla tillgång för ${member.name}`}
               >
                 <p>
-                  Återkalla tillgång för {member.name}
-                  {member.userId === userId ? ' (dig själv)' : ''}? Alla befintliga sessioner
-                  förlorar tillgång. Personer och innehåll i kartan finns kvar.
+                  Återkalla tillgång för {member.name}? Alla befintliga sessioner förlorar tillgång.
+                  Personer och innehåll i kartan finns kvar.
                 </p>
                 <div className="access-actions">
                   <button
@@ -578,7 +600,6 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
                         `members/${encodeURIComponent(member.userId)}/revoke`,
                         {},
                         'Tillgången har återkallats.',
-                        member.userId === userId,
                       )
                     }
                   >
@@ -710,7 +731,7 @@ export function App() {
   const [revision, setRevision] = useState(0);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState(false);
-  const bootstrap = useResource<Bootstrap>('/api/bootstrap', revision);
+  const bootstrap = useResource<Bootstrap>('/api/bootstrap', revision, true);
   const reload = useCallback(() => setRevision((value) => value + 1), []);
   const data = bootstrap.status === 'loaded' ? bootstrap.data : undefined;
   async function signOut() {
@@ -793,7 +814,12 @@ export function App() {
           </Routes>
         )}
         {data && (data.status === 'forbidden' || data.status === 'ready') && (
-          <InvitationEntry userId={data.user.id} onAccepted={created} onReload={reload} />
+          <InvitationEntry
+            userId={data.user.id}
+            showInvitation={data.status === 'forbidden' || data.household.role !== 'administrator'}
+            onAccepted={created}
+            onReload={reload}
+          />
         )}
       </main>
       <footer>Det som hör ihop, samlat.</footer>
