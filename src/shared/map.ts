@@ -64,6 +64,7 @@ export interface RelationshipChange {
   before: MapRelationship | null;
   after: RelationshipValue | null;
   type: RelationshipType;
+  objectNames?: Record<string, string>;
 }
 
 export function proposedRelationships(

@@ -225,6 +225,16 @@ identity questions, deletion review, and the actual demo seed. Only external
 identity providers are substituted; SQLite and the application remain real.
 Failure tests inject a SQLite write error or interrupt an HTTP response.
 
+`tests/integration/draft-conflicts.spec.ts` orders requests from separate
+users and clients against the running app and real SQLite. It covers
+whole-draft rollback, stale resolution choices and approvals, private
+draft access, membership revocation, independent saves, overlapping
+objects and relationships, duplicate links, and deleted endpoints.
+Browser checks require an explicit conflict choice followed by a new save.
+They also verify that a resolved draft and readable relationship proposals
+survive normal server restart. The fixtures use only fictional identities
+and content; no timing delays decide which writer wins.
+
 Relationship and object types are household-owned database records. Forms
 read current definitions and drafts capture their revisions. Catalog editing
 has separate implementation tickets. Future full export, replacement import,

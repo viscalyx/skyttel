@@ -41,6 +41,26 @@ export function relationships(database: Database.Database, householdId: string) 
       left.targetId === right.targetId
     );
   }
+  function objectNames(
+    draft: MapDraft,
+    before: RelationshipValue | null,
+    after: RelationshipValue | null,
+    previous: Record<string, string> = {},
+  ) {
+    const names: Record<string, string> = {};
+    for (const id of [before?.sourceId, before?.targetId, after?.sourceId, after?.targetId]) {
+      if (!id) continue;
+      const saved = database
+        .prepare('SELECT name FROM map_object WHERE householdId = ? AND id = ?')
+        .get(householdId, id) as { name: string } | undefined;
+      const name =
+        previous[id] ??
+        saved?.name ??
+        draft.changes.find((change) => change.id === id)?.after?.name;
+      if (name !== undefined) names[id] = name;
+    }
+    return names;
+  }
   return {
     read,
     types,
@@ -57,6 +77,7 @@ export function relationships(database: Database.Database, householdId: string) 
             id: value.id,
             before,
             after: null,
+            objectNames: existing?.objectNames ?? objectNames(draft, before, null),
             type:
               existing?.type ??
               (types().find((type) => type.id === value.typeId) as RelationshipType),
@@ -110,7 +131,14 @@ export function relationships(database: Database.Database, householdId: string) 
       );
       if (!type) throw new MapError('invalid_type', 400);
       const changes = (draft.relationships ?? []).filter((change) => change.id !== body.id);
-      if (before || after) changes.push({ id: body.id, before, after, type });
+      if (before || after)
+        changes.push({
+          id: body.id,
+          before,
+          after,
+          type,
+          objectNames: objectNames(draft, before, after, existing?.objectNames),
+        });
       return { draft: { ...draft, version: draft.version + 1, relationships: changes } };
     },
     save(draft: MapDraft): RelationshipChange[] {
@@ -182,7 +210,7 @@ export function relationships(database: Database.Database, householdId: string) 
               'UPDATE map_relationship SET revision = revision + 1 WHERE householdId = ? AND id = ?',
             )
             .run(householdId, change.id);
-        return { ...change, after };
+        return { id: change.id, before: change.before, after, type: change.type };
       });
     },
   };
