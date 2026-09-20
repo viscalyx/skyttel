@@ -85,10 +85,13 @@ node scripts/security/check-results.mjs grype reports .github/security-exception
 ## Versions and updates
 
 External Actions use full commit hashes with readable release comments. The
-production Node 24 base uses Debian 13 with both a version and digest. Build
-and runtime use the same base, and runtime removes unused npm and Yarn.
-Dependabot checks npm,
-Actions, and the production Dockerfile weekly. Review update diffs, lifecycle
+production Node 24 base uses Alpine 3.24 with both a version and digest. Build
+and runtime use the same base. Runtime removes unused npm, Yarn, and the OS
+package manager and its dependencies, retaining the certificate trust store.
+Native SQLite is installed for this base during the build; never copy a
+development installation's native modules into the production image.
+Dependabot checks npm, Actions, and the production Dockerfile weekly. Review
+update diffs, lifecycle
 scripts, native compilation, and test evidence before merging. No update is
 automatically accepted.
 
@@ -138,3 +141,4 @@ jobs must enforce these contracts when introduced.
 - [CodeQL result severity](https://docs.github.com/en/code-security/how-tos/manage-security-alerts/manage-code-scanning-alerts/triage-alerts-in-pull-requests)
 - [Grype scan Action inputs](https://github.com/anchore/scan-action)
 - [ZAP baseline exit codes and reports](https://www.zaproxy.org/docs/docker/baseline-scan/)
+- [Official Node image variants and native-library compatibility](https://github.com/nodejs/docker-node#nodealpine)
