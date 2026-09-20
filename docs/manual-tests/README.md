@@ -8,3 +8,6 @@ till motsvarande automatiserade integrationstester.
 
 - [Privata utkast](drafts.md): återuppta ett utkast med konflikt och spara
   oberoende förslag tillsammans.
+- [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
+  försök efter omstart, återförsöka från en annan klient och kontrollera
+  privat tillgång.
