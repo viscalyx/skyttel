@@ -61,6 +61,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   const [operations, setOperations] = useState<SaveOperation[]>([]);
   const nameInput = useRef<HTMLInputElement>(null);
   const newButton = useRef<HTMLButtonElement>(null);
+  const focusAfterClose = useRef(false);
   const [load, setLoad] = useState(0);
 
   const loseAccess = useCallback(() => {
@@ -143,6 +144,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
 
   useEffect(() => {
     if (editor?.id) nameInput.current?.focus();
+    else if (focusAfterClose.current) {
+      focusAfterClose.current = false;
+      newButton.current?.focus();
+    }
   }, [editor?.id]);
 
   async function save(attempt: SaveAttempt, recover = false) {
@@ -660,9 +665,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 type="button"
                 disabled={pending}
                 onClick={() => {
+                  focusAfterClose.current = true;
                   setEditor(null);
                   setDirty(false);
-                  newButton.current?.focus();
                 }}
               >
                 Stäng utan att skicka texten
