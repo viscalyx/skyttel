@@ -76,13 +76,15 @@ function git(...args) {
 }
 
 function writeCompatible(file, content) {
-  if (fs.existsSync(file)) {
-    if (fs.readFileSync(file, 'utf8') !== content) {
-      throw new Error(`Existing release artifact conflicts with the source revision: ${file}`);
-    }
+  try {
+    fs.writeFileSync(file, content, { flag: 'wx' });
     return;
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
   }
-  fs.writeFileSync(file, content, { flag: 'wx' });
+  if (fs.readFileSync(file, 'utf8') !== content) {
+    throw new Error(`Existing release artifact conflicts with the source revision: ${file}`);
+  }
 }
 
 export function main(args = process.argv.slice(2), env = process.env) {
