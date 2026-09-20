@@ -23,7 +23,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   return result;
 }
 
-type Editor = { id: string; baseRevision: number | null; value: ObjectValue };
+type Editor = { id: string; version: number; baseRevision: number | null; value: ObjectValue };
 
 export function HouseholdMap({ householdId }: { householdId: string }) {
   const path = `/api/households/${encodeURIComponent(householdId)}/map`;
@@ -138,6 +138,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     const proposal = state.draft.changes.find((change) => change.id === object?.id);
     setEditor({
       id: object?.id ?? crypto.randomUUID(),
+      version: state.draft.version,
       baseRevision: proposal ? (proposal.before?.revision ?? null) : (object?.revision ?? null),
       value: proposal?.after ??
         object ?? { typeId: state.types[0]?.id ?? '', name: '', description: '' },
@@ -247,7 +248,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-                void action('draft', { ...editor, version: state.draft.version });
+                void action('draft', editor);
               }}
             >
               <fieldset disabled={pending || blocked}>
@@ -297,16 +298,24 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   }}
                 />
                 <p>Texten i formuläret skickas först när du lägger den i utkastet.</p>
+                {editor.version !== state.draft.version && (
+                  <p role="alert">
+                    Formuläret bygger på ett äldre utkast. Kopiera eventuell text du vill behålla,
+                    stäng formuläret och öppna objektets aktuella förslag innan du fortsätter.
+                  </p>
+                )}
                 <div className="access-actions">
-                  <button type="submit">Lägg i mitt utkast</button>
+                  <button type="submit" disabled={editor.version !== state.draft.version}>
+                    Lägg i mitt utkast
+                  </button>
                   {(editor.baseRevision !== null ||
                     state.draft.changes.some((change) => change.id === editor.id)) && (
                     <button
                       type="button"
-                      disabled={dirty}
+                      disabled={dirty || editor.version !== state.draft.version}
                       onClick={() =>
                         void action('draft', {
-                          version: state.draft.version,
+                          version: editor.version,
                           id: editor.id,
                           baseRevision: editor.baseRevision,
                           value: null,

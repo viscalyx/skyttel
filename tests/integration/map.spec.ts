@@ -2,6 +2,45 @@ import { expect, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
+test('refreshing after a conflict preserves text without authorizing a stale form', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const second = await browser.newContext();
+  try {
+    await signIn(page.request, installation.origin);
+    await createHousehold(page.request, installation.origin);
+    await page.goto(installation.origin);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page.getByLabel('Objektets namn').fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await signIn(second.request, installation.origin);
+    const tab = await second.newPage();
+    await tab.goto(installation.origin);
+    for (const editor of [page, tab])
+      await editor.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByLabel('Objektets namn').fill('Lo gammalt förslag');
+    await tab.getByLabel('Objektets namn').fill('Lo nytt förslag');
+    await tab.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await expect(page.getByRole('alert')).toContainText('Förslaget eller kartan har ändrats');
+    await page.getByRole('button', { name: 'Hämta aktuellt underlag' }).click();
+    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
+      'Lo nytt förslag',
+    );
+    await expect(page.getByLabel('Objektets namn')).toHaveValue('Lo gammalt förslag');
+    await expect(page.getByRole('button', { name: 'Lägg i mitt utkast' })).toBeDisabled();
+    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await page.getByRole('button', { name: 'Lo nytt förslag', exact: true }).click();
+    await expect(page.getByLabel('Objektets namn')).toHaveValue('Lo nytt förslag');
+    await expect(page.getByRole('button', { name: 'Lägg i mitt utkast' })).toBeEnabled();
+  } finally {
+    await second.close();
+    await installation.close();
+  }
+});
+
 test('an uncertain save recovers its receipt and stale tabs cannot save newer drafts', async ({
   page,
   browser,

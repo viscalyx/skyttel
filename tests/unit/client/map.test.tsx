@@ -122,7 +122,10 @@ test('a stale draft is blocked until refreshed, and a lost proposal is recovered
   );
   loseResponse = '';
   await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
-  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+  await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('äldre utkast'));
+  expect(
+    (screen.getByRole('button', { name: 'Lägg i mitt utkast' }) as HTMLButtonElement).disabled,
+  ).toBe(true);
   expect((screen.getByLabelText('Objektets namn') as HTMLInputElement).value).toBe('Robin Exempel');
   await userEvent.click(screen.getByRole('button', { name: 'Stäng utan att skicka texten' }));
   expect(screen.queryByLabelText('Objektets namn')).toBeNull();

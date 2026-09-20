@@ -24,7 +24,10 @@ object retains its prior values in history; it is not permanent erasure.
 If another client changes your draft or the underlying objects, saving is
 blocked. Fetch the current information and review it again. For an object
 conflict, discard the draft and recreate the intended proposals from current
-values. Nothing is partially saved. If the save result is unknown, use
+values. An older open form keeps its text but cannot be submitted after a
+draft conflict. Copy any text you need, close the form, and reopen the current
+proposal before editing again. Nothing is partially saved.
+If the save result is unknown, use
 **Hämta samma kvitto igen** before making another save. An unknown result
 does not mean that saving failed.
 
