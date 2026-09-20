@@ -225,6 +225,14 @@ ingress configuration, disk service, or a different CPU architecture.
 
 ## Verify real identity providers separately
 
+`tests/integration/linking.spec.ts` exercises the running app's public
+linking flow with persistent SQLite and deterministic providers. It covers
+both identity proofs, matching and different email addresses, occupied and
+wrong identities, denied consent, provider failures, cancellation, session
+binding, and the verified browser result. These checks do not verify live
+provider policy or personal Microsoft account support. Use synthetic data
+only; never put tokens or identity proofs in technical logs or test reports.
+
 If you are new to provider registration, start with the
 [first-time setup walkthrough](../operations/first-time-use.md).
 
@@ -248,6 +256,12 @@ household data in public evidence.
 5. Verify logout, denied consent, and a provider error. Confirm that the page
    gives a usable retry path and technical logs contain no secret or identity
    detail.
+6. Open **Inloggningssätt**, prove the existing login, then link a controlled
+   identity from the other provider. Include a personal Microsoft account.
+   Check the verified result, sign out, and sign in with each provider.
+   Confirm the same Skyttel user ID and household access. Repeat with denied
+   consent and an identity already owned by another Skyttel user; earlier
+   access must remain intact.
 
 Record the date, image digest, provider, Microsoft account category, scenarios,
 and pass/fail result in private release evidence. State explicitly which

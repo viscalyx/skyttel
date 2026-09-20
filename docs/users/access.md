@@ -18,6 +18,31 @@ The household must keep at least one administrator. Give another member the
 administrator role before you remove the last administrator's access or
 change that person's role to member.
 
+## Link Google and Microsoft
+
+Open **Inloggningssätt** while signed in. The page lists your connected
+providers. Select **Verifiera Google** or **Verifiera Microsoft** and prove
+the existing login again. Choose the same provider identity that already
+belongs to your Skyttel user. Then select **Koppla Microsoft** or
+**Koppla Google** and complete the other provider's login within ten minutes.
+Personal Microsoft accounts are supported as well as work accounts.
+
+Wait for the verified result and check that both providers are listed as
+connected. Either login then reaches the same Skyttel user ID and current
+household memberships. Linking does not create a new owner for your saved
+content. Drafts, personal views, and historical authorship will use this
+same identity when those features are available. Matching email addresses
+never link accounts automatically; the two addresses may also differ.
+
+Select **Avbryt länkning** to cancel. If verification is already completing,
+wait for its result; a completed link remains connected. Denied consent,
+provider errors, a
+wrong existing identity, or an expired verification leave earlier logins
+and access intact. Start again from the existing login. An identity that
+already belongs to another Skyttel user cannot be taken over or silently
+merged. Signing in separately with the second provider before linking can
+create such a separate user.
+
 ## Invite a Skyttel user
 
 1. Ask the recipient to open your Skyttel installation and sign in. A person
