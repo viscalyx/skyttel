@@ -1,4 +1,4 @@
-FROM node:24.21.0-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS dependencies
+FROM node:24.21.0-trixie-slim@sha256:8ec5d7557396cfe32d21c3f9c13072355ceab22b584578ca4bb28af31120cffe AS dependencies
 
 WORKDIR /app
 RUN apt-get update \
@@ -17,14 +17,16 @@ RUN npm run build
 FROM dependencies AS production-dependencies
 RUN npm prune --omit=dev
 
-FROM node:24.21.0-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS runtime
+FROM node:24.21.0-trixie-slim@sha256:8ec5d7557396cfe32d21c3f9c13072355ceab22b584578ca4bb28af31120cffe AS runtime
 
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=3000 \
     SKYTTEL_DATABASE_PATH=/data/skyttel.sqlite
 WORKDIR /app
-RUN mkdir /data && chown node:node /data
+RUN mkdir /data && chown node:node /data \
+    && rm -rf /usr/local/lib/node_modules/npm /opt/yarn-* \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package.json ./
