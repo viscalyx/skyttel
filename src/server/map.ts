@@ -139,6 +139,7 @@ export function householdMap(database: Database.Database, userId: string, househ
             if (conflict.type) change.type = conflict.type;
             if (!change.after) edges.removeObject(current, change.id);
           }
+          edges.reconcileObjectRemovals(current);
         } else {
           const change = current.relationships?.find((item) => item.id === conflict.id);
           if (!change) throw new MapError('resolution_conflict');
@@ -148,8 +149,17 @@ export function householdMap(database: Database.Database, userId: string, househ
             );
           } else {
             if (!conflict.current && change.before) throw new MapError('relationship_conflict');
+            const before = change.before;
             change.before = conflict.current;
             if (conflict.type) change.type = conflict.type;
+            // Keep triggers from draft edits, but drop dependencies on detached saved endpoints.
+            if (change.removedWithObjects)
+              change.removedWithObjects = change.removedWithObjects.filter(
+                (id) =>
+                  (before?.sourceId !== id && before?.targetId !== id) ||
+                  change.before?.sourceId === id ||
+                  change.before?.targetId === id,
+              );
           }
         }
         return writeDraft({ ...current, version: current.version + 1 });
@@ -203,6 +213,7 @@ export function householdMap(database: Database.Database, userId: string, househ
         current.changes = current.changes.filter((change) => change.id !== id);
         if (before || after) current.changes.push({ id, before, after, type });
         if (!after) edges.removeObject(current, id);
+        edges.reconcileObjectRemovals(current);
         return writeDraft({ ...current, version: current.version + 1 });
       });
     },

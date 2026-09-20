@@ -61,9 +61,25 @@ export function relationships(database: Database.Database, householdId: string) 
     }
     return names;
   }
+  function reconcileObjectRemovals(draft: MapDraft) {
+    const removedObjects = draft.changes.filter((change) => !change.after);
+    draft.relationships = draft.relationships?.filter((change) => {
+      const causes = change.removedWithObjects;
+      // Explicit deletions and older drafts without provenance keep their proposals.
+      if (!causes) return true;
+      change.removedWithObjects = removedObjects
+        .filter(
+          ({ id }) =>
+            causes.includes(id) || change.before?.sourceId === id || change.before?.targetId === id,
+        )
+        .map(({ id }) => id);
+      return change.removedWithObjects.length > 0;
+    });
+  }
   return {
     read,
     types,
+    reconcileObjectRemovals,
     removeObject(draft: MapDraft, id: string) {
       for (const value of effective(draft)) {
         if (value.sourceId !== id && value.targetId !== id) continue;
@@ -77,6 +93,7 @@ export function relationships(database: Database.Database, householdId: string) 
             id: value.id,
             before,
             after: null,
+            removedWithObjects: [id],
             objectNames: existing?.objectNames ?? objectNames(draft, before, null),
             type:
               existing?.type ??
