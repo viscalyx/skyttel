@@ -54,11 +54,8 @@ ask a repository administrator to complete the GitHub steps. GitHub's
 [environment instructions](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
 explain the settings and permission requirements.
 
-## 2. Publish and select the first image
+## 2. Select the published image
 
-1. If the deployment implementation is still in a pull request, merge it
-   after its required checks and reviews pass. Otherwise, use the latest
-   successful image publication from `main`.
 1. In GitHub, open **Actions → Container release** and select the run for
    the latest commit on `main`. Wait for `plan`, `checks`, `candidate`, and
    `publish` to succeed.
@@ -347,22 +344,17 @@ that unsent text or an interrupted save was stored.
 
 ## Updating an existing installation
 
-Keep the existing service, persistent disk, and authentication secret. Read
-[operator upgrade notes](operator-upgrade-notes.md) before approving a merge:
-with automation configured, merging triggers deployment immediately.
+Keep the existing service, persistent disk, and authentication secret.
 
-For an installation without `/api/version`, perform the first compatible
-update during an attended maintenance window. Automation cannot establish
-the identity of an older application without this endpoint.
-
-1. Verify the target release as described in step 2 and establish that its
-   migration path supports the existing database.
-1. Confirm no deployment is active. On the existing service's **Settings**
-   page, update the saved image reference to that exact verified digest.
-1. Use **Manual Deploy → Deploy latest reference**, keeping the same disk
-   and configuration. Wait for the deployment to finish.
-1. Perform the application checks in step 6 and restart checks in step 10.
-   Configure or retry GitHub automation only after these succeed.
+1. Read the [operator upgrade notes](operator-upgrade-notes.md) and complete
+   any required preparation before approving a merge to `main`.
+1. After the merge, open **Actions → Container release** for that commit.
+   The workflow publishes the verified image and deploys its exact digest
+   to the configured Render service automatically.
+1. Wait for `deploy` to succeed, then inspect the deployment report using
+   step 9. If it fails, follow the diagnosis procedure below before retrying.
+1. Confirm application health, version, and existing household access using
+   step 6. Perform any additional checks required by the upgrade notes.
 
 ## Diagnose failure before retry
 
