@@ -20,6 +20,11 @@ function requireState(condition, code) {
 
 class DeploymentError extends Error {}
 
+function observedDeployId(value) {
+  if (typeof value !== 'string' || !/^dep-[a-z0-9]{1,64}$/u.test(value)) return null;
+  return value;
+}
+
 // Only allowlisted, non-household fields may enter public deployment evidence.
 function observedIdentity(value) {
   if (
@@ -118,7 +123,7 @@ export async function deployRelease({
     report.observedDeploy =
       deploy.status === 'fulfilled' && deploy.value
         ? {
-            id: /^dep-[a-z0-9]+$/u.test(deploy.value.id) ? deploy.value.id : null,
+            id: observedDeployId(deploy.value.id),
             status: [
               ...active,
               'live',
@@ -237,8 +242,9 @@ export async function deployRelease({
       deploy = await render(`${servicePath}/deploys`, 'POST', { imageUrl });
     }
     report.checks.push('saved-image');
-    requireState(/^dep-[a-z0-9]+$/u.test(deploy.id), 'missing_deploy_id');
-    report.deployId = deploy.id;
+    const deployId = observedDeployId(deploy.id);
+    requireState(deployId !== null, 'missing_deploy_id');
+    report.deployId = deployId;
     for (let count = 0; active.has(deploy.status) && count < attempts; count++) {
       await sleep(10_000);
       deploy = await render(`${servicePath}/deploys/${report.deployId}`);

@@ -42,6 +42,7 @@ function platform() {
     healthy: true,
     nextHealthy: true,
     nextDigest: digest,
+    nextDeployId: 'dep-new',
     nextIdentity: version,
     ignorePatch: false,
     databasePath: '/data/skyttel.sqlite',
@@ -82,7 +83,7 @@ function platform() {
         state.deploys++;
         state.healthy = state.nextHealthy;
         state.deploy = {
-          id: 'dep-new',
+          id: state.nextDeployId,
           status: state.nextStatus,
           image: { ref: body.imageUrl, sha: state.nextDigest },
         };
@@ -134,7 +135,10 @@ test('a superseded candidate never changes Render, including when main advances 
   const { state, run } = platform();
   state.main = 'f'.repeat(40);
   assert.equal((await run()).outcome, 'superseded');
-  assert.equal(state.requests.filter((r) => r.url.includes('api.render.com')).length, 0);
+  assert.equal(
+    state.requests.filter((r) => new URL(r.url).hostname === 'api.render.com').length,
+    0,
+  );
   state.main = commit;
   state.deploy.status = 'update_in_progress';
   state.onWait = () => {
@@ -222,4 +226,23 @@ test('unknown database state is reported without copying an unexpected applicati
   assert.equal(report.database, 'unknown');
   assert.equal(report.application, null);
   assert.doesNotMatch(JSON.stringify(report), /private-household-name|private-token/);
+});
+
+test('malformed deployment IDs are rejected before polling and excluded from public evidence', async () => {
+  for (const id of [
+    ['dep-private'],
+    { id: 'dep-private' },
+    'dep-private/../secret',
+    `dep-${'a'.repeat(65)}`,
+  ]) {
+    const { state, run } = platform();
+    state.nextDeployId = id;
+    const report = await run();
+    assert.equal(report.outcome, 'failure');
+    assert.equal(report.failure, 'missing_deploy_id');
+    assert.equal(report.deployId, undefined);
+    assert.equal(report.observedDeploy.id, null);
+    assert.equal(state.waits, 0);
+    assert.doesNotMatch(JSON.stringify(report), /dep-private|secret/);
+  }
 });
