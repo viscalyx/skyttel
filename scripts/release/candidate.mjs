@@ -120,12 +120,9 @@ async function verify(directory) {
   const identity = await readJson(join(directory, 'release.json'));
   assert.equal(digest(await readFile(join(directory, 'manifest.json'))), identity.digest);
   validateCandidateReports(identity, await readJson(join(directory, 'grype.json')));
-  const sbom = await readJson(join(directory, 'sbom.spdx.json'));
-  assert.match(sbom.spdxVersion, /^SPDX-\d+\.\d+$/u, 'Invalid SPDX version');
-  const sbomPredicateType = `https://spdx.dev/Document/v${sbom.spdxVersion.slice(5)}`;
   for (const [name, predicateType] of [
     ['provenance', 'https://slsa.dev/provenance/v1'],
-    ['sbom', sbomPredicateType],
+    ['sbom', 'https://spdx.dev/Document/v2.3'],
   ]) {
     const output = execFileSync(
       'gh',
@@ -155,7 +152,7 @@ async function verify(directory) {
       identity,
       JSON.parse(output),
       predicateType,
-      name === 'sbom' ? sbom : undefined,
+      name === 'sbom' ? await readJson(join(directory, 'sbom.spdx.json')) : undefined,
     );
   }
 }

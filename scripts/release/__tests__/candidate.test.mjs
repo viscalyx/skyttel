@@ -124,7 +124,7 @@ it('accepts only verified provenance for the exact image and SBOM predicate', ()
   );
 });
 
-it('verifies versioned SPDX bundles through the CLI and rejects inconsistent inventory', (t) => {
+it('verifies SPDX 2.3 bundles through the CLI and rejects inconsistent evidence', (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'skyttel-candidate-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const writeJson = (name, value) => writeFileSync(join(directory, name), JSON.stringify(value));
@@ -189,54 +189,52 @@ console.log(JSON.stringify(results));
       },
     );
 
-  for (const version of ['2.2', '2.3']) {
-    const predicateType = `https://spdx.dev/Document/v${version}`;
-    const sbom = { spdxVersion: `SPDX-${version}`, packages: [{ name: 'skyttel' }] };
-    writeJson('sbom.spdx.json', sbom);
-    writeJson('sbom.sigstore.json', verified(predicateType, sbom));
-    writeFileSync(join(directory, 'calls.jsonl'), '');
-    const result = verify();
-    assert.equal(result.status, 0, result.stderr);
-    const calls = readFileSync(join(directory, 'calls.jsonl'), 'utf8')
-      .trim()
-      .split('\n')
-      .map(JSON.parse);
-    assert.deepEqual(
-      calls,
-      [
-        ['provenance', 'https://slsa.dev/provenance/v1'],
-        ['sbom', predicateType],
-      ].map(([name, type]) => [
-        'attestation',
-        'verify',
-        join(directory, 'manifest.json'),
-        '--bundle',
-        join(directory, `${name}.sigstore.json`),
-        '--repo',
-        release.repository,
-        '--signer-workflow',
-        release.origin.workflow,
-        '--source-digest',
-        release.commit,
-        '--source-ref',
-        release.origin.ref,
-        '--deny-self-hosted-runners',
-        '--predicate-type',
-        type,
-        '--format',
-        'json',
-      ]),
-    );
-    writeJson('sbom.spdx.json', { ...sbom, packages: [] });
-    const mismatch = verify();
-    assert.equal(mismatch.status, 1);
-    assert.match(mismatch.stderr, /Signed SBOM does not match inventory/u);
-  }
+  const predicateType = 'https://spdx.dev/Document/v2.3';
+  const sbom = { spdxVersion: 'SPDX-2.3', packages: [{ name: 'skyttel' }] };
+  writeJson('sbom.spdx.json', sbom);
+  writeJson('sbom.sigstore.json', verified(predicateType, sbom));
+  const result = verify();
+  assert.equal(result.status, 0, result.stderr);
+  const calls = readFileSync(join(directory, 'calls.jsonl'), 'utf8')
+    .trim()
+    .split('\n')
+    .map(JSON.parse);
+  assert.deepEqual(
+    calls,
+    [
+      ['provenance', 'https://slsa.dev/provenance/v1'],
+      ['sbom', predicateType],
+    ].map(([name, type]) => [
+      'attestation',
+      'verify',
+      join(directory, 'manifest.json'),
+      '--bundle',
+      join(directory, `${name}.sigstore.json`),
+      '--repo',
+      release.repository,
+      '--signer-workflow',
+      release.origin.workflow,
+      '--source-digest',
+      release.commit,
+      '--source-ref',
+      release.origin.ref,
+      '--deny-self-hosted-runners',
+      '--predicate-type',
+      type,
+      '--format',
+      'json',
+    ]),
+  );
+  writeJson('sbom.spdx.json', { ...sbom, packages: [] });
+  const mismatch = verify();
+  assert.equal(mismatch.status, 1);
+  assert.match(mismatch.stderr, /Signed SBOM does not match inventory/u);
 
-  for (const spdxVersion of [undefined, '2.3', 'SPDX-', 'SPDX-2.3-extra']) {
-    writeJson('sbom.spdx.json', { spdxVersion });
-    writeFileSync(join(directory, 'calls.jsonl'), '');
-    assert.equal(verify().status, 1);
-    assert.equal(readFileSync(join(directory, 'calls.jsonl'), 'utf8'), '');
+  writeJson('sbom.spdx.json', sbom);
+  for (const type of ['https://spdx.dev/Document', 'https://spdx.dev/Document/v2.2']) {
+    writeJson('sbom.sigstore.json', verified(type, sbom));
+    const wrongType = verify();
+    assert.equal(wrongType.status, 1);
+    assert.match(wrongType.stderr, /No attestations found with predicate type/u);
   }
 });
