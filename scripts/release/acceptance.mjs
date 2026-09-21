@@ -188,10 +188,7 @@ async function inspectRelease(directory, requirePublic = true) {
   assert.equal(checked.commit, release.commit);
   if (requirePublic) {
     assert.equal(checked.remote.draft, false);
-    assert.deepEqual(
-      [...checked.present].sort(),
-      options.assets.map((asset) => asset.name).sort(),
-    );
+    assert.deepEqual([...checked.present].sort(), options.assets.map((asset) => asset.name).sort());
   }
   const tags = await registryTags(release);
   assert.deepEqual(checkRegistryTags(release, tags), [], 'Missing published image tags');
@@ -270,7 +267,10 @@ export function validateRetry(before, after) {
   assert.equal(after.body, before.body, 'Retry changes release text');
   assert.ok(before.assets.length > 0, 'Baseline has no partial publication');
   for (const asset of before.assets) {
-    assert.deepEqual(after.assets.find((entry) => entry.name === asset.name), asset);
+    assert.deepEqual(
+      after.assets.find((entry) => entry.name === asset.name),
+      asset,
+    );
   }
   assert.ok(after.assets.length > before.assets.length, 'Retry adds no missing assets');
 }
