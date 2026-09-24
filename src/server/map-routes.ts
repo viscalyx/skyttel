@@ -93,6 +93,20 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
       ),
     ),
   );
+  routes.post('/households/:id/map/undo', (context) =>
+    context.json(
+      householdMap(database, context.get('userId'), context.req.param('id')).undo(
+        context.get('body'),
+      ),
+    ),
+  );
+  routes.post('/households/:id/map/discard-change', (context) =>
+    context.json(
+      householdMap(database, context.get('userId'), context.req.param('id')).discardChange(
+        context.get('body'),
+      ),
+    ),
+  );
   routes.post('/households/:id/map/discard', (context) =>
     context.json(
       householdMap(database, context.get('userId'), context.req.param('id')).discard(

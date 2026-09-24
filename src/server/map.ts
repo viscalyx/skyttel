@@ -12,17 +12,21 @@ import { readLifecycle } from './lifecycle.js';
 
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
+import { mapTombstones } from './map-tombstones.js';
+import { undoSave } from './map-undo.js';
 import { objectTypes, readCustomValues } from './object-types.js';
 import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
+import { keepIndependent } from './undo-facts.js';
 
 export { MapError } from './map-error.js';
 
 export function householdMap(database: Database.Database, userId: string, householdId: string) {
   const edges = relationships(database, householdId);
   const types = objectTypes(database, householdId, userId);
-  const edgeTypes = relationshipTypes(database, householdId);
+  const edgeTypes = relationshipTypes(database, householdId, userId);
   const operations = mapOperations(database, userId, householdId);
+  const tombstones = mapTombstones(database, householdId);
   function authorize() {
     if (!householdAccess(database, userId, householdId)) throw new MapError('forbidden', 403);
   }
@@ -149,6 +153,33 @@ export function householdMap(database: Database.Database, userId: string, househ
     read(): MapState {
       return transaction(readState);
     },
+    undo(body: Record<string, unknown>) {
+      return transaction(() => {
+        operations.assertEditable();
+        checkedDraft(body.version);
+        if (typeof body.operationId !== 'string' || typeof body.userId !== 'string')
+          throw new MapError('invalid_request', 400);
+        const row = database
+          .prepare(
+            'SELECT receipt FROM map_save WHERE householdId = ? AND userId = ? AND operationId = ?',
+          )
+          .get(householdId, body.userId, body.operationId) as { receipt: string } | undefined;
+        if (!row) throw new MapError('undo_unavailable');
+        const receipt = JSON.parse(row.receipt) as SaveReceipt;
+        if (receipt.contentVersion !== operations.contentVersion())
+          throw new MapError('content_conflict');
+        const proposed = undoSave(
+          readState(),
+          receipt,
+          tombstones,
+          types.read(true),
+          edgeTypes.read(true),
+        );
+        types.validateUndo(proposed);
+        edgeTypes.validateUndo(proposed);
+        return writeDraft(proposed);
+      });
+    },
     resolve(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
@@ -174,10 +205,24 @@ export function householdMap(database: Database.Database, userId: string, househ
         if (conflict.kind === 'object') {
           const change = current.changes.find((item) => item.id === conflict.id);
           if (!change) throw new MapError('resolution_conflict');
-          if (body.choice === 'saved') {
+          if (body.choice === 'saved' || (!conflict.current && !change.after)) {
             current.changes = current.changes.filter((item) => item.id !== conflict.id);
+            const remaining = keepIndependent('object', change, conflict.current);
+            if (remaining)
+              current.changes.push({
+                ...change,
+                ...remaining,
+                undo: undefined,
+                undoFields: undefined,
+                type:
+                  types.effective(current).find((item) => item.id === remaining.after?.typeId) ??
+                  change.type,
+              });
           } else {
-            if (!conflict.current && change.before) throw new MapError('object_conflict');
+            if (!conflict.current && change.before) {
+              if (!change.undo) throw new MapError('object_conflict');
+              if (change.after) change.restoreRevision = tombstones.revision('object', change.id);
+            }
             change.after = resolvedObjectValue(change, conflict.current);
             change.before = conflict.current;
             if (conflict.type) change.type = conflict.type;
@@ -188,12 +233,28 @@ export function householdMap(database: Database.Database, userId: string, househ
         } else {
           const change = current.relationships?.find((item) => item.id === conflict.id);
           if (!change) throw new MapError('resolution_conflict');
-          if (body.choice === 'saved') {
+          if (body.choice === 'saved' || (!conflict.current && !change.after)) {
             current.relationships = current.relationships?.filter(
               (item) => item.id !== conflict.id,
             );
+            const remaining = keepIndependent('relationship', change, conflict.current);
+            if (remaining)
+              current.relationships?.push({
+                ...change,
+                ...remaining,
+                undo: undefined,
+                undoFields: undefined,
+                type:
+                  edgeTypes
+                    .effective(current)
+                    .find((item) => item.id === remaining.after?.typeId) ?? change.type,
+              });
           } else {
-            if (!conflict.current && change.before) throw new MapError('relationship_conflict');
+            if (!conflict.current && change.before) {
+              if (!change.undo) throw new MapError('relationship_conflict');
+              if (change.after)
+                change.restoreRevision = tombstones.revision('relationship', change.id);
+            }
             const before = change.before;
             change.after = resolvedRelationshipValue(change, conflict.current);
             change.before = conflict.current;
@@ -279,7 +340,18 @@ export function householdMap(database: Database.Database, userId: string, househ
         const type = types.effective(current).find((item) => item.id === typeId);
         if (!type) throw new MapError('invalid_type', 400);
         current.changes = current.changes.filter((change) => change.id !== id);
-        if (before || after) current.changes.push({ id, before, after, type });
+        if (before || after)
+          current.changes.push({
+            id,
+            before,
+            after,
+            type,
+            ...(existing?.restoreRevision !== undefined
+              ? { restoreRevision: existing.restoreRevision }
+              : {}),
+            ...(existing?.undo ? { undo: true } : {}),
+            ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
+          });
         if (!after) edges.removeObject(current, id);
         edges.reconcileObjectRemovals(current);
         return writeDraft({ ...current, version: current.version + 1 });
@@ -289,6 +361,29 @@ export function householdMap(database: Database.Database, userId: string, househ
       return transaction(() => {
         operations.assertEditable();
         return writeDraft({ version: checkedDraft(version).version + 1, changes: [] });
+      });
+    },
+    discardChange(body: Record<string, unknown>) {
+      return transaction(() => {
+        operations.assertEditable();
+        const current = checkedDraft(body.version);
+        if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
+        if (body.kind === 'object') {
+          const change = current.changes.find((item) => item.id === body.id);
+          if (!change) throw new MapError('draft_conflict');
+          if (!change.before) edges.removeObject(current, change.id);
+          current.changes = current.changes.filter((item) => item.id !== body.id);
+          edges.reconcileObjectRemovals(current);
+        } else if (body.kind === 'relationship') {
+          current.relationships = current.relationships?.filter((item) => item.id !== body.id);
+        } else if (body.kind === 'objectType') {
+          current.objectTypes = current.objectTypes?.filter((item) => item.id !== body.id);
+        } else if (body.kind === 'relationshipType') {
+          current.relationshipTypes = current.relationshipTypes?.filter(
+            (item) => item.id !== body.id,
+          );
+        } else throw new MapError('invalid_request', 400);
+        return writeDraft({ ...current, version: current.version + 1 });
       });
     },
     save(body: Record<string, unknown>) {
@@ -323,8 +418,15 @@ export function householdMap(database: Database.Database, userId: string, househ
               userId,
               draftVersion: current.version,
               savedAt: new Date().toISOString(),
+              actorName: (
+                database.prepare('SELECT name FROM user WHERE id = ?').get(userId) as {
+                  name: string;
+                }
+              ).name,
               changes: [],
             };
+            const previousTypes = types.read();
+            const previousEdgeTypes = edgeTypes.read();
             const definitionChanges = types.save(current);
             if (definitionChanges.length) receipt.objectTypes = definitionChanges;
             const relationshipDefinitions = edgeTypes.save(current);
@@ -335,7 +437,12 @@ export function householdMap(database: Database.Database, userId: string, househ
               const saved = object(change.id);
               if (!isDeepStrictEqual(saved ?? null, change.before))
                 throw new MapError('object_conflict');
-              const type = types.read().find((item) => item.id === change.type.id);
+              const removedType = !change.after
+                ? current.objectTypes?.find((item) => item.id === change.type.id && !item.after)
+                    ?.before
+                : null;
+              const type =
+                removedType ?? types.read(!change.after).find((item) => item.id === change.type.id);
               if (!type || type.revision !== change.type.revision)
                 throw new MapError('type_conflict');
               if (change.after) readCustomValues(change.after.customValues, type);
@@ -344,7 +451,7 @@ export function householdMap(database: Database.Database, userId: string, househ
                     id: change.id,
                     householdId,
                     typeId: change.after.typeId,
-                    revision: (saved?.revision ?? 0) + 1,
+                    revision: (saved?.revision ?? change.restoreRevision ?? 0) + 1,
                     name: change.after.name,
                     description: change.after.description,
                     ...(change.after.customValues
@@ -358,14 +465,10 @@ export function householdMap(database: Database.Database, userId: string, househ
                   }
                 : null;
               if (after) {
-                if (
-                  !saved &&
-                  database.prepare('SELECT 1 FROM map_object WHERE id = ?').get(change.id)
-                )
-                  throw new MapError('object_conflict');
+                if (!saved) tombstones.assertCreation('object', change.id, change.restoreRevision);
                 database
                   .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle`)
+              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle, deleted = 0`)
                   .run(
                     after.id,
                     householdId,
@@ -384,9 +487,17 @@ export function householdMap(database: Database.Database, userId: string, househ
                     'UPDATE map_object SET deleted = 1, revision = revision + 1 WHERE householdId = ? AND id = ?',
                   )
                   .run(householdId, change.id);
-              receipt.changes.push({ before: change.before, after, type });
+              const beforeType = change.before
+                ? previousTypes.find((item) => item.id === change.before?.typeId)
+                : undefined;
+              receipt.changes.push({
+                before: change.before,
+                after,
+                type,
+                ...(beforeType && !isDeepStrictEqual(beforeType, type) ? { beforeType } : {}),
+              });
             }
-            const relationshipChanges = edges.save(current);
+            const relationshipChanges = edges.save(current, previousEdgeTypes);
             if (relationshipChanges.length) receipt.relationships = relationshipChanges;
             database
               .prepare(

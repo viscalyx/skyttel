@@ -2,19 +2,21 @@ import type Database from 'better-sqlite3';
 import type {
   MapDraft,
   MapRelationship,
-  RelationshipChange,
   RelationshipType,
   RelationshipValue,
+  SavedRelationshipChange,
 } from '../shared/map.js';
 import { proposedRelationships } from '../shared/map.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
+import { mapTombstones } from './map-tombstones.js';
 import { relationshipTypes } from './relationship-types.js';
 
 // All operations run inside the map's authorized, immediate transaction.
 export function relationships(database: Database.Database, householdId: string) {
   const definitions = relationshipTypes(database, householdId);
+  const tombstones = mapTombstones(database, householdId);
   function read(): MapRelationship[] {
     return database
       .prepare(
@@ -181,10 +183,15 @@ export function relationships(database: Database.Database, householdId: string) 
           after,
           type,
           objectNames: objectNames(draft, before, after, existing?.objectNames),
+          ...(existing?.restoreRevision !== undefined
+            ? { restoreRevision: existing.restoreRevision }
+            : {}),
+          ...(existing?.undo ? { undo: true as const } : {}),
+          ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
         });
       return { draft: { ...draft, version: draft.version + 1, relationships: changes } };
     },
-    save(draft: MapDraft): RelationshipChange[] {
+    save(draft: MapDraft, previousTypes: RelationshipType[]): SavedRelationshipChange[] {
       const current = read();
       const changes = [...(draft.relationships ?? [])];
       const final = effective({ ...draft, relationships: changes });
@@ -208,17 +215,17 @@ export function relationships(database: Database.Database, householdId: string) 
         const saved = current.find((value) => value.id === change.id) ?? null;
         if (JSON.stringify(saved) !== JSON.stringify(change.before))
           throw new MapError('relationship_conflict');
+        const removedType = !change.after
+          ? draft.relationshipTypes?.find((item) => item.id === change.type.id && !item.after)
+              ?.before
+          : null;
         if (
-          !types().some(
+          !(removedType ? [removedType] : types()).some(
             (type) => type.id === change.type.id && type.revision === change.type.revision,
           )
         )
           throw new MapError('type_conflict');
-        if (
-          !saved &&
-          database.prepare('SELECT 1 FROM map_relationship WHERE id = ?').get(change.id)
-        )
-          throw new MapError('relationship_conflict');
+        if (!saved) tombstones.assertCreation('relationship', change.id, change.restoreRevision);
       }
       // Temporarily remove changed edges so endpoint swaps do not violate the unique index.
       for (const change of changes)
@@ -231,7 +238,7 @@ export function relationships(database: Database.Database, householdId: string) 
               ...change.after,
               id: change.id,
               householdId,
-              revision: (change.before?.revision ?? 0) + 1,
+              revision: (change.before?.revision ?? change.restoreRevision ?? 0) + 1,
             }
           : null;
         if (after)
@@ -255,11 +262,16 @@ export function relationships(database: Database.Database, householdId: string) 
               'UPDATE map_relationship SET revision = revision + 1 WHERE householdId = ? AND id = ?',
             )
             .run(householdId, change.id);
+        const beforeType = previousTypes.find((type) => type.id === change.before?.typeId);
         return {
           id: change.id,
           before: change.before,
           after,
           type: change.type,
+          ...(beforeType &&
+          (beforeType.id !== change.type.id || beforeType.revision !== change.type.revision)
+            ? { beforeType }
+            : {}),
           // Build shared snapshots from saved objects, never cached private draft names.
           objectNames: objectNames(draft, change.before, after),
         };

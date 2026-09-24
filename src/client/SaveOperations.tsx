@@ -34,8 +34,14 @@ export function checkOperation(operation: SaveOperation, attempt: SaveAttempt) {
 
 export function receiptMessage(receipt: SaveReceipt) {
   const changes = [
-    ...(receipt.objectTypes ?? []).map((change) => `${change.after.name} (objekttyp)`),
-    ...(receipt.relationshipTypes ?? []).map((change) => `${change.after.name} (sambandstyp)`),
+    ...(receipt.objectTypes ?? []).map(
+      (change) =>
+        `${change.after?.name ?? change.before?.name} (${change.after ? 'objekttyp' : 'borttagen objekttyp'})`,
+    ),
+    ...(receipt.relationshipTypes ?? []).map(
+      (change) =>
+        `${change.after?.name ?? change.before?.name} (${change.after ? 'sambandstyp' : 'borttagen sambandstyp'})`,
+    ),
     ...receipt.changes.map((change) => change.after?.name ?? change.before?.name),
     ...(receipt.relationships ?? []).map(
       (change) => `${change.type.name} (${change.after ? 'samband' : 'borttaget samband'})`,
@@ -45,6 +51,16 @@ export function receiptMessage(receipt: SaveReceipt) {
 }
 
 export function rejectionMessage(code: string) {
+  if (code === 'restoration_conflict')
+    return 'Det borttagna innehållet har ändrats sedan återställningsförslaget skapades. Inget sparades. Hämta aktuellt underlag, kasta det gamla återställningsförslaget och välj sparandet i historiken igen.';
+  if (code === 'undo_draft_overlap')
+    return 'Ångringen överlappar ett eget förslag. Utkastet är oförändrat. Rätta eller kasta det överlappande förslaget och försök igen. Oberoende förslag kan vara kvar.';
+  if (code === 'undo_unavailable')
+    return 'Sparandet eller det återställningsbara innehållet finns inte kvar. Inget ångringsförslag lades till.';
+  if (code === 'definition_in_use')
+    return 'Definitionen används fortfarande av innehåll eller ett privat utkast. Ta bort användningen eller byt typ först. Ingen del av ångringen eller sparandet genomfördes.';
+  if (code === 'field_in_use')
+    return 'Fältet används fortfarande av innehåll eller ett privat utkast. Ta bort fältvärdena först. Ingen del av ångringen eller sparandet genomfördes.';
   if (code === 'invalid_relationship_type')
     return 'Ange sambandstypens namn, beskrivning och benämningar från båda hållen. Sambandstyper har inga egna fält.';
   if (code === 'duplicate_relationship')

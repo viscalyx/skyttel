@@ -44,8 +44,12 @@ underlag, gör konfliktvalet, granska hela skillnaden och spara igen.
 
 **Borttaget** innehåll bevaras för återställning. Historiken innehåller
 tidigare värden, samband och typdefinitioner, tidpunkten och den som sparar.
-Det finns ingen automatisk tidsgräns. Det fullständiga gränssnittet för
-historik och ångring införs separat.
+Det finns ingen automatisk tidsgräns. Återställ innehållet under
+**Ändringshistorik**. Välj **Visa historik** och
+ångra borttagningsgruppen som ett nytt privat förslag. Granska och spara
+hela utkastet för att göra återställningen gemensam. Läs
+[guiden för historik och ångring](history.md), särskilt om du redan har
+egna förslag eller andra ändringar tillkommer efter borttagningen.
 
 ## Permanent radering
 

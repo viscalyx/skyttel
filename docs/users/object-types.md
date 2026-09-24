@@ -60,6 +60,8 @@ exempelvis ett nytt fält eller en beskrivning som du inte har ändrat.
 Kvittot omfattar definitioner och objekt i samma sparande. Historiken
 bevarar äldre definitioner och fältens betydelse. Följ
 [guiden för familjeabonnemang](family-subscription.md) vid oklart sparande.
-Ångring, export, återimport och permanent radering omfattar även dessa
-uppgifter när respektive flöde blir tillgängligt. Dessa flöden och
-borttagning av typdefinitioner är ännu inte tillgängliga i appen.
+[Ångring av ett helt sparande](history.md) omfattar också definitioner
+och egna fält. En typ som fortfarande används kan inte tas bort genom
+ångring utan att användningen hanteras. Separat borttagning av
+typdefinitioner, export, återimport och permanent radering är ännu
+inte tillgängliga i appen.

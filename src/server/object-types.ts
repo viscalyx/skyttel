@@ -2,7 +2,10 @@ import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
 import type { CustomField, CustomValues, MapDraft, ObjectType } from '../shared/map.js';
 import { proposedObjectTypes } from '../shared/map.js';
+import { definitionUsage } from './definition-usage.js';
 import { MapError } from './map-error.js';
+import { mapTombstones } from './map-tombstones.js';
+import { keepIndependent } from './undo-facts.js';
 
 export function readCustomValues(value: unknown, type: ObjectType): CustomValues | undefined {
   if (value === undefined) return undefined;
@@ -33,6 +36,8 @@ function resolvedDefinition(before: ObjectType | null, after: ObjectType, curren
   const revision = current.revision + 1;
   if (!before) return { ...after, revision };
   const fields = new Map(current.fields?.map((field) => [field.id, field]));
+  for (const field of before.fields ?? [])
+    if (!after.fields?.some((item) => item.id === field.id)) fields.delete(field.id);
   for (const proposed of after.fields ?? []) {
     const original = before.fields?.find((field) => field.id === proposed.id);
     const saved = fields.get(proposed.id);
@@ -61,11 +66,13 @@ function resolvedDefinition(before: ObjectType | null, after: ObjectType, curren
 }
 
 export function objectTypes(database: Database.Database, householdId: string, userId: string) {
-  function read(): ObjectType[] {
+  const tombstones = mapTombstones(database, householdId);
+  const usage = definitionUsage(database, householdId, userId);
+  function read(includeRemoved = false): ObjectType[] {
     return (
       database
         .prepare(`SELECT t.*, f.fields FROM object_type t LEFT JOIN object_type_fields f ON f.typeId = t.id
-      WHERE t.householdId = ? ORDER BY CASE WHEN t.name = 'Person' THEN 0 ELSE 1 END, t.name, t.id`)
+      WHERE t.householdId = ? ${includeRemoved ? '' : "AND NOT EXISTS (SELECT 1 FROM removed_type WHERE kind = 'objectType' AND typeId = t.id)"} ORDER BY CASE WHEN t.name = 'Person' THEN 0 ELSE 1 END, t.name, t.id`)
         .all(householdId) as (ObjectType & { fields: string | null })[]
     ).map(({ fields, ...type }) => ({
       ...type,
@@ -115,10 +122,19 @@ export function objectTypes(database: Database.Database, householdId: string, us
       ...(fields.length ? { fields } : {}),
     };
   }
-  function checkFields(before: ObjectType | null, after: ObjectType, draft: MapDraft) {
+  function checkFields(
+    before: ObjectType | null,
+    after: ObjectType,
+    draft: MapDraft,
+    allowRemoval = false,
+  ) {
     for (const field of before?.fields ?? []) {
       const next = after.fields?.find((item) => item.id === field.id);
-      if (!next) throw new MapError('field_removal_unsupported', 400);
+      if (!next) {
+        if (!allowRemoval) throw new MapError('field_removal_unsupported', 400);
+        usage.assertUnused('objectType', after.id, draft, field.id);
+        continue;
+      }
       if (next.kind === field.kind) continue;
       const objects = database
         .prepare(
@@ -151,24 +167,56 @@ export function objectTypes(database: Database.Database, householdId: string, us
   }
   return {
     read,
+    validateUndo(draft: MapDraft) {
+      for (const change of draft.objectTypes ?? []) {
+        if (!change.after) usage.assertUnused('objectType', change.id, draft);
+        else
+          checkFields(
+            read().find((type) => type.id === change.id) ?? null,
+            change.after,
+            draft,
+            true,
+          );
+      }
+    },
     effective(draft: MapDraft) {
       return proposedObjectTypes(read(), draft.objectTypes);
     },
     resolve(draft: MapDraft, id: string, current: ObjectType | null, choice: 'saved' | 'proposed') {
       const change = draft.objectTypes?.find((item) => item.id === id);
-      if (!change || !current) throw new MapError('type_conflict');
-      if (choice === 'saved')
+      if (!change) throw new MapError('type_conflict');
+      if (choice === 'saved' || (!current && !change.after)) {
         draft.objectTypes = draft.objectTypes?.filter((item) => item.id !== id);
-      else {
+        const remaining = keepIndependent('objectType', change, current);
+        if (remaining?.after)
+          draft.objectTypes?.push({
+            id,
+            ...remaining,
+            after: {
+              ...remaining.after,
+              revision: (current?.revision ?? remaining.before?.revision ?? 0) + 1,
+            },
+          });
+      } else if (change.after && current) {
         const resolved = resolvedDefinition(change.before, change.after, current);
         const after = { ...resolved, ...validate({ ...resolved, fields: resolved.fields ?? [] }) };
-        checkFields(current, after, draft);
+        checkFields(current, after, draft, true);
         change.before = current;
         change.after = after;
+      } else {
+        if (!current && change.after) {
+          change.restoreRevision = tombstones.revision('objectType', id);
+          change.after.revision = change.restoreRevision + 1;
+        }
+        if (!change.after) usage.assertUnused('objectType', id, draft);
+        change.before = current;
       }
-      const type = choice === 'saved' ? current : change.after;
+      const type =
+        choice === 'saved'
+          ? (draft.objectTypes?.find((item) => item.id === id)?.after ?? current)
+          : change.after;
       for (const proposal of draft.changes)
-        if (proposal.type.id === id) {
+        if (proposal.type.id === id && type) {
           if (proposal.after) readCustomValues(proposal.after.customValues, type);
           proposal.type = type;
         }
@@ -185,11 +233,11 @@ export function objectTypes(database: Database.Database, householdId: string, us
       const after: ObjectType = {
         id: body.id,
         householdId,
-        revision: (before?.revision ?? 0) + 1,
+        revision: (before?.revision ?? existing?.restoreRevision ?? 0) + 1,
         ...validate(body.value),
       };
       checkFields(before, after, draft);
-      if (existing)
+      if (existing?.after)
         checkFields(
           {
             ...existing.after,
@@ -202,7 +250,16 @@ export function objectTypes(database: Database.Database, householdId: string, us
         );
       draft.objectTypes = [
         ...(draft.objectTypes ?? []).filter((item) => item.id !== body.id),
-        { id: body.id, before, after },
+        {
+          id: body.id,
+          before,
+          after,
+          ...(existing?.restoreRevision !== undefined
+            ? { restoreRevision: existing.restoreRevision }
+            : {}),
+          ...(existing?.undo ? { undo: true as const } : {}),
+          ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
+        },
       ];
       for (const change of draft.changes)
         if (change.type.id === body.id) {
@@ -215,9 +272,13 @@ export function objectTypes(database: Database.Database, householdId: string, us
       for (const change of draft.objectTypes ?? []) {
         const current = read().find((item) => item.id === change.id) ?? null;
         if (!isDeepStrictEqual(current, change.before)) throw new MapError('type_conflict');
-        if (!current && database.prepare('SELECT 1 FROM object_type WHERE id = ?').get(change.id))
-          throw new MapError('type_conflict');
-        checkFields(current, change.after, draft);
+        if (!current) tombstones.assertCreation('objectType', change.id, change.restoreRevision);
+        if (!change.after) {
+          usage.assertUnused('objectType', change.id, draft);
+          tombstones.removeType('objectType', change.id);
+          continue;
+        }
+        checkFields(current, change.after, draft, true);
         database
           .prepare(`INSERT INTO object_type (id, householdId, revision, name, description) VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET revision = excluded.revision, name = excluded.name, description = excluded.description`)
@@ -233,6 +294,7 @@ export function objectTypes(database: Database.Database, householdId: string, us
             'INSERT INTO object_type_fields (typeId, fields) VALUES (?, ?) ON CONFLICT(typeId) DO UPDATE SET fields = excluded.fields',
           )
           .run(change.id, JSON.stringify(change.after.fields ?? []));
+        tombstones.restoreType('objectType', change.id);
       }
       return draft.objectTypes ?? [];
     },

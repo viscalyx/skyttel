@@ -5,6 +5,24 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### History and whole-save undo
+
+Back up the persistent database and retain its matching image before upgrade.
+Startup adds retained removal records for type definitions. Private drafts
+can also contain restoration proposals. Use the upgraded image with this
+database. Stop the application and restore the matching backup before
+returning to an older image.
+
+New save records retain the saving user's name with their identifier.
+Apply existing access restrictions and retention rules to these names,
+removed definitions, and restoration records in the database and backups.
+Older records can contain only the user identifier. Undo adds a new save;
+it does not remove the original history or permanently erase information.
+
+Clients that read drafts, receipts, or history must handle definition
+removals with no resulting definition, as well as restoration proposals.
+Reload open browser sessions after upgrade so they can review these changes.
+
 ### Editable directed relationship types
 
 Back up the persistent database and retain its matching image before upgrade.

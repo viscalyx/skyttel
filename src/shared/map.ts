@@ -20,7 +20,10 @@ export interface ObjectType extends TypeDefinition {
 export interface ObjectTypeChange {
   id: string;
   before: ObjectType | null;
-  after: ObjectType;
+  after: ObjectType | null;
+  restoreRevision?: number;
+  undo?: true;
+  undoFields?: string[];
 }
 export type CustomValues = Record<string, string | number | boolean>;
 export interface RelationshipType extends TypeDefinition {
@@ -30,7 +33,10 @@ export interface RelationshipType extends TypeDefinition {
 export interface RelationshipTypeChange {
   id: string;
   before: RelationshipType | null;
-  after: RelationshipType;
+  after: RelationshipType | null;
+  restoreRevision?: number;
+  undo?: true;
+  undoFields?: string[];
 }
 
 export interface ObjectValue {
@@ -52,6 +58,9 @@ export interface DraftChange {
   before: MapObject | null;
   after: ObjectValue | null;
   type: ObjectType;
+  restoreRevision?: number;
+  undo?: true;
+  undoFields?: string[];
 }
 export interface MapDraft {
   version: number;
@@ -76,10 +85,16 @@ export interface SaveReceipt {
   householdId: string;
   userId: string;
   savedAt: string;
-  relationships?: RelationshipChange[];
+  relationships?: SavedRelationshipChange[];
+  actorName?: string;
   objectTypes?: ObjectTypeChange[];
   relationshipTypes?: RelationshipTypeChange[];
-  changes: { before: MapObject | null; after: MapObject | null; type: ObjectType }[];
+  changes: {
+    before: MapObject | null;
+    after: MapObject | null;
+    type: ObjectType;
+    beforeType?: ObjectType;
+  }[];
 }
 
 interface SaveOperationIdentity {
@@ -121,6 +136,13 @@ export interface RelationshipChange {
 export interface DraftRelationshipChange extends RelationshipChange {
   // Object deletions that require this generated relationship deletion.
   removedWithObjects?: string[];
+  restoreRevision?: number;
+  undo?: true;
+  undoFields?: string[];
+}
+export interface SavedRelationshipChange extends RelationshipChange {
+  after: MapRelationship | null;
+  beforeType?: RelationshipType;
 }
 
 export function proposedRelationships(
@@ -143,7 +165,10 @@ export function proposedRelationships(
 
 export function proposedObjectTypes(saved: ObjectType[], changes: ObjectTypeChange[] = []) {
   const result = new Map(saved.map((type) => [type.id, type]));
-  for (const change of changes) result.set(change.id, change.after);
+  for (const change of changes) {
+    if (change.after) result.set(change.id, change.after);
+    else result.delete(change.id);
+  }
   return [...result.values()];
 }
 
@@ -152,6 +177,9 @@ export function proposedRelationshipTypes(
   changes: RelationshipTypeChange[] = [],
 ) {
   const result = new Map(saved.map((type) => [type.id, type]));
-  for (const change of changes) result.set(change.id, change.after);
+  for (const change of changes) {
+    if (change.after) result.set(change.id, change.after);
+    else result.delete(change.id);
+  }
   return [...result.values()];
 }

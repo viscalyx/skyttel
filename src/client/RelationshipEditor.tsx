@@ -11,7 +11,7 @@ export const knowledgeLabels: Record<Knowledge, string> = {
 };
 export function relationshipLabel(
   value: RelationshipValue,
-  state: MapState,
+  state: Pick<MapState, 'relationshipTypes'>,
   objects: Map<string, { name: string }>,
   perspectiveId?: string,
 ) {

@@ -39,8 +39,9 @@ function sameFact(left?: FinancialFact, right?: FinancialFact) {
 export function resolvedRelationshipType(
   change: RelationshipTypeChange,
   current: RelationshipType,
-): RelationshipType {
+): RelationshipType | null {
   const { before, after } = change;
+  if (!after) return null;
   const field = <K extends 'name' | 'description' | 'forwardLabel' | 'reverseLabel'>(key: K) =>
     before && after[key] === before[key] ? current[key] : after[key];
   return {
@@ -124,7 +125,7 @@ export function draftConflicts(state: MapState): DraftConflict[] {
   const conflicts: DraftConflict[] = state.draft.changes.flatMap((change) => {
     const current = state.objects.find((object) => object.id === change.id) ?? null;
     const type =
-      types.find(
+      (change.after ? types : [...types, ...state.types]).find(
         (item) =>
           item.id ===
           (resolvedObjectValue(change, current)?.typeId ?? current?.typeId ?? change.type.id),
@@ -167,8 +168,9 @@ export function draftConflicts(state: MapState): DraftConflict[] {
     const current = state.relationships.find((value) => value.id === change.id) ?? null;
     const after = resolvedRelationshipValue(change, current);
     const type =
-      edgeTypes.find((item) => item.id === (after?.typeId ?? current?.typeId ?? change.type.id)) ??
-      null;
+      (after ? edgeTypes : [...edgeTypes, ...state.relationshipTypes]).find(
+        (item) => item.id === (after?.typeId ?? current?.typeId ?? change.type.id),
+      ) ?? null;
     const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
     const duplicates = after
       ? [...proposedRelationships(state.relationships, state.draft.relationships).values()].filter(

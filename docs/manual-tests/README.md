@@ -35,6 +35,9 @@ till motsvarande automatiserade integrationstester.
 - [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
   försök efter omstart, återförsöka från en annan klient och kontrollera
   privat tillgång.
+- [Historik och ångring](history.md): läsa hela ändringsgrupper, skapa
+  privata ångringsförslag, bevara oberoende arbete, granska överlapp och
+  återställa borttagna objekt och samband med samma identiteter.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
   kända slutdatum och granska, kasta eller spara vanlig borttagning med
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.

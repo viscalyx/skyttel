@@ -385,7 +385,7 @@ matching historical definitions”.
 - Automationen läser historikunderlaget via HTTP. Det tidigare objektet
   och sambandet har sina aktuella typ-ID:n tillsammans med motsvarande
   definitioner för **Abonnemang** och **Används av**, samt tomma eftervärden.
-  Det fullständiga historikgränssnittet införs separat.
+  Läsning och ångring i gränssnittet provas i [historikfallen](history.md).
 
 ### UTKAST-08: välj ett befintligt samband och behåll andra förslag
 

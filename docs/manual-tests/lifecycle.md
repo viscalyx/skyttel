@@ -133,7 +133,7 @@ connected edge and preserves history”.
   Lo och Molnmusik finns kvar. Inga typdefinitioner städas bort.
 - Automationen läser historikunderlaget via HTTP och kontrollerar tidigare
   objekt, samband, namn och definitioner samt tidpunkt och användare.
-  Det fullständiga historikgränssnittet införs separat.
+  Läsning och ångring i gränssnittet provas i [historikfallen](history.md).
 
 Konflikter som blockerar hela borttagningen provas även i
 [UTKAST-06](drafts.md#utkast-06-granska-nya-samband-före-objektborttagning).

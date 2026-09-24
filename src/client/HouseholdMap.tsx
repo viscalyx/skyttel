@@ -23,6 +23,7 @@ import {
 } from '../shared/map.js';
 import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js';
 import { LifecycleDetails, LifecycleEditor, LifecycleStatus } from './Lifecycle.js';
+import { MapHistory } from './MapHistory.js';
 import { MapRequestError, request } from './map-request.js';
 import {
   CustomFieldsDetails,
@@ -278,7 +279,15 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   }
 
   async function action(
-    kind: 'draft' | 'relationship' | 'object-type' | 'relationship-type' | 'discard' | 'resolve',
+    kind:
+      | 'draft'
+      | 'relationship'
+      | 'object-type'
+      | 'relationship-type'
+      | 'discard'
+      | 'resolve'
+      | 'undo'
+      | 'discard-change',
     body: unknown,
   ) {
     if (!state || pending || blocked) return;
@@ -309,7 +318,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
             : 'Det befintliga sambandet har ändrats. Granska aktuellt underlag.',
         );
       } else {
-        setState({ ...state, draft });
+        setState(kind === 'undo' ? await request<MapState>(path) : { ...state, draft });
         setStatus(
           kind === 'resolve'
             ? 'Konfliktvalet finns i ditt privata utkast. Granska hela utkastet och ge ett nytt sparbesked.'
@@ -334,6 +343,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           'invalid_relationship_type',
           'field_kind_in_use',
           'field_removal_unsupported',
+          'undo_draft_overlap',
+          'undo_unavailable',
+          'definition_in_use',
+          'field_in_use',
         ].includes(failure.code)
       ) {
         setError(rejectionMessage(failure.code));
@@ -439,7 +452,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
         {conflict.type !== null &&
           !conflict.duplicates &&
           !conflict.missingEndpoints &&
-          !deleted && (
+          (!deleted || proposal?.undo) && (
             <button
               type="button"
               disabled={pending || blocked || dirty}
@@ -456,7 +469,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           )}
         {deleted && (
           <p>
-            Objektet eller sambandet är borttaget. Skapa ett nytt förslag om det fortfarande behövs.
+            {proposal?.undo
+              ? 'Objektet eller sambandet är borttaget. Behåll förslaget för att återställa det i ditt utkast.'
+              : 'Objektet eller sambandet är borttaget. Skapa ett nytt förslag om det fortfarande behövs.'}
           </p>
         )}
       </div>
@@ -623,6 +638,19 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 },
                 true,
               )
+            }
+          />
+          <MapHistory
+            path={path}
+            version={state.draft.version}
+            disabled={pending || dirty || blocked}
+            onAccessLost={loseAccess}
+            onUndo={(receipt) =>
+              void action('undo', {
+                version: state.draft.version,
+                userId: receipt.userId,
+                operationId: receipt.operationId,
+              })
             }
           />
           <details>
@@ -1058,12 +1086,30 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
             {state.draft.relationshipTypes?.map((change) => (
               <article key={change.id}>
                 <h3>
-                  {change.before ? 'Ändrad sambandstyp' : 'Ny sambandstyp'}: {change.after.name}
+                  {!change.after
+                    ? 'Borttagen sambandstyp'
+                    : change.before
+                      ? 'Ändrad sambandstyp'
+                      : 'Ny sambandstyp'}
+                  : {change.after?.name ?? change.before?.name}
                 </h3>
                 <h4>Sparat underlag</h4>
                 <RelationshipTypeDetails type={change.before} />
                 <h4>Förslag</h4>
                 <RelationshipTypeDetails type={change.after} />
+                <button
+                  type="button"
+                  disabled={pending || blocked || dirty}
+                  onClick={() =>
+                    void action('discard-change', {
+                      version: state.draft.version,
+                      kind: 'relationshipType',
+                      id: change.id,
+                    })
+                  }
+                >
+                  Kasta förslaget
+                </button>
                 {conflicts
                   .filter(
                     (conflict) => conflict.kind === 'relationshipType' && conflict.id === change.id,
@@ -1119,12 +1165,30 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
             {state.draft.objectTypes?.map((change) => (
               <article key={change.id}>
                 <h3>
-                  {change.before ? 'Ändrad objekttyp' : 'Ny objekttyp'}: {change.after.name}
+                  {!change.after
+                    ? 'Borttagen objekttyp'
+                    : change.before
+                      ? 'Ändrad objekttyp'
+                      : 'Ny objekttyp'}
+                  : {change.after?.name ?? change.before?.name}
                 </h3>
                 <h4>Sparat underlag</h4>
                 <ObjectTypeDetails type={change.before} />
                 <h4>Förslag</h4>
                 <ObjectTypeDetails type={change.after} />
+                <button
+                  type="button"
+                  disabled={pending || blocked || dirty}
+                  onClick={() =>
+                    void action('discard-change', {
+                      version: state.draft.version,
+                      kind: 'objectType',
+                      id: change.id,
+                    })
+                  }
+                >
+                  Kasta förslaget
+                </button>
                 {conflicts
                   .filter((conflict) => conflict.kind === 'objectType' && conflict.id === change.id)
                   .map((conflict) => (
@@ -1180,6 +1244,19 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 )}
                 <h4>Förslag</h4>
                 {details(change.after, change.type)}
+                <button
+                  type="button"
+                  disabled={pending || blocked || dirty}
+                  onClick={() =>
+                    void action('discard-change', {
+                      version: state.draft.version,
+                      kind: 'object',
+                      id: change.id,
+                    })
+                  }
+                >
+                  Kasta förslaget
+                </button>
                 {conflicts
                   .filter((conflict) => conflict.kind === 'object' && conflict.id === change.id)
                   .map((conflict) => (
@@ -1222,6 +1299,19 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                     : 'Borttaget'}
                 </p>
                 {change.after && <LifecycleDetails value={change.after} />}
+                <button
+                  type="button"
+                  disabled={pending || blocked || dirty}
+                  onClick={() =>
+                    void action('discard-change', {
+                      version: state.draft.version,
+                      kind: 'relationship',
+                      id: change.id,
+                    })
+                  }
+                >
+                  Kasta förslaget
+                </button>
                 {conflicts
                   .filter(
                     (conflict) => conflict.kind === 'relationship' && conflict.id === change.id,
