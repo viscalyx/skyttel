@@ -146,6 +146,7 @@ test('SAMMANSLAGNING-01: explicit identities and edge choices survive restart, l
       description: 'Andra uppgiften',
     });
     expect(restored.objects.some((item) => item.id === 'private')).toBe(true);
+    expect(restored.objects.some((item) => item.id === 'independent')).toBe(false);
     expect(restored.relationships).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'first', sourceId: 'a', targetId: 'card' }),
