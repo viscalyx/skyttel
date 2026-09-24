@@ -132,7 +132,8 @@ and used field kinds stay protected”.
 
 ### TYP-04: Samtidiga definitionsändringar kräver ett nytt konfliktval
 
-**Syfte:** Stoppa hela utkastet och bevara tidigare definition i historiken.
+**Syfte:** Stoppa hela utkastet, bevara oberoende ändringar och visa tidigare
+definition i historiken.
 
 **Användare:** Alex och Lo.
 
@@ -148,7 +149,7 @@ until an explicit current choice”.
 1. Alex ändrar Person till Människor med beskrivningen Mitt förslag och
    lägger definitionen i utkastet. Skapa Alex av typen Människor i samma utkast.
 2. Lo ändrar Person till Personer med beskrivningen Annans rättelse och
-   sparar hela sitt utkast.
+   lägger till textfältet Smeknamn. Lo sparar hela sitt utkast.
 3. Alex försöker spara, hämtar aktuellt underlag och granskar konflikten.
    Kontrollera att inga objekt sparas och att det egna utkastet finns kvar.
 4. Välj **Behåll min typdefinition**. Kontrollera att inget sparas förrän
@@ -159,7 +160,10 @@ until an explicit current choice”.
 
 - Den aktuella definitionen och förslaget visas tillsammans vid konflikten.
 - Senaste sparandet omfattar definitionen Människor och objektet Alex.
-  Historiken bevarar Personer med Annans rättelse som tidigare definition.
+  Beskrivningen är Mitt förslag. Los oberoende tillägg Smeknamn finns kvar
+  i definitionen och i objektets formulär.
+- Historiken bevarar Personer med Annans rättelse och Smeknamn som tidigare
+  definition. Objektets sparade typdefinition innehåller också Smeknamn.
 
 ### TYP-05: Felaktiga värden och ny användning stoppar hela sparandet
 

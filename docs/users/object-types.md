@@ -54,6 +54,8 @@ Vid en samtidig definitionsändring sparas inget av det berörda försöket.
 Välj **Hämta aktuellt underlag** och granska den sparade definitionen.
 Välj vilken definition eller vilket objektförslag du vill behålla,
 granska hela utkastet och ge ett nytt sparbesked.
+Om du behåller din typdefinition bevaras också andras oberoende ändringar,
+exempelvis ett nytt fält eller en beskrivning som du inte har ändrat.
 
 Kvittot omfattar definitioner och objekt i samma sparande. Historiken
 bevarar äldre definitioner och fältens betydelse. Följ

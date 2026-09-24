@@ -24,7 +24,8 @@ till motsvarande automatiserade integrationstester.
   borttagningar före ett gemensamt sparande.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
-  ändringar och samma atomiska kvitto som objektens innehåll.
+  ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
+  som objektens innehåll.
 - [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
   försök efter omstart, återförsöka från en annan klient och kontrollera
   privat tillgång.

@@ -29,7 +29,38 @@ export function readCustomValues(value: unknown, type: ObjectType): CustomValues
   return Object.keys(result).length ? result : undefined;
 }
 
-export function objectTypes(database: Database.Database, householdId: string) {
+function resolvedDefinition(before: ObjectType | null, after: ObjectType, current: ObjectType) {
+  const revision = current.revision + 1;
+  if (!before) return { ...after, revision };
+  const fields = new Map(current.fields?.map((field) => [field.id, field]));
+  for (const proposed of after.fields ?? []) {
+    const original = before.fields?.find((field) => field.id === proposed.id);
+    const saved = fields.get(proposed.id);
+    fields.set(
+      proposed.id,
+      original && saved
+        ? {
+            id: proposed.id,
+            name: proposed.name === original.name ? saved.name : proposed.name,
+            description:
+              proposed.description === original.description
+                ? saved.description
+                : proposed.description,
+            kind: proposed.kind === original.kind ? saved.kind : proposed.kind,
+          }
+        : proposed,
+    );
+  }
+  return {
+    ...after,
+    revision,
+    name: after.name === before.name ? current.name : after.name,
+    description: after.description === before.description ? current.description : after.description,
+    ...(fields.size ? { fields: [...fields.values()] } : {}),
+  };
+}
+
+export function objectTypes(database: Database.Database, householdId: string, userId: string) {
   function read(): ObjectType[] {
     return (
       database
@@ -95,20 +126,25 @@ export function objectTypes(database: Database.Database, householdId: string) {
         )
         .all(householdId, after.id) as { customValues: string | null }[];
       const drafts = database
-        .prepare('SELECT changes FROM map_draft WHERE householdId = ?')
-        .all(householdId) as { changes: string }[];
+        .prepare('SELECT changes FROM map_draft WHERE householdId = ? AND userId != ?')
+        .all(householdId, userId) as { changes: string }[];
       const used =
         objects.some(
           (object) =>
             object.customValues && Object.hasOwn(JSON.parse(object.customValues), field.id),
         ) ||
-        [
-          ...drafts.flatMap((item) => JSON.parse(item.changes) as MapDraft['changes']),
-          ...draft.changes,
-        ].some(
+        drafts
+          .flatMap((item) => JSON.parse(item.changes) as MapDraft['changes'])
+          .some(
+            (change) =>
+              change.after?.typeId === after.id &&
+              Object.hasOwn(change.after.customValues ?? {}, field.id),
+          ) ||
+        draft.changes.some(
           (change) =>
             change.after?.typeId === after.id &&
-            Object.hasOwn(change.after.customValues ?? {}, field.id),
+            Object.hasOwn(change.after.customValues ?? {}, field.id) &&
+            change.type.fields?.find((item) => item.id === field.id)?.kind !== next.kind,
         );
       if (used) throw new MapError('field_kind_in_use');
     }
@@ -124,9 +160,11 @@ export function objectTypes(database: Database.Database, householdId: string) {
       if (choice === 'saved')
         draft.objectTypes = draft.objectTypes?.filter((item) => item.id !== id);
       else {
-        checkFields(current, change.after, draft);
+        const resolved = resolvedDefinition(change.before, change.after, current);
+        const after = { ...resolved, ...validate({ ...resolved, fields: resolved.fields ?? [] }) };
+        checkFields(current, after, draft);
         change.before = current;
-        change.after = { ...change.after, revision: current.revision + 1 };
+        change.after = after;
       }
       const type = choice === 'saved' ? current : change.after;
       for (const proposal of draft.changes)

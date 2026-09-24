@@ -330,6 +330,7 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
       client.post(`${path}/${route}`, { headers: { origin: installation.origin }, data });
     const type = (await read()).types[0];
     const value = { name: 'Människor', description: 'Mitt förslag', fields: [] };
+    const independentField = { id: 'alias', name: 'Smeknamn', description: '', kind: 'text' };
     expect(
       (await post('object-type', { version: 0, id: type.id, baseRevision: 1, value })).status(),
     ).toBe(200);
@@ -351,7 +352,12 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
             version: 0,
             id: type.id,
             baseRevision: 1,
-            value: { ...value, name: 'Personer', description: 'Annans rättelse' },
+            value: {
+              ...value,
+              name: 'Personer',
+              description: 'Annans rättelse',
+              fields: [independentField],
+            },
           },
           other.request,
         )
@@ -378,17 +384,27 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
     const after = await read();
     expect(after.types.find((item: { id: string }) => item.id === type.id)).toMatchObject({
       name: 'Människor',
+      description: 'Mitt förslag',
+      fields: [independentField],
       revision: 3,
     });
     expect(after.objects).toHaveLength(1);
+    await page.reload();
+    await page.getByRole('button', { name: 'Alex', exact: true }).click();
+    await expect(page.getByLabel('Smeknamn', { exact: true })).toHaveValue('');
     const { history } = await (await page.request.get(`${path}/history`)).json();
     expect(history).toHaveLength(2);
     expect(history[1].objectTypes[0].before).toMatchObject({
       name: 'Personer',
       description: 'Annans rättelse',
+      fields: [independentField],
       revision: 2,
     });
-    expect(history[1].changes[0].type).toMatchObject({ name: 'Människor', revision: 3 });
+    expect(history[1].changes[0].type).toMatchObject({
+      name: 'Människor',
+      revision: 3,
+      fields: [independentField],
+    });
   } finally {
     await other.close();
     await installation.close();

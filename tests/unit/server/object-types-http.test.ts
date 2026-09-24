@@ -170,6 +170,7 @@ test('used kinds stay fixed across saved and private values and are rechecked at
     fields: fields.map((field) => (field.id === 'number' ? { ...field, kind: 'text' } : field)),
   };
   expect((await define(changeKind, 1)).status()).toBe(200);
+  expect((await propose({ number: 'Tolv' })).status()).toBe(200);
   expect((await propose({ number: 12 }, other)).status()).toBe(200);
   const rejected = await save('late-use');
   expect(rejected.status()).toBe(409);
@@ -180,6 +181,7 @@ test('used kinds stay fixed across saved and private values and are rechecked at
   expect((await save('other-object', other)).status()).toBe(200);
   expect((await define(changeKind, 1)).status()).toBe(409);
   expect((await define({ ...definition, fields: [] }, 1)).status()).toBe(400);
+  expect((await post('discard', { version: (await read()).draft.version })).status()).toBe(200);
   const corrected = {
     ...definition,
     name: 'Solkraft',
@@ -204,6 +206,59 @@ test('used kinds stay fixed across saved and private values and are rechecked at
     'boolean',
   );
 });
+
+test.each(['create', 'update'])(
+  'an unused field kind and dependent object %s save in one atomic change group',
+  async (action) => {
+    expect((await define()).status()).toBe(200);
+    if (action === 'update') expect((await propose()).status()).toBe(200);
+    expect((await save('initial')).status()).toBe(200);
+    const changed = {
+      ...definition,
+      fields: fields.map((field) => (field.id === 'text' ? { ...field, kind: 'number' } : field)),
+    };
+    expect((await define(changed, 1)).status()).toBe(200);
+    expect((await propose({ text: 12 }, client, action === 'update' ? 1 : null)).status()).toBe(
+      200,
+    );
+    const response = await save('definition-and-object');
+    expect(response.status()).toBe(200);
+    const { receipt } = await response.json();
+    expect(receipt.objectTypes[0]).toMatchObject({
+      before: { revision: 1 },
+      after: { revision: 2 },
+    });
+    expect(receipt.objectTypes[0].before.fields[0]).toMatchObject({ id: 'text', kind: 'text' });
+    expect(receipt.objectTypes[0].after.fields[0]).toMatchObject({ id: 'text', kind: 'number' });
+    expect(receipt.changes[0].after.customValues).toEqual({ text: 12 });
+    const state = await read();
+    expect(state.objects[0].customValues).toEqual({ text: 12 });
+    expect(state.types.find((type) => type.id === 'solar')?.fields?.[0].kind).toBe('number');
+    expect(state.draft.changes).toEqual([]);
+    expect(state.draft.objectTypes).toBeUndefined();
+    const { history } = await (await client.get(`${path}/history`)).json();
+    expect(history).toHaveLength(2);
+    expect(history[1]).toEqual(receipt);
+  },
+);
+
+test.each(['saved', 'proposed'])(
+  'values using a %s field kind cannot be reinterpreted in the same private draft',
+  async (definitionState) => {
+    expect((await define()).status()).toBe(200);
+    if (definitionState === 'saved') expect((await save('initial')).status()).toBe(200);
+    expect((await propose({ text: '2026-09-24' })).status()).toBe(200);
+    const before = await read();
+    const changed = {
+      ...definition,
+      fields: fields.map((field) => (field.id === 'text' ? { ...field, kind: 'date' } : field)),
+    };
+    const response = await define(changed, definitionState === 'saved' ? 1 : null);
+    expect(response.status()).toBe(409);
+    expect(await response.json()).toEqual({ error: 'field_kind_in_use' });
+    expect(await read()).toEqual(before);
+  },
+);
 
 test('definition conflict choices preserve atomic history and update dependent object snapshots', async () => {
   expect((await define()).status()).toBe(200);
@@ -245,6 +300,97 @@ test('definition conflict choices preserve atomic history and update dependent o
   const { history } = await (await client.get(`${path}/history`)).json();
   expect(history.at(-1).objectTypes[0].before.name).toBe('Annans andra namn');
   expect(history.at(-1).objectTypes[0].after.name).toBe('Mitt namn igen');
+});
+
+test.each([false, true])(
+  'choosing a type proposal preserves independent definition corrections (new field: %s)',
+  async (addField) => {
+    expect((await define()).status()).toBe(200);
+    expect((await save('initial')).status()).toBe(200);
+    const mine = {
+      ...definition,
+      name: 'Solkraft',
+      fields: fields.map((field) =>
+        field.id === 'text' ? { ...field, name: 'Egen anteckning' } : field,
+      ),
+    };
+    expect((await define(mine, 1)).status()).toBe(200);
+    expect((await propose({ text: 'På taket' })).status()).toBe(200);
+    const theirs = {
+      ...definition,
+      description: 'Gemensam rättelse',
+      fields: [
+        ...fields.map((field) =>
+          field.id === 'text' ? { ...field, description: 'Fältets förklaring' } : field,
+        ),
+        ...(addField ? [{ id: 'size', name: 'Storlek', description: '', kind: 'number' }] : []),
+      ],
+    };
+    expect((await define(theirs, 1, other)).status()).toBe(200);
+    expect((await save('other-definition', other)).status()).toBe(200);
+    const state = await read();
+    expect(
+      (
+        await post('resolve', {
+          version: state.draft.version,
+          choice: 'proposed',
+          conflict: {
+            kind: 'objectType',
+            id: 'solar',
+            current: state.types.find((type) => type.id === 'solar'),
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    expect((await save('resolved')).status()).toBe(200);
+    const resolved = await read();
+    expect(resolved.types.find((type) => type.id === 'solar')).toMatchObject({
+      name: 'Solkraft',
+      description: 'Gemensam rättelse',
+      fields: [
+        { ...fields[0], name: 'Egen anteckning', description: 'Fältets förklaring' },
+        ...theirs.fields.slice(1),
+      ],
+    });
+    expect(resolved.objects[0].customValues).toEqual({ text: 'På taket' });
+    const { history } = await (await client.get(`${path}/history`)).json();
+    expect(history.at(-1).objectTypes[0].before).toMatchObject(theirs);
+    expect(history.at(-1).objectTypes[0].after).toEqual(
+      resolved.types.find((type) => type.id === 'solar'),
+    );
+    expect(history.at(-1).changes[0].type).toEqual(history.at(-1).objectTypes[0].after);
+  },
+);
+
+test('resolving independent added fields still enforces the definition size limit', async () => {
+  const full = {
+    ...definition,
+    fields: Array.from({ length: 99 }, (_, index) => ({ ...fields[0], id: `field-${index}` })),
+  };
+  expect((await define(full)).status()).toBe(200);
+  expect((await save('initial')).status()).toBe(200);
+  expect(
+    (await define({ ...full, fields: [...full.fields, { ...fields[0], id: 'mine' }] }, 1)).status(),
+  ).toBe(200);
+  expect(
+    (
+      await define({ ...full, fields: [...full.fields, { ...fields[0], id: 'theirs' }] }, 1, other)
+    ).status(),
+  ).toBe(200);
+  expect((await save('other-definition', other)).status()).toBe(200);
+  const before = await read();
+  const response = await post('resolve', {
+    version: before.draft.version,
+    choice: 'proposed',
+    conflict: {
+      kind: 'objectType',
+      id: 'solar',
+      current: before.types.find((type) => type.id === 'solar'),
+    },
+  });
+  expect(response.status()).toBe(400);
+  expect(await response.json()).toEqual({ error: 'invalid_type_definition' });
+  expect(await read()).toEqual(before);
 });
 
 test('overlapping object corrections retain independently changed custom values', async () => {

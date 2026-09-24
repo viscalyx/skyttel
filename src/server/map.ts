@@ -15,7 +15,7 @@ export { MapError } from './map-error.js';
 
 export function householdMap(database: Database.Database, userId: string, householdId: string) {
   const edges = relationships(database, householdId);
-  const types = objectTypes(database, householdId);
+  const types = objectTypes(database, householdId, userId);
   const operations = mapOperations(database, userId, householdId);
   function authorize() {
     if (!householdAccess(database, userId, householdId)) throw new MapError('forbidden', 403);
