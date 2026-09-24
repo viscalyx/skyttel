@@ -83,6 +83,10 @@ database schema version and build time, and policy outcome:
 The database update check is mandatory on every scan. The release policy's
 five-day maximum database age also applies. The shared policy reads the
 same reviewed exception records as releases and reevaluates expiry each day.
+Every record must be valid and match a High or Critical finding on a retained
+image. Separate exact-image exceptions can cover running and rollback images.
+Remove unmatched records, including exceptions for images no longer retained;
+they block monitoring even when both scans have no High or Critical findings.
 The status artifact contains only allowlisted metadata and opaque finding
 fingerprints. Raw scanner output, package findings, credentials, and provider
 responses are not published in workflow logs or artifacts.

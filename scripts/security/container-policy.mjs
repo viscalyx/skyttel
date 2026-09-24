@@ -3,7 +3,14 @@ function requireValue(condition, message) {
 }
 
 // Shared by the release gate and daily scans of retained images.
-export function containerPolicy({ report, sbom, imageId, document, now = Date.now() }) {
+export function containerPolicy({
+  report,
+  sbom,
+  imageId,
+  document,
+  now = Date.now(),
+  retainedImageIds = [imageId],
+}) {
   requireValue(/^sha256:[a-f0-9]{64}$/u.test(imageId), 'Invalid image ID');
   requireValue(
     report.source?.type === 'image' && report.source.target?.imageID === imageId,
@@ -34,7 +41,7 @@ export function containerPolicy({ report, sbom, imageId, document, now = Date.no
   requireValue(document.version === 1 && Array.isArray(document.exceptions), 'Invalid exceptions');
   let exceptions;
   try {
-    exceptions = validateExceptions(document.exceptions, imageId, now);
+    exceptions = validateExceptions(document.exceptions, imageId, retainedImageIds, now);
   } catch {
     return { outcome: 'blocked', reason: 'invalid_exception' };
   }
@@ -61,8 +68,9 @@ export function containerPolicy({ report, sbom, imageId, document, now = Date.no
   return { outcome: blocked ? 'blocked' : 'passed', reason: blocked ? 'high_critical' : null };
 }
 
-function validateExceptions(records, imageId, now) {
+function validateExceptions(records, imageId, retainedImageIds, now) {
   const exceptions = new Set();
+  const scopes = new Set();
   for (const record of records) {
     for (const field of [
       'vulnerability',
@@ -85,7 +93,10 @@ function validateExceptions(records, imageId, now) {
     for (const field of ['vulnerability', 'package', 'version', 'type']) {
       requireValue(!/[*?]/u.test(record[field]), 'Wildcard exception scope');
     }
-    requireValue(record.imageId === imageId, 'Exception image mismatch');
+    requireValue(
+      /^sha256:[a-f0-9]{64}$/u.test(record.imageId) && retainedImageIds.includes(record.imageId),
+      'Exception image mismatch',
+    );
     requireValue(
       new URL(record.evidence).protocol === 'https:',
       'Exception evidence must use HTTPS',
@@ -97,8 +108,10 @@ function validateExceptions(records, imageId, now) {
       'Exception is expired, future-dated, or exceeds 30 days',
     );
     const key = JSON.stringify([record.vulnerability, record.package, record.version, record.type]);
-    requireValue(!exceptions.has(key), 'Duplicate exception');
-    exceptions.add(key);
+    const scope = JSON.stringify([record.imageId, key]);
+    requireValue(!scopes.has(scope), 'Duplicate exception');
+    scopes.add(scope);
+    if (record.imageId === imageId) exceptions.add(key);
   }
   return exceptions;
 }

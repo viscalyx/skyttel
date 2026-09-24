@@ -89,7 +89,7 @@ async function targets(github, current) {
   return selected;
 }
 
-function scanResult(target, evidence, exceptions, scannedAt) {
+function scanResult(target, evidence, exceptions, scannedAt, retainedImageIds) {
   const { report, sbom } = evidence;
   const manifest = target.image.split('@')[1];
   requireState(report.source?.target?.manifestDigest === manifest);
@@ -108,12 +108,10 @@ function scanResult(target, evidence, exceptions, scannedAt) {
     report,
     sbom,
     imageId,
-    // Each exception is still exact-image scoped. Release scans retain their
-    // stricter unused-record gate; retained images use the same assessment.
-    document: {
-      version: 1,
-      exceptions: exceptions.exceptions.filter((record) => record.imageId === imageId),
-    },
+    // Validate every record before selecting this image's exceptions. A record
+    // for the other retained image must still match a finding in its own scan.
+    document: exceptions,
+    retainedImageIds,
     now: Date.parse(scannedAt),
   });
   const findings = report.matches
@@ -266,13 +264,23 @@ export async function monitorImages({
     requireState(/^https:\/\/github\.com\/viscalyx\/skyttel\/actions\/runs\/[0-9]+$/u.test(runUrl));
     const current = await liveImage(render, serviceId);
     const selected = await targets(github, current.image);
+    const scans = [];
     for (const target of selected) {
       try {
-        report.targets.push(scanResult(target, await scan(target.image), exceptions, now()));
+        scans.push({ evidence: await scan(target.image), scannedAt: now() });
+      } catch {
+        scans.push({ evidence: undefined, scannedAt: now() });
+      }
+    }
+    const retainedImageIds = scans.map((entry) => entry.evidence?.report?.source?.target?.imageID);
+    for (const [index, target] of selected.entries()) {
+      const { evidence, scannedAt } = scans[index];
+      try {
+        report.targets.push(scanResult(target, evidence, exceptions, scannedAt, retainedImageIds));
       } catch {
         report.targets.push({
           ...target,
-          scannedAt: now(),
+          scannedAt,
           policy: 'unknown',
           reason: 'scan_evidence_unavailable',
         });

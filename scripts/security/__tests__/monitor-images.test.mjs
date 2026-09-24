@@ -15,6 +15,22 @@ const finding = {
   artifact: { name: 'private-synthetic-package', version: '1.0.0', type: 'npm' },
 };
 
+function reviewedException(imageId = digest('e')) {
+  return {
+    vulnerability: finding.vulnerability.id,
+    package: finding.artifact.name,
+    version: '1.0.0',
+    type: 'npm',
+    imageId,
+    owner: 'maintainer',
+    reviewer: 'reviewer',
+    rationale: 'Synthetic exception',
+    evidence: 'https://example.test/assessment',
+    created: '2026-09-23T00:00:00Z',
+    expires: '2026-09-25T00:00:00Z',
+  };
+}
+
 function evidence(reference, matches = []) {
   return {
     report: {
@@ -205,19 +221,7 @@ test('new and repeated findings reconcile one issue; new findings notify and unk
 test('same reviewed exact-image policy accepts valid exceptions and blocks expiry or invalid scope', async () => {
   const { state, run } = fixture();
   state.matches = [finding];
-  const exception = {
-    vulnerability: finding.vulnerability.id,
-    package: finding.artifact.name,
-    version: '1.0.0',
-    type: 'npm',
-    imageId: digest('e'),
-    owner: 'maintainer',
-    reviewer: 'reviewer',
-    rationale: 'Synthetic exception',
-    evidence: 'https://example.test/assessment',
-    created: '2026-09-23T00:00:00Z',
-    expires: '2026-09-25T00:00:00Z',
-  };
+  const exception = reviewedException();
   state.exceptions.exceptions = [exception];
   assert.equal((await run()).status, 'passed');
   exception.expires = '2026-09-24T09:00:00Z';
@@ -228,6 +232,56 @@ test('same reviewed exact-image policy accepts valid exceptions and blocks expir
   exception.imageId = digest('e');
   exception.package = '*';
   assert.equal((await run()).status, 'blocked');
+});
+
+test('malformed exception records block clean scans and open the status alert', async () => {
+  for (const record of [{}, { imageId: digest('f') }, null]) {
+    const { state, run } = fixture();
+    state.exceptions.exceptions = [record];
+    const result = await run();
+    assert.equal(result.status, 'blocked');
+    assert.equal(result.notification, 'accepted-by-github');
+    assert.equal(state.issues[0].state, 'open');
+    assert.equal(
+      result.targets.every((target) => target.reason === 'invalid_exception'),
+      true,
+    );
+  }
+});
+
+test('an exception for an image no longer retained blocks clean scans and opens the alert', async () => {
+  const { state, run } = fixture();
+  state.exceptions.exceptions = [reviewedException(digest('f'))];
+  const result = await run();
+  assert.equal(result.status, 'blocked');
+  assert.equal(result.notification, 'accepted-by-github');
+  assert.equal(state.issues[0].state, 'open');
+});
+
+test('each retained image needs its own matched exception, including the same finding on both', async () => {
+  const { state, run } = fixture();
+  let rollbackMatches = [finding];
+  const scan = async (reference) => {
+    const running = reference === image('b');
+    const data = evidence(reference, running ? [finding] : rollbackMatches);
+    data.report.source.target.imageID = running ? digest('e') : digest('f');
+    return data;
+  };
+  state.exceptions.exceptions = [reviewedException()];
+  const unexceptedRollback = await run({ scan });
+  assert.equal(unexceptedRollback.status, 'blocked');
+  assert.deepEqual(
+    unexceptedRollback.targets.map((target) => target.policy),
+    ['passed', 'blocked'],
+  );
+  state.exceptions.exceptions.push(reviewedException(digest('f')));
+  assert.equal((await run({ scan })).status, 'passed');
+  assert.equal(state.issues[0].state, 'closed');
+  rollbackMatches = [];
+  const unmatchedRollback = await run({ scan });
+  assert.equal(unmatchedRollback.status, 'blocked');
+  assert.equal(unmatchedRollback.targets[1].reason, 'unused_exception');
+  assert.equal(state.issues[0].state, 'open');
 });
 
 test('missing, different-image, stale-database and malformed scan evidence all remain unknown', async () => {
