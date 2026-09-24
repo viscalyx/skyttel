@@ -435,6 +435,70 @@ test('history and undo require current household access, and do not expose priva
   ).toBe(403);
 });
 
+test('per-proposal discard requires current household access and preserves every private draft when denied', async () => {
+  await object('person', { name: 'Lo Exempel' });
+  await save('initial');
+  const { actor, userId } = await member();
+  await object('person', { name: 'Administratörens privata förslag' });
+  await object('person', { name: 'Medlemmens privata förslag' }, actor);
+  const ownerBefore = await read();
+  const memberBefore = await read(actor);
+  const historyBefore = await (await client.request(`${path}/history`)).json();
+  const body = { version: memberBefore.draft.version, kind: 'object', id: 'person' };
+  const anonymous = fixture.client();
+  expect((await post('discard-change', body, anonymous)).status).toBe(401);
+
+  fixture.setSubject('another-household-member');
+  const outsider = fixture.client();
+  await outsider.signIn();
+  const { user } = await (await outsider.request('/api/bootstrap')).json();
+  // Arrange a separate household, then create its private proposal through HTTP.
+  fixture.database
+    .prepare('INSERT INTO household (id, name, createdAt) VALUES (?, ?, ?)')
+    .run('other-household', 'Annat hushåll', '2026-01-01');
+  fixture.database
+    .prepare('INSERT INTO membership (householdId, userId, role) VALUES (?, ?, ?)')
+    .run('other-household', user.id, 'member');
+  const otherPath = '/api/households/other-household/map';
+  const other = (await (await outsider.request(otherPath)).json()) as MapState;
+  expect(
+    (
+      await outsider.json(`${otherPath}/draft`, {
+        version: other.draft.version,
+        id: 'other-person',
+        baseRevision: null,
+        value: { name: 'Robin Exempel', description: '', typeId: other.types[0].id },
+      })
+    ).status,
+  ).toBe(200);
+  const otherBefore = await (await outsider.request(otherPath)).json();
+  const otherHistoryBefore = await (await outsider.request(`${otherPath}/history`)).json();
+  expect((await post('discard-change', body, outsider)).status).toBe(403);
+
+  expect(
+    (await client.json(`${path.replace('/map', '')}/members/${userId}/revoke`, {})).status,
+  ).toBe(200);
+  expect((await post('discard-change', body, actor)).status).toBe(403);
+  expect(await read()).toEqual(ownerBefore);
+  expect(await (await client.request(`${path}/history`)).json()).toEqual(historyBefore);
+  expect(await (await outsider.request(otherPath)).json()).toEqual(otherBefore);
+  expect(await (await outsider.request(`${otherPath}/history`)).json()).toEqual(otherHistoryBefore);
+
+  // Restore access through the API to inspect the private draft and prove the
+  // same request is valid for an ordinary member with current access.
+  const invitation = await client.json(`${path.replace('/map', '')}/invitations`, { userId });
+  expect(invitation.status).toBe(201);
+  const { code } = await invitation.json();
+  expect((await actor.json('/api/invitations/accept', { code })).status).toBe(200);
+  expect(await read(actor)).toEqual(memberBefore);
+  expect((await post('discard-change', body, actor)).status).toBe(200);
+  const discarded = await read(actor);
+  expect(discarded.draft.changes).toEqual([]);
+  expect(discarded.objects).toEqual(memberBefore.objects);
+  expect(await read()).toEqual(ownerBefore);
+  expect(await (await client.request(`${path}/history`)).json()).toEqual(historyBefore);
+});
+
 test('undo restores necessary definitions removed after the selected object deletion', async () => {
   expect(
     (
