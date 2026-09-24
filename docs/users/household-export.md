@@ -37,10 +37,10 @@ skapas; senare ändringar kräver en ny export.
    nedladdning startar, inte att filen finns på din disk.
 
 Behåll hela ZIP-filen. Den innehåller ett format med angiven version,
-maskinläsbart innehåll och bilddata för fortsatt behandling. Det finns
-inget flöde för återimport i gränssnittet. Exporten ger inte någon ny
-tillgång till hushållet och innehåller inte sessioner, aktiva OAuth-token
-eller serverhemligheter.
+maskinläsbart innehåll och bilddata. En aktuell administratör kan
+[återimportera ett befintligt hushåll](household-import.md). Exporten ger
+inte någon ny tillgång till hushållet och innehåller inte sessioner,
+aktiva OAuth-token eller serverhemligheter.
 
 ## Avbryt eller försök igen
 

@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { chmodSync, existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { unzipSync, zipSync } from 'fflate';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { applicationFixture } from './fixture.js';
@@ -308,6 +310,17 @@ test('losing administrator authority during cancellation fails the prepared impo
     contentVersion: 1,
   });
   await cancelling;
+  expect((await client.request(`${path}/map`)).status).toBe(409);
+  expect((await client.json(`${path}/exports`, {})).status).toBe(409);
+  expect((await upload()).status).toBe(409);
+  expect(
+    await (
+      await client.json(`${path}/imports/${ready.id}/confirm`, {
+        confirmed: true,
+        contentVersion: 1,
+      })
+    ).json(),
+  ).toMatchObject({ status: 'prepared' });
   expect((await other.json(`${path}/members/${owner.id}/role`, { role: 'member' })).status).toBe(
     200,
   );
@@ -319,4 +332,249 @@ test('losing administrator authority during cancellation fails the prepared impo
     status: 'failed',
     error: 'forbidden',
   });
+});
+
+test('failed removal of an aborted upload prevents false completion and a later import retries cleanup', async () => {
+  const ready = await (await upload()).json();
+  const directory = join(dirname(fixture.config.databasePath), '.skyttel-imports');
+  let blockedDirectory = '';
+  let entered: () => void = () => {};
+  const reading = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const second = client.request(`${path}/imports`, {
+    method: 'POST',
+    headers: {
+      origin: fixture.config.origin,
+      'content-type': 'application/zip',
+      'X-Skyttel-Content-Version': '1',
+    },
+    body: new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(archive.slice(0, 1));
+      },
+      pull() {
+        entered();
+        return new Promise<void>(() => {});
+      },
+      cancel() {
+        blockedDirectory = join(
+          directory,
+          readdirSync(directory).find((id) => id !== ready.id) as string,
+        );
+        chmodSync(blockedDirectory, 0o000);
+      },
+    }),
+    duplex: 'half',
+  } as RequestInit);
+  try {
+    await reading;
+    const confirmed = await client.json(`${path}/imports/${ready.id}/confirm`, {
+      confirmed: true,
+      contentVersion: 1,
+    });
+    expect(await confirmed.json()).toMatchObject({ status: 'failed', contentVersion: 1 });
+    expect((await second).status).toBe(500);
+    expect((await (await client.request(`${path}/map`)).json()).contentVersion).toBe(1);
+  } finally {
+    if (blockedDirectory) chmodSync(blockedDirectory, 0o700);
+  }
+  const next = await (await upload()).json();
+  expect(
+    (
+      await (
+        await client.json(`${path}/imports/${next.id}/confirm`, {
+          confirmed: true,
+          contentVersion: 1,
+        })
+      ).json()
+    ).status,
+  ).toBe('completed');
+  expect(existsSync(blockedDirectory)).toBe(false);
+});
+
+test('completed outcomes survive repeated confirmation and reject altered confirmation identity', async () => {
+  const ready = await (await upload()).json();
+  const body = { confirmed: true, contentVersion: 1 };
+  const first = await (await client.json(`${path}/imports/${ready.id}/confirm`, body)).json();
+  expect(first).toMatchObject({ status: 'completed', contentVersion: 2 });
+  expect(await (await client.json(`${path}/imports/${ready.id}/confirm`, body)).json()).toEqual(
+    first,
+  );
+  expect(await (await client.request(`${path}/imports/${ready.id}`)).json()).toEqual(first);
+  expect(
+    (await client.json(`${path}/imports/${ready.id}/confirm`, { ...body, contentVersion: 2 }))
+      .status,
+  ).toBe(409);
+  expect(
+    (await client.json(`${path}/imports/${ready.id}/confirm`, { ...body, confirmed: false }))
+      .status,
+  ).toBe(400);
+  expect(
+    (await client.json(`${path}/imports/${ready.id}/confirm`, { ...body, extra: true })).status,
+  ).toBe(400);
+  expect((await client.request(`${path}/imports/missing`)).status).toBe(404);
+});
+
+test('custom definitions, ended facts, removed catalog entries and unsaved private work roundtrip together', async () => {
+  const read = async () => (await client.request(`${path}/map`)).json();
+  const post = async (route: string, body: Record<string, unknown>) => {
+    const state = await read();
+    const response = await client.json(`${path}/map/${route}`, {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      ...body,
+    });
+    expect(response.status, await response.text()).toBe(200);
+  };
+  const fields = [
+    { id: 'serial', name: 'Serienummer', description: '', kind: 'text' },
+    { id: 'count', name: 'Antal', description: '', kind: 'number' },
+    { id: 'date', name: 'Datum', description: '', kind: 'date' },
+    { id: 'enabled', name: 'Aktiv', description: '', kind: 'boolean' },
+  ];
+  await post('object-type', {
+    id: 'equipment',
+    baseRevision: null,
+    value: { name: 'Utrustning', description: 'Egna fält', fields },
+  });
+  await post('relationship-type', {
+    id: 'installed',
+    baseRevision: null,
+    value: {
+      name: 'Installerad',
+      description: '',
+      forwardLabel: 'installerad i',
+      reverseLabel: 'innehåller',
+    },
+  });
+  await post('draft', {
+    id: 'machine',
+    baseRevision: null,
+    value: {
+      name: 'Maskin',
+      description: '',
+      typeId: 'equipment',
+      identity: 'unspecified',
+      lifecycle: 'ended',
+      customValues: { serial: 'SYNTH-1', count: 2, date: '2026-01-01', enabled: false },
+      financialFacts: {
+        price: { knowledge: 'known', value: '19' },
+        endDate: { knowledge: 'uncertain', value: '2026-01-01' },
+      },
+    },
+  });
+  await post('relationship', {
+    id: 'installation',
+    baseRevision: null,
+    value: {
+      typeId: 'installed',
+      sourceId: 'machine',
+      targetId: 'lamp',
+      knowledge: 'uncertain',
+      lifecycle: 'ended',
+      endDate: { knowledge: 'known', value: '2026-01-01' },
+    },
+  });
+  await post('save', { operationId: 'definitions-and-facts' });
+  await post('object-type', {
+    id: 'unused',
+    baseRevision: null,
+    value: { name: 'Tillfällig', description: '', fields: [] },
+  });
+  await post('relationship-type', {
+    id: 'unused-edge',
+    baseRevision: null,
+    value: { name: 'Tillfällig', description: '', forwardLabel: 'framåt', reverseLabel: 'bakåt' },
+  });
+  await post('save', { operationId: 'unused-definitions' });
+  await post('object-type', { id: 'unused', baseRevision: 1, value: null });
+  await post('relationship-type', { id: 'unused-edge', baseRevision: 1, value: null });
+  await post('save', { operationId: 'removed-definitions' });
+  await post('object-type', {
+    id: 'equipment',
+    baseRevision: 1,
+    value: { name: 'Privat utrustning', description: 'Privat förslag', fields },
+  });
+  await post('relationship-type', {
+    id: 'installed',
+    baseRevision: 1,
+    value: {
+      name: 'Privat installation',
+      description: '',
+      forwardLabel: 'finns i',
+      reverseLabel: 'har',
+    },
+  });
+  await post('draft', {
+    id: 'machine',
+    baseRevision: 1,
+    value: {
+      ...(await read()).objects.find((item: { id: string }) => item.id === 'machine'),
+      name: 'Privat maskin',
+    },
+  });
+  await post('relationship', {
+    id: 'installation',
+    baseRevision: 1,
+    value: {
+      typeId: 'installed',
+      sourceId: 'machine',
+      targetId: null,
+      knowledge: 'unknown',
+      lifecycle: 'ended',
+      endDate: { knowledge: 'known', value: '2026-01-01' },
+    },
+  });
+  const before = await read();
+  const history = await (await client.request(`${path}/map/history`)).json();
+  const exported = await (await client.json(`${path}/exports`, {})).json();
+  archive = new Uint8Array(
+    await (await client.request(`${path}/exports/${exported.id}`)).arrayBuffer(),
+  );
+  const response = await upload();
+  expect(response.status, await response.clone().text()).toBe(201);
+  const ready = await response.json();
+  expect(
+    await (
+      await client.json(`${path}/imports/${ready.id}/confirm`, {
+        contentVersion: 1,
+        confirmed: true,
+      })
+    ).json(),
+  ).toMatchObject({ status: 'completed' });
+  const after = await read();
+  expect(after).toEqual({ ...before, contentVersion: 2 });
+  expect(await (await client.request(`${path}/map/history`)).json()).toEqual(history);
+  await post('save', { operationId: 'fresh-private-definitions' });
+  expect((await read()).objects).toContainEqual(
+    expect.objectContaining({
+      id: 'machine',
+      name: 'Privat maskin',
+      customValues: { serial: 'SYNTH-1', count: 2, date: '2026-01-01', enabled: false },
+    }),
+  );
+});
+
+test('committed replacement stays gated after file cleanup fails and explicit retry completes cleanup only', async () => {
+  const ready = await (await upload()).json();
+  const directory = join(dirname(fixture.config.databasePath), '.skyttel-imports', ready.id);
+  chmodSync(directory, 0o500);
+  const body = { confirmed: true, contentVersion: 1 };
+  try {
+    const confirmed = await client.json(`${path}/imports/${ready.id}/confirm`, body);
+    expect(await confirmed.json()).toMatchObject({ status: 'cleanup', contentVersion: 2 });
+    expect((await client.request(`${path}/map`)).status).toBe(409);
+    expect((await client.json(`${path}/exports`, {})).status).toBe(409);
+    expect(await (await client.request(`${path}/imports/${ready.id}`)).json()).toMatchObject({
+      status: 'cleanup',
+    });
+  } finally {
+    chmodSync(directory, 0o700);
+  }
+  expect(
+    await (await client.json(`${path}/imports/${ready.id}/confirm`, body)).json(),
+  ).toMatchObject({ status: 'completed', contentVersion: 2 });
+  expect(existsSync(directory)).toBe(false);
+  expect((await (await client.request(`${path}/map`)).json()).contentVersion).toBe(2);
 });

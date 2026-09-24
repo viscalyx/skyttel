@@ -3,6 +3,7 @@ import { closeSync, openSync, readSync } from 'node:fs';
 import { join } from 'node:path';
 import type Database from 'better-sqlite3';
 import { contentOwner } from './content-identities.js';
+import { validateImportReferences } from './import-references.js';
 import type { ImportContent } from './import-schema.js';
 import { MapError } from './map-error.js';
 import { projectDraftScope } from './project-content-scope.js';
@@ -74,6 +75,20 @@ export function assertImportCollisions(
   householdId: string,
   content: ImportContent,
 ) {
+  const referencedTables = {
+    object: 'map_object',
+    relationship: 'map_relationship',
+    objectType: 'object_type',
+    relationshipType: 'relationship_type',
+  };
+  validateImportReferences(content, (kind, id) => {
+    if (
+      database
+        .prepare(`SELECT 1 FROM ${referencedTables[kind]} WHERE id = ? AND householdId != ?`)
+        .get(id, householdId)
+    )
+      throw new MapError('archive_identity_conflict', 409);
+  });
   for (const [name, table] of [
     ['objects', 'map_object'],
     ['relationships', 'map_relationship'],

@@ -1,8 +1,14 @@
 import { z } from 'zod';
 import type { DraftChange, ObjectMerge } from '../shared/map.js';
 
-const id = z.string().min(1).max(128);
+const id = z.string().regex(/^[\w-]{1,128}$/);
 const text = z.string().max(10000);
+const name = z
+  .string()
+  .min(1)
+  .max(200)
+  .refine((value) => Boolean(value.trim()));
+const description = z.string().max(2000);
 const natural = z
   .number()
   .int()
@@ -10,16 +16,18 @@ const natural = z
   .max(Number.MAX_SAFE_INTEGER - 1);
 const positive = natural.min(1);
 const scope = { householdId: id };
-const definitionShape = { id, ...scope, revision: positive, name: text, description: text };
+const definitionShape = { id, ...scope, revision: positive, name, description };
 const field = z
   .object({
-    id,
-    name: text,
-    description: text,
+    id: id.refine((value) => !['__proto__', 'constructor', 'prototype'].includes(value)),
+    name,
+    description,
     kind: z.enum(['text', 'number', 'date', 'boolean']),
   })
   .strict();
-const objectType = z.object({ ...definitionShape, fields: z.array(field).optional() }).strict();
+const objectType = z
+  .object({ ...definitionShape, fields: z.array(field).max(100).optional() })
+  .strict();
 const relationshipType = z
   .object({ ...definitionShape, forwardLabel: text.optional(), reverseLabel: text.optional() })
   .strict();
@@ -35,8 +43,8 @@ const financialFacts = z.record(id, fact);
 const objectValue = z
   .object({
     typeId: id,
-    name: text,
-    description: text,
+    name,
+    description,
     identity: z.enum(['unspecified', 'unresolved']).optional(),
     financialFacts: financialFacts.optional(),
     customValues: values.optional(),
@@ -161,7 +169,7 @@ export const importContentSchema = z
     household: z.object({ id, name: text, createdAt: text, contentVersion: positive }).strict(),
     identities: z.array(z.object({ id, name: text }).strict()),
     objectTypes: z.array(z.object(definitionShape).strict()),
-    objectTypeFields: z.array(z.object({ typeId: id, fields: z.array(field) }).strict()),
+    objectTypeFields: z.array(z.object({ typeId: id, fields: z.array(field).max(100) }).strict()),
     relationshipTypes: z.array(z.object(definitionShape).strict()),
     relationshipTypeLabels: z.array(
       z.object({ typeId: id, forwardLabel: text, reverseLabel: text }).strict(),

@@ -119,3 +119,79 @@ operations-ID provas endast automatiserat. Testet låter den riktiga
 servern spara, bryter svaret, importerar och verifierar sedan att de gamla
 återförsöken avvisas utan falsk sparbekräftelse eller ny ändring. Manuella
 steg påstår inte att det kontrollerade nätavbrottet har utförts.
+
+### IMPORT-07: bevara äldre fältbetydelser och ångra med nytt underlag
+
+**Syfte:** Kontrollera att import bevarar både dagens fältdefinition och
+historiska värden med en annan definition, utan att konvertera värden.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Ett separat provhushåll utan andra ändringar. Välj
+en objekttyp utan använda egna fält. Följ förberedelserna för fullständig
+export och återimport i detta dokument.
+
+**Integrationstest:**
+[household-import-definitions.spec.ts](../../tests/integration/household-import-definitions.spec.ts),
+testfallet “IMPORT-07: historical field meanings survive replacement and
+fresh whole-save undo”.
+
+**Steg:**
+
+1. Lägg till textfältet **Serienummer** på den oanvända objekttypen och
+   spara hela utkastet.
+2. Ändra det ännu oanvända fältets värdeslag till tal. Lägg objektet
+   **Mätare** av samma typ med värdet **42** i utkastet. Spara dessa två
+   ändringar tillsammans och anteckna kvittot.
+3. Ångra hela sparandet från steg 2 genom historiken och spara
+   ångringsförslaget. Kontrollera att objektet saknas och fältet är text
+   igen. Behåll även detta kvitto.
+4. Hämta en fullständig export. Återimportera filen till samma hushåll
+   genom Administration och bekräfta ersättningen. Starta om servern med
+   samma databas och öppna hushållet igen.
+5. Kontrollera båda kvittona i historiken. Ångra sparandet från steg 3
+   med aktuellt underlag och spara hela förslaget. Starta om igen och
+   kontrollera **Mätare** och fältdefinitionen.
+
+**Förväntat resultat:**
+
+- Exporten accepteras även när ett historiskt talvärde hör till ett fält
+  som nu är text. Fältets och objektets stabila identiteter bevaras.
+- Historiken behåller samma kvitton, författare, tidpunkter och tidigare
+  värden efter importen. Talet **42** konverteras inte till text.
+- Det nya ångrandet återställer **Mätare**, talfältet och värdet **42**.
+  Resultatet kvarstår efter omstart och de tidigare kvittona är oförändrade.
+
+### IMPORT-08: förbered filen på nytt när en tidigare förberedelse saknas
+
+**Syfte:** Kontrollera att en bortstädad förberedelse inte låser importen
+och att en ny ersättning kräver ny granskning och bekräftelse.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** En fullständig provexport och en separat testinstallation
+som får startas om. Ingen ersättning har bekräftats.
+
+**Integrationstest:**
+[household-import-recovery.spec.ts](../../tests/integration/household-import-recovery.spec.ts),
+testfallet “IMPORT-08: an unavailable prepared archive allows fresh review
+after restart without changing content”.
+
+**Steg:**
+
+1. Välj exportfilen i Administration och tryck **Kontrollera importfil**.
+   Granska sammanställningen men bekräfta inte ersättning.
+2. Starta om servern med samma databas. Ladda om administrationssidan.
+   Tryck **Hämta importens status** innan du väljer någon ny fil.
+3. Läs beskedet om den saknade förberedelsen och kontrollera att kartan
+   fortfarande har sitt tidigare innehåll.
+4. Välj filen på nytt, kontrollera den och granska den nya sammanställningen.
+   Bekräfta uttryckligen ersättningen och invänta resultatet.
+
+**Förväntat resultat:**
+
+- Omstarten städar tillfälligt material utan att ersätta hushållets innehåll.
+- Statusbeskedet gör det möjligt att välja en ny fil. Ett saknat förberett
+  arkiv påstås inte vara en genomförd import.
+- Den nya filen kräver ny granskning och ett nytt uttryckligt beslut.
+  Därefter kan samma giltiga export återimporteras.

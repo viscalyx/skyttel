@@ -46,24 +46,29 @@ export function HouseholdImport({
   }
   function fail(failure: unknown, confirming = false) {
     if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) onAccessLost();
-    if (failure instanceof MapRequestError && failure.code === 'content_conflict') {
+    if (
+      failure instanceof MapRequestError &&
+      ['content_conflict', 'import_unavailable'].includes(failure.code)
+    ) {
       remember(null);
       setResult(null);
     }
     setError(
-      failure instanceof MapRequestError && failure.code === 'content_conflict'
-        ? 'Hushållets innehåll har ändrats. Förbered filen igen och granska en ny ersättning.'
-        : failure instanceof MapRequestError &&
-            [
-              'invalid_archive',
-              'unsupported_archive',
-              'archive_too_large',
-              'archive_identity_conflict',
-            ].includes(failure.code)
-          ? 'Filen kan inte importeras. Kontrollera att det är en hel Skyttel-export i ett format och en storlek som stöds.'
-          : confirming
-            ? 'Ersättningen kunde inte bekräftas. Utfallet är okänt. Hämta importens status innan du försöker något annat.'
-            : 'Importen kunde inte förberedas eller hämtas. Kontrollera anslutningen och försök igen.',
+      failure instanceof MapRequestError && failure.code === 'import_unavailable'
+        ? 'Den förberedda importen finns inte längre. Välj filen och förbered den igen.'
+        : failure instanceof MapRequestError && failure.code === 'content_conflict'
+          ? 'Hushållets innehåll har ändrats. Förbered filen igen och granska en ny ersättning.'
+          : failure instanceof MapRequestError &&
+              [
+                'invalid_archive',
+                'unsupported_archive',
+                'archive_too_large',
+                'archive_identity_conflict',
+              ].includes(failure.code)
+            ? 'Filen kan inte importeras. Kontrollera att det är en hel Skyttel-export i ett format och en storlek som stöds.'
+            : confirming
+              ? 'Ersättningen kunde inte bekräftas. Utfallet är okänt. Hämta importens status innan du försöker något annat.'
+              : 'Importen kunde inte förberedas eller hämtas. Kontrollera anslutningen och försök igen.',
     );
   }
   async function prepare() {

@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
 import type {
   MapDraft,
@@ -213,8 +214,7 @@ export function relationships(database: Database.Database, householdId: string) 
       }
       for (const change of changes) {
         const saved = current.find((value) => value.id === change.id) ?? null;
-        if (JSON.stringify(saved) !== JSON.stringify(change.before))
-          throw new MapError('relationship_conflict');
+        if (!isDeepStrictEqual(saved, change.before)) throw new MapError('relationship_conflict');
         const removedType = !change.after
           ? draft.relationshipTypes?.find((item) => item.id === change.type.id && !item.after)
               ?.before

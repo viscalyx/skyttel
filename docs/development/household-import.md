@@ -59,7 +59,14 @@ unmapped imported identity already uses the member's login ID.
 Saved receipts retain their original actor, origin scope, timestamp, and
 content generation. Working drafts and fresh undo proposals project only
 typed household scopes to the current target. Custom-value strings are not
-rewritten. History images authorize through the current target household.
+rewritten. Personal positions may intentionally retain an object ID after
+a never-saved private object was discarded; those rows remain preserved
+and exported even when ordinary reads filter them out. Image owners must
+resolve a retained current, private, or historical object identity. History
+images authorize through the current target household. Current live edges
+must resolve current live endpoints and types. Historical snapshots may
+retain deleted identities and old field meanings. Every definition snapshot
+still obeys the field-count, field-ID, name and value-kind rules.
 Imported operations enter `historical_operation`; they are export evidence,
 not live save attempts. `retired_operation` prevents old local or imported
 operation IDs from acquiring a new meaning after replacement.
