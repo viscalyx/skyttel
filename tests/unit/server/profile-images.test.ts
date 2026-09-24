@@ -340,6 +340,83 @@ test('independent concurrent facts and image undo overlap follow ordinary confli
   expect((await read()).draft.changes).toEqual([]);
 });
 
+test('type changes, conflict choices and undo preserve independently replaced profile images', async () => {
+  expect((await upload(await sourceImage())).status).toBe(200);
+  await save('initial');
+  const initial = await read();
+  const original = initial.objects[0];
+  const target = initial.types.find((type) => type.id !== original.typeId);
+  expect(target).toBeDefined();
+  expect(
+    (
+      await client.json(`${path}/draft`, {
+        version: initial.draft.version,
+        id: original.id,
+        baseRevision: original.revision,
+        typeRevision: target?.revision,
+        value: { ...original, typeId: target?.id },
+      })
+    ).status,
+  ).toBe(200);
+  const { actor } = await member();
+  expect((await upload(await sourceImage('jpeg', '#ffff00'), actor)).status).toBe(200);
+  await save('concurrent-image', actor);
+  let current = await read();
+  const replacement = current.objects[0].profileImageId;
+  expect(replacement).not.toBe(original.profileImageId);
+  expect(draftConflicts(current)).toHaveLength(1);
+  expect(
+    (
+      await client.json(`${path}/resolve`, {
+        version: current.draft.version,
+        conflict: draftConflicts(current)[0],
+        choice: 'proposed',
+      })
+    ).status,
+  ).toBe(200);
+  const changed = await save('type-change');
+  expect((await read()).objects[0]).toMatchObject({
+    id: original.id,
+    typeId: target?.id,
+    profileImageId: replacement,
+  });
+  expect((await upload(await sourceImage('webp', '#123456'), actor)).status).toBe(200);
+  await save('later-image', actor);
+  current = await read();
+  const latest = current.objects[0];
+  const imageBytes = Buffer.from(
+    await (await client.request(`${images}/${latest.profileImageId}`)).arrayBuffer(),
+  );
+  expect(
+    (
+      await client.json(`${path}/draft`, {
+        version: current.draft.version,
+        id: original.id,
+        baseRevision: latest.revision,
+        value: { ...latest, description: 'Egen oberoende anteckning' },
+      })
+    ).status,
+  ).toBe(200);
+  expect((await undo(changed)).status).toBe(200);
+  expect((await read()).draft.changes[0].after).toMatchObject({
+    typeId: original.typeId,
+    profileImageId: latest.profileImageId,
+    description: 'Egen oberoende anteckning',
+  });
+  await save('undo-type-change');
+  expect((await read()).objects[0]).toMatchObject({
+    id: original.id,
+    typeId: original.typeId,
+    profileImageId: latest.profileImageId,
+    description: 'Egen oberoende anteckning',
+  });
+  expect(
+    Buffer.from(await (await client.request(`${images}/${latest.profileImageId}`)).arrayBuffer()),
+  ).toEqual(imageBytes);
+  for (const id of [original.profileImageId, replacement])
+    expect((await client.request(`${images}/${id}`)).status).toBe(200);
+});
+
 test.each(['draft', 'save', 'access'] as const)(
   'an upload rechecks %s after asynchronous body processing',
   async (change) => {
