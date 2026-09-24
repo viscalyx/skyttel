@@ -263,6 +263,32 @@ test('AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifte
     expect(map.objects).toHaveLength(5);
     expect(map.relationships).toHaveLength(4);
     expect(map.contextObjects).toEqual([]);
+    await post('draft', {
+      id: 'car',
+      baseRevision: 1,
+      value: {
+        typeId: vehicleType,
+        name: 'Rättad blå bil',
+        description: 'Bilens rättade uppgifter',
+      },
+    });
+    const draftResponse = await callAssistant(app.origin, access_token, 'read_my_draft');
+    const draft = JSON.parse((await draftResponse.json()).result.content[0].text);
+    expect(draft.changes).toMatchObject([
+      {
+        before: { description: 'Bilens sparade uppgifter' },
+        after: { description: 'Bilens rättade uppgifter' },
+      },
+    ]);
+    expect(draft.current.objects).toContainEqual(
+      expect.objectContaining({ id: 'car', description: 'Bilens sparade uppgifter' }),
+    );
+    expect(draft.current.objects.filter((object: { id: string }) => object.id !== 'car')).toEqual([
+      { id: 'kim', typeId: personType, name: 'Kim' },
+      { id: 'lo', typeId: personType, name: 'Lo' },
+    ]);
+    for (const excluded of ['övriga detaljer', 'Cykeln', 'Samlingen', 'Orelaterad', 'Hemligt'])
+      expect(JSON.stringify(draft)).not.toContain(excluded);
   } finally {
     await app.close();
   }

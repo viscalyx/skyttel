@@ -99,6 +99,114 @@ test('write authorization requires separate map consent and signed requested sco
   ).toEqual([]);
 });
 
+test('whole-draft reviews keep changed saved facts but project untouched endpoints without expanding their graph', async () => {
+  const token = await connect();
+  const catalog = (await tool(token, 'read_type_catalog')).value;
+  const type = catalog.types.find((entry: { name: string }) => entry.name === 'Bankkonto');
+  const edgeType = catalog.relationshipTypes.find(
+    (entry: { name: string }) => entry.name === 'Använder',
+  );
+  let review = (await tool(token, 'read_my_draft')).value;
+  for (const [id, name, description, amount] of [
+    ['changed', 'Ändrat konto', 'Berörd sparad anteckning', '149'],
+    ['neighbor', 'Grannkonto', 'Orelaterad privat anteckning', '998877'],
+    ['distant', 'Avlägset konto', 'Avlägsen privat anteckning', '112233'],
+  ]) {
+    review = (
+      await tool(token, 'propose_object', {
+        version: review.version,
+        contentVersion: review.contentVersion,
+        id,
+        baseRevision: null,
+        value: {
+          typeId: type.id,
+          name,
+          description,
+          financialFacts: { price: { knowledge: 'known', value: amount } },
+        },
+      })
+    ).value;
+  }
+  for (const [id, sourceId, targetId] of [
+    ['direct', 'changed', 'neighbor'],
+    ['distant-edge', 'neighbor', 'distant'],
+  ]) {
+    review = (
+      await tool(token, 'propose_relationship', {
+        version: review.version,
+        contentVersion: review.contentVersion,
+        id,
+        baseRevision: null,
+        value: { typeId: edgeType.id, sourceId, targetId, knowledge: 'known' },
+      })
+    ).value;
+  }
+  await tool(token, 'save_draft', {
+    version: review.version,
+    contentVersion: review.contentVersion,
+    operationId: 'privacy-fixture',
+  });
+  review = (await tool(token, 'read_my_draft')).value;
+  const changed = (await tool(token, 'read_map', { objectId: 'changed' })).value.objects[0];
+  review = (
+    await tool(token, 'propose_object', {
+      version: review.version,
+      contentVersion: review.contentVersion,
+      id: changed.id,
+      baseRevision: changed.revision,
+      value: {
+        typeId: type.id,
+        name: 'Rättat konto',
+        description: changed.description,
+        financialFacts: { price: { knowledge: 'known', value: '189' } },
+      },
+    })
+  ).value;
+  expect(review.changes[0].before.financialFacts.price.value).toBe('149');
+  expect(review.changes[0].after.financialFacts.price.value).toBe('189');
+  expect(
+    review.current.objects.find((object: { id: string }) => object.id === 'changed'),
+  ).toMatchObject({
+    description: 'Berörd sparad anteckning',
+    financialFacts: changed.financialFacts,
+  });
+  expect(review.current.objects.find((object: { id: string }) => object.id === 'neighbor')).toEqual(
+    { id: 'neighbor', name: 'Grannkonto', typeId: type.id },
+  );
+  expect(review.current.relationships.map((edge: { id: string }) => edge.id)).toEqual(['direct']);
+  expect(JSON.stringify(review)).not.toMatch(
+    /Orelaterad privat|998877|Avlägsen privat|112233|distant/,
+  );
+  expect((await tool(token, 'read_my_draft')).value).toEqual(review);
+
+  review = (
+    await tool(token, 'discard_draft', {
+      version: review.version,
+      contentVersion: review.contentVersion,
+    })
+  ).value;
+  review = (
+    await tool(token, 'propose_relationship', {
+      version: review.version,
+      contentVersion: review.contentVersion,
+      id: 'direct',
+      baseRevision: 1,
+      value: {
+        typeId: edgeType.id,
+        sourceId: 'changed',
+        targetId: 'neighbor',
+        knowledge: 'uncertain',
+      },
+    })
+  ).value;
+  expect(review.current.objects).toEqual([
+    { id: 'neighbor', name: 'Grannkonto', typeId: type.id },
+    { id: 'changed', name: 'Ändrat konto', typeId: type.id },
+  ]);
+  expect(review.current.relationships.map((edge: { id: string }) => edge.id)).toEqual(['direct']);
+  expect(JSON.stringify(review)).not.toMatch(/998877|112233|distant|Berörd sparad/);
+});
+
 test('a family case resumes browser proposals, discovers current types, corrects and saves the whole draft with one receipt', async () => {
   const token = await connect();
   const catalog = (await tool(token, 'read_type_catalog')).value;

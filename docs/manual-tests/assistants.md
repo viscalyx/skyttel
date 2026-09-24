@@ -212,6 +212,11 @@ uppgifter”.
 3. Sök efter `ingen träff` och begär därefter ett obefintligt objekt-ID.
 4. Ange både Blå bilens ID och söktexten `Samlingen`.
 5. Begär slutligen hela den sparade kartan utan avgränsning.
+6. Föreslå i webbläsaren en rättelse av Blå bilens namn och beskrivning.
+   Spara inte. Anropa `read_my_draft` i klienten och granska hela svaret.
+   Bilens sparade och föreslagna uppgifter ska finnas kvar; Kim och Lo
+   får bara ID, namn och typ i `current.objects`. Deras egna beskrivningar,
+   Cykeln två steg bort och Samlingen ska inte följa med automatiskt.
 
 **Förväntat resultat:**
 
@@ -339,15 +344,17 @@ resultatet i den separata, icke blockerande
 
 ## Hela kartärenden
 
-AI-08 till AI-12 använder den konfigurerade administratörens inloggning,
-en separat testinstallation med påhittade data och en textklient som kan
-begära `skyttel:read` och `skyttel:write`. Följ
-[integrationsguidens kartarbete](../development/assistants.md#whole-draft-map-work).
-Använd demokartan för AI-08. Börja AI-09 till AI-11 med ett tomt eget
-utkast; kasta demoutkastet i den isolerade testinstallationen vid behov.
-Behåll databas och identitet under ett fall. Återkalla testanslutningar
-och följ installationens städning efteråt. Kör samtliga manuella steg
-först efter hela specifikation #31 och anteckna resultaten i #97.
+AI-08 och AI-12 använder en verklig textklient med kartmedgivande enligt
+[integrationsguiden](../development/assistants.md#whole-draft-map-work).
+AI-09 till AI-11 använder den
+[kontrollerade lokala MCP-klienten](../development/manual-mcp-controls.md):
+starta en ny tom provdatabas och hjälpprocess inför varje fall. Guiden ger
+exakta kommandon för OAuth, omstart med samma databas och städning.
+Använd den konfigurerade administratörens egen inloggning och hushållet
+**MCP-prov**. Inga riktiga hushållsuppgifter, modellkostnader eller publika
+adresser behövs för dessa tre kontroller. Klienten skickar verktygsanrop;
+den provar inte en språkmodells tolkning. Kör samtliga manuella steg först
+efter hela specifikation #31 och anteckna resultaten i #97.
 
 ### AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärendet
 
@@ -401,7 +408,8 @@ manuellt. CI provar dessutom omstart och exakt återförsök av kvittot.
 
 **Användare:** Samma användare i webbläsare och textklient.
 
-**Förutsättningar:** Tomt eget utkast och godkänd anslutning för kartarbete.
+**Förutsättningar:** Ny tom provdatabas och den kontrollerade MCP-klientens
+godkända anslutning för kartarbete enligt förberedelsen.
 
 **Integrationstest:**
 [assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
@@ -411,13 +419,18 @@ utan delsparande”.
 **Steg:**
 
 1. Föreslå Lo Exempel med **Nytt objekt** i webbläsaren. Spara inte.
-2. Be assistenten läsa och sammanfatta hela utkastet. Behåll den versionen.
+2. Kör `capture-save old` i terminal B. Läs hela `review`, kontrollera
+   Lo Exempel och att händelsen är `captured`. Klienten behåller exakt
+   version, innehållsversion och operations-ID utan att spara.
 3. Lägg Kim Exempel i samma utkast genom webbläsaren.
-4. Låt klientens provkontroll anropa `save_draft` med den tidigare
-   versionen och ett nytt operations-ID. Granska avvisningen och det
-   återlämnade aktuella utkastet.
-5. Be assistenten läsa upp båda förslagen och ge ett nytt uttryckligt
-   sparbesked. Kontrollera det nya kvittot och ladda om kartan.
+4. Kör `send old`. Kontrollera `result.value.error: draft_conflict`,
+   den aktuella versionen och båda objekten i `result.value.review`.
+   Ladda om kartan: båda ska vara förslag, inget gemensamt sparat.
+5. Kör `capture-save fresh` och granska båda förslagen. Ge ditt nya
+   sparbesked genom att köra `send fresh`. Kontrollera ett kvitto med
+   båda objekten och ladda om kartan.
+6. Kör `send old` igen. Kontrollera avvisning, aldrig ett lyckat kvitto
+   för det gamla försöket. Följ guidens återkallelse och städning.
 
 **Förväntat resultat:**
 
@@ -426,17 +439,18 @@ utan delsparande”.
 - Ett nytt godkänt sparande omfattar båda. Det gamla operations-ID:t
   kan inte återanvändas för den nya versionen.
 
-Om klienten inte kan hålla fast vid den tidigare versionen för steg 4,
-anteckna att just den kontrollen inte är manuellt verifierad. CI ordnar
-denna konkurrens deterministiskt genom de publika ingångarna.
+Den kontrollerade klienten skickar den fångade versionen oförändrad;
+ingen särskild funktion i en språkmodell behövs för att köra fallet.
 
 ### AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt sparande
 
-**Syfte:** Återfinna ett beständigt sparresultat från en återansluten klient.
+**Syfte:** Återfinna ett förlorat sparresultat efter serveromstart och prova
+exakt återförsök utan dubbla ändringar.
 
 **Användare:** Samma användare i webbläsare och textklient.
 
-**Förutsättningar:** Tomt eget utkast och godkänd anslutning för kartarbete.
+**Förutsättningar:** Ny tom provdatabas och den kontrollerade MCP-klientens
+godkända anslutning för kartarbete enligt förberedelsen.
 
 **Integrationstest:**
 [assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
@@ -445,27 +459,35 @@ utan dubbelt sparande”.
 
 **Steg:**
 
-1. Lägg Lo Exempel i utkastet genom webbläsaren. Be assistenten läsa det
-   och spara hela utkastet på ditt uttryckliga besked.
-2. Anteckna kvittots operations-ID. Stäng textklienten och starta den igen.
-3. Be den kontrollera tidigare sparförsök innan den gör nya ändringar.
-   Kontrollera samma kvitto genom `read_save_operation` och
-   **Mina sparförsök** i kartan.
-4. Kontrollera att Lo Exempel finns en gång och att utkastet är tomt.
+1. Lägg Lo Exempel i utkastet genom webbläsaren. Kör `capture-save lost`
+   i terminal B och granska hela utkastet. Anteckna bara det syntetiska
+   operations-ID:t från `arguments` för senare jämförelse.
+2. Ge ditt sparbesked genom `drop lost`. Kontrollera händelsen
+   `response-dropped` och `outcome: "unknown"`. Inget kvitto får skrivas
+   ut. Hjälpklientens felpunkt inväntar en lyckad transaktion innan den
+   kastar bort svaret; ett fel eller en avvisning verifierar inte steget.
+3. Ladda om kartan och kontrollera att Lo Exempel är sparad. Gör inga
+   nya ändringar. Stoppa servern i terminal A med Ctrl+C och starta om
+   med guidens exakta omstartskommando och samma databas. Behåll terminal
+   B öppen så att den ursprungliga begäran finns kvar.
+4. Kör `status lost`. Kontrollera `succeeded` och ett beständigt kvitto
+   med samma operations-ID. Kontrollera även **Mina sparförsök** i kartan.
+5. Kör `send lost`. Jämför kvittots ID, tidpunkt och ändringar med det
+   återfunna kvittot; allt ska vara samma. Ladda om kartan och historiken.
+6. Följ guidens återkallelse och städning.
 
 **Förväntat resultat:**
 
-- Det genomförda försöket återfinns med samma kvitto och identitet.
-- Klienten behöver inte skapa ett nytt sparande för att ta reda på resultatet.
-- Inget ytterligare objekt eller dubblerat historiksteg uppstår.
+- Efter det kontrollerade bortfallet behandlas utfallet som okänt tills
+  ett nytt statusanrop verifierar det beständiga resultatet.
+- Samma databas efter serveromstart ger samma kvitto. Återförsöket skickar
+  de ursprungliga fälten och operations-ID:t, utan ny fångst eller sparbegäran.
+- Lo Exempel finns en gång, utkastet är tomt och historiken innehåller
+  ett enda sparande. Ingen bekräftad återställning påstås vid uteblivet svar.
 
-Det kontrollerade bortfallet efter serverns transaktion och appens omstart
-provas automatiserat: den riktiga servern sparar, men HTTP-svaret bryts
-innan klienten får det. Den återanslutna klienten kontrollerar status och
-ett exakt återförsök ger samma kvitto och enda historikhändelse. Stegen
-ovan verifierar återfinnandet efter klientomstart, inte själva bortfallet.
-Ett verkligt avbrott som råkar inträffa ska redovisas separat; ett uteblivet
-svar får aldrig beskrivas som bekräftat sparande eller bekräftad återställning.
+Felkontrollen slänger det kompletta lyckade HTTP-svaret vid klientgränsen.
+Den bevisar återhämtning efter ett kontrollerat avbrott efter transaktionen,
+inte hur en verklig språkmodell reagerar på ett godtyckligt nätfel.
 
 ### AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kastade
 
@@ -473,7 +495,8 @@ svar får aldrig beskrivas som bekräftat sparande eller bekräftad återställn
 
 **Användare:** Samma användare i webbläsare och textklient.
 
-**Förutsättningar:** Tomt eget utkast och godkänd anslutning för kartarbete.
+**Förutsättningar:** Ny tom provdatabas och den kontrollerade MCP-klientens
+godkända anslutning för kartarbete enligt förberedelsen.
 
 **Integrationstest:**
 [assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
@@ -482,24 +505,50 @@ förblir kastade”.
 
 **Steg:**
 
-1. Be assistenten föreslå Betalkonto som bankkonto med olöst identitet
-   och Hushållskonto som ett separat, identifierat bankkonto.
-2. Begär sparande. Kontrollera att identiteten måste redas ut och att
-   inget av objekten blir gemensamt sparat. Kontrollera också att
-   **Spara hela utkastet** är inaktiverad i kartan.
-3. Välj uttryckligen att Betalkonto får vara ett ospecificerat objekt.
-   Be assistenten kasta förslaget Hushållskonto och beskriva det återstående
-   hela utkastet.
-4. Spara det återstående utkastet. Ladda om kartan och öppna Betalkonto.
+1. Kör följande rader en i taget i terminal B. Typen slås upp i hushållets
+   aktuella katalog; inga typ-ID:n behöver skrivas in.
+
+   <!-- markdownlint-disable MD013 -->
+   ```text
+   capture-object bank {"id":"manual-bank","type":"Bankkonto","name":"Betalkonto","identity":"unresolved"}
+   send bank
+   capture-object other {"id":"manual-other","type":"Bankkonto","name":"Hushållskonto"}
+   send other
+   capture-save blocked
+   send blocked
+   ```
+   <!-- markdownlint-enable MD013 -->
+
+2. Kontrollera `unresolved_identity` och att båda förslagen finns kvar.
+   Ladda om kartan: inget av objekten är gemensamt sparat och
+   **Spara hela utkastet** är inaktiverad.
+3. Välj uttryckligen att Betalkonto får vara ospecificerat. Kör dessa
+   rader. Fångsten `delayed` behåller ett oskickat rättelseanrop före
+   kastandet; `send delayed` skickar sedan exakt det gamla underlaget.
+
+   <!-- markdownlint-disable MD013 -->
+   ```text
+   capture-object specified {"id":"manual-bank","type":"Bankkonto","name":"Betalkonto","identity":"unspecified"}
+   send specified
+   capture-object delayed {"id":"manual-other","type":"Bankkonto","name":"Hushållskonto"}
+   discard manual-other
+   send delayed
+   ```
+   <!-- markdownlint-enable MD013 -->
+
+4. Kontrollera `draft_conflict` för det försenade anropet och att
+   `review.changes` endast innehåller Betalkonto. Kör `read`, granska hela
+   kvarvarande utkastet och spara genom `capture-save final` följt av
+   `send final`.
+5. Ladda om kartan och öppna Betalkonto. Kontrollera ospecificerad
+   identitet och att Hushållskonto saknas. Följ guidens städning.
 
 **Förväntat resultat:**
 
 - Olöst identitet blockerar hela sparandet, även det oberoende förslaget.
 - Betalkonto behåller ospecificerad identitet. Hushållskonto sparas inte.
+- Det försenade rättelseanropet kan inte återinföra det kastade förslaget.
 - Kasta förslag är skilt från att ångra sparade uppgifter.
-
-CI skickar dessutom ett försenat rättelseanrop med versionen före kastandet.
-Det avvisas och kan inte återinföra det kastade förslaget.
 
 ### AI-12: nekade och hypotetiska sparbesked sparar inget
 

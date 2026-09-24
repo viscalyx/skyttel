@@ -127,6 +127,12 @@ financial facts, image preservation and conflict rules come from the
 same domain boundary as the forms. Type-definition editing, merge,
 history and undo tools are separate extensions. No conversation is stored.
 
+`current.objects` keeps full saved values for changed objects. Other endpoints
+contain only ID, name and type, matching `read_map`'s identity context. A
+relationship-only proposal does not expand those endpoints' other links.
+Read further details explicitly only when needed for the task. The entire
+private draft and its before/after values remain available for review.
+
 ## Local deterministic verification
 
 Run the repository's checks from [the testing guide](testing.md). Focused
@@ -163,6 +169,14 @@ separately in issue #97; do not infer it from deterministic tool calls.
 Browser cases use Chromium in the devcontainer. These are deterministic
 CI results, not evidence of real Google/Microsoft or external account
 connections, physical devices, speech, or production deployment.
+
+The [controlled local MCP client](manual-mcp-controls.md) gives manual testers
+concrete commands for retained stale requests, discarded post-commit responses,
+same-database server restart, exact retries and delayed proposals after discard.
+It obtains its own public OAuth grant and never uses Codex credentials or
+application storage. The helper's executable test uses real HTTP and SQLite
+with only the external identity provider substituted. This controlled-tool
+evidence does not establish real-model interpretation.
 
 ## Manual local Codex CLI setup
 

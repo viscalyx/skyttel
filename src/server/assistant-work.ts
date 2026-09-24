@@ -26,7 +26,8 @@ export function assistantDraftReview(map: HouseholdMap) {
       .filter((change) => change.after?.knowledge === 'unresolved')
       .map(({ id }) => ({ kind: 'relationship', id })),
   ];
-  const objectIds = new Set(draft.changes.map(({ id }) => id));
+  const changedObjectIds = new Set(draft.changes.map(({ id }) => id));
+  const objectIds = new Set(changedObjectIds);
   for (const change of draft.relationships ?? []) {
     for (const edge of [change.before, change.after]) {
       if (edge) {
@@ -38,8 +39,8 @@ export function assistantDraftReview(map: HouseholdMap) {
   const relationships = state.relationships.filter(
     (edge) =>
       draft.relationships?.some((change) => change.id === edge.id) ||
-      objectIds.has(edge.sourceId) ||
-      (edge.targetId !== null && objectIds.has(edge.targetId)),
+      changedObjectIds.has(edge.sourceId) ||
+      (edge.targetId !== null && changedObjectIds.has(edge.targetId)),
   );
   for (const edge of relationships) {
     objectIds.add(edge.sourceId);
@@ -48,7 +49,13 @@ export function assistantDraftReview(map: HouseholdMap) {
   const pendingOperations = map
     .operations()
     .operations.filter(({ status }) => status === 'pending');
-  const objects = state.objects.filter(({ id }) => objectIds.has(id));
+  const objects = state.objects
+    .filter(({ id }) => objectIds.has(id))
+    .map((object) =>
+      changedObjectIds.has(object.id)
+        ? object
+        : { id: object.id, name: object.name, typeId: object.typeId },
+    );
   const objectTypeIds = new Set([
     ...objects.map(({ typeId }) => typeId),
     ...(draft.objectTypes ?? []).map(({ id }) => id),

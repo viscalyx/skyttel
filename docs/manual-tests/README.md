@@ -40,6 +40,8 @@ betyder inte att dess manuella prov är genomfört.
   återkallad åtkomst, särskilt kartmedgivande, hela utkast, rättelser,
   konflikter och återfunna kvitton samt ett separat manuellt Codex CLI-prov
   med verklig Google-inloggning i devcontainern, utan CI-hemligheter.
+  En kontrollerad lokal MCP-klient behåller gamla begäranden, tappar ett
+  lyckat sparbesked och provar exakta återförsök efter serveromstart.
 
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, återhämta anslutningsfel, logga ut och länka inloggningssätt.
