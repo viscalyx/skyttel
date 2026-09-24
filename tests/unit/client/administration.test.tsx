@@ -39,6 +39,9 @@ type Reply = { data?: unknown; status?: number; error?: Error; response?: Promis
 const unexpectedRequests: string[] = [];
 
 function serve(routes: Record<string, Reply[]>) {
+  routes['/api/households/linden/erasure'] ??= Array.from({ length: 3 }, () => ({
+    data: { objects: [], relationships: [], objectTypes: [], relationshipTypes: [], status: null },
+  }));
   routes['/api/households/linden/map?reload=0'] ??= [
     {
       data: {

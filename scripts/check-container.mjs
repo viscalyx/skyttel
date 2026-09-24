@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
+import { checkContainerErasure } from './check-container-erasure.mjs';
 
 const exec = promisify(execFile);
 const docker = process.env.DOCKER_BIN ?? 'docker';
@@ -352,6 +353,19 @@ try {
   assert.deepEqual(await mapRequest(), savedMap);
   assert.deepEqual(await mapRequest('/save', saveRequest), receipt);
   console.log('PASS: failed migration exits without readiness or private diagnostic values');
+  await checkContainerErasure({
+    command,
+    request,
+    waitUntilReady,
+    container: persisted,
+    image,
+    volume: persistedVolume,
+    containers,
+    fixture,
+    origin: configuredOrigin,
+    imageId,
+    saveRequest,
+  });
 } finally {
   for (const name of containers) {
     await command(['rm', '--force', name]).catch(() => {});

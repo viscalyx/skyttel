@@ -13,6 +13,11 @@ betyder inte att dess manuella prov är genomfört.
 
 ## Områden
 
+- [Permanent radering](household-erasure.md): uttrycklig granskning och
+  bekräftelse, bevarat oberoende innehåll efter omstart, förlorat svar och
+  förnyad granskning efter samtidig ändring samt väntande städning och
+  återhämtning efter omstart.
+
 - [Fullständig återimport](household-import.md): uttrycklig ersättning,
   bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,
   ny förberedelse efter omstart och ångring med aktuellt underlag.

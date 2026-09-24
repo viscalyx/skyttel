@@ -5,6 +5,24 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Permanent household erasure
+
+Keep a database backup with its matching application image before upgrade.
+Use the upgraded image with the new content maintenance state. Reload open
+map sessions after rollout. Old content generations cannot submit edits or
+retry saves after an erasure.
+
+Allow free persistent disk space for database reconstruction and normal
+journal use. A pending erasure can block content access across the whole
+installation while a database reader or storage error delays cleanup.
+Keep the recorded operation and resume it from household administration.
+Use the [pending erasure runbook](permanent-erasure.md) after an interruption.
+
+Downloaded exports and provider snapshots remain separate recovery copies.
+An explicit import or restoration of an older copy can restore erased
+information. Apply the household's retention decision to those copies;
+do not use an older backup merely to clear a pending erasure.
+
 ### Atomic household replacement
 
 Keep a matching database backup before upgrade. The upgrade separates
