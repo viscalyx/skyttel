@@ -37,6 +37,7 @@ finns kvar för historik och ångring utan automatisk tidsgräns. Kända
 bildadresser ger inte tillgång utan aktuellt medlemskap i rätt hushåll.
 Andra medlemmars osparade bilder är privata i det vanliga arbetet.
 
-Bilder ska ingå i hushållets fullständiga export, återimport och permanenta
-radering när dessa separata arbetsflöden finns tillgängliga. Vanlig
-borttagning är återställningsbar och innebär inte permanent radering.
+Bilder och bevarade bildversioner ingår i hushållets
+[fullständiga export](household-export.md), även andra användares privata
+bildförslag. Återimport och permanent radering är separata arbetsflöden.
+Vanlig borttagning är återställningsbar och innebär inte permanent radering.

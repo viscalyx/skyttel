@@ -3,6 +3,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } fr
 import type { Administration, HouseholdInvitation } from '../shared/administration.js';
 import { householdNameMaxLength, normalizeHouseholdName } from '../shared/household-name.js';
 import { Assistants } from './Assistants.js';
+import { HouseholdExport } from './HouseholdExport.js';
 import { HouseholdMap } from './HouseholdMap.js';
 import { MapRequestError as RequestError, request } from './map-request.js';
 
@@ -746,6 +747,7 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
           ))}
         </ul>
       )}
+      <HouseholdExport key={id} householdId={id ?? ''} onAccessLost={onReload} />
     </section>
   );
 }

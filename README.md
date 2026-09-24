@@ -28,6 +28,8 @@ AI-behandlingsval, läsåtkomst och återkallelse för textklienter.
 gemensam redigering, ändringssymboler och enheternas begränsningar.
 [Guiden för profilbilder](docs/users/profile-images.md) beskriver privata
 bildförslag, formatgränser och återställning genom historiken.
+[Guiden för fullständig export](docs/users/household-export.md) beskriver
+arkivets privata innehåll, nedladdning och säker förvaring.
 
 Utveckla i projektets [devcontainer](docs/development/devcontainer.md).
 [Utvecklings- och testinstruktionerna](docs/development/testing.md) beskriver

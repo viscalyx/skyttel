@@ -11,6 +11,7 @@ import { administrationRoutes } from './administration-routes.js';
 import { assistantRoutes } from './assistant-routes.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
+import { householdExportRoutes } from './household-export-routes.js';
 import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from './households.js';
 import { createLoginMethods } from './login-methods.js';
 import { MapError } from './map.js';
@@ -174,6 +175,7 @@ export function createApp({
     return context.json({ household });
   });
   app.route('/api', administrationRoutes(database, auth, config.origin));
+  app.route('/api', householdExportRoutes(database, auth, config.origin));
   app.route('/api', linking.routes);
   app.route('/api', mapRoutes(database, auth, config.origin));
   app.route('/api', profileImageRoutes(database, auth, config.origin));

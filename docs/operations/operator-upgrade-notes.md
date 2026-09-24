@@ -5,6 +5,27 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Complete household export
+
+Rebuild the complete application image. Verify that only current
+administrators can prepare and download a full household archive after
+rollout. These archives include every user's private drafts, personal
+views, history, and retained encoded images. Apply household backup access
+restrictions to each downloaded archive. An archive restores content; it
+must never restore old login or membership authority.
+
+Allow free persistent disk space for a content snapshot and its ZIP archive
+during preparation, in addition to the database and its active journal.
+Only one preparation runs at a time. Temporary copies have private file
+permissions and expire after ten minutes; interrupted copies are removed
+on the next application start. Check storage and cleanup failures before
+retrying an export. A failed or interrupted export is not a recovery copy.
+
+Use readers that support version 1 of the full archive format and ZIP64
+when needed. Keep downloaded copies in a secure location. No automatic
+backup is added, and a larger storage failure can lose information added
+after the latest own export.
+
 ### Reversible object merges
 
 Keep a database backup with the application image that can read it before

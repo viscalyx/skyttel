@@ -6,6 +6,11 @@ till motsvarande automatiserade integrationstester.
 
 ## Områden
 
+- [Fullständig export](household-export.md): privata uppgifter före
+  export, nedladdning, avbrott, återkallad aktiv hämtning, giltighetstid samt
+  bevarade identiteter, bildversioner, utkast och placeringar efter
+  sammanslagning.
+
 - [Sammanslagning](object-merge.md): uttrycklig identitet, val av uppgifter
   och samband, privata förslag, avbrott, omstart och ångring av hela sparandet.
 
