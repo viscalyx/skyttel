@@ -6,6 +6,7 @@ import {
   mergeConnections,
   mergeFacts,
   mergeFor,
+  mergeNeedsChoice,
   mergeObjects,
   mergeValues,
 } from '../shared/object-merge.js';
@@ -98,8 +99,8 @@ export function ObjectMerge({
   };
   const a = left ? mergeFacts(left) : {};
   const b = right ? mergeFacts(right) : {};
-  const differing = [...new Set([...Object.keys(a), ...Object.keys(b)])].filter(
-    (key) => JSON.stringify(a[key]) !== JSON.stringify(b[key]),
+  const differing = [...new Set([...Object.keys(a), ...Object.keys(b)])].filter((key) =>
+    mergeNeedsChoice(key, a[key], b[key]),
   );
   function label(key: string) {
     if (key.startsWith('financialFacts:'))
@@ -116,12 +117,19 @@ export function ObjectMerge({
           description: 'Beskrivning',
           typeId: 'Objekttyp',
           lifecycle: 'Status',
+          identity: 'Identitetsstatus',
           profileImageId: 'Profilbild',
         } as Record<string, string>
       )[key] ?? key
     );
   }
   function fact(key: string, value: unknown) {
+    if (key === 'identity')
+      return value === 'unspecified'
+        ? 'Ospecificerat objekt'
+        : value === 'unresolved'
+          ? 'Obesvarad identitetsfråga'
+          : 'Identifierat objekt';
     if (value === undefined || value === '') return 'Ingen uppgift';
     if (key === 'typeId') return types.find((type) => type.id === value)?.name;
     if (key === 'profileImageId') return 'Profilbilden som visas ovan';
@@ -268,7 +276,9 @@ export function ObjectMerge({
                       <option value="survivor">Första objektets uppgift</option>
                       <option value="absorbed">Andra objektets uppgift</option>
                       {!['typeId', 'name', 'description'].includes(key) && (
-                        <option value="omit">Utelämna uppgiften</option>
+                        <option value="omit">
+                          {key === 'identity' ? 'Identifierat objekt' : 'Utelämna uppgiften'}
+                        </option>
                       )}
                     </select>
                   </label>

@@ -22,6 +22,7 @@ import {
   proposedRelationships,
   proposedRelationshipTypes,
 } from '../shared/map.js';
+import { mergeFor } from '../shared/object-merge.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js';
 import { LifecycleDetails, LifecycleEditor, LifecycleStatus } from './Lifecycle.js';
@@ -1714,7 +1715,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                         })
                       }
                     >
-                      Kasta förslaget
+                      {mergeFor(state.draft, 'object', change.id)
+                        ? 'Kasta hela sammanslagningen'
+                        : 'Kasta förslaget'}
                     </button>
                     {conflicts
                       .filter((conflict) => conflict.kind === 'object' && conflict.id === change.id)
@@ -1769,7 +1772,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                         })
                       }
                     >
-                      Kasta förslaget
+                      {mergeFor(state.draft, 'relationship', change.id)
+                        ? 'Kasta hela sammanslagningen'
+                        : 'Kasta förslaget'}
                     </button>
                     {conflicts
                       .filter(

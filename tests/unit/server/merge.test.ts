@@ -783,3 +783,66 @@ test('a merge preserves restoration authority for relationships already restored
     revision: 3,
   });
 });
+
+test('confirming a merge retains unspecified identity', async () => {
+  for (const id of ['a', 'b']) {
+    const state = await read();
+    expect(
+      (
+        await post('draft', {
+          version: state.draft.version,
+          id,
+          baseRevision: null,
+          value: {
+            typeId: state.types[0].id,
+            name: 'Bankkontot',
+            description: '',
+            identity: 'unspecified',
+          },
+        })
+      ).status,
+    ).toBe(200);
+  }
+  await save('unspecified');
+  expect((await post('merge', await proposal())).status).toBe(200);
+  await save('same-unspecified');
+  expect((await read()).objects[0].identity).toBe('unspecified');
+});
+
+test('confirmed same-phenomenon identity still requires explicitly resolving an unanswered identity fact', async () => {
+  await object('a');
+  await object('b');
+  await save('initial');
+  for (const id of ['a', 'b']) {
+    const state = await read();
+    const before = state.objects.find((item) => item.id === id);
+    expect(
+      (
+        await post('draft', {
+          version: state.draft.version,
+          id,
+          baseRevision: before?.revision,
+          value: { ...before, identity: 'unresolved' },
+        })
+      ).status,
+    ).toBe(200);
+  }
+  const body = await proposal();
+  expect(await (await post('merge', body)).json()).toEqual({ error: 'merge_choices_required' });
+  expect(
+    (await post('merge', { ...body, choices: { ...body.choices, identity: 'survivor' } })).status,
+  ).toBe(200);
+  expect(
+    await (
+      await post('save', { version: (await read()).draft.version, operationId: 'unresolved-fact' })
+    ).json(),
+  ).toEqual({ error: 'unresolved_identity' });
+  await post('discard-change', { version: (await read()).draft.version, kind: 'object', id: 'a' });
+  const reviewed = await proposal();
+  expect(
+    (await post('merge', { ...reviewed, choices: { ...reviewed.choices, identity: 'omit' } }))
+      .status,
+  ).toBe(200);
+  await save('identified');
+  expect((await read()).objects[0].identity).toBeUndefined();
+});

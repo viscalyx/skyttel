@@ -18,7 +18,7 @@ export function mergeObjects(state: MapState) {
 export function mergeFacts(value: ObjectValue): Record<string, unknown> {
   const { financialFacts, customValues, ...simple } = value;
   const facts: Record<string, unknown> = {};
-  for (const key of ['typeId', 'name', 'description', 'lifecycle', 'profileImageId'])
+  for (const key of ['typeId', 'name', 'description', 'identity', 'lifecycle', 'profileImageId'])
     facts[key] = simple[key as keyof typeof simple];
   for (const [key, fact] of Object.entries(financialFacts ?? {}))
     facts[`financialFacts:${key}`] = fact;
@@ -26,6 +26,11 @@ export function mergeFacts(value: ObjectValue): Record<string, unknown> {
   for (const [key, fact] of Object.entries(customValues ?? {}))
     facts[`customValues:${value.typeId}:${key}`] = fact;
   return facts;
+}
+export function mergeNeedsChoice(key: string, left: unknown, right: unknown) {
+  return (
+    JSON.stringify(left) !== JSON.stringify(right) || (key === 'identity' && left === 'unresolved')
+  );
 }
 export function mergeConnections(state: MapState, ids: string[]) {
   return [...proposedRelationships(state.relationships, state.draft.relationships).values()].filter(
@@ -78,7 +83,7 @@ export function mergeValues(
           ? b.typeId
           : undefined;
   for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    const differs = JSON.stringify(a[key]) !== JSON.stringify(b[key]);
+    const differs = mergeNeedsChoice(key, a[key], b[key]);
     const choice = choices[key];
     if (differs && !['survivor', 'absorbed', 'omit'].includes(choice as string)) return null;
     const fact = !differs

@@ -128,6 +128,7 @@ test('type-specific custom fields and uncertain financial facts are visible and 
   await userEvent.selectOptions(screen.getByLabelText('Välj Namn'), 'absorbed');
   await userEvent.selectOptions(screen.getByLabelText('Välj Beskrivning'), 'absorbed');
   await userEvent.selectOptions(screen.getByLabelText('Välj Status'), 'survivor');
+  await userEvent.selectOptions(screen.getByLabelText('Välj Identitetsstatus'), 'absorbed');
   await userEvent.selectOptions(screen.getByLabelText('Välj Senast uppgiven skuld'), 'survivor');
   await userEvent.selectOptions(screen.getByLabelText('Välj Valuta'), 'absorbed');
   await userEvent.selectOptions(screen.getByLabelText('Välj Växt: Nummer'), 'survivor');

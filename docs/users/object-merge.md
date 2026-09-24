@@ -34,6 +34,10 @@ Detta är inte permanent radering.
 Ett förslag utan bekräftad identitet kan finnas i ditt privata utkast,
 men blockerar hela sparandet. Att behålla ett **Ospecificerat objekt** är
 ett annat val och bekräftar inte att två identifierade objekt är samma.
+En bekräftad sammanslagning behåller en gemensam ospecificerad status.
+Om identitetsstatus skiljer sig väljer du den uttryckligen. En kvarvarande
+obesvarad identitetsfråga spärrar sparandet även om du bekräftar samma
+företeelse; välj **Identifierat objekt** först när frågan är utredd.
 
 Två behållna samband får inte bli identiska med samma typ, riktning och
 ändpunkter. Granska vilka samband som ska finnas kvar om sammanslagningen
