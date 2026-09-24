@@ -7,14 +7,15 @@ import {
 } from '../shared/draft-conflicts.js';
 import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
 import { compatibleCustomFields } from '../shared/map.js';
+import { mergeFor, withoutMerge } from '../shared/object-merge.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { householdAccess } from './households.js';
 import { readLifecycle } from './lifecycle.js';
-
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
 import { undoSave } from './map-undo.js';
+import { assertMergeEditable, proposeMerge } from './object-merge.js';
 import { objectTypes, readCustomValues } from './object-types.js';
 import { type EncodedImage, profileImages } from './profile-images.js';
 import { relationshipTypes } from './relationship-types.js';
@@ -142,6 +143,7 @@ export function householdMap(database: Database.Database, userId: string, househ
     if (body.contentVersion !== operations.contentVersion()) throw new MapError('content_conflict');
     if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
       throw new MapError('invalid_request', 400);
+    assertMergeEditable(current, 'object', body.id);
     const existing = current.changes.find((change) => change.id === body.id);
     const saved = object(body.id) ?? null;
     const before = existing ? existing.before : saved;
@@ -210,6 +212,14 @@ export function householdMap(database: Database.Database, userId: string, househ
           .get(householdId, body.userId, body.operationId) as { receipt: string } | undefined;
         if (!row) throw new MapError('undo_unavailable');
         const receipt = JSON.parse(row.receipt) as SaveReceipt;
+        const ownDraft = draft();
+        if (
+          receipt.changes.some((change) =>
+            mergeFor(ownDraft, 'object', change.after?.id ?? change.before?.id),
+          ) ||
+          receipt.relationships?.some((change) => mergeFor(ownDraft, 'relationship', change.id))
+        )
+          throw new MapError('undo_draft_overlap');
         if (receipt.contentVersion !== operations.contentVersion())
           throw new MapError('content_conflict');
         const proposed = undoSave(
@@ -234,6 +244,8 @@ export function householdMap(database: Database.Database, userId: string, househ
           isDeepStrictEqual(item, body.conflict),
         );
         if (!conflict) throw new MapError('resolution_conflict');
+        if (conflict.kind === 'object' || conflict.kind === 'relationship')
+          assertMergeEditable(current, conflict.kind, conflict.id);
         if (conflict.kind === 'objectType') {
           return writeDraft(types.resolve(current, conflict.id, conflict.current, body.choice));
         }
@@ -318,6 +330,13 @@ export function householdMap(database: Database.Database, userId: string, househ
         return writeDraft({ ...current, version: current.version + 1 });
       });
     },
+    merge(body: Record<string, unknown>) {
+      return transaction(() => {
+        operations.assertEditable();
+        checkedDraft(body.version);
+        return writeDraft(proposeMerge(readState(), body, types, edges, images));
+      });
+    },
     proposeObjectType(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
@@ -327,7 +346,9 @@ export function householdMap(database: Database.Database, userId: string, househ
     proposeRelationship(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        const result = edges.propose(checkedDraft(body.version), body);
+        const current = checkedDraft(body.version);
+        assertMergeEditable(current, 'relationship', body.id);
+        const result = edges.propose(current, body);
         return {
           ...writeDraft(result.draft),
           ...(result.existingId ? { existingId: result.existingId } : {}),
@@ -347,6 +368,7 @@ export function householdMap(database: Database.Database, userId: string, househ
         if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
           throw new MapError('invalid_request', 400);
         const id = body.id;
+        assertMergeEditable(current, 'object', id);
         const existing = current.changes.find((change) => change.id === id);
         const before = existing ? existing.before : (object(id) ?? null);
         if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('object_conflict');
@@ -425,6 +447,9 @@ export function householdMap(database: Database.Database, userId: string, househ
         operations.assertEditable();
         const current = checkedDraft(body.version);
         if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
+        const merge = mergeFor(current, body.kind as string, body.id);
+        if (merge)
+          return writeDraft({ ...withoutMerge(current, merge), version: current.version + 1 });
         if (body.kind === 'object') {
           const change = current.changes.find((item) => item.id === body.id);
           if (!change) throw new MapError('draft_conflict');
@@ -564,6 +589,21 @@ export function householdMap(database: Database.Database, userId: string, househ
                 before: change.before,
                 after,
                 type,
+                ...(change.merge
+                  ? {
+                      merge: {
+                        survivorId: change.merge.survivorId,
+                        absorbedId: change.merge.absorbedId,
+                        identityConfirmed: change.merge.identityConfirmed,
+                        objects: change.merge.objects,
+                        types: change.merge.types,
+                        relationships: change.merge.relationships,
+                        relationshipTypes: change.merge.relationshipTypes,
+                        objectNames: change.merge.objectNames,
+                        ...(change.merge.imageCopy ? { imageCopy: change.merge.imageCopy } : {}),
+                      },
+                    }
+                  : {}),
                 ...(beforeType && !isDeepStrictEqual(beforeType, type) ? { beforeType } : {}),
               });
             }
@@ -580,10 +620,10 @@ export function householdMap(database: Database.Database, userId: string, househ
                 receipt.savedAt,
                 JSON.stringify(receipt.changes),
               );
-            writeDraft({ version: current.version + 1, changes: [] });
             database
               .prepare('INSERT INTO map_save VALUES (?, ?, ?, ?, ?)')
               .run(body.operationId, householdId, userId, current.version, JSON.stringify(receipt));
+            writeDraft({ version: current.version + 1, changes: [] });
             operations.complete(registered.operationId);
             return { receipt };
           })();

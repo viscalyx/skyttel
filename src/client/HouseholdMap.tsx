@@ -27,6 +27,7 @@ import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js
 import { LifecycleDetails, LifecycleEditor, LifecycleStatus } from './Lifecycle.js';
 import { MapHistory } from './MapHistory.js';
 import { MapRequestError, request } from './map-request.js';
+import { MergeSourceDetails, ObjectMerge } from './ObjectMerge.js';
 import {
   CustomFieldsDetails,
   CustomFieldsEditor,
@@ -77,6 +78,7 @@ async function readOperations(path: string, householdId: string, current: MapSta
 export function HouseholdMap({ householdId }: { householdId: string }) {
   const path = `/api/households/${encodeURIComponent(householdId)}/map`;
   const [state, setState] = useState<MapState | null>(null);
+  const [mergeOpen, setMergeOpen] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [edgeEditor, setEdgeEditor] = useState<{
     id: string;
@@ -156,6 +158,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     setQuery('');
     setTypeFilter('');
     setState(null);
+    setMergeOpen(false);
     setOperations([]);
     setEditor(null);
     setEdgeEditor(null);
@@ -390,6 +393,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
 
   async function action(
     kind:
+      | 'merge'
       | 'draft'
       | 'relationship'
       | 'object-type'
@@ -437,6 +441,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               : 'Förslaget finns i ditt privata utkast. Kartan är inte ändrad.',
         );
       }
+      setMergeOpen(false);
       setEditor(null);
       setEdgeEditor(null);
       setTypeEditor(null);
@@ -448,6 +453,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
       if (
         failure instanceof MapRequestError &&
         [
+          'merge_choices_required',
+          'merge_review_required',
+          'merge_conflict',
+          'duplicate_relationship',
           'invalid_custom_value',
           'invalid_type_definition',
           'invalid_relationship_type',
@@ -1175,6 +1184,30 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               >
                 Nytt objekt
               </button>
+              <button
+                type="button"
+                disabled={pending || dirty || blocked}
+                onClick={() => {
+                  setEditor(null);
+                  setEdgeEditor(null);
+                  setMergeOpen(true);
+                  setDirty(true);
+                }}
+              >
+                Slå samman objekt
+              </button>
+              {mergeOpen && (
+                <ObjectMerge
+                  state={state}
+                  selectedId={selection?.kind === 'object' ? selection.id : undefined}
+                  disabled={pending || blocked}
+                  onSubmit={(body) => void action('merge', body)}
+                  onClose={() => {
+                    setMergeOpen(false);
+                    setDirty(false);
+                  }}
+                />
+              )}
               {editor && (
                 <form
                   onSubmit={(event) => {
@@ -1621,6 +1654,38 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       {!change.after ? 'Borttagning' : !change.before ? 'Nytt objekt' : 'Ändring'}:{' '}
                       {change.after?.name ?? change.before?.name}
                     </h3>
+                    {change.merge && (
+                      <div>
+                        <h4>Sammanslagning</h4>
+                        <MergeSourceDetails merge={change.merge} />
+                        <p>
+                          Identitet {change.merge.absorbedId} tas in i {change.merge.survivorId}.
+                        </p>
+                        <p>
+                          {change.merge.identityConfirmed
+                            ? 'Samma företeelse är uttryckligen bekräftad.'
+                            : 'Identiteten är inte bekräftad. Hela sparandet är blockerat.'}
+                        </p>
+                        <p>
+                          För att rätta: kasta sammanslagningen, rätta eventuella tidigare förslag
+                          och välj objekten igen. Tidigare egna förslag återkommer; övriga förslag
+                          finns kvar.
+                        </p>
+                        <button
+                          type="button"
+                          disabled={pending || blocked || dirty}
+                          onClick={() =>
+                            void action('discard-change', {
+                              version: state.draft.version,
+                              kind: 'object',
+                              id: change.id,
+                            })
+                          }
+                        >
+                          Kasta sammanslagningen för att rätta
+                        </button>
+                      </div>
+                    )}
                     <h4>Sparat underlag</h4>
                     {details(
                       change.before,

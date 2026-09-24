@@ -158,7 +158,10 @@ export function draftConflicts(state: MapState): DraftConflict[] {
           (edge) =>
             (edge.sourceId === change.id || edge.targetId === change.id) &&
             !state.draft.relationships?.some(
-              (proposal) => proposal.id === edge.id && !proposal.after,
+              (proposal) =>
+                proposal.id === edge.id &&
+                (!proposal.after ||
+                  (proposal.after.sourceId !== change.id && proposal.after.targetId !== change.id)),
             ),
         );
     return (current?.revision ?? null) !== (change.before?.revision ?? null) ||

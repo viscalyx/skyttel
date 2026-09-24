@@ -1,5 +1,8 @@
 # Läs historik och ångra ett sparande
 
+Även en [sammanslagning av objekt](object-merge.md) kan ångras genom
+samma flöde, med ursprungliga identiteter och samband bevarade.
+
 Alla hushållets medlemmar kan läsa **Ändringshistorik**. Välj **Visa
 historik** för att se sparade ändringsgrupper. Varje grupp hör till ett
 helt sparande och visar tidigare och nya värden, objekt, samband och

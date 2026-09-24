@@ -6,6 +6,9 @@ till motsvarande automatiserade integrationstester.
 
 ## Områden
 
+- [Sammanslagning](object-merge.md): uttrycklig identitet, val av uppgifter
+  och samband, privata förslag, avbrott, omstart och ångring av hela sparandet.
+
 - [Profilbilder](profile-images.md): privata bildförslag, formatfel,
   gränser, omstart, bildbyte, borttagning, ångring, kvitton och bildåtkomst.
 

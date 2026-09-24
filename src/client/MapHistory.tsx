@@ -9,6 +9,7 @@ import type {
 import { FinancialFactsDetails } from './FinancialFacts.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
+import { MergeSourceDetails } from './ObjectMerge.js';
 import { CustomFieldsDetails, ObjectTypeDetails } from './ObjectTypes.js';
 import { ProfileImage } from './ProfileImage.js';
 import { relationshipLabel } from './RelationshipEditor.js';
@@ -195,6 +196,13 @@ export function MapHistory({
               {receipt.changes.map((change) => (
                 <div key={change.after?.id ?? change.before?.id}>
                   <h4>Objekt: {change.after?.name ?? change.before?.name}</h4>
+                  {change.merge && <MergeSourceDetails merge={change.merge} />}
+                  {change.merge && (
+                    <p>
+                      Sammanslagning: identitet {change.merge.absorbedId} tas in i{' '}
+                      {change.merge.survivorId}. Samma företeelse är uttryckligen bekräftad.
+                    </p>
+                  )}
                   <h5>Före sparandet</h5>
                   <ObjectDetails
                     value={change.before}

@@ -74,6 +74,13 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
       ),
     ),
   );
+  routes.post('/households/:id/map/merge', (context) =>
+    context.json(
+      householdMap(database, context.get('userId'), context.req.param('id')).merge(
+        context.get('body'),
+      ),
+    ),
+  );
   routes.post('/households/:id/map/draft', (context) =>
     context.json(
       householdMap(database, context.get('userId'), context.req.param('id')).propose(

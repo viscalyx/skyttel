@@ -5,6 +5,19 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Reversible object merges
+
+Keep a database backup with the application image that can read it before
+upgrade. Merge proposals and history retain identity, relationship and image
+copy information. Use the upgraded application with this content. To return
+to an older image, stop the application and restore its matching backup.
+Reload open browser sessions after rollout.
+
+Include merge records and original and copied image versions in full
+content recovery. Apply the same access and retention rules as other
+household history. Erasure tools must follow image copies and remove
+affected merge snapshots and private proposals as well as current content.
+
 ### Private profile images
 
 Back up the persistent database and retain its matching image before upgrade.

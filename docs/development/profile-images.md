@@ -37,6 +37,11 @@ values in the following JSON:
 - `map_save.receipt`: `changes[].before` and `changes[].after`.
 - `map_history.changes`: the same saved object changes used for history.
 
+Explicit merges can copy an image to a version owned by the surviving
+object. Include `merge.objects[].profileImageId` and the copy lineage in
+all three locations. See [object merge persistence](object-merge.md) for
+the exact inventory and erasure obligations for original and copied images.
+
 Preserve all of these references and the needed BLOBs together during full
 export and import. Validate household and object ownership, image bounds,
 format and missing references before an atomic import. Remap creator and

@@ -73,6 +73,20 @@ export interface DraftChange {
   restoreRevision?: number;
   undo?: true;
   undoFields?: string[];
+  merge?: ObjectMerge;
+}
+export interface ObjectMerge {
+  survivorId: string;
+  absorbedId: string;
+  identityConfirmed: boolean;
+  objects: MapObject[];
+  types: ObjectType[];
+  relationships: MapRelationship[];
+  relationshipTypes: RelationshipType[];
+  objectNames: Record<string, string>;
+  previousChanges: DraftChange[];
+  previousRelationships: DraftRelationshipChange[];
+  imageCopy?: { sourceObjectId: string; sourceImageId: string; copiedImageId: string };
 }
 export interface MapDraft {
   version: number;
@@ -106,6 +120,7 @@ export interface SaveReceipt {
     after: MapObject | null;
     type: ObjectType;
     beforeType?: ObjectType;
+    merge?: Omit<ObjectMerge, 'previousChanges' | 'previousRelationships'>;
   }[];
 }
 

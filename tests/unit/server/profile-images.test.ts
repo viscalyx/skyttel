@@ -469,41 +469,44 @@ test.each(['draft', 'save', 'access'] as const)(
   },
 );
 
-test('a custom field named profileImageId cannot grant access to another member’s private image', async () => {
-  await upload(await sourceImage());
-  const privateId = (await read()).draft.changes[0].after?.profileImageId;
-  const { actor } = await member();
-  const state = await read(actor);
-  const type = state.types[0];
-  expect(
-    (
-      await actor.json(`${path}/object-type`, {
-        version: 0,
-        id: type.id,
-        baseRevision: type.revision,
-        value: {
-          ...type,
-          fields: [{ id: 'profileImageId', name: 'Vanlig text', description: '', kind: 'text' }],
-        },
-      })
-    ).status,
-  ).toBe(200);
-  expect(
-    (
-      await actor.json(`${path}/draft`, {
-        version: 1,
-        id: 'other',
-        baseRevision: null,
-        value: {
-          typeId: type.id,
-          name: 'Annat objekt',
-          description: '',
-          customValues: { profileImageId: privateId },
-        },
-      })
-    ).status,
-  ).toBe(200);
-  expect((await actor.request(`${images}/${privateId}`)).status).toBe(404);
-  await save('text-only', actor);
-  expect((await actor.request(`${images}/${privateId}`)).status).toBe(404);
-});
+test.each(['profileImageId', 'sourceImageId', 'copiedImageId'])(
+  'a custom field named %s cannot grant access to another member’s private image',
+  async (fieldId) => {
+    await upload(await sourceImage());
+    const privateId = (await read()).draft.changes[0].after?.profileImageId;
+    const { actor } = await member();
+    const state = await read(actor);
+    const type = state.types[0];
+    expect(
+      (
+        await actor.json(`${path}/object-type`, {
+          version: 0,
+          id: type.id,
+          baseRevision: type.revision,
+          value: {
+            ...type,
+            fields: [{ id: fieldId, name: 'Vanlig text', description: '', kind: 'text' }],
+          },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await actor.json(`${path}/draft`, {
+          version: 1,
+          id: 'other',
+          baseRevision: null,
+          value: {
+            typeId: type.id,
+            name: 'Annat objekt',
+            description: '',
+            customValues: { [fieldId]: privateId },
+          },
+        })
+      ).status,
+    ).toBe(200);
+    expect((await actor.request(`${images}/${privateId}`)).status).toBe(404);
+    await save('text-only', actor);
+    expect((await actor.request(`${images}/${privateId}`)).status).toBe(404);
+  },
+);

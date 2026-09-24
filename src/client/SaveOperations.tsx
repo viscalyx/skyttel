@@ -51,6 +51,12 @@ export function receiptMessage(receipt: SaveReceipt) {
 }
 
 export function rejectionMessage(code: string) {
+  if (code === 'merge_choices_required')
+    return 'Välj uttryckligen varje uppgift som skiljer sig och hur varje samband ska hanteras.';
+  if (code === 'merge_review_required')
+    return 'Detta ingår i en sammanslagning. Kasta sammanslagningen för att rätta; tidigare egna förslag återkommer. Välj sedan objekten igen och granska hela skillnaden.';
+  if (code === 'merge_conflict')
+    return 'Underlaget för sammanslagningen har ändrats. Hämta aktuellt underlag och välj objekten igen.';
   if (code === 'restoration_conflict')
     return 'Det borttagna innehållet har ändrats sedan återställningsförslaget skapades. Inget sparades. Hämta aktuellt underlag, kasta det gamla återställningsförslaget och välj sparandet i historiken igen.';
   if (code === 'undo_draft_overlap')
