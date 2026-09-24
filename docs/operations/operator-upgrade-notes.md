@@ -5,6 +5,20 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Editable directed relationship types
+
+Back up the persistent database and retain its matching image before upgrade.
+Startup adds storage for direction labels and private relationship type
+proposals. Existing definitions and content remain. Use the upgraded image
+with this database. Stop the application and restore the matching backup
+before returning to an older image.
+
+Relationship definitions and direction labels occur in private drafts,
+receipts, and history. Apply existing backup access restrictions and retention
+rules to these records. Clients that describe a whole draft or save must
+include relationship type changes. Existing definitions without a reverse
+label keep their original direction until a member supplies both labels.
+
 ### Ended content and recoverable removals
 
 Back up the persistent database and retain its matching image before upgrade.

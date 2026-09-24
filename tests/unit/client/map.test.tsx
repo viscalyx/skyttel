@@ -76,6 +76,145 @@ async function save() {
   await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Sparat:'));
 }
 
+test('relationship type forms review both labels and show one edge from either object', async () => {
+  const initial = await (await client.request(path)).json();
+  for (const [version, id, name] of [
+    [0, 'bike', 'Cykeln'],
+    [1, 'garage', 'Garaget'],
+  ] as const) {
+    await client.json(`${path}/draft`, {
+      version,
+      id,
+      baseRevision: null,
+      value: { typeId: initial.types[0].id, name, description: '' },
+    });
+  }
+  await open();
+  await userEvent.click(screen.getByRole('button', { name: 'Ny sambandstyp' }));
+  await userEvent.type(screen.getByLabelText('Sambandstypens namn'), 'Förvaring');
+  await userEvent.type(screen.getByLabelText('Sambandstypens beskrivning'), 'Hushållets platser');
+  await userEvent.type(screen.getByLabelText('Benämning från startobjektet'), 'förvaras i');
+  await userEvent.type(screen.getByLabelText('Benämning från målobjektet'), 'innehåller');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt samband' }));
+  await userEvent.selectOptions(screen.getByLabelText('Från objekt'), 'bike');
+  await userEvent.selectOptions(screen.getByLabelText('Till objekt'), 'garage');
+  await userEvent.selectOptions(
+    screen.getByLabelText('Sambandstyp'),
+    screen.getByRole('option', { name: 'Förvaring' }),
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+  await waitFor(() =>
+    expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+      'Cykeln → förvaras i → Garaget',
+    ),
+  );
+  await save();
+  expect(screen.getByRole('status').textContent).toContain('Förvaring (sambandstyp)');
+  await userEvent.click(screen.getByRole('button', { name: 'Garaget' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Samband för Garaget' })).getByRole('button', {
+      name: 'Garaget → innehåller → Cykeln',
+    }),
+  );
+  expect((screen.getByLabelText('Från objekt') as HTMLSelectElement).value).toBe('bike');
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng sambandet utan att skicka' }));
+  await userEvent.click(screen.getByText('Sambandstyper och riktning'));
+  await userEvent.click(screen.getByRole('button', { name: 'Ändra sambandstyp: Förvaring' }));
+  await userEvent.clear(screen.getByLabelText('Sambandstypens namn'));
+  await userEvent.type(screen.getByLabelText('Sambandstypens namn'), 'Plats');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }));
+  await waitFor(() =>
+    expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+      'Ändrad sambandstyp: Plats',
+    ),
+  );
+  await save();
+  await userEvent.click(screen.getByRole('button', { name: 'Ändra sambandstyp: Plats' }));
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Stäng sambandstypen utan att skicka' }),
+  );
+  const saved = await (await client.request(path)).json();
+  expect(saved.relationships).toHaveLength(1);
+  expect(saved.relationships[0]).toMatchObject({
+    sourceId: 'bike',
+    targetId: 'garage',
+    revision: 1,
+  });
+});
+
+test('relationship type conflict review offers merged independent corrections and the current definition', async () => {
+  const definition = {
+    name: 'Förvaring',
+    description: 'Förvaringsplats',
+    forwardLabel: 'förvaras i',
+    reverseLabel: 'innehåller',
+  };
+  await client.json(`${path}/relationship-type`, {
+    version: 0,
+    id: 'storage',
+    baseRevision: null,
+    value: definition,
+  });
+  await client.json(`${path}/save`, { version: 1, operationId: 'initial' });
+  fixture.setSubject('member');
+  const other = fixture.client();
+  await other.signIn();
+  const { user } = await (await other.request('/api/bootstrap')).json();
+  const { code } = await (
+    await client.json(`/api/households/${householdId}/invitations`, { userId: user.id })
+  ).json();
+  await other.json('/api/invitations/accept', { code });
+  await client.json(`${path}/relationship-type`, {
+    version: 2,
+    id: 'storage',
+    baseRevision: 1,
+    value: { ...definition, name: 'Plats' },
+  });
+  await other.json(`${path}/relationship-type`, {
+    version: 0,
+    id: 'storage',
+    baseRevision: 1,
+    value: { ...definition, description: 'Ny förklaring', reverseLabel: 'rymmer' },
+  });
+  await other.json(`${path}/save`, { version: 1, operationId: 'other' });
+  await open();
+  const review = screen.getByRole('region', { name: 'Hela mitt utkast' });
+  expect(review.textContent).toContain('Mitt förslag med oberoende rättelser bevarade');
+  await userEvent.click(screen.getByRole('button', { name: 'Behåll min sambandstyp' }));
+  await waitFor(() => expect(review.textContent).not.toContain('Konflikt: sparad sambandstyp'));
+  expect(review.textContent).toContain('Ny förklaring');
+  await save();
+  await client.json(`${path}/relationship-type`, {
+    version: 5,
+    id: 'storage',
+    baseRevision: 3,
+    value: { ...definition, name: 'Mitt förslag' },
+  });
+  await other.json(`${path}/relationship-type`, {
+    version: 2,
+    id: 'storage',
+    baseRevision: 3,
+    value: { ...definition, name: 'Annans rättelse' },
+  });
+  await other.json(`${path}/save`, { version: 3, operationId: 'other-again' });
+  cleanup();
+  await open();
+  await screen.findByRole('button', { name: 'Använd sparad sambandstyp' });
+  await userEvent.click(screen.getByRole('button', { name: 'Använd sparad sambandstyp' }));
+  await waitFor(() =>
+    expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+      'Inga förslag i utkastet',
+    ),
+  );
+  expect(
+    (await (await client.request(path)).json()).relationshipTypes.find(
+      (type: { id: string }) => type.id === 'storage',
+    ).name,
+  ).toBe('Annans rättelse');
+});
+
 test('an update rejects an open form, preserves unsent text and explains how to recover', async () => {
   await open();
   render(<BuildNotice />);

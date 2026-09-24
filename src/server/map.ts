@@ -13,6 +13,7 @@ import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
 import { objectTypes, readCustomValues } from './object-types.js';
+import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
 
 export { MapError } from './map-error.js';
@@ -20,6 +21,7 @@ export { MapError } from './map-error.js';
 export function householdMap(database: Database.Database, userId: string, householdId: string) {
   const edges = relationships(database, householdId);
   const types = objectTypes(database, householdId, userId);
+  const edgeTypes = relationshipTypes(database, householdId);
   const operations = mapOperations(database, userId, householdId);
   function authorize() {
     if (!householdAccess(database, userId, householdId)) throw new MapError('forbidden', 403);
@@ -27,10 +29,16 @@ export function householdMap(database: Database.Database, userId: string, househ
   function draft(): MapDraft {
     const row = database
       .prepare(
-        'SELECT version, changes, relationships, objectTypes FROM map_draft WHERE householdId = ? AND userId = ?',
+        'SELECT version, changes, relationships, objectTypes, relationshipTypes FROM map_draft WHERE householdId = ? AND userId = ?',
       )
       .get(householdId, userId) as
-      | { version: number; changes: string; relationships: string; objectTypes: string }
+      | {
+          version: number;
+          changes: string;
+          relationships: string;
+          objectTypes: string;
+          relationshipTypes: string;
+        }
       | undefined;
     return row
       ? {
@@ -38,13 +46,16 @@ export function householdMap(database: Database.Database, userId: string, househ
           changes: JSON.parse(row.changes),
           ...(row.relationships !== '[]' ? { relationships: JSON.parse(row.relationships) } : {}),
           ...(row.objectTypes !== '[]' ? { objectTypes: JSON.parse(row.objectTypes) } : {}),
+          ...(row.relationshipTypes !== '[]'
+            ? { relationshipTypes: JSON.parse(row.relationshipTypes) }
+            : {}),
         }
       : { version: 0, changes: [] };
   }
   function writeDraft(value: MapDraft) {
     database
-      .prepare(`INSERT INTO map_draft (householdId, userId, version, changes, relationships, objectTypes) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(householdId, userId)
-      DO UPDATE SET version = excluded.version, changes = excluded.changes, relationships = excluded.relationships, objectTypes = excluded.objectTypes`)
+      .prepare(`INSERT INTO map_draft (householdId, userId, version, changes, relationships, objectTypes, relationshipTypes) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(householdId, userId)
+      DO UPDATE SET version = excluded.version, changes = excluded.changes, relationships = excluded.relationships, objectTypes = excluded.objectTypes, relationshipTypes = excluded.relationshipTypes`)
       .run(
         householdId,
         userId,
@@ -52,6 +63,7 @@ export function householdMap(database: Database.Database, userId: string, househ
         JSON.stringify(value.changes),
         JSON.stringify(value.relationships ?? []),
         JSON.stringify(value.objectTypes ?? []),
+        JSON.stringify(value.relationshipTypes ?? []),
       );
     return value;
   }
@@ -150,6 +162,9 @@ export function householdMap(database: Database.Database, userId: string, househ
         if (conflict.kind === 'objectType') {
           return writeDraft(types.resolve(current, conflict.id, conflict.current, body.choice));
         }
+        if (conflict.kind === 'relationshipType') {
+          return writeDraft(edgeTypes.resolve(current, conflict.id, conflict.current, body.choice));
+        }
         if (body.choice === 'proposed' && conflict.duplicates)
           throw new MapError('duplicate_relationship');
         if (body.choice === 'proposed' && conflict.missingEndpoints)
@@ -210,6 +225,12 @@ export function householdMap(database: Database.Database, userId: string, househ
           ...writeDraft(result.draft),
           ...(result.existingId ? { existingId: result.existingId } : {}),
         };
+      });
+    },
+    proposeRelationshipType(body: Record<string, unknown>) {
+      return transaction(() => {
+        operations.assertEditable();
+        return writeDraft(edgeTypes.propose(checkedDraft(body.version), body));
       });
     },
     propose(body: Record<string, unknown>) {
@@ -291,7 +312,8 @@ export function householdMap(database: Database.Database, userId: string, househ
             if (
               !current.changes.length &&
               !current.relationships?.length &&
-              !current.objectTypes?.length
+              !current.objectTypes?.length &&
+              !current.relationshipTypes?.length
             )
               throw new MapError('empty_draft');
             const receipt: SaveReceipt = {
@@ -305,6 +327,8 @@ export function householdMap(database: Database.Database, userId: string, househ
             };
             const definitionChanges = types.save(current);
             if (definitionChanges.length) receipt.objectTypes = definitionChanges;
+            const relationshipDefinitions = edgeTypes.save(current);
+            if (relationshipDefinitions.length) receipt.relationshipTypes = relationshipDefinitions;
             for (const change of current.changes) {
               if (change.after?.identity === 'unresolved')
                 throw new MapError('unresolved_identity');

@@ -77,6 +77,15 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
       ),
     ),
   );
+  routes.post('/households/:id/map/relationship-type', (context) =>
+    context.json(
+      householdMap(
+        database,
+        context.get('userId'),
+        context.req.param('id'),
+      ).proposeRelationshipType(context.get('body')),
+    ),
+  );
   routes.post('/households/:id/map/resolve', (context) =>
     context.json(
       householdMap(database, context.get('userId'), context.req.param('id')).resolve(

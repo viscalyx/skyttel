@@ -10,9 +10,11 @@ import { proposedRelationships } from '../shared/map.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
+import { relationshipTypes } from './relationship-types.js';
 
 // All operations run inside the map's authorized, immediate transaction.
 export function relationships(database: Database.Database, householdId: string) {
+  const definitions = relationshipTypes(database, householdId);
   function read(): MapRelationship[] {
     return database
       .prepare(
@@ -34,11 +36,7 @@ export function relationships(database: Database.Database, householdId: string) 
         };
       });
   }
-  function types(): RelationshipType[] {
-    return database
-      .prepare('SELECT * FROM relationship_type WHERE householdId = ? ORDER BY name, id')
-      .all(householdId) as RelationshipType[];
-  }
+  const types = definitions.read;
   function effective(draft: MapDraft) {
     return [...proposedRelationships(read(), draft.relationships).values()];
   }
@@ -113,7 +111,9 @@ export function relationships(database: Database.Database, householdId: string) 
             objectNames: existing?.objectNames ?? objectNames(draft, before, null),
             type:
               existing?.type ??
-              (types().find((type) => type.id === value.typeId) as RelationshipType),
+              (definitions
+                .effective(draft)
+                .find((type) => type.id === value.typeId) as RelationshipType),
           });
       }
     },
@@ -166,10 +166,12 @@ export function relationships(database: Database.Database, householdId: string) 
           return { draft, existingId: duplicate.id };
         }
       }
-      const type = types().find(
-        (type) => type.id === (after?.typeId ?? before?.typeId ?? existing?.type.id),
-      );
+      const type = definitions
+        .effective(draft)
+        .find((type) => type.id === (after?.typeId ?? before?.typeId ?? existing?.type.id));
       if (!type) throw new MapError('invalid_type', 400);
+      if (body.typeRevision !== undefined && body.typeRevision !== type.revision)
+        throw new MapError('type_conflict');
       const changes = (draft.relationships ?? []).filter((change) => change.id !== body.id);
       if (before || after)
         changes.push({

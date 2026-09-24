@@ -23,7 +23,15 @@ export interface ObjectTypeChange {
   after: ObjectType;
 }
 export type CustomValues = Record<string, string | number | boolean>;
-export type RelationshipType = TypeDefinition;
+export interface RelationshipType extends TypeDefinition {
+  forwardLabel?: string;
+  reverseLabel?: string;
+}
+export interface RelationshipTypeChange {
+  id: string;
+  before: RelationshipType | null;
+  after: RelationshipType;
+}
 
 export interface ObjectValue {
   typeId: string;
@@ -50,6 +58,7 @@ export interface MapDraft {
   changes: DraftChange[];
   relationships?: DraftRelationshipChange[];
   objectTypes?: ObjectTypeChange[];
+  relationshipTypes?: RelationshipTypeChange[];
 }
 export interface MapState {
   userId: string;
@@ -69,6 +78,7 @@ export interface SaveReceipt {
   savedAt: string;
   relationships?: RelationshipChange[];
   objectTypes?: ObjectTypeChange[];
+  relationshipTypes?: RelationshipTypeChange[];
   changes: { before: MapObject | null; after: MapObject | null; type: ObjectType }[];
 }
 
@@ -132,6 +142,15 @@ export function proposedRelationships(
 }
 
 export function proposedObjectTypes(saved: ObjectType[], changes: ObjectTypeChange[] = []) {
+  const result = new Map(saved.map((type) => [type.id, type]));
+  for (const change of changes) result.set(change.id, change.after);
+  return [...result.values()];
+}
+
+export function proposedRelationshipTypes(
+  saved: RelationshipType[],
+  changes: RelationshipTypeChange[] = [],
+) {
   const result = new Map(saved.map((type) => [type.id, type]));
   for (const change of changes) result.set(change.id, change.after);
   return [...result.values()];

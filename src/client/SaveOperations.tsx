@@ -35,6 +35,7 @@ export function checkOperation(operation: SaveOperation, attempt: SaveAttempt) {
 export function receiptMessage(receipt: SaveReceipt) {
   const changes = [
     ...(receipt.objectTypes ?? []).map((change) => `${change.after.name} (objekttyp)`),
+    ...(receipt.relationshipTypes ?? []).map((change) => `${change.after.name} (sambandstyp)`),
     ...receipt.changes.map((change) => change.after?.name ?? change.before?.name),
     ...(receipt.relationships ?? []).map(
       (change) => `${change.type.name} (${change.after ? 'samband' : 'borttaget samband'})`,
@@ -44,6 +45,10 @@ export function receiptMessage(receipt: SaveReceipt) {
 }
 
 export function rejectionMessage(code: string) {
+  if (code === 'invalid_relationship_type')
+    return 'Ange sambandstypens namn, beskrivning och benämningar från båda hållen. Sambandstyper har inga egna fält.';
+  if (code === 'duplicate_relationship')
+    return 'Samma samband finns redan. Inget sparades. Hämta aktuellt underlag och använd det befintliga sambandet eller ändra ditt förslag.';
   if (code === 'invalid_custom_value')
     return 'Kontrollera de egna fälten: ange text, ett giltigt tal, datum eller ja/nej enligt fältets värdeslag.';
   if (code === 'invalid_type_definition')

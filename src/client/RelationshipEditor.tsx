@@ -13,8 +13,15 @@ export function relationshipLabel(
   value: RelationshipValue,
   state: MapState,
   objects: Map<string, { name: string }>,
+  perspectiveId?: string,
 ) {
-  return `${objects.get(value.sourceId)?.name ?? value.sourceId} → ${state.relationshipTypes.find((type) => type.id === value.typeId)?.name ?? value.typeId} → ${value.targetId ? (objects.get(value.targetId)?.name ?? value.targetId) : knowledgeLabels[value.knowledge]}${value.knowledge === 'uncertain' ? ' (Osäkert uppgivet)' : ''}`;
+  const type = state.relationshipTypes.find((type) => type.id === value.typeId);
+  const source = objects.get(value.sourceId)?.name ?? value.sourceId;
+  const target = value.targetId
+    ? (objects.get(value.targetId)?.name ?? value.targetId)
+    : knowledgeLabels[value.knowledge];
+  const reverse = perspectiveId === value.targetId && type?.reverseLabel;
+  return `${reverse ? target : source} → ${reverse || type?.forwardLabel || type?.name || value.typeId} → ${reverse ? source : target}${value.knowledge === 'uncertain' ? ' (Osäkert uppgivet)' : ''}`;
 }
 export function RelationshipEditor({
   state,
@@ -32,6 +39,9 @@ export function RelationshipEditor({
   onClose: () => void;
 }) {
   const [value, setValue] = useState(initial.value);
+  const [typeRevisions] = useState(
+    () => new Map(state.relationshipTypes.map((type) => [type.id, type.revision])),
+  );
   const stale = initial.version !== state.draft.version;
   const choices = [...objects.values()].filter(
     (object) => !state.draft.changes.some((change) => change.id === object.id && !change.after),
@@ -56,7 +66,7 @@ export function RelationshipEditor({
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit({ ...initial, value });
+        onSubmit({ ...initial, value, typeRevision: typeRevisions.get(value.typeId) });
       }}
     >
       <fieldset disabled={disabled || stale}>

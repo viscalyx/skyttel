@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
+import {
+  type DraftConflict,
+  draftConflicts,
+  resolvedRelationshipType,
+} from '../shared/draft-conflicts.js';
 import type {
   MapDraft,
   MapObject,
@@ -7,11 +11,16 @@ import type {
   MapState,
   ObjectType,
   ObjectValue,
+  RelationshipType,
   RelationshipValue,
   SaveOperation,
   SaveReceipt,
 } from '../shared/map.js';
-import { proposedObjectTypes, proposedRelationships } from '../shared/map.js';
+import {
+  proposedObjectTypes,
+  proposedRelationships,
+  proposedRelationshipTypes,
+} from '../shared/map.js';
 import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js';
 import { LifecycleDetails, LifecycleEditor, LifecycleStatus } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
@@ -22,6 +31,7 @@ import {
   ObjectTypeEditor,
 } from './ObjectTypes.js';
 import { RelationshipEditor, relationshipLabel } from './RelationshipEditor.js';
+import { RelationshipTypeDetails, RelationshipTypeEditor } from './RelationshipTypes.js';
 import {
   checkOperation,
   checkSaveIdentity,
@@ -71,6 +81,11 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     version: number;
     baseRevision: number | null;
   } | null>(null);
+  const [edgeTypeEditor, setEdgeTypeEditor] = useState<{
+    type: RelationshipType;
+    version: number;
+    baseRevision: number | null;
+  } | null>(null);
   const [dirty, setDirty] = useState(false);
   const [query, setQuery] = useState('');
   const [pending, setPending] = useState(false);
@@ -90,6 +105,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     setEditor(null);
     setEdgeEditor(null);
     setTypeEditor(null);
+    setEdgeTypeEditor(null);
     setDirty(false);
     saveAttempt.current = null;
     setStatus('');
@@ -222,6 +238,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
         setEditor(null);
         setEdgeEditor(null);
         setTypeEditor(null);
+        setEdgeTypeEditor(null);
       }
       const { operations: recent } = await request<{ operations: SaveOperation[] }>(
         `${path}/operations`,
@@ -261,7 +278,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   }
 
   async function action(
-    kind: 'draft' | 'relationship' | 'object-type' | 'discard' | 'resolve',
+    kind: 'draft' | 'relationship' | 'object-type' | 'relationship-type' | 'discard' | 'resolve',
     body: unknown,
   ) {
     if (!state || pending || blocked) return;
@@ -288,7 +305,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
         }
         setStatus(
           edge
-            ? `Sambandet finns redan: ${relationshipLabel(edge, latest, objects)}. Ingen dubblett skapades.`
+            ? `Sambandet finns redan: ${relationshipLabel(edge, { ...latest, relationshipTypes: proposedRelationshipTypes(latest.relationshipTypes, latest.draft.relationshipTypes) }, objects)}. Ingen dubblett skapades.`
             : 'Det befintliga sambandet har ändrats. Granska aktuellt underlag.',
         );
       } else {
@@ -304,6 +321,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
       setEditor(null);
       setEdgeEditor(null);
       setTypeEditor(null);
+      setEdgeTypeEditor(null);
       setDirty(false);
       setBlocked(false);
       newButton.current?.focus();
@@ -313,6 +331,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
         [
           'invalid_custom_value',
           'invalid_type_definition',
+          'invalid_relationship_type',
           'field_kind_in_use',
           'field_removal_unsupported',
         ].includes(failure.code)
@@ -338,9 +357,16 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   }
 
   const effectiveTypes = proposedObjectTypes(state?.types ?? [], state?.draft.objectTypes);
+  const effectiveEdgeTypes = proposedRelationshipTypes(
+    state?.relationshipTypes ?? [],
+    state?.draft.relationshipTypes,
+  );
+  const effectiveState = state
+    ? { ...state, types: effectiveTypes, relationshipTypes: effectiveEdgeTypes }
+    : null;
   const conflicts = state ? draftConflicts(state) : [];
   function conflictReview(conflict: DraftConflict) {
-    if (conflict.kind === 'objectType') return null;
+    if (conflict.kind === 'objectType' || conflict.kind === 'relationshipType') return null;
     const proposal = (
       conflict.kind === 'object' ? state?.draft.changes : state?.draft.relationships
     )?.find((change) => change.id === conflict.id);
@@ -383,7 +409,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
             </p>
             <ul>
               {conflict.duplicates.map((edge) => (
-                <li key={edge.id}>{relationshipLabel(edge, state, displayed)}</li>
+                <li key={edge.id}>{relationshipLabel(edge, effectiveState ?? state, displayed)}</li>
               ))}
             </ul>
           </>
@@ -441,6 +467,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     if (!state) return;
     const proposal = state.draft.changes.find((change) => change.id === object?.id);
     setTypeEditor(null);
+    setEdgeTypeEditor(null);
     setEdgeEditor(null);
     setEditor({
       typeRevision:
@@ -477,7 +504,8 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     state &&
       (state.draft.changes.length ||
         state.draft.relationships?.length ||
-        state.draft.objectTypes?.length),
+        state.draft.objectTypes?.length ||
+        state.draft.relationshipTypes?.length),
   );
   const unresolved =
     state?.draft.changes.some((change) => change.after?.identity === 'unresolved') ||
@@ -487,6 +515,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     const proposal = state.draft.relationships?.find((change) => change.id === edge?.id);
     setEditor(null);
     setTypeEditor(null);
+    setEdgeTypeEditor(null);
     setEdgeEditor({
       id: edge?.id ?? crypto.randomUUID(),
       version: state.draft.version,
@@ -613,6 +642,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       setEditor(null);
                       setEdgeEditor(null);
                       setDirty(false);
+                      setEdgeTypeEditor(null);
                       setTypeEditor({
                         type,
                         version: state.draft.version,
@@ -635,6 +665,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               setEditor(null);
               setEdgeEditor(null);
               setDirty(true);
+              setEdgeTypeEditor(null);
               setTypeEditor({
                 type: {
                   id: crypto.randomUUID(),
@@ -667,6 +698,86 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               }
               onClose={() => {
                 setTypeEditor(null);
+                setEdgeTypeEditor(null);
+                setDirty(false);
+              }}
+            />
+          )}
+          <details>
+            <summary>Sambandstyper och riktning</summary>
+            <p>
+              Alla medlemmar kan ändra definitionerna, även förifyllda typer. En ändrad definition
+              kopplar inte om objekten.
+            </p>
+            <ul aria-label="Sambandstyper">
+              {effectiveEdgeTypes.map((type) => (
+                <li key={type.id}>
+                  <button
+                    type="button"
+                    disabled={pending || dirty || blocked}
+                    onClick={() => {
+                      const proposal = state.draft.relationshipTypes?.find(
+                        (item) => item.id === type.id,
+                      );
+                      setEditor(null);
+                      setEdgeEditor(null);
+                      setTypeEditor(null);
+                      setDirty(false);
+                      setEdgeTypeEditor({
+                        type,
+                        version: state.draft.version,
+                        baseRevision: proposal
+                          ? (proposal.before?.revision ?? null)
+                          : type.revision,
+                      });
+                    }}
+                  >
+                    Ändra sambandstyp: {type.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <button
+            type="button"
+            disabled={pending || dirty || blocked}
+            onClick={() => {
+              setEditor(null);
+              setEdgeEditor(null);
+              setTypeEditor(null);
+              setDirty(true);
+              setEdgeTypeEditor({
+                type: {
+                  id: crypto.randomUUID(),
+                  householdId,
+                  revision: 0,
+                  name: '',
+                  description: '',
+                },
+                version: state.draft.version,
+                baseRevision: null,
+              });
+            }}
+          >
+            Ny sambandstyp
+          </button>
+          {edgeTypeEditor && (
+            <RelationshipTypeEditor
+              key={edgeTypeEditor.type.id}
+              initial={edgeTypeEditor.type}
+              disabled={pending || blocked}
+              stale={edgeTypeEditor.version !== state.draft.version}
+              onDirty={() => setDirty(true)}
+              onSubmit={(value) =>
+                void action('relationship-type', {
+                  version: edgeTypeEditor.version,
+                  id: edgeTypeEditor.type.id,
+                  baseRevision: edgeTypeEditor.baseRevision,
+                  value,
+                })
+              }
+              onClose={() => {
+                setEdgeTypeEditor(null);
                 setDirty(false);
               }}
             />
@@ -870,6 +981,26 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               </button>
             </form>
           )}
+          {editor && effectiveState && (
+            <section aria-label={`Samband för ${editor.value.name}`}>
+              <h2>Samband för {editor.value.name}</h2>
+              <ul>
+                {[...displayedEdges.values()]
+                  .filter((edge) => edge.sourceId === editor.id || edge.targetId === editor.id)
+                  .map((edge) => (
+                    <li key={edge.id}>
+                      <button
+                        type="button"
+                        disabled={pending || dirty || blocked}
+                        onClick={() => editRelationship(edge)}
+                      >
+                        {relationshipLabel(edge, effectiveState, displayed, editor.id)}
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </section>
+          )}
           <h2>Samband</h2>
           <ul aria-label="Samband">
             {[...displayedEdges.values()].map((edge) => (
@@ -879,14 +1010,16 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   disabled={pending || dirty || blocked}
                   onClick={() => editRelationship(edge)}
                 >
-                  {relationshipLabel(edge, state, displayed)}
+                  {relationshipLabel(edge, effectiveState ?? state, displayed)}
                 </button>
                 <LifecycleStatus value={edge} />
                 {state.draft.relationships?.some((change) => change.id === edge.id) && (
                   <span className="proposed-status">Förslag i ditt utkast</span>
                 )}
                 <details>
-                  <summary>Åtgärder för {relationshipLabel(edge, state, displayed)}</summary>
+                  <summary>
+                    Åtgärder för {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                  </summary>
                   <button
                     type="button"
                     disabled={pending || dirty || blocked}
@@ -908,7 +1041,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           {edgeEditor && (
             <RelationshipEditor
               key={edgeEditor.id}
-              state={state}
+              state={effectiveState ?? state}
               objects={displayed}
               initial={edgeEditor}
               disabled={pending || blocked}
@@ -922,6 +1055,67 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           <section aria-labelledby="draft-title" className="draft-review">
             <h2 id="draft-title">Hela mitt utkast</h2>
             {!hasChanges && <p>Inga förslag i utkastet.</p>}
+            {state.draft.relationshipTypes?.map((change) => (
+              <article key={change.id}>
+                <h3>
+                  {change.before ? 'Ändrad sambandstyp' : 'Ny sambandstyp'}: {change.after.name}
+                </h3>
+                <h4>Sparat underlag</h4>
+                <RelationshipTypeDetails type={change.before} />
+                <h4>Förslag</h4>
+                <RelationshipTypeDetails type={change.after} />
+                {conflicts
+                  .filter(
+                    (conflict) => conflict.kind === 'relationshipType' && conflict.id === change.id,
+                  )
+                  .map((conflict) => (
+                    <div key={conflict.id}>
+                      <h4>Konflikt: sparad sambandstyp</h4>
+                      <RelationshipTypeDetails
+                        type={conflict.kind === 'relationshipType' ? conflict.current : null}
+                      />
+                      {conflict.kind === 'relationshipType' && conflict.current && (
+                        <>
+                          <h4>Mitt förslag med oberoende rättelser bevarade</h4>
+                          <RelationshipTypeDetails
+                            type={resolvedRelationshipType(change, conflict.current)}
+                          />
+                        </>
+                      )}
+                      <p>
+                        Välj definition för utkastet. Oberoende rättelser bevaras när du behåller
+                        ditt förslag. Granska hela utkastet före ett nytt sparbesked.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('resolve', {
+                            version: state.draft.version,
+                            conflict,
+                            choice: 'saved',
+                          })
+                        }
+                      >
+                        Använd sparad sambandstyp
+                      </button>
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('resolve', {
+                            version: state.draft.version,
+                            conflict,
+                            choice: 'proposed',
+                          })
+                        }
+                      >
+                        Behåll min sambandstyp
+                      </button>
+                    </div>
+                  ))}
+              </article>
+            ))}
             {state.draft.objectTypes?.map((change) => (
               <article key={change.id}>
                 <h3>
@@ -1017,7 +1211,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   {change.after
                     ? relationshipLabel(
                         change.after,
-                        state,
+                        { ...state, relationshipTypes: [change.type] },
                         new Map([
                           ...Object.entries(change.objectNames ?? {}).map(
                             ([id, name]) => [id, { name }] as const,

@@ -8,10 +8,12 @@ import type {
   ObjectType,
   ObjectValue,
   RelationshipChange,
+  RelationshipType,
+  RelationshipTypeChange,
   RelationshipValue,
   TypeDefinition,
 } from './map.js';
-import { proposedObjectTypes, proposedRelationships } from './map.js';
+import { proposedObjectTypes, proposedRelationships, proposedRelationshipTypes } from './map.js';
 
 export type DraftConflict = {
   id: string;
@@ -23,6 +25,7 @@ export type DraftConflict = {
   | { kind: 'object'; current: MapObject | null }
   | { kind: 'relationship'; current: MapRelationship | null }
   | { kind: 'objectType'; current: ObjectType | null }
+  | { kind: 'relationshipType'; current: RelationshipType | null }
 );
 
 function sameFact(left?: FinancialFact, right?: FinancialFact) {
@@ -31,6 +34,23 @@ function sameFact(left?: FinancialFact, right?: FinancialFact) {
     left?.value === right?.value &&
     left?.reportedOn === right?.reportedOn
   );
+}
+
+export function resolvedRelationshipType(
+  change: RelationshipTypeChange,
+  current: RelationshipType,
+): RelationshipType {
+  const { before, after } = change;
+  const field = <K extends 'name' | 'description' | 'forwardLabel' | 'reverseLabel'>(key: K) =>
+    before && after[key] === before[key] ? current[key] : after[key];
+  return {
+    ...after,
+    revision: current.revision + 1,
+    name: field('name'),
+    description: field('description'),
+    forwardLabel: field('forwardLabel'),
+    reverseLabel: field('reverseLabel'),
+  };
 }
 
 export function resolvedObjectValue(
@@ -97,6 +117,10 @@ export function resolvedRelationshipValue(
 
 export function draftConflicts(state: MapState): DraftConflict[] {
   const types = proposedObjectTypes(state.types, state.draft.objectTypes);
+  const edgeTypes = proposedRelationshipTypes(
+    state.relationshipTypes,
+    state.draft.relationshipTypes,
+  );
   const conflicts: DraftConflict[] = state.draft.changes.flatMap((change) => {
     const current = state.objects.find((object) => object.id === change.id) ?? null;
     const type =
@@ -134,13 +158,17 @@ export function draftConflicts(state: MapState): DraftConflict[] {
     if ((current?.revision ?? null) !== (change.before?.revision ?? null))
       conflicts.push({ kind: 'objectType', id: change.id, current });
   }
+  for (const change of state.draft.relationshipTypes ?? []) {
+    const current = state.relationshipTypes.find((type) => type.id === change.id) ?? null;
+    if ((current?.revision ?? null) !== (change.before?.revision ?? null))
+      conflicts.push({ kind: 'relationshipType', id: change.id, current });
+  }
   for (const change of state.draft.relationships ?? []) {
     const current = state.relationships.find((value) => value.id === change.id) ?? null;
     const after = resolvedRelationshipValue(change, current);
     const type =
-      state.relationshipTypes.find(
-        (item) => item.id === (after?.typeId ?? current?.typeId ?? change.type.id),
-      ) ?? null;
+      edgeTypes.find((item) => item.id === (after?.typeId ?? current?.typeId ?? change.type.id)) ??
+      null;
     const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
     const duplicates = after
       ? [...proposedRelationships(state.relationships, state.draft.relationships).values()].filter(

@@ -29,6 +29,9 @@ till motsvarande automatiserade integrationstester.
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
   som objektens innehåll.
+- [Sambandstyper och riktning](relationship-types.md): benämningar från
+  båda objekten, redigerbara definitioner, privata förslag, dubbletter
+  och samtidiga sparanden utan delsparande.
 - [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
   försök efter omstart, återförsöka från en annan klient och kontrollera
   privat tillgång.

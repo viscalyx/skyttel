@@ -578,7 +578,9 @@ test('UTKAST-02: a stale discard preserves newer object and relationship proposa
     await newer.goto(app.installation.origin);
     await newer.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await newer.getByLabel('Från objekt').selectOption('lo');
-    await newer.getByLabel('Sambandstyp').selectOption(initial.relationshipTypes[0].id);
+    await newer
+      .getByLabel('Sambandstyp', { exact: true })
+      .selectOption(initial.relationshipTypes[0].id);
     await newer.getByLabel('Till objekt').selectOption('service');
     await newer.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await expect(newer.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
