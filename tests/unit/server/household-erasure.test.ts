@@ -1,8 +1,8 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { chmodSync, existsSync, readdirSync, readFileSync, statSync, watch } from 'node:fs';
 import { dirname, join } from 'node:path';
 import Database from 'better-sqlite3';
-import { unzipSync } from 'fflate';
+import { unzipSync, zipSync } from 'fflate';
 import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
@@ -105,11 +105,11 @@ async function upload(id: string, actor = client, noise = false) {
   return (await readMap(actor)).draft.changes.find((change) => change.id === id)?.after
     ?.profileImageId as string;
 }
-async function proposeMerge(choices: Record<string, string> = {}) {
-  const state = await readMap();
+async function proposeMerge(choices: Record<string, string> = {}, actor = client) {
+  const state = await readMap(actor);
   const objects = mergeObjects(state);
   const relationships = mergeConnections(state, ['a', 'b']);
-  const response = await client.json(`${path}/map/merge`, {
+  const response = await actor.json(`${path}/map/merge`, {
     version: state.draft.version,
     survivorId: 'a',
     absorbedId: 'b',
@@ -541,6 +541,244 @@ test('erasing a former type keeps current values and rebases only erased private
   expect(await (await client.request(`${path}/map/history`)).text()).not.toContain(
     'ERASE-TYPE-VALUE',
   );
+});
+
+test('erasing a former type removes its last historical image reference and bytes but preserves the current image', async () => {
+  for (const id of ['former-image-type', 'current-image-type']) {
+    const state = await readMap();
+    expect(
+      (
+        await client.json(`${path}/map/object-type`, {
+          id,
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          baseRevision: null,
+          value: { name: id, description: '', fields: [] },
+        })
+      ).status,
+    ).toBe(200);
+  }
+  await object('retained-image-object', { typeId: 'former-image-type' });
+  await save('image-object-created');
+  const oldImage = await upload('retained-image-object', client, true);
+  await save('former-image-saved');
+  const oldBytes = Buffer.from(
+    await (await client.request(`${path}/profile-images/${oldImage}`)).arrayBuffer(),
+  );
+  const sentinel = oldBytes.subarray(32, 64);
+  expect(
+    ['', '-wal'].some((suffix) =>
+      existsSync(`${fixture.config.databasePath}${suffix}`)
+        ? readFileSync(`${fixture.config.databasePath}${suffix}`).includes(sentinel)
+        : false,
+    ),
+  ).toBe(true);
+  await object('retained-image-object', { typeId: 'current-image-type', description: oldImage });
+  const currentImage = await upload('retained-image-object', client, true);
+  await save('new-type-and-image');
+  const selection: ErasureSelection = [{ kind: 'objectType', id: 'former-image-type' }];
+  const reviewResponse = await client.json(`${path}/erasure/review`, { selection });
+  expect(reviewResponse.status).toBe(200);
+  const review = await reviewResponse.json();
+  expect(review.objects).toEqual([]);
+  expect(review.imageVersions).toEqual([{ id: oldImage, objectId: 'retained-image-object' }]);
+  expect(review.images).toBe(1);
+  const result = await client.json(`${path}/erasure/execute`, {
+    selection,
+    token: review.token,
+    operationId: 'erase-former-image-type',
+    confirmation: 'RADERA PERMANENT',
+  });
+  expect(result.status).toBe(200);
+  expect((await result.json()).status).toMatchObject({ phase: 'completed', counts: { images: 1 } });
+  expect((await readMap()).objects).toEqual([
+    expect.objectContaining({
+      id: 'retained-image-object',
+      typeId: 'current-image-type',
+      profileImageId: currentImage,
+      description: oldImage,
+    }),
+  ]);
+  expect((await client.request(`${path}/profile-images/${oldImage}`)).status).toBe(404);
+  expect((await client.request(`${path}/profile-images/${currentImage}`)).status).toBe(200);
+  const prepared = await client.json(`${path}/exports`, {});
+  expect(prepared.status).toBe(201);
+  const archiveId = (await prepared.json()).id;
+  const archive = unzipSync(
+    new Uint8Array(await (await client.request(`${path}/exports/${archiveId}`)).arrayBuffer()),
+  );
+  const exported = JSON.parse(Buffer.from(archive['content.json']).toString());
+  expect(exported.images.map((image: { id: string }) => image.id)).toEqual([currentImage]);
+  expect(Buffer.from(archive['images.bin']).includes(sentinel)).toBe(false);
+  expect(exported.objects[0].description).toBe(oldImage);
+  for (const suffix of ['', '-wal', '-journal'])
+    if (existsSync(`${fixture.config.databasePath}${suffix}`))
+      expect(readFileSync(`${fixture.config.databasePath}${suffix}`).includes(sentinel)).toBe(
+        false,
+      );
+  expect(fixture.database.pragma('freelist_count', { simple: true })).toBe(0);
+});
+
+test('erasing historical meaning preserves images still used by current objects, independent history and another owner’s draft', async () => {
+  const initial = await readMap();
+  const formerType = initial.types[0].id;
+  const currentType = initial.types[1].id;
+  for (const id of ['current-reference', 'history-reference', 'private-reference'])
+    await object(id, { typeId: formerType });
+  await save('three-original-objects');
+  const currentImage = await upload('current-reference', client, true);
+  const historicalImage = await upload('history-reference', client, true);
+  const privateImage = await upload('private-reference', client, true);
+  await save('three-original-images');
+  const { actor } = await invite();
+  await object('private-reference', { description: 'Independent private image reference' }, actor);
+  for (const id of ['current-reference', 'history-reference', 'private-reference'])
+    await object(id, { typeId: currentType });
+  await save('new-meaning');
+  await object('history-reference', { description: 'Independent history keeps its earlier image' });
+  await save('independent-history');
+  const latestHistoryImage = await upload('history-reference', client, true);
+  const latestPrivateImage = await upload('private-reference', client, true);
+  await save('replace-current-pictures');
+  const selection: ErasureSelection = [{ kind: 'objectType', id: formerType }];
+  const review = await (await client.json(`${path}/erasure/review`, { selection })).json();
+  expect(review.objects).toEqual([]);
+  expect(review.images).toBe(0);
+  expect((await client.json(`${path}/erasure/execute`, await reviewed(selection))).status).toBe(
+    200,
+  );
+  const state = await readMap(actor);
+  expect(state.draft.changes).toMatchObject([
+    {
+      id: 'private-reference',
+      before: { profileImageId: privateImage, typeId: currentType },
+      after: {
+        profileImageId: privateImage,
+        typeId: currentType,
+        description: 'Independent private image reference',
+      },
+    },
+  ]);
+  for (const image of [currentImage, historicalImage, latestHistoryImage, latestPrivateImage])
+    expect((await client.request(`${path}/profile-images/${image}`)).status).toBe(200);
+  expect((await actor.request(`${path}/profile-images/${privateImage}`)).status).toBe(200);
+  const ready = await (await client.json(`${path}/exports`, {})).json();
+  const archive = unzipSync(
+    new Uint8Array(await (await client.request(`${path}/exports/${ready.id}`)).arrayBuffer()),
+  );
+  const exported = JSON.parse(Buffer.from(archive['content.json']).toString());
+  expect(exported.images.map((image: { id: string }) => image.id).sort()).toEqual(
+    [currentImage, historicalImage, privateImage, latestHistoryImage, latestPrivateImage].sort(),
+  );
+});
+
+test('erasing a private merge’s type removes its orphaned private versions and copy without exposing them or erasing shared source images', async () => {
+  const initial = await readMap();
+  for (const id of ['a', 'b']) await object(id, { name: 'Lo', typeId: initial.types[0].id });
+  const sharedImage = await upload('b', client, true);
+  await save('shared-source-image');
+  const { actor } = await invite();
+  const privateImage = await upload('a', actor, true);
+  await object('a', { typeId: initial.types[1].id }, actor);
+  await proposeMerge({ typeId: 'survivor', profileImageId: 'absorbed' }, actor);
+  const copiedImage = (await readMap(actor)).draft.changes.find((change) => change.id === 'a')
+    ?.after?.profileImageId as string;
+  expect(copiedImage).not.toBe(sharedImage);
+  const selection: ErasureSelection = [{ kind: 'objectType', id: initial.types[1].id }];
+  const review = await (await client.json(`${path}/erasure/review`, { selection })).json();
+  expect(review.objects).toEqual([]);
+  expect(review.images).toBe(2);
+  expect(review.privateImages).toBe(2);
+  expect(review.imageVersions).toEqual([]);
+  expect(JSON.stringify(review)).not.toContain(privateImage);
+  expect(JSON.stringify(review)).not.toContain(copiedImage);
+  const erased = await client.json(`${path}/erasure/execute`, await reviewed(selection));
+  expect(erased.status).toBe(200);
+  expect((await erased.json()).status.counts.images).toBe(2);
+  expect((await readMap()).objects.map(({ id }) => id)).toEqual(['a', 'b']);
+  for (const id of [privateImage, copiedImage])
+    expect((await actor.request(`${path}/profile-images/${id}`)).status).toBe(404);
+  expect((await client.request(`${path}/profile-images/${sharedImage}`)).status).toBe(200);
+  const ready = await (await client.json(`${path}/exports`, {})).json();
+  const archive = unzipSync(
+    new Uint8Array(await (await client.request(`${path}/exports/${ready.id}`)).arrayBuffer()),
+  );
+  const exported = JSON.parse(Buffer.from(archive['content.json']).toString());
+  expect(exported.images.map((image: { id: string }) => image.id)).toEqual([sharedImage]);
+  expect(JSON.stringify(exported)).not.toContain(privateImage);
+  expect(JSON.stringify(exported)).not.toContain(copiedImage);
+});
+
+test('scoped erasure preserves an unrelated orphan image admitted by a complete archive import', async () => {
+  await object('erased-object');
+  await object('unrelated-owner');
+  const existingImage = await upload('unrelated-owner', client, true);
+  await save('archive-original');
+  const readyExport = await (await client.json(`${path}/exports`, {})).json();
+  const parts = unzipSync(
+    new Uint8Array(await (await client.request(`${path}/exports/${readyExport.id}`)).arrayBuffer()),
+  );
+  const content = JSON.parse(Buffer.from(parts['content.json']).toString());
+  const orphanBytes = await sharp({
+    create: { width: 16, height: 16, channels: 3, background: '#eb7534' },
+  })
+    .webp()
+    .toBuffer();
+  content.images.push({
+    ...content.images[0],
+    id: 'unrelated-orphan-image',
+    width: 16,
+    height: 16,
+    offset: parts['images.bin'].length,
+    length: orphanBytes.length,
+    sha256: createHash('sha256').update(orphanBytes).digest('hex'),
+  });
+  parts['images.bin'] = Buffer.concat([parts['images.bin'], orphanBytes]);
+  parts['content.json'] = Buffer.from(JSON.stringify(content));
+  const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
+  for (const part of manifest.parts) {
+    part.bytes = parts[part.path].length;
+    part.sha256 = createHash('sha256').update(parts[part.path]).digest('hex');
+  }
+  parts['manifest.json'] = Buffer.from(JSON.stringify(manifest));
+  const uploadResponse = await client.request(`${path}/imports`, {
+    method: 'POST',
+    headers: {
+      origin: fixture.config.origin,
+      'content-type': 'application/zip',
+      'x-skyttel-content-version': '1',
+    },
+    body: new Uint8Array(zipSync(parts)),
+  });
+  expect(uploadResponse.status, await uploadResponse.clone().text()).toBe(201);
+  const readyImport = await uploadResponse.json();
+  const imported = await client.json(`${path}/imports/${readyImport.id}/confirm`, {
+    contentVersion: 1,
+    confirmed: true,
+  });
+  expect(imported.status).toBe(200);
+  expect((await imported.json()).status).toBe('completed');
+  const selection: ErasureSelection = [{ kind: 'object', id: 'erased-object' }];
+  const review = await (await client.json(`${path}/erasure/review`, { selection })).json();
+  expect(review.images).toBe(0);
+  expect((await client.json(`${path}/erasure/execute`, await reviewed(selection))).status).toBe(
+    200,
+  );
+  const exported = await (await client.json(`${path}/exports`, {})).json();
+  const archive = unzipSync(
+    new Uint8Array(await (await client.request(`${path}/exports/${exported.id}`)).arrayBuffer()),
+  );
+  const result = JSON.parse(Buffer.from(archive['content.json']).toString());
+  expect(result.images.map((image: { id: string }) => image.id).sort()).toEqual(
+    [existingImage, 'unrelated-orphan-image'].sort(),
+  );
+  const orphan = result.images.find(
+    (image: { id: string }) => image.id === 'unrelated-orphan-image',
+  );
+  expect(
+    Buffer.from(archive['images.bin'].subarray(orphan.offset, orphan.offset + orphan.length)),
+  ).toEqual(orphanBytes);
+  expect((await readMap()).objects.map(({ id }) => id)).toEqual(['unrelated-owner']);
 });
 
 test('an old endpoint is removed from another owner’s private proposal without losing its independent end-date conflict', async () => {

@@ -4,7 +4,8 @@ import type { ErasureSelection, ErasureStatus } from '../shared/household-erasur
 import { AdministrationError } from './administration.js';
 import { type ContentMaintenance, contentMaintenance } from './content-maintenance.js';
 import { eraseHouseholdContent } from './erase-household-content.js';
-import { type ErasureScope, planErasure } from './erasure-content.js';
+import { planErasure } from './erasure-content.js';
+import type { ErasureScope } from './erasure-projection.js';
 import { invalidateHouseholdExports } from './household-export.js';
 import { invalidateHouseholdImports } from './household-import.js';
 import { MapError } from './map-error.js';
@@ -96,8 +97,8 @@ export function resumeErasure(
               scope: ErasureScope;
               counts: ErasureStatus['counts'];
             };
-            eraseHouseholdContent(database, householdId, actorId, payload.scope);
-            return payload.counts;
+            const erased = eraseHouseholdContent(database, householdId, actorId, payload.scope);
+            return { ...payload.counts, ...erased };
           });
         }
         if (current.phase === 'cleanup' && reclaimPages(database))

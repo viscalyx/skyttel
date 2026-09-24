@@ -14,6 +14,7 @@ import type {
 } from '../shared/map.js';
 import { AdministrationError } from './administration.js';
 import { contentOwner } from './content-identities.js';
+import { type ErasureScope, erasurePredicates, erasureProjection } from './erasure-projection.js';
 
 type DraftRow = {
   userId: string;
@@ -26,12 +27,6 @@ type DraftRow = {
 type SaveRow = { userId: string; operationId: string; receipt: string };
 type HistoryRow = { id: number; userId: string; operationId: string; changes: string };
 type Change = DraftChange | SaveReceipt['changes'][number];
-export type ErasureScope = {
-  objects: string[];
-  relationships: string[];
-  objectTypes: string[];
-  relationshipTypes: string[];
-};
 export function erasureContent(database: Database.Database, householdId: string, actorId: string) {
   const objects: MapObject[] = (
     database
@@ -299,6 +294,7 @@ export function planErasure(
     relationshipTypes: [...relationshipTypes],
   };
   const affected = erasurePredicates(scope);
+  const projection = erasureProjection(content, scope);
   const named = (
     kind: ErasureKind,
     selected: Set<string>,
@@ -339,13 +335,11 @@ export function planErasure(
     privateObjects: [...objects].filter((id) => !content.visible.object.has(id)).length,
     privateRelationships: [...relationships].filter((id) => !content.visible.relationship.has(id))
       .length,
-    images: content.images.filter((image) => objects.has(image.objectId)).length,
-    imageVersions: content.images
-      .filter((image) => objects.has(image.objectId) && content.visibleImages.has(image.id))
+    images: projection.images.length,
+    imageVersions: projection.images
+      .filter((image) => content.visibleImages.has(image.id))
       .map(({ id, objectId }) => ({ id, objectId })),
-    privateImages: content.images.filter(
-      (image) => objects.has(image.objectId) && !content.visibleImages.has(image.id),
-    ).length,
+    privateImages: projection.images.filter((image) => !content.visibleImages.has(image.id)).length,
     positions: content.positions.filter((position) => objects.has(position.objectId)).length,
     historyChanges: content.saves.reduce(
       (count, { receipt }) =>
@@ -384,75 +378,4 @@ export function reviewErasure(
   selection: ErasureSelection,
 ) {
   return planErasure(database, householdId, actorId, selection).review;
-}
-
-export function erasurePredicates(scope: ErasureScope) {
-  const objects = new Set(scope.objects);
-  const relationships = new Set(scope.relationships);
-  const objectTypes = new Set(scope.objectTypes);
-  const relationshipTypes = new Set(scope.relationshipTypes);
-  const objectValue = (value: { typeId: string; id?: string } | null) =>
-    Boolean(value && ((value.id && objects.has(value.id)) || objectTypes.has(value.typeId)));
-  const edgeValue = (value: { typeId: string; sourceId: string; targetId: string | null } | null) =>
-    Boolean(
-      value &&
-        (relationshipTypes.has(value.typeId) ||
-          objects.has(value.sourceId) ||
-          (value.targetId && objects.has(value.targetId))),
-    );
-  function edgeChange(change: RelationshipChange) {
-    return (
-      relationships.has(change.id) ||
-      edgeValue(change.before) ||
-      edgeValue(change.after) ||
-      relationshipTypes.has(change.type.id)
-    );
-  }
-  function objectChange(change: Change): boolean {
-    const id = 'id' in change ? change.id : (change.after?.id ?? change.before?.id);
-    return Boolean(
-      (id && objects.has(id)) ||
-        objectValue(change.before) ||
-        objectValue(change.after) ||
-        objectTypes.has(change.type.id) ||
-        (change.beforeType && objectTypes.has(change.beforeType.id)) ||
-        (change.merge &&
-          (change.merge.objects.some(objectValue) ||
-            change.merge.types.some((type) => objectTypes.has(type.id)))),
-    );
-  }
-  const namesTouched = (names: Record<string, string> | undefined) =>
-    Object.keys(names ?? {}).some((id) => objects.has(id));
-  const edgeTouched = (change: RelationshipChange) =>
-    edgeChange(change) ||
-    namesTouched(change.objectNames) ||
-    ('removedWithObjects' in change &&
-      (change as NonNullable<MapDraft['relationships']>[number]).removedWithObjects?.some((id) =>
-        objects.has(id),
-      ));
-  function objectTouched(change: Change): boolean {
-    const merge = change.merge;
-    return Boolean(
-      objectChange(change) ||
-        (merge &&
-          (namesTouched(merge.objectNames) ||
-            merge.relationships.some((edge) => relationships.has(edge.id) || edgeValue(edge)) ||
-            merge.relationshipTypes.some((type) => relationshipTypes.has(type.id)) ||
-            ('previousChanges' in merge &&
-              ((merge as ObjectMerge).previousChanges.some(objectTouched) ||
-                (merge as ObjectMerge).previousRelationships.some(edgeTouched))))),
-    );
-  }
-  return {
-    objectChange,
-    edgeChange,
-    objectTouched,
-    edgeTouched,
-    objectValue,
-    edgeValue,
-    objects,
-    relationships,
-    objectTypes,
-    relationshipTypes,
-  };
 }

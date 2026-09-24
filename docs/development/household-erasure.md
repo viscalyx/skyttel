@@ -44,7 +44,9 @@ a new content path. The traversal covers:
 - Saved receipts and the separate history index, including mixed groups,
   endpoint-name dictionaries, former types, and merge/image-copy evidence.
 - Every retained encoded image version owned by an affected identity,
-  including private versions and copies created by merges.
+  including private versions and copies created by merges. Also remove
+  versions whose last typed reference disappears from the retained content,
+  even when their current object survives a former type's erasure.
 - Every owner's positions for affected objects. Display settings contain
   no content references and remain unchanged.
 - Live operation authority, retired operation identifiers, and imported
@@ -66,6 +68,18 @@ relationship B→C remains when its old A→C snapshot is erased, and a private
 end-date proposal remains subject to its original conflict checks. A
 current object of type U remains when former type T is erased; its current
 U values, including `false`, remain intact.
+
+Review and execution use the same in-memory projection of surviving drafts,
+receipts and history. Image references include current objects, before/after
+snapshots, merge objects, source/copy evidence and nested prior proposals;
+each reference must match the image's owning object. A surviving reference
+preserves that version, including another owner's independent private work.
+Report newly unreferenced versions in the reviewed image count and remove
+them in the erasure transaction before physical cleanup. Public versions
+appear by ID; other owners' private-only versions remain aggregate counts.
+Unrelated image rows already lacking references before erasure remain
+outside the selected scope, including rows retained by a complete import.
+Do not use a household-wide orphan sweep or treat arbitrary text as a link.
 
 ## Durable operation and cleanup
 

@@ -16,7 +16,8 @@ betyder inte att dess manuella prov är genomfört.
 - [Permanent radering](household-erasure.md): uttrycklig granskning och
   bekräftelse, bevarat oberoende innehåll efter omstart, förlorat svar och
   förnyad granskning efter samtidig ändring samt väntande städning och
-  återhämtning efter omstart.
+  återhämtning efter omstart. Radering av en tidigare typ tar bort dess
+  sista historiska bildversion utan att ta bort objektets nuvarande bild.
 
 - [Fullständig återimport](household-import.md): uttrycklig ersättning,
   bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,

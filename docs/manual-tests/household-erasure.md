@@ -314,3 +314,77 @@ väntande ärendes **Försök slutföra raderingen** innan nästa fall påbörja
 - Väntande status och stängd tillgång finns kvar efter serveromstart.
 - När läsningen släpps kan samma ärende slutföras. Lampan och dess bild
   återkommer inte; stolen och dess privata förslag finns kvar.
+
+## Historiska bilder efter typbyte
+
+### RADERING-05: Radera en tidigare typ och dess sista historiska bild
+
+**Syfte:** Kontrollera att en tidigare bild försvinner även ur en ny export
+när dess sista historiska hänvisning raderas, medan objektet med ny typ och
+ny bild finns kvar efter omstart.
+
+**Användare:** Alex som administratör i profil A.
+
+**Förutsättningar:** Starta en ny lokal provdatabas enligt avsnittet ovan
+och skapa Linden. Förbered två tydligt olika påhittade PNG-bilder, till
+exempel en blå bild och en orange bild. Använd följande förberedelse i
+stället för allmän förberedelse steg 2–5:
+
+1. Välj **Ny objekttyp**, skriv **Tidigare bildtyp** i **Typens namn** och
+   välj **Lägg typförslaget i mitt utkast**. Lägg inga egna fält till typen.
+2. Skapa **Lampan att radera** av **Tidigare bildtyp** och **Stolen att
+   bevara** av **Fordon**. Lägg båda i utkastet och välj
+   **Spara hela utkastet**. Trots lampans testnamn ska själva objektet
+   bevaras i detta fall.
+3. Öppna lampan, välj den blå bilden med **Välj profilbild** och spara
+   hela utkastet. Öppna lampan igen, kopiera bildens adress och anteckna
+   dess bild-ID, den sista delen efter `/profile-images/` i adressen.
+4. Byt lampans **Objekttyp** till **Fordon**. Bekräfta
+   **Jag har hanterat tidigare fältvärden för typbytet** om fältet visas
+   och välj **Lägg i mitt utkast**. Välj sedan den orange profilbilden.
+   Spara typbytet och bildbytet tillsammans med **Spara hela utkastet**.
+   Anteckna den nya bildens adress och ID. ID:na ska skilja sig åt.
+5. Flytta lampan och stolen enligt allmän förberedelse steg 4. Lägg
+   stolens **Oberoende privat förslag** i utkastet enligt steg 5 utan
+   att spara hela utkastet. Öppna den blå bildens adress i en annan flik;
+   bilden ska fortfarande gå att läsa från historiken före radering.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+testfallet “RADERING-05: erasing a former type removes its historical image
+from a fresh export while preserving the current object after restart”.
+
+**Steg:**
+
+1. Öppna **Administrera tillgång → Permanent radering**. Välj bara
+   **Tidigare bildtyp** under objekttyper och välj **Granska raderingen**.
+2. Kontrollera att inga objekt eller personliga placeringar ska raderas.
+   **Bildversioner: 1** ska visas. **Berörda bildversioner** ska innehålla
+   den blå bildens ID, men inte den orange bildens ID.
+3. Skriv **RADERA PERMANENT**, välj **Radera permanent** och invänta
+   **Den permanenta raderingen är slutförd.** Starta om enligt kommandot
+   för samma databas ovan. Ladda om och kontrollera slutförd status.
+4. Välj **Till hushållet**. Lampan ska finnas med **Fordon** och orange
+   bild. Stolen och dess privata förslag samt båda placeringarna ska
+   finnas kvar. Välj **Visa historik**: stolen ska ha bevarad historik,
+   men lampans blå bild och tidigare typ ska inte visas.
+5. Öppna och ladda om de två sparade bildadresserna. I utvecklarverktygens
+   **Network** ska den blå bildens adress ge HTTP 404 och den orange
+   bildens adress HTTP 200 med bilden kvar.
+6. Hämta en ny fullständig export genom **Förbered fullständig export**
+   och **Hämta ZIP-fil**. Öppna ZIP-filen och sök i `content.json` efter
+   den blå bildens ID; det ska saknas i hela filen. Listan `images` ska
+   innehålla exakt en bild, med den orange bildens ID. Lampan, stolen och
+   **Oberoende privat förslag** ska finnas kvar i innehållet.
+7. Kopiera den exporterade `images.bin` till `kvarvarande-bild.webp`
+   och öppna kopian i webbläsaren. Eftersom exporten innehåller en enda
+   bild ska den visa den orange bilden. Radera hämtade provfiler efteråt.
+
+**Förväntat resultat:**
+
+- Granskningen räknar och visar den historiska bildversion som ska raderas
+  trots att dess nuvarande objekt bevaras.
+- Den tidigare typen och den blå bilden är borta ur historik, bildåtkomst
+  och en ny fullständig export, även efter omstart.
+- Det nuvarande objektet, dess orange bild, stolens oberoende historik
+  och privata förslag samt båda placeringarna finns kvar.

@@ -1,15 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
-import type {
-  DraftChange,
-  DraftRelationshipChange,
-  MapObject,
-  MapRelationship,
-  ObjectMerge,
-  RelationshipChange,
-  SaveReceipt,
-} from '../shared/map.js';
-import { type ErasureScope, erasureContent, erasurePredicates } from './erasure-content.js';
+import { erasureContent } from './erasure-content.js';
+import { type ErasureScope, erasureProjection } from './erasure-projection.js';
 
 // Call inside the maintenance owner's immediate transaction. Only documented
 // typed paths are references; arbitrary field names and text remain ordinary data.
@@ -20,116 +12,9 @@ export function eraseHouseholdContent(
   scope: ErasureScope,
 ) {
   const content = erasureContent(database, householdId, actorId);
-  const affected = erasurePredicates(scope);
-  const names = (value: Record<string, string> | undefined) =>
-    value && Object.fromEntries(Object.entries(value).filter(([id]) => !affected.objects.has(id)));
-  function cleanEdge<T extends RelationshipChange>(change: T): T {
-    return { ...change, ...(change.objectNames ? { objectNames: names(change.objectNames) } : {}) };
-  }
-  function cleanMerge<
-    T extends
-      | NonNullable<DraftChange['merge']>
-      | NonNullable<SaveReceipt['changes'][number]['merge']>,
-  >(merge: T): T {
-    const result = {
-      ...merge,
-      relationships: merge.relationships.filter(
-        (edge) => !affected.relationships.has(edge.id) && !affected.edgeValue(edge),
-      ),
-      relationshipTypes: merge.relationshipTypes.filter(
-        (type) => !affected.relationshipTypes.has(type.id),
-      ),
-      objectNames: names(merge.objectNames) ?? {},
-    };
-    if ('previousChanges' in result) {
-      const draftMerge = result as ObjectMerge;
-      draftMerge.previousChanges = draftMerge.previousChanges.flatMap(cleanDraftObject);
-      draftMerge.previousRelationships = draftMerge.previousRelationships.flatMap(cleanDraftEdge);
-    }
-    return result;
-  }
-  const objectMeaning = (value: MapObject) => ({
-    typeId: value.typeId,
-    customValues: value.customValues,
-  });
-  const edgeMeaning = (value: MapRelationship) => ({
-    typeId: value.typeId,
-    sourceId: value.sourceId,
-    targetId: value.targetId,
-    knowledge: value.knowledge,
-  });
-  const facts = (value: object) =>
-    Object.fromEntries(
-      Object.entries(value).filter(
-        ([key, item]) =>
-          !['id', 'householdId', 'revision', 'deleted'].includes(key) && item !== undefined,
-      ),
-    );
-  function cleanDraftObject(change: DraftChange): DraftChange[] {
-    if (affected.objects.has(change.id)) return [];
-    let next = { ...change };
-    if (affected.objectChange(change)) {
-      const current = content.objects.find((object) => object.id === change.id);
-      if (
-        !current ||
-        affected.objectValue(current) ||
-        !change.before ||
-        !change.after ||
-        change.merge
-      )
-        return [];
-      const type = content.allTypes.get(current.typeId);
-      if (!type) return [];
-      // Remove only erased type/custom meaning. Original expected/proposed
-      // independent facts and revision remain, so newer edits still conflict.
-      next = {
-        ...change,
-        before: { ...change.before, ...objectMeaning(current) },
-        after: { ...change.after, ...objectMeaning(current) },
-        type,
-      };
-      delete next.beforeType;
-      if (next.undoFields)
-        next.undoFields = next.undoFields.filter(
-          (key) => key !== 'objectMeaning' && key !== 'typeId' && !key.startsWith('customValues:'),
-        );
-      if (isDeepStrictEqual(facts(next.before as MapObject), facts(next.after as object)))
-        return [];
-    }
-    if (next.merge) next.merge = cleanMerge(next.merge);
-    return [next];
-  }
-  function cleanDraftEdge(change: DraftRelationshipChange): DraftRelationshipChange[] {
-    if (affected.relationships.has(change.id)) return [];
-    let next = cleanEdge(change);
-    if (affected.edgeChange(change)) {
-      const current = content.relationships.find((edge) => edge.id === change.id);
-      if (!current || affected.edgeValue(current) || !change.before || !change.after) return [];
-      const type = content.allEdgeTypes.get(current.typeId);
-      if (!type) return [];
-      next = {
-        ...next,
-        before: { ...change.before, ...edgeMeaning(current) },
-        after: { ...change.after, ...edgeMeaning(current) },
-        type,
-      };
-      if (next.undoFields) next.undoFields = next.undoFields.filter((key) => key !== 'meaning');
-      if (isDeepStrictEqual(facts(next.before as MapRelationship), facts(next.after as object)))
-        return [];
-    }
-    if (next.removedWithObjects)
-      next.removedWithObjects = next.removedWithObjects.filter((id) => !affected.objects.has(id));
-    return [next];
-  }
-  for (const draft of content.drafts) {
-    const next = {
-      changes: draft.changes.flatMap(cleanDraftObject),
-      relationships: draft.relationships.flatMap(cleanDraftEdge),
-      objectTypes: draft.objectTypes.filter((change) => !affected.objectTypes.has(change.id)),
-      relationshipTypes: draft.relationshipTypes.filter(
-        (change) => !affected.relationshipTypes.has(change.id),
-      ),
-    };
+  const projection = erasureProjection(content, scope);
+  for (const [index, draft] of content.drafts.entries()) {
+    const next = projection.drafts[index];
     if (
       !['changes', 'relationships', 'objectTypes', 'relationshipTypes'].every((key) =>
         isDeepStrictEqual(draft[key as keyof typeof next], next[key as keyof typeof next]),
@@ -148,37 +33,8 @@ export function eraseHouseholdContent(
           draft.userId,
         );
   }
-  for (const saved of content.saves) {
-    const receipt: SaveReceipt = {
-      ...saved.receipt,
-      changes: saved.receipt.changes
-        .filter((change) => !affected.objectChange(change))
-        .map((change) => ({
-          ...change,
-          ...(change.merge ? { merge: cleanMerge(change.merge) } : {}),
-        })),
-      ...(saved.receipt.relationships
-        ? {
-            relationships: saved.receipt.relationships
-              .filter((change) => !affected.edgeChange(change))
-              .map(cleanEdge),
-          }
-        : {}),
-      ...(saved.receipt.objectTypes
-        ? {
-            objectTypes: saved.receipt.objectTypes.filter(
-              (change) => !affected.objectTypes.has(change.id),
-            ),
-          }
-        : {}),
-      ...(saved.receipt.relationshipTypes
-        ? {
-            relationshipTypes: saved.receipt.relationshipTypes.filter(
-              (change) => !affected.relationshipTypes.has(change.id),
-            ),
-          }
-        : {}),
-    };
+  for (const [index, saved] of content.saves.entries()) {
+    const { receipt } = projection.saves[index];
     if (
       !receipt.changes.length &&
       !receipt.relationships?.length &&
@@ -206,13 +62,8 @@ export function eraseHouseholdContent(
         .run(householdId, saved.userId, saved.operationId);
     }
   }
-  for (const historical of content.history) {
-    const changes = historical.changes
-      .filter((change) => !affected.objectChange(change))
-      .map((change) => ({
-        ...change,
-        ...(change.merge ? { merge: cleanMerge(change.merge) } : {}),
-      }));
+  for (const [index, historical] of content.history.entries()) {
+    const { changes } = projection.history[index];
     const receipt = database
       .prepare('SELECT 1 FROM map_save WHERE householdId = ? AND userId = ? AND operationId = ?')
       .get(householdId, historical.userId, historical.operationId);
@@ -234,12 +85,13 @@ export function eraseHouseholdContent(
       .prepare('DELETE FROM map_object WHERE householdId = ? AND id = ?')
       .run(householdId, id);
     database
-      .prepare('DELETE FROM profile_image WHERE householdId = ? AND objectId = ?')
-      .run(householdId, id);
-    database
       .prepare('DELETE FROM personal_position WHERE householdId = ? AND objectId = ?')
       .run(householdId, id);
   }
+  for (const image of projection.images)
+    database
+      .prepare('DELETE FROM profile_image WHERE householdId = ? AND id = ?')
+      .run(householdId, image.id);
   for (const [kind, table, ids] of [
     ['objectType', 'object_type', scope.objectTypes],
     ['relationshipType', 'relationship_type', scope.relationshipTypes],
@@ -250,4 +102,5 @@ export function eraseHouseholdContent(
         .prepare(`DELETE FROM ${table} WHERE householdId = ? AND id = ?`)
         .run(householdId, id);
     }
+  return { images: projection.images.length };
 }
