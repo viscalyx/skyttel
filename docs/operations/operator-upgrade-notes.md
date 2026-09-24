@@ -5,6 +5,22 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Restore to a fresh installation
+
+The administrator can now explicitly assign restored historical private
+content to verified current members. No new migration or archive format is
+required beyond schema 15. Rebuild the application and use the
+[recovery runbook](recovery.md) when replacing a disk or moving installation.
+Keep the source read-only after its final export and allow only one writable
+installation after cutover. Configure fresh authentication secrets and the
+destination's first administrator; an archive restores no old login authority.
+
+Review historical and current IDs with the people concerned before assignment.
+Displaced private content remains unmapped and can be assigned back. All
+clients must reload after a binding change. Old save operations become
+historical evidence, including pending attempts; they cannot authorize retries.
+If the response is lost, read current bindings before making another change.
+
 ### Permanent household erasure
 
 Keep a database backup with its matching application image before upgrade.

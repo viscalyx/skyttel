@@ -50,8 +50,9 @@ and even matching identity IDs never establish a binding. Unmapped private
 drafts and personal views remain stored and included in administrator
 exports; ordinary members cannot claim them by logging in.
 
-Future recovery owner mapping must explicitly bind `content_identity.userId`
-to a verified current login after administrator confirmation. The nullable
+[Recovery owner mapping](household-recovery.md) explicitly binds
+`content_identity.userId` to a verified current login after administrator
+confirmation. The nullable
 binding is unique per household and current user. Membership still grants
 access separately. A new current member gets a distinct owner when an
 unmapped imported identity already uses the member's login ID.

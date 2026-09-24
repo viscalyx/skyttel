@@ -154,11 +154,14 @@ container restarts and replacements. `docker compose down` keeps that volume;
 adding `--volumes` deletes it and its household data.
 
 Before updating, read the [operator upgrade notes](operator-upgrade-notes.md),
-back up the database, and retain the matching application image. Build the
+download a [complete household export](../users/household-export.md), and
+retain the matching application image. Build the
 new image, keep the same volume and secret, and run `docker compose up -d`
 again. Do not run old and new application versions against the same SQLite
 volume at the same time. To return to an older image after a schema change,
-stop the application and restore that image's matching database backup.
+establish compatibility first. An export restores household content through
+a compatible application; it does not roll back the database schema or
+restore authentication state. See [recovery and moving](recovery.md).
 
 ## Deploy on a container host
 
@@ -186,10 +189,13 @@ service out of traffic and check disk availability, write permission, free
 space, and the deployed migration files. Correct the cause and restart. Do not
 delete the database or edit migration history to force a healthy state.
 
-Skyttel does not provide automated backups, household export/import, or a data
-recovery interface. Arrange backups separately before storing data you need
-to keep. Persistent disk protects ordinary restarts; it does not protect
-against loss of the disk.
+Skyttel provides complete versioned household export and import, without
+extra automatic backup. Keep your own private exports outside the running
+disk. [Restore or move the household](recovery.md) into a new installation
+with fresh access and explicit historical-owner assignments. Persistent disk
+protects ordinary restarts; it does not protect against loss of the disk.
+Everything since the latest usable export can be lost in a major failure,
+and recovery can require several days.
 
 ## Verify before opening access
 

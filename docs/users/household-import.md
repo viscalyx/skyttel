@@ -30,6 +30,8 @@ hushåll återkopplas endast när en verifierad koppling redan finns. Privata
 uppgifter från en annan installation förblir utan inloggad ägare tills en
 administratör uttryckligen kopplar den historiska identiteten till ett
 verifierat konto. Att namn eller andra uppgifter råkar stämma räcker inte.
+Följ [guiden för innehållskopplingar](household-recovery.md) för att granska
+och bekräfta kopplingen utan att skriva över något privat arbete.
 
 Om rensningen inte är klar är innehållet redan ersatt, men kartan hålls
 stängd tills rensningen lyckas. Välj **Slutför importens rensning** eller

@@ -747,21 +747,25 @@ approving a production update.
 
 Release checks use disposable containers with synthetic household content.
 They verify restart and replacement on the same disk, including private
-drafts, objects, history, and save receipts. An injected failed migration
-checks that existing content remains. Personal-view persistence will join
-this check when that feature arrives.
+drafts, objects, history, and save receipts. Archive recovery and explicit
+owner reassignment preserve private encoded images, personal positions and
+view settings through container restarts. An injected failed migration
+checks that existing content remains.
 
 Deployment controller tests simulate Render failures and competing releases.
 These checks do not establish real Render or identity-provider behavior;
 the first live deployment and real-provider verification above remain
 separate operator checks.
 
-## Disk loss and future recovery
+## Disk loss and recovery
 
 Persistent disk protects ordinary restarts and deployments. It does not
 protect against loss of the disk. No extra automatic backup is configured.
-The planned portable recovery path is complete versioned household export
-and reimport; it is not implemented yet. Until it exists, do not present a
-code rollback as data recovery. Data since the last usable export can be
-lost in a major failure, and extended downtime can be necessary. Server
-secrets and fresh login associations remain separate from household export.
+The portable recovery path is a complete versioned household export and
+import into a new installation. Follow the [recovery and move runbook](recovery.md)
+for an empty destination disk, verified image, fresh sign-in, explicit
+historical-owner assignment, restart checks and a single active cutover.
+Keep your own private exports outside the running disk. Data since the last
+usable export can be lost in a major failure, and recovery can require
+several days. Server secrets, memberships and new login associations remain
+separate from household export. An app-code rollback does not restore data.

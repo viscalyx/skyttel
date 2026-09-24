@@ -3,6 +3,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } fr
 import type { Administration, HouseholdInvitation } from '../shared/administration.js';
 import { householdNameMaxLength, normalizeHouseholdName } from '../shared/household-name.js';
 import { Assistants } from './Assistants.js';
+import { ContentOwners } from './ContentOwners.js';
 import { HouseholdErasure } from './HouseholdErasure.js';
 import { HouseholdExport } from './HouseholdExport.js';
 import { HouseholdImport } from './HouseholdImport.js';
@@ -752,6 +753,7 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
       <HouseholdExport key={`export-${id}`} householdId={id ?? ''} onAccessLost={onReload} />
       <HouseholdErasure key={`erasure-${id}`} householdId={id ?? ''} onAccessLost={onReload} />
       <HouseholdImport key={`import-${id}`} householdId={id ?? ''} onAccessLost={onReload} />
+      <ContentOwners key={`owners-${id}`} householdId={id ?? ''} onAccessLost={onReload} />
     </section>
   );
 }

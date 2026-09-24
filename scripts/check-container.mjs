@@ -8,6 +8,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { checkContainerAssistants } from './check-container-assistants.mjs';
 import { checkContainerErasure } from './check-container-erasure.mjs';
+import { checkContainerRecovery } from './check-container-recovery.mjs';
 
 const exec = promisify(execFile);
 const docker = process.env.DOCKER_BIN ?? 'docker';
@@ -368,6 +369,14 @@ try {
     saveRequest,
   });
   await checkContainerAssistants({
+    command,
+    request,
+    waitUntilReady,
+    name: persisted,
+    fixture,
+    origin: configuredOrigin,
+  });
+  await checkContainerRecovery({
     command,
     request,
     waitUntilReady,

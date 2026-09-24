@@ -11,6 +11,7 @@ import { administrationRoutes } from './administration-routes.js';
 import { assistantRoutes } from './assistant-routes.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
+import { contentOwnerRoutes } from './content-owner-routes.js';
 import { householdErasureRoutes } from './household-erasure-routes.js';
 import { householdExportRoutes } from './household-export-routes.js';
 import { householdImportRoutes } from './household-import-routes.js';
@@ -179,6 +180,7 @@ export function createApp({
     return context.json({ household });
   });
   app.route('/api', administrationRoutes(database, auth, config.origin));
+  app.route('/api', contentOwnerRoutes(database, auth, config.origin));
   app.route('/api', householdExportRoutes(database, auth, config.origin));
   app.route('/api', householdErasureRoutes(database, auth, config.origin));
   app.route('/api', householdImportRoutes(database, auth, config.origin));

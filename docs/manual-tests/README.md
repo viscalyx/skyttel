@@ -13,6 +13,11 @@ betyder inte att dess manuella prov är genomfört.
 
 ## Områden
 
+- [Återställning och flytt](household-recovery.md): tomma lokala installationer,
+  uttrycklig verifierad ägarkoppling, bevarat undanträngt privat arbete,
+  gamla sessioner och sparförsök, omstart och fortsatt export till en tredje
+  installation utan gammal databas eller inloggningsbehörighet.
+
 - [Permanent radering](household-erasure.md): uttrycklig granskning och
   bekräftelse, bevarat oberoende innehåll efter omstart, förlorat svar och
   förnyad granskning efter samtidig ändring samt väntande städning och
