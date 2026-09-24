@@ -6,28 +6,69 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 ## Konfigurerade användare
 
-Använd en isolerad testinstallation enligt
-[installationsguiden](../operations/installation.md).
+Använd den lokala devcontainern och värddatorns webbläsare enligt
+[utvecklingsguiden](../development/devcontainer.md#run-the-application).
+Inloggningen ska fungera med den konfigurerade första administratörens
+Google- eller Microsoft-konto innan du börjar.
 
-- **Alex** är administratör i hushållet Linden och använder profil A.
+- **Alex** är namnet på testrollen för detta konto, inte ett krav på
+  kontots visningsnamn. Alex är administratör i Linden och använder profil A.
 - Profil B använder samma administratör för samtidig ändring av utkastet.
+  Logga in med samma konto i båda profilerna; ingen inbjudan behövs.
 
 Använd bara påhittade uppgifter och testbilder. Permanent radering kan
 inte ångras i Skyttel. Kör inte testfallen mot ett verkligt hushåll.
 
 ## Allmän förberedelse
 
-1. Skapa Linden som Alex. Lägg **Lampan att radera** och
-   **Stolen att bevara** i samma utkast och spara hela utkastet.
-2. Lägg en testbild på lampan och spara. Anteckna bildens adress från
-   webbläsarens nätverksverktyg för senare kontroll. Flytta lampan och
-   stolen i din personliga vy så att båda får sparade placeringar.
-3. Ändra stolens beskrivning till **Oberoende privat förslag** och lägg
-   ändringen i det privata utkastet utan att spara hela utkastet.
-4. Börja med en ny testinstallation eller återställ testunderlaget inför
-   varje fall. Vid omstart inom ett fall ska samma databas finnas kvar.
-5. Förbered operatörsåtkomst för omstart och för det kontrollerade
-   anslutningsfelet i RADERING-02. Radera hämtade testexporter efter provet.
+1. Starta en ny provdatabas enligt nästa avsnitt inför varje fall. Öppna
+   <http://localhost:5173>, logga in som Alex och skriv **Linden** i
+   **Hushållets namn**. Välj **Skapa hushåll**.
+2. Välj **Nytt objekt**, fyll i **Lampan att radera** i **Objektets namn**,
+   välj **Fordon** som **Objekttyp** och välj **Lägg i mitt utkast**.
+   Lägg till **Stolen att bevara** på samma sätt. Typen används bara för
+   detta tekniska prov. Välj **Spara hela utkastet** och invänta kvittot.
+3. Öppna lampans detaljer och välj en liten påhittad PNG-bild genom
+   **Välj profilbild**. Stäng detaljerna utan att ändra texten och välj
+   **Spara hela utkastet**. Öppna lampan igen. Högerklicka på bilden,
+   välj att kopiera bildens adress och spara adressen för senare kontroll.
+4. Välj lampan i listan, välj **Öppna rymdkartan** och öppna **Ordna min vy**.
+   Välj **Flytta höger i rummet** en gång. Välj stolen och flytta den åt vänster
+   med **Flytta vänster i rummet**. Ladda om och kontrollera placeringarna.
+5. Öppna stolen i **Lista och detaljer**, skriv **Oberoende privat förslag**
+   i **Beskrivning** och välj **Lägg i mitt utkast**. Kontrollera förslaget
+   under **Hela mitt utkast**. Spara inte hela utkastet.
+6. Behåll samma databas vid omstart inom ett fall. RADERING-02 använder
+   Chromium med utvecklarverktyg; RADERING-04 behöver en andra terminal.
+   Förbered en privat mapp för hämtade exporter och radera filerna efteråt.
+
+### Ny lokal provdatabas och omstart
+
+Stoppa eventuell befintlig `npm run dev:all` med Ctrl+C. Kör följande från
+projektets rot i en terminal i devcontainern inför varje nytt fall.
+Kommandot skapar en separat tom databas och använder befintlig
+inloggningskonfiguration. Kör bara ett av fallen åt gången.
+
+```sh
+erasure_case_dir=$(mktemp -d /tmp/skyttel-radering.XXXXXX)
+printf 'SKYTTEL_DATABASE_PATH=%s/skyttel.sqlite\n' "$erasure_case_dir" \
+  > /tmp/skyttel-radering.env
+env -u SKYTTEL_DATABASE_PATH node --env-file=/tmp/skyttel-radering.env \
+  scripts/develop.mjs
+```
+
+Vid **omstart inom samma fall**: tryck Ctrl+C i serverns terminal, vänta
+tills kommandot avslutas och kör bara följande. Låt en eventuell separat
+SQLite-läsare fortsätta i sin egen terminal.
+
+```sh
+env -u SKYTTEL_DATABASE_PATH node --env-file=/tmp/skyttel-radering.env \
+  scripts/develop.mjs
+```
+
+Ladda sedan om webbläsarsidan. Kör inte databasförberedelsen på nytt vid
+omstart; den skulle välja en annan, tom databas. Efter sista fallet kan du
+stoppa provservern och starta den vanliga miljön med `npm run dev:all`.
 
 ## Granska och genomför
 
@@ -55,15 +96,26 @@ preserves unrelated work after restart”.
    Välj **Granska raderingen** med tangentbordet.
 3. Kontrollera **Omfattning att bekräfta**. Lampan, dess bildversion och
    en personlig placering ingår; stolen ska inte ingå. Bildens identifierare
-   visas. Andra användares privata bildversioner och innehåll visas som antal.
+   visas. Antalen för andras privata innehåll ska vara noll i denna provkarta.
 4. Kontrollera att **Radera permanent** är inaktiverad. Skriv
    **RADERA PERMANENT** i bekräftelsefältet och aktivera knappen med Enter.
-5. Invänta uttryckligt besked om slutförd radering. Starta om installationen
-   med samma databas och ladda om sidan. Kontrollera raderingsstatus igen.
-6. Öppna kartan, utkastet och historiken. Kontrollera att lampan är borta,
-   stolen finns kvar och stolens privata beskrivning finns kvar.
-7. Öppna lampans tidigare bildadress. Hämta en ny fullständig export och
-   granska innehållet enligt [exportfallen](household-export.md).
+5. Invänta **Den permanenta raderingen är slutförd.** Starta om enligt
+   avsnittet ovan, ladda om sidan och kontrollera samma raderingsstatus.
+6. Välj **Till hushållet** och **Lista och detaljer**. Sök efter lampan;
+   ingen träff ska visas. Öppna stolen och kontrollera dess beskrivning
+   samt förslaget under **Hela mitt utkast**. Välj **Visa historik** under
+   **Ändringshistorik**: stolen ska finnas i det ursprungliga sparandet,
+   men lampan ska saknas.
+   Kontrollera också att stolens placering finns kvar i **Rymdkarta**.
+7. Öppna lampans sparade bildadress i en ny flik i samma profil. Ladda om
+   adressen så att en ny begäran görs; kontrollera HTTP-status 404 i
+   utvecklarverktygens **Network**, utan någon bild.
+8. Öppna **Administrera tillgång**, välj **Förbered fullständig export**
+   och sedan **Hämta ZIP-fil**. Öppna ZIP-filen och `content.json`. Sök efter
+   **Lampan att radera**; namnet ska saknas i hela filen. Stolen och
+   **Oberoende privat förslag** ska finnas. `images` ska vara en tom lista
+   och `images.bin` ska vara tom. Se även
+   [EXPORT-01](household-export.md#export-01-hämta-en-fullständig-export-med-tangentbordet).
 
 **Förväntat resultat:**
 
@@ -83,9 +135,42 @@ slutförd radering och att serverns beständiga resultat kan återfinnas.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** En ny provkarta är förberedd. Operatören kan bryta
-svaret på raderingsanropet efter att servern har slutfört det, utan att
-ändra begäran. Integrationstestet bryter motsvarande svar vid nätverket.
+**Förutsättningar:** En ny provkarta är förberedd i Chromium. Koden nedan
+låter servern slutföra en enda radering men kastar bort svaret innan
+applikationen får det. Begäran skickas oförändrad. Integrationstestet
+bryter motsvarande svar vid nätverket.
+
+Öppna utvecklarverktygen med F12. Under **Sources → Snippets** skapar du
+ett nytt utdrag, lägger in koden nedan och kör det med Ctrl+Enter medan
+administrationssidan är öppen. **Console** ska visa
+**RADERING-02: redo för ett svar.** Kör utdraget bara en gång per försök.
+
+```js
+(() => {
+  const originalFetch = window.fetch;
+  window.fetch = async function (...args) {
+    const response = await originalFetch.apply(this, args);
+    const url = new URL(response.url);
+    if (url.origin === location.origin &&
+        url.pathname.endsWith('/erasure/execute')) {
+      window.fetch = originalFetch;
+      const result = await response.clone().json();
+      if (response.ok && result.status?.phase === 'completed') {
+        console.info('RADERING-02: slutfört svar kastas bort.');
+        throw new TypeError('RADERING-02: kontrollerat förlorat svar');
+      }
+      console.error('RADERING-02: inget slutfört svar; avbrottet sker inte.');
+    }
+    return response;
+  };
+  console.info('RADERING-02: redo för ett svar.');
+})();
+```
+
+Öppna **Network**, aktivera **Preserve log**, töm listan och filtrera på
+`erasure/execute`. Skyttel ska skicka ett enda sådant anrop under hela
+fallet. Svaret kan visas som HTTP 200 här trots att utdraget gör det
+otillgängligt för applikationen.
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
@@ -94,13 +179,19 @@ status without another erasure”.
 
 **Steg:**
 
-1. Välj lampan och granska omfattningen. Förbered avbrottet enligt
-   förutsättningarna och bekräfta raderingen.
-2. Kontrollera beskedet när svaret försvinner. Återställ anslutningen.
+1. Välj lampan och **Granska raderingen**. Skriv **RADERA PERMANENT**
+   och välj **Radera permanent** efter att utdraget är förberett.
+2. Kontrollera **Utfallet är oklart** och konsolens besked om att ett
+   slutfört svar kastas bort. Avbrottet avaktiveras automatiskt. Ladda
+   inte om sidan ännu. Om konsolen i stället säger att avbrottet inte
+   sker, anteckna utfallet och följ eventuell väntande återhämtning;
+   detta försök verifierar då inte ett förlorat slutfört svar.
 3. Välj **Kontrollera raderingsstatus och läs in aktuellt innehåll**.
    Kontrollera att den genomförda raderingen återfinns.
-4. Ladda om sidan och kontrollera samma slutförda resultat. Öppna kartan
-   och kontrollera att stolen finns kvar.
+4. Kontrollera att **Network** fortfarande visar exakt ett
+   `erasure/execute`-anrop. Ladda om sidan och kontrollera samma slutförda
+   resultat. Välj **Till hushållet**: stolen ska finnas och lampan saknas.
+   Omladdning tar även bort utdragets påverkan om fallet avbryts i förtid.
 
 **Förväntat resultat:**
 
@@ -118,6 +209,8 @@ innehållet ändras efter granskningen.
 **Användare:** Alex i profil A och B.
 
 **Förutsättningar:** Samma nya provkarta är öppen i båda profilerna.
+Profil A visar **Administrera tillgång**. Profil B visar hushållets
+**Lista och detaljer** och är inloggad med samma konto som profil A.
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
@@ -127,14 +220,18 @@ confirmation before erasure”.
 **Steg:**
 
 1. Välj lampan och granska raderingen i profil A utan att bekräfta ännu.
-2. Ändra stolens privata beskrivning till **Senare privat förslag** i
-   profil B och lägg den i utkastet.
-3. Skriv bekräftelsetexten och välj **Radera permanent** i profil A.
-4. Kontrollera beskedet om ändrat innehåll och att båda objekten finns
-   kvar. Välj **Granska raderingen** igen.
+2. Öppna stolen i profil B, ändra **Beskrivning** till
+   **Senare privat förslag** och välj **Lägg i mitt utkast**.
+   Invänta att **Hela mitt utkast** visar den nya texten. Spara inte.
+3. Skriv **RADERA PERMANENT** och välj **Radera permanent** i profil A.
+4. Kontrollera beskedet **Innehållet har ändrats. Granska raderingen igen**.
+   Kontrollera i profil B att båda objekten finns kvar. I profil A väljer
+   du **Granska raderingen** igen utan att först ladda om sidan.
 5. Kontrollera att bekräftelsefältet är tomt och knappen inaktiverad.
    Granska, skriv bekräftelsen igen och genomför raderingen.
-6. Kontrollera att stolen och dess senare privata beskrivning finns kvar.
+6. Invänta slutfört resultat och välj **Till hushållet** i profil A.
+   Kontrollera att lampan saknas och att **Hela mitt utkast** visar stolen
+   med **Senare privat förslag**.
 
 **Förväntat resultat:**
 
@@ -152,11 +249,35 @@ slutförd radering och att ärendet kan fortsättas efter omstart.
 
 **Användare:** Alex som administratör samt testinstallationens operatör.
 
-**Förutsättningar:** En ny provkarta är förberedd. Operatören håller en
-separat SQLite-läsning öppen mot testdatabasen före raderingen så att äldre
-journalsidor inte kan städas. Läsningen ska kunna avslutas uttryckligen.
-Integrationstestet håller en riktig separat lästransaktion och startar om
-applikationsservern med samma databas medan läsningen är kvar.
+**Förutsättningar:** En ny provkarta är förberedd med den lokala
+provdatabasen ovan. Kör följande från projektets rot i en **andra**
+terminal i devcontainern. Kommandot läser samma databas och håller en
+separat lästransaktion öppen så att äldre journalsidor inte kan städas.
+Vänta på beskedet **Läsningen är öppen** och lämna terminalen orörd tills
+steg 5. Integrationstestet håller en motsvarande riktig SQLite-läsare.
+
+```sh
+env -u SKYTTEL_DATABASE_PATH node --env-file=/tmp/skyttel-radering.env \
+  --input-type=module -e '
+import Database from "better-sqlite3";
+const database = new Database(process.env.SKYTTEL_DATABASE_PATH, {
+  readonly: true,
+  fileMustExist: true,
+});
+database.exec("BEGIN");
+database.prepare("SELECT id FROM map_object LIMIT 1").get();
+function release() {
+  database.exec("ROLLBACK");
+  database.close();
+  console.log("Läsningen är avslutad.");
+  process.exit(0);
+}
+process.stdin.resume();
+process.stdin.once("data", release);
+process.once("SIGINT", release);
+console.log("Läsningen är öppen. Tryck Enter när steg 5 säger till.");
+'
+```
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
@@ -167,15 +288,24 @@ completes only after the reader releases”.
 
 1. Välj lampan, granska och bekräfta permanent radering medan operatörens
    läsning är öppen.
-2. Kontrollera beskedet om väntande städning. Försök läsa hushållets karta
-   och förbereda en export; innehållet ska vara tillfälligt otillgängligt.
-3. Låt operatören starta om applikationsservern med samma databas utan att
-   avsluta den separata läsningen. Ladda om administrationssidan.
+2. Kontrollera beskedet **Raderingen är inte slutförd**. Öppna
+   **Till hushållet** i en ny flik och försök läsa kartan. På den kvarvarande
+   administrationssidan väljer du **Förbered fullständig export**.
+   Båda försöken ska avvisas; ingen karta eller export ska lämnas ut.
+3. Starta om enligt **Ny lokal provdatabas och omstart** ovan i serverns
+   terminal. Låt läsarens andra terminal vara kvar. Ladda om
+   administrationssidan när servern åter är redo.
 4. Kontrollera att raderingen fortfarande inte påstås vara slutförd och
    att **Försök slutföra raderingen** erbjuds.
-5. Låt operatören avsluta läsningen. Välj **Försök slutföra raderingen**.
-6. Invänta slutförd status. Kontrollera kartan, stolens privata utkast
-   och lampans tidigare bildadress.
+5. Tryck Enter i läsarens terminal. Invänta **Läsningen är avslutad**.
+   Välj sedan **Försök slutföra raderingen** på administrationssidan.
+6. Invänta **Den permanenta raderingen är slutförd.** Välj **Till hushållet**
+   och kontrollera att lampan saknas, stolen finns och **Hela mitt utkast**
+   visar **Oberoende privat förslag**. Öppna och ladda om lampans sparade
+   bildadress; **Network** ska visa HTTP 404 utan bild.
+
+Om fallet avbryts: avsluta läsaren med Enter eller Ctrl+C och använd samma
+väntande ärendes **Försök slutföra raderingen** innan nästa fall påbörjas.
 
 **Förväntat resultat:**
 
