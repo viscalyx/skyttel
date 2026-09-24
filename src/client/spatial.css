@@ -1,0 +1,344 @@
+.panel.household-panel {
+  width: min(100%, 90rem);
+}
+.map-presentation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.map-presentation [aria-pressed="true"] {
+  background: #185d50;
+  color: white;
+}
+.map-workspace {
+  display: grid;
+  gap: 1.5rem;
+}
+.map-content,
+.map-space {
+  min-width: 0;
+}
+.map-space[hidden],
+.map-content[hidden] {
+  display: none;
+}
+.presentation-combined .map-workspace {
+  grid-template-columns: minmax(0, 1.3fr) minmax(20rem, 1fr);
+  align-items: start;
+}
+.presentation-combined .map-space {
+  position: sticky;
+  top: 1rem;
+}
+.spatial-surface {
+  position: relative;
+  height: 60vh;
+  min-height: 20rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #102e2c;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.spatial-surface canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+.spatial-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.spatial-labels button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  white-space: nowrap;
+  max-width: 15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  touch-action: none;
+}
+.presentation-map {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: #f5f7f5;
+  overflow: auto;
+  padding: 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+.presentation-map > h2,
+.presentation-map > p {
+  margin: 0;
+}
+.presentation-map .map-presentation {
+  margin: 0.5rem 0;
+}
+.presentation-map .map-workspace {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+.presentation-map .map-space {
+  min-height: 0;
+}
+.presentation-map .spatial-map {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.presentation-map > h2,
+.presentation-map > p:not([role="status"]):not([role="alert"]) {
+  display: none;
+}
+.presentation-map .spatial-map > h2 {
+  display: none;
+}
+.presentation-map .spatial-surface {
+  flex: 1;
+  height: 100%;
+  min-height: 15rem;
+}
+.presentation-map .map-content {
+  overflow: auto;
+  padding: 0.75rem;
+}
+@media (max-width: 1099px) {
+  .presentation-combined .map-workspace {
+    grid-template-columns: 1fr;
+  }
+  .presentation-combined .map-space {
+    position: static;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .household-map *,
+  .household-map *::before,
+  .household-map *::after {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
+
+.map-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.map-filters label {
+  margin: 0;
+}
+.map-filters input {
+  width: 12rem;
+}
+.map-filters p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.spatial-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.connection {
+  stroke: #88b4b0;
+  stroke-width: 2;
+  opacity: 0.3;
+}
+.connection.selected {
+  opacity: 1;
+  stroke: #d5fff4;
+  stroke-width: 3;
+}
+.spatial-labels .spatial-edge {
+  background: #24423f;
+  border-color: #53766e;
+  color: #acccc1;
+  font-size: 0.8rem;
+}
+.spatial-labels .spatial-edge.selected {
+  border-color: #d5fff4;
+  color: white;
+}
+.spatial-labels [aria-pressed="true"] {
+  outline: 3px solid #9bf0d5;
+}
+.presentation-map .camera-tools {
+  position: relative;
+  flex-shrink: 0;
+  margin: 0;
+  z-index: 2;
+  max-height: 45vh;
+  overflow: auto;
+  background: #f5f7f5;
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+}
+.proposal-symbol {
+  display: inline-block;
+  font-weight: 900;
+  font-size: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 0.3rem;
+}
+.proposal-symbol.added {
+  color: #004b30;
+  background: #b9f3d8;
+}
+.proposal-symbol.changed {
+  color: #3a2900;
+  background: #ffdc55;
+}
+.proposal-symbol.removed {
+  color: #b52121;
+  background: #ffe8e8;
+}
+.type-icon {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.6rem;
+  border-radius: 50%;
+  background: #d9eae4;
+  color: #174137;
+  margin-right: 0.3rem;
+}
+.spatial-menu {
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  border: 1px solid #52776c;
+  border-radius: 1rem;
+  background: #f5f7f5;
+  color: #183a36;
+}
+.spatial-menu::backdrop {
+  background: #06272499;
+}
+.spatial-menu button {
+  display: block;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+.household-map.presentation-map {
+  margin: 0;
+  padding: 0 0.5rem;
+  height: 100dvh;
+  overflow: hidden;
+}
+.presentation-map .map-presentation {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin: 0.25rem 0;
+}
+.spatial-bottom-bar button {
+  min-height: 44px;
+  padding: 0.25rem 0.5rem;
+}
+.presentation-map .map-presentation button {
+  font-size: 0.85rem;
+  min-height: 44px;
+  padding: 0.35rem 0.65rem;
+}
+.presentation-map .combined-mode-button,
+.presentation-map .open-map-button {
+  display: none;
+}
+.map-filter-panel > summary {
+  display: none;
+}
+.presentation-map .map-filter-panel {
+  margin: 0;
+  position: relative;
+  flex-shrink: 0;
+}
+.presentation-map .map-filter-panel > summary {
+  display: block;
+  min-height: 32px;
+}
+.presentation-map .map-filter-panel[open] .map-filters {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  padding: 0.5rem;
+  max-height: 60dvh;
+  overflow: auto;
+  background: #f5f7f5;
+  box-shadow: 0 8px 20px #102e2c55;
+}
+.household-map .map-filters select {
+  width: auto;
+  margin: 0;
+}
+.presentation-map .spatial-surface {
+  min-height: 0;
+  border-radius: 0.5rem;
+}
+.presentation-map .spatial-map > button {
+  padding: 0.25rem 0.5rem;
+  min-height: 38px;
+}
+.presentation-map .map-content {
+  background: #f5f7f5;
+}
+.presentation-map > [role="status"] {
+  max-height: 3.2em;
+  overflow: auto;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+.graphics-notice {
+  position: absolute;
+  z-index: 3;
+  padding: 1rem;
+  background: #fff0cf;
+  color: #493c00;
+}
+.label-leader {
+  stroke: #b4cdc5;
+  stroke-width: 1;
+  opacity: 0.65;
+}
+.spatial-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  padding: 0.25rem;
+  background: #f5f7f5;
+}
+.spatial-bottom-bar label {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+.spatial-bottom-bar input {
+  width: 1.2rem;
+  height: 1.2rem;
+  min-height: 1.2rem;
+  padding: 0;
+  margin: 0 0.3rem 0 0;
+}
+.label-note {
+  margin: 0;
+  font-size: 0.8rem;
+}
+.connection {
+  pointer-events: stroke;
+  cursor: pointer;
+}

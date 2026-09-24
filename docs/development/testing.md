@@ -37,14 +37,20 @@ build and the API from the same origin.
 Vitest exercises public application functions, rendered React screens, and
 HTTP handlers. SQLite-backed behavior uses temporary real databases;
 external provider responses and browser network requests use synthetic
-fixtures. Coverage includes every TypeScript and TSX file under `src`,
+fixtures. The graphics project renders the public spatial component in real
+headless Chromium with Three.js and WebGL 2. It uses the existing Playwright
+browser installation and contributes browser V8 coverage to the same report
+as the Node and jsdom projects. Install Chromium before the first Vitest run.
+Coverage includes every TypeScript and TSX file under `src`,
 including entry points. Tests do not reach into private application helpers.
 Coverage gates require 85% of statements, lines, and functions, and 90% of
 branches.
 
 ```sh
+npx playwright install chromium
 npm run test:unit
 npm run test:unit -- tests/unit/server/config.test.ts
+npm run test:unit -- --project graphics
 npm run test:unit:coverage
 npm run lint
 npm run lint:fix

@@ -132,7 +132,7 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
       await expect(review).toContainText('Lo Lind');
       await reopened.getByRole('button', { name: 'Kasta hela utkastet' }).click();
       await reopened.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
-      await reopened.getByRole('button', { name: 'Ta bort' }).click();
+      await reopened.getByRole('button', { name: 'Ta bort', exact: true }).click();
       await expect(review).toContainText('Borttagning');
       await reopened.getByRole('button', { name: 'Spara hela utkastet' }).click();
       await expect(reopened.getByRole('list', { name: 'Objekt' })).not.toContainText('Lo Exempel');

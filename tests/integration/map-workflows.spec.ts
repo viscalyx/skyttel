@@ -51,7 +51,7 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     const search = page.getByLabel('Sök objekt');
     await search.fill('åSAS');
     await expect(objects.getByRole('button')).toHaveText(['Åsas tjänst']);
-    await objects.getByRole('button', { name: 'Åsas tjänst' }).click();
+    await objects.getByRole('button', { name: 'Åsas tjänst', exact: true }).click();
     await expect(page.getByLabel('Objektets namn')).toBeFocused();
     await page.getByLabel('Objektets namn').fill('Text som inte skickas');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Inte heller denna text skickas');
@@ -59,19 +59,19 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeFocused();
-    await objects.getByRole('button', { name: 'Åsas tjänst' }).click();
+    await objects.getByRole('button', { name: 'Åsas tjänst', exact: true }).click();
     await expect(page.getByLabel('Objektets namn')).toHaveValue('Åsas tjänst');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Gemensam musik');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await search.fill('finns inte');
-    await expect(objects.getByRole('button')).toHaveCount(0);
+    await expect(objects.getByRole('listitem')).toHaveCount(0);
     await search.fill('');
-    await expect(objects.getByRole('button')).toHaveCount(3);
+    await expect(objects.getByRole('listitem')).toHaveCount(3);
     await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Avbrutet objekt');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.reload();
-    await expect(objects.getByRole('button')).toHaveCount(3);
+    await expect(objects.getByRole('listitem')).toHaveCount(3);
     expect((await read()).objects).toEqual(saved.objects);
     expect((await read()).draft.changes).toEqual([]);
   } finally {

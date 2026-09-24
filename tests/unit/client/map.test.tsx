@@ -886,3 +886,42 @@ test('a conflicting type offers both current choices and never grants an implici
     'Inga förslag',
   );
 });
+
+test('view changes retain unsent object text and filters can clear without changing household content', async () => {
+  await open();
+  await add('Lo Rymdprov');
+  await add('Kim Rymdprov');
+  await save();
+  const original = await (await client.request(path)).json();
+  await userEvent.click(screen.getByRole('button', { name: 'Lo Rymdprov' }));
+  await userEvent.clear(screen.getByLabelText('Beskrivning'));
+  await userEvent.type(screen.getByLabelText('Beskrivning'), 'Oskickad vytext');
+  await userEvent.click(screen.getByRole('button', { name: 'Samlad vy' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Öppna rymdkartan' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Visa detaljer och utkast' }));
+  expect((screen.getByLabelText('Beskrivning') as HTMLTextAreaElement).value).toBe(
+    'Oskickad vytext',
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Till kartan' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Lista och detaljer' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng utan att skicka texten' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Redigera Lo Rymdprov' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Visa objektets kopplingar' }));
+  expect(screen.getByText('Fokus: Lo Rymdprov')).toBeTruthy();
+  expect(
+    within(screen.getByRole('list', { name: 'Objekt' })).queryByText('Kim Rymdprov'),
+  ).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Visa hela rymden' }));
+  await userEvent.type(screen.getByLabelText('Sök objekt'), 'Lo');
+  await userEvent.selectOptions(
+    screen.getByLabelText('Filtrera objekttyp'),
+    original.types.find((type: { name: string }) => type.name === 'Abonnemang').id,
+  );
+  expect(within(screen.getByRole('list', { name: 'Objekt' })).queryByRole('listitem')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Visa hela rymden' }));
+  await userEvent.keyboard('{Escape}');
+  expect(
+    within(screen.getByRole('list', { name: 'Objekt' })).getAllByRole('listitem'),
+  ).toHaveLength(2);
+  expect((await (await client.request(path)).json()).objects).toEqual(original.objects);
+});

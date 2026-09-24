@@ -105,7 +105,10 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
       'Obesvarad identitetsfråga',
     );
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
-    await page.getByRole('button', { name: /Familjemusik → Betalas med → Obesvarad/ }).click();
+    await page
+      .getByRole('list', { name: 'Samband', exact: true })
+      .getByRole('button', { name: /Familjemusik → Betalas med → Obesvarad/ })
+      .click();
     await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
     await page.getByLabel('Till objekt').selectOption({ label: 'Betalkonto (Bankkonto)' });
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
@@ -119,7 +122,10 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     for (const knowledge of ['unknown', 'none']) {
-      await page.getByRole('button', { name: /Familjemusik → Betalas med/ }).click();
+      await page
+        .getByRole('list', { name: 'Samband', exact: true })
+        .getByRole('button', { name: /Familjemusik → Betalas med/ })
+        .click();
       await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
       await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
       await page.getByRole('button', { name: 'Spara hela utkastet' }).click();

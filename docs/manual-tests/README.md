@@ -17,6 +17,10 @@ till motsvarande automatiserade integrationstester.
   tillgång med bevarat innehåll i kartan.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt och bevara ofullständiga uppgifter.
+- [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
+  fokus, filter, etiketter, pekmenyer, ändringssymboler och bevarad
+  oskickad text vid vybyte, orientering och grafikavbrott samt fungerande
+  navigation när tillgången återkallas i helskärm.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast.

@@ -24,6 +24,8 @@ hur hushållet skapar och rättar gemensamma definitioner genom sina utkast.
 beskriver egna betydelser, benämningar från båda håll och dubbletter.
 [Guiden för externa assistenter](docs/users/assistants.md) beskriver
 AI-behandlingsval, läsåtkomst och återkallelse för textklienter.
+[Guiden för rymdkartan](docs/users/spatial-map.md) beskriver navigering,
+gemensam redigering, ändringssymboler och enheternas begränsningar.
 
 Utveckla i projektets [devcontainer](docs/development/devcontainer.md).
 [Utvecklings- och testinstruktionerna](docs/development/testing.md) beskriver

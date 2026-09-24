@@ -174,7 +174,16 @@
     "PKCE",
     "läsåtkomst",
     "läsåtkomsten",
-    "förmarkerat"
+    "förmarkerat",
+    "vybyte",
+    "vybytet",
+    "ändobjekt",
+    "panorerbart",
+    "Oskickat",
+    "Fokusmarkeringar",
+    "skärmläsarflöden",
+    "WebGL",
+    "oskickade"
   ],
   "overrides": [
     {
