@@ -1,6 +1,7 @@
 import './spatial.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
+import { LifecycleStatus } from './Lifecycle.js';
 import { relationshipLabel } from './RelationshipEditor.js';
 import { type ProjectedPoint, spatialScene } from './spatial-scene.js';
 
@@ -59,6 +60,30 @@ const cameraActions = [
   ['out', 'Zooma ut'],
 ] as const;
 
+function arrowTip(
+  source: { x: number; y: number },
+  target: { x: number; y: number },
+  label?: { x: number; y: number; width: number; height: number },
+) {
+  if (!label) return target;
+  const halfWidth = label.width / 2 + 6;
+  const halfHeight = label.height / 2 + 6;
+  const offsetX = target.x - label.x;
+  const offsetY = target.y - label.y;
+  // A displaced label already exposes its object. Otherwise stop at the
+  // label's reserved boundary so that the HTML button cannot hide the arrow.
+  if (Math.abs(offsetX) > halfWidth || Math.abs(offsetY) > halfHeight) return target;
+  const dx = source.x - target.x;
+  const dy = source.y - target.y;
+  if (!dx && !dy) return target;
+  const fraction = Math.min(
+    dx ? (halfWidth - Math.sign(dx) * offsetX) / Math.abs(dx) : Number.POSITIVE_INFINITY,
+    dy ? (halfHeight - Math.sign(dy) * offsetY) / Math.abs(dy) : Number.POSITIVE_INFINITY,
+    1,
+  );
+  return { x: target.x + dx * fraction, y: target.y + dy * fraction };
+}
+
 export function SpatialMap({
   state,
   active,
@@ -114,6 +139,44 @@ export function SpatialMap({
   }, [menuObject]);
   useEffect(() => () => cancelHold(), [cancelHold]);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const labelLayer = useRef<HTMLDivElement>(null);
+  const labelObserver = useRef<ResizeObserver | null>(null);
+  const observeLabel = useCallback((element: HTMLButtonElement | null) => {
+    if (!element) return;
+    labelObserver.current?.observe(element);
+    return () => labelObserver.current?.unobserve(element);
+  }, []);
+  const [labelSizes, setLabelSizes] = useState(
+    new Map<string, { width: number; height: number }>(),
+  );
+  useLayoutEffect(() => {
+    if (!activated || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver((entries) => {
+      setLabelSizes((previous) => {
+        const next = new Map(previous);
+        let changed = false;
+        for (const { target } of entries) {
+          const label = target as HTMLButtonElement;
+          const id = label.dataset.layoutId;
+          if (!id) continue;
+          const width = label.offsetWidth;
+          const height = label.offsetHeight;
+          if (!width || !height) continue;
+          if (previous.get(id)?.width !== width || previous.get(id)?.height !== height) {
+            next.set(id, { width, height });
+            changed = true;
+          }
+        }
+        return changed ? next : previous;
+      });
+    });
+    labelObserver.current = observer;
+    for (const label of labelLayer.current?.children ?? []) observer.observe(label);
+    return () => {
+      observer.disconnect();
+      labelObserver.current = null;
+    };
+  }, [activated]);
   const scene = useRef<ReturnType<typeof spatialScene> | null>(null);
   const [points, setPoints] = useState<ProjectedPoint[]>([]);
   const [unavailable, setUnavailable] = useState(false);
@@ -198,22 +261,32 @@ export function SpatialMap({
     return target;
   }
   const labels = new Map(
-    [...locations].map(([id, point]) => [
-      id,
-      place(point.x, point.y, Math.min(240, (objects.get(id)?.name.length ?? 0) * 8 + 95), 50),
-    ]),
+    [...locations].map(([id, point]) => {
+      const size = labelSizes.get(`object-${id}`) ?? {
+        width: Math.min(240, (objects.get(id)?.name.length ?? 0) * 8 + 95),
+        height: 50,
+      };
+      return [id, place(point.x, point.y, size.width, size.height)];
+    }),
   );
   const edges = [...relationships.values()].flatMap((edge) => {
     const source = locations.get(edge.sourceId);
     const target = edge.targetId ? locations.get(edge.targetId) : undefined;
     if (!source || (edge.targetId && !target)) return [];
     const end = target ?? { x: source.x + 100, y: source.y + 80 };
+    const tip = arrowTip(source, end, edge.targetId ? labels.get(edge.targetId) : undefined);
     const selected =
       selection?.kind === 'relationship'
         ? selection.id === edge.id
         : selection?.id === edge.sourceId || selection?.id === edge.targetId;
-    const label = place((source.x + end.x) / 2, (source.y + end.y) / 2 + 32, 170, 42);
-    return [{ edge, source, end, selected, ...label }];
+    const size = labelSizes.get(`relationship-${edge.id}`) ?? { width: 170, height: 42 };
+    const label = place(
+      (source.x + end.x) / 2,
+      (source.y + end.y) / 2 + size.height / 2 + 11,
+      size.width,
+      size.height,
+    );
+    return [{ edge, source, end, tip, selected, ...label }];
   });
   return (
     <section className="spatial-map" aria-label="Rymdkarta">
@@ -345,7 +418,7 @@ export function SpatialMap({
               }
             />
           ))}
-          {edges.map(({ edge, source, end, selected }) => (
+          {edges.map(({ edge, source, tip, selected }) => (
             // biome-ignore lint/a11y/useSemanticElements: SVG geometry supplies pointer selection; the HTML label supplies the keyboard route.
             <line
               key={edge.id}
@@ -360,8 +433,8 @@ export function SpatialMap({
               }}
               x1={source.x}
               y1={source.y}
-              x2={end.x}
-              y2={end.y}
+              x2={tip.x}
+              y2={tip.y}
               markerEnd="url(#spatial-arrow)"
               className={selected ? 'connection selected' : 'connection'}
               onClick={() => {
@@ -370,10 +443,12 @@ export function SpatialMap({
             />
           ))}
         </svg>
-        <div className="spatial-labels">
+        <div className="spatial-labels" ref={labelLayer}>
           {edges.map(({ edge, x, y, selected }) => (
             <button
               key={edge.id}
+              data-layout-id={`relationship-${edge.id}`}
+              ref={observeLabel}
               type="button"
               disabled={disabled}
               className={`spatial-edge${selected ? ' selected' : ''}`}
@@ -381,12 +456,15 @@ export function SpatialMap({
               style={{ left: x, top: y }}
               onClick={() => onSelectRelationship(edge)}
             >
-              <ProposalSymbol
-                change={state.draft.relationships?.find((change) => change.id === edge.id)}
-              />{' '}
-              →{' '}
-              {state.relationshipTypes.find((type) => type.id === edge.typeId)?.forwardLabel ??
-                state.relationshipTypes.find((type) => type.id === edge.typeId)?.name}
+              <span className="spatial-caption">
+                <ProposalSymbol
+                  change={state.draft.relationships?.find((change) => change.id === edge.id)}
+                />{' '}
+                →{' '}
+                {state.relationshipTypes.find((type) => type.id === edge.typeId)?.forwardLabel ??
+                  state.relationshipTypes.find((type) => type.id === edge.typeId)?.name}
+              </span>
+              <LifecycleStatus value={edge} />
             </button>
           ))}
           {[...locations.values()].map((point) => {
@@ -395,6 +473,8 @@ export function SpatialMap({
             return (
               <button
                 key={point.id}
+                data-layout-id={`object-${point.id}`}
+                ref={observeLabel}
                 type="button"
                 disabled={disabled}
                 aria-label={`Välj objekt: ${object.name}`}
@@ -438,18 +518,21 @@ export function SpatialMap({
                   else onSelect(object);
                 }}
               >
-                <span
-                  className="type-icon"
-                  aria-hidden="true"
-                  title={state.types.find((type) => type.id === object.typeId)?.name}
-                >
-                  {icons[state.types.find((type) => type.id === object.typeId)?.name ?? ''] ??
-                    state.types.find((type) => type.id === object.typeId)?.name.slice(0, 2)}
+                <span className="spatial-caption">
+                  <span
+                    className="type-icon"
+                    aria-hidden="true"
+                    title={state.types.find((type) => type.id === object.typeId)?.name}
+                  >
+                    {icons[state.types.find((type) => type.id === object.typeId)?.name ?? ''] ??
+                      state.types.find((type) => type.id === object.typeId)?.name.slice(0, 2)}
+                  </span>
+                  <ProposalSymbol
+                    change={state.draft.changes.find((change) => change.id === object.id)}
+                  />{' '}
+                  {object.name}
                 </span>
-                <ProposalSymbol
-                  change={state.draft.changes.find((change) => change.id === object.id)}
-                />{' '}
-                {object.name}
+                <LifecycleStatus value={object} />
               </button>
             );
           })}

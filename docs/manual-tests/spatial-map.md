@@ -60,7 +60,9 @@ selection”.
 
 **Steg:**
 
-1. Öppna Samlad vy. Filtrera på Person och kontrollera att tjänsten döljs.
+1. Öppna rymdkartan. Kontrollera pilen från Lo Exempel till Molnmusik
+   före och efter rotation och panorering. Byt till Samlad vy. Filtrera
+   på Person och kontrollera att tjänsten döljs.
 2. Välj Visa hela rymden och Ctrl-klicka Lo Exempel. Kontrollera fokus.
 3. Panorera med knappen under Navigera rymden. Välj Visa hela rymden.
 4. Sök efter Lo. Flytta tangentbordsfokus till en kameraknapp och tryck
@@ -70,7 +72,8 @@ selection”.
 
 **Förväntat resultat:**
 
-- Riktning och rätt ändobjekt syns. Fokus visar direkta samband.
+- Pilspetsen syns utanför målets etikett, även efter kamerarörelse.
+  Riktning och rätt ändobjekt syns. Fokus visar direkta samband.
 - Visa hela rymden rensar filter och fokus med bibehållen kamera.
 - Escape rensar sökningen utanför formuläret. Sambandet öppnar rätt
   detaljer med Molnmusik som mål.
@@ -201,3 +204,41 @@ navigation”.
 - Ändringen nekas, privata uppgifter döljs och helskärmsläget lämnas.
 - Navigationen kan användas omedelbart. Utloggning visar inloggningssidan
   utan kvarvarande oskickad text.
+
+## Uppgifter över tid
+
+### RYMD-07: upphörda uppgifter behåller status bredvid ändringssymboler
+
+**Syfte:** Skilja upphört från förslag i rymdkartans objekt och samband.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** De två objekten och användningssambandet är förslag.
+
+**Integrationstest:**
+[spatial.spec.ts](../../tests/integration/spatial.spec.ts),
+testfallet “RYMD-07: ended objects and relationships retain status beside
+draft symbols”.
+
+**Steg:**
+
+1. Välj Molnmusik i listan, välj status Upphört och lägg i utkastet.
+2. Välj Lo Exempel. Ange ett känt slutdatum i det förflutna under
+   Ekonomiska uppgifter och avtalsvillkor, välj Gäller fortfarande och
+   lägg i utkastet.
+3. Välj användningssambandet. Ange ett känt slutdatum i det förflutna,
+   behåll Följ slutdatum och lägg sambandet i utkastet.
+4. Öppna rymdkartan och kontrollera objektens och sambandets etiketter.
+5. Visa detaljer och utkast, spara hela utkastet, starta om appen och
+   öppna rymdkartan igen.
+6. Välj sambandets etikett, välj Gäller fortfarande och lägg sambandet
+   i utkastet. Gå tillbaka till kartan.
+
+**Förväntat resultat:**
+
+- Molnmusik och sambandet visar Upphört med separat färg bredvid
+  plusmarkeringen. Lo Exempel visar inget Upphört trots slutdatumet.
+- Namn, typikon och riktning är fortfarande begripliga. Upphört finns
+  kvar efter sparande och omstart; plusmarkeringarna försvinner.
+- Sambandets rättelse visar tilde och tar bort dess Upphört-markering.
+  Molnmusiks status påverkas inte.

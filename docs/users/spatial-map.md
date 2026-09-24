@@ -58,6 +58,11 @@ Markeringarna visar skillnaden mot sparad karta:
 - **~** med gul markering: ändrat förslag.
 - **×** med röd markering: föreslagen borttagning.
 
+**Upphört** har en egen färg och visas även i rymdkartans objekt- och
+sambandsetiketter. Statusen följer samma slutdatum och manuella val som
+i listan. Den kan visas samtidigt med en ändringssymbol och finns kvar
+efter sparandet. **Gäller fortfarande** åsidosätter ett passerat slutdatum.
+
 **Ta bort** lägger omedelbart objektets och dess inkommande och utgående
 sambands borttagning i utkastet. Andra objekt finns kvar. Granska
 **Hela mitt utkast** och välj **Spara hela utkastet** för att ändra den

@@ -65,6 +65,17 @@
   text-overflow: ellipsis;
   touch-action: none;
 }
+.spatial-caption {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spatial-labels .ended-status {
+  display: block;
+  width: fit-content;
+  margin: 0.25rem auto 0;
+  font-size: 0.8rem;
+}
 .presentation-map {
   position: fixed;
   inset: 0;

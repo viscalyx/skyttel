@@ -87,7 +87,7 @@ state.draft.relationships = state.relationships.map((edge, index) => ({
   objectNames: {},
 }));
 
-function MapView() {
+function MapView({ relationships = state.relationships } = {}) {
   const [selection, setSelection] = useState<{
     kind: 'object' | 'relationship';
     id: string;
@@ -103,7 +103,7 @@ function MapView() {
         active
         state={state}
         objects={objects}
-        relationships={new Map(state.relationships.map((edge) => [edge.id, edge]))}
+        relationships={new Map(relationships.map((edge) => [edge.id, edge]))}
         selection={selection}
         disabled={false}
         onSelect={(object) => {
@@ -186,6 +186,31 @@ test('graphics navigation and label modes expose selectable objects and directed
     .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.' })
     .click({ position: { x: 5, y: 5 } });
   await expect.element(page.getByRole('status')).toHaveTextContent('Hela rymden');
+});
+
+test('direction rendering retains selectable self references and explicitly absent targets', async () => {
+  render(
+    <MapView
+      relationships={[
+        { ...state.relationships[0], id: 'self', targetId: 'lo' },
+        { ...state.relationships[1], id: 'none', knowledge: 'none' },
+      ]}
+    />,
+  );
+  await page
+    .getByRole('button', {
+      name: 'Välj samband: Lo Exempel → använder → Lo Exempel',
+      exact: true,
+    })
+    .click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await page
+    .getByRole('button', {
+      name: 'Välj samband: Kim Exempel → använder → Uttryckligen inget',
+      exact: true,
+    })
+    .click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: none');
 });
 
 test('context menu edits, focuses, cancels and removes only the chosen object', async () => {
