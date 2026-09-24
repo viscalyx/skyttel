@@ -36,6 +36,7 @@ type Store = {
   jobs: Map<string, ReadyImport>;
   uploading?: { householdId: string; controller: AbortController; settled: Promise<void> };
   running: Set<string>;
+  abandoned: Map<string, { householdId: string; directory: string }>;
 };
 const stores = new WeakMap<Database.Database, Store>();
 const lifetimeMs = 10 * 60 * 1000;
@@ -59,7 +60,7 @@ export function initializeHouseholdImports(database: Database.Database) {
     payload = NULL, error = CASE phase WHEN 'prepared' THEN 'import_interrupted' ELSE NULL END, updatedAt = ?
     WHERE kind = 'import' AND phase IN ('prepared', 'cleanup')`)
       .run(new Date().toISOString());
-  stores.set(database, { directory, jobs: new Map(), running: new Set() });
+  stores.set(database, { directory, jobs: new Map(), running: new Set(), abandoned: new Map() });
 }
 function storeFor(database: Database.Database) {
   initializeHouseholdImports(database);
@@ -142,6 +143,13 @@ export async function invalidateHouseholdImports(
     upload.controller.abort();
     await upload.settled;
   }
+  // A failed upload may have failed its first removal too. Keep that path
+  // registered until deletion succeeds; erasure must not report completion.
+  for (const [id, abandoned] of store.abandoned) {
+    if (abandoned.householdId !== householdId) continue;
+    await rm(abandoned.directory, { recursive: true, force: true });
+    store.abandoned.delete(id);
+  }
   for (const job of [...store.jobs.values()])
     if (job.householdId === householdId && job.id !== exceptImportId) await discard(store, job);
 }
@@ -169,6 +177,7 @@ export async function prepareHouseholdImport(
     resolveSettled = resolve;
   });
   store.uploading = { householdId, controller, settled };
+  store.abandoned.set(id, { householdId, directory });
   try {
     await mkdir(directory, { mode: 0o700 });
     const file = await open(join(directory, 'archive.zip'), 'wx', 0o600);
@@ -221,9 +230,11 @@ export async function prepareHouseholdImport(
       );
     }, lifetimeMs).unref();
     store.jobs.set(id, job);
+    store.abandoned.delete(id);
     return readyStatus(job);
   } catch (error) {
     await rm(directory, { recursive: true, force: true });
+    store.abandoned.delete(id);
     if (error instanceof MapError) throw error;
     throw new MapError(signal.aborted ? 'import_cancelled' : 'invalid_archive', 400);
   } finally {
