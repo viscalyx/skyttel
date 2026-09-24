@@ -26,4 +26,46 @@ authorization semantics remain unchanged.
 
 ## Final observations
 
-Final measurements are recorded after the implementation and checks finish.
+Measured clean implementation commit
+`1fae0c0af36da404a4bb5d0eba7a41bf273b7733`, tree
+`84bb55c67e3ff740912d0d2b0b87f9c0c1e8287a`, on 2026-09-24 at 21:44 UTC.
+The browser, Node, Linux, architecture, viewport, memory and CPU limits were
+the same as the baseline. No other test suite ran in this worktree during
+measurement. Host load averages after the six observations were
+2.33/2.78/2.79. Both runs used the plan's 20/5 Mbit/s, 40 ms connection.
+The host load differed, so these are observed improvements, not an isolated
+CPU comparison.
+
+| Run | Cache | Open | Search | Save | Labels | Overlaps |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Cold | 2166 | 29 | 826 | 25 | 0 |
+| 1 | Warm | 2061 | 31 | 828 | 25 | 0 |
+| 2 | Cold | 2221 | 33 | 820 | 25 | 0 |
+| 2 | Warm | 2060 | 31 | 834 | 25 | 0 |
+| 3 | Cold | 2188 | 32 | 822 | 25 | 0 |
+| 3 | Warm | 2084 | 35 | 815 | 25 | 0 |
+
+All six observations met all three time limits and had no overlapping
+overview labels. Values in the table are rounded to whole milliseconds;
+the [raw report](measurements/large-map-2026-09-24.json) preserves precision
+and environment metadata. Reread content and history matched every save;
+after server restart the final content, history and successful operation
+contained the same durable receipt. Visual inspection confirmed that
+selected paths remained distinct from the faded background connections.
+
+The full check on this product code passed: 414 Vitest tests, 135 Playwright
+tests, release/security gates, typecheck, lint, documentation checks and
+production build. Coverage was 93.69% statements, 90.64% branches, 93.57%
+functions and 95.39% lines, with thresholds unchanged. The large-map browser
+case visited every object and relationship page, searched the last object,
+returned to off-page selected content, focused its connections, preserved
+unsent text across views, saved and reread after restart. It also preserved
+25 coincident personal positions and rejected anonymous/revoked access.
+The existing directed-arrow, lifecycle, personal movement and concurrency
+cases remained green. Manual physical-device execution is not claimed.
+
+No production-host capacity or physical target-device result is inferred
+from this environment. The client bundle warning above 500 kB still appears;
+the measured production bundle nevertheless met the stated connection
+targets. More history, larger images, concurrent load or a different device
+can change the results and should be recorded when repeating the plan.
