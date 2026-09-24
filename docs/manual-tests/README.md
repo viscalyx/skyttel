@@ -20,6 +20,7 @@ betyder inte att dess manuella prov är genomfört.
 
 - [Fullständig återimport](household-import.md): uttrycklig ersättning,
   bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,
+  lokalt prov med tappat sparbesked, avvisade gamla sparbegäranden,
   ny förberedelse efter omstart och ångring med aktuellt underlag.
 
 - [Fullständig export](household-export.md): privata uppgifter före

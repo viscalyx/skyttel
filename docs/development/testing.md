@@ -32,6 +32,60 @@ node --env-file=.env.local dist/server/index.js
 The database directory must be writable. The server serves the Vite client
 build and the API from the same origin.
 
+## Disposable local browser session
+
+Use this setup when a browser check must replace household content. It runs
+inside the devcontainer with the host browser at `http://localhost:5173`.
+Complete the normal [development login setup](devcontainer.md#run-the-application)
+first; the [authentication walkthrough](local-authentication.md) explains
+provider registration. The configured first administrator signs in with
+that existing account. Household names and information must be invented.
+No public address, tunnel, new provider registration, or assistant is needed.
+
+Stop the normal `npm run dev:all` with Ctrl+C and keep ports 3300 and 5173
+free. From the repository root, run this block in a terminal that you keep
+open for the whole check. It creates a new empty database without running
+`db:setup` or changing the ordinary development database. Provider settings
+come from the same private environment file as normal development:
+`SKYTTEL_DEV_ENV_FILE`, or `.devcontainer/.env` when it is not set.
+
+```sh
+umask 077
+SKYTTEL_BROWSER_CASE_DIR=$(mktemp -d /tmp/skyttel-browser-case.XXXXXX)
+printf 'SKYTTEL_DATABASE_PATH=%s/skyttel.sqlite\n' \
+  "$SKYTTEL_BROWSER_CASE_DIR" > "$SKYTTEL_BROWSER_CASE_DIR/case.env"
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_BROWSER_CASE_DIR/case.env" scripts/develop.mjs
+```
+
+Open a fresh private browser window on the host, sign in and create the
+requested household. If two profiles are required, use two separate browser
+profiles, both signed in as the same configured administrator. Session
+cookies are profile-local. Keep any downloaded synthetic archives in a
+separate private folder on the host.
+
+For a restart within the check, press Ctrl+C, wait for both development
+processes to stop, and run only this command in the same terminal. It uses
+the same database, sessions, and household:
+
+```sh
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_BROWSER_CASE_DIR/case.env" scripts/develop.mjs
+```
+
+Reload the browser after startup. Do not rerun the directory-creation block
+or `db:setup` during a persistence check. When finished, stop the server,
+close the test browser windows, remove downloaded test archives, and delete
+only this temporary directory in the same terminal:
+
+```sh
+rm -r -- "${SKYTTEL_BROWSER_CASE_DIR:?}"
+unset SKYTTEL_BROWSER_CASE_DIR
+```
+
+Start the ordinary environment again with `npm run dev:all`. For another
+isolated check, create a fresh directory with the first block.
+
 ## Application unit tests and lint
 
 Vitest exercises public application functions, rendered React screens, and
