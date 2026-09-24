@@ -78,12 +78,21 @@ export function resolvedObjectValue(
       : after.financialFacts?.[key];
     if (fact) financialFacts[key] = fact;
   }
-  const customValues: CustomValues = {};
-  for (const key of new Set([
+  const customKeys = new Set([
     ...Object.keys(before.customValues ?? {}),
     ...Object.keys(after.customValues ?? {}),
     ...Object.keys(current.customValues ?? {}),
-  ])) {
+  ]);
+  // Field identity belongs to its type. A type change and its corrected
+  // values are one choice; only fields of the same type can merge separately.
+  const changingType = before.typeId !== after.typeId || before.typeId !== current.typeId;
+  const meaning =
+    after.typeId === before.typeId &&
+    [...customKeys].every((key) => after.customValues?.[key] === before.customValues?.[key])
+      ? current
+      : after;
+  const customValues: CustomValues = changingType ? { ...meaning.customValues } : {};
+  for (const key of changingType ? [] : customKeys) {
     const value =
       after.customValues?.[key] === before.customValues?.[key]
         ? current.customValues?.[key]
@@ -91,7 +100,7 @@ export function resolvedObjectValue(
     if (value !== undefined) customValues[key] = value;
   }
   return {
-    typeId: field('typeId'),
+    typeId: changingType ? meaning.typeId : field('typeId'),
     name: field('name'),
     description: field('description'),
     ...(identity ? { identity } : {}),

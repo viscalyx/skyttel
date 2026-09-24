@@ -33,6 +33,15 @@ object removal and membership revocation retain these records; revocation
 blocks further access. Include retained personal views in full household
 recovery and permanent erasure procedures.
 
+### Object type changes
+
+Use the upgraded application with private drafts that contain a type-change
+undo. Earlier application versions cannot preserve the new grouped conflict
+choices. Before returning to an earlier image, stop the application and
+restore its matching database backup. Clients that display private drafts
+must show the retained source definition and the proposed type and values
+together. Reload open browser sessions after upgrade.
+
 ### History and whole-save undo
 
 Back up the persistent database and retain its matching image before upgrade.

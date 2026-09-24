@@ -153,6 +153,7 @@ export function undoSave(
           ([id]) =>
             !current ||
             !change.undoFields ||
+            change.undoFields.includes('objectMeaning') ||
             change.undoFields.includes('typeId') ||
             change.undoFields.includes(`customValues:${id}`),
         ),
@@ -171,6 +172,7 @@ export function undoSave(
         ...change,
         id,
         type,
+        beforeType: state.types.find((item) => item.id === change.before?.typeId),
         undo: true,
         ...(!current && change.after ? { restoreRevision: tombstones.revision('object', id) } : {}),
       },

@@ -46,6 +46,37 @@ Det tidigare fältet och värdena finns kvar. Skyttel konverterar inte värden
 automatiskt. Även användning i ett privat utkast kan hindra byte av
 värdeslag; felbeskedet avslöjar inte utkastets innehåll.
 
+## Byt typ på ett objekt
+
+Öppna objektet och välj en annan **Objekttyp**, exempelvis från Cykel till
+Fordon. Objektets identitet och alla dess samband finns kvar. Namn,
+beskrivning och andra uppgifter som inte hör till typens egna fält påverkas
+inte av själva typvalet.
+
+Den nya typens fält börjar obesvarade. Tidigare fältvärden visas separat,
+även om den nya typen har fält med samma namn. Fyll själv i de uppgifter
+som ska gälla efter bytet. Inga värden överförs eller konverteras automatiskt.
+Lämna **Obesvarat** för uppgifter du inte känner till; det är skilt från
+**Nej**. Bekräfta **Jag har hanterat tidigare fältvärden för typbytet** när
+du har rättat de nya fälten eller valt att lämna dem obesvarade.
+
+Välj **Lägg i mitt utkast**. I **Hela mitt utkast** ser du tidigare typ och
+värden samt den nya typen och dess värden. Typbytet och fälträttelserna
+sparas tillsammans med resten av utkastet. Ett fel stoppar hela sparandet.
+Tidigare sparade värden finns kvar i historiken. Oskickade formulärvärden
+försvinner om du stänger formuläret utan att lägga förslaget i utkastet.
+
+Ett typbyte gäller ett objekt. Ett namnbyte på typdefinitionen ändrar
+benämningen för alla objekt av den typen. Sammanslagning gäller flera
+objekt som ska bli ett; ett typbyte slår inte samman objekt och flyttar
+inga samband.
+
+Vid konflikt mellan typer granskar du typen och dess fältvärden som en
+helhet. Oberoende ändringar, exempelvis ett senare namn, bevaras. Ångring
+lägger tillbaka tidigare typ och värden i ett nytt förslag. Senare ändrade
+fält kräver ett uttryckligt val; ett överlappande eget fältförslag behöver
+hanteras innan du ångrar. Oberoende eget utkastarbete finns kvar.
+
 ## Samtidiga ändringar och återupptagning
 
 Typförslag och objektförslag finns kvar efter omladdning och omstart när

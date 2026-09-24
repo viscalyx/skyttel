@@ -38,7 +38,8 @@ till motsvarande automatiserade integrationstester.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
-  som objektens innehåll.
+  som objektens innehåll. Typbyten granskar tidigare och nya värden,
+  bevarar identitet och samband samt följer historikens ångring.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, privata förslag, dubbletter
   och samtidiga sparanden utan delsparande.

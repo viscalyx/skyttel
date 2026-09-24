@@ -76,6 +76,71 @@ async function save() {
   await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Sparat:'));
 }
 
+test('changing type shows displaced values and requires handling them without copying matching field IDs', async () => {
+  for (const [version, id, name, kind] of [
+    [0, 'cycle', 'Cykel', 'text'],
+    [1, 'vehicle', 'Fordon', 'number'],
+  ] as const) {
+    expect(
+      (
+        await client.json(`${path}/object-type`, {
+          version,
+          id,
+          baseRevision: null,
+          value: {
+            name,
+            description: '',
+            fields: [
+              { id: 'serial', name: 'Nummer', description: '', kind },
+              { id: 'insured', name: 'Försäkrad', description: '', kind: 'boolean' },
+            ],
+          },
+        })
+      ).status,
+    ).toBe(200);
+  }
+  await client.json(`${path}/draft`, {
+    version: 2,
+    id: 'bike',
+    baseRevision: null,
+    value: {
+      typeId: 'cycle',
+      name: 'Alex blå cykel',
+      description: '',
+      customValues: { serial: 'SYNTH-42', insured: false },
+    },
+  });
+  await client.json(`${path}/save`, { version: 3, operationId: 'setup' });
+  await open();
+  await userEvent.click(screen.getByRole('button', { name: 'Alex blå cykel' }));
+  await userEvent.selectOptions(screen.getByLabelText('Objekttyp'), 'vehicle');
+  expect((screen.getByLabelText('Nummer') as HTMLInputElement).value).toBe('');
+  expect((screen.getByLabelText('Försäkrad') as HTMLSelectElement).value).toBe('');
+  const previous = screen.getByRole('region', { name: 'Tidigare fältvärden' });
+  expect(previous.textContent).toContain('Cykel');
+  expect(previous.textContent).toContain('Nummer: SYNTH-42');
+  expect(previous.textContent).toContain('Försäkrad: Nej');
+  expect(
+    (screen.getByRole('button', { name: 'Lägg i mitt utkast' }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  await userEvent.type(screen.getByLabelText('Nummer'), '42');
+  await userEvent.click(screen.getByLabelText('Jag har hanterat tidigare fältvärden för typbytet'));
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  const review = screen.getByRole('region', { name: 'Hela mitt utkast' });
+  expect(review.textContent).toContain('Nummer: SYNTH-42');
+  expect(review.textContent).toContain('Nummer: 42');
+  expect(review.textContent).toContain('Försäkrad: Obesvarat');
+  await save();
+  const state: MapState = await (await client.request(path)).json();
+  expect(state.objects[0]).toMatchObject({
+    id: 'bike',
+    typeId: 'vehicle',
+    customValues: { serial: 42 },
+  });
+  expect(state.objects[0].customValues).not.toHaveProperty('insured');
+});
+
 test('relationship type forms review both labels and show one edge from either object', async () => {
   const initial = await (await client.request(path)).json();
   for (const [version, id, name] of [

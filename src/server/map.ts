@@ -256,6 +256,7 @@ export function householdMap(database: Database.Database, userId: string, househ
               current.changes.push({
                 ...change,
                 ...remaining,
+                beforeType: types.read().find((type) => type.id === remaining.before?.typeId),
                 undo: undefined,
                 undoFields: undefined,
                 type:
@@ -269,6 +270,7 @@ export function householdMap(database: Database.Database, userId: string, househ
             }
             change.after = resolvedObjectValue(change, conflict.current);
             change.before = conflict.current;
+            change.beforeType = types.read().find((type) => type.id === conflict.current?.typeId);
             if (conflict.type) change.type = conflict.type;
             if (change.after) readCustomValues(change.after.customValues, change.type);
             if (!change.after) edges.removeObject(current, change.id);
@@ -391,6 +393,8 @@ export function householdMap(database: Database.Database, userId: string, househ
         const typeId = after?.typeId ?? before?.typeId ?? existing?.type.id;
         const type = types.effective(current).find((item) => item.id === typeId);
         if (!type) throw new MapError('invalid_type', 400);
+        const beforeType =
+          existing?.beforeType ?? types.read().find((item) => item.id === before?.typeId);
         current.changes = current.changes.filter((change) => change.id !== id);
         if (before || after)
           current.changes.push({
@@ -398,6 +402,7 @@ export function householdMap(database: Database.Database, userId: string, househ
             before,
             after,
             type,
+            ...(beforeType ? { beforeType } : {}),
             ...(existing?.restoreRevision !== undefined
               ? { restoreRevision: existing.restoreRevision }
               : {}),

@@ -69,6 +69,7 @@ export interface DraftChange {
   before: MapObject | null;
   after: ObjectValue | null;
   type: ObjectType;
+  beforeType?: ObjectType;
   restoreRevision?: number;
   undo?: true;
   undoFields?: string[];

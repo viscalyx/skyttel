@@ -1,7 +1,8 @@
 # Manuella testfall för objekttyper och egna fält
 
 Testfallen hjälper den som provar Skyttel att kontrollera gemensamma
-definitioner, privata förslag, frivilliga fält och samtidiga ändringar.
+definitioner, privata förslag, frivilliga fält, typbyten och samtidiga
+ändringar.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -198,3 +199,89 @@ entire draft and map”.
   Felet säger att ett nytt fält behövs utan att avslöja Los privata innehåll.
 - Ingen del sparas, inte heller Person-objektet. Tidigare fältdefinition,
   hela utkastet och historiken är oförändrade.
+
+## Byte av objekttyp
+
+### TYP-06: Typbyte bevarar objekt, samband och tidigare fältbetydelse
+
+**Syfte:** Granska gamla värden, rätta nya fält och ångra ett typbyte.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Skapa Cykel med Nummer som text och Försäkrad som
+ja/nej. Skapa Motorfordon med samma fältnamn men Nummer som tal. Spara
+Alex blå cykel av typen Cykel med Nummer `SYNTH-42` och Försäkrad **Nej**.
+Spara Garaget och ett samband från cykeln till garaget. Anteckna objektets
+och sambandets ID från kartans publika HTTP-svar.
+
+**Integrationstest:**
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts),
+testfallet “TYP-06: type changes review displaced values and preserve
+identity, edges and history through restart and undo”.
+
+**Steg:**
+
+1. Öppna Alex blå cykel och välj Motorfordon som **Objekttyp**. Kontrollera
+   **Tidigare fältvärden**: Cykel, Nummer `SYNTH-42` och Försäkrad **Nej**.
+   Kontrollera att nya Nummer är tomt och Försäkrad är **Obesvarat**.
+   **Lägg i mitt utkast** ska vara inaktiverat innan värdena hanteras.
+2. Ange `42` i det nya Nummer. Lämna Försäkrad obesvarat. Markera
+   **Jag har hanterat tidigare fältvärden för typbytet** och lägg i utkastet.
+   Granska båda typerna, gamla och nya Nummer samt obesvarat Försäkrad.
+3. Starta om installationen och ladda om. Kontrollera samma privata
+   förslag. Spara hela utkastet och kontrollera cykelns och sambandets ID.
+4. Byt typdefinitionens namn från Cykel till Trampcykel och dess fältnamn
+   till Tidigare Nummer och Tidigare Försäkrad. Spara. Starta om och öppna
+   **Visa historik**. Hitta typbytet från Cykel till Motorfordon.
+5. Kontrollera tidigare typnamn, Nummer `SYNTH-42`, sparande användare
+   och tidpunkt. Välj **Ångra sparandet** för typbytet och granska förslaget.
+   Spara hela utkastet, starta om och läs kartan igen.
+
+**Förväntat resultat:**
+
+- Inga gamla värden kopieras eller konverteras till den nya typens fält.
+  Historiken behåller de ursprungliga namnen trots dagens namnbyte.
+- Typbyte och ångring behåller objektets och sambandets identiteter.
+  Typbytet sparar talet `42` och obesvarat Försäkrad; ångring återför
+  texten `SYNTH-42` och uttryckligt **Nej**.
+- Sparat utkast och historik finns kvar efter normal omstart.
+
+### TYP-07: Fel och samtidiga ändringar stoppar hela typbytet
+
+**Syfte:** Kontrollera atomiskt sparande, nytt sparbesked och eget utkast.
+
+**Användare:** Alex och Lo.
+
+**Förutsättningar:** Samma sparade typer, objekt och samband som i TYP-06.
+Lo har aktuell tillgång till hushållet.
+
+**Integrationstest:**
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts),
+testfallet “TYP-07: invalid values and concurrent definitions block whole
+saves until fresh choices while undo protects private fields”.
+
+**Steg:**
+
+1. Alex lägger namnbytet Garaget till Eget namn i sitt utkast. Föreslå
+   typbytet till Motorfordon. För att kontrollera serverns validering,
+   kopiera förslagsbegäran i nätverkspanelen och skicka Nummer som texten
+   `fel` i stället för ett tal. Kontrollera HTTP 400 och oförändrat utkast.
+2. Rätta Nummer till `42`, välj Försäkrad **Nej**, hantera gamla värden och
+   lägg typbytet i utkastet. Lo ändrar och sparar Motorfordons beskrivning.
+3. Alex försöker spara hela utkastet. Kontrollera att varken Garagets namn
+   eller cykelns typ ändras. Hämta aktuellt underlag och behåll förslaget
+   efter granskning av den nya definitionen. Återsänd tidigare sparbegäran
+   med samma gamla utkastversion men nytt operations-ID: HTTP 409.
+4. Ge ett nytt sparbesked och kontrollera båda sparade ändringarna. Lägg
+   sedan Nummer `43` i eget utkast. Försök ångra typbytet: överlappet ska
+   stoppas utan att det egna fältförslaget ändras.
+5. Kasta eget utkast och lägg i stället beskrivningen Oberoende uppgift på
+   cykeln i utkastet. Ångra typbytet. Starta om och granska det kvarvarande
+   förslaget; spara sedan hela utkastet.
+
+**Förväntat resultat:**
+
+- Felaktiga värden och inaktuella definitioner sparar ingen del av gruppen.
+  Konfliktvalet kräver ett nytt sparbesked för det aktuella utkastet.
+- Eget överlappande fältförslag blockerar ångringen. Den oberoende
+  beskrivningen bevaras tillsammans med återförd Cykel och dess gamla värden.

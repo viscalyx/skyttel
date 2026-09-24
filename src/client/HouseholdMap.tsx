@@ -5,6 +5,7 @@ import {
   resolvedRelationshipType,
 } from '../shared/draft-conflicts.js';
 import type {
+  CustomValues,
   MapDraft,
   MapObject,
   MapRelationship,
@@ -52,6 +53,8 @@ type Editor = {
   baseRevision: number | null;
   typeRevision: number;
   value: ObjectValue;
+  displacedFields?: { id: string; type: ObjectType; values: CustomValues }[];
+  fieldsHandled?: boolean;
 };
 
 function checkOperations(operations: SaveOperation[], householdId: string, current: MapState) {
@@ -716,7 +719,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
       <>
         <p>Namn: {value.name}</p>
         <ProfileImage householdId={householdId} value={value} />
-        <p>Objekttyp: {typeName(value.typeId)}</p>
+        <p>Objekttyp: {definition?.name ?? typeName(value.typeId)}</p>
         <p>Beskrivning: {value.description || 'Ingen beskrivning'}</p>
         <FinancialFactsDetails facts={value.financialFacts} />
         <CustomFieldsDetails
@@ -1176,6 +1179,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 <form
                   onSubmit={(event) => {
                     event.preventDefault();
+                    if (editor.displacedFields?.length && !editor.fieldsHandled) return;
                     void action('draft', editor);
                   }}
                 >
@@ -1215,12 +1219,25 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       value={editor.value.typeId}
                       onChange={(event) => {
                         setDirty(true);
+                        const previousType = effectiveTypes.find(
+                          (type) => type.id === editor.value.typeId,
+                        );
+                        const values = editor.value.customValues ?? {};
+                        const displacedFields = [...(editor.displacedFields ?? [])];
+                        if (previousType && Object.keys(values).length)
+                          displacedFields.push({
+                            id: crypto.randomUUID(),
+                            type: previousType,
+                            values,
+                          });
                         setEditor({
                           ...editor,
+                          displacedFields,
+                          fieldsHandled: false,
                           typeRevision:
                             effectiveTypes.find((type) => type.id === event.target.value)
                               ?.revision ?? 0,
-                          value: { ...editor.value, typeId: event.target.value },
+                          value: { ...editor.value, typeId: event.target.value, customValues: {} },
                         });
                       }}
                     >
@@ -1230,6 +1247,36 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                         </option>
                       ))}
                     </select>
+                    <p>
+                      Ett typbyte behåller objektet och alla dess samband. Den nya typens fält
+                      börjar obesvarade. Fyll själv i uppgifterna som ska gälla efter bytet.
+                    </p>
+                    {!!editor.displacedFields?.length && (
+                      <section aria-label="Tidigare fältvärden">
+                        <h3>Tidigare fältvärden</h3>
+                        {editor.displacedFields.map(({ id, type, values }) => (
+                          <div key={id}>
+                            <p>Objekttyp: {type.name}</p>
+                            <CustomFieldsDetails type={type} values={values} />
+                          </div>
+                        ))}
+                        <p>
+                          Dessa värden följer inte med till den nya typen. För över de uppgifter du
+                          vill behålla genom att fylla i de nya fälten. Tidigare sparade uppgifter
+                          finns kvar i historiken.
+                        </p>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={editor.fieldsHandled ?? false}
+                            onChange={(event) =>
+                              setEditor({ ...editor, fieldsHandled: event.target.checked })
+                            }
+                          />
+                          Jag har hanterat tidigare fältvärden för typbytet
+                        </label>
+                      </section>
+                    )}
                     <label htmlFor="object-identity">Objektets identitet</label>
                     <select
                       id="object-identity"
@@ -1296,7 +1343,13 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       </p>
                     )}
                     <div className="access-actions">
-                      <button type="submit" disabled={editor.version !== state.draft.version}>
+                      <button
+                        type="submit"
+                        disabled={
+                          editor.version !== state.draft.version ||
+                          (!!editor.displacedFields?.length && !editor.fieldsHandled)
+                        }
+                      >
                         Lägg i mitt utkast
                       </button>
                       {(editor.baseRevision !== null ||
@@ -1571,8 +1624,18 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                     <h4>Sparat underlag</h4>
                     {details(
                       change.before,
-                      state.types.find((type) => type.id === change.before?.typeId) ?? change.type,
+                      change.beforeType ??
+                        state.types.find((type) => type.id === change.before?.typeId) ??
+                        change.type,
                     )}
+                    {change.before &&
+                      change.after &&
+                      change.before.typeId !== change.after.typeId && (
+                        <p>
+                          Typbyte: objektets identitet och samband finns kvar. Tidigare fältvärden
+                          ersätts av den nya typens uppgifter i förslaget.
+                        </p>
+                      )}
                     <h4>Förslag</h4>
                     {details(change.after, change.type)}
                     <button
