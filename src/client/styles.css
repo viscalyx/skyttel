@@ -401,6 +401,24 @@ footer {
 .draft-review {
   margin-top: 2rem;
 }
+.ended-status {
+  display: inline-block;
+  margin-inline: 0.5rem;
+  padding: 0.15rem 0.4rem;
+  color: #793600;
+  background: #fff0cf;
+  border: 1px solid #aa5b00;
+  border-radius: 0.25rem;
+}
+.proposed-status {
+  display: inline-block;
+  margin-inline: 0.5rem;
+  padding: 0.15rem 0.4rem;
+  color: #153c73;
+  background: #e6f0ff;
+  border: 1px solid #3765a3;
+  border-radius: 0.25rem;
+}
 .draft-review article {
   border-top: 1px solid #dae3de;
   padding-block: 1rem;

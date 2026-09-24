@@ -236,6 +236,7 @@ test('invalid objects and changed type definitions cannot enter the shared map',
     {},
     { ...body.value, typeId: 'missing' },
     { ...body.value, description: 'x'.repeat(2001) },
+    { ...body.value, lifecycle: 'deleted' },
   ]) {
     expect((await client.json(`${path}/draft`, { ...body, value })).status).toBe(400);
   }
@@ -255,6 +256,43 @@ test('invalid objects and changed type definitions cannot enter the shared map',
     (await client.json(`${path}/save`, { version: 1, operationId: 'changed-type' })).status,
   ).toBe(409);
   expect((await read()).objects).toEqual([]);
+});
+
+test('manual lifecycle corrections retain their prior values in shared history', async () => {
+  const { types } = await read();
+  for (const lifecycle of ['ended', 'active']) {
+    const state = await read();
+    const value = {
+      typeId: types[0].id,
+      name: 'Lo Exempel',
+      description: '',
+      lifecycle,
+      financialFacts: { endDate: { knowledge: 'known', value: '2020-01-01' } },
+    };
+    const proposed = await client.json(`${path}/draft`, {
+      version: state.draft.version,
+      id: 'lo',
+      baseRevision: state.objects[0]?.revision ?? null,
+      value,
+    });
+    expect(proposed.status).toBe(200);
+    expect((await read()).objects).toEqual(state.objects);
+    const draft = await proposed.json();
+    const saved = await client.json(`${path}/save`, {
+      version: draft.version,
+      operationId: lifecycle,
+    });
+    expect(saved.status).toBe(200);
+    expect((await read()).objects[0]).toMatchObject(value);
+  }
+  const { history } = await (await client.request(`${path}/history`)).json();
+  expect(history.at(-1).changes[0]).toMatchObject({
+    before: { lifecycle: 'ended' },
+    after: {
+      lifecycle: 'active',
+      financialFacts: { endDate: { knowledge: 'known', value: '2020-01-01' } },
+    },
+  });
 });
 
 test('shared history does not expose abandoned private relationship endpoint names', async () => {
@@ -309,5 +347,8 @@ test('shared history does not expose abandoned private relationship endpoint nam
   ).toBe(200);
   const history = await (await actor.request(`${path}/history`)).text();
   expect(history).not.toContain('Private abandoned name');
-  expect(history).not.toContain('objectNames');
+  expect(JSON.parse(history).history.at(-1).relationships[0].objectNames).toEqual({
+    lo: 'Lo',
+    kim: 'Kim',
+  });
 });

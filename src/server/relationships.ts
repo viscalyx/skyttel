@@ -7,6 +7,8 @@ import type {
   RelationshipValue,
 } from '../shared/map.js';
 import { proposedRelationships } from '../shared/map.js';
+import { readFinancialFacts } from './financial-facts.js';
+import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
 
 // All operations run inside the map's authorized, immediate transaction.
@@ -14,9 +16,23 @@ export function relationships(database: Database.Database, householdId: string) 
   function read(): MapRelationship[] {
     return database
       .prepare(
-        'SELECT id, householdId, typeId, revision, sourceId, targetId, knowledge FROM map_relationship WHERE householdId = ? AND deleted = 0 ORDER BY id',
+        'SELECT id, householdId, typeId, revision, sourceId, targetId, knowledge, lifecycle, endDate FROM map_relationship WHERE householdId = ? AND deleted = 0 ORDER BY id',
       )
-      .all(householdId) as MapRelationship[];
+      .all(householdId)
+      .map((row) => {
+        const { lifecycle, endDate, ...value } = row as Omit<
+          MapRelationship,
+          'lifecycle' | 'endDate'
+        > & {
+          lifecycle: MapRelationship['lifecycle'] | null;
+          endDate: string | null;
+        };
+        return {
+          ...value,
+          ...(lifecycle ? { lifecycle } : {}),
+          ...(endDate ? { endDate: JSON.parse(endDate) } : {}),
+        };
+      });
   }
   function types(): RelationshipType[] {
     return database
@@ -123,11 +139,18 @@ export function relationships(database: Database.Database, householdId: string) 
             : value.targetId !== null)
         )
           throw new MapError('invalid_request', 400);
+        const lifecycle = readLifecycle(value.lifecycle);
+        const endDate =
+          value.endDate === undefined
+            ? undefined
+            : readFinancialFacts({ endDate: value.endDate })?.endDate;
         after = {
           typeId: value.typeId,
           sourceId: value.sourceId,
           targetId: value.targetId,
           knowledge: value.knowledge,
+          ...(lifecycle ? { lifecycle } : {}),
+          ...(endDate ? { endDate } : {}),
         };
         if (
           !endpoint(after.sourceId, draft) ||
@@ -210,8 +233,8 @@ export function relationships(database: Database.Database, householdId: string) 
           : null;
         if (after)
           database
-            .prepare(`INSERT INTO map_relationship (id, householdId, typeId, revision, sourceId, targetId, knowledge) VALUES (?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, sourceId = excluded.sourceId, targetId = excluded.targetId, knowledge = excluded.knowledge, deleted = 0`)
+            .prepare(`INSERT INTO map_relationship (id, householdId, typeId, revision, sourceId, targetId, knowledge, lifecycle, endDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, sourceId = excluded.sourceId, targetId = excluded.targetId, knowledge = excluded.knowledge, lifecycle = excluded.lifecycle, endDate = excluded.endDate, deleted = 0`)
             .run(
               after.id,
               householdId,
@@ -220,6 +243,8 @@ export function relationships(database: Database.Database, householdId: string) 
               after.sourceId,
               after.targetId,
               after.knowledge,
+              after.lifecycle ?? null,
+              after.endDate ? JSON.stringify(after.endDate) : null,
             );
         else
           database
@@ -227,7 +252,14 @@ export function relationships(database: Database.Database, householdId: string) 
               'UPDATE map_relationship SET revision = revision + 1 WHERE householdId = ? AND id = ?',
             )
             .run(householdId, change.id);
-        return { id: change.id, before: change.before, after, type: change.type };
+        return {
+          id: change.id,
+          before: change.before,
+          after,
+          type: change.type,
+          // Build shared snapshots from saved objects, never cached private draft names.
+          objectNames: objectNames(draft, change.before, after),
+        };
       });
     },
   };

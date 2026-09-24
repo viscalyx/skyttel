@@ -28,3 +28,6 @@ till motsvarande automatiserade integrationstester.
 - [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
   försök efter omstart, återförsöka från en annan klient och kontrollera
   privat tillgång.
+- [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
+  kända slutdatum och granska, kasta eller spara vanlig borttagning med
+  bevarade anslutna objekt och historikunderlag.

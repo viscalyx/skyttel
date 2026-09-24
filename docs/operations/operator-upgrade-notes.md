@@ -5,6 +5,18 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Ended content and recoverable removals
+
+Back up the persistent database and retain its matching image before upgrade.
+Startup adds storage for lifecycle status and relationship end dates. Use
+the upgraded image with this database; an older image requires its matching
+backup. Stop the application before restoring that backup.
+
+Ordinary removal keeps content, relationship names, type definitions, and
+earlier values in history without automatic expiry. Apply existing access
+restrictions to these records and backups. Ordinary removal does not erase
+this retained information. Permanent erasure is a separate planned action.
+
 ### Daily image security monitoring
 
 Before rollout, configure the operator who receives security alerts and

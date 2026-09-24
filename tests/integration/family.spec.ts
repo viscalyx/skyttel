@@ -98,7 +98,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await page.getByLabel('Från objekt').selectOption({ label: 'Familjemusik (Abonnemang)' });
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalas med' });
-    await page.getByLabel('Uppgiftens säkerhet').selectOption('unresolved');
+    await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('unresolved');
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await page.reload();
     await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
@@ -106,7 +106,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     );
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     await page.getByRole('button', { name: /Familjemusik → Betalas med → Obesvarad/ }).click();
-    await page.getByLabel('Uppgiftens säkerhet').selectOption('uncertain');
+    await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
     await page.getByLabel('Till objekt').selectOption({ label: 'Betalkonto (Bankkonto)' });
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
@@ -120,7 +120,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     for (const knowledge of ['unknown', 'none']) {
       await page.getByRole('button', { name: /Familjemusik → Betalas med/ }).click();
-      await page.getByLabel('Uppgiftens säkerhet').selectOption(knowledge);
+      await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
       await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
       await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
       await expect(page.getByRole('status')).toContainText('Sparat');

@@ -7,6 +7,8 @@ läggs till i kartan får ingen inloggning eller tillgång till hushållet.
 
 För bostad, garage och finansiering, följ
 [guiden för hyra, lån, kredit och avbetalning](contracts.md).
+För avslut och borttagning, följ
+[guiden för upphört, borttaget och permanent raderat](lifecycle.md).
 
 ## Skapa separata objekt
 

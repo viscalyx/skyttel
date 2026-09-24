@@ -123,7 +123,11 @@ test('review, search, correction, discard and deletion use the real persistent m
     expect(screen.getByRole('status').textContent).toContain('Utkastet är kastat'),
   );
   await userEvent.click(screen.getByRole('button', { name: 'Lo Lind' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Föreslå borttagning' }));
+  await userEvent.click(
+    within(screen.getByRole('group', { name: 'Objektets detaljer' })).getByRole('button', {
+      name: 'Ta bort',
+    }),
+  );
   await waitFor(() => expect(review.textContent).toContain('Borttagning'));
   await save();
   expect(within(screen.getByRole('list', { name: 'Objekt' })).queryByRole('button')).toBeNull();
@@ -321,15 +325,17 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
     ['none', 'Uttryckligen inget'],
   ]) {
     await userEvent.click(
-      within(screen.getByRole('list', { name: 'Samband' })).getByRole('button'),
+      within(screen.getByRole('list', { name: 'Samband' })).getByRole('button', { name: /→/ }),
     );
     await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), knowledge);
     await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
     await screen.findByRole('button', { name: new RegExp(`Lo → .* → ${label}`) });
     await save();
   }
-  await userEvent.click(within(screen.getByRole('list', { name: 'Samband' })).getByRole('button'));
-  await userEvent.click(screen.getByRole('button', { name: 'Föreslå borttagning av sambandet' }));
+  await userEvent.click(
+    within(screen.getByRole('list', { name: 'Samband' })).getByRole('button', { name: /→/ }),
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Ta bort sambandet' }));
   await waitFor(() =>
     expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
       'Borttagning av samband',
@@ -355,7 +361,9 @@ test('a duplicate displays its existing relationship and stale relationship text
   await proposeLink();
   await proposeLink();
   expect(screen.getByRole('status').textContent).toContain('Sambandet finns redan');
-  await userEvent.click(within(screen.getByRole('list', { name: 'Samband' })).getByRole('button'));
+  await userEvent.click(
+    within(screen.getByRole('list', { name: 'Samband' })).getByRole('button', { name: /→/ }),
+  );
   const state = await (await client.request(path)).json();
   await client.json(`${path}/draft`, {
     version: state.draft.version,
@@ -374,7 +382,9 @@ test('a duplicate displays its existing relationship and stale relationship text
       (screen.getByLabelText('Från objekt').closest('fieldset') as HTMLFieldSetElement).disabled,
   ).toBe(true);
   await userEvent.click(screen.getByRole('button', { name: 'Stäng sambandet utan att skicka' }));
-  await userEvent.click(within(screen.getByRole('list', { name: 'Samband' })).getByRole('button'));
+  await userEvent.click(
+    within(screen.getByRole('list', { name: 'Samband' })).getByRole('button', { name: /→/ }),
+  );
   expect((screen.getByLabelText('Uppgiftens säkerhet') as HTMLSelectElement).value).toBe('known');
 });
 

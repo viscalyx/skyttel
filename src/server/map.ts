@@ -4,6 +4,7 @@ import { draftConflicts, resolvedObjectValue } from '../shared/draft-conflicts.j
 import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { householdAccess } from './households.js';
+import { readLifecycle } from './lifecycle.js';
 
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
@@ -53,25 +54,27 @@ export function householdMap(database: Database.Database, userId: string, househ
   function object(id: string) {
     const row = database
       .prepare(
-        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
+        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
       )
       .get(householdId, id);
     return row ? readObject(row) : undefined;
   }
   function readObject(row: unknown): MapObject {
-    const { identity, financialFacts, customValues, ...value } = row as Omit<
+    const { identity, financialFacts, customValues, lifecycle, ...value } = row as Omit<
       MapObject,
-      'identity' | 'financialFacts' | 'customValues'
+      'identity' | 'financialFacts' | 'customValues' | 'lifecycle'
     > & {
       identity: MapObject['identity'] | null;
       financialFacts: string | null;
       customValues: string | null;
+      lifecycle: MapObject['lifecycle'] | null;
     };
     return {
       ...value,
       ...(identity ? { identity } : {}),
       ...(financialFacts ? { financialFacts: JSON.parse(financialFacts) } : {}),
       ...(customValues ? { customValues: JSON.parse(customValues) } : {}),
+      ...(lifecycle ? { lifecycle } : {}),
     };
   }
   function checkedDraft(version: unknown) {
@@ -98,7 +101,7 @@ export function householdMap(database: Database.Database, userId: string, househ
       types: types.read(),
       objects: database
         .prepare(
-          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
+          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
         )
         .all(householdId)
         .map(readObject),
@@ -235,6 +238,7 @@ export function householdMap(database: Database.Database, userId: string, househ
             throw new MapError('type_conflict');
           const customValues = readCustomValues(value.customValues, type);
           const financialFacts = readFinancialFacts(value.financialFacts);
+          const lifecycle = readLifecycle(value.lifecycle);
           after = {
             typeId: value.typeId,
             name: value.name.trim(),
@@ -242,6 +246,7 @@ export function householdMap(database: Database.Database, userId: string, househ
             ...(value.identity ? { identity: value.identity } : {}),
             ...(financialFacts ? { financialFacts } : {}),
             ...(customValues ? { customValues } : {}),
+            ...(lifecycle ? { lifecycle } : {}),
           };
         }
         const typeId = after?.typeId ?? before?.typeId ?? existing?.type.id;
@@ -317,6 +322,7 @@ export function householdMap(database: Database.Database, userId: string, househ
                       ? { customValues: change.after.customValues }
                       : {}),
                     ...(change.after.identity ? { identity: change.after.identity } : {}),
+                    ...(change.after.lifecycle ? { lifecycle: change.after.lifecycle } : {}),
                     ...(change.after.financialFacts
                       ? { financialFacts: change.after.financialFacts }
                       : {}),
@@ -329,8 +335,8 @@ export function householdMap(database: Database.Database, userId: string, househ
                 )
                   throw new MapError('object_conflict');
                 database
-                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues`)
+                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle`)
                   .run(
                     after.id,
                     householdId,
@@ -341,6 +347,7 @@ export function householdMap(database: Database.Database, userId: string, househ
                     after.identity ?? null,
                     after.financialFacts ? JSON.stringify(after.financialFacts) : null,
                     after.customValues ? JSON.stringify(after.customValues) : null,
+                    after.lifecycle ?? null,
                   );
               } else
                 database

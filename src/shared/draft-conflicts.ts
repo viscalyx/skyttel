@@ -32,6 +32,7 @@ export function resolvedObjectValue(
   const field = <K extends keyof ObjectValue>(key: K): ObjectValue[K] =>
     after[key] === before[key] ? current[key] : after[key];
   const identity = field('identity');
+  const lifecycle = field('lifecycle');
   const financialFacts: FinancialFacts = {};
   const sameFact = (left?: FinancialFact, right?: FinancialFact) =>
     left?.knowledge === right?.knowledge &&
@@ -61,6 +62,7 @@ export function resolvedObjectValue(
     name: field('name'),
     description: field('description'),
     ...(identity ? { identity } : {}),
+    ...(lifecycle ? { lifecycle } : {}),
     ...(Object.keys(financialFacts).length ? { financialFacts } : {}),
     ...(Object.keys(customValues).length ? { customValues } : {}),
   };

@@ -1,4 +1,5 @@
-import type { FinancialFacts } from './financial-facts.js';
+import type { FinancialFact, FinancialFacts } from './financial-facts.js';
+import type { Lifecycle } from './lifecycle.js';
 
 export interface TypeDefinition {
   id: string;
@@ -31,6 +32,7 @@ export interface ObjectValue {
   identity?: 'unspecified' | 'unresolved';
   financialFacts?: FinancialFacts;
   customValues?: CustomValues;
+  lifecycle?: Lifecycle;
 }
 export interface MapObject extends ObjectValue {
   id: string;
@@ -91,6 +93,8 @@ export interface RelationshipValue {
   sourceId: string;
   targetId: string | null;
   knowledge: Knowledge;
+  lifecycle?: Lifecycle;
+  endDate?: FinancialFact;
 }
 export interface MapRelationship extends RelationshipValue {
   id: string;

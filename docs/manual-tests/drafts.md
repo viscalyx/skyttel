@@ -183,7 +183,7 @@ proposal”.
 
 1. Lägg namnändringen **Lo Lind** och ett nytt objekt **Kim Exempel** i
    administratörens utkast utan att spara.
-2. Öppna **Lo Exempel** som medlemmen, välj **Föreslå borttagning** och
+2. Öppna **Lo Exempel** som medlemmen, välj **Ta bort** och
    **Spara hela utkastet**.
 3. Ladda om administratörens sida. Granska konflikten och möjliga val.
 4. Välj **Använd sparat värde**. Granska det återstående utkastet och
@@ -252,7 +252,7 @@ relationships”.
 
 **Steg:**
 
-1. Föreslå borttagning av **Lo Exempel** som administratören.
+1. Öppna **Lo Exempel** som administratören och välj **Ta bort**.
 2. Lägg **Lo Exempel → Använder → Molnmusik** med säkerheten
    **Osäkert uppgivet** i medlemmens utkast och spara det.
 3. Försök spara administratörens äldre utkast. Hämta aktuellt underlag.
@@ -346,7 +346,7 @@ recovery choice”.
 
 1. Lägg **Lo Exempel → Använder → Molnmusik** med säkerheten
    **Osäkert uppgivet** i administratörens utkast.
-2. Föreslå borttagning av **Molnmusik** som medlemmen och spara.
+2. Öppna **Molnmusik** som medlemmen, välj **Ta bort** och spara.
 3. Ladda om administratörens sida och granska konflikten.
 4. Starta om appen med samma databas och öppna administratörens utkast.
 5. Välj **Använd sparat värde**.

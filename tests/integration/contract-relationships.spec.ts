@@ -24,7 +24,7 @@ async function addRelationship(
   await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
   await page.getByLabel('Från objekt').selectOption(sourceId);
   await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: type });
-  await page.getByLabel('Uppgiftens säkerhet').selectOption(knowledge);
+  await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
   if (targetId) await page.getByLabel('Till objekt').selectOption(targetId);
   await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
 }
@@ -136,7 +136,7 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
     await page
       .getByRole('button', { name: 'Bostadshyra → Betalas med → Obesvarad identitetsfråga' })
       .click();
-    await page.getByLabel('Uppgiftens säkerhet').selectOption('known');
+    await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('known');
     await page.getByLabel('Till objekt').selectOption('bank');
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     relationships[relationships.length - 1] = ['home-rent', 'Betalas med', 'bank', 'known'];

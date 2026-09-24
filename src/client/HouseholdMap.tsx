@@ -13,6 +13,7 @@ import type {
 } from '../shared/map.js';
 import { proposedObjectTypes, proposedRelationships } from '../shared/map.js';
 import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js';
+import { LifecycleDetails, LifecycleEditor, LifecycleStatus } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
 import {
   CustomFieldsDetails,
@@ -356,6 +357,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               : 'Finns inte i kartan'}
           </p>
         )}
+        {conflict.kind === 'relationship' && conflict.current && (
+          <LifecycleDetails value={conflict.current} />
+        )}
         <p>Välj vilket värde du vill behålla. Valet ändrar bara ditt utkast.</p>
         {conflict.type !== undefined && (
           <p>
@@ -492,6 +496,17 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     });
     setDirty(true);
   }
+  function remove(kind: 'draft' | 'relationship', item: MapObject | MapRelationship) {
+    if (!state) return;
+    const changes = kind === 'draft' ? state.draft.changes : state.draft.relationships;
+    const proposal = changes?.find((change) => change.id === item.id);
+    void action(kind, {
+      id: item.id,
+      version: state.draft.version,
+      baseRevision: proposal ? (proposal.before?.revision ?? null) : item.revision,
+      value: null,
+    });
+  }
   function typeName(id: string) {
     return effectiveTypes.find((type) => type.id === id)?.name ?? id;
   }
@@ -506,6 +521,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           type={definition ?? effectiveTypes.find((type) => type.id === value.typeId)}
           values={value.customValues}
         />
+        <LifecycleDetails value={value} />
         {value.identity && (
           <p>
             {value.identity === 'unspecified'
@@ -523,6 +539,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     <div className="household-map">
       <h2>Objekt i hushållet</h2>
       <p>Förslag ligger i ditt privata, beständiga utkast tills du sparar hela utkastet.</p>
+      <p>Ta bort lägger borttagningen direkt i ditt utkast. Det är ingen permanent radering.</p>
       <p className="muted">
         Skriv inte fullständiga konto- eller kortnummer, lösenord, pinkoder, säkerhetskoder eller
         återställningskoder.
@@ -675,13 +692,31 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   >
                     {object.name}
                   </button>
-                  <span>
-                    {' '}
-                    {typeName(object.typeId)}
-                    {state.draft.changes.some((change) => change.id === object.id)
-                      ? ' — förslag i ditt utkast'
-                      : ''}
-                  </span>
+                  <span> {typeName(object.typeId)}</span>
+                  <LifecycleStatus value={object} />
+                  {state.draft.changes.some((change) => change.id === object.id) && (
+                    <span className="proposed-status">
+                      {state.draft.changes.some(
+                        (change) => change.id === object.id && !change.after,
+                      )
+                        ? 'Borttagning i ditt utkast'
+                        : 'Förslag i ditt utkast'}
+                    </span>
+                  )}
+                  {!state.draft.changes.some(
+                    (change) => change.id === object.id && !change.after,
+                  ) && (
+                    <details>
+                      <summary>Åtgärder för {object.name}</summary>
+                      <button
+                        type="button"
+                        disabled={pending || dirty || blocked}
+                        onClick={() => remove('draft', object)}
+                      >
+                        Ta bort
+                      </button>
+                    </details>
+                  )}
                 </li>
               ))}
           </ul>
@@ -774,6 +809,14 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   }}
                 />
                 <p>Texten i formuläret skickas först när du lägger den i utkastet.</p>
+                <LifecycleEditor
+                  kind="object"
+                  value={editor.value.lifecycle}
+                  onChange={(lifecycle) => {
+                    setDirty(true);
+                    setEditor({ ...editor, value: { ...editor.value, lifecycle } });
+                  }}
+                />
                 <FinancialFactsEditor
                   key={editor.id}
                   facts={editor.value.financialFacts}
@@ -809,7 +852,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                         })
                       }
                     >
-                      Föreslå borttagning
+                      Ta bort
                     </button>
                   )}
                 </div>
@@ -838,6 +881,20 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 >
                   {relationshipLabel(edge, state, displayed)}
                 </button>
+                <LifecycleStatus value={edge} />
+                {state.draft.relationships?.some((change) => change.id === edge.id) && (
+                  <span className="proposed-status">Förslag i ditt utkast</span>
+                )}
+                <details>
+                  <summary>Åtgärder för {relationshipLabel(edge, state, displayed)}</summary>
+                  <button
+                    type="button"
+                    disabled={pending || dirty || blocked}
+                    onClick={() => remove('relationship', edge)}
+                  >
+                    Ta bort
+                  </button>
+                </details>
               </li>
             ))}
           </ul>
@@ -954,6 +1011,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       )
                     : 'Finns inte i kartan'}
                 </p>
+                {change.before && <LifecycleDetails value={change.before} />}
                 <h4>Förslag</h4>
                 <p>
                   {change.after
@@ -969,6 +1027,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       )
                     : 'Borttaget'}
                 </p>
+                {change.after && <LifecycleDetails value={change.after} />}
                 {conflicts
                   .filter(
                     (conflict) => conflict.kind === 'relationship' && conflict.id === change.id,

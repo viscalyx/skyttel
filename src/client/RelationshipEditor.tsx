@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Knowledge, MapObject, MapState, RelationshipValue } from '../shared/map.js';
+import { LifecycleEditor, RelationshipEndDate } from './Lifecycle.js';
 
 export const knowledgeLabels: Record<Knowledge, string> = {
   known: 'Känt',
@@ -120,11 +121,20 @@ export function RelationshipEditor({
             </select>
           </>
         )}
+        <LifecycleEditor
+          kind="relationship"
+          value={value.lifecycle}
+          onChange={(lifecycle) => setValue({ ...value, lifecycle })}
+        />
+        <RelationshipEndDate
+          value={value.endDate}
+          onChange={(endDate) => setValue({ ...value, endDate })}
+        />
         <button type="submit">Lägg sambandet i mitt utkast</button>
         {(initial.baseRevision !== null ||
           state.draft.relationships?.some((change) => change.id === initial.id)) && (
           <button type="button" onClick={() => onSubmit({ ...initial, value: null })}>
-            Föreslå borttagning av sambandet
+            Ta bort sambandet
           </button>
         )}
       </fieldset>

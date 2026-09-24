@@ -200,7 +200,7 @@ test('KARTA-03: equal object names stay distinct when correcting and deleting a 
       sourceId: login?.sourceId,
       typeId: login?.typeId,
     });
-    await page.getByRole('button', { name: 'Föreslå borttagning av sambandet' }).click();
+    await page.getByRole('button', { name: 'Ta bort sambandet' }).click();
     await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
       'Borttagning av samband',
     );
@@ -248,7 +248,7 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     const object = saved.objects.find((item) => item.name === 'Musikkonto');
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
     await page.getByRole('button', { name: 'Musikkonto', exact: true }).click();
-    await page.getByRole('button', { name: 'Föreslå borttagning', exact: true }).click();
+    await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await expect(
       review.getByRole('heading', { name: 'Borttagning: Musikkonto', exact: true }),
     ).toBeVisible();
@@ -278,7 +278,7 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     expect((await read()).objects).toEqual(saved.objects);
     expect((await read()).relationships).toEqual(saved.relationships);
     await page.getByRole('button', { name: 'Musikkonto', exact: true }).click();
-    await page.getByRole('button', { name: 'Föreslå borttagning', exact: true }).click();
+    await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await save(page);
     await page.reload();
     await expect(
