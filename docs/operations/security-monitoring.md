@@ -147,9 +147,10 @@ exclude this retained set. Scan artifacts request 90 days of Actions
 retention; copy needed evidence to private operator storage before expiry.
 Do not delete an image or its deployment record to silence an alarm.
 
-The supported maintenance path is a new verified release for the running
-installation. Retained recovery images are monitored, but older releases
-do not receive separate backported fixes or guaranteed response times.
+The maintenance scope covers the running installation and retained
+rollback image. Fixes are delivered through a new verified release for
+the running installation; recovery still requires a compatible image and
+database.
 
 ## Verification boundaries
 
