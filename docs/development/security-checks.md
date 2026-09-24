@@ -138,7 +138,11 @@ not rebuild that image after scanning. Release evidence has separate
 retention from ordinary check reports. After successful main publication,
 the [Render deployment job](../operations/render.md) uses separate credentials
 to deploy and verify that digest. Stable tags do not change production.
-Daily scanning of running and recovery images remains separate work.
+The [daily image monitor](../operations/security-monitoring.md) scans the
+actual running and retained rollback digests. It shares the release
+container policy and reports unknown status when required evidence or
+notification delivery fails. Its synthetic failure cases run with
+`npm run test:gates`.
 
 ## Upstream references
 

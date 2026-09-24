@@ -5,6 +5,20 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Daily image security monitoring
+
+Before rollout, configure the operator who receives security alerts and
+verify delivery through GitHub. Review the latest successful scan of the
+running and retained recovery images before each production update and at
+least monthly. Missing or stale evidence means that current status is
+unknown. Check security updates and exception expiry each week.
+
+Keep the running and previous successfully deployed images, their deployment
+records, and their verification evidence outside temporary build cleanup.
+An older image with an unresolved finding remains unsafe for recovery even
+after a fixed image enters production. Follow the private security contact
+procedure for investigation details.
+
 ### Production terminal access
 
 Before rollout, review who can use the production host's terminals. The

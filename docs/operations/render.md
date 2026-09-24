@@ -739,6 +739,12 @@ and [deploy API](https://api-docs.render.com/reference/create-deploy).
 
 ## What automated checks cover
 
+Configure the [daily image security monitor](security-monitoring.md) after
+the first accepted deployment. It checks the running digest and retained
+rollback image, maintains one current status issue, and requires verified
+delivery to the selected operator. Check fresh monitoring evidence before
+approving a production update.
+
 Release checks use disposable containers with synthetic household content.
 They verify restart and replacement on the same disk, including private
 drafts, objects, history, and save receipts. An injected failed migration
