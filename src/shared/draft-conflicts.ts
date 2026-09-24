@@ -69,6 +69,7 @@ export function resolvedObjectValue(
     after[key] === before[key] ? current[key] : after[key];
   const identity = field('identity');
   const lifecycle = field('lifecycle');
+  const profileImageId = field('profileImageId');
   const financialFacts: FinancialFacts = {};
   for (const { key } of financialFields) {
     // The value, certainty and date describe one fact and must stay together.
@@ -95,6 +96,7 @@ export function resolvedObjectValue(
     description: field('description'),
     ...(identity ? { identity } : {}),
     ...(lifecycle ? { lifecycle } : {}),
+    ...(profileImageId ? { profileImageId } : {}),
     ...(Object.keys(financialFacts).length ? { financialFacts } : {}),
     ...(Object.keys(customValues).length ? { customValues } : {}),
   };

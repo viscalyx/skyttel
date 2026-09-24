@@ -15,6 +15,8 @@ import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from '.
 import { createLoginMethods } from './login-methods.js';
 import { MapError } from './map.js';
 import { mapRoutes } from './map-routes.js';
+import { profileImageRoutes } from './profile-image-routes.js';
+import { imageUploadLimit } from './profile-images.js';
 
 export function createApp({
   config,
@@ -56,12 +58,15 @@ export function createApp({
       return context.json({ error: 'client_outdated' }, 409);
     await next();
   });
-  app.use(
-    '/api/*',
+  app.use('/api/*', (context, next) =>
     bodyLimit({
-      maxSize: 16_384,
-      onError: (context) => context.json({ error: 'invalid_request' }, 413),
-    }),
+      maxSize:
+        context.req.method === 'POST' &&
+        /^\/api\/households\/[^/]+\/profile-images\/[^/]+$/.test(context.req.path)
+          ? imageUploadLimit
+          : 16_384,
+      onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
+    })(context, next),
   );
   app.onError((error, context) => {
     if (error instanceof AdministrationError || error instanceof MapError)
@@ -171,6 +176,7 @@ export function createApp({
   app.route('/api', administrationRoutes(database, auth, config.origin));
   app.route('/api', linking.routes);
   app.route('/api', mapRoutes(database, auth, config.origin));
+  app.route('/api', profileImageRoutes(database, auth, config.origin));
   app.route('/', assistantRoutes(database, auth, config.origin));
   app.all('/api/*', (context) => context.json({ error: 'not_found' }, 404));
   app.use('/assets/*', serveStatic({ root: './dist/client' }));

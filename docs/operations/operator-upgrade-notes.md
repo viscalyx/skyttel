@@ -5,6 +5,21 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Private profile images
+
+Back up the persistent database and retain its matching image before upgrade.
+Startup adds image storage and keeps existing objects and drafts. Rebuild
+the complete application image so the native image processor matches the
+deployment architecture. Verify image upload, private access, and restart
+recovery after rollout. Stop the application and restore its matching backup
+before returning to an older image.
+
+The database now retains small encoded images and historical versions.
+Monitor persistent disk use and apply existing backup access restrictions
+to these images. Ordinary removal retains image history; it does not erase
+the original saved information. Permit uploads up to 10 MB at the ingress
+for the image upload route. Keep smaller limits for ordinary API requests.
+
 ### History and whole-save undo
 
 Back up the persistent database and retain its matching image before upgrade.

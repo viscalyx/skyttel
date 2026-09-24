@@ -6,7 +6,7 @@ type Kind = 'object' | 'relationship' | 'objectType' | 'relationshipType';
 type Facts = Map<string, unknown>;
 type Change<T> = { before: T | null; after: T | null };
 const scalarFields = {
-  object: ['typeId', 'name', 'description', 'identity', 'lifecycle'],
+  object: ['typeId', 'name', 'description', 'identity', 'lifecycle', 'profileImageId'],
   relationship: ['lifecycle', 'endDate'],
   objectType: ['name', 'description'],
   relationshipType: ['name', 'description', 'forwardLabel', 'reverseLabel'],

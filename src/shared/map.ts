@@ -50,6 +50,7 @@ export interface RelationshipTypeChange {
 }
 
 export interface ObjectValue {
+  profileImageId?: string;
   typeId: string;
   name: string;
   description: string;

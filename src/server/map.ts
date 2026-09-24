@@ -16,6 +16,7 @@ import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
 import { undoSave } from './map-undo.js';
 import { objectTypes, readCustomValues } from './object-types.js';
+import { type EncodedImage, profileImages } from './profile-images.js';
 import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
 import { keepIndependent } from './undo-facts.js';
@@ -23,6 +24,7 @@ import { keepIndependent } from './undo-facts.js';
 export { MapError } from './map-error.js';
 
 export function householdMap(database: Database.Database, userId: string, householdId: string) {
+  const images = profileImages(database, householdId, userId);
   const edges = relationships(database, householdId);
   const types = objectTypes(database, householdId, userId);
   const edgeTypes = relationshipTypes(database, householdId, userId);
@@ -70,32 +72,36 @@ export function householdMap(database: Database.Database, userId: string, househ
         JSON.stringify(value.objectTypes ?? []),
         JSON.stringify(value.relationshipTypes ?? []),
       );
+    images.prune();
     return value;
   }
   function object(id: string) {
     const row = database
       .prepare(
-        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
+        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
       )
       .get(householdId, id);
     return row ? readObject(row) : undefined;
   }
   function readObject(row: unknown): MapObject {
-    const { identity, financialFacts, customValues, lifecycle, ...value } = row as Omit<
-      MapObject,
-      'identity' | 'financialFacts' | 'customValues' | 'lifecycle'
-    > & {
-      identity: MapObject['identity'] | null;
-      financialFacts: string | null;
-      customValues: string | null;
-      lifecycle: MapObject['lifecycle'] | null;
-    };
+    const { identity, financialFacts, customValues, lifecycle, profileImageId, ...value } =
+      row as Omit<
+        MapObject,
+        'identity' | 'financialFacts' | 'customValues' | 'lifecycle' | 'profileImageId'
+      > & {
+        identity: MapObject['identity'] | null;
+        financialFacts: string | null;
+        customValues: string | null;
+        lifecycle: MapObject['lifecycle'] | null;
+        profileImageId: string | null;
+      };
     return {
       ...value,
       ...(identity ? { identity } : {}),
       ...(financialFacts ? { financialFacts: JSON.parse(financialFacts) } : {}),
       ...(customValues ? { customValues: JSON.parse(customValues) } : {}),
       ...(lifecycle ? { lifecycle } : {}),
+      ...(profileImageId ? { profileImageId } : {}),
     };
   }
   function checkedDraft(version: unknown) {
@@ -122,7 +128,7 @@ export function householdMap(database: Database.Database, userId: string, househ
       types: types.read(),
       objects: database
         .prepare(
-          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
+          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
         )
         .all(householdId)
         .map(readObject),
@@ -130,7 +136,44 @@ export function householdMap(database: Database.Database, userId: string, househ
     };
   }
 
+  function imageChange(body: Record<string, unknown>) {
+    operations.assertEditable();
+    const current = checkedDraft(body.version);
+    if (body.contentVersion !== operations.contentVersion()) throw new MapError('content_conflict');
+    if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
+      throw new MapError('invalid_request', 400);
+    const existing = current.changes.find((change) => change.id === body.id);
+    const saved = object(body.id) ?? null;
+    const before = existing ? existing.before : saved;
+    const after = existing ? existing.after : saved;
+    if (!after) throw new MapError('object_conflict');
+    if ((before?.revision ?? null) !== body.baseRevision || !isDeepStrictEqual(before, saved))
+      throw new MapError('object_conflict');
+    const type = types.effective(current).find((item) => item.id === after.typeId);
+    if (!type || (existing && !isDeepStrictEqual(existing.type, type)))
+      throw new MapError('type_conflict');
+    return { current, existing, before, after, type, id: body.id };
+  }
   return {
+    image(id: string) {
+      return transaction(() => images.read(id));
+    },
+    checkImageChange(body: Record<string, unknown>) {
+      transaction(() => {
+        imageChange(body);
+      });
+    },
+    proposeImage(body: Record<string, unknown>, image: EncodedImage | null) {
+      return transaction(() => {
+        const { current, existing, before, after, type, id } = imageChange(body);
+        const value = { ...after };
+        if (image) value.profileImageId = images.insert(id, image);
+        else delete value.profileImageId;
+        current.changes = current.changes.filter((change) => change.id !== id);
+        current.changes.push({ ...existing, id, before, after: value, type });
+        return writeDraft({ ...current, version: current.version + 1 });
+      });
+    },
     registerOperation(body: Record<string, unknown>) {
       return transaction(() => ({ operation: operations.register(body, draft()) }));
     },
@@ -327,6 +370,13 @@ export function householdMap(database: Database.Database, userId: string, househ
           const customValues = readCustomValues(value.customValues, type);
           const financialFacts = readFinancialFacts(value.financialFacts);
           const lifecycle = readLifecycle(value.lifecycle);
+          // Older/manual clients that edit other facts must retain the image.
+          const imageId = Object.hasOwn(value, 'profileImageId')
+            ? value.profileImageId
+            : existing
+              ? existing.after?.profileImageId
+              : before?.profileImageId;
+          const profileImageId = imageId == null ? undefined : images.validate(imageId, id);
           after = {
             typeId: value.typeId,
             name: value.name.trim(),
@@ -335,6 +385,7 @@ export function householdMap(database: Database.Database, userId: string, househ
             ...(financialFacts ? { financialFacts } : {}),
             ...(customValues ? { customValues } : {}),
             ...(lifecycle ? { lifecycle } : {}),
+            ...(profileImageId ? { profileImageId } : {}),
           };
         }
         const typeId = after?.typeId ?? before?.typeId ?? existing?.type.id;
@@ -451,7 +502,11 @@ export function householdMap(database: Database.Database, userId: string, househ
                   !compatibleCustomFields(change.after.customValues, change.type, type))
               )
                 throw new MapError('type_conflict');
-              if (change.after) readCustomValues(change.after.customValues, type);
+              if (change.after) {
+                readCustomValues(change.after.customValues, type);
+                if (change.after.profileImageId)
+                  images.validate(change.after.profileImageId, change.id);
+              }
               const after = change.after
                 ? {
                     id: change.id,
@@ -463,6 +518,9 @@ export function householdMap(database: Database.Database, userId: string, househ
                     ...(change.after.customValues
                       ? { customValues: change.after.customValues }
                       : {}),
+                    ...(change.after.profileImageId
+                      ? { profileImageId: change.after.profileImageId }
+                      : {}),
                     ...(change.after.identity ? { identity: change.after.identity } : {}),
                     ...(change.after.lifecycle ? { lifecycle: change.after.lifecycle } : {}),
                     ...(change.after.financialFacts
@@ -473,8 +531,8 @@ export function householdMap(database: Database.Database, userId: string, househ
               if (after) {
                 if (!saved) tombstones.assertCreation('object', change.id, change.restoreRevision);
                 database
-                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle, deleted = 0`)
+                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle, profileImageId = excluded.profileImageId, deleted = 0`)
                   .run(
                     after.id,
                     householdId,
@@ -486,6 +544,7 @@ export function householdMap(database: Database.Database, userId: string, househ
                     after.financialFacts ? JSON.stringify(after.financialFacts) : null,
                     after.customValues ? JSON.stringify(after.customValues) : null,
                     after.lifecycle ?? null,
+                    after.profileImageId ?? null,
                   );
               } else
                 database

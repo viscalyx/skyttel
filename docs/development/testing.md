@@ -256,6 +256,9 @@ files, migrations, and production dependencies. It has no test entry point.
 
 The check also verifies authenticated household access before and after a
 production-container restart using synthetic identities and data.
+It uploads synthetic pixels through the production image endpoint, checks
+the returned WebP dimensions with the native image processor, and checks
+private and saved image persistence across container replacement.
 It also verifies private draft recovery, saved objects, history, and repeated
 saving with the same receipt across container restarts.
 

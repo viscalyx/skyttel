@@ -430,3 +430,7 @@ footer {
   margin-bottom: 0.5rem;
   white-space: pre-wrap;
 }
+.profile-image {
+  object-fit: contain;
+  border-radius: 0.5rem;
+}

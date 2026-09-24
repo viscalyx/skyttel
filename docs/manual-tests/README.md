@@ -6,6 +6,9 @@ till motsvarande automatiserade integrationstester.
 
 ## Områden
 
+- [Profilbilder](profile-images.md): privata bildförslag, formatfel,
+  gränser, omstart, bildbyte, borttagning, ångring, kvitton och bildåtkomst.
+
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
   anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
   återkallad åtkomst.

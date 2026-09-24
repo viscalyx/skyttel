@@ -26,6 +26,8 @@ beskriver egna betydelser, benämningar från båda håll och dubbletter.
 AI-behandlingsval, läsåtkomst och återkallelse för textklienter.
 [Guiden för rymdkartan](docs/users/spatial-map.md) beskriver navigering,
 gemensam redigering, ändringssymboler och enheternas begränsningar.
+[Guiden för profilbilder](docs/users/profile-images.md) beskriver privata
+bildförslag, formatgränser och återställning genom historiken.
 
 Utveckla i projektets [devcontainer](docs/development/devcontainer.md).
 [Utvecklings- och testinstruktionerna](docs/development/testing.md) beskriver

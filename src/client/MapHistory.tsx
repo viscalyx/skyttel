@@ -10,6 +10,7 @@ import { FinancialFactsDetails } from './FinancialFacts.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
 import { CustomFieldsDetails, ObjectTypeDetails } from './ObjectTypes.js';
+import { ProfileImage } from './ProfileImage.js';
 import { relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeDetails } from './RelationshipTypes.js';
 
@@ -25,6 +26,7 @@ function ObjectDetails({
   return value ? (
     <>
       <p>Namn: {value.name}.</p>
+      <ProfileImage householdId={value.householdId} value={value} />
       <details>
         <summary>Objektets identitet</summary>
         <p>{value.id}</p>

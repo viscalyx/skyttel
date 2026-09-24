@@ -21,6 +21,7 @@ import {
   proposedRelationships,
   proposedRelationshipTypes,
 } from '../shared/map.js';
+import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js';
 import { LifecycleDetails, LifecycleEditor, LifecycleStatus } from './Lifecycle.js';
 import { MapHistory } from './MapHistory.js';
@@ -31,6 +32,7 @@ import {
   ObjectTypeDetails,
   ObjectTypeEditor,
 } from './ObjectTypes.js';
+import { ProfileImage, ProfileImageEditor } from './ProfileImage.js';
 import { RelationshipEditor, relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeDetails, RelationshipTypeEditor } from './RelationshipTypes.js';
 import {
@@ -319,6 +321,61 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
       } else {
         setError(
           'Sparandet kunde inte bekräftas. Utfallet är okänt. Försök hämta samma kvitto igen.',
+        );
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function changeImage(file: File | null) {
+    if (!state || !editor || pending || dirty || blocked) return;
+    setPending(true);
+    setStatus('');
+    setError('');
+    try {
+      const response = await fetch(
+        `/api/households/${encodeURIComponent(householdId)}/profile-images/${encodeURIComponent(editor.id)}`,
+        {
+          method: file ? 'POST' : 'DELETE',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'X-Skyttel-Build': buildHeader,
+            'X-Skyttel-Draft-Version': String(editor.version),
+            'X-Skyttel-Content-Version': String(state.contentVersion),
+            'X-Skyttel-Object-Revision': String(editor.baseRevision),
+          },
+          body: file,
+        },
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        notifyOutdatedClient(result.error);
+        throw new MapRequestError(response.status, result.error);
+      }
+      const draft = result as MapDraft;
+      const value = draft.changes.find((change) => change.id === editor.id)?.after;
+      if (!value) throw new Error('invalid_image_result');
+      setState({ ...state, draft });
+      setEditor({ ...editor, value, version: draft.version });
+      setStatus('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+    } catch (failure) {
+      if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) loseAccess();
+      else if (failure instanceof MapRequestError && failure.status === 413)
+        setError('Bilden är för stor. Välj en bild på högst 10 MB. Dina förslag är kvar.');
+      else if (
+        failure instanceof MapRequestError &&
+        ['invalid_image', 'image_processing_failed', 'image_size'].includes(failure.code)
+      )
+        setError(
+          'Bilden kunde inte behandlas. Välj en hel JPEG-, PNG- eller WebP-bild inom gränserna. Dina förslag är kvar.',
+        );
+      else {
+        setBlocked(true);
+        setError(
+          'Bildändringen kunde inte bekräftas. Hämta aktuellt underlag innan du försöker igen.',
         );
       }
     } finally {
@@ -656,6 +713,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     return value ? (
       <>
         <p>Namn: {value.name}</p>
+        <ProfileImage householdId={householdId} value={value} />
         <p>Objekttyp: {typeName(value.typeId)}</p>
         <p>Beskrivning: {value.description || 'Ingen beskrivning'}</p>
         <FinancialFactsDetails facts={value.financialFacts} />
@@ -1120,6 +1178,18 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 >
                   <fieldset disabled={pending || blocked}>
                     <legend>Objektets detaljer</legend>
+                    <ProfileImageEditor
+                      householdId={householdId}
+                      value={editor.value}
+                      disabled={
+                        pending ||
+                        blocked ||
+                        dirty ||
+                        editor.version !== state.draft.version ||
+                        !displayed.has(editor.id)
+                      }
+                      onChange={(file) => void changeImage(file)}
+                    />
                     <label htmlFor="object-name">Objektets namn</label>
                     <input
                       ref={nameInput}
