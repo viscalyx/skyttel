@@ -205,7 +205,10 @@
     "Fokusmarkeringar",
     "skärmläsarflöden",
     "WebGL",
-    "oskickade"
+    "oskickade",
+    "filutforskare",
+    "filväljaren",
+    "avbrottskoden"
   ],
   "overrides": [
     {
