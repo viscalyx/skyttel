@@ -118,7 +118,7 @@ test('AI-01: OAuth krävs innan assistenten kan läsa kartan', async ({ request 
     expect(await resource.json()).toMatchObject({
       resource: `${app.origin}/mcp`,
       authorization_servers: [`${app.origin}/api/auth`],
-      scopes_supported: ['skyttel:read'],
+      scopes_supported: ['skyttel:read', 'skyttel:write'],
     });
     await signIn(request, app.origin);
     expect((await createHousehold(request, app.origin)).status()).toBe(201);

@@ -24,11 +24,15 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
-function mount(path: string, responder: (path: string) => Response) {
+function mount(
+  path: string,
+  responder: (path: string) => Response,
+  scope = 'skyttel:read offline_access',
+) {
   window.history.replaceState(
     {},
     '',
-    `${path}?client_id=synthetic-client&scope=skyttel%3Aread%20offline_access`,
+    `${path}?client_id=synthetic-client&scope=${encodeURIComponent(scope)}`,
   );
   vi.stubGlobal(
     'fetch',
@@ -70,6 +74,19 @@ test('consent shows exact identity and read access, and failed approval permits 
   expect(approve.disabled).toBe(false);
   await user.click(screen.getByRole('button', { name: 'Nej, anslut inte' }));
   expect((await screen.findByRole('alert')).textContent).toContain('starta anslutningen igen');
+});
+
+test('map work consent requires its own choice and clearly separates connection access from a save instruction', async () => {
+  mount('/assistant-consent', () => Response.json(context), 'skyttel:read skyttel:write');
+  await screen.findByText('Inloggad som Alex Exempel (alex).');
+  const user = userEvent.setup();
+  const approve = screen.getByRole('button', { name: 'Godkänn kartarbete' }) as HTMLButtonElement;
+  await user.selectOptions(screen.getByLabelText('Välj hushåll'), 'linden');
+  await user.click(screen.getByLabelText(/Jag tillåter extern AI-behandling/));
+  expect(approve.disabled).toBe(true);
+  await user.click(screen.getByLabelText(/Jag tillåter förslag och sparande/));
+  expect(approve.disabled).toBe(false);
+  expect(screen.getByText(/Medgivandet sparar inga kartuppgifter/)).toBeTruthy();
 });
 
 test('revocation failure preserves the visible connection, successful retry refreshes it', async () => {

@@ -41,6 +41,19 @@ Existing access is preserved. Imported historical identities do not create
 logins. Private content from another installation needs explicit verified
 owner mapping before a current user can resume it.
 
+### Assistant map work
+
+Keep existing read-only assistant grants unchanged. Clients that need to
+propose and save changes must request new consent for map work. Verify
+that a read-only connection cannot write after rollout. Map-work consent
+does not replace the user's explicit instruction for each whole-draft save.
+
+Update assistant clients to read the complete draft review and preserve
+both content and draft versions. After an interrupted save, check the
+durable result before further changes. Retry only the same operation and
+content; imported content invalidates older attempts. Do not treat a
+missing response or a pending attempt as a successful save.
+
 ### Complete household export
 
 Rebuild the complete application image. Verify that only current

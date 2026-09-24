@@ -19,10 +19,13 @@ export function Assistants({ consent = false }: { consent?: boolean }) {
   const [data, setData] = useState<AssistantContext | null>(null);
   const [householdId, setHouseholdId] = useState('');
   const [externalAi, setExternalAi] = useState(false);
+  const [mapWork, setMapWork] = useState(false);
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
   const [revision, setRevision] = useState(0);
   const clientId = new URLSearchParams(window.location.search).get('client_id') ?? '';
+  const scopes = new URLSearchParams(window.location.search).get('scope')?.split(' ') ?? [];
+  const wantsWrite = scopes.includes('skyttel:write');
   useEffect(() => {
     const controller = new AbortController();
     void request<AssistantContext>(
@@ -44,6 +47,7 @@ export function Assistants({ consent = false }: { consent?: boolean }) {
       const result = await request<{ url: string }>('/api/assistants/consent', {
         accept,
         externalAi,
+        mapWork,
         householdId,
         oauth_query: window.location.search.slice(1),
       });
@@ -74,7 +78,9 @@ export function Assistants({ consent = false }: { consent?: boolean }) {
       <h1>{consent ? 'Anslut extern assistent' : 'Assistentanslutningar'}</h1>
       <p>
         En extern assistent kan läsa valt hushålls gemensamma karta och ditt eget privata utkast.
-        Den kan inte ändra eller spara något genom denna anslutning.
+        {consent && !wantsWrite
+          ? ' Den kan inte ändra eller spara något genom denna läsanslutning.'
+          : ' Kartarbete kräver ett särskilt medgivande för förslag i ditt utkast och sparande på ditt uttryckliga besked.'}
       </p>
       <p>
         Uppgifter som assistenten hämtar behandlas av den externa AI-tjänsten enligt ditt avtal och
@@ -83,8 +89,8 @@ export function Assistants({ consent = false }: { consent?: boolean }) {
       </p>
       <p>
         Valet gäller AI-behandling och är skilt från cookies och annan lagring. Ett nej lämnar
-        formulär och manuellt kartarbete tillgängliga. Återkallelse stoppar nya hämtningar; den
-        raderar inte uppgifter som klienten redan har fått.
+        formulär och manuellt kartarbete tillgängliga. Återkallelse stoppar nya anrop; den raderar
+        inte uppgifter som klienten redan har fått.
       </p>
       {!data && !error && <p role="status">Hämtar anslutningar…</p>}
       {data && (
@@ -100,12 +106,8 @@ export function Assistants({ consent = false }: { consent?: boolean }) {
               </p>
               <p>
                 Begärd åtkomst: läsa karta och eget utkast
-                {new URLSearchParams(window.location.search)
-                  .get('scope')
-                  ?.includes('offline_access')
-                  ? ', även när denna webbsida är stängd'
-                  : ''}
-                .
+                {wantsWrite ? ', föreslå och rätta uppgifter samt spara hela ditt utkast' : ''}
+                {scopes.includes('offline_access') ? ', även när denna webbsida är stängd' : ''}.
               </p>
               <label htmlFor="assistant-household">Välj hushåll</label>
               <select
@@ -128,13 +130,38 @@ export function Assistants({ consent = false }: { consent?: boolean }) {
                 />
                 Jag tillåter extern AI-behandling av uppgifterna som denna anslutning hämtar.
               </label>
+              {wantsWrite && (
+                <>
+                  <p>
+                    Medgivandet sparar inga kartuppgifter. Assistenten ska visa hela utkastet och
+                    spara först på ditt uttryckliga besked. Ett sparande omfattar även förslag från
+                    dina andra klienter. Versioner och konfliktkontroller bevisar inte vad du har
+                    sagt.
+                  </p>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={mapWork}
+                      onChange={(event) => setMapWork(event.target.checked)}
+                    />
+                    Jag tillåter förslag och sparande av hela mitt utkast på mitt uttryckliga
+                    besked.
+                  </label>
+                </>
+              )}
               <div className="access-actions">
                 <button
                   type="button"
-                  disabled={pending || !externalAi || !householdId || !data.client}
+                  disabled={
+                    pending ||
+                    !externalAi ||
+                    !householdId ||
+                    !data.client ||
+                    (wantsWrite && !mapWork)
+                  }
                   onClick={() => void decide(true)}
                 >
-                  Godkänn läsåtkomst
+                  {wantsWrite ? 'Godkänn kartarbete' : 'Godkänn läsåtkomst'}
                 </button>
                 <button type="button" disabled={pending} onClick={() => void decide(false)}>
                   Nej, anslut inte

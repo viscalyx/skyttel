@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
+import { checkContainerAssistants } from './check-container-assistants.mjs';
 import { checkContainerErasure } from './check-container-erasure.mjs';
 
 const exec = promisify(execFile);
@@ -95,7 +96,7 @@ async function request(name, path, options = {}) {
      }, (response) => {
        const chunks = [];
        response.on('data', (chunk) => { chunks.push(chunk); });
-       response.on('end', () => console.log(JSON.stringify({ status: response.statusCode,
+       response.on('end', () => console.log(JSON.stringify({ status: response.statusCode, headers: response.headers,
          body: Buffer.concat(chunks).toString(options.binary ? 'base64' : 'utf8') })));
      });
      request.on('timeout', () => request.destroy(new Error('Container request timed out')));
@@ -365,6 +366,14 @@ try {
     origin: configuredOrigin,
     imageId,
     saveRequest,
+  });
+  await checkContainerAssistants({
+    command,
+    request,
+    waitUntilReady,
+    name: persisted,
+    fixture,
+    origin: configuredOrigin,
   });
 } finally {
   for (const name of containers) {

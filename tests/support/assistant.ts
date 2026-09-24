@@ -2,7 +2,11 @@ import { createHash, randomBytes } from 'node:crypto';
 import { type APIRequestContext, expect } from '@playwright/test';
 
 // Register and exchange over real public HTTP without a browser cookie.
-export async function beginAssistant(browser: APIRequestContext, origin: string) {
+export async function beginAssistant(
+  browser: APIRequestContext,
+  origin: string,
+  scope = 'skyttel:read offline_access',
+) {
   const registration = await fetch(`${origin}/api/auth/oauth2/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -13,7 +17,7 @@ export async function beginAssistant(browser: APIRequestContext, origin: string)
       token_endpoint_auth_method: 'none',
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],
-      scope: 'skyttel:read offline_access',
+      scope,
     }),
   });
   expect(registration.status, await registration.clone().text()).toBe(201);
@@ -23,7 +27,7 @@ export async function beginAssistant(browser: APIRequestContext, origin: string)
     client_id,
     response_type: 'code',
     redirect_uri: 'http://127.0.0.1:7777/callback',
-    scope: 'skyttel:read offline_access',
+    scope,
     resource: `${origin}/mcp`,
     state: 'fictional-state',
     code_challenge: createHash('sha256').update(verifier).digest('base64url'),
@@ -43,6 +47,7 @@ export async function beginAssistant(browser: APIRequestContext, origin: string)
         data: {
           accept: true,
           externalAi: true,
+          ...(scope.split(' ').includes('skyttel:write') ? { mapWork: true } : {}),
           householdId,
           oauth_query: consentUrl.search.slice(1),
           ...extra,

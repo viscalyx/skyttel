@@ -325,7 +325,7 @@ test('public discovery and failures expose no secrets and cookie login alone gra
   const resource = await fetch(`${app.origin}/.well-known/oauth-protected-resource/mcp`);
   expect(await resource.json()).toMatchObject({
     resource: `${app.origin}/mcp`,
-    scopes_supported: ['skyttel:read'],
+    scopes_supported: ['skyttel:read', 'skyttel:write'],
   });
   const metadata = await fetch(`${app.origin}/.well-known/oauth-authorization-server/api/auth`);
   expect(await metadata.json()).toMatchObject({

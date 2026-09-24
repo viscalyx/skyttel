@@ -6,7 +6,13 @@ import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
-import { assistantConsent, assistantScope } from './assistant-auth.js';
+import { assistantConsent, assistantScope, assistantWriteScope } from './assistant-auth.js';
+import {
+  assistantDraftReview,
+  assistantResult,
+  assistantWorkInstructions,
+  registerAssistantWork,
+} from './assistant-work.js';
 import type { Auth } from './auth.js';
 import { householdAccess } from './households.js';
 import { householdMap, MapError } from './map.js';
@@ -24,7 +30,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
     context.json({
       resource: `${origin}/mcp`,
       authorization_servers: [`${origin}/api/auth`],
-      scopes_supported: [assistantScope],
+      scopes_supported: [assistantScope, assistantWriteScope],
       bearer_methods_supported: ['header'],
     }),
   );
@@ -81,6 +87,11 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
     if (body.accept) {
       if (
         body.externalAi !== true ||
+        (new URLSearchParams(body.oauth_query)
+          .get('scope')
+          ?.split(' ')
+          .includes(assistantWriteScope) &&
+          body.mapWork !== true) ||
         typeof body.householdId !== 'string' ||
         !householdAccess(database, session.user.id, body.householdId)
       )
@@ -144,6 +155,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
     if (context.req.header('Origin') && context.req.header('Origin') !== origin)
       return context.json({ error: 'forbidden' }, 403);
     let connection: Connection;
+    let canWrite = false;
     try {
       const token = await verifier.verifyAccessTokenRequest(context.req.raw, {
         verifyOptions: { audience: `${origin}/mcp`, issuer: `${origin}/api/auth` },
@@ -161,6 +173,8 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
       if (!found || !householdAccess(database, found.userId, found.householdId))
         throw new Error('invalid_token');
       connection = found;
+      canWrite =
+        typeof token.scope === 'string' && token.scope.split(' ').includes(assistantWriteScope);
     } catch {
       context.header(
         'WWW-Authenticate',
@@ -174,15 +188,15 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
     const server = new McpServer(
       { name: 'Skyttel', version: '1.0.0' },
       {
-        instructions: `Läs bara relevant innehåll för uppdraget. Personer i kartan ger ingen inloggning. Användarhantering, export, återimport och permanent radering görs i ${origin}/households/${connection.householdId}/administration. Denna ingång är läsande.`,
+        instructions: `Läs bara relevant innehåll för uppdraget. Personer i kartan ger ingen inloggning. Användarhantering, export, återimport och permanent radering görs i ${origin}/households/${connection.householdId}/administration. ${canWrite ? assistantWorkInstructions : 'Denna anslutning är läsande. Kartarbete kräver nytt uttryckligt medgivande med skyttel:read och skyttel:write.'}`,
       },
     );
-    function read() {
+    function map() {
       // Authorization and SQLite read are synchronous: revocation cannot slip
       // between this check and the read while SDK request parsing awaits input.
       if (!database.prepare('SELECT 1 FROM assistant_connection WHERE id = ?').get(connection.id))
         throw new MapError('forbidden', 403);
-      return householdMap(database, connection.userId, connection.householdId).read();
+      return householdMap(database, connection.userId, connection.householdId);
     }
     server.registerTool(
       'read_map',
@@ -198,7 +212,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       },
       async ({ query, objectId }) => {
-        const state = read();
+        const state = map().read();
         const objects = state.objects.filter(
           (object) =>
             (!objectId || object.id === objectId) &&
@@ -242,19 +256,14 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
     server.registerTool(
       'read_my_draft',
       {
-        description: 'Läs endast den anslutna användarens privata beständiga utkast.',
+        description:
+          'Läs hela den anslutna användarens privata beständiga utkast, inklusive tidigare förslag från andra klienter, aktuell version/contentVersion, berörda sparade värden, konflikter, olösta identiteter och väntande sparförsök. readyToSave är ingen mänsklig tillåtelse att spara.',
         inputSchema: z.object({}).strict(),
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       },
-      async () => ({
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(read().draft),
-          },
-        ],
-      }),
+      async () => assistantResult(assistantDraftReview(map())),
     );
+    if (canWrite) registerAssistantWork(server, map);
     const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

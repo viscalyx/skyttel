@@ -34,9 +34,13 @@ should request another specific object only when its details are needed for
 the user's task.
 
 `read_my_draft` returns the connected user's entire current private draft.
-Both tools reject unknown arguments. Neither tool accepts household or user
-identifiers. No administration, export, import, deletion or mutation tools
-are registered.
+It retains `version`, `changes` and optional relationship/type changes,
+and adds `contentVersion`, relevant saved values in `current`, `conflicts`,
+`unresolvedIdentities`, `pendingOperations` and `readyToSave`. The last flag
+does not grant permission to save; domain conditions are checked again
+when saving. All proposals, including earlier browser work, are included.
+No tool accepts an acting household or user identifier. Administrative
+tools remain absent, including export, import, erasure and access changes.
 
 The resource metadata is at `/.well-known/oauth-protected-resource`.
 The authorization server issuer is `SKYTTEL_ORIGIN` plus `/api/auth`.
@@ -45,8 +49,12 @@ Its metadata is discoverable at
 `/api/auth/.well-known/oauth-authorization-server`.
 
 Better Auth provides dynamic client registration, authorization code
-exchange with PKCE, JWT signing and refresh. Only `skyttel:read` and
-optional `offline_access` are available. Client credentials cannot grant
+exchange with PKCE, JWT signing and refresh. `skyttel:read` remains the
+default. Map work requires both `skyttel:read` and `skyttel:write`, with
+explicit map-work consent in addition to the AI-processing choice.
+`offline_access` is optional. Earlier read tokens and refresh grants do
+not gain write authority; request new consent to enable map work.
+Client credentials cannot grant
 household access. Native clients must declare `application_type: native`
 when registering loopback HTTP callbacks; web callbacks require HTTPS.
 Registration alone grants no access.
@@ -60,10 +68,64 @@ cannot change a pending token's household through session selection.
 
 MCP checks token signature, issuer, audience, expiry, scope and the
 current connection and membership. Tool execution rechecks the connection
-immediately before the synchronous database read. Revocation removes the
+immediately before each synchronous domain action. Revocation removes the
 connection and its refresh tokens; membership removal also removes the
 connection. Reconnection creates a different ID and cannot restore an old
 token. There is no retained MCP response or conversation cache.
+
+## Whole-draft map work
+
+Write-authorized clients discover these additional tools through MCP:
+
+- `read_type_catalog`: current effective definitions, including own browser
+  type proposals. It works in an empty household; `read_map` still filters
+  definitions to the returned objects and endpoints.
+- `propose_object` and `propose_relationship`: new or corrected complete
+  values, or `value: null` for ordinary reversible removal. Preserve facts
+  that are not being changed. Supply stable `id`, `baseRevision`, the
+  current type's `typeRevision`, and captured draft/content versions.
+  A duplicate relationship returns its `existingId` without another edge.
+- `resolve_conflict`: the exact latest conflict plus `saved` or `proposed`.
+- `discard_proposal` and `discard_draft`: discard private work only.
+- `prepare_save`: optionally register an approved attempt before saving.
+  A pending record is not a receipt and prevents further draft edits.
+- `save_draft`: atomically save the entire reviewed draft. Supply exactly
+  `operationId`, `version` and `contentVersion`; no extra approval field
+  can prove human intent. The return value contains the durable `receipt`.
+- `read_save_operation` and `read_my_save_operations`: recover a known
+  attempt or discover own pending and recent terminal attempts.
+
+Every mutation requires `contentVersion` and the reviewed draft `version`.
+Proposal, correction and discard results return the whole draft review.
+Domain failures are MCP tool errors with a stable `error`, a Swedish
+`message`, and current `review` when access permits it. Resolve conflicts
+and unexpected versions, present the whole draft, and obtain a fresh save
+instruction. Never save independent parts of a blocked whole draft.
+Unknown internal outcomes expose no database diagnostic or household text.
+
+The MCP initialization instructions govern the client conversation: deny
+negative and hypothetical saves, include earlier proposals, permit a clear
+correction plus save in one message without a redundant confirmation,
+and confirm only receipt contents. These are client responsibilities;
+server version checks are not independent evidence of human intent.
+There is no mandatory visit to the map or extra approval screen.
+
+Keep the operation ID and exact request until its outcome is known. After
+a lost response, read status before changes or another save. `succeeded`
+contains the original receipt, `pending` permits only an exact retry,
+and `rejected` requires resolving the failure before a new approved
+attempt. `null` means no live attempt was found in current content; it
+does not prove success or renew approval after import. A retry of a
+completed request returns its original receipt even if a newer draft
+exists. A changed request under the same ID is rejected. Replacement
+content retires old IDs and rejects old generations.
+
+The adapter uses the authenticated connection's actor with `householdMap`;
+it never treats an imported content-owner ID as a login identity. All
+ordinary map constraints, identity questions, current definitions,
+financial facts, image preservation and conflict rules come from the
+same domain boundary as the forms. Type-definition editing, merge,
+history and undo tools are separate extensions. No conversation is stored.
 
 ## Local deterministic verification
 
@@ -73,8 +135,10 @@ checks are:
 ```sh
 npm run build
 npm run test:unit -- tests/unit/server/assistants.test.ts
+npm run test:unit -- tests/unit/server/assistant-work.test.ts
 npm run test:unit -- tests/unit/client/assistants.test.tsx
 npm run test:integration -- tests/integration/assistants.spec.ts
+npm run test:integration -- tests/integration/assistant-work.spec.ts
 ```
 
 The tests run the actual app over loopback HTTP with temporary SQLite.
@@ -84,6 +148,17 @@ refresh checks and MCP use the actual libraries. Cases cover privacy,
 filtered reads, own drafts, restart persistence, invalid tokens,
 cross-household identifiers, signed-query tampering, denied AI consent,
 revocation and an already initialized SDK client.
+Map-work cases also cover browser draft handoff, whole-save conflicts,
+receipt loss, interrupted SQLite writes, exact retries, content generations,
+current types and preserved read-only grants. They do not run a language
+model and do not prove that a real client follows the conversation rules.
+
+The local AI-07 command intentionally requests read access. To prepare the
+separate map-work cases, revoke and log out that test connection, then
+repeat its login command with `--scopes skyttel:read,skyttel:write` and
+approve **Godkänn kartarbete**. Use the same isolated data and cleanup.
+Record real client behavior, including negative/hypothetical commands,
+separately in issue #97; do not infer it from deterministic tool calls.
 
 Browser cases use Chromium in the devcontainer. These are deterministic
 CI results, not evidence of real Google/Microsoft or external account

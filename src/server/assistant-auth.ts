@@ -7,6 +7,7 @@ import type Database from 'better-sqlite3';
 // The grant belongs to this consent request, never to mutable session selection.
 export const assistantConsent = new AsyncLocalStorage<string>();
 export const assistantScope = 'skyttel:read';
+export const assistantWriteScope = 'skyttel:write';
 
 export function assistantAuthPlugins(database: Database.Database, origin: string) {
   return [
@@ -14,14 +15,17 @@ export function assistantAuthPlugins(database: Database.Database, origin: string
     oauthProvider({
       loginPage: '/assistant-consent',
       consentPage: '/assistant-consent',
-      scopes: [assistantScope, 'offline_access'],
+      scopes: [assistantScope, assistantWriteScope, 'offline_access'],
       validAudiences: [`${origin}/mcp`],
       resources: [
-        { identifier: `${origin}/mcp`, allowedScopes: [assistantScope, 'offline_access'] },
+        {
+          identifier: `${origin}/mcp`,
+          allowedScopes: [assistantScope, assistantWriteScope, 'offline_access'],
+        },
       ],
       clientRegistrationDefaultResources: [`${origin}/mcp`],
       clientRegistrationDefaultScopes: [assistantScope],
-      clientRegistrationAllowedScopes: [assistantScope, 'offline_access'],
+      clientRegistrationAllowedScopes: [assistantScope, assistantWriteScope, 'offline_access'],
       allowDynamicClientRegistration: true,
       allowUnauthenticatedClientRegistration: true,
       grantTypes: ['authorization_code', 'refresh_token'],

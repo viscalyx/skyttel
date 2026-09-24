@@ -1,7 +1,8 @@
 # Manuella testfall för externa assistenter
 
 Testfallen omfattar OAuth-medgivande, separat val om AI-behandling,
-avgränsade läsningar, privata utkast och återkallad åtkomst. Anteckna commit,
+avgränsade läsningar, privata utkast, kartarbete och återkallad åtkomst.
+Anteckna commit,
 webbläsare och godkänt eller underkänt resultat vid körning. AI-07 är ett
 separat manuellt prov med verklig Google-inloggning och Codex CLI. Det körs
 inte i CI och har egna användare och förberedelser nedan.
@@ -335,3 +336,198 @@ driftsatta HTTPS-ingången.
 Kör fallet efter att hela specifikation #31 är implementerad. Registrera
 resultatet i den separata, icke blockerande
 [restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
+
+## Hela kartärenden
+
+AI-08 till AI-12 använder den konfigurerade administratörens inloggning,
+en separat testinstallation med påhittade data och en textklient som kan
+begära `skyttel:read` och `skyttel:write`. Följ
+[integrationsguidens kartarbete](../development/assistants.md#whole-draft-map-work).
+Använd demokartan för AI-08. Börja AI-09 till AI-11 med ett tomt eget
+utkast; kasta demoutkastet i den isolerade testinstallationen vid behov.
+Behåll databas och identitet under ett fall. Återkalla testanslutningar
+och följ installationens städning efteråt. Kör samtliga manuella steg
+först efter hela specifikation #31 och anteckna resultaten i #97.
+
+### AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärendet
+
+**Syfte:** Fortsätta webbläsarens förslag och spara ett samlat familjeärende.
+
+**Användare:** Den konfigurerade administratören i webbläsare och textklient.
+
+**Förutsättningar:** Ny demokarta med Lo-konflikten och förslaget om
+inloggningsadress. En äldre läsanslutning kan finnas men ger inte kartarbete.
+
+**Integrationstest:**
+[assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
+testfallet “AI-08: kartmedgivande fortsätter webbutkast och sparar
+hela familjeärendet”.
+
+**Steg:**
+
+1. Kontrollera att **Hela mitt utkast** i webbläsaren innehåller Lo Lind.
+   Starta en ny klientanslutning som begär kartarbete.
+2. Välj hushåll och tillåt extern AI-behandling. Kontrollera att
+   **Godkänn kartarbete** ännu inte kan väljas. Läs informationen om
+   hela utkastet. Markera även valet om förslag och sparande med
+   tangentbordet och godkänn.
+3. Be assistenten läsa hela utkastet, inklusive tidigare förslag och
+   konflikten mellan Lo Lind och Lo Berg. Be den behålla Lo Lind som
+   ditt förslag. Kontrollera att pianobeskrivningen finns kvar.
+4. Be den läsa Familjens Molnmusik och skilja den som står på avtalet
+   från den som betalar och det kort som används.
+5. Säg ”Ändra priset till 189 SEK per månad och spara hela utkastet”.
+   Granska de faktiska verktygsanropen och kvittot, inklusive det redan
+   föreslagna bytet till `musik@example.test`.
+6. Öppna kartan igen. Kontrollera Lo Lind, den nya inloggningsadressen,
+   priset och det tomma utkastet.
+
+**Förväntat resultat:**
+
+- Medgivandet kräver både AI-valet och valet om kartarbete. Det sparar
+  inga uppgifter på egen hand.
+- Hela utkastet följer med. Rättelsen och sparandet kräver inte ännu ett
+  ja enbart för att rättelsen skapar en ny version.
+- Ett kvitto omfattar de två objekträttelserna och adressambandet.
+  Efter omladdning finns de sparade uppgifterna och **Inga förslag**.
+
+CI använder bestämda MCP-anrop, inte en språkmodell. Klientens tolkning
+av den kombinerade instruktionen och kvaliteten på dess besked bedöms
+manuellt. CI provar dessutom omstart och exakt återförsök av kvittot.
+
+### AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparande
+
+**Syfte:** Stoppa ett gammalt sparunderlag från en annan klient.
+
+**Användare:** Samma användare i webbläsare och textklient.
+
+**Förutsättningar:** Tomt eget utkast och godkänd anslutning för kartarbete.
+
+**Integrationstest:**
+[assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
+testfallet “AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked
+utan delsparande”.
+
+**Steg:**
+
+1. Föreslå Lo Exempel med **Nytt objekt** i webbläsaren. Spara inte.
+2. Be assistenten läsa och sammanfatta hela utkastet. Behåll den versionen.
+3. Lägg Kim Exempel i samma utkast genom webbläsaren.
+4. Låt klientens provkontroll anropa `save_draft` med den tidigare
+   versionen och ett nytt operations-ID. Granska avvisningen och det
+   återlämnade aktuella utkastet.
+5. Be assistenten läsa upp båda förslagen och ge ett nytt uttryckligt
+   sparbesked. Kontrollera det nya kvittot och ladda om kartan.
+
+**Förväntat resultat:**
+
+- Det gamla försöket avvisas. Ingen av de två personerna delsparas.
+- Svaret visar aktuell version, båda förslagen och behovet av nytt besked.
+- Ett nytt godkänt sparande omfattar båda. Det gamla operations-ID:t
+  kan inte återanvändas för den nya versionen.
+
+Om klienten inte kan hålla fast vid den tidigare versionen för steg 4,
+anteckna att just den kontrollen inte är manuellt verifierad. CI ordnar
+denna konkurrens deterministiskt genom de publika ingångarna.
+
+### AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt sparande
+
+**Syfte:** Återfinna ett beständigt sparresultat från en återansluten klient.
+
+**Användare:** Samma användare i webbläsare och textklient.
+
+**Förutsättningar:** Tomt eget utkast och godkänd anslutning för kartarbete.
+
+**Integrationstest:**
+[assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
+testfallet “AI-10: förlorat MCP-kvittosvar återfinns efter omstart
+utan dubbelt sparande”.
+
+**Steg:**
+
+1. Lägg Lo Exempel i utkastet genom webbläsaren. Be assistenten läsa det
+   och spara hela utkastet på ditt uttryckliga besked.
+2. Anteckna kvittots operations-ID. Stäng textklienten och starta den igen.
+3. Be den kontrollera tidigare sparförsök innan den gör nya ändringar.
+   Kontrollera samma kvitto genom `read_save_operation` och
+   **Mina sparförsök** i kartan.
+4. Kontrollera att Lo Exempel finns en gång och att utkastet är tomt.
+
+**Förväntat resultat:**
+
+- Det genomförda försöket återfinns med samma kvitto och identitet.
+- Klienten behöver inte skapa ett nytt sparande för att ta reda på resultatet.
+- Inget ytterligare objekt eller dubblerat historiksteg uppstår.
+
+Det kontrollerade bortfallet efter serverns transaktion och appens omstart
+provas automatiserat: den riktiga servern sparar, men HTTP-svaret bryts
+innan klienten får det. Den återanslutna klienten kontrollerar status och
+ett exakt återförsök ger samma kvitto och enda historikhändelse. Stegen
+ovan verifierar återfinnandet efter klientomstart, inte själva bortfallet.
+Ett verkligt avbrott som råkar inträffa ska redovisas separat; ett uteblivet
+svar får aldrig beskrivas som bekräftat sparande eller bekräftad återställning.
+
+### AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kastade
+
+**Syfte:** Behålla identitetsfrågor och respektera kastade förslag.
+
+**Användare:** Samma användare i webbläsare och textklient.
+
+**Förutsättningar:** Tomt eget utkast och godkänd anslutning för kartarbete.
+
+**Integrationstest:**
+[assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
+testfallet “AI-11: identitetsfrågor blockerar och kastade MCP-förslag
+förblir kastade”.
+
+**Steg:**
+
+1. Be assistenten föreslå Betalkonto som bankkonto med olöst identitet
+   och Hushållskonto som ett separat, identifierat bankkonto.
+2. Begär sparande. Kontrollera att identiteten måste redas ut och att
+   inget av objekten blir gemensamt sparat. Kontrollera också att
+   **Spara hela utkastet** är inaktiverad i kartan.
+3. Välj uttryckligen att Betalkonto får vara ett ospecificerat objekt.
+   Be assistenten kasta förslaget Hushållskonto och beskriva det återstående
+   hela utkastet.
+4. Spara det återstående utkastet. Ladda om kartan och öppna Betalkonto.
+
+**Förväntat resultat:**
+
+- Olöst identitet blockerar hela sparandet, även det oberoende förslaget.
+- Betalkonto behåller ospecificerad identitet. Hushållskonto sparas inte.
+- Kasta förslag är skilt från att ångra sparade uppgifter.
+
+CI skickar dessutom ett försenat rättelseanrop med versionen före kastandet.
+Det avvisas och kan inte återinföra det kastade förslaget.
+
+### AI-12: nekade och hypotetiska sparbesked sparar inget
+
+**Syfte:** Kontrollera den verkliga textklientens tolkning av sparregeln.
+
+**Användare:** Den konfigurerade administratören och den verkliga textklienten.
+
+**Förutsättningar:** Ett påhittat privat förslag, känd utkastversion och
+godkänd anslutning för kartarbete. Anteckna den sparade kartans utgångsläge.
+
+**Integrationstest:** Endast manuellt för språkmodellens beteende.
+`tests/unit/server/assistant-work.test.ts` kontrollerar instruktionerna
+genom riktig MCP-initiering, inte hur en modell tolkar en människas ord.
+
+**Steg:**
+
+1. Säg ”Spara inte ändringarna”. Granska faktiska verktygsanrop och karta.
+2. Fråga ”Vad händer om vi sparar hela utkastet?”. Granska åter anrop och karta.
+3. Be assistenten sammanfatta hela utkastet. Ge sedan ett tydligt
+   ”Spara hela utkastet” och jämför beskedet med det beständiga kvittot.
+
+**Förväntat resultat:**
+
+- De två första beskeden anropar varken `prepare_save` eller `save_draft`.
+  Kartan och historiken förblir oförändrade.
+- Det tredje beskedet ger ett kort, verifierat resultat för hela utkastet.
+- Versionskontroller eller modellens egen försäkran anges inte som
+  oberoende bevis på vad människan faktiskt sade eller hörde.
+
+Anteckna klient, modell, datum och faktiskt utfall i #97. Avvikande
+klientbeteende får inte döljas av godkända deterministiska serverprov.

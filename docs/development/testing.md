@@ -266,6 +266,11 @@ the returned WebP dimensions with the native image processor, and checks
 private and saved image persistence across container replacement.
 It also verifies private draft recovery, saved objects, history, and repeated
 saving with the same receipt across container restarts.
+Public OAuth checks register synthetic native clients, obtain separate
+read and map-work consent, and verify whole-draft MCP saving, receipt
+recovery after restart, read-only isolation and connection revocation.
+Only the browser's initial synthetic identity is arranged by the fixture;
+assistant tokens and consent use the production HTTP flow.
 
 Temporary test containers and volumes are removed after the check. These
 checks do not deploy to Render and do not certify a provider registration,
