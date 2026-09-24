@@ -327,6 +327,122 @@ test('object deletion previews all relationship removals and rejects newly attac
   expect((await read()).relationships).toHaveLength(2);
 });
 
+test('deleting an endpoint after a private type change retains the saved relationship definition', async () => {
+  await object('a');
+  await object('b');
+  await edge();
+  expect((await save()).status).toBe(200);
+  const initial = await read();
+  const savedType = initial.relationshipTypes[0];
+  const proposedType = initial.relationshipTypes[1];
+  expect((await edge('edge', { typeId: proposedType.id })).status).toBe(200);
+  expect((await object('a', null)).status).toBe(200);
+  const state = await read();
+  expect(draftConflicts(state)).toEqual([]);
+  expect(state.draft.relationships).toMatchObject([
+    { id: 'edge', before: { typeId: savedType.id }, after: null, type: savedType },
+  ]);
+  expect(state.objects).toEqual(initial.objects);
+  expect(state.relationships).toEqual(initial.relationships);
+  const response = await save();
+  expect(response.status).toBe(200);
+  const { receipt } = await response.json();
+  expect(receipt.relationships).toMatchObject([
+    { id: 'edge', before: { typeId: savedType.id }, after: null, type: savedType },
+  ]);
+  const saved = await read();
+  expect(saved.objects.map((item) => item.id)).toEqual(['b']);
+  expect(saved.relationships).toEqual([]);
+  expect(saved.relationshipTypes).toEqual(initial.relationshipTypes);
+  const { history } = await (await client.request(`${path}/history`)).json();
+  expect(history.at(-1)).toEqual(receipt);
+});
+
+test.each(['before', 'after'] as const)(
+  'editing the retained definition %s an endpoint deletion saves labels with the deletion atomically',
+  async (timing) => {
+    await object('a');
+    await object('b');
+    await edge();
+    expect((await save()).status).toBe(200);
+    const initial = await read();
+    const savedType = initial.relationshipTypes[0];
+    const definition = {
+      name: 'Användning',
+      description: 'Användning i hushållet',
+      forwardLabel: 'använder',
+      reverseLabel: 'används av',
+    };
+    const define = async () =>
+      client.json(`${path}/relationship-type`, {
+        version: (await read()).draft.version,
+        id: savedType.id,
+        baseRevision: savedType.revision,
+        value: definition,
+      });
+    expect((await edge('edge', { typeId: initial.relationshipTypes[1].id })).status).toBe(200);
+    if (timing === 'before') expect((await define()).status).toBe(200);
+    expect((await object('a', null)).status).toBe(200);
+    if (timing === 'after') expect((await define()).status).toBe(200);
+    const proposed = await read();
+    expect(draftConflicts(proposed)).toEqual([]);
+    const expectedType = { ...savedType, ...definition, revision: 2 };
+    expect(proposed.draft.relationships?.[0].type).toEqual(expectedType);
+    const response = await save();
+    expect(response.status).toBe(200);
+    const { receipt } = await response.json();
+    expect(receipt.relationshipTypes).toEqual([
+      { id: savedType.id, before: savedType, after: expectedType },
+    ]);
+    expect(receipt.relationships).toMatchObject([
+      { id: 'edge', before: { typeId: savedType.id }, after: null, type: expectedType },
+    ]);
+    expect((await read()).relationshipTypes.find((item) => item.id === savedType.id)).toEqual(
+      expectedType,
+    );
+    const { history } = await (await client.request(`${path}/history`)).json();
+    expect(history.at(-1)).toEqual(receipt);
+  },
+);
+
+test('cascade deletion preserves the reviewed definition revision when the relationship type is unchanged', async () => {
+  await object('a');
+  await object('b');
+  await edge();
+  expect((await save()).status).toBe(200);
+  const actor = await member();
+  expect((await edge('edge', { lifecycle: 'ended' })).status).toBe(200);
+  const initial = await read();
+  const savedType = initial.relationshipTypes[0];
+  expect(
+    (
+      await actor.json(`${path}/relationship-type`, {
+        version: (await read(actor)).draft.version,
+        id: savedType.id,
+        baseRevision: savedType.revision,
+        value: {
+          name: 'Ändrad betydelse',
+          description: '',
+          forwardLabel: 'kopplar till',
+          reverseLabel: 'kopplas från',
+        },
+      })
+    ).status,
+  ).toBe(200);
+  expect((await save(actor)).status).toBe(200);
+  expect((await object('a', null)).status).toBe(200);
+  const proposed = await read();
+  expect(proposed.draft.relationships?.[0].type).toEqual(savedType);
+  expect(draftConflicts(proposed)).toMatchObject([
+    { kind: 'relationship', id: 'edge', type: { id: savedType.id, revision: 2 } },
+  ]);
+  expect((await save()).status).toBe(409);
+  const rejected = await read();
+  expect(rejected.objects).toEqual(initial.objects);
+  expect(rejected.relationships).toEqual(initial.relationships);
+  expect(rejected.draft).toEqual(proposed.draft);
+});
+
 test.each(['before', 'after'] as const)(
   'keeping a saved object preserves relationship deletions proposed independently %s object removal',
   async (timing) => {

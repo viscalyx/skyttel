@@ -113,18 +113,22 @@ connected edge and preserves history”.
 
 **Steg:**
 
-1. Öppna **Åtgärder för Familjemusik** i objektlistan och välj **Ta bort**.
+1. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Betalar** som
+   sambandstyp och lägg sambandet i utkastet utan att spara.
+2. Öppna **Åtgärder för Familjemusik** i objektlistan och välj **Ta bort**.
    Granska **Hela mitt utkast** utan något ytterligare förslagssteg.
-2. Ladda om sidan, granska förslaget igen och välj **Kasta hela utkastet**.
-3. Upprepa **Ta bort** i listan och välj **Spara hela utkastet**.
-4. Starta om appen med samma databas och ladda om sidan.
+3. Ladda om sidan, granska förslaget igen och välj **Kasta hela utkastet**.
+4. Upprepa typbytet och **Ta bort** i listan. Välj **Spara hela utkastet**.
+5. Starta om appen med samma databas och ladda om sidan.
 
 **Förväntat resultat:**
 
 - Utkastet innehåller borttagning av Familjemusik och båda sambanden med
   läsbara objektnamn och riktningar. Den gemensamma kartan är oförändrad.
+- Borttagningen visar sambandets sparade typ **Använder**, utan **Betalar**
+  eller någon typkonflikt. Hela utkastet går att spara direkt.
 - Förslaget överlever omladdning. Kastande återger båda sambanden och
-  tömmer utkastet utan att ändra den gemensamma kartan.
+  tömmer utkastet utan att ändra den gemensamma kartan eller sambandets typ.
 - Efter sparande och omstart är Familjemusik och båda sambanden borta.
   Lo och Molnmusik finns kvar. Inga typdefinitioner städas bort.
 - Automationen läser historikunderlaget via HTTP och kontrollerar tidigare

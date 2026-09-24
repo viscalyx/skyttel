@@ -125,6 +125,16 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     const initial = await read();
     await page.goto(installation.origin);
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
+    const proposeTypeChange = async () => {
+      await page
+        .getByRole('list', { name: 'Samband', exact: true })
+        .getByRole('button', { name: 'Lo Exempel → Använder → Familjemusik', exact: true })
+        .click();
+      await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalar' });
+      await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+      await expect(review).toContainText('Lo Exempel → Betalar → Familjemusik');
+    };
+    await proposeTypeChange();
     await page.getByText('Åtgärder för Familjemusik', { exact: true }).click();
     await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await expect(review).toContainText('Borttagning: Familjemusik');
@@ -133,6 +143,8 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     ).toHaveCount(2);
     await expect(review).toContainText('Lo Exempel → Använder → Familjemusik');
     await expect(review).toContainText('Familjemusik → Använder → Molnmusik');
+    await expect(review).not.toContainText('Betalar');
+    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
     expect((await read()).objects).toEqual(initial.objects);
     expect((await read()).relationships).toEqual(initial.relationships);
     await page.reload();
@@ -142,6 +154,8 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     await expect(
       page.getByRole('list', { name: 'Samband', exact: true }).getByRole('listitem'),
     ).toHaveCount(2);
+    expect((await read()).relationships).toEqual(initial.relationships);
+    await proposeTypeChange();
     await page.getByText('Åtgärder för Familjemusik', { exact: true }).click();
     await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();

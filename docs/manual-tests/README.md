@@ -37,4 +37,4 @@ till motsvarande automatiserade integrationstester.
   privat tillgång.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
   kända slutdatum och granska, kasta eller spara vanlig borttagning med
-  bevarade anslutna objekt och historikunderlag.
+  bevarade anslutna objekt och historikunderlag, även efter privata typbyten.

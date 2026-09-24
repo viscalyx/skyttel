@@ -110,10 +110,11 @@ export function relationships(database: Database.Database, householdId: string) 
             removedWithObjects: [id],
             objectNames: existing?.objectNames ?? objectNames(draft, before, null),
             type:
-              existing?.type ??
-              (definitions
-                .effective(draft)
-                .find((type) => type.id === value.typeId) as RelationshipType),
+              existing?.type.id === before.typeId
+                ? existing.type
+                : (definitions
+                    .effective(draft)
+                    .find((type) => type.id === before.typeId) as RelationshipType),
           });
       }
     },
