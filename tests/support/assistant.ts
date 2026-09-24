@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { APIRequestContext } from '@playwright/test';
+import { type APIRequestContext, expect } from '@playwright/test';
 
 // Register and exchange over real public HTTP without a browser cookie.
 export async function beginAssistant(browser: APIRequestContext, origin: string) {
@@ -16,7 +16,7 @@ export async function beginAssistant(browser: APIRequestContext, origin: string)
       scope: 'skyttel:read offline_access',
     }),
   });
-  if (!registration.ok) throw new Error(`Registration failed: ${await registration.text()}`);
+  expect(registration.status, await registration.clone().text()).toBe(201);
   const { client_id } = await registration.json();
   const verifier = randomBytes(32).toString('base64url');
   const query = new URLSearchParams({
@@ -31,6 +31,7 @@ export async function beginAssistant(browser: APIRequestContext, origin: string)
   });
   const authorizeUrl = `${origin}/api/auth/oauth2/authorize?${query}`;
   const response = await browser.get(authorizeUrl, { maxRedirects: 0 });
+  expect(response.status(), await response.text()).toBe(302);
   const consentUrl = new URL(response.headers().location, origin);
   return {
     authorizeUrl,

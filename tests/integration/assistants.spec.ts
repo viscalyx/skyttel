@@ -1,5 +1,5 @@
-import { createHash, randomBytes } from 'node:crypto';
 import { expect, test } from '@playwright/test';
+import type { MapState } from '../../src/shared/map.js';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
@@ -47,71 +47,15 @@ test('AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla tok
   try {
     await signIn(request, app.origin);
     const { household } = await (await createHousehold(request, app.origin)).json();
-    const registered = await request.post(`${app.origin}/api/auth/oauth2/register`, {
-      headers: { origin: app.origin },
-      data: {
-        application_type: 'native',
-        client_name: 'Påhittad textassistent',
-        redirect_uris: ['http://127.0.0.1:7777/callback'],
-        token_endpoint_auth_method: 'none',
-        grant_types: ['authorization_code', 'refresh_token'],
-        response_types: ['code'],
-        scope: 'skyttel:read offline_access',
-      },
-    });
-    expect(registered.status(), await registered.text()).toBe(201);
-    const { client_id } = await registered.json();
-    const verifier = randomBytes(32).toString('base64url');
-    const query = new URLSearchParams({
-      client_id,
-      response_type: 'code',
-      redirect_uri: 'http://127.0.0.1:7777/callback',
-      scope: 'skyttel:read offline_access',
-      resource: `${app.origin}/mcp`,
-      state: 'fictional-state',
-      code_challenge: createHash('sha256').update(verifier).digest('base64url'),
-      code_challenge_method: 'S256',
-    });
-    const authorization = await request.get(`${app.origin}/api/auth/oauth2/authorize?${query}`, {
-      maxRedirects: 0,
-    });
-    expect(authorization.status()).toBe(302);
-    const consentUrl = new URL(authorization.headers().location, app.origin);
-    const oauth_query = consentUrl.search.slice(1);
-    const denied = await request.post(`${app.origin}/api/assistants/consent`, {
-      headers: { origin: app.origin },
-      data: {
-        accept: true,
-        externalAi: false,
-        householdId: household.id,
-        oauth_query,
-      },
-    });
+    const flow = await beginAssistant(request, app.origin);
+    const denied = await flow.consent(household.id, { externalAi: false });
     expect(denied.status()).toBe(403);
-    const consent = await request.post(`${app.origin}/api/assistants/consent`, {
-      headers: { origin: app.origin },
-      data: {
-        accept: true,
-        externalAi: true,
-        householdId: household.id,
-        oauth_query,
-      },
-    });
+    const consent = await flow.consent(household.id);
     expect(consent.status(), await consent.text()).toBe(200);
     const callback = new URL((await consent.json()).url);
     expect(callback.searchParams.get('state')).toBe('fictional-state');
-    const token = await request.post(`${app.origin}/api/auth/oauth2/token`, {
-      headers: { origin: app.origin },
-      form: {
-        grant_type: 'authorization_code',
-        client_id,
-        code: callback.searchParams.get('code') ?? '',
-        redirect_uri: 'http://127.0.0.1:7777/callback',
-        code_verifier: verifier,
-        resource: `${app.origin}/mcp`,
-      },
-    });
-    expect(token.status(), await token.text()).toBe(200);
+    const token = await flow.exchange(callback.href);
+    expect(token.status, await token.clone().text()).toBe(200);
     const { access_token } = await token.json();
     const headers = {
       authorization: `Bearer ${access_token}`,
@@ -176,6 +120,149 @@ test('AI-01: OAuth krävs innan assistenten kan läsa kartan', async ({ request 
       authorization_servers: [`${app.origin}/api/auth`],
       scopes_supported: ['skyttel:read'],
     });
+    await signIn(request, app.origin);
+    expect((await createHousehold(request, app.origin)).status()).toBe(201);
+    const cookieOnly = await request.post(`${app.origin}/mcp`, {
+      headers: { origin: app.origin, accept: 'application/json, text/event-stream' },
+      data: {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'read_map', arguments: {} },
+      },
+    });
+    expect(cookieOnly.status()).toBe(401);
+    expect(await cookieOnly.json()).toEqual({
+      error: 'unauthenticated',
+      message: 'Anslutningen behöver godkännas på nytt i Skyttel.',
+    });
+  } finally {
+    await app.close();
+  }
+});
+
+test('AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifter', async ({
+  request,
+}) => {
+  const app = await createInstallation();
+  try {
+    await signIn(request, app.origin);
+    const { household } = await (await createHousehold(request, app.origin)).json();
+    const path = `${app.origin}/api/households/${household.id}/map`;
+    const read = async (): Promise<MapState> => (await request.get(path)).json();
+    const post = async (route: string, data: Record<string, unknown>) => {
+      const state = await read();
+      const response = await request.post(`${path}/${route}`, {
+        headers: { origin: app.origin },
+        data: { version: state.draft.version, ...data },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    };
+    const state = await read();
+    const vehicleType = state.types.find((type) => type.name === 'Fordon')?.id;
+    const personType = state.types.find((type) => type.name === 'Person')?.id;
+    await post('object-type', {
+      id: 'unrelated-type',
+      baseRevision: null,
+      value: {
+        name: 'Privat samling',
+        description: 'Orelaterad typbeskrivning',
+        fields: [{ id: 'note', name: 'Anteckning', description: 'Hemligt fält', kind: 'text' }],
+      },
+    });
+    for (const [id, typeId, name, description] of [
+      ['car', vehicleType, 'Blå bilen', 'Bilens sparade uppgifter'],
+      ['kim', personType, 'Kim', 'Kims övriga detaljer'],
+      ['lo', personType, 'Lo', 'Los övriga detaljer'],
+      ['bike', vehicleType, 'Cykeln två steg bort', 'Cykelns uppgifter'],
+      ['collection', 'unrelated-type', 'Samlingen', 'Orelaterat objekt'],
+    ])
+      await post('draft', {
+        id,
+        baseRevision: null,
+        value: { typeId, name, description },
+      });
+    for (const [id, type, sourceId, targetId, knowledge] of [
+      ['ownership', 'Äger', 'car', 'kim', 'known'],
+      ['usage', 'Använder', 'lo', 'car', 'uncertain'],
+      ['unknown-user', 'Används av', 'car', null, 'unknown'],
+      ['second-hop', 'Använder', 'kim', 'bike', 'known'],
+    ])
+      await post('relationship', {
+        id,
+        baseRevision: null,
+        value: {
+          typeId: state.relationshipTypes.find((item) => item.name === type)?.id,
+          sourceId,
+          targetId,
+          knowledge,
+        },
+      });
+    await post('save', { operationId: 'save-scoped-map' });
+    const flow = await beginAssistant(request, app.origin);
+    const consent = await flow.consent(household.id);
+    expect(consent.status(), await consent.text()).toBe(200);
+    const tokens = await flow.exchange((await consent.json()).url);
+    expect(tokens.status, await tokens.clone().text()).toBe(200);
+    const { access_token } = await tokens.json();
+    for (const args of [
+      { objectId: 'car' },
+      { query: 'BILEN' },
+      { objectId: 'car', query: 'bilen' },
+    ]) {
+      const response = await callAssistant(app.origin, access_token, 'read_map', args);
+      expect(response.status, await response.clone().text()).toBe(200);
+      const result = await response.json();
+      const map = JSON.parse(result.result.content[0].text);
+      expect(map.objects).toEqual([
+        expect.objectContaining({ id: 'car', description: 'Bilens sparade uppgifter' }),
+      ]);
+      expect(map.contextObjects).toEqual([
+        { id: 'kim', typeId: personType, name: 'Kim' },
+        { id: 'lo', typeId: personType, name: 'Lo' },
+      ]);
+      expect(map.relationships.map((edge: { id: string }) => edge.id).sort()).toEqual([
+        'ownership',
+        'unknown-user',
+        'usage',
+      ]);
+      expect(map.relationships).toContainEqual(
+        expect.objectContaining({ id: 'unknown-user', targetId: null, knowledge: 'unknown' }),
+      );
+      expect(map.relationships).toContainEqual(
+        expect.objectContaining({ id: 'usage', knowledge: 'uncertain' }),
+      );
+      expect(map.types.map((type: { name: string }) => type.name).sort()).toEqual([
+        'Fordon',
+        'Person',
+      ]);
+      expect(map.relationshipTypes.map((type: { name: string }) => type.name).sort()).toEqual([
+        'Använder',
+        'Används av',
+        'Äger',
+      ]);
+      for (const excluded of ['övriga detaljer', 'Cykeln', 'Samlingen', 'Orelaterad', 'Hemligt'])
+        expect(JSON.stringify(map)).not.toContain(excluded);
+    }
+    for (const args of [
+      { query: 'ingen träff' },
+      { objectId: 'missing' },
+      { objectId: 'car', query: 'Samlingen' },
+    ]) {
+      const result = await (await callAssistant(app.origin, access_token, 'read_map', args)).json();
+      expect(JSON.parse(result.result.content[0].text)).toEqual({
+        objects: [],
+        contextObjects: [],
+        types: [],
+        relationshipTypes: [],
+        relationships: [],
+      });
+    }
+    const result = await (await callAssistant(app.origin, access_token, 'read_map')).json();
+    const map = JSON.parse(result.result.content[0].text);
+    expect(map.objects).toHaveLength(5);
+    expect(map.relationships).toHaveLength(4);
+    expect(map.contextObjects).toEqual([]);
   } finally {
     await app.close();
   }

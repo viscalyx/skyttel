@@ -14,11 +14,29 @@ no long-lived server session or cached household content. An initialized
 client must send its bearer token on every request. Cookie authentication
 alone cannot call MCP.
 
-`read_map` returns the saved map. Optional `query` and `objectId` narrow
-the objects and associated relationships. `read_my_draft` returns the
-connected user's entire current private draft. Both tools reject unknown
-arguments. Neither tool accepts household or user identifiers. No
-administration, export, import, deletion or mutation tools are registered.
+`read_map` returns the saved map. Optional `query` searches object names
+and descriptions without case sensitivity; `objectId` selects one object.
+When both are provided, an object must match both. The response contains:
+
+- `objects`: full saved values for the matching objects.
+- `relationships`: incoming and outgoing relationships touching a matching
+  object, including unknown or explicitly absent endpoints.
+- `contextObjects`: only `id`, `name` and `typeId` for the other endpoints
+  needed to understand those relationships. These are references, not full
+  object values. Their other relationships are not followed.
+- `types` and `relationshipTypes`: definitions used by the returned objects,
+  endpoint references and relationships. Unrelated definitions are omitted.
+
+A search with no matches returns empty lists, including both type catalogs.
+An unfiltered read returns all saved objects and relationships, with an empty
+`contextObjects` list because all endpoints are already full objects. Clients
+should request another specific object only when its details are needed for
+the user's task.
+
+`read_my_draft` returns the connected user's entire current private draft.
+Both tools reject unknown arguments. Neither tool accepts household or user
+identifiers. No administration, export, import, deletion or mutation tools
+are registered.
 
 The resource metadata is at `/.well-known/oauth-protected-resource`.
 The authorization server issuer is `SKYTTEL_ORIGIN` plus `/api/auth`.

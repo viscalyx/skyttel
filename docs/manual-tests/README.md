@@ -7,7 +7,8 @@ till motsvarande automatiserade integrationstester.
 ## Områden
 
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
-  anslutning, egna utkast, hushållsgränser och återkallad åtkomst.
+  anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
+  återkallad åtkomst.
 
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, återhämta anslutningsfel, logga ut och länka inloggningssätt.

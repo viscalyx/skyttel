@@ -188,7 +188,7 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
       'read_map',
       {
         description:
-          'Läs hushållets sparade karta. Avgränsa med söktext eller objekt-ID när uppdraget gäller en del av kartan. Identitet och hushåll kommer från medgivandet.',
+          'Läs hushållets sparade karta. Avgränsa med söktext i namn och beskrivning eller objekt-ID. Om båda anges krävs båda. Svar innehåller valda objekt, deras direkta inkommande och utgående samband samt endast ID, namn och typ för övriga ändpunkter i contextObjects. Läs andra ändpunkters detaljer med en ny avgränsad läsning endast när de behövs för uppdraget. Bara berörda typdefinitioner följer med. Identitet och hushåll kommer från medgivandet.',
         inputSchema: z
           .object({
             query: z.string().max(100).optional(),
@@ -208,17 +208,31 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
                 .includes(query.toLocaleLowerCase('sv'))),
         );
         const ids = new Set(objects.map((object) => object.id));
+        const relationships = state.relationships.filter(
+          (edge) => ids.has(edge.sourceId) || (edge.targetId !== null && ids.has(edge.targetId)),
+        );
+        const endpointIds = new Set<string>();
+        for (const edge of relationships) {
+          endpointIds.add(edge.sourceId);
+          if (edge.targetId !== null) endpointIds.add(edge.targetId);
+        }
+        const contextObjects = state.objects
+          .filter((object) => !ids.has(object.id) && endpointIds.has(object.id))
+          .map(({ id, typeId, name }) => ({ id, typeId, name }));
+        const typeIds = new Set([...objects, ...contextObjects].map((object) => object.typeId));
+        const relationshipTypeIds = new Set(relationships.map((edge) => edge.typeId));
         return {
           content: [
             {
               type: 'text',
               text: JSON.stringify({
-                types: state.types,
+                types: state.types.filter((type) => typeIds.has(type.id)),
                 objects,
-                relationshipTypes: state.relationshipTypes,
-                relationships: state.relationships.filter(
-                  (edge) => ids.has(edge.sourceId) && (!edge.targetId || ids.has(edge.targetId)),
+                contextObjects,
+                relationshipTypes: state.relationshipTypes.filter((type) =>
+                  relationshipTypeIds.has(type.id),
                 ),
+                relationships,
               }),
             },
           ],

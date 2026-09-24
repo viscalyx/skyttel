@@ -1,8 +1,8 @@
 # Manuella testfall för externa assistenter
 
 Testfallen omfattar OAuth-medgivande, separat val om AI-behandling,
-privata utkast och återkallad åtkomst. Anteckna commit, webbläsare och
-godkänt eller underkänt resultat vid körning.
+avgränsade läsningar, privata utkast och återkallad åtkomst. Anteckna commit,
+webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
 
@@ -41,11 +41,29 @@ testfallet “AI-01: OAuth krävs innan assistenten kan läsa kartan”.
 
 1. Lägg till Skyttels MCP-adress i klienten med OAuth.
 2. Begär en läsning utan att slutföra Skyttels medgivande.
+3. Logga in i Skyttel i webbläsaren. Begär därefter `read_map` på `/mcp`
+   från samma webbläsarsession med dess vanliga inloggningscookie men utan
+   OAuth-token. Kör följande i utvecklarverktygens konsol på Skyttels sida:
+
+   ```javascript
+   const svar = await fetch('/mcp', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+       jsonrpc: '2.0',
+       id: 1,
+       method: 'tools/call',
+       params: { name: 'read_map', arguments: {} },
+     }),
+   });
+   console.log(svar.status, await svar.json());
+   ```
 
 **Förväntat resultat:**
 
 - Klienten behöver autentisering och medgivande. Inget kartinnehåll visas.
 - Skyttels vanliga webbinloggning räcker inte som assistentmedgivande.
+  Även anropet med enbart inloggningscookie får HTTP 401 utan kartinnehåll.
 
 ### AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla token
 
@@ -157,3 +175,47 @@ klienten”.
   identifierare ger inte tillgång till Alex utkast eller Eken.
 - Återkallat medlemskap stoppar nästa anrop även i den öppna klienten.
   Administrativa åtgärder saknas bland assistentens verktyg.
+
+### AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifter
+
+**Syfte:** Kontrollera att en objektfråga får nödvändigt sammanhang utan
+att hela kartan eller orelaterade typdefinitioner följer med.
+
+**Användare:** Alex och den anslutna textklienten.
+
+**Förutsättningar:** Klienten har läsåtkomst till Linden. Skapa och spara
+fordonen Blå bilen och Cykeln två steg bort samt personerna Kim och Lo.
+Ge personerna egna beskrivningar. Skapa också objekttypen Privat samling
+med en egen beskrivning och ett textfält med beskrivning, och ett objekt
+Samlingen av den typen. Spara följande samband: Blå bilen → Äger → Kim,
+Lo → Använder → Blå bilen med osäker uppgift, Blå bilen → Används av →
+Okänt, och Kim → Använder → Cykeln två steg bort.
+
+**Integrationstest:**
+[assistants.spec.ts](../../tests/integration/assistants.spec.ts),
+testfallet “AI-06: avgränsad läsning visar direkta samband utan orelaterade
+uppgifter”.
+
+**Steg:**
+
+1. Anropa `read_map` med Blå bilens `objectId`. Granska verktygssvaret.
+2. Anropa samma verktyg med `query` satt till `BILEN`, och sedan med både
+   Blå bilens ID och söktexten `bilen`.
+3. Sök efter `ingen träff` och begär därefter ett obefintligt objekt-ID.
+4. Ange både Blå bilens ID och söktexten `Samlingen`.
+5. Begär slutligen hela den sparade kartan utan avgränsning.
+
+**Förväntat resultat:**
+
+- De tre läsningarna om bilen visar dess sparade uppgifter och tre direkta
+  samband. Osäker och okänd uppgift har kvar sin betydelse.
+- Kim och Lo visas som ändpunkter med endast ID, namn och typ i
+  `contextObjects`. Deras beskrivningar, cykeln och Kims andra samband
+  följer inte med. Samlingen och dess typ- och fältbeskrivningar saknas.
+- Endast objekttyperna Fordon och Person samt sambandstyperna Äger,
+  Använder och Används av följer med i de avgränsade svaren.
+- Utebliven träff, obefintligt ID och motsägande ID och söktext ger tomma
+  listor även för ändpunkter och typdefinitioner.
+- Den oavgränsade läsningen visar de fem skapade objekten och fyra samband.
+  `contextObjects` är då tom eftersom ändpunkterna redan är fullständiga
+  objekt i svaret.

@@ -24,7 +24,12 @@ där. En databas i EU garanterar inte att all AI-behandling sker i EU.
 Lägg inte lösenord eller andra hemligheter i kartan.
 
 Be assistenten läsa det som behövs för frågan, exempelvis ett visst
-objekt eller ditt utkast. Andra medlemmars privata utkast ingår inte.
+objekt eller ditt utkast. En avgränsad objektläsning visar objektets
+direkta inkommande och utgående samband. Andra ändpunkter visas med
+namn, ID och typ, utan sina övriga uppgifter eller samband. Be om en
+ny avgränsad läsning om även deras detaljer behövs. Bara berörda
+typdefinitioner följer med; en sökning utan träffar lämnar inget
+kartinnehåll. Andra medlemmars privata utkast ingår inte.
 Om resultatet uteblir ska assistenten inte påstå sig ha läst informationen.
 
 ## Återkalla anslutningen

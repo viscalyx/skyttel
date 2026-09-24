@@ -130,6 +130,51 @@ test('read tools isolate own draft and household, filter relevant objects, and r
   }
 });
 
+test('a scoped read with no matches returns no authored type metadata', async () => {
+  const path = `${app.origin}/api/households/${householdId}/map`;
+  const headers = { origin: app.origin };
+  expect(
+    (
+      await browser.post(`${path}/object-type`, {
+        headers,
+        data: {
+          version: 0,
+          id: 'unrelated-type',
+          baseRevision: null,
+          value: {
+            name: 'Privat samling',
+            description: 'Hushållets orelaterade typbeskrivning',
+            fields: [
+              { id: 'note', name: 'Anteckning', description: 'Fältets beskrivning', kind: 'text' },
+            ],
+          },
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  expect(
+    (
+      await browser.post(`${path}/save`, {
+        headers,
+        data: { version: 1, operationId: 'save-unrelated-type' },
+      })
+    ).status(),
+  ).toBe(200);
+  const connection = await connect();
+  for (const args of [{ query: 'ingen träff' }, { objectId: 'missing' }]) {
+    const result = await (
+      await callAssistant(app.origin, connection.access_token, 'read_map', args)
+    ).json();
+    expect(JSON.parse(result.result.content[0].text)).toEqual({
+      objects: [],
+      contextObjects: [],
+      types: [],
+      relationshipTypes: [],
+      relationships: [],
+    });
+  }
+});
+
 test('only own user or household administrator can revoke and old tokens remain denied after reconnect', async () => {
   const other = await member();
   try {
