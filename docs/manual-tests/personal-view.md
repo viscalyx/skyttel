@@ -174,3 +174,54 @@ further reads and both mutations”.
 - Robin ser egna val och ändrar inte Alex placeringar eller inställningar.
 - Återkallad tillgång hindrar fortsatt läsning och båda slags sparanden.
   Inloggningsnavigationen är tillgänglig när helskärmskartan stängs.
+
+## Inläsning och kamera
+
+### PLACERING-06: sen första inläsning och bevarad kamera vid uppdatering
+
+**Syfte:** Kontrollera att sparade placeringar syns vid kartans start och
+att senare inläsningar och visningsval bevarar användarens kameravy.
+
+**Användare:** Alex Exempel på dator med mus.
+
+**Förutsättningar:** Lampan och Cykeln är sparade. Använd ett brett fönster
+där lista och rymdkarta visas samtidigt. Webbläsaren kan simulera en långsam
+anslutning. För fördröjningsdelen behöver rymdkartan hinna visas innan de
+personliga placeringarna är färdiga att använda. Anteckna om denna ordning
+inte går att återskapa; då är den delen inte bedömd manuellt.
+
+**Integrationstest:**
+[personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
+testfallet “PLACERING-06: delayed initial personal positions frame once and
+later refreshes preserve the camera”.
+
+**Steg:**
+
+1. Välj Lampan via Lista och detaljer och öppna rymdkartan. Öppna Ordna
+   min vy. Använd Flytta höger i rummet upprepade gånger tills Lampan
+   ligger helt utanför den ursprungliga vyn. Vänta på beskedet att din
+   personliga vy är sparad. Gör samma sak med Cykeln, utan att ändra kameran.
+2. Aktivera långsam anslutning i webbläsarens nätverksinställningar och
+   ladda om sidan. Kontrollera att lista och rymdkarta visas. Öppna Ordna
+   min vy medan Visa stjärnhimmel ännu är inaktiv i väntan på de personliga
+   placeringarna. Använd inte Återställ vy eller kameraknapparna.
+3. Vänta tills Visa stjärnhimmel går att använda och kontrollera att båda
+   objekten syns. Återgå till normal anslutning.
+4. Öppna Navigera rymden och använd Panorera höger så att objekten hamnar
+   tydligt vid sidan av sina första lägen på skärmen. Behåll dem synliga
+   och lägg märke till utsnittet.
+5. Välj Läs in min aktuella vy under Ordna min vy. Vänta tills läsningen
+   är klar och jämför utsnittet med det du valde i föregående steg.
+6. Aktivera Visa stjärnhimmel. Vänta på beskedet att vyn är sparad och
+   jämför utsnittet igen.
+
+**Förväntat resultat:**
+
+- När de första personliga placeringarna är klara ramas de båda flyttade
+  objekten in automatiskt. De syns utan att användaren återställer vyn,
+  även när rymdkartan visas före den personliga inläsningen.
+- Efter den första inramningen kan användaren välja ett eget utsnitt.
+  Läs in min aktuella vy bevarar det utsnittet utan att kameran hoppar
+  tillbaka eller zoomar om.
+- Stjärnhimlen visas. Även efter att valet sparas ligger objekten kvar
+  på samma ställen i utsnittet och kameran bevaras.

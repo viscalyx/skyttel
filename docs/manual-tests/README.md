@@ -26,7 +26,8 @@ till motsvarande automatiserade integrationstester.
   navigation när tillgången återkallas i helskärm.
 - [Personliga placeringar](personal-view.md): flyttning med mus, pekgester
   och tangentbord, visningsval, samtidighetskonflikter, bevarad text,
-  beständighet och avskildhet mellan användare.
+  beständighet och avskildhet mellan användare samt inramning vid sen
+  första inläsning med bevarad kamera vid senare uppdateringar.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast.

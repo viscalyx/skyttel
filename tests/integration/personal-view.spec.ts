@@ -305,6 +305,80 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
   }
 });
 
+test('PLACERING-06: delayed initial personal positions frame once and later refreshes preserve the camera', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  let releaseView = () => {};
+  const delayedView = new Promise<void>((resolve) => {
+    releaseView = resolve;
+  });
+  try {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    const { path } = await arrange(page, installation.origin);
+    for (const [id, position] of [
+      ['lamp', { x: 900, y: 800, z: 700 }],
+      ['bike', { x: 910, y: 805, z: 705 }],
+    ] as const) {
+      expect(
+        (
+          await page.request.post(`${path}/view/position`, {
+            headers: { origin: installation.origin },
+            data: { id, position, version: 0 },
+          })
+        ).ok(),
+      ).toBe(true);
+    }
+    await page.route(`${path}/view`, async (route) => {
+      const response = await route.fetch();
+      await delayedView;
+      await route.fulfill({ response });
+    });
+    await page.reload();
+    const canvas = space(page).locator('canvas');
+    await expect(canvas).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toBeVisible();
+    await space(page).getByText('Ordna min vy', { exact: true }).click();
+    const stars = space(page).getByLabel('Visa stjärnhimmel', { exact: true });
+    await expect(stars).toBeDisabled();
+    // Let the initial shared-map render finish while the personal response waits.
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+    releaseView();
+    await expect(stars).toBeEnabled();
+    await space(page).getByText('Ordna min vy', { exact: true }).click();
+    await canvas.scrollIntoViewIfNeeded();
+    for (const name of ['Lampan', 'Cykeln']) {
+      await expect(
+        space(page).getByRole('button', { name: `Välj objekt: ${name}`, exact: true }),
+      ).toBeInViewport({ ratio: 1 });
+    }
+    const projection = () =>
+      space(page)
+        .locator('line[data-object-id="lamp"]')
+        .evaluate((line: SVGLineElement) => ({
+          x: line.x1.baseVal.value,
+          y: line.y1.baseVal.value,
+        }));
+    const framed = await projection();
+    await space(page).getByText('Navigera rymden', { exact: true }).click();
+    await space(page).getByRole('button', { name: 'Panorera höger', exact: true }).click();
+    await expect.poll(projection).not.toEqual(framed);
+    const navigated = await projection();
+    await space(page).getByText('Ordna min vy', { exact: true }).click();
+    await space(page).getByRole('button', { name: 'Läs in min aktuella vy', exact: true }).click();
+    await expect(space(page).getByText('Aktuell personlig vy är inläst.')).toBeVisible();
+    expect(await projection()).toEqual(navigated);
+    await stars.check();
+    await expect(space(page).getByText('Din personliga vy är sparad.')).toBeVisible();
+    expect(await projection()).toEqual(navigated);
+  } finally {
+    releaseView();
+    await installation.close();
+  }
+});
+
 test('PLACERING-05: personal views stay private and revocation denies further reads and both mutations', async ({
   page,
   browser,

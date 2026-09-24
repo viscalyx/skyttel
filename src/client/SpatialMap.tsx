@@ -255,10 +255,12 @@ export function SpatialMap({
       scene.current = null;
     };
   }, [activated, motion, movement.cancel]);
+  const personalReady = !personal || Boolean(personal.view);
   useEffect(() => {
-    if (!activated) return;
+    // The first scene update frames the layout, including saved personal positions.
+    if (!activated || !personalReady) return;
     scene.current?.update([...objects.keys()], personal?.view?.positions);
-  }, [objects, activated, personal?.view?.positions]);
+  }, [objects, activated, personal?.view?.positions, personalReady]);
   useEffect(() => {
     if (!activated) return;
     scene.current?.configure(preferences);
