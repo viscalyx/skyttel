@@ -34,6 +34,7 @@ export function checkOperation(operation: SaveOperation, attempt: SaveAttempt) {
 
 export function receiptMessage(receipt: SaveReceipt) {
   const changes = [
+    ...(receipt.objectTypes ?? []).map((change) => `${change.after.name} (objekttyp)`),
     ...receipt.changes.map((change) => change.after?.name ?? change.before?.name),
     ...(receipt.relationships ?? []).map(
       (change) => `${change.type.name} (${change.after ? 'samband' : 'borttaget samband'})`,
@@ -43,6 +44,14 @@ export function receiptMessage(receipt: SaveReceipt) {
 }
 
 export function rejectionMessage(code: string) {
+  if (code === 'invalid_custom_value')
+    return 'Kontrollera de egna fälten: ange text, ett giltigt tal, datum eller ja/nej enligt fältets värdeslag.';
+  if (code === 'invalid_type_definition')
+    return 'Ange namn, beskrivning och giltiga fält för objekttypen.';
+  if (code === 'field_kind_in_use')
+    return 'Fältets värdeslag används redan. Skapa ett nytt fält med rätt värdeslag; tidigare fält och värden finns kvar.';
+  if (code === 'field_removal_unsupported')
+    return 'Behåll tidigare fält. Borttagning av fält hanteras separat från rättelse av definitionen.';
   if (code === 'client_outdated')
     return 'Skyttel har uppdaterats. Kopiera osänd text och ladda om sidan. Kontrollera tidigare sparförsök efter omladdning.';
   if (code === 'operation_conflict')

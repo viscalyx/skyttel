@@ -5,14 +5,21 @@ import type {
   MapObject,
   MapRelationship,
   MapState,
+  ObjectType,
   ObjectValue,
   RelationshipValue,
   SaveOperation,
   SaveReceipt,
 } from '../shared/map.js';
-import { proposedRelationships } from '../shared/map.js';
+import { proposedObjectTypes, proposedRelationships } from '../shared/map.js';
 import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js';
 import { MapRequestError, request } from './map-request.js';
+import {
+  CustomFieldsDetails,
+  CustomFieldsEditor,
+  ObjectTypeDetails,
+  ObjectTypeEditor,
+} from './ObjectTypes.js';
 import { RelationshipEditor, relationshipLabel } from './RelationshipEditor.js';
 import {
   checkOperation,
@@ -23,7 +30,13 @@ import {
   SaveOperations,
 } from './SaveOperations.js';
 
-type Editor = { id: string; version: number; baseRevision: number | null; value: ObjectValue };
+type Editor = {
+  id: string;
+  version: number;
+  baseRevision: number | null;
+  typeRevision: number;
+  value: ObjectValue;
+};
 
 function checkOperations(operations: SaveOperation[], householdId: string, current: MapState) {
   for (const operation of operations)
@@ -52,6 +65,11 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     baseRevision: number | null;
     value: RelationshipValue;
   } | null>(null);
+  const [typeEditor, setTypeEditor] = useState<{
+    type: ObjectType;
+    version: number;
+    baseRevision: number | null;
+  } | null>(null);
   const [dirty, setDirty] = useState(false);
   const [query, setQuery] = useState('');
   const [pending, setPending] = useState(false);
@@ -70,6 +88,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     setOperations([]);
     setEditor(null);
     setEdgeEditor(null);
+    setTypeEditor(null);
     setDirty(false);
     saveAttempt.current = null;
     setStatus('');
@@ -201,6 +220,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
       if (!dirty) {
         setEditor(null);
         setEdgeEditor(null);
+        setTypeEditor(null);
       }
       const { operations: recent } = await request<{ operations: SaveOperation[] }>(
         `${path}/operations`,
@@ -239,7 +259,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     }
   }
 
-  async function action(kind: 'draft' | 'relationship' | 'discard' | 'resolve', body: unknown) {
+  async function action(
+    kind: 'draft' | 'relationship' | 'object-type' | 'discard' | 'resolve',
+    body: unknown,
+  ) {
     if (!state || pending || blocked) return;
     setPending(true);
     setError('');
@@ -279,10 +302,23 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
       }
       setEditor(null);
       setEdgeEditor(null);
+      setTypeEditor(null);
       setDirty(false);
       setBlocked(false);
       newButton.current?.focus();
     } catch (failure) {
+      if (
+        failure instanceof MapRequestError &&
+        [
+          'invalid_custom_value',
+          'invalid_type_definition',
+          'field_kind_in_use',
+          'field_removal_unsupported',
+        ].includes(failure.code)
+      ) {
+        setError(rejectionMessage(failure.code));
+        return;
+      }
       setBlocked(true);
       if (
         failure instanceof MapRequestError &&
@@ -300,8 +336,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     }
   }
 
+  const effectiveTypes = proposedObjectTypes(state?.types ?? [], state?.draft.objectTypes);
   const conflicts = state ? draftConflicts(state) : [];
   function conflictReview(conflict: DraftConflict) {
+    if (conflict.kind === 'objectType') return null;
     const proposal = (
       conflict.kind === 'object' ? state?.draft.changes : state?.draft.relationships
     )?.find((change) => change.id === conflict.id);
@@ -398,12 +436,19 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   function edit(object?: MapObject) {
     if (!state) return;
     const proposal = state.draft.changes.find((change) => change.id === object?.id);
+    setTypeEditor(null);
+    setEdgeEditor(null);
     setEditor({
+      typeRevision:
+        effectiveTypes.find(
+          (type) =>
+            type.id === (proposal?.after?.typeId ?? object?.typeId ?? effectiveTypes[0]?.id),
+        )?.revision ?? 0,
       id: object?.id ?? crypto.randomUUID(),
       version: state.draft.version,
       baseRevision: proposal ? (proposal.before?.revision ?? null) : (object?.revision ?? null),
       value: proposal?.after ??
-        object ?? { typeId: state.types[0]?.id ?? '', name: '', description: '' },
+        object ?? { typeId: effectiveTypes[0]?.id ?? '', name: '', description: '' },
     });
     setDirty(false);
   }
@@ -425,7 +470,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   );
   const savedObjects = new Map((state?.objects ?? []).map((object) => [object.id, object]));
   const hasChanges = Boolean(
-    state && (state.draft.changes.length || state.draft.relationships?.length),
+    state &&
+      (state.draft.changes.length ||
+        state.draft.relationships?.length ||
+        state.draft.objectTypes?.length),
   );
   const unresolved =
     state?.draft.changes.some((change) => change.after?.identity === 'unresolved') ||
@@ -434,6 +482,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     if (!state) return;
     const proposal = state.draft.relationships?.find((change) => change.id === edge?.id);
     setEditor(null);
+    setTypeEditor(null);
     setEdgeEditor({
       id: edge?.id ?? crypto.randomUUID(),
       version: state.draft.version,
@@ -444,15 +493,19 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     setDirty(true);
   }
   function typeName(id: string) {
-    return state?.types.find((type) => type.id === id)?.name ?? id;
+    return effectiveTypes.find((type) => type.id === id)?.name ?? id;
   }
-  function details(value: ObjectValue | null) {
+  function details(value: ObjectValue | null, definition?: ObjectType) {
     return value ? (
       <>
         <p>Namn: {value.name}</p>
         <p>Objekttyp: {typeName(value.typeId)}</p>
         <p>Beskrivning: {value.description || 'Ingen beskrivning'}</p>
         <FinancialFactsDetails facts={value.financialFacts} />
+        <CustomFieldsDetails
+          type={definition ?? effectiveTypes.find((type) => type.id === value.typeId)}
+          values={value.customValues}
+        />
         {value.identity && (
           <p>
             {value.identity === 'unspecified'
@@ -526,6 +579,81 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               )
             }
           />
+          <details>
+            <summary>Objekttyper och egna fält</summary>
+            <p>
+              Alla medlemmar kan föreslå ändringar, även i förifyllda typer. Egna fält är inte till
+              för hemliga uppgifter.
+            </p>
+            <ul aria-label="Objekttyper">
+              {effectiveTypes.map((type) => (
+                <li key={type.id}>
+                  <button
+                    type="button"
+                    disabled={pending || dirty || blocked}
+                    onClick={() => {
+                      const proposal = state.draft.objectTypes?.find((item) => item.id === type.id);
+                      setEditor(null);
+                      setEdgeEditor(null);
+                      setDirty(false);
+                      setTypeEditor({
+                        type,
+                        version: state.draft.version,
+                        baseRevision: proposal
+                          ? (proposal.before?.revision ?? null)
+                          : type.revision,
+                      });
+                    }}
+                  >
+                    Ändra typ: {type.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <button
+            type="button"
+            disabled={pending || dirty || blocked}
+            onClick={() => {
+              setEditor(null);
+              setEdgeEditor(null);
+              setDirty(true);
+              setTypeEditor({
+                type: {
+                  id: crypto.randomUUID(),
+                  householdId,
+                  revision: 0,
+                  name: '',
+                  description: '',
+                },
+                version: state.draft.version,
+                baseRevision: null,
+              });
+            }}
+          >
+            Ny objekttyp
+          </button>
+          {typeEditor && (
+            <ObjectTypeEditor
+              key={typeEditor.type.id}
+              initial={typeEditor.type}
+              disabled={pending || blocked}
+              stale={typeEditor.version !== state.draft.version}
+              onDirty={() => setDirty(true)}
+              onSubmit={(value) =>
+                void action('object-type', {
+                  version: typeEditor.version,
+                  id: typeEditor.type.id,
+                  baseRevision: typeEditor.baseRevision,
+                  value,
+                })
+              }
+              onClose={() => {
+                setTypeEditor(null);
+                setDirty(false);
+              }}
+            />
+          )}
           <label htmlFor="object-search">Sök objekt</label>
           <input
             id="object-search"
@@ -595,11 +723,14 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                     setDirty(true);
                     setEditor({
                       ...editor,
+                      typeRevision:
+                        effectiveTypes.find((type) => type.id === event.target.value)?.revision ??
+                        0,
                       value: { ...editor.value, typeId: event.target.value },
                     });
                   }}
                 >
-                  {state.types.map((type) => (
+                  {effectiveTypes.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.name}
                     </option>
@@ -632,6 +763,14 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       ...editor,
                       value: { ...editor.value, description: event.target.value },
                     });
+                  }}
+                />
+                <CustomFieldsEditor
+                  type={effectiveTypes.find((type) => type.id === editor.value.typeId)}
+                  values={editor.value.customValues}
+                  onChange={(customValues) => {
+                    setDirty(true);
+                    setEditor({ ...editor, value: { ...editor.value, customValues } });
                   }}
                 />
                 <p>Texten i formuläret skickas först när du lägger den i utkastet.</p>
@@ -726,6 +865,57 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           <section aria-labelledby="draft-title" className="draft-review">
             <h2 id="draft-title">Hela mitt utkast</h2>
             {!hasChanges && <p>Inga förslag i utkastet.</p>}
+            {state.draft.objectTypes?.map((change) => (
+              <article key={change.id}>
+                <h3>
+                  {change.before ? 'Ändrad objekttyp' : 'Ny objekttyp'}: {change.after.name}
+                </h3>
+                <h4>Sparat underlag</h4>
+                <ObjectTypeDetails type={change.before} />
+                <h4>Förslag</h4>
+                <ObjectTypeDetails type={change.after} />
+                {conflicts
+                  .filter((conflict) => conflict.kind === 'objectType' && conflict.id === change.id)
+                  .map((conflict) => (
+                    <div key={conflict.id}>
+                      <h4>Konflikt: sparad typdefinition</h4>
+                      <ObjectTypeDetails
+                        type={conflict.kind === 'objectType' ? conflict.current : null}
+                      />
+                      <p>
+                        Välj definition för utkastet och granska hela utkastet före ett nytt
+                        sparbesked.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('resolve', {
+                            version: state.draft.version,
+                            conflict,
+                            choice: 'saved',
+                          })
+                        }
+                      >
+                        Använd sparad typdefinition
+                      </button>
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('resolve', {
+                            version: state.draft.version,
+                            conflict,
+                            choice: 'proposed',
+                          })
+                        }
+                      >
+                        Behåll min typdefinition
+                      </button>
+                    </div>
+                  ))}
+              </article>
+            ))}
             {state.draft.changes.map((change) => (
               <article key={change.id}>
                 <h3>
@@ -733,9 +923,12 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   {change.after?.name ?? change.before?.name}
                 </h3>
                 <h4>Sparat underlag</h4>
-                {details(change.before)}
+                {details(
+                  change.before,
+                  state.types.find((type) => type.id === change.before?.typeId) ?? change.type,
+                )}
                 <h4>Förslag</h4>
-                {details(change.after)}
+                {details(change.after, change.type)}
                 {conflicts
                   .filter((conflict) => conflict.kind === 'object' && conflict.id === change.id)
                   .map((conflict) => (

@@ -19,6 +19,19 @@ An older image with an unresolved finding remains unsafe for recovery even
 after a fixed image enters production. Follow the private security contact
 procedure for investigation details.
 
+### Editable object types and custom fields
+
+Back up the persistent database and retain its matching image before upgrade.
+Startup adds storage for editable object definitions and custom field values.
+Existing definitions, objects, and private drafts remain. Use the upgraded
+image with this database. Stop the application and restore the matching
+backup before returning to an older image.
+
+Definitions and field values can occur in private drafts, saved objects,
+receipts, and history. Apply the same backup access restrictions and retention
+rules to these records as to other household content. Clients that read save
+results must include definition changes when they describe the whole save.
+
 ### Production terminal access
 
 Before rollout, review who can use the production host's terminals. The

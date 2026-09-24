@@ -1,13 +1,15 @@
 import { type FinancialFact, type FinancialFacts, financialFields } from './financial-facts.js';
 import type {
+  CustomValues,
   DraftChange,
   MapObject,
   MapRelationship,
   MapState,
+  ObjectType,
   ObjectValue,
   TypeDefinition,
 } from './map.js';
-import { proposedRelationships } from './map.js';
+import { proposedObjectTypes, proposedRelationships } from './map.js';
 
 export type DraftConflict = {
   id: string;
@@ -18,6 +20,7 @@ export type DraftConflict = {
 } & (
   | { kind: 'object'; current: MapObject | null }
   | { kind: 'relationship'; current: MapRelationship | null }
+  | { kind: 'objectType'; current: ObjectType | null }
 );
 
 export function resolvedObjectValue(
@@ -41,20 +44,34 @@ export function resolvedObjectValue(
       : after.financialFacts?.[key];
     if (fact) financialFacts[key] = fact;
   }
+  const customValues: CustomValues = {};
+  for (const key of new Set([
+    ...Object.keys(before.customValues ?? {}),
+    ...Object.keys(after.customValues ?? {}),
+    ...Object.keys(current.customValues ?? {}),
+  ])) {
+    const value =
+      after.customValues?.[key] === before.customValues?.[key]
+        ? current.customValues?.[key]
+        : after.customValues?.[key];
+    if (value !== undefined) customValues[key] = value;
+  }
   return {
     typeId: field('typeId'),
     name: field('name'),
     description: field('description'),
     ...(identity ? { identity } : {}),
     ...(Object.keys(financialFacts).length ? { financialFacts } : {}),
+    ...(Object.keys(customValues).length ? { customValues } : {}),
   };
 }
 
 export function draftConflicts(state: MapState): DraftConflict[] {
+  const types = proposedObjectTypes(state.types, state.draft.objectTypes);
   const conflicts: DraftConflict[] = state.draft.changes.flatMap((change) => {
     const current = state.objects.find((object) => object.id === change.id) ?? null;
     const type =
-      state.types.find(
+      types.find(
         (item) => item.id === (resolvedObjectValue(change, current)?.typeId ?? change.type.id),
       ) ?? null;
     const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
@@ -81,6 +98,11 @@ export function draftConflicts(state: MapState): DraftConflict[] {
         ]
       : [];
   });
+  for (const change of state.draft.objectTypes ?? []) {
+    const current = state.types.find((type) => type.id === change.id) ?? null;
+    if ((current?.revision ?? null) !== (change.before?.revision ?? null))
+      conflicts.push({ kind: 'objectType', id: change.id, current });
+  }
   for (const change of state.draft.relationships ?? []) {
     const current = state.relationships.find((value) => value.id === change.id) ?? null;
     const type = state.relationshipTypes.find((item) => item.id === change.type.id) ?? null;

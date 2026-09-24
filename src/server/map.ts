@@ -1,25 +1,20 @@
 import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
 import { draftConflicts, resolvedObjectValue } from '../shared/draft-conflicts.js';
-import type {
-  MapDraft,
-  MapObject,
-  MapState,
-  ObjectType,
-  ObjectValue,
-  SaveReceipt,
-} from '../shared/map.js';
+import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { householdAccess } from './households.js';
 
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
+import { objectTypes, readCustomValues } from './object-types.js';
 import { relationships } from './relationships.js';
 
 export { MapError } from './map-error.js';
 
 export function householdMap(database: Database.Database, userId: string, householdId: string) {
   const edges = relationships(database, householdId);
+  const types = objectTypes(database, householdId);
   const operations = mapOperations(database, userId, householdId);
   function authorize() {
     if (!householdAccess(database, userId, householdId)) throw new MapError('forbidden', 403);
@@ -27,52 +22,56 @@ export function householdMap(database: Database.Database, userId: string, househ
   function draft(): MapDraft {
     const row = database
       .prepare(
-        'SELECT version, changes, relationships FROM map_draft WHERE householdId = ? AND userId = ?',
+        'SELECT version, changes, relationships, objectTypes FROM map_draft WHERE householdId = ? AND userId = ?',
       )
       .get(householdId, userId) as
-      | { version: number; changes: string; relationships: string }
+      | { version: number; changes: string; relationships: string; objectTypes: string }
       | undefined;
     return row
       ? {
           version: row.version,
           changes: JSON.parse(row.changes),
           ...(row.relationships !== '[]' ? { relationships: JSON.parse(row.relationships) } : {}),
+          ...(row.objectTypes !== '[]' ? { objectTypes: JSON.parse(row.objectTypes) } : {}),
         }
       : { version: 0, changes: [] };
   }
   function writeDraft(value: MapDraft) {
     database
-      .prepare(`INSERT INTO map_draft (householdId, userId, version, changes, relationships) VALUES (?, ?, ?, ?, ?) ON CONFLICT(householdId, userId)
-      DO UPDATE SET version = excluded.version, changes = excluded.changes, relationships = excluded.relationships`)
+      .prepare(`INSERT INTO map_draft (householdId, userId, version, changes, relationships, objectTypes) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(householdId, userId)
+      DO UPDATE SET version = excluded.version, changes = excluded.changes, relationships = excluded.relationships, objectTypes = excluded.objectTypes`)
       .run(
         householdId,
         userId,
         value.version,
         JSON.stringify(value.changes),
         JSON.stringify(value.relationships ?? []),
+        JSON.stringify(value.objectTypes ?? []),
       );
     return value;
   }
   function object(id: string) {
     const row = database
       .prepare(
-        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
+        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues FROM map_object WHERE householdId = ? AND id = ? AND deleted = 0',
       )
       .get(householdId, id);
     return row ? readObject(row) : undefined;
   }
   function readObject(row: unknown): MapObject {
-    const { identity, financialFacts, ...value } = row as Omit<
+    const { identity, financialFacts, customValues, ...value } = row as Omit<
       MapObject,
-      'identity' | 'financialFacts'
+      'identity' | 'financialFacts' | 'customValues'
     > & {
       identity: MapObject['identity'] | null;
       financialFacts: string | null;
+      customValues: string | null;
     };
     return {
       ...value,
       ...(identity ? { identity } : {}),
       ...(financialFacts ? { financialFacts: JSON.parse(financialFacts) } : {}),
+      ...(customValues ? { customValues: JSON.parse(customValues) } : {}),
     };
   }
   function checkedDraft(version: unknown) {
@@ -96,14 +95,10 @@ export function householdMap(database: Database.Database, userId: string, househ
       contentVersion: operations.contentVersion(),
       relationshipTypes: edges.types(),
       relationships: edges.read(),
-      types: database
-        .prepare(
-          "SELECT * FROM object_type WHERE householdId = ? ORDER BY CASE WHEN name = 'Person' THEN 0 ELSE 1 END, name, id",
-        )
-        .all(householdId) as ObjectType[],
+      types: types.read(),
       objects: database
         .prepare(
-          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
+          'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues FROM map_object WHERE householdId = ? AND deleted = 0 ORDER BY name, id',
         )
         .all(householdId)
         .map(readObject),
@@ -145,6 +140,9 @@ export function householdMap(database: Database.Database, userId: string, househ
           isDeepStrictEqual(item, body.conflict),
         );
         if (!conflict) throw new MapError('resolution_conflict');
+        if (conflict.kind === 'objectType') {
+          return writeDraft(types.resolve(current, conflict.id, conflict.current, body.choice));
+        }
         if (body.choice === 'proposed' && conflict.duplicates)
           throw new MapError('duplicate_relationship');
         if (body.choice === 'proposed' && conflict.missingEndpoints)
@@ -161,6 +159,7 @@ export function householdMap(database: Database.Database, userId: string, househ
             change.after = resolvedObjectValue(change, conflict.current);
             change.before = conflict.current;
             if (conflict.type) change.type = conflict.type;
+            if (change.after) readCustomValues(change.after.customValues, change.type);
             if (!change.after) edges.removeObject(current, change.id);
           }
           edges.reconcileObjectRemovals(current);
@@ -187,6 +186,12 @@ export function householdMap(database: Database.Database, userId: string, househ
           }
         }
         return writeDraft({ ...current, version: current.version + 1 });
+      });
+    },
+    proposeObjectType(body: Record<string, unknown>) {
+      return transaction(() => {
+        operations.assertEditable();
+        return writeDraft(types.propose(checkedDraft(body.version), body));
       });
     },
     proposeRelationship(body: Record<string, unknown>) {
@@ -224,6 +229,11 @@ export function householdMap(database: Database.Database, userId: string, househ
               !['unspecified', 'unresolved'].includes(value.identity))
           )
             throw new MapError('invalid_request', 400);
+          const type = types.effective(current).find((item) => item.id === value.typeId);
+          if (!type) throw new MapError('invalid_type', 400);
+          if (body.typeRevision !== undefined && body.typeRevision !== type.revision)
+            throw new MapError('type_conflict');
+          const customValues = readCustomValues(value.customValues, type);
           const financialFacts = readFinancialFacts(value.financialFacts);
           after = {
             typeId: value.typeId,
@@ -231,12 +241,11 @@ export function householdMap(database: Database.Database, userId: string, househ
             description: value.description,
             ...(value.identity ? { identity: value.identity } : {}),
             ...(financialFacts ? { financialFacts } : {}),
+            ...(customValues ? { customValues } : {}),
           };
         }
         const typeId = after?.typeId ?? before?.typeId ?? existing?.type.id;
-        const type = database
-          .prepare('SELECT * FROM object_type WHERE householdId = ? AND id = ?')
-          .get(householdId, typeId ?? '') as ObjectType | undefined;
+        const type = types.effective(current).find((item) => item.id === typeId);
         if (!type) throw new MapError('invalid_type', 400);
         current.changes = current.changes.filter((change) => change.id !== id);
         if (before || after) current.changes.push({ id, before, after, type });
@@ -269,7 +278,11 @@ export function householdMap(database: Database.Database, userId: string, househ
             const current = checkedDraft(body.version);
             if (operations.hash(current) !== previous.draftHash)
               throw new MapError('operation_conflict');
-            if (!current.changes.length && !current.relationships?.length)
+            if (
+              !current.changes.length &&
+              !current.relationships?.length &&
+              !current.objectTypes?.length
+            )
               throw new MapError('empty_draft');
             const receipt: SaveReceipt = {
               contentVersion: operations.contentVersion(),
@@ -280,17 +293,18 @@ export function householdMap(database: Database.Database, userId: string, househ
               savedAt: new Date().toISOString(),
               changes: [],
             };
+            const definitionChanges = types.save(current);
+            if (definitionChanges.length) receipt.objectTypes = definitionChanges;
             for (const change of current.changes) {
               if (change.after?.identity === 'unresolved')
                 throw new MapError('unresolved_identity');
               const saved = object(change.id);
               if (!isDeepStrictEqual(saved ?? null, change.before))
                 throw new MapError('object_conflict');
-              const type = database
-                .prepare('SELECT * FROM object_type WHERE householdId = ? AND id = ?')
-                .get(householdId, change.type.id) as ObjectType | undefined;
+              const type = types.read().find((item) => item.id === change.type.id);
               if (!type || type.revision !== change.type.revision)
                 throw new MapError('type_conflict');
+              if (change.after) readCustomValues(change.after.customValues, type);
               const after = change.after
                 ? {
                     id: change.id,
@@ -299,6 +313,9 @@ export function householdMap(database: Database.Database, userId: string, househ
                     revision: (saved?.revision ?? 0) + 1,
                     name: change.after.name,
                     description: change.after.description,
+                    ...(change.after.customValues
+                      ? { customValues: change.after.customValues }
+                      : {}),
                     ...(change.after.identity ? { identity: change.after.identity } : {}),
                     ...(change.after.financialFacts
                       ? { financialFacts: change.after.financialFacts }
@@ -312,8 +329,8 @@ export function householdMap(database: Database.Database, userId: string, househ
                 )
                   throw new MapError('object_conflict');
                 database
-                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts`)
+                  .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues`)
                   .run(
                     after.id,
                     householdId,
@@ -323,6 +340,7 @@ export function householdMap(database: Database.Database, userId: string, househ
                     after.description,
                     after.identity ?? null,
                     after.financialFacts ? JSON.stringify(after.financialFacts) : null,
+                    after.customValues ? JSON.stringify(after.customValues) : null,
                   );
               } else
                 database

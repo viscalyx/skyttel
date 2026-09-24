@@ -18,6 +18,8 @@ Målet med Skyttel är att ge hushållet en gemensam, tydlig och sammanhängande
 
 [Guiden för hushållets tillgång](docs/users/access.md) beskriver roller,
 inbjudningar och hur en administratör återkallar tillgång.
+[Guiden för objekttyper och egna fält](docs/users/object-types.md) beskriver
+hur hushållet skapar och rättar gemensamma definitioner genom sina utkast.
 
 Utveckla i projektets [devcontainer](docs/development/devcontainer.md).
 [Utvecklings- och testinstruktionerna](docs/development/testing.md) beskriver

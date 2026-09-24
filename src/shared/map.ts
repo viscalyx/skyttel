@@ -7,7 +7,21 @@ export interface TypeDefinition {
   name: string;
   description: string;
 }
-export type ObjectType = TypeDefinition;
+export interface CustomField {
+  id: string;
+  name: string;
+  description: string;
+  kind: 'text' | 'number' | 'date' | 'boolean';
+}
+export interface ObjectType extends TypeDefinition {
+  fields?: CustomField[];
+}
+export interface ObjectTypeChange {
+  id: string;
+  before: ObjectType | null;
+  after: ObjectType;
+}
+export type CustomValues = Record<string, string | number | boolean>;
 export type RelationshipType = TypeDefinition;
 
 export interface ObjectValue {
@@ -16,6 +30,7 @@ export interface ObjectValue {
   description: string;
   identity?: 'unspecified' | 'unresolved';
   financialFacts?: FinancialFacts;
+  customValues?: CustomValues;
 }
 export interface MapObject extends ObjectValue {
   id: string;
@@ -32,6 +47,7 @@ export interface MapDraft {
   version: number;
   changes: DraftChange[];
   relationships?: DraftRelationshipChange[];
+  objectTypes?: ObjectTypeChange[];
 }
 export interface MapState {
   userId: string;
@@ -50,6 +66,7 @@ export interface SaveReceipt {
   userId: string;
   savedAt: string;
   relationships?: RelationshipChange[];
+  objectTypes?: ObjectTypeChange[];
   changes: { before: MapObject | null; after: MapObject | null; type: ObjectType }[];
 }
 
@@ -108,4 +125,10 @@ export function proposedRelationships(
     else result.delete(change.id);
   }
   return result;
+}
+
+export function proposedObjectTypes(saved: ObjectType[], changes: ObjectTypeChange[] = []) {
+  const result = new Map(saved.map((type) => [type.id, type]));
+  for (const change of changes) result.set(change.id, change.after);
+  return [...result.values()];
 }

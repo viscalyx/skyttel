@@ -63,6 +63,13 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
       ),
     ),
   );
+  routes.post('/households/:id/map/object-type', (context) =>
+    context.json(
+      householdMap(database, context.get('userId'), context.req.param('id')).proposeObjectType(
+        context.get('body'),
+      ),
+    ),
+  );
   routes.post('/households/:id/map/relationship', (context) =>
     context.json(
       householdMap(database, context.get('userId'), context.req.param('id')).proposeRelationship(

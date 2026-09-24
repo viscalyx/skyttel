@@ -607,3 +607,133 @@ test.each(['lo', 'new'])(
     expect((await read()).objects.find((object) => object.id === id)?.name).toBe('Lo Lind');
   },
 );
+
+test('custom type forms use four optional field kinds and keep errors editable without saving', async () => {
+  await open();
+  await userEvent.click(screen.getByRole('button', { name: 'Ny objekttyp' }));
+  await userEvent.type(screen.getByLabelText('Typens namn'), 'Solcellsanläggning');
+  await userEvent.type(screen.getByLabelText('Typens beskrivning'), 'Elproduktion');
+  for (const [name, kind] of [
+    ['Leverantör', 'text'],
+    ['Effekt', 'number'],
+    ['Datum', 'date'],
+    ['Batteri', 'boolean'],
+  ]) {
+    await userEvent.click(screen.getByRole('button', { name: 'Lägg till fält' }));
+    const field = within(
+      screen.getAllByRole('group', { name: /^Eget fält/ }).at(-1) as HTMLElement,
+    );
+    await userEvent.type(field.getByLabelText('Fältets namn'), name);
+    await userEvent.type(field.getByLabelText('Fältets beskrivning'), `Uppgift om ${name}`);
+    await userEvent.selectOptions(field.getByLabelText('Värdeslag'), kind);
+  }
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.type(screen.getByLabelText('Objektets namn'), 'Paneler');
+  const type = (await (await client.request(path)).json()).draft.objectTypes[0].after;
+  await userEvent.selectOptions(screen.getByLabelText('Objekttyp'), type.id);
+  await userEvent.type(screen.getByLabelText('Leverantör'), 'Exempelsol');
+  await userEvent.type(screen.getByLabelText('Effekt'), '12.5');
+  await userEvent.type(screen.getByLabelText('Datum'), '2026-09-01');
+  await userEvent.selectOptions(screen.getByLabelText('Batteri'), 'false');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+    'Batteri: Nej',
+  );
+  await save();
+  await userEvent.click(screen.getByRole('button', { name: 'Paneler' }));
+  await userEvent.clear(screen.getByLabelText('Leverantör'));
+  await userEvent.clear(screen.getByLabelText('Effekt'));
+  await userEvent.selectOptions(screen.getByLabelText('Batteri'), 'true');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+    'Leverantör: Obesvarat',
+  );
+  expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+    'Batteri: Ja',
+  );
+  await save();
+  await userEvent.click(screen.getByRole('button', { name: 'Paneler' }));
+  await userEvent.selectOptions(screen.getByLabelText('Batteri'), '');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  await save();
+  await userEvent.click(screen.getByText('Objekttyper och egna fält', { exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ändra typ: Solcellsanläggning' }));
+  await userEvent.selectOptions(screen.getAllByLabelText('Värdeslag')[2], 'number');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
+  await screen.findByText(/Fältets värdeslag används redan/);
+  expect(
+    (screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
+  await userEvent.selectOptions(screen.getAllByLabelText('Värdeslag')[2], 'date');
+  await userEvent.clear(screen.getByLabelText('Typens namn'));
+  await userEvent.type(screen.getByLabelText('Typens namn'), 'Solkraft');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  await userEvent.click(screen.getByRole('button', { name: 'Ändra typ: Solkraft' }));
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Stäng typformuläret utan att skicka' }),
+  );
+  await save();
+});
+
+test('a conflicting type offers both current choices and never grants an implicit save', async () => {
+  const state = (await (await client.request(path)).json()) as MapState;
+  const type = state.types[0];
+  await client.json(`${path}/object-type`, {
+    version: 0,
+    id: type.id,
+    baseRevision: 1,
+    value: { name: 'Mitt namn', description: '', fields: [] },
+  });
+  fixture.setSubject('other-types');
+  const other = fixture.client();
+  await other.signIn();
+  const { user } = await (await other.request('/api/bootstrap')).json();
+  const { code } = await (
+    await client.json(`/api/households/${householdId}/invitations`, { userId: user.id })
+  ).json();
+  await other.json('/api/invitations/accept', { code });
+  await other.json(`${path}/object-type`, {
+    version: 0,
+    id: type.id,
+    baseRevision: 1,
+    value: { name: 'Annans namn', description: 'Rättad definition', fields: [] },
+  });
+  await other.json(`${path}/save`, { version: 1, operationId: 'other-type' });
+  await open();
+  await screen.findByText('Konflikt: sparad typdefinition');
+  await userEvent.click(screen.getByRole('button', { name: 'Behåll min typdefinition' }));
+  await waitFor(() => expect(screen.queryByText('Konflikt: sparad typdefinition')).toBeNull());
+  expect(
+    (await (await client.request(path)).json()).types.find(
+      (item: { id: string }) => item.id === type.id,
+    ).name,
+  ).toBe('Annans namn');
+  await save();
+  await userEvent.click(screen.getByText('Objekttyper och egna fält', { exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ändra typ: Mitt namn' }));
+  await userEvent.type(screen.getByLabelText('Typens namn'), ' igen');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
+  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
+  await other.json(`${path}/object-type`, {
+    version: 2,
+    id: type.id,
+    baseRevision: 3,
+    value: { name: 'Gemensamt namn', description: '', fields: [] },
+  });
+  await other.json(`${path}/save`, { version: 3, operationId: 'other-again' });
+  cleanup();
+  await open();
+  await screen.findByText('Konflikt: sparad typdefinition');
+  await userEvent.click(screen.getByRole('button', { name: 'Använd sparad typdefinition' }));
+  await waitFor(() => expect(screen.queryByText('Konflikt: sparad typdefinition')).toBeNull());
+  expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+    'Inga förslag',
+  );
+});

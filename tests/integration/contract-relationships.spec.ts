@@ -335,7 +335,11 @@ test('AVTAL-06: upgrading preserves household definitions and an older private d
     } finally {
       database.close();
     }
-    await copyFile('migrations/007_contracts.sql', join(migrationsDirectory, '007_contracts.sql'));
+    await Promise.all(
+      (await readdir('migrations'))
+        .filter((name) => name.endsWith('.sql') && name >= '007')
+        .map((name) => copyFile(join('migrations', name), join(migrationsDirectory, name))),
+    );
     await installation.restart();
     const path = `${installation.origin}/api/households/${household.id}/map`;
     const response = await request.get(path, { maxRetries: 1 });
