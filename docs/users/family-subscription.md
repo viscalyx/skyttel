@@ -111,6 +111,11 @@ ditt förslag och det som är sparat nu. Välj för varje konflikt:
 - **Använd sparat värde** för att ta bort just ditt överlappande förslag.
   Övriga förslag finns kvar.
 
+För samband bevaras oberoende ändringar av status och slutdatum. Ett
+slutdatum och dess säkerhet väljs tillsammans. Sambandets betydelse,
+ändpunkter och säkerhet hålls också ihop, så att exempelvis
+**Uttryckligen inget** inte kombineras med ett utpekat objekt.
+
 Ett nytt samband kan blockera en planerad objektborttagning. Konflikten
 visar vilka ytterligare samband borttagningen berör. Om du behåller
 borttagningen läggs även dessa samband i utkastet som borttagningar.

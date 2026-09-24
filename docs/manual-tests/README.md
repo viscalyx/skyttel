@@ -22,7 +22,9 @@ till motsvarande automatiserade integrationstester.
   validering, konflikter, historik och bevarade äldre utkast.
 - [Privata utkast](drafts.md): återuppta utkast, hantera gamla kastförsök
   och konfliktval samt granska samtidiga ändringar, dubbletter och
-  borttagningar före ett gemensamt sparande.
+  borttagningar före ett gemensamt sparande. Bevara oberoende status
+  och slutdatum i samband vid konfliktval samt rätt typdefinitioner
+  vid borttagning efter typbyten.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto

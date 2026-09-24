@@ -1,6 +1,10 @@
 import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
-import { draftConflicts, resolvedObjectValue } from '../shared/draft-conflicts.js';
+import {
+  draftConflicts,
+  resolvedObjectValue,
+  resolvedRelationshipValue,
+} from '../shared/draft-conflicts.js';
 import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { householdAccess } from './households.js';
@@ -176,6 +180,7 @@ export function householdMap(database: Database.Database, userId: string, househ
           } else {
             if (!conflict.current && change.before) throw new MapError('relationship_conflict');
             const before = change.before;
+            change.after = resolvedRelationshipValue(change, conflict.current);
             change.before = conflict.current;
             if (conflict.type) change.type = conflict.type;
             // Keep triggers from draft edits, but drop dependencies on detached saved endpoints.

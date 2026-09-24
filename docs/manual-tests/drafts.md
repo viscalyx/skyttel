@@ -15,7 +15,7 @@ Robin Demo är en påhittad tidigare hushållsmedlem som anges som författare
 i ändringshistoriken. Posten saknar kopplad inloggning, session och aktuellt
 medlemskap. Den ger ingen extra inloggning för manuell testning.
 
-UTKAST-03–09 använder dessutom en separat testidentitet med rollen medlem.
+UTKAST-03–11 använder dessutom en separat testidentitet med rollen medlem.
 Bjud in identiteten enligt [tillgång till hushållet](../users/access.md).
 Använd skilda webbläsarprofiler för administratören och medlemmen.
 
@@ -35,7 +35,7 @@ För UTKAST-01 används demodata:
 Återställ demodata före varje ny körning av testfallet. Under testets
 omstart ska samma databas behållas; kör då inte `npm run db:setup`.
 
-För UTKAST-02–09 används en separat, tom testinstallation enligt
+För UTKAST-02–11 används en separat, tom testinstallation enligt
 [installationsguiden](../operations/installation.md), utan demodata:
 
 1. Logga in som den konfigurerade administratören och skapa ett hushåll.
@@ -299,6 +299,93 @@ and can accept the saved value”.
   Sparande är blockerat före valet.
 - Valet tömmer det överlappande förslaget. Kartans samband behåller
   **Uttryckligen inget** och inget nytt sparande krävs.
+
+### UTKAST-10: bevara oberoende status och håll slutdatumets säkerhet samlad
+
+**Syfte:** Bevara oberoende ändringar av ett samband när ett konfliktval
+görs och låta ett överlappande datumval omfatta både datum och säkerhet.
+
+**Användare:** Administratören och medlemmen.
+
+**Förutsättningar:** Spara **Lo Exempel → Använder → Molnmusik** med
+säkerheten **Känt**, statusen **Följ slutdatum** och utan slutdatum.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallet “UTKAST-10: relationship choices preserve independent status
+and keep date certainty with its value”.
+
+**Steg:**
+
+1. Öppna sambandet som administratören. Ange **2031-04-12** som känt
+   **Sambandets slutdatum** och lägg sambandet i utkastet utan att spara.
+2. Öppna samma samband som medlemmen. Välj **Upphört** under
+   **Sambandets status**, lägg sambandet i utkastet och spara.
+3. Ladda om administratörens sida. Granska konflikten med slutdatumet och
+   den sparade statusen. Välj **Behåll mitt förslag**.
+4. Kontrollera hos medlemmen att inget slutdatum är sparat. Starta om
+   appen med samma databas, ladda om administratörens sida och granska
+   hela utkastet igen. Välj **Spara hela utkastet**.
+5. Ändra slutdatumets säkerhet till **Osäkert uppgivet** som administratören.
+   Behåll datumet **2031-04-12** och lägg sambandet i utkastet.
+6. Ändra slutdatumet till **2031-05-15**, behåll säkerheten **Känt** och
+   välj statusen **Gäller fortfarande** som medlemmen. Lägg sambandet i
+   utkastet och spara.
+7. Ladda om administratörens sida, granska båda datumen, deras säkerhet
+   och den sparade statusen. Välj **Behåll mitt förslag**.
+8. Kontrollera hos medlemmen att det kända datumet **2031-05-15** fortfarande
+   är sparat. Välj **Spara hela utkastet** som administratören och ladda
+   om hos medlemmen.
+
+**Förväntat resultat:**
+
+- Sparande är blockerat före varje konfliktval. Valet ändrar bara utkastet
+  och kräver ett nytt sparande av hela det granskade utkastet.
+- Det första lösta utkastet överlever omstart. Efter sparandet innehåller
+  sambandet både **Upphört** och det kända slutdatumet **2031-04-12**.
+- Efter det andra sparandet innehåller sambandet **Gäller fortfarande**
+  och **2031-04-12 (Osäkert uppgivet)**. Den oberoende statusen bevaras;
+  det valda datumet och dess säkerhet hålls ihop.
+
+### UTKAST-11: bevara rätt typdefinition vid borttagning efter ett typbyte
+
+**Syfte:** Granska aktuella typer före borttagning och bevara definitionerna
+som hör till de borttagna värdena i historikunderlaget.
+
+**Användare:** Administratören och medlemmen.
+
+**Förutsättningar:** Spara **Lo Exempel → Använder → Molnmusik** med
+säkerheten **Känt** utöver de två objekten enligt förberedelsen.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallet “UTKAST-11: deletion after concurrent type changes retains the
+matching historical definitions”.
+
+**Steg:**
+
+1. Öppna **Åtgärder för Lo Exempel** som administratören och välj **Ta bort**.
+   Låt borttagningen av objektet och sambandet ligga kvar i utkastet.
+2. Öppna **Lo Exempel** som medlemmen. Byt **Objekttyp** till
+   **Abonnemang** och lägg ändringen i utkastet.
+3. Byt sambandets typ från **Använder** till **Används av** i samma utkast.
+   Behåll riktningen från Lo till Molnmusik och spara hela utkastet.
+4. Ladda om administratörens sida och granska konflikterna för objektet
+   och sambandet. Välj **Behåll mitt förslag** för båda.
+5. Kontrollera hos medlemmen att objektet och sambandet fortfarande finns.
+   Välj sedan **Spara hela utkastet** som administratören och ladda om
+   hos medlemmen.
+
+**Förväntat resultat:**
+
+- Konflikterna visar de aktuella typerna **Abonnemang** och **Används av**.
+  Hela sparandet är blockerat tills båda valen är gjorda.
+- Valen ändrar bara utkastet. Efter det nya sparandet är Lo och sambandet
+  borttagna, medan Molnmusik finns kvar.
+- Automationen läser historikunderlaget via HTTP. Det tidigare objektet
+  och sambandet har sina aktuella typ-ID:n tillsammans med motsvarande
+  definitioner för **Abonnemang** och **Används av**, samt tomma eftervärden.
+  Det fullständiga historikgränssnittet införs separat.
 
 ### UTKAST-08: välj ett befintligt samband och behåll andra förslag
 

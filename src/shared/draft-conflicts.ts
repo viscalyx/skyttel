@@ -7,6 +7,8 @@ import type {
   MapState,
   ObjectType,
   ObjectValue,
+  RelationshipChange,
+  RelationshipValue,
   TypeDefinition,
 } from './map.js';
 import { proposedObjectTypes, proposedRelationships } from './map.js';
@@ -23,6 +25,14 @@ export type DraftConflict = {
   | { kind: 'objectType'; current: ObjectType | null }
 );
 
+function sameFact(left?: FinancialFact, right?: FinancialFact) {
+  return (
+    left?.knowledge === right?.knowledge &&
+    left?.value === right?.value &&
+    left?.reportedOn === right?.reportedOn
+  );
+}
+
 export function resolvedObjectValue(
   change: DraftChange,
   current: MapObject | null,
@@ -34,10 +44,6 @@ export function resolvedObjectValue(
   const identity = field('identity');
   const lifecycle = field('lifecycle');
   const financialFacts: FinancialFacts = {};
-  const sameFact = (left?: FinancialFact, right?: FinancialFact) =>
-    left?.knowledge === right?.knowledge &&
-    left?.value === right?.value &&
-    left?.reportedOn === right?.reportedOn;
   for (const { key } of financialFields) {
     // The value, certainty and date describe one fact and must stay together.
     const fact = sameFact(after.financialFacts?.[key], before.financialFacts?.[key])
@@ -68,13 +74,36 @@ export function resolvedObjectValue(
   };
 }
 
+export function resolvedRelationshipValue(
+  change: RelationshipChange,
+  current: MapRelationship | null,
+): RelationshipValue | null {
+  const { before, after } = change;
+  if (!before || !after || !current) return after;
+  // Meaning, endpoints and certainty describe one relationship fact.
+  const meaning = ['typeId', 'sourceId', 'targetId', 'knowledge'] as const;
+  const value = meaning.every((key) => after[key] === before[key]) ? current : after;
+  const lifecycle = after.lifecycle === before.lifecycle ? current.lifecycle : after.lifecycle;
+  const endDate = sameFact(after.endDate, before.endDate) ? current.endDate : after.endDate;
+  return {
+    typeId: value.typeId,
+    sourceId: value.sourceId,
+    targetId: value.targetId,
+    knowledge: value.knowledge,
+    ...(lifecycle ? { lifecycle } : {}),
+    ...(endDate ? { endDate } : {}),
+  };
+}
+
 export function draftConflicts(state: MapState): DraftConflict[] {
   const types = proposedObjectTypes(state.types, state.draft.objectTypes);
   const conflicts: DraftConflict[] = state.draft.changes.flatMap((change) => {
     const current = state.objects.find((object) => object.id === change.id) ?? null;
     const type =
       types.find(
-        (item) => item.id === (resolvedObjectValue(change, current)?.typeId ?? change.type.id),
+        (item) =>
+          item.id ===
+          (resolvedObjectValue(change, current)?.typeId ?? current?.typeId ?? change.type.id),
       ) ?? null;
     const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
     const connections = change.after
@@ -107,19 +136,23 @@ export function draftConflicts(state: MapState): DraftConflict[] {
   }
   for (const change of state.draft.relationships ?? []) {
     const current = state.relationships.find((value) => value.id === change.id) ?? null;
-    const type = state.relationshipTypes.find((item) => item.id === change.type.id) ?? null;
-    const changedType = type?.revision !== change.type.revision;
-    const duplicates = change.after
+    const after = resolvedRelationshipValue(change, current);
+    const type =
+      state.relationshipTypes.find(
+        (item) => item.id === (after?.typeId ?? current?.typeId ?? change.type.id),
+      ) ?? null;
+    const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
+    const duplicates = after
       ? [...proposedRelationships(state.relationships, state.draft.relationships).values()].filter(
           (edge) =>
             edge.id !== change.id &&
-            edge.typeId === change.after?.typeId &&
-            edge.sourceId === change.after.sourceId &&
-            edge.targetId === change.after.targetId,
+            edge.typeId === after.typeId &&
+            edge.sourceId === after.sourceId &&
+            edge.targetId === after.targetId,
         )
       : [];
-    const missingEndpoints = change.after
-      ? [change.after.sourceId, change.after.targetId].filter((id): id is string => {
+    const missingEndpoints = after
+      ? [after.sourceId, after.targetId].filter((id): id is string => {
           if (id === null) return false;
           const proposal = state.draft.changes.find((item) => item.id === id);
           return proposal ? !proposal.after : !state.objects.some((item) => item.id === id);
