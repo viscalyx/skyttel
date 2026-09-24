@@ -8,6 +8,8 @@ import {
 import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
 import { compatibleCustomFields } from '../shared/map.js';
 import { mergeFor, withoutMerge } from '../shared/object-merge.js';
+import { contentOwner } from './content-identities.js';
+import { assertContentAvailable, assertContentVersion } from './content-maintenance.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { householdAccess } from './households.js';
 import { readLifecycle } from './lifecycle.js';
@@ -24,7 +26,14 @@ import { keepIndependent } from './undo-facts.js';
 
 export { MapError } from './map-error.js';
 
-export function householdMap(database: Database.Database, userId: string, householdId: string) {
+export function householdMap(database: Database.Database, actorId: string, householdId: string) {
+  const userId = database
+    .transaction(() => {
+      if (!householdAccess(database, actorId, householdId)) throw new MapError('forbidden', 403);
+      assertContentAvailable(database, householdId);
+      return contentOwner(database, householdId, actorId);
+    })
+    .immediate();
   const images = profileImages(database, householdId, userId);
   const edges = relationships(database, householdId);
   const types = objectTypes(database, householdId, userId);
@@ -32,7 +41,10 @@ export function householdMap(database: Database.Database, userId: string, househ
   const operations = mapOperations(database, userId, householdId);
   const tombstones = mapTombstones(database, householdId);
   function authorize() {
-    if (!householdAccess(database, userId, householdId)) throw new MapError('forbidden', 403);
+    if (!householdAccess(database, actorId, householdId)) throw new MapError('forbidden', 403);
+    assertContentAvailable(database, householdId);
+    if (contentOwner(database, householdId, actorId) !== userId)
+      throw new MapError('content_conflict');
   }
   function draft(): MapDraft {
     const row = database
@@ -105,7 +117,8 @@ export function householdMap(database: Database.Database, userId: string, househ
       ...(profileImageId ? { profileImageId } : {}),
     };
   }
-  function checkedDraft(version: unknown) {
+  function checkedDraft(version: unknown, contentVersion: unknown) {
+    assertContentVersion(database, householdId, contentVersion);
     if (!Number.isSafeInteger(version) || (version as number) < 0)
       throw new MapError('invalid_request', 400);
     const current = draft();
@@ -139,7 +152,7 @@ export function householdMap(database: Database.Database, userId: string, househ
 
   function imageChange(body: Record<string, unknown>) {
     operations.assertEditable();
-    const current = checkedDraft(body.version);
+    const current = checkedDraft(body.version, body.contentVersion);
     if (body.contentVersion !== operations.contentVersion()) throw new MapError('content_conflict');
     if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
       throw new MapError('invalid_request', 400);
@@ -202,7 +215,7 @@ export function householdMap(database: Database.Database, userId: string, househ
     undo(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        checkedDraft(body.version);
+        checkedDraft(body.version, body.contentVersion);
         if (typeof body.operationId !== 'string' || typeof body.userId !== 'string')
           throw new MapError('invalid_request', 400);
         const row = database
@@ -220,8 +233,6 @@ export function householdMap(database: Database.Database, userId: string, househ
           receipt.relationships?.some((change) => mergeFor(ownDraft, 'relationship', change.id))
         )
           throw new MapError('undo_draft_overlap');
-        if (receipt.contentVersion !== operations.contentVersion())
-          throw new MapError('content_conflict');
         const proposed = undoSave(
           readState(),
           receipt,
@@ -237,7 +248,7 @@ export function householdMap(database: Database.Database, userId: string, househ
     resolve(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        const current = checkedDraft(body.version);
+        const current = checkedDraft(body.version, body.contentVersion);
         if (body.choice !== 'saved' && body.choice !== 'proposed')
           throw new MapError('invalid_request', 400);
         const conflict = draftConflicts(readState()).find((item) =>
@@ -333,20 +344,20 @@ export function householdMap(database: Database.Database, userId: string, househ
     merge(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        checkedDraft(body.version);
+        checkedDraft(body.version, body.contentVersion);
         return writeDraft(proposeMerge(readState(), body, types, edges, images));
       });
     },
     proposeObjectType(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        return writeDraft(types.propose(checkedDraft(body.version), body));
+        return writeDraft(types.propose(checkedDraft(body.version, body.contentVersion), body));
       });
     },
     proposeRelationship(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        const current = checkedDraft(body.version);
+        const current = checkedDraft(body.version, body.contentVersion);
         assertMergeEditable(current, 'relationship', body.id);
         const result = edges.propose(current, body);
         return {
@@ -358,13 +369,13 @@ export function householdMap(database: Database.Database, userId: string, househ
     proposeRelationshipType(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        return writeDraft(edgeTypes.propose(checkedDraft(body.version), body));
+        return writeDraft(edgeTypes.propose(checkedDraft(body.version, body.contentVersion), body));
       });
     },
     propose(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        const current = checkedDraft(body.version);
+        const current = checkedDraft(body.version, body.contentVersion);
         if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
           throw new MapError('invalid_request', 400);
         const id = body.id;
@@ -436,16 +447,19 @@ export function householdMap(database: Database.Database, userId: string, househ
         return writeDraft({ ...current, version: current.version + 1 });
       });
     },
-    discard(version: unknown) {
+    discard(version: unknown, contentVersion?: unknown) {
       return transaction(() => {
         operations.assertEditable();
-        return writeDraft({ version: checkedDraft(version).version + 1, changes: [] });
+        return writeDraft({
+          version: checkedDraft(version, contentVersion).version + 1,
+          changes: [],
+        });
       });
     },
     discardChange(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
-        const current = checkedDraft(body.version);
+        const current = checkedDraft(body.version, body.contentVersion);
         if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
         const merge = mergeFor(current, body.kind as string, body.id);
         if (merge)
@@ -483,7 +497,7 @@ export function householdMap(database: Database.Database, userId: string, househ
         try {
           // A savepoint rolls back every map write before recording a terminal rejection.
           return database.transaction(() => {
-            const current = checkedDraft(body.version);
+            const current = checkedDraft(body.version, body.contentVersion);
             if (operations.hash(current) !== previous.draftHash)
               throw new MapError('operation_conflict');
             if (
@@ -501,7 +515,7 @@ export function householdMap(database: Database.Database, userId: string, househ
               draftVersion: current.version,
               savedAt: new Date().toISOString(),
               actorName: (
-                database.prepare('SELECT name FROM user WHERE id = ?').get(userId) as {
+                database.prepare('SELECT name FROM user WHERE id = ?').get(actorId) as {
                   name: string;
                 }
               ).name,

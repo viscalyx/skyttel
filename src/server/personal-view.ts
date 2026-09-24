@@ -6,6 +6,7 @@ import {
   type PersonalView,
   type ViewSettings,
 } from '../shared/personal-view.js';
+import { assertContentVersion } from './content-maintenance.js';
 import { householdMap } from './map.js';
 import { MapError } from './map-error.js';
 
@@ -19,12 +20,14 @@ const movement = z
   .object({
     id: z.string().min(1).max(128),
     version,
+    contentVersion: z.number().int().min(1).optional(),
     position: z.object({ x: coordinate, y: coordinate, z: coordinate }).strict(),
   })
   .strict();
 const preferences = z
   .object({
     version,
+    contentVersion: z.number().int().min(1).optional(),
     settings: z
       .object({
         invertX: z.boolean(),
@@ -39,12 +42,14 @@ const preferences = z
   .strict();
 
 /** Personal presentation has per-object versions, independent of the shared map. */
-export function personalView(database: Database.Database, userId: string, householdId: string) {
+export function personalView(database: Database.Database, actorId: string, householdId: string) {
+  let userId = actorId;
   function transaction<T>(action: (ids: Set<string>) => T) {
     return database
       .transaction(() => {
         // Read current membership and this user's draft inside the write lock.
-        const map = householdMap(database, userId, householdId).read();
+        const map = householdMap(database, actorId, householdId).read();
+        userId = map.userId;
         const ids = new Set(map.objects.map(({ id }) => id));
         for (const change of map.draft.changes) ids.add(change.id);
         return action(ids);
@@ -77,6 +82,7 @@ export function personalView(database: Database.Database, userId: string, househ
     },
     move(body: Record<string, unknown>) {
       return transaction((ids) => {
+        assertContentVersion(database, householdId, body.contentVersion);
         const parsed = movement.safeParse(body);
         if (!parsed.success) throw new MapError('invalid_request', 400);
         const { id, version, position } = parsed.data;
@@ -92,6 +98,7 @@ export function personalView(database: Database.Database, userId: string, househ
     },
     configure(body: Record<string, unknown>) {
       return transaction(() => {
+        assertContentVersion(database, householdId, body.contentVersion);
         const parsed = preferences.safeParse(body);
         if (!parsed.success) throw new MapError('invalid_request', 400);
         const { version, settings: next } = parsed.data;

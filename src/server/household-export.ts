@@ -20,6 +20,7 @@ import {
   type ReadyExport,
 } from '../shared/household-export.js';
 import { AdministrationError } from './administration.js';
+import { assertContentAvailable } from './content-maintenance.js';
 import { householdAccess } from './households.js';
 
 type Job = {
@@ -59,6 +60,7 @@ function storeFor(database: Database.Database) {
 function authorize(database: Database.Database, actorId: string, householdId: string) {
   if (householdAccess(database, actorId, householdId)?.role !== 'administrator')
     throw new AdministrationError('forbidden', 403);
+  assertContentAvailable(database, householdId);
 }
 
 async function discard(store: Store, job: Job) {
@@ -133,7 +135,7 @@ const collections = [
   ['history', 'SELECT * FROM map_history WHERE householdId = ? ORDER BY id', ['changes']],
   [
     'operations',
-    'SELECT * FROM map_operation WHERE householdId = ? ORDER BY userId, operationId',
+    'SELECT * FROM map_operation WHERE householdId = ? UNION ALL SELECT * FROM historical_operation WHERE householdId = ? ORDER BY userId, operationId',
     [],
   ],
   [
@@ -175,15 +177,16 @@ async function snapshot(database: Database.Database, job: Job): Promise<ExportMa
       await content.writeFile(bytes);
     }
     await write(`{"household":${JSON.stringify(household)},"identities":[`);
-    const identityQuery = `SELECT user.id, user.name FROM user WHERE user.id IN (
+    const identityQuery = `SELECT id, name FROM content_identity WHERE householdId = @householdId AND id IN (
       SELECT userId FROM map_draft WHERE householdId = @householdId
       UNION SELECT userId FROM map_save WHERE householdId = @householdId
       UNION SELECT userId FROM map_history WHERE householdId = @householdId
       UNION SELECT userId FROM map_operation WHERE householdId = @householdId
+      UNION SELECT userId FROM historical_operation WHERE householdId = @householdId
       UNION SELECT createdBy FROM profile_image WHERE householdId = @householdId
       UNION SELECT userId FROM personal_position WHERE householdId = @householdId
       UNION SELECT userId FROM personal_view_settings WHERE householdId = @householdId
-    ) ORDER BY user.id`;
+    ) ORDER BY id`;
     let first = true;
     for (const identity of reader
       .prepare(identityQuery)
@@ -196,7 +199,9 @@ async function snapshot(database: Database.Database, job: Job): Promise<ExportMa
       await write(`,${JSON.stringify(name)}:[`);
       first = true;
       const parameters =
-        name === 'removedTypes' ? [job.householdId, job.householdId] : [job.householdId];
+        name === 'removedTypes' || name === 'operations'
+          ? [job.householdId, job.householdId]
+          : [job.householdId];
       for (const result of reader.prepare(sql).iterate(...parameters)) {
         const row = result as Record<string, unknown>;
         for (const field of jsonFields)
@@ -290,6 +295,7 @@ export async function prepareHouseholdExport(
     if (job.actorId === actorId && job.householdId === householdId) await discard(store, job);
   if (store.jobs.size >= 2 || [...store.jobs.values()].some((job) => job.state === 'preparing'))
     throw new AdministrationError('export_busy', 409);
+  authorize(database, actorId, householdId);
   const id = randomUUID();
   const job: Job = {
     id,

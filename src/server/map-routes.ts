@@ -136,6 +136,7 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
     context.json(
       householdMap(database, context.get('userId'), context.req.param('id')).discard(
         context.get('body').version,
+        context.get('body').contentVersion,
       ),
     ),
   );
