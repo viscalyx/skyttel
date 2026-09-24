@@ -2,6 +2,7 @@ import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useStat
 import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router';
 import type { Administration, HouseholdInvitation } from '../shared/administration.js';
 import { householdNameMaxLength, normalizeHouseholdName } from '../shared/household-name.js';
+import { Assistants } from './Assistants.js';
 import { HouseholdMap } from './HouseholdMap.js';
 import { MapRequestError as RequestError, request } from './map-request.js';
 
@@ -117,6 +118,9 @@ function Login({ providers }: { providers: Provider[] }) {
       const result = await request<{ url: string }>('/api/auth/sign-in/social', {
         provider,
         callbackURL: '/',
+        ...(location.pathname === '/assistant-consent'
+          ? { oauth_query: location.search.slice(1) }
+          : {}),
         errorCallbackURL: '/?authError=1',
       });
       if (typeof result.url !== 'string') throw new Error('invalid_redirect');
@@ -781,6 +785,9 @@ function HouseholdPage({ onSessionExpired }: { onSessionExpired: () => void }) {
         </p>
       )}
       <HouseholdMap key={result.data.household.id} householdId={result.data.household.id} />
+      <p>
+        <Link to="/assistants">Assistentanslutningar</Link>
+      </p>
       <div className="empty-state">
         <div className="weave-mark" aria-hidden="true">
           ↗
@@ -862,6 +869,8 @@ export function App() {
           location.pathname !== '/login-methods' &&
           (data.status === 'setup' || data.status === 'ready') && (
             <Routes>
+              <Route path="/assistant-consent" element={<Assistants consent />} />
+              <Route path="/assistants" element={<Assistants />} />
               <Route
                 path="/"
                 element={

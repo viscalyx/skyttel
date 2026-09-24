@@ -7,6 +7,7 @@ import { createApp } from '../../src/server/app.js';
 import { createAuth, verifyAuthSchema } from '../../src/server/auth.js';
 import type { Config } from '../../src/server/config.js';
 import { openDatabase } from '../../src/server/database.js';
+import { legacyAuth } from './legacy-auth.js';
 
 export type Identity = {
   subject: string;
@@ -62,7 +63,10 @@ export async function createInstallation(
     config.port = address.port;
     config.origin = `http://127.0.0.1:${address.port}`;
     database = openDatabase(config.databasePath, databaseOptions);
-    const auth = createAuth(config, database);
+    const hasOAuth = database
+      .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'oauthClient'")
+      .get();
+    const auth = hasOAuth ? createAuth(config, database) : legacyAuth(config, database);
     await verifyAuthSchema(auth);
     const context = await auth.$context;
     for (const provider of context.socialProviders) {

@@ -32,6 +32,21 @@ receipts, and history. Apply the same backup access restrictions and retention
 rules to these records as to other household content. Clients that read save
 results must include definition changes when they describe the whole save.
 
+### External assistant access
+
+Retain the persistent database and authentication secret during upgrade.
+Startup adds OAuth authorization and assistant connections. Use the same
+HTTPS origin for the app, consent pages, OAuth endpoints and MCP endpoint.
+Confirm that the ingress forwards all of them. A tunnel for MCP alone does
+not make a local authorization server reachable.
+
+Before enabling real client use, verify provider login, explicit AI consent,
+household selection and revocation with fictional data in each selected text
+client. Local automated checks do not establish production compatibility.
+Existing users have no assistant connection until they approve one. Users
+and administrators can revoke connections; revocation stops future reads
+but cannot remove information already received by an external service.
+
 ### Production terminal access
 
 Before rollout, review who can use the production host's terminals. The

@@ -20,6 +20,8 @@ Målet med Skyttel är att ge hushållet en gemensam, tydlig och sammanhängande
 inbjudningar och hur en administratör återkallar tillgång.
 [Guiden för objekttyper och egna fält](docs/users/object-types.md) beskriver
 hur hushållet skapar och rättar gemensamma definitioner genom sina utkast.
+[Guiden för externa assistenter](docs/users/assistants.md) beskriver
+AI-behandlingsval, läsåtkomst och återkallelse för textklienter.
 
 Utveckla i projektets [devcontainer](docs/development/devcontainer.md).
 [Utvecklings- och testinstruktionerna](docs/development/testing.md) beskriver

@@ -155,7 +155,11 @@
     "wayfinding",
     "ägbar",
     "talfält",
-    "återställningskoder"
+    "återställningskoder",
+    "PKCE",
+    "läsåtkomst",
+    "läsåtkomsten",
+    "förmarkerat"
   ],
   "overrides": [
     {

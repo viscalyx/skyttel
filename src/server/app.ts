@@ -8,6 +8,7 @@ import { buildIdentity } from '../shared/build-identity.js';
 import { normalizeHouseholdName } from '../shared/household-name.js';
 import { AdministrationError } from './administration.js';
 import { administrationRoutes } from './administration-routes.js';
+import { assistantRoutes } from './assistant-routes.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
 import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from './households.js';
@@ -97,9 +98,20 @@ export function createApp({
     '/api/auth/callback/microsoft',
     '/api/auth/sign-out',
     '/api/auth/get-session',
+    '/api/auth/.well-known/oauth-authorization-server',
+    '/api/auth/jwks',
+    '/api/auth/oauth2/authorize',
+    '/api/auth/oauth2/register',
+    '/api/auth/oauth2/token',
+    '/api/auth/oauth2/revoke',
   ]);
   app.on(['GET', 'POST'], '/api/auth/*', async (context) => {
     if (!authRoutes.has(context.req.path)) return context.json({ error: 'not_found' }, 404);
+    if (context.req.path === '/api/auth/oauth2/authorize') {
+      const url = new URL(context.req.url);
+      url.searchParams.set('prompt', 'consent');
+      return auth.handler(new Request(url, context.req.raw));
+    }
     return context.req.path.startsWith('/api/auth/callback/')
       ? linking.handleCallback(context.req.raw)
       : auth.handler(context.req.raw);
@@ -159,6 +171,7 @@ export function createApp({
   app.route('/api', administrationRoutes(database, auth, config.origin));
   app.route('/api', linking.routes);
   app.route('/api', mapRoutes(database, auth, config.origin));
+  app.route('/', assistantRoutes(database, auth, config.origin));
   app.all('/api/*', (context) => context.json({ error: 'not_found' }, 404));
   app.use('/assets/*', serveStatic({ root: './dist/client' }));
   app.get(
