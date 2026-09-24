@@ -13,7 +13,12 @@ import type {
   RelationshipValue,
   TypeDefinition,
 } from './map.js';
-import { proposedObjectTypes, proposedRelationships, proposedRelationshipTypes } from './map.js';
+import {
+  compatibleCustomFields,
+  proposedObjectTypes,
+  proposedRelationships,
+  proposedRelationshipTypes,
+} from './map.js';
 
 export type DraftConflict = {
   id: string;
@@ -130,7 +135,12 @@ export function draftConflicts(state: MapState): DraftConflict[] {
           item.id ===
           (resolvedObjectValue(change, current)?.typeId ?? current?.typeId ?? change.type.id),
       ) ?? null;
-    const changedType = type?.id !== change.type.id || type?.revision !== change.type.revision;
+    const changedType =
+      type?.id !== change.type.id ||
+      type?.revision !== change.type.revision ||
+      (change.after &&
+        type &&
+        !compatibleCustomFields(change.after.customValues, change.type, type));
     const connections = change.after
       ? []
       : state.relationships.filter(

@@ -6,6 +6,7 @@ import {
   resolvedRelationshipValue,
 } from '../shared/draft-conflicts.js';
 import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
+import { compatibleCustomFields } from '../shared/map.js';
 import { readFinancialFacts } from './financial-facts.js';
 import { householdAccess } from './households.js';
 import { readLifecycle } from './lifecycle.js';
@@ -443,7 +444,12 @@ export function householdMap(database: Database.Database, userId: string, househ
                 : null;
               const type =
                 removedType ?? types.read(!change.after).find((item) => item.id === change.type.id);
-              if (!type || type.revision !== change.type.revision)
+              if (
+                !type ||
+                type.revision !== change.type.revision ||
+                (change.after &&
+                  !compatibleCustomFields(change.after.customValues, change.type, type))
+              )
                 throw new MapError('type_conflict');
               if (change.after) readCustomValues(change.after.customValues, type);
               const after = change.after

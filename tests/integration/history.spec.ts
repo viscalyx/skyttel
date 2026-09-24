@@ -344,3 +344,82 @@ test('HISTORIK-04: keeping saved values retains independent private facts and th
     await installation.close();
   }
 });
+
+test('HISTORIK-05: restored field values require a compatible definition and a fresh save', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { read, post, object, save, path } = await setup(page.request, installation.origin);
+    const typeId = (await read()).types[0].id;
+    const define = async (kind: 'text' | 'number') => {
+      const state = await read();
+      const type = state.types.find((item) => item.id === typeId);
+      expect(
+        (
+          await post('object-type', {
+            version: state.draft.version,
+            id: typeId,
+            baseRevision: type?.revision,
+            value: {
+              ...type,
+              fields: [{ id: 'serial', name: 'Serienummer', description: '', kind }],
+            },
+          })
+        ).ok(),
+      ).toBe(true);
+    };
+    await define('number');
+    await object('valued', 'Lo Exempel', { customValues: { serial: 42 } });
+    await save('numeric-object');
+    expect(
+      (
+        await post('draft', {
+          version: (await read()).draft.version,
+          id: 'valued',
+          baseRevision: 1,
+          value: null,
+        })
+      ).ok(),
+    ).toBe(true);
+    const deletion = await save('delete-valued');
+    await define('text');
+    await save('unused-now-text');
+    await page.goto(installation.origin);
+    await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+    const group = page
+      .getByRole('region', { name: 'Ändringshistorik' })
+      .getByRole('article')
+      .filter({ hasText: 'Sparande: delete-valued' });
+    await group.getByRole('button', { name: 'Ångra sparandet' }).click();
+    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
+    await expect(draft).toContainText('Konflikt: sparad typdefinition');
+    await expect(draft).toContainText('Serienummer: Tal');
+    await expect(draft).toContainText('Serienummer: Text');
+    await expect(draft).toContainText('Serienummer: 42');
+    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
+    await draft.getByRole('button', { name: 'Använd sparad typdefinition', exact: true }).click();
+    await expect(draft).toContainText('Konflikt: sparat i kartan nu');
+    await expect(draft).toContainText('Serienummer: 42');
+    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
+    expect((await read()).objects).toEqual([]);
+    await draft.getByRole('button', { name: 'Använd sparat värde', exact: true }).click();
+    await expect(draft).toContainText('Inga förslag');
+    await group.getByRole('button', { name: 'Ångra sparandet' }).click();
+    await draft.getByRole('button', { name: 'Behåll min typdefinition', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('nytt sparbesked');
+    expect((await read()).objects).toEqual([]);
+    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await expect(page.getByRole('status')).toContainText('Sparat');
+    const state = await read();
+    expect(state.objects[0]).toMatchObject({ id: 'valued', customValues: { serial: 42 } });
+    expect(state.types.find((type) => type.id === typeId)?.fields?.[0].kind).toBe('number');
+    const { history } = await (await page.request.get(`${path}/history`)).json();
+    expect(history).toHaveLength(4);
+    expect(history.find((item: SaveReceipt) => item.operationId === deletion.operationId)).toEqual(
+      deletion,
+    );
+  } finally {
+    await installation.close();
+  }
+});

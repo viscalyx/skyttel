@@ -41,7 +41,8 @@ till motsvarande automatiserade integrationstester.
   privat tillgång.
 - [Historik och ångring](history.md): läsa hela ändringsgrupper, skapa
   privata ångringsförslag, bevara oberoende arbete, granska överlapp och
-  återställa borttagna objekt och samband med samma identiteter.
+  återställa borttagna objekt och samband med samma identiteter samt
+  granska äldre fält mot dagens definitioner före återställning.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
   kända slutdatum och granska, kasta eller spara vanlig borttagning med
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.

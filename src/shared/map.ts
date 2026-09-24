@@ -26,6 +26,16 @@ export interface ObjectTypeChange {
   undoFields?: string[];
 }
 export type CustomValues = Record<string, string | number | boolean>;
+export function compatibleCustomFields(
+  values: CustomValues | undefined,
+  source: ObjectType,
+  target: ObjectType,
+) {
+  return Object.keys(values ?? {}).every((id) => {
+    const field = source.fields?.find((item) => item.id === id);
+    return field && field.kind === target.fields?.find((item) => item.id === id)?.kind;
+  });
+}
 export interface RelationshipType extends TypeDefinition {
   forwardLabel?: string;
   reverseLabel?: string;

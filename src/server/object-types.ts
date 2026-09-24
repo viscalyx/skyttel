@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
 import type { CustomField, CustomValues, MapDraft, ObjectType } from '../shared/map.js';
-import { proposedObjectTypes } from '../shared/map.js';
+import { compatibleCustomFields, proposedObjectTypes } from '../shared/map.js';
 import { definitionUsage } from './definition-usage.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
@@ -127,6 +127,7 @@ export function objectTypes(database: Database.Database, householdId: string, us
     after: ObjectType,
     draft: MapDraft,
     allowRemoval = false,
+    deferKindChanges = false,
   ) {
     for (const field of before?.fields ?? []) {
       const next = after.fields?.find((item) => item.id === field.id);
@@ -135,20 +136,27 @@ export function objectTypes(database: Database.Database, householdId: string, us
         usage.assertUnused('objectType', after.id, draft, field.id);
         continue;
       }
-      if (next.kind === field.kind) continue;
+      if (next.kind === field.kind || deferKindChanges) continue;
       const objects = database
         .prepare(
-          'SELECT customValues FROM map_object WHERE householdId = ? AND typeId = ? AND deleted = 0',
+          'SELECT id, customValues FROM map_object WHERE householdId = ? AND typeId = ? AND deleted = 0',
         )
-        .all(householdId, after.id) as { customValues: string | null }[];
+        .all(householdId, after.id) as { id: string; customValues: string | null }[];
       const drafts = database
         .prepare('SELECT changes FROM map_draft WHERE householdId = ? AND userId != ?')
         .all(householdId, userId) as { changes: string }[];
       const used =
-        objects.some(
-          (object) =>
-            object.customValues && Object.hasOwn(JSON.parse(object.customValues), field.id),
-        ) ||
+        objects.some((object) => {
+          if (!object.customValues || !Object.hasOwn(JSON.parse(object.customValues), field.id))
+            return false;
+          const change = draft.changes.find((item) => item.id === object.id);
+          if (change)
+            return (
+              change.after?.typeId === after.id &&
+              Object.hasOwn(change.after.customValues ?? {}, field.id)
+            );
+          return true;
+        }) ||
         drafts
           .flatMap((item) => JSON.parse(item.changes) as MapDraft['changes'])
           .some(
@@ -170,13 +178,19 @@ export function objectTypes(database: Database.Database, householdId: string, us
     validateUndo(draft: MapDraft) {
       for (const change of draft.objectTypes ?? []) {
         if (!change.after) usage.assertUnused('objectType', change.id, draft);
-        else
+        else {
+          const current = read().find((type) => type.id === change.id) ?? null;
+          validate({ ...change.after, fields: change.after.fields ?? [] });
           checkFields(
-            read().find((type) => type.id === change.id) ?? null,
+            current ?? read(true).find((type) => type.id === change.id) ?? null,
             change.after,
             draft,
             true,
+            // Conflicting definitions must be reviewed first. Resolution and
+            // atomic saving both enforce usage against the chosen definition.
+            current?.revision !== change.before?.revision,
           );
+        }
       }
     },
     effective(draft: MapDraft) {
@@ -217,6 +231,14 @@ export function objectTypes(database: Database.Database, householdId: string, us
           : change.after;
       for (const proposal of draft.changes)
         if (proposal.type.id === id && type) {
+          // Keeping today's definition leaves incompatible historical values
+          // visible as an object conflict until they are edited or discarded.
+          if (
+            choice === 'saved' &&
+            proposal.after &&
+            !compatibleCustomFields(proposal.after.customValues, proposal.type, type)
+          )
+            continue;
           if (proposal.after) readCustomValues(proposal.after.customValues, type);
           proposal.type = type;
         }
@@ -278,7 +300,12 @@ export function objectTypes(database: Database.Database, householdId: string, us
           tombstones.removeType('objectType', change.id);
           continue;
         }
-        checkFields(current, change.after, draft, true);
+        checkFields(
+          current ?? read(true).find((type) => type.id === change.id) ?? null,
+          change.after,
+          draft,
+          true,
+        );
         database
           .prepare(`INSERT INTO object_type (id, householdId, revision, name, description) VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET revision = excluded.revision, name = excluded.name, description = excluded.description`)

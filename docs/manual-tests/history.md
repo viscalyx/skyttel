@@ -223,3 +223,48 @@ facts and their conflicts”.
 - Först det nya sparbeskedet gör namnet Lo Ek och beskrivningen
   Egen beskrivning gemensamma. Ett nytt kvitto och en ny historikgrupp
   tillkommer. Namnbytesgruppen och övrig tidigare historik är oförändrade.
+
+### HISTORIK-05: granska fältets värdeslag innan ett äldre värde återställs
+
+**Syfte:** Bevara ett äldre fältvärde utan omvandling och kräva en
+kompatibel definition samt ett nytt sparbesked för återställning.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Lo Exempel enligt förberedelsen. Lägg till fältet
+**Serienummer** med värdeslaget **Tal** på objekttypen Person enligt
+[guiden för egna fält](../users/object-types.md). Spara definitionen,
+ange värdet **42** på Lo och spara. Inget annat objekt eller privat utkast
+ska använda fältet.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts),
+testfallet “HISTORIK-05: restored field values require a compatible
+definition and a fresh save”.
+
+**Steg:**
+
+1. Ta bort Lo och spara hela utkastet. Anteckna borttagningsgruppen under
+   **Visa historik**.
+2. Ändra det nu oanvända fältet Serienummer till värdeslaget **Text**
+   och spara definitionen.
+3. Välj **Ångra sparandet** i borttagningsgruppen. Granska definitionen
+   och objektet under **Hela mitt utkast**.
+4. Välj **Använd sparad typdefinition**. Kontrollera objektets konflikt
+   och välj sedan **Använd sparat värde** för objektet.
+5. Ångra samma borttagningsgrupp igen. Välj **Behåll min typdefinition**
+   och granska hela utkastet. Kontrollera att Lo ännu saknas i kartan.
+6. Välj **Spara hela utkastet** och kontrollera kvittot, Lo och historiken.
+
+**Förväntat resultat:**
+
+- Ångringen visar Serienummer som Tal i förslaget, Text i dagens
+  definition och objektets äldre värde 42. Sparandet är spärrat.
+- Valet av dagens definition lämnar värdet 42 som en objektkonflikt;
+  det omvandlas inte till text och kan inte sparas utan ytterligare val.
+  Valet av sparat objektvärde avstår från återställningen och tömmer
+  utkastet. Lo saknas fortfarande i den gemensamma kartan.
+- Valet av den äldre definitionen ändrar bara utkastet. Först det nya
+  sparbeskedet återställer Lo med samma identitet och talvärdet 42.
+- Ett nytt kvitto och en ny historikgrupp tillkommer. Borttagningsgruppen
+  är oförändrad. Inget fältvärde omvandlas automatiskt.

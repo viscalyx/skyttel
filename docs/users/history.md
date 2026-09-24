@@ -61,6 +61,19 @@ Typdefinitioner och egna fält som ingår i sparandet följer också med i
 granskningen. En definition som fortfarande behövs av annat innehåll
 kan inte tas bort genom ångring utan att användningen hanteras.
 
+Återställning tar också med äldre fält som behövs för objektets värden.
+Om fältet saknas eller har ett annat värdeslag visas en konflikt för
+typdefinitionen. Granska det äldre värdeslaget tillsammans med dagens
+definition. Oberoende namn, beskrivningar och andra fält behålls.
+Ett värdeslag som används av annat innehåll eller ett annat privat utkast
+kan inte bytas genom konfliktvalet.
+
+Om du väljer **Använd sparad typdefinition** och det äldre värdet inte
+passar finns objektförslaget kvar som en konflikt. Värdet omvandlas inte.
+Rätta objektförslaget uttryckligen eller välj **Använd sparat värde** för
+att avstå från återställningen av objektet. Granska hela utkastet innan
+du sparar igen.
+
 Vanlig borttagning har ingen automatisk tidsgräns för bevarat innehåll.
 Permanent raderad information kan aldrig återställas genom ångring.
 Permanent radering är ett separat planerat administrativt flöde.
