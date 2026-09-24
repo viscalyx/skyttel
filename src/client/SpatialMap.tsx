@@ -1,9 +1,12 @@
 import './spatial.css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
+import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { relationshipLabel } from './RelationshipEditor.js';
 import { type ProjectedPoint, spatialScene } from './spatial-scene.js';
+import { useObjectMovement } from './use-object-movement.js';
+import type { usePersonalView } from './use-personal-view.js';
 
 export function ProposalSymbol({ change }: { change?: { before: unknown; after: unknown } }) {
   if (!change) return null;
@@ -97,6 +100,7 @@ export function SpatialMap({
   onClear,
   onReset,
   onRemove,
+  personal,
 }: {
   state: MapState;
   active: boolean;
@@ -110,6 +114,7 @@ export function SpatialMap({
   onClear: () => void;
   onReset: () => void;
   onRemove: (object: MapObject) => void;
+  personal?: ReturnType<typeof usePersonalView>;
 }) {
   const [activated, setActivated] = useState(active);
   useEffect(() => {
@@ -126,6 +131,7 @@ export function SpatialMap({
   }, []);
   function openMenu(object: MapObject, target: HTMLElement) {
     cancelHold();
+    movement.cancel();
     returnFocus.current = target;
     setMenuObject(object);
   }
@@ -178,18 +184,54 @@ export function SpatialMap({
     };
   }, [activated]);
   const scene = useRef<ReturnType<typeof spatialScene> | null>(null);
+  const [orientation, setOrientation] = useState<Position[]>([]);
+  const [moving, setMoving] = useState(false);
+  const motionTimer = useRef<number>(0);
+  const motion = useCallback(() => {
+    setMoving(true);
+    window.clearTimeout(motionTimer.current);
+    motionTimer.current = window.setTimeout(() => setMoving(false), 1400);
+  }, []);
+  useEffect(() => () => window.clearTimeout(motionTimer.current), []);
+  const settings = personal?.view?.settings ?? defaultViewSettings;
+  const [localSettings, setLocalSettings] = useState(defaultViewSettings);
+  const preferences = personal ? settings : localSettings;
+  function configure(value: Partial<ViewSettings>) {
+    if (
+      (Object.keys(value) as (keyof ViewSettings)[]).every((key) => value[key] === preferences[key])
+    )
+      return;
+    const { version: _version, ...current } = { ...preferences, version: 0 };
+    const next = { ...current, ...value };
+    if (personal) void personal.configure(next);
+    else setLocalSettings(next);
+  }
   const [points, setPoints] = useState<ProjectedPoint[]>([]);
   const [unavailable, setUnavailable] = useState(false);
   const [contextLost, setContextLost] = useState(false);
-  const [allLabels, setAllLabels] = useState(false);
+  const allLabels = preferences.allLabels;
+  const previousLabels = useRef(false);
   const [resetRequested, setResetRequested] = useState(false);
-  const pointer = useRef<{ x: number; y: number } | null>(null);
+  const pointer = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    moved: boolean;
+    multiple: boolean;
+  } | null>(null);
+  const movement = useObjectMovement(scene, {
+    enabled: Boolean(personal?.view) && !personal?.pending && !contextLost,
+    active,
+    cancelHold,
+    onMove: (id, position) => personal?.move(id, position),
+  });
   useEffect(() => {
     if (!activated || !canvas.current) return;
     const element = canvas.current;
     const lost = (event: Event) => {
       event.preventDefault();
       setContextLost(true);
+      movement.cancel();
       scene.current?.contextLost(true);
     };
     const restored = () => {
@@ -202,7 +244,7 @@ export function SpatialMap({
     element.addEventListener('webglcontextlost', lost);
     element.addEventListener('webglcontextrestored', restored);
     try {
-      scene.current = spatialScene(element, setPoints);
+      scene.current = spatialScene(element, setPoints, setOrientation, motion);
     } catch {
       setUnavailable(true);
     }
@@ -212,11 +254,20 @@ export function SpatialMap({
       scene.current?.dispose();
       scene.current = null;
     };
-  }, [activated]);
+  }, [activated, motion, movement.cancel]);
   useEffect(() => {
     if (!activated) return;
-    scene.current?.update([...objects.keys()]);
-  }, [objects, activated]);
+    scene.current?.update([...objects.keys()], personal?.view?.positions);
+  }, [objects, activated, personal?.view?.positions]);
+  useEffect(() => {
+    if (!activated) return;
+    scene.current?.configure(preferences);
+    if (preferences.allLabels && !previousLabels.current) {
+      scene.current?.navigate('in');
+      scene.current?.navigate('in');
+    }
+    previousLabels.current = preferences.allLabels;
+  }, [preferences, activated]);
   useEffect(() => {
     if (!resetRequested) return;
     // Reframe after the shared view has revealed previously filtered objects.
@@ -353,6 +404,16 @@ export function SpatialMap({
         role="presentation"
         onPointerDownCapture={(event) => {
           if (!event.isPrimary) cancelHold();
+          movement.down(event);
+        }}
+        onPointerMoveCapture={movement.move}
+        onPointerUpCapture={movement.end}
+        onPointerCancelCapture={movement.cancel}
+        onClickCapture={(event) => {
+          if (movement.suppressClick()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
         }}
       >
         <canvas
@@ -360,14 +421,35 @@ export function SpatialMap({
           role="img"
           aria-label="Rymdens bakgrund. Välj innehåll med etiketterna eller listan."
           onPointerDown={(event) => {
-            pointer.current = { x: event.clientX, y: event.clientY };
+            if (pointer.current) pointer.current.multiple = true;
+            else
+              pointer.current = {
+                id: event.pointerId,
+                x: event.clientX,
+                y: event.clientY,
+                moved: false,
+                multiple: !event.isPrimary,
+              };
+          }}
+          onPointerMove={(event) => {
+            if (
+              pointer.current &&
+              Math.hypot(event.clientX - pointer.current.x, event.clientY - pointer.current.y) > 5
+            )
+              pointer.current.moved = true;
           }}
           onPointerUp={(event) => {
             if (
               pointer.current &&
+              pointer.current.id === event.pointerId &&
+              !pointer.current.moved &&
+              !pointer.current.multiple &&
               Math.hypot(event.clientX - pointer.current.x, event.clientY - pointer.current.y) < 5
             )
               onClear();
+            pointer.current = null;
+          }}
+          onPointerCancel={() => {
             pointer.current = null;
           }}
         />
@@ -385,12 +467,36 @@ export function SpatialMap({
               <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
             </marker>
           </defs>
+          {movement.guide &&
+            (() => {
+              const start = scene.current?.project(movement.guide.start);
+              const end = scene.current?.project(movement.guide.end);
+              return (
+                start &&
+                end && (
+                  <g className="height-guide">
+                    <circle cx={start.x} cy={start.y} r="6" />
+                    <line
+                      x1={start.x}
+                      y1={start.y}
+                      x2={end.x}
+                      y2={end.y}
+                      markerEnd="url(#spatial-arrow)"
+                    />
+                    <text x={start.x + 10} y={start.y - 12}>
+                      Höjdflyttning · personlig vy
+                    </text>
+                  </g>
+                )
+              );
+            })()}
           {[...locations].map(([id, point]) => {
             const label = labels.get(id);
             return (
               label && (
                 <line
                   key={`leader-${id}`}
+                  data-object-id={id}
                   className="label-leader"
                   x1={point.x}
                   y1={point.y}
@@ -487,6 +593,7 @@ export function SpatialMap({
                 onPointerDown={(event) => {
                   cancelHold();
                   held.current = false;
+                  movement.start(object.id, event);
                   if (event.pointerType === 'touch' && event.isPrimary) {
                     const target = event.currentTarget;
                     hold.current = {
@@ -537,25 +644,129 @@ export function SpatialMap({
             );
           })}
         </div>
+        {(moving || preferences.axisPinned) && (
+          <svg
+            className={`spatial-axis ${preferences.axisCorner}`}
+            role="img"
+            aria-label="Rummets axlar: sidled X, höjd Y, djup Z"
+            viewBox="0 0 90 90"
+          >
+            {orientation.map((axis, index) => (
+              <g key={['X', 'Y', 'Z'][index]}>
+                <line x1="45" y1="45" x2={45 + axis.x * 28} y2={45 - axis.y * 28} />
+                <text x={45 + axis.x * 35} y={49 - axis.y * 35}>
+                  {['X', 'Y', 'Z'][index]}
+                </text>
+              </g>
+            ))}
+          </svg>
+        )}
       </div>
-      <details className="camera-tools">
-        <summary>Navigera rymden</summary>
-        <p>
-          Dra tom rymd för att rotera. Två fingrar panorerar och nypzoomar. Använd också knapparna.
-        </p>
-        <div className="access-actions">
-          {cameraActions.map(([command, label]) => (
-            <button key={command} type="button" onClick={() => scene.current?.navigate(command)}>
-              {label}
+      <div className="spatial-tools">
+        <details className="camera-tools">
+          <summary>Navigera rymden</summary>
+          <p>
+            Dra tom rymd för att rotera. Två fingrar panorerar och nypzoomar. Använd också
+            knapparna.
+          </p>
+          <div className="access-actions">
+            {cameraActions.map(([command, label]) => (
+              <button key={command} type="button" onClick={() => scene.current?.navigate(command)}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </details>
+        <details className="camera-tools personal-tools">
+          <summary>Ordna min vy</summary>
+          <p>
+            Placeringarna är bara dina. Dra objektet för att flytta. Shift eller ett andra stilla
+            finger ger höjdled. Avbruten gest återställer placeringen.
+          </p>
+          <fieldset disabled={!personal?.view || personal.pending}>
+            <legend>Flytta valt objekt</legend>
+            {(
+              [
+                ['x', -1, 'vänster i rummet'],
+                ['x', 1, 'höger i rummet'],
+                ['y', 1, 'uppåt i rummet'],
+                ['y', -1, 'nedåt i rummet'],
+                ['z', -1, 'inåt i rummet'],
+                ['z', 1, 'utåt i rummet'],
+              ] as const
+            ).map(([axis, step, label]) => (
+              <button
+                key={label}
+                type="button"
+                disabled={selection?.kind !== 'object'}
+                onClick={() => {
+                  if (selection?.kind !== 'object') return;
+                  const position = scene.current?.position(selection.id);
+                  if (position) {
+                    const next = { ...position, [axis]: position[axis] + step };
+                    scene.current?.place(selection.id, next);
+                    void personal?.move(selection.id, next);
+                  }
+                }}
+              >
+                Flytta {label}
+              </button>
+            ))}
+          </fieldset>
+          <fieldset disabled={personal && (!personal.view || personal.pending)}>
+            <legend>Personliga visningsval</legend>
+            {(
+              [
+                ['invertX', 'Vänd panorering i sidled'],
+                ['invertY', 'Vänd panorering i höjdled'],
+                ['axisPinned', 'Visa axlar hela tiden'],
+                ['stars', 'Visa stjärnhimmel'],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key}>
+                <input
+                  type="checkbox"
+                  checked={preferences[key]}
+                  onChange={(event) => configure({ [key]: event.target.checked })}
+                />
+                {label}
+              </label>
+            ))}
+            <label htmlFor="personal-axis-corner">Axelvisarens hörn</label>
+            <select
+              id="personal-axis-corner"
+              value={preferences.axisCorner}
+              onChange={(event) =>
+                configure({ axisCorner: event.target.value as ViewSettings['axisCorner'] })
+              }
+            >
+              <option value="bottom-right">Nere till höger</option>
+              <option value="bottom-left">Nere till vänster</option>
+              <option value="top-right">Uppe till höger</option>
+              <option value="top-left">Uppe till vänster</option>
+            </select>
+          </fieldset>
+          {personal && (
+            <button
+              type="button"
+              disabled={personal.pending}
+              onClick={() => void personal.refresh()}
+            >
+              Läs in min aktuella vy
             </button>
-          ))}
-        </div>
-      </details>
+          )}
+        </details>
+      </div>
+      {personal?.message && (
+        <p aria-live="polite" className="personal-view-status">
+          {personal.message}
+        </p>
+      )}
       <div className="spatial-bottom-bar">
         <button
           type="button"
           onClick={() => {
-            setAllLabels(false);
+            configure({ allLabels: false });
             onReset();
             setResetRequested(true);
           }}
@@ -566,12 +777,9 @@ export function SpatialMap({
           <input
             type="checkbox"
             checked={allLabels}
+            disabled={personal && (!personal.view || personal.pending)}
             onChange={(event) => {
-              setAllLabels(event.target.checked);
-              if (event.target.checked) {
-                scene.current?.navigate('in');
-                scene.current?.navigate('in');
-              }
+              configure({ allLabels: event.target.checked });
             }}
           />{' '}
           Alla etiketter

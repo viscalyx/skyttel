@@ -3,6 +3,7 @@ import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { App } from '../../../src/client/App.js';
+import { defaultViewSettings } from '../../../src/shared/personal-view.js';
 
 const anonymous = { status: 'anonymous', providers: ['google', 'microsoft'] };
 const setup = {
@@ -30,6 +31,9 @@ function serve(routes: Record<string, Reply[]>) {
     },
   ];
   routes['/api/households/linden/map/operations'] ??= [{ data: { operations: [] } }];
+  routes['/api/households/linden/map/view'] ??= [
+    { data: { positions: [], settings: { ...defaultViewSettings, version: 0 } } },
+  ];
   const fetch = vi.fn(async (input: string | URL | Request, _init?: RequestInit) => {
     const path =
       typeof input === 'string'

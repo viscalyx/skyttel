@@ -20,6 +20,19 @@ to these images. Ordinary removal retains image history; it does not erase
 the original saved information. Permit uploads up to 10 MB at the ingress
 for the image upload route. Keep smaller limits for ordinary API requests.
 
+### Personal map views
+
+Back up the persistent database and retain its matching image before upgrade.
+Startup adds personal object placements and display settings. Use the
+upgraded image with this database. Stop the application and restore the
+matching backup before returning to an older image.
+
+Keep personal views within the same access and backup restrictions as
+private drafts. Each view belongs to one user and one household. Normal
+object removal and membership revocation retain these records; revocation
+blocks further access. Include retained personal views in full household
+recovery and permanent erasure procedures.
+
 ### History and whole-save undo
 
 Back up the persistent database and retain its matching image before upgrade.

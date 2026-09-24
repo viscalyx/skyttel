@@ -353,3 +353,80 @@
   pointer-events: stroke;
   cursor: pointer;
 }
+.spatial-axis {
+  position: absolute;
+  width: min(90px, 25%);
+  height: min(90px, 25%);
+  pointer-events: none;
+  background: #102e2cdd;
+  border-radius: 0.5rem;
+  color: #d5fff4;
+}
+.spatial-axis line {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.spatial-axis text {
+  fill: currentColor;
+  text-anchor: middle;
+  font-size: 12px;
+}
+.spatial-axis.top-left {
+  top: 0.5rem;
+  left: 0.5rem;
+}
+.spatial-axis.top-right {
+  top: 0.5rem;
+  right: 0.5rem;
+}
+.spatial-axis.bottom-left {
+  bottom: 0.5rem;
+  left: 0.5rem;
+}
+.spatial-axis.bottom-right {
+  bottom: 0.5rem;
+  right: 0.5rem;
+}
+.height-guide {
+  stroke: #ffd981;
+  fill: #ffd981;
+  stroke-width: 2;
+}
+.height-guide text {
+  stroke: #102e2c;
+  stroke-width: 3;
+  paint-order: stroke;
+  font-size: 13px;
+}
+.personal-tools fieldset {
+  margin: 0.5rem 0;
+}
+.personal-tools label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.personal-tools input[type="checkbox"] {
+  width: 1.2rem;
+  min-height: 1.2rem;
+  margin: 0;
+}
+.spatial-map .personal-tools select {
+  width: auto;
+}
+.personal-view-status {
+  margin: 0.25rem 0;
+  max-height: 3em;
+  overflow: auto;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+.spatial-tools {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+.spatial-tools > details {
+  flex: 1;
+  min-width: 0;
+}

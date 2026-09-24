@@ -5,6 +5,10 @@
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
     "appservern",
+    "Bildplansdrag",
+    "nypzooma",
+    "vyändringar",
+    "vybyten",
     "devcontainern",
     "historikfallen",
     "historikguiden",

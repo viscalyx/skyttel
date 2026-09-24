@@ -41,7 +41,7 @@ async function expectVisibleDirection(space: Locator) {
     start: { x: element.x1.baseVal.value, y: element.y1.baseVal.value },
     tip: { x: element.x2.baseVal.value, y: element.y2.baseVal.value },
   }));
-  const svg = space.locator('svg');
+  const svg = space.locator('svg.spatial-lines');
   const surface = await svg.boundingBox();
   const target = await space
     .getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true })

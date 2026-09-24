@@ -24,6 +24,9 @@ till motsvarande automatiserade integrationstester.
   fokus, filter, etiketter, pekmenyer, upphörd status, ändringssymboler och bevarad
   oskickad text vid vybyte, orientering och grafikavbrott samt fungerande
   navigation när tillgången återkallas i helskärm.
+- [Personliga placeringar](personal-view.md): flyttning med mus, pekgester
+  och tangentbord, visningsval, samtidighetskonflikter, bevarad text,
+  beständighet och avskildhet mellan användare.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast.

@@ -44,6 +44,7 @@ import {
   SaveOperations,
 } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
+import { usePersonalView } from './use-personal-view.js';
 
 type Editor = {
   id: string;
@@ -162,6 +163,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     setStatus('');
     setError('Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.');
   }, []);
+  const personal = usePersonalView(path, loseAccess);
 
   useEffect(() => {
     let active = true;
@@ -887,6 +889,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               hidden={presentation === 'list' || (presentation === 'map' && detailsOpen)}
             >
               <SpatialMap
+                personal={personal}
                 active={presentation !== 'list' && !(presentation === 'map' && detailsOpen)}
                 state={effectiveState ?? state}
                 objects={visibleObjects}
