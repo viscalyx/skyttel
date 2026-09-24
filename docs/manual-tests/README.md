@@ -5,6 +5,12 @@ beskriver användare, förberedelser, steg och förväntat resultat samt länkar
 till motsvarande automatiserade integrationstester. Fall som uttryckligen
 kräver verkliga externa konton anges som enbart manuella och körs inte i CI.
 
+För specifikation #31 görs all manuell provning efter att implementationen
+är klar. Följ fallen här och registrera resultaten i den separata
+[restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
+Restlistan blockerar inga implementationsärenden; ett stängt ärende
+betyder inte att dess manuella prov är genomfört.
+
 ## Områden
 
 - [Fullständig export](household-export.md): privata uppgifter före

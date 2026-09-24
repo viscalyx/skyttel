@@ -264,7 +264,9 @@ Dessa tester är inte bevis för genomfört AI-07.
 
 **Steg:**
 
-1. Kör kommandot för `mcp login` från integrationsguiden i terminal B.
+1. Starta `bash scripts/manual-codex-case.sh` i terminal B för guidad körning,
+   eller kör integrationsguidens CLI-kommandon själv vid respektive steg.
+   Kör först `mcp login` enligt guiden.
    Öppna den utskrivna adressen i värddatorns privata webbläsarfönster.
 2. Välj **Fortsätt med Google** och logga in med den konfigurerade
    administratörens Google-konto. Kontrollera att du kommer tillbaka till
@@ -329,3 +331,7 @@ nytt verktygsanrop kan visas, är den kontrollen inte verifierad. Anteckna
 godkänt först när alla kontroller är genomförda. Ett godkänt AI-07 verifierar
 inte ChatGPT på webben, Codex-appen, Microsoft-inloggning eller den
 driftsatta HTTPS-ingången.
+
+Kör fallet efter att hela specifikation #31 är implementerad. Registrera
+resultatet i den separata, icke blockerande
+[restlistan #97](https://github.com/viscalyx/skyttel/issues/97).

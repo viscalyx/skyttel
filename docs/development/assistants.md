@@ -99,6 +99,10 @@ do not run it in CI or add real credentials to pull request workflows.
 Execution status: **not yet run**. The installed CLI used to prepare these
 instructions is `codex-cli 0.156.1`; its help includes `--no-browser`.
 
+All manual verification for specification #31 runs after its implementation
+is complete. Record results in the separate, nonblocking
+[manual verification issue #97](https://github.com/viscalyx/skyttel/issues/97).
+
 The developer prepares the local server and CLI commands below. The tester
 performs login, household selection, consent, reads, revocation, reconnection,
 and cleanup in [manual case AI-07](../manual-tests/assistants.md#ai-07-manuellt-codex-cli-prov-med-google-i-devcontainern).
@@ -162,9 +166,7 @@ printing it; the existing Google and Microsoft secrets are reused.
   export HOST=127.0.0.1 PORT=3301 NODE_ENV=development
   SKYTTEL_CASE_DIR="$(mktemp -d /tmp/skyttel-codex-development.XXXXXX)"
   export SKYTTEL_DATABASE_PATH="$SKYTTEL_CASE_DIR/skyttel.sqlite"
-  trap 'rm -f "$SKYTTEL_DATABASE_PATH" "$SKYTTEL_DATABASE_PATH-wal" \
-    "$SKYTTEL_DATABASE_PATH-shm" "$SKYTTEL_DATABASE_PATH-journal";
-    rmdir "$SKYTTEL_CASE_DIR"' EXIT
+  trap 'rm -rf -- "$SKYTTEL_CASE_DIR"' EXIT
   SKYTTEL_CASE_SECRET="$(openssl rand -base64 48)"
   export BETTER_AUTH_SECRET="$SKYTTEL_CASE_SECRET"
   npm run db:setup
@@ -174,7 +176,8 @@ printing it; the existing Google and Microsoft secrets are reused.
 
 Keep terminal A running until the manual case and connection cleanup finish.
 The command builds and serves the complete app, including MCP and OAuth.
-Its exit trap deletes only this run's temporary SQLite files and directory.
+Its exit trap deletes this run's temporary directory, including SQLite files
+and temporary export archives. The path comes only from the `mktemp` above.
 It does not edit either private environment file. After an interrupted run,
 remove any remaining test connection credentials before starting again.
 
@@ -191,6 +194,18 @@ response proves startup only. If the port is occupied, identify the process;
 do not redirect the case to an unrelated running installation.
 
 ### Commands for the manual case
+
+For a guided run, start this in terminal B after terminal A is ready:
+
+```sh
+bash scripts/manual-codex-case.sh
+```
+
+The wizard runs the CLI commands below and pauses for the browser steps in
+AI-07. Keep that case open for its expected results. It does not collect
+credentials, write configuration, or determine the test outcome. If you stop
+early, follow the cleanup instructions below. The commands remain available
+for running the same case without the wizard.
 
 Use the dedicated server name `skyttel_development_case`, unused by ordinary
 client configuration. These per-command overrides avoid adding a permanent
@@ -253,8 +268,8 @@ Do not include credentials, callback query strings, cookies, personal identity
 values, or full conversation logs in public evidence. A successful result
 establishes only the local Codex CLI and Google path. ChatGPT web, Codex desktop,
 Microsoft login, and the deployed HTTPS endpoint need separate verification;
-[issue #55](https://github.com/viscalyx/skyttel/issues/55) retains its acceptance
-criteria.
+[issue #97](https://github.com/viscalyx/skyttel/issues/97) tracks those manual
+checks after implementation without blocking the specification's work.
 
 ## Real text-client verification
 
@@ -306,6 +321,6 @@ The client configuration instructions follow
 Client registration details and available account controls must be checked
 against the actual installed clients. A successful tunnel experiment is
 recorded separately from verification of the deployed production HTTPS
-endpoint. Issue #55 remains open until its real-client acceptance criteria
-are met. Codex login inside the devcontainer remains in its separate issue;
-this workflow does not replace it.
+endpoint. These manual checks are deferred until specification #31 is
+implemented and tracked in the separate, nonblocking issue #97. Closing
+implementation issue #55 does not claim that these checks passed.

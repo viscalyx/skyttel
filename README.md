@@ -34,5 +34,8 @@ arkivets privata innehåll, nedladdning och säker förvaring.
 Utveckla i projektets [devcontainer](docs/development/devcontainer.md).
 [Utvecklings- och testinstruktionerna](docs/development/testing.md) beskriver
 projektets kontroller och hur de körs.
+[Det lokala Codex-provet](docs/development/assistants.md#manual-local-codex-cli-setup)
+har en isolerad testdatabas och guidad körning med
+`bash scripts/manual-codex-case.sh` efter serverförberedelsen.
 [Releaseguiden](docs/development/container-releases.md) beskriver publicering,
 verifiering och bevarande av containerbilder.
