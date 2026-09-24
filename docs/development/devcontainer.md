@@ -10,7 +10,8 @@ Use a running Docker engine and VS Code with the Dev Containers extension.
 Before the first container creation, prepare the private environment file:
 
 ```sh
-cp .devcontainer/.env.example .devcontainer/.env
+cp -n .devcontainer/.env.example .devcontainer/.env
+chmod 600 .devcontainer/.env
 openssl rand -base64 48
 ```
 
@@ -21,8 +22,18 @@ display the sign-in page but cannot complete real sign-in. The example
 administrator identifier also fails the required demo-data setup during
 container creation. Configure dedicated provider registrations and a first
 administrator before creating the container, using the
+[local authentication guide](local-authentication.md) and the
 [installation guide](../operations/installation.md). Keep credentials and
 identity values out of Git and public logs.
+
+For a new contributor who does not yet know their Google administrator
+subject, first follow the
+[port-5173 identity setup](local-authentication.md#continue-with-the-first-household)
+on the host. It requires the repository's Node.js and npm versions once,
+before the first container creation. Sign in through the development server,
+save the verified identity in the private configuration, and stop that server.
+The creation script cannot seed demo data with an unknown administrator.
+If the subject is already configured, skip this bootstrap.
 
 Ensure the host directories
 `~/.codex/sessions`, `~/.codex/plugins`, `~/.codex/skills`, and
@@ -52,6 +63,14 @@ and 9324 for Playwright reports.
 Keep host port 5173 free because the sign-in origin uses that port. Ctrl+C
 stops both development processes; source edits reload them.
 
+For Google login, use a web client named **Skyttel local development** in a
+development project. Register both
+`http://localhost:5173/api/auth/callback/google` and
+`http://localhost:3301/api/auth/callback/google` as authorized redirect URIs.
+Leave authorized JavaScript origins empty for Skyttel's server-side flow.
+The [Google setup steps](local-authentication.md#4-create-the-google-web-client)
+cover existing registrations, development names, scopes, and private secrets.
+
 To build and run the compiled application on port 3301, use:
 
 ```sh
@@ -61,9 +80,17 @@ npm run dev:prodlike
 This command builds once, then serves the Vite client and API through the
 production Hono server at [port 3301](http://localhost:3301). It uses the same
 database and provider credentials as normal development. Its public origin
-uses the configured host and protocol with port 3301. For real sign-in, add
-the corresponding port-3301 callback URLs to the dedicated provider
-registrations. Source edits require another build. Keep host port 3301 free.
+uses the configured host and protocol with port 3301. Keep `PORT=3300` in the
+private development file: this command overrides it only for its compiled
+server process. Google needs the exact port-3301 callback above; Microsoft
+ignores the localhost port, so its existing Web callback with the same path
+also covers 3301. See the [Microsoft callback guidance](local-authentication.md#8-set-the-microsoft-callback-address).
+Source edits require another build. Keep host port 3301 free.
+
+The [manual local Codex setup](assistants.md#manual-local-codex-cli-setup)
+uses this compiled server with a separate disposable database. It exercises
+the real Google and Codex connection manually, outside CI. The normal Vite
+proxy on port 5173 does not forward `/mcp` or OAuth discovery metadata.
 
 `SKYTTEL_DEV_ENV_FILE` selects another private environment file. Exported
 environment values take precedence over file values. Compose also loads

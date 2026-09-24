@@ -2,9 +2,13 @@
 
 Testfallen omfattar OAuth-medgivande, separat val om AI-behandling,
 avgränsade läsningar, privata utkast och återkallad åtkomst. Anteckna commit,
-webbläsare och godkänt eller underkänt resultat vid körning.
+webbläsare och godkänt eller underkänt resultat vid körning. AI-07 är ett
+separat manuellt prov med verklig Google-inloggning och Codex CLI. Det körs
+inte i CI och har egna användare och förberedelser nedan.
 
 ## Konfigurerade användare
+
+Följande användare gäller AI-01 till AI-06:
 
 - Alex Exempel är administratör i Hushållet Linden och loggar in med Google.
 - Robin Exempel är medlem i Linden och loggar in med Microsoft. Robin
@@ -13,6 +17,9 @@ webbläsare och godkänt eller underkänt resultat vid körning.
   sig från CI-provets Påhittad textassistent.
 
 ## Allmän förberedelse
+
+Följande förberedelser gäller AI-01 till AI-06. För AI-07 används i stället
+den isolerade installation som anges i testfallet.
 
 1. Använd en testinstallation med enbart påhittade data. Förbered verklig
    klientåtkomst enligt [integrationsguiden](../development/assistants.md).
@@ -219,3 +226,106 @@ uppgifter”.
 - Den oavgränsade läsningen visar de fem skapade objekten och fyra samband.
   `contextObjects` är då tom eftersom ändpunkterna redan är fullständiga
   objekt i svaret.
+
+## Verklig lokal klient
+
+### AI-07: manuellt Codex CLI-prov med Google i devcontainern
+
+**Syfte:** Kontrollera verklig Google-inloggning, OAuth-medgivande, läsning
+av sparad karta och eget utkast samt återkallelse och ny anslutning från
+Codex CLI i devcontainern.
+
+**Användare:** Den Google-identitet som redan är konfigurerad som första
+administratör i den privata `.env.local`. Samma person använder sin
+befintliga Codex-inloggning. Personerna i demokartan är påhittade objekt,
+inte ytterligare inloggade Skyttel-användare.
+
+**Förutsättningar:** Följ
+[den lokala Codex-förberedelsen](../development/assistants.md#manual-local-codex-cli-setup).
+Terminal A kör den kompilerade appen på `http://localhost:3301` med en ny,
+tillfällig databas. Google-klienten heter **Skyttel local development** och
+har `http://localhost:3301/api/auth/callback/google` som tillåten returadress.
+Port 3301 är vidarebefordrad till värddatorn. Terminal B används för Codex.
+Öppna ett nytt privat webbläsarfönster. Återanvänd inte den vanliga
+utvecklingsdatabasen eller en tidigare körnings databas.
+
+Databasen innehåller `TestHousehold`, abonnemanget Familjens Molnmusik,
+tjänstekontot Familjens musikkonto och administratörens osparade demoutkast.
+Spara eller kasta inte utkastet under provet. Det innehåller även andra
+påhittade förslag; detta fall kontrollerar förslaget om inloggningsadress.
+
+**Integrationstest:** Endast manuellt. Verklig Google- och Codex-inloggning
+ingår inte i CI eller pull request-körningar och kräver inga hemligheter
+där. Närliggande protokollbeteenden täcks med ersatta identitetsleverantörer i
+[assistants.spec.ts](../../tests/integration/assistants.spec.ts), bland annat
+“AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla token”
+och “AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klienten”.
+Dessa tester är inte bevis för genomfört AI-07.
+
+**Steg:**
+
+1. Kör kommandot för `mcp login` från integrationsguiden i terminal B.
+   Öppna den utskrivna adressen i värddatorns privata webbläsarfönster.
+2. Välj **Fortsätt med Google** och logga in med den konfigurerade
+   administratörens Google-konto. Kontrollera att du kommer tillbaka till
+   Skyttels medgivandesida på port 3301.
+3. Kontrollera användaren och klientnamnet, välj `TestHousehold`, läs
+   informationen om extern AI-behandling och markera det separata AI-valet.
+   Välj **Godkänn läsåtkomst**. Kopiera den fullständiga slutliga
+   returadressen från webbläsaren till den väntande CLI-inloggningen.
+   Klistra inte in adressen i Codex-konversationen. Webbläsaren kan visa
+   anslutningsfel vid returadressen; CLI måste ändå bekräfta inloggningen.
+4. Starta den interaktiva Codex-klienten med integrationsguidens kommando.
+   Be den: ”Använd endast MCP-servern skyttel_development_case. Anropa
+   read_map med query Familjens Molnmusik. Visa abonnemangets sparade pris
+   och direkta samband. Läs inga lokala filer och använd inte terminalen
+   för att hitta svaret.” Kontrollera det faktiska verktygsanropet och
+   svaret, inte enbart modellens sammanfattning.
+5. Begär ett nytt `read_map` med `query` satt till `Familjens musikkonto`.
+   Kontrollera kontots sparade samband **Inloggningsadress**. Begär sedan
+   `read_my_draft` utan argument. Be Codex skilja den sparade adressen från
+   förslaget i ditt privata utkast. Kontrollera båda verktygssvaren.
+6. Öppna `http://localhost:3301` i samma privata webbläsarfönster. Öppna
+   **Assistentanslutningar** i `TestHousehold` och välj
+   **Återkalla anslutning** för testklienten. Låt Codex-sessionen vara öppen.
+7. Begär ett nytt `read_map` för Familjens Molnmusik i samma Codex-session.
+   Kräv ett nytt verktygsanrop och granska resultatet. Godkänn inte en ny
+   inloggning eller ett nytt medgivande ännu. Ett svar från tidigare
+   konversation bevisar varken ny läsning eller nekad åtkomst.
+8. Avsluta Codex-sessionen. Kör guidens `mcp logout` för testservern och
+   därefter samma `mcp login` igen. Slutför ett nytt Skyttel-medgivande i
+   webbläsaren och överför returadressen till CLI. Google kan minnas sin
+   inloggning; ett nytt Skyttel-medgivande krävs ändå.
+9. Starta Codex med samma serverinställning och begär ett nytt `read_map`
+   för Familjens Molnmusik. Kontrollera att verktyget åter kan läsa data.
+10. Återkalla även den nya anslutningen i Skyttel. Följ guidens städning:
+    avsluta Codex, ta bort testserverns CLI-inloggning, stäng det privata
+    webbläsarfönstret och stoppa terminal A. Kontrollera att den tillfälliga
+    databasen tas bort. Behåll ordinarie utvecklingsdata och inloggningar.
+11. Anteckna datum, commit, Codex-version, webbläsare, lokal adress, Google
+    som leverantör, resultat per kontroll och städningens resultat. Utelämna
+    hemligheter, personliga identiteter och returadressens frågeparametrar.
+
+**Förväntat resultat:**
+
+- Rätt Skyttel-användare ger uttryckligt medgivande för `TestHousehold`.
+  Codex-inloggningen ensam ger ingen tillgång till hushållet.
+- Abonnemangets beskrivning anger det påhittade priset 149 kr per månad.
+  Alex Exempel står på avtalet, Kim Exempel betalar och betalningsmedlet
+  är Familjens musikkort. Uppgifterna kommer från ett lyckat `read_map`.
+- Kontots sparade inloggningsadress är `familjen@example.test`.
+  `read_my_draft` visar förslaget `musik@example.test` i administratörens
+  eget utkast. Förslaget är inte en sparad ändring i den gemensamma kartan.
+- Återkallelsen stoppar en ny verktygsläsning med den gamla anslutningen.
+  Ett autentiseringsfel eller krav på nytt medgivande ger inga nya kartdata.
+  Uppgifter som redan finns i konversationen behöver inte försvinna.
+- En ny anslutning med nytt medgivande kan läsa kartan igen. Efter städning
+  återstår ingen aktiv testanslutning, testserver eller tillfällig databas.
+
+**Resultatstatus:** Inte genomfört. Om klientregistrering eller inloggning
+inte fungerar, anteckna blockerat och ett felbesked utan känsliga värden.
+Om ett observerat resultat strider mot kraven, anteckna underkänt. Om inget
+nytt verktygsanrop kan visas, är den kontrollen inte verifierad. Anteckna
+godkänt först när alla kontroller är genomförda. Ett godkänt AI-07 verifierar
+inte ChatGPT på webben, Codex-appen, Microsoft-inloggning eller den
+driftsatta HTTPS-ingången.

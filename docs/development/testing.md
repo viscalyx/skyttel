@@ -284,6 +284,14 @@ only; never put tokens or identity proofs in technical logs or test reports.
 If you are new to provider registration, start with the
 [local authentication walkthrough](local-authentication.md).
 
+For a manual Codex CLI connection inside the devcontainer, use the
+[local assistant setup](assistants.md#manual-local-codex-cli-setup).
+It reuses development Google credentials with the port-3301 callback and a
+disposable database. Normal development login uses the port-5173 callback
+on the same Google client. This live-client check is excluded from CI and
+pull request workflows; do not add provider secrets or a Codex login to run
+it there. Automated tests retain their synthetic identity providers.
+
 Use a private verification installation with its own persistent disk, secret,
 and provider registrations. Register the correct callback URLs and authorize
 Google test accounts if its consent screen requires them. Do not post tokens,

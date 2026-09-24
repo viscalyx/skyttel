@@ -2,7 +2,8 @@
 
 Testfallen är grupperade efter område i applikationen. Varje områdesfil
 beskriver användare, förberedelser, steg och förväntat resultat samt länkar
-till motsvarande automatiserade integrationstester.
+till motsvarande automatiserade integrationstester. Fall som uttryckligen
+kräver verkliga externa konton anges som enbart manuella och körs inte i CI.
 
 ## Områden
 
@@ -19,7 +20,8 @@ till motsvarande automatiserade integrationstester.
 
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
   anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
-  återkallad åtkomst.
+  återkallad åtkomst samt ett separat manuellt Codex CLI-prov med verklig
+  Google-inloggning i devcontainern, utan CI-hemligheter.
 
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, återhämta anslutningsfel, logga ut och länka inloggningssätt.
