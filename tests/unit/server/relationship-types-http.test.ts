@@ -70,7 +70,7 @@ afterEach(() => fixture.close());
 test('type and label validation keeps the private draft unchanged and forbids fields', async () => {
   const unchanged = await read();
   for (const value of [
-    null,
+    'not a definition',
     [],
     {},
     { ...definition, fields: [] },

@@ -390,7 +390,6 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           'invalid_type_definition',
           'invalid_relationship_type',
           'field_kind_in_use',
-          'field_removal_unsupported',
           'undo_draft_overlap',
           'undo_unavailable',
           'definition_in_use',
@@ -1342,7 +1341,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                         ? 'Borttagen sambandstyp'
                         : change.before
                           ? 'Ändrad sambandstyp'
-                          : 'Ny sambandstyp'}
+                          : change.restoreRevision !== undefined
+                            ? 'Återställ sambandstyp'
+                            : 'Ny sambandstyp'}
                       : {change.after?.name ?? change.before?.name}
                     </h3>
                     <h4>Sparat underlag</h4>
@@ -1422,7 +1423,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                         ? 'Borttagen objekttyp'
                         : change.before
                           ? 'Ändrad objekttyp'
-                          : 'Ny objekttyp'}
+                          : change.restoreRevision !== undefined
+                            ? 'Återställ objekttyp'
+                            : 'Ny objekttyp'}
                       : {change.after?.name ?? change.before?.name}
                     </h3>
                     <h4>Sparat underlag</h4>

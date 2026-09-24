@@ -62,4 +62,6 @@ finns. **Använd sparat värde** tar bort det överlappande förslaget ur
 utkastet. Granska övriga förslag innan du sparar igen.
 
 Läs också om [objekttyper och egna fält](object-types.md) och
-[hushållets abonnemang](family-subscription.md).
+[hushållets abonnemang](family-subscription.md). Oanvända typer kan
+[tas bort och återställas genom historiken](definition-removal.md);
+användande samband måste först hanteras och ändpunkterna kan finnas kvar.

@@ -62,6 +62,5 @@ bevarar äldre definitioner och fältens betydelse. Följ
 [guiden för familjeabonnemang](family-subscription.md) vid oklart sparande.
 [Ångring av ett helt sparande](history.md) omfattar också definitioner
 och egna fält. En typ som fortfarande används kan inte tas bort genom
-ångring utan att användningen hanteras. Separat borttagning av
-typdefinitioner, export, återimport och permanent radering är ännu
-inte tillgängliga i appen.
+ångring utan att användningen hanteras. Läs om
+[borttagning och återställning av typer och fält](definition-removal.md).

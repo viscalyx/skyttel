@@ -27,7 +27,7 @@ export function RelationshipTypeEditor({
   stale: boolean;
   onDirty: () => void;
   onSubmit: (
-    value: Pick<RelationshipType, 'name' | 'description' | 'forwardLabel' | 'reverseLabel'>,
+    value: Pick<RelationshipType, 'name' | 'description' | 'forwardLabel' | 'reverseLabel'> | null,
   ) => void;
   onClose: () => void;
 }) {
@@ -98,6 +98,15 @@ export function RelationshipTypeEditor({
         <button type="submit" disabled={stale}>
           Lägg sambandstypen i mitt utkast
         </button>
+        <p>
+          En använd typ kan inte tas bort. Ta bort eller byt typ på sambanden först, även upphörda
+          samband och förslag i privata utkast. Objekten kan finnas kvar.
+        </p>
+        {initial.revision > 0 && (
+          <button type="button" disabled={stale} onClick={() => onSubmit(null)}>
+            Ta bort sambandstypen
+          </button>
+        )}
       </fieldset>
       <button type="button" disabled={disabled} onClick={onClose}>
         Stäng sambandstypen utan att skicka

@@ -107,6 +107,15 @@ export function relationshipTypes(database: Database.Database, householdId: stri
         ? existing.before
         : (read().find((type) => type.id === body.id) ?? null);
       if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('type_conflict');
+      if (body.value === null) {
+        if (!before && !existing) throw new MapError('type_conflict');
+        usage.assertUnused('relationshipType', body.id, draft);
+        draft.relationshipTypes = (draft.relationshipTypes ?? []).filter(
+          (item) => item.id !== body.id,
+        );
+        if (before) draft.relationshipTypes.push({ id: body.id, before, after: null });
+        return { ...draft, version: draft.version + 1 };
+      }
       const after: RelationshipType = {
         id: body.id,
         householdId,

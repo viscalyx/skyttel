@@ -58,9 +58,9 @@ export function rejectionMessage(code: string) {
   if (code === 'undo_unavailable')
     return 'Sparandet eller det återställningsbara innehållet finns inte kvar. Inget ångringsförslag lades till.';
   if (code === 'definition_in_use')
-    return 'Definitionen används fortfarande av innehåll eller ett privat utkast. Ta bort användningen eller byt typ först. Ingen del av ångringen eller sparandet genomfördes.';
+    return 'Typen används fortfarande i kartan eller privata utkast, även om innehållet är upphört. För en objekttyp: ta bort eller byt typ på användande objekt. För en sambandstyp: ta bort eller byt typ på sambanden; objekten kan finnas kvar. Ingen ändring genomfördes.';
   if (code === 'field_in_use')
-    return 'Fältet används fortfarande av innehåll eller ett privat utkast. Ta bort fältvärdena först. Ingen del av ångringen eller sparandet genomfördes.';
+    return 'Fältet används fortfarande i kartan eller privata utkast, även om innehållet är upphört. Ta bort fältvärdena och hantera berörda typförslag först. Ingen ändring genomfördes.';
   if (code === 'invalid_relationship_type')
     return 'Ange sambandstypens namn, beskrivning och benämningar från båda hållen. Sambandstyper har inga egna fält.';
   if (code === 'duplicate_relationship')
@@ -71,8 +71,6 @@ export function rejectionMessage(code: string) {
     return 'Ange namn, beskrivning och giltiga fält för objekttypen.';
   if (code === 'field_kind_in_use')
     return 'Fältets värdeslag används redan. Skapa ett nytt fält med rätt värdeslag; tidigare fält och värden finns kvar.';
-  if (code === 'field_removal_unsupported')
-    return 'Behåll tidigare fält. Borttagning av fält hanteras separat från rättelse av definitionen.';
   if (code === 'client_outdated')
     return 'Skyttel har uppdaterats. Kopiera osänd text och ladda om sidan. Kontrollera tidigare sparförsök efter omladdning.';
   if (code === 'operation_conflict')

@@ -78,7 +78,7 @@ afterEach(async () => {
 test('invalid type definitions and malformed values do not change the private draft', async () => {
   const unchanged = await read();
   for (const value of [
-    null,
+    'not a definition',
     [],
     { ...definition, name: null },
     { ...definition, name: ' ' },
@@ -180,7 +180,9 @@ test('used kinds stay fixed across saved and private values and are rechecked at
   expect((await define(changeKind, 1)).status()).toBe(409);
   expect((await save('other-object', other)).status()).toBe(200);
   expect((await define(changeKind, 1)).status()).toBe(409);
-  expect((await define({ ...definition, fields: [] }, 1)).status()).toBe(400);
+  const removal = await define({ ...definition, fields: [] }, 1);
+  expect(removal.status()).toBe(409);
+  expect(await removal.json()).toEqual({ error: 'field_in_use' });
   expect((await post('discard', { version: (await read()).draft.version })).status()).toBe(200);
   const corrected = {
     ...definition,

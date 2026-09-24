@@ -126,13 +126,11 @@ export function objectTypes(database: Database.Database, householdId: string, us
     before: ObjectType | null,
     after: ObjectType,
     draft: MapDraft,
-    allowRemoval = false,
     deferKindChanges = false,
   ) {
     for (const field of before?.fields ?? []) {
       const next = after.fields?.find((item) => item.id === field.id);
       if (!next) {
-        if (!allowRemoval) throw new MapError('field_removal_unsupported', 400);
         usage.assertUnused('objectType', after.id, draft, field.id);
         continue;
       }
@@ -185,7 +183,6 @@ export function objectTypes(database: Database.Database, householdId: string, us
             current ?? read(true).find((type) => type.id === change.id) ?? null,
             change.after,
             draft,
-            true,
             // Conflicting definitions must be reviewed first. Resolution and
             // atomic saving both enforce usage against the chosen definition.
             current?.revision !== change.before?.revision,
@@ -214,7 +211,7 @@ export function objectTypes(database: Database.Database, householdId: string, us
       } else if (change.after && current) {
         const resolved = resolvedDefinition(change.before, change.after, current);
         const after = { ...resolved, ...validate({ ...resolved, fields: resolved.fields ?? [] }) };
-        checkFields(current, after, draft, true);
+        checkFields(current, after, draft);
         change.before = current;
         change.after = after;
       } else {
@@ -252,6 +249,13 @@ export function objectTypes(database: Database.Database, householdId: string, us
         ? existing.before
         : (read().find((item) => item.id === body.id) ?? null);
       if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('type_conflict');
+      if (body.value === null) {
+        if (!before && !existing) throw new MapError('type_conflict');
+        usage.assertUnused('objectType', body.id, draft);
+        draft.objectTypes = (draft.objectTypes ?? []).filter((item) => item.id !== body.id);
+        if (before) draft.objectTypes.push({ id: body.id, before, after: null });
+        return { ...draft, version: draft.version + 1 };
+      }
       const after: ObjectType = {
         id: body.id,
         householdId,
@@ -304,7 +308,6 @@ export function objectTypes(database: Database.Database, householdId: string, us
           current ?? read(true).find((type) => type.id === change.id) ?? null,
           change.after,
           draft,
-          true,
         );
         database
           .prepare(`INSERT INTO object_type (id, householdId, revision, name, description) VALUES (?, ?, ?, ?, ?)

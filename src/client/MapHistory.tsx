@@ -130,7 +130,8 @@ export function MapHistory({
       <h2 id="map-history-title">Ändringshistorik</h2>
       <p>
         Genomförda sparanden i hushållet. Ångra sparandet skapar ett nytt privat förslag mot dagens
-        karta. Granska och spara hela utkastet för att genomföra det.
+        karta. Granska och spara hela utkastet för att genomföra det. Saknade typer som behövs för
+        återställningen följer med som synliga definitionsförslag.
       </p>
       <button type="button" onClick={() => setOpen(!open)}>
         {open ? 'Dölj historik' : 'Visa historik'}

@@ -36,6 +36,9 @@ till motsvarande automatiserade integrationstester.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, privata förslag, dubbletter
   och samtidiga sparanden utan delsparande.
+- [Borttagning av typer och fält](definition-removal.md): granskad
+  katalogborttagning, användningsspärrar för upphört innehåll och privata
+  utkast samt uttrycklig återställning av saknade definitioner med innehållet.
 - [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
   försök efter omstart, återförsöka från en annan klient och kontrollera
   privat tillgång.

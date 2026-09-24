@@ -39,7 +39,7 @@ export function ObjectTypeEditor({
   disabled: boolean;
   stale: boolean;
   onDirty: () => void;
-  onSubmit: (value: Pick<ObjectType, 'name' | 'description' | 'fields'>) => void;
+  onSubmit: (value: Pick<ObjectType, 'name' | 'description' | 'fields'> | null) => void;
   onClose: () => void;
 }) {
   const [value, setValue] = useState({
@@ -120,6 +120,16 @@ export function ObjectTypeEditor({
                 </option>
               ))}
             </select>
+            <button
+              type="button"
+              disabled={stale}
+              onClick={() => {
+                onDirty();
+                setValue({ ...value, fields: value.fields.filter((item) => item.id !== field.id) });
+              }}
+            >
+              Ta bort fält: {field.name || `Eget fält ${index + 1}`}
+            </button>
           </fieldset>
         ))}
         <button
@@ -147,6 +157,15 @@ export function ObjectTypeEditor({
         <button type="submit" disabled={stale}>
           Lägg typförslaget i mitt utkast
         </button>
+        <p>
+          Använda typer och fält kan inte tas bort. Hantera först objekt och fältvärden i kartan och
+          privata utkast, även upphört innehåll. Borttagning visas i utkastet före sparande.
+        </p>
+        {initial.revision > 0 && (
+          <button type="button" disabled={stale} onClick={() => onSubmit(null)}>
+            Ta bort objekttypen
+          </button>
+        )}
       </fieldset>
       <button type="button" disabled={disabled} onClick={onClose}>
         Stäng typformuläret utan att skicka

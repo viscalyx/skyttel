@@ -60,6 +60,10 @@ att skilja objekt med samma namn åt.
 Typdefinitioner och egna fält som ingår i sparandet följer också med i
 granskningen. En definition som fortfarande behövs av annat innehåll
 kan inte tas bort genom ångring utan att användningen hanteras.
+När innehållet behöver en typ som saknas i katalogen visar utkastet
+**Återställ objekttyp** eller **Återställ sambandstyp**. Granska och
+spara definitionen tillsammans med innehållet. Läs om
+[katalogborttagning och återställning](definition-removal.md).
 
 Återställning tar också med äldre fält som behövs för objektets värden.
 Om fältet saknas eller har ett annat värdeslag visas en konflikt för
