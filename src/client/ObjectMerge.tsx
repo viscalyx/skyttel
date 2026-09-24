@@ -18,8 +18,10 @@ import { relationshipLabel } from './RelationshipEditor.js';
 
 export function MergeSourceDetails({
   merge,
+  householdId,
 }: {
   merge: Omit<Merge, 'previousChanges' | 'previousRelationships'>;
+  householdId?: string;
 }) {
   return (
     <details>
@@ -33,7 +35,7 @@ export function MergeSourceDetails({
             Objekttyp: {merge.types.find((type) => type.id === object.typeId)?.name}. Beskrivning:{' '}
             {object.description || 'Ingen beskrivning'}
           </p>
-          <ProfileImage householdId={object.householdId} value={object} />
+          <ProfileImage householdId={householdId ?? object.householdId} value={object} />
           <FinancialFactsDetails facts={object.financialFacts} />
           <CustomFieldsDetails
             type={merge.types.find((type) => type.id === object.typeId)}

@@ -53,6 +53,7 @@ import { usePersonalView } from './use-personal-view.js';
 type Editor = {
   id: string;
   version: number;
+  contentVersion: number;
   baseRevision: number | null;
   typeRevision: number;
   value: ObjectValue;
@@ -81,21 +82,25 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   const path = `/api/households/${encodeURIComponent(householdId)}/map`;
   const [state, setState] = useState<MapState | null>(null);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeGeneration, setMergeGeneration] = useState(1);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [edgeEditor, setEdgeEditor] = useState<{
     id: string;
     version: number;
+    contentVersion: number;
     baseRevision: number | null;
     value: RelationshipValue;
   } | null>(null);
   const [typeEditor, setTypeEditor] = useState<{
     type: ObjectType;
     version: number;
+    contentVersion: number;
     baseRevision: number | null;
   } | null>(null);
   const [edgeTypeEditor, setEdgeTypeEditor] = useState<{
     type: RelationshipType;
     version: number;
+    contentVersion: number;
     baseRevision: number | null;
   } | null>(null);
   const [presentation, setPresentation] = useState<'list' | 'combined' | 'map'>(() =>
@@ -354,7 +359,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
             'Content-Type': 'application/octet-stream',
             'X-Skyttel-Build': buildHeader,
             'X-Skyttel-Draft-Version': String(editor.version),
-            'X-Skyttel-Content-Version': String(state.contentVersion),
+            'X-Skyttel-Content-Version': String(editor.contentVersion),
             'X-Skyttel-Object-Revision': String(editor.baseRevision),
           },
           body: file,
@@ -411,7 +416,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     setError('');
     setStatus('');
     try {
-      const draft = await request<MapDraft & { existingId?: string }>(`${path}/${kind}`, body);
+      const draft = await request<MapDraft & { existingId?: string }>(`${path}/${kind}`, {
+        contentVersion: state.contentVersion,
+        ...(body as Record<string, unknown>),
+      });
       if (draft.existingId) {
         const latest = await request<MapState>(path);
         setState(latest);
@@ -618,6 +626,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
         )?.revision ?? 0,
       id: object?.id ?? crypto.randomUUID(),
       version: state.draft.version,
+      contentVersion: state.contentVersion,
       baseRevision: proposal ? (proposal.before?.revision ?? null) : (object?.revision ?? null),
       value: proposal?.after ??
         object ?? { typeId: effectiveTypes[0]?.id ?? '', name: '', description: '' },
@@ -711,6 +720,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     setEdgeEditor({
       id: edge?.id ?? crypto.randomUUID(),
       version: state.draft.version,
+      contentVersion: state.contentVersion,
       baseRevision: proposal ? (proposal.before?.revision ?? null) : (edge?.revision ?? null),
       value: proposal?.after ??
         edge ?? { typeId: '', sourceId: '', targetId: '', knowledge: 'known' },
@@ -724,6 +734,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     void action(kind, {
       id: item.id,
       version: state.draft.version,
+      contentVersion: state.contentVersion,
       baseRevision: proposal ? (proposal.before?.revision ?? null) : item.revision,
       value: null,
     });
@@ -945,13 +956,15 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 }
               />
               <MapHistory
+                generation={state.contentVersion}
                 path={path}
                 version={state.draft.version}
                 disabled={pending || dirty || blocked}
                 onAccessLost={loseAccess}
-                onUndo={(receipt) =>
+                onUndo={(receipt, contentVersion) =>
                   void action('undo', {
                     version: state.draft.version,
+                    contentVersion,
                     userId: receipt.userId,
                     operationId: receipt.operationId,
                   })
@@ -980,6 +993,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                           setTypeEditor({
                             type,
                             version: state.draft.version,
+                            contentVersion: state.contentVersion,
                             baseRevision: proposal
                               ? (proposal.before?.revision ?? null)
                               : type.revision,
@@ -1009,6 +1023,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       description: '',
                     },
                     version: state.draft.version,
+                    contentVersion: state.contentVersion,
                     baseRevision: null,
                   });
                 }}
@@ -1020,11 +1035,15 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   key={typeEditor.type.id}
                   initial={typeEditor.type}
                   disabled={pending || blocked}
-                  stale={typeEditor.version !== state.draft.version}
+                  stale={
+                    typeEditor.version !== state.draft.version ||
+                    typeEditor.contentVersion !== state.contentVersion
+                  }
                   onDirty={() => setDirty(true)}
                   onSubmit={(value) =>
                     void action('object-type', {
                       version: typeEditor.version,
+                      contentVersion: typeEditor.contentVersion,
                       id: typeEditor.type.id,
                       baseRevision: typeEditor.baseRevision,
                       value,
@@ -1060,6 +1079,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                           setEdgeTypeEditor({
                             type,
                             version: state.draft.version,
+                            contentVersion: state.contentVersion,
                             baseRevision: proposal
                               ? (proposal.before?.revision ?? null)
                               : type.revision,
@@ -1089,6 +1109,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       description: '',
                     },
                     version: state.draft.version,
+                    contentVersion: state.contentVersion,
                     baseRevision: null,
                   });
                 }}
@@ -1100,11 +1121,15 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   key={edgeTypeEditor.type.id}
                   initial={edgeTypeEditor.type}
                   disabled={pending || blocked}
-                  stale={edgeTypeEditor.version !== state.draft.version}
+                  stale={
+                    edgeTypeEditor.version !== state.draft.version ||
+                    edgeTypeEditor.contentVersion !== state.contentVersion
+                  }
                   onDirty={() => setDirty(true)}
                   onSubmit={(value) =>
                     void action('relationship-type', {
                       version: edgeTypeEditor.version,
+                      contentVersion: edgeTypeEditor.contentVersion,
                       id: edgeTypeEditor.type.id,
                       baseRevision: edgeTypeEditor.baseRevision,
                       value,
@@ -1203,6 +1228,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 onClick={() => {
                   setEditor(null);
                   setEdgeEditor(null);
+                  setMergeGeneration(state.contentVersion);
                   setMergeOpen(true);
                   setDirty(true);
                 }}
@@ -1214,7 +1240,12 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   state={state}
                   selectedId={selection?.kind === 'object' ? selection.id : undefined}
                   disabled={pending || blocked}
-                  onSubmit={(body) => void action('merge', body)}
+                  onSubmit={(body) =>
+                    void action('merge', {
+                      ...(body as Record<string, unknown>),
+                      contentVersion: mergeGeneration,
+                    })
+                  }
                   onClose={() => {
                     setMergeOpen(false);
                     setDirty(false);
@@ -1406,6 +1437,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                           onClick={() =>
                             void action('draft', {
                               version: editor.version,
+                              contentVersion: editor.contentVersion,
                               id: editor.id,
                               baseRevision: editor.baseRevision,
                               value: null,
@@ -1498,7 +1530,12 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   objects={displayed}
                   initial={edgeEditor}
                   disabled={pending || blocked}
-                  onSubmit={(body) => void action('relationship', body)}
+                  onSubmit={(body) =>
+                    void action('relationship', {
+                      ...(body as Record<string, unknown>),
+                      contentVersion: edgeEditor.contentVersion,
+                    })
+                  }
                   onClose={() => {
                     setEdgeEditor(null);
                     setDirty(false);
@@ -1530,6 +1567,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       onClick={() =>
                         void action('discard-change', {
                           version: state.draft.version,
+                          contentVersion: state.contentVersion,
                           kind: 'relationshipType',
                           id: change.id,
                         })
@@ -1566,6 +1604,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                             onClick={() =>
                               void action('resolve', {
                                 version: state.draft.version,
+                                contentVersion: state.contentVersion,
                                 conflict,
                                 choice: 'saved',
                               })
@@ -1579,6 +1618,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                             onClick={() =>
                               void action('resolve', {
                                 version: state.draft.version,
+                                contentVersion: state.contentVersion,
                                 conflict,
                                 choice: 'proposed',
                               })
@@ -1612,6 +1652,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       onClick={() =>
                         void action('discard-change', {
                           version: state.draft.version,
+                          contentVersion: state.contentVersion,
                           kind: 'objectType',
                           id: change.id,
                         })
@@ -1639,6 +1680,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                             onClick={() =>
                               void action('resolve', {
                                 version: state.draft.version,
+                                contentVersion: state.contentVersion,
                                 conflict,
                                 choice: 'saved',
                               })
@@ -1652,6 +1694,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                             onClick={() =>
                               void action('resolve', {
                                 version: state.draft.version,
+                                contentVersion: state.contentVersion,
                                 conflict,
                                 choice: 'proposed',
                               })
@@ -1692,6 +1735,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                           onClick={() =>
                             void action('discard-change', {
                               version: state.draft.version,
+                              contentVersion: state.contentVersion,
                               kind: 'object',
                               id: change.id,
                             })
@@ -1724,6 +1768,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       onClick={() =>
                         void action('discard-change', {
                           version: state.draft.version,
+                          contentVersion: state.contentVersion,
                           kind: 'object',
                           id: change.id,
                         })
@@ -1781,6 +1826,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       onClick={() =>
                         void action('discard-change', {
                           version: state.draft.version,
+                          contentVersion: state.contentVersion,
                           kind: 'relationship',
                           id: change.id,
                         })

@@ -13,6 +13,9 @@ betyder inte att dess manuella prov är genomfört.
 
 ## Områden
 
+- [Fullständig återimport](household-import.md): uttrycklig ersättning,
+  bevarad åtkomst, privata uppgifter, bildhistorik och ångring efter omstart.
+
 - [Fullständig export](household-export.md): privata uppgifter före
   export, nedladdning, avbrott, återkallad aktiv hämtning, giltighetstid samt
   bevarade identiteter, bildversioner, utkast och placeringar efter

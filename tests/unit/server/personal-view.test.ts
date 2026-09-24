@@ -54,6 +54,7 @@ test('independent moves merge while stale overlapping moves and settings are rej
       .status,
   ).toBe(409);
   expect(await (await client.request(`${path}/view`)).json()).toEqual({
+    contentVersion: 1,
     positions: [
       { id: 'bike', version: 1, x: 4, y: 0, z: 1 },
       { id: 'lamp', version: 2, x: 3, y: 0, z: 1 },
@@ -90,6 +91,7 @@ test('positions and settings require current membership and never expose another
   };
   await invite();
   expect(await (await member.request(`${path}/view`)).json()).toEqual({
+    contentVersion: 1,
     positions: [],
     settings: { ...defaultViewSettings, version: 0 },
   });
@@ -141,6 +143,7 @@ test('invalid coordinates, unknown objects, forged owners and malformed settings
     expect((await client.json(`${path}/view/settings`, { version: 0, settings })).status).toBe(400);
   }
   expect(await (await client.request(`${path}/view`)).json()).toEqual({
+    contentVersion: 1,
     positions: [],
     settings: { ...defaultViewSettings, version: 0 },
   });

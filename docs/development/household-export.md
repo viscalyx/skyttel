@@ -28,7 +28,7 @@ The manifest contains:
 | `version` | Integer `1`; the public archive format version. |
 | `createdAt` | UTC ISO timestamp when the content snapshot is complete. |
 | `householdId` | The stable source household identity. |
-| `schemaVersion` | Source database migration version; currently `14`. |
+| `schemaVersion` | Source database migration version; currently `15`. |
 | `parts` | Exactly two records, for `content.json` then `images.bin`. |
 
 Each part record contains `path`, the uncompressed byte count `bytes`, and
@@ -189,3 +189,6 @@ complete replacement or erasure, so a new export cannot start in the gap.
 Advancing `contentVersion` also makes older prepared handles unavailable;
 it does not replace cancellation of live readers. Bytes already delivered
 to a client cannot be recalled by server-side erasure.
+
+Import support and historical ownership are specified in
+[the replacement guide](household-import.md).

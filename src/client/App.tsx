@@ -4,6 +4,7 @@ import type { Administration, HouseholdInvitation } from '../shared/administrati
 import { householdNameMaxLength, normalizeHouseholdName } from '../shared/household-name.js';
 import { Assistants } from './Assistants.js';
 import { HouseholdExport } from './HouseholdExport.js';
+import { HouseholdImport } from './HouseholdImport.js';
 import { HouseholdMap } from './HouseholdMap.js';
 import { MapRequestError as RequestError, request } from './map-request.js';
 
@@ -747,7 +748,8 @@ function AdministrationPage({ userId, onReload }: { userId: string; onReload: ()
           ))}
         </ul>
       )}
-      <HouseholdExport key={id} householdId={id ?? ''} onAccessLost={onReload} />
+      <HouseholdExport key={`export-${id}`} householdId={id ?? ''} onAccessLost={onReload} />
+      <HouseholdImport key={`import-${id}`} householdId={id ?? ''} onAccessLost={onReload} />
     </section>
   );
 }

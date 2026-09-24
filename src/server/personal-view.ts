@@ -44,12 +44,14 @@ const preferences = z
 /** Personal presentation has per-object versions, independent of the shared map. */
 export function personalView(database: Database.Database, actorId: string, householdId: string) {
   let userId = actorId;
+  let contentVersion = 1;
   function transaction<T>(action: (ids: Set<string>) => T) {
     return database
       .transaction(() => {
         // Read current membership and this user's draft inside the write lock.
         const map = householdMap(database, actorId, householdId).read();
         userId = map.userId;
+        contentVersion = map.contentVersion;
         const ids = new Set(map.objects.map(({ id }) => id));
         for (const change of map.draft.changes) ids.add(change.id);
         return action(ids);
@@ -76,6 +78,7 @@ export function personalView(database: Database.Database, actorId: string, house
   return {
     read(): PersonalView {
       return transaction((ids) => ({
+        contentVersion,
         positions: positions().filter(({ id }) => ids.has(id)),
         settings: settings(),
       }));

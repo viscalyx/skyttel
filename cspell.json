@@ -208,7 +208,10 @@
     "oskickade",
     "filutforskare",
     "filväljaren",
-    "avbrottskoden"
+    "avbrottskoden",
+    "importfil",
+    "ångrandet",
+    "bilddelen"
   ],
   "overrides": [
     {

@@ -20,6 +20,7 @@ import { undoSave } from './map-undo.js';
 import { assertMergeEditable, proposeMerge } from './object-merge.js';
 import { objectTypes, readCustomValues } from './object-types.js';
 import { type EncodedImage, profileImages } from './profile-images.js';
+import { projectReceiptScope } from './project-content-scope.js';
 import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
 import { keepIndependent } from './undo-facts.js';
@@ -235,7 +236,7 @@ export function householdMap(database: Database.Database, actorId: string, house
           throw new MapError('undo_draft_overlap');
         const proposed = undoSave(
           readState(),
-          receipt,
+          projectReceiptScope(receipt, householdId),
           tombstones,
           types.read(true),
           edgeTypes.read(true),

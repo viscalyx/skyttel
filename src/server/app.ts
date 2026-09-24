@@ -12,6 +12,7 @@ import { assistantRoutes } from './assistant-routes.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
 import { householdExportRoutes } from './household-export-routes.js';
+import { householdImportRoutes } from './household-import-routes.js';
 import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from './households.js';
 import { createLoginMethods } from './login-methods.js';
 import { MapError } from './map.js';
@@ -60,14 +61,16 @@ export function createApp({
     await next();
   });
   app.use('/api/*', (context, next) =>
-    bodyLimit({
-      maxSize:
-        context.req.method === 'POST' &&
-        /^\/api\/households\/[^/]+\/profile-images\/[^/]+$/.test(context.req.path)
-          ? imageUploadLimit
-          : 16_384,
-      onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
-    })(context, next),
+    context.req.method === 'POST' && /^\/api\/households\/[^/]+\/imports$/.test(context.req.path)
+      ? next()
+      : bodyLimit({
+          maxSize:
+            context.req.method === 'POST' &&
+            /^\/api\/households\/[^/]+\/profile-images\/[^/]+$/.test(context.req.path)
+              ? imageUploadLimit
+              : 16_384,
+          onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
+        })(context, next),
   );
   app.onError((error, context) => {
     if (error instanceof AdministrationError || error instanceof MapError)
@@ -176,6 +179,7 @@ export function createApp({
   });
   app.route('/api', administrationRoutes(database, auth, config.origin));
   app.route('/api', householdExportRoutes(database, auth, config.origin));
+  app.route('/api', householdImportRoutes(database, auth, config.origin));
   app.route('/api', linking.routes);
   app.route('/api', mapRoutes(database, auth, config.origin));
   app.route('/api', profileImageRoutes(database, auth, config.origin));

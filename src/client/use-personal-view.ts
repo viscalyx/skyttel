@@ -74,7 +74,9 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
           setView(latest);
           setMessage(
             error instanceof MapRequestError &&
-              ['position_conflict', 'view_settings_conflict'].includes(error.code)
+              ['position_conflict', 'view_settings_conflict', 'content_conflict'].includes(
+                error.code,
+              )
               ? 'En annan klient har ändrat din vy. Din äldre ändring sparades inte. Aktuella placeringar och inställningar visas.'
               : 'Ändringen kunde inte bekräftas. Aktuella placeringar och inställningar visas.',
           );
@@ -96,6 +98,7 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
       if (!current.current || pending) return;
       return update('position', {
         id,
+        contentVersion: current.current.contentVersion,
         position,
         version: current.current.positions.find((item) => item.id === id)?.version ?? 0,
       });
@@ -104,7 +107,11 @@ export function usePersonalView(path: string, onAccessLost: () => void) {
       if (!current.current || pending) return;
       const version = current.current.settings.version;
       setView({ ...current.current, settings: { ...settings, version } });
-      return update('settings', { settings, version });
+      return update('settings', {
+        settings,
+        version,
+        contentVersion: current.current.contentVersion,
+      });
     },
   };
 }

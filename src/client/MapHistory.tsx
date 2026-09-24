@@ -19,7 +19,9 @@ function ObjectDetails({
   value,
   type,
   absent,
+  householdId,
 }: {
+  householdId: string;
   value: MapObject | null;
   type: ObjectType;
   absent: string;
@@ -27,7 +29,7 @@ function ObjectDetails({
   return value ? (
     <>
       <p>Namn: {value.name}.</p>
-      <ProfileImage householdId={value.householdId} value={value} />
+      <ProfileImage householdId={householdId} value={value} />
       <details>
         <summary>Objektets identitet</summary>
         <p>{value.id}</p>
@@ -87,17 +89,21 @@ function EdgeDetails({
 
 export function MapHistory({
   path,
+  generation = 1,
   version,
   disabled,
   onUndo,
   onAccessLost,
 }: {
   path: string;
+  generation?: number;
   version: number;
   disabled: boolean;
-  onUndo: (receipt: SaveReceipt) => void;
+  onUndo: (receipt: SaveReceipt, generation: number) => void;
   onAccessLost: () => void;
 }) {
+  const householdId = decodeURIComponent(path.split('/')[3]);
+  const [loadedGeneration, setLoadedGeneration] = useState(generation);
   const [open, setOpen] = useState(false);
   const [history, setHistory] = useState<SaveReceipt[] | null>(null);
   const [error, setError] = useState('');
@@ -114,7 +120,10 @@ export function MapHistory({
       controller.signal,
     )
       .then((result) => {
-        if (!controller.signal.aborted) setHistory(result.history);
+        if (!controller.signal.aborted) {
+          setHistory(result.history);
+          setLoadedGeneration(generation);
+        }
       })
       .catch((failure) => {
         if (controller.signal.aborted) return;
@@ -127,7 +136,7 @@ export function MapHistory({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [open, path, version, reload, onAccessLost]);
+  }, [open, path, version, generation, reload, onAccessLost]);
   return (
     <section aria-labelledby="map-history-title" className="draft-review">
       <h2 id="map-history-title">Ändringshistorik</h2>
@@ -196,7 +205,9 @@ export function MapHistory({
               {receipt.changes.map((change) => (
                 <div key={change.after?.id ?? change.before?.id}>
                   <h4>Objekt: {change.after?.name ?? change.before?.name}</h4>
-                  {change.merge && <MergeSourceDetails merge={change.merge} />}
+                  {change.merge && (
+                    <MergeSourceDetails householdId={householdId} merge={change.merge} />
+                  )}
                   {change.merge && (
                     <p>
                       Sammanslagning: identitet {change.merge.absorbedId} tas in i{' '}
@@ -205,12 +216,18 @@ export function MapHistory({
                   )}
                   <h5>Före sparandet</h5>
                   <ObjectDetails
+                    householdId={householdId}
                     value={change.before}
                     type={change.beforeType ?? change.type}
                     absent="Fanns inte i kartan"
                   />
                   <h5>Efter sparandet</h5>
-                  <ObjectDetails value={change.after} type={change.type} absent="Borttaget" />
+                  <ObjectDetails
+                    householdId={householdId}
+                    value={change.after}
+                    type={change.type}
+                    absent="Borttaget"
+                  />
                 </div>
               ))}
               {receipt.relationships?.map((change) => (
@@ -228,7 +245,11 @@ export function MapHistory({
                   <EdgeDetails value={change.after} change={change} absent="Borttaget" />
                 </div>
               ))}
-              <button type="button" disabled={disabled || loading} onClick={() => onUndo(receipt)}>
+              <button
+                type="button"
+                disabled={disabled || loading}
+                onClick={() => onUndo(receipt, loadedGeneration)}
+              >
                 Ångra sparandet
               </button>
             </article>

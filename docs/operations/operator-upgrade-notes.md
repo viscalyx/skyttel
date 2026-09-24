@@ -5,6 +5,24 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Atomic household replacement
+
+Keep a matching database backup before upgrade. The upgrade separates
+historical content owners from authenticated users. To return to an older
+image, stop the application and restore its matching backup. Reload open
+clients; all mutations now require the content generation they reviewed.
+
+Allow persistent disk space for an uploaded archive and its extracted
+parts. Import accepts supported full archives up to about 1.1 GB, with a
+32 MiB content part and a 1 GiB image part. Interrupted preparations are
+removed at startup. A committed replacement stays committed after restart.
+If cleanup fails, content remains unavailable until cleanup completes;
+check the durable import status before retrying or restoring a backup.
+
+Existing access is preserved. Imported historical identities do not create
+logins. Private content from another installation needs explicit verified
+owner mapping before a current user can resume it.
+
 ### Complete household export
 
 Rebuild the complete application image. Verify that only current

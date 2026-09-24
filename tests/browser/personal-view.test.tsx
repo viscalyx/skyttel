@@ -24,7 +24,11 @@ const state = {
 };
 
 function service() {
-  let view: PersonalView = { positions: [], settings: { ...defaultViewSettings, version: 0 } };
+  let view: PersonalView = {
+    contentVersion: 1,
+    positions: [],
+    settings: { ...defaultViewSettings, version: 0 },
+  };
   let failure: 'network' | 'conflict' | 'denied' | 'uncertain' | null = null;
   let readFailure = false;
   let initialFailure = false;
@@ -45,6 +49,7 @@ function service() {
       }
       if (failure === 'conflict') {
         view = {
+          contentVersion: 1,
           positions: [{ id: 'lamp', x: 1, y: 4, z: -2, version: 2 }],
           settings: { ...defaultViewSettings, axisPinned: true, version: 2 },
         };
@@ -59,7 +64,7 @@ function service() {
       const body = JSON.parse(init?.body as string);
       if (url.endsWith('position')) {
         const position = { ...body.position, id: body.id, version: body.version + 1 };
-        view = { ...view, positions: [position] };
+        view = { ...view, contentVersion: 1, positions: [position] };
         return Response.json(position);
       }
       const settings = { ...body.settings, version: body.version + 1 };

@@ -17,6 +17,7 @@ export const defaultViewSettings: ViewSettings = {
   allLabels: false,
 };
 export type PersonalView = {
+  contentVersion: number;
   positions: PersonalPosition[];
   settings: ViewSettings & { version: number };
 };

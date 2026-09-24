@@ -90,6 +90,7 @@ state.draft.relationships = state.relationships.map((edge, index) => ({
 
 function MapView({ relationships = state.relationships } = {}) {
   const [view, setView] = useState<PersonalView>({
+    contentVersion: 1,
     positions: [],
     settings: { ...defaultViewSettings, version: 0 },
   });
@@ -114,6 +115,7 @@ function MapView({ relationships = state.relationships } = {}) {
           move: async (id, position) =>
             setView((previous) => ({
               ...previous,
+              contentVersion: 1,
               positions: [
                 ...previous.positions.filter((item) => item.id !== id),
                 { ...position, id, version: 1 },
