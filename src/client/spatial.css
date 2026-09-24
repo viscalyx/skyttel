@@ -175,6 +175,9 @@
   stroke: #d5fff4;
   stroke-width: 3;
 }
+.spatial-map.crowded .connection:not(.selected) {
+  opacity: 0.05;
+}
 .spatial-labels .spatial-edge {
   background: #24423f;
   border-color: #53766e;

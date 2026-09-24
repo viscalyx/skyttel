@@ -281,7 +281,7 @@ export function SpatialMap({
   );
   const occupied: { x: number; y: number; width: number; height: number }[] = [];
   function place(x: number, y: number, width: number, height: number) {
-    let target = { x, y, width, height };
+    const target = { x, y, width, height };
     const surfaceWidth = canvas.current?.clientWidth ?? 0;
     const surfaceHeight = canvas.current?.clientHeight ?? 0;
     for (let step = 0; step < 49; step += 1) {
@@ -306,20 +306,92 @@ export function SpatialMap({
             Math.abs(other.y - candidate.y) < (other.height + height) / 2 + 8,
         )
       ) {
-        target = candidate;
-        break;
+        occupied.push(candidate);
+        return candidate;
       }
     }
-    occupied.push(target);
-    return target;
+    // Fill remaining room for small focused groups before hiding any label.
+    for (let row = height / 2 + 8; row <= surfaceHeight - height / 2 - 8; row += height + 12) {
+      for (
+        let column = width / 2 + 8;
+        column <= surfaceWidth - width / 2 - 8;
+        column += width + 12
+      ) {
+        const candidate = { x: column, y: row, width, height };
+        if (
+          !occupied.some(
+            (other) =>
+              Math.abs(other.x - column) < (other.width + width) / 2 + 8 &&
+              Math.abs(other.y - row) < (other.height + height) / 2 + 8,
+          )
+        ) {
+          occupied.push(candidate);
+          return candidate;
+        }
+      }
+    }
+    if (allLabels) {
+      occupied.push(target);
+      return target;
+    }
+    return null;
   }
-  const labels = new Map(
-    [...locations].map(([id, point]) => {
+  const candidates = [
+    ...[...locations].flatMap(([id, point]) => {
+      const object = objects.get(id);
+      if (!object) return [];
       const size = labelSizes.get(`object-${id}`) ?? {
-        width: Math.min(240, (objects.get(id)?.name.length ?? 0) * 8 + 95),
+        width: Math.min(240, object.name.length * 8 + 95),
         height: 50,
       };
-      return [id, place(point.x, point.y, size.width, size.height)];
+      return [
+        {
+          key: `object-${id}`,
+          ...point,
+          ...size,
+          priority:
+            selection?.kind === 'object' && selection.id === id
+              ? 0
+              : state.draft.changes.some((change) => change.id === id)
+                ? 2
+                : 3,
+        },
+      ];
+    }),
+    ...[...relationships.values()].flatMap((edge) => {
+      const source = locations.get(edge.sourceId);
+      const target = edge.targetId ? locations.get(edge.targetId) : undefined;
+      if (!source || (edge.targetId && !target)) return [];
+      const end = target ?? { x: source.x + 100, y: source.y + 80 };
+      const size = labelSizes.get(`relationship-${edge.id}`) ?? { width: 170, height: 42 };
+      return [
+        {
+          key: `relationship-${edge.id}`,
+          x: (source.x + end.x) / 2,
+          y: (source.y + end.y) / 2 + size.height / 2 + 11,
+          ...size,
+          priority:
+            selection?.kind === 'relationship' && selection.id === edge.id
+              ? 0
+              : selection?.kind === 'object' &&
+                  [edge.sourceId, edge.targetId].includes(selection.id)
+                ? 1
+                : state.draft.relationships?.some((change) => change.id === edge.id)
+                  ? 2
+                  : 4,
+        },
+      ];
+    }),
+  ].sort((a, b) => a.priority - b.priority || a.key.localeCompare(b.key));
+  const placed = new Map<string, { x: number; y: number; width: number; height: number }>();
+  for (const candidate of candidates) {
+    const label = place(candidate.x, candidate.y, candidate.width, candidate.height);
+    if (label) placed.set(candidate.key, label);
+  }
+  const labels = new Map(
+    [...locations.keys()].flatMap((id) => {
+      const label = placed.get(`object-${id}`);
+      return label ? [[id, label] as const] : [];
     }),
   );
   const edges = [...relationships.values()].flatMap((edge) => {
@@ -332,17 +404,17 @@ export function SpatialMap({
       selection?.kind === 'relationship'
         ? selection.id === edge.id
         : selection?.id === edge.sourceId || selection?.id === edge.targetId;
-    const size = labelSizes.get(`relationship-${edge.id}`) ?? { width: 170, height: 42 };
-    const label = place(
-      (source.x + end.x) / 2,
-      (source.y + end.y) / 2 + size.height / 2 + 11,
-      size.width,
-      size.height,
-    );
-    return [{ edge, source, end, tip, selected, ...label }];
+    return [{ edge, source, end, tip, selected }];
+  });
+  const labeledEdges = edges.flatMap((edge) => {
+    const label = placed.get(`relationship-${edge.edge.id}`);
+    return label ? [{ ...edge, ...label }] : [];
   });
   return (
-    <section className="spatial-map" aria-label="Rymdkarta">
+    <section
+      className={`spatial-map${!allLabels && placed.size < candidates.length ? ' crowded' : ''}`}
+      aria-label="Rymdkarta"
+    >
       <h2>Rymdkarta</h2>
       <dialog
         ref={menu}
@@ -511,7 +583,7 @@ export function SpatialMap({
               )
             );
           })}
-          {edges.map(({ edge, source, end, x, y }) => (
+          {labeledEdges.map(({ edge, source, end, x, y }) => (
             <line
               key={`edge-leader-${edge.id}`}
               className="label-leader"
@@ -552,7 +624,7 @@ export function SpatialMap({
           ))}
         </svg>
         <div className="spatial-labels" ref={labelLayer}>
-          {edges.map(({ edge, x, y, selected }) => (
+          {labeledEdges.map(({ edge, x, y, selected }) => (
             <button
               key={edge.id}
               data-layout-id={`relationship-${edge.id}`}
@@ -577,7 +649,7 @@ export function SpatialMap({
           ))}
           {[...locations.values()].map((point) => {
             const object = objects.get(point.id);
-            if (!object) return null;
+            if (!object || !labels.has(point.id)) return null;
             return (
               <button
                 key={point.id}
@@ -787,6 +859,12 @@ export function SpatialMap({
           Alla etiketter
         </label>
       </div>
+      {!allLabels && placed.size < candidates.length && (
+        <p className="label-note">
+          {placed.size} av {candidates.length} etiketter visas för läsbarhet. Alla objekt och
+          samband finns i listan. Sök eller välj ett objekt och visa dess kopplingar.
+        </p>
+      )}
       {allLabels && (
         <p className="label-note">Närmare utsnitt. Panorera för att se fler etiketter.</p>
       )}

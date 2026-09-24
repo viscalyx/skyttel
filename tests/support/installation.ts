@@ -7,6 +7,7 @@ import { createApp } from '../../src/server/app.js';
 import { createAuth, verifyAuthSchema } from '../../src/server/auth.js';
 import type { Config } from '../../src/server/config.js';
 import { openDatabase } from '../../src/server/database.js';
+import { seedLargeMap } from './large-map.js';
 import { legacyAuth } from './legacy-auth.js';
 
 export type Identity = {
@@ -133,6 +134,9 @@ export async function createInstallation(
     origin: config.origin,
     seedDemo() {
       return seedDemo(database, config);
+    },
+    seedLargeMap(userId: string, householdId: string) {
+      seedLargeMap(database, userId, householdId);
     },
     directory,
     setIdentity(value: Identity) {

@@ -91,6 +91,11 @@ npm run build
 npm run test:integration -- tests/integration/bootstrap.spec.ts
 ```
 
+For controlled large-map timing measurements, run `npm run measure:map`
+separately from other suites. The [measurement plan](large-map-performance.md)
+defines the synthetic dataset, network conditions, readiness boundaries and
+report options. Functional large-map checks remain in the integration suite.
+
 To generate an HTML report and open it on port 9324, use:
 
 ```sh

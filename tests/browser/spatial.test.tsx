@@ -485,6 +485,54 @@ test('graphics navigation and label modes expose selectable objects and directed
   await expect.element(page.getByRole('status')).toHaveTextContent('Hela rymden');
 });
 
+test('dense labels remain readable and explicit all-label mode retains access to every label', async () => {
+  const objects = Array.from({ length: 100 }, (_, index) => ({
+    ...state.objects[0],
+    id: `dense-${index}`,
+    name: `Tätt objekt ${index}`,
+  }));
+  render(
+    <SpatialMap
+      state={{ ...state, objects, relationships: [], draft: { version: 0, changes: [] } }}
+      active
+      objects={new Map(objects.map((object) => [object.id, object]))}
+      relationships={new Map()}
+      selection={{ kind: 'object', id: 'dense-99' }}
+      disabled={false}
+      onSelect={() => {}}
+      onSelectRelationship={() => {}}
+      onFocus={() => {}}
+      onClear={() => {}}
+      onReset={() => {}}
+      onRemove={() => {}}
+    />,
+  );
+  await expect
+    .element(page.getByRole('button', { name: 'Välj objekt: Tätt objekt 99', exact: true }))
+    .toBeVisible();
+  await expect
+    .poll(() => {
+      const boxes = [...document.querySelectorAll('.spatial-labels button')].map((label) =>
+        label.getBoundingClientRect(),
+      );
+      return (
+        boxes.length > 0 &&
+        boxes.length < 100 &&
+        boxes.every((a, index) =>
+          boxes
+            .slice(index + 1)
+            .every(
+              (b) =>
+                a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom,
+            ),
+        )
+      );
+    })
+    .toBe(true);
+  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await expect.poll(() => document.querySelectorAll('.spatial-labels button').length).toBe(100);
+});
+
 test('direction rendering retains selectable self references and explicitly absent targets', async () => {
   render(
     <MapView

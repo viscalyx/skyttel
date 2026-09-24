@@ -27,6 +27,8 @@ till motsvarande automatiserade integrationstester.
   fokus, filter, etiketter, pekmenyer, upphörd status, ändringssymboler och bevarad
   oskickad text vid vybyte, orientering och grafikavbrott samt fungerande
   navigation när tillgången återkallas i helskärm.
+- [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
+  genom sidvisning, sökning och fokus, med bevarad text och placering.
 - [Personliga placeringar](personal-view.md): flyttning med mus, pekgester
   och tangentbord, visningsval, samtidighetskonflikter, bevarad text,
   beständighet och avskildhet mellan användare samt inramning vid sen

@@ -34,6 +34,7 @@
     "test:integration": "playwright test",
     "test:report": "playwright show-report --port 9324",
     "test:container": "node scripts/check-container.mjs",
+    "measure:map": "npm run build && tsx scripts/measure-map.ts",
     "check": "npm run typecheck && npm run lint && npm run lint:docs && npm run test:gates && npm run build && npm run test:unit:coverage && npm run test:integration",
     "purge:install": "node scripts/purge-install.mjs"
   },

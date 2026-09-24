@@ -24,6 +24,12 @@ vid sökningen. Klick på tom rymd, Escape utanför formuläret eller
 **Visa hela rymden** lämnar fokus och rensar sökning och typfilter.
 Kamerans vinkel, zoom och panorering behålls.
 
+Längre listor visar 50 poster per sida. Använd sidvalet eller
+**Föregående sida** och **Nästa sida** för att nå resten. Sökning gäller
+alla objekt, oavsett listsida. **Visa valt innehåll i listan** återgår till
+sidan med ditt valda objekt eller samband. Formulärtexten behålls när du
+byter sida. Sökning och ändrat fokus börjar på första sidan igen.
+
 ## Navigera rymden
 
 Dra i tom rymd för att rotera. Använd mushjulet eller nyp med två fingrar
@@ -33,8 +39,14 @@ lutning och zoom. Kartdrag markerar inte etiketternas text.
 
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Det ändrar inga hushållsuppgifter.
-**Alla etiketter** ger ett närmare utsnitt som går att
-panorera. Objektnamn får plats före sambandens etiketter. Korta stödlinjer
+Översikten visar de etiketter som får plats utan överlappning. Valda objekt
+och samband, deras kopplingar och utkast prioriteras. Ett besked anger hur
+många etiketter som visas; innehållet och dina personliga placeringar ändras
+inte. Sök, välj i listan och använd fokus för att följa ett tätt sammanhang.
+Bakgrundens samband tonas ned mer i täta vyer; valda samband framhävs.
+
+**Alla etiketter** ger ett närmare utsnitt som går att panorera och visar
+även etiketter som överlappar. Korta stödlinjer
 till etiketter är heldragna och långa stödlinjer är streckade. Listan och
 detaljerna ger tillgång till hela innehållet även när etiketter ligger
 utanför det synliga utsnittet. På en smal telefon kan även en mindre

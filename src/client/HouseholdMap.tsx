@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   type DraftConflict,
   draftConflicts,
@@ -35,6 +35,7 @@ import {
   ObjectTypeDetails,
   ObjectTypeEditor,
 } from './ObjectTypes.js';
+import { PagedList } from './PagedList.js';
 import { ProfileImage, ProfileImageEditor } from './ProfileImage.js';
 import { RelationshipEditor, relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeDetails, RelationshipTypeEditor } from './RelationshipTypes.js';
@@ -488,7 +489,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     }
   }
 
-  const effectiveTypes = proposedObjectTypes(state?.types ?? [], state?.draft.objectTypes);
+  const effectiveTypes = useMemo(
+    () => proposedObjectTypes(state?.types ?? [], state?.draft.objectTypes),
+    [state],
+  );
   const effectiveEdgeTypes = proposedRelationshipTypes(
     state?.relationshipTypes ?? [],
     state?.draft.relationshipTypes,
@@ -620,51 +624,54 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     });
     setDirty(false);
   }
-  const displayed = state
-    ? new Map(state.objects.map((object) => [object.id, object]))
-    : new Map<string, MapObject>();
-  for (const change of state?.draft.changes ?? []) {
-    if (change.after)
-      displayed.set(change.id, {
-        ...change.after,
-        id: change.id,
-        householdId,
-        revision: change.before?.revision ?? 0,
-      });
-  }
-  const displayedEdges = proposedRelationships(
-    state?.relationships ?? [],
-    state?.draft.relationships,
-  );
-  const spatialEdges = new Map(displayedEdges);
-  for (const change of state?.draft.relationships ?? []) {
-    if (!change.after && change.before) spatialEdges.set(change.id, change.before);
-  }
-  const connected = new Set([focusId]);
-  for (const edge of spatialEdges.values()) {
-    if (edge.sourceId === focusId || edge.targetId === focusId) {
-      connected.add(edge.sourceId);
-      connected.add(edge.targetId);
+  const { displayed, displayedEdges, visibleObjects, visibleEdges } = useMemo(() => {
+    const displayed = state
+      ? new Map(state.objects.map((object) => [object.id, object]))
+      : new Map<string, MapObject>();
+    for (const change of state?.draft.changes ?? []) {
+      if (change.after)
+        displayed.set(change.id, {
+          ...change.after,
+          id: change.id,
+          householdId,
+          revision: change.before?.revision ?? 0,
+        });
     }
-  }
-  const visibleObjects = new Map(
-    [...displayed].filter(
-      ([, object]) =>
-        (!focusId || connected.has(object.id)) &&
-        (!typeFilter || object.typeId === typeFilter) &&
-        `${object.name} ${effectiveTypes.find((type) => type.id === object.typeId)?.name ?? ''}`
-          .toLocaleLowerCase('sv')
-          .includes(query.toLocaleLowerCase('sv')),
-    ),
-  );
-  const visibleEdges = new Map(
-    [...spatialEdges].filter(
-      ([, edge]) =>
-        visibleObjects.has(edge.sourceId) &&
-        (!edge.targetId || visibleObjects.has(edge.targetId)) &&
-        (!focusId || edge.sourceId === focusId || edge.targetId === focusId),
-    ),
-  );
+    const displayedEdges = proposedRelationships(
+      state?.relationships ?? [],
+      state?.draft.relationships,
+    );
+    const spatialEdges = new Map(displayedEdges);
+    for (const change of state?.draft.relationships ?? []) {
+      if (!change.after && change.before) spatialEdges.set(change.id, change.before);
+    }
+    const connected = new Set([focusId]);
+    for (const edge of spatialEdges.values()) {
+      if (edge.sourceId === focusId || edge.targetId === focusId) {
+        connected.add(edge.sourceId);
+        connected.add(edge.targetId);
+      }
+    }
+    const visibleObjects = new Map(
+      [...displayed].filter(
+        ([, object]) =>
+          (!focusId || connected.has(object.id)) &&
+          (!typeFilter || object.typeId === typeFilter) &&
+          `${object.name} ${effectiveTypes.find((type) => type.id === object.typeId)?.name ?? ''}`
+            .toLocaleLowerCase('sv')
+            .includes(query.toLocaleLowerCase('sv')),
+      ),
+    );
+    const visibleEdges = new Map(
+      [...spatialEdges].filter(
+        ([, edge]) =>
+          visibleObjects.has(edge.sourceId) &&
+          (!edge.targetId || visibleObjects.has(edge.targetId)) &&
+          (!focusId || edge.sourceId === focusId || edge.targetId === focusId),
+      ),
+    );
+    return { displayed, displayedEdges, visibleObjects, visibleEdges };
+  }, [state, householdId, effectiveTypes, focusId, typeFilter, query]);
   function showAll() {
     setQuery('');
     setTypeFilter('');
@@ -1109,8 +1116,13 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   }}
                 />
               )}
-              <ul aria-label="Objekt" className="access-list">
-                {[...visibleObjects.values()].map((object) => (
+              <PagedList
+                label="Objekt"
+                className="access-list"
+                key={`objects-${query}-${typeFilter}-${focusId}`}
+                items={[...visibleObjects.values()]}
+                selectedId={selection?.kind === 'object' ? selection.id : undefined}
+                renderItem={(object) => (
                   <li key={object.id}>
                     <button
                       type="button"
@@ -1175,8 +1187,8 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                       </details>
                     )}
                   </li>
-                ))}
-              </ul>
+                )}
+              />
               <button
                 ref={newButton}
                 type="button"
@@ -1439,37 +1451,39 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                 </section>
               )}
               <h2>Samband</h2>
-              <ul aria-label="Samband">
-                {[...displayedEdges.values()]
-                  .filter((edge) => visibleEdges.has(edge.id))
-                  .map((edge) => (
-                    <li key={edge.id}>
+              <PagedList
+                label="Samband"
+                key={`edges-${query}-${typeFilter}-${focusId}`}
+                items={[...displayedEdges.values()].filter((edge) => visibleEdges.has(edge.id))}
+                selectedId={selection?.kind === 'relationship' ? selection.id : undefined}
+                renderItem={(edge) => (
+                  <li key={edge.id}>
+                    <button
+                      type="button"
+                      disabled={pending || dirty || blocked}
+                      onClick={() => editRelationship(edge)}
+                    >
+                      {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                    </button>
+                    <LifecycleStatus value={edge} />
+                    {state.draft.relationships?.some((change) => change.id === edge.id) && (
+                      <span className="proposed-status">Förslag i ditt utkast</span>
+                    )}
+                    <details>
+                      <summary>
+                        Åtgärder för {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                      </summary>
                       <button
                         type="button"
                         disabled={pending || dirty || blocked}
-                        onClick={() => editRelationship(edge)}
+                        onClick={() => remove('relationship', edge)}
                       >
-                        {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                        Ta bort
                       </button>
-                      <LifecycleStatus value={edge} />
-                      {state.draft.relationships?.some((change) => change.id === edge.id) && (
-                        <span className="proposed-status">Förslag i ditt utkast</span>
-                      )}
-                      <details>
-                        <summary>
-                          Åtgärder för {relationshipLabel(edge, effectiveState ?? state, displayed)}
-                        </summary>
-                        <button
-                          type="button"
-                          disabled={pending || dirty || blocked}
-                          onClick={() => remove('relationship', edge)}
-                        >
-                          Ta bort
-                        </button>
-                      </details>
-                    </li>
-                  ))}
-              </ul>
+                    </details>
+                  </li>
+                )}
+              />
               <button
                 type="button"
                 disabled={pending || dirty || blocked}
