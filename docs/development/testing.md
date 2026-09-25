@@ -1,424 +1,172 @@
-# Develop and test Skyttel
+# Run Skyttel tests
 
-Use Node.js 24 LTS, npm 12, and the committed npm lockfile.
-`packageManager` pins the npm release used by development, CI, and builds.
-Native `better-sqlite3` installation requires a supported prebuilt binary or
-Python, a C/C++ compiler, and Make. The Docker build supplies these tools in
-its build stage.
+Prepare dependencies and Chromium with the
+[development environment guide](devcontainer.md). Run these commands from
+the repository root. Automated tests create temporary databases and
+synthetic identities; they need no provider credentials or running
+`npm run dev:all` process.
 
-The [devcontainer guide](devcontainer.md) provides the complete Linux
-development environment, client/server startup, persistent development data,
-and tool configuration. Run checks explicitly after starting the container.
+## Unit tests
 
-## Install and build
+Run the complete Vitest suite:
 
 ```sh
-node scripts/install-repository-npm.mjs
-npm ci
-npm run typecheck
-npm run lint
-npm run lint:docs
-npm run build
-```
-
-For a local production build, configure `.env.local` according to the
-[installation guide](../operations/installation.md), then start the application
-with that environment loaded:
-
-```sh
-node --env-file=.env.local dist/server/index.js
-```
-
-The database directory must be writable. The server serves the Vite client
-build and the API from the same origin.
-
-## Disposable local browser session
-
-Use this setup when a browser check must replace household content. It runs
-inside the devcontainer with the host browser at `http://localhost:5173`.
-Complete the normal [development login setup](devcontainer.md#run-the-application)
-first; the [authentication walkthrough](local-authentication.md) explains
-provider registration. The configured first administrator signs in with
-that existing account. Household names and information must be invented.
-No public address, tunnel, new provider registration, or assistant is needed.
-
-Stop the normal `npm run dev:all` with Ctrl+C and keep ports 3300 and 5173
-free. From the repository root, run this block in a terminal that you keep
-open for the whole check. It creates a new empty database without running
-`db:setup` or changing the ordinary development database. Provider settings
-come from the same private environment file as normal development:
-`SKYTTEL_DEV_ENV_FILE`, or `.devcontainer/.env` when it is not set.
-
-```sh
-umask 077
-SKYTTEL_BROWSER_CASE_DIR=$(mktemp -d /tmp/skyttel-browser-case.XXXXXX)
-printf 'SKYTTEL_DATABASE_PATH=%s/skyttel.sqlite\n' \
-  "$SKYTTEL_BROWSER_CASE_DIR" > "$SKYTTEL_BROWSER_CASE_DIR/case.env"
-env -u SKYTTEL_DATABASE_PATH \
-  node --env-file="$SKYTTEL_BROWSER_CASE_DIR/case.env" scripts/develop.mjs
-```
-
-Open a fresh private browser window on the host, sign in and create the
-requested household. If two profiles are required, use two separate browser
-profiles, both signed in as the same configured administrator. Session
-cookies are profile-local. Keep any downloaded synthetic archives in a
-separate private folder on the host.
-
-For a restart within the check, press Ctrl+C, wait for both development
-processes to stop, and run only this command in the same terminal. It uses
-the same database, sessions, and household:
-
-```sh
-env -u SKYTTEL_DATABASE_PATH \
-  node --env-file="$SKYTTEL_BROWSER_CASE_DIR/case.env" scripts/develop.mjs
-```
-
-Reload the browser after startup. Do not rerun the directory-creation block
-or `db:setup` during a persistence check. When finished, stop the server,
-close the test browser windows, remove downloaded test archives, and delete
-only this temporary directory in the same terminal:
-
-```sh
-rm -r -- "${SKYTTEL_BROWSER_CASE_DIR:?}"
-unset SKYTTEL_BROWSER_CASE_DIR
-```
-
-Start the ordinary environment again with `npm run dev:all`. For another
-isolated check, create a fresh directory with the first block.
-
-## Application unit tests and lint
-
-For reproducible text-provider delay and failure checks without a real key,
-use the [controlled local launcher](manual-text-assistant.md). It keeps
-the actual browser, MCP and SQLite paths and substitutes only outside
-providers. Real provider setup is documented in the
-[text assistant guide](text-assistant.md).
-
-Vitest exercises public application functions, rendered React screens, and
-HTTP handlers. SQLite-backed behavior uses temporary real databases;
-external provider responses and browser network requests use synthetic
-fixtures. The graphics project renders the public spatial component in real
-headless Chromium with Three.js and WebGL 2. It uses the existing Playwright
-browser installation and contributes browser V8 coverage to the same report
-as the Node and jsdom projects. Install Chromium before the first Vitest run.
-Coverage includes every TypeScript and TSX file under `src`,
-including entry points. Tests do not reach into private application helpers.
-Coverage gates require 85% of statements, lines, and functions, and 90% of
-branches.
-
-```sh
-npx playwright install chromium
 npm run test:unit
+```
+
+Run one file, or filter its test names with a regular expression:
+
+```sh
 npm run test:unit -- tests/unit/server/config.test.ts
+npm run test:unit -- tests/unit/server/config.test.ts -t 'default listener'
+```
+
+For repeated edits, start watch mode and leave the terminal running:
+
+```sh
+npx vitest watch tests/unit/server/config.test.ts
+```
+
+Vitest reruns affected tests after changes. Press Ctrl+C to stop watching.
+The npm `test:unit` script uses `vitest run`, so it exits after one run.
+
+Use `--project server`, `--project client` or `--project graphics` to select
+one configured project. Graphics tests use headless Chromium with WebGL 2:
+
+```sh
 npm run test:unit -- --project graphics
 npm run test:unit:coverage
-npm run lint
-npm run lint:fix
 ```
 
-Biome checks application and test code, scripts, CSS, and root configuration.
-The project keeps single quotes and semicolons. Markdown lint and cSpell
-remain separate checks. CI enforces these checks and the application suites.
+Coverage checks every TypeScript and TSX file under `src`. The thresholds
+are 85% for statements, lines and functions, and 90% for branches. The
+coverage command prints its summary and writes an HTML report under
+`coverage/`. Unit tests do not need an application build first.
 
-## Isolated application checks
+## Integration tests
+
+Playwright starts isolated application installations and drives the browser
+and public HTTP endpoints against real SQLite. External provider responses
+are controlled. Rebuild before running browser tests so their client bundle
+matches the current source:
 
 ```sh
-npx playwright install chromium
-npm test
+npm run build
+npm run test:integration
 ```
 
-`npm test` builds the application and runs Vitest followed by Playwright.
-The Playwright suite drives the application through the browser and public HTTP
-endpoints, uses real SQLite databases in temporary directories, and supplies
-only synthetic users and households. Each installation has independent
-storage and a configured first administrator. Provider sign-in uses a test
-substitute; verify real registrations separately as described below.
-
-These checks cover installation setup, server-side access decisions,
-independent installations, same-email identities, current membership,
-revoked access, and restart persistence. Browser checks include recoverable
-startup errors, denied Google and Microsoft consent with successful retry,
-keyboard operation, and a narrow mobile viewport. Tests must never use live
-provider credentials, real households, or production storage. Keep generated
-traces and reports local; their inputs must remain synthetic.
-
-Run a focused test file while changing a feature, and run typechecking again
-after changing the shared contract. Run the full suite after completing the
-change. Rebuild before a focused browser test so it uses the latest client:
+Run one spec, or select tests by a title fragment or case ID:
 
 ```sh
 npm run build
 npm run test:integration -- tests/integration/bootstrap.spec.ts
+npm run test:integration -- --grep 'ACCESS-01'
 ```
 
-For controlled large-map timing measurements, run `npm run measure:map`
-separately from other suites. The [measurement plan](large-map-performance.md)
-defines the synthetic dataset, network conditions, readiness boundaries and
-report options. Functional large-map checks remain in the integration suite.
-
-To generate an HTML report and open it on port 9324, use:
+List selected tests without executing them:
 
 ```sh
-npm run test:integration -- --reporter=html
-npm run test:report
+npm run test:integration -- tests/integration/bootstrap.spec.ts --list
 ```
 
-Do not replace SQLite with an in-memory repository mock. Arrange membership
-scenarios with fixtures and assert through the public HTTP interface.
+`npm test` builds the application, then runs all unit and integration tests.
+The ordinary suites do not make billable provider calls. Keep their inputs
+synthetic and do not point fixtures at an existing household database.
 
-The Playwright suite covers keyboard use and widths of 320 pixels through
-browser viewport emulation. This does not verify a physical iPhone or iPad.
-Run `npm run check` for typechecking, Biome, documentation checks, workflow
-gate tests, the build, Vitest coverage, and Playwright. Production image
-changes also require the separate `npm run test:container` check.
+## Investigate browser failures
 
-## Environment and real-provider checks
-
-With Docker available, `npm run test:devcontainer` checks both development
-profiles using isolated storage. It verifies configuration preservation,
-the first storage transition, restart and container recreation. CI runs
-this separately from the application suite. Configuration process tests
-also run in `npm run test:gates`. See the
-[persistence guide](devcontainer-persistence.md#automatiskt-prov-av-omstart-och-ombyggnad)
-for requirements and the boundary around personal account sign-in.
-
-The following commands are separate opt-in checks with private configuration:
-
-- `npm run test:real-model`: actual model interpretation through MCP,
-  including negative, hypothetical and positive save instructions.
-  Follow the [model evaluation guide](real-model-tests.md).
-- `npm run test:real-voice`: recorded Swedish speech through actual WebRTC,
-  Live and Terra, with observable saved data and a durable receipt.
-  Follow the [speech evaluation guide](real-voice-tests.md).
-- `npm run test:installation`: read-only verification of HTTPS, deployed
-  version and recent security monitoring against the actual Render images.
-  Follow the [monitoring guide](../operations/security-monitoring.md#automated-live-verification).
-
-Missing configuration fails these commands. It is not a passed or skipped
-verification. Ordinary CI does not call paid providers or use live accounts.
-Record the tested commit and actual outcomes separately from discovery and
-tests using provider substitutes. An automatic result cannot establish
-what a person heard or whether they noticed a notification.
-
-## Pull request gates
-
-The Operator Upgrade Gate checks every pull request to `main` except those
-authored by `dependabot[bot]`. For other pull requests, select exactly one
-operator-impact declaration in the pull request template.
-`Operator notes updated` requires a meaningful addition or correction under
-`## Unreleased` in the committed operator notes.
-Formatting, source markers, removal-only changes, and release history do not
-count as updated guidance. `No operator notes needed` still requires a valid
-notes document. The gate verifies the declaration and notes structure;
-reviewers assess whether the guidance covers the actual operational impact.
-
-The SSDLC Gate requires the template's security-review checkbox for changes
-to application code, persistence, dependencies, deployment, authentication,
-security documentation, or development and CI security controls. Ordinary
-documentation-only changes can pass without the checkbox. Dependabot pull
-requests skip both gates. The workflows check the pull request author, so
-the exemption also applies when a maintainer edits a Dependabot pull request.
-A checked box records the author's assessment and does not replace security
-review or security testing.
-
-Both gates rerun when a pull request opens, receives commits, reopens, changes
-its description, or becomes ready for review. They evaluate committed notes
-and the pull request description using the gate scripts on the base branch.
-Changes to those scripts in a pull request do not affect its own gate run.
-API failures or incomplete evidence fail the check.
-
-After a successful gate run, maintainers can select the
-`operator-upgrade-gate` and `ssdlc-gate` checks in the `main` branch rules to
-require them before merging. The workflow files alone do not change branch
-protection.
-See GitHub's [pull request target documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)
-for the execution context.
-
-Run the dependency-free gate tests with Node.js 24:
-
-```sh
-npm run test:gates
-```
-
-Application CI runs these tests too. To check a real pull request, use the
-read-only GitHub API mode with a suitable token in the environment; keep the
-token out of command arguments and logs:
-
-```sh
-export GITHUB_REPOSITORY=viscalyx/skyttel
-node scripts/release/operator-upgrade-gate.mjs --github-pr 66
-node scripts/security/ssdlc-gate.mjs --github-pr 66
-```
-
-Both commands read `GITHUB_TOKEN`. An unchecked SSDLC declaration on a
-security-sensitive change must fail until the assessment is complete.
-
-## Dependency updates
-
-`.github/dependabot.yml` enables weekly version-update checks for the root
-npm project, GitHub Actions, and production Docker base. Each dependency gets
-a separate pull request.
-The configuration takes effect on `main`. GitHub supplies the Dependabot
-update workflow, so no custom workflow file is needed. See GitHub's
-[Dependabot configuration guide](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-version-updates).
-
-Use `npm run purge:install` explicitly during dependency maintenance. It
-empties `node_modules`, clears the npm cache, and regenerates the lockfile
-with native optional packages available. The mounted `node_modules`
-directory itself stays in place. Select dependency versions before running
-the command; it does not change version declarations. Inspect both manifest
-and lockfile changes, then run `npm run check`.
-
-npm 12 requires reviewed dependency installation scripts. The committed
-`allowScripts` entries approve exact versions, and `.npmrc` rejects
-unreviewed scripts. Review changed lifecycle scripts before updating an
-approval. Use `npm ci` for ordinary setup and CI; purge is never automatic.
-
-Review each update and let application CI validate it. Dependabot pull
-requests skip the Operator Upgrade and SSDLC gates, so their descriptions
-do not need the template declarations. Reviewers must still assess operational
-impact and commit meaningful operator notes when needed. Updates do not merge
-automatically.
-
-All updates run the mandatory application and security checks. See the
-[security checks guide](security-checks.md) for failure policy, container
-exceptions, repository settings, and how to attach new feature tests.
-
-After updating Playwright, install its matching Chromium browser with
-`npx playwright install chromium`. Keep `.node-version`, the `package.json`
-engine range, and both production Dockerfile base references compatible.
-For development tool updates and rebuild checks, follow the
-[devcontainer guide](devcontainer.md#tools-and-updates). Run the
-production-container checks when production inputs change.
-
-## Devcontainer development
-
-Follow the [devcontainer guide](devcontainer.md) to prepare the environment
-and start the application. When changing the development configuration,
-container creation runs `npm run db:migrate` and preserves existing data.
-A new database has an empty schema until you create a household or explicitly
-seed demo data. After a rebuild, start the application, check the tools, and
-confirm that saved content, private drafts, and personal settings remain.
-Use `npm run test:devcontainer` for the isolated rebuild and persistence
-check. Run application checks explicitly; container startup does not run them.
-
-Use `npm run db:setup` to replace the development database contents with
-`TestHousehold` and its configured administrator. Follow the
-[demo data setup](devcontainer.md#reset-demo-data) before running it; the
-command removes all existing application data and sessions. Add reusable
-demo fixtures in `scripts/seeds/demo.ts`. Automated tests continue to use
-their own temporary databases and synthetic provider identities.
-
-Run the seed and family scenarios with:
+Playwright retains traces for failures under `test-results/`. Generate an
+HTML report for a focused run and open it on port 9324:
 
 ```sh
 npm run build
-npm run test:integration -- \
-  tests/integration/database-setup.spec.ts tests/integration/family.spec.ts
+npm run test:integration -- tests/integration/bootstrap.spec.ts --reporter=html
+npm run test:report
 ```
 
-The HTTP and browser map tests exercise draft privacy, version conflicts,
-atomic rollback, receipts, and reopening. The family scenario also covers
-relationship duplication, concurrent additions, incomplete information,
-identity questions, deletion review, and the actual demo seed. Only external
-identity providers are substituted; SQLite and the application remain real.
-Failure tests inject a SQLite write error or interrupt an HTTP response.
+In the devcontainer, open the forwarded port from VS Code's **Ports** panel.
+The report contains the failed assertion, error context and retained trace.
+Stop the report server with Ctrl+C when finished. Keep reports and traces
+local; fixture inputs must contain only synthetic data.
 
-`tests/integration/draft-conflicts.spec.ts` orders requests from separate
-users and clients against the running app and real SQLite. It covers
-whole-draft rollback, stale resolution choices and approvals, private
-draft access, membership revocation, independent saves, overlapping
-objects and relationships, duplicate links, and deleted endpoints.
-Browser checks require an explicit conflict choice followed by a new save.
-They also verify that a resolved draft and readable relationship proposals
-survive normal server restart. The fixtures use only fictional identities
-and content; no timing delays decide which writer wins.
+For interactive reruns in a host browser, start Playwright's UI on the same
+forwarded port after stopping any report server:
 
-## Production-container checks
+```sh
+npm run build
+npm run test:integration -- --ui --ui-host=0.0.0.0 --ui-port=9324
+```
 
-With a running Docker daemon:
+Keep the forwarded port private. Select the affected spec or test in the UI
+and inspect its actions and assertions. Rebuild after changing application
+client code before rerunning. If your environment has a graphical display,
+`--debug` instead opens the Playwright Inspector with a visible browser.
+
+For controlled provider delays and failures in a manual browser session,
+use the [local text-assistant launcher](../manual-tests/setup/text-assistant.md).
+
+## Complete the development checks
+
+After focused tests pass, run the full repository check:
+
+```sh
+npm run check
+```
+
+This runs typechecking, Biome, documentation checks, workflow gate tests,
+the build, unit-test coverage and Playwright integration tests. It does not
+run the optional container or real-provider checks below.
+
+Run an individual check while correcting its findings:
+
+```sh
+npm run typecheck
+npm run lint
+npm run lint:fix
+npm run lint:docs
+npm run test:gates
+```
+
+`lint:fix` applies Biome's fixes. Review the resulting changes and rerun the
+relevant check. Markdown lint and spelling checks are separate from Biome.
+
+## Container and environment changes
+
+With a running Docker daemon, run the check matching the changed inputs:
 
 ```sh
 npm run test:container
+npm run test:devcontainer
 ```
 
-This builds the production Dockerfile, runs it with disposable storage and
-synthetic configuration, checks readiness and its unprivileged runtime user,
-checks that test authentication is unavailable, and exercises restart and
-failed-migration behavior. The production image contains built application
-files, migrations, and production dependencies. It has no test entry point.
+`test:container` builds the production image with disposable storage and
+synthetic configuration. It checks startup, permissions, migrations and
+persistence across restarts, then removes its test containers and volumes.
+It does not deploy the image or verify a live provider registration.
 
-The check also verifies authenticated household access before and after a
-production-container restart using synthetic identities and data.
-It uploads synthetic pixels through the production image endpoint, checks
-the returned WebP dimensions with the native image processor, and checks
-private and saved image persistence across container replacement.
-It also verifies private draft recovery, saved objects, history, and repeated
-saving with the same receipt across container restarts.
-Public OAuth checks register synthetic native clients, obtain separate
-read and map-work consent, and verify whole-draft MCP saving, receipt
-recovery after restart, read-only isolation and connection revocation.
-Only the browser's initial synthetic identity is arranged by the fixture;
-assistant tokens and consent use the production HTTP flow.
+`test:devcontainer` checks both development profiles using isolated storage,
+including restart and container recreation. See the
+[state and rebuild guidance](devcontainer.md#state-and-rebuilds) when changing
+development configuration.
 
-Temporary test containers and volumes are removed after the check. These
-checks do not deploy to Render and do not certify a provider registration,
-ingress configuration, disk service, or a different CPU architecture.
+Run `npm run measure:map` separately from other suites. Its
+[measurement plan](../manual-tests/large-map-performance.md) defines the
+dataset, network conditions, readiness boundaries and report options.
 
-## Verify real identity providers separately
+## Optional checks with real providers
 
-`tests/integration/linking.spec.ts` exercises the running app's public
-linking flow with persistent SQLite and deterministic providers. It covers
-both identity proofs, matching and different email addresses, occupied and
-wrong identities, denied consent, provider failures, cancellation, session
-binding, and the verified browser result. These checks do not verify live
-provider policy or personal Microsoft account support. Use synthetic data
-only; never put tokens or identity proofs in technical logs or test reports.
+These commands require explicit private configuration:
 
-If you are new to provider registration, start with the
-[local authentication walkthrough](local-authentication.md).
+- `npm run test:real-model`: model interpretation through MCP. Follow the
+  [model evaluation guide](../manual-tests/real-model-tests.md).
+- `npm run test:real-voice`: recorded Swedish speech through WebRTC, Live
+  and Terra. Follow the
+  [speech evaluation guide](../manual-tests/real-voice-tests.md).
+- `npm run test:installation`: read-only checks of HTTPS, deployed version
+  and security monitoring against actual Render images. Follow the
+  [monitoring guide](../operations/security-monitoring.md#automated-live-verification).
 
-For a manual Codex CLI connection inside the devcontainer, use the
-[local assistant setup](assistants.md#manual-local-codex-cli-setup).
-It reuses development Google credentials with the port-3301 callback and a
-disposable database. Normal development login uses the port-5173 callback
-on the same Google client. This live-client check is excluded from CI and
-pull request workflows; do not add provider secrets or a Codex login to run
-it there. Automated tests retain their synthetic identity providers.
-
-Use a private verification installation with its own persistent disk, secret,
-and provider registrations. Register the correct callback URLs and authorize
-Google test accounts if its consent screen requires them. Do not post tokens,
-subjects, personal email addresses, screenshots with identity details, or
-household data in public evidence.
-
-1. Configure a controlled Google identity as first administrator. Complete the
-   actual Google redirect and consent flow, create a synthetic household,
-   sign out, and sign in again.
-2. Restart the production container and confirm that the same household and
-   provider identity are retained.
-3. Repeat in a separate installation with a personal Microsoft account as
-   first administrator. An organizational Microsoft account alone does not
-   verify personal-account support.
-4. Confirm that another authenticated identity cannot create or access the
-   household, including direct API requests. If using matching email
-   addresses across providers, confirm they do not merge automatically.
-5. Verify logout, denied consent, and a provider error. Confirm that the page
-   gives a usable retry path and technical logs contain no secret or identity
-   detail.
-6. Open **Inloggningssätt**, prove the existing login, then link a controlled
-   identity from the other provider. Include a personal Microsoft account.
-   Check the verified result, sign out, and sign in with each provider.
-   Confirm the same Skyttel user ID and household access. Repeat with denied
-   consent and an identity already owned by another Skyttel user; earlier
-   access must remain intact.
-
-Record the date, image digest, provider, Microsoft account category, scenarios,
-and pass/fail result in private release evidence. State explicitly which
-checks are deterministic and which use a real provider. Passing the automated
-suite alone is not a claim of live Google or Microsoft sign-in success.
-
-Verify the deployed HTTPS origin and callback URLs before release. Local
-HTTP checks do not verify hosted ingress or provider policies for that
-deployment. Test physical mobile devices separately when they are part of
-the release's target platforms; browser viewport emulation is insufficient.
+Missing configuration fails these commands. It is not a passed or skipped
+verification. Record the tested commit and actual result separately from
+discovery and tests using provider substitutes. Ordinary CI does not use
+live accounts or call paid providers.
