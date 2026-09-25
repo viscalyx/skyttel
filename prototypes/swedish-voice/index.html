@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skyttel · Pröva svenskt tal</title>
+  <style>
+    :root{color-scheme:light;--ink:#213c33;--muted:#61766c;--line:#dbe4da;--paper:#fff;--green:#2f654d;--pale:#edf4ed;--amber:#9c6510;--amber-bg:#fff1d6;--red:#a14936}
+    *{box-sizing:border-box}body{margin:0;background:#f3f5ef;color:var(--ink);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{border:1px solid #b9cbbc;background:white;color:var(--ink);padding:9px 13px;border-radius:9px;cursor:pointer}button:hover{background:#e9f2e8}button:disabled{opacity:.45;cursor:default}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid #508361;outline-offset:3px}button.primary,button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:white}.primary:hover{background:#214a38}button.danger{color:var(--red)}h1,h2,h3,p{margin:0}h1{font-size:clamp(25px,3.5vw,39px);line-height:1.17;letter-spacing:-.035em;font-weight:680}h2{font-size:18px;line-height:1.35}h3{font-size:15px}p+p{margin-top:8px}small,.muted{color:var(--muted);font-size:13px}.eyebrow{font-size:11px;font-weight:750;letter-spacing:.13em;text-transform:uppercase}.shell{max-width:1510px;padding:25px 30px 36px;margin:auto}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:21px}.brand{font-size:21px;font-weight:700;letter-spacing:-.06em}.brand:before{content:"✳";font-size:26px;color:var(--green);margin-right:8px}.tag{border:1px solid #d4ded1;border-radius:40px;padding:4px 10px;font-size:11px;color:var(--muted)}.intro{max-width:930px}.intro>p{margin-top:10px;font-size:16px;color:#526b5e}.bar{background:var(--paper);border:1px solid var(--line);border-radius:14px;margin-top:22px;padding:16px 19px}.voice-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.voice-controls{display:flex;gap:7px;flex-wrap:wrap}.live-indicator{display:flex;gap:9px;align-items:center;font-size:14px}.dot{width:9px;height:9px;border-radius:100%;background:#95a69a;flex:none}.connected .dot{background:#428d62;box-shadow:0 0 0 4px #e4f2e6}.budget-group{margin-left:auto;display:flex;gap:14px;align-items:center;color:var(--muted);font-size:12px}.status-line{margin-top:12px;padding-top:12px;border-top:1px solid #e8ede5;display:flex;gap:14px;align-items:flex-start}.status-line #status{font-size:14px;flex:1}.privacy{font-size:12px;color:var(--muted);margin-top:10px}.layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(330px,1fr);gap:19px;margin-top:19px;align-items:start}.panel{min-width:0;border:1px solid var(--line);border-radius:14px;background:white;padding:19px}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.badge{display:inline-block;border-radius:30px;background:#edf3e9;color:#4d6a55;padding:3px 9px;font-size:11px;font-weight:650;white-space:nowrap}.badge.proposed{background:var(--amber-bg);color:var(--amber)}.view-tabs{display:flex;gap:4px;padding:3px;background:#f1f4ed;border-radius:9px}.view-tabs button{border:0;padding:5px 11px;font-size:12px;border-radius:6px}.map-space{background:#152e26;border-radius:11px;position:relative;overflow:hidden}.map-space canvas{display:block;width:100%;height:420px;touch-action:none;cursor:grab}.map-space canvas:active{cursor:grabbing}.map-empty{position:absolute;inset:0;display:grid;place-content:center;padding:28px;color:#d3e1d5;text-align:center;pointer-events:none}.map-caption{position:absolute;left:15px;top:12px;pointer-events:none;font-size:11px;color:#a9c1b1;letter-spacing:.04em}.map-tools{display:flex;gap:6px;align-items:center;margin-top:9px}.map-tools button{font-size:12px;padding:4px 9px}.map-tools .muted{margin-left:auto;font-size:11px}.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--muted);margin:10px 0 14px}.legend i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#5f937c;margin-right:5px}.legend .new i{background:#dfa43d}.legend .changed i{background:#cf80d9}.legend .removed i{background:#d6775f}.inspector{margin-top:13px;border-top:1px solid #e5ece2;padding-top:13px;font-size:13px}.inspector .detail-heading{display:flex;align-items:center;gap:8px;margin-bottom:8px}.detail-fields{display:grid;grid-template-columns:minmax(85px,.6fr) minmax(0,1fr);gap:5px 12px;margin:8px 0}.detail-fields dt{color:var(--muted)}.detail-fields dd{margin:0;overflow-wrap:anywhere}.relation-line{font-size:12px;padding:6px 0;border-top:1px solid #edf1e9}.map-list{display:grid;gap:7px;max-height:430px;overflow:auto;padding:2px}.object-row{display:flex;text-align:left;align-items:center;gap:10px;width:100%;border:1px solid #e1e8dc;border-radius:9px;padding:10px 11px;background:#fbfcf9}.object-row.selected{outline:2px solid #467c5e;outline-offset:-2px}.object-icon{width:32px;height:32px;display:grid;place-content:center;border-radius:50%;background:#e6eee3;color:var(--green);font-size:12px;flex:none;font-weight:700}.object-info{min-width:0;flex:1}.object-info strong{display:block;font-size:13px;font-weight:630;overflow-wrap:anywhere}.object-info small{display:block;font-size:11px}.change-marker{font-size:10px;border-radius:15px;padding:2px 6px;white-space:nowrap}.is-new .change-marker{color:var(--amber);background:var(--amber-bg)}.is-changed .change-marker{color:#854e8c;background:#f7e9f6}.is-removed .change-marker{color:var(--red);background:#fae7e1}.is-removed .object-info{text-decoration:line-through}.side{display:grid;gap:19px}.state-summary{font-size:14px;color:#4d695b;margin-bottom:12px}.change-list{margin:0;padding-left:19px;font-size:13px}.change-list li{padding:4px 0}.change-list .before{color:#88675c;text-decoration:line-through}.change-list .after{font-weight:550}.empty{border-radius:9px;background:#f3f6ef;padding:13px;color:var(--muted);font-size:13px}.blockers{margin-bottom:12px;padding:11px 12px;border-radius:9px;background:#fff3dc;font-size:13px;color:#71531c}.blockers strong{display:block;margin-bottom:4px}.blockers ul{padding-left:17px;margin:3px 0}.save-note{font-size:12px;border-radius:8px;background:#edf5e9;padding:9px 11px;margin-top:12px}.save-note.waiting{background:#f4f3ee;color:#6d6b5b}.saved-title{margin-top:13px;padding-top:12px;border-top:1px solid #e8ede2}.saved-list{font-size:12px;display:grid;gap:6px;margin-top:9px}.saved-entry{border-bottom:1px solid #edf0e9;padding-bottom:6px;overflow-wrap:anywhere}details{font-size:13px}summary{cursor:pointer;color:var(--green);font-weight:620}details>summary{padding:3px 0}.transcript{height:275px;overflow:auto;padding-right:3px;scrollbar-width:thin}.utterance{margin:0 0 12px;padding:9px 12px;background:#f1f5ee;border-radius:9px;font-size:13px}.utterance.you{margin-left:24px;background:#e9f2e7}.utterance.assistant{margin-right:15px}.utterance.event{background:#faf2de}.utterance-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:750;display:block;margin-bottom:3px}.utterance.partial .utterance-text{color:#698071}.utterance-text{white-space:pre-wrap;overflow-wrap:anywhere}.transcript-empty{display:flex;align-items:center;justify-content:center;min-height:220px;text-align:center;padding:22px;color:#748577;font-size:13px}.scenario{margin-top:19px}.scenario-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}.script-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.script-step{border-top:2px solid #c3d3ba;padding-top:9px;font-size:13px}.script-step .number{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:650;margin-bottom:4px}.script-step p{font-size:13px}.script-step .muted{margin-top:6px;font-size:11px}.scenario-foot{margin-top:13px;padding-top:11px;border-top:1px solid #e7ece2;font-size:12px;color:var(--muted)}.technical{margin-top:16px;padding:14px 18px;border:1px dashed #cbd7c8;border-radius:11px;background:#f7f9f3}.technical summary{font-size:12px;color:var(--muted)}.technical-body{margin-top:12px}.test-row{display:flex;gap:8px;margin-top:7px}.test-row input{min-width:0;flex:1;border:1px solid #c3d0bd;padding:8px 10px;border-radius:7px;background:white}.technical button{font-size:12px}.tech-log{background:#183027;color:#cce1d1;max-height:220px;overflow:auto;font:11px/1.6 ui-monospace,SFMono-Regular,monospace;white-space:pre-wrap;padding:12px;border-radius:7px;margin:10px 0;overflow-wrap:anywhere}.technical pre.state-json{font:11px/1.5 ui-monospace,SFMono-Regular,monospace;max-height:320px;overflow:auto;background:white;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere}.footer{margin-top:18px;color:#778a7b;font-size:11px}.hidden,[hidden]{display:none!important}
+    @media(min-width:1250px){.map-space canvas{height:475px}}@media(max-width:970px){.shell{padding:20px}.layout{grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr)}.voice-row{gap:12px}.budget-group{margin-left:0}.map-space canvas{height:390px}.script-grid{grid-template-columns:1fr;gap:12px}.script-step{border-top:0;border-left:2px solid #c3d3ba;padding:0 0 0 11px}}@media(max-width:760px){.shell{padding:16px 13px 28px}.topline{margin-bottom:17px}.intro>p{font-size:14px}.bar{padding:13px;margin-top:17px}.voice-row{align-items:flex-start;gap:10px}.voice-controls{width:100%}.voice-controls button{font-size:13px;padding:9px 11px}.live-indicator{font-size:12px}.budget-group{margin-left:auto;font-size:11px;gap:8px}.status-line{display:block}.privacy{font-size:11px}.layout{display:flex;flex-direction:column;gap:14px;margin-top:14px}.panel{padding:15px;width:100%}.map-panel{order:2}.side{display:contents}.changes-panel{order:1}.transcript-panel{order:3}.map-space canvas{height:355px}.map-list{max-height:320px}.map-tools .muted{max-width:155px;text-align:right}.transcript{height:240px}.scenario{margin-top:14px}.scenario-head{display:block}.scenario-head small{display:block;margin-top:4px}h2{font-size:17px}.footer{line-height:1.5}.technical{padding:12px}.test-row{flex-wrap:wrap}.test-row input{width:100%;flex-basis:100%}}
+    .work-indicator{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:13px}.work-inline{border-top:1px solid #e8ede2;padding:10px 0 12px}.work-copy{min-width:0;flex:1}.work-copy strong{display:block;font-size:12px}.work-copy span{font-size:12px;color:var(--muted)}.work-clock{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted);font-size:12px}.work-spinner{width:17px;height:17px;border:2px solid #c9d9c8;border-top-color:var(--green);border-radius:50%;flex:none}.is-working .work-spinner{animation:work-turn 1s linear infinite}.work-inline:not(.is-working) .work-spinner{width:8px;height:8px;border:0;background:#91a88e;margin:0 4px}.is-uncertain .work-spinner{border-top-color:var(--amber)}.work-floating{position:fixed;z-index:20;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(520px,calc(100% - 26px));padding:13px 17px;border:1px solid #b9cfb9;border-radius:13px;background:#fafff7;box-shadow:0 5px 24px #16312724}.work-floating.is-uncertain{background:#fff8e9;border-color:#dec796}.work-visible .shell{padding-bottom:110px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@keyframes work-turn{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.is-working .work-spinner{animation:none}}
+    .transcript-panel{display:flex;flex-direction:column}.transcript-panel>.transcript{flex:none}.work-inline{flex:none;min-height:59px;margin-top:7px;padding:11px 12px;background:#f5f8f0;border-radius:0 0 9px 9px}.work-inline.is-working{background:#edf5e9;border-top-color:#bcd1b6}.work-inline.is-uncertain{background:#fff6e5;border-top-color:#ddc897}.work-copy .work-hint{display:block;font-size:11px;margin-top:2px}.work-hint:empty{display:none}
+    .experiment-settings{margin-top:12px;padding-top:10px;border-top:1px solid #e8ede2;font-size:12px}.experiment-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.experiment-row label{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600}.experiment-row input{width:16px;height:16px;margin:0;accent-color:var(--green)}.experiment-row select{font:inherit;color:var(--ink);background:white;border:1px solid #c3d0bd;border-radius:7px;padding:7px 9px;max-width:100%}.experiment-row select:disabled{opacity:.65}.experiment-models{margin-top:10px}.experiment-models label{flex-wrap:wrap}.experiment-row .eyebrow{font-size:10px;color:var(--muted)}.experiment-settings .privacy{margin-top:5px}.transport-timing{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:3px!important}.transport-timing strong{color:var(--ink);font-weight:600}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <div class="topline"><div class="brand">skyttel</div><span class="tag">Kastbart talprov · syntetiska uppgifter</span></div>
+  <header class="intro">
+    <div class="eyebrow">Från svenskt tal till hushållets karta</div>
+    <h1>Berätta. Rätta. Spara med rösten.</h1>
+    <p>Klarar verkligt svenskt tal att ändra kartan, reda ut en osäker uppgift och spara rätt förslag? Följ ändringarna här medan du pratar.</p>
+  </header>
+  <section class="bar" aria-label="Talsamtal">
+    <div class="voice-row">
+      <div class="voice-controls">
+        <button class="primary" id="start-voice">Starta talsamtal</button>
+        <button id="mute-voice" disabled aria-pressed="false">Pausa mikrofon</button>
+        <button id="stop-voice" disabled>Avsluta</button>
+        <button id="reconnect-voice" hidden>Återanslut</button>
+      </div>
+      <div class="live-indicator" id="connection"><span class="dot" aria-hidden="true"></span><span id="mic-status">Mikrofonen är av</span></div>
+      <div class="budget-group"><span id="budget">Budget hämtas…</span><span id="latency" title="Tid till svar">Svarstid —</span></div>
+    </div>
+    <div class="status-line"><div id="status" role="status" aria-live="polite">Starta samtalet och tillåt mikrofonen. Vänta på hälsningen, prata sedan på svenska.</div></div>
+    <p class="privacy">Kartan visar ändringarna. Fråga om du vill höra detaljerna.</p>
+    <p class="privacy">När du startar skickas mikrofonljud till OpenAI. Använd bara provets påhittade uppgifter. Prototypen sparar inga ljudfiler. ”Spara” ändrar bara provets lokala karta.</p>
+    <p class="privacy" id="budget-note" hidden></p>
+    <p class="privacy" id="model-info"></p>
+    <div class="experiment-settings" aria-label="Experimentinställningar">
+      <div class="experiment-row"><span class="eyebrow">Experiment</span><label for="use-mcp"><input id="use-mcp" type="checkbox" checked disabled aria-describedby="transport-help transport-status">Använd MCP</label><span id="transport-status" class="muted" role="status">Hämtar aktuellt läge…</span></div>
+      <p class="privacy" id="transport-help">Avmarkerad: samma kartfunktioner körs direkt. Byt mellan samtalen.</p>
+      <div class="experiment-row experiment-models">
+        <label for="backend-model">Agentmodell <select id="backend-model" disabled aria-describedby="model-help model-status"><option value="">Hämtar modeller…</option></select></label>
+        <label for="reasoning-effort">Resonemang <select id="reasoning-effort" disabled aria-describedby="model-help model-status"><option value="">Hämtar nivåer…</option></select></label>
+        <span id="model-status" class="muted" role="status">Hämtar aktuellt modellval…</span>
+      </div>
+      <p class="privacy" id="model-help">Välj modell och resonemang mellan samtalen, när kartarbetet är klart. Hög nivå kan ta längre tid och kosta mer.</p>
+      <p class="transport-timing">Senaste avslutade kartuppdrag per läge, inklusive kö:</p>
+      <p class="transport-timing" id="transport-timing-mcp">MCP · ingen färdig mätning ännu.</p>
+      <p class="transport-timing" id="transport-timing-direct">Direkt · ingen färdig mätning ännu.</p>
+    </div>
+  </section>
+  <div class="layout">
+    <section class="panel map-panel" id="map-region" aria-labelledby="map-heading" aria-busy="false">
+      <div class="panel-heading"><h2 id="map-heading">Hushållets karta <span class="badge" id="map-badge">Hämtas</span></h2><div class="view-tabs" role="tablist" aria-label="Visa kartan"><button id="show-map" role="tab" aria-selected="true" aria-controls="map-visual">Karta</button><button id="show-list" role="tab" aria-selected="false" aria-controls="map-list-panel">Lista</button></div></div>
+      <div class="legend"><span><i></i>Befintligt</span><span class="new"><i></i>+ Nytt förslag</span><span class="changed"><i></i>Ändrat</span><span class="removed"><i></i>− Tas bort</span></div>
+      <div id="map-visual" role="tabpanel" aria-labelledby="show-map">
+        <div class="map-space"><canvas id="map-canvas" aria-label="Roterbar hushållskarta. Samma information finns i listvyn."></canvas><div class="map-caption">OBJEKT OCH SAMBAND · FÖRSLAG VISAS DIREKT</div><div id="map-empty" class="map-empty">Exempelkartan hämtas…</div></div>
+        <div class="map-tools"><button id="zoom-in" aria-label="Zooma in">+</button><button id="zoom-out" aria-label="Zooma ut">−</button><button id="reset-map">Återställ vy</button><span class="muted">Dra för att rotera. Välj objekt eller samband.</span></div>
+      </div>
+      <div id="map-list-panel" role="tabpanel" aria-labelledby="show-list" hidden><div class="map-list" id="objects-list"></div></div>
+      <div class="inspector" id="inspector" aria-live="polite"><span class="muted">Välj ett objekt för att se uppgifter och samband.</span></div>
+    </section>
+    <div class="side">
+      <section class="panel changes-panel" id="changes-region" aria-labelledby="changes-heading" aria-busy="false">
+        <div class="panel-heading"><h2 id="changes-heading">Ändringar under samtalet</h2><span class="badge" id="draft-badge">Inget utkast</span></div>
+        <div id="blockers" class="blockers" hidden></div>
+        <div id="changes"><div class="empty">Inga ändringar föreslås ännu. Berätta om Tonrum för att börja.</div></div>
+        <div id="save-note" class="save-note waiting">Säg ”spara ändringarna” när förslaget stämmer.</div>
+        <details class="saved-title"><summary id="saved-summary">Aktuell sparad karta</summary><div id="saved-map" class="saved-list"></div></details>
+      </section>
+      <section class="panel transcript-panel" aria-labelledby="transcript-heading">
+        <div class="panel-heading"><h2 id="transcript-heading">Samtalet</h2><span class="muted">Svenska · tal och text</span></div>
+        <div class="transcript" id="transcript" role="log" aria-live="polite" aria-relevant="additions text"><div id="transcript-empty" class="transcript-empty">Här visas vad du säger och vad Skyttel svarar.<br>Du behöver inte skriva för att genomföra provet.</div></div>
+        <div class="work-indicator work-inline" id="work-inline" aria-label="Samtalets arbetsstatus"><span class="work-spinner" aria-hidden="true"></span><div class="work-copy"><strong id="work-heading">Skyttel är redo</strong><span id="work-phase">Berätta vad du vill göra.</span><span class="work-hint" id="work-hint"></span></div><span class="work-clock" id="work-elapsed" aria-hidden="true"></span></div>
+      </section>
+    </div>
+  </div>
+  <section class="panel scenario" aria-labelledby="scenario-heading">
+    <div class="scenario-head"><h2 id="scenario-heading">Ett kort talprov</h2><small>Säg med egna ord. Inga uppgifter nedan är verkliga.</small></div>
+    <div class="script-grid">
+      <div class="script-step"><div class="number">01 · Berätta och precisera</div><p>”Vi har Tonrum för 189 kronor i månaden. Kim betalar och Lo använder tjänsten.”</p><p class="muted">När du får frågan om Lo: ”Lo Lind. Jag tror att Lo Berg också använder den, men jag är osäker.”</p></div>
+      <div class="script-step"><div class="number">02 · Rätta och knyt ihop</div><p>”Nej, priset är 199 kronor. Abonnemanget betalas med Alex kort som slutar på 1111.”</p><p class="muted">”Tjänstekontot har alex@example.invalid som kontaktadress.” Säg adressen långsamt; rätta med rösten om den blir fel.</p></div>
+      <div class="script-step"><div class="number">03 · Lyssna och godkänn</div><p>”Vad har ändrats?” Lyssna och följ kartan. Rätta det som behövs. Säg sedan ”spara ändringarna”.</p><p class="muted">Kontrollera att 199 kronor, rätt Lo, osäkerheten, kortet och adressens roll är kvar i den sparade kartan.</p></div>
+    </div>
+    <div class="scenario-foot">Pröva också att avbryta ett svar med ”vänta”, säga om samma uppgift och återansluta efter avbrott. Lägg märke till om förslaget är kvar och om något oväntat sparas.</div>
+  </section>
+  <details class="technical">
+    <summary>Teknisk logg och provkontroller</summary>
+    <div class="technical-body">
+      <p class="muted">Textinmatningen hjälper till att kontrollera kopplingen. Talprovet ovan går att genomföra helt med rösten.</p>
+      <label for="test-text" class="muted">Valfritt textmeddelande till samma samtal</label>
+      <div class="test-row"><input id="test-text" type="text" autocomplete="off" placeholder="Exempel: Vad innehåller kartan?"><button id="send-text">Skicka text</button><button id="signal-disconnect" class="danger">Simulera avbrott</button></div>
+      <details><summary>Senaste tidsdiagnostik</summary><p class="muted">Mottagningstider i webbläsaren. Väntan från Live-delegering till API-anrop inkluderar klientens regel om 550 ms och väntan på kvitto för textrevisionen. Nästa assistenttext kan vara fortsättning på tidigare tal; detta mäter inga hörbara ljudpauser.</p><pre id="client-timing" class="state-json">Ingen delegering uppmätt ännu.</pre><pre id="model-step-timing" class="state-json">Inget färdigt modellsteg ännu.</pre></details>
+      <pre id="technical-log" class="tech-log" aria-label="Teknisk händelselogg">Provet väntar på anslutning.</pre>
+      <details><summary>Fullt karttillstånd och ändringslista</summary><pre id="full-state" class="state-json">Ingen karta mottagen ännu.</pre></details>
+    </div>
+  </details>
+  <p class="footer">Kastbar prototyp. Familjen, tjänsten och alla uppgifter är syntetiska. Sparandet är en lokal simulering i detta prov.</p>
+</main>
+<div class="work-indicator work-floating" id="work-floating" hidden aria-hidden="true"><span class="work-spinner"></span><div class="work-copy"><strong id="work-floating-heading">Skyttel arbetar</strong><span id="work-floating-phase"></span></div><span class="work-clock" id="work-floating-elapsed"></span></div>
+<div id="work-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<script>
+(() => {
+  const el = id => document.getElementById(id);
+  const emptyMap = () => ({objects:{},relations:{}});
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const kindNames = {person:'Person',company:'Företag',association:'Förening',service:'Tjänst',subscription:'Abonnemang',card:'Kort',service_account:'Tjänstekonto',email:'E-postadress',email_address:'E-postadress',bank_account:'Bankkonto',contract:'Avtal',home:'Bostad',vehicle:'Fordon',unspecified:'Ospecificerat objekt'};
+  const fieldNames = {name:'Namn',kind:'Typ',price:'Pris',amount:'Belopp',price_sek:'Pris i kronor',monthly_price:'Månadspris',currency:'Valuta',interval:'Betalningsintervall',billing_interval:'Betalningsintervall',last4:'Sista fyra siffror',last_four:'Sista fyra siffror',address:'Adress',email:'E-postadress',note:'Anteckning',notes:'Anteckningar',certainty:'Säkerhet',status:'Status',from:'Från',to:'Till',type:'Samband',usage:'Användning',value:'Värde',role:'Roll',uncertain:'Osäkert uppgivet'};
+  let relationNames = Object.create(null);
+  const icons = {person:'P',company:'F',association:'F',service:'T',subscription:'A',card:'K',service_account:'TK',email:'@',email_address:'@',bank_account:'BK',contract:'A',home:'B',vehicle:'F'};
+  let data = {saved_map:emptyMap(),draft_map:null,full_diff:[],blockers:[],ready_to_save:false,map_version:0,draft_version:0};
+  let selected = null, activeView = matchMedia('(max-width:760px)').matches ? 'list' : 'map';
+  let isConnected = false, micMuted = false;
+  const camera = {yaw:.13,pitch:-.08,zoom:1,centerX:0,centerY:0,centerZ:0};
+  const canvas = el('map-canvas'), ctx = canvas.getContext('2d');
+  let screenNodes = [], screenEdges = [], drag = null;
+  const partials = new Map();
+  const transcriptRows = new Map();
+  let lastWorkAnnouncement = '';
+  const currentMap = () => data.draft_map || data.saved_map || emptyMap();
+  const objectName = (id, map=currentMap()) => map.objects?.[id]?.name || data.saved_map?.objects?.[id]?.name || id || 'Okänt objekt';
+  const humanType = value => relationNames[value] || kindNames[value] || String(value ?? '').replaceAll('_',' ');
+  const relationLabel = value => relationNames[value] || 'har samband med';
+  function valueText(value) {
+    if (value === undefined || value === null) return 'Ingen uppgift';
+    if (typeof value === 'boolean') return value ? 'Ja' : 'Nej';
+    if (Array.isArray(value)) return value.map(valueText).join(', ');
+    if (typeof value === 'object') return Object.entries(value).map(([key,val]) => `${fieldNames[key] || key}: ${valueText(val)}`).join(' · ');
+    return ({uncertain:'Osäkert uppgivet',unknown:'Okänt',none:'Uttryckligen inget',confirmed:'Bekräftat',certain:'Säkert uppgivet',monthly:'Månadsvis',month:'Månad',active:'Gäller',ended:'Upphört'}[value] || String(value));
+  }
+  function objectFields(object) {
+    return Object.entries(object || {}).filter(([key]) => !['id','name'].includes(key)).map(([key,val]) => `<dt>${escape(fieldNames[key] || key.replaceAll('_',' '))}</dt><dd>${escape(key === 'kind' ? humanType(val) : valueText(val))}</dd>`).join('');
+  }
+  function changeState(collection,id) {
+    if (!data.draft_map) return '';
+    const before = data.saved_map?.[collection]?.[id], after = data.draft_map?.[collection]?.[id];
+    if (!before && after) return 'new';
+    if (before && !after) return 'removed';
+    return JSON.stringify(before) !== JSON.stringify(after) ? 'changed' : '';
+  }
+  const stateLabel = state => ({new:'+ Nytt',changed:'Ändrat',removed:'− Tas bort'}[state] || '');
+  function relationText(relation, map=currentMap()) {
+    if (!relation) return 'Inget samband';
+    let result = `${objectName(relation.from,map)} → ${relationLabel(relation.type)} → ${objectName(relation.to,map)}`;
+    const extra = Object.entries(relation).filter(([key]) => !['id','from','to','type'].includes(key));
+    if(extra.length) result += ' · ' + extra.map(([key,val]) => `${fieldNames[key] || key}: ${valueText(val)}`).join(', ');
+    return result;
+  }
+  function renderList() {
+    const objects = {...data.saved_map.objects,...currentMap().objects};
+    el('objects-list').innerHTML = Object.entries(objects).map(([id,object]) => {
+      const state = changeState('objects',id);
+      return `<button class="object-row is-${state}${selected?.collection==='objects'&&selected.id===id?' selected':''}" data-object="${escape(id)}"><span class="object-icon">${escape(icons[object.kind] || '·')}</span><span class="object-info"><strong>${escape(object.name || id)}</strong><small>${escape(humanType(object.kind))}</small></span>${state?`<span class="change-marker">${stateLabel(state)}</span>`:''}</button>`;
+    }).join('') || '<div class="empty">Inga objekt i kartan ännu.</div>';
+    el('objects-list').querySelectorAll('[data-object]').forEach(button => button.onclick = () => select('objects',button.dataset.object));
+  }
+  function select(collection,id) { selected = {collection,id}; renderList(); renderInspector(); draw(); }
+  function applyMapSelection(action) {
+    const failure=text=>({ok:false,text});
+    if(!action||action.type!=='select_map_record'||!action.reference||
+       !['objects','relations'].includes(action.reference.collection)||
+       typeof action.reference.id!=='string'||!action.reference.id.trim())
+      return failure('Markeringen saknar en giltig kartpost.');
+    if(['map_version','draft_version'].some(key=>!Number.isSafeInteger(action[key])||action[key]<1||action[key]!==data[key]))
+      return failure('Kartan har ändrats. Kontrollera posten igen innan den markeras.');
+    const {collection,id}=action.reference, map=currentMap();
+    const records={...data.saved_map[collection],...map[collection]};
+    if(!Object.hasOwn(records,id)||!records[id]||typeof records[id]!=='object')return failure('Posten finns inte i den aktuella kartan.');
+    const nodes=nodePositions(),byId=new Map(nodes.map(node=>[node.id,node]));
+    const points=collection==='objects'?[byId.get(id)]:[byId.get(records[id].from),byId.get(records[id].to)];
+    if(points.some(point=>!point)||
+       (collection==='relations'&&points[0].x===points[1].x&&points[0].y===points[1].y))
+      return failure('Posten kan inte visas som en markering i kartan.');
+    // Center in world coordinates before projecting, so distant records do not
+    // depend on the previous rotation or zoom. Keep both relation endpoints in view.
+    Object.assign(camera,{yaw:0,pitch:0,zoom:1,
+      centerX:points.reduce((sum,node)=>sum+node.x,0)/points.length,
+      centerY:points.reduce((sum,node)=>sum+node.y,0)/points.length,
+      centerZ:points.reduce((sum,node)=>sum+node.z,0)/points.length});
+    setActiveView('map');
+    const bounds=canvas.getBoundingClientRect(),scale=Math.min(bounds.width/780,bounds.height/580);
+    if(!(bounds.width>80&&bounds.height>100&&scale>0))return failure('Kartvyn är inte synlig. Öppna kartan och försök igen.');
+    for(const point of points){
+      const perspective=850/(850+point.z-camera.centerZ);
+      const dx=Math.abs((point.x-camera.centerX)*scale*perspective),dy=Math.abs((point.y-camera.centerY)*scale*perspective);
+      if(dx)camera.zoom=Math.min(camera.zoom,(bounds.width/2-40)/dx);
+      if(dy)camera.zoom=Math.min(camera.zoom,(bounds.height/2-50)/dy);
+    }
+    select(collection,id);
+    const visible=node=>node&&Number.isFinite(node.sx)&&Number.isFinite(node.sy)&&
+      node.sx>=node.r&&node.sx<=bounds.width-node.r&&node.sy>=node.r&&node.sy<=bounds.height-node.r;
+    const drawn=collection==='objects'?visible(screenNodes.find(node=>node.id===id)):
+      screenEdges.some(edge=>edge.id===id&&visible(edge.a)&&visible(edge.b));
+    if(!drawn||selected?.collection!==collection||selected.id!==id||!el('inspector').querySelector('.detail-heading'))
+      return failure('Markeringen kunde inte visas i kartan.');
+    canvas.scrollIntoView({block:'center',behavior:'instant'});
+    el('inspector').querySelector('.detail-heading').scrollIntoView({block:'nearest',behavior:'instant'});
+    return {ok:true,text:'Markerad.'};
+  }
+  function renderInspector() {
+    if (!selected) {el('inspector').innerHTML='<span class="muted">Välj ett objekt eller samband för att se alla uppgifter.</span>';return;}
+    const {collection,id} = selected, map = currentMap(), item = map[collection]?.[id] || data.saved_map[collection]?.[id];
+    if (!item) {selected=null;renderInspector();return;}
+    const state = changeState(collection,id), title = collection==='objects' ? item.name || id : relationText(item);
+    let html = `<div class="detail-heading"><strong>${escape(title)}</strong>${state?`<span class="badge proposed">${stateLabel(state)}</span>`:''}</div>`;
+    if (collection==='objects') {
+      html += `<dl class="detail-fields">${objectFields(item)}</dl>`;
+      const relations = {...data.saved_map.relations,...map.relations};
+      const relevant = Object.entries(relations).filter(([,relation]) => relation.from===id || relation.to===id);
+      html += relevant.length ? relevant.map(([rid,relation]) => `<div class="relation-line">${escape(relationText(relation))}${changeState('relations',rid)?` <span class="badge proposed">${stateLabel(changeState('relations',rid))}</span>`:''}</div>`).join('') : '<p class="muted">Inga samband angivna.</p>';
+    } else html += `<dl class="detail-fields">${Object.entries(item).filter(([key])=>key!=='id').map(([key,val])=>`<dt>${escape(fieldNames[key]||key)}</dt><dd>${escape(['from','to'].includes(key)?objectName(val):key==='type'?relationLabel(val):valueText(val))}</dd>`).join('')}</dl>`;
+    el('inspector').innerHTML = html;
+  }
+  function diffText(diff) {
+    const {collection,id,field,before,after} = diff;
+    const relation = collection === 'relations';
+    const itemBefore = data.saved_map[collection]?.[id], itemAfter = currentMap()[collection]?.[id];
+    const title = relation ? relationText(itemAfter || itemBefore) : objectName(id);
+    if (!itemBefore && itemAfter) return `Lägg till ${relation?'samband: ':''}${title}`;
+    if (itemBefore && !itemAfter) return `Ta bort ${relation?'samband: ':''}${title}`;
+    if (field && !['*','object','relation'].includes(field)) {
+      const humanValue = val => ['from','to'].includes(field) ? objectName(val) : field==='type' ? relationLabel(val) : valueText(val);
+      return `${title}: ${fieldNames[field] || field.replaceAll('_',' ')} ${humanValue(before)} → ${humanValue(after)}`;
+    }
+    return `${relation?'Ändra samband':'Ändra'}: ${title}`;
+  }
+  function deriveDiffs() {
+    const diffs=[];
+    if(!data.draft_map) return diffs;
+    for(const collection of ['objects','relations']) for(const id of new Set([...Object.keys(data.saved_map[collection] || {}),...Object.keys(data.draft_map[collection] || {})])) {
+      const before=data.saved_map[collection]?.[id],after=data.draft_map[collection]?.[id];
+      if(JSON.stringify(before)===JSON.stringify(after)) continue;
+      if(!before||!after) diffs.push({collection,id,before,after});
+      else for(const field of new Set([...Object.keys(before),...Object.keys(after)])) if(JSON.stringify(before[field])!==JSON.stringify(after[field])) diffs.push({collection,id,field,before:before[field],after:after[field]});
+    }
+    return diffs;
+  }
+  function renderChanges(receipt=null) {
+    const diffs = Array.isArray(data.full_diff)&&data.full_diff.length ? data.full_diff : deriveDiffs();
+    const lines = [...new Set(diffs.map(diffText))];
+    el('draft-badge').textContent = lines.length ? `${lines.length} ${lines.length===1?'ändring':'ändringar'}` : 'Inget utkast';
+    el('draft-badge').classList.toggle('proposed',Boolean(lines.length));
+    el('map-badge').textContent = lines.length ? 'Med förslag' : 'Sparad';
+    el('map-badge').classList.toggle('proposed',Boolean(lines.length));
+    el('changes').innerHTML = lines.length ? `<p class="state-summary">Det här föreslås just nu.</p><ul class="change-list">${lines.slice(0,6).map(line=>`<li>${escape(line)}</li>`).join('')}</ul>${lines.length>6?`<details style="margin-top:8px"><summary>Visa ${lines.length-6} fler ändringar</summary><ul class="change-list">${lines.slice(6).map(line=>`<li>${escape(line)}</li>`).join('')}</ul></details>`:''}` : '<div class="empty">Inga osparade ändringar. Berätta för att lägga till eller rätta en uppgift.</div>';
+    const blockers = Array.isArray(data.blockers) ? data.blockers : data.blockers ? [data.blockers] : [];
+    el('blockers').hidden = !blockers.length;
+    el('blockers').innerHTML = `<strong>Behöver redas ut</strong><ul>${blockers.map(blocker=>`<li>${escape(typeof blocker==='string'?blocker:blocker.message||blocker.question||blocker.reason||valueText(blocker))}</li>`).join('')}</ul>`;
+    const receiptVersion = receipt && typeof receipt==='object' ? receipt.map_version ?? receipt.version : null;
+    el('save-note').textContent = receipt ? `Senaste sparkvittot gäller provets lokala sparande${receiptVersion!==null&&receiptVersion!==undefined?' · version '+receiptVersion:''}.${lines.length?' Förslagen ovan är fortfarande osparade.':''}` : blockers.length ? 'Svara på den öppna frågan innan du ber att spara.' : lines.length && data.ready_to_save ? 'Förslaget kan sparas. Säg ”spara ändringarna” när det stämmer.' : lines.length ? 'Förslaget är ännu inte klart att spara. Fortsätt samtalet.' : `Aktuell sparad kartversion ${data.map_version ?? '—'}. Säg ”spara ändringarna” när nästa förslag stämmer.`;
+    el('save-note').classList.toggle('waiting',!receipt && (!lines.length || !data.ready_to_save));
+    const saved = data.saved_map;
+    el('saved-summary').textContent = `Aktuell sparad karta · version ${data.map_version ?? '—'}`;
+    el('saved-map').innerHTML = `<p class="muted">${Object.keys(saved.objects).length} objekt · ${Object.keys(saved.relations).length} samband</p>`+Object.entries(saved.objects).map(([id,object])=>`<details class="saved-entry"><summary>${escape(object.name||id)} <small>· ${escape(humanType(object.kind))}</small></summary><dl class="detail-fields">${objectFields(object)}</dl></details>`).join('')+Object.values(saved.relations).map(relation=>`<div class="saved-entry">${escape(relationText(relation,saved))}</div>`).join('');
+  }
+  function hash(text) {let result=0;for(const char of String(text)) result=(result*31+char.charCodeAt(0))>>>0;return result;}
+  function nodePositions() {
+    const objects = {...data.saved_map.objects,...currentMap().objects}, groups={};
+    for(const [id,object] of Object.entries(objects)) (groups[object.kind || 'other'] ||= []).push([id,object]);
+    const anchors={person:[-270,-15,0],card:[245,-120,20],service:[35,135,0],subscription:[60,-15,75],service_account:[40,-135,25],email:[275,140,-60],email_address:[275,140,-60],company:[-85,225,-40]};
+    const result=[];
+    for(const [kind,items] of Object.entries(groups)) {
+      items.sort(([a],[b])=>a.localeCompare(b));
+      const anchor=anchors[kind] || [-70,40,120];
+      items.forEach(([id,object],index)=>{
+        const offset=index-(items.length-1)/2, spread=kind==='person'?120:86;
+        result.push({id,object,x:anchor[0]+(kind==='person'?Math.abs(offset)*19:offset*25),y:anchor[1]+offset*spread,z:anchor[2]+((hash(id)%5)-2)*24,state:changeState('objects',id)});
+      });
+    }
+    return result;
+  }
+  function draw() {
+    if(activeView!=='map') return;
+    const bounds=canvas.getBoundingClientRect();if(!bounds.width||!bounds.height)return;
+    const ratio=Math.min(devicePixelRatio||1,2),w=bounds.width,h=bounds.height;
+    if(canvas.width!==Math.round(w*ratio)||canvas.height!==Math.round(h*ratio)){canvas.width=Math.round(w*ratio);canvas.height=Math.round(h*ratio);}
+    ctx.setTransform(ratio,0,0,ratio,0,0);ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='#254236';ctx.lineWidth=1;
+    for(let x=(w/2)%40;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+    for(let y=(h/2)%40;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+    const nodes=nodePositions(), scale=Math.min(w/780,h/580)*camera.zoom;
+    const project=node=>{
+      const nx=node.x-camera.centerX,ny=node.y-camera.centerY,nz=node.z-camera.centerZ;
+      const x=nx*Math.cos(camera.yaw)+nz*Math.sin(camera.yaw),z=-nx*Math.sin(camera.yaw)+nz*Math.cos(camera.yaw);
+      const y=ny*Math.cos(camera.pitch)-z*Math.sin(camera.pitch),depth=ny*Math.sin(camera.pitch)+z*Math.cos(camera.pitch);
+      const perspective=850/(850+depth);
+      return {...node,sx:w/2+x*scale*perspective,sy:h/2+y*scale*perspective,depth,r:17*Math.min(1.2,Math.max(.8,perspective))};
+    };
+    screenNodes=nodes.map(project).sort((a,b)=>b.depth-a.depth);const byId=Object.fromEntries(screenNodes.map(node=>[node.id,node]));
+    screenEdges=[];const map=currentMap(),relations={...data.saved_map.relations,...map.relations};
+    for(const [id,relation] of Object.entries(relations)) {
+      const a=byId[relation.from],b=byId[relation.to];if(!a||!b)continue;
+      const state=changeState('relations',id),chosen=selected?.collection==='relations'&&selected.id===id,near=selected?.collection==='objects'&&(selected.id===relation.from||selected.id===relation.to);
+      ctx.strokeStyle=chosen||near?'#eaf3df':state==='new'?'#dba343':state==='changed'?'#c285ce':state==='removed'?'#d17860':'#628673';ctx.lineWidth=chosen||near?2.5:state?1.8:1.2;ctx.setLineDash(state==='removed'?[6,5]:[]);
+      ctx.beginPath();ctx.moveTo(a.sx,a.sy);ctx.lineTo(b.sx,b.sy);ctx.stroke();ctx.setLineDash([]);
+      const angle=Math.atan2(b.sy-a.sy,b.sx-a.sx),endX=b.sx-Math.cos(angle)*(b.r+3),endY=b.sy-Math.sin(angle)*(b.r+3);
+      ctx.beginPath();ctx.moveTo(endX-Math.cos(angle-.45)*6,endY-Math.sin(angle-.45)*6);ctx.lineTo(endX,endY);ctx.lineTo(endX-Math.cos(angle+.45)*6,endY-Math.sin(angle+.45)*6);ctx.stroke();
+      if(chosen||near){const label=relationLabel(relation.type),x=(a.sx+b.sx)/2,y=(a.sy+b.sy)/2;ctx.font='11px system-ui';const width=ctx.measureText(label).width;ctx.fillStyle='#163127';ctx.fillRect(x-width/2-5,y-10,width+10,18);ctx.fillStyle='#e8efdf';ctx.textAlign='center';ctx.fillText(label,x,y+3);}
+      screenEdges.push({id,a,b});
+    }
+    const paintNodes=selected?.collection==='objects'?[...screenNodes.filter(node=>node.id!==selected.id),...screenNodes.filter(node=>node.id===selected.id)]:screenNodes;
+    for(const node of paintNodes){const {sx,sy,r,object,state}=node,chosen=selected?.collection==='objects'&&selected.id===node.id;
+      const color=state==='new'?'#e4b450':state==='changed'?'#d197db':state==='removed'?'#df937d':'#bfd6c1';
+      ctx.fillStyle=chosen?'#365e45':'#203f31';ctx.strokeStyle=color;ctx.lineWidth=chosen?3:state?2:1.3;ctx.setLineDash(state==='removed'?[3,3]:[]);
+      ctx.beginPath();ctx.arc(sx,sy,r+(chosen?2:0),0,Math.PI*2);ctx.fill();ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=color;ctx.font='600 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(icons[object.kind]||'·',sx,sy);ctx.textBaseline='alphabetic';
+      const raw=object.name||node.id,label=raw.length>27?raw.slice(0,25)+'…':raw;ctx.font='12px system-ui';const width=ctx.measureText(label).width;
+      const lx=Math.max(width/2+5,Math.min(w-width/2-5,sx)),ly=Math.min(h-17,sy+r+19);
+      ctx.fillStyle='#183328';ctx.fillRect(lx-width/2-4,ly-12,width+8,18);ctx.fillStyle=color;ctx.fillText(label,lx,ly);
+      if(state){ctx.font='9px system-ui';ctx.fillStyle=color;ctx.fillText(stateLabel(state),lx,ly+13);}
+    }
+    el('map-empty').hidden=nodes.length>0;
+  }
+  function setActiveView(view){activeView=view;el('map-visual').hidden=view!=='map';el('map-list-panel').hidden=view!=='list';el('show-map').setAttribute('aria-selected',view==='map');el('show-list').setAttribute('aria-selected',view==='list');if(view==='map')draw();}
+  el('show-map').onclick=()=>setActiveView('map');el('show-list').onclick=()=>setActiveView('list');
+  el('zoom-in').onclick=()=>{camera.zoom=Math.min(2,camera.zoom+.15);draw();};el('zoom-out').onclick=()=>{camera.zoom=camera.zoom<.5?camera.zoom*.85:Math.max(.5,camera.zoom-.15);draw();};el('reset-map').onclick=()=>{Object.assign(camera,{yaw:.13,pitch:-.08,zoom:1,centerX:0,centerY:0,centerZ:0});draw();};
+  canvas.addEventListener('pointerdown',event=>{drag={x:event.clientX,y:event.clientY,originX:event.clientX,originY:event.clientY,moved:false};canvas.setPointerCapture(event.pointerId);});
+  canvas.addEventListener('pointermove',event=>{if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag.moved ||= Math.hypot(event.clientX-drag.originX,event.clientY-drag.originY)>5;if(drag.moved){camera.yaw+=dx*.008;camera.pitch=Math.max(-1.1,Math.min(1.1,camera.pitch+dy*.008));draw();}drag.x=event.clientX;drag.y=event.clientY;});
+  canvas.addEventListener('pointerup',event=>{if(!drag)return;const moved=drag.moved;drag=null;if(moved)return;const bounds=canvas.getBoundingClientRect(),x=event.clientX-bounds.left,y=event.clientY-bounds.top;
+    const node=[...screenNodes].reverse().find(item=>Math.hypot(item.sx-x,item.sy-y)<item.r+12);if(node){select('objects',node.id);return;}
+    const edge=screenEdges.find(({a,b})=>{const dx=b.sx-a.sx,dy=b.sy-a.sy,len=dx*dx+dy*dy,t=len?Math.max(0,Math.min(1,((x-a.sx)*dx+(y-a.sy)*dy)/len)):0;return Math.hypot(x-a.sx-t*dx,y-a.sy-t*dy)<8;});if(edge)select('relations',edge.id);
+  });
+  canvas.addEventListener('pointercancel',()=>{drag=null;});new ResizeObserver(draw).observe(canvas);
+  function renderVoiceControls() {
+    el('connection').classList.toggle('connected',isConnected&&!micMuted);
+    el('start-voice').disabled=isConnected;el('stop-voice').disabled=!isConnected;el('mute-voice').disabled=!isConnected;
+    el('mute-voice').textContent=micMuted?'Återuppta mikrofon':'Pausa mikrofon';el('mute-voice').setAttribute('aria-pressed',String(micMuted));
+    el('mic-status').textContent=!isConnected?'Mikrofonen är av':micMuted?'Mikrofonen är pausad':'Mikrofonen är på';
+  }
+  window.VoiceUI = {
+    setStatus(text){el('status').textContent=String(text ?? '');},
+    showWork(work={}){
+      const busy=Boolean(work.active),uncertain=busy&&Boolean(work.uncertain);
+      const heading=uncertain?'Kontrollerar arbetsstatus':work.phase==='error'?'Arbetet avbröts'
+        :busy?(work.phase==='receive'||work.phase==='queue'?'Skyttel väntar':'Skyttel arbetar')
+        :'Skyttel är redo';
+      const inactiveText={complete:'Klart. Du kan fortsätta prata.',
+        error:'Se felbeskedet i samtalet innan du fortsätter.',
+        superseded:'Fortsätt med din rättelse.'};
+      const phaseText=busy?work.text||'Kontrollerar ditt besked…'
+        :inactiveText[work.phase]||'Berätta vad du vill göra.';
+      const seconds=Math.floor(Math.max(0,Number(work.elapsed_ms)||0)/1000);
+      const elapsed=busy?(seconds<60?`${seconds} s`:`${Math.floor(seconds/60)} min ${seconds%60} s`):'';
+      for(const suffix of ['', '-floating']){
+        el('work'+suffix+'-heading').textContent=heading;
+        el('work'+suffix+'-phase').textContent=phaseText;
+        el('work'+suffix+'-elapsed').textContent=elapsed;
+      }
+      el('work-hint').textContent=uncertain?'Vänta på serverns besked.'
+        :busy?'Du kan vänta på svaret eller fortsätta prata.':'';
+      for(const id of ['work-inline','work-floating']){
+        el(id).classList.toggle('is-working',busy&&!uncertain);
+        el(id).classList.toggle('is-uncertain',uncertain);
+      }
+      el('work-floating').hidden=!busy;
+      document.body.classList.toggle('work-visible',busy);
+      for(const id of ['map-region','changes-region'])el(id).setAttribute('aria-busy',String(busy));
+      // Announce phase changes once; the visual clock stays outside live regions.
+      const announcement=work.phase+':'+heading+':'+phaseText;
+      if(announcement!==lastWorkAnnouncement){
+        lastWorkAnnouncement=announcement;
+        el('work-announcement').textContent=heading+'. '+phaseText;
+      }
+    },
+    setConnected(connected){isConnected=Boolean(connected);if(!isConnected)micMuted=false;renderVoiceControls();},
+    setMuted(muted){micMuted=Boolean(muted);renderVoiceControls();},
+    applyMapSelection,
+    addTranscript(role,text,{partial=false,id}={}){
+      el('transcript-empty')?.remove();const log=el('transcript'),shouldScroll=log.scrollHeight-log.scrollTop-log.clientHeight<80;
+      const normalized=['user','you','human'].includes(role)?'you':['assistant','model','skyttel'].includes(role)?'assistant':'event';
+      const identified=id!==undefined&&id!==null;
+      let row=identified?transcriptRows.get(id):partials.get(role);if(!row){row=document.createElement('div');row.className=`utterance ${normalized}`;const label=document.createElement('span');label.className='utterance-label';label.textContent=normalized==='you'?'Du':normalized==='assistant'?'Skyttel':'Händelse';const content=document.createElement('div');content.className='utterance-text';row.append(label,content);log.append(row);if(identified){transcriptRows.set(id,row);row.dataset.transcriptId=String(id);}}
+      row.querySelector('.utterance-text').textContent=String(text ?? '');row.classList.toggle('partial',partial);
+      if(!identified){if(partial)partials.set(role,row);else partials.delete(role);}if(shouldScroll)log.scrollTop=log.scrollHeight;return row;
+    },
+    setRelationLabels(labels){
+      if(!labels||typeof labels!=='object'||Array.isArray(labels))return;
+      relationNames=Object.assign(Object.create(null),Object.fromEntries(
+        Object.entries(labels).filter(([,label])=>typeof label==='string'&&label.trim())
+      ));
+    },
+    showView(view){
+      if(!view||typeof view!=='object')return false;
+      // Both versions only increase for this trial's fixed household and user.
+      if(['map_version','draft_version'].some(key=>!Number.isSafeInteger(view[key])||view[key]<data[key]))return false;
+      data={...data,...view,receipt:view.receipt??null};data.saved_map=data.saved_map||emptyMap();data.saved_map={objects:{},relations:{},...data.saved_map};if(data.draft_map)data.draft_map={objects:{},relations:{},...data.draft_map};
+      renderList();renderInspector();renderChanges(view.receipt??null);draw();el('full-state').textContent=JSON.stringify(data,null,2);
+      return true;
+    },
+    log(text){const log=el('technical-log');if(log.textContent==='Provet väntar på anslutning.')log.textContent='';const stamp=new Date().toLocaleTimeString('sv-SE');log.textContent+=`${stamp}  ${typeof text==='string'?text:JSON.stringify(text)}\n`;log.scrollTop=log.scrollHeight;},
+    showBudget(budget){
+      el('budget-note').hidden=!budget||typeof budget!=='object'||!budget.note;
+      el('budget-note').textContent=budget&&typeof budget==='object'?budget.note||'':'';
+      el('budget').title='';
+      if(typeof budget==='string'||typeof budget==='number'){el('budget').textContent=String(budget);return;}
+      if(!budget){el('budget').textContent='Budget —';return;}
+      if(['accounted_usd','confirmed_usd','reserved_usd','remaining_usd'].some(key=>budget[key]!==undefined)) {
+        const amount=value=>Number.isFinite(Number(value))?Number(value).toFixed(3):'—';
+        const parts=[];
+        if(budget.confirmed_usd!==undefined)parts.push(`Beräknat ${amount(budget.confirmed_usd)}`);
+        if(budget.reserved_usd!==undefined)parts.push(`reserverat ${amount(budget.reserved_usd)}`);
+        if(budget.remaining_usd!==undefined)parts.push(`kvar ${amount(budget.remaining_usd)}`);
+        if(!parts.length)parts.push(`Budgetbelastning ${amount(budget.accounted_usd)}`);
+        el('budget').textContent=parts.join(' · ')+(budget.limit_usd!==undefined?` av ${Number(budget.limit_usd).toFixed(2)}`:'')+' USD';
+        el('budget').title=[budget.accounted_usd!==undefined?`Budgetbelastning: ${amount(budget.accounted_usd)} USD`:'',budget.limit_usd!==undefined?`Budgetgräns: ${amount(budget.limit_usd)} USD`:'',budget.note||''].filter(Boolean).join(' · ');
+        return;
+      }
+      const spent=budget.spent_usd??budget.spent??budget.used_usd??budget.estimated_cost_usd??budget.estimated_spend_usd,capped=budget.limit_usd??budget.cap_usd??budget.max_usd??budget.limit;
+      el('budget').textContent=spent!==undefined||capped!==undefined?`Kostnad ${spent!==undefined?Number(spent).toFixed(3):'—'}${capped!==undefined?' / '+Number(capped).toFixed(2):''} USD`:Object.entries(budget).map(([key,val])=>`${key.replaceAll('_',' ')}: ${valueText(val)}`).join(' · ');
+    },
+    showClientTiming(timing){
+      if(!timing)return;
+      const interval=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0?Math.round(value)+' ms':'—';
+      el('client-timing').textContent=[
+        'Senaste mottagna användardelta → Live-delegering: '+interval(timing.input_to_delegation_ms),
+        'Live-delegering → API-anrop startat: '+interval(timing.dispatch_wait_ms),
+        'API-anrop → komplett JSON-svar mottaget: '+interval(timing.request_ms),
+        'Commentary köad för sändning → nästa assistentdelta: '+interval(timing.append_to_output_ms),
+        timing.note||''
+      ].filter(Boolean).join('\n');
+    },
+    showLatency(ms,work){
+      el('latency').textContent=Number.isFinite(Number(ms))?`Svarstid ${(Number(ms)/1000).toFixed(1)} s`:'Svarstid —';
+      if(work){
+        const seconds=value=>(Math.max(0,Number(value)||0)/1000).toFixed(1)+' s';
+        el('latency').title=`Totalt ${seconds(work.total_ms)} · modell ${seconds(work.model_ms)} (${work.model_calls||0} anrop) · kartverktyg ${seconds(work.tool_ms)}`;
+        if(!work.active&&work.phase==='complete'&&['mcp','direct'].includes(work.transport)){
+          const finite=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
+          const duration=value=>finite(value)?(value/1000).toFixed(1)+' s':'—';
+          const cart=finite(work.tool_ms)&&finite(work.verify_ms)?Math.round(work.tool_ms+work.verify_ms)+' ms':'—';
+          const calls=Number.isSafeInteger(work.model_calls)&&work.model_calls>=0?work.model_calls:'—';
+          const completion=({standard:'standard',combined:'kombinerat'})[work.completion_mode];
+          el('transport-timing-'+work.transport).textContent=`${work.transport==='mcp'?'MCP':'Direkt'} senast${completion?' ('+completion+')':''} · totalt ${duration(work.total_ms)} · modell ${duration(work.model_ms)} · kartarbete ${cart} · kö ${duration(work.queue_ms)} · ${calls} modellanrop`;
+        }
+        if(!work.active&&work.phase==='complete'){
+          const count=value=>Number.isSafeInteger(value)&&value>=0?value:'—';
+          el('model-step-timing').textContent=Array.isArray(work.model_steps)&&work.model_steps.length
+            ?work.model_steps.map(step=>`Modellanrop ${count(step.call)}: ${seconds(step.elapsed_ms)} · input ${count(step.input_tokens)} · cache ${count(step.cached_tokens)} · output ${count(step.output_tokens)} · resonemang ${count(step.reasoning_tokens)} · verktyg ${Array.isArray(step.tools)?step.tools.join(', '):'—'}`).join('\n')
+            :'Inga detaljer per modellanrop i det senaste färdiga uppdraget.';
+        }
+      }
+    }
+  };
+  setActiveView(activeView);
+})();
+</script>
+<script src="/voice.js"></script>
+</body>
+</html>
