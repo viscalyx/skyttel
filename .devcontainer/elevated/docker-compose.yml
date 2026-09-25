@@ -9,7 +9,7 @@ services:
       # Mount the root folder that contains .git
       - ../..:/workspace:cached
 
-      # Keep existing SQLite state in its original volume
+       Persist Codex configuration, installation, and SQLite state/logs
       - type: volume
         source: codex-state
         target: /home/vscode/.codex/sqlite
