@@ -25,6 +25,66 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
    `/history`. Hushållets ID finns i kartans vanliga nätverksbegäran.
    Skriv inte inloggningsuppgifter eller testinnehåll i offentliga rapporter.
 
+### Skicka ett felaktigt fältvärde med aktuell utkastversion
+
+Använd detta kontrollsteg i TYP-05 och TYP-07. Ett lokalt avvisat formulär
+skickar ingen begäran att kopiera. Lägg därför först det giltiga
+objektförslaget i utkastet enligt fallet. Kopiera därefter endast JSON-kroppen
+från den lyckade `POST /api/households/<id>/map/draft` i nätverkspanelen.
+Anteckna hushållets ID och fältets ID under `value.customValues` i kroppen.
+Fältets visningsnamn är inte dess ID.
+
+Låt båda användarna avstå från andra ändringar under kontrollen. Kör koden
+nedan i den inloggade profilens Console. Klistra in den giltiga JSON-kroppen,
+hushållets ID, fältets ID och fallets ogiltiga värde i frågorna. Koden läser
+aktuella versioner och ändrar bara det angivna fältet. Den kopierade
+begärans gamla `version` är redan förbrukad och får inte återanvändas.
+
+```js
+await (async () => {
+  const body = JSON.parse(prompt('Giltig JSON-kropp från map/draft'));
+  const householdId = prompt('Hushållets ID');
+  const fieldId = prompt('Fältets ID i value.customValues');
+  const invalidValue = prompt('Ogiltigt värde: 2026-02-30 eller fel');
+  if (!Object.hasOwn(body.value?.customValues ?? {}, fieldId)) {
+    throw new Error('Fältet saknas i den kopierade begäran');
+  }
+  const path = `/api/households/${encodeURIComponent(householdId)}/map`;
+  const read = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Läsning misslyckades: ${response.status}`);
+    return response.json();
+  };
+  const before = await read(path);
+  const historyBefore = await read(`${path}/history`);
+  const identity = await read('/api/version');
+  body.version = before.draft.version;
+  body.contentVersion = before.contentVersion;
+  body.value.customValues[fieldId] = invalidValue;
+  const response = await fetch(`${path}/draft`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Skyttel-Build': `${identity.commit}:${identity.version}`,
+    },
+    body: JSON.stringify(body),
+  });
+  console.log({
+    status: response.status,
+    error: (await response.json()).error,
+    unchangedMap: JSON.stringify(before) === JSON.stringify(await read(path)),
+    unchangedHistory:
+      JSON.stringify(historyBefore) === JSON.stringify(await read(`${path}/history`)),
+  });
+})();
+```
+
+Resultatet ska vara `status: 400`, `error: "invalid_request"`,
+`unchangedMap: true` och `unchangedHistory: true`. HTTP 409 betyder att en
+versionskontroll stoppar begäran; det är inte ett godkänt valideringsprov.
+Hämta då ett nytt giltigt underlag och gör om kontrollen utan samtidiga
+ändringar. Koden sparar inte hela utkastet och ska inte ändra något.
+
 ## Definitioner och fält
 
 ### TYP-01: Definition och objekt sparas tillsammans med beständigt kvitto
@@ -184,10 +244,11 @@ entire draft and map”.
 
 1. Alex föreslår att det oanvända Effekt blir text. Lägg också ett
    oberoende nytt Person-objekt i samma utkast.
-2. Skapa ett förslag av typen Solkraft. Prova ett ogiltigt datum.
-   För kontroll av serversidan: kopiera objektets vanliga förslagsbegäran
-   från nätverkspanelen, ändra Datum till `2026-02-30` och skicka igen.
-   Kontrollera HTTP 400 och att tidigare utkast är oförändrat.
+2. Skapa ett förslag av typen Solkraft med det giltiga datumet
+   `2026-02-28` och lägg förslaget i utkastet. Följ kontrollsteget
+   [för felaktigt fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
+   för Datum med värdet `2026-02-30`. Kontrollera HTTP 400 och att kartan,
+   hela utkastet och historiken är oförändrade jämfört med före återförsöket.
 3. Lo lägger ett nytt objekt med Effekt `12` i sitt privata utkast utan
    att spara. Alex försöker nu spara hela sitt utkast.
 4. Kontrollera felet, kartan, det egna utkastet och historikens HTTP-svar.
@@ -263,11 +324,13 @@ saves until fresh choices while undo protects private fields”.
 **Steg:**
 
 1. Alex lägger namnbytet Garaget till Eget namn i sitt utkast. Föreslå
-   typbytet till Motorfordon. För att kontrollera serverns validering,
-   kopiera förslagsbegäran i nätverkspanelen och skicka Nummer som texten
-   `fel` i stället för ett tal. Kontrollera HTTP 400 och oförändrat utkast.
-2. Rätta Nummer till `42`, välj Försäkrad **Nej**, hantera gamla värden och
-   lägg typbytet i utkastet. Lo ändrar och sparar Motorfordons beskrivning.
+   typbytet till Motorfordon: ange Nummer `42`, välj Försäkrad **Nej**,
+   hantera gamla värden och lägg typbytet i utkastet. Följ kontrollsteget
+   [för felaktigt fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
+   för Nummer med texten `fel`. Kontrollera HTTP 400 och oförändrad karta,
+   helt utkast och historik jämfört med före återförsöket.
+2. Behåll det giltiga typbytet med Nummer `42` och Försäkrad **Nej** i
+   utkastet. Lo ändrar och sparar Motorfordons beskrivning.
 3. Alex försöker spara hela utkastet. Kontrollera att varken Garagets namn
    eller cykelns typ ändras. Hämta aktuellt underlag och behåll förslaget
    efter granskning av den nya definitionen. Återsänd tidigare sparbegäran

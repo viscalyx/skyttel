@@ -39,7 +39,8 @@ betyder inte att dess manuella prov är genomfört.
   sammanslagning.
 
 - [Sammanslagning](object-merge.md): uttrycklig identitet, val av uppgifter
-  och samband, privata förslag, avbrott, omstart och ångring av hela sparandet.
+  och samband, privata förslag, kontrollerat förlorat sparsvar, omstart
+  och ångring av hela sparandet.
 
 - [Profilbilder](profile-images.md): privata bildförslag, formatfel,
   gränser, omstart, bildbyte, borttagning, ångring, kvitton och bildåtkomst.
@@ -68,10 +69,12 @@ betyder inte att dess manuella prov är genomfört.
 - [Personliga placeringar](personal-view.md): flyttning med mus, pekgester
   och tangentbord, visningsval, samtidighetskonflikter, bevarad text,
   beständighet och avskildhet mellan användare samt inramning vid sen
-  första inläsning med bevarad kamera vid senare uppdateringar.
+  första inläsning med bevarad kamera vid senare uppdateringar. Separata
+  provhushåll på samma installation förbereds med ett lokalt kommando.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
-  validering, konflikter, historik och bevarade äldre utkast.
+  validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
+  kommando förbereder äldre provdata för uppgraderingen.
 - [Privata utkast](drafts.md): återuppta utkast, hantera gamla kastförsök
   och konfliktval samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status
@@ -82,6 +85,7 @@ betyder inte att dess manuella prov är genomfört.
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
   som objektens innehåll. Typbyten granskar tidigare och nya värden,
   bevarar identitet och samband samt följer historikens ångring.
+  Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, privata förslag, dubbletter
   och samtidiga sparanden utan delsparande.

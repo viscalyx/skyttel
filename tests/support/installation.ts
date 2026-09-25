@@ -29,12 +29,16 @@ export const robin: Identity = {
 
 export async function createInstallation(
   firstAdmin = { provider: 'google' as 'google' | 'microsoft', subject: alex.subject },
-  databaseOptions: { migrationsDirectory?: string; legacyAuthCallbacks?: boolean } = {},
+  databaseOptions: {
+    migrationsDirectory?: string;
+    legacyAuthCallbacks?: boolean;
+    databasePath?: string;
+  } = {},
 ) {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-test-'));
   const config: Config = {
     origin: 'http://127.0.0.1',
-    databasePath: join(directory, 'skyttel.db'),
+    databasePath: databaseOptions.databasePath ?? join(directory, 'skyttel.db'),
     firstAdmin,
     authSecret: 'synthetic-test-secret-with-at-least-32-characters',
     google: { clientId: 'fake-google', clientSecret: 'fake-secret' },

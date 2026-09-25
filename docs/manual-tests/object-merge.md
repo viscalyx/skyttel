@@ -50,9 +50,15 @@ restart, lost receipt and whole-save undo”.
 5. Välj objekten och uppgifterna igen, behåll endast det andra sambandet
    och bekräfta uttryckligen att objekten är samma företeelse.
 6. Lägg förslaget i utkastet. Starta om installationen och ladda om sidan.
-   Kontrollera hela skillnaden och spara. Avbryt svaret efter att servern
-   tar emot sparandet med webbläsarens nätverksverktyg. Ladda om och
-   kontrollera det genomförda sparförsöket och kvittot.
+   Kontrollera hela skillnaden. Kör engångskoden för förlorat sparsvar i
+   [BILD-02](profile-images.md#bild-02-avvisa-felaktiga-bilder-och-återhämta-bildborttagning)
+   i den här sidans Console **före** nästa sparande. Välj **Spara hela
+   utkastet** utan att ladda om först. Koden inväntar serversvaret innan
+   appen får anslutningsfelet. Kontrollera det okända utfallet och välj
+   **Hämta samma kvitto igen**. Ladda om, öppna **Mina sparförsök** och
+   **Visa historik**: samma genomförda försök och kvitto ska finnas, med
+   exakt en ändringsgrupp för sammanslagningen. Koden återställer `fetch`
+   efter ett svar; ladda om sidan för att återställa om provet avbryts.
 7. Rätta det kvarvarande objektets namn till Senare namn och spara.
    Lägg Eget senare objekt i utkastet. Starta om installationen.
 8. Öppna den andra webbläsaren. Välj **Visa historik**, hitta

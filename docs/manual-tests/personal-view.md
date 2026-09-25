@@ -152,8 +152,11 @@ viewport changes preserve existing placement and unsent text”.
 
 **Användare:** Alex, Robin och den utloggade profilen.
 
-**Förutsättningar:** Alex har flyttat Lampan. Robin har först bara
-tillgång till ett annat provhushåll.
+**Förutsättningar:** Följ
+[förberedelsen för två provhushåll](../development/manual-map-fixtures.md#a-second-household-on-the-same-installation).
+Alex har Linden och Robin har först bara Eken på **samma installation**.
+Skapa och flytta Lampan som Alex. Behåll Lindens adress och hushålls-ID
+från Alex profil. Använd en tredje, utloggad profil för åtkomstprovet.
 
 **Integrationstest:**
 [personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
@@ -162,11 +165,41 @@ further reads and both mutations”.
 
 **Steg:**
 
-1. Försök öppna Linden utloggad och med Robins andra hushållstillgång.
-2. Bjud in Robin till Linden. Flytta Lampan och ändra stjärnvalet som Robin.
+1. Försök öppna Lindens adress utloggad och med Robins andra hushållstillgång.
+   Kör åtkomstprovet nedan i båda profilernas Console.
+2. Bjud in Robin till Linden och acceptera inbjudan som Robin. Öppna
+   Lindens adress uttryckligen även om startsidan visar Eken. Flytta Lampan
+   och ändra stjärnvalet som Robin.
 3. Kontrollera Alex vy. Låt Robin behålla kartan öppen medan Alex
    återkallar Robins tillgång.
 4. Välj Läs in min aktuella vy som Robin och försök fortsätta arbeta.
+   Kör åtkomstprovet igen som Robin. Alla tre svar ska vara HTTP 403.
+
+Kör följande endast när profilen **saknar** tillgång till Linden. Ange
+Lindens ID från Alex kartbegäran i nätverkspanelen. Provet försöker läsa
+vyn och göra båda slags ändringar genom appens publika HTTP-gränssnitt.
+De tomma ändringarna ska nekas av tillgångskontrollen före valideringen.
+Utloggad profil ska få tre HTTP 401; Robin utan tillgång ska få tre HTTP 403.
+
+```js
+await (async () => {
+  const householdId = prompt('Lindens hushålls-ID');
+  const identity = await (await fetch('/api/version')).json();
+  const viewPath = `/api/households/${encodeURIComponent(householdId)}/map/view`;
+  console.log('read', (await fetch(viewPath)).status);
+  for (const kind of ['position', 'settings']) {
+    const response = await fetch(`${viewPath}/${kind}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Skyttel-Build': `${identity.commit}:${identity.version}`,
+      },
+      body: '{}',
+    });
+    console.log(kind, response.status);
+  }
+})();
+```
 
 **Förväntat resultat:**
 
