@@ -55,6 +55,11 @@ omladdning och omstart.
 **Hela ditt utkast** visar de samlade förslagen för objekt, samband och
 typer. Rättelser visar tidigare och föreslagna värden, exempelvis
 **Sista fyra: 1111 → 2222**. Öppna detaljerna för mer information.
+Skriv eller säg **Läs upp hela utkastet** för att granska förslagen i
+samtalet. Svaret beskriver ändrade värden före och efter, inklusive
+objektens identitet, om de gäller eller har upphört, profilbildsändringar
+och egna typdefinitioner. Profilbilder beskrivs som tillagda, bytta eller
+borttagna.
 Fråga om något är oklart. Assistenten
 ska fråga vid tvetydig identitet och skilja okänt, uttryckligen inget,
 osäkert uppgivet och ospecificerat objekt åt.
@@ -67,7 +72,8 @@ hypotetiska och uppskjutna sparkommandon ger inte tillåtelse att spara.
 Om formuleringen är oklar kan du behöva skriva **Spara hela utkastet nu**.
 
 Statusen **Sparat** kommer från ett beständigt kvitto. **Visa kvittot**
-visar vad sparandet omfattar. **Assistentens samtalstext – inte en
+visar vad sparandet omfattar. Fråga **Vad sparades senast?** för att få
+detaljer från det sparandet i samtalet. **Assistentens samtalstext – inte en
 bekräftelse** visar modellens frågor och svar separat. Texten kan innehålla
 fel, även ett påstående om att något har sparats eller markerats. Lita på
 Skyttels status och kvitto för sådana resultat. Detsamma gäller AI-röstens

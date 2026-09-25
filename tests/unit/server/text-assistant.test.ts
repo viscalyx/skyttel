@@ -470,6 +470,74 @@ test.each(['draft', 'save'])(
   },
 );
 
+test.each(['draft', 'latest_save'])(
+  'requested %s details report object status and the old relationship meaning through the public assistant',
+  async (source) => {
+    const model = textModel(() => [
+      modelMessage('En påhittad sammanfattning från leverantören.'),
+      modelTool('report_result', { source }),
+    ]);
+    await setup(model.provider);
+    const mapPath = path.replace('/text-assistant', '/map');
+    async function propose(endpoint: string, data: Record<string, unknown>) {
+      const state = await (await browser.get(mapPath)).json();
+      const response = await browser.post(`${mapPath}/${endpoint}`, {
+        headers: { origin: app.origin },
+        data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    const value = await webProposal('Tonrum', 'tonrum');
+    await propose('draft', {
+      id: 'tonrum',
+      baseRevision: null,
+      value: { ...value, lifecycle: 'active' },
+    });
+    await webProposal('Alex', 'alex');
+    const { relationshipTypes } = await (await browser.get(mapPath)).json();
+    const usageType = relationshipTypes.find((type: { name: string }) => type.name === 'Använder');
+    const paymentType = relationshipTypes.find((type: { name: string }) => type.name === 'Betalar');
+    const relationship = { sourceId: 'alex', targetId: 'tonrum', knowledge: 'known' };
+    await propose('relationship', {
+      id: 'alex-tonrum',
+      baseRevision: null,
+      value: { ...relationship, typeId: usageType.id },
+    });
+    await propose('save', { operationId: 'baseline' });
+    await propose('draft', {
+      id: 'tonrum',
+      baseRevision: 1,
+      value: { ...value, lifecycle: 'ended' },
+    });
+    await propose('relationship', {
+      id: 'alex-tonrum',
+      baseRevision: 1,
+      value: { ...relationship, typeId: paymentType.id },
+    });
+    if (source === 'latest_save') await propose('save', { operationId: 'correction' });
+
+    const before = await (await browser.get(mapPath)).json();
+    const result = await message(
+      await start(),
+      source === 'draft' ? 'Läs upp hela utkastet.' : 'Läs upp vad som sparades senast.',
+    );
+
+    expect(result).toMatchObject({
+      phase: 'ready',
+      result: { kind: source === 'draft' ? 'draft' : 'history' },
+    });
+    expect(result.reply).toContain('Tonrum (Gäller: aktuellt → upphört)');
+    expect(result.reply).toContain('Alex Använder Tonrum → Alex Betalar Tonrum');
+    expect(result.reply).not.toContain('påhittad');
+    expect(result.modelReply).toBeUndefined();
+    expect(result.receipt).toBeUndefined();
+    expect(result.selection).toBeUndefined();
+    const after = await (await browser.get(mapPath)).json();
+    expect(after).toEqual(before);
+    expect(model.requests).toHaveLength(1);
+  },
+);
+
 test('latest-save details and unsaved undo are grounded in the actual receipt and preserve unrelated proposals', async () => {
   let mode = 'history';
   let receipt: { operationId: string; userId: string };

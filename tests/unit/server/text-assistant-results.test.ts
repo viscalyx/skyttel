@@ -100,7 +100,7 @@ test('draft details report corrected card values, knowledge and dates without cl
     'Senast uppgiven skuld: 2500 (2026-08-01) → osäkert uppgivet: 2400 (2026-09-01)',
   );
   expect(result.message).toContain('Sista siffror: 1234 → 9876');
-  expect(result.message).toContain('Aktivt: true → false');
+  expect(result.message).toContain('Aktivt: ja → nej');
   expect(result.message).toContain('Köpgräns: 100 → 0');
   expect(result.message).not.toMatch(/Valuta|[Ss]parat/);
 });
@@ -356,5 +356,305 @@ test('relationship details report corrected status and end date when the people 
     expect(result.message).toContain('Slutdatum: 2026-12-31 → osäkert uppgivet: 2026-09-20');
     expect(result.message).not.toContain('Alex → Musikabonnemanget används av Alex');
     expect(result.message).not.toContain('bort');
+  }
+});
+
+test.each([
+  [{ lifecycle: 'active' }, { lifecycle: 'ended' }, 'Gäller: aktuellt → upphört'],
+  [
+    { identity: 'unspecified' },
+    { identity: 'unresolved' },
+    'Identitet: ospecificerat objekt → olöst identitet',
+  ],
+  [{ identity: 'unresolved' }, {}, 'Identitet: olöst identitet → identifierat'],
+  [{}, { profileImageId: 'private-new-image' }, 'Profilbild: ingen bild → ny bild'],
+  [
+    { profileImageId: 'private-old-image' },
+    { profileImageId: 'private-new-image' },
+    'Profilbild: bild finns → ny bild',
+  ],
+  [{ profileImageId: 'private-old-image' }, {}, 'Profilbild: bild finns → ingen bild'],
+] satisfies [Partial<MapObject>, Partial<MapObject>, string][])(
+  'requested details describe a single object correction: %s → %s',
+  (oldValues, newValues, expected) => {
+    const before = card(oldValues);
+    const after = card(newValues);
+    const changes = [{ id: before.id, type: cardType, before, after }];
+
+    for (const result of [
+      draftResult({ version: 1, changes }),
+      historyResult(receipt({ changes })),
+    ]) {
+      expect(result.message).toContain(expected);
+      expect(result.message).not.toMatch(/private-|profileImageId|https?:|data:|bort/);
+    }
+  },
+);
+
+test.each(['addition', 'removal'])(
+  'requested object %s details include its type, description, identity, status and image presence',
+  (operation) => {
+    const object = card({
+      description: 'Bara för matinköp',
+      identity: 'unspecified',
+      lifecycle: 'ended',
+      profileImageId: 'private-card-image',
+    });
+    const changes = [
+      {
+        id: object.id,
+        type: cardType,
+        before: operation === 'removal' ? object : null,
+        after: operation === 'addition' ? object : null,
+      },
+    ];
+
+    for (const result of [
+      draftResult({ version: 1, changes }),
+      historyResult(receipt({ changes })),
+    ]) {
+      expect(result.message).toContain(
+        operation === 'addition' ? 'objekttyp: ej angivet → Kort' : 'objekttyp: Kort → ej angivet',
+      );
+      expect(result.message).toContain(
+        operation === 'addition'
+          ? 'beskrivning: ej angivet → Bara för matinköp'
+          : 'beskrivning: Bara för matinköp → ej angivet',
+      );
+      expect(result.message).toContain('ospecificerat objekt');
+      expect(result.message).toContain('upphört');
+      expect(result.message).toContain(
+        operation === 'addition'
+          ? 'Profilbild: ingen bild → ny bild'
+          : 'Profilbild: bild finns → ingen bild',
+      );
+      expect(result.message).not.toContain('private-card-image');
+    }
+  },
+);
+
+test('requested type corrections include each definition before and after, including removed fields and direction labels', () => {
+  const beforeType: ObjectType = {
+    ...cardType,
+    description: 'Kort för hushållet',
+    fields: [
+      { id: 'digits', name: 'Siffror', description: 'De fyra sista', kind: 'number' },
+      { id: 'old-field', name: 'Giltigt', description: '', kind: 'boolean' },
+      { id: 'note', name: 'Anteckning', description: '', kind: 'text' },
+    ],
+  };
+  const afterType: ObjectType = {
+    ...beforeType,
+    name: 'Betalkort',
+    description: '',
+    fields: [
+      { id: 'digits', name: 'Sista siffror', description: 'Även inledande nollor', kind: 'text' },
+      { id: 'new-field', name: 'Giltigt till', description: 'Sista giltighetsdagen', kind: 'date' },
+      { id: 'note', name: 'Anteckning', description: '', kind: 'text' },
+    ],
+  };
+  const objectTypes = [{ id: cardType.id, before: beforeType, after: afterType }];
+  const relationshipTypes = [
+    {
+      id: usageType.id,
+      before: { ...usageType, description: 'Vem som använder', reverseLabel: 'använder' },
+      after: {
+        ...usageType,
+        name: 'Ägande',
+        description: 'Vem som äger',
+        forwardLabel: 'ägs av',
+        reverseLabel: 'äger',
+      },
+    },
+  ];
+
+  for (const result of [
+    draftResult({ version: 1, changes: [], objectTypes, relationshipTypes }),
+    historyResult(receipt({ objectTypes, relationshipTypes })),
+  ]) {
+    expect(result.message).toContain('namn: Kort → Betalkort');
+    expect(result.message).toContain('beskrivning: Kort för hushållet → tom');
+    expect(result.message).toContain(
+      'Eget fält: Siffror (tal): De fyra sista → Sista siffror (text): Även inledande nollor',
+    );
+    expect(result.message).toContain('Eget fält: Giltigt (ja/nej): ingen beskrivning → ej angivet');
+    expect(result.message).toContain(
+      'Eget fält: ej angivet → Giltigt till (datum): Sista giltighetsdagen',
+    );
+    expect(result.message).toContain('namn: Användning → Ägande');
+    expect(result.message).toContain('beskrivning: Vem som använder → Vem som äger');
+    expect(result.message).toContain('Framåtriktning: används av → ägs av');
+    expect(result.message).toContain('Omvänd riktning: använder → äger');
+    expect(result.message).not.toMatch(/Anteckning|old-field|new-field|digits/);
+  }
+});
+
+test.each(['addition', 'removal'])(
+  'requested type %s details include their full definitions',
+  (operation) => {
+    const objectType = { ...cardType, description: 'Betalningsmedel med kortnummer' };
+    const relationshipType = {
+      ...usageType,
+      description: 'Kopplar användare till tjänst',
+      reverseLabel: 'använder',
+    };
+    const objectTypes = [
+      {
+        id: objectType.id,
+        before: operation === 'removal' ? objectType : null,
+        after: operation === 'addition' ? objectType : null,
+      },
+    ];
+    const relationshipTypes = [
+      {
+        id: relationshipType.id,
+        before: operation === 'removal' ? relationshipType : null,
+        after: operation === 'addition' ? relationshipType : null,
+      },
+    ];
+
+    for (const result of [
+      draftResult({ version: 1, changes: [], objectTypes, relationshipTypes }),
+      historyResult(receipt({ objectTypes, relationshipTypes })),
+    ]) {
+      expect(result.message).toContain(
+        operation === 'addition'
+          ? 'beskrivning: ej angivet → Betalningsmedel med kortnummer'
+          : 'beskrivning: Betalningsmedel med kortnummer → ej angivet',
+      );
+      expect(result.message).toContain('Sista siffror (text): ingen beskrivning');
+      expect(result.message).toContain('Aktivt (ja/nej): ingen beskrivning');
+      expect(result.message).toContain('Köpgräns (tal): ingen beskrivning');
+      expect(result.message).toContain('Kopplar användare till tjänst');
+      expect(result.message).toContain(
+        operation === 'addition'
+          ? 'Framåtriktning: ej angivet → används av'
+          : 'Framåtriktning: används av → ej angivet',
+      );
+      expect(result.message).toContain(
+        operation === 'addition'
+          ? 'Omvänd riktning: ej angivet → använder'
+          : 'Omvänd riktning: använder → ej angivet',
+      );
+    }
+  },
+);
+
+test('relationship details retain old labels and distinguish an unresolved identity from an unknown target', () => {
+  const before = usage({ targetId: null, knowledge: 'unknown' });
+  const after = usage({ targetId: null, knowledge: 'unresolved' });
+  const type = { ...usageType, revision: 2, forwardLabel: 'nyttjar', reverseLabel: 'nyttjas av' };
+  const relationships = [
+    {
+      id: before.id,
+      before,
+      after,
+      type,
+      objectNames: { subscription: 'Musikabonnemanget' },
+    },
+  ];
+  const draft = draftResult({
+    version: 1,
+    changes: [],
+    relationships,
+    relationshipTypes: [{ id: type.id, before: usageType, after: type }],
+  });
+  const history = historyResult(
+    receipt({
+      relationships: [{ ...relationships[0], beforeType: usageType }],
+    }),
+  );
+
+  for (const result of [draft, history])
+    expect(result.message).toContain(
+      'Musikabonnemanget används av okänt → Musikabonnemanget nyttjar olöst identitet',
+    );
+});
+
+test('relationship type changes remain visible when both types use the same direction label', () => {
+  const beforeType = { ...usageType, forwardLabel: 'har' };
+  const type = { ...beforeType, id: 'ownership', name: 'Ägande' };
+  const result = historyResult(
+    receipt({
+      relationships: [
+        {
+          id: 'usage',
+          before: usage(),
+          after: usage({ typeId: type.id }),
+          type,
+          beforeType,
+          objectNames: { subscription: 'Musikabonnemanget', alex: 'Alex' },
+        },
+      ],
+    }),
+  );
+
+  expect(result.message).toContain('sambandstyp: Användning → Ägande');
+});
+
+test('a relationship uses each endpoint name from the same side of an object rename', () => {
+  const before = card({ id: 'subscription', name: 'Gamla abonnemanget' });
+  const after = card({ id: 'subscription', name: 'Nya abonnemanget' });
+  const result = historyResult(
+    receipt({
+      changes: [{ type: cardType, before, after }],
+      relationships: [
+        {
+          id: 'usage',
+          before: usage(),
+          after: usage({ knowledge: 'uncertain' }),
+          type: usageType,
+          objectNames: { subscription: 'Nya abonnemanget', alex: 'Alex' },
+        },
+      ],
+    }),
+  );
+
+  expect(result.message).toContain(
+    'Gamla abonnemanget används av Alex → Nya abonnemanget används av Alex (osäkert uppgivet)',
+  );
+});
+
+test('missing historical definitions stay unknown instead of borrowing the new type name', () => {
+  const afterType = { ...cardType, id: 'bank', name: 'Bankkonto' };
+  const result = historyResult(
+    receipt({
+      changes: [{ before: card(), after: card({ typeId: afterType.id }), type: afterType }],
+      relationships: [
+        {
+          id: 'usage',
+          before: usage(),
+          after: usage({ typeId: 'ownership' }),
+          type: { ...usageType, id: 'ownership', name: 'Ägande', forwardLabel: 'ägs av' },
+          objectNames: { subscription: 'Musikabonnemanget', alex: 'Alex' },
+        },
+      ],
+    }),
+  );
+
+  expect(result.message).toContain('objekttyp: okänd objekttyp → Bankkonto');
+  expect(result.message).toContain(
+    'Musikabonnemanget okänd sambandstyp Alex → Musikabonnemanget ägs av Alex',
+  );
+  expect(result.message).toContain('sambandstyp: okänd sambandstyp → Ägande');
+});
+
+test('requested type details report a change to the order of existing custom fields', () => {
+  const objectTypes = [
+    {
+      id: cardType.id,
+      before: cardType,
+      after: { ...cardType, fields: [...(cardType.fields ?? [])].reverse() },
+    },
+  ];
+
+  for (const result of [
+    draftResult({ version: 1, changes: [], objectTypes }),
+    historyResult(receipt({ objectTypes })),
+  ]) {
+    expect(result.message).toContain(
+      'Fältordning: Sista siffror, Aktivt, Köpgräns → Köpgräns, Aktivt, Sista siffror',
+    );
+    expect(result.message).not.toContain('Eget fält:');
   }
 });
