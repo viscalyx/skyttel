@@ -392,8 +392,10 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
     await page.getByRole('button', { name: 'Lista och detaljer', exact: true }).click();
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad mobiltext');
     await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
+    await expect
+      .poll(async () => (await space.locator('canvas').boundingBox())?.height)
+      .toBeGreaterThan(200);
     const surface = await space.locator('canvas').boundingBox();
-    expect(surface?.height).toBeGreaterThan(200);
     expect((surface?.y ?? 0) + (surface?.height ?? 0)).toBeLessThanOrEqual(390);
     await page.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
       const extension = canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context');

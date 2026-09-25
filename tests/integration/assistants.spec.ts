@@ -23,6 +23,7 @@ test('AI-03: medgivandet kräver val av hushåll och AI-behandling', async ({ pa
       route.fulfill({ body: 'Påhittad klient' }),
     );
     await page.getByRole('button', { name: 'Godkänn läsåtkomst' }).click();
+    await page.waitForURL('http://127.0.0.1:7777/callback**');
     const tokens = await flow.exchange((await callback).url());
     expect(tokens.status, await tokens.clone().text()).toBe(200);
     const { access_token } = await tokens.json();
