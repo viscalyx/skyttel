@@ -274,9 +274,10 @@ och terminalens kommentarspaket är inte bevis för hört tal.
    bekräftelse**, kvarvarande Lo-förslag och status utan bekräftat sparande
    eller ny markering.
 4. Kör `sessions`. Läs det senaste paketet med typen
-   `session.commentary.append`. **Skyttels resultat** ska säga att inget
-   nytt sparande eller markering är bekräftad. Modellens svar ska stå
-   separat under **Modellens obekräftade samtalstext (inte ett resultatbesked)**.
+   `session.commentary.append`. Beskedet **Utkast: 1 osparat förslag**
+   ska beskriva det faktiska utkastet utan att bekräfta något sparande
+   eller någon markering. Modellens svar ska stå separat, citerat under
+   **Samtal (obekräftat)**.
 5. Upprepa `user Kontrollera utkastet.` och `delegate` för varje rad
    nedan. Använd det nya hållna anropets ID och släpp ett svar i taget:
 

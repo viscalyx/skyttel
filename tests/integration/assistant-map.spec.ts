@@ -123,7 +123,7 @@ test('TEXT-08: markering öppnar och centrerar objekt och samband före bekräft
       visible: true,
     });
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Påhittad uppgift');
-    await page.getByRole('button', { name: 'Navigera rymden', exact: true }).click();
+    await page.getByText('Navigera rymden', { exact: true }).click();
     for (let index = 0; index < 16; index++)
       await page.getByRole('button', { name: 'Panorera vänster', exact: true }).click();
     await send('Visa sambandet mellan Lo och Molnmusik.');

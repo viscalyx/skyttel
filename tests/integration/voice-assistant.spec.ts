@@ -187,12 +187,8 @@ test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async (
         .toBe(index + 1);
       const commentary = live.sent.at(-1)?.event as { content: string };
       const [result, modelText] = commentary.content.split('\n');
-      expect(result).toBe(
-        'Skyttels resultat: Inget nytt sparande eller markering är bekräftad. 1 objektförslag i utkastet.',
-      );
-      expect(modelText).toBe(
-        `Modellens obekräftade samtalstext (inte ett resultatbesked): ${JSON.stringify(reply)}`,
-      );
+      expect(result).toBe('Utkast: 1 osparat förslag.');
+      expect(modelText).toBe(`Samtal (obekräftat): ${JSON.stringify(reply)}`);
       const current = await (await page.request.get(path)).json();
       expect(current.objects).toEqual(before.objects);
       expect(current.draft).toEqual(before.draft);
