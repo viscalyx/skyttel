@@ -10,7 +10,7 @@ start the development server. Production-container checks belong in the
 [installation guide](../operations/installation.md#build-start-and-restart).
 
 For a new contributor, complete provider registration in sections 1–9, then
-[discover the administrator inside the container](devcontainer-persistence.md#ange-första-administratören)
+[set up sign-in inside the container](devcontainer.md#set-up-local-sign-in)
 or use the host setup in sections 10–13. Host development requires Git,
 the repository's Node.js and npm versions, and a supported shell.
 Devcontainer development needs Docker and VS Code with Dev Containers;
@@ -51,6 +51,8 @@ Google explains these registration terms in
 
 ## 1. Create and select a Google Cloud project
 
+Use your own Google account, or follow Google's
+[account creation instructions](https://support.google.com/accounts/answer/27441?hl=en).
 You can create an account and project for this sign-in setup for free, as
 described in Google's
 [Sign in with Google tutorial](https://codelabs.developers.google.com/codelabs/sign-in-with-google-button).
@@ -163,10 +165,13 @@ and [Better Auth's Google setup](https://better-auth.com/docs/authentication/goo
 
 ## 5. Save the credentials privately
 
-Skyttel reads settings from environment variables. For the local container,
-these are stored in a file named `.env.local` in the Skyttel project folder.
-That file is private configuration: Git ignores it, so it is not included in
-commits. It still contains readable secrets and must stay on your computer.
+Skyttel reads settings from environment variables. This walkthrough saves
+your provider credentials in `.env.local` in the Skyttel project folder for
+host development. Devcontainer development reads `.devcontainer/.env`; the
+[container steps](#use-the-credentials-in-the-devcontainer) explain what to
+copy there. Both files are private configuration: Git ignores them, so they
+are not included in commits. They still contain readable secrets and must
+stay on your computer.
 
 The command steps in this guide require Unix tools and a POSIX-compatible
 shell, such as Bash or Zsh on macOS or Linux. On Windows, use a Linux shell in
@@ -220,37 +225,45 @@ issues, or this guide. See Google's
 
 ### Use the credentials in the devcontainer
 
-The development scripts read `.devcontainer/.env` by default. To use your
-existing `.env.local` instead, select it in the terminal where you start
-Skyttel:
+Complete both provider registrations before continuing. Follow
+[Prepare and start](devcontainer.md#prepare-and-start) to prepare the host,
+create `.devcontainer/.env`, and generate `BETTER_AUTH_SECRET` if needed.
+In your editor, copy the four provider credentials from `.env.local` into
+their existing entries in `.devcontainer/.env`. Keep the container settings:
 
-```sh
-export SKYTTEL_DEV_ENV_FILE=.env.local
-export SKYTTEL_ORIGIN=http://localhost:5173
-export PORT=3300
-npm run dev:all
+```dotenv
+SKYTTEL_DATABASE_PATH=/data/skyttel.sqlite
+SKYTTEL_ORIGIN=http://localhost:5173
+HOST=0.0.0.0
+PORT=3300
 ```
 
-Both provider credentials and the configured first administrator must be
-present. Keep the administrator's existing Google subject; do not replace it
-with the client ID or repeat administrator discovery for an existing setup.
-Open `http://localhost:5173` and use **Fortsätt med Google**. Check that the
+Keep an existing administrator's provider and subject. If you configured
+them on the host, copy both entries from `.env.local`; do not replace the
+subject with a client ID. For a new installation without a known subject,
+follow [administrator discovery](devcontainer.md#designate-the-first-administrator)
+inside the container. Initial container setup stops at `db:setup` until
+the subject is configured; dependencies are already installed for discovery.
+
+The development scripts read `.devcontainer/.env` by default. Compose exports
+its values at container creation, and exported values take precedence over
+file values. Recreate the container after changing exported settings.
+Creation and rebuilding run `db:setup`, replacing application data and
+sessions with the demo household; ordinary restarts preserve data. See
+[state and rebuilds](devcontainer.md#state-and-rebuilds).
+
+With the administrator configured, run `npm run dev:all` in the container,
+open `http://localhost:5173`, and sign in with that provider. Check that the
 expected development household opens. This verifies the port-5173 callback;
 it does not verify the separate Codex connection.
 
-Exported values take precedence over the selected file. The devcontainer's
-Compose configuration exports `.devcontainer/.env` values at creation, so
-selecting `.env.local` alone does not replace those values. Keep the private
-files consistent and recreate the container when changing exported settings,
-following the [devcontainer guide](devcontainer.md). Do not print credentials
-to compare them.
-
 For the compiled application, `npm run dev:prodlike` sets the origin and
 listening port to 3301. Use the
-[isolated Codex preparation](assistants.md#manual-local-codex-cli-setup)
+[isolated Codex preparation](../manual-tests/setup/assistants.md#manual-local-codex-cli-setup)
 for the manual assistant test; that preparation explicitly selects a new
-database and loads credentials from `.env.local`. The same Google development
-client serves both ports, without a public tunnel or new provider secrets.
+database and loads credentials from the selected private development file.
+The same Google development client serves both ports, without a public
+tunnel or new provider secrets.
 Keep real-provider and real-Codex tests outside CI and pull request workflows.
 
 The remaining provider sections also cover Microsoft configuration. New
@@ -278,6 +291,13 @@ prerequisites. Microsoft's
 [tenant creation guidance](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant)
 also limits creation of additional workforce tenants by free or trial users.
 Review the applicable signup and billing terms if you need a new Azure account.
+
+If you have no directory, follow [Azure account signup](https://azure.microsoft.com/en-us/free/).
+The signup requires a phone number and a supported payment card, and creates
+a directory you can select in Entra, often named **Default Directory**.
+If your existing directory denies app registration, ask its administrator for
+**Application Developer** access or a registration you can manage. See
+Microsoft's [app-registration permissions](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/delegate-app-roles).
 
 The account managing this registration and the account used to test Skyttel
 can differ. The sign-in verification needs a **personal Microsoft account**;
@@ -383,8 +403,8 @@ See Microsoft's
 Plan the replacement before the expiry date shown in Entra, for example two
 weeks beforehand. The expiry is set by Microsoft, not by when you first start
 Skyttel. Renewal means creating a replacement secret in the **same app
-registration**, updating Skyttel, and retiring the old secret. You keep the
-same Application (client) ID and household.
+registration**, updating Skyttel, and retiring the old secret. Secret
+replacement keeps the same Application (client) ID and household ownership.
 
 During replacement, both credentials can remain valid in Entra, but Skyttel
 uses only the one configured in its environment. It does not automatically
@@ -401,11 +421,22 @@ try the old value if the replacement fails.
 4. Copy the new **Value** immediately. Replace only the value after
    `MICROSOFT_CLIENT_SECRET=` in `.env.local` and save. Keep the client ID,
    `BETTER_AUTH_SECRET`, administrator identity, and database settings.
-5. Stop the development server with Ctrl+C. If the devcontainer exports the
-   old credential, update its private `.devcontainer/.env` too and recreate
-   the container to load that value. Recreation and rebuilding preserve
-   development data. Follow the
-   [environment guidance](devcontainer.md#run-the-application).
+5. Stop the development server with Ctrl+C. In the devcontainer, update
+   `MICROSOFT_CLIENT_SECRET` in `.devcontainer/.env` too, then run:
+
+   ```sh
+   (
+     unset MICROSOFT_CLIENT_SECRET
+     SKYTTEL_DEV_ENV_FILE=.devcontainer/.env npm run dev:all
+   )
+   ```
+
+   The subshell clears the old exported secret for this process so the
+   development command loads the new value from the file. Use this command
+   for subsequent starts while the container still exports the old value.
+   This reload preserves your development household and linked logins.
+   Container creation and rebuilding run `db:setup` and reset that data;
+   they are unnecessary for secret renewal.
    For host development, open a terminal without stale exported credentials,
    select `.env.local`, and start the server again:
 
@@ -452,12 +483,13 @@ identity discovery and use the [devcontainer guide](devcontainer.md).
 Changing the first-administrator setting does not transfer an existing
 household to another account.
 
-The optional demo reset requires a known administrator subject; ordinary
-container creation only applies migrations. For a first setup, either
-[discover the identity inside the container](devcontainer-persistence.md#ange-första-administratören)
-or use the host development server below. Both paths use port 5173 and the
-same provider registration as normal development. Neither requires a
-production container or another callback.
+Container creation and rebuilding run `db:setup`, which requires a known
+administrator subject and resets application data to the demo household.
+For a first setup, either follow
+[the container steps](#use-the-credentials-in-the-devcontainer), including
+administrator discovery, or use the host development server below.
+Both paths use port 5173 and the same provider registration as normal
+development. Neither requires a production container or another callback.
 
 ### 10. Prepare the host and local configuration
 
@@ -473,8 +505,9 @@ npm ci
 Use a user-managed Node.js installation where the npm bootstrap can update
 npm without administrator privileges. Native SQLite dependencies need a
 supported prebuilt binary or Python, a C/C++ compiler, and Make; see the
-[development prerequisites](testing.md). A host installation of dependencies
-is separate from the devcontainer's dependency volume.
+[development prerequisites](devcontainer.md#develop-without-the-container).
+A host installation of dependencies is separate from the devcontainer's
+dependency volume.
 
 1. Open the existing `.env.local`. Keep the provider credentials saved above.
    For a new development installation, set:
@@ -536,29 +569,53 @@ browser port to resolve a conflict, because the Google callback must match.
    and **Logga ut**. This is the expected result while the administrator
    subject is `not-configured`. **Inloggningen kunde inte slutföras** means
    authentication failed; check the credentials and callback before continuing.
-4. Stop terminal A with Ctrl+C. From the repository root in a private host
-   terminal, read the authenticated provider identity:
+4. In the same signed-in browser, open
+   `http://localhost:5173/api/bootstrap`. Confirm `status` is `forbidden`
+   and copy `user.id` privately. Stop terminal A with Ctrl+C.
+5. From the repository root in a private host terminal, read that user's
+   provider identifier. Run the prompt first, then the Node block. The lookup
+   loads the selected environment file and refuses an existing household.
+
+   ```sh
+   export SKYTTEL_SETUP_USER_ID=''
+   printf 'Skyttel user ID: '
+   read -r SKYTTEL_SETUP_USER_ID
+   ```
 
    ```sh
    node --input-type=module <<'JS'
    import Database from 'better-sqlite3';
-   const db = new Database('./data/skyttel.sqlite', {
+   process.loadEnvFile(process.env.SKYTTEL_DEV_ENV_FILE ?? '.env.local');
+   const userId = process.env.SKYTTEL_SETUP_USER_ID?.trim();
+   const provider = process.env.SKYTTEL_FIRST_ADMIN_PROVIDER;
+   if (!userId || provider !== 'google') {
+     throw new Error('Check the user ID and configured Google provider.');
+   }
+   const db = new Database(process.env.SKYTTEL_DATABASE_PATH, {
      readonly: true,
      fileMustExist: true,
    });
-   console.table(db.prepare(
-     'SELECT providerId, accountId FROM account WHERE providerId = ?'
-   ).all('google'));
-   db.close();
+   try {
+     if (db.prepare('SELECT 1 FROM installation WHERE id = 1').get()) {
+       throw new Error('A household already exists. Stop setup.');
+     }
+     const accounts = db.prepare(
+       'SELECT accountId FROM account WHERE userId = ? AND providerId = ?',
+     ).all(userId, provider);
+     if (accounts.length !== 1) {
+       throw new Error('Expected one matching account. Check the sign-in.');
+     }
+     console.log(accounts[0].accountId);
+   } finally {
+     db.close();
+   }
    JS
+   unset SKYTTEL_SETUP_USER_ID
    ```
 
-   Use the actual configured path if you intentionally chose a different
-   database. The output is a private identity identifier; do not share or
-   record the terminal. Expect exactly one Google account in this new setup.
-   If several accounts appear, establish which belongs to the intended person
-   before proceeding; do not select the first row by assumption.
-5. Copy that account's complete `accountId` into `SKYTTEL_FIRST_ADMIN_SUBJECT`
+   The output is a private identity identifier; do not share or record the
+   terminal. The lookup matches the signed-in user and configured provider.
+6. Copy the returned `accountId` into `SKYTTEL_FIRST_ADMIN_SUBJECT`
    in `.env.local`. Keep `SKYTTEL_FIRST_ADMIN_PROVIDER=google` and save.
    Google's stable `sub` is the identifier; it is not your email address.
 
@@ -601,18 +658,18 @@ files out of Git and update their shared credentials together when needed.
 
 Follow [Prepare and start](devcontainer.md#prepare-and-start), including the
 host Codex prerequisites, then reopen the repository in the devcontainer.
-Its creation script migrates the container's separate development database
-without resetting it. For a new empty database, choose either the installation
-flow or an explicit `npm run db:setup` to create `TestHousehold`; the latter
-deletes any existing application data. In a container terminal, run
+Its creation script runs `db:setup`, migrating the container's separate
+development database and replacing its application data and sessions with
+`TestHousehold`. Rebuilding repeats that reset; ordinary restarts preserve
+data. In a container terminal, run
 `npm run dev:all` and open port 5173 on the host. Sign in with Google and check
 the household you created. The devcontainer supplies its own Node.js, npm,
 tools, and native dependencies for ongoing work.
 
 For the **manual Codex CLI test**, stop any existing port-3301 app and use
-[the isolated setup](assistants.md#manual-local-codex-cli-setup). It reuses the
-same Google client but uses the registered port-3301 callback and a fresh
-throwaway database. Normal development stays on port 5173.
+[the isolated setup](../manual-tests/setup/assistants.md#manual-local-codex-cli-setup).
+It reuses the same Google client but uses the registered port-3301 callback
+and a fresh throwaway database. Normal development stays on port 5173.
 
 ### 14. Check Microsoft sign-in separately
 
@@ -624,9 +681,9 @@ tillgång till hushållet** after successful sign-in. A provider error is not
 an expected access denial. A Google household does not automatically belong
 to a Microsoft identity with the same email address.
 
-To test linking instead, follow the [login-linking steps](../users/access.md#link-google-and-microsoft)
+To test linking instead, follow the [login-linking steps](../user-guide/access.md#koppla-google-och-microsoft)
 with an identity that does not already belong to a Skyttel user. Signing in
 separately creates a separate user, which cannot later be merged by linking.
 Additional provider, persistence, and denial checks are described in
-[real-provider verification](testing.md#verify-real-identity-providers-separately).
+[real-provider verification](../manual-tests/setup/browser.md#verify-real-identity-providers-separately).
 Those checks and real Codex login remain manual and separate from CI.
