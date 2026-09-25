@@ -793,7 +793,12 @@ test('all labels only opens a closer view when needed and retains an already clo
   expect(location()).toBe(close);
 });
 
-test('direction rendering retains selectable self references and explicitly absent targets', async () => {
+test('direction rendering retains selectable self references and explicitly absent targets', async ({
+  onTestFinished,
+}) => {
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  onTestFinished(() => page.viewport(viewport.width, viewport.height));
+  await page.viewport(1280, 1000);
   render(
     <MapView
       relationships={[
@@ -802,6 +807,9 @@ test('direction rendering retains selectable self references and explicitly abse
       ]}
     />,
   );
+  // Overview labels may be culled when font metrics or the viewport leave no room.
+  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
   await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
   await page
     .getByRole('button', {
