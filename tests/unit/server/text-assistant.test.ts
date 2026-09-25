@@ -287,9 +287,14 @@ test.each(['Kan du spara', 'Kan du spara?', 'Jag vill att du sparar det direkt.'
   },
 );
 
-test.each(['separate', 'combined'])(
-  'a negated fact followed by a current whole-save request uses the %s MCP path and saves independent proposals too',
-  async (mode) => {
+test.each([
+  ['separate', 'Lo använder inte Tonrum längre. Ta bort kopplingen och spara ändringarna.'],
+  ['combined', 'Lo använder inte Tonrum längre. Ta bort kopplingen och spara ändringarna.'],
+  ['separate', 'Ta bort kopplingen eftersom Lo inte använder Tonrum längre och spara ändringarna.'],
+  ['combined', 'Ta bort kopplingen eftersom Lo inte använder Tonrum längre och spara ändringarna.'],
+])(
+  'a current whole-save request through %s preserves independent proposals: %s',
+  async (mode, instruction) => {
     let step = 0;
     const model = textModel((body) => {
       const operation = {
@@ -344,10 +349,7 @@ test.each(['separate', 'combined'])(
     });
     expect(baseline.status(), await baseline.text()).toBe(200);
     await webProposal('Oberoende hjälm', 'helmet');
-    const status = await message(
-      await start(),
-      'Lo använder inte Tonrum längre. Ta bort kopplingen och spara ändringarna.',
-    );
+    const status = await message(await start(), instruction);
     expect(status).toMatchObject({
       phase: 'ready',
       receipt: {
@@ -618,6 +620,10 @@ test.each([
   'Lo använder inte Tonrum längre. Skriv ”spara ändringarna” i beskrivningen.',
   'Om jag ger klartecken. Ta bort kopplingen och spara.',
   'Spara inte än. Ta bort kopplingen och spara.',
+  'Rätta inte beskrivningen och spara.',
+  'Ta inte bort kopplingen och spara.',
+  'Du får inte ändra kopplingen och spara.',
+  'Rätta beskrivningen? Och spara.',
 ])('a provider cannot save when the actual current instruction is %s', async (text) => {
   const model = textModel(() => [
     modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'injected-save' }),

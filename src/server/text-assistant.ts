@@ -155,9 +155,9 @@ export function textAssistantRoutes({
   // verification. Ambiguous, quoted, negative and hypothetical requests need
   // a new clear instruction; a model-supplied approval flag has no authority.
   function requestsSave(text: string) {
-    // A negated map fact in an earlier sentence does not negate a new save
-    // command. Keep the entire save sentence for conditional/negative checks,
-    // so e.g. "Om Lo slutar, ta bort kopplingen och spara" stays unauthorized.
+    // A negated map fact does not negate a separate save command. A correction
+    // may precede that command in the same sentence, but its imperative must
+    // itself be affirmative. Conditions and withheld saving still block it.
     const unquoted = text.toLocaleLowerCase('sv').replace(/["'“”«»].*?["'“”«»]/gu, '');
     const sentences = unquoted
       .trim()
@@ -168,27 +168,34 @@ export function textAssistantRoutes({
     // or turn an example/condition spanning sentences into current authority.
     if (
       /\b(om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(unquoted) ||
-      sentences.some(
-        (sentence) =>
-          /\bspara(?:r|nde)?\b/u.test(sentence) &&
-          /\b(inte|ej|ingenting|aldrig|utan|vänta)\b/u.test(sentence),
-      )
+      sentences
+        .slice(0, -1)
+        .some(
+          (sentence) =>
+            /\bspara(?:r|nde)?\b/u.test(sentence) &&
+            /\b(inte|ej|ingenting|aldrig|utan|vänta)\b/u.test(sentence),
+        )
     )
       return false;
+    const correction = plain.match(
+      /^(?:ta bort|lägg till|ändra|rätta)\s+(?!inte\b|ej\b|aldrig\b)(\S.*)\b(?:och|sedan)\s+(spara.*)$/u,
+    );
+    const command =
+      correction && !/\?|\b(spara|sparar|vänta)\b/u.test(correction[1]) ? correction[2] : plain;
     const suffix =
       '(?:\\s+(?:nu|direkt|allt|allting|det|detta|det här|hela utkastet|utkastet|ändringarna|alla ändringar|förslaget|förslagen))*';
     return (
       !/\b(inte|ej|ingenting|aldrig|utan|vänta|om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(
-        plain,
+        command,
       ) &&
       (new RegExp(`^(?:kan du spara|jag vill att du sparar)${suffix}[.!?]?$`, 'u').test(
-        plain.trim(),
+        command.trim(),
       ) ||
-        (!plain.includes('?') &&
+        (!command.includes('?') &&
           new RegExp(
             `(?:^|[.!;]\\s*|\\boch\\s+|\\bsedan\\s+|\\bja,?\\s+)spara${suffix}[.!]?$`,
             'u',
-          ).test(plain.trim())))
+          ).test(command.trim())))
     );
   }
   async function refresh(session: Session, guard?: () => void) {
