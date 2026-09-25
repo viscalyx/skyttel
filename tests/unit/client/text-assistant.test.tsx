@@ -115,7 +115,8 @@ test('the shared workspace keeps the map, draft and conversation available befor
     'Här visas vad du säger och vad Skyttel svarar.',
   );
   expect(
-    (screen.getByRole('button', { name: 'Starta textassistenten' }) as HTMLButtonElement).disabled,
+    ((await screen.findByRole('button', { name: 'Starta textassistenten' })) as HTMLButtonElement)
+      .disabled,
   ).toBe(true);
   expect(requests.every((request) => request.startsWith('GET '))).toBe(true);
 });
