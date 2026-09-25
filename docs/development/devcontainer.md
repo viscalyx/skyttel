@@ -225,11 +225,11 @@ Playwright tooling use rolling releases and can change on rebuild. VS Code
 manages editor extension updates.
 
 Before rebuilding for tool updates, back up development data you need.
-After the rebuild, start the application and check that your saved content
-and private drafts remain. Follow the
-[manual persistence check](devcontainer-persistence.md#manuellt-prov-av-omstart-och-ombyggnad)
-for database, Codex state, credentials, and personal settings. Run the
-application checks explicitly:
+Use the
+[automated persistence check](devcontainer-persistence.md#automatiskt-prov-av-omstart-och-ombyggnad)
+for database, Codex state, credential files, and personal settings.
+Complete personal account sign-in separately. Run the application checks
+explicitly:
 
 ```sh
 npm run check

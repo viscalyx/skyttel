@@ -89,6 +89,20 @@ async function targets(github, current) {
   return selected;
 }
 
+/** Read the live image and its accepted deployment history without scanning or notifying. */
+export async function observeDeployedImages({
+  githubToken,
+  renderToken,
+  serviceId,
+  fetch: send = globalThis.fetch,
+}) {
+  requireState(githubToken && renderToken && /^srv-[a-z0-9]+$/u.test(serviceId));
+  const github = client('https://api.github.com/repos/viscalyx/skyttel', githubToken, send);
+  const render = client('https://api.render.com/v1', renderToken, send);
+  const current = await liveImage(render, serviceId);
+  return { current, targets: await targets(github, current.image) };
+}
+
 function scanResult(target, evidence, exceptions, scannedAt, retainedImageIds) {
   const { report, sbom } = evidence;
   const manifest = target.image.split('@')[1];
@@ -262,8 +276,12 @@ export async function monitorImages({
   try {
     requireState(githubToken && renderToken && /^srv-[a-z0-9]+$/u.test(serviceId));
     requireState(/^https:\/\/github\.com\/viscalyx\/skyttel\/actions\/runs\/[0-9]+$/u.test(runUrl));
-    const current = await liveImage(render, serviceId);
-    const selected = await targets(github, current.image);
+    const { current, targets: selected } = await observeDeployedImages({
+      githubToken,
+      renderToken,
+      serviceId,
+      fetch: send,
+    });
     const scans = [];
     for (const target of selected) {
       try {

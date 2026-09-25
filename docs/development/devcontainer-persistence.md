@@ -147,150 +147,63 @@ som har egen lagring enligt [volymtabellen](devcontainer.md#state-and-rebuilds).
 
 ## Kontrollera personliga inställningar utan ombyggnad
 
-Kontrollera sammanslagningen med en tillfällig syntetisk konfiguration före
-ombyggnaden. Följande kommando ändrar ingen riktig användarkonfiguration,
-startar ingen Codex-session och kräver ingen inloggning. Det kontrollerar
-även att projektets avsiktliga begränsningar finns kvar.
+Kör konfigurationstesterna utan Docker eller inloggning:
 
-<!-- markdownlint-disable MD013 -->
 ```sh
-python3 - <<'PY'
-from pathlib import Path
-import runpy
-import tempfile
-import tomllib
-
-merge = runpy.run_path('.devcontainer/merge-codex-config.py')
-managed = Path('.devcontainer/codex-config.toml').read_text()
-personal = '''approval_policy = "on-request"
-default_permissions = ":read-only"
-model = "personal-sentinel"
-[plugins.plugin-management]
-enabled = true
-[[skills.config]]
-path = "/home/vscode/.codex/skills/.system/skill-creator/SKILL.md"
-enabled = true
-'''
-with tempfile.TemporaryDirectory(prefix='skyttel-config-') as directory:
-    path = Path(directory) / 'config.toml'
-    path.write_text(personal)
-    for _ in range(2):
-        merged = merge['merge_config'](path.read_text(), managed)
-        merge['write_atomic'](path, merged)
-    actual = tomllib.loads(path.read_text())
-    expected = tomllib.loads(personal)
-    for key, value in expected.items():
-        assert actual[key] == value, key
-    assert actual['cli_auth_credentials_store'] == 'file'
-    assert actual['projects']['/workspace']['trust_level'] == 'trusted'
-    assert actual['permissions'] == tomllib.loads(managed)['permissions']
-    assert merge['merge_config'](path.read_text(), managed) == path.read_text()
-project = tomllib.loads(Path('.codex/config.toml').read_text())
-assert project['approval_policy'] == 'never'
-assert project['default_permissions'] == 'skyttel-development'
-assert project['plugins']['plugin-management']['enabled'] is False
-assert all(entry['enabled'] is False for entry in project['skills']['config'])
-assert project['permissions']['skyttel-development']['extends'] == ':workspace'
-print('Personliga val bevarade; projektets policy kvar.')
-PY
+node --test scripts/__tests__/devcontainer-config.test.mjs
 ```
-<!-- markdownlint-enable MD013 -->
 
-Förvänta bevarade personliga val efter båda sammanslagningarna. Provet
-kontrollerar filinnehåll; verklig inläsning i CLI och VS Code samt ombyggnad
-följer det manuella provet nedan. Inställningar som redan saknas i din
-personliga fil kan inte återskapas av sammanslagningen; återställ dem från
-egen kopia eller välj dem igen i användarkonfigurationen.
+Testerna använder tillfälliga filer och kontrollerar att personliga modell-,
+godkännande-, plugin- och skillinställningar bevaras. De kontrollerar även
+första övergången från äldre förvaltade block, upprepad sammanslagning,
+filbehörigheter och att felaktiga filer inte skrivs över. Riktig
+användarkonfiguration läses inte.
+
+## Automatiskt prov av omstart och ombyggnad
+
+Kör från repositoryts rot med installerade beroenden, Python 3.11 eller
+senare samt en tillgänglig Docker-motor och Docker Compose:
+
+```sh
+npm run test:devcontainer
+```
+
+Provet bygger repositoryts devcontaineravbildning och kör båda profilernas
+volymstruktur i egna Compose-projekt. Alla monteringar får nya testvolymer,
+även de kataloger som normalt delas med värddatorn. Din vanliga databas,
+personliga konfiguration och privata miljöfil används inte.
+
+För varje profil kontrolleras följande:
+
+- En databas skapad med appens migrationer behåller ett sparat objekt,
+  ett privat utkast och övriga tabeller efter omstart och återskapande.
+- Båda profilernas skapandekommandon använder migration utan återställning,
+  och den verkliga migrationskörningen bevarar databasens innehåll.
+- Den första övergångens säkerhetskopia via `~/.config` kan återställas
+  när den beständiga Codex-katalogen införs.
+- Personliga inställningar, syntetisk inloggningsfil, Codex-arbetsläge
+  och den separata SQLite-volymen bevaras.
+- Katalogerna för sessioner, plugins, skills, regler, temporärfiler,
+  VS Code, beroenden och worktrees behåller sina markörer.
+- Lagringsförberedelsen och konfigurationssammanslagningen fungerar även
+  när de körs igen efter att containerns disponibla lager ersätts.
+- Testets containrar och volymer tas bort efter körningen.
+
+Provet kör lagrings- och konfigurationsstegen från skapandet. Det kör inte
+VS Code eller hela installationen av verktyg i `postCreateCommand`.
+Migrationen körs med repositoryts Node och beroenden på en isolerad kopia
+av testvolymens databas. Resultatet förs tillbaka till testvolymen och
+jämförs direkt i SQLite. Användarflöden har separata integrationstester.
+Syntetisk inloggning verifierar filens beständighet, inte ett verkligt konto.
 
 ## Manuellt prov av omstart och ombyggnad
 
-Detta är ett körbart manuellt prov, inte ett automatiserat livscykeltest.
-Faktisk körning med utvecklarens Docker, konton och VS Code återstår i
-[ärende #97](https://github.com/viscalyx/skyttel/issues/97) och blockerar inte
-implementeringen. Anteckna profil, värdplattform och verktygsversioner samt
-resultaten från varje steg. Dokumentera inte hemligheter eller privata data.
+Omstarts- och beständighetskontrollerna ovan ingår i automatiseringen.
+Inloggning som kräver ett personligt medgivande görs fortfarande enligt
+[Codex-inloggningen](#logga-in-i-codex-i-containern).
+Kontrollera Codex-tilläggets inloggning i VS Code med ditt eget konto.
+Spara inga token eller personliga identitetsvärden i testresultat.
 
-1. Använd en utvecklingsdatabas med enbart syntetiskt innehåll. Starta Skyttel
-   och skapa om möjligt ett sparat objekt samt ett separat privat utkast.
-   Notera deras namn och utkastets status. Stoppa sedan appen med Ctrl+C.
-   Kör inte `db:setup` under provet.
-1. Lägg till en ofarlig databasmarkör. Kommandot fungerar även utan riktiga
-   konton i en ny, migrerad databas. Ett befintligt markör-ID ger ett fel;
-   kontrollera då den befintliga markören i stället för att ersätta den.
-
-   ```sh
-   sqlite3 -bail "$SKYTTEL_DATABASE_PATH" <<'SQL'
-   INSERT INTO user (id, name, email, createdAt, updatedAt)
-   VALUES ('devcontainer-persistence-sentinel', 'Bevarat utvecklingsprov',
-     'devcontainer-persistence@example.test', 0, 0);
-   SQL
-   ```
-
-1. Öppna `~/.codex/config.toml` och lägg till inställningen nedan under
-   `[shell_environment_policy.set]`. Skapa sektionen sist i filen om den
-   saknas; skapa inte två sektioner med samma namn.
-
-   ```toml
-   [shell_environment_policy.set]
-   SKYTTEL_PERSISTENCE_SENTINEL = "retained"
-   ```
-
-1. Skapa markörer för övrigt Codex-arbetsläge och för dess SQLite-volym:
-
-   ```sh
-   printf 'retained\n' > "$HOME/.codex/persistence-sentinel.txt"
-   printf 'retained\n' > "$HOME/.codex/sqlite/persistence-sentinel.txt"
-   codex login status
-   ```
-
-   Anteckna om inloggningen är aktiv. En ny värddator utan inloggning ska
-   fortfarande kunna starta containern; gör inloggningsprovet separat.
-   Om en syntetisk Codex-session finns, notera även att den går att välja
-   för återupptagning före ombyggnaden.
-1. Stäng Codex-klienterna. Stoppa och starta samma container via Docker och
-   öppna den i VS Code igen. Kör kontrollkommandona nedan, starta Skyttel
-   och jämför objekt och privat utkast. Stoppa appen igen.
-1. Välj **Dev Containers: Rebuild Container** för samma profil. Behåll
-   Compose-projektnamn och volymer. Vänta tills skapandet är klart och kör
-   samma kontroller igen.
-
-   <!-- markdownlint-disable MD013 -->
-   ```sh
-   sqlite3 -bail "$SKYTTEL_DATABASE_PATH" \
-     "SELECT name FROM user WHERE id = 'devcontainer-persistence-sentinel';"
-   python3 - <<'PY'
-   from pathlib import Path
-   import tomllib
-   home = Path.home() / '.codex'
-   config = tomllib.loads((home / 'config.toml').read_text())
-   assert config['shell_environment_policy']['set']['SKYTTEL_PERSISTENCE_SENTINEL'] == 'retained'
-   for path in ('persistence-sentinel.txt', 'sqlite/persistence-sentinel.txt'):
-       assert (home / path).read_text() == 'retained\n'
-   print('Personlig inställning och Codex-markörer bevarade.')
-   PY
-   findmnt -T "$HOME/.codex/tmp" -o TARGET,SOURCE
-   codex login status
-   ```
-   <!-- markdownlint-enable MD013 -->
-
-   Förvänta `Bevarat utvecklingsprov`, bevarade markörer och samma personliga
-   inställning. Temporärkatalogen ska ha sin separata montering vid
-   `/home/vscode/.codex/tmp`, inte ligga i någon av värddatorns delade
-   Codex-kataloger. Inloggningen ska finnas kvar om den var aktiv före provet;
-   återkallade eller utgångna inloggningsuppgifter kan kräva ny inloggning.
-   Kontrollera även VS Code-tillägget och att den noterade sessionen kan
-   väljas igen. Starta Skyttel och kontrollera sparat objekt och privat utkast.
-1. Upprepa med den extra behörighetsprofilen endast när den behöver
-   verifieras. Förbered markörerna i den profilens egna volymer. Ett byte av
-   profil flyttar inte data mellan de två Compose-projekten.
-1. Ta bort de två markörfilerna och inställningen efter provet. Ta bort
-   databasmarkören med:
-
-   ```sh
-   sqlite3 -bail "$SKYTTEL_DATABASE_PATH" \
-     "DELETE FROM user WHERE id = 'devcontainer-persistence-sentinel';"
-   ```
-
-Om någon kontroll misslyckas, behåll volymerna och läs containerloggen.
-`docker compose down --volumes` raderar arbetsläget och ska inte användas
-för att felsöka beständighet.
+Vid den första övergången behöver du fortfarande säkra din egen befintliga
+fil enligt [övergångsguiden](#bevara-befintliga-inställningar-vid-första-övergången).
+Det är en engångsåtgärd för dina uppgifter, inte ett extra manuellt test.

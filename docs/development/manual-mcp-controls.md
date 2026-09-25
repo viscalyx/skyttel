@@ -3,9 +3,9 @@
 Use `scripts/manual-mcp-client.ts` to retain exact requests, deliver them
 after a browser edit, and deliberately suppress a completed save response.
 It is a deterministic test client, without a language model. It does not
-establish how Codex or ChatGPT interprets a human instruction. Real-client
-and model checks remain separate and all human execution is deferred to
-[issue 97](https://github.com/viscalyx/skyttel/issues/97).
+establish how Codex or ChatGPT interprets a human instruction. The matching
+integration tests and the helper's executable test cover these controls;
+manual repetition is optional troubleshooting, not a requirement in #97.
 
 The helper uses public OAuth registration, PKCE and explicit Skyttel map-work
 consent. It receives its own short-lived grant, never reads SQLite or browser

@@ -4,8 +4,8 @@ Use this launcher for reproducible browser checks of installation costs.
 The app, authentication, OAuth/MCP, usage recording and SQLite are real.
 Only external identity/model responses and browser media are controlled.
 No real provider requests, credentials, microphone or paid usage are needed.
-Human execution belongs to the nonblocking
-[restlista #97](https://github.com/viscalyx/skyttel/issues/97).
+Integration tests cover these controlled scenarios. Manual repetition is
+optional troubleshooting and is not required by #97.
 
 ## Start and stop
 

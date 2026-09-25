@@ -91,6 +91,41 @@ The status artifact contains only allowlisted metadata and opaque finding
 fingerprints. Raw scanner output, package findings, credentials, and provider
 responses are not published in workflow logs or artifacts.
 
+### Automated live verification
+
+From a trusted checkout with `npm ci` complete, supply `GH_TOKEN`,
+`RENDER_API_KEY`, `RENDER_SERVICE_ID`, and `SKYTTEL_ORIGIN` through your
+private shell environment. Use the installation's public HTTPS origin.
+The GitHub token needs read access to Actions artifacts and deployments;
+the Render token needs access to read the service and deployments. Then run:
+
+```sh
+node scripts/security/verify-installation.mjs
+```
+
+This command only reads existing evidence. It checks that monitoring is
+enabled, the latest scheduled run succeeds within 36 hours, and no newer
+failed or unfinished run hides behind an earlier success. It downloads the
+latest run's own status artifact and compares its running and rollback
+images with Render and accepted GitHub deployments. Missing, expired,
+stale, blocked, unknown, or mismatched evidence fails the command.
+
+It also checks the deployed HTTPS health, version, database readiness,
+anonymous provider availability, and application page. It rechecks the
+deployment and latest monitoring run before returning success. These
+checks overlap the release deployment verification and make that evidence
+available without rerunning a deployment job. Save the JSON output with
+the version's verification record; exit status zero means these checks pass.
+
+The command does not start a scan, change the installation, restart a
+service, or send a notification. A missing scheduled run requires waiting
+for and then verifying the scheduled workflow; a manual run alone is
+insufficient. Run the separate restart and real sign-in checks from the
+[Render guide](render.md#10-check-persistence-through-a-normal-restart).
+The output always marks human notification delivery as `unverified`.
+Complete the [recipient delivery check](#configure-the-recipient-and-verify-delivery)
+and keep its actual receipt confirmation separately.
+
 ## Respond to findings and failures
 
 New findings or unknown status open or reopen one persistent status issue.
@@ -161,6 +196,9 @@ database.
 `npm run test:gates` uses synthetic deployment and scanner responses to
 exercise digest selection, repeated and new findings, exception validity
 and expiry, missing evidence, stale databases, production drift, and alarm
-failure. These checks do not establish real Render, GHCR, scheduled workflow,
-or human notification delivery. Record those checks on the configured
-installation using the procedure above.
+failure. It also tests the read-only verification command with synthetic
+HTTP responses and real status archives, including stale or failed scheduled
+runs and mismatched live images. These tests do not establish real Render,
+GHCR, scheduled workflow, or human notification delivery. Run the read-only
+verification on the configured installation for live evidence, and record
+actual notification receipt using the procedure above.

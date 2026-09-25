@@ -4,8 +4,8 @@ Fallen provar att assistentens verktyg följer samma regler som formulären.
 Anteckna commit, klient, modell, webbläsare samt godkänt eller underkänt
 resultat. Automatiska prov ersätter identitetsleverantören och anropar
 verktygen deterministiskt; de bevisar inte modellens svenska tolkning.
-Mänsklig körning görs efter hela specifikationen och redovisas i
-[restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
+De länkade integrationstesterna verifierar verktygsreglerna. Stegen här
+är stöd för frivillig felsökning och behöver inte upprepas i #97.
 
 ## Konfigurerade användare
 

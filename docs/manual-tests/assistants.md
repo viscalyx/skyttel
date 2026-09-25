@@ -344,9 +344,10 @@ godkänt först när alla kontroller är genomförda. Ett godkänt AI-07 verifie
 inte ChatGPT på webben, Codex-appen, Microsoft-inloggning eller den
 driftsatta HTTPS-ingången.
 
-Kör fallet efter att hela specifikation #31 är implementerad. Registrera
-resultatet i den separata, icke blockerande
-[restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
+Fallet är stöd för felsökning av en verklig klient. Den separata,
+icke blockerande [restlistan #97](https://github.com/viscalyx/skyttel/issues/97)
+behåller personlig inloggning, medgivanden och mänsklig bedömning.
+Automatiskt verifierade verktygsregler behöver inte upprepas där.
 
 ## Hela kartärenden
 
@@ -359,8 +360,8 @@ exakta kommandon för OAuth, omstart med samma databas och städning.
 Använd den konfigurerade administratörens egen inloggning och hushållet
 **MCP-prov**. Inga riktiga hushållsuppgifter, modellkostnader eller publika
 adresser behövs för dessa tre kontroller. Klienten skickar verktygsanrop;
-den provar inte en språkmodells tolkning. Kör samtliga manuella steg först
-efter hela specifikation #31 och anteckna resultaten i #97.
+den provar inte en språkmodells tolkning. Integrationstesterna verifierar
+de kontrollerade fallen; #97 kräver ingen manuell upprepning.
 
 ### AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärendet
 
@@ -375,6 +376,10 @@ inloggningsadress. En äldre läsanslutning kan finnas men ger inte kartarbete.
 [assistant-work.spec.ts](../../tests/integration/assistant-work.spec.ts),
 testfallet “AI-08: kartmedgivande fortsätter webbutkast och sparar
 hela familjeärendet”.
+Modelltolkningen provas dessutom i
+[assistant-language.spec.ts](../../tests/real-model/assistant-language.spec.ts),
+testfallet “AI-08: verklig modell rättar och sparar hela familjeärendet genom
+MCP”, med [separat verklig modellkörning](../development/real-model-tests.md).
 
 **Steg:**
 
@@ -404,9 +409,10 @@ hela familjeärendet”.
 - Ett kvitto omfattar de två objekträttelserna och adressambandet.
   Efter omladdning finns de sparade uppgifterna och **Inga förslag**.
 
-CI använder bestämda MCP-anrop, inte en språkmodell. Klientens tolkning
-av den kombinerade instruktionen och kvaliteten på dess besked bedöms
-manuellt. CI provar dessutom omstart och exakt återförsök av kvittot.
+Vanlig CI använder bestämda MCP-anrop och provar dessutom omstart och
+exakt återförsök av kvittot. Den separata modellkörningen provar den
+kombinerade instruktionen med verklig modell. Kvaliteten på formuleringen
+av besked och andra klienters inloggning bedöms separat.
 
 ### AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparande
 
@@ -562,27 +568,40 @@ förblir kastade”.
 
 **Användare:** Den konfigurerade administratören och den verkliga textklienten.
 
-**Förutsättningar:** Ett påhittat privat förslag, känd utkastversion och
-godkänd anslutning för kartarbete. Anteckna den sparade kartans utgångsläge.
+**Förutsättningar:** Ett påhittat privat förslag om personen **Lo Exempel**,
+beskrivning **Spelar piano.**, känd utkastversion och godkänd anslutning för
+kartarbete. Anteckna den sparade kartans utgångsläge.
 
-**Integrationstest:** Endast manuellt för språkmodellens beteende.
-`tests/unit/server/assistant-work.test.ts` kontrollerar instruktionerna
-genom riktig MCP-initiering, inte hur en modell tolkar en människas ord.
+**Integrationstest:**
+[assistant-language.spec.ts](../../tests/real-model/assistant-language.spec.ts),
+testfallet “AI-12: verklig modell skiljer nekade och hypotetiska besked från
+rättelse och sparande”. Följ den
+[separata modellguiden](../development/real-model-tests.md) för en uttrycklig
+körning med verklig modell och privat nyckel. Vanlig CI använder ingen
+verklig modell. Provet använder en MCP SDK-klient; det ger inget resultat
+för en annan klients inloggning eller modell.
 
 **Steg:**
 
 1. Säg ”Spara inte ändringarna”. Granska faktiska verktygsanrop och karta.
 2. Fråga ”Vad händer om vi sparar hela utkastet?”. Granska åter anrop och karta.
-3. Be assistenten sammanfatta hela utkastet. Ge sedan ett tydligt
-   ”Spara hela utkastet” och jämför beskedet med det beständiga kvittot.
+3. Säg ”Spara senare, inte nu”. Be sedan om en förklaring av meningen
+   ”Spara hela utkastet” utan att den utförs. Granska åter anrop och karta.
+4. Be assistenten sammanfatta hela utkastet. Säg sedan ”Ändra namnet på Lo
+   Exempel i mitt utkast till Lo Lind och spara hela utkastet nu. Det är
+   samma person. Behåll beskrivningen.” Jämför kartan och beskedet med det
+   beständiga kvittot.
 
 **Förväntat resultat:**
 
-- De två första beskeden anropar varken `prepare_save` eller `save_draft`.
-  Kartan och historiken förblir oförändrade.
-- Det tredje beskedet ger ett kort, verifierat resultat för hela utkastet.
+- Beskeden i steg 1–3 anropar varken `prepare_save` eller `save_draft`.
+  Kartan, utkastet, historiken och sparförsöken förblir oförändrade.
+- Steg 4 sparar Lo Lind med beskrivningen kvar, tömmer utkastet och ger
+  exakt ett kvitto för hela utkastet. Resultatet består efter omstart.
 - Versionskontroller eller modellens egen försäkran anges inte som
   oberoende bevis på vad människan faktiskt sade eller hörde.
 
-Anteckna klient, modell, datum och faktiskt utfall i #97. Avvikande
-klientbeteende får inte döljas av godkända deterministiska serverprov.
+Anteckna klient, modell, datum och faktiskt utfall vid verklig körning.
+Avvikande klientbeteende får inte döljas av godkända deterministiska
+serverprov. Automatisk körning ger en rapport med modell- och
+verktygsresultat; den påstår inte att ett mänskligt prov är genomfört.

@@ -4,8 +4,8 @@ Fallen provar samlat utkast, rättelse och sparande, sena svar, avbrott,
 kvittoåterhämtning, begärda samtalsdetaljer och faktisk markering.
 Anteckna commit, webbläsare,
 modell eller kontrollerad ersättare samt godkänt eller underkänt resultat.
-All mänsklig körning görs efter specifikationens implementation i
-[#97](https://github.com/viscalyx/skyttel/issues/97).
+De länkade integrationstesterna verifierar de kontrollerade flödena.
+Stegen här är stöd för felsökning; #97 kräver ingen manuell upprepning.
 
 ## Konfigurerade användare
 

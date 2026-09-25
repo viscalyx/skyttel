@@ -134,7 +134,8 @@ de lokala klienter som OpenAI beskriver; webbklienten har egen installation.
 
 De automatiska proven använder riktig Skyttel, OAuth, MCP och SQLite
 med påhittade identiteter. De bevisar inte en anslutning från ett riktigt
-inloggat ChatGPT- eller Codex-konto. Verkliga klientprov och resultat
-hanteras enligt [integrationsguiden](../development/assistants.md) efter
-hela specifikationens implementation, i den separata [restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
+inloggat ChatGPT- eller Codex-konto. Följ
+[integrationsguiden](../development/assistants.md) för klientens anslutning.
+Personlig inloggning, medgivanden och mänsklig bedömning följs i den
+separata [restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
 Extern röst ingår inte.

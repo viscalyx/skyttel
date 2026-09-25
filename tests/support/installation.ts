@@ -36,6 +36,7 @@ export async function createInstallation(
     legacyAuthCallbacks?: boolean;
     databasePath?: string;
     modelFetch?: typeof fetch;
+    providerApiKey?: string;
     modelUsage?: TextModelUsage;
     liveFetch?: typeof fetch;
     liveSideband?: LiveSidebandFactory;
@@ -54,7 +55,11 @@ export async function createInstallation(
     microsoft: { clientId: 'fake-microsoft', clientSecret: 'fake-secret' },
     port: 0,
     host: '127.0.0.1',
-    ...(databaseOptions.modelFetch ? { openaiApiKey: 'synthetic-model-key' } : {}),
+    ...(databaseOptions.providerApiKey
+      ? { openaiApiKey: databaseOptions.providerApiKey }
+      : databaseOptions.modelFetch
+        ? { openaiApiKey: 'synthetic-model-key' }
+        : {}),
   };
   let identity = alex;
   let providerFails = false;

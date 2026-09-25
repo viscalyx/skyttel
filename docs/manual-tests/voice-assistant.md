@@ -2,8 +2,9 @@
 
 Fallen provar samma privata utkast, MCP-regler och kvitton som textassistenten.
 Anteckna commit, webbläsare, operativsystem, mikrofon, modell eller kontrollerad
-ersättare samt resultat. All mänsklig körning sker efter implementationen i
-[#97](https://github.com/viscalyx/skyttel/issues/97).
+ersättare samt resultat. De kontrollerade flödena verifieras automatiskt.
+I [#97](https://github.com/viscalyx/skyttel/issues/97) återstår mänsklig
+bedömning av faktiskt hört ljud och användning med egen utrustning.
 
 ## Konfigurerade användare
 
@@ -57,6 +58,11 @@ eller ljud.
 **Integrationstest:**
 [voice-assistant.spec.ts](../../tests/integration/voice-assistant.spec.ts),
 “TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtext”.
+Det separata leverantörsprovet
+[swedish-speech.spec.ts](../../tests/real-voice/swedish-speech.spec.ts),
+“TAL-01: recorded Swedish speech changes the family map through real Live
+and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
+[körguiden](../development/real-voice-tests.md).
 
 **Steg, kontrollerat familjeunderlag:**
 

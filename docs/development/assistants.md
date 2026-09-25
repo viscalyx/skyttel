@@ -213,8 +213,9 @@ The local AI-07 command intentionally requests read access. To prepare the
 separate map-work cases, revoke and log out that test connection, then
 repeat its login command with `--scopes skyttel:read,skyttel:write` and
 approve **Godkänn kartarbete**. Use the same isolated data and cleanup.
-Record real client behavior, including negative/hypothetical commands,
-separately in issue #97; do not infer it from deterministic tool calls.
+The [model evaluation suite](real-model-tests.md) checks negative and
+hypothetical commands with a real model and MCP client. Record the actual
+client and model; do not infer another client's behavior from that result.
 
 Browser cases use Chromium in the devcontainer. These are deterministic
 CI results, not evidence of real Google/Microsoft or external account
@@ -238,9 +239,11 @@ do not run it in CI or add real credentials to pull request workflows.
 Execution status: **not yet run**. The installed CLI used to prepare these
 instructions is `codex-cli 0.156.1`; its help includes `--no-browser`.
 
-All manual verification for specification #31 runs after its implementation
-is complete. Record results in the separate, nonblocking
-[manual verification issue #97](https://github.com/viscalyx/skyttel/issues/97).
+The separate, nonblocking
+[manual verification issue #97](https://github.com/viscalyx/skyttel/issues/97)
+retains personal account actions and human assessment. Automated scenarios
+do not require manual repetition. The full procedure below remains useful
+for investigating a particular real client.
 
 The developer prepares the local server and CLI commands below. The tester
 performs login, household selection, consent, reads, revocation, reconnection,
@@ -406,9 +409,11 @@ results, cleanup outcome, and passed, failed, blocked, or not-run status.
 Do not include credentials, callback query strings, cookies, personal identity
 values, or full conversation logs in public evidence. A successful result
 establishes only the local Codex CLI and Google path. ChatGPT web, Codex desktop,
-Microsoft login, and the deployed HTTPS endpoint need separate verification;
-[issue #97](https://github.com/viscalyx/skyttel/issues/97) tracks those manual
-checks after implementation without blocking the specification's work.
+Microsoft login, and the deployed HTTPS endpoint need their own evidence.
+The [installation verifier](../operations/security-monitoring.md#automated-live-verification)
+checks HTTPS and deployment state automatically. Issue #97 tracks personal
+account actions and human assessment without requiring a repeat of the
+automated application scenarios.
 
 ## Real text-client verification
 
@@ -460,6 +465,8 @@ The client configuration instructions follow
 Client registration details and available account controls must be checked
 against the actual installed clients. A successful tunnel experiment is
 recorded separately from verification of the deployed production HTTPS
-endpoint. These manual checks are deferred until specification #31 is
-implemented and tracked in the separate, nonblocking issue #97. Closing
-implementation issue #55 does not claim that these checks passed.
+endpoint. Use the procedure for client-specific troubleshooting. The
+separate, nonblocking issue #97 retains personal sign-in, consent and
+human assessment only; it does not require a manual rerun of automated
+application scenarios. Closing an implementation issue does not establish
+successful verification of an external client.

@@ -7,9 +7,10 @@ secret. Use the host browser with separate Chrome profiles; cookies on
 `localhost` are shared across ports within one profile.
 
 Use invented household content only. The setup does not change the ordinary
-development database. It does not need a public address or tunnel. Actual
-human execution belongs to
-[the final manual run](https://github.com/viscalyx/skyttel/issues/97).
+development database. It does not need a public address or tunnel.
+`tests/integration/household-recovery.spec.ts` automates this scenario with
+isolated installations. The steps here support optional troubleshooting;
+Issue #97 does not require a manual repeat.
 
 ## Prerequisites
 

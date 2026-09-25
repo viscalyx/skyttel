@@ -32,9 +32,11 @@ track only after both the connection and protocol are ready.
 Use only invented household information for real-provider acceptance. The
 [manual cases](../manual-tests/voice-assistant.md) distinguish real Swedish
 speech and hardware from the [controlled local launcher](manual-voice-assistant.md).
-All human execution, including Windows, iPhone and iPad, remains deferred to
-[#97](https://github.com/viscalyx/skyttel/issues/97). Automated substitutions
-and earlier platform prototypes do not establish device support.
+The [automated speech check](real-voice-tests.md) sends a recorded Swedish
+request through the real providers. Human listening and physical equipment
+assessment remain in [#97](https://github.com/viscalyx/skyttel/issues/97).
+Automated substitutions and earlier platform prototypes do not establish
+device support; previously deferred device checks remain deferred.
 
 ## Authority and conversation lifetime
 

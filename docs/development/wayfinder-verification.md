@@ -50,7 +50,7 @@ Råa sessionsloggar, hemligheter och kördata ingår inte i grenen.
 | [#16](https://github.com/viscalyx/skyttel/issues/16#issuecomment-5678916527) | Implementerat med rättelser | Pekgester, separat redigering, hel karta och rörelseval. [Rumsliga flöden](../../tests/integration/spatial.spec.ts). |
 | [#17](https://github.com/viscalyx/skyttel/issues/17#issuecomment-5679042669) | Avslutat avgränsat prov | Den historiska API-åtkomsten och provramen är dokumenterade. Ingen ny betald körning krävs. |
 | [#18](https://github.com/viscalyx/skyttel/issues/18#issuecomment-5688577251) | Underlag och uttryckligt urval | Driftalternativen är utredda; #12/#31 väljer Render och SQLite utan extra automatisk backup. [Fast underlag](https://github.com/viscalyx/skyttel/blob/96c641dbf5d9f34944f8f285212bb44c7b959c9b/docs/research/hosting-storage.md). |
-| [#19](https://github.com/viscalyx/skyttel/issues/19#issuecomment-5688577722) | Underlag och valt spår | Modeller, villkor, kostnader och klientgränser är spårade. Verkliga klientprov ligger i #97. [Fast underlag](https://github.com/viscalyx/skyttel/blob/64fddd101e4e1ca3437e183f056a113d773c959c/docs/research/ai-mcp-production.md). |
+| [#19](https://github.com/viscalyx/skyttel/issues/19#issuecomment-5688577722) | Underlag och valt spår | Modeller, villkor, kostnader och klientgränser är spårade. Mänskliga bekräftelser ligger i #97. [Fast underlag](https://github.com/viscalyx/skyttel/blob/64fddd101e4e1ca3437e183f056a113d773c959c/docs/research/ai-mcp-production.md). |
 | [#20](https://github.com/viscalyx/skyttel/issues/20#issuecomment-5688731768) | Underlag; alternativ bortvalt | Cloudflare är utrett. #12/#31 kräver inte parallell Cloudflare-drift. [Fast underlag](https://github.com/viscalyx/skyttel/blob/9964630664215caec5204c4d3999d1527f922d5b/docs/research/cloudflare.md). |
 | [#21](https://github.com/viscalyx/skyttel/issues/21#issuecomment-5688766972) | Underlag; alternativ bortvalt | Gandi är utrett. Render är det uttryckligen valda driftspåret. [Fast underlag](https://github.com/viscalyx/skyttel/blob/04dd6291a582149cc9376b07fb6e50de03de0e39/docs/research/gandi.md). |
 | [#22](https://github.com/viscalyx/skyttel/issues/22#issuecomment-5688787471) | Underlag; alternativ bortvalt | Azure är utrett. Render är det uttryckligen valda driftspåret. [Fast underlag](https://github.com/viscalyx/skyttel/blob/331c21fc8b05232cb6718cc873a724bdbe2d5bc9/docs/research/azure.md). |
@@ -110,9 +110,12 @@ anger exakt commit, miljö och sex observationer med 500 objekt och
 har noll överlappande namn i översiktsläget. Det är ett lokalt resultat
 med påhittade uppgifter, inte ett kapacitetslöfte för drift eller enheter.
 
-Verkligt svenskt tal, externa klienter, leverantörsinloggning, fysiska
-enheter, införande och larmleverans återstår i den uttryckligen
-icke blockerande [restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
-Den är tilldelad `johlju` och länkar till körbara förberedelser och
-[manuella fall](../manual-tests/README.md). Automatiska ersättare och
-skärmbilder räknas inte som genomförda mänskliga prov.
+Automatiserade appfall behöver inte upprepas manuellt. Separata kommandon
+för [modellprov](real-model-tests.md), [talprov](real-voice-tests.md),
+[devcontainerbeständighet](devcontainer-persistence.md#automatiskt-prov-av-omstart-och-ombyggnad)
+och [driftverifiering](../operations/security-monitoring.md#automated-live-verification)
+ger eget körunderlag. Personlig inloggning och medgivanden, mänsklig
+bedömning av ljud och användning samt bekräftelse från larmmottagaren
+återstår i den icke blockerande
+[restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
+Automatiska ersättare och skärmbilder räknas inte som mänskliga observationer.

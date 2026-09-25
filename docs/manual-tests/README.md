@@ -5,11 +5,16 @@ beskriver användare, förberedelser, steg och förväntat resultat samt länkar
 till motsvarande automatiserade integrationstester. Fall som uttryckligen
 kräver verkliga externa konton anges som enbart manuella och körs inte i CI.
 
-För specifikation #31 görs all manuell provning efter att implementationen
-är klar. Följ fallen här och registrera resultaten i den separata
-[restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
-Restlistan blockerar inga implementationsärenden; ett stängt ärende
-betyder inte att dess manuella prov är genomfört.
+Fallen fungerar som körbara beskrivningar och stöd för felsökning.
+Automatiserade fall behöver inte upprepas manuellt för specifikation #31.
+Den separata [restlistan #97](https://github.com/viscalyx/skyttel/issues/97)
+innehåller bara kvarvarande mänskliga bedömningar och bekräftelser.
+Registrera automatiska körningar med version och resultat; skilj dem från
+verkliga leverantörsprov och mänskliga observationer.
+
+Separata automatiska [modellprov](../development/real-model-tests.md) och
+[talprov](../development/real-voice-tests.md) använder verkliga leverantörer.
+De körs uttryckligen med privat konfiguration och redovisas separat från CI.
 
 ## Områden
 

@@ -172,6 +172,34 @@ Run `npm run check` for typechecking, Biome, documentation checks, workflow
 gate tests, the build, Vitest coverage, and Playwright. Production image
 changes also require the separate `npm run test:container` check.
 
+## Environment and real-provider checks
+
+With Docker available, `npm run test:devcontainer` checks both development
+profiles using isolated storage. It verifies configuration preservation,
+the first storage transition, restart and container recreation. CI runs
+this separately from the application suite. Configuration process tests
+also run in `npm run test:gates`. See the
+[persistence guide](devcontainer-persistence.md#automatiskt-prov-av-omstart-och-ombyggnad)
+for requirements and the boundary around personal account sign-in.
+
+The following commands are separate opt-in checks with private configuration:
+
+- `npm run test:real-model`: actual model interpretation through MCP,
+  including negative, hypothetical and positive save instructions.
+  Follow the [model evaluation guide](real-model-tests.md).
+- `npm run test:real-voice`: recorded Swedish speech through actual WebRTC,
+  Live and Terra, with observable saved data and a durable receipt.
+  Follow the [speech evaluation guide](real-voice-tests.md).
+- `npm run test:installation`: read-only verification of HTTPS, deployed
+  version and recent security monitoring against the actual Render images.
+  Follow the [monitoring guide](../operations/security-monitoring.md#automated-live-verification).
+
+Missing configuration fails these commands. It is not a passed or skipped
+verification. Ordinary CI does not call paid providers or use live accounts.
+Record the tested commit and actual outcomes separately from discovery and
+tests using provider substitutes. An automatic result cannot establish
+what a person heard or whether they noticed a notification.
+
 ## Pull request gates
 
 The Operator Upgrade Gate checks every pull request to `main` except those
@@ -271,8 +299,8 @@ container creation runs `npm run db:migrate` and preserves existing data.
 A new database has an empty schema until you create a household or explicitly
 seed demo data. After a rebuild, start the application, check the tools, and
 confirm that saved content, private drafts, and personal settings remain.
-Follow the devcontainer guide for the manual rebuild procedure. Run the
-application checks explicitly; container startup does not run them.
+Use `npm run test:devcontainer` for the isolated rebuild and persistence
+check. Run application checks explicitly; container startup does not run them.
 
 Use `npm run db:setup` to replace the development database contents with
 `TestHousehold` and its configured administrator. Follow the

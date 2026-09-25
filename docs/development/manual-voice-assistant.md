@@ -10,8 +10,9 @@ WebRTC resources are also substitutes, with silent synthetic media tracks.
 speech recognition, Swedish pronunciation, actual browser permission prompts,
 device audio or real-provider availability. The application's listening label
 describes the simulated connection. Keep actual speech/device results separate.
-All human execution belongs to the later, nonblocking
-[restlista #97](https://github.com/viscalyx/skyttel/issues/97).
+Integration tests cover these controls; #97 does not require a manual
+repeat. Use the [real speech check](real-voice-tests.md) for automated
+provider evidence. Human listening and equipment assessment remain separate.
 
 ## Start the isolated application
 

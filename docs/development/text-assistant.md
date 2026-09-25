@@ -29,9 +29,10 @@ For later real-model checks, use the
 with invented data and the optional key in the private environment file.
 In the map, approve both choices under **Skyttels textassistent** and select
 **Starta textassistenten**. Each user makes their own AI choice.
-All human execution is deferred to
-[#97](https://github.com/viscalyx/skyttel/issues/97); preparation and
-deterministic checks do not establish real model interpretation quality.
+Use the [model evaluation suite](real-model-tests.md) for automated checks
+of real Swedish instructions through MCP. Preparation and deterministic
+checks do not establish real model interpretation quality. Issue #97
+retains human assessments and personal account actions only.
 
 ## Provider and MCP contract
 

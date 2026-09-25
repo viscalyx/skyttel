@@ -2,8 +2,8 @@
 
 Fallen provar installationens kostnadsöversikt, mätningarnas osäkerhet,
 månadens antaganden och åtkomst. Anteckna commit, webbläsare och godkänt
-eller underkänt resultat. Kör manuellt först efter implementationen och
-registrera resultat i [restlistan #97](https://github.com/viscalyx/skyttel/issues/97).
+eller underkänt resultat. De länkade integrationstesterna verifierar fallen;
+manuell körning är stöd för felsökning och krävs inte i #97.
 
 ## Konfigurerade användare
 

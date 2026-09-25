@@ -8,8 +8,9 @@ requests and needs no provider credentials. It never opens your normal
 development database or private environment file.
 
 These controls verify application behavior, not a real model's understanding
-of Swedish. Keep real-model results separate. All human execution belongs
-to the later, nonblocking [restlista #97](https://github.com/viscalyx/skyttel/issues/97).
+of Swedish. Keep real-model results separate. Integration tests cover these
+controlled scenarios; manual repetition is optional troubleshooting and is
+not required by #97.
 
 ## Start and sign in
 
