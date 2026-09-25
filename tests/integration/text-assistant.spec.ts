@@ -37,6 +37,102 @@ async function arrange(page: Page, app: Awaited<ReturnType<typeof createInstalla
   return { path, value };
 }
 
+test('TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och eftervärden', async ({
+  page,
+}) => {
+  const app = await createInstallation(undefined, {
+    modelFetch: textModel(() => [modelMessage('Ett provsvar.')]).provider,
+  });
+  try {
+    await signIn(page.request, app.origin);
+    const { household } = await (await createHousehold(page.request, app.origin)).json();
+    const path = `${app.origin}/api/households/${household.id}/map`;
+    const read = async () => (await page.request.get(path)).json();
+    const post = async (route: string, data: object) => {
+      const state = await read();
+      const response = await page.request.post(`${path}/${route}`, {
+        headers: { origin: app.origin },
+        data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    };
+    const state = await read();
+    await post('object-type', {
+      id: 'card-type',
+      baseRevision: null,
+      value: {
+        name: 'Provkort',
+        description: '',
+        fields: [{ id: 'last-four', name: 'Sista fyra', description: '', kind: 'text' }],
+      },
+    });
+    const value = {
+      typeId: 'card-type',
+      name: 'Kortet',
+      description: '',
+      customValues: { 'last-four': '1111' },
+    };
+    await post('draft', { id: 'card', baseRevision: null, value });
+    await post('draft', {
+      id: 'kim',
+      baseRevision: null,
+      value: { typeId: state.types[0].id, name: 'Kim', description: '' },
+    });
+    await post('save', { operationId: 'summary-initial' });
+    await post('draft', {
+      id: 'card',
+      baseRevision: 1,
+      value: { ...value, customValues: { 'last-four': '2222' } },
+    });
+    await post('relationship', {
+      id: 'payment',
+      baseRevision: null,
+      value: {
+        typeId: state.relationshipTypes.find((type: { name: string }) => type.name === 'Betalar')
+          .id,
+        sourceId: 'kim',
+        targetId: 'card',
+        knowledge: 'known',
+      },
+    });
+    await post('object-type', {
+      id: 'storage-type',
+      baseRevision: null,
+      value: { name: 'Förvaring', description: 'Hushållets förvaring', fields: [] },
+    });
+    await post('relationship-type', {
+      id: 'storage-link',
+      baseRevision: null,
+      value: {
+        name: 'Förvaras',
+        description: '',
+        forwardLabel: 'förvaras i',
+        reverseLabel: 'innehåller',
+      },
+    });
+    await page.goto(app.origin);
+    await consent(page);
+    const summary = assistant(page).getByRole('list', { name: 'Alla föreslagna ändringar' });
+    await expect(summary.getByRole('listitem')).toHaveCount(4);
+    for (const line of [
+      'Sista fyra: 1111 → 2222',
+      'Kim → Betalar → Kortet',
+      'Objekttyp: Förvaring',
+      'Sambandstyp: Förvaras',
+    ])
+      await expect(summary.getByText(line, { exact: false })).toBeVisible();
+    await expect(assistant(page).getByText('Visa hela utkastets detaljer')).toBeVisible();
+    expect(
+      (await read()).objects.find((object: { id: string }) => object.id === 'card').customValues[
+        'last-four'
+      ],
+    ).toBe('1111');
+    expect((await read()).draft.relationships).toHaveLength(1);
+  } finally {
+    await app.close();
+  }
+});
+
 test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext', async ({
   page,
 }) => {

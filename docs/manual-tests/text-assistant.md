@@ -282,3 +282,43 @@ i kartan innan du börjar. Inget sparande är genomfört.
   oförändrat och inget kvitto finns för dessa svar. Det sista riktiga
   sparanropet ger däremot kvitto, sparad Lo och bekräftad status.
 - Användbara frågor försvinner inte genom en lista med förbjudna ord.
+
+### TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och eftervärden
+
+**Syfte:** Förstå hela utkastets ändringar utan att behöva öppna detaljer.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Ny isolerad installation enligt startguiden. Detta
+fall använder egna förberedelser i stället för det vanliga Lo-förslaget.
+Inga modellsvar behövs; assistenten läser det befintliga utkastet.
+
+**Integrationstest:**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+“TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och eftervärden”.
+
+**Steg:**
+
+1. Skapa objekttypen **Provkort** med textfältet **Sista fyra**, enligt
+   [typfallen](object-types.md). Skapa **Kortet** av denna typ med värdet
+   **1111** i fältet och personen **Kim**. Spara hela utkastet.
+2. Rätta Kortets **Sista fyra** till **2222** och lägg ändringen i utkastet.
+3. Lägg till ett samband från **Kim** med typen **Betalar** till **Kortet**.
+   Skapa också den oanvända objekttypen **Förvaring** och sambandstypen
+   **Förvaras**, med riktningarna **förvaras i** och **innehåller**.
+   Lämna alla fyra förslagen osparade.
+4. Godkänn assistentens två val och starta textassistenten. Läs
+   **Ändringar under samtalet** utan att öppna detaljerna.
+5. Kräv **Sista fyra: 1111 → 2222**, sambandet från Kim som betalar
+   Kortet samt de båda nya typerna i den synliga listan.
+6. Öppna detaljer vid behov. Kontrollera att den sparade kartan fortfarande
+   har värdet 1111 och att de fyra förslagen ligger kvar i utkastet.
+
+**Förväntat resultat:**
+
+- Objekt, samband, objekttyper och sambandstyper ingår i samma synliga
+  sammanfattning. Ett föreslaget samband döljs inte i en detaljsektion.
+- Rättelsen använder verkligt tidigare och föreslaget värde. Den får
+  aldrig beskrivas som 2222 → 2222.
+- Att läsa sammanfattningen sparar ingenting. Fullständiga detaljer finns
+  kvar för fortsatt granskning.

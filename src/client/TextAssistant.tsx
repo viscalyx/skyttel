@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import type { ObjectType, ObjectValue, RelationshipValue } from '../shared/map.js';
+import type { ObjectType, ObjectValue } from '../shared/map.js';
 import type { TextAssistantView } from '../shared/text-assistant.js';
+import { ConversationTranscript, type TranscriptRow } from './ConversationTranscript.js';
 import { FinancialFactsDetails } from './FinancialFacts.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
@@ -10,22 +11,10 @@ import { ProfileImage } from './ProfileImage.js';
 import { RelationshipTypeDetails } from './RelationshipTypes.js';
 import { receiptMessage, rejectionMessage } from './SaveOperations.js';
 import { VoiceAssistant } from './VoiceAssistant.js';
-
-function relationshipDetails(
-  value: RelationshipValue,
-  forwardLabel = 'Samband',
-  objectNames: Record<string, string> = {},
-) {
-  const source = objectNames[value.sourceId] ?? value.sourceId;
-  const target = value.targetId
-    ? (objectNames[value.targetId] ?? value.targetId)
-    : value.knowledge === 'none'
-      ? 'Uttryckligen inget'
-      : value.knowledge === 'unresolved'
-        ? 'Olöst identitet'
-        : 'Okänt';
-  return `${source} → ${forwardLabel} → ${target}${value.knowledge === 'uncertain' ? ' (osäkert uppgivet)' : ''}`;
-}
+import './voice.css';
+import { AssistantWorkTime } from './AssistantWorkTime.js';
+import { DraftChangeSummary } from './DraftChangeSummary.js';
+import { relationshipDetails } from './relationship-description.js';
 
 function ObjectDetails({ value, type }: { value: ObjectValue | null; type: ObjectType }) {
   return value ? (
@@ -89,39 +78,61 @@ export function TextAssistant({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [unknown, setUnknown] = useState(false);
+  const [transcript, setTranscript] = useState<TranscriptRow[]>([]);
   const active = useRef<TextAssistantView | null>(null);
+  const showTranscript = useCallback((row: TranscriptRow) => {
+    if (!active.current) return;
+    setTranscript((rows) =>
+      rows.some((item) => item.id === row.id)
+        ? rows.map((item) => (item.id === row.id ? row : item))
+        : [...rows, row],
+    );
+  }, []);
   const callbacks = useRef({ onMapChange, onAccessLost, onSelectObject });
   callbacks.current = { onMapChange, onAccessLost, onSelectObject };
   const mounted = useRef(true);
   const requestEpoch = useRef(0);
-  const update = useCallback((next: TextAssistantView) => {
-    if (!mounted.current) return;
-    const previous = active.current;
-    if (
-      previous &&
-      (next.id !== previous.id ||
-        next.revision < previous.revision ||
-        next.review.contentVersion < previous.review.contentVersion ||
-        (next.review.contentVersion === previous.review.contentVersion &&
-          next.review.version < previous.review.version))
-    )
-      return;
-    active.current = next;
-    setSession(next);
-    if (
-      !previous ||
-      next.review.version !== previous.review.version ||
-      next.review.contentVersion !== previous.review.contentVersion ||
-      next.receipt?.operationId !== previous.receipt?.operationId
-    )
-      callbacks.current.onMapChange();
-  }, []);
+  const update = useCallback(
+    (next: TextAssistantView) => {
+      if (!mounted.current) return;
+      const previous = active.current;
+      if (
+        previous &&
+        (next.id !== previous.id ||
+          next.revision < previous.revision ||
+          next.review.contentVersion < previous.review.contentVersion ||
+          (next.review.contentVersion === previous.review.contentVersion &&
+            next.review.version < previous.review.version))
+      )
+        return;
+      active.current = next;
+      setSession(next);
+      if (
+        next.modelReply &&
+        (next.modelReply !== previous?.modelReply || next.revision !== previous?.revision)
+      )
+        showTranscript({
+          id: `text-${next.id}-${next.revision}`,
+          role: 'assistant',
+          text: next.modelReply,
+        });
+      if (
+        !previous ||
+        next.review.version !== previous.review.version ||
+        next.review.contentVersion !== previous.review.contentVersion ||
+        next.receipt?.operationId !== previous.receipt?.operationId
+      )
+        callbacks.current.onMapChange();
+    },
+    [showTranscript],
+  );
   const fail = useCallback((failure: unknown) => {
     if (!mounted.current) return;
     if (failure instanceof MapRequestError && [401, 403, 404].includes(failure.status)) {
       active.current = null;
       setSession(null);
       setText('');
+      setTranscript([]);
       setUnknown(false);
       setExternalAi(false);
       setMapWork(false);
@@ -226,6 +237,7 @@ export function TextAssistant({
     if (!current || !text.trim()) return;
     const epoch = ++requestEpoch.current;
     const sent = text;
+    showTranscript({ id: crypto.randomUUID(), role: 'user', text: sent });
     setPending(true);
     setError('');
     try {
@@ -257,6 +269,7 @@ export function TextAssistant({
       active.current = null;
       setSession(null);
       setText('');
+      setTranscript([]);
       setExternalAi(false);
       setMapWork(false);
       setUnknown(false);
@@ -325,7 +338,8 @@ export function TextAssistant({
             householdId={householdId}
             assistant={session}
             onAssistant={update}
-            onAccessLost={onAccessLost}
+            onAccessLost={() => fail(new MapRequestError(403))}
+            onTranscript={showTranscript}
             onRecoveryNeeded={() => setUnknown(true)}
           />
         ) : (
@@ -408,14 +422,7 @@ export function TextAssistant({
                   !review.relationships?.length &&
                   !review.objectTypes?.length &&
                   !review.relationshipTypes?.length && <p>Inga förslag.</p>}
-                <ul>
-                  {review.changes.map((change) => (
-                    <li key={change.id}>
-                      {change.after ? (change.before ? 'Rätta' : 'Lägg till') : 'Ta bort'}:{' '}
-                      {change.after?.name ?? change.before?.name}
-                    </li>
-                  ))}
-                </ul>
+                <DraftChangeSummary review={review} />
                 {Boolean(review.conflicts.length || review.unresolvedIdentities.length) && (
                   <p>Utkastet har konflikter eller olösta identiteter. Red ut dem före sparande.</p>
                 )}
@@ -450,7 +457,7 @@ export function TextAssistant({
                             {value
                               ? relationshipDetails(
                                   value,
-                                  change.type.forwardLabel,
+                                  change.type.forwardLabel ?? change.type.name,
                                   change.objectNames,
                                 )
                               : 'Borttaget'}
@@ -572,36 +579,34 @@ export function TextAssistant({
             )}
             {session && (
               <>
-                <p
-                  role="status"
-                  className={`assistant-work-status${session.phase === 'working' ? ' is-working' : ''}`}
+                <div
+                  className={`assistant-work-indicator${session.phase === 'working' ? ' is-working' : ''}`}
                 >
-                  {session.phase === 'working'
-                    ? 'Assistenten arbetar… Du kan avbryta eller ge ett nytt uppdrag.'
-                    : session.phase === 'recovery'
-                      ? 'Kontrollera det tidigare sparförsöket innan du fortsätter.'
-                      : session.receipt
-                        ? 'Sparat. Hela utkastet finns i hushållets karta.'
-                        : session.displayedSelection
-                          ? 'Markerat i kartan.'
-                          : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.'}
-                </p>
+                  <p
+                    role="status"
+                    className={`assistant-work-status${session.phase === 'working' ? ' is-working' : ''}`}
+                  >
+                    {session.phase === 'working'
+                      ? 'Assistenten arbetar… Du kan avbryta eller ge ett nytt uppdrag.'
+                      : session.phase === 'recovery'
+                        ? 'Kontrollera det tidigare sparförsöket innan du fortsätter.'
+                        : session.receipt
+                          ? 'Sparat. Hela utkastet finns i hushållets karta.'
+                          : session.displayedSelection
+                            ? 'Markerat i kartan.'
+                            : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.'}
+                  </p>
+                  {session.phase === 'working' && (
+                    <AssistantWorkTime key={`${session.id}-${session.revision}`} />
+                  )}
+                </div>
                 {session.reply && !session.receipt && !session.displayedSelection && (
                   <div>
                     <h4>Besked från Skyttel</h4>
                     <p>{session.reply}</p>
                   </div>
                 )}
-                {session.modelReply && (
-                  <section aria-label="Assistentens samtalstext" className="assistant-utterance">
-                    <h4>Assistentens samtalstext – inte en bekräftelse</h4>
-                    <p>
-                      Samtalstexten kan innehålla fel. Sparande och markering bekräftas bara av
-                      Skyttels status och kvitton.
-                    </p>
-                    <p>{session.modelReply}</p>
-                  </section>
-                )}
+                {transcript.length > 0 && <ConversationTranscript rows={transcript} />}
                 {session.error && <p role="alert">{errorMessage(session.error)}</p>}
                 <form
                   className="assistant-message-form"

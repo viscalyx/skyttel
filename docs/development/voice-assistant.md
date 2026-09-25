@@ -16,13 +16,18 @@ OpenAI from the server and WebRTC media connectivity from the user's browser.
 The browser exchanges its SDP offer with Skyttel; it never receives the API key
 or the server's OAuth token. Existing Content Security Policy stays in effect.
 
-Approve the separate AI and map-work choices, then select **Starta röst** in
-the active assistant. Only that explicit button requests microphone access.
+Approve the separate AI and map-work choices, then select **Starta talsamtal**,
+or **Starta röst** in an active text conversation. These explicit actions
+request microphone access.
 The microphone remains disabled until both the connection and Live protocol
 are ready. Autoplay restrictions show **Spela upp ljud**. A denied microphone,
 failed provider, broken connection or audio error leaves text and forms usable.
 Stop capture immediately on disconnect; allow three seconds for a transient
 connection interruption, then close. There is no automatic reconnection.
+**Pausa mikrofon** disables the existing microphone track without stopping
+it or the Live session; remote audio remains available. Transient connection
+recovery respects the paused state. **Återuppta mikrofon** enables that same
+track only after both the connection and protocol are ready.
 
 Use only invented household information for real-provider acceptance. The
 [manual cases](../manual-tests/voice-assistant.md) distinguish real Swedish
@@ -35,7 +40,11 @@ and earlier platform prototypes do not establish device support.
 
 The actual OpenAI SDK creates the Live session with `store: false`. A server
 sideband is the single delegation executor. Browser data-channel capabilities
-permit closure and basic lifecycle events; they do not execute map tools.
+permit closure, lifecycle events, both transcript streams and delegation
+boundaries; they do not execute map tools. The browser accumulates dialogue
+in memory, labels both speakers and preserves short-pause continuations using
+audio timestamps when available. The visible clock follows the current work
+phase and revision, outside the live announcement region.
 Reflected audio is ignored. The server holds raw input/output transcript
 fragments with timing in bounded memory, preserving words across deltas.
 A metadata-only delegation event uses the complete new user fragments before
@@ -78,7 +87,9 @@ ends the server voice session and its associated work. Task execution has a
 two-minute bound. Context retains at most 40 fragments and 8,000 serialized
 characters, with at most 4,000 characters in a new request. Session event and
 delegation limits stop unusually long sessions; restart voice to continue.
-Stopping clears transcript memory. Closed status is retained for one minute
+Stopping voice clears the server's transcript memory. The browser keeps the
+visible dialogue until the text conversation ends, access is lost or the page
+reloads. Closed status is retained for one minute
 for reply recovery, then removed. No audio or conversation is household content,
 export data, technical logs or restored authentication state.
 

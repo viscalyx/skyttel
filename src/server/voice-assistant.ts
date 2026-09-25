@@ -175,6 +175,9 @@ export function voiceAssistantRoutes({
                 allowed_server_events: [
                   { type: 'session.started' },
                   { type: 'session.closed' },
+                  { type: 'session.input_transcript.delta' },
+                  { type: 'session.output_transcript.delta' },
+                  { type: 'session.delegation.created' },
                   { type: 'error' },
                 ],
               },

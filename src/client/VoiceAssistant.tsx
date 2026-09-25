@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TextAssistantView } from '../shared/text-assistant.js';
 import type { VoiceAssistantResponse, VoiceAssistantView } from '../shared/voice-assistant.js';
+import type { TranscriptRow } from './ConversationTranscript.js';
 import { MapRequestError, request } from './map-request.js';
 import { createVoiceTransport, type VoiceTransport } from './voice-transport.js';
 
@@ -35,6 +36,7 @@ export function VoiceAssistant(props: {
   onAccessLost: () => void;
   onRecoveryNeeded?: () => void;
   autoStart?: boolean;
+  onTranscript?: (row: TranscriptRow) => void;
 }) {
   const path = `/api/households/${encodeURIComponent(props.householdId)}/text-assistant/${encodeURIComponent(props.assistant.id)}/voice`;
   const latest = useRef(props);
@@ -47,6 +49,7 @@ export function VoiceAssistant(props: {
   const [error, setError] = useState('');
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const [disconnected, setDisconnected] = useState(false);
+  const [paused, setPaused] = useState(false);
   const apply = useCallback((view: TextAssistantView) => {
     const shown = latest.current.assistant;
     if (
@@ -62,11 +65,11 @@ export function VoiceAssistant(props: {
     async (message = '') => {
       const attempt = current.current;
       if (!attempt) return;
+      attempt.transport?.stopCapture();
       current.current = null;
       const generation = ++epoch.current;
       clearTimeout(attempt.poll);
       attempt.controller.abort();
-      attempt.transport?.stopCapture();
       if (mounted.current) {
         setState('closing');
         setPlaybackBlocked(false);
@@ -108,6 +111,8 @@ export function VoiceAssistant(props: {
     current.current = attempt;
     epoch.current++;
     setState('connecting');
+    setPaused(false);
+    setDisconnected(false);
     setVoice(null);
     setError('');
     const active = () => mounted.current && current.current === attempt;
@@ -180,6 +185,9 @@ export function VoiceAssistant(props: {
         onDisconnected: (value) => {
           if (active()) setDisconnected(value);
         },
+        onTranscript: (row) => {
+          if (active()) latest.current.onTranscript?.(row);
+        },
       });
       await attempt.transport.connect(async (sdp, options) => {
         let result: VoiceAssistantResponse;
@@ -228,10 +236,26 @@ export function VoiceAssistant(props: {
             Stäng av rösten
           </button>
         )}
+        {state === 'listening' && (
+          <button
+            type="button"
+            aria-pressed={paused}
+            onClick={() => {
+              current.current?.transport?.setMicrophonePaused(!paused);
+              setPaused(!paused);
+            }}
+          >
+            {paused ? 'Återuppta mikrofon' : 'Pausa mikrofon'}
+          </button>
+        )}
         <span
-          className={`microphone-state${state === 'listening' && !disconnected ? ' connected' : ''}`}
+          className={`microphone-state${state === 'listening' && !disconnected && !paused ? ' connected' : ''}`}
         >
-          {state === 'listening' && !disconnected ? 'Mikrofonen är på' : 'Mikrofonen är av'}
+          {state === 'listening' && !disconnected
+            ? paused
+              ? 'Mikrofonen är pausad'
+              : 'Mikrofonen är på'
+            : 'Mikrofonen är av'}
         </span>
       </div>
       <p>
@@ -255,7 +279,9 @@ export function VoiceAssistant(props: {
                   ? 'Assistenten arbetar…'
                   : voice?.phase === 'recovery'
                     ? 'Kontrollera det tidigare sparförsöket innan nya ändringar.'
-                    : 'Lyssnar. Du kan tala, rätta eller be att spara hela utkastet.'}
+                    : paused
+                      ? 'Mikrofonen är pausad. Samtalet är kvar och du kan fortfarande höra Skyttel.'
+                      : 'Lyssnar. Du kan tala, rätta eller be att spara hela utkastet.'}
       </p>
       {error && <p role="alert">{error}</p>}
       {playbackBlocked && (

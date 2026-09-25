@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
+import { TextAssistant } from '../../../src/client/TextAssistant.js';
 import { VoiceAssistant } from '../../../src/client/VoiceAssistant.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 
@@ -138,6 +139,106 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
+
+test('pausing the microphone preserves the session and remains paused after reconnection', async () => {
+  const { track, calls, getUserMedia } = setup();
+  await userEvent.click(screen.getByRole('button', { name: 'Starta röst' }));
+  await waitFor(() => expect(Peer.all[0]?.channel.readyState).toBe('open'));
+  const peer = Peer.all[0];
+  await act(async () =>
+    peer.channel.emit({ type: 'session.started', session: { id: 'provider-session' } }),
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Pausa mikrofon' }));
+  expect(track.enabled).toBe(false);
+  expect(track.stop).not.toHaveBeenCalled();
+  expect(screen.getByText('Mikrofonen är pausad')).toBeDefined();
+  await act(async () => {
+    peer.connectionState = 'disconnected';
+    peer.dispatchEvent(new Event('connectionstatechange'));
+    peer.connectionState = 'connected';
+    peer.dispatchEvent(new Event('connectionstatechange'));
+  });
+  expect(track.enabled).toBe(false);
+  await userEvent.click(screen.getByRole('button', { name: 'Återuppta mikrofon' }));
+  expect(track.enabled).toBe(true);
+  expect(getUserMedia).toHaveBeenCalledOnce();
+  expect(calls.filter((call) => call.url === base)).toHaveLength(1);
+  expect(calls.some((call) => call.url.endsWith('/stop'))).toBe(false);
+});
+
+test.each(['stop', 'revoked'])(
+  'the conversation keeps both speakers and short pauses, then clears on %s',
+  async (ending) => {
+    const { component } = setup();
+    component.unmount();
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/messages')) return Response.json({ error: 'forbidden' }, { status: 403 });
+      if (url.includes('/voice'))
+        return Response.json({
+          voice: { id: 'voice', phase: 'listening', seconds: null, usageFinal: false },
+          assistant: assistant(),
+          sdp: 'answer',
+        });
+      return Response.json(
+        init?.method === 'POST' || url.endsWith('/text-session')
+          ? assistant()
+          : { available: true },
+      );
+    });
+    render(
+      <TextAssistant
+        householdId="linden"
+        onMapChange={vi.fn()}
+        onAccessLost={vi.fn()}
+        onSelectObject={() => false}
+        selectedObjectId={null}
+      />,
+    );
+    await userEvent.click(await screen.findByLabelText(/Jag tillåter att OpenAI/));
+    await userEvent.click(screen.getByLabelText(/Jag tillåter förslag och sparande/));
+    await userEvent.click(screen.getByRole('button', { name: 'Starta talsamtal' }));
+    await waitFor(() => expect(Peer.all[0]?.channel.readyState).toBe('open'));
+    const peer = Peer.all[0];
+    const fragment = async (
+      role: 'input' | 'output',
+      delta: string,
+      start_ms: number,
+      end_ms: number,
+    ) => {
+      await act(async () =>
+        peer.channel.emit({ type: `session.${role}_transcript.delta`, delta, start_ms, end_ms }),
+      );
+    };
+    await fragment('input', 'Kim betalar', 0, 1000);
+    const log = await screen.findByRole('log', { name: 'Samtalets dialog' });
+    expect(log.textContent).toContain('DuKim betalar');
+    await fragment('output', 'Jag lyssnar.', 1100, 1300);
+    await fragment('input', ' för musiken.', 1500, 1900);
+    expect(log.querySelectorAll('li')).toHaveLength(2);
+    expect(log.textContent).toContain('Kim betalar för musiken.');
+    await fragment('output', ' Berätta mer.', 2000, 2600);
+    await fragment('input', 'Rätta till Lo.', 5000, 6000);
+    await fragment('output', 'Sparat säger rösten.', 6100, 6500);
+    expect(log.querySelectorAll('li')).toHaveLength(4);
+    expect(log.textContent).toContain('SkyttelJag lyssnar. Berätta mer.');
+    expect(screen.getByRole('status').textContent).toContain('Nya förslag är osparade');
+    if (ending === 'stop') {
+      await userEvent.click(screen.getByRole('button', { name: 'Stäng av rösten' }));
+      await fragment('output', 'För sent.', 7000, 7500);
+      expect(log.textContent).not.toContain('För sent.');
+      expect(log.textContent).toContain('Kim betalar för musiken.');
+      await userEvent.click(screen.getByRole('button', { name: 'Avsluta textassistenten' }));
+    } else {
+      await userEvent.type(screen.getByLabelText('Meddelande till textassistenten'), 'Privat text');
+      await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
+    }
+    expect(screen.queryByRole('log')).toBeNull();
+    await userEvent.click(screen.getByLabelText(/Jag tillåter att OpenAI/));
+    await userEvent.click(screen.getByLabelText(/Jag tillåter förslag och sparande/));
+    await userEvent.click(screen.getByRole('button', { name: 'Starta textassistenten' }));
+    expect(screen.queryByRole('log')).toBeNull();
+  },
+);
 
 test('temporary disconnection mutes capture, recovery re-enables it and an unusable connection stops server work', async () => {
   const { track, calls } = setup();

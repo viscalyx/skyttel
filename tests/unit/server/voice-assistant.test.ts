@@ -47,6 +47,16 @@ test('voice requires the existing current assistant consent and creates only the
         audio: { output: { voice: 'marin' } },
         delegation: { type: 'client' },
         store: false,
+        client: {
+          data_channel: {
+            allowed_client_events: ['session.close'],
+            allowed_server_events: expect.arrayContaining([
+              { type: 'session.input_transcript.delta' },
+              { type: 'session.output_transcript.delta' },
+              { type: 'session.delegation.created' },
+            ]),
+          },
+        },
       },
       transport: { type: 'webrtc', sdp: 'synthetic-offer' },
     },

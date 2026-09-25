@@ -47,6 +47,99 @@ function speak(live: ReturnType<typeof liveProvider>, text: string, id = crypto.
   });
 }
 
+test('TAL-05: dialog, mikrofonpaus och arbetstid finns kvar under samtalet', async ({ page }) => {
+  let release!: (output: unknown[]) => void;
+  let held = false;
+  const model = textModel(
+    () =>
+      new Promise<unknown[]>((resolve) => {
+        held = true;
+        release = resolve;
+      }),
+  );
+  const live = liveProvider();
+  const app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+  });
+  try {
+    await simpleMap(page, app);
+    const events = [
+      { type: 'session.input_transcript.delta', delta: 'Kim betalar', start_ms: 0, end_ms: 1000 },
+      {
+        type: 'session.output_transcript.delta',
+        delta: 'Jag lyssnar.',
+        start_ms: 1100,
+        end_ms: 1300,
+      },
+      {
+        type: 'session.input_transcript.delta',
+        delta: ' för musiken.',
+        start_ms: 1500,
+        end_ms: 1900,
+      },
+      {
+        type: 'session.output_transcript.delta',
+        delta: ' Berätta mer.',
+        start_ms: 2000,
+        end_ms: 2600,
+      },
+      {
+        type: 'session.input_transcript.delta',
+        delta: 'Rätta till Lo.',
+        start_ms: 5000,
+        end_ms: 6000,
+      },
+    ];
+    for (const event of events) {
+      expect(live.requests[0].session.client?.data_channel?.allowed_server_events).toContainEqual({
+        type: event.type,
+      });
+      await page.evaluate(
+        (event) => window.skyttelVoiceFixture.emit({ ...event, event_id: crypto.randomUUID() }),
+        event,
+      );
+    }
+    const log = assistant(page).getByRole('log', { name: 'Samtalets dialog' });
+    await expect(log.getByRole('listitem')).toHaveCount(3);
+    await expect(log.getByRole('listitem').nth(0)).toHaveText('DuKim betalar för musiken.');
+    await expect(log.getByRole('listitem').nth(1)).toHaveText('SkyttelJag lyssnar. Berätta mer.');
+    await assistant(page).getByRole('button', { name: 'Pausa mikrofon' }).click();
+    await expect(assistant(page).getByText('Mikrofonen är pausad', { exact: true })).toBeVisible();
+    await page.evaluate(() => {
+      window.skyttelVoiceFixture.disconnect();
+      window.skyttelVoiceFixture.reconnect();
+    });
+    expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
+      { enabled: false, state: 'live' },
+    ]);
+    await assistant(page).getByRole('button', { name: 'Återuppta mikrofon' }).click();
+    expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
+      { enabled: true, state: 'live' },
+    ]);
+    expect(live.requests).toHaveLength(1);
+    speak(live, 'Kontrollera utkastet.');
+    await expect.poll(() => held).toBe(true);
+    await expect(assistant(page).getByRole('status')).toContainText('Assistenten arbetar');
+    const elapsed = assistant(page).getByLabel('Tid för pågående arbete');
+    await expect(elapsed).toBeVisible();
+    await expect(elapsed).not.toHaveText('0 s');
+    release([modelMessage('Vem använder musiken?')]);
+    await expect(log).toContainText('Vem använder musiken?');
+    await expect(elapsed).toHaveCount(0);
+    await assistant(page).getByRole('button', { name: 'Stäng av rösten' }).click();
+    await expect(log).toContainText('Kim betalar för musiken.');
+    await assistant(page).getByRole('button', { name: 'Avsluta textassistenten' }).click();
+    await expect(log).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
+      'Lo Exempel',
+    );
+  } finally {
+    await app.close();
+  }
+});
+
 test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async ({ page }) => {
   const replies = [
     'Klart. Ändringarna är nu lagrade i hushållets karta.',

@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
@@ -31,8 +31,42 @@ function session(): TextAssistantView {
 }
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+test('working time advances visibly without repeating live announcements and resets for a new request', async () => {
+  vi.useFakeTimers();
+  let current: TextAssistantView = { ...session(), phase: 'working' };
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url === path) return Response.json(init?.method === 'POST' ? current : { available: true });
+    if (url.endsWith('/cancel')) current = { ...current, phase: 'ready', revision: 1 };
+    if (url.endsWith('/messages')) current = { ...current, phase: 'working', revision: 2 };
+    return Response.json(current);
+  });
+  await act(async () => {
+    showAssistant();
+  });
+  fireEvent.click(screen.getByLabelText(/Jag tillåter att OpenAI/));
+  fireEvent.click(screen.getByLabelText(/Jag tillåter förslag och sparande/));
+  await act(async () =>
+    fireEvent.click(screen.getByRole('button', { name: 'Starta textassistenten' })),
+  );
+  const announcement = screen.getByRole('status').textContent;
+  await act(async () => vi.advanceTimersByTimeAsync(3100));
+  expect(screen.getByText('3 s')).toBeDefined();
+  expect(screen.getByRole('status').textContent).toBe(announcement);
+  await act(async () => vi.advanceTimersByTimeAsync(60_000));
+  expect(screen.getByRole('timer').textContent).toBe('1 min 3 s');
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Avbryt uppdrag' })));
+  expect(screen.queryByText('3 s')).toBeNull();
+  expect(screen.queryByRole('timer')).toBeNull();
+  fireEvent.change(screen.getByLabelText('Meddelande till textassistenten'), {
+    target: { value: 'Fortsätt.' },
+  });
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Skicka' })));
+  expect(screen.getByText('0 s')).toBeDefined();
 });
 
 async function consent() {
@@ -540,6 +574,7 @@ test('whole draft review exposes object facts, type edits, uncertain relationshi
           name: 'Rättad cykel',
           description: 'Efter rättning',
           customValues: { colour: 'Röd' },
+          financialFacts: { price: { knowledge: 'known', value: '150' } },
           lifecycle: 'ended',
         },
         merge: {
@@ -653,7 +688,14 @@ test('whole draft review exposes object facts, type edits, uncertain relationshi
   showAssistant();
   await consent();
   const review = within(await screen.findByRole('region', { name: 'Assistentens hela utkast' }));
-  expect(review.getByText('Rätta: Rättad cykel')).toBeDefined();
+  const compact = review.getByRole('list', { name: 'Alla föreslagna ändringar' });
+  expect(compact.textContent).toContain('Namn: Gammal cykel → Rättad cykel');
+  expect(compact.textContent).toContain('Färg: Blå → Röd');
+  expect(compact.textContent).toContain('Pris: 100 → 150');
+  expect(compact.textContent).toContain('Alex → använder → Rättad cykel (osäkert uppgivet)');
+  expect(compact.textContent).toContain('Objekttyp: Fordon → Cykeltyp');
+  expect(compact.textContent).toContain('Sambandstyp: Använder → Delad användning');
+  expect(compact.textContent).toContain('Ta bort samband: robin');
   expect(review.getByText('Ta bort: Dubblett')).toBeDefined();
   expect(review.getByText('Lägg till: Oklar cykel')).toBeDefined();
   expect(review.queryByText('Inga förslag.')).toBeNull();

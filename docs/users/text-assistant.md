@@ -24,8 +24,15 @@ välj **Spela upp ljud**. Du kan fortsätta med text eller formulär när
 mikrofonen eller ljuduppspelningen inte fungerar.
 
 **Lyssnar** betyder att rösten är ansluten. **Assistenten arbetar** visar
-att ett uppdrag pågår. Om ett sparresultat är oklart visas att det tidigare
+att ett uppdrag pågår, med ökande tid längst ned på skärmen.
+Om ett sparresultat är oklart visas att det tidigare
 sparförsöket måste kontrolleras innan nya ändringar.
+
+I **Samtalet** visas både dina ord och Skyttels svar löpande. Tidigare
+rader finns kvar under samtalet. Korta pauser kan fortsätta samma rad.
+Välj **Pausa mikrofon** för att sluta skicka ljud utan att avsluta samtalet;
+du kan fortfarande höra Skyttel. **Återuppta mikrofon** fortsätter med
+samma anslutning. En pausad mikrofon förblir pausad efter en kort störning.
 
 Beskriv ärendet på svenska, svara på följdfrågor och rätta uppgifter med
 rösten. Säg exempelvis **Rätta priset till 189 kr och spara** för ett
@@ -45,8 +52,10 @@ omladdning och omstart.
 
 ## Granska, rätta och spara
 
-**Hela ditt utkast** visar de samlade förslagen. Öppna detaljerna för
-tidigare och föreslagna uppgifter. Fråga om något är oklart. Assistenten
+**Hela ditt utkast** visar de samlade förslagen för objekt, samband och
+typer. Rättelser visar tidigare och föreslagna värden, exempelvis
+**Sista fyra: 1111 → 2222**. Öppna detaljerna för mer information.
+Fråga om något är oklart. Assistenten
 ska fråga vid tvetydig identitet och skilja okänt, uttryckligen inget,
 osäkert uppgivet och ospecificerat objekt åt.
 
@@ -80,7 +89,9 @@ startar du en ny anslutning och öppnar **Tidigare sparförsök**. Där finns
 även kvitton från andra enheter. Ett avvisat försök behöver ett nytt
 underlag och ett nytt sparbesked.
 
+**Stäng av rösten** behåller den synliga dialogen i det pågående samtalet.
 **Avsluta textassistenten** tar bort anslutningen och samtalsminnet.
+Dialogen försvinner också vid omladdning eller när åtkomsten upphör.
 Anslutningen upphör senast efter 30 minuter eller när dess medgivande
 återkallas. Utkast, sparade uppgifter och kvitton finns kvar. Återimport
 eller byte av innehållsägare kräver en ny anslutning.

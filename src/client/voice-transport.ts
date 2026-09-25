@@ -1,4 +1,5 @@
 import { type ExchangeSdp, OpenAILiveWebRTC } from 'openai/live/webrtc';
+import type { TranscriptRow } from './ConversationTranscript.js';
 
 export function createVoiceTransport(callbacks: {
   onReady: () => void;
@@ -6,6 +7,7 @@ export function createVoiceTransport(callbacks: {
   onFailure: (reason: 'network' | 'audio' | 'microphone' | 'provider') => void;
   onPlaybackBlocked: (blocked: boolean) => void;
   onDisconnected: (disconnected: boolean) => void;
+  onTranscript?: (row: TranscriptRow) => void;
 }) {
   const live = new OpenAILiveWebRTC();
   const audio = new Audio();
@@ -16,8 +18,63 @@ export function createVoiceTransport(callbacks: {
   let started = false;
   let stopped = false;
   let closed = false;
+  let paused = false;
   let startupTimer: ReturnType<typeof setTimeout> | undefined;
   let disconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  let userRow: TranscriptRow | undefined;
+  let assistantRow: TranscriptRow | undefined;
+  let userEnd: number | undefined;
+  let userAt = 0;
+  let assistantSince = false;
+  let assistantBoundary = false;
+  let assistantAt = 0;
+  const turnGap = 2000;
+  const audioTime = (value: number) => Number.isFinite(value) && value >= 0;
+  function finish(row: TranscriptRow | undefined) {
+    if (!row?.partial) return;
+    row.partial = false;
+    callbacks.onTranscript?.({ ...row });
+  }
+  function transcript(
+    role: TranscriptRow['role'],
+    event: { delta: string; start_ms: number; end_ms: number },
+  ) {
+    if (closed || stopped || !event.delta) return;
+    const now = performance.now();
+    if (role === 'user') {
+      const gap =
+        userEnd !== undefined && audioTime(event.start_ms) && event.start_ms >= userEnd
+          ? event.start_ms - userEnd
+          : now - userAt;
+      finish(assistantRow);
+      if (!userRow || (assistantSince && gap >= turnGap)) {
+        finish(userRow);
+        userRow = { id: crypto.randomUUID(), role, text: '' };
+        assistantRow = undefined;
+      }
+      userRow.text += event.delta;
+      userRow.partial = true;
+      userAt = now;
+      userEnd =
+        audioTime(event.end_ms) && (!audioTime(event.start_ms) || event.end_ms >= event.start_ms)
+          ? event.end_ms
+          : undefined;
+      assistantSince = false;
+      callbacks.onTranscript?.({ ...userRow });
+    } else {
+      assistantSince = true;
+      finish(userRow);
+      if (!assistantRow || (assistantBoundary && now - assistantAt >= turnGap)) {
+        finish(assistantRow);
+        assistantRow = { id: crypto.randomUUID(), role, text: '' };
+      }
+      assistantRow.text += event.delta;
+      assistantRow.partial = true;
+      assistantBoundary = false;
+      assistantAt = now;
+      callbacks.onTranscript?.({ ...assistantRow });
+    }
+  }
   async function playAudio() {
     if (closed || stopped) return;
     try {
@@ -54,7 +111,7 @@ export function createVoiceTransport(callbacks: {
     )
       return;
     clearTimeout(startupTimer);
-    for (const track of microphone?.getTracks() ?? []) track.enabled = true;
+    for (const track of microphone?.getTracks() ?? []) track.enabled = !paused;
     callbacks.onReady();
   }
   const connectionChanged = () => {
@@ -74,6 +131,12 @@ export function createVoiceTransport(callbacks: {
   };
   live.peerConnection.addEventListener('connectionstatechange', connectionChanged);
   const subscriptions = [
+    live.on('session.input_transcript.delta', (event) => transcript('user', event)),
+    live.on('session.output_transcript.delta', (event) => transcript('assistant', event)),
+    live.on('session.delegation.created', () => {
+      assistantBoundary = true;
+      finish(assistantRow);
+    }),
     live.on('session.started', (event) => {
       if (typeof event.session?.id !== 'string' || !event.session.id) return;
       started = true;
@@ -95,6 +158,8 @@ export function createVoiceTransport(callbacks: {
     }),
   ];
   function stopCapture() {
+    finish(userRow);
+    finish(assistantRow);
     stopped = true;
     clearTimeout(startupTimer);
     clearTimeout(disconnectTimer);
@@ -143,6 +208,13 @@ export function createVoiceTransport(callbacks: {
       }
     },
     stopCapture,
+    setMicrophonePaused(value: boolean) {
+      paused = value;
+      if (closed || stopped) return;
+      for (const track of microphone?.getTracks() ?? [])
+        track.enabled =
+          !paused && connected && started && live.peerConnection.connectionState === 'connected';
+    },
     close,
     playAudio,
   };

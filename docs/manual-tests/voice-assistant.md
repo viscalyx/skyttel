@@ -320,3 +320,71 @@ och terminalens kommentarspaket är inte bevis för hört tal.
   Samtalsfrågor finns kvar och kan besvaras, även efter verklig markering.
 - De sista verktygsanropen ger faktisk markeringsbekräftelse respektive
   sparat innehåll och kvitto. De fria orden ersätter aldrig dessa bevis.
+
+### TAL-05: dialog, mikrofonpaus och arbetstid finns kvar under samtalet
+
+**Syfte:** Följa båda talarna, pausa mikrofonen utan att tappa samtalet och
+se väntetiden under kartarbete.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Följ förberedelsen för TAL-02 med Lo Exempel i
+utkastet. Rösten är igång. Detta prov använder syntetiska textfragment och
+tysta mediespår; verkligt tal redovisas separat i TAL-01.
+
+**Integrationstest:**
+[voice-assistant.spec.ts](../../tests/integration/voice-assistant.spec.ts),
+“TAL-05: dialog, mikrofonpaus och arbetstid finns kvar under samtalet”.
+
+**Steg:**
+
+1. Kör följande i webbläsarkonsolen. Tiderna beskriver korta respektive
+   längre pauser i det syntetiska ljudet:
+
+   ```javascript
+   for (const [role, delta, start_ms, end_ms] of [
+     ['input', 'Kim betalar', 0, 1000],
+     ['output', 'Jag lyssnar.', 1100, 1300],
+     ['input', ' för musiken.', 1500, 1900],
+     ['output', ' Berätta mer.', 2000, 2600],
+     ['input', 'Rätta till Lo.', 5000, 6000],
+   ]) {
+     window.skyttelVoiceFixture.emit({
+       type: `session.${role}_transcript.delta`,
+       event_id: crypto.randomUUID(), delta, start_ms, end_ms,
+     });
+   }
+   ```
+
+2. Läs samtalet. **Du** har en sammanhållen rad med **Kim betalar för
+   musiken.**, **Skyttel** har **Jag lyssnar. Berätta mer.** och den senare
+   rättelsen **Rätta till Lo.** ligger på en ny rad.
+3. Välj **Pausa mikrofon**. Kräv **Mikrofonen är pausad** och kör:
+
+   ```javascript
+   window.skyttelVoiceFixture.disconnect();
+   window.skyttelVoiceFixture.reconnect();
+   window.skyttelVoiceFixture.stats();
+   ```
+
+4. Mikrofonspåret ska fortfarande ha `enabled: false` och `state: 'live'`.
+   Välj **Återuppta mikrofon** och kontrollera `enabled: true`, samma
+   antal anslutningar och kvarvarande dialog.
+5. Kör `user Kontrollera utkastet.` och `delegate` i terminalen. Låt
+   modellanropet vara hållet och kontrollera att arbetsindikeringen syns
+   längst ned med ökande tid. Släpp sedan det hållna anropet med
+   `reply REQUEST Vem använder musiken?`, där `REQUEST` är dess ID.
+6. Kräv frågan i dialogen och avslutad arbetsindikering. Stäng rösten:
+   tidigare dialog finns kvar. Välj **Avsluta textassistenten**:
+   dialogen försvinner medan Lo-förslaget finns kvar i utkastet.
+
+**Förväntat resultat:**
+
+- Fragment visas löpande med talarroll och sammanhängande korta pauser.
+  Tidigare rader ersätts inte av det senaste svaret.
+- Paus behåller samtal och ljuduppspelning. En återhämtad anslutning
+  startar inte en mikrofon som användaren har pausat.
+- Arbetsstatus och tid skiljer väntan från ett färdigt svar. Klockan
+  ger inga upprepade statusuppläsningar för skärmläsaren.
+- Dialogen är tillfällig och är inte ett sparkvitto. Avslut tar bort
+  samtalet men bevarar utkastet.
