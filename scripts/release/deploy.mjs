@@ -144,6 +144,7 @@ function observedIdentity(value) {
 /** Deploy one approved main release. HTTP and time are the external boundaries. */
 export async function deployRelease({
   identity,
+  sourceCommit,
   serviceId,
   origin,
   githubToken,
@@ -157,7 +158,7 @@ export async function deployRelease({
     outcome: 'failure',
     requested: {
       version: identity.fullVersion,
-      commit: identity.commit,
+      commit: sourceCommit,
       digest: identity.digest,
     },
     checks: [],
@@ -275,9 +276,14 @@ export async function deployRelease({
       health.status === 'fulfilled' && health.value?.status === 'ok' ? 'ok' : 'unknown';
   };
   try {
+    requireState(
+      typeof sourceCommit === 'string' && /^[a-f0-9]{40}$/u.test(sourceCommit),
+      'invalid_source_commit',
+    );
+    requireState(identity.commit === sourceCommit, 'release_commit_mismatch');
     validateReleasePlan(identity, {
       repository: 'viscalyx/skyttel',
-      commit: identity.commit,
+      commit: sourceCommit,
       ref: 'refs/heads/main',
       eventName: 'push',
     });
@@ -292,8 +298,9 @@ export async function deployRelease({
     const superseded = async () => {
       const currentMain = (await github('/git/ref/heads/main')).object.sha;
       requireState(/^[a-f0-9]{40}$/u.test(currentMain), 'invalid_main_revision');
-      if (currentMain === identity.commit) return false;
-      const comparison = await github(`/compare/${identity.commit}...${currentMain}`);
+      if (currentMain === sourceCommit) return false;
+      // Request paths use the workflow revision, never data from the release file.
+      const comparison = await github(`/compare/${sourceCommit}...${currentMain}`);
       // A rewritten branch cannot authorize an older candidate. Only permit
       // descendants with a complete comparison and unchanged production inputs.
       if (comparison.status !== 'ahead') return true;
@@ -363,7 +370,7 @@ export async function deployRelease({
     phase = 'create-deployment-record';
     deploymentId = (
       await github('/deployments', 'POST', {
-        ref: identity.commit,
+        ref: sourceCommit,
         environment: 'production',
         auto_merge: false,
         required_contexts: [],
@@ -416,7 +423,7 @@ export async function deployRelease({
     requireState(health.status === 'ok', 'health_failed');
     const running = observedIdentity(await application('/api/version'));
     requireState(
-      running?.commit === identity.commit &&
+      running?.commit === sourceCommit &&
         running.version === identity.fullVersion &&
         running.database.status === 'ready',
       'running_identity_mismatch',
@@ -440,7 +447,7 @@ export async function deployRelease({
         report.observedDeploy?.id === report.deployId &&
         report.observedDeploy.status === 'live' &&
         report.observedDeploy.digest === identity.digest &&
-        report.application?.commit === identity.commit &&
+        report.application?.commit === sourceCommit &&
         report.application.version === identity.fullVersion &&
         report.database === 'ready' &&
         report.health === 'ok',
@@ -491,6 +498,7 @@ export async function main(env = process.env) {
     requireState(identity.commit === env.GITHUB_SHA, 'release_commit_mismatch');
     report = await deployRelease({
       identity,
+      sourceCommit: env.GITHUB_SHA,
       serviceId: env.RENDER_SERVICE_ID,
       origin: env.SKYTTEL_ORIGIN,
       githubToken: env.GH_TOKEN,

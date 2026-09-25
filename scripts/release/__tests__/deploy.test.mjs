@@ -114,9 +114,10 @@ function platform() {
     throw new Error(`Unexpected HTTP request: ${path}`);
   };
   const events = [];
-  const run = () =>
+  const run = (overrides = {}) =>
     deployRelease({
       identity,
+      sourceCommit: commit,
       serviceId: 'srv-synthetic',
       origin: 'https://skyttel.example.test',
       githubToken: 'synthetic-github-secret',
@@ -128,6 +129,7 @@ function platform() {
       },
       attempts: 2,
       onEvent: (event) => events.push(structuredClone(event)),
+      ...overrides,
     });
   return { state, run, events };
 }
@@ -260,6 +262,31 @@ test('documentation and devcontainer pushes cannot supersede a pending productio
   assert.equal((await run()).outcome, 'success');
   assert.equal(state.deploys, 1);
   assert.equal(state.requests.filter(({ url }) => url.includes('/compare/')).length, 3);
+  assert.ok(
+    state.requests
+      .filter(({ url }) => url.includes('/compare/'))
+      .every(
+        ({ url }) =>
+          url === `https://api.github.com/repos/viscalyx/skyttel/compare/${commit}...${state.main}`,
+      ),
+  );
+});
+
+test('release identity must match a valid workflow revision before any outbound request', async () => {
+  for (const sourceCommit of [undefined, '', 'main', `${commit}/private-data`, [commit]]) {
+    const { state, run } = platform();
+    const report = await run({ sourceCommit });
+    assert.equal(report.failure, 'invalid_source_commit');
+    assert.equal(state.requests.length, 0);
+  }
+  for (const artifactCommit of ['f'.repeat(40), `${commit}/private-data`, [commit]]) {
+    const { state, run } = platform();
+    const report = await run({ identity: { ...identity, commit: artifactCommit } });
+    assert.equal(report.failure, 'release_commit_mismatch');
+    assert.equal(state.requests.length, 0);
+    assert.equal(report.requested.commit, commit);
+    assert.doesNotMatch(JSON.stringify(report), /private-data/);
+  }
 });
 
 test('renamed production inputs and rewritten main supersede a candidate', async () => {
