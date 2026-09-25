@@ -306,3 +306,55 @@ test('an empty draft and absent history are explicit rather than implied changes
     message: 'Det finns inget tidigare sparande i hushållets historik.',
   });
 });
+
+test('requested details include the financial and custom values entered with a new object', () => {
+  const after = card({
+    financialFacts: {
+      price: { knowledge: 'known', value: '129' },
+      currency: { knowledge: 'known', value: 'SEK' },
+      paymentInterval: { knowledge: 'known', value: 'månadsvis' },
+    },
+    customValues: { 'last-digits': '9876' },
+  });
+  const changes = [{ id: after.id, type: cardType, before: null, after }];
+  const draft = draftResult({ version: 1, changes });
+  const history = historyResult(receipt({ changes }));
+
+  for (const result of [draft, history]) {
+    expect(result.message).toContain('Pris: ej angivet → 129');
+    expect(result.message).toContain('Valuta: ej angivet → SEK');
+    expect(result.message).toContain('Betalningsintervall: ej angivet → månadsvis');
+    expect(result.message).toContain('Sista siffror: ej angivet → 9876');
+  }
+});
+
+test('relationship details report corrected status and end date when the people are unchanged', () => {
+  const before = usage({
+    lifecycle: 'active',
+    endDate: { knowledge: 'known', value: '2026-12-31' },
+  });
+  const after = usage({
+    lifecycle: 'ended',
+    endDate: { knowledge: 'uncertain', value: '2026-09-20' },
+    revision: 2,
+  });
+  const relationships = [
+    {
+      id: before.id,
+      type: usageType,
+      before,
+      after,
+      objectNames: { subscription: 'Musikabonnemanget', alex: 'Alex' },
+    },
+  ];
+  const draft = draftResult({ version: 2, changes: [], relationships });
+  const history = historyResult(receipt({ relationships }));
+
+  for (const result of [draft, history]) {
+    expect(result.message).toContain('sambandet Musikabonnemanget används av Alex');
+    expect(result.message).toContain('Gäller: aktuellt → upphört');
+    expect(result.message).toContain('Slutdatum: 2026-12-31 → osäkert uppgivet: 2026-09-20');
+    expect(result.message).not.toContain('Alex → Musikabonnemanget används av Alex');
+    expect(result.message).not.toContain('bort');
+  }
+});

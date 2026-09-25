@@ -13,6 +13,10 @@ function fact(value: FinancialFact | undefined) {
   return `${text}${value.reportedOn ? ` (${value.reportedOn})` : ''}`;
 }
 
+function lifecycle(value: RelationshipValue['lifecycle']) {
+  return value === 'ended' ? 'upphört' : value === 'active' ? 'aktuellt' : 'ej angivet';
+}
+
 /** These words describe actual tool records. Provider prose never enters here. */
 function details(value: MapDraft | SaveReceipt, saved: boolean) {
   const verb = (before: unknown, after: unknown) =>
@@ -42,23 +46,23 @@ function details(value: MapDraft | SaveReceipt, saved: boolean) {
         fields.push(
           `beskrivning: ${change.before.description || 'tom'} → ${change.after.description || 'tom'}`,
         );
-      for (const { key, label } of financialFields) {
-        const before = change.before.financialFacts?.[key];
-        const after = change.after.financialFacts?.[key];
-        if (JSON.stringify(before) !== JSON.stringify(after))
-          fields.push(`${label}: ${fact(before)} → ${fact(after)}`);
-      }
-      for (const id of new Set([
-        ...Object.keys(change.before.customValues ?? {}),
-        ...Object.keys(change.after.customValues ?? {}),
-      ])) {
-        const before = change.before.customValues?.[id];
-        const after = change.after.customValues?.[id];
-        if (before !== after)
-          fields.push(
-            `${change.type.fields?.find((field) => field.id === id)?.name ?? change.beforeType?.fields?.find((field) => field.id === id)?.name ?? id}: ${before ?? 'ej angivet'} → ${after ?? 'ej angivet'}`,
-          );
-      }
+    }
+    for (const { key, label } of financialFields) {
+      const before = change.before?.financialFacts?.[key];
+      const after = change.after?.financialFacts?.[key];
+      if (JSON.stringify(before) !== JSON.stringify(after))
+        fields.push(`${label}: ${fact(before)} → ${fact(after)}`);
+    }
+    for (const id of new Set([
+      ...Object.keys(change.before?.customValues ?? {}),
+      ...Object.keys(change.after?.customValues ?? {}),
+    ])) {
+      const before = change.before?.customValues?.[id];
+      const after = change.after?.customValues?.[id];
+      if (before !== after)
+        fields.push(
+          `${change.type.fields?.find((field) => field.id === id)?.name ?? change.beforeType?.fields?.find((field) => field.id === id)?.name ?? id}: ${before ?? 'ej angivet'} → ${after ?? 'ej angivet'}`,
+        );
     }
     lines.push(
       `${verb(change.before, change.after)} ${name}${fields.length ? ` (${fields.join('; ')})` : ''}`,
@@ -76,11 +80,22 @@ function details(value: MapDraft | SaveReceipt, saved: boolean) {
           : 'okänt';
       return `${source} ${change.type.forwardLabel ?? change.type.name} ${target}${relationship.knowledge === 'uncertain' ? ' (osäkert uppgivet)' : ''}`;
     };
+    const beforeDescription = change.before ? describe(change.before) : '';
+    const afterDescription = describe(edge);
     const description =
-      change.before && change.after
-        ? `${describe(change.before)} → ${describe(change.after)}`
-        : describe(edge);
-    lines.push(`${verb(change.before, change.after)} sambandet ${description}`);
+      beforeDescription && beforeDescription !== afterDescription
+        ? `${beforeDescription} → ${afterDescription}`
+        : afterDescription;
+    const fields: string[] = [];
+    if (change.before?.lifecycle !== change.after?.lifecycle)
+      fields.push(
+        `Gäller: ${lifecycle(change.before?.lifecycle)} → ${lifecycle(change.after?.lifecycle)}`,
+      );
+    if (JSON.stringify(change.before?.endDate) !== JSON.stringify(change.after?.endDate))
+      fields.push(`Slutdatum: ${fact(change.before?.endDate)} → ${fact(change.after?.endDate)}`);
+    lines.push(
+      `${verb(change.before, change.after)} sambandet ${description}${fields.length ? ` (${fields.join('; ')})` : ''}`,
+    );
   }
   for (const [kind, changes] of [
     ['objekttypen', value.objectTypes],
