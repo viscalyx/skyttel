@@ -427,7 +427,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 
 6. Kräv det korta beskedet **Sparat. Hela utkastet finns i hushållets
    karta.** och ett tomt utkast. Öppna **Visa kvittot** och kontrollera
-   att Tonrums status och sambandets nya typ ingår i sparandet.
+   att **Tonrum** och sambandstypen **Betalar** finns med.
 7. Skicka **Vad sparades senast?** Använd det nya `held`-numret:
 
    ```text
