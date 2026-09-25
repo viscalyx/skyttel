@@ -82,24 +82,35 @@ export function waitForMapDisplay(
             0,
             Math.min(viewport.bottom, indicator.getBoundingClientRect().top - 8) - viewport.top,
           );
-        if (!scrolled) {
+        const nodes = request.objectIds.map((id) =>
+          surface.querySelector(`.spatial-node[data-object-id="${CSS.escape(id)}"]`),
+        );
+        const selected = surface.querySelector(
+          target.kind === 'object'
+            ? `.spatial-node[data-object-id="${CSS.escape(target.id)}"][aria-pressed="true"]`
+            : `.spatial-edge[data-layout-id="relationship-${CSS.escape(target.id)}"].selected`,
+        );
+        if (!scrolled && nodes.every(rendered) && rendered(selected)) {
           inspector.scrollTop = 0;
           const mapBox = surface.getBoundingClientRect();
           const detailsBox = inspector.getBoundingClientRect();
+          let top = Math.min(mapBox.top, detailsBox.top);
+          let bottom = Math.max(mapBox.bottom, detailsBox.bottom);
+          if (bottom - top > viewport.height) {
+            // Short desktop windows may not fit the entire map surface plus
+            // its toolbar offset. Keep the actual selection and inspector in view.
+            const boxes = [...nodes, selected].map((element) => element.getBoundingClientRect());
+            top = Math.min(detailsBox.top, ...boxes.map((box) => box.top));
+            bottom = Math.max(detailsBox.bottom, ...boxes.map((box) => box.bottom));
+          }
           window.scrollBy({
-            top:
-              (Math.min(mapBox.top, detailsBox.top) +
-                Math.max(mapBox.bottom, detailsBox.bottom) -
-                viewport.top -
-                viewport.bottom) /
-              2,
+            top: (top + bottom - viewport.top - viewport.bottom) / 2,
             behavior: 'instant',
           });
           scrolled = true;
         }
         const bounds = surface.getBoundingClientRect();
-        const nodesVisible = request.objectIds.every((id) => {
-          const node = surface.querySelector(`.spatial-node[data-object-id="${CSS.escape(id)}"]`);
+        const nodesVisible = nodes.every((node) => {
           return (
             rendered(node) &&
             contained(node, bounds) &&
@@ -107,11 +118,6 @@ export function waitForMapDisplay(
             uncovered(node)
           );
         });
-        const selected = surface.querySelector(
-          target.kind === 'object'
-            ? `.spatial-node[data-object-id="${CSS.escape(target.id)}"][aria-pressed="true"]`
-            : `.spatial-edge[data-layout-id="relationship-${CSS.escape(target.id)}"].selected`,
-        );
         const summary = inspector.querySelector('p');
         if (
           nodesVisible &&
