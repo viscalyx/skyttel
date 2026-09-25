@@ -38,7 +38,7 @@ test('first creation supplies defaults and private file permissions', async (t) 
   const result = config.run();
   assert.equal(result.status, 0, result.stderr);
   const parsed = config.parse();
-  assert.equal(parsed.cli_auth_credentials_store, 'file');
+  assert.equal(parsed.cli_auth_credentials_store, undefined);
   assert.equal(parsed.default_permissions, 'skyttel-development');
   assert.equal(parsed.projects['/workspace'].trust_level, 'trusted');
   assert.equal(parsed.permissions['skyttel-development'].filesystem['~/.codex/skills'], 'write');

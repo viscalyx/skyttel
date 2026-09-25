@@ -197,7 +197,7 @@ case_codex() {
 
 cleanup_hint() {
   note "For interrupted runs: revoke the test connection in Skyttel."
-  note "Run the dedicated mcp logout command in docs/development/assistants.md."
+  note "Run the dedicated mcp logout command in docs/manual-tests/setup/assistants.md."
   note "Then close the private browser window and stop terminal A with Ctrl+C."
 }
 
@@ -210,7 +210,7 @@ banner "AI-07: local Codex and Google"
 
 stage "Check the disposable installation"
 say "Read docs/manual-tests/assistants.md, case AI-07, before continuing."
-say "Terminal A must run the isolated setup from docs/development/assistants.md."
+say "Terminal A must run the isolated setup from docs/manual-tests/setup/assistants.md."
 say "Keep this terminal B open. Use a NEW private host-browser window."
 say "VS Code must forward port 3301 to host port 3301."
 curl --fail --silent --show-error http://localhost:3301/healthz
@@ -267,4 +267,3 @@ pause "Press Enter after cleanup and recording the result."
 trap - EXIT
 finish
 say "The manual workflow is finished. Its outcome is the result you recorded in #97."
-

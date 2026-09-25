@@ -16,28 +16,13 @@ Målet med Skyttel är att ge hushållet en gemensam, tydlig och sammanhängande
 
 ![Konceptillustration](docs/images/shuttle-conceptillustration.png)
 
-[Guiden för hushållets tillgång](docs/users/access.md) beskriver roller,
-inbjudningar och hur en administratör återkallar tillgång.
-[Guiden för objekttyper och egna fält](docs/users/object-types.md) beskriver
-hur hushållet skapar och rättar gemensamma definitioner genom sina utkast.
-[Guiden för sambandstyper och riktning](docs/users/relationship-types.md)
-beskriver egna betydelser, benämningar från båda håll och dubbletter.
-[Guiden för externa assistenter](docs/users/assistants.md) beskriver
-AI-behandlingsval, läsåtkomst och återkallelse för textklienter.
-[Guiden för Skyttels textassistent](docs/users/text-assistant.md) beskriver
-text och röst, samlat utkast, rättelser, sparbesked, avbrott och återfunna kvitton.
-[Guiden för rymdkartan](docs/users/spatial-map.md) beskriver navigering,
-gemensam redigering, ändringssymboler och enheternas begränsningar.
-[Guiden för profilbilder](docs/users/profile-images.md) beskriver privata
-bildförslag, formatgränser och återställning genom historiken.
-[Guiden för fullständig export](docs/users/household-export.md) beskriver
-arkivets privata innehåll, nedladdning och säker förvaring.
+[Användarguiden](docs/user-guide/README.md) beskriver hur du kommer igång,
+bygger hushållets karta, använder text och röst och administrerar hushållet.
+Börja med [Kom igång](docs/user-guide/getting-started.md) eller välj ett
+arbetsflöde i guidens innehållsförteckning.
 
-Utveckla i projektets [devcontainer](docs/development/devcontainer.md).
-[Utvecklings- och testinstruktionerna](docs/development/testing.md) beskriver
-projektets kontroller och hur de körs.
-[Det lokala Codex-provet](docs/development/assistants.md#manual-local-codex-cli-setup)
-har en isolerad testdatabas och guidad körning med
-`bash scripts/manual-codex-case.sh` efter serverförberedelsen.
-[Releaseguiden](docs/development/container-releases.md) beskriver publicering,
+Förbered utvecklingsmiljön med [utvecklingsguiden](docs/development/devcontainer.md).
+[Testinstruktionerna](docs/development/testing.md) beskriver projektets
+kontroller och hur de körs.
+[Releaseguiden](docs/operations/container-releases.md) beskriver publicering,
 verifiering och bevarande av containerbilder.

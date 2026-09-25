@@ -8,7 +8,7 @@ Use fictional data in public tests and reports. If a credential leaks, revoke
 or rotate it before discussing remediation. Removing it from the latest file
 does not remove it from repository history.
 
-See the [security checks guide](docs/development/security-checks.md) for
+See the [security checks guide](docs/operations/security-checks.md) for
 blocking policy, temporary exceptions, and maintainer review.
 
 Maintainers review security updates weekly and deliver fixes in a new

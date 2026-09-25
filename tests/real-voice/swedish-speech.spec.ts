@@ -19,7 +19,7 @@ test('TAL-01: recorded Swedish speech changes the family map through real Live a
   const speechFile = process.env.SKYTTEL_TEST_SPEECH_WAV;
   if (process.env.SKYTTEL_REAL_VOICE_TEST !== '1' || !apiKey || !speechFile)
     throw new Error(
-      'Set SKYTTEL_REAL_VOICE_TEST=1, OPENAI_API_KEY and SKYTTEL_TEST_SPEECH_WAV; see docs/development/real-voice-tests.md.',
+      'Set SKYTTEL_REAL_VOICE_TEST=1, OPENAI_API_KEY and SKYTTEL_TEST_SPEECH_WAV; see docs/manual-tests/real-voice-tests.md.',
     );
   if (!isAbsolute(speechFile) || speechFile.includes('%'))
     throw new Error('The speech fixture must have an absolute path without a percent sign.');
