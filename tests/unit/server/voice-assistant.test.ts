@@ -257,6 +257,19 @@ test.each([
     instruction: 'Rätta beskrivningen till Information om det godkänns. Spara nu.',
     save: false,
   },
+  {
+    instruction: 'Rätta beskrivningen till Information bara om Elsa sa ja. Spara nu.',
+    save: false,
+  },
+  {
+    instruction:
+      'Rätta beskrivningen till Information endast om våra anställda godkänner. Spara nu.',
+    save: false,
+  },
+  {
+    instruction: 'Ändra beskrivningen till Information enbart om Vera sa ja och spara.',
+    save: false,
+  },
 ])(
   'spoken description correction $instruction requires a current unconditional save command',
   async ({ instruction, save, description = 'Information om bilen' }) => {
@@ -308,6 +321,7 @@ test.each([
     } else {
       expect(assistant).toMatchObject({ phase: 'error', error: 'assistant_save_not_requested' });
       expect(assistant.receipt).toBeUndefined();
+      expect(assistant.operations).toEqual([]);
       expect(map.objects).toEqual([]);
       expect(map.draft.changes).toMatchObject([{ id: 'web-object', after: { description: '' } }]);
       expect(history).toEqual([]);

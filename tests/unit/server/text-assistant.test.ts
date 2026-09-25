@@ -767,6 +767,15 @@ test.each([
   'Ändra beskrivningen till Information om det fungerar och spara.',
   'Ändra beskrivningen till Information om alla startar och spara.',
   'Ändra beskrivningen till Underlag om min villa startar och spara.',
+  'Rätta beskrivningen till Information bara om Elsa sa ja. Spara nu.',
+  'Rätta beskrivningen till Information endast om våra anställda godkänner. Spara nu.',
+  'Ändra beskrivningen till Information enbart om Vera sa ja och spara.',
+  'Rätta beskrivningen till Information även om Elsa sa ja. Spara nu.',
+  'Rätta beskrivningen till Information som om Elsa sa ja. Spara nu.',
+  'Rätta beskrivningen till Information inte om Elsa sa ja. Spara nu.',
+  'Rätta beskrivningen till Information utom om våra anställda godkänner. Spara nu.',
+  'Rätta beskrivningen till Information,bara om Elsa sa ja. Spara nu.',
+  'Rätta beskrivningen till Information om den blå bilen bara om Elsa sa ja. Spara nu.',
 ])('a provider cannot save when the actual current instruction is %s', async (text) => {
   const model = textModel(() => [
     modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'injected-save' }),
@@ -783,6 +792,68 @@ test.each([
     (await (await browser.get(`${path.replace('/text-assistant', '/map')}/operations`)).json())
       .operations,
   ).toEqual([]);
+});
+
+test.each([
+  ['combined', 'Rätta beskrivningen till Information bara om Elsa sa ja. Spara nu.'],
+  ['separate', 'Rätta beskrivningen till Information bara om Elsa sa ja. Spara nu.'],
+  [
+    'combined',
+    'Rätta beskrivningen till Information endast om våra anställda godkänner. Spara nu.',
+  ],
+  [
+    'separate',
+    'Rätta beskrivningen till Information endast om våra anställda godkänner. Spara nu.',
+  ],
+])('a conditional correction through %s cannot save: %s', async (mode, instruction) => {
+  let step = 0;
+  let value: Record<string, unknown> = {};
+  const model = textModel((body) => {
+    const operation = {
+      name: 'propose_object',
+      arguments: {
+        id: 'web-object',
+        baseRevision: null,
+        value: { ...value, description: 'Information' },
+      },
+    };
+    if (mode === 'combined')
+      return [
+        modelTool('submit_changes', {
+          version: 1,
+          contentVersion: 1,
+          completion: 'save',
+          operations: [operation],
+        }),
+      ];
+    return [
+      step++ === 0
+        ? modelTool(operation.name, { ...operation.arguments, version: 1, contentVersion: 1 })
+        : modelTool('save_draft', {
+            version: lastToolResult(body).version,
+            contentVersion: 1,
+            operationId: 'conditional-save',
+          }),
+    ];
+  });
+  await setup(model.provider);
+  value = await webProposal();
+  const status = await message(await start(), instruction);
+  expect(status).toMatchObject({ phase: 'error', error: 'assistant_save_not_requested' });
+  expect(status.receipt).toBeUndefined();
+  const mapPath = path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  expect(map.objects).toEqual([]);
+  expect(map.draft.changes).toMatchObject([
+    {
+      id: 'web-object',
+      after: {
+        description: mode === 'separate' ? 'Information' : 'Påhittat formulärförslag',
+      },
+    },
+  ]);
+  expect((await (await browser.get(`${mapPath}/operations`)).json()).operations).toEqual([]);
+  expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual([]);
 });
 
 test.each(['discard', 'cancel', 'supersede', 'logout'] as const)(

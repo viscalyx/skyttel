@@ -155,6 +155,14 @@ export function textAssistantRoutes({
   // verification. Ambiguous, quoted, negative and hypothetical requests need
   // a new clear instruction; a model-supplied approval flag has no authority.
   function descriptionForSaveCheck(description: string) {
+    // A modifier such as "bara om" introduces a condition, even when its
+    // subject and predicate also resemble a nominal topic. Keep it intact.
+    if (
+      /(?:^|[^\p{L}\p{N}_])(?:bara|endast|enbart|blott|även|som|utom|inte|ej|aldrig|oavsett)\s+om\b/u.test(
+        description,
+      )
+    )
+      return description;
     const [heading, ...topics] = description.trim().split(/\bom\b/u);
     if (!heading.trim() || !topics.length) return description;
     // Unquoted replacement data may contain coordinated nominal topics. A
