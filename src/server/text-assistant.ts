@@ -154,6 +154,42 @@ export function textAssistantRoutes({
   // This deliberately narrow command check is not general language
   // verification. Ambiguous, quoted, negative and hypothetical requests need
   // a new clear instruction; a model-supplied approval flag has no authority.
+  function descriptionForSaveCheck(description: string) {
+    const [heading, ...topics] = description.trim().split(/\bom\b/u);
+    if (!heading.trim() || !topics.length) return description;
+    // Unquoted replacement data may contain coordinated nominal topics. A
+    // further predicate after a complete nominal group is not field data:
+    // "om bilen startar" and "om kostnaden understiger 200" stay conditional.
+    // Keep uncertain parses unchanged so the ordinary om guard rejects them.
+    const determiner =
+      /^(?:den|det|de|min|mitt|mina|din|ditt|dina|sin|sitt|sina|vår|vårt|våra|er|ert|era|en|ett|alla|dessa)$/u;
+    const plural = /^(?:de|mina|dina|sina|våra|era|alla|dessa)$/u;
+    for (const topic of topics) {
+      const groups = topic
+        .trim()
+        .split(/\s*,\s*|\s+(?:och|samt|i|på|med|för|till|från|av|hos|vid|mellan|under|över)\s+/u);
+      for (const group of groups) {
+        const words = group.split(/\s+/u);
+        const first = words[0];
+        const last = words.at(-1) ?? '';
+        const modifiers = words.slice(determiner.test(first) ? 1 : 0, -1);
+        if (
+          !/^[\p{L}\p{N}-]+$/u.test(last) ||
+          modifiers.some((word) => !/^[\p{L}]+[aå]$/u.test(word)) ||
+          words.some((word) =>
+            /^(?:jag|du|han|hon|vi|ni|man|är|var|vore|blir|blev|har|hade|finns|fanns|kan|kunde|ska|skall|skulle|vill|ville|får|fick|måste)$/u.test(
+              word,
+            ),
+          ) ||
+          (/^(?:den|det|de|alla)$/u.test(first) && /(?:r|s|ade|de|te)$/u.test(last)) ||
+          (modifiers.length > 0 && !plural.test(first) && /(?:ar|er|ade|de|te|s)$/u.test(last))
+        )
+          return description;
+      }
+    }
+    return description.replace(/\bom\b/gu, '');
+  }
+
   function requestsSave(text: string) {
     // A negated map fact does not negate a separate save command. A correction
     // may precede that command in the same sentence, but its imperative must
@@ -162,13 +198,17 @@ export function textAssistantRoutes({
       .toLocaleLowerCase('sv')
       .replace(/["'“”«»].*?["'“”«»]/gu, '')
       .trim();
-    // In a bounded description replacement, "om" can mean "about". Only
-    // recognize a factual heading with one topic word at the end of that
-    // replacement. Modal ellipses and extra clauses remain conditional;
-    // this is not a general parser for ambiguous description wording.
+    // The imperative introduces field data up to a sentence boundary or the
+    // final save clause. Heading words and topic length do not grant authority;
+    // the separate command and all remaining conditions are checked below.
     const instruction = unquoted.replace(
-      /(^|[.!;]\s*)((?:ändra|rätta)\s+beskrivningen\s+till\s+(?:information|uppgifter|fakta|anteckningar))\s+om\s+([\p{L}-]+)(?=\s*(?:[.!;]|(?:och|sedan)\s+spara\b|$))/gu,
-      '$1$2 $3',
+      /(^|[.!;]\s*)((?:ändra|rätta)\s+beskrivningen\s+till\s+)([^.!;?]+)/gu,
+      (_, boundary, correction, remainder: string) => {
+        const commandAt = remainder.search(/\b(?:och|sedan)\s+spara\b/u);
+        const payload = commandAt < 0 ? remainder : remainder.slice(0, commandAt);
+        const command = commandAt < 0 ? '' : remainder.slice(commandAt);
+        return `${boundary}${correction}${descriptionForSaveCheck(payload)}${command}`;
+      },
     );
     const sentences = instruction
       .trim()

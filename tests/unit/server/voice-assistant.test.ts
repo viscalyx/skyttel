@@ -223,6 +223,21 @@ test.each([
   { instruction: 'Rätta beskrivningen till Information om bilen. Spara nu.', save: true },
   { instruction: 'Ändra beskrivningen till Information om bilen och spara.', save: true },
   {
+    instruction: 'Rätta beskrivningen till Information om den blå bilen. Spara nu.',
+    description: 'Information om den blå bilen',
+    save: true,
+  },
+  {
+    instruction: 'Rätta beskrivningen till Information om bilen och lånet. Spara nu.',
+    description: 'Information om bilen och lånet',
+    save: true,
+  },
+  {
+    instruction: 'Ändra beskrivningen till Försäkringsuppgifter om mina stora bilar och spara.',
+    description: 'Försäkringsuppgifter om mina stora bilar',
+    save: true,
+  },
+  {
     instruction: 'Rätta beskrivningen till Information om bilen. Spara om du är säker.',
     save: false,
   },
@@ -230,9 +245,21 @@ test.each([
     instruction: 'Ändra beskrivningen till Information om bilen och spara inte.',
     save: false,
   },
+  {
+    instruction: 'Rätta beskrivningen till Information om bilen startar. Spara nu.',
+    save: false,
+  },
+  {
+    instruction: 'Ändra beskrivningen till Information om kostnaden understiger 200 och spara.',
+    save: false,
+  },
+  {
+    instruction: 'Rätta beskrivningen till Information om det godkänns. Spara nu.',
+    save: false,
+  },
 ])(
   'spoken description correction $instruction requires a current unconditional save command',
-  async ({ instruction, save }) => {
+  async ({ instruction, save, description = 'Information om bilen' }) => {
     let typeId = '';
     const model = textModel(() => [
       modelTool('submit_changes', {
@@ -245,7 +272,7 @@ test.each([
             arguments: {
               id: 'web-object',
               baseRevision: null,
-              value: { typeId, name: 'Formulärförslag', description: 'Information om bilen' },
+              value: { typeId, name: 'Formulärförslag', description },
             },
           },
         ],
@@ -271,12 +298,10 @@ test.each([
       expect(assistant).toMatchObject({
         phase: 'ready',
         receipt: {
-          changes: [{ after: { id: 'web-object', description: 'Information om bilen' } }],
+          changes: [{ after: { id: 'web-object', description } }],
         },
       });
-      expect(map.objects).toMatchObject([
-        { id: 'web-object', description: 'Information om bilen' },
-      ]);
+      expect(map.objects).toMatchObject([{ id: 'web-object', description }]);
       expect(map.draft.changes).toEqual([]);
       expect(history).toEqual([assistant.receipt]);
       expect(JSON.stringify(voice.live.sent.at(-1))).toContain('Sparat');

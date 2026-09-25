@@ -253,6 +253,34 @@ test.each([
     'Rätta beskrivningen till Anteckningar om hunden. Spara nu.',
     { description: 'Anteckningar om hunden' },
   ],
+  [
+    'Rätta beskrivningen till Information om den blå bilen. Spara nu.',
+    { description: 'Information om den blå bilen' },
+  ],
+  [
+    'Rätta beskrivningen till Information om bilen och lånet. Spara nu.',
+    { description: 'Information om bilen och lånet' },
+  ],
+  [
+    'Ändra beskrivningen till Försäkringsuppgifter om den blå bilen och lånet och spara.',
+    { description: 'Försäkringsuppgifter om den blå bilen och lånet' },
+  ],
+  [
+    'Ändra beskrivningen till Historik om mina bilar och spara.',
+    { description: 'Historik om mina bilar' },
+  ],
+  [
+    'Rätta beskrivningen till Servicehistorik om mina stora bilar. Spara nu.',
+    { description: 'Servicehistorik om mina stora bilar' },
+  ],
+  [
+    'Ändra beskrivningen till Underlag om avtalet i det gamla huset och lånet och spara.',
+    { description: 'Underlag om avtalet i det gamla huset och lånet' },
+  ],
+  [
+    'Rätta beskrivningen till Journal om min nya dator. Spara nu.',
+    { description: 'Journal om min nya dator' },
+  ],
 ])(
   'a current correction and save instruction %s confirms only its durable receipt',
   async (instruction, correction) => {
@@ -729,6 +757,16 @@ test.each([
   'Ändra beskrivningen till Information om bilen och spara bara bilen.',
   'Spara inte än. Rätta beskrivningen till Information om bilen och spara.',
   'Rätta beskrivningen till Information om bilen. Säg ”spara nu”.',
+  'Rätta beskrivningen till Information om bilen startar. Spara nu.',
+  'Rätta beskrivningen till Information om kostnaden understiger 200. Spara nu.',
+  'Rätta beskrivningen till Information om den blå bilen om priset stämmer. Spara nu.',
+  'Ändra beskrivningen till Historik om mina stora bilar om min partner säger ja och spara.',
+  'Rätta beskrivningen till Information om allt är rätt. Spara nu.',
+  'Rätta beskrivningen till Information om det godkänns. Spara nu.',
+  'Rätta beskrivningen till Information om det regnar. Spara nu.',
+  'Ändra beskrivningen till Information om det fungerar och spara.',
+  'Ändra beskrivningen till Information om alla startar och spara.',
+  'Ändra beskrivningen till Underlag om min villa startar och spara.',
 ])('a provider cannot save when the actual current instruction is %s', async (text) => {
   const model = textModel(() => [
     modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'injected-save' }),
