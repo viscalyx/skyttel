@@ -6,6 +6,10 @@ import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState, ObjectValue, RelationshipValue } from '../../../src/shared/map.js';
 import { applicationFixture } from '../server/fixture.js';
 
+// These full form workflows use the real HTTP app and SQLite; coverage on
+// shared CI runners can take longer than the five-second unit-test default.
+vi.setConfig({ testTimeout: 15_000 });
+
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
 let client: ReturnType<typeof fixture.client>;
 let householdId: string;
