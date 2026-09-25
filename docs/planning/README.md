@@ -5,9 +5,8 @@
 deras resolutioner inför implementation och produktverifiering.
 Grundspecifikationens acceptanskriterier och avgränsningar styr arbetet.
 
-[Verifieringen mot Wayfinder](../development/wayfinder-verification.md)
-spårar varje ärende till godkänt underlag, implementation och kontroller.
-Den skiljer prototypernas ansvar och dokumenterar uttryckliga avgränsningar.
+[Produktverifieringen](https://github.com/viscalyx/skyttel/issues/31)
+samlar granskningen mot grundspecifikationen och dess godkända underlag.
 
 Beslut om informationslivscykeln finns i
 [Vilken information ska sparas, ändras över tid och kunna återställas?](https://github.com/viscalyx/skyttel/issues/9#issuecomment-5655680457).
