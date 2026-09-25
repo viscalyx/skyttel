@@ -22,6 +22,11 @@ betyder inte att dess manuella prov är genomfört.
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
   definitioner, granskad sammanslagning med bilder samt ångring efter import.
 
+- [Skyttels textassistent](text-assistant.md): separat AI-val, hela utkast,
+  rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
+  faktisk markering med skyddad formulärtext. Kontrollerade lokala
+  leverantörssvar och verklig modellförståelse redovisas separat.
+
 - [Permanent radering](household-erasure.md): uttrycklig granskning och
   bekräftelse, bevarat oberoende innehåll efter omstart, förlorat svar och
   förnyad granskning efter samtidig ändring samt väntande städning och

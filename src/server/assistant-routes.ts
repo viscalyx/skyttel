@@ -6,7 +6,12 @@ import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
-import { assistantConsent, assistantScope, assistantWriteScope } from './assistant-auth.js';
+import {
+  assistantConsent,
+  assistantScope,
+  assistantTaskAccess,
+  assistantWriteScope,
+} from './assistant-auth.js';
 import {
   assistantDraftReview,
   assistantResult,
@@ -192,11 +197,15 @@ export function assistantRoutes(database: Database.Database, auth: Auth, origin:
       },
     );
     function map() {
+      assistantTaskAccess.getStore()?.();
       // Authorization and SQLite read are synchronous: revocation cannot slip
       // between this check and the read while SDK request parsing awaits input.
       if (!database.prepare('SELECT 1 FROM assistant_connection WHERE id = ?').get(connection.id))
         throw new MapError('forbidden', 403);
-      return householdMap(database, connection.userId, connection.householdId);
+      const domain = householdMap(database, connection.userId, connection.householdId);
+      const guard = assistantTaskAccess.getStore();
+      if (guard) guard(domain.read().contentVersion);
+      return domain;
     }
     server.registerTool(
       'read_map',

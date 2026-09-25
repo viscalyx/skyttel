@@ -7,6 +7,7 @@ import { createApp } from '../../src/server/app.js';
 import { createAuth, verifyAuthSchema } from '../../src/server/auth.js';
 import type { Config } from '../../src/server/config.js';
 import { openDatabase } from '../../src/server/database.js';
+import type { TextModelUsage } from '../../src/server/text-assistant-model.js';
 import { seedLargeMap } from './large-map.js';
 import { legacyAuth } from './legacy-auth.js';
 
@@ -33,6 +34,8 @@ export async function createInstallation(
     migrationsDirectory?: string;
     legacyAuthCallbacks?: boolean;
     databasePath?: string;
+    modelFetch?: typeof fetch;
+    modelUsage?: TextModelUsage;
   } = {},
 ) {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-test-'));
@@ -45,12 +48,14 @@ export async function createInstallation(
     microsoft: { clientId: 'fake-microsoft', clientSecret: 'fake-secret' },
     port: 0,
     host: '127.0.0.1',
+    ...(databaseOptions.modelFetch ? { openaiApiKey: 'synthetic-model-key' } : {}),
   };
   let identity = alex;
   let providerFails = false;
   let consentDenied = false;
   let database: ReturnType<typeof openDatabase>;
   let server: ServerType;
+  let closeApp: () => Promise<void>;
   async function start() {
     let handle: (request: Request) => Response | Promise<Response> = () =>
       new Response(null, { status: 503 });
@@ -105,7 +110,14 @@ export async function createInstallation(
         };
       };
     }
-    const app = createApp({ config, database, auth });
+    const app = createApp({
+      config,
+      database,
+      auth,
+      modelFetch: databaseOptions.modelFetch,
+      modelUsage: databaseOptions.modelUsage,
+    });
+    closeApp = app.close;
     handle = (request) => {
       // Model the original login-only callback while arranging a legacy
       // installation. Production always applies all migrations before serving.
@@ -131,6 +143,7 @@ export async function createInstallation(
         else resolve();
       });
     });
+    await closeApp();
     database.close();
   }
   await start();

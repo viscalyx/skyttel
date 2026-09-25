@@ -17,6 +17,7 @@ type Reply = { data?: unknown; status?: number; error?: Error };
 const unexpectedRequests: string[] = [];
 
 function serve(routes: Record<string, Reply[]>) {
+  routes['/api/households/linden/text-assistant'] ??= [{ data: { available: false } }];
   routes['/api/households/linden/map?reload=0'] ??= [
     {
       data: {

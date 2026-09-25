@@ -21,17 +21,23 @@ import { MapError } from './map.js';
 import { mapRoutes } from './map-routes.js';
 import { profileImageRoutes } from './profile-image-routes.js';
 import { imageUploadLimit } from './profile-images.js';
+import { textAssistantRoutes } from './text-assistant.js';
+import type { TextModelUsage } from './text-assistant-model.js';
 
 export function createApp({
   config,
   database,
   auth,
   identity = buildIdentity,
+  modelFetch,
+  modelUsage,
 }: {
   config: Config;
   database: Database.Database;
   auth: Auth;
   identity?: typeof buildIdentity;
+  modelFetch?: typeof fetch;
+  modelUsage?: TextModelUsage;
 }) {
   const app = new Hono();
   const linking = createLoginMethods(database, auth, config.origin);
@@ -188,6 +194,15 @@ export function createApp({
   app.route('/api', mapRoutes(database, auth, config.origin));
   app.route('/api', profileImageRoutes(database, auth, config.origin));
   app.route('/', assistantRoutes(database, auth, config.origin));
+  const textAssistant = textAssistantRoutes({
+    database,
+    auth,
+    config,
+    dispatch: (request) => app.fetch(request),
+    modelFetch,
+    modelUsage,
+  });
+  app.route('/api', textAssistant.routes);
   app.all('/api/*', (context) => context.json({ error: 'not_found' }, 404));
   app.use('/assets/*', serveStatic({ root: './dist/client' }));
   app.get(
@@ -198,5 +213,5 @@ export function createApp({
     },
     serveStatic({ path: './dist/client/index.html' }),
   );
-  return app;
+  return Object.assign(app, { close: textAssistant.close });
 }

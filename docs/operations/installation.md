@@ -52,12 +52,17 @@ technical logs.
 | `BETTER_AUTH_SECRET` | A randomly generated secret of at least 32 characters. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credentials for the installation's Google web application. |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` | Credentials for the installation's Microsoft web application. |
+| `OPENAI_API_KEY` | Optional server-only project key for Skyttel's text assistant. Without it, manual map work remains available. |
 | `PORT` | Optional; defaults to `3000`. Compose uses port `3000`. |
 | `HOST` | Optional; defaults to `0.0.0.0`. |
 <!-- markdownlint-enable MD013 -->
 
 Both providers must be configured. Invalid or incomplete configuration stops
 startup before the application accepts traffic.
+
+To enable the approved text assistant, follow the
+[provider setup](../development/text-assistant.md#enable-real-provider-access).
+Keep its optional key out of browser build variables and technical logs.
 
 ## Register identity providers
 

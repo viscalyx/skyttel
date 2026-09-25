@@ -48,6 +48,7 @@ import {
   SaveOperations,
 } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
+import { TextAssistant } from './TextAssistant.js';
 import { usePersonalView } from './use-personal-view.js';
 
 type Editor = {
@@ -939,6 +940,24 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               />
             </div>
             <div className="map-content" hidden={presentation === 'map' && !detailsOpen}>
+              <TextAssistant
+                householdId={householdId}
+                onMapChange={() => setLoad((value) => value + 1)}
+                onAccessLost={loseAccess}
+                selectedObjectId={
+                  selection?.kind === 'object' && visibleObjects.has(selection.id)
+                    ? selection.id
+                    : null
+                }
+                onSelectObject={(id) => {
+                  if (dirty || pending || blocked || !displayed.has(id)) return false;
+                  setQuery('');
+                  setTypeFilter('');
+                  setFocusId(null);
+                  setSelection({ kind: 'object', id });
+                  return true;
+                }}
+              />
               <SaveOperations
                 operations={operations}
                 disabled={pending}

@@ -88,6 +88,12 @@ isolated check, create a fresh directory with the first block.
 
 ## Application unit tests and lint
 
+For reproducible text-provider delay and failure checks without a real key,
+use the [controlled local launcher](manual-text-assistant.md). It keeps
+the actual browser, MCP and SQLite paths and substitutes only outside
+providers. Real provider setup is documented in the
+[text assistant guide](text-assistant.md).
+
 Vitest exercises public application functions, rendered React screens, and
 HTTP handlers. SQLite-backed behavior uses temporary real databases;
 external provider responses and browser network requests use synthetic

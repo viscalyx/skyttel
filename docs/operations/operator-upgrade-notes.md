@@ -21,6 +21,20 @@ clients must reload after a binding change. Old save operations become
 historical evidence, including pending attempts; they cannot authorize retries.
 If the response is lost, read current bindings before making another change.
 
+### Built-in text assistant
+
+To enable the text assistant, configure `OPENAI_API_KEY` in the server's
+private environment and restart with the same disk and authentication
+secret. Keep the key out of browser settings, public build variables and
+logs. Without it, ordinary map editing remains available.
+
+Each user makes separate AI and map-work choices. The assistant uses the
+same current household access and map rules as external MCP clients.
+Stopping a session does not reverse a committed save: check its durable
+result before trying again. See the
+[setup and recovery guidance](../development/text-assistant.md).
+Real-model checks remain separate from deterministic provider substitutes.
+
 ### Permanent household erasure
 
 Keep a database backup with its matching application image before upgrade.

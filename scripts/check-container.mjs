@@ -9,6 +9,7 @@ import { promisify } from 'node:util';
 import { checkContainerAssistants } from './check-container-assistants.mjs';
 import { checkContainerErasure } from './check-container-erasure.mjs';
 import { checkContainerRecovery } from './check-container-recovery.mjs';
+import { checkContainerTextAssistant } from './check-container-text-assistant.mjs';
 
 const exec = promisify(execFile);
 const docker = process.env.DOCKER_BIN ?? 'docker';
@@ -33,6 +34,7 @@ const environment = {
   MICROSOFT_CLIENT_ID: 'synthetic-microsoft-client',
   MICROSOFT_CLIENT_SECRET: 'synthetic-microsoft-secret',
   SKYTTEL_TEST_LOGIN: '1',
+  OPENAI_API_KEY: 'synthetic-openai-container-key',
 };
 
 async function command(args) {
@@ -369,6 +371,14 @@ try {
     saveRequest,
   });
   await checkContainerAssistants({
+    command,
+    request,
+    waitUntilReady,
+    name: persisted,
+    fixture,
+    origin: configuredOrigin,
+  });
+  await checkContainerTextAssistant({
     command,
     request,
     waitUntilReady,

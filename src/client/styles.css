@@ -380,6 +380,27 @@ footer {
 .household-map {
   margin-top: 2rem;
 }
+
+.text-assistant {
+  border: 1px solid #acc1bb;
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+}
+.text-assistant > h3 {
+  margin-top: 0;
+}
+.text-assistant label {
+  display: block;
+  margin: 0.5rem 0;
+}
+.text-assistant textarea {
+  min-height: 5rem;
+}
+.text-assistant article {
+  border-bottom: 1px solid #cbd8d3;
+  margin: 0.5rem 0;
+}
 .household-map fieldset {
   min-width: 0;
   padding: 1rem;
