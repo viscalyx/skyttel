@@ -766,6 +766,44 @@ main:has(.household-panel) {
 .map-inspector form {
   margin-top: 12px;
 }
+.map-editor-dialog {
+  display: contents;
+}
+.presentation-map .map-editor-dialog {
+  display: none;
+}
+.presentation-map.map-details-open:not(.map-editor-open) .map-editor-dialog {
+  display: contents;
+}
+.presentation-map .map-editor-dialog[open] {
+  display: block;
+  position: fixed;
+  inset: calc(var(--editor-top, 0px) + 12px) auto auto 50%;
+  transform: translateX(-50%);
+  width: min(580px, calc(100vw - 24px));
+  height: min(720px, calc(var(--editor-height, 100dvh) - 24px));
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #b9c9bd;
+  border-radius: 12px;
+  background: #f3f4ef;
+  color: #263c33;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.map-editor-dialog::backdrop {
+  background: #06171099;
+}
+.household-map.presentation-map.map-editor-open .assistant-side,
+.household-map.presentation-map.map-editor-open
+  .assistant-side
+  > .assistant-panel:has(.map-editor-dialog) {
+  display: contents;
+}
+.household-map.presentation-map.map-editor-open .assistant-side > :not(:has(.map-editor-dialog)) {
+  display: none;
+}
 .household-map .map-inspector fieldset {
   padding: 0;
   border: 0;
@@ -789,7 +827,7 @@ main:has(.household-panel) {
 }
 .household-map.presentation-map .household-intro,
 .household-map.presentation-map .assistant-bar,
-.household-map.presentation-map:not(.map-details-open) .assistant-side {
+.household-map.presentation-map:not(.map-details-open, .map-editor-open) .assistant-side {
   display: none;
 }
 .household-map.presentation-map .assistant-layout {

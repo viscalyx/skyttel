@@ -104,12 +104,16 @@ interruption, finger changes and empty-space navigation”.
 **Steg:**
 
 1. Dra Lampan med ett finger. Lägg ett andra finger stilla på kartan och
-   dra det första uppåt. Släpp det andra först och sedan det första.
+   dra det första uppåt. Lägg till ett tredje finger. Släpp det andra
+   först, rör det första igen och lyft sedan alla fingrar.
 2. Börja ett nytt drag och avbryt pekgesten, exempelvis genom att lämna
    webbläsaren. Återgå och kontrollera placeringen.
 3. Börja höjdflyttning men släpp det första fingret före det andra.
    Fortsätt röra det kvarvarande fingret och släpp det.
-4. Dra i tom rymd med ett finger. Panorera sedan med två fingrar: flytta
+4. Börja höjdflyttning igen och flytta även ankarfingret. Kontrollera
+   återgången till ursprungsplaceringen. Fortsätt med båda fingrarna
+   för panorering och nypzoom. Lyft alla fingrar.
+5. Dra i tom rymd med ett finger. Panorera sedan med två fingrar: flytta
    båda lika långt åt samma håll utan att ändra avståndet mellan dem.
    Släpp båda. Börja en ny tvåfingergest och dra isär fingrarna lika långt
    åt varsitt håll för att zooma in.
@@ -117,8 +121,11 @@ interruption, finger changes and empty-space navigation”.
 **Förväntat resultat:**
 
 - Bildplansdrag och höjdled fungerar. Höjdhjälpen syns under höjdgesten.
-- Avbruten gest och byte av det flyttande fingret återställer placeringen
-  utan sparad flytt eller oavsiktlig redigering.
+- Höjdflytten sparas oavsett vilket av parets fingrar som lyfts först.
+  Återstående fingrar flyttar ingenting innan alla har lyfts. Ett tredje
+  finger påverkar inte det aktiva paret.
+- Flyttat ankare återställer objektet och övergår utan hopp till kameran.
+  Avbruten objektgest återställer utan sparad flytt.
 - Tom rymd styr kameran utan att ändra objektens placeringar.
   Panorering förskjuter utsnittet utan att märkbart ändra skalan.
   När fingrarna dras isär ökar objektens avstånd på skärmen.
@@ -143,16 +150,22 @@ viewport changes preserve existing placement and unsent text”.
 
 1. Flytta Lampan. Aktivera Visa axlar hela tiden och välj hörnet uppe
    till vänster. Vänd panorering separat i sidled och höjdled.
-2. Aktivera stjärnhimlen. Kontrollera bakgrunden.
+2. Kontrollera att stjärnhimlen är avstängd och reglaget inaktivt. Stäng
+   av systemets minskade rörelse och aktivera stjärnhimlen. Slå på
+   minskad rörelse igen utan omladdning och granska samma reglage och
+   bakgrund. Stäng av minskad rörelse igen.
 3. Skapa Ny sak i listan och lägg i utkastet. Öppna kartan igen.
-4. Skriv Oskickad text som nytt namn på Lampan utan att skicka texten.
+4. Välj Lampan och Redigera. Skriv Oskickad text som nytt namn utan att
+   skicka texten.
    Öppna kartan och växla mellan stående och liggande smal visningsyta.
    Återgå till detaljerna.
 
 **Förväntat resultat:**
 
-- Visningsval sparas personligt. Stjärnhimlen syns och axelvisaren stannar
-  inom kartans synliga yta. Ingen automatisk animation krävs.
+- Visningsval sparas personligt. Minskad rörelse stänger av stjärnorna
+  och inaktiverar reglaget, även när det personliga valet är på. När
+  minskad rörelse stängs av återkommer det personliga valet. Axelvisaren
+  stannar inom kartans synliga yta. Ingen automatisk animation krävs.
 - Nya förslag flyttar inte befintliga placeringar eller kameran.
 - Lampans text och val samt det nya utkastet finns kvar efter vybyten.
 

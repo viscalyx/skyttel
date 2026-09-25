@@ -301,7 +301,7 @@ test('personal placement buttons move the selected object in three dimensions wi
   expect(second[0].z).toBe(first[0].z);
 });
 
-test('native touch gestures move in the camera plane and height while cancellation and finger swaps restore the original placement', async () => {
+test('native touch height gestures retain either release order and wait for all fingers before another move', async () => {
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await expect.element(lo).toBeVisible();
@@ -340,42 +340,93 @@ test('native touch gestures move in the camera plane and height while cancellati
   await expect.poll(() => positions()[0].y).toBeGreaterThan(before.y);
   expect(positions()[0].x).toBe(before.x);
   expect(positions()[0].z).toBe(before.z);
+  for (const released of [1, 2]) {
+    start = location();
+    const driver = { id: 1, ...start };
+    const anchor = { id: 2, x: start.x + 100, y: start.y };
+    const extra = { id: 3, x: start.x + 130, y: start.y };
+    const beforeHeight = positions()[0];
+    await send('touchStart', [driver]);
+    await send('touchStart', [driver, anchor]);
+    await send('touchStart', [driver, anchor, extra]);
+    const raised = { ...driver, y: start.y - 30 };
+    await send('touchMove', [raised, anchor, extra]);
+    await send('touchEnd', [released === 1 ? raised : anchor]);
+    await expect.poll(() => positions()[0].y).toBeGreaterThan(beforeHeight.y);
+    expect(positions()[0].x).toBe(beforeHeight.x);
+    expect(positions()[0].z).toBe(beforeHeight.z);
+    const completed = positions();
+    const remaining = released === 1 ? anchor : raised;
+    const bounds = lo.element().getBoundingClientRect();
+    await send('touchMove', [{ ...remaining, x: remaining.x + 40 }, extra]);
+    expect(positions()).toEqual(completed);
+    expect(lo.element().getBoundingClientRect().x).toBeCloseTo(bounds.x);
+    expect(lo.element().getBoundingClientRect().y).toBeCloseTo(bounds.y);
+    await send('touchEnd', []);
+  }
   const saved = positions();
   start = location();
   await send('touchStart', [{ id: 1, ...start }]);
   await send('touchMove', [{ id: 1, x: start.x + 30, y: start.y }]);
   await send('touchCancel', []);
   expect(positions()).toEqual(saved);
-  start = location();
-  const stationary = { id: 2, x: start.x + 100, y: start.y };
-  await send('touchStart', [{ id: 1, ...start }]);
-  await send('touchStart', [{ id: 1, ...start }, stationary]);
-  await send('touchMove', [{ id: 1, x: start.x, y: start.y - 30 }, stationary]);
-  await send('touchEnd', [{ id: 1, x: start.x, y: start.y - 30 }]);
-  await send('touchMove', [{ ...stationary, y: stationary.y + 30 }]);
-  await send('touchEnd', []);
-  expect(positions()).toEqual(saved);
-  // A moving second finger cancels instead of silently interpreting a pinch
-  // as a height edit; three-finger interruption also leaves no saved move.
-  for (const extra of [false, true]) {
-    start = location();
-    const anchor = { id: 2, x: start.x + 100, y: start.y };
-    await send('touchStart', [{ id: 1, ...start }]);
-    await send('touchStart', [{ id: 1, ...start }, anchor]);
-    if (extra)
-      await send('touchStart', [
-        { id: 1, ...start },
-        anchor,
-        { id: 3, x: start.x + 130, y: start.y },
-      ]);
-    else
-      await send('touchMove', [
-        { id: 1, ...start },
-        { ...anchor, y: anchor.y + 30 },
-      ]);
-    await send('touchEnd', []);
-  }
-  expect(positions()).toEqual(saved);
+  await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+});
+
+test('a moving height anchor restores the object and hands the stable pair to pan and pinch', async () => {
+  render(<MapView />);
+  const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  const music = page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true });
+  await expect.element(lo).toBeVisible();
+  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+  const initial = lo.element().getBoundingClientRect();
+  const musicInitial = music.element().getBoundingClientRect();
+  const offset = window.frameElement?.getBoundingClientRect();
+  const driver = {
+    id: 1,
+    x: initial.x + initial.width / 2 + (offset?.x ?? 0),
+    y: initial.y + initial.height / 2 + (offset?.y ?? 0),
+  };
+  const anchor = { id: 2, x: driver.x + 100, y: driver.y };
+  const session = cdp();
+  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  const touch = (
+    type: 'touchStart' | 'touchMove' | 'touchEnd',
+    touchPoints: { id: number; x: number; y: number }[],
+  ) => session.send('Input.dispatchTouchEvent', { type, touchPoints });
+  await touch('touchStart', [driver]);
+  await touch('touchMove', [{ ...driver, x: driver.x + 20 }]);
+  driver.x += 20;
+  await touch('touchStart', [driver, anchor]);
+  driver.y -= 25;
+  await touch('touchMove', [driver, anchor]);
+  anchor.y += 30;
+  await touch('touchMove', [driver, anchor]);
+  await expect.poll(() => lo.element().getBoundingClientRect().x).toBeCloseTo(initial.x, 1);
+  await expect.poll(() => lo.element().getBoundingClientRect().y).toBeCloseTo(initial.y, 1);
+  expect(music.element().getBoundingClientRect().x).toBeCloseTo(musicInitial.x, 1);
+  driver.x += 30;
+  anchor.x += 30;
+  await touch('touchMove', [driver, anchor]);
+  await expect
+    .poll(() => music.element().getBoundingClientRect().x)
+    .not.toBeCloseTo(musicInitial.x, 1);
+  const distance = () =>
+    Math.hypot(
+      lo.element().getBoundingClientRect().x - music.element().getBoundingClientRect().x,
+      lo.element().getBoundingClientRect().y - music.element().getBoundingClientRect().y,
+    );
+  const beforePinch = distance();
+  driver.x -= 30;
+  anchor.x += 30;
+  await touch('touchMove', [driver, anchor]);
+  await expect.poll(distance).toBeGreaterThan(beforePinch);
+  await touch('touchEnd', [anchor]);
+  const stopped = lo.element().getBoundingClientRect();
+  await touch('touchMove', [{ ...driver, y: driver.y + 30 }]);
+  expect(lo.element().getBoundingClientRect().y).toBeCloseTo(stopped.y);
+  await touch('touchEnd', []);
+  expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
   await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
 });
 
@@ -788,6 +839,11 @@ test('context menu edits, focuses, cancels and removes only the chosen object', 
   await page.getByRole('button', { name: 'Avbryt', exact: true }).click();
   await expect.element(lo).toHaveFocus();
   await lo.click({ button: 'right' });
+  await expect
+    .element(page.getByRole('button', { name: 'Ta bort objekt', exact: true }))
+    .toHaveAccessibleDescription(
+      /Objektet och dess 1 samband läggs som borttagningar i ditt utkast/,
+    );
   await page.getByRole('button', { name: 'Ta bort objekt', exact: true }).click();
   await expect.element(lo).not.toBeInTheDocument();
   await expect
@@ -849,4 +905,40 @@ test('long press does not activate a menu action on release and movement cancels
   await expect.element(page.getByRole('status')).toHaveTextContent('Ingen vald');
   await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
+});
+
+test('reduced motion overrides a saved star choice and follows system changes', async () => {
+  const session = cdp();
+  await session.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+  });
+  render(<MapView relationships={[]} />);
+  const stars = page.getByLabelText('Visa stjärnhimmel', { exact: true });
+  await stars.click();
+  await expect.element(stars).toBeChecked();
+  await session.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+  });
+  await expect.element(stars).not.toBeChecked();
+  await expect.element(stars).toBeDisabled();
+  const screenshot = await page.screenshot({
+    element: document.querySelector('canvas') as HTMLCanvasElement,
+    base64: true,
+  });
+  const picture = new Image();
+  picture.src = `data:image/png;base64,${screenshot.base64}`;
+  await picture.decode();
+  const sample = document.createElement('canvas');
+  sample.width = picture.width;
+  sample.height = picture.height;
+  const context = sample.getContext('2d');
+  if (!context) throw new Error('Pixel sampling unavailable');
+  context.drawImage(picture, 0, 0);
+  // Empty corners use the flat green sky, not the dark blue star sky.
+  expect([...context.getImageData(30, 30, 1, 1).data]).toEqual([19, 46, 37, 255]);
+  await session.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }],
+  });
+  await expect.element(stars).toBeEnabled();
+  await expect.element(stars).toBeChecked();
 });

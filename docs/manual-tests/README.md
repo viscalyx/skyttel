@@ -83,13 +83,15 @@ betyder inte att dess manuella prov är genomfört.
 - [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
   fokus på tidigare och föreslagna samband med läsbara tidigare värden,
   fokus, filter, namn vid runda symboler, sambandsetiketter vid val,
-  bevarat etikettläge vid återställning, pekmenyer, upphörd status,
+  bevarat etikettläge vid återställning, pekmenyer, uttrycklig redigering
+  med bevarat listfokus, sambandens antal vid direkt borttagning, upphörd status,
   ändringssymboler och bevarad oskickad text vid vybyte, orientering och
   grafikavbrott samt fungerande navigation när tillgången återkallas i helskärm.
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
   genom sidvisning, sökning och fokus, med bevarad text och placering.
 - [Personliga placeringar](personal-view.md): flyttning med mus, pekgester
-  och tangentbord, visningsval, samtidighetskonflikter, bevarad text,
+  och tangentbord, stabila fingerpar och kameraväxling, systemets minskade
+  rörelse, visningsval, samtidighetskonflikter, bevarad text,
   beständighet och avskildhet mellan användare samt inramning vid sen
   första inläsning med bevarad kamera vid senare uppdateringar. Separata
   provhushåll på samma installation förbereds med ett lokalt kommando.

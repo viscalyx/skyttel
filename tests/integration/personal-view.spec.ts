@@ -201,7 +201,7 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     expect(raised.y).toBeGreaterThan(before.y);
     expect(raised.x).toBe(before.x);
     expect(raised.z).toBe(before.z);
-    const saved = await read();
+    let saved = await read();
     start = await center(page);
     await touch('touchStart', [{ id: 1, ...start }]);
     await touch('touchMove', [{ id: 1, x: start.x - 30, y: start.y }]);
@@ -213,9 +213,38 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     await touch('touchStart', [{ id: 1, ...start }, finger]);
     await touch('touchMove', [{ id: 1, x: start.x, y: start.y - 30 }, finger]);
     await touch('touchEnd', [{ id: 1, x: start.x, y: start.y - 30 }]);
+    await expect.poll(async () => (await read()).positions[0].version).toBe(3);
+    const completed = (await read()).positions[0];
+    expect(completed.y).toBeGreaterThan(raised.y);
+    expect(completed.x).toBe(raised.x);
+    expect(completed.z).toBe(raised.z);
+    saved = await read();
     await touch('touchMove', [{ ...finger, y: finger.y + 30 }]);
     await touch('touchEnd', []);
     expect(await read()).toEqual(saved);
+    start = await center(page);
+    const driver = { id: 1, ...start };
+    const movingAnchor = { id: 2, x: anchorX(start.x, 100), y: start.y };
+    const extra = { id: 3, x: anchorX(start.x, 130), y: start.y };
+    await touch('touchStart', [driver]);
+    await touch('touchMove', [{ ...driver, x: driver.x + 20 }]);
+    driver.x += 20;
+    await touch('touchStart', [driver, movingAnchor]);
+    await touch('touchStart', [driver, movingAnchor, extra]);
+    driver.y -= 25;
+    await touch('touchMove', [driver, movingAnchor, extra]);
+    await expect(space(page).getByText('Höjdflyttning · personlig vy')).toBeVisible();
+    movingAnchor.y += 30;
+    await touch('touchMove', [driver, movingAnchor, extra]);
+    await expect.poll(async () => (await center(page)).x).toBeCloseTo(start.x);
+    await expect.poll(async () => (await center(page)).y).toBeCloseTo(start.y);
+    driver.x += 30;
+    movingAnchor.x += 30;
+    await touch('touchMove', [driver, movingAnchor, extra]);
+    await expect.poll(async () => (await center(page)).x).not.toBeCloseTo(start.x);
+    await touch('touchEnd', []);
+    expect(await read()).toEqual(saved);
+    await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
     const box = await space(page).locator('canvas').boundingBox();
     if (!box) throw new Error('Canvas must be visible');
     const empty = { id: 1, x: box.x + 20, y: box.y + 25 };
@@ -300,13 +329,30 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
       .raw()
       .toBuffer();
     await space(page).getByText('Ordna min vy', { exact: true }).click();
-    await space(page).getByLabel('Visa stjärnhimmel', { exact: true }).check();
+    const starControl = space(page).getByLabel('Visa stjärnhimmel', { exact: true });
+    await expect(starControl).not.toBeChecked();
+    await expect(starControl).toBeDisabled();
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await starControl.check();
     await expect.poll(async () => (await read()).settings.stars).toBe(true);
     await space(page).getByText('Ordna min vy', { exact: true }).click();
     const stars = await sharp(await canvas.screenshot())
       .raw()
       .toBuffer();
     expect(stars.equals(dark)).toBe(false);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(starControl).not.toBeChecked();
+    await expect(starControl).toBeDisabled();
+    expect(
+      (
+        await sharp(await canvas.screenshot())
+          .raw()
+          .toBuffer()
+      ).equals(dark),
+    ).toBe(true);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(starControl).toBeEnabled();
+    await expect(starControl).toBeChecked();
     const projection = () =>
       space(page)
         .locator('line[data-object-id="lamp"]')
@@ -332,6 +378,7 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Lampan', exact: true })
       .click();
+    await page.getByRole('button', { name: 'Redigera Lampan', exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Oskickad text');
     await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
     await page.setViewportSize({ width: 390, height: 844 });

@@ -349,6 +349,7 @@ export function spatialScene(
       sky.background = new Color(value.stars ? '#09121f' : '#132e25');
       draw();
     },
+    beginCameraGesture: gestures.beginTouch,
     position(id: string): Position | null {
       const value = locations.get(id);
       return value ? { x: value.x, y: value.y, z: value.z } : null;

@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
 import '../../src/client/styles.css';
 import type { MapState } from '../../src/shared/map.js';
@@ -87,7 +87,10 @@ test('desktop keeps the wide map beside its inspector, with speech above and the
     page.getByRole('button', { name: 'Alex', exact: true }).element().getBoundingClientRect().top,
   ).toBeGreaterThan(bounds?.bottom ?? 0);
   await page.getByRole('button', { name: 'Alex', exact: true }).click();
-  await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Alex');
+  await expect.element(page.getByText('Namn: Alex', { exact: true })).toBeVisible();
+  await expect
+    .element(page.getByLabelText('Objektets namn', { exact: true }))
+    .not.toBeInTheDocument();
 });
 
 test('phone starts with the list and preserves an edited name through full-map navigation', async () => {
@@ -96,6 +99,13 @@ test('phone starts with the list and preserves an edited name through full-map n
     .element(page.getByRole('button', { name: 'Lista och detaljer', exact: true }))
     .toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Alex', exact: true }).click();
+  await expect.element(page.getByRole('button', { name: 'Alex', exact: true })).toHaveFocus();
+  await userEvent.keyboard('{Tab}');
+  await expect
+    .element(page.getByRole('button', { name: 'Redigera Alex', exact: true }))
+    .toHaveFocus();
+  await userEvent.keyboard('{Enter}');
+  await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveFocus();
   await page.getByLabelText('Objektets namn', { exact: true }).fill('Alex ändrat');
   await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
   await expect
@@ -107,7 +117,7 @@ test('phone starts with the list and preserves an edited name through full-map n
   const bounds = document.querySelector('.spatial-surface')?.getBoundingClientRect();
   expect(bounds?.height).toBeGreaterThan(500);
   expect(bounds?.width).toBeGreaterThan(340);
-  await page.getByRole('button', { name: 'Visa detaljer och utkast', exact: true }).click();
+  await page.getByRole('button', { name: 'Redigera val', exact: true }).click();
   await expect
     .element(page.getByLabelText('Objektets namn', { exact: true }))
     .toHaveValue('Alex ändrat');
@@ -129,5 +139,26 @@ test('full map fills the available desktop and landscape phone area', async () =
   await expect.poll(() => surface()?.width).toBeGreaterThan(800);
   await expect.poll(() => surface()?.height).toBeGreaterThan(200);
   await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();
+  await expect
+    .element(page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }))
+    .toBeVisible();
+  await expect
+    .element(page.getByLabelText('Objektets namn', { exact: true }))
+    .not.toBeInTheDocument();
+  await page.getByRole('button', { name: 'Redigera val', exact: true }).click();
   await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Alex');
+  const dialog = page.getByRole('dialog', { name: 'Redigera val', exact: true });
+  await expect.element(dialog).toBeVisible();
+  expect(dialog.element().getBoundingClientRect().height).toBeLessThan(390);
+  expect(dialog.element().getBoundingClientRect().width).toBeLessThan(844);
+  await page.viewport(844, 140);
+  const name = page.getByLabelText('Objektets namn', { exact: true });
+  await expect.poll(() => name.element().getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+  await expect.poll(() => name.element().getBoundingClientRect().bottom).toBeLessThanOrEqual(140);
+  await expect.element(name).toHaveValue('Alex');
+  await page.viewport(844, 390);
+  await page.getByRole('button', { name: 'Till kartan', exact: true }).click();
+  await expect
+    .element(page.getByRole('button', { name: 'Redigera val', exact: true }))
+    .toHaveFocus();
 });

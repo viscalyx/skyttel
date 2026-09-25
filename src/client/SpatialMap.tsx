@@ -3,6 +3,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
 import { LifecycleStatus } from './Lifecycle.js';
+import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
 import { relationshipLabel } from './RelationshipEditor.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
 import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
@@ -61,6 +62,7 @@ export function SpatialMap({
   selection,
   disabled,
   onSelect,
+  onEdit = onSelect,
   onSelectRelationship,
   onFocus,
   onClear,
@@ -76,6 +78,7 @@ export function SpatialMap({
   selection: { kind: 'object' | 'relationship'; id: string; previous?: boolean } | null;
   disabled: boolean;
   onSelect: (object: MapObject) => void;
+  onEdit?: (object: MapObject) => void;
   onSelectRelationship: (edge: MapRelationship, previous?: boolean) => void;
   onFocus: (id: string) => void;
   onClear: () => void;
@@ -166,6 +169,17 @@ export function SpatialMap({
   const settings = personal?.view?.settings ?? defaultViewSettings;
   const [localSettings, setLocalSettings] = useState(defaultViewSettings);
   const preferences = personal ? settings : localSettings;
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+  );
+  useEffect(() => {
+    const preference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (!preference) return;
+    const update = () => setReducedMotion(preference.matches);
+    update();
+    preference.addEventListener('change', update);
+    return () => preference.removeEventListener('change', update);
+  }, []);
   function configure(value: Partial<ViewSettings>) {
     if (
       (Object.keys(value) as (keyof ViewSettings)[]).every((key) => value[key] === preferences[key])
@@ -270,13 +284,13 @@ export function SpatialMap({
   }, [objects, relationships, activated, personal?.view?.positions, personalReady]);
   useEffect(() => {
     if (!activated) return;
-    scene.current?.configure(preferences);
+    scene.current?.configure({ ...preferences, stars: preferences.stars && !reducedMotion });
     if (!active) return;
     if (preferences.allLabels && !previousLabels.current) {
       if (scene.current?.openLabelView()) setCloserLabels(true);
     }
     previousLabels.current = preferences.allLabels;
-  }, [preferences, activated, active]);
+  }, [preferences, activated, active, reducedMotion]);
   useEffect(() => {
     if (
       revealRequest &&
@@ -517,7 +531,7 @@ export function SpatialMap({
         <button
           type="button"
           onClick={() => {
-            if (menuObject) onSelect(menuObject);
+            if (menuObject) onEdit(menuObject);
             closeMenu();
           }}
         >
@@ -534,6 +548,7 @@ export function SpatialMap({
         </button>
         <button
           type="button"
+          aria-describedby={`${labelPrefix}-removal`}
           disabled={
             disabled ||
             state.draft.changes.some((change) => change.id === menuObject?.id && !change.after)
@@ -545,6 +560,13 @@ export function SpatialMap({
         >
           Ta bort objekt
         </button>
+        {menuObject && (
+          <ObjectRemovalNotice
+            state={state}
+            objectId={menuObject.id}
+            id={`${labelPrefix}-removal`}
+          />
+        )}
         <button type="button" onClick={closeMenu}>
           Avbryt
         </button>
@@ -997,12 +1019,13 @@ export function SpatialMap({
         <label>
           <input
             type="checkbox"
-            checked={preferences.stars}
-            disabled={Boolean(personal && (!personal.view || personal.pending))}
+            checked={preferences.stars && !reducedMotion}
+            disabled={reducedMotion || Boolean(personal && (!personal.view || personal.pending))}
             onChange={(event) => configure({ stars: event.target.checked })}
           />
           Visa stjärnhimmel
         </label>
+        {reducedMotion && <span>Minskad rörelse: stjärnhimlen är avstängd.</span>}
       </div>
       {!allLabels && hiddenLabels > 0 && (
         <p className="label-note">

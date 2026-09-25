@@ -15,7 +15,8 @@ Klicka på ett objekts runda symbol för att öppna samma detaljer som i
 listan. Symbolen visar objektets profilbild eller en ikon för dess typ.
 Namnet visas bredvid symbolen. När du väljer ett objekt visas etiketterna
 för dess samband. **Alla etiketter** visar även de andra sambandsnamnen.
-Klicka på ett sambands etikett för att redigera riktning, säkerhet och status.
+Klicka på ett sambands etikett för att läsa dess uppgifter. Välj sedan
+**Redigera valt samband** för att ändra riktning, säkerhet och status.
 Pilen går från det första objektet till det andra. Okänt och uttryckligen
 inget är uppgifter om ett samband, inte nya objekt.
 
@@ -68,12 +69,16 @@ sparade sambandet utan att ändra det.
 
 Högerklick eller långtryck på ett objekt ger **Redigera objekt**,
 **Visa kopplingar** och **Ta bort objekt**. I listan finns också
-**Redigera** och **Ta bort** vid det valda objektet.
+**Redigera** och **Ta bort** vid det valda objektet. Fokus stannar på
+listraden efter val; Tab når åtgärderna. Valet visar uppgifterna utan att
+öppna formuläret. **Redigera** flyttar fokus till formuläret.
 
 Formulärtext skickas först när du lägger den i utkastet. Val och
 oskickad text för samma objekt eller samband finns kvar vid vybyte,
-storleksändring och vändning av enheten. I kartan öppnar **Visa detaljer
-och utkast** den gemensamma redigeringen; **Till kartan** går tillbaka.
+storleksändring och vändning av enheten. Ett vanligt val i helskärmskartan
+behåller kartan. **Redigera val** öppnar samma formulär i en avgränsad
+dialog över kartan; **Till kartan** stänger den och behåller texten.
+**Visa detaljer och utkast** ger även tillgång till hela ändringslistan.
 
 Markeringarna visar skillnaden mot sparad karta:
 
@@ -91,7 +96,8 @@ i listan. Den kan visas samtidigt med en ändringssymbol och finns kvar
 efter sparandet. **Gäller fortfarande** åsidosätter ett passerat slutdatum.
 
 **Ta bort** lägger omedelbart objektets och dess inkommande och utgående
-sambands borttagning i utkastet. Andra objekt finns kvar. Granska
+sambands borttagning i utkastet. Antalet berörda samband och följden
+visas vid knappen före borttagningen. Andra objekt finns kvar. Granska
 **Hela mitt utkast** och välj **Spara hela utkastet** för att ändra den
 gemensamma kartan. **Kasta hela utkastet** tar bort osparade förslag;
 det är inte ångring av ett tidigare sparande.
@@ -122,11 +128,14 @@ riktning och är märkt som personlig vy. Håll Shift med ett valt objekt
 för att förhandsvisa hjälpen. **Visa höjdhjälp** under kartan håller den
 synlig och låter dig granska senaste höjdflyttningens start efter draget.
 Uppåt- och nedåtknapparna visar också hjälpen. Valet gäller den öppna sidan.
-Släpp det andra fingret först
-för att återgå till vanlig flyttning. Släpp sedan det första för att spara.
+Höjdflytten avslutas och sparas när något av de två fingrarna lyfts.
+Lyft alla fingrar innan nästa objektflytt; ett kvarvarande finger flyttar
+varken objektet eller kameran. Ett tredje finger ändrar inte det aktiva
+fingerparet.
 
-Om det andra fingret flyttas, det första släpps före det andra, fler
-fingrar tillkommer eller gesten avbryts återställs objektets placering.
+Om ankarfingret flyttas återgår objektet till placeringen före hela
+draget, och fingrarna fortsätter med panorering och nypzoom utan hopp.
+En avbruten objektgest återställer placeringen.
 Ett långtryck öppnar menyn utan flyttning. Du kan välja objektet i listan,
 öppna kartan och använda **Ordna min vy** för att flytta i alla sex
 riktningar med knappar och tangentbord.
@@ -136,7 +145,10 @@ höjdled. Axelvisaren visas under rörelse och en kort stund efteråt.
 Välj mellan fyra hörn eller **Visa axlar hela tiden**. **Visa stjärnhimmel**
 finns direkt under kartan. Stjärnhimlen följer rotation och zoom men ligger
 still vid panorering
-och objektflyttning. Hjälpvisare, avstånd och placeringar är presentation;
+och objektflyttning. Systemets minskade rörelse stänger av stjärnorna och
+inaktiverar reglaget, även om ditt sparade val är på. Om systemvalet
+stängs av igen kan stjärnhimlen användas enligt ditt personliga val.
+Hjälpvisare, avstånd och placeringar är presentation;
 de tillför inga uppgifter om hushållet.
 
 Flyttar och visningsval sparas direkt för din Skyttel-användare och det

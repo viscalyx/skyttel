@@ -37,8 +37,10 @@ durable save”.
 
 **Steg:**
 
-1. Öppna rymdkartan, välj Molnmusik och skriv Molnmusik familj som namn.
-2. Byt till Lista och detaljer. Kontrollera texten och lägg den i utkastet.
+1. Öppna rymdkartan och välj Molnmusik. Kontrollera att kartan ligger
+   kvar. Välj Redigera val och skriv Molnmusik familj som namn i dialogen.
+2. Välj Till kartan och byt till Lista och detaljer. Kontrollera texten
+   och lägg den i utkastet.
 3. Granska och spara hela utkastet. Starta om appen och öppna kartan igen.
 
 **Förväntat resultat:**
@@ -106,7 +108,8 @@ from saved content”.
    Visa utkastet och spara.
 2. Högerklicka Molnmusik och välj Redigera objekt. Lägg en ändrad
    beskrivning i utkastet. Gå tillbaka till kartan.
-3. Kontrollera gul tilde, öppna menyn och välj Ta bort objekt.
+3. Kontrollera gul tilde och öppna menyn. Läs att objektet och ett
+   samband läggs som borttagningar i utkastet. Välj Ta bort objekt.
 4. Kontrollera objektet, sambandet och hela ändringslistan. Kasta utkastet.
 
 **Förväntat resultat:**
@@ -138,7 +141,8 @@ unsent editing”.
 
 1. Kontrollera att Lista och detaljer är startläge. Öppna kartan och håll
    på Molnmusik tills menyn visas. Släpp och välj Redigera objekt.
-2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten och byt vy.
+2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten, välj Till
+   kartan och byt vy.
 3. Öppna kartan igen. Använd webbläsarens verktyg för att simulera förlust
    och återställning av WebGL-kontext, eller kör det länkade automatiska
    provet för detta avbrott. Anteckna separat vad som faktiskt provas.
@@ -179,10 +183,14 @@ changes”.
    typikoner och sambandets etikett. Välj Alla etiketter, slå av och på
    valet igen och kontrollera att kameran står kvar. Panorera och välj
    Återställ vy.
-2. Välj sambandet i listan med tangentbord. Ange känt slutdatum
+2. Välj Lo Exempel i objektlistan med tangentbord. Kontrollera att fokus
+   stannar på raden och att Tab når Redigera och Ta bort. Läs att objektet
+   och ett samband läggs som borttagningar i utkastet. Välj Redigera,
+   kontrollera rätt formulär och stäng utan ändring.
+3. Välj sambandet i listan med tangentbord och välj Redigera. Ange känt slutdatum
    2026-12-31 utan att skicka formuläret.
-3. Öppna kartan, ändra fönsterstorlek och öppna detaljer och utkast.
-4. Kontrollera datumet, lägg sambandet i utkastet och spara hela utkastet.
+4. Öppna kartan, ändra fönsterstorlek och öppna detaljer och utkast.
+5. Kontrollera datumet, lägg sambandet i utkastet och spara hela utkastet.
 
 **Förväntat resultat:**
 
@@ -236,17 +244,19 @@ draft symbols”.
 
 **Steg:**
 
-1. Välj Molnmusik i listan, välj status Upphört och lägg i utkastet.
-2. Välj Lo Exempel. Ange ett känt slutdatum i det förflutna under
+1. Välj Molnmusik i listan och Redigera, välj status Upphört och lägg
+   i utkastet.
+2. Välj Lo Exempel och Redigera. Ange ett känt slutdatum i det förflutna under
    Ekonomiska uppgifter och avtalsvillkor, välj Gäller fortfarande och
    lägg i utkastet.
-3. Välj användningssambandet. Ange ett känt slutdatum i det förflutna,
+3. Välj användningssambandet och Redigera. Ange ett känt slutdatum i det förflutna,
    behåll Följ slutdatum och lägg sambandet i utkastet.
 4. Öppna rymdkartan, välj Alla etiketter och kontrollera objektens och
    sambandets etiketter.
 5. Visa detaljer och utkast, spara hela utkastet, starta om appen och
    öppna rymdkartan igen.
-6. Välj sambandets etikett, välj Gäller fortfarande och lägg sambandet
+6. Välj sambandets etikett och Redigera val. Välj Gäller fortfarande
+   och lägg sambandet
    i utkastet. Gå tillbaka till kartan.
 
 **Förväntat resultat:**
@@ -287,5 +297,6 @@ and opens the saved route read-only”.
 - Molnmusiks fokus visar både sparad och föreslagen betalare.
 - Den böjda tidigare linjen och etiketten leder till läsbara tidigare
   värden utan redigeringsfält. Fokus på Molnmusik behålls vid valet.
-- Det föreslagna sambandet öppnar redigeringen med Kim som Från objekt.
-  Granskningen ändrar inga uppgifter i utkastet eller den sparade kartan.
+- Det föreslagna sambandet visar Kim som betalare. Redigera valt samband
+  öppnar formuläret med Kim som Från objekt. Granskningen ändrar inga
+  uppgifter i utkastet eller den sparade kartan.

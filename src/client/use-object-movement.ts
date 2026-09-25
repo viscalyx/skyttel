@@ -38,6 +38,8 @@ export function useObjectMovement(
   },
 ) {
   const gesture = useRef<Gesture | null>(null);
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const waiting = useRef(false);
   const suppressed = useRef(false);
   const [guide, setGuide] = useState<{ id: string; start: Position; end: Position } | null>(null);
   const [heightActive, setHeightActive] = useState(false);
@@ -49,6 +51,8 @@ export function useObjectMovement(
       setGuide(null);
     }
     gesture.current = null;
+    touches.current.clear();
+    waiting.current = false;
     setHeightActive(false);
     cancelHold();
   }, [scene, cancelHold]);
@@ -85,7 +89,15 @@ export function useObjectMovement(
       return value;
     },
     start(id: string, event: ReactPointerEvent) {
-      if (!enabled || !active || event.button !== 0 || !event.isPrimary || gesture.current) return;
+      if (
+        !enabled ||
+        !active ||
+        event.button !== 0 ||
+        !event.isPrimary ||
+        gesture.current ||
+        waiting.current
+      )
+        return;
       const origin = scene.current?.position(id);
       if (!origin) return;
       suppressed.current = false;
@@ -103,11 +115,14 @@ export function useObjectMovement(
       };
     },
     down(event: ReactPointerEvent) {
+      if (event.pointerType === 'touch')
+        touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
       const current = gesture.current;
       if (!current || event.pointerId === current.primary) return;
       cancelHold();
       event.stopPropagation();
-      if (current.second || event.pointerType !== 'touch') {
+      if (current.second) return;
+      if (event.pointerType !== 'touch') {
         cancel();
         return;
       }
@@ -117,6 +132,8 @@ export function useObjectMovement(
       event.currentTarget.setPointerCapture(current.primary);
     },
     move(event: ReactPointerEvent) {
+      if (touches.current.has(event.pointerId))
+        touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
       const current = gesture.current;
       if (!current) return;
       if (!event.buttons) {
@@ -124,8 +141,15 @@ export function useObjectMovement(
         return;
       }
       if (event.pointerId === current.second?.id) {
-        if (Math.hypot(event.clientX - current.second.x, event.clientY - current.second.y) > 10)
-          cancel();
+        if (Math.hypot(event.clientX - current.second.x, event.clientY - current.second.y) > 10) {
+          scene.current?.place(current.id, current.origin);
+          gesture.current = null;
+          waiting.current = true;
+          suppressed.current = true;
+          setGuide(null);
+          setHeightActive(false);
+          scene.current?.beginCameraGesture(touches.current);
+        }
         return;
       }
       if (event.pointerId !== current.primary) return;
@@ -154,19 +178,12 @@ export function useObjectMovement(
       event.stopPropagation();
     },
     end(event: ReactPointerEvent) {
+      touches.current.delete(event.pointerId);
+      if (!touches.current.size) waiting.current = false;
       const current = gesture.current;
       if (!current) return;
-      if (event.pointerId === current.second?.id) {
-        current.second = undefined;
-        rebase(current, event.shiftKey);
-        setHeightActive(false);
-        return;
-      }
-      if (event.pointerId !== current.primary) return;
-      if (current.second) {
-        cancel();
-        return;
-      }
+      if (event.pointerId !== current.primary && event.pointerId !== current.second?.id) return;
+      if (current.second) waiting.current = touches.current.size > 0;
       gesture.current = null;
       setHeightActive(false);
       cancelHold();

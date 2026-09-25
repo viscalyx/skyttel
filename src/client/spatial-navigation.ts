@@ -10,23 +10,30 @@ export function cameraGestures(
 ) {
   const pointers = new Map<number, { x: number; y: number; button: number }>();
   let enabled = true;
+  let multiple = false;
   function down(event: PointerEvent) {
-    if (!enabled) return;
+    if (!enabled || (!pointers.size && event.target !== canvas)) return;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, button: event.button });
+    if (pointers.size > 1) multiple = true;
     canvas.setPointerCapture(event.pointerId);
   }
   function move(event: PointerEvent) {
     const before = pointers.get(event.pointerId);
     if (!before || !enabled) return;
-    const other = [...pointers].find(([id]) => id !== event.pointerId)?.[1];
+    const pair = [...pointers].slice(0, 2);
+    if (!pair.some(([id]) => id === event.pointerId)) {
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, button: before.button });
+      return;
+    }
+    const other = pair.find(([id]) => id !== event.pointerId)?.[1];
     const dx = event.clientX - before.x;
     const dy = event.clientY - before.y;
-    if (other && pointers.size === 2) {
+    if (other) {
       camera.pan(dx / 2, dy / 2);
       const oldDistance = Math.hypot(before.x - other.x, before.y - other.y);
       const distance = Math.hypot(event.clientX - other.x, event.clientY - other.y);
       if (oldDistance > 2 && distance > 2) camera.zoom(oldDistance / distance);
-    } else if (pointers.size === 1) {
+    } else if (!multiple) {
       if (before.button === 2 || event.shiftKey) camera.pan(dx, dy);
       else
         camera.rotate(
@@ -38,9 +45,11 @@ export function cameraGestures(
   }
   function end(event: PointerEvent) {
     pointers.delete(event.pointerId);
+    if (!pointers.size) multiple = false;
   }
   function cancel() {
     pointers.clear();
+    multiple = false;
   }
   function wheel(event: WheelEvent) {
     event.preventDefault();
@@ -52,25 +61,34 @@ export function cameraGestures(
   function context(event: Event) {
     event.preventDefault();
   }
-  canvas.addEventListener('pointerdown', down);
-  canvas.addEventListener('pointermove', move);
-  canvas.addEventListener('pointerup', end);
-  canvas.addEventListener('pointercancel', cancel);
-  canvas.addEventListener('lostpointercapture', end);
+  surface.addEventListener('pointerdown', down);
+  surface.addEventListener('pointermove', move);
+  surface.addEventListener('pointerup', end);
+  surface.addEventListener('pointercancel', cancel);
+  surface.addEventListener('lostpointercapture', end);
   surface.addEventListener('wheel', wheel, { passive: false });
   canvas.addEventListener('contextmenu', context);
   window.addEventListener('blur', cancel);
   return {
+    beginTouch(values: ReadonlyMap<number, { x: number; y: number }>) {
+      cancel();
+      if (!enabled) return;
+      multiple = true;
+      for (const [id, point] of values) {
+        pointers.set(id, { ...point, button: 0 });
+        surface.setPointerCapture(id);
+      }
+    },
     enabled(value: boolean) {
       enabled = value;
       if (!value) cancel();
     },
     dispose() {
-      canvas.removeEventListener('pointerdown', down);
-      canvas.removeEventListener('pointermove', move);
-      canvas.removeEventListener('pointerup', end);
-      canvas.removeEventListener('pointercancel', cancel);
-      canvas.removeEventListener('lostpointercapture', end);
+      surface.removeEventListener('pointerdown', down);
+      surface.removeEventListener('pointermove', move);
+      surface.removeEventListener('pointerup', end);
+      surface.removeEventListener('pointercancel', cancel);
+      surface.removeEventListener('lostpointercapture', end);
       surface.removeEventListener('wheel', wheel);
       canvas.removeEventListener('contextmenu', context);
       window.removeEventListener('blur', cancel);
