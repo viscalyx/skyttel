@@ -71,10 +71,14 @@ Råa sessionsloggar, hemligheter och kördata ingår inte i grenen.
 - #14: samlad dialog, mikrofonpaus, arbetstid, fullständig ändringslista,
   naturliga uttryckliga sparbesked och samlat slutförande av modellarbete.
   Sparbesked kommer från kvittot. Markeringsbesked kräver att rätt objekt
-  eller samband faktiskt syns i kartan och detaljpanelen.
+  eller samband faktiskt syns i kartan och detaljpanelen, även på telefon
+  och i lägre datorfönster. Begärda detaljer beskriver verkliga tidigare
+  och nya värden för status, identitet, bilder och egna typdefinitioner.
+  Sambandets tidigare betydelse kommer från det historiska underlaget.
 - #9 och #10: sparande efter återimport verifierar den uttryckligt kopplade
   innehållsägaren. En nekad sakuppgift i samma mening som ett uttryckligt
-  sparbesked får inte felaktigt blockera hela sparandet.
+  sparbesked får inte felaktigt blockera hela sparandet. En faktuell
+  beskrivning som **Information om bilen** skiljs från villkor för att spara.
 - #12: normal ombyggnad av devcontainern bevarar utvecklingsdata och
   personliga Codex-inställningar. Första inloggningen kräver inte en
   befintlig autentiseringsfil på värddatorn.
@@ -87,12 +91,13 @@ Råa sessionsloggar, hemligheter och kördata ingår inte i grenen.
 
 ## Verifiering och kvarvarande mänskliga prov
 
-Produktrevision `d10f8f0` klarar `npm run check`: typkontroll, Biome,
+Revision `41e7b4f` klarar `npm run check`: typkontroll, Biome,
 Markdown och stavning, 96 release- och säkerhetsprov, produktionsbygge,
-842 enhets- och webbläsartester samt 179 integrationstester.
-Täckningen är 93,86 procent satser, 90,41 procent grenar, 93,79 procent
-funktioner och 96,12 procent rader. Gränsvärdena är oförändrade.
-Produktionscontainerns nio kontrollgrupper går också igenom, inklusive
+883 enhets- och webbläsartester samt 182 integrationstester.
+Täckningen är 93,88 procent satser, 90,54 procent grenar, 93,76 procent
+funktioner och 96,11 procent rader. Gränsvärdena är oförändrade.
+Produktionscontainerns nio kontrollgrupper går igenom för samma
+produktkod, revision `2257fe5`, inklusive
 beständighet vid byte av container, MCP, text, röst och återimport.
 De proven använder kontrollerade leverantörer och gör inga modellköp.
 Slutgranskningens två axlar, kodstandard och specifikation, redovisas
