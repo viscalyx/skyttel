@@ -773,7 +773,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     <section
       ref={workspace}
       tabIndex={-1}
-      className={`household-map presentation-${presentation}`}
+      className={`household-map presentation-${presentation}${detailsOpen ? ' map-details-open' : ''}`}
       aria-label="Hushållskarta"
       onKeyDown={(event) => {
         if (
@@ -786,13 +786,11 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           showAll();
       }}
     >
-      <h2>Objekt i hushållet</h2>
-      <p>Förslag ligger i ditt privata, beständiga utkast tills du sparar hela utkastet.</p>
-      <p>Ta bort lägger borttagningen direkt i ditt utkast. Det är ingen permanent radering.</p>
-      <p className="muted">
-        Skriv inte fullständiga konto- eller kortnummer, lösenord, pinkoder, säkerhetskoder eller
-        återställningskoder.
-      </p>
+      <header className="household-intro">
+        <p className="eyebrow">Från samtal till hushållets karta</p>
+        <h2>Berätta. Rätta. Spara med rösten.</h2>
+        <p>Följ ändringarna medan du pratar. Du kan också skriva eller använda kartans formulär.</p>
+      </header>
       <p role="status">
         {pending
           ? saveAttempt.current
@@ -827,449 +825,41 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           Hämta samma kvitto igen
         </button>
       )}
+      {!state && !error && (
+        <div className="map-loading" role="status" aria-busy="true">
+          <span className="assistant-spinner" aria-hidden="true" />
+          Hushållets karta hämtas…
+        </div>
+      )}
       {state && (
-        <>
-          <nav className="map-presentation" aria-label="Kartans visning">
-            <button
-              type="button"
-              ref={listModeButton}
-              aria-pressed={presentation === 'list'}
-              onClick={() => setPresentation('list')}
-            >
-              Lista och detaljer
-            </button>
-            <button
-              type="button"
-              className="combined-mode-button"
-              aria-pressed={presentation === 'combined'}
-              onClick={() => setPresentation('combined')}
-            >
-              Samlad vy
-            </button>
-            <button
-              type="button"
-              className="open-map-button"
-              aria-pressed={presentation === 'map'}
-              onClick={() => {
-                setPresentation('map');
-                setDetailsOpen(false);
-              }}
-            >
-              Öppna rymdkartan
-            </button>
-            {presentation === 'map' && (
-              <button type="button" onClick={() => setDetailsOpen((open) => !open)}>
-                {detailsOpen ? 'Till kartan' : 'Visa detaljer och utkast'}
-              </button>
-            )}
-          </nav>
-          <details
-            className="map-filter-panel"
-            open={presentation !== 'map' || filtersOpen}
-            onToggle={(event) => {
-              if (presentation === 'map') setFiltersOpen(event.currentTarget.open);
-            }}
-          >
-            <summary>Sök och fokus</summary>
-            <div className="map-filters">
-              <label htmlFor="object-search">Sök objekt</label>
-              <input
-                id="object-search"
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              <label htmlFor="map-type-filter">Filtrera objekttyp</label>
-              <select
-                id="map-type-filter"
-                value={typeFilter}
-                onChange={(event) => setTypeFilter(event.target.value)}
-              >
-                <option value="">Alla typer</option>
-                {effectiveTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-              <button type="button" onClick={showAll}>
-                Visa hela rymden
-              </button>
-              <button
-                type="button"
-                disabled={selection?.kind !== 'object'}
-                onClick={() => {
-                  if (selection?.kind === 'object') focusObject(selection.id);
-                }}
-              >
-                Visa objektets kopplingar
-              </button>
-              <p aria-live="polite">
-                {visibleObjects.size} objekt och {visibleEdges.size} samband
-                {focusId && (
-                  <>
-                    {' '}
-                    · <span>Fokus: {displayed.get(focusId)?.name}</span>
-                  </>
-                )}
-              </p>
-            </div>
-          </details>
-          <div className="map-workspace">
-            <div
-              className="map-space"
-              hidden={presentation === 'list' || (presentation === 'map' && detailsOpen)}
-            >
-              <SpatialMap
-                personal={personal}
-                active={presentation !== 'list' && !(presentation === 'map' && detailsOpen)}
-                state={effectiveState ?? state}
-                objects={visibleObjects}
-                relationships={visibleEdges}
-                selection={selection}
-                disabled={pending || dirty || blocked}
-                onSelect={edit}
-                onSelectRelationship={editRelationship}
-                onFocus={focusObject}
-                onClear={showAll}
-                onReset={() => {
-                  showAll();
-                  setStatus('Översikt återställd. Alla objekt visas.');
-                }}
-                onRemove={(object) => remove('draft', object)}
-              />
-            </div>
-            <div className="map-content" hidden={presentation === 'map' && !detailsOpen}>
-              <TextAssistant
-                householdId={householdId}
-                onMapChange={() => setLoad((value) => value + 1)}
-                onAccessLost={loseAccess}
-                selectedObjectId={
-                  selection?.kind === 'object' && visibleObjects.has(selection.id)
-                    ? selection.id
-                    : null
-                }
-                onSelectObject={(id) => {
-                  if (dirty || pending || blocked || !displayed.has(id)) return false;
-                  setQuery('');
-                  setTypeFilter('');
-                  setFocusId(null);
-                  setSelection({ kind: 'object', id });
-                  return true;
-                }}
-              />
-              <SaveOperations
-                operations={operations}
-                disabled={pending}
-                onRetry={(operation) =>
-                  void save(
-                    {
-                      operationId: operation.operationId,
-                      version: operation.draftVersion,
-                      contentVersion: operation.contentVersion,
-                      householdId: operation.householdId,
-                      userId: operation.userId,
-                    },
-                    true,
-                  )
-                }
-              />
-              <MapHistory
-                generation={state.contentVersion}
-                path={path}
-                version={state.draft.version}
-                disabled={pending || dirty || blocked}
-                onAccessLost={loseAccess}
-                onUndo={(receipt, contentVersion) =>
-                  void action('undo', {
-                    version: state.draft.version,
-                    contentVersion,
-                    userId: receipt.userId,
-                    operationId: receipt.operationId,
-                  })
-                }
-              />
-              <details>
-                <summary>Objekttyper och egna fält</summary>
-                <p>
-                  Alla medlemmar kan föreslå ändringar, även i förifyllda typer. Egna fält är inte
-                  till för hemliga uppgifter.
+        <TextAssistant
+          householdId={householdId}
+          onMapChange={() => setLoad((value) => value + 1)}
+          onAccessLost={loseAccess}
+          selectedObjectId={
+            selection?.kind === 'object' && visibleObjects.has(selection.id) ? selection.id : null
+          }
+          onSelectObject={(id) => {
+            if (dirty || pending || blocked || !displayed.has(id)) return false;
+            setQuery('');
+            setTypeFilter('');
+            setFocusId(null);
+            setSelection({ kind: 'object', id });
+            return true;
+          }}
+          inspector={
+            <section className="map-inspector" aria-label="Val och redigering">
+              <h3>Val och redigering</h3>
+              {(editor || edgeEditor) && (
+                <p className="muted">
+                  Skriv inte fullständiga konto- eller kortnummer, lösenord, pinkoder,
+                  säkerhetskoder eller återställningskoder.
                 </p>
-                <ul aria-label="Objekttyper">
-                  {effectiveTypes.map((type) => (
-                    <li key={type.id}>
-                      <button
-                        type="button"
-                        disabled={pending || dirty || blocked}
-                        onClick={() => {
-                          const proposal = state.draft.objectTypes?.find(
-                            (item) => item.id === type.id,
-                          );
-                          setEditor(null);
-                          setEdgeEditor(null);
-                          setDirty(false);
-                          setEdgeTypeEditor(null);
-                          setTypeEditor({
-                            type,
-                            version: state.draft.version,
-                            contentVersion: state.contentVersion,
-                            baseRevision: proposal
-                              ? (proposal.before?.revision ?? null)
-                              : type.revision,
-                          });
-                        }}
-                      >
-                        Ändra typ: {type.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-              <button
-                type="button"
-                disabled={pending || dirty || blocked}
-                onClick={() => {
-                  setEditor(null);
-                  setEdgeEditor(null);
-                  setDirty(true);
-                  setEdgeTypeEditor(null);
-                  setTypeEditor({
-                    type: {
-                      id: crypto.randomUUID(),
-                      householdId,
-                      revision: 0,
-                      name: '',
-                      description: '',
-                    },
-                    version: state.draft.version,
-                    contentVersion: state.contentVersion,
-                    baseRevision: null,
-                  });
-                }}
-              >
-                Ny objekttyp
-              </button>
-              {typeEditor && (
-                <ObjectTypeEditor
-                  key={typeEditor.type.id}
-                  initial={typeEditor.type}
-                  disabled={pending || blocked}
-                  stale={
-                    typeEditor.version !== state.draft.version ||
-                    typeEditor.contentVersion !== state.contentVersion
-                  }
-                  onDirty={() => setDirty(true)}
-                  onSubmit={(value) =>
-                    void action('object-type', {
-                      version: typeEditor.version,
-                      contentVersion: typeEditor.contentVersion,
-                      id: typeEditor.type.id,
-                      baseRevision: typeEditor.baseRevision,
-                      value,
-                    })
-                  }
-                  onClose={() => {
-                    setTypeEditor(null);
-                    setEdgeTypeEditor(null);
-                    setDirty(false);
-                  }}
-                />
               )}
-              <details>
-                <summary>Sambandstyper och riktning</summary>
-                <p>
-                  Alla medlemmar kan ändra definitionerna, även förifyllda typer. En ändrad
-                  definition kopplar inte om objekten.
+              {!editor && !edgeEditor && (
+                <p className="muted">
+                  Välj ett objekt eller samband för att se uppgifter och samband.
                 </p>
-                <ul aria-label="Sambandstyper">
-                  {effectiveEdgeTypes.map((type) => (
-                    <li key={type.id}>
-                      <button
-                        type="button"
-                        disabled={pending || dirty || blocked}
-                        onClick={() => {
-                          const proposal = state.draft.relationshipTypes?.find(
-                            (item) => item.id === type.id,
-                          );
-                          setEditor(null);
-                          setEdgeEditor(null);
-                          setTypeEditor(null);
-                          setDirty(false);
-                          setEdgeTypeEditor({
-                            type,
-                            version: state.draft.version,
-                            contentVersion: state.contentVersion,
-                            baseRevision: proposal
-                              ? (proposal.before?.revision ?? null)
-                              : type.revision,
-                          });
-                        }}
-                      >
-                        Ändra sambandstyp: {type.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-              <button
-                type="button"
-                disabled={pending || dirty || blocked}
-                onClick={() => {
-                  setEditor(null);
-                  setEdgeEditor(null);
-                  setTypeEditor(null);
-                  setDirty(true);
-                  setEdgeTypeEditor({
-                    type: {
-                      id: crypto.randomUUID(),
-                      householdId,
-                      revision: 0,
-                      name: '',
-                      description: '',
-                    },
-                    version: state.draft.version,
-                    contentVersion: state.contentVersion,
-                    baseRevision: null,
-                  });
-                }}
-              >
-                Ny sambandstyp
-              </button>
-              {edgeTypeEditor && (
-                <RelationshipTypeEditor
-                  key={edgeTypeEditor.type.id}
-                  initial={edgeTypeEditor.type}
-                  disabled={pending || blocked}
-                  stale={
-                    edgeTypeEditor.version !== state.draft.version ||
-                    edgeTypeEditor.contentVersion !== state.contentVersion
-                  }
-                  onDirty={() => setDirty(true)}
-                  onSubmit={(value) =>
-                    void action('relationship-type', {
-                      version: edgeTypeEditor.version,
-                      contentVersion: edgeTypeEditor.contentVersion,
-                      id: edgeTypeEditor.type.id,
-                      baseRevision: edgeTypeEditor.baseRevision,
-                      value,
-                    })
-                  }
-                  onClose={() => {
-                    setEdgeTypeEditor(null);
-                    setDirty(false);
-                  }}
-                />
-              )}
-              <PagedList
-                label="Objekt"
-                className="access-list"
-                key={`objects-${query}-${typeFilter}-${focusId}`}
-                items={[...visibleObjects.values()]}
-                selectedId={selection?.kind === 'object' ? selection.id : undefined}
-                renderItem={(object) => (
-                  <li key={object.id}>
-                    <button
-                      type="button"
-                      disabled={pending || dirty || blocked}
-                      onClick={() => edit(object)}
-                    >
-                      {object.name}
-                    </button>
-                    <span> {typeName(object.typeId)}</span>
-                    <ProposalSymbol
-                      change={state.draft.changes.find((change) => change.id === object.id)}
-                    />
-                    {selection?.kind === 'object' && selection.id === object.id && (
-                      <div className="access-actions">
-                        <button
-                          type="button"
-                          aria-label={`Redigera ${object.name}`}
-                          disabled={pending || blocked}
-                          onClick={() => edit(object)}
-                        >
-                          Redigera
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`Ta bort ${object.name}`}
-                          disabled={
-                            pending ||
-                            dirty ||
-                            blocked ||
-                            state.draft.changes.some(
-                              (change) => change.id === object.id && !change.after,
-                            )
-                          }
-                          onClick={() => remove('draft', object)}
-                        >
-                          Ta bort
-                        </button>
-                      </div>
-                    )}
-                    <LifecycleStatus value={object} />
-                    {state.draft.changes.some((change) => change.id === object.id) && (
-                      <span className="proposed-status">
-                        {state.draft.changes.some(
-                          (change) => change.id === object.id && !change.after,
-                        )
-                          ? 'Borttagning i ditt utkast'
-                          : 'Förslag i ditt utkast'}
-                      </span>
-                    )}
-                    {!state.draft.changes.some(
-                      (change) => change.id === object.id && !change.after,
-                    ) && (
-                      <details>
-                        <summary>Åtgärder för {object.name}</summary>
-                        <button
-                          type="button"
-                          disabled={pending || dirty || blocked}
-                          onClick={() => remove('draft', object)}
-                        >
-                          Ta bort
-                        </button>
-                      </details>
-                    )}
-                  </li>
-                )}
-              />
-              <button
-                ref={newButton}
-                type="button"
-                disabled={pending || dirty || blocked}
-                onClick={() => edit()}
-              >
-                Nytt objekt
-              </button>
-              <button
-                type="button"
-                disabled={pending || dirty || blocked}
-                onClick={() => {
-                  setEditor(null);
-                  setEdgeEditor(null);
-                  setMergeGeneration(state.contentVersion);
-                  setMergeOpen(true);
-                  setDirty(true);
-                }}
-              >
-                Slå samman objekt
-              </button>
-              {mergeOpen && (
-                <ObjectMerge
-                  state={state}
-                  selectedId={selection?.kind === 'object' ? selection.id : undefined}
-                  disabled={pending || blocked}
-                  onSubmit={(body) =>
-                    void action('merge', {
-                      ...(body as Record<string, unknown>),
-                      contentVersion: mergeGeneration,
-                    })
-                  }
-                  onClose={() => {
-                    setMergeOpen(false);
-                    setDirty(false);
-                  }}
-                />
               )}
               {editor && (
                 <form
@@ -1333,7 +923,11 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                           typeRevision:
                             effectiveTypes.find((type) => type.id === event.target.value)
                               ?.revision ?? 0,
-                          value: { ...editor.value, typeId: event.target.value, customValues: {} },
+                          value: {
+                            ...editor.value,
+                            typeId: event.target.value,
+                            customValues: {},
+                          },
                         });
                       }}
                     >
@@ -1501,47 +1095,6 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   </ul>
                 </section>
               )}
-              <h2>Samband</h2>
-              <PagedList
-                label="Samband"
-                key={`edges-${query}-${typeFilter}-${focusId}`}
-                items={[...displayedEdges.values()].filter((edge) => visibleEdges.has(edge.id))}
-                selectedId={selection?.kind === 'relationship' ? selection.id : undefined}
-                renderItem={(edge) => (
-                  <li key={edge.id}>
-                    <button
-                      type="button"
-                      disabled={pending || dirty || blocked}
-                      onClick={() => editRelationship(edge)}
-                    >
-                      {relationshipLabel(edge, effectiveState ?? state, displayed)}
-                    </button>
-                    <LifecycleStatus value={edge} />
-                    {state.draft.relationships?.some((change) => change.id === edge.id) && (
-                      <span className="proposed-status">Förslag i ditt utkast</span>
-                    )}
-                    <details>
-                      <summary>
-                        Åtgärder för {relationshipLabel(edge, effectiveState ?? state, displayed)}
-                      </summary>
-                      <button
-                        type="button"
-                        disabled={pending || dirty || blocked}
-                        onClick={() => remove('relationship', edge)}
-                      >
-                        Ta bort
-                      </button>
-                    </details>
-                  </li>
-                )}
-              />
-              <button
-                type="button"
-                disabled={pending || dirty || blocked}
-                onClick={() => editRelationship()}
-              >
-                Nytt samband
-              </button>
               {edgeEditor && (
                 <RelationshipEditor
                   key={edgeEditor.id}
@@ -1561,358 +1114,884 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   }}
                 />
               )}
-              <section aria-labelledby="draft-title" className="draft-review">
-                <h2 id="draft-title">Hela mitt utkast</h2>
-                {!hasChanges && <p>Inga förslag i utkastet.</p>}
-                {state.draft.relationshipTypes?.map((change) => (
-                  <article key={change.id}>
-                    <h3>
-                      {!change.after
-                        ? 'Borttagen sambandstyp'
-                        : change.before
-                          ? 'Ändrad sambandstyp'
-                          : change.restoreRevision !== undefined
-                            ? 'Återställ sambandstyp'
-                            : 'Ny sambandstyp'}
-                      : {change.after?.name ?? change.before?.name}
-                    </h3>
-                    <h4>Sparat underlag</h4>
-                    <RelationshipTypeDetails type={change.before} />
-                    <h4>Förslag</h4>
-                    <RelationshipTypeDetails type={change.after} />
-                    <button
-                      type="button"
-                      disabled={pending || blocked || dirty}
-                      onClick={() =>
-                        void action('discard-change', {
-                          version: state.draft.version,
-                          contentVersion: state.contentVersion,
-                          kind: 'relationshipType',
-                          id: change.id,
-                        })
-                      }
-                    >
-                      Kasta förslaget
-                    </button>
-                    {conflicts
-                      .filter(
-                        (conflict) =>
-                          conflict.kind === 'relationshipType' && conflict.id === change.id,
-                      )
-                      .map((conflict) => (
-                        <div key={conflict.id}>
-                          <h4>Konflikt: sparad sambandstyp</h4>
-                          <RelationshipTypeDetails
-                            type={conflict.kind === 'relationshipType' ? conflict.current : null}
-                          />
-                          {conflict.kind === 'relationshipType' && conflict.current && (
-                            <>
-                              <h4>Mitt förslag med oberoende rättelser bevarade</h4>
-                              <RelationshipTypeDetails
-                                type={resolvedRelationshipType(change, conflict.current)}
-                              />
-                            </>
-                          )}
-                          <p>
-                            Välj definition för utkastet. Oberoende rättelser bevaras när du
-                            behåller ditt förslag. Granska hela utkastet före ett nytt sparbesked.
-                          </p>
+            </section>
+          }
+          draftSummary={
+            <>
+              {!hasChanges ? (
+                <p className="assistant-empty">Inga förslag i utkastet.</p>
+              ) : (
+                <ul className="assistant-change-list">
+                  {[
+                    ...state.draft.changes,
+                    ...(state.draft.relationships ?? []),
+                    ...(state.draft.objectTypes ?? []),
+                    ...(state.draft.relationshipTypes ?? []),
+                  ].map((change) => (
+                    <li key={change.id}>
+                      {change.after ? (change.before ? 'Ändra' : 'Lägg till') : 'Ta bort'}:{' '}
+                      {change.after && 'name' in change.after
+                        ? change.after.name
+                        : change.before && 'name' in change.before
+                          ? change.before.name
+                          : 'Samband'}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {Boolean(conflicts.length || unresolved) && (
+                <p className="error">
+                  Utkastet har konflikter eller olösta identiteter. Red ut dem före sparande.
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setDetailsOpen(true);
+                  requestAnimationFrame(() => document.getElementById('draft-title')?.focus());
+                }}
+              >
+                Granska och spara hela utkastet
+              </button>
+            </>
+          }
+        >
+          <div className="household-map-heading">
+            <h2>Hushållets karta</h2>
+            <span className={`map-state-badge${hasChanges ? ' has-changes' : ''}`}>
+              {hasChanges ? 'Med förslag' : 'Sparad'}
+            </span>
+          </div>
+          <nav className="map-presentation" aria-label="Kartans visning">
+            <button
+              type="button"
+              ref={listModeButton}
+              aria-pressed={presentation === 'list'}
+              onClick={() => setPresentation('list')}
+            >
+              Lista och detaljer
+            </button>
+            <button
+              type="button"
+              className="combined-mode-button"
+              aria-pressed={presentation === 'combined'}
+              onClick={() => setPresentation('combined')}
+            >
+              Samlad vy
+            </button>
+            <button
+              type="button"
+              className="open-map-button"
+              aria-pressed={presentation === 'map'}
+              onClick={() => {
+                setPresentation('map');
+                setDetailsOpen(false);
+              }}
+            >
+              Öppna rymdkartan
+            </button>
+            {presentation === 'map' && (
+              <button type="button" onClick={() => setDetailsOpen((open) => !open)}>
+                {detailsOpen ? 'Till kartan' : 'Visa detaljer och utkast'}
+              </button>
+            )}
+          </nav>
+          <details
+            className="map-filter-panel"
+            open={presentation !== 'map' || filtersOpen}
+            onToggle={(event) => {
+              if (presentation === 'map') setFiltersOpen(event.currentTarget.open);
+            }}
+          >
+            <summary>Sök och fokus</summary>
+            <div className="map-filters">
+              <label htmlFor="object-search">Sök objekt</label>
+              <input
+                id="object-search"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+              <label htmlFor="map-type-filter">Filtrera objekttyp</label>
+              <select
+                id="map-type-filter"
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+              >
+                <option value="">Alla typer</option>
+                {effectiveTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </select>
+              <button type="button" onClick={showAll}>
+                Visa hela rymden
+              </button>
+              <button
+                type="button"
+                disabled={selection?.kind !== 'object'}
+                onClick={() => {
+                  if (selection?.kind === 'object') focusObject(selection.id);
+                }}
+              >
+                Visa objektets kopplingar
+              </button>
+              <p aria-live="polite">
+                {visibleObjects.size} objekt och {visibleEdges.size} samband
+                {focusId && (
+                  <>
+                    {' '}
+                    · <span>Fokus: {displayed.get(focusId)?.name}</span>
+                  </>
+                )}
+              </p>
+            </div>
+          </details>
+          <div className="map-workspace">
+            <div
+              className="map-space"
+              hidden={presentation === 'list' || (presentation === 'map' && detailsOpen)}
+            >
+              <SpatialMap
+                personal={personal}
+                active={presentation !== 'list' && !(presentation === 'map' && detailsOpen)}
+                state={effectiveState ?? state}
+                objects={visibleObjects}
+                relationships={visibleEdges}
+                selection={selection}
+                disabled={pending || dirty || blocked}
+                onSelect={edit}
+                onSelectRelationship={editRelationship}
+                onFocus={focusObject}
+                onClear={showAll}
+                onReset={() => {
+                  showAll();
+                  setStatus('Översikt återställd. Alla objekt visas.');
+                }}
+                onRemove={(object) => remove('draft', object)}
+              />
+            </div>
+            <div className="map-content" hidden={presentation === 'map' && !detailsOpen}>
+              <div className="map-management">
+                <PagedList
+                  label="Objekt"
+                  className="access-list"
+                  key={`objects-${query}-${typeFilter}-${focusId}`}
+                  items={[...visibleObjects.values()]}
+                  selectedId={selection?.kind === 'object' ? selection.id : undefined}
+                  renderItem={(object) => (
+                    <li key={object.id}>
+                      <button
+                        type="button"
+                        disabled={pending || dirty || blocked}
+                        onClick={() => edit(object)}
+                      >
+                        {object.name}
+                      </button>
+                      <span> {typeName(object.typeId)}</span>
+                      <ProposalSymbol
+                        change={state.draft.changes.find((change) => change.id === object.id)}
+                      />
+                      {selection?.kind === 'object' && selection.id === object.id && (
+                        <div className="access-actions">
                           <button
                             type="button"
-                            disabled={pending || blocked || dirty}
-                            onClick={() =>
-                              void action('resolve', {
-                                version: state.draft.version,
-                                contentVersion: state.contentVersion,
-                                conflict,
-                                choice: 'saved',
-                              })
-                            }
+                            aria-label={`Redigera ${object.name}`}
+                            disabled={pending || blocked}
+                            onClick={() => edit(object)}
                           >
-                            Använd sparad sambandstyp
+                            Redigera
                           </button>
                           <button
                             type="button"
-                            disabled={pending || blocked || dirty}
-                            onClick={() =>
-                              void action('resolve', {
-                                version: state.draft.version,
-                                contentVersion: state.contentVersion,
-                                conflict,
-                                choice: 'proposed',
-                              })
+                            aria-label={`Ta bort ${object.name}`}
+                            disabled={
+                              pending ||
+                              dirty ||
+                              blocked ||
+                              state.draft.changes.some(
+                                (change) => change.id === object.id && !change.after,
+                              )
                             }
+                            onClick={() => remove('draft', object)}
                           >
-                            Behåll min sambandstyp
+                            Ta bort
                           </button>
                         </div>
-                      ))}
-                  </article>
-                ))}
-                {state.draft.objectTypes?.map((change) => (
-                  <article key={change.id}>
-                    <h3>
-                      {!change.after
-                        ? 'Borttagen objekttyp'
-                        : change.before
-                          ? 'Ändrad objekttyp'
-                          : change.restoreRevision !== undefined
-                            ? 'Återställ objekttyp'
-                            : 'Ny objekttyp'}
-                      : {change.after?.name ?? change.before?.name}
-                    </h3>
-                    <h4>Sparat underlag</h4>
-                    <ObjectTypeDetails type={change.before} />
-                    <h4>Förslag</h4>
-                    <ObjectTypeDetails type={change.after} />
-                    <button
-                      type="button"
-                      disabled={pending || blocked || dirty}
-                      onClick={() =>
-                        void action('discard-change', {
-                          version: state.draft.version,
-                          contentVersion: state.contentVersion,
-                          kind: 'objectType',
-                          id: change.id,
-                        })
-                      }
-                    >
-                      Kasta förslaget
-                    </button>
-                    {conflicts
-                      .filter(
-                        (conflict) => conflict.kind === 'objectType' && conflict.id === change.id,
-                      )
-                      .map((conflict) => (
-                        <div key={conflict.id}>
-                          <h4>Konflikt: sparad typdefinition</h4>
-                          <ObjectTypeDetails
-                            type={conflict.kind === 'objectType' ? conflict.current : null}
-                          />
-                          <p>
-                            Välj definition för utkastet och granska hela utkastet före ett nytt
-                            sparbesked.
-                          </p>
+                      )}
+                      <LifecycleStatus value={object} />
+                      {state.draft.changes.some((change) => change.id === object.id) && (
+                        <span className="proposed-status">
+                          {state.draft.changes.some(
+                            (change) => change.id === object.id && !change.after,
+                          )
+                            ? 'Borttagning i ditt utkast'
+                            : 'Förslag i ditt utkast'}
+                        </span>
+                      )}
+                      {!state.draft.changes.some(
+                        (change) => change.id === object.id && !change.after,
+                      ) && (
+                        <details>
+                          <summary>Åtgärder för {object.name}</summary>
                           <button
                             type="button"
-                            disabled={pending || blocked || dirty}
-                            onClick={() =>
-                              void action('resolve', {
-                                version: state.draft.version,
-                                contentVersion: state.contentVersion,
-                                conflict,
-                                choice: 'saved',
-                              })
-                            }
+                            disabled={pending || dirty || blocked}
+                            onClick={() => remove('draft', object)}
                           >
-                            Använd sparad typdefinition
+                            Ta bort
                           </button>
-                          <button
-                            type="button"
-                            disabled={pending || blocked || dirty}
-                            onClick={() =>
-                              void action('resolve', {
-                                version: state.draft.version,
-                                contentVersion: state.contentVersion,
-                                conflict,
-                                choice: 'proposed',
-                              })
-                            }
-                          >
-                            Behåll min typdefinition
-                          </button>
-                        </div>
-                      ))}
-                  </article>
-                ))}
-                {state.draft.changes.map((change) => (
-                  <article key={change.id}>
-                    <h3>
-                      {!change.after ? 'Borttagning' : !change.before ? 'Nytt objekt' : 'Ändring'}:{' '}
-                      {change.after?.name ?? change.before?.name}
-                    </h3>
-                    {change.merge && (
-                      <div>
-                        <h4>Sammanslagning</h4>
-                        <MergeSourceDetails merge={change.merge} />
-                        <p>
-                          Identitet {change.merge.absorbedId} tas in i {change.merge.survivorId}.
-                        </p>
-                        <p>
-                          {change.merge.identityConfirmed
-                            ? 'Samma företeelse är uttryckligen bekräftad.'
-                            : 'Identiteten är inte bekräftad. Hela sparandet är blockerat.'}
-                        </p>
-                        <p>
-                          För att rätta: kasta sammanslagningen, rätta eventuella tidigare förslag
-                          och välj objekten igen. Tidigare egna förslag återkommer; övriga förslag
-                          finns kvar.
-                        </p>
+                        </details>
+                      )}
+                    </li>
+                  )}
+                />
+                <button
+                  ref={newButton}
+                  type="button"
+                  disabled={pending || dirty || blocked}
+                  onClick={() => edit()}
+                >
+                  Nytt objekt
+                </button>
+                <button
+                  type="button"
+                  disabled={pending || dirty || blocked}
+                  onClick={() => {
+                    setEditor(null);
+                    setEdgeEditor(null);
+                    setMergeGeneration(state.contentVersion);
+                    setMergeOpen(true);
+                    setDirty(true);
+                  }}
+                >
+                  Slå samman objekt
+                </button>
+                {mergeOpen && (
+                  <ObjectMerge
+                    state={state}
+                    selectedId={selection?.kind === 'object' ? selection.id : undefined}
+                    disabled={pending || blocked}
+                    onSubmit={(body) =>
+                      void action('merge', {
+                        ...(body as Record<string, unknown>),
+                        contentVersion: mergeGeneration,
+                      })
+                    }
+                    onClose={() => {
+                      setMergeOpen(false);
+                      setDirty(false);
+                    }}
+                  />
+                )}
+                <h2>Samband</h2>
+                <PagedList
+                  label="Samband"
+                  key={`edges-${query}-${typeFilter}-${focusId}`}
+                  items={[...displayedEdges.values()].filter((edge) => visibleEdges.has(edge.id))}
+                  selectedId={selection?.kind === 'relationship' ? selection.id : undefined}
+                  renderItem={(edge) => (
+                    <li key={edge.id}>
+                      <button
+                        type="button"
+                        disabled={pending || dirty || blocked}
+                        onClick={() => editRelationship(edge)}
+                      >
+                        {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                      </button>
+                      <LifecycleStatus value={edge} />
+                      {state.draft.relationships?.some((change) => change.id === edge.id) && (
+                        <span className="proposed-status">Förslag i ditt utkast</span>
+                      )}
+                      <details>
+                        <summary>
+                          Åtgärder för {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                        </summary>
                         <button
                           type="button"
-                          disabled={pending || blocked || dirty}
-                          onClick={() =>
-                            void action('discard-change', {
-                              version: state.draft.version,
-                              contentVersion: state.contentVersion,
-                              kind: 'object',
-                              id: change.id,
-                            })
-                          }
+                          disabled={pending || dirty || blocked}
+                          onClick={() => remove('relationship', edge)}
                         >
-                          Kasta sammanslagningen för att rätta
+                          Ta bort
                         </button>
-                      </div>
-                    )}
-                    <h4>Sparat underlag</h4>
-                    {details(
-                      change.before,
-                      change.beforeType ??
-                        state.types.find((type) => type.id === change.before?.typeId) ??
-                        change.type,
-                    )}
-                    {change.before &&
-                      change.after &&
-                      change.before.typeId !== change.after.typeId && (
-                        <p>
-                          Typbyte: objektets identitet och samband finns kvar. Tidigare fältvärden
-                          ersätts av den nya typens uppgifter i förslaget.
-                        </p>
-                      )}
-                    <h4>Förslag</h4>
-                    {details(change.after, change.type)}
-                    <button
-                      type="button"
-                      disabled={pending || blocked || dirty}
-                      onClick={() =>
-                        void action('discard-change', {
-                          version: state.draft.version,
-                          contentVersion: state.contentVersion,
-                          kind: 'object',
-                          id: change.id,
-                        })
-                      }
-                    >
-                      {mergeFor(state.draft, 'object', change.id)
-                        ? 'Kasta hela sammanslagningen'
-                        : 'Kasta förslaget'}
-                    </button>
-                    {conflicts
-                      .filter((conflict) => conflict.kind === 'object' && conflict.id === change.id)
-                      .map((conflict) => (
-                        <div key={conflict.id}>{conflictReview(conflict)}</div>
-                      ))}
-                  </article>
-                ))}
-                {(state.draft.relationships ?? []).map((change) => (
-                  <article key={change.id}>
-                    <h3>{change.after ? 'Samband' : 'Borttagning av samband'}</h3>
-                    <h4>Sparat underlag</h4>
-                    <p>
-                      {change.before
-                        ? relationshipLabel(
-                            change.before,
-                            state,
-                            new Map([
-                              ...savedObjects,
-                              ...Object.entries(change.objectNames ?? {}).map(
-                                ([id, name]) => [id, { name }] as const,
-                              ),
-                            ]),
-                          )
-                        : 'Finns inte i kartan'}
-                    </p>
-                    {change.before && <LifecycleDetails value={change.before} />}
-                    <h4>Förslag</h4>
-                    <p>
-                      {change.after
-                        ? relationshipLabel(
-                            change.after,
-                            { ...state, relationshipTypes: [change.type] },
-                            new Map([
-                              ...Object.entries(change.objectNames ?? {}).map(
-                                ([id, name]) => [id, { name }] as const,
-                              ),
-                              ...displayed,
-                            ]),
-                          )
-                        : 'Borttaget'}
-                    </p>
-                    {change.after && <LifecycleDetails value={change.after} />}
-                    <button
-                      type="button"
-                      disabled={pending || blocked || dirty}
-                      onClick={() =>
-                        void action('discard-change', {
-                          version: state.draft.version,
-                          contentVersion: state.contentVersion,
-                          kind: 'relationship',
-                          id: change.id,
-                        })
-                      }
-                    >
-                      {mergeFor(state.draft, 'relationship', change.id)
-                        ? 'Kasta hela sammanslagningen'
-                        : 'Kasta förslaget'}
-                    </button>
-                    {conflicts
-                      .filter(
-                        (conflict) => conflict.kind === 'relationship' && conflict.id === change.id,
+                      </details>
+                    </li>
+                  )}
+                />
+                <button
+                  type="button"
+                  disabled={pending || dirty || blocked}
+                  onClick={() => editRelationship()}
+                >
+                  Nytt samband
+                </button>
+                <div className="map-definition-tools">
+                  <SaveOperations
+                    operations={operations}
+                    disabled={pending}
+                    onRetry={(operation) =>
+                      void save(
+                        {
+                          operationId: operation.operationId,
+                          version: operation.draftVersion,
+                          contentVersion: operation.contentVersion,
+                          householdId: operation.householdId,
+                          userId: operation.userId,
+                        },
+                        true,
                       )
-                      .map((conflict) => (
-                        <div key={conflict.id}>{conflictReview(conflict)}</div>
+                    }
+                  />
+                  <MapHistory
+                    generation={state.contentVersion}
+                    path={path}
+                    version={state.draft.version}
+                    disabled={pending || dirty || blocked}
+                    onAccessLost={loseAccess}
+                    onUndo={(receipt, contentVersion) =>
+                      void action('undo', {
+                        version: state.draft.version,
+                        contentVersion,
+                        userId: receipt.userId,
+                        operationId: receipt.operationId,
+                      })
+                    }
+                  />
+                  <details>
+                    <summary>Objekttyper och egna fält</summary>
+                    <p>
+                      Alla medlemmar kan föreslå ändringar, även i förifyllda typer. Egna fält är
+                      inte till för hemliga uppgifter.
+                    </p>
+                    <ul aria-label="Objekttyper">
+                      {effectiveTypes.map((type) => (
+                        <li key={type.id}>
+                          <button
+                            type="button"
+                            disabled={pending || dirty || blocked}
+                            onClick={() => {
+                              const proposal = state.draft.objectTypes?.find(
+                                (item) => item.id === type.id,
+                              );
+                              setEditor(null);
+                              setEdgeEditor(null);
+                              setDirty(false);
+                              setEdgeTypeEditor(null);
+                              setTypeEditor({
+                                type,
+                                version: state.draft.version,
+                                contentVersion: state.contentVersion,
+                                baseRevision: proposal
+                                  ? (proposal.before?.revision ?? null)
+                                  : type.revision,
+                              });
+                            }}
+                          >
+                            Ändra typ: {type.name}
+                          </button>
+                        </li>
                       ))}
-                  </article>
-                ))}
-                {unresolved && (
-                  <p role="alert">
-                    Obesvarad identitetsfråga: välj rätt objekt eller uttryckligen ett ospecificerat
-                    objekt före sparande.
-                  </p>
-                )}
-                {dirty && (
-                  <p>
-                    Lägg formulärets text i utkastet eller stäng formuläret innan du sparar eller
-                    kastar utkastet.
-                  </p>
-                )}
-                <div className="access-actions">
+                    </ul>
+                  </details>
                   <button
                     type="button"
-                    className="primary"
-                    disabled={
-                      pending ||
-                      blocked ||
-                      dirty ||
-                      !hasChanges ||
-                      unresolved ||
-                      conflicts.length > 0
-                    }
+                    disabled={pending || dirty || blocked}
                     onClick={() => {
-                      saveAttempt.current = {
+                      setEditor(null);
+                      setEdgeEditor(null);
+                      setDirty(true);
+                      setEdgeTypeEditor(null);
+                      setTypeEditor({
+                        type: {
+                          id: crypto.randomUUID(),
+                          householdId,
+                          revision: 0,
+                          name: '',
+                          description: '',
+                        },
                         version: state.draft.version,
-                        operationId: crypto.randomUUID(),
                         contentVersion: state.contentVersion,
-                        userId: state.userId,
-                        householdId,
-                      };
-                      void save(saveAttempt.current);
+                        baseRevision: null,
+                      });
                     }}
                   >
-                    Spara hela utkastet
+                    Ny objekttyp
                   </button>
+                  {typeEditor && (
+                    <ObjectTypeEditor
+                      key={typeEditor.type.id}
+                      initial={typeEditor.type}
+                      disabled={pending || blocked}
+                      stale={
+                        typeEditor.version !== state.draft.version ||
+                        typeEditor.contentVersion !== state.contentVersion
+                      }
+                      onDirty={() => setDirty(true)}
+                      onSubmit={(value) =>
+                        void action('object-type', {
+                          version: typeEditor.version,
+                          contentVersion: typeEditor.contentVersion,
+                          id: typeEditor.type.id,
+                          baseRevision: typeEditor.baseRevision,
+                          value,
+                        })
+                      }
+                      onClose={() => {
+                        setTypeEditor(null);
+                        setEdgeTypeEditor(null);
+                        setDirty(false);
+                      }}
+                    />
+                  )}
+                  <details>
+                    <summary>Sambandstyper och riktning</summary>
+                    <p>
+                      Alla medlemmar kan ändra definitionerna, även förifyllda typer. En ändrad
+                      definition kopplar inte om objekten.
+                    </p>
+                    <ul aria-label="Sambandstyper">
+                      {effectiveEdgeTypes.map((type) => (
+                        <li key={type.id}>
+                          <button
+                            type="button"
+                            disabled={pending || dirty || blocked}
+                            onClick={() => {
+                              const proposal = state.draft.relationshipTypes?.find(
+                                (item) => item.id === type.id,
+                              );
+                              setEditor(null);
+                              setEdgeEditor(null);
+                              setTypeEditor(null);
+                              setDirty(false);
+                              setEdgeTypeEditor({
+                                type,
+                                version: state.draft.version,
+                                contentVersion: state.contentVersion,
+                                baseRevision: proposal
+                                  ? (proposal.before?.revision ?? null)
+                                  : type.revision,
+                              });
+                            }}
+                          >
+                            Ändra sambandstyp: {type.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                   <button
                     type="button"
-                    disabled={pending || blocked || dirty || !hasChanges}
-                    onClick={() => void action('discard', { version: state.draft.version })}
+                    disabled={pending || dirty || blocked}
+                    onClick={() => {
+                      setEditor(null);
+                      setEdgeEditor(null);
+                      setTypeEditor(null);
+                      setDirty(true);
+                      setEdgeTypeEditor({
+                        type: {
+                          id: crypto.randomUUID(),
+                          householdId,
+                          revision: 0,
+                          name: '',
+                          description: '',
+                        },
+                        version: state.draft.version,
+                        contentVersion: state.contentVersion,
+                        baseRevision: null,
+                      });
+                    }}
                   >
-                    Kasta hela utkastet
+                    Ny sambandstyp
                   </button>
+                  {edgeTypeEditor && (
+                    <RelationshipTypeEditor
+                      key={edgeTypeEditor.type.id}
+                      initial={edgeTypeEditor.type}
+                      disabled={pending || blocked}
+                      stale={
+                        edgeTypeEditor.version !== state.draft.version ||
+                        edgeTypeEditor.contentVersion !== state.contentVersion
+                      }
+                      onDirty={() => setDirty(true)}
+                      onSubmit={(value) =>
+                        void action('relationship-type', {
+                          version: edgeTypeEditor.version,
+                          contentVersion: edgeTypeEditor.contentVersion,
+                          id: edgeTypeEditor.type.id,
+                          baseRevision: edgeTypeEditor.baseRevision,
+                          value,
+                        })
+                      }
+                      onClose={() => {
+                        setEdgeTypeEditor(null);
+                        setDirty(false);
+                      }}
+                    />
+                  )}
                 </div>
-              </section>
+                <section aria-labelledby="draft-title" className="draft-review">
+                  <h2 id="draft-title" tabIndex={-1}>
+                    Hela mitt utkast
+                  </h2>
+                  <p className="muted">
+                    Ta bort lägger borttagningen direkt i ditt utkast. Det är ingen permanent
+                    radering.
+                  </p>
+                  {!hasChanges && <p>Inga förslag i utkastet.</p>}
+                  {state.draft.relationshipTypes?.map((change) => (
+                    <article key={change.id}>
+                      <h3>
+                        {!change.after
+                          ? 'Borttagen sambandstyp'
+                          : change.before
+                            ? 'Ändrad sambandstyp'
+                            : change.restoreRevision !== undefined
+                              ? 'Återställ sambandstyp'
+                              : 'Ny sambandstyp'}
+                        : {change.after?.name ?? change.before?.name}
+                      </h3>
+                      <h4>Sparat underlag</h4>
+                      <RelationshipTypeDetails type={change.before} />
+                      <h4>Förslag</h4>
+                      <RelationshipTypeDetails type={change.after} />
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('discard-change', {
+                            version: state.draft.version,
+                            contentVersion: state.contentVersion,
+                            kind: 'relationshipType',
+                            id: change.id,
+                          })
+                        }
+                      >
+                        Kasta förslaget
+                      </button>
+                      {conflicts
+                        .filter(
+                          (conflict) =>
+                            conflict.kind === 'relationshipType' && conflict.id === change.id,
+                        )
+                        .map((conflict) => (
+                          <div key={conflict.id}>
+                            <h4>Konflikt: sparad sambandstyp</h4>
+                            <RelationshipTypeDetails
+                              type={conflict.kind === 'relationshipType' ? conflict.current : null}
+                            />
+                            {conflict.kind === 'relationshipType' && conflict.current && (
+                              <>
+                                <h4>Mitt förslag med oberoende rättelser bevarade</h4>
+                                <RelationshipTypeDetails
+                                  type={resolvedRelationshipType(change, conflict.current)}
+                                />
+                              </>
+                            )}
+                            <p>
+                              Välj definition för utkastet. Oberoende rättelser bevaras när du
+                              behåller ditt förslag. Granska hela utkastet före ett nytt sparbesked.
+                            </p>
+                            <button
+                              type="button"
+                              disabled={pending || blocked || dirty}
+                              onClick={() =>
+                                void action('resolve', {
+                                  version: state.draft.version,
+                                  contentVersion: state.contentVersion,
+                                  conflict,
+                                  choice: 'saved',
+                                })
+                              }
+                            >
+                              Använd sparad sambandstyp
+                            </button>
+                            <button
+                              type="button"
+                              disabled={pending || blocked || dirty}
+                              onClick={() =>
+                                void action('resolve', {
+                                  version: state.draft.version,
+                                  contentVersion: state.contentVersion,
+                                  conflict,
+                                  choice: 'proposed',
+                                })
+                              }
+                            >
+                              Behåll min sambandstyp
+                            </button>
+                          </div>
+                        ))}
+                    </article>
+                  ))}
+                  {state.draft.objectTypes?.map((change) => (
+                    <article key={change.id}>
+                      <h3>
+                        {!change.after
+                          ? 'Borttagen objekttyp'
+                          : change.before
+                            ? 'Ändrad objekttyp'
+                            : change.restoreRevision !== undefined
+                              ? 'Återställ objekttyp'
+                              : 'Ny objekttyp'}
+                        : {change.after?.name ?? change.before?.name}
+                      </h3>
+                      <h4>Sparat underlag</h4>
+                      <ObjectTypeDetails type={change.before} />
+                      <h4>Förslag</h4>
+                      <ObjectTypeDetails type={change.after} />
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('discard-change', {
+                            version: state.draft.version,
+                            contentVersion: state.contentVersion,
+                            kind: 'objectType',
+                            id: change.id,
+                          })
+                        }
+                      >
+                        Kasta förslaget
+                      </button>
+                      {conflicts
+                        .filter(
+                          (conflict) => conflict.kind === 'objectType' && conflict.id === change.id,
+                        )
+                        .map((conflict) => (
+                          <div key={conflict.id}>
+                            <h4>Konflikt: sparad typdefinition</h4>
+                            <ObjectTypeDetails
+                              type={conflict.kind === 'objectType' ? conflict.current : null}
+                            />
+                            <p>
+                              Välj definition för utkastet och granska hela utkastet före ett nytt
+                              sparbesked.
+                            </p>
+                            <button
+                              type="button"
+                              disabled={pending || blocked || dirty}
+                              onClick={() =>
+                                void action('resolve', {
+                                  version: state.draft.version,
+                                  contentVersion: state.contentVersion,
+                                  conflict,
+                                  choice: 'saved',
+                                })
+                              }
+                            >
+                              Använd sparad typdefinition
+                            </button>
+                            <button
+                              type="button"
+                              disabled={pending || blocked || dirty}
+                              onClick={() =>
+                                void action('resolve', {
+                                  version: state.draft.version,
+                                  contentVersion: state.contentVersion,
+                                  conflict,
+                                  choice: 'proposed',
+                                })
+                              }
+                            >
+                              Behåll min typdefinition
+                            </button>
+                          </div>
+                        ))}
+                    </article>
+                  ))}
+                  {state.draft.changes.map((change) => (
+                    <article key={change.id}>
+                      <h3>
+                        {!change.after ? 'Borttagning' : !change.before ? 'Nytt objekt' : 'Ändring'}
+                        : {change.after?.name ?? change.before?.name}
+                      </h3>
+                      {change.merge && (
+                        <div>
+                          <h4>Sammanslagning</h4>
+                          <MergeSourceDetails merge={change.merge} />
+                          <p>
+                            Identitet {change.merge.absorbedId} tas in i {change.merge.survivorId}.
+                          </p>
+                          <p>
+                            {change.merge.identityConfirmed
+                              ? 'Samma företeelse är uttryckligen bekräftad.'
+                              : 'Identiteten är inte bekräftad. Hela sparandet är blockerat.'}
+                          </p>
+                          <p>
+                            För att rätta: kasta sammanslagningen, rätta eventuella tidigare förslag
+                            och välj objekten igen. Tidigare egna förslag återkommer; övriga förslag
+                            finns kvar.
+                          </p>
+                          <button
+                            type="button"
+                            disabled={pending || blocked || dirty}
+                            onClick={() =>
+                              void action('discard-change', {
+                                version: state.draft.version,
+                                contentVersion: state.contentVersion,
+                                kind: 'object',
+                                id: change.id,
+                              })
+                            }
+                          >
+                            Kasta sammanslagningen för att rätta
+                          </button>
+                        </div>
+                      )}
+                      <h4>Sparat underlag</h4>
+                      {details(
+                        change.before,
+                        change.beforeType ??
+                          state.types.find((type) => type.id === change.before?.typeId) ??
+                          change.type,
+                      )}
+                      {change.before &&
+                        change.after &&
+                        change.before.typeId !== change.after.typeId && (
+                          <p>
+                            Typbyte: objektets identitet och samband finns kvar. Tidigare fältvärden
+                            ersätts av den nya typens uppgifter i förslaget.
+                          </p>
+                        )}
+                      <h4>Förslag</h4>
+                      {details(change.after, change.type)}
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('discard-change', {
+                            version: state.draft.version,
+                            contentVersion: state.contentVersion,
+                            kind: 'object',
+                            id: change.id,
+                          })
+                        }
+                      >
+                        {mergeFor(state.draft, 'object', change.id)
+                          ? 'Kasta hela sammanslagningen'
+                          : 'Kasta förslaget'}
+                      </button>
+                      {conflicts
+                        .filter(
+                          (conflict) => conflict.kind === 'object' && conflict.id === change.id,
+                        )
+                        .map((conflict) => (
+                          <div key={conflict.id}>{conflictReview(conflict)}</div>
+                        ))}
+                    </article>
+                  ))}
+                  {(state.draft.relationships ?? []).map((change) => (
+                    <article key={change.id}>
+                      <h3>{change.after ? 'Samband' : 'Borttagning av samband'}</h3>
+                      <h4>Sparat underlag</h4>
+                      <p>
+                        {change.before
+                          ? relationshipLabel(
+                              change.before,
+                              state,
+                              new Map([
+                                ...savedObjects,
+                                ...Object.entries(change.objectNames ?? {}).map(
+                                  ([id, name]) => [id, { name }] as const,
+                                ),
+                              ]),
+                            )
+                          : 'Finns inte i kartan'}
+                      </p>
+                      {change.before && <LifecycleDetails value={change.before} />}
+                      <h4>Förslag</h4>
+                      <p>
+                        {change.after
+                          ? relationshipLabel(
+                              change.after,
+                              { ...state, relationshipTypes: [change.type] },
+                              new Map([
+                                ...Object.entries(change.objectNames ?? {}).map(
+                                  ([id, name]) => [id, { name }] as const,
+                                ),
+                                ...displayed,
+                              ]),
+                            )
+                          : 'Borttaget'}
+                      </p>
+                      {change.after && <LifecycleDetails value={change.after} />}
+                      <button
+                        type="button"
+                        disabled={pending || blocked || dirty}
+                        onClick={() =>
+                          void action('discard-change', {
+                            version: state.draft.version,
+                            contentVersion: state.contentVersion,
+                            kind: 'relationship',
+                            id: change.id,
+                          })
+                        }
+                      >
+                        {mergeFor(state.draft, 'relationship', change.id)
+                          ? 'Kasta hela sammanslagningen'
+                          : 'Kasta förslaget'}
+                      </button>
+                      {conflicts
+                        .filter(
+                          (conflict) =>
+                            conflict.kind === 'relationship' && conflict.id === change.id,
+                        )
+                        .map((conflict) => (
+                          <div key={conflict.id}>{conflictReview(conflict)}</div>
+                        ))}
+                    </article>
+                  ))}
+                  {unresolved && (
+                    <p role="alert">
+                      Obesvarad identitetsfråga: välj rätt objekt eller uttryckligen ett
+                      ospecificerat objekt före sparande.
+                    </p>
+                  )}
+                  {dirty && (
+                    <p>
+                      Lägg formulärets text i utkastet eller stäng formuläret innan du sparar eller
+                      kastar utkastet.
+                    </p>
+                  )}
+                  <div className="access-actions">
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={
+                        pending ||
+                        blocked ||
+                        dirty ||
+                        !hasChanges ||
+                        unresolved ||
+                        conflicts.length > 0
+                      }
+                      onClick={() => {
+                        saveAttempt.current = {
+                          version: state.draft.version,
+                          operationId: crypto.randomUUID(),
+                          contentVersion: state.contentVersion,
+                          userId: state.userId,
+                          householdId,
+                        };
+                        void save(saveAttempt.current);
+                      }}
+                    >
+                      Spara hela utkastet
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pending || blocked || dirty || !hasChanges}
+                      onClick={() => void action('discard', { version: state.draft.version })}
+                    >
+                      Kasta hela utkastet
+                    </button>
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
-        </>
+        </TextAssistant>
       )}
     </section>
   );

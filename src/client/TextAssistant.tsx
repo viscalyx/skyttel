@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import type { ObjectType, ObjectValue, RelationshipValue } from '../shared/map.js';
 import type { TextAssistantView } from '../shared/text-assistant.js';
 import { FinancialFactsDetails } from './FinancialFacts.js';
@@ -66,12 +66,18 @@ export function TextAssistant({
   onAccessLost,
   onSelectObject,
   selectedObjectId,
+  children,
+  draftSummary,
+  inspector,
 }: {
   householdId: string;
   onMapChange: () => void;
   onAccessLost: () => void;
   onSelectObject: (id: string) => boolean;
   selectedObjectId: string | null;
+  children?: ReactNode;
+  draftSummary?: ReactNode;
+  inspector?: ReactNode;
 }) {
   const path = `/api/households/${encodeURIComponent(householdId)}/text-assistant`;
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -79,6 +85,7 @@ export function TextAssistant({
   const [mapWork, setMapWork] = useState(false);
   const [session, setSession] = useState<TextAssistantView | null>(null);
   const [text, setText] = useState('');
+  const [startWithVoice, setStartWithVoice] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [unknown, setUnknown] = useState(false);
@@ -175,7 +182,8 @@ export function TextAssistant({
       controller.abort();
     };
   }, [session, unknown, pending, path, update, fail]);
-  async function start() {
+  async function start(withVoice = false) {
+    setStartWithVoice(withVoice);
     const epoch = ++requestEpoch.current;
     setPending(true);
     setError('');
@@ -309,303 +317,367 @@ export function TextAssistant({
   }, [session, pending, selectedObjectId, command]);
   const review = session?.review;
   return (
-    <section aria-label="Skyttels textassistent" className="text-assistant">
-      <h3>Skyttels textassistent</h3>
-      {available === false && (
-        <p>Textassistenten är inte tillgänglig. Du kan använda kartan och formulären.</p>
-      )}
-      {!session && available && (
-        <>
-          <p>
-            OpenAI behandlar ditt meddelande, hela ditt eget utkast och relevanta kartuppgifter. Om
-            du startar röst behandlas även ditt ljud. Mikrofonen startar först när du väljer det.
-            Samtalet sparas inte i Skyttels hushållsinnehåll. Skriv inga lösenord eller fullständiga
-            konto- och kortnummer.
-          </p>
-          <label>
-            <input
-              type="checkbox"
-              checked={externalAi}
-              onChange={(event) => setExternalAi(event.target.checked)}
-            />{' '}
-            Jag tillåter att OpenAI behandlar uppgifterna i detta samtal.
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={mapWork}
-              onChange={(event) => setMapWork(event.target.checked)}
-            />{' '}
-            Jag tillåter förslag och sparande av hela mitt utkast när jag uttryckligen ber om det.
-          </label>
-          <button
-            type="button"
-            disabled={pending || !externalAi || !mapWork}
-            onClick={() => void start()}
-          >
-            Starta textassistenten
-          </button>
-        </>
-      )}
-      {error && <p role="alert">{error}</p>}
-      {session && (
-        <>
+    <section aria-label="Skyttels textassistent" className="assistant-workspace">
+      <section aria-label="Talsamtal" className="assistant-bar">
+        {session ? (
           <VoiceAssistant
+            autoStart={startWithVoice}
             householdId={householdId}
             assistant={session}
             onAssistant={update}
             onAccessLost={onAccessLost}
             onRecoveryNeeded={() => setUnknown(true)}
           />
-          <p role="status">
-            {session.phase === 'working'
-              ? 'Assistenten arbetar… Du kan avbryta eller ge ett nytt uppdrag.'
-              : session.phase === 'recovery'
-                ? 'Kontrollera det tidigare sparförsöket innan du fortsätter.'
-                : session.receipt
-                  ? 'Sparat. Hela utkastet finns i hushållets karta.'
-                  : session.displayedSelection
-                    ? 'Markerat i kartan.'
-                    : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.'}
-          </p>
-          {session.reply && !session.receipt && !session.displayedSelection && (
-            <div>
-              <h4>Besked från Skyttel</h4>
-              <p>{session.reply}</p>
+        ) : (
+          <>
+            <div className="assistant-bar-heading">
+              <h3>Tala med Skyttel</h3>
+              <span className="microphone-state">Mikrofonen är av</span>
             </div>
-          )}
-          {session.modelReply && (
-            <section aria-label="Assistentens samtalstext">
-              <h4>Assistentens samtalstext – inte en bekräftelse</h4>
-              <p>
-                Samtalstexten kan innehålla fel. Sparande och markering bekräftas bara av Skyttels
-                status och kvitton.
-              </p>
-              <p>{session.modelReply}</p>
-            </section>
-          )}
-          {session.error && <p role="alert">{errorMessage(session.error)}</p>}
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void send();
-            }}
-          >
-            <label htmlFor="text-assistant-message">Meddelande till textassistenten</label>
-            <textarea
-              id="text-assistant-message"
-              maxLength={4000}
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-            />
-            <button
-              type="submit"
-              disabled={pending || unknown || session.phase === 'recovery' || !text.trim()}
-            >
-              Skicka
-            </button>
-          </form>
-          {session.phase === 'working' && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => void command('cancel', { revision: session.revision })}
-            >
-              Avbryt uppdrag
-            </button>
-          )}
-          <button type="button" disabled={pending} onClick={() => void command('recover')}>
-            Kontrollera sparresultat
-          </button>
-          <button type="button" disabled={pending} onClick={() => void stop()}>
-            Avsluta textassistenten
-          </button>
-          {review && (
-            <section aria-label="Assistentens hela utkast">
-              <h4>Hela ditt utkast</h4>
-              <p>
-                Även tidigare förslag från formulär och andra klienter ingår. Ett sparbesked gäller
-                allt som visas här.
-              </p>
-              {!review.changes.length &&
-                !review.relationships?.length &&
-                !review.objectTypes?.length &&
-                !review.relationshipTypes?.length && <p>Inga förslag.</p>}
-              <ul>
-                {review.changes.map((change) => (
-                  <li key={change.id}>
-                    {change.after ? (change.before ? 'Rätta' : 'Lägg till') : 'Ta bort'}:{' '}
-                    {change.after?.name ?? change.before?.name}
-                  </li>
-                ))}
-              </ul>
-              {Boolean(review.conflicts.length || review.unresolvedIdentities.length) && (
-                <p>Utkastet har konflikter eller olösta identiteter. Red ut dem före sparande.</p>
-              )}
-              <details>
-                <summary>Visa hela utkastets detaljer</summary>
-                {review.changes.map((change) => (
-                  <article key={change.id}>
-                    <h5>{change.after?.name ?? change.before?.name}</h5>
-                    {change.before && (
-                      <>
-                        <p>Tidigare:</p>
-                        <ObjectDetails
-                          value={change.before}
-                          type={change.beforeType ?? change.type}
-                        />
-                      </>
-                    )}
-                    <p>Förslag:</p>
-                    <ObjectDetails value={change.after} type={change.type} />
-                    {change.merge && (
-                      <MergeSourceDetails merge={change.merge} householdId={householdId} />
-                    )}
-                  </article>
-                ))}
-                {review.relationships?.map((change) => (
-                  <article key={change.id}>
-                    <h5>{change.type.name}</h5>
-                    {[change.before, change.after].map((value, index) => (
-                      <div key={index === 0 ? 'before' : 'after'}>
-                        <p>
-                          {index === 0 ? 'Tidigare' : 'Förslag'}:{' '}
-                          {value
-                            ? relationshipDetails(
-                                value,
-                                change.type.forwardLabel,
-                                change.objectNames,
-                              )
-                            : 'Borttaget'}
-                        </p>
-                        {value && <LifecycleDetails value={value} />}
-                      </div>
-                    ))}
-                  </article>
-                ))}
-                {review.objectTypes?.map((change) => (
-                  <article key={change.id}>
-                    <p>Objekttyp före:</p>
-                    <ObjectTypeDetails type={change.before} />
-                    <p>Objekttyp efter:</p>
-                    <ObjectTypeDetails
-                      type={
-                        change.after
-                          ? { ...change.after, id: change.id, householdId, revision: 0 }
-                          : null
-                      }
-                    />
-                  </article>
-                ))}
-                {review.relationshipTypes?.map((change) => (
-                  <article key={change.id}>
-                    <p>Sambandstyp före:</p>
-                    <RelationshipTypeDetails type={change.before} />
-                    <p>Sambandstyp efter:</p>
-                    <RelationshipTypeDetails
-                      type={
-                        change.after
-                          ? { ...change.after, id: change.id, householdId, revision: 0 }
-                          : null
-                      }
-                    />
-                  </article>
-                ))}
-                {review.conflicts.map((conflict) => {
-                  const objectChange = review.changes.find((change) => change.id === conflict.id);
-                  const edgeChange = review.relationships?.find(
-                    (change) => change.id === conflict.id,
-                  );
-                  return (
-                    <article key={`${conflict.kind}-${conflict.id}`}>
-                      <h5>Konflikt: aktuellt sparat värde</h5>
-                      {conflict.kind === 'object' && objectChange && (
-                        <ObjectDetails
-                          value={conflict.current}
-                          type={
-                            review.current?.types.find(
-                              (type) => type.id === conflict.current?.typeId,
-                            ) ?? objectChange.type
-                          }
-                        />
-                      )}
-                      {conflict.kind === 'objectType' && (
-                        <ObjectTypeDetails type={conflict.current} />
-                      )}
-                      {conflict.kind === 'relationshipType' && (
-                        <RelationshipTypeDetails type={conflict.current} />
-                      )}
-                      {conflict.kind === 'relationship' && (
-                        <>
-                          <p>
-                            {conflict.current
-                              ? relationshipDetails(
-                                  conflict.current,
-                                  review.current?.relationshipTypes.find(
-                                    (type) => type.id === conflict.current?.typeId,
-                                  )?.forwardLabel,
-                                  edgeChange?.objectNames,
-                                )
-                              : 'Finns inte i kartan'}
-                          </p>
-                          {conflict.current && <LifecycleDetails value={conflict.current} />}
-                        </>
-                      )}
-                      {conflict.type !== undefined && (
-                        <p>
-                          {conflict.type
-                            ? `Typen har ändrats: ${conflict.type.name}. ${conflict.type.description}`
-                            : 'Typen finns inte längre.'}
-                        </p>
-                      )}
-                      {Boolean(conflict.missingEndpoints?.length) && (
-                        <p>Sambandet hänvisar till borttagna objekt.</p>
-                      )}
-                      {Boolean(conflict.duplicates?.length) && (
-                        <p>Motsvarande samband finns redan i kartan.</p>
-                      )}
-                      {Boolean(conflict.connections?.length) && (
-                        <p>Borttagningen berör även sparade samband.</p>
-                      )}
-                    </article>
-                  );
-                })}
-              </details>
-            </section>
-          )}
-          {session.receipt && (
-            <details>
-              <summary>Visa kvittot</summary>
-              <p>{receiptMessage(session.receipt)}</p>
-              <p>Sparat: {session.receipt.savedAt}</p>
-            </details>
-          )}
-          <details open={session.phase === 'recovery'}>
-            <summary>Tidigare sparförsök</summary>
-            {!session.operations.length && <p>Inga registrerade sparförsök.</p>}
-            {session.operations.map((operation) => (
-              <article key={operation.operationId}>
+            {available === null && (
+              <p className="assistant-loading">Hämtar samtalets tillgänglighet…</p>
+            )}
+            {available === false && (
+              <p>Textassistenten är inte tillgänglig. Du kan använda kartan och formulären.</p>
+            )}
+            {!session && available && (
+              <>
                 <p>
-                  {operation.status === 'succeeded'
-                    ? receiptMessage(operation.receipt)
-                    : operation.status === 'rejected'
-                      ? rejectionMessage(operation.error)
-                      : `Väntande sparförsök: ${operation.operationId}`}
+                  OpenAI behandlar ditt meddelande, hela ditt eget utkast och relevanta
+                  kartuppgifter. Om du startar röst behandlas även ditt ljud. Mikrofonen startar
+                  först när du väljer det. Samtalet sparas inte i Skyttels hushållsinnehåll. Skriv
+                  inga lösenord eller fullständiga konto- och kortnummer.
                 </p>
-                {operation.status === 'pending' && (
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={externalAi}
+                    onChange={(event) => setExternalAi(event.target.checked)}
+                  />{' '}
+                  Jag tillåter att OpenAI behandlar uppgifterna i detta samtal.
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={mapWork}
+                    onChange={(event) => setMapWork(event.target.checked)}
+                  />{' '}
+                  Jag tillåter förslag och sparande av hela mitt utkast när jag uttryckligen ber om
+                  det.
+                </label>
+                <div className="voice-controls">
                   <button
                     type="button"
-                    disabled={pending || session.phase === 'working'}
-                    onClick={() => void command('retry', { operationId: operation.operationId })}
+                    className="primary"
+                    disabled={pending || !externalAi || !mapWork}
+                    onClick={() => void start(true)}
                   >
-                    Slutför samma sparförsök
+                    Starta talsamtal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={pending || !externalAi || !mapWork}
+                    onClick={() => void start()}
+                  >
+                    Starta textassistenten
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        )}
+        {error && <p role="alert">{error}</p>}
+      </section>
+      <div className="assistant-layout">
+        {children && <div className="assistant-map-panel">{children}</div>}
+        <div className="assistant-side">
+          {inspector && <div className="assistant-panel">{inspector}</div>}
+          <section
+            aria-label="Ändringar under samtalet"
+            className="assistant-panel assistant-changes"
+          >
+            <h3>Ändringar under samtalet</h3>
+            {review ? (
+              <section aria-label="Assistentens hela utkast">
+                <h4>Hela ditt utkast</h4>
+                <p>
+                  Även tidigare förslag från formulär och andra klienter ingår. Ett sparbesked
+                  gäller allt som visas här.
+                </p>
+                {!review.changes.length &&
+                  !review.relationships?.length &&
+                  !review.objectTypes?.length &&
+                  !review.relationshipTypes?.length && <p>Inga förslag.</p>}
+                <ul>
+                  {review.changes.map((change) => (
+                    <li key={change.id}>
+                      {change.after ? (change.before ? 'Rätta' : 'Lägg till') : 'Ta bort'}:{' '}
+                      {change.after?.name ?? change.before?.name}
+                    </li>
+                  ))}
+                </ul>
+                {Boolean(review.conflicts.length || review.unresolvedIdentities.length) && (
+                  <p>Utkastet har konflikter eller olösta identiteter. Red ut dem före sparande.</p>
+                )}
+                <details>
+                  <summary>Visa hela utkastets detaljer</summary>
+                  {review.changes.map((change) => (
+                    <article key={change.id}>
+                      <h5>{change.after?.name ?? change.before?.name}</h5>
+                      {change.before && (
+                        <>
+                          <p>Tidigare:</p>
+                          <ObjectDetails
+                            value={change.before}
+                            type={change.beforeType ?? change.type}
+                          />
+                        </>
+                      )}
+                      <p>Förslag:</p>
+                      <ObjectDetails value={change.after} type={change.type} />
+                      {change.merge && (
+                        <MergeSourceDetails merge={change.merge} householdId={householdId} />
+                      )}
+                    </article>
+                  ))}
+                  {review.relationships?.map((change) => (
+                    <article key={change.id}>
+                      <h5>{change.type.name}</h5>
+                      {[change.before, change.after].map((value, index) => (
+                        <div key={index === 0 ? 'before' : 'after'}>
+                          <p>
+                            {index === 0 ? 'Tidigare' : 'Förslag'}:{' '}
+                            {value
+                              ? relationshipDetails(
+                                  value,
+                                  change.type.forwardLabel,
+                                  change.objectNames,
+                                )
+                              : 'Borttaget'}
+                          </p>
+                          {value && <LifecycleDetails value={value} />}
+                        </div>
+                      ))}
+                    </article>
+                  ))}
+                  {review.objectTypes?.map((change) => (
+                    <article key={change.id}>
+                      <p>Objekttyp före:</p>
+                      <ObjectTypeDetails type={change.before} />
+                      <p>Objekttyp efter:</p>
+                      <ObjectTypeDetails
+                        type={
+                          change.after
+                            ? { ...change.after, id: change.id, householdId, revision: 0 }
+                            : null
+                        }
+                      />
+                    </article>
+                  ))}
+                  {review.relationshipTypes?.map((change) => (
+                    <article key={change.id}>
+                      <p>Sambandstyp före:</p>
+                      <RelationshipTypeDetails type={change.before} />
+                      <p>Sambandstyp efter:</p>
+                      <RelationshipTypeDetails
+                        type={
+                          change.after
+                            ? { ...change.after, id: change.id, householdId, revision: 0 }
+                            : null
+                        }
+                      />
+                    </article>
+                  ))}
+                  {review.conflicts.map((conflict) => {
+                    const objectChange = review.changes.find((change) => change.id === conflict.id);
+                    const edgeChange = review.relationships?.find(
+                      (change) => change.id === conflict.id,
+                    );
+                    return (
+                      <article key={`${conflict.kind}-${conflict.id}`}>
+                        <h5>Konflikt: aktuellt sparat värde</h5>
+                        {conflict.kind === 'object' && objectChange && (
+                          <ObjectDetails
+                            value={conflict.current}
+                            type={
+                              review.current?.types.find(
+                                (type) => type.id === conflict.current?.typeId,
+                              ) ?? objectChange.type
+                            }
+                          />
+                        )}
+                        {conflict.kind === 'objectType' && (
+                          <ObjectTypeDetails type={conflict.current} />
+                        )}
+                        {conflict.kind === 'relationshipType' && (
+                          <RelationshipTypeDetails type={conflict.current} />
+                        )}
+                        {conflict.kind === 'relationship' && (
+                          <>
+                            <p>
+                              {conflict.current
+                                ? relationshipDetails(
+                                    conflict.current,
+                                    review.current?.relationshipTypes.find(
+                                      (type) => type.id === conflict.current?.typeId,
+                                    )?.forwardLabel,
+                                    edgeChange?.objectNames,
+                                  )
+                                : 'Finns inte i kartan'}
+                            </p>
+                            {conflict.current && <LifecycleDetails value={conflict.current} />}
+                          </>
+                        )}
+                        {conflict.type !== undefined && (
+                          <p>
+                            {conflict.type
+                              ? `Typen har ändrats: ${conflict.type.name}. ${conflict.type.description}`
+                              : 'Typen finns inte längre.'}
+                          </p>
+                        )}
+                        {Boolean(conflict.missingEndpoints?.length) && (
+                          <p>Sambandet hänvisar till borttagna objekt.</p>
+                        )}
+                        {Boolean(conflict.duplicates?.length) && (
+                          <p>Motsvarande samband finns redan i kartan.</p>
+                        )}
+                        {Boolean(conflict.connections?.length) && (
+                          <p>Borttagningen berör även sparade samband.</p>
+                        )}
+                      </article>
+                    );
+                  })}
+                </details>
+              </section>
+            ) : (
+              (draftSummary ?? (
+                <p className="assistant-empty">
+                  Inga ändringar föreslås ännu. Berätta för att lägga till eller rätta en uppgift.
+                </p>
+              ))
+            )}
+            <p className="assistant-save-note">
+              Förslag ligger i ditt privata utkast tills du sparar hela utkastet.
+            </p>
+          </section>
+          <section aria-label="Samtalet" className="assistant-panel assistant-conversation">
+            <div className="assistant-panel-heading">
+              <h3>Samtalet</h3>
+              <span className="muted">Svenska · tal och text</span>
+            </div>
+            {!session && (
+              <div className="assistant-transcript-empty">
+                Här visas vad du säger och vad Skyttel svarar.
+              </div>
+            )}
+            {session && (
+              <>
+                <p
+                  role="status"
+                  className={`assistant-work-status${session.phase === 'working' ? ' is-working' : ''}`}
+                >
+                  {session.phase === 'working'
+                    ? 'Assistenten arbetar… Du kan avbryta eller ge ett nytt uppdrag.'
+                    : session.phase === 'recovery'
+                      ? 'Kontrollera det tidigare sparförsöket innan du fortsätter.'
+                      : session.receipt
+                        ? 'Sparat. Hela utkastet finns i hushållets karta.'
+                        : session.displayedSelection
+                          ? 'Markerat i kartan.'
+                          : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.'}
+                </p>
+                {session.reply && !session.receipt && !session.displayedSelection && (
+                  <div>
+                    <h4>Besked från Skyttel</h4>
+                    <p>{session.reply}</p>
+                  </div>
+                )}
+                {session.modelReply && (
+                  <section aria-label="Assistentens samtalstext" className="assistant-utterance">
+                    <h4>Assistentens samtalstext – inte en bekräftelse</h4>
+                    <p>
+                      Samtalstexten kan innehålla fel. Sparande och markering bekräftas bara av
+                      Skyttels status och kvitton.
+                    </p>
+                    <p>{session.modelReply}</p>
+                  </section>
+                )}
+                {session.error && <p role="alert">{errorMessage(session.error)}</p>}
+                <form
+                  className="assistant-message-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void send();
+                  }}
+                >
+                  <label htmlFor="text-assistant-message">Meddelande till textassistenten</label>
+                  <textarea
+                    placeholder="Berätta vad du vill göra…"
+                    id="text-assistant-message"
+                    maxLength={4000}
+                    value={text}
+                    onChange={(event) => setText(event.target.value)}
+                  />
+                  <button
+                    type="submit"
+                    disabled={pending || unknown || session.phase === 'recovery' || !text.trim()}
+                  >
+                    Skicka
+                  </button>
+                </form>
+                {session.phase === 'working' && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => void command('cancel', { revision: session.revision })}
+                  >
+                    Avbryt uppdrag
                   </button>
                 )}
-              </article>
-            ))}
-          </details>
-        </>
-      )}
+                <button type="button" disabled={pending} onClick={() => void command('recover')}>
+                  Kontrollera sparresultat
+                </button>
+                <button type="button" disabled={pending} onClick={() => void stop()}>
+                  Avsluta textassistenten
+                </button>
+                {session.receipt && (
+                  <details>
+                    <summary>Visa kvittot</summary>
+                    <p>{receiptMessage(session.receipt)}</p>
+                    <p>Sparat: {session.receipt.savedAt}</p>
+                  </details>
+                )}
+                <details open={session.phase === 'recovery'}>
+                  <summary>Tidigare sparförsök</summary>
+                  {!session.operations.length && <p>Inga registrerade sparförsök.</p>}
+                  {session.operations.map((operation) => (
+                    <article key={operation.operationId}>
+                      <p>
+                        {operation.status === 'succeeded'
+                          ? receiptMessage(operation.receipt)
+                          : operation.status === 'rejected'
+                            ? rejectionMessage(operation.error)
+                            : `Väntande sparförsök: ${operation.operationId}`}
+                      </p>
+                      {operation.status === 'pending' && (
+                        <button
+                          type="button"
+                          disabled={pending || session.phase === 'working'}
+                          onClick={() =>
+                            void command('retry', { operationId: operation.operationId })
+                          }
+                        >
+                          Slutför samma sparförsök
+                        </button>
+                      )}
+                    </article>
+                  ))}
+                </details>
+              </>
+            )}
+          </section>
+        </div>
+      </div>
     </section>
   );
 }

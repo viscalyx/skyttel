@@ -34,6 +34,7 @@ export function VoiceAssistant(props: {
   onAssistant: (view: TextAssistantView) => void;
   onAccessLost: () => void;
   onRecoveryNeeded?: () => void;
+  autoStart?: boolean;
 }) {
   const path = `/api/households/${encodeURIComponent(props.householdId)}/text-assistant/${encodeURIComponent(props.assistant.id)}/voice`;
   const latest = useRef(props);
@@ -101,7 +102,7 @@ export function VoiceAssistant(props: {
       epoch.current++;
     };
   }, [path, stop]);
-  async function start() {
+  const start = useCallback(async () => {
     if (current.current) return;
     const attempt: Attempt = { path, controller: new AbortController() };
     current.current = attempt;
@@ -206,10 +207,33 @@ export function VoiceAssistant(props: {
     } catch (failure) {
       fail(failure);
     }
-  }
+  }, [path, apply, stop]);
+  useEffect(() => {
+    if (props.autoStart) void start();
+  }, [props.autoStart, start]);
   return (
-    <section aria-label="Skyttels röst" className="text-assistant">
-      <h4>Tala med Skyttel</h4>
+    <section aria-label="Skyttels röst" className="voice-assistant">
+      <div className="voice-controls">
+        {state === 'idle' ? (
+          <button
+            type="button"
+            className="primary"
+            disabled={props.assistant.phase === 'working'}
+            onClick={() => void start()}
+          >
+            Starta röst
+          </button>
+        ) : (
+          <button type="button" disabled={state === 'closing'} onClick={() => void stop()}>
+            Stäng av rösten
+          </button>
+        )}
+        <span
+          className={`microphone-state${state === 'listening' && !disconnected ? ' connected' : ''}`}
+        >
+          {state === 'listening' && !disconnected ? 'Mikrofonen är på' : 'Mikrofonen är av'}
+        </span>
+      </div>
       <p>
         Rösten använder samma samtal och hela ditt utkast. OpenAI behandlar ljudet. Text och kartans
         formulär finns kvar.
@@ -218,7 +242,7 @@ export function VoiceAssistant(props: {
         AI-rösten kan innehålla fel. Skyttels status och kvitton bekräftar vad som faktiskt har
         sparats eller markerats.
       </p>
-      <p aria-live="polite">
+      <p className="voice-status" aria-live="polite">
         {state === 'connecting'
           ? 'Ansluter rösten… Mikrofonen är avstängd tills tjänsten är klar.'
           : state === 'closing'
@@ -243,19 +267,6 @@ export function VoiceAssistant(props: {
             Spela upp ljud
           </button>
         </div>
-      )}
-      {state === 'idle' ? (
-        <button
-          type="button"
-          disabled={props.assistant.phase === 'working'}
-          onClick={() => void start()}
-        >
-          Starta röst
-        </button>
-      ) : (
-        <button type="button" disabled={state === 'closing'} onClick={() => void stop()}>
-          Stäng av rösten
-        </button>
       )}
     </section>
   );

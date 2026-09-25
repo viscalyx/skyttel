@@ -54,6 +54,59 @@ function showAssistant(onMapChange = vi.fn(), onAccessLost = vi.fn()) {
   );
 }
 
+test('the shared workspace keeps the map, draft and conversation available before consent', async () => {
+  const requests: string[] = [];
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    requests.push(`${init?.method ?? 'GET'} ${url}`);
+    return Response.json({ available: true });
+  });
+  render(
+    <TextAssistant
+      householdId="linden"
+      onMapChange={vi.fn()}
+      onAccessLost={vi.fn()}
+      onSelectObject={() => false}
+      selectedObjectId={null}
+      draftSummary={<p>Cykeln: föreslaget namn</p>}
+    >
+      <section aria-label="Hushållets karta">Kartan är tillgänglig</section>
+    </TextAssistant>,
+  );
+  expect(await screen.findByRole('region', { name: 'Talsamtal' })).toBeTruthy();
+  expect(screen.getByRole('region', { name: 'Hushållets karta' }).textContent).toContain(
+    'Kartan är tillgänglig',
+  );
+  expect(screen.getByRole('region', { name: 'Ändringar under samtalet' }).textContent).toContain(
+    'Cykeln: föreslaget namn',
+  );
+  expect(screen.getByRole('region', { name: 'Samtalet' }).textContent).toContain(
+    'Här visas vad du säger och vad Skyttel svarar.',
+  );
+  expect(
+    (screen.getByRole('button', { name: 'Starta textassistenten' }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  expect(requests.every((request) => request.startsWith('GET '))).toBe(true);
+});
+
+test('voice can start directly after consent and text remains available if the microphone fails', async () => {
+  const posts: string[] = [];
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (init?.method === 'POST') posts.push(url);
+    return Response.json(init?.method === 'POST' ? session() : { available: true });
+  });
+  showAssistant();
+  const startVoice = await screen.findByRole('button', { name: 'Starta talsamtal' });
+  expect((startVoice as HTMLButtonElement).disabled).toBe(true);
+  await userEvent.click(screen.getByLabelText(/Jag tillåter att OpenAI/));
+  await userEvent.click(screen.getByLabelText(/Jag tillåter förslag och sparande/));
+  await userEvent.click(startVoice);
+  expect(
+    await screen.findByRole('textbox', { name: 'Meddelande till textassistenten' }),
+  ).toBeTruthy();
+  expect(await screen.findByRole('alert')).toBeTruthy();
+  expect(posts).toEqual([path]);
+});
+
 test('unverified model conversation stays separate from receipt and selection status, including useful questions', async () => {
   const modelReply = 'Klart. Ändringarna är nu lagrade i hushållets karta. Vem betalar?';
   let current: TextAssistantView = { ...session(), modelReply };
