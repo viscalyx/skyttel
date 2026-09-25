@@ -146,5 +146,7 @@ konflikter, fortsätta på en annan enhet eller följa upp ett oklart sparande.
 Avtal, belopp, villkor, datum, samband och ofullständiga uppgifter hör
 till samma hushållsinnehåll som övriga kartan. Samma informationsregler
 för export, återimport och radering gäller, inklusive privata utkast i
-fullständig administrativ export. Administrativa flöden för export,
-återimport och permanent radering är ännu inte tillgängliga i appen.
+fullständig administrativ export. Administratörer följer guiderna för
+[export](household-export.md), [återimport](household-import.md) och
+[permanent radering](household-erasure.md). Granska raderingens omfattning;
+den tar även bort berörda historiska uppgifter och kan inte ångras.

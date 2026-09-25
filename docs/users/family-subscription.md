@@ -152,8 +152,9 @@ text som ännu bara finns i ett öppet formulär omfattas inte av kvittot.
 Andra hushållsmedlemmar ser de gemensamma ändringarna efter sparandet,
 men kan inte läsa dina privata sparförsök.
 
-Privata utkast ingår enligt hushållets informationsregler i fullständig
-administrativ export. Administrativa flöden för export, återimport och
-permanent radering är ännu inte tillgängliga i appen. Samband och
-ofullständiga uppgifter hör till samma hushållsinnehåll och ska omfattas
-av dessa flöden när de införs.
+Privata utkast ingår i administratörens
+[fullständiga export](household-export.md). Samband och ofullständiga
+uppgifter hör till samma hushållsinnehåll och bevaras vid
+[återimport](household-import.md). Administratörer kan också granska och
+bekräfta [permanent radering](household-erasure.md), som tar bort berört
+innehåll även ur historik och privata utkast.

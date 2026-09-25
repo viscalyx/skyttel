@@ -83,5 +83,6 @@ du sparar igen.
 
 Vanlig borttagning har ingen automatisk tidsgräns för bevarat innehåll.
 Permanent raderad information kan aldrig återställas genom ångring.
-Permanent radering är ett separat planerat administrativt flöde.
+Administratörer använder det separata, uttryckligt bekräftade flödet för
+[permanent radering](household-erasure.md).
 Läs mer om [upphört, borttaget och permanent raderat](lifecycle.md).

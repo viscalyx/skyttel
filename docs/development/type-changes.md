@@ -36,8 +36,9 @@ this entry remains readable.
   saved `before`/`after`, `type` and optional `beforeType` snapshots. Saved
   receipts continue to include actor and time through the history contract.
 
-Export and import must preserve these nested values, definitions and undo
-metadata with stable object and field IDs. Permanent erasure must include
-these retained snapshots in every affected private draft and saved record.
-Ordinary type changes do not erase history. These downstream workflows have
-separate implementation scope; this guide does not claim they are available.
+[Export](household-export.md) and [import](household-import.md) preserve
+these nested values, definitions and undo metadata with stable object and
+field IDs. [Permanent erasure](household-erasure.md) includes affected
+retained snapshots in private drafts and saved records, while preserving
+independent current content and history. Maintain those traversals when
+adding another typed reference. Ordinary type changes do not erase history.

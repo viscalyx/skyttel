@@ -55,6 +55,9 @@ egna förslag eller andra ändringar tillkommer efter borttagningen.
 
 **Permanent raderat** betyder att informationen inte kan ångras i Skyttel.
 Det är en separat administrativ åtgärd. Vanlig borttagning gör aldrig
-informationen permanent raderad. Gränssnitten för permanent radering,
-fullständig export och återimport införs separat; livscykeluppgifter och
-historik ingår i det innehåll dessa flöden ska hantera.
+informationen permanent raderad. Administratörer använder separata flöden
+för [permanent radering](household-erasure.md),
+[fullständig export](household-export.md) och
+[återimport](household-import.md). Export och återimport bevarar
+livscykeluppgifter och historik. Permanent radering tar även bort berörda
+historiska uppgifter; granska omfattningen innan du bekräftar.
