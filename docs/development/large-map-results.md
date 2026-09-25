@@ -24,7 +24,7 @@ ordinary labels to available space, retains explicit all-label mode, and
 pages long lists while keeping every entry reachable. Shared save and
 authorization semantics remain unchanged.
 
-## Final observations
+## Initial optimized implementation
 
 Measured clean implementation commit
 `1fae0c0af36da404a4bb5d0eba7a41bf273b7733`, tree
@@ -69,3 +69,34 @@ from this environment. The client bundle warning above 500 kB still appears;
 the measured production bundle nevertheless met the stated connection
 targets. More history, larger images, concurrent load or a different device
 can change the results and should be recorded when repeating the plan.
+
+## Prototype-aligned implementation
+
+The measurement at 2026-09-25 06:25 UTC uses clean commit
+`caa5f068bb21031ae80a2ebe684771578a011678`, tree
+`55b50a03a2cc71728535d2274fdd922330d10bfd`. This version includes the approved
+spatial presentation and explicit editing controls. The measurement reads
+the separate name labels and opens **Redigera valt objekt** before editing.
+Its readiness, timing, overlap and durability assertions are unchanged.
+
+The environment, browser, Node version, viewport and connection are the
+same as above. No competing test suite runs during this measurement.
+Host load averages at completion are 3.42/4.03/2.72. The
+[raw report](measurements/large-map-2026-09-25.json) records the complete
+environment, exact values and clean worktree.
+
+| Run | Cache | Open | Search | Save | Labels | Overlaps |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Cold | 2912 | 41 | 866 | 13 | 0 |
+| 1 | Warm | 2738 | 44 | 853 | 13 | 0 |
+| 2 | Cold | 2881 | 47 | 853 | 13 | 0 |
+| 2 | Warm | 2871 | 38 | 842 | 13 | 0 |
+| 3 | Cold | 2787 | 36 | 857 | 13 | 0 |
+| 3 | Warm | 2784 | 44 | 839 | 13 | 0 |
+
+All six observations meet the original limits: opening within 5 seconds,
+search within 1 second and saving within 2 seconds. Overview labels have
+no overlapping pairs. Every saved description matches the reread content
+and history; after restart, content, history and operation agree on the
+same durable receipt. This is a local synthetic-data result, with no
+physical-device or production-host claim.
