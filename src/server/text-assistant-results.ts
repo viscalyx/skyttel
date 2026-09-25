@@ -1,12 +1,16 @@
 import { type FinancialFact, financialFields } from '../shared/financial-facts.js';
-import type { MapDraft, SaveReceipt } from '../shared/map.js';
+import type { MapDraft, RelationshipValue, SaveReceipt } from '../shared/map.js';
 import type { TextAssistantResult } from '../shared/text-assistant.js';
 
 function fact(value: FinancialFact | undefined) {
   if (!value) return 'ej angivet';
-  if (value.knowledge === 'none') return 'uttryckligen inget';
-  if (value.knowledge === 'unknown') return 'okänt';
-  return `${value.knowledge === 'uncertain' ? 'osäkert uppgivet: ' : ''}${value.value}`;
+  const text =
+    value.knowledge === 'none'
+      ? 'uttryckligen inget'
+      : value.knowledge === 'unknown'
+        ? 'okänt'
+        : `${value.knowledge === 'uncertain' ? 'osäkert uppgivet: ' : ''}${value.value}`;
+  return `${text}${value.reportedOn ? ` (${value.reportedOn})` : ''}`;
 }
 
 /** These words describe actual tool records. Provider prose never enters here. */
@@ -28,6 +32,10 @@ function details(value: MapDraft | SaveReceipt, saved: boolean) {
     const name = change.after?.name ?? change.before?.name;
     const fields: string[] = [];
     if (change.before && change.after) {
+      if (change.before.typeId !== change.after.typeId)
+        fields.push(
+          `objekttyp: ${change.beforeType?.name ?? change.before.typeId} → ${change.type.name}`,
+        );
       if (change.before.name !== change.after.name)
         fields.push(`namn: ${change.before.name} → ${change.after.name}`);
       if (change.before.description !== change.after.description)
@@ -48,7 +56,7 @@ function details(value: MapDraft | SaveReceipt, saved: boolean) {
         const after = change.after.customValues?.[id];
         if (before !== after)
           fields.push(
-            `${change.type.fields?.find((field) => field.id === id)?.name ?? id}: ${before ?? 'ej angivet'} → ${after ?? 'ej angivet'}`,
+            `${change.type.fields?.find((field) => field.id === id)?.name ?? change.beforeType?.fields?.find((field) => field.id === id)?.name ?? id}: ${before ?? 'ej angivet'} → ${after ?? 'ej angivet'}`,
           );
       }
     }
@@ -59,15 +67,20 @@ function details(value: MapDraft | SaveReceipt, saved: boolean) {
   for (const change of value.relationships ?? []) {
     const edge = change.after ?? change.before;
     if (!edge) continue;
-    const source = change.objectNames?.[edge.sourceId] ?? edge.sourceId;
-    const target = edge.targetId
-      ? (change.objectNames?.[edge.targetId] ?? edge.targetId)
-      : edge.knowledge === 'none'
-        ? 'uttryckligen ingen'
-        : 'okänt';
-    lines.push(
-      `${verb(change.before, change.after)} sambandet ${source} ${change.type.forwardLabel ?? change.type.name} ${target}`,
-    );
+    const describe = (relationship: RelationshipValue) => {
+      const source = change.objectNames?.[relationship.sourceId] ?? relationship.sourceId;
+      const target = relationship.targetId
+        ? (change.objectNames?.[relationship.targetId] ?? relationship.targetId)
+        : relationship.knowledge === 'none'
+          ? 'uttryckligen ingen'
+          : 'okänt';
+      return `${source} ${change.type.forwardLabel ?? change.type.name} ${target}${relationship.knowledge === 'uncertain' ? ' (osäkert uppgivet)' : ''}`;
+    };
+    const description =
+      change.before && change.after
+        ? `${describe(change.before)} → ${describe(change.after)}`
+        : describe(edge);
+    lines.push(`${verb(change.before, change.after)} sambandet ${description}`);
   }
   for (const [kind, changes] of [
     ['objekttypen', value.objectTypes],
