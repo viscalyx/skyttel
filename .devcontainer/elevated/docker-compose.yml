@@ -72,7 +72,6 @@ services:
 
 volumes:
   skyttel-data:
-  codex-home:
   codex-state:
   codex-tmp:
   config:
