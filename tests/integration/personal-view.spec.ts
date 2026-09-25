@@ -360,11 +360,14 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
       space(page)
         .locator('line[data-object-id="lamp"]')
         .evaluate((line: SVGLineElement) => {
-          const bounds = line.ownerSVGElement?.getBoundingClientRect();
-          if (!bounds) throw new Error('Map must be visible');
+          const canvas = line.ownerSVGElement?.parentElement?.querySelector('canvas');
+          if (!canvas?.clientWidth || !canvas.clientHeight) throw new Error('Map must be visible');
+          // The scene projects in the canvas's integer client dimensions; its
+          // fractional bounding rectangle can change when the draft resizes it.
+          const { clientWidth: width, clientHeight: height } = canvas;
           return {
-            x: (line.x1.baseVal.value - bounds.width / 2) / bounds.height,
-            y: (line.y1.baseVal.value - bounds.height / 2) / bounds.height,
+            x: (line.x1.baseVal.value - width / 2) / height,
+            y: (line.y1.baseVal.value - height / 2) / height,
           };
         });
     const pointBefore = await projection();
