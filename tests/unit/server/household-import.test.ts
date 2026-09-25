@@ -60,6 +60,29 @@ function changedContent(change: (content: Record<string, unknown>) => void) {
   });
 }
 
+test.each([14, 15, 16])(
+  'schema %i household archives remain importable with their saved content and history',
+  async (schemaVersion) => {
+    const bytes = altered((parts) => {
+      const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
+      manifest.schemaVersion = schemaVersion;
+      parts['manifest.json'] = new TextEncoder().encode(JSON.stringify(manifest));
+    });
+    const prepared = await upload(bytes);
+    expect(prepared.status).toBe(201);
+    const ready = await prepared.json();
+    const confirmed = await client.json(`${path}/imports/${ready.id}/confirm`, {
+      contentVersion: 1,
+      confirmed: true,
+    });
+    expect(await confirmed.json()).toMatchObject({ status: 'completed', contentVersion: 2 });
+    const map = await (await client.request(`${path}/map`)).json();
+    expect(map.objects).toEqual([expect.objectContaining({ id: 'lamp', name: 'Lampa' })]);
+    const { history } = await (await client.request(`${path}/map/history`)).json();
+    expect(history).toEqual([expect.objectContaining({ operationId: 'lamp-save' })]);
+  },
+);
+
 test('invalid archives leave all live content and access unchanged before confirmation', async () => {
   const before = await (await client.request(`${path}/map`)).json();
   const bootstrap = await (await client.request('/api/bootstrap')).json();
@@ -77,6 +100,11 @@ test('invalid archives leave all live content and access unchanged before confir
     altered((parts) => {
       const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
       manifest.version = 99;
+      parts['manifest.json'] = new TextEncoder().encode(JSON.stringify(manifest));
+    }),
+    altered((parts) => {
+      const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
+      manifest.schemaVersion = 17;
       parts['manifest.json'] = new TextEncoder().encode(JSON.stringify(manifest));
     }),
     changedContent((content) => {

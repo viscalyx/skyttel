@@ -7,6 +7,8 @@ export interface TextModelAttempt {
   startedAt: string;
   endedAt: string | null;
   model: 'gpt-5.6-terra';
+  resolvedModel?: string | null;
+  serviceTier?: string | null;
   requestId: string | null;
   responseId: string | null;
   outcome: 'started' | 'completed' | 'failed' | 'aborted' | 'incomplete';
@@ -67,6 +69,18 @@ export function textModel(apiKey: string, modelFetch?: typeof fetch, record?: Te
       );
       attempt.requestId = identifier(response._request_id);
       attempt.responseId = identifier(response.id);
+      attempt.resolvedModel =
+        response.model == null
+          ? null
+          : response.model === attempt.model
+            ? attempt.model
+            : 'unsupported';
+      attempt.serviceTier =
+        response.service_tier == null
+          ? null
+          : response.service_tier === 'default'
+            ? 'default'
+            : 'unsupported';
       const usage = response.usage;
       attempt.usage = {
         input: count(usage?.input_tokens),

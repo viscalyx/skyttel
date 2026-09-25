@@ -13,6 +13,11 @@ betyder inte att dess manuella prov är genomfört.
 
 ## Områden
 
+- [Månadskostnad](costs.md): separata Render-, Live- och Terra-belopp,
+  prisunderlag, månadens antaganden, okända värden, kumulativa mätningar,
+  omstart, hämtningsfel och installationens särskilda kostnadsbehörighet.
+  En lokal startguide ger kontrollerade leverantörssvar och två identiteter.
+
 - [Återställning och flytt](household-recovery.md): tomma lokala installationer,
   uttrycklig verifierad ägarkoppling, bevarat undanträngt privat arbete,
   gamla sessioner och sparförsök, omstart och fortsatt export till en tredje

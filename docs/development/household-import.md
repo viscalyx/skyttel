@@ -41,7 +41,7 @@ Technical logs contain fixed event codes, not archive values or file paths.
 
 ## Supported content and ownership
 
-Version 1 archives from database schema 14 and 15 have the same serialized
+Version 1 archives from database schema 14, 15 and 16 have the same serialized
 content shape. Their explicit migration inserts all historical owners into
 `content_identity`, independently of authentication. No archived identity
 creates a login user. Same-household replacement retains only an existing
@@ -49,6 +49,11 @@ verified identity-to-login binding. Foreign archive names, email-like text,
 and even matching identity IDs never establish a binding. Unmapped private
 drafts and personal views remain stored and included in administrator
 exports; ordinary members cannot claim them by logging in.
+
+Installation-wide usage and cost assumptions are outside household archives.
+Import leaves the target installation's measurements unchanged; moving a
+household to another installation does not transfer its previous usage ledger.
+Missing measurement history must not be interpreted as zero cost.
 
 [Recovery owner mapping](household-recovery.md) explicitly binds
 `content_identity.userId` to a verified current login after administrator

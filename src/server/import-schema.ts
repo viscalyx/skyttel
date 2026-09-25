@@ -291,7 +291,7 @@ export const importManifestSchema = z
     version: z.literal(1),
     createdAt: text,
     householdId: id,
-    schemaVersion: z.union([z.literal(14), z.literal(15)]),
+    schemaVersion: z.union([z.literal(14), z.literal(15), z.literal(16)]),
     parts: z
       .array(
         z

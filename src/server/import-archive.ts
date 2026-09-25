@@ -81,7 +81,7 @@ export async function validateImportArchive(directory: string, signal: AbortSign
     if (actual?.bytes !== part.bytes || actual.sha256 !== part.sha256)
       throw new MapError('invalid_archive', 400);
   }
-  // v1/schema14 and v1/schema15 have identical content shapes. The explicit
+  // v1/schema14, schema15 and schema16 have identical content shapes. The explicit
   // migration is ownership separation on insertion, without restoring access.
   const parsed = importContentSchema.safeParse(
     parseJson(await readFile(join(directory, 'content.json'), 'utf8')),

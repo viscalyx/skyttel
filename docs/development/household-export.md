@@ -28,7 +28,7 @@ The manifest contains:
 | `version` | Integer `1`; the public archive format version. |
 | `createdAt` | UTC ISO timestamp when the content snapshot is complete. |
 | `householdId` | The stable source household identity. |
-| `schemaVersion` | Source database migration version; currently `15`. |
+| `schemaVersion` | Source database migration version; currently `16`. |
 | `parts` | Exactly two records, for `content.json` then `images.bin`. |
 
 Each part record contains `path`, the uncompressed byte count `bytes`, and

@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { checkContainerAssistants } from './check-container-assistants.mjs';
+import { checkContainerCosts } from './check-container-costs.mjs';
 import { checkContainerErasure } from './check-container-erasure.mjs';
 import { checkContainerRecovery } from './check-container-recovery.mjs';
 import { checkContainerTextAssistant } from './check-container-text-assistant.mjs';
@@ -388,6 +389,14 @@ try {
     origin: configuredOrigin,
   });
   await checkContainerVoiceAssistant({
+    command,
+    request,
+    waitUntilReady,
+    name: persisted,
+    fixture,
+    origin: configuredOrigin,
+  });
+  await checkContainerCosts({
     command,
     request,
     waitUntilReady,

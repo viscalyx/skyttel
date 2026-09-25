@@ -5,6 +5,27 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Installation cost measurements
+
+Follow the existing upgrade and recovery procedure. Start the new image
+on the existing persistent disk and confirm
+database readiness. Cost recording starts at upgrade; earlier usage remains
+unknown. An older image does not reverse the database changes.
+
+The configured first-administrator identity controls installation cost
+access, independently of household roles. Verify that identity, then review
+the monthly hosting and currency assumptions in the cost view. Initial
+values assume one paid service, a small disk, a free workspace and an
+illustrative currency conversion. Follow the
+[cost operations guide](costs.md) to set the actual assumptions and handle
+missing measurements. The view is an estimate and applies no spending stop.
+
+The installation retains cost measurements separately from household
+content. Household export, import and permanent erasure do not transfer or
+clear them. A household archive cannot restore the cost history after disk
+loss. Preserve installation recovery copies when that history is required;
+this upgrade adds no automatic backup.
+
 ### Voice assistant
 
 The optional voice assistant uses the existing private AI provider setup.

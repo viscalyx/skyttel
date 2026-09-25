@@ -12,6 +12,8 @@ import { assistantRoutes } from './assistant-routes.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
 import { contentOwnerRoutes } from './content-owner-routes.js';
+import { costRoutes } from './cost-routes.js';
+import { installationCosts } from './costs.js';
 import { householdErasureRoutes } from './household-erasure-routes.js';
 import { householdExportRoutes } from './household-export-routes.js';
 import { householdImportRoutes } from './household-import-routes.js';
@@ -48,6 +50,7 @@ export function createApp({
   liveUsage?: LiveUsage;
 }) {
   const app = new Hono();
+  const costs = installationCosts(database);
   const linking = createLoginMethods(database, auth, config.origin);
   app.use(
     '*',
@@ -145,14 +148,15 @@ export function createApp({
   app.get('/api/bootstrap', async (context) => {
     const providers = ['google', 'microsoft'] as const;
     const session = await auth.api.getSession({ headers: context.req.raw.headers });
-    if (!session) return context.json({ status: 'anonymous', providers });
+    if (!session) return context.json({ status: 'anonymous', providers, operator: false });
     const user = { id: session.user.id, name: session.user.name };
+    const operator = isFirstAdmin(database, user.id, config);
     const household = householdAccess(database, user.id);
-    if (household) return context.json({ status: 'ready', providers, user, household });
+    if (household) return context.json({ status: 'ready', providers, user, household, operator });
     if (!isInitialized(database) && isFirstAdmin(database, user.id, config)) {
-      return context.json({ status: 'setup', providers, user });
+      return context.json({ status: 'setup', providers, user, operator });
     }
-    return context.json({ status: 'forbidden', providers, user });
+    return context.json({ status: 'forbidden', providers, user, operator });
   });
 
   app.post('/api/households', async (context) => {
@@ -194,6 +198,7 @@ export function createApp({
     return context.json({ household });
   });
   app.route('/api', administrationRoutes(database, auth, config.origin));
+  app.route('/api', costRoutes(database, auth, config, costs));
   app.route('/api', contentOwnerRoutes(database, auth, config.origin));
   app.route('/api', householdExportRoutes(database, auth, config.origin));
   app.route('/api', householdErasureRoutes(database, auth, config.origin));
@@ -209,7 +214,10 @@ export function createApp({
     config,
     dispatch: (request) => app.fetch(request),
     modelFetch,
-    modelUsage,
+    modelUsage: (attempt) => {
+      costs.model(attempt);
+      modelUsage?.(attempt);
+    },
     onStop: (sessionId) => stopVoice?.(sessionId),
   });
   app.route('/api', textAssistant.routes);
@@ -219,6 +227,7 @@ export function createApp({
     liveFetch,
     liveSideband,
     liveUsage,
+    recordUsage: costs.live,
     interrupt: textAssistant.interrupt,
   });
   stopVoice = voiceAssistant.stopSession;

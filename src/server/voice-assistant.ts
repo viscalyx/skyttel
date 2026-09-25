@@ -36,6 +36,7 @@ export function voiceAssistantRoutes({
   liveFetch,
   liveSideband,
   liveUsage,
+  recordUsage,
   interrupt,
 }: {
   config: Config;
@@ -43,6 +44,7 @@ export function voiceAssistantRoutes({
   liveFetch?: typeof fetch;
   liveSideband?: LiveSidebandFactory;
   liveUsage?: LiveUsage;
+  recordUsage?: LiveUsage;
   interrupt: (sessionId: string, revision: number) => void;
 }) {
   const routes = new Hono();
@@ -75,6 +77,7 @@ export function voiceAssistantRoutes({
   }
   function report(usage: LiveUsageAttempt) {
     try {
+      recordUsage?.({ ...usage });
       liveUsage?.({ ...usage });
     } catch {
       console.error(JSON.stringify({ event: 'live_usage_unavailable' }));
@@ -149,7 +152,13 @@ export function voiceAssistantRoutes({
       final: false,
       outcome: 'starting',
     };
-    report(usage);
+    // Required ledger start must commit before any billable provider request.
+    recordUsage?.({ ...usage });
+    try {
+      liveUsage?.({ ...usage });
+    } catch {
+      console.error(JSON.stringify({ event: 'live_usage_unavailable' }));
+    }
     try {
       const result = await client.live.create(
         {
