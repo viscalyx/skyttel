@@ -287,6 +287,89 @@ test.each(['Kan du spara', 'Kan du spara?', 'Jag vill att du sparar det direkt.'
   },
 );
 
+test.each(['separate', 'combined'])(
+  'a negated fact followed by a current whole-save request uses the %s MCP path and saves independent proposals too',
+  async (mode) => {
+    let step = 0;
+    const model = textModel((body) => {
+      const operation = {
+        name: 'propose_relationship',
+        arguments: { id: 'lo-tonrum', baseRevision: 1, value: null },
+      };
+      if (mode === 'combined')
+        return [
+          modelTool('submit_changes', {
+            version: 5,
+            contentVersion: 1,
+            completion: 'save',
+            operations: [operation],
+          }),
+        ];
+      return [
+        step++ === 0
+          ? modelTool(operation.name, { ...operation.arguments, version: 5, contentVersion: 1 })
+          : modelTool('save_draft', {
+              version: lastToolResult(body).version,
+              contentVersion: 1,
+              operationId: 'model-save',
+            }),
+      ];
+    });
+    await setup(model.provider);
+    await webProposal('Lo', 'lo');
+    await webProposal('Tonrum', 'tonrum');
+    const mapPath = path.replace('/text-assistant', '/map');
+    const initial = await (await browser.get(mapPath)).json();
+    const relationship = await browser.post(`${mapPath}/relationship`, {
+      headers: { origin: app.origin },
+      data: {
+        version: 2,
+        contentVersion: 1,
+        id: 'lo-tonrum',
+        baseRevision: null,
+        value: {
+          sourceId: 'lo',
+          targetId: 'tonrum',
+          knowledge: 'known',
+          typeId: initial.relationshipTypes.find(
+            (type: { name: string }) => type.name === 'Använder',
+          ).id,
+        },
+      },
+    });
+    expect(relationship.status(), await relationship.text()).toBe(200);
+    const baseline = await browser.post(`${mapPath}/save`, {
+      headers: { origin: app.origin },
+      data: { version: 3, contentVersion: 1, operationId: 'baseline' },
+    });
+    expect(baseline.status(), await baseline.text()).toBe(200);
+    await webProposal('Oberoende hjälm', 'helmet');
+    const status = await message(
+      await start(),
+      'Lo använder inte Tonrum längre. Ta bort kopplingen och spara ändringarna.',
+    );
+    expect(status).toMatchObject({
+      phase: 'ready',
+      receipt: {
+        draftVersion: 6,
+        changes: [{ after: { id: 'helmet', name: 'Oberoende hjälm' } }],
+        relationships: [
+          { before: { id: 'lo-tonrum', sourceId: 'lo', targetId: 'tonrum' }, after: null },
+        ],
+      },
+    });
+    expect(status.error).toBeUndefined();
+    const map = await (await browser.get(mapPath)).json();
+    expect(map.relationships).toEqual([]);
+    expect(map.objects).toHaveLength(3);
+    expect(map.draft.changes).toEqual([]);
+    expect(map.draft.relationships ?? []).toEqual([]);
+    const { history } = await (await browser.get(`${mapPath}/history`)).json();
+    expect(history).toHaveLength(2);
+    expect(history).toContainEqual(status.receipt);
+  },
+);
+
 test.each(['unavailable', 'disconnected'])(
   'a committed receipt remains confirmed when subsequent MCP view refreshes are %s',
   async (failure) => {
@@ -528,6 +611,13 @@ test.each([
   'Jag undrar om du kan spara.',
   'Skriv ”jag vill att du sparar det direkt” i beskrivningen.',
   'Läs beskrivningen och berätta vad den betyder.',
+  'Lo använder inte Tonrum längre. Spara inte ändringarna.',
+  'Lo använder inte Tonrum längre. Spara bara kopplingen.',
+  'Om Lo slutar använda Tonrum, ta bort kopplingen och spara.',
+  'När Lo slutar använda Tonrum, ta bort kopplingen och spara.',
+  'Lo använder inte Tonrum längre. Skriv ”spara ändringarna” i beskrivningen.',
+  'Om jag ger klartecken. Ta bort kopplingen och spara.',
+  'Spara inte än. Ta bort kopplingen och spara.',
 ])('a provider cannot save when the actual current instruction is %s', async (text) => {
   const model = textModel(() => [
     modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'injected-save' }),

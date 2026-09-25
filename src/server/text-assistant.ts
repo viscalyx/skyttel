@@ -11,6 +11,7 @@ import type {
 } from '../shared/text-assistant.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
+import { contentOwner } from './content-identities.js';
 import { householdAccess } from './households.js';
 import { MapError } from './map.js';
 import { connectTextAssistant, type LocalDispatch } from './text-assistant-mcp.js';
@@ -154,7 +155,26 @@ export function textAssistantRoutes({
   // verification. Ambiguous, quoted, negative and hypothetical requests need
   // a new clear instruction; a model-supplied approval flag has no authority.
   function requestsSave(text: string) {
-    const plain = text.toLocaleLowerCase('sv').replace(/["'“”«»].*?["'“”«»]/gu, '');
+    // A negated map fact in an earlier sentence does not negate a new save
+    // command. Keep the entire save sentence for conditional/negative checks,
+    // so e.g. "Om Lo slutar, ta bort kopplingen och spara" stays unauthorized.
+    const unquoted = text.toLocaleLowerCase('sv').replace(/["'“”«»].*?["'“”«»]/gu, '');
+    const sentences = unquoted
+      .trim()
+      .replace(/[.!;]+$/u, '')
+      .split(/[.!;]\s*/u);
+    const plain = sentences.at(-1) ?? '';
+    // Do not infer that a final imperative cancels an earlier withheld save,
+    // or turn an example/condition spanning sentences into current authority.
+    if (
+      /\b(om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(unquoted) ||
+      sentences.some(
+        (sentence) =>
+          /\bspara(?:r|nde)?\b/u.test(sentence) &&
+          /\b(inte|ej|ingenting|aldrig|utan|vänta)\b/u.test(sentence),
+      )
+    )
+      return false;
     const suffix =
       '(?:\\s+(?:nu|direkt|allt|allting|det|detta|det här|hela utkastet|utkastet|ändringarna|alla ändringar|förslaget|förslagen))*';
     return (
@@ -238,13 +258,17 @@ export function textAssistantRoutes({
     receipt: TextAssistantView['receipt'],
     expected: { operationId: string; version: number; contentVersion: number },
   ) {
+    // The login actor grants access; restored private content can have a
+    // different historical owner. Check the current grant/generation before
+    // resolving that trusted binding, including after a delayed save reply.
+    session.mcp.checkAccess();
     if (
       !receipt ||
       receipt.operationId !== expected.operationId ||
       receipt.draftVersion !== expected.version ||
       receipt.contentVersion !== expected.contentVersion ||
       receipt.householdId !== session.householdId ||
-      receipt.userId !== session.actorId
+      receipt.userId !== contentOwner(database, session.householdId, session.actorId)
     )
       throw new Error('invalid_receipt');
   }
@@ -908,8 +932,14 @@ export function textAssistantRoutes({
     const operation = session.pendingSave
       ? session.operations.find((item) => item.operationId === session.pendingSave?.operationId)
       : undefined;
-    if (operation?.status === 'succeeded') saved(session, operation.receipt);
-    else if (session.operations.some((item) => item.status === 'pending'))
+    if (operation?.status === 'succeeded') {
+      verifyReceipt(session, operation.receipt, {
+        operationId: operation.operationId,
+        version: operation.draftVersion,
+        contentVersion: operation.contentVersion,
+      });
+      saved(session, operation.receipt);
+    } else if (session.operations.some((item) => item.status === 'pending'))
       session.phase = 'recovery';
     else {
       session.pendingSave = undefined;
@@ -945,8 +975,14 @@ export function textAssistantRoutes({
       guard();
       const operation = session.operations.find((item) => item.operationId === body?.operationId);
       if (!operation) throw new MapError('operation_conflict', 409);
-      if (operation.status === 'succeeded') saved(session, operation.receipt);
-      else if (operation.status === 'rejected') throw new MapError(operation.error, 409);
+      if (operation.status === 'succeeded') {
+        verifyReceipt(session, operation.receipt, {
+          operationId: operation.operationId,
+          version: operation.draftVersion,
+          contentVersion: operation.contentVersion,
+        });
+        saved(session, operation.receipt);
+      } else if (operation.status === 'rejected') throw new MapError(operation.error, 409);
       else {
         session.task?.abort();
         session.task = task;
