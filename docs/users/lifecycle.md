@@ -8,9 +8,11 @@ osparade ändringar.
 
 ## Ange och rätta status
 
-Öppna objektet eller sambandet. Välj **Upphört** under **Objektets status**
-eller **Sambandets status** och lägg ändringen i utkastet. Granska hela
-utkastet och spara det för att göra ändringen gemensam. Ett avslutat
+Välj objektet eller sambandet och sedan **Redigera valt objekt** eller
+**Redigera valt samband** i detaljpanelen. Välj **Upphört** under
+**Objektets status** eller **Sambandets status** och lägg ändringen
+i utkastet. Granska hela utkastet och spara det för att göra ändringen
+gemensam. Ett avslutat
 abonnemang ändrar ingen annan status: tjänsten, tjänstekontot, personer,
 kort och deras samband finns kvar.
 

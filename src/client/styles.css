@@ -766,6 +766,11 @@ main:has(.household-panel) {
 .map-inspector form {
   margin-top: 12px;
 }
+.presentation-combined .map-inspector:not(:has(form)) {
+  max-height: 35dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
 .map-editor-dialog {
   display: contents;
 }
@@ -902,5 +907,27 @@ main:has(.household-panel) {
   .assistant-panel,
   .assistant-map-panel {
     padding: 14px;
+  }
+  .presentation-combined .assistant-map-panel,
+  .presentation-combined .assistant-side,
+  .household-map.presentation-combined .map-workspace,
+  .household-map.presentation-combined .map-space,
+  .presentation-combined .spatial-map {
+    display: contents;
+  }
+  .presentation-combined .spatial-surface {
+    order: 1;
+    width: 100%;
+    height: 40dvh;
+    min-height: 0;
+  }
+  .presentation-combined .assistant-panel:has(.map-inspector) {
+    order: 2;
+    width: 100%;
+  }
+  .presentation-combined .spatial-map > :not(h2, .spatial-surface, dialog),
+  .presentation-combined .assistant-side > :not(:has(.map-inspector)),
+  .presentation-combined .map-content {
+    order: 3;
   }
 }

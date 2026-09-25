@@ -75,7 +75,8 @@ behövs. Behåll samma fordonsobjekt när finansiering eller användning ändras
 
 ## Lägg till frivilliga belopp och villkor
 
-Öppna objektets formulär och **Ekonomiska uppgifter och avtalsvillkor**.
+Välj objektet, **Redigera valt objekt** i detaljpanelen och sedan
+**Ekonomiska uppgifter och avtalsvillkor** i formuläret.
 Avsnittet finns för alla objekttyper, även hushållets egna typer. Du kan
 ange **Pris**, **Valuta**, **Betalningsintervall**, **Startdatum**,
 **Slutdatum** och **Avtalsvillkor** när du känner till dem. Beskriv
@@ -126,9 +127,10 @@ att två objekt är samma sak.
 
 ## Hitta, rätta och spara tillsammans
 
-Sök efter avtalet, bostaden, garaget eller bilen i **Sök objekt**. Öppna
-objektet för att rätta belopp, villkor och säkerhet. Öppna ett samband för
-att rätta exempelvis avtalspart eller betalningsmedel. Ändringarna läggs
+Sök efter avtalet, bostaden, garaget eller bilen i **Sök objekt**. Välj
+objektet och **Redigera valt objekt** i detaljpanelen för att rätta belopp,
+villkor och säkerhet. Välj ett samband och **Redigera valt samband** för
+att rätta exempelvis avtalspart eller betalningsmedel. Lägg ändringarna
 i samma privata utkast som övriga förslag.
 
 Granska tidigare och föreslagna värden i **Hela mitt utkast**. Förslag som

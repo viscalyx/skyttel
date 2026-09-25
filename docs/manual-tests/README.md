@@ -34,8 +34,8 @@ betyder inte att dess manuella prov är genomfört.
   verkligt tal redovisas separat.
 - [Skyttels textassistent](text-assistant.md): separat AI-val, hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
-  synliga objekt och samband i karta och detaljpanel med skyddad
-  formulärtext samt obekräftad samtalstext
+  samtidigt synliga objekt och samband i karta och detaljpanel även på
+  telefon, med skyddad formulärtext samt obekräftad samtalstext
   skild från resultat samt synliga samband, typer och före-/eftervärden
   i hela ändringslistan. Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.

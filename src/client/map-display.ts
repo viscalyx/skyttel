@@ -7,7 +7,10 @@ export type MapRevealRequest = {
 };
 
 function rendered(element: Element | null): element is HTMLElement {
-  return element instanceof HTMLElement && element.checkVisibility();
+  return (
+    element instanceof HTMLElement &&
+    element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
+  );
 }
 
 function contained(element: HTMLElement, bounds: DOMRect) {
@@ -19,6 +22,13 @@ function contained(element: HTMLElement, bounds: DOMRect) {
     box.right <= bounds.right &&
     box.top >= bounds.top &&
     box.bottom <= bounds.bottom
+  );
+}
+
+function uncovered(element: HTMLElement) {
+  const box = element.getBoundingClientRect();
+  return element.contains(
+    document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2),
   );
 }
 
@@ -58,22 +68,63 @@ export function waitForMapDisplay(
         surface.dataset.revealRequest === request.id &&
         rendered(inspector)
       ) {
+        const visibleViewport = window.visualViewport;
+        const viewport = new DOMRect(
+          visibleViewport?.offsetLeft ?? 0,
+          visibleViewport?.offsetTop ?? 0,
+          visibleViewport?.width ?? window.innerWidth,
+          visibleViewport?.height ?? window.innerHeight,
+        );
+        // The working notice is opaque even though it lets pointer events through.
+        const indicator = root.querySelector('.assistant-work-indicator.is-working');
+        if (rendered(indicator))
+          viewport.height = Math.max(
+            0,
+            Math.min(viewport.bottom, indicator.getBoundingClientRect().top - 8) - viewport.top,
+          );
         if (!scrolled) {
-          surface.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+          inspector.scrollTop = 0;
+          const mapBox = surface.getBoundingClientRect();
+          const detailsBox = inspector.getBoundingClientRect();
+          window.scrollBy({
+            top:
+              (Math.min(mapBox.top, detailsBox.top) +
+                Math.max(mapBox.bottom, detailsBox.bottom) -
+                viewport.top -
+                viewport.bottom) /
+              2,
+            behavior: 'instant',
+          });
           scrolled = true;
         }
         const bounds = surface.getBoundingClientRect();
-        const viewport = new DOMRect(0, 0, window.innerWidth, window.innerHeight);
         const nodesVisible = request.objectIds.every((id) => {
           const node = surface.querySelector(`.spatial-node[data-object-id="${CSS.escape(id)}"]`);
-          return rendered(node) && contained(node, bounds) && contained(node, viewport);
+          return (
+            rendered(node) &&
+            contained(node, bounds) &&
+            contained(node, viewport) &&
+            uncovered(node)
+          );
         });
         const selected = surface.querySelector(
           target.kind === 'object'
             ? `.spatial-node[data-object-id="${CSS.escape(target.id)}"][aria-pressed="true"]`
             : `.spatial-edge[data-layout-id="relationship-${CSS.escape(target.id)}"].selected`,
         );
-        if (nodesVisible && rendered(selected) && contained(selected, bounds)) {
+        const summary = inspector.querySelector('p');
+        if (
+          nodesVisible &&
+          rendered(selected) &&
+          contained(selected, bounds) &&
+          contained(selected, viewport) &&
+          uncovered(selected) &&
+          contained(inspector, viewport) &&
+          uncovered(inspector) &&
+          rendered(summary) &&
+          contained(summary, inspector.getBoundingClientRect()) &&
+          uncovered(summary)
+        ) {
           finish(true);
           return;
         }

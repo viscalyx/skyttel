@@ -1,9 +1,10 @@
 # Profilbilder
 
-En profilbild hjälper dig att känna igen ett objekt. Öppna objektets
-detaljer och lägg först eventuell oskickad text i ditt utkast. Välj sedan
-**Välj profilbild**. Det gäller också nya objekt: lägg objektet i utkastet
-innan du väljer bilden. **Ta bort profilbild** föreslår att bilden tas bort.
+En profilbild hjälper dig att känna igen ett objekt. Välj objektet och
+**Redigera valt objekt** i detaljpanelen. Lägg först eventuell oskickad
+text i ditt utkast och välj sedan **Välj profilbild**. Det gäller också
+nya objekt: lägg objektet i utkastet innan du väljer bilden.
+**Ta bort profilbild** föreslår att bilden tas bort.
 
 Bildval, byte och borttagning blir privata förslag. Du ser bilden i
 detaljerna och kan granska bilden före och efter i hela utkastet.

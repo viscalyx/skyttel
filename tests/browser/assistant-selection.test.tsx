@@ -36,10 +36,12 @@ const state: MapState = {
   draft: { version: 0, changes: [] },
 };
 
-async function open() {
-  await page.viewport(1280, 900);
-  await expect.poll(() => innerWidth).toBe(1280);
-  await expect.poll(() => matchMedia('(min-width: 1100px) and (pointer: fine)').matches).toBe(true);
+async function open(width = 1280, height = 900, mapState = state) {
+  await page.viewport(width, height);
+  await expect.poll(() => innerWidth).toBe(width);
+  await expect
+    .poll(() => matchMedia('(min-width: 1100px) and (pointer: fine)').matches)
+    .toBe(width >= 1100);
   let current: TextAssistantView = {
     id: 'conversation',
     revision: 0,
@@ -64,7 +66,7 @@ async function open() {
         positions: [],
         settings: { ...defaultViewSettings, version: 0 },
       });
-    if (url.includes('/map?')) return Response.json(state);
+    if (url.includes('/map?')) return Response.json(mapState);
     if (url.endsWith('/text-assistant'))
       return Response.json(init?.method === 'POST' ? current : { available: true });
     if (url.endsWith('/messages')) {
@@ -183,4 +185,42 @@ test('a hidden document never reports a visible map selection', async () => {
   await app.show({ kind: 'object', id: 'lo' });
   await expect.poll(() => app.acknowledgements.length).toBe(1);
   expect(app.acknowledgements[0].displayed).toBe(false);
+});
+
+test('a panel covering the actual inspector prevents a successful display acknowledgement', async () => {
+  const app = await open();
+  const cover = document.createElement('style');
+  cover.textContent = `
+    .map-inspector { position: relative; }
+    .map-inspector[data-selection-id]::after {
+      content: ''; position: absolute; inset: 0; z-index: 100; background: white;
+    }
+  `;
+  document.head.append(cover);
+  try {
+    await app.show({ kind: 'object', id: 'lo' });
+    await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
+    expect(app.acknowledgements[0].displayed).toBe(false);
+  } finally {
+    cover.remove();
+  }
+});
+
+test('long phone details remain scrollable beside the visible selection and require explicit editing', async () => {
+  const app = await open(390, 844, {
+    ...state,
+    objects: state.objects.map((object) => ({
+      ...object,
+      description: 'Påhittade uppgifter om hushållets objekt. '.repeat(40),
+    })),
+  });
+  await app.show({ kind: 'object', id: 'lo' });
+  await expect.poll(() => app.acknowledgements.length).toBe(1);
+  expect(app.acknowledgements[0].displayed).toBe(true);
+  const inspector = page.getByRole('region', { name: 'Val och redigering' }).element();
+  expect(inspector.scrollHeight).toBeGreaterThan(inspector.clientHeight);
+  expect(inspector.getBoundingClientRect().bottom).toBeLessThanOrEqual(innerHeight);
+  expect(inspector.querySelector('form')).toBeNull();
+  await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+  await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Lo');
 });

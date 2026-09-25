@@ -5,6 +5,12 @@ privata utkast. På telefon och platta börjar du i **Lista och detaljer**.
 **Öppna rymdkartan** fyller den tillgängliga webbytan. **Samlad vy** visar
 kartan och listan tillsammans där det finns plats.
 
+När assistenten visar ett objekt eller samband öppnas **Samlad vy**.
+Kartan och det valda innehållets detaljpanel visas samtidigt innan
+markeringsbeskedet. På en smal skärm ligger detaljpanelen direkt under
+kartan; rulla i panelen för att läsa längre uppgifter. Välj
+**Redigera valt objekt** eller **Redigera valt samband** för att ändra dem.
+
 ## Hitta innehåll
 
 Utgångsläget omfattar alla objekt och samband. **Sök objekt** och

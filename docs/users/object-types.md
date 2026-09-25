@@ -35,9 +35,10 @@ Namn och beskrivning kan rättas även när typen eller fältet används.
 Objekten behåller sina identiteter och värden när definitionerna byter namn.
 Snarlika namn kopplas inte ihop automatiskt.
 
-För att rätta ett värde öppnar du objektet. Ändra fältet, lägg rättelsen
-i utkastet och spara hela utkastet. Du kan också rensa ett värde eller
-välja **Obesvarat**. Andra medlemmar ser den sparade definitionen och kan
+För att rätta ett värde väljer du objektet och **Redigera valt objekt**
+i detaljpanelen. Ändra fältet, lägg rättelsen i utkastet och spara hela
+utkastet. Du kan också rensa ett värde eller välja **Obesvarat**.
+Andra medlemmar ser den sparade definitionen och kan
 skapa egna objekt med samma fält. Din privata nya typ blir tillgänglig
 för dem först efter ditt sparande.
 
@@ -48,8 +49,9 @@ värdeslag; felbeskedet avslöjar inte utkastets innehåll.
 
 ## Byt typ på ett objekt
 
-Öppna objektet och välj en annan **Objekttyp**, exempelvis från Cykel till
-Fordon. Objektets identitet och alla dess samband finns kvar. Namn,
+Välj objektet och **Redigera valt objekt** i detaljpanelen. Välj sedan
+en annan **Objekttyp**, exempelvis från Cykel till Fordon.
+Objektets identitet och alla dess samband finns kvar. Namn,
 beskrivning och andra uppgifter som inte hör till typens egna fält påverkas
 inte av själva typvalet.
 

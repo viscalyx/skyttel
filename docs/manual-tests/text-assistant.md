@@ -333,7 +333,8 @@ Inga modellsvar behövs; assistenten läser det befintliga utkastet.
 ### TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen
 
 **Syfte:** Assistentens markeringsbesked ska följa synlig karta och rätt
-uppgifter i detaljpanelen, även när kartan är stängd eller bortpanorerad.
+uppgifter i detaljpanelen, även när kartan är stängd eller bortpanorerad
+och när skärmen är smal.
 
 **Användare:** Alex i den kontrollerade installationen.
 
@@ -344,7 +345,7 @@ utkastet genom formulären. Stäng formulären utan oskickad text.
 **Integrationstest:**
 [assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts),
 testfallet “TEXT-08: markering öppnar och centrerar objekt och samband
-före bekräftelsen”.
+före bekräftelsen”, både dator- och telefonvarianten.
 
 **Steg:**
 
@@ -353,7 +354,8 @@ före bekräftelsen”.
    `tool NUMMER show_map_item {"kind":"object","id":"LO-ID"}`;
    byt `NUMMER` och `LO-ID` mot provets verkliga värden.
 2. Kontrollera att kartan öppnas och att Lo syns markerad i den.
-   Detaljpanelen ska visa Lo och beskrivningen **Påhittad uppgift**.
+   Detaljpanelen ska samtidigt synas med Lo och beskrivningen
+   **Påhittad uppgift**, utan att du behöver rulla sidan för att hitta den.
    Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
    `reply NUMMER Här är urvalet.` och kontrollera **Markerat i kartan**.
 3. Öppna **Navigera rymden** och panorera tills objekten inte syns.
@@ -361,18 +363,22 @@ före bekräftelsen”.
    ID från `held` och svara med
    `tool NUMMER show_map_item {"kind":"relationship","id":"SAMBANDS-ID"}`.
 4. Kontrollera att båda objekten och det valda sambandet syns igen.
-   Detaljpanelen ska visa **Lo Exempel → Använder → Molnmusik**.
+   Detaljpanelen ska samtidigt visa **Lo Exempel → Använder → Molnmusik**.
    Kontrollera `displayed: true` och släpp sluttexten.
 5. Välj **Redigera valt samband**. Ändra **Till objekt** i formuläret
    utan att lägga ändringen i utkastet.
    Skriv **Visa Lo igen** och upprepa visningsanropet från steg 1.
    Kontrollera `displayed: false`, släpp sluttexten och kontrollera att
    formulärets oskickade ändring finns kvar.
+6. Stäng formuläret och upprepa steg 1–5 med ett smalt telefonfönster.
+   Detaljpanelen ska synas direkt under kartan. Om uppgifterna är längre
+   kan du rulla inuti panelen. Markeringen öppnar inget redigeringsformulär.
 
 **Förväntat resultat:**
 
 - Markeringsbekräftelsen kommer först efter att det efterfrågade objektet
-  eller sambandet visas i kartan och dess uppgifter finns i detaljpanelen.
+  eller sambandet visas i kartan och dess uppgifter samtidigt syns i
+  detaljpanelen, även på telefon.
 - Kamera och vy anpassas till urvalet utan att personliga placeringar
   eller hushållets innehåll ändras.
 - Oskickad formulärtext förhindrar ett nytt urval. Ingen ny bekräftad
