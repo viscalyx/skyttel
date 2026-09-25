@@ -3,6 +3,8 @@
 This guide is for developers and operators enabling Skyttel's own text
 assistant. For reproducible faults without credentials or charges, use
 the [controlled local launcher](manual-text-assistant.md).
+The [voice setup guide](voice-assistant.md) covers the same assistant with
+microphone input and spoken output.
 
 ## Enable real provider access
 

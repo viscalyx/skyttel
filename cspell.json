@@ -247,7 +247,13 @@
     "avbrottskoden",
     "importfil",
     "ångrandet",
-    "bilddelen"
+    "bilddelen",
+    "Autoplay",
+    "röstsetup",
+    "talförståelse",
+    "Talprov",
+    "talprovet",
+    "textassistentanslutning"
   ],
   "overrides": [
     {

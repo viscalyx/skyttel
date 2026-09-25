@@ -5,6 +5,19 @@ before upgrading Skyttel.
 
 ## Unreleased
 
+### Voice assistant
+
+The optional voice assistant uses the existing private AI provider setup.
+Keep a secure browser origin and permit the provider's server connections
+and browser media traffic. Users must explicitly start microphone access;
+blocked audio requires a browser playback action. See the
+[voice setup and recovery guide](../development/voice-assistant.md).
+
+A broken voice connection stops associated work. It does not undo a completed
+save. Check durable save receipts before retrying uncertain work. Final voice
+usage can be unavailable after a connection loss; retain that uncertainty.
+No database conversion is required for this upgrade.
+
 ### Restore to a fresh installation
 
 The administrator can now explicitly assign restored historical private

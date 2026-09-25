@@ -7,6 +7,7 @@ import { createApp } from '../../src/server/app.js';
 import { createAuth, verifyAuthSchema } from '../../src/server/auth.js';
 import type { Config } from '../../src/server/config.js';
 import { openDatabase } from '../../src/server/database.js';
+import type { LiveSidebandFactory, LiveUsage } from '../../src/server/live-provider.js';
 import type { TextModelUsage } from '../../src/server/text-assistant-model.js';
 import { seedLargeMap } from './large-map.js';
 import { legacyAuth } from './legacy-auth.js';
@@ -36,6 +37,10 @@ export async function createInstallation(
     databasePath?: string;
     modelFetch?: typeof fetch;
     modelUsage?: TextModelUsage;
+    liveFetch?: typeof fetch;
+    liveSideband?: LiveSidebandFactory;
+    liveUsage?: LiveUsage;
+    browserProviderScript?: string;
   } = {},
 ) {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-test-'));
@@ -56,9 +61,9 @@ export async function createInstallation(
   let database: ReturnType<typeof openDatabase>;
   let server: ServerType;
   let closeApp: () => Promise<void>;
+  let handle: (request: Request) => Response | Promise<Response> = () =>
+    new Response(null, { status: 503 });
   async function start() {
-    let handle: (request: Request) => Response | Promise<Response> = () =>
-      new Response(null, { status: 503 });
     server = serve({
       fetch: (request) => handle(request),
       hostname: config.host,
@@ -116,9 +121,12 @@ export async function createInstallation(
       auth,
       modelFetch: databaseOptions.modelFetch,
       modelUsage: databaseOptions.modelUsage,
+      liveFetch: databaseOptions.liveFetch,
+      liveSideband: databaseOptions.liveSideband,
+      liveUsage: databaseOptions.liveUsage,
     });
     closeApp = app.close;
-    handle = (request) => {
+    handle = async (request) => {
       // Model the original login-only callback while arranging a legacy
       // installation. Production always applies all migrations before serving.
       if (
@@ -126,7 +134,35 @@ export async function createInstallation(
         new URL(request.url).pathname.startsWith('/api/auth/callback/')
       )
         return auth.handler(request);
-      return app.fetch(request);
+      // Disposable browser-provider substitution only. Production has no asset,
+      // HTML alteration or switch for this controlled microphone/WebRTC seam.
+      const script = databaseOptions.browserProviderScript;
+      const scriptPath = '/assets/manual-voice-provider.js';
+      if (script && request.method === 'GET' && new URL(request.url).pathname === scriptPath)
+        return new Response(script, {
+          headers: {
+            'Content-Type': 'text/javascript; charset=utf-8',
+            'Cache-Control': 'no-store',
+          },
+        });
+      const response = await app.fetch(request);
+      if (
+        script &&
+        response.status === 200 &&
+        response.headers.get('Content-Type')?.includes('text/html')
+      ) {
+        const headers = new Headers(response.headers);
+        headers.delete('Content-Length');
+        headers.delete('ETag');
+        return new Response(
+          (await response.text()).replace('<head>', `<head><script src="${scriptPath}"></script>`),
+          {
+            status: response.status,
+            headers,
+          },
+        );
+      }
+      return response;
     };
   }
   async function stop() {
@@ -149,6 +185,7 @@ export async function createInstallation(
   await start();
   return {
     origin: config.origin,
+    fetch: (request: Request) => handle(request),
     seedDemo() {
       return seedDemo(database, config);
     },

@@ -25,7 +25,7 @@ beskriver egna betydelser, benämningar från båda håll och dubbletter.
 [Guiden för externa assistenter](docs/users/assistants.md) beskriver
 AI-behandlingsval, läsåtkomst och återkallelse för textklienter.
 [Guiden för Skyttels textassistent](docs/users/text-assistant.md) beskriver
-samlat utkast, rättelser, sparbesked, avbrott och återfunna kvitton.
+text och röst, samlat utkast, rättelser, sparbesked, avbrott och återfunna kvitton.
 [Guiden för rymdkartan](docs/users/spatial-map.md) beskriver navigering,
 gemensam redigering, ändringssymboler och enheternas begränsningar.
 [Guiden för profilbilder](docs/users/profile-images.md) beskriver privata

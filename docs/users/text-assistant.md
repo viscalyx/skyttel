@@ -14,6 +14,35 @@ hushållets egna typer och ditt befintliga privata utkast. Förslag från
 andra klienter ingår också. Oskickad formulärtext ligger kvar i formuläret
 och ingår först när du lägger den i utkastet.
 
+## Tala med Skyttel
+
+Välj **Starta röst** i ditt pågående samtal och tillåt mikrofonen i
+webbläsaren. Rösten använder samma utkast och regler som textassistenten.
+OpenAI behandlar ljudet när rösten är igång. Mikrofonen startar först när
+du väljer det och anslutningen är klar. Om webbläsaren blockerar ljudet,
+välj **Spela upp ljud**. Du kan fortsätta med text eller formulär när
+mikrofonen eller ljuduppspelningen inte fungerar.
+
+**Lyssnar** betyder att rösten är ansluten. **Assistenten arbetar** visar
+att ett uppdrag pågår. Om ett sparresultat är oklart visas att det tidigare
+sparförsöket måste kontrolleras innan nya ändringar.
+
+Beskriv ärendet på svenska, svara på följdfrågor och rätta uppgifter med
+rösten. Säg exempelvis **Rätta priset till 189 kr och spara** för ett
+samlat sparande. En paus, ett ofullständigt fragment eller ett tidigare
+sparbesked ger inte tillåtelse för ett nytt sparande. Vid oklarheter
+behövs ett nytt tydligt besked. Kvittot och kartans verkliga markering
+är bekräftelsen även när du använder röst.
+
+**Stäng av rösten** stoppar mikrofonen och pågående röstarbete. Nytt tal
+kan också avbryta ett äldre uppdrag. Vid bruten anslutning stängs
+mikrofonen av medan anslutningen kontrolleras; en längre störning kräver
+ett nytt startval. Ett ljudsvar som inte hördes betyder inte att ett
+sparande misslyckades. Kontrollera sparresultat först. Du kan säga
+**Slutför samma sparförsök** när exakt ett väntande försök finns.
+Genomförda sparanden och deras kvitton finns kvar efter avstängning,
+omladdning och omstart.
+
 ## Granska, rätta och spara
 
 **Hela ditt utkast** visar de samlade förslagen. Öppna detaljerna för
@@ -54,6 +83,7 @@ eller byte av innehållsägare kräver en ny anslutning.
 
 ## Vilka uppgifter behandlas?
 
+Vid röst används även ljud och tillfälliga textfragment av samtalet.
 Skyttel skickar meddelandet, hela det egna utkast som behöver granskas och
 relevanta kartdelar till OpenAI. Bilder skickas inte i textanropen.
 Fullständiga samtal sparas inte som hushållsinnehåll. Skriv inte lösenord,

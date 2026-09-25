@@ -22,6 +22,9 @@ betyder inte att dess manuella prov är genomfört.
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
   definitioner, granskad sammanslagning med bilder samt ångring efter import.
 
+- [Skyttels röst](voice-assistant.md): svenska röstuppdrag, avbrott,
+  faktisk markering och exakt sparåterhämtning. Kontrollerat familjeunderlag
+  och verkligt tal redovisas separat.
 - [Skyttels textassistent](text-assistant.md): separat AI-val, hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
   faktisk markering med skyddad formulärtext. Kontrollerade lokala

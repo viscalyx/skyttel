@@ -16,6 +16,7 @@ import { householdErasureRoutes } from './household-erasure-routes.js';
 import { householdExportRoutes } from './household-export-routes.js';
 import { householdImportRoutes } from './household-import-routes.js';
 import { createHousehold, householdAccess, isFirstAdmin, isInitialized } from './households.js';
+import type { LiveSidebandFactory, LiveUsage } from './live-provider.js';
 import { createLoginMethods } from './login-methods.js';
 import { MapError } from './map.js';
 import { mapRoutes } from './map-routes.js';
@@ -23,6 +24,7 @@ import { profileImageRoutes } from './profile-image-routes.js';
 import { imageUploadLimit } from './profile-images.js';
 import { textAssistantRoutes } from './text-assistant.js';
 import type { TextModelUsage } from './text-assistant-model.js';
+import { voiceAssistantRoutes } from './voice-assistant.js';
 
 export function createApp({
   config,
@@ -31,6 +33,9 @@ export function createApp({
   identity = buildIdentity,
   modelFetch,
   modelUsage,
+  liveFetch,
+  liveSideband,
+  liveUsage,
 }: {
   config: Config;
   database: Database.Database;
@@ -38,6 +43,9 @@ export function createApp({
   identity?: typeof buildIdentity;
   modelFetch?: typeof fetch;
   modelUsage?: TextModelUsage;
+  liveFetch?: typeof fetch;
+  liveSideband?: LiveSidebandFactory;
+  liveUsage?: LiveUsage;
 }) {
   const app = new Hono();
   const linking = createLoginMethods(database, auth, config.origin);
@@ -194,6 +202,7 @@ export function createApp({
   app.route('/api', mapRoutes(database, auth, config.origin));
   app.route('/api', profileImageRoutes(database, auth, config.origin));
   app.route('/', assistantRoutes(database, auth, config.origin));
+  let stopVoice: ((sessionId: string) => void) | undefined;
   const textAssistant = textAssistantRoutes({
     database,
     auth,
@@ -201,8 +210,19 @@ export function createApp({
     dispatch: (request) => app.fetch(request),
     modelFetch,
     modelUsage,
+    onStop: (sessionId) => stopVoice?.(sessionId),
   });
   app.route('/api', textAssistant.routes);
+  const voiceAssistant = voiceAssistantRoutes({
+    config,
+    dispatch: (request) => app.fetch(request),
+    liveFetch,
+    liveSideband,
+    liveUsage,
+    interrupt: textAssistant.interrupt,
+  });
+  stopVoice = voiceAssistant.stopSession;
+  app.route('/api', voiceAssistant.routes);
   app.all('/api/*', (context) => context.json({ error: 'not_found' }, 404));
   app.use('/assets/*', serveStatic({ root: './dist/client' }));
   app.get(
@@ -213,5 +233,10 @@ export function createApp({
     },
     serveStatic({ path: './dist/client/index.html' }),
   );
-  return Object.assign(app, { close: textAssistant.close });
+  return Object.assign(app, {
+    close: async () => {
+      await voiceAssistant.close();
+      await textAssistant.close();
+    },
+  });
 }

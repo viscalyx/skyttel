@@ -10,6 +10,7 @@ import { checkContainerAssistants } from './check-container-assistants.mjs';
 import { checkContainerErasure } from './check-container-erasure.mjs';
 import { checkContainerRecovery } from './check-container-recovery.mjs';
 import { checkContainerTextAssistant } from './check-container-text-assistant.mjs';
+import { checkContainerVoiceAssistant } from './check-container-voice-assistant.mjs';
 
 const exec = promisify(execFile);
 const docker = process.env.DOCKER_BIN ?? 'docker';
@@ -379,6 +380,14 @@ try {
     origin: configuredOrigin,
   });
   await checkContainerTextAssistant({
+    command,
+    request,
+    waitUntilReady,
+    name: persisted,
+    fixture,
+    origin: configuredOrigin,
+  });
+  await checkContainerVoiceAssistant({
     command,
     request,
     waitUntilReady,

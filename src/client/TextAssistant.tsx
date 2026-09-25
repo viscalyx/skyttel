@@ -9,6 +9,7 @@ import { CustomFieldsDetails, ObjectTypeDetails } from './ObjectTypes.js';
 import { ProfileImage } from './ProfileImage.js';
 import { RelationshipTypeDetails } from './RelationshipTypes.js';
 import { receiptMessage, rejectionMessage } from './SaveOperations.js';
+import { VoiceAssistant } from './VoiceAssistant.js';
 
 function relationshipDetails(
   value: RelationshipValue,
@@ -316,7 +317,8 @@ export function TextAssistant({
       {!session && available && (
         <>
           <p>
-            OpenAI behandlar ditt meddelande, hela ditt eget utkast och relevanta kartuppgifter.
+            OpenAI behandlar ditt meddelande, hela ditt eget utkast och relevanta kartuppgifter. Om
+            du startar röst behandlas även ditt ljud. Mikrofonen startar först när du väljer det.
             Samtalet sparas inte i Skyttels hushållsinnehåll. Skriv inga lösenord eller fullständiga
             konto- och kortnummer.
           </p>
@@ -348,6 +350,13 @@ export function TextAssistant({
       {error && <p role="alert">{error}</p>}
       {session && (
         <>
+          <VoiceAssistant
+            householdId={householdId}
+            assistant={session}
+            onAssistant={update}
+            onAccessLost={onAccessLost}
+            onRecoveryNeeded={() => setUnknown(true)}
+          />
           <p role="status">
             {session.phase === 'working'
               ? 'Assistenten arbetar… Du kan avbryta eller ge ett nytt uppdrag.'
