@@ -283,7 +283,9 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
         return Math.hypot(after.x - panBefore.x, after.y - panBefore.y);
       })
       .toBeGreaterThan(10);
-    expect((await projection()).separation / panBefore.separation).toBeCloseTo(1, 1);
+    await expect
+      .poll(async () => (await projection()).separation / panBefore.separation)
+      .toBeCloseTo(1, 1);
     expect(await read()).toEqual(saved);
     await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
     const pinchBefore = await projection();
