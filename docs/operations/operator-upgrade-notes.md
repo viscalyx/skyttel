@@ -8,8 +8,8 @@ before upgrading Skyttel.
 ### Restore to a fresh installation
 
 The administrator can now explicitly assign restored historical private
-content to verified current members. No new migration or archive format is
-required beyond schema 15. Rebuild the application and use the
+content to verified current members. This change needs no additional database
+migration or archive format change. Rebuild the application and use the
 [recovery runbook](recovery.md) when replacing a disk or moving installation.
 Keep the source read-only after its final export and allow only one writable
 installation after cutover. Configure fresh authentication secrets and the
