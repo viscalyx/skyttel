@@ -158,8 +158,19 @@ export function textAssistantRoutes({
     // A negated map fact does not negate a separate save command. A correction
     // may precede that command in the same sentence, but its imperative must
     // itself be affirmative. Conditions and withheld saving still block it.
-    const unquoted = text.toLocaleLowerCase('sv').replace(/["'“”«»].*?["'“”«»]/gu, '');
-    const sentences = unquoted
+    const unquoted = text
+      .toLocaleLowerCase('sv')
+      .replace(/["'“”«»].*?["'“”«»]/gu, '')
+      .trim();
+    // In a bounded description replacement, "om" can mean "about". Only
+    // recognize a factual heading with one topic word at the end of that
+    // replacement. Modal ellipses and extra clauses remain conditional;
+    // this is not a general parser for ambiguous description wording.
+    const instruction = unquoted.replace(
+      /(^|[.!;]\s*)((?:ändra|rätta)\s+beskrivningen\s+till\s+(?:information|uppgifter|fakta|anteckningar))\s+om\s+([\p{L}-]+)(?=\s*(?:[.!;]|(?:och|sedan)\s+spara\b|$))/gu,
+      '$1$2 $3',
+    );
+    const sentences = instruction
       .trim()
       .replace(/[.!;]+$/u, '')
       .split(/[.!;]\s*/u);
@@ -167,7 +178,10 @@ export function textAssistantRoutes({
     // Do not infer that a final imperative cancels an earlier withheld save,
     // or turn an example/condition spanning sentences into current authority.
     if (
-      /\b(om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(unquoted) ||
+      /\bom\s+(?:möjligt|tillåtet|nödvändigt|lämpligt|godkänt|säkert|önskat|föreskrivet|klart|okej|ok)\b/u.test(
+        unquoted,
+      ) ||
+      /\b(om|när|kanske|skulle|exempel|citat|förklara)\b/u.test(instruction) ||
       sentences
         .slice(0, -1)
         .some(

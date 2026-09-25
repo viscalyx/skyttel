@@ -219,6 +219,77 @@ async function proposal(path: string) {
   expect(response.status()).toBe(200);
 }
 
+test.each([
+  { instruction: 'Rätta beskrivningen till Information om bilen. Spara nu.', save: true },
+  { instruction: 'Ändra beskrivningen till Information om bilen och spara.', save: true },
+  {
+    instruction: 'Rätta beskrivningen till Information om bilen. Spara om du är säker.',
+    save: false,
+  },
+  {
+    instruction: 'Ändra beskrivningen till Information om bilen och spara inte.',
+    save: false,
+  },
+])(
+  'spoken description correction $instruction requires a current unconditional save command',
+  async ({ instruction, save }) => {
+    let typeId = '';
+    const model = textModel(() => [
+      modelTool('submit_changes', {
+        version: 1,
+        contentVersion: 1,
+        completion: 'save',
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: 'web-object',
+              baseRevision: null,
+              value: { typeId, name: 'Formulärförslag', description: 'Information om bilen' },
+            },
+          },
+        ],
+      }),
+    ]);
+    const voice = await setupVoice(model.provider);
+    await proposal(voice.path);
+    const mapPath = voice.path.replace('/text-assistant', '/map');
+    typeId = (await (await browser.get(mapPath)).json()).types[0].id;
+    await voice.poll();
+    voice.transcript(instruction);
+    voice.delegate();
+    await expect
+      .poll(
+        () =>
+          voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
+      )
+      .toBe(1);
+    const { assistant } = await voice.poll();
+    const map = await (await browser.get(mapPath)).json();
+    const { history } = await (await browser.get(`${mapPath}/history`)).json();
+    if (save) {
+      expect(assistant).toMatchObject({
+        phase: 'ready',
+        receipt: {
+          changes: [{ after: { id: 'web-object', description: 'Information om bilen' } }],
+        },
+      });
+      expect(map.objects).toMatchObject([
+        { id: 'web-object', description: 'Information om bilen' },
+      ]);
+      expect(map.draft.changes).toEqual([]);
+      expect(history).toEqual([assistant.receipt]);
+      expect(JSON.stringify(voice.live.sent.at(-1))).toContain('Sparat');
+    } else {
+      expect(assistant).toMatchObject({ phase: 'error', error: 'assistant_save_not_requested' });
+      expect(assistant.receipt).toBeUndefined();
+      expect(map.objects).toEqual([]);
+      expect(map.draft.changes).toMatchObject([{ id: 'web-object', after: { description: '' } }]);
+      expect(history).toEqual([]);
+    }
+  },
+);
+
 test('voice commentary separates unverified paraphrased claims and useful questions from actual result proof', async () => {
   const modelReply =
     'Klart. Ändringarna är nu lagrade i hushållets karta. Saved successfully. Vem betalar?';

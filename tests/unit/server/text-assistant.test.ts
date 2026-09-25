@@ -234,46 +234,68 @@ async function webProposal(name = 'Redan från formuläret', id = 'web-object') 
   return value;
 }
 
-test('one current correction and save instruction saves the whole existing draft and confirms only its durable receipt', async () => {
-  let step = 0;
-  let value: Record<string, unknown> = {};
-  const model = textModel((body) => {
-    if (step++ === 0)
-      return [
-        modelTool('propose_object', {
-          version: 1,
-          contentVersion: 1,
-          id: 'web-object',
-          baseRevision: null,
-          value: { ...value, name: 'Rättat namn' },
-        }),
-      ];
-    if (step === 2)
-      return [
-        modelTool('save_draft', {
-          version: lastToolResult(body).version,
-          contentVersion: 1,
-          operationId: 'model-save',
-        }),
-      ];
-    return [modelMessage('Jag har sparat massor av påhittade saker!')];
-  });
-  await setup(model.provider);
-  value = await webProposal();
-  const status = await message(await start(), 'Rätta namnet till Rättat namn och spara.');
-  expect(status.phase).toBe('ready');
-  expect(status.receipt.changes).toMatchObject([{ after: { name: 'Rättat namn' } }]);
-  expect(status.reply).toBe('Sparat. Hela utkastet finns i hushållets karta.');
-  expect(status.reply).not.toContain('påhittade saker');
-  const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
-  expect(map.objects).toMatchObject([{ id: 'web-object', name: 'Rättat namn' }]);
-  expect(map.draft.changes).toEqual([]);
-  await app.restart();
-  const reconnected = await start();
-  expect(reconnected.operations).toContainEqual(
-    expect.objectContaining({ status: 'succeeded', operationId: status.receipt.operationId }),
-  );
-});
+test.each([
+  ['Rätta namnet till Rättat namn och spara.', { name: 'Rättat namn' }],
+  [
+    'Rätta beskrivningen till Information om bilen. Spara nu.',
+    { description: 'Information om bilen' },
+  ],
+  [
+    'Ändra beskrivningen till Information om bilen och spara.',
+    { description: 'Information om bilen' },
+  ],
+  ['Ändra beskrivningen till Uppgifter om huset och spara.', { description: 'Uppgifter om huset' }],
+  [
+    '  Ändra beskrivningen till Information om värmepumpen och spara.  ',
+    { description: 'Information om värmepumpen' },
+  ],
+  [
+    'Rätta beskrivningen till Anteckningar om hunden. Spara nu.',
+    { description: 'Anteckningar om hunden' },
+  ],
+])(
+  'a current correction and save instruction %s confirms only its durable receipt',
+  async (instruction, correction) => {
+    let step = 0;
+    let value: Record<string, unknown> = {};
+    const model = textModel((body) => {
+      if (step++ === 0)
+        return [
+          modelTool('propose_object', {
+            version: 1,
+            contentVersion: 1,
+            id: 'web-object',
+            baseRevision: null,
+            value: { ...value, ...correction },
+          }),
+        ];
+      if (step === 2)
+        return [
+          modelTool('save_draft', {
+            version: lastToolResult(body).version,
+            contentVersion: 1,
+            operationId: 'model-save',
+          }),
+        ];
+      return [modelMessage('Jag har sparat massor av påhittade saker!')];
+    });
+    await setup(model.provider);
+    value = await webProposal();
+    const status = await message(await start(), instruction);
+    expect(status.phase).toBe('ready');
+    expect(status.receipt.changes).toMatchObject([{ after: correction }]);
+    expect(status.reply).toBe('Sparat. Hela utkastet finns i hushållets karta.');
+    expect(status.reply).not.toContain('påhittade saker');
+    const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+    expect(map.objects).toMatchObject([{ id: 'web-object', ...correction }]);
+    expect(map.draft.changes).toEqual([]);
+    await app.restart();
+    const reconnected = await start();
+    expect(reconnected.operations).toContainEqual(
+      expect.objectContaining({ status: 'succeeded', operationId: status.receipt.operationId }),
+    );
+  },
+);
 
 test.each(['Kan du spara', 'Kan du spara?', 'Jag vill att du sparar det direkt.'])(
   'a current natural whole-draft instruction %s produces one verified save',
@@ -695,6 +717,18 @@ test.each([
   'Ta inte bort kopplingen och spara.',
   'Du får inte ändra kopplingen och spara.',
   'Rätta beskrivningen? Och spara.',
+  'Rätta beskrivningen till Information om bilen. Spara om du är säker.',
+  'Ändra beskrivningen till Information om bilen om du är säker och spara.',
+  'Rätta beskrivningen till Information om bilen finns. Spara nu.',
+  'Ändra beskrivningen till Information om möjligt och spara.',
+  'Ändra beskrivningen till Information om tillåtet och spara.',
+  'Rätta beskrivningen till Information om föreskrivet. Spara nu.',
+  'Om bilen finns, rätta beskrivningen till Information om bilen och spara.',
+  'Rätta beskrivningen till Information om bilen. Spara inte nu.',
+  'Ändra inte beskrivningen till Information om bilen och spara.',
+  'Ändra beskrivningen till Information om bilen och spara bara bilen.',
+  'Spara inte än. Rätta beskrivningen till Information om bilen och spara.',
+  'Rätta beskrivningen till Information om bilen. Säg ”spara nu”.',
 ])('a provider cannot save when the actual current instruction is %s', async (text) => {
   const model = textModel(() => [
     modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'injected-save' }),
