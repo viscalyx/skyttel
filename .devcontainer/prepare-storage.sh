@@ -7,7 +7,6 @@ owner="$(id -u):$(id -g)"
 storage=(
   /data
   "$HOME/.codex"
-  "$HOME/.codex/sqlite"
   "$HOME/.codex/tmp"
   "$HOME/.config"
   "$HOME/.vscode-server"
@@ -20,7 +19,8 @@ for directory in "${storage[@]}"; do
     \( -path "$HOME/.codex/sessions" \
        -o -path "$HOME/.codex/plugins" \
        -o -path "$HOME/.codex/skills" \
-       -o -path "$HOME/.codex/rules" \) -prune \
+       -o -path "$HOME/.codex/rules" \
+       -o -path "$HOME/.codex/auth.json" \) -prune \
     -o \( ! -uid "$(id -u)" -o ! -gid "$(id -g)" \) \
     -exec chown -h "$owner" {} +
 done
