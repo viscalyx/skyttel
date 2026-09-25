@@ -91,13 +91,13 @@ Råa sessionsloggar, hemligheter och kördata ingår inte i grenen.
 
 ## Verifiering och kvarvarande mänskliga prov
 
-Revision `41e7b4f` klarar `npm run check`: typkontroll, Biome,
+Revision `df74092` klarar `npm run check`: typkontroll, Biome,
 Markdown och stavning, 96 release- och säkerhetsprov, produktionsbygge,
-883 enhets- och webbläsartester samt 182 integrationstester.
-Täckningen är 93,88 procent satser, 90,54 procent grenar, 93,76 procent
-funktioner och 96,11 procent rader. Gränsvärdena är oförändrade.
+906 enhets- och webbläsartester samt 182 integrationstester.
+Täckningen är 93,87 procent satser, 90,53 procent grenar, 93,76 procent
+funktioner och 96,12 procent rader. Gränsvärdena är oförändrade.
 Produktionscontainerns nio kontrollgrupper går igenom för samma
-produktkod, revision `2257fe5`, inklusive
+revision, inklusive
 beständighet vid byte av container, MCP, text, röst och återimport.
 De proven använder kontrollerade leverantörer och gör inga modellköp.
 Slutgranskningens två axlar, kodstandard och specifikation, redovisas
