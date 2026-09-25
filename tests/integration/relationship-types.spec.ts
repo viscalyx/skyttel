@@ -426,6 +426,7 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     );
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('status')).toContainText('Förvaring (sambandstyp)');
+    const originalRelationship = (await (await page.request.get(path)).json()).relationships[0];
     await page.reload();
     await page.getByRole('button', { name: 'Alex blå cykel', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Samband för Alex blå cykel' })).toContainText(
@@ -456,6 +457,7 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     const saved = await (await page.request.get(path)).json();
     expect(saved.relationships).toHaveLength(1);
     expect(saved.relationships[0]).toMatchObject({
+      id: originalRelationship.id,
       sourceId: 'bike',
       targetId: 'garage',
       revision: 1,
@@ -561,6 +563,7 @@ test('STY-05: duplicate adds, edits and concurrent saves preserve identity and r
       targetId: 'bike',
       typeId: 'storage',
       lifecycle: 'ended',
+      endDate: { knowledge: 'known', value: '2020-01-01' },
     });
     const concurrent = { ...edge, targetId: 'shed' };
     expect(
@@ -599,6 +602,12 @@ test('STY-05: duplicate adds, edits and concurrent saves preserve identity and r
     await expect(page.getByRole('status')).toContainText('Sparat');
     const current = await read();
     expect(current.relationships).toHaveLength(3);
+    expect(
+      current.relationships.find((item: { id: string }) => item.id === 'second'),
+    ).toMatchObject({
+      lifecycle: 'ended',
+      endDate: { knowledge: 'known', value: '2020-01-01' },
+    });
     expect(current.relationships.some((item: { id: string }) => item.id === 'mine')).toBe(false);
     expect(current.relationships.some((item: { id: string }) => item.id === 'theirs')).toBe(true);
     const { history } = await (await page.request.get(`${path}/history`)).json();
@@ -614,6 +623,8 @@ test('STY-05: duplicate adds, edits and concurrent saves preserve identity and r
       typeId: 'storage',
       sourceId: 'garage',
       targetId: 'bike',
+      lifecycle: 'ended',
+      endDate: { knowledge: 'known', value: '2020-01-01' },
     });
   } finally {
     await member.close();

@@ -210,13 +210,46 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     await touch('touchMove', [{ ...empty, x: empty.x + 50 }]);
     await touch('touchEnd', []);
     await expect.poll(async () => (await center(page)).x).not.toBe(oldPoint.x);
-    const second = { id: 2, x: empty.x + 150, y: empty.y };
-    await touch('touchStart', [empty, second]);
+    const projection = () =>
+      space(page).evaluate((region) => {
+        const points = ['lamp', 'bike'].map((id) => {
+          const line = region.querySelector<SVGLineElement>(`line[data-object-id="${id}"]`);
+          if (!line) throw new Error('Both projected object anchors must remain visible');
+          return { x: line.x1.baseVal.value, y: line.y1.baseVal.value };
+        });
+        return {
+          x: (points[0].x + points[1].x) / 2,
+          y: (points[0].y + points[1].y) / 2,
+          separation: Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y),
+        };
+      });
+    const panBefore = await projection();
+    const panStart = { id: 1, x: box.x + 70, y: box.y + 65 };
+    const second = { id: 2, x: panStart.x + 150, y: panStart.y };
+    await touch('touchStart', [panStart, second]);
     await touch('touchMove', [
-      { ...empty, x: empty.x + 20, y: empty.y + 20 },
-      { ...second, x: second.x + 55, y: second.y + 20 },
+      { ...panStart, x: panStart.x + 30, y: panStart.y + 20 },
+      { ...second, x: second.x + 30, y: second.y + 20 },
     ]);
     await touch('touchEnd', []);
+    await expect
+      .poll(async () => {
+        const after = await projection();
+        return Math.hypot(after.x - panBefore.x, after.y - panBefore.y);
+      })
+      .toBeGreaterThan(10);
+    expect((await projection()).separation / panBefore.separation).toBeCloseTo(1, 1);
+    expect(await read()).toEqual(saved);
+    const pinchBefore = await projection();
+    await touch('touchStart', [panStart, second]);
+    await touch('touchMove', [
+      { ...panStart, x: panStart.x - 35 },
+      { ...second, x: second.x + 35 },
+    ]);
+    await touch('touchEnd', []);
+    await expect
+      .poll(async () => (await projection()).separation)
+      .toBeGreaterThan(pinchBefore.separation * 1.2);
     expect(await read()).toEqual(saved);
     await expect(space(page).getByRole('img', { name: /Rummets axlar/ })).toBeVisible();
     await expect(space(page).getByRole('img', { name: /Rummets axlar/ })).not.toBeVisible({

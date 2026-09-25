@@ -104,7 +104,10 @@ interruption, finger changes and empty-space navigation”.
    webbläsaren. Återgå och kontrollera placeringen.
 3. Börja höjdflyttning men släpp det första fingret före det andra.
    Fortsätt röra det kvarvarande fingret och släpp det.
-4. Dra i tom rymd med ett finger. Panorera och nypzooma med två fingrar.
+4. Dra i tom rymd med ett finger. Panorera sedan med två fingrar: flytta
+   båda lika långt åt samma håll utan att ändra avståndet mellan dem.
+   Släpp båda. Börja en ny tvåfingergest och dra isär fingrarna lika långt
+   åt varsitt håll för att zooma in.
 
 **Förväntat resultat:**
 
@@ -112,6 +115,8 @@ interruption, finger changes and empty-space navigation”.
 - Avbruten gest och byte av det flyttande fingret återställer placeringen
   utan sparad flytt eller oavsiktlig redigering.
 - Tom rymd styr kameran utan att ändra objektens placeringar.
+  Panorering förskjuter utsnittet utan att märkbart ändra skalan.
+  När fingrarna dras isär ökar objektens avstånd på skärmen.
   Axelvisaren syns under rörelse och försvinner en kort stund efteråt.
 
 ## Visningsval och åtkomst

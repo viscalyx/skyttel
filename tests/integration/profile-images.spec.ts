@@ -220,24 +220,58 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     await expect(page.getByRole('status')).toContainText('Sparat');
     expect((await second.request.get(`${images}/${first}`)).status()).toBe(200);
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
-    await input.setInputFiles({ name: 'andra.webp', mimeType: 'image/webp', buffer: source });
+    await input.setInputFiles({
+      name: 'andra.webp',
+      mimeType: 'image/webp',
+      buffer: await sharp(source).negate().webp().toBuffer(),
+    });
+    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    const replacementId = (await read()).draft.changes[0].after?.profileImageId;
+    expect(replacementId).not.toBe(first);
+    expect((await second.request.get(`${images}/${replacementId}`)).status()).toBe(404);
+    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await expect(page.getByRole('status')).toContainText('Sparat');
+    const replaced = await read();
+    expect(replaced.objects[0].profileImageId).toBe(replacementId);
+    expect(replaced.draft.changes).toEqual([]);
+    const { history } = await (await page.request.get(`${path}/history`)).json();
+    expect(history.at(-1).changes[0]).toMatchObject({
+      before: { profileImageId: first },
+      after: { profileImageId: replacementId },
+    });
+    // The old image is retained only through history; the replacement is current.
+    for (const id of [first, replacementId])
+      expect((await second.request.get(`${images}/${id}`)).status()).toBe(200);
+    await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await input.setInputFiles({
+      name: 'tredje.webp',
+      mimeType: 'image/webp',
+      buffer: await sharp(source).grayscale().webp().toBuffer(),
+    });
     await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
     const privateId = (await read()).draft.changes[0].after?.profileImageId;
+    expect(privateId).not.toBe(first);
+    expect(privateId).not.toBe(replacementId);
     expect((await second.request.get(`${images}/${privateId}`)).status()).toBe(404);
+    const imageIds = [first, replacementId, privateId];
+    for (const id of imageIds)
+      expect((await anonymous.request.get(`${images}/${id}`)).status()).toBe(401);
     await page.request.post(`${path.replace('/map', '')}/members/${user.id}/revoke`, {
       headers: { origin: installation.origin },
       data: {},
     });
-    expect((await second.request.get(`${images}/${first}`)).status()).toBe(403);
-    expect((await second.request.get(`${images}/${privateId}`)).status()).toBe(403);
+    for (const id of imageIds)
+      expect((await second.request.get(`${images}/${id}`)).status()).toBe(403);
     installation.seedMembership(user.id, 'elsewhere', 'Annat hushåll');
-    expect(
-      (
-        await second.request.get(
-          `${installation.origin}/api/households/elsewhere/profile-images/${first}`,
-        )
-      ).status(),
-    ).toBe(404);
+    for (const id of imageIds)
+      expect(
+        (
+          await second.request.get(
+            `${installation.origin}/api/households/elsewhere/profile-images/${id}`,
+          )
+        ).status(),
+      ).toBe(404);
     const headers = {
       origin: installation.origin,
       'x-skyttel-draft-version': '0',

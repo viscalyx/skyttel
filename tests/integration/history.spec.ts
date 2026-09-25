@@ -200,6 +200,20 @@ test('HISTORIK-02: deletion undo restores ended objects and relationships with t
       lifecycle: 'ended',
       revision: 3,
     });
+    const { history: afterUndo } = await (await page.request.get(`${path}/history`)).json();
+    expect(afterUndo).toHaveLength(history.length + 1);
+    expect(afterUndo.slice(0, history.length)).toEqual(history);
+    expect(afterUndo.at(-1).changes[0].after).toMatchObject({
+      id: 'person',
+      name: 'Lo Exempel',
+      lifecycle: 'ended',
+    });
+    expect(afterUndo.at(-1).relationships[0].after).toMatchObject({
+      id: 'uses',
+      sourceId: 'person',
+      targetId: 'card',
+      lifecycle: 'ended',
+    });
   } finally {
     await installation.close();
   }
@@ -210,7 +224,7 @@ test('HISTORIK-03: later overlaps need a fresh choice and own overlaps block ato
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, object, save } = await setup(page.request, installation.origin);
+    const { read, object, save, path } = await setup(page.request, installation.origin);
     await object('person', 'Lo Exempel');
     await save('initial');
     await object('person', 'Lo Lind', { name: 'Lo Lind' });
@@ -220,6 +234,9 @@ test('HISTORIK-03: later overlaps need a fresh choice and own overlaps block ato
     await object('person', 'Privat namn', { name: 'Privat namn' });
     await object('independent', 'Robin Exempel');
     const unchanged = await read();
+    const readHistory = async (): Promise<SaveReceipt[]> =>
+      (await (await page.request.get(`${path}/history`)).json()).history;
+    const historyBefore = await readHistory();
     await page.goto(installation.origin);
     await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
     const group = page
@@ -229,6 +246,7 @@ test('HISTORIK-03: later overlaps need a fresh choice and own overlaps block ato
     await group.getByRole('button', { name: 'Ångra sparandet' }).click();
     await expect(page.getByRole('alert')).toContainText('överlappar ett eget förslag');
     expect(await read()).toEqual(unchanged);
+    expect(await readHistory()).toEqual(historyBefore);
     const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
     await draft
       .getByRole('article')
@@ -243,12 +261,22 @@ test('HISTORIK-03: later overlaps need a fresh choice and own overlaps block ato
     await draft.getByRole('button', { name: 'Behåll mitt förslag', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('nytt sparbesked');
     expect((await read()).objects[0].name).toBe('Lo Ek');
+    expect(await readHistory()).toEqual(historyBefore);
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     expect((await read()).objects.find((item) => item.id === 'person')?.name).toBe('Lo Exempel');
     expect((await read()).objects.find((item) => item.id === 'independent')?.name).toBe(
       'Robin Exempel',
     );
+    const historyAfter = await readHistory();
+    expect(historyAfter).toHaveLength(historyBefore.length + 1);
+    expect(historyAfter.slice(0, historyBefore.length)).toEqual(historyBefore);
+    expect(
+      historyAfter
+        .at(-1)
+        ?.changes.map((change) => change.after?.id)
+        .sort(),
+    ).toEqual(['independent', 'person']);
   } finally {
     await installation.close();
   }

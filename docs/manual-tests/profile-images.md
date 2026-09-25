@@ -160,10 +160,18 @@ current household access”.
 
 1. Lägg en WebP-bild på Lo i Alex utkast. Kopiera bildadressen och öppna
    den som Robin och utloggad. Spara som Alex och öppna samma adress som Robin.
-2. Byt bilden i Alex utkast. Prova den nya bildadressen som Robin.
-3. Återkalla Robins tillgång som Alex. Prova båda bildadresserna igen,
+2. Byt till PNG-bilden i Alex utkast. Prova den nya bildadressen som Robin:
+   den ska ännu nekas. Stäng formuläret och spara hela utkastet som Alex.
+   Kontrollera att objektets aktuella bild är PNG-bilden. Öppna historiken
+   och jämför bilderna före och efter bytet. Den första WebP-bilden ska nu
+   bara finnas i historiken. Robin ska kunna öppna både dess gamla adress
+   och den aktuella PNG-bildens adress.
+3. Lägg JPEG-bilden som ett nytt privat bildförslag utan att spara.
+   Kopiera den tredje bildadressen; den ska nekas som Robin. Prova alla
+   tre bildadresserna i den utloggade profilen: samtliga ska nekas.
+4. Återkalla Robins tillgång som Alex. Prova alla tre bildadresserna igen,
    även efter att du ersätter hushållets ID i adressen med `unknown-household`.
-4. Öppna appens startsida i Robins profil och i den utloggade profilen.
+5. Öppna appens startsida i Robins profil och i den utloggade profilen.
    Kör koden nedan i respektive utvecklarkonsol och ange den antecknade
    objektadressens sökväg och versionsvärden. Kontrollera statuskoderna.
 
@@ -202,8 +210,8 @@ await (async () => {
 **Förväntat resultat:**
 
 - Endast Alex ser osparade bildversioner. Robin ser den gemensamma bilden
-  efter sparande. Utloggad får inte tillgång.
-- Återkallad tillgång stoppar läsning av kända och äldre bildversioner samt
+  och den äldre bilden som bara finns i historiken. Utloggad får inte tillgång.
+- Återkallad tillgång stoppar läsning av aktuell, historisk och privat bild samt
   bildändringar. API-proven ger 403 som Robin och 401 som utloggad.
   En okänd hushållsadress ger inte tillgång.
 

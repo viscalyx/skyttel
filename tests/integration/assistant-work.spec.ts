@@ -61,6 +61,10 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
       choice: 'proposed',
       conflict: review.conflicts[0],
     });
+    expect(
+      review.changes.find((change: { after: { name: string } }) => change.after.name === 'Lo Lind')
+        ?.after,
+    ).toMatchObject({ description: 'Spelar piano i musikföreningen.' });
     const savedMap = await tool(app.origin, token, 'read_map', { query: 'Familjens Molnmusik' });
     expect(savedMap.relationshipTypes.map((type: { name: string }) => type.name)).toEqual(
       expect.arrayContaining(['Betalar', 'Står på avtalet', 'Betalas med']),
@@ -101,6 +105,15 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
     );
     await page.getByRole('button', { name: 'Familjens Molnmusik', exact: true }).click();
     await expect(page.getByLabel('Pris', { exact: true })).toHaveValue('189');
+    const lo = await tool(app.origin, token, 'read_map', { query: 'Lo Lind' });
+    expect(lo.objects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Lo Lind',
+          description: 'Spelar piano i musikföreningen.',
+        }),
+      ]),
+    );
   } finally {
     await app.close();
   }
@@ -145,6 +158,20 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
       version: denied.review.version,
     });
     expect(saved.receipt.changes).toHaveLength(2);
+    const mapBeforeRetry = await tool(app.origin, token, 'read_map');
+    const historyPath = `${app.origin}/api/households/${household.id}/map/history`;
+    const historyBeforeRetry = await (await page.request.get(historyPath)).json();
+    expect(historyBeforeRetry.history).toEqual([saved.receipt]);
+    const rejectedAgain = await tool(app.origin, token, 'save_draft', attempt);
+    expect(rejectedAgain.error).toBe('draft_conflict');
+    expect(rejectedAgain).not.toHaveProperty('receipt');
+    expect(await tool(app.origin, token, 'read_map')).toEqual(mapBeforeRetry);
+    expect(await (await page.request.get(historyPath)).json()).toEqual(historyBeforeRetry);
+    expect(
+      await tool(app.origin, token, 'read_save_operation', {
+        operationId: saved.receipt.operationId,
+      }),
+    ).toMatchObject({ operation: { status: 'succeeded', receipt: saved.receipt } });
     await page.reload();
     await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
       'Inga förslag',
