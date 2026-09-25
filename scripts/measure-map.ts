@@ -58,15 +58,16 @@ try {
       await page.getByRole('button', { name: 'Samlad vy', exact: true }).click();
       await page.getByText('Navigera rymden', { exact: true }).click();
       await expect(page.getByRole('button', { name: 'Rotera vänster', exact: true })).toBeEnabled();
-      await expect(page.locator('.spatial-labels button').first()).toBeVisible();
+      const labels = page.locator('.spatial-labels [data-layout-id]');
+      await expect(labels.first()).toBeVisible();
       await expect(
         page
           .getByRole('list', { name: 'Objekt', exact: true })
           .getByRole('button', { name: 'Provobjekt 000', exact: true }),
       ).toBeEnabled();
       const openMs = performance.now() - started;
-      const overlaps = await page.locator('.spatial-labels button').evaluateAll((buttons) => {
-        const boxes = buttons.map((button) => button.getBoundingClientRect());
+      const overlaps = await labels.evaluateAll((elements) => {
+        const boxes = elements.map((element) => element.getBoundingClientRect());
         let count = 0;
         for (let a = 0; a < boxes.length; a += 1)
           for (let b = a + 1; b < boxes.length; b += 1)
