@@ -83,50 +83,12 @@ private environment file. Replace the synthetic credentials with your own
 development registrations to sign in with those providers. Keep development
 credentials separate from production credentials.
 
-### Google
-
-In [Google Cloud Console](https://console.cloud.google.com/), create or select
-a development project. Configure Google Auth Platform's branding and an
-external audience, keeping the app in testing mode. Create a **Web
-application** OAuth client, for example `Skyttel local development`.
-Leave **Authorized JavaScript origins** empty and register both callbacks:
-
-```text
-http://localhost:5173/api/auth/callback/google
-http://localhost:3301/api/auth/callback/google
-```
-
-Save the client ID and client secret as `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET` in `.devcontainer/.env`. Use the exact host, port,
-and path above, without a trailing slash. The internal API port 3300 is
-not the browser callback. Skyttel uses basic identity scopes only:
-`openid`, `email`, and `profile`.
-See [Google's web-server registration guidance](https://developers.google.com/identity/protocols/oauth2/web-server).
-
-### Microsoft
-
-In [Microsoft Entra](https://entra.microsoft.com/), use a directory where
-you have permission to register applications. Create an app registration
-supporting both organizational directories and personal Microsoft accounts.
-Add a **Web** platform with this callback:
-
-```text
-http://localhost:5173/api/auth/callback/microsoft
-```
-
-Microsoft ignores the port when matching localhost callbacks, so this
-entry also covers port 3301. Keep one Web entry for this host and path.
-Save **Application (client) ID** as `MICROSOFT_CLIENT_ID`.
-Under **Certificates & secrets**, create a client secret and save its
-**Value**, which is shown only at creation, as `MICROSOFT_CLIENT_SECRET`.
-The **Secret ID** cannot authenticate Skyttel. Record the expiry privately
-and replace the secret before it expires. Reload the container environment
-and verify a fresh sign-in before retiring the old secret.
-
-Skyttel requests `openid`, `profile`, and `email`; mail, calendar, and
-directory administration permissions are unnecessary. See Microsoft's
-[registration instructions](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)
-and [localhost callback rules](https://learn.microsoft.com/en-us/entra/identity-platform/reply-url#localhost-exceptions).
+Follow the detailed [local authentication walkthrough](local-authentication.md)
+to create your own provider accounts and development registrations, configure
+callbacks, save the credentials privately, and renew Microsoft secrets.
+Copy the four provider credentials into `.devcontainer/.env`, keeping the
+container's database path and other settings. Recreate the container to load
+the credentials, then continue below to designate your first administrator.
 
 ### Designate the first administrator
 

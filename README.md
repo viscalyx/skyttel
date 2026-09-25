@@ -22,6 +22,8 @@ Börja med [Kom igång](docs/user-guide/getting-started.md) eller välj ett
 arbetsflöde i guidens innehållsförteckning.
 
 Förbered utvecklingsmiljön med [utvecklingsguiden](docs/development/devcontainer.md).
+Registrera egna utvecklingskonton och konfigurera
+[lokal inloggning](docs/development/local-authentication.md).
 [Testinstruktionerna](docs/development/testing.md) beskriver projektets
 kontroller och hur de körs.
 [Releaseguiden](docs/operations/container-releases.md) beskriver publicering,
