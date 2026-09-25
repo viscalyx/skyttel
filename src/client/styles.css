@@ -798,6 +798,13 @@ main:has(.household-panel) {
 .household-map.presentation-map .assistant-map-panel {
   border: 0;
   padding: 0;
+  width: 100%;
+}
+.household-map.presentation-map .household-map-heading {
+  display: none;
+}
+.household-map.presentation-map .map-filter-panel {
+  margin: 0;
 }
 .household-map.presentation-map .assistant-workspace {
   flex: 1;
@@ -807,6 +814,7 @@ main:has(.household-panel) {
 .household-map.presentation-map:not(.map-details-open) .assistant-map-panel {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   height: 100%;
 }
 .household-map.presentation-map .map-workspace {

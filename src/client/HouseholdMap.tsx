@@ -1151,7 +1151,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   requestAnimationFrame(() => document.getElementById('draft-title')?.focus());
                 }}
               >
-                Granska och spara hela utkastet
+                Granska utkastet
               </button>
             </>
           }

@@ -3,6 +3,8 @@
 Testfallen omfattar gemensam redigering, navigering och bevarad text i
 lista och rymdkarta. Anteckna commit, webbläsare, enhet, fysisk eller
 emulerad inmatning samt godkänt eller underkänt resultat vid körning.
+Fysiska enhetsprov och hjälpmedelsprov följs separat i
+[uppföljningen för manuella prov](https://github.com/viscalyx/skyttel/issues/97).
 
 ## Konfigurerade användare
 
@@ -61,19 +63,22 @@ selection”.
 **Steg:**
 
 1. Öppna rymdkartan. Kontrollera pilen från Lo Exempel till Molnmusik
-   före och efter rotation och panorering. Byt till Samlad vy. Filtrera
-   på Person och kontrollera att tjänsten döljs.
+   före och efter rotation och panorering. Byt till Samlad vy och välj
+   Lo Exempels runda symbol. Kontrollera att sambandets etikett visas.
+   Filtrera på Person och kontrollera att tjänsten döljs.
 2. Välj Visa hela rymden och Ctrl-klicka Lo Exempel. Kontrollera fokus.
 3. Panorera med knappen under Navigera rymden. Välj Visa hela rymden.
 4. Sök efter Lo. Flytta tangentbordsfokus till en kameraknapp och tryck
    Escape.
 5. Fokusera Lo Exempel igen, sök efter Lo och filtrera på Person. Välj
-   Återställ vy och sedan användningssambandets etikett.
+   Återställ vy, välj Alla etiketter och sedan användningssambandets etikett.
 
 **Förväntat resultat:**
 
-- Pilspetsen syns utanför målets etikett, även efter kamerarörelse.
-  Riktning och rätt ändobjekt syns. Fokus visar direkta samband.
+- Pilspetsen syns utanför målets runda symbol, även efter kamerarörelse.
+  Riktning och rätt ändobjekt syns. Sambandets etikett visas när ett
+  anslutet objekt väljs eller Alla etiketter är på. Fokus visar direkta
+  samband.
 - Visa hela rymden rensar filter och fokus med bibehållen kamera.
 - Escape rensar sökningen utanför formuläret. Sambandet öppnar rätt
   detaljer med Molnmusik som mål.
@@ -95,7 +100,8 @@ from saved content”.
 
 **Steg:**
 
-1. Öppna kartan och kontrollera plusmarkeringarna. Visa utkastet och spara.
+1. Öppna kartan, välj Alla etiketter och kontrollera plusmarkeringarna.
+   Visa utkastet och spara.
 2. Högerklicka Molnmusik och välj Redigera objekt. Lägg en ändrad
    beskrivning i utkastet. Gå tillbaka till kartan.
 3. Kontrollera gul tilde, öppna menyn och välj Ta bort objekt.
@@ -103,7 +109,9 @@ from saved content”.
 
 **Förväntat resultat:**
 
-- Nytt innehåll har plus, ändringar gul tilde och borttagningar rött kryss.
+- Nytt innehåll har guldgult plus, ändringar gul tilde och borttagningar
+  korallfärgat kryss. Objektens namn visas bredvid de runda symbolerna.
+- Samband som föreslås tas bort visas med en böjd, streckad linje.
 - Borttagningen omfattar det anslutna sambandet direkt i utkastet.
   Sparad karta och det andra objektet ändras inte.
 - Kasta hela utkastet återgår till sparad karta utan historisk ångring.
@@ -165,7 +173,9 @@ changes”.
 
 **Steg:**
 
-1. Öppna Samlad vy och välj Alla etiketter. Panorera och välj Återställ vy.
+1. Öppna Samlad vy och välj Lo Exempels runda symbol. Kontrollera namn,
+   typikoner och sambandets etikett. Välj Alla etiketter, panorera och
+   välj Återställ vy.
 2. Välj sambandet i listan med tangentbord. Ange känt slutdatum
    2026-12-31 utan att skicka formuläret.
 3. Öppna kartan, ändra fönsterstorlek och öppna detaljer och utkast.
@@ -174,7 +184,8 @@ changes”.
 **Förväntat resultat:**
 
 - Alla etiketter ger ett närmare panorerbart utsnitt. Återställ vy ger
-  överblick igen. Objektnamn prioriteras och stödlinjer visar anknytningen.
+  överblick igen och behåller valet Alla etiketter. Objektnamn ligger nära
+  sina runda symboler och stödlinjer visar anknytningen.
 - Tangentbordsvägen öppnar rätt samband. Oskickat slutdatum finns kvar
   efter vybyte och blir beständigt först vid det samlade sparandet.
 
@@ -228,7 +239,8 @@ draft symbols”.
    lägg i utkastet.
 3. Välj användningssambandet. Ange ett känt slutdatum i det förflutna,
    behåll Följ slutdatum och lägg sambandet i utkastet.
-4. Öppna rymdkartan och kontrollera objektens och sambandets etiketter.
+4. Öppna rymdkartan, välj Alla etiketter och kontrollera objektens och
+   sambandets etiketter.
 5. Visa detaljer och utkast, spara hela utkastet, starta om appen och
    öppna rymdkartan igen.
 6. Välj sambandets etikett, välj Gäller fortfarande och lägg sambandet
@@ -236,8 +248,9 @@ draft symbols”.
 
 **Förväntat resultat:**
 
-- Molnmusik och sambandet visar Upphört med separat färg bredvid
-  plusmarkeringen. Lo Exempel visar inget Upphört trots slutdatumet.
+- Molnmusik visar Upphört vid namnet och plus vid den runda symbolen.
+  Sambandets etikett visar både Upphört och plus. Status och förslag har
+  olika färger. Lo Exempel visar inget Upphört trots slutdatumet.
 - Namn, typikon och riktning är fortfarande begripliga. Upphört finns
   kvar efter sparande och omstart; plusmarkeringarna försvinner.
 - Sambandets rättelse visar tilde och tar bort dess Upphört-markering.

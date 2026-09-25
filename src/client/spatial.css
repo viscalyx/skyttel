@@ -37,7 +37,7 @@
   min-height: 20rem;
   overflow: hidden;
   border-radius: 1rem;
-  background: #102e2c;
+  background: #132e25;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -50,32 +50,7 @@
   display: block;
   touch-action: none;
 }
-.spatial-labels {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.spatial-labels button {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
-  white-space: nowrap;
-  max-width: 15rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  touch-action: none;
-}
-.spatial-caption {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.spatial-labels .ended-status {
-  display: block;
-  width: fit-content;
-  margin: 0.25rem auto 0;
-  font-size: 0.8rem;
-}
+
 .presentation-map {
   position: fixed;
   inset: 0;
@@ -166,30 +141,55 @@
   overflow: visible;
 }
 .connection {
-  stroke: #88b4b0;
-  stroke-width: 2;
-  opacity: 0.3;
+  stroke: #8dbba5;
+  stroke-width: 1.4;
+  opacity: 0.25;
 }
 .connection.selected {
-  opacity: 1;
-  stroke: #d5fff4;
-  stroke-width: 3;
+  opacity: 0.95;
+  stroke-width: 2;
 }
-.spatial-map.crowded .connection:not(.selected) {
-  opacity: 0.05;
+.connection.added {
+  stroke: #dba343;
+  opacity: 0.7;
+}
+.connection.changed {
+  stroke: #eed37c;
+  opacity: 0.7;
+}
+.connection.removed {
+  stroke: #d17860;
+  stroke-dasharray: 6 5;
+  opacity: 0.6;
+}
+.spatial-map.crowded .connection.existing:not(.selected) {
+  opacity: 0.12;
 }
 .spatial-labels .spatial-edge {
-  background: #24423f;
-  border-color: #53766e;
-  color: #acccc1;
-  font-size: 0.8rem;
+  min-height: 30px;
+  max-width: 15rem;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 4px;
+  color: #8dbba5;
+  background: #132e25ed;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: auto;
+  touch-action: none;
 }
 .spatial-labels .spatial-edge.selected {
-  border-color: #d5fff4;
-  color: white;
+  color: #dbede3;
 }
-.spatial-labels [aria-pressed="true"] {
-  outline: 3px solid #9bf0d5;
+.spatial-labels .spatial-edge.added {
+  color: #e4b450;
+}
+.spatial-labels .spatial-edge.changed {
+  color: #eed37c;
+}
+.spatial-labels .spatial-edge.removed {
+  color: #df937d;
 }
 .presentation-map .camera-tools {
   position: relative;
@@ -210,8 +210,8 @@
   border-radius: 0.3rem;
 }
 .proposal-symbol.added {
-  color: #004b30;
-  background: #b9f3d8;
+  color: #67460b;
+  background: #f7e7bb;
 }
 .proposal-symbol.changed {
   color: #3a2900;
@@ -220,6 +220,149 @@
 .proposal-symbol.removed {
   color: #b52121;
   background: #ffe8e8;
+}
+.spatial-labels,
+.spatial-objects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.spatial-labels > *,
+.spatial-objects > button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.spatial-name {
+  display: block;
+  max-width: 15rem;
+  padding: 2px 5px;
+  color: #e4eee8;
+  background: #132e25e8;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.spatial-caption {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spatial-type-name {
+  display: block;
+  color: #bfd6c1;
+  font-size: 11px;
+}
+.spatial-labels .ended-status {
+  display: block;
+  width: fit-content;
+  margin: 0.2rem auto 0;
+  font-size: 0.7rem;
+}
+.spatial-objects .spatial-node {
+  --node-color: #8dbba5;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--node-color);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+  overflow: visible;
+}
+.spatial-objects .spatial-node:hover:enabled {
+  background: transparent;
+  border: 0;
+}
+.spatial-labels .spatial-edge:hover:enabled {
+  background: #1c3c31;
+  color: #e4eee8;
+}
+.spatial-orb {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background: #203f31;
+}
+.spatial-type-icon {
+  width: 24px;
+  height: 24px;
+}
+.spatial-portrait {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.spatial-node[aria-pressed="true"] .spatial-orb {
+  border-width: 3px;
+  border-color: var(--node-color);
+  background: var(--node-color);
+  color: #122a23;
+}
+.spatial-node:focus-visible {
+  outline: 2px solid #e5f5ee;
+  outline-offset: 2px;
+}
+.spatial-node .proposal-symbol {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+  background: #132e25;
+}
+.spatial-node.added .spatial-orb {
+  outline: 1px solid #e4b450;
+  outline-offset: 4px;
+}
+.spatial-node.added,
+.spatial-name.added .spatial-type-name,
+.spatial-node .proposal-symbol.added {
+  color: #e4b450;
+}
+.spatial-objects .spatial-node.added {
+  --node-color: #e4b450;
+}
+.spatial-node.changed,
+.spatial-name.changed .spatial-type-name,
+.spatial-node .proposal-symbol.changed {
+  color: #eed37c;
+}
+.spatial-objects .spatial-node.changed {
+  --node-color: #eed37c;
+}
+.spatial-node.removed,
+.spatial-name.removed .spatial-type-name,
+.spatial-node .proposal-symbol.removed {
+  color: #df937d;
+}
+.spatial-objects .spatial-node.removed {
+  --node-color: #df937d;
+}
+.spatial-node.removed .spatial-orb {
+  border-style: dashed;
+}
+.spatial-name.subdued,
+.spatial-node.subdued {
+  opacity: 0.48;
 }
 .type-icon {
   display: inline-grid;
@@ -324,12 +467,13 @@
   color: #493c00;
 }
 .label-leader {
-  stroke: #b4cdc5;
+  stroke: #8dbba5;
   stroke-width: 1;
-  opacity: 0.65;
+  opacity: 0.32;
 }
 .spatial-bottom-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
@@ -356,13 +500,21 @@
   pointer-events: stroke;
   cursor: pointer;
 }
+.connection-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 18;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.connection.previous {
+  pointer-events: none;
+}
 .spatial-axis {
   position: absolute;
   width: min(90px, 25%);
   height: min(90px, 25%);
   pointer-events: none;
-  background: #102e2cdd;
-  border-radius: 0.5rem;
   color: #d5fff4;
 }
 .spatial-axis line {
@@ -389,17 +541,6 @@
 .spatial-axis.bottom-right {
   bottom: 0.5rem;
   right: 0.5rem;
-}
-.height-guide {
-  stroke: #ffd981;
-  fill: #ffd981;
-  stroke-width: 2;
-}
-.height-guide text {
-  stroke: #102e2c;
-  stroke-width: 3;
-  paint-order: stroke;
-  font-size: 13px;
 }
 .personal-tools fieldset {
   margin: 0.5rem 0;

@@ -797,15 +797,6 @@ function HouseholdPage({ onSessionExpired }: { onSessionExpired: () => void }) {
       <p>
         <Link to="/assistants">Assistentanslutningar</Link>
       </p>
-      <div className="empty-state">
-        <div className="weave-mark" aria-hidden="true">
-          ↗
-        </div>
-        <h2>Hushållet är redo</h2>
-        <p>
-          Ditt hushåll är skapat. Du kan återkomma hit genom att logga in med samma inloggningssätt.
-        </p>
-      </div>
     </section>
   );
 }

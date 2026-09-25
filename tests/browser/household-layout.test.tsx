@@ -115,3 +115,15 @@ test('phone starts with the list and preserves an edited name through full-map n
     .toHaveValue('Alex ändrat');
   expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
 });
+
+test('full map fills the available desktop and landscape phone area', async () => {
+  await open(1280);
+  await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
+  const surface = () => document.querySelector('.spatial-surface')?.getBoundingClientRect();
+  await expect.poll(() => surface()?.width).toBeGreaterThan(1200);
+  await page.viewport(844, 390);
+  await expect.poll(() => surface()?.width).toBeGreaterThan(800);
+  await expect.poll(() => surface()?.height).toBeGreaterThan(200);
+  await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();
+  await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Alex');
+});

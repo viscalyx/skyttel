@@ -88,7 +88,13 @@ state.draft.relationships = state.relationships.map((edge, index) => ({
   objectNames: {},
 }));
 
-function MapView({ relationships = state.relationships } = {}) {
+function MapView({
+  mapState = state,
+  relationships = mapState.relationships,
+}: {
+  mapState?: MapState;
+  relationships?: MapState['relationships'];
+} = {}) {
   const [view, setView] = useState<PersonalView>({
     contentVersion: 1,
     positions: [],
@@ -99,7 +105,7 @@ function MapView({ relationships = state.relationships } = {}) {
     id: string;
   } | null>(null);
   const [objects, setObjects] = useState(
-    new Map(state.objects.map((object) => [object.id, object])),
+    new Map(mapState.objects.map((object) => [object.id, object])),
   );
   const [message, setMessage] = useState('Ingen vald');
   return (
@@ -125,7 +131,7 @@ function MapView({ relationships = state.relationships } = {}) {
             setView((previous) => ({ ...previous, settings: { ...settings, version: 1 } })),
         }}
         active
-        state={state}
+        state={mapState}
         objects={objects}
         relationships={new Map(relationships.map((edge) => [edge.id, edge]))}
         selection={selection}
@@ -162,6 +168,78 @@ function MapView({ relationships = state.relationships } = {}) {
     </>
   );
 }
+
+test('the approved spatial presentation uses compact pictogram nodes, separate names and contextual relationship labels', async () => {
+  render(<MapView />);
+  const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  await expect.element(lo).toBeVisible();
+  const button = lo.element();
+  const bounds = button.getBoundingClientRect();
+  expect(bounds.width).toBeGreaterThanOrEqual(44);
+  expect(bounds.width).toBeLessThanOrEqual(48);
+  expect(bounds.height).toBe(bounds.width);
+  expect(button.querySelector('svg path, svg circle')).not.toBeNull();
+  const name = page.getByText('Lo Exempel', { exact: true }).element();
+  expect(button.contains(name)).toBe(false);
+  const nameBounds = name.getBoundingClientRect();
+  expect(
+    nameBounds.top >= bounds.bottom ||
+      nameBounds.bottom <= bounds.top ||
+      nameBounds.left >= bounds.right ||
+      nameBounds.right <= bounds.left,
+  ).toBe(true);
+  expect(document.querySelectorAll('.spatial-edge')).toHaveLength(0);
+  const hit = document.querySelector('.connection-hit');
+  expect(hit).not.toBeNull();
+  expect(Number.parseFloat(getComputedStyle(hit as Element).strokeWidth)).toBeGreaterThanOrEqual(
+    18,
+  );
+  await lo.click();
+  await expect
+    .element(
+      page.getByRole('button', {
+        name: 'Välj samband: Lo Exempel → använder → Musikspelaren',
+        exact: true,
+      }),
+    )
+    .toBeVisible();
+  await page.getByRole('checkbox', { name: 'Alla etiketter', exact: true }).click();
+  await expect.poll(() => document.querySelectorAll('.spatial-edge').length).toBe(2);
+});
+
+test('changing a relationship retains its prior route while the current route remains selectable', async () => {
+  const before = state.relationships[0];
+  const after = { ...before, sourceId: 'kim' };
+  render(
+    <MapView
+      mapState={{
+        ...state,
+        relationships: [before],
+        draft: {
+          version: 1,
+          changes: [],
+          relationships: [
+            { id: before.id, before, after, type: state.relationshipTypes[0], objectNames: {} },
+          ],
+        },
+      }}
+      relationships={[after]}
+    />,
+  );
+  await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
+  const previous = document.querySelector('[data-previous-relationship="edge"]');
+  expect(previous).not.toBeNull();
+  expect(previous?.textContent).toContain('Lo Exempel → använder → Musikspelaren');
+  expect(previous?.getAttribute('d')).toContain('Q');
+  expect(getComputedStyle(previous as Element).strokeDasharray).not.toBe('none');
+  await page
+    .getByRole('button', {
+      name: 'Välj samband: Kim Exempel → använder → Musikspelaren',
+      exact: true,
+    })
+    .click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+});
 
 test('personal placement buttons move the selected object in three dimensions without editing household facts', async () => {
   render(<MapView />);
@@ -209,6 +287,8 @@ test('native touch gestures move in the camera plane and height while cancellati
   await send('touchStart', [{ id: 1, ...start }, second]);
   await send('touchMove', [{ id: 1, x: start.x, y: start.y - 35 }, second]);
   await expect.element(page.getByText('Höjdflyttning · personlig vy')).toBeVisible();
+  await expect.element(page.getByText('Hjälpplan', { exact: true })).toBeVisible();
+  await expect.element(page.getByText(/^↑ .* steg högre än start$/, { exact: true })).toBeVisible();
   await send('touchEnd', [second]);
   await send('touchEnd', []);
   await expect.poll(() => positions()[0].y).toBeGreaterThan(before.y);
@@ -390,9 +470,9 @@ test('painted stars respond to rotation and zoom while panning and object moveme
     context.drawImage(picture, 0, 0);
     const { data } = context.getImageData(0, 0, sample.width, sample.height);
     const bounds = canvas.getBoundingClientRect();
-    const overlays = [...document.querySelectorAll('.spatial-labels button, .spatial-axis')].map(
-      (element) => element.getBoundingClientRect(),
-    );
+    const overlays = [
+      ...document.querySelectorAll('.spatial-labels > *, .spatial-node, .spatial-axis'),
+    ].map((element) => element.getBoundingClientRect());
     const visible = (pixel: number) => {
       const x = bounds.x + (pixel % sample.width);
       const y = bounds.y + Math.floor(pixel / sample.width);
@@ -406,13 +486,7 @@ test('painted stars respond to rotation and zoom while panning and object moveme
     };
     const pixels = new Set<number>();
     for (let index = 0; index < data.length; index += 4) {
-      if (
-        data[index] >= 200 &&
-        data[index + 1] >= 225 &&
-        data[index + 2] >= 232 &&
-        data[index + 2] - data[index] >= 10 &&
-        visible(index / 4)
-      )
+      if (data[index + 2] > 55 && data[index + 2] > data[index] * 1.04 && visible(index / 4))
         pixels.add(index / 4);
     }
     return { pixels, visible };
@@ -470,6 +544,7 @@ test('graphics navigation and label modes expose selectable objects and directed
     .toBeVisible();
   await page.getByLabelText('Alla etiketter', { exact: true }).click();
   await page.getByRole('button', { name: 'Återställ vy' }).click();
+  await lo.click();
   await page
     .getByRole('button', {
       name: 'Välj samband: Lo Exempel → använder → Musikspelaren',
@@ -477,6 +552,7 @@ test('graphics navigation and label modes expose selectable objects and directed
     })
     .click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
   await page
     .getByRole('button', { name: 'Välj samband: Kim Exempel → använder → Okänt', exact: true })
     .click();
@@ -512,9 +588,10 @@ test('dense labels remain readable and explicit all-label mode retains access to
   await expect
     .element(page.getByRole('button', { name: 'Välj objekt: Tätt objekt 99', exact: true }))
     .toBeVisible();
+  await expect.element(page.getByText('Tätt objekt 99', { exact: true })).toBeVisible();
   await expect
     .poll(() => {
-      const boxes = [...document.querySelectorAll('.spatial-labels button')].map((label) =>
+      const boxes = [...document.querySelectorAll('.spatial-name')].map((label) =>
         label.getBoundingClientRect(),
       );
       return (
@@ -532,7 +609,7 @@ test('dense labels remain readable and explicit all-label mode retains access to
     })
     .toBe(true);
   await page.getByLabelText('Alla etiketter', { exact: true }).click();
-  await expect.poll(() => document.querySelectorAll('.spatial-labels button').length).toBe(100);
+  await expect.poll(() => document.querySelectorAll('.spatial-name').length).toBe(100);
 });
 
 test('direction rendering retains selectable self references and explicitly absent targets', async () => {
@@ -544,6 +621,7 @@ test('direction rendering retains selectable self references and explicitly abse
       ]}
     />,
   );
+  await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
   await page
     .getByRole('button', {
       name: 'Välj samband: Lo Exempel → använder → Lo Exempel',
@@ -551,6 +629,7 @@ test('direction rendering retains selectable self references and explicitly abse
     })
     .click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+  await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
   await page
     .getByRole('button', {
       name: 'Välj samband: Kim Exempel → använder → Uttryckligen inget',

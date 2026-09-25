@@ -37,25 +37,35 @@ async function arrange(page: Page, origin: string) {
 
 async function expectVisibleDirection(space: Locator) {
   const line = space.locator('line.connection');
-  const arrow = await line.evaluate((element: SVGLineElement) => ({
-    start: { x: element.x1.baseVal.value, y: element.y1.baseVal.value },
-    tip: { x: element.x2.baseVal.value, y: element.y2.baseVal.value },
-  }));
+  const { arrow, surface, target } = await line.evaluate((element: SVGLineElement) => {
+    const region = element.closest('.spatial-map');
+    const svg = region?.querySelector('.spatial-lines');
+    const node = region?.querySelector('[aria-label="Välj objekt: Molnmusik"]');
+    if (!svg || !node) throw new Error('The map and target must be visible');
+    const bounds = (item: Element) => {
+      const { x, y, width, height } = item.getBoundingClientRect();
+      return { x, y, width, height };
+    };
+    return {
+      arrow: {
+        start: { x: element.x1.baseVal.value, y: element.y1.baseVal.value },
+        tip: { x: element.x2.baseVal.value, y: element.y2.baseVal.value },
+        color: getComputedStyle(element).stroke.match(/\d+/g)?.map(Number) ?? [],
+        opacity: Number(getComputedStyle(element).opacity),
+        width: Number.parseFloat(getComputedStyle(element).strokeWidth),
+      },
+      surface: bounds(svg),
+      target: bounds(node),
+    };
+  });
   const svg = space.locator('svg.spatial-lines');
-  const surface = await svg.boundingBox();
-  const target = await space
-    .getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true })
-    .boundingBox();
-  expect(surface).not.toBeNull();
-  expect(target).not.toBeNull();
-  if (!surface || !target) throw new Error('The map and target must be visible');
   const tip = { x: arrow.tip.x + surface.x, y: arrow.tip.y + surface.y };
   expect(
     tip.x < target.x ||
       tip.x > target.x + target.width ||
       tip.y < target.y ||
       tip.y > target.y + target.height,
-    'The directional tip must be outside the opaque target label',
+    'The directional tip must be outside the target circle',
   ).toBe(true);
   const dx = arrow.tip.x - arrow.start.x;
   const dy = arrow.tip.y - arrow.start.y;
@@ -64,23 +74,47 @@ async function expectVisibleDirection(space: Locator) {
   const towardTarget =
     dx * (target.x + target.width / 2 - tip.x) + dy * (target.y + target.height / 2 - tip.y);
   expect(towardTarget, 'The visible arrow must point toward the target').toBeGreaterThan(0);
-  const { data, info } = await sharp(await svg.screenshot())
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+  const screenshot = await svg.screenshot();
+  const { data, info } = await sharp(screenshot).raw().toBuffer({ resolveWithObject: true });
   // Check painted wings, away from the narrow line: the arrow must survive
   // compositing with HTML labels, not merely exist as an SVG marker.
   for (const side of [-1, 1]) {
     const x = Math.round(arrow.tip.x - (dx / length) * 8 - (dy / length) * side * 2.5);
     const y = Math.round(arrow.tip.y - (dy / length) * 8 + (dx / length) * side * 2.5);
-    const offset = (y * info.width + x) * info.channels;
-    const [red, green, blue] = data.subarray(offset, offset + 3);
-    // Permit antialiasing and a leader crossing a wing, but reject the space
-    // background and the opaque light/dark label backgrounds.
-    expect(red).toBeGreaterThan(30);
-    expect(red).toBeLessThan(150);
-    expect(green).toBeGreaterThan(70);
-    expect(green).toBeLessThan(200);
-    expect(blue - red).toBeGreaterThan(20);
+    const backgroundX = Math.round(arrow.tip.x - (dx / length) * 8 - (dy / length) * side * 12);
+    const backgroundY = Math.round(arrow.tip.y - (dy / length) * 8 + (dx / length) * side * 12);
+    const backgroundOffset = (backgroundY * info.width + backgroundX) * info.channels;
+    const background = [...data.subarray(backgroundOffset, backgroundOffset + 3)];
+    const expected = arrow.color.map(
+      (channel, index) => channel * arrow.opacity + background[index] * (1 - arrow.opacity),
+    );
+    expect(expected).toHaveLength(3);
+    // Match the painted stroke in a small wing area, allowing antialiasing.
+    // The adjacent background must remain distinct, so a missing or covered
+    // marker cannot pass just because its SVG geometry exists.
+    const wingPixels = [-1, 0, 1].flatMap((offsetY) =>
+      [-1, 0, 1].flatMap((offsetX) => {
+        const distance =
+          (side *
+            (-dy * (x + offsetX + 0.5 - arrow.tip.x) + dx * (y + offsetY + 0.5 - arrow.tip.y))) /
+          length;
+        // Exclude the shaft and its antialiasing, even after pixel rounding.
+        if (distance <= arrow.width / 2 + 1.25) return [];
+        const offset = ((y + offsetY) * info.width + x + offsetX) * info.channels;
+        return [[...data.subarray(offset, offset + 3)]];
+      }),
+    );
+    const painted = wingPixels.some(
+      (pixel) =>
+        pixel.every((channel, index) => Math.abs(channel - expected[index]) < 45) &&
+        Math.hypot(...pixel.map((channel, index) => channel - background[index])) > 40,
+    );
+    if (!painted) {
+      await test.info().attach('directional-arrow', { body: screenshot, contentType: 'image/png' });
+    }
+    expect(painted, `The ${side < 0 ? 'left' : 'right'} arrow wing must be visibly painted`).toBe(
+      true,
+    );
   }
 }
 
@@ -143,6 +177,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await expect(
       fullMap.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true }),
     ).toBeVisible();
+    await expect(fullMap.locator('.spatial-edge')).toHaveCount(0);
     await expectVisibleDirection(fullMap);
     await fullMap.getByText('Navigera rymden', { exact: true }).click();
     await fullMap.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
@@ -152,6 +187,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await page.getByRole('button', { name: 'Lista och detaljer', exact: true }).click();
     await page.getByRole('button', { name: 'Samlad vy', exact: true }).click();
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    await space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
     await expect(
       space.getByRole('button', {
         name: 'Välj samband: Lo Exempel → Använder → Molnmusik',
@@ -195,6 +231,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await expect(page.getByLabel('Sök objekt')).toHaveValue('');
     await expect(page.getByLabel('Filtrera objekttyp')).toHaveValue('');
     await expect(page.getByText('Fokus: Lo Exempel', { exact: true })).toHaveCount(0);
+    await space.getByLabel('Alla etiketter', { exact: true }).check();
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true }),
     ).toBeVisible();
@@ -232,6 +269,7 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
     await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     const music = space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true });
+    await space.getByLabel('Alla etiketter', { exact: true }).check();
     await expect(music).toContainText('+');
     await page.getByRole('button', { name: 'Visa detaljer och utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
@@ -252,6 +290,23 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
         exact: true,
       }),
     ).toContainText('×');
+    const removedConnection = space.locator('path.connection.removed');
+    await expect(removedConnection).toBeVisible();
+    const removedGeometry = await removedConnection.evaluate((path: SVGPathElement) => {
+      const length = path.getTotalLength();
+      const start = path.getPointAtLength(0);
+      const end = path.getPointAtLength(length);
+      const middle = path.getPointAtLength(length / 2);
+      return {
+        dash: getComputedStyle(path).strokeDasharray,
+        bend:
+          Math.abs(
+            (end.x - start.x) * (middle.y - start.y) - (end.y - start.y) * (middle.x - start.x),
+          ) / Math.hypot(end.x - start.x, end.y - start.y),
+      };
+    });
+    expect(removedGeometry.dash).not.toBe('none');
+    expect(removedGeometry.bend).toBeGreaterThan(3);
     state = await read();
     expect(state.objects).toHaveLength(2);
     expect(state.relationships).toHaveLength(1);
@@ -362,61 +417,80 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await page.goto(installation.origin);
     await page.getByRole('button', { name: 'Samlad vy', exact: true }).click();
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    await space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
     const geometry = () =>
       space.evaluate((region) => {
-        const surface = region.querySelector('svg')?.getBoundingClientRect();
+        const surface = region.querySelector('.spatial-lines')?.getBoundingClientRect();
         if (!surface) throw new Error('The map surface must be visible');
         const leaders = [...region.querySelectorAll<SVGLineElement>('.label-leader')];
-        return [...region.querySelectorAll<HTMLButtonElement>('.spatial-labels button')].map(
-          (label) => {
-            const box = label.getBoundingClientRect();
-            const x = box.x + box.width / 2 - surface.x;
-            const y = box.y + box.height / 2 - surface.y;
-            const leader = leaders.find(
-              (line) => Math.hypot(line.x2.baseVal.value - x, line.y2.baseVal.value - y) < 1,
-            );
-            if (!leader) throw new Error(`Missing attachment for ${label.ariaLabel}`);
-            const anchor = { x: leader.x1.baseVal.value, y: leader.y1.baseVal.value };
-            return {
-              name: label.ariaLabel,
-              anchor,
-              x,
-              y,
-              left: box.left,
-              top: box.top,
-              right: box.right,
-              bottom: box.bottom,
-              distance: Math.hypot(x - anchor.x, y - anchor.y),
-              dash: getComputedStyle(leader).strokeDasharray,
-              stroke: getComputedStyle(leader).stroke,
-            };
-          },
-        );
+        return [...region.querySelectorAll<HTMLElement>('[data-layout-id]')].map((label) => {
+          const box = label.getBoundingClientRect();
+          const x = box.x + box.width / 2 - surface.x;
+          const y = box.y + box.height / 2 - surface.y;
+          const leader = leaders.find(
+            (line) => Math.hypot(line.x2.baseVal.value - x, line.y2.baseVal.value - y) < 1,
+          );
+          if (!leader) throw new Error(`Missing attachment for ${label.dataset.layoutId}`);
+          const anchor = { x: leader.x1.baseVal.value, y: leader.y1.baseVal.value };
+          return {
+            id: label.dataset.layoutId,
+            anchor,
+            x,
+            y,
+            left: box.left,
+            top: box.top,
+            right: box.right,
+            bottom: box.bottom,
+            distance: Math.hypot(x - anchor.x, y - anchor.y),
+            dash: getComputedStyle(leader).strokeDasharray,
+            stroke: getComputedStyle(leader).stroke,
+          };
+        });
       });
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }),
     ).toBeVisible();
     const overview = await geometry();
     const objectPoints = (items: typeof overview) =>
-      items.filter((item) => item.name?.startsWith('Välj objekt:'));
+      items.filter((item) => item.id?.startsWith('object-'));
     const separation = (items: typeof overview) => {
       const [first, second] = objectPoints(items);
       return Math.hypot(first.anchor.x - second.anchor.x, first.anchor.y - second.anchor.y);
     };
-    // At this bounded size the first object keeps its position and the
-    // relationship label yields space to the object labels.
-    expect(objectPoints(overview)[0].distance).toBeLessThan(1);
-    const edgeLabel = overview.find((item) => item.name?.startsWith('Välj samband:'));
-    expect(edgeLabel?.distance).toBeGreaterThan(35);
+    expect(objectPoints(overview)).toHaveLength(2);
+    expect(overview.find((item) => item.id === 'relationship-use')).toBeDefined();
+    const nodes = await space.locator('.spatial-node').evaluateAll((elements) =>
+      elements.map((element) => {
+        const box = element.getBoundingClientRect();
+        return {
+          left: box.left,
+          right: box.right,
+          top: box.top,
+          bottom: box.bottom,
+          width: box.width,
+          height: box.height,
+        };
+      }),
+    );
+    for (const node of nodes) {
+      expect(node.width).toBe(44);
+      expect(node.height).toBe(44);
+    }
+    // Names remain close to their compact circles. Every visible label in
+    // this bounded overview must be distinct from other names and circles.
     for (const label of objectPoints(overview)) {
-      expect(edgeLabel).toBeDefined();
-      if (!edgeLabel) throw new Error('The relationship label must be visible');
-      expect(
-        label.right <= edgeLabel.left ||
-          label.left >= edgeLabel.right ||
-          label.bottom <= edgeLabel.top ||
-          label.top >= edgeLabel.bottom,
-      ).toBe(true);
+      expect(label.distance).toBeGreaterThan(22);
+      expect(label.distance).toBeLessThan(160);
+    }
+    for (const [index, label] of overview.entries()) {
+      for (const other of [...overview.slice(index + 1), ...nodes]) {
+        expect(
+          label.right <= other.left ||
+            label.left >= other.right ||
+            label.bottom <= other.top ||
+            label.top >= other.bottom,
+        ).toBe(true);
+      }
     }
     for (const label of overview) {
       expect(label.stroke).not.toBe('none');
@@ -441,7 +515,7 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
       )
       .toBeGreaterThan(25);
     await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
-    await expect(space.getByLabel('Alla etiketter', { exact: true })).not.toBeChecked();
+    await expect(space.getByLabel('Alla etiketter', { exact: true })).toBeChecked();
     await expect
       .poll(async () => Math.abs(separation(await geometry()) - separation(overview)))
       .toBeLessThan(2);
@@ -546,24 +620,30 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await page.goto(installation.origin);
     await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-    const music = space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true });
-    const lo = space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    const musicNode = space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true });
+    const music = space.locator('[data-object-label="music"]');
+    const lo = space.locator('[data-object-label="lo"]');
     const edge = space.getByRole('button', {
       name: 'Välj samband: Lo Exempel → Använder → Molnmusik',
       exact: true,
     });
-    for (const label of [music, edge]) {
+    for (const [label, symbolContainer] of [
+      [music, musicNode],
+      [edge, edge],
+    ]) {
       await expect(label.getByText('Upphört', { exact: true })).toBeVisible();
-      await expect(label).toContainText('+');
+      await expect(symbolContainer).toContainText('+');
       const endedColor = await label
         .getByText('Upphört')
         .evaluate((element) => getComputedStyle(element).backgroundColor);
-      const proposalColor = await label
+      const proposalColor = await symbolContainer
         .getByTitle('Nytt förslag')
         .evaluate((element) => getComputedStyle(element).backgroundColor);
       expect(endedColor).not.toBe(proposalColor);
     }
     await expect(lo).not.toContainText('Upphört');
+    await expect(musicNode).toHaveAccessibleDescription(/Upphört/);
     await page.getByRole('button', { name: 'Visa detaljer och utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
@@ -571,6 +651,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await page.reload();
     await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
     await expect(music.getByText('Upphört', { exact: true })).toBeVisible();
+    await expect(musicNode).toHaveAccessibleDescription(/Upphört/);
     await expect(edge.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(lo).not.toContainText('Upphört');
     await expect(space.getByTitle('Nytt förslag')).toHaveCount(0);

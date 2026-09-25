@@ -1,6 +1,7 @@
 # Manuella testfall för profilbilder
 
-Testfallen omfattar privata bildförslag, historik, ångring, fel och åtkomst.
+Testfallen omfattar privata bildförslag, visning i rymdkartan, historik,
+ångring, fel och åtkomst.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -65,12 +66,15 @@ and undo replacement”.
 **Steg:**
 
 1. Öppna Lo Exempels detaljer. Välj en PNG-bild. Kontrollera förhandsbilden
-   och beskedet om privat förslag.
+   och beskedet om privat förslag. Öppna rymdkartan och kontrollera bilden
+   i Lo Exempels runda symbol. Öppna detaljerna igen.
 2. Skriv en ny beskrivning utan att skicka. Kontrollera att bildvalet är
-   inaktiverat. Växla till rymdkartan och öppna detaljerna. Lägg texten i
-   utkastet och spara hela utkastet.
-3. Starta om servern normalt och ladda om sidan. Öppna Lo och byt bilden
-   till WebP. Stäng formuläret och spara hela utkastet.
+   inaktiverat. Växla till rymdkartan och kontrollera bilden i Lo Exempels
+   runda symbol. Öppna detaljerna. Lägg texten i utkastet och spara hela
+   utkastet.
+3. Starta om servern normalt och ladda om sidan. Kontrollera bilden i
+   detaljerna och rymdkartan. Öppna Lo och byt bilden till WebP. Stäng
+   formuläret och spara hela utkastet.
 4. Öppna historiken. Läs och se bilderna före och efter senaste sparandet.
    Ångra sparandet och spara hela utkastet.
 
@@ -78,7 +82,8 @@ and undo replacement”.
 
 - Bilden läggs på rätt objekt som privat förslag. Oskickad text bevaras vid
   vybyte och bildvalet kan inte skriva över den.
-- Sparad bild och beskrivning överlever omstart. Historiken visar bytet.
+- Bilden visas i objektets runda symbol före sparandet och efter omstart.
+  Sparad bild och beskrivning överlever omstart. Historiken visar bytet.
 - Ångring återför den första bilden och bevarar den ändrade beskrivningen.
 
 ### BILD-02: Avvisa felaktiga bilder och återhämta bildborttagning

@@ -240,8 +240,8 @@ later refreshes preserve the camera”.
    ligger helt utanför den ursprungliga vyn. Vänta på beskedet att din
    personliga vy är sparad. Gör samma sak med Cykeln, utan att ändra kameran.
 2. Aktivera långsam anslutning i webbläsarens nätverksinställningar och
-   ladda om sidan. Kontrollera att lista och rymdkarta visas. Öppna Ordna
-   min vy medan Visa stjärnhimmel ännu är inaktiv i väntan på de personliga
+   ladda om sidan. Kontrollera att lista och rymdkarta visas. Kontrollera
+   Visa stjärnhimmel under kartan medan valet är inaktivt i väntan på de personliga
    placeringarna. Använd inte Återställ vy eller kameraknapparna.
 3. Vänta tills Visa stjärnhimmel går att använda och kontrollera att båda
    objekten syns. Återgå till normal anslutning.

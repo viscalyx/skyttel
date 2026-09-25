@@ -58,8 +58,9 @@ betyder inte att dess manuella prov är genomfört.
   och samband, privata förslag, kontrollerat förlorat sparsvar, omstart
   och ångring av hela sparandet.
 
-- [Profilbilder](profile-images.md): privata bildförslag, formatfel,
-  gränser, omstart, bildbyte, borttagning, ångring, kvitton och bildåtkomst.
+- [Profilbilder](profile-images.md): privata bildförslag, visning i
+  rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, ångring,
+  kvitton och bildåtkomst.
 
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
   anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
@@ -77,9 +78,10 @@ betyder inte att dess manuella prov är genomfört.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt och bevara ofullständiga uppgifter.
 - [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
-  fokus, filter, etiketter, pekmenyer, upphörd status, ändringssymboler och bevarad
-  oskickad text vid vybyte, orientering och grafikavbrott samt fungerande
-  navigation när tillgången återkallas i helskärm.
+  fokus, filter, namn vid runda symboler, sambandsetiketter vid val,
+  bevarat etikettläge vid återställning, pekmenyer, upphörd status,
+  ändringssymboler och bevarad oskickad text vid vybyte, orientering och
+  grafikavbrott samt fungerande navigation när tillgången återkallas i helskärm.
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
   genom sidvisning, sökning och fokus, med bevarad text och placering.
 - [Personliga placeringar](personal-view.md): flyttning med mus, pekgester

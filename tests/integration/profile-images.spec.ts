@@ -1,8 +1,33 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
+
+async function expectSpatialPortrait(page: Page, imageId: string | null | undefined) {
+  expect(imageId).toBeTruthy();
+  const portrait = page
+    .getByRole('region', { name: 'Rymdkarta', exact: true })
+    .getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true })
+    .getByAltText('Profilbild för Lo Exempel');
+  await expect(portrait).toBeVisible();
+  await expect(portrait).toHaveAttribute('src', new RegExp(`/profile-images/${imageId}$`));
+  await expect
+    .poll(() =>
+      portrait.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0),
+    )
+    .toBe(true);
+  const { data, info } = await sharp(await portrait.screenshot())
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const offset =
+    (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels;
+  const pixel = [...data.subarray(offset, offset + 3)];
+  // The uploaded synthetic blue pixels must actually paint inside the node.
+  for (const [index, expected] of [0, 136, 255].entries()) {
+    expect(Math.abs(pixel[index] - expected)).toBeLessThan(15);
+  }
+}
 
 test('BILD-01: profile image proposals preserve text, survive restart and undo replacement', async ({
   page,
@@ -42,9 +67,12 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
     const first = (await read()).draft.changes[0].after?.profileImageId;
     await expect(details.getByAltText('Profilbild för Lo Exempel')).toBeVisible();
     expect((await read()).objects).toEqual([]);
+    await page.getByRole('button', { name: 'Öppna rymdkartan' }).click();
+    await expectSpatialPortrait(page, first);
+    await page.getByRole('button', { name: 'Visa detaljer och utkast' }).click();
     await details.getByLabel('Beskrivning', { exact: true }).fill('Oskickad text');
     await expect(details.getByLabel('Välj profilbild')).toBeDisabled();
-    await page.getByRole('button', { name: 'Öppna rymdkartan' }).click();
+    await page.getByRole('button', { name: 'Till kartan', exact: true }).click();
     await page.getByRole('button', { name: 'Visa detaljer och utkast' }).click();
     await expect(details.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad text');
     await details.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
@@ -54,6 +82,9 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
     await page.reload();
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
     await expect(details.getByAltText('Profilbild för Lo Exempel')).toBeVisible();
+    await page.getByRole('button', { name: 'Öppna rymdkartan' }).click();
+    await expectSpatialPortrait(page, first);
+    await page.getByRole('button', { name: 'Visa detaljer och utkast' }).click();
     await details.getByLabel('Välj profilbild').setInputFiles({
       name: 'ny.webp',
       mimeType: 'image/webp',

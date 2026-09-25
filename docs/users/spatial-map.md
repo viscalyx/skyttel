@@ -11,9 +11,11 @@ Utgångsläget omfattar alla objekt och samband. **Sök objekt** och
 **Filtrera objekttyp** begränsar både karta och lista. I helskärmskartan
 finns dessa kontroller under **Sök och fokus**.
 
-Klicka på ett objekts etikett för att öppna samma detaljer som i listan.
-Typikonen hjälper dig att känna igen objektets typ. Klicka på ett
-sambands etikett för att redigera dess riktning, säkerhet och status.
+Klicka på ett objekts runda symbol för att öppna samma detaljer som i
+listan. Symbolen visar objektets profilbild eller en ikon för dess typ.
+Namnet visas bredvid symbolen. När du väljer ett objekt visas etiketterna
+för dess samband. **Alla etiketter** visar även de andra sambandsnamnen.
+Klicka på ett sambands etikett för att redigera riktning, säkerhet och status.
 Pilen går från det första objektet till det andra. Okänt och uttryckligen
 inget är uppgifter om ett samband, inte nya objekt.
 
@@ -38,7 +40,8 @@ Under **Navigera rymden** finns också knappar för panorering, rotation,
 lutning och zoom. Kartdrag markerar inte etiketternas text.
 
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
-kartans placeringar. Det ändrar inga hushållsuppgifter.
+kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
+hushållsuppgifter.
 Översikten visar de etiketter som får plats utan överlappning. Valda objekt
 och samband, deras kopplingar och utkast prioriteras. Ett besked anger hur
 många etiketter som visas; innehållet och dina personliga placeringar ändras
@@ -66,12 +69,16 @@ och utkast** den gemensamma redigeringen; **Till kartan** går tillbaka.
 
 Markeringarna visar skillnaden mot sparad karta:
 
-- **+** med grön markering: nytt förslag.
+- **+** med guldgul markering: nytt förslag.
 - **~** med gul markering: ändrat förslag.
-- **×** med röd markering: föreslagen borttagning.
+- **×** med korallfärgad markering: föreslagen borttagning.
 
-**Upphört** har en egen färg och visas även i rymdkartans objekt- och
-sambandsetiketter. Statusen följer samma slutdatum och manuella val som
+Samband som föreslås tas bort visas som böjda, streckade linjer. När ett
+förslag byter ett sambands typ eller anslutna objekt kan den tidigare
+kopplingen visas på samma sätt bredvid den föreslagna kopplingen.
+
+**Upphört** har en egen färg och visas vid objektets namn eller i
+sambandets etikett. Statusen följer samma slutdatum och manuella val som
 i listan. Den kan visas samtidigt med en ändringssymbol och finns kvar
 efter sparandet. **Gäller fortfarande** åsidosätter ett passerat slutdatum.
 
@@ -114,8 +121,9 @@ riktningar med knappar och tangentbord.
 
 Under **Ordna min vy** kan du vända panoreringen separat i sidled och
 höjdled. Axelvisaren visas under rörelse och en kort stund efteråt.
-Välj mellan fyra hörn eller **Visa axlar hela tiden**. Den valbara
-stjärnhimlen följer rotation och zoom men ligger still vid panorering
+Välj mellan fyra hörn eller **Visa axlar hela tiden**. **Visa stjärnhimmel**
+finns direkt under kartan. Stjärnhimlen följer rotation och zoom men ligger
+still vid panorering
 och objektflyttning. Hjälpvisare, avstånd och placeringar är presentation;
 de tillför inga uppgifter om hushållet.
 
