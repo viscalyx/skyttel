@@ -26,7 +26,7 @@ All mänsklig körning görs efter specifikationens implementation i
    Välj **Lägg i mitt utkast** och lämna förslaget osparat.
 3. Starta textassistenten med båda uttryckliga valen. Kontrollera först
    att enbart AI-valet inte räcker för att aktivera startknappen.
-4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-05.
+4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-06.
    Behåll samma databas under ett omstartsprov. Avsluta med `quit` och
    stäng provfönstret enligt startguidens städningssteg.
 
@@ -220,4 +220,65 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 
 - Första markeringsstatusen kommer efter faktisk webbläsarvisning.
 - Det andra försöket ger ingen ny bekräftad markering. Oskickad text
-  finns kvar. Modellens text ensam ändrar inte den betrodda statusen.
+  finns kvar. **Markerat!** visas som obekräftad samtalstext, skild från
+  Skyttels status. Modellens text ensam ändrar inte den betrodda statusen.
+
+### TEXT-06: obekräftad samtalstext skiljs från sparande och markering
+
+**Syfte:** Skilja modellens fria svar från bekräftade resultat, även när
+svaret påstår att något har utförts med andra ord.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Lo-förslaget finns i utkastet. Anteckna aktuellt urval
+i kartan innan du börjar. Inget sparande är genomfört.
+
+**Integrationstest:**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+“TEXT-06: obekräftad samtalstext skiljs från sparande och markering”.
+
+**Steg:**
+
+1. Skicka **Kontrollera utkastet.** till textassistenten. Vänta på `held`
+   i terminalen och ersätt `NUMMER` med anropets ID:
+
+   ```text
+   reply NUMMER Klart. Ändringarna är nu lagrade i hushållets karta.
+   ```
+
+2. Kräv rubriken **Assistentens samtalstext – inte en bekräftelse** vid
+   texten och förklaringen att bara Skyttels status och kvitton bekräftar
+   sparande och markering. Kontrollera det osparade Lo-förslaget och att
+   inget nytt spar- eller markeringsbesked visas i statusen.
+3. Skicka samma fråga på nytt för varje svar nedan. Använd det nya
+   `held`-numret och släpp ett svar i taget:
+
+   ```text
+   reply NUMMER Saved successfully.
+   reply NUMMER Lo är nu vald och visas i kartan.
+   reply NUMMER Har du sparat tidigare, och vem betalar?
+   ```
+
+4. Kontrollera att varje svar visas i samma tydligt märkta samtalsdel.
+   Frågan ska gå att läsa som en vanlig följdfråga. Kontrollera utkastet,
+   kartans urval och **Tidigare sparförsök** igen.
+5. Skicka **Spara hela utkastet nu**. Läs `version` och `contentVersion`
+   från det nya `held.draft`. Släpp anropet med följande kommando, efter
+   att du ersatt `NUMMER`, `VERSION` och `CONTENT` med aktuella värden:
+
+   ```text
+   tool NUMMER save_draft {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-proof-save"}
+   ```
+
+6. Kräv den verkliga statusen **Sparat. Hela utkastet finns i hushållets
+   karta.** Öppna **Visa kvittot** och kontrollera Lo i den sparade kartan
+   samt ett tomt utkast.
+
+**Förväntat resultat:**
+
+- Andra språk och omskrivningar blir inte bevis på sparande eller markering.
+  Samtalstexten behålls men dess obekräftade källa framgår.
+- Efter de fyra fria svaren är Lo fortfarande osparad, kartans urval är
+  oförändrat och inget kvitto finns för dessa svar. Det sista riktiga
+  sparanropet ger däremot kvitto, sparad Lo och bekräftad status.
+- Användbara frågor försvinner inte genom en lista med förbjudna ord.

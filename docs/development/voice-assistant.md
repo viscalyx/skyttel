@@ -61,8 +61,13 @@ fresh normal MCP authorization.
 Completion uses `session.commentary.append` and the actual delegation ID.
 Its text is bounded to 480 UTF-8 bytes, below the provider's 500-token limit.
 Confirmed save and selection messages derive from durable receipts and the
-browser's actual selection acknowledgement. Ordinary model prose cannot set
-application success state. Commentary acceptance is not proof of audible speech
+browser's actual selection acknowledgement. Commentary separates
+**Skyttels resultat** from **Modellens obekräftade samtalstext**. Provider
+conversation is bounded and quoted as unverified input, never added to the
+verified result. Useful questions remain conversation rather than proof.
+The browser also explains that AI speech can be wrong. Ordinary model prose
+cannot set application success state. Commentary acceptance is not proof
+of audible speech
 or exact spoken wording. See the official
 [client delegation](https://developers.openai.com/api/docs/guides/live-delegation)
 and [server controls](https://developers.openai.com/api/docs/guides/voice-server-controls)

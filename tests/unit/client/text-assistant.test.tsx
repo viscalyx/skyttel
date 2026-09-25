@@ -54,6 +54,33 @@ function showAssistant(onMapChange = vi.fn(), onAccessLost = vi.fn()) {
   );
 }
 
+test('unverified model conversation stays separate from receipt and selection status, including useful questions', async () => {
+  const modelReply = 'Klart. Ändringarna är nu lagrade i hushållets karta. Vem betalar?';
+  let current: TextAssistantView = { ...session(), modelReply };
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url === path) return Response.json(init?.method === 'POST' ? current : { available: true });
+    if (url.endsWith('/messages'))
+      current = { ...current, revision: 1, displayedSelection: 'bike' };
+    return Response.json(current);
+  });
+  showAssistant();
+  await consent();
+  const conversation = await screen.findByRole('region', { name: 'Assistentens samtalstext' });
+  expect(within(conversation).getByRole('heading').textContent).toBe(
+    'Assistentens samtalstext – inte en bekräftelse',
+  );
+  expect(conversation.textContent).toContain(modelReply);
+  expect(conversation.textContent).toContain(
+    'Sparande och markering bekräftas bara av Skyttels status och kvitton.',
+  );
+  expect(screen.getByRole('status').textContent).toContain('Nya förslag är osparade');
+  expect(screen.getByRole('status').textContent).not.toContain('lagrade');
+  await userEvent.type(screen.getByLabelText('Meddelande till textassistenten'), 'Markera cykeln.');
+  await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
+  expect(screen.getByRole('status').textContent).toBe('Markerat i kartan.');
+  expect(conversation.textContent).toContain('Vem betalar?');
+});
+
 test('a pending save is recovered with the same operation and a durable receipt replaces model claims', async () => {
   let current = session();
   const identity = {

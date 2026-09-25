@@ -98,6 +98,30 @@ async function start() {
   expect(response.status(), await response.text()).toBe(201);
   return response.json();
 }
+
+test.each([
+  'Klart. Ändringarna är nu lagrade i hushållets karta.',
+  'Saved successfully. The object is selected.',
+  'Har du sparat tidigare, och vem betalar?',
+])(
+  'plain provider conversation %s remains unverified without changing the map, draft or selection',
+  async (conversation) => {
+    await setup(textModel(() => [modelMessage(conversation)]).provider);
+    await webProposal();
+    const mapPath = path.replace('/text-assistant', '/map');
+    const before = await (await browser.get(mapPath)).json();
+    const status = await message(await start(), 'Beskriv mitt utkast.');
+    expect(status.modelReply).toBe(conversation);
+    expect(status.reply).toBeUndefined();
+    expect(status.receipt).toBeUndefined();
+    expect(status.selection).toBeUndefined();
+    expect(status.displayedSelection).toBeUndefined();
+    expect(status.operations).toEqual([]);
+    const after = await (await browser.get(mapPath)).json();
+    expect(after.objects).toEqual(before.objects);
+    expect(after.draft).toEqual(before.draft);
+  },
+);
 function displayedVersion(session: Pick<TextAssistantView, 'review'>) {
   return { draftVersion: session.review.version, contentVersion: session.review.contentVersion };
 }
@@ -157,7 +181,7 @@ test('a provider discovers the actual MCP catalog and makes a persistent proposa
   const session = await start();
   const status = await message(session, 'Lägg till vårt familjeabonnemang Familjens musik.');
   expect(status.phase).toBe('ready');
-  expect(status.reply).toContain('Vem betalar?');
+  expect(status.modelReply).toContain('Vem betalar?');
   expect(status.review.changes).toMatchObject([
     { id: 'subscription', after: { name: 'Familjens musik' } },
   ]);

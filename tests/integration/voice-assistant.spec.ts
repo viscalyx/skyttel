@@ -47,6 +47,96 @@ function speak(live: ReturnType<typeof liveProvider>, text: string, id = crypto.
   });
 }
 
+test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async ({ page }) => {
+  const replies = [
+    'Klart. Ändringarna är nu lagrade i hushållets karta.',
+    'Saved successfully.',
+    'Lo är nu vald och visas i kartan.',
+    'Har du sparat tidigare, och vem betalar?',
+  ];
+  let step = 0;
+  const model = textModel(() => {
+    if (step < replies.length) return [modelMessage(replies[step++])];
+    if (step++ === replies.length) return [modelTool('show_map_object', { objectId: 'lo' })];
+    if (step === replies.length + 2) return [modelMessage('Vem betalar?')];
+    return [
+      modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'provider-choice' }),
+    ];
+  });
+  const live = liveProvider();
+  const app = await createInstallation(undefined, {
+    modelFetch: model.provider,
+    liveFetch: live.provider,
+    liveSideband: live.attach,
+  });
+  try {
+    const { path } = await simpleMap(page, app);
+    const before = await (await page.request.get(path)).json();
+    const object = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+    const selected = await object.getAttribute('aria-pressed');
+    await expect(assistant(page)).toContainText('AI-rösten kan innehålla fel.');
+    for (const [index, reply] of replies.entries()) {
+      speak(live, 'Beskriv mitt utkast.');
+      const conversation = assistant(page).getByRole('region', {
+        name: 'Assistentens samtalstext',
+        exact: true,
+      });
+      await expect(conversation).toContainText(reply);
+      await expect(conversation.getByRole('heading')).toHaveText(
+        'Assistentens samtalstext – inte en bekräftelse',
+      );
+      await expect(assistant(page).getByRole('status')).toContainText('Nya förslag är osparade');
+      await expect(object).toHaveAttribute('aria-pressed', selected ?? 'false');
+      await expect
+        .poll(
+          () => live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
+        )
+        .toBe(index + 1);
+      const commentary = live.sent.at(-1)?.event as { content: string };
+      const [result, modelText] = commentary.content.split('\n');
+      expect(result).toBe(
+        'Skyttels resultat: Inget nytt sparande eller markering är bekräftad. 1 objektförslag i utkastet.',
+      );
+      expect(modelText).toBe(
+        `Modellens obekräftade samtalstext (inte ett resultatbesked): ${JSON.stringify(reply)}`,
+      );
+      const current = await (await page.request.get(path)).json();
+      expect(current.objects).toEqual(before.objects);
+      expect(current.draft).toEqual(before.draft);
+      expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
+    }
+    speak(live, 'Markera Lo Exempel.');
+    await expect(assistant(page).getByRole('status')).toHaveText('Markerat i kartan.');
+    await expect(object).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      assistant(page).getByRole('region', { name: 'Assistentens samtalstext', exact: true }),
+    ).toContainText('Vem betalar?');
+    await expect
+      .poll(
+        () => live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
+      )
+      .toBe(5);
+    expect(JSON.stringify(live.sent.at(-1))).toContain(
+      'Skyttels resultat (verifierat): Objektet är markerat',
+    );
+    speak(live, 'Spara hela utkastet nu.');
+    await expect(assistant(page).getByRole('status')).toHaveText(
+      'Sparat. Hela utkastet finns i hushållets karta.',
+    );
+    await expect
+      .poll(
+        () => live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
+      )
+      .toBe(6);
+    expect(JSON.stringify(live.sent.at(-1))).toContain('Skyttels resultat (verifierat): Sparat.');
+    await assistant(page).getByText('Visa kvittot', { exact: true }).click();
+    await expect(assistant(page)).toContainText('Sparat: Lo Exempel. Kvitto:');
+    expect((await (await page.request.get(path)).json()).objects).toMatchObject([{ id: 'lo' }]);
+  } finally {
+    await app.close();
+  }
+});
+
 test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtext', async ({
   page,
 }) => {

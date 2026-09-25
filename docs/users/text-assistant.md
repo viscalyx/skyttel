@@ -58,8 +58,12 @@ hypotetiska och uppskjutna sparkommandon ger inte tillåtelse att spara.
 Om formuleringen är oklar kan du behöva skriva **Spara hela utkastet nu**.
 
 Statusen **Sparat** kommer från ett beständigt kvitto. **Visa kvittot**
-visar vad sparandet omfattar. Assistentens fria text är en modelltolkning;
-den ersätter inte kvittot. En markeringsstatus visas först när den öppna
+visar vad sparandet omfattar. **Assistentens samtalstext – inte en
+bekräftelse** visar modellens frågor och svar separat. Texten kan innehålla
+fel, även ett påstående om att något har sparats eller markerats. Lita på
+Skyttels status och kvitto för sådana resultat. Detsamma gäller AI-röstens
+formuleringar; ett ljudsvar är inte i sig ett sparbevis.
+En markeringsstatus visas först när den öppna
 webbläsaren har visat det valda objektet. Oskickad formulärtext skyddas
 genom att en sådan visningsbegäran kan nekas.
 

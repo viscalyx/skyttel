@@ -237,7 +237,9 @@ backup. Stop the application before restoring that backup.
 Ordinary removal keeps content, relationship names, type definitions, and
 earlier values in history without automatic expiry. Apply existing access
 restrictions to these records and backups. Ordinary removal does not erase
-this retained information. Permanent erasure is a separate planned action.
+this retained information. Administrators use the separate reviewed
+permanent-erasure procedure to remove retained content. Follow its cleanup
+and recovery guidance before treating an interrupted erasure as complete.
 
 ### Daily image security monitoring
 
@@ -305,8 +307,10 @@ deployment-failure notifications. Keep other deployment paths disabled.
 After failure, establish the actual running image and database state before
 retry. Wait for any active migration. Return to older code only when it is
 compatible with the current database; changing the image does not restore
-data. No extra automatic backup is added. Full household export and reimport
-remain the planned recovery path and are not yet available.
+data. No extra automatic backup is added. Use a complete household export
+and the documented reimport procedure for content recovery or transfer.
+Authentication and membership are configured separately on a replacement
+installation. Without a usable export, later content can be lost.
 
 Ask users to preserve unsent text and reload old browser sessions after an
 update. Outdated sessions cannot submit changes. An interrupted save must

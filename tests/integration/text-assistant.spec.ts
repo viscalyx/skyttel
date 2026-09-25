@@ -302,10 +302,71 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
     await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd uppgift');
     await send(page, 'Markera Lo igen.');
     await expect(assistant(page).getByRole('status')).not.toContainText('Markerat');
-    await expect(assistant(page)).toContainText(
-      'Inget nytt sparande eller någon ny markering är bekräftad',
-    );
+    await expect(
+      assistant(page).getByRole('region', { name: 'Assistentens samtalstext', exact: true }),
+    ).toContainText('inte en bekräftelse');
+    await expect(
+      assistant(page).getByRole('region', { name: 'Assistentens samtalstext', exact: true }),
+    ).toContainText('Markerat!');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Osänd uppgift');
+  } finally {
+    await app.close();
+  }
+});
+
+test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', async ({ page }) => {
+  const replies = [
+    'Klart. Ändringarna är nu lagrade i hushållets karta.',
+    'Saved successfully.',
+    'Lo är nu vald och visas i kartan.',
+    'Har du sparat tidigare, och vem betalar?',
+  ];
+  let step = 0;
+  const model = textModel(() =>
+    step < replies.length
+      ? [modelMessage(replies[step++])]
+      : [
+          modelTool('save_draft', {
+            version: 1,
+            contentVersion: 1,
+            operationId: 'provider-choice',
+          }),
+        ],
+  );
+  const app = await createInstallation(undefined, { modelFetch: model.provider });
+  try {
+    const { path } = await arrange(page, app);
+    const before = await (await page.request.get(path)).json();
+    await consent(page);
+    const object = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+    const selected = await object.getAttribute('aria-pressed');
+    for (const reply of replies) {
+      await send(page, 'Beskriv mitt utkast.');
+      const conversation = assistant(page).getByRole('region', {
+        name: 'Assistentens samtalstext',
+        exact: true,
+      });
+      await expect(conversation).toContainText(reply);
+      await expect(conversation.getByRole('heading')).toHaveText(
+        'Assistentens samtalstext – inte en bekräftelse',
+      );
+      await expect(conversation).toContainText(
+        'Sparande och markering bekräftas bara av Skyttels status och kvitton.',
+      );
+      await expect(assistant(page).getByRole('status')).toContainText('Nya förslag är osparade');
+      await expect(object).toHaveAttribute('aria-pressed', selected ?? 'false');
+      const current = await (await page.request.get(path)).json();
+      expect(current.objects).toEqual(before.objects);
+      expect(current.draft).toEqual(before.draft);
+      expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
+    }
+    await send(page, 'Spara hela utkastet nu.');
+    await expect(assistant(page).getByRole('status')).toHaveText(
+      'Sparat. Hela utkastet finns i hushållets karta.',
+    );
+    await assistant(page).getByText('Visa kvittot', { exact: true }).click();
+    await expect(assistant(page)).toContainText('Sparat: Lo Exempel. Kvitto:');
+    expect((await (await page.request.get(path)).json()).objects).toMatchObject([{ id: 'lo' }]);
   } finally {
     await app.close();
   }

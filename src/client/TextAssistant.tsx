@@ -370,9 +370,19 @@ export function TextAssistant({
           </p>
           {session.reply && !session.receipt && !session.displayedSelection && (
             <div>
-              <h4>Assistentens svar</h4>
+              <h4>Besked från Skyttel</h4>
               <p>{session.reply}</p>
             </div>
+          )}
+          {session.modelReply && (
+            <section aria-label="Assistentens samtalstext">
+              <h4>Assistentens samtalstext – inte en bekräftelse</h4>
+              <p>
+                Samtalstexten kan innehålla fel. Sparande och markering bekräftas bara av Skyttels
+                status och kvitton.
+              </p>
+              <p>{session.modelReply}</p>
+            </section>
           )}
           {session.error && <p role="alert">{errorMessage(session.error)}</p>}
           <form

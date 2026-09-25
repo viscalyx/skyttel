@@ -15,6 +15,8 @@ export interface TextAssistantView {
   phase: 'ready' | 'working' | 'error' | 'recovery';
   review: TextAssistantReview;
   reply?: string;
+  /** Provider conversation is never evidence of a saved or displayed result. */
+  modelReply?: string;
   error?: string;
   receipt?: SaveReceipt;
   operations: SaveOperation[];

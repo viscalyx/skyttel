@@ -214,6 +214,10 @@ export function VoiceAssistant(props: {
         Rösten använder samma samtal och hela ditt utkast. OpenAI behandlar ljudet. Text och kartans
         formulär finns kvar.
       </p>
+      <p>
+        AI-rösten kan innehålla fel. Skyttels status och kvitton bekräftar vad som faktiskt har
+        sparats eller markerats.
+      </p>
       <p aria-live="polite">
         {state === 'connecting'
           ? 'Ansluter rösten… Mikrofonen är avstängd tills tjänsten är klar.'

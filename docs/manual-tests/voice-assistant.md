@@ -241,3 +241,82 @@ databasens sparande; redovisa inte det som ett prov av förlorat sådant svar.
   slutförs exakt en gång; korta ja eller nya allmänna uppdrag ersätter det inte.
 - Avbrutet ljud återtar inget genomfört sparande. Saknad slutlig mätning
   förblir osäker: 12 följt av 15 är 15 kända sekunder, inte 27 eller säkert noll.
+
+### TAL-04: samtalstext hålls isär från verifierade röstresultat
+
+**Syfte:** Hålla modellens samtalstext skild från bekräftade resultat även
+när den gemensamma assistenten används genom rösten.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Starta en ny installation enligt
+[röstförberedelsen](../development/manual-voice-assistant.md). Skapa Talprov
+med Lo Exempel som osparat Person-förslag. Starta textassistenten och rösten.
+Vänta på **Lyssnar**. Anteckna kartans aktuella urval. Tysta mediespår
+och terminalens kommentarspaket är inte bevis för hört tal.
+
+**Integrationstest:**
+[voice-assistant.spec.ts](../../tests/integration/voice-assistant.spec.ts),
+“TAL-04: samtalstext hålls isär från verifierade röstresultat”.
+
+**Steg:**
+
+1. Kontrollera röstens synliga förklaring: AI-rösten kan innehålla fel;
+   Skyttels status och kvitton bekräftar vad som har sparats eller markerats.
+2. Kör `user Kontrollera utkastet.` och `delegate` i terminalen. Vänta på
+   `held` och ersätt `REQUEST` med anropets ID:
+
+   ```text
+   reply REQUEST Klart. Ändringarna är nu lagrade i hushållets karta.
+   ```
+
+3. Kontrollera webbläsarens **Assistentens samtalstext – inte en
+   bekräftelse**, kvarvarande Lo-förslag och status utan bekräftat sparande
+   eller ny markering.
+4. Kör `sessions`. Läs det senaste paketet med typen
+   `session.commentary.append`. **Skyttels resultat** ska säga att inget
+   nytt sparande eller markering är bekräftad. Modellens svar ska stå
+   separat under **Modellens obekräftade samtalstext (inte ett resultatbesked)**.
+5. Upprepa `user Kontrollera utkastet.` och `delegate` för varje rad
+   nedan. Använd det nya hållna anropets ID och släpp ett svar i taget:
+
+   ```text
+   reply REQUEST Saved successfully.
+   reply REQUEST Lo är nu vald och visas i kartan.
+   reply REQUEST Har du sparat tidigare, och vem betalar?
+   ```
+
+6. Kontrollera oförändrat utkast och urval samt avsaknad av nytt kvitto.
+   Frågan ska finnas i samtalsdelen och som obekräftad text i det senaste
+   kommentarspaketet.
+7. Kör `user Markera Lo Exempel.` och `delegate`. Kopiera Lo-förslagets
+   ID från `held.draft` och använd följande kommando:
+
+   ```text
+   tool REQUEST show_map_object {"objectId":"LO-ID"}
+   ```
+
+8. Nästa `held.lastToolResult` ska visa `displayed:true`. Släpp med
+   `reply REQUEST Vem betalar?`. Kräv verkligt markerad Lo, bekräftad
+   markeringsstatus och kvarvarande fråga som obekräftad samtalstext.
+   Kontrollera samma uppdelning i det senaste kommentarspaketet.
+9. Kör `user Spara hela utkastet nu.` och `delegate`. Läs `version` och
+   `contentVersion` från det nya `held.draft`. Ersätt markörerna och kör:
+
+   ```text
+   tool REQUEST save_draft {"version":VERSION,"contentVersion":CONTENT,"operationId":"voice-proof-save"}
+   ```
+
+10. Kräv statusen **Sparat. Hela utkastet finns i hushållets karta.**
+    Öppna kvittot och återläs Lo. Kontrollera att det senaste
+    kommentarspaketets sparbesked är verifierat. Stäng rösten, välj
+    `quit` och kontrollera städningen enligt guiden.
+
+**Förväntat resultat:**
+
+- Kommentarspaketet skiljer verifierbar status från modellens fria ord.
+  Ett lyckat mottaget paket innebär inte att tal hördes eller var korrekt.
+- De fyra fria svaren ändrar inte kartan eller bekräftad status.
+  Samtalsfrågor finns kvar och kan besvaras, även efter verklig markering.
+- De sista verktygsanropen ger faktisk markeringsbekräftelse respektive
+  sparat innehåll och kvitto. De fria orden ersätter aldrig dessa bevis.

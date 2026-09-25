@@ -102,7 +102,7 @@ test.each(['new speech', 'connection loss'])(
         delegation: { id: randomUUID(), type: 'delegation', target: 'client' },
       });
       await expect
-        .poll(async () => (await (await browser.get(path)).json()).reply)
+        .poll(async () => (await (await browser.get(path)).json()).modelReply)
         .toBe('Det nya uppdraget är förstått.');
       expect(model.requests).toHaveLength(2);
       expect(await (await browser.get(`${householdPath}/map`)).json()).toEqual(map);

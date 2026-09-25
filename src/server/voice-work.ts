@@ -66,13 +66,22 @@ export function voiceWork({
     });
   }
   function completion(view: TextAssistantView) {
-    if (view.receipt) return 'Verifierat: Sparat. Hela utkastet finns i hushållets karta.';
-    if (view.displayedSelection) return 'Verifierat: Objektet är markerat i den öppna kartan.';
     if (view.phase === 'recovery')
       return 'Sparresultatet är inte bekräftat. Tidigare sparförsök kontrolleras innan nytt arbete. Säg ”slutför samma sparförsök” om du vill slutföra exakt det väntande försöket.';
     if (view.error)
       return 'Uppdraget kunde inte slutföras. Utkastet finns kvar. Kontrollera det aktuella underlaget och ge ett nytt tydligt uppdrag; inget nytt sparande är bekräftat.';
-    return `Verifierat: Inget nytt sparande. ${view.review.changes.length} objektförslag i ditt utkast. Svar: ${(view.reply ?? 'Vad vill du göra?').slice(0, 600)}`;
+    const result = view.receipt
+      ? 'Skyttels resultat (verifierat): Sparat. Hela utkastet finns i hushållets karta.'
+      : view.displayedSelection
+        ? 'Skyttels resultat (verifierat): Objektet är markerat i den öppna kartan.'
+        : `Skyttels resultat: Inget nytt sparande eller markering är bekräftad. ${view.review.changes.length} objektförslag i utkastet.`;
+    if (!view.modelReply) return result;
+    // Keep the source boundary and quoted conversation intact within Live's
+    // byte limit. Provider prose is data, never part of the verified result.
+    const prefix = `${result}\nModellens obekräftade samtalstext (inte ett resultatbesked): `;
+    const points = Array.from(view.modelReply).slice(0, 480);
+    while (Buffer.byteLength(prefix + JSON.stringify(points.join('')), 'utf8') > 480) points.pop();
+    return prefix + JSON.stringify(points.join(''));
   }
   async function execute(
     id: string,

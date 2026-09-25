@@ -65,6 +65,7 @@ export function textAssistantRoutes({
     session.displayed?.(false);
     session.input = [];
     session.reply = undefined;
+    session.modelReply = undefined;
     session.receipt = undefined;
     session.operations = [];
     clearTimeout(session.timer);
@@ -99,6 +100,7 @@ export function textAssistantRoutes({
       phase,
       review,
       reply,
+      modelReply,
       error,
       receipt,
       operations,
@@ -111,6 +113,7 @@ export function textAssistantRoutes({
       phase,
       review,
       reply,
+      modelReply,
       error,
       receipt,
       operations,
@@ -170,6 +173,7 @@ export function textAssistantRoutes({
     session.receipt = receipt;
     session.pendingSave = undefined;
     session.reply = 'Sparat. Hela utkastet finns i hushållets karta.';
+    session.modelReply = undefined;
     session.error = undefined;
     session.phase = 'ready';
     session.input = [];
@@ -254,11 +258,8 @@ export function textAssistantRoutes({
         session.input.push(...toResponseInputItems(response.output));
         const calls = response.output.filter((item) => item.type === 'function_call');
         if (!calls.length) {
-          session.reply = session.displayedSelection
-            ? 'Markerat i kartan.'
-            : /\b(sparat|sparade|sparats|markerat|markerade)\b/iu.test(response.output_text)
-              ? 'Inget nytt sparande eller någon ny markering är bekräftad. Kontrollera utkastet och tidigare sparförsök.'
-              : response.output_text;
+          session.modelReply = response.output_text;
+          session.reply = session.displayedSelection ? 'Markerat i kartan.' : undefined;
           session.phase = session.pendingSave ? 'recovery' : 'ready';
           return;
         }
@@ -369,6 +370,7 @@ export function textAssistantRoutes({
           : 'error';
       session.error = error instanceof MapError ? error.code : 'assistant_provider_failed';
       session.reply = undefined;
+      session.modelReply = undefined;
       session.input = [];
       try {
         await refresh(session, guard);
@@ -541,6 +543,7 @@ export function textAssistantRoutes({
     session.phase = 'working';
     session.error = undefined;
     session.reply = undefined;
+    session.modelReply = undefined;
     session.receipt = undefined;
     session.selection = undefined;
     session.displayedSelection = undefined;
@@ -568,6 +571,7 @@ export function textAssistantRoutes({
     session.input = [];
     session.selection = undefined;
     session.reply = 'Uppdraget är avbrutet. Ett redan genomfört sparande är inte ångrat.';
+    session.modelReply = undefined;
     session.phase = session.pendingSave ? 'recovery' : 'ready';
     await refresh(session);
     return context.json(view(session));
@@ -576,6 +580,7 @@ export function textAssistantRoutes({
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
     if (session.phase === 'working') return context.json(view(session));
+    session.modelReply = undefined;
     await refresh(session);
     const operation = session.pendingSave
       ? session.operations.find((item) => item.operationId === session.pendingSave?.operationId)

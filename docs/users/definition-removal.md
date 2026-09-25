@@ -62,5 +62,8 @@ automatiskt. Se [historik och ångring](history.md) för konfliktvalen.
 
 Vanlig borttagning är skild från permanent radering och har ingen
 automatisk tidsgräns. Aktuella och äldre definitioner, privata utkast och
-historik behålls som hushållsinnehåll. Fullständig export, återimport och
-permanent radering är separata planerade administrativa flöden.
+historik behålls som hushållsinnehåll. Administratörer använder de separata
+flödena för [fullständig export](household-export.md),
+[återimport](household-import.md) och
+[permanent radering](household-erasure.md). En permanent radering kan inte
+ångras genom historiken; granska dess omfattning före bekräftelsen.

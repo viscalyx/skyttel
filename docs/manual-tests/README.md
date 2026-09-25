@@ -28,11 +28,13 @@ betyder inte att dess manuella prov är genomfört.
   definitioner, granskad sammanslagning med bilder samt ångring efter import.
 
 - [Skyttels röst](voice-assistant.md): svenska röstuppdrag, avbrott,
-  faktisk markering och exakt sparåterhämtning. Kontrollerat familjeunderlag
-  och verkligt tal redovisas separat.
+  faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
+  samtalstext och verifierade resultat. Kontrollerat familjeunderlag och
+  verkligt tal redovisas separat.
 - [Skyttels textassistent](text-assistant.md): separat AI-val, hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
-  faktisk markering med skyddad formulärtext. Kontrollerade lokala
+  faktisk markering med skyddad formulärtext samt obekräftad samtalstext
+  skild från resultat. Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
 
 - [Permanent radering](household-erasure.md): uttrycklig granskning och

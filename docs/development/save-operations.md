@@ -1,13 +1,15 @@
 # Durable save operations
 
-This contract is for developers building map clients and future household
-import or permanent-deletion features. The HTTP routes, browser client, and
-future assistant clients must use the same operation identity and results.
+This contract is for developers maintaining map clients, household import
+and permanent erasure. HTTP, browser and assistant clients use the same
+operation identity and results through the shared map rules.
 
 ## Registration and recovery
 
-`GET /api/households/:id/map` provides the authenticated `userId`, current
-`contentVersion`, and private draft version. Save requests contain only
+`GET /api/households/:id/map` provides the private content owner's `userId`,
+current `contentVersion`, and private draft version. The content owner can
+differ from the authenticated login after explicit recovery mapping.
+Save requests contain only
 `operationId`, `version`, and `contentVersion`. Generate an operation ID
 once and retain the complete request for retries. Omitting `contentVersion`
 means generation 1, never the household's current generation.
@@ -74,28 +76,35 @@ Migration 006 preserves older receipts, assigns them content generation 1,
 and makes their successful operations discoverable. Ordinary server restarts
 preserve drafts, pending operations, rejections, and receipts in SQLite.
 
-## Future import and permanent deletion
+## Import, erasure and content generations
 
-There is no public import or permanent-deletion endpoint yet. Future work
-must preserve the content-generation boundary established by migration 006.
+Administrators use the public
+[household import](household-import.md) and
+[permanent erasure](household-erasure.md) lifecycles. These capabilities are
+absent from assistant tools. Both use the shared maintenance coordinator,
+which commits a durable content gate before asynchronous cancellation and
+cleanup. The content change and generation increase then commit atomically.
+Clients must check the administrative operation's own status after a lost
+reply; a map-save receipt is not an import or erasure receipt.
 
-For whole-household content replacement, open one immediate SQLite
-transaction, increment `household.contentVersion`, then install the replacement
-content before committing. The generation trigger immediately deletes all
-of that household's `map_operation`, `map_save`, `map_history`, and `map_draft`
-rows. Install any replacement drafts and history after that increment, within
-the same transaction. The importer must also replace the remaining map data;
-the trigger alone does not remove objects, relationships, or types.
+The current generation trigger retires live operation IDs and clears only
+the live `map_operation` authority. It does not delete all drafts, saved
+receipts or history. Import replaces those collections explicitly; scoped
+erasure prunes affected content while preserving independent history and
+private work. Do not reintroduce the older household-wide trigger as an
+erasure shortcut.
 
-An import failure must roll back the generation increment, cleanup, and all
-replacement writes together. Do not import an older generation number or
-restore old operation identities as current requests. Generations cannot
-decrease. Old requests fail with `content_conflict`, even if their draft
-version or object IDs appear again in the replacement content.
+Imported operation evidence belongs to `historical_operation`; retired
+operation IDs cannot become new current requests. Historical receipts keep
+their original generation and author. New proposals use the target's current
+generation and explicitly mapped content owner. The
+[recovery contract](household-recovery.md) describes that mapping without
+restoring old authentication or membership.
 
-The cleanup is deliberately household-wide. A future targeted permanent
-deletion must define how to remove affected receipts and operation data,
-prevent old retries, and preserve unrelated drafts and history. It must not
-silently use the household-wide cleanup as an object-deletion implementation.
-Any whole-household purge must erase the remaining household content in the
-same transaction and retain the generation barrier for subsequent requests.
+A failed content transaction rolls back its generation increase and writes
+together. Old requests fail with `content_conflict` even when their draft
+version or object IDs reappear. Never attach the latest generation to an
+old request. Physical cleanup can remain pending after a committed content
+change; the durable maintenance gate stays closed until cleanup succeeds.
+Follow the import or erasure status and recovery procedure instead of
+clearing operation rows or treating a missing response as failure.

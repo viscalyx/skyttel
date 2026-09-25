@@ -72,8 +72,12 @@ enables save tools. Model-provided approval fields have no authority.
 Quoted, negative, hypothetical and deferred requests are rejected. This
 is a bounded Swedish command check, not independent proof of arbitrary
 natural-language intent. Ambiguous phrasing needs a new clear command.
-The application status comes from receipts and browser acknowledgements;
-ordinary model prose is separately labelled and is not a truth verifier.
+The application status comes from receipts and browser acknowledgements.
+`reply` contains only application-authored messages; `modelReply` contains
+unverified provider conversation. The browser labels that conversation
+explicitly and keeps it separate from status, including when it contains
+a paraphrased success claim. Follow-up questions remain available after a
+verified selection. No finite word blacklist can verify free model prose.
 
 Save preparation records a stable operation before execution. Unknown
 results block new work until checked through MCP. Restart recovery reads
