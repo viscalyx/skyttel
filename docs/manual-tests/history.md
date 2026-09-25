@@ -10,7 +10,7 @@ Använd två konfigurerade testidentiteter: **Alex Exempel** som
 administratör och **Robin Exempel** som vanlig medlem i samma hushåll.
 Namnen avser testernas roller; logga in genom installationens
 konfigurerade identitetsleverantör. Bjud in Robin enligt
-[tillgång till hushållet](../users/access.md). Använd skilda
+[tillgång till hushållet](../user-guide/access.md). Använd skilda
 webbläsarprofiler så att båda kan arbeta samtidigt.
 
 ## Allmän förberedelse
@@ -22,7 +22,7 @@ webbläsarprofiler så att båda kan arbeta samtidigt.
    **Lo Exempel** med **Nytt objekt**, **Objektets namn**, **Objekttyp**
    och **Lägg i mitt utkast**. Välj **Spara hela utkastet**.
 3. Kontrollera att båda användarna ser Lo och har **Inga förslag** i sina
-   egna utkast. Läs [historikguiden](../users/history.md) för begreppen.
+   egna utkast. Läs [historikguiden](../user-guide/history.md) för begreppen.
 4. Använd ett nytt tomt testhushåll för varje fall. Behåll samma databas
    vid omstart inom ett fall. Kör ingen återställning av demodata då.
 
@@ -233,7 +233,7 @@ kompatibel definition samt ett nytt sparbesked för återställning.
 
 **Förutsättningar:** Lo Exempel enligt förberedelsen. Lägg till fältet
 **Serienummer** med värdeslaget **Tal** på objekttypen Person enligt
-[guiden för egna fält](../users/object-types.md). Spara definitionen,
+[guiden för egna fält](../user-guide/object-types.md). Spara definitionen,
 ange värdet **42** på Lo och spara. Inget annat objekt eller privat utkast
 ska använda fältet.
 

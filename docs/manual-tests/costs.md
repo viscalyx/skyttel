@@ -15,7 +15,7 @@ manuell körning är stöd för felsökning och krävs inte i #97.
 
 ## Allmän förberedelse
 
-1. Starta den [kontrollerade installationen](../development/manual-costs.md).
+1. Starta den [kontrollerade installationen](setup/costs.md).
    Följ portkopplingen och använd exakt den utskrivna adressen. Inga verkliga
    leverantörskonton, modellnycklar eller mikrofoner behövs.
 2. Starta en ny installation för varje fall. Behåll samma databas och
@@ -97,7 +97,7 @@ månadsantaganden utan att förväxla uppskattning med faktura.
    Terra ska visa **Belopp saknas** och saknade mätvärden.
 4. Läs texten om ofullständig delsumma. Anteckna delsumman. Kör
    `restart` och ladda om; kräv samma kända underlag och osäkerhet.
-5. Följ guidens [kontrollerade hämtningsfel](../development/manual-costs.md#a-failed-refresh-without-losing-the-last-values).
+5. Följ guidens [kontrollerade hämtningsfel](setup/costs.md#a-failed-refresh-without-losing-the-last-values).
    Välj **Uppdatera underlaget**. Kräv synligt fel och inaktuella tidigare
    värden med samma delsumma. Ta bort blockeringen och uppdatera igen.
 
@@ -118,7 +118,7 @@ månadsantaganden utan att förväxla uppskattning med faktura.
 **Användare:** Alex och Robin i skilda webbläsarprofiler.
 
 **Förutsättningar:** Ny installation utan hushåll. Följ guidens
-[två identiteter](../development/manual-costs.md#two-identities).
+[två identiteter](setup/costs.md#two-identities).
 
 **Integrationstest:**
 [costs.spec.ts](../../tests/integration/costs.spec.ts),

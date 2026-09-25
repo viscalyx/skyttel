@@ -9,7 +9,7 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 - Alex är administratör i testhushållet och loggar in med Google.
 - Lo är vanlig medlem i samma hushåll och använder en annan webbläsarprofil.
-  Alex bjuder in Lo enligt [tillgångsguiden](../users/access.md).
+  Alex bjuder in Lo enligt [tillgångsguiden](../user-guide/access.md).
 - Använd endast påhittade uppgifter. Alla prov gäller en separat
   testinstallation med riktig SQLite, aldrig ett verkligt hushåll.
 
@@ -21,10 +21,10 @@ kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
 formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
-1. Starta appen enligt [testguiden](../development/testing.md).
+1. Starta appen enligt [provförberedelsen](setup/browser.md#disposable-local-browser-session).
    Börja varje fall i ett nytt testhushåll utan privata förslag.
 2. Ha båda profilerna öppna när fallet använder två medlemmar. Använd
-   [typguiden](../users/object-types.md) för att hitta formulären.
+   [typguiden](../user-guide/object-types.md) för att hitta formulären.
 3. Vid kontroll av publika HTTP-svar, använd webbläsarens nätverkspanel
    för den egna inloggade profilen. Kartan läses på
    `/api/households/<hushållets id>/map`, historiken på samma adress med

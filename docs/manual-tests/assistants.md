@@ -29,7 +29,7 @@ Följande förberedelser gäller AI-01 till AI-06. För AI-07 används i ställe
 den isolerade installation som anges i testfallet.
 
 1. Använd en testinstallation med enbart påhittade data. Förbered verklig
-   klientåtkomst enligt [integrationsguiden](../development/assistants.md).
+   klientåtkomst enligt [klientens startguide](setup/assistants.md#real-text-client-verification).
 2. Skapa ett sparat objekt i Linden. Lägg olika privata förslag i Alex och
    Robins utkast. Lämna dem osparade. Behåll data mellan fallen men
    återkalla anslutningar och återställ medlemskap mellan körningarna.
@@ -253,7 +253,7 @@ befintliga Codex-inloggning. Personerna i demokartan är påhittade objekt,
 inte ytterligare inloggade Skyttel-användare.
 
 **Förutsättningar:** Följ
-[den lokala Codex-förberedelsen](../development/assistants.md#manual-local-codex-cli-setup).
+[den lokala Codex-förberedelsen](setup/assistants.md#manual-local-codex-cli-setup).
 Terminal A kör den kompilerade appen på `http://localhost:3301` med en ny,
 tillfällig databas. Google-klienten heter **Skyttel local development** och
 har `http://localhost:3301/api/auth/callback/google` som tillåten returadress.
@@ -352,9 +352,9 @@ Automatiskt verifierade verktygsregler behöver inte upprepas där.
 ## Hela kartärenden
 
 AI-08 och AI-12 använder en verklig textklient med kartmedgivande enligt
-[integrationsguiden](../development/assistants.md#whole-draft-map-work).
+[klientens startguide](setup/assistants.md#real-text-client-verification).
 AI-09 till AI-11 använder den
-[kontrollerade lokala MCP-klienten](../development/manual-mcp-controls.md):
+[kontrollerade lokala MCP-klienten](setup/mcp-controls.md):
 starta en ny tom provdatabas och hjälpprocess inför varje fall. Guiden ger
 exakta kommandon för OAuth, omstart med samma databas och städning.
 Använd den konfigurerade administratörens egen inloggning och hushållet
@@ -379,7 +379,7 @@ hela familjeärendet”.
 Modelltolkningen provas dessutom i
 [assistant-language.spec.ts](../../tests/real-model/assistant-language.spec.ts),
 testfallet “AI-08: verklig modell rättar och sparar hela familjeärendet genom
-MCP”, med [separat verklig modellkörning](../development/real-model-tests.md).
+MCP”, med [separat verklig modellkörning](real-model-tests.md).
 
 **Steg:**
 
@@ -576,7 +576,7 @@ kartarbete. Anteckna den sparade kartans utgångsläge.
 [assistant-language.spec.ts](../../tests/real-model/assistant-language.spec.ts),
 testfallet “AI-12: verklig modell skiljer nekade och hypotetiska besked från
 rättelse och sparande”. Följ den
-[separata modellguiden](../development/real-model-tests.md) för en uttrycklig
+[separata modellguiden](real-model-tests.md) för en uttrycklig
 körning med verklig modell och privat nyckel. Vanlig CI använder ingen
 verklig modell. Provet använder en MCP SDK-klient; det ger inget resultat
 för en annan klients inloggning eller modell.

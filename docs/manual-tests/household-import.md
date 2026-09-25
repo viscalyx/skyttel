@@ -7,7 +7,7 @@ Manuell körning sker efter att hela specifikationen är implementerad.
 
 ## Konfigurerade användare
 
-Använd [en separat lokal provdatabas](../development/testing.md#disposable-local-browser-session)
+Använd [en separat lokal provdatabas](setup/browser.md#disposable-local-browser-session)
 i devcontainern och värddatorns webbläsare. **Alex** är testrollen för den
 konfigurerade första administratörens befintliga Google- eller
 Microsoft-konto; kontot behöver inte heta Alex. Skapa hushållet **Linden**
@@ -19,7 +19,7 @@ konto. Ingen inbjudan, publik webbadress eller tunnel behövs.
 1. Starta en ny provdatabas enligt länken ovan inför varje fall. Skapa
    Linden och ett sparat objekt **Lampa från exporten**.
 2. Hämta en fullständig export enligt
-   [exportguiden](../users/household-export.md). Spara ZIP-filen privat.
+   [exportguiden](../user-guide/household-export.md). Spara ZIP-filen privat.
 3. Ändra objektets namn till **Senare namn** och spara hela utkastet.
 4. Återställ provmiljön mellan fallen. Radera hämtade testfiler efteråt.
    Vid omstart ska samma databas användas: följ bara guidens

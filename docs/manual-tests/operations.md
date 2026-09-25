@@ -14,7 +14,7 @@ profilens flikar eller lokala webbläsardata.
 
 SPAR-04 behöver dessutom en separat testidentitet med aktuell tillgång
 till hushållet och rollen medlem. Följ
-[inbjudan av en användare](../users/access.md#invite-a-skyttel-user)
+[inbjudan av en användare](../user-guide/access.md#bjud-in-en-skyttel-användare)
 för att ge identiteten tillgång. Kartans påhittade personer och Robin Demo
 saknar inloggning;
 de kan inte användas som testidentitet.

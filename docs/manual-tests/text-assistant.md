@@ -23,9 +23,9 @@ formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
 1. TEXT-01 använder den
-   [verkliga modellens isolerade setup](../development/text-assistant.md#enable-real-provider-access).
+   [verkliga modellens isolerade setup](../development/devcontainer.md#optional-assistant-access).
    Övriga fall använder den
-   [kontrollerade startguiden](../development/manual-text-assistant.md).
+   [kontrollerade startguiden](setup/text-assistant.md).
    Den senare håller varje modellsvar tills du släpper det i terminalen.
    Den provar inte en verklig modells svenska språkförståelse.
 2. Skapa hushållet Textprov. Skapa objektet **Lo Exempel** av typen

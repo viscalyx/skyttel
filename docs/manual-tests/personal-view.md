@@ -15,7 +15,8 @@ att prova samtidighet.
 ## Allmän förberedelse
 
 1. Starta en isolerad installation enligt
-   [utvecklingsguiden](../development/testing.md). Använd ett nytt hushåll
+   [provförberedelsen](setup/browser.md#disposable-local-browser-session).
+   Använd ett nytt hushåll
    mellan fallen.
 2. Skapa Lampan och Cykeln och spara hela utkastet. Bjud in Robin till
    hushållet när fallet anger det.
@@ -176,7 +177,7 @@ viewport changes preserve existing placement and unsent text”.
 **Användare:** Alex, Robin och den utloggade profilen.
 
 **Förutsättningar:** Följ
-[förberedelsen för två provhushåll](../development/manual-map-fixtures.md#a-second-household-on-the-same-installation).
+[förberedelsen för två provhushåll](setup/map-fixtures.md#a-second-household-on-the-same-installation).
 Alex har Linden och Robin har först bara Eken på **samma installation**.
 Skapa och flytta Lampan som Alex. Behåll Lindens adress och hushålls-ID
 från Alex profil. Använd en tredje, utloggad profil för åtkomstprovet.

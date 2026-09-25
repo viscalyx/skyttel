@@ -12,9 +12,20 @@ innehåller bara kvarvarande mänskliga bedömningar och bekräftelser.
 Registrera automatiska körningar med version och resultat; skilj dem från
 verkliga leverantörsprov och mänskliga observationer.
 
-Separata automatiska [modellprov](../development/real-model-tests.md) och
-[talprov](../development/real-voice-tests.md) använder verkliga leverantörer.
+Separata automatiska [modellprov](real-model-tests.md) och
+[talprov](real-voice-tests.md) använder verkliga leverantörer.
 De körs uttryckligen med privat konfiguration och redovisas separat från CI.
+
+## Köra och förbereda prov
+
+[Testguiden](../development/testing.md) beskriver kommandon för automatiska
+kontroller och rapporter. [Provförberedelsen](setup/browser.md) ger en separat
+lokal provdatabas. Förbered utvecklingsmiljön med
+[utvecklingsguiden](../development/devcontainer.md). Områdesfallen länkar
+till de särskilda startguider som behövs för deras provdata och kontroller.
+
+För [stora kartor](large-map-performance.md) finns en separat mätplan och
+[uppmätta resultat](large-map-results.md).
 
 ## Områden
 

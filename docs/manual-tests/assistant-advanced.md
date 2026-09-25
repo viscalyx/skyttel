@@ -25,7 +25,7 @@ kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
 formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
-1. Följ [den kontrollerade klientens startguide](../development/manual-mcp-controls.md)
+1. Följ [den kontrollerade klientens startguide](setup/mcp-controls.md)
    för en ny tillfällig databas på `http://localhost:3301`, privat
    webbläsarfönster och hushållet **MCP-prov**. Behåll terminal A och
    databasens sökväg under fallet. Terminal B ska visa `ready`.
@@ -49,14 +49,14 @@ objektet eller sambandet öppnar inte formuläret.
    MCP-servern skyttel_advanced_case, inte lokala filer eller terminalen.
    Granska verkliga verktygsanrop. Om OAuth inte fungerar, registrera
    blockerat; kringgå inte medgivandet. Se
-   [klientguidens förutsättningar](../development/assistants.md#manual-local-codex-cli-setup).
+   [klientguidens förutsättningar](setup/assistants.md#manual-local-codex-cli-setup).
    ChatGPT kan användas med separat förberedd åtkomst; det krävs inte här.
 3. Be assistenten läsa hela ditt utkast innan varje nytt arbetssteg.
    Låt den sammanfatta hela skillnaden innan du säger **spara hela utkastet**.
    Kontrollera att sparbekräftelsen bygger på ett kvitto. Kontrollerade
    kommandon nedan skrivs i terminal B, inte som modellprompt eller shell.
 4. Kommandona `tools`, `read-tool`, `capture-tool`, `capture-save` och `send`
-   beskrivs i [kommandoguiden](../development/manual-mcp-controls.md#commands).
+   beskrivs i [kommandoguiden](setup/mcp-controls.md#commands).
    `capture-tool` hämtar dagens versioner men skickar inget. `send` behåller
    exakt fångat innehåll. Använd nya etiketter; skriv aldrig över en fångst.
    Kopiera endast angivna innehålls-ID:n och JSON-värden, aldrig token.

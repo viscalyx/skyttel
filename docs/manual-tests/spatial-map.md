@@ -14,7 +14,8 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
 ## Allmän förberedelse
 
 1. Starta en isolerad installation enligt
-   [utvecklingsguiden](../development/testing.md). Använd ett nytt
+   [provförberedelsen](setup/browser.md#disposable-local-browser-session).
+   Använd ett nytt
    provhushåll mellan fallen så att inget tidigare utkast finns kvar.
 2. Skapa förslag för personen Lo Exempel och tjänsten Molnmusik. Lägg vid
    behov till sambandet Lo Exempel → Använder → Molnmusik. Lämna förslagen

@@ -19,14 +19,14 @@ formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
 1. Använd ett tomt testhushåll med påhittade uppgifter enligt
-   [familjeabonnemanget](../users/family-subscription.md).
+   [familjeabonnemanget](../user-guide/family-subscription.md).
 2. Skapa abonnemanget **Familjemusik**, personen **Lo Exempel** och tjänsten
    **Molnmusik**. Lägg dem i utkastet och spara hela utkastet.
 3. Skapa sambanden **Lo Exempel → Använder → Familjemusik** och
    **Familjemusik → Använder → Molnmusik**. Spara hela utkastet.
 4. Använd ett nytt testhushåll för varje fall. Behåll samma databas när
    appen startas om inom ett fall. Läs
-   [livscykelguiden](../users/lifecycle.md) för begrepp och datumgräns.
+   [livscykelguiden](../user-guide/lifecycle.md) för begrepp och datumgräns.
 
 ## Status
 

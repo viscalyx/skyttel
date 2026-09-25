@@ -3,7 +3,7 @@
 Testfallet gäller sökning, sidvisning, fokus och redigering i en karta med
 500 objekt och 1 500 samband. Anteckna commit, webbläsare och godkänt eller
 underkänt resultat vid körning. Tidsmätning och etikettgeometri provas separat
-enligt [mätplanen](../development/large-map-performance.md).
+enligt [mätplanen](large-map-performance.md).
 
 ## Konfigurerade användare
 
@@ -20,7 +20,7 @@ formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
 1. Installera projektets beroenden och Chromium enligt
-   [testguiden](../development/testing.md).
+   [utvecklingsguiden](../development/devcontainer.md#prepare-and-start).
 2. Kör `MAP_PAUSE=1 npm run measure:map` i utvecklingsmiljön. Öppna den
    lokala adress som skrivs ut. Vid användning av värddatorns webbläsare,
    vidarebefordra den utskrivna porten från devcontainern. Logga in.

@@ -16,7 +16,7 @@ i ändringshistoriken. Posten saknar kopplad inloggning, session och aktuellt
 medlemskap. Den ger ingen extra inloggning för manuell testning.
 
 UTKAST-03–11 använder dessutom en separat testidentitet med rollen medlem.
-Bjud in identiteten enligt [tillgång till hushållet](../users/access.md).
+Bjud in identiteten enligt [tillgång till hushållet](../user-guide/access.md).
 Använd skilda webbläsarprofiler för administratören och medlemmen.
 
 ## Allmän förberedelse
@@ -71,7 +71,7 @@ testfallet “UTKAST-01: demo seed resumes a conflict and preserves independent
 proposals without granting access to map people”.
 [database-setup.spec.ts](../../tests/integration/database-setup.spec.ts)
 kontrollerar även demodatans underlag, historik och administratörens åtkomst.
-Se [testguiden](../development/testing.md#devcontainer-development) för
+Se [testguiden](../development/testing.md#integration-tests) för
 kommandon som kör integrationstesterna.
 
 **Steg:**

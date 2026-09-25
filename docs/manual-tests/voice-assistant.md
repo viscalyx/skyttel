@@ -23,7 +23,7 @@ objektet eller sambandet öppnar inte formuläret.
 
 1. Välj den kontrollerade vägen eller det verkliga talprovet i TAL-01.
    TAL-02 och TAL-03 använder den
-   [kontrollerade startguiden](../development/manual-voice-assistant.md).
+   [kontrollerade startguiden](setup/voice-assistant.md).
    Den senare håller varje Terra-anrop och använder tysta mediespår; den
    lyssnar inte på din mikrofon och provar inte svensk talförståelse.
 2. För TAL-02 och TAL-03: skapa Talprov och lägg **Lo Exempel**, typ
@@ -62,7 +62,7 @@ Det separata leverantörsprovet
 [swedish-speech.spec.ts](../../tests/real-voice/swedish-speech.spec.ts),
 “TAL-01: recorded Swedish speech changes the family map through real Live
 and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
-[körguiden](../development/real-voice-tests.md).
+[körguiden](real-voice-tests.md).
 
 **Steg, kontrollerat familjeunderlag:**
 
@@ -122,7 +122,7 @@ and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
 
 **Steg, verkligt svenskt tal:**
 
-1. Följ [röstguidens verkliga setup](../development/voice-assistant.md#enable-and-operate)
+1. Följ [röstguidens verkliga setup](../development/devcontainer.md#optional-assistant-access)
    i en ny isolerad installation med påhittade data. Skapa Talprov och lägg
    Lo Exempel, typ Person, med beskrivningen Påhittad uppgift i utkastet.
    Välj Lo och skriv **Osänd text som ska finnas kvar** i beskrivningen
@@ -262,7 +262,7 @@ när den gemensamma assistenten används genom rösten.
 **Användare:** Alex i den kontrollerade installationen.
 
 **Förutsättningar:** Starta en ny installation enligt
-[röstförberedelsen](../development/manual-voice-assistant.md). Skapa Talprov
+[röstförberedelsen](setup/voice-assistant.md). Skapa Talprov
 med Lo Exempel som osparat Person-förslag. Starta textassistenten och rösten.
 Vänta på **Lyssnar**. Anteckna kartans aktuella urval. Tysta mediespår
 och terminalens kommentarspaket är inte bevis för hört tal.

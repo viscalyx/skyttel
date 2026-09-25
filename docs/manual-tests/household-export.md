@@ -21,7 +21,7 @@ ger ingen rätt att göra fullständig export.
 ## Allmän förberedelse
 
 1. Skapa Linden som Alex och bjud in Robin enligt
-   [guiden för tillgång](../users/access.md#invite-a-skyttel-user).
+   [guiden för tillgång](../user-guide/access.md#bjud-in-en-skyttel-användare).
 2. Spara ett gemensamt objekt med profilbild. Ändra beskrivningen och
    spara igen så att historik finns. Lägg ett eget privat objekt i Robins
    utkast och ändra Robins personliga vy utan att spara utkastet.
@@ -210,7 +210,7 @@ original, copied and private image versions”.
 
 **Steg:**
 
-1. Följ [guiden för sammanslagning](../users/object-merge.md). Låt det
+1. Följ [guiden för sammanslagning](../user-guide/object-merge.md). Låt det
    första objektet behålla sin identitet och välj det andra objektets
    profilbild. Bekräfta samma företeelse och spara hela utkastet.
 2. Anteckna kvittot. Öppna **Visa historik** och granska sammanslagningen,
@@ -249,7 +249,7 @@ en pågående överföring och tar bort dess tillfälliga serverkopia.
 administratör i en separat, kontrollerad HTTP-klient.
 
 **Förutsättningar:** Använd
-[exportförberedelsen](../development/manual-export.md) i stället för den
+[exportförberedelsen](setup/export.md) i stället för den
 allmänna förberedelsen. Den startar en isolerad app med riktig SQLite,
 kontrollerade externa inloggningssvar och 100 syntetiska bildversioner.
 Alex och Robin får sina separata sessioner genom appens vanliga inloggning.

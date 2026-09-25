@@ -15,7 +15,7 @@ innehåll kopplas avsiktligt till Robin efter uttrycklig granskning.
 
 ## Allmän förberedelse
 
-1. Följ [den lokala flyttförberedelsen](../development/local-recovery.md).
+1. Följ [den lokala flyttförberedelsen](setup/local-recovery.md).
    Den skapar separata tomma databaser och hemligheter på port 5173 och
    3301. Använd separata Chrome-profiler A och B enligt guiden. Skapa ett
    tomt hushåll på vardera installationen efter normal inloggning.

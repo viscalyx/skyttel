@@ -22,7 +22,8 @@ formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
 1. Starta en separat testinstallation enligt
-   [utvecklingsguiden](../development/testing.md). Logga in som Alex och
+   [provförberedelsen](setup/browser.md#disposable-local-browser-session).
+   Logga in som Alex och
    skapa ett hushåll om installationen ännu saknar ett.
 2. Börja varje fall utan förslag i **Hela mitt utkast**. Använd en ny
    testinstallation vid omkörning, eller ta bort testfallets egna objekt
@@ -242,7 +243,7 @@ definitioner eller privata utkast ersätts.
 inloggade hushållsmedlem.
 
 **Förutsättningar:** Följ
-[förberedelsen för äldre avtalsdata](../development/manual-map-fixtures.md#legacy-contract-upgrade).
+[förberedelsen för äldre avtalsdata](setup/map-fixtures.md#legacy-contract-upgrade).
 Den ger en separat databas med migrationerna 001–006, egen Bostad och
 Hyresvärd, sparade Björkbacken och samma verifierade användares privata
 namnförslag Björkbacken hemma. Guiden anger definitionernas identiteter,

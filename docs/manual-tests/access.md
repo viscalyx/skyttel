@@ -16,7 +16,7 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 Använd endast fiktiva hushåll och kontrollerade testidentiteter. Den
 automatiserade motsvarigheten använder syntetiska identitetsleverantörer.
 Verkliga leverantörer kontrolleras separat enligt
-[testguiden](../development/testing.md#verify-real-identity-providers-separately).
+[testguiden](setup/browser.md#verify-real-identity-providers-separately).
 
 ## Allmän förberedelse
 
