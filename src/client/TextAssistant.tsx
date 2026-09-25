@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import type { ObjectType, ObjectValue } from '../shared/map.js';
-import type { TextAssistantView } from '../shared/text-assistant.js';
+import type { MapSelection, TextAssistantView } from '../shared/text-assistant.js';
 import { ConversationTranscript, type TranscriptRow } from './ConversationTranscript.js';
 import { FinancialFactsDetails } from './FinancialFacts.js';
 import { LifecycleDetails } from './Lifecycle.js';
@@ -53,8 +53,7 @@ export function TextAssistant({
   householdId,
   onMapChange,
   onAccessLost,
-  onSelectObject,
-  selectedObjectId,
+  onSelectItem,
   children,
   draftSummary,
   inspector,
@@ -62,8 +61,7 @@ export function TextAssistant({
   householdId: string;
   onMapChange: () => void;
   onAccessLost: () => void;
-  onSelectObject: (id: string) => boolean;
-  selectedObjectId: string | null;
+  onSelectItem: (target: MapSelection, signal: AbortSignal) => Promise<boolean>;
   children?: ReactNode;
   draftSummary?: ReactNode;
   inspector?: ReactNode;
@@ -88,8 +86,8 @@ export function TextAssistant({
         : [...rows, row],
     );
   }, []);
-  const callbacks = useRef({ onMapChange, onAccessLost, onSelectObject });
-  callbacks.current = { onMapChange, onAccessLost, onSelectObject };
+  const callbacks = useRef({ onMapChange, onAccessLost, onSelectItem });
+  callbacks.current = { onMapChange, onAccessLost, onSelectItem };
   const mounted = useRef(true);
   const requestEpoch = useRef(0);
   const update = useCallback(
@@ -280,54 +278,33 @@ export function TextAssistant({
       if (mounted.current && epoch === requestEpoch.current) setPending(false);
     }
   }
-  const selectionRequested = useRef<string | null>(null);
   const selectionAcknowledged = useRef<string | null>(null);
+  const selectionKey =
+    session?.phase === 'working' && session.selection?.revision === session.revision
+      ? JSON.stringify([session.id, session.selection])
+      : null;
   useEffect(() => {
-    const selection = session?.selection;
-    if (
-      !selection ||
-      pending ||
-      session.phase !== 'working' ||
-      selection.revision !== session.revision
-    )
+    const selection = active.current?.selection;
+    if (!selectionKey || !selection || pending || selectionAcknowledged.current === selectionKey)
       return;
-    const key = `${session.id}:${selection.revision}:${selection.objectId}`;
-    if (selectionRequested.current === key) return;
-    selectionRequested.current = key;
-    if (!callbacks.current.onSelectObject(selection.objectId)) {
-      selectionAcknowledged.current = key;
-      void command('selection', { ...selection, displayed: false });
-    }
-  }, [session, pending, command]);
-  useEffect(() => {
-    const selection = session?.selection;
-    if (
-      !selection ||
-      pending ||
-      session.phase !== 'working' ||
-      selectedObjectId !== selection.objectId ||
-      selection.revision !== session.revision
-    )
-      return;
-    const key = `${session.id}:${selection.revision}:${selection.objectId}`;
-    if (selectionAcknowledged.current === key) return;
+    const target: MapSelection = selection.kind
+      ? { kind: selection.kind, id: selection.id }
+      : { kind: 'object', id: selection.objectId };
     const epoch = requestEpoch.current;
-    let frame = 0;
-    const first = requestAnimationFrame(() => {
-      frame = requestAnimationFrame(() => {
-        if (epoch !== requestEpoch.current) return;
-        selectionAcknowledged.current = key;
-        void command('selection', {
-          ...selection,
-          displayed: document.visibilityState === 'visible',
-        });
-      });
-    });
-    return () => {
-      cancelAnimationFrame(first);
-      cancelAnimationFrame(frame);
-    };
-  }, [session, pending, selectedObjectId, command]);
+    const abort = new AbortController();
+    void (async () => {
+      let displayed = false;
+      try {
+        displayed = await callbacks.current.onSelectItem(target, abort.signal);
+      } catch {
+        // A failed display is never evidence for a successful map selection.
+      }
+      if (abort.signal.aborted || epoch !== requestEpoch.current) return;
+      selectionAcknowledged.current = selectionKey;
+      void command('selection', { ...selection, ...target, displayed });
+    })();
+    return () => abort.abort();
+  }, [selectionKey, pending, command]);
   const review = session?.review;
   return (
     <section aria-label="Skyttels textassistent" className="assistant-workspace">
@@ -592,7 +569,7 @@ export function TextAssistant({
                         ? 'Kontrollera det tidigare sparförsöket innan du fortsätter.'
                         : session.receipt
                           ? 'Sparat. Hela utkastet finns i hushållets karta.'
-                          : session.displayedSelection
+                          : session.displayedSelection || session.displayedItem
                             ? 'Markerat i kartan.'
                             : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.'}
                   </p>
@@ -600,12 +577,15 @@ export function TextAssistant({
                     <AssistantWorkTime key={`${session.id}-${session.revision}`} />
                   )}
                 </div>
-                {session.reply && !session.receipt && !session.displayedSelection && (
-                  <div>
-                    <h4>Besked från Skyttel</h4>
-                    <p>{session.reply}</p>
-                  </div>
-                )}
+                {session.reply &&
+                  !session.receipt &&
+                  !session.displayedSelection &&
+                  !session.displayedItem && (
+                    <div>
+                      <h4>Besked från Skyttel</h4>
+                      <p>{session.reply}</p>
+                    </div>
+                  )}
                 {transcript.length > 0 && <ConversationTranscript rows={transcript} />}
                 {session.error && <p role="alert">{errorMessage(session.error)}</p>}
                 <form

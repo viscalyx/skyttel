@@ -190,8 +190,7 @@ test.each(['stop', 'revoked'])(
         householdId="linden"
         onMapChange={vi.fn()}
         onAccessLost={vi.fn()}
-        onSelectObject={() => false}
-        selectedObjectId={null}
+        onSelectItem={async () => false}
       />,
     );
     await userEvent.click(await screen.findByLabelText(/Jag tillåter att OpenAI/));

@@ -28,7 +28,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(installation.origin);
     await expect(page.getByText('500 objekt och 1500 samband', { exact: true })).toBeVisible();
-    const labels = page.locator('.spatial-labels button');
+    const labels = page.locator('.spatial-labels [data-layout-id]');
     await expect(labels.first()).toBeVisible();
     await expect
       .poll(() =>

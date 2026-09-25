@@ -23,10 +23,12 @@ import {
   proposedRelationshipTypes,
 } from '../shared/map.js';
 import { mergeFor } from '../shared/object-merge.js';
+import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { FinancialFactsDetails, FinancialFactsEditor } from './FinancialFacts.js';
 import { LifecycleDetails, LifecycleEditor, LifecycleStatus } from './Lifecycle.js';
 import { MapHistory } from './MapHistory.js';
+import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
 import { MapRequestError, request } from './map-request.js';
 import { MergeSourceDetails, ObjectMerge } from './ObjectMerge.js';
 import {
@@ -113,6 +115,9 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const workspace = useRef<HTMLElement>(null);
+  const [revealRequest, setRevealRequest] = useState<MapRevealRequest>();
+  const revealAbort = useRef<AbortController | null>(null);
+  useEffect(() => () => revealAbort.current?.abort(), []);
   const listModeButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (presentation !== 'map') return;
@@ -158,6 +163,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   const [load, setLoad] = useState(0);
 
   const loseAccess = useCallback(() => {
+    revealAbort.current?.abort();
     setPresentation('list');
     setDetailsOpen(false);
     setFiltersOpen(false);
@@ -728,6 +734,39 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
     });
     setDirty(true);
   }
+  async function revealAssistantItem(target: MapSelection, signal: AbortSignal) {
+    revealAbort.current?.abort();
+    if (!state || dirty || pending || blocked || !workspace.current || signal.aborted) return false;
+    const object = target.kind === 'object' ? displayed.get(target.id) : undefined;
+    const edge = target.kind === 'relationship' ? displayedEdges.get(target.id) : undefined;
+    if (!object && !edge) return false;
+    const objectIds = object
+      ? [object.id]
+      : edge
+        ? [edge.sourceId, ...(edge.targetId ? [edge.targetId] : [])]
+        : [];
+    const request: MapRevealRequest = {
+      id: crypto.randomUUID(),
+      objectIds,
+      ...(edge ? { relationshipId: edge.id } : {}),
+    };
+    const abort = new AbortController();
+    revealAbort.current = abort;
+    const cancel = () => abort.abort();
+    signal.addEventListener('abort', cancel, { once: true });
+    setQuery('');
+    setTypeFilter('');
+    setFocusId(null);
+    setPresentation('combined');
+    if (object) edit(object);
+    else editRelationship(edge);
+    setRevealRequest(request);
+    try {
+      return await waitForMapDisplay(workspace.current, request, target, abort.signal);
+    } finally {
+      signal.removeEventListener('abort', cancel);
+    }
+  }
   function remove(kind: 'draft' | 'relationship', item: MapObject | MapRelationship) {
     if (!state) return;
     const changes = kind === 'draft' ? state.draft.changes : state.draft.relationships;
@@ -836,19 +875,22 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
           householdId={householdId}
           onMapChange={() => setLoad((value) => value + 1)}
           onAccessLost={loseAccess}
-          selectedObjectId={
-            selection?.kind === 'object' && visibleObjects.has(selection.id) ? selection.id : null
-          }
-          onSelectObject={(id) => {
-            if (dirty || pending || blocked || !displayed.has(id)) return false;
-            setQuery('');
-            setTypeFilter('');
-            setFocusId(null);
-            setSelection({ kind: 'object', id });
-            return true;
-          }}
+          onSelectItem={revealAssistantItem}
           inspector={
-            <section className="map-inspector" aria-label="Val och redigering">
+            <section
+              className="map-inspector"
+              aria-label="Val och redigering"
+              data-selection-kind={editor ? 'object' : edgeEditor ? 'relationship' : undefined}
+              data-selection-id={
+                editor?.version === state.draft.version &&
+                editor.contentVersion === state.contentVersion
+                  ? editor.id
+                  : edgeEditor?.version === state.draft.version &&
+                      edgeEditor.contentVersion === state.contentVersion
+                    ? edgeEditor.id
+                    : undefined
+              }
+            >
               <h3>Val och redigering</h3>
               {(editor || edgeEditor) && (
                 <p className="muted">
@@ -1254,6 +1296,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
               hidden={presentation === 'list' || (presentation === 'map' && detailsOpen)}
             >
               <SpatialMap
+                revealRequest={revealRequest}
                 personal={personal}
                 active={presentation !== 'list' && !(presentation === 'map' && detailsOpen)}
                 state={effectiveState ?? state}

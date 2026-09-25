@@ -82,8 +82,7 @@ function showAssistant(onMapChange = vi.fn(), onAccessLost = vi.fn()) {
       householdId="linden"
       onMapChange={onMapChange}
       onAccessLost={onAccessLost}
-      onSelectObject={() => false}
-      selectedObjectId={null}
+      onSelectItem={async () => false}
     />,
   );
 }
@@ -99,8 +98,7 @@ test('the shared workspace keeps the map, draft and conversation available befor
       householdId="linden"
       onMapChange={vi.fn()}
       onAccessLost={vi.fn()}
-      onSelectObject={() => false}
-      selectedObjectId={null}
+      onSelectItem={async () => false}
       draftSummary={<p>Cykeln: föreslaget namn</p>}
     >
       <section aria-label="Hushållets karta">Kartan är tillgänglig</section>
@@ -352,7 +350,7 @@ test.each(['Avbryt uppdrag', 'Avsluta textassistenten'])(
   async (action) => {
     let release!: (response: Response) => void;
     const polled = vi.fn();
-    const selected = vi.fn(() => false);
+    const selected = vi.fn(async () => false);
     const current: TextAssistantView = { ...session(), revision: 2, phase: 'working' };
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
       if (url === path)
@@ -373,8 +371,7 @@ test.each(['Avbryt uppdrag', 'Avsluta textassistenten'])(
         householdId="linden"
         onMapChange={vi.fn()}
         onAccessLost={vi.fn()}
-        onSelectObject={selected}
-        selectedObjectId={null}
+        onSelectItem={selected}
       />,
     );
     await consent();
@@ -431,9 +428,8 @@ test.each([true, false])(
             householdId="linden"
             onMapChange={vi.fn()}
             onAccessLost={vi.fn()}
-            selectedObjectId={selected}
-            onSelectObject={(id) => {
-              if (displayable) setSelected(id);
+            onSelectItem={async (target) => {
+              if (displayable) setSelected(target.id);
               return displayable;
             }}
           />
@@ -445,6 +441,8 @@ test.each([true, false])(
     await waitFor(() =>
       expect(acknowledged).toHaveBeenCalledExactlyOnceWith({
         objectId: 'bike',
+        kind: 'object',
+        id: 'bike',
         revision: 0,
         displayed: displayable,
       }),
@@ -456,20 +454,15 @@ test.each([true, false])(
   },
 );
 
-test('canceling while a display frame is queued prevents a late selection acknowledgement', async () => {
-  const frames = new Map<number, FrameRequestCallback>();
-  let frameId = 0;
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    frames.set(++frameId, callback);
-    return frameId;
-  });
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+test('canceling while the map display is pending aborts it and prevents a late acknowledgement', async () => {
   const current: TextAssistantView = {
     ...session(),
     phase: 'working',
     revision: 1,
     selection: { objectId: 'bike', revision: 1 },
   };
+  let finishDisplay!: (displayed: boolean) => void;
+  let displaySignal!: AbortSignal;
   let finishCancel!: (response: Response) => void;
   const acknowledged = vi.fn();
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
@@ -490,24 +483,20 @@ test('canceling while a display frame is queued prevents a late selection acknow
       householdId="linden"
       onMapChange={vi.fn()}
       onAccessLost={vi.fn()}
-      onSelectObject={() => true}
-      selectedObjectId="bike"
+      onSelectItem={(_target, signal) => {
+        displaySignal = signal;
+        return new Promise<boolean>((resolve) => {
+          finishDisplay = resolve;
+        });
+      }}
     />,
   );
   await consent();
-  expect(frames.size).toBe(1);
-  await act(async () => {
-    const [id, callback] = [...frames.entries()][0];
-    frames.delete(id);
-    callback(1);
-  });
+  await waitFor(() => expect(displaySignal).toBeDefined());
+  expect(acknowledged).not.toHaveBeenCalled();
   await userEvent.click(screen.getByRole('button', { name: 'Avbryt uppdrag' }));
-  await act(async () => {
-    for (const [id, callback] of [...frames]) {
-      frames.delete(id);
-      callback(2);
-    }
-  });
+  expect(displaySignal.aborted).toBe(true);
+  await act(async () => finishDisplay(true));
   expect(acknowledged).not.toHaveBeenCalled();
   await act(async () =>
     finishCancel(Response.json({ ...current, revision: 2, phase: 'ready', selection: undefined })),
@@ -743,8 +732,7 @@ test('separate choices start the conversation and a lost reply retains the messa
       householdId="linden"
       onMapChange={vi.fn()}
       onAccessLost={vi.fn()}
-      onSelectObject={() => false}
-      selectedObjectId={null}
+      onSelectItem={async () => false}
     />,
   );
   const start = await screen.findByRole('button', { name: 'Starta textassistenten' });
@@ -776,8 +764,7 @@ test('provider errors preserve manual work and revoked access clears the convers
       householdId="linden"
       onMapChange={vi.fn()}
       onAccessLost={lost}
-      onSelectObject={() => false}
-      selectedObjectId={null}
+      onSelectItem={async () => false}
     />,
   );
   await screen.findByRole('button', { name: 'Starta textassistenten' });

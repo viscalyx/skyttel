@@ -26,7 +26,7 @@ All mänsklig körning görs efter specifikationens implementation i
    Välj **Lägg i mitt utkast** och lämna förslaget osparat.
 3. Starta textassistenten med båda uttryckliga valen. Kontrollera först
    att enbart AI-valet inte räcker för att aktivera startknappen.
-4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-06.
+4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-08.
    Behåll samma databas under ett omstartsprov. Avsluta med `quit` och
    stäng provfönstret enligt startguidens städningssteg.
 
@@ -208,7 +208,8 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 1. Skriv **Markera Lo i kartan**. Kopiera Lo-förslagets ID från `held`.
    Svara med `tool NUMMER show_map_object {"objectId":"LO-ID"}`, där
    `LO-ID` ersätts med det verkliga prov-ID:t.
-2. Kontrollera att Lo blir valt och att **Redigera Lo Exempel** visas.
+2. Kontrollera att Lo blir valt och synligt i kartan och att detaljpanelen
+   visar **Lo Exempel** samt **Påhittad uppgift**.
    Nästa `held` ska innehålla `displayed: true`. Svara
    `reply NUMMER Markerat!` och kontrollera markeringsstatusen.
 3. Öppna Lo och skriv **Osänd uppgift** i beskrivningen. Skicka
@@ -322,3 +323,50 @@ Inga modellsvar behövs; assistenten läser det befintliga utkastet.
   aldrig beskrivas som 2222 → 2222.
 - Att läsa sammanfattningen sparar ingenting. Fullständiga detaljer finns
   kvar för fortsatt granskning.
+
+### TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen
+
+**Syfte:** Assistentens markeringsbesked ska följa synlig karta och rätt
+uppgifter i detaljpanelen, även när kartan är stängd eller bortpanorerad.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Lo-förslaget finns. Lägg även **Molnmusik**, typ
+**Tjänst**, och ett samband **Lo Exempel → Använder → Molnmusik** i
+utkastet genom formulären. Stäng formulären utan oskickad text.
+
+**Integrationstest:**
+[assistant-map.spec.ts](../../tests/integration/assistant-map.spec.ts),
+testfallet “TEXT-08: markering öppnar och centrerar objekt och samband
+före bekräftelsen”.
+
+**Steg:**
+
+1. Välj **Lista och detaljer**. Skriv **Visa Lo i kartan** i assistenten.
+   Kopiera Lo-förslagets ID från terminalens `held`. Svara med
+   `tool NUMMER show_map_item {"kind":"object","id":"LO-ID"}`;
+   byt `NUMMER` och `LO-ID` mot provets verkliga värden.
+2. Kontrollera att kartan öppnas och att Lo syns markerad i den.
+   Detaljpanelen ska visa Lo och beskrivningen **Påhittad uppgift**.
+   Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
+   `reply NUMMER Här är urvalet.` och kontrollera **Markerat i kartan**.
+3. Öppna **Navigera rymden** och panorera tills objekten inte syns.
+   Skriv **Visa sambandet mellan Lo och Molnmusik**. Kopiera sambandets
+   ID från `held` och svara med
+   `tool NUMMER show_map_item {"kind":"relationship","id":"SAMBANDS-ID"}`.
+4. Kontrollera att båda objekten och det valda sambandet syns igen.
+   Detaljpanelen ska visa Lo som **Från objekt** och Molnmusik som
+   **Till objekt**. Kontrollera `displayed: true` och släpp sluttexten.
+5. Ändra **Till objekt** i formuläret utan att lägga ändringen i utkastet.
+   Skriv **Visa Lo igen** och upprepa visningsanropet från steg 1.
+   Kontrollera `displayed: false`, släpp sluttexten och kontrollera att
+   formulärets oskickade ändring finns kvar.
+
+**Förväntat resultat:**
+
+- Markeringsbekräftelsen kommer först efter att det efterfrågade objektet
+  eller sambandet visas i kartan och dess uppgifter finns i detaljpanelen.
+- Kamera och vy anpassas till urvalet utan att personliga placeringar
+  eller hushållets innehåll ändras.
+- Oskickad formulärtext förhindrar ett nytt urval. Ingen ny bekräftad
+  markering påstås, och formulärets uppgifter finns kvar.
