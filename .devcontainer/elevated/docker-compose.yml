@@ -9,7 +9,12 @@ services:
       # Mount the root folder that contains .git
       - ../..:/workspace:cached
 
-      # Persist Codex configuration, installation, and SQLite state/logs
+      # Persist container-owned credentials, configuration, and runtime state
+      - type: volume
+        source: codex-home
+        target: /home/vscode/.codex
+
+      # Keep existing SQLite state in its original volume
       - type: volume
         source: codex-state
         target: /home/vscode/.codex/sqlite
@@ -27,11 +32,6 @@ services:
       - type: bind
         source: ${HOME}/.codex/rules
         target: /home/vscode/.codex/rules
-
-      # Re-use auth file from host
-      - type: bind
-        source: ${HOME}/.codex/auth.json
-        target: /home/vscode/.codex/auth.json
 
       # Keep runtime temp wrappers container-local
       - codex-tmp:/home/vscode/.codex/tmp
@@ -77,6 +77,7 @@ services:
 
 volumes:
   skyttel-data:
+  codex-home:
   codex-state:
   codex-tmp:
   config:

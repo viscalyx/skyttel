@@ -17,31 +17,33 @@ openssl rand -base64 48
 
 Put the generated value in `BETTER_AUTH_SECRET` in `.devcontainer/.env` and
 keep it stable across rebuilds. This ignored file is the default environment
-for `npm run dev:all` and `npm run db:setup`. The synthetic provider values
-display the sign-in page but cannot complete real sign-in. The example
-administrator identifier also fails the required demo-data setup during
-container creation. Configure dedicated provider registrations and a first
-administrator before creating the container, using the
+for `npm run dev:all`, `npm run db:migrate`, and `npm run db:setup`.
+Container creation applies migrations and leaves a new database empty.
+The synthetic provider values allow creation and display the sign-in page,
+but cannot complete real sign-in. Configure dedicated provider registrations
+and a first administrator before signing into Skyttel or explicitly seeding
+demo data, using the
 [local authentication guide](local-authentication.md) and the
 [installation guide](../operations/installation.md). Keep credentials and
 identity values out of Git and public logs.
 
 For a new contributor who does not yet know their Google administrator
-subject, first follow the
-[port-5173 identity setup](local-authentication.md#continue-with-the-first-household)
-on the host. It requires the repository's Node.js and npm versions once,
-before the first container creation. Sign in through the development server,
-save the verified identity in the private configuration, and stop that server.
-The creation script cannot seed demo data with an unknown administrator.
-If the subject is already configured, skip this bootstrap.
+subject, follow the
+[in-container identity setup](devcontainer-persistence.md#ange-första-administratören).
+Sign in through the development server, save the verified identity in the
+private configuration, and stop that server.
+Recreate the container to reload Compose environment values. If the subject
+is already configured, skip this bootstrap. Demo seeding is always explicit.
 
 Ensure the host directories
 `~/.codex/sessions`, `~/.codex/plugins`, `~/.codex/skills`, and
-`~/.codex/rules` exist. `~/.codex/auth.json` must be an existing regular file
-from your host Codex authentication setup. An empty placeholder is not usable
-authentication. These mounts share their actual contents with the container;
-changes to a shared directory also affect the host. The container does not
-copy authentication into its image or the repository.
+`~/.codex/rules` exist and are writable by your host user. These mounts share
+their actual contents with the container; changes also affect the host.
+No host `auth.json` is required. Codex stores credentials and personal
+configuration in the container-owned `codex-home` volume. Sign in inside
+the container, or optionally copy existing host credentials, following the
+[Swedish setup and persistence guide](devcontainer-persistence.md).
+Credentials belong in neither the image nor the repository.
 
 Select **Dev Containers: Reopen in Container** and choose the normal Skyttel
 configuration. Wait for dependency and tool installation and the Codex daemon
@@ -106,13 +108,15 @@ updated forwarded ports.
 
 ## Reset demo data
 
-Both dev container profiles run `npm run db:setup` as the final creation
-step, including after a rebuild. Configure real provider credentials and
-the first administrator before creating the container. Each successful
-setup replaces the development database contents with demo data.
+Both profiles run `npm run db:migrate` as the final creation step, including
+after a rebuild. This initializes an empty schema or applies pending
+migrations to the existing database, retaining application data. It never
+seeds demo data. Ordinary application startup also applies migrations.
+Use the installation flow to create a new household, or explicitly choose
+the destructive demo reset below.
 
 After configuring real provider credentials and the first administrator,
-prepare the development database and start the application:
+replace the development database with demo data and start the application:
 
 ```sh
 npm run db:setup
@@ -170,7 +174,8 @@ Compose keeps independent named volumes for the following state:
 | Volume | Container path and purpose |
 | --- | --- |
 | `skyttel-data` | `/data`: development SQLite database and journal files. |
-| `codex-state` | `/home/vscode/.codex`: installed runtime, configuration, and remaining Codex state. |
+| `codex-home` | `/home/vscode/.codex`: container credentials, personal configuration, installed runtime, and remaining Codex state. |
+| `codex-state` | `/home/vscode/.codex/sqlite`: existing Codex SQLite state and logs. |
 | `codex-tmp` | `/home/vscode/.codex/tmp`: container-local runtime wrappers. |
 | `config` | `/home/vscode/.config`: personal tool settings. |
 | `vscode-server` | `/home/vscode/.vscode-server`: remote editor settings and extensions. |
@@ -179,13 +184,19 @@ Compose keeps independent named volumes for the following state:
 <!-- markdownlint-enable MD013 -->
 
 The host Codex bind mounts override their corresponding paths inside
-`codex-state`; their contents remain on the host. Source and the private
-`.devcontainer/.env` remain in the repository's host bind mount.
+`codex-home`; their contents remain on the host. The separate `codex-state`
+and `codex-tmp` volumes also override their paths inside `codex-home`.
+Source and the private `.devcontainer/.env` remain in the repository's
+host bind mount.
 
 Restarting or rebuilding the same Compose project retains its volumes.
-Rebuilding also runs `npm run db:setup`, which replaces application data in
-the retained database with demo data. Back up development data you need
-before rebuilding; a normal restart does not run this reset.
+Rebuilding runs `npm run db:migrate`, retaining application content, sessions,
+drafts, and receipts. Only an explicit `npm run db:setup` resets the data.
+Personal Codex settings survive; creation merges the managed permissions
+while preserving personal settings outside those managed sections.
+Before the first rebuild that adds `codex-home`, preserve any configuration
+from the disposable container filesystem using the
+[transition steps](devcontainer-persistence.md#bevara-befintliga-inställningar-vid-första-övergången).
 The normal `skyttel-devcontainer` and opt-in `skyttel-devcontainer-elevated`
 projects have separate named volumes; they share the same host bind mounts.
 Changing the Compose project name selects different volumes. Removing
@@ -210,8 +221,11 @@ Playwright tooling use rolling releases and can change on rebuild. VS Code
 manages editor extension updates.
 
 Before rebuilding for tool updates, back up development data you need.
-After the rebuild, start the application and check that the demo household
-is available. Run the application checks explicitly:
+After the rebuild, start the application and check that your saved content
+and private drafts remain. Follow the
+[manual persistence check](devcontainer-persistence.md#manuellt-prov-av-omstart-och-ombyggnad)
+for database, Codex state, credentials, and personal settings. Run the
+application checks explicitly:
 
 ```sh
 npm run check

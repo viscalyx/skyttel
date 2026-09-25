@@ -267,11 +267,12 @@ production-container checks when production inputs change.
 
 Follow the [devcontainer guide](devcontainer.md) to prepare the environment
 and start the application. When changing the development configuration,
-back up development data you need before rebuilding: container creation runs
-`npm run db:setup` and replaces application data with demo data. After the
-rebuild, start the application, check the tools, and confirm that the demo
-household is available. Run the application checks explicitly; container
-startup does not run them.
+container creation runs `npm run db:migrate` and preserves existing data.
+A new database has an empty schema until you create a household or explicitly
+seed demo data. After a rebuild, start the application, check the tools, and
+confirm that saved content, private drafts, and personal settings remain.
+Follow the devcontainer guide for the manual rebuild procedure. Run the
+application checks explicitly; container startup does not run them.
 
 Use `npm run db:setup` to replace the development database contents with
 `TestHousehold` and its configured administrator. Follow the

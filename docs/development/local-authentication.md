@@ -10,11 +10,12 @@ start the development server. Production-container checks belong in the
 [installation guide](../operations/installation.md#build-start-and-restart).
 
 For a new contributor, complete provider registration in sections 1–9, then
-use sections 10–13 to discover the administrator identity and start normal
-development. That first identity setup requires Git, the repository's Node.js
-and npm versions on the host, and a supported shell. Ongoing devcontainer
-work also needs Docker and VS Code with Dev Containers. If your credentials
-and administrator identity already exist, use
+[discover the administrator inside the container](devcontainer-persistence.md#ange-första-administratören)
+or use the host setup in sections 10–13. Host development requires Git,
+the repository's Node.js and npm versions, and a supported shell.
+Devcontainer development needs Docker and VS Code with Dev Containers;
+Node.js and npm run inside the container. If your credentials and
+administrator identity already exist, use
 [the configured devcontainer steps](#use-the-credentials-in-the-devcontainer).
 
 For a production deployment, follow the
@@ -402,8 +403,8 @@ try the old value if the replacement fails.
    `BETTER_AUTH_SECRET`, administrator identity, and database settings.
 5. Stop the development server with Ctrl+C. If the devcontainer exports the
    old credential, update its private `.devcontainer/.env` too and recreate
-   the container to load that value. A container rebuild resets demo data;
-   preserve any development work first. Follow the
+   the container to load that value. Recreation and rebuilding preserve
+   development data. Follow the
    [environment guidance](devcontainer.md#run-the-application).
    For host development, open a terminal without stale exported credentials,
    select `.env.local`, and start the server again:
@@ -451,11 +452,12 @@ identity discovery and use the [devcontainer guide](devcontainer.md).
 Changing the first-administrator setting does not transfer an existing
 household to another account.
 
-The devcontainer's creation script seeds demo data and requires a known
-administrator subject. For a first setup, discover that subject with the
-host development server below **before** creating the devcontainer. This
-one-time bootstrap uses the same port 5173 and provider registration as normal
-development. It does not require a production container or another callback.
+The optional demo reset requires a known administrator subject; ordinary
+container creation only applies migrations. For a first setup, either
+[discover the identity inside the container](devcontainer-persistence.md#ange-första-administratören)
+or use the host development server below. Both paths use port 5173 and the
+same provider registration as normal development. Neither requires a
+production container or another callback.
 
 ### 10. Prepare the host and local configuration
 
@@ -599,10 +601,13 @@ files out of Git and update their shared credentials together when needed.
 
 Follow [Prepare and start](devcontainer.md#prepare-and-start), including the
 host Codex prerequisites, then reopen the repository in the devcontainer.
-Its creation script seeds the container's separate development database.
-In a container terminal, run `npm run dev:all` and open port 5173 on the host.
-Sign in with Google and check `TestHousehold`. The devcontainer supplies its
-own Node.js, npm, tools, and native dependencies for ongoing work.
+Its creation script migrates the container's separate development database
+without resetting it. For a new empty database, choose either the installation
+flow or an explicit `npm run db:setup` to create `TestHousehold`; the latter
+deletes any existing application data. In a container terminal, run
+`npm run dev:all` and open port 5173 on the host. Sign in with Google and check
+the household you created. The devcontainer supplies its own Node.js, npm,
+tools, and native dependencies for ongoing work.
 
 For the **manual Codex CLI test**, stop any existing port-3301 app and use
 [the isolated setup](assistants.md#manual-local-codex-cli-setup). It reuses the

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge Azure-managed settings into an existing Codex user configuration."""
+"""Merge development settings into an existing Codex user configuration."""
 
 from __future__ import annotations
 
@@ -380,6 +380,15 @@ def merge_config(existing_content: str, managed_content: str) -> str:
     managed_plugin_names = require_disabled_plugins(managed)
     managed_skill_paths = require_disabled_skills(managed)
     root_lines, trust_level, profile_lines = render_profile(managed)
+    # Seed the devcontainer credential store once, preserving personal choices.
+    if (
+        "cli_auth_credentials_store" in managed
+        and "cli_auth_credentials_store" not in tomllib.loads(existing_content)
+    ):
+        credentials_store = require_string(
+            managed["cli_auth_credentials_store"], "cli_auth_credentials_store",
+        )
+        root_lines.insert(0, f"cli_auth_credentials_store = {toml_string(credentials_store)}")
     existing_lines, workspace_found = clean_existing_config(
         existing_content,
         trust_level,

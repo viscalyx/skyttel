@@ -21,6 +21,7 @@
     "dev:all": "node scripts/develop.mjs",
     "dev:prodlike": "node scripts/develop-prodlike.mjs",
     "db:setup": "tsx scripts/setup-database.ts",
+    "db:migrate": "tsx scripts/migrate-development-database.ts",
     "build": "tsc -p tsconfig.server.json && vite build",
     "start": "node dist/server/index.js",
     "typecheck": "tsc --noEmit",
