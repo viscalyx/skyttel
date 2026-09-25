@@ -9,6 +9,12 @@ export type TextAssistantReview = MapDraft & {
   pendingOperations: SaveOperation[];
   current?: { types: ObjectType[]; relationshipTypes: RelationshipType[] };
 };
+export type MapSelection = { kind: 'object' | 'relationship'; id: string };
+export type TextAssistantResult = {
+  kind: 'draft' | 'undo' | 'restored' | 'history';
+  /** Server-produced text grounded in successful MCP results. */
+  message: string;
+};
 export interface TextAssistantView {
   id: string;
   revision: number;
@@ -17,9 +23,11 @@ export interface TextAssistantView {
   reply?: string;
   /** Provider conversation is never evidence of a saved or displayed result. */
   modelReply?: string;
+  result?: TextAssistantResult;
   error?: string;
   receipt?: SaveReceipt;
   operations: SaveOperation[];
   selection?: { objectId: string; revision: number };
   displayedSelection?: string;
+  displayedItem?: MapSelection;
 }
