@@ -26,12 +26,17 @@ keep its credentials and personal identity values private.
 Select **Dev Containers: Reopen in Container** and the normal Skyttel
 configuration. Wait for installation and the Codex daemon to finish starting.
 Creation installs the repository's Node.js and npm versions, application
-dependencies, and browser tools, then runs `npm run db:migrate`.
-A new database starts empty; an existing database retains its data.
+dependencies, and browser tools, then runs `npm run db:setup`.
+Creation and rebuilding apply migrations, remove existing application data
+and sessions, and load the demo household. Ordinary restarts preserve data.
 The application and tests start only when you run them.
 
 The example provider values allow startup and display the sign-in page.
 Complete [local sign-in setup](#set-up-local-sign-in) to use the application.
+On first setup, `db:setup` stops with `SKYTTEL_FIRST_ADMIN_SUBJECT` until
+you configure your administrator's provider identifier. The dependencies
+are already installed: follow the sign-in steps below, then rebuild to
+complete setup and load the demo household.
 Use invented household information in development.
 
 The normal configuration includes access to the host Docker engine. Use it
@@ -182,9 +187,10 @@ real provider credentials.
 4. Save the returned value as `SKYTTEL_FIRST_ADMIN_SUBJECT` in your private
    environment file. It is the provider's account identifier, not an email
    address, client ID, or the Skyttel `user.id` used for the lookup.
-5. Recreate the container, restart development, and sign in again. Follow
-   the installation screen to create a household, or explicitly choose
-   [demo data](#reset-demo-data).
+5. Rebuild the devcontainer to complete setup and load `TestHousehold`,
+   then restart development and sign in again. When developing without
+   the container, restart development and follow the installation screen
+   to create a household, or explicitly choose [demo data](#reset-demo-data).
 
 A successful provider sign-in alone does not grant household access.
 Matching email addresses at Google and Microsoft do not link their accounts.
@@ -193,7 +199,8 @@ Use the [access guide](../user-guide/access.md) when testing another identity.
 ## Reset demo data
 
 After configuring provider credentials and a verified administrator subject,
-you can replace the development database with the demo household:
+container creation and rebuilding reset the database to the demo household.
+To perform the same reset without rebuilding:
 
 ```sh
 npm run db:setup
@@ -203,8 +210,9 @@ npm run dev:all
 `db:setup` removes all application data and sessions from the selected
 `SKYTTEL_DATABASE_PATH` and creates `TestHousehold` with your configured
 administrator. Check the selected path and back up anything you want to
-keep before running it. Sign in again after the reset. Container creation,
-rebuilding, `db:migrate`, and normal application startup preserve the data.
+keep before running it or rebuilding the container. Sign in again after the
+reset. `db:migrate`, normal application startup, and container stop/start
+preserve the data.
 
 ## Develop without the container
 
@@ -260,8 +268,13 @@ Keep credentials out of the repository and container image.
 
 ## State and rebuilds
 
-The same Compose project retains the database, dependencies, editor state,
-`~/.config`, and `/home/vscode/worktrees` in named volumes across rebuilds.
+Both profiles run `db:setup` when created or rebuilt: saved application
+data, private drafts, and sessions are replaced with fresh demo data.
+The database volume remains mounted, but its application contents reset.
+A normal container stop/start or application restart preserves those contents.
+
+The same Compose project retains dependencies, editor state, `~/.config`,
+and `/home/vscode/worktrees` in named volumes across rebuilds.
 Keep additional Git worktrees outside the checkout and install dependencies
 for each. Changing profiles or the Compose project name selects different
 volumes; removing volumes deletes their contents.

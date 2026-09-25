@@ -43,6 +43,7 @@ async function build() {
 
 async function prepareFixture() {
   const manifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+  assert.equal(manifest.scripts['db:setup'], 'tsx scripts/setup-database.ts');
   assert.equal(manifest.scripts['db:migrate'], 'tsx scripts/migrate-development-database.ts');
   await mkdir(bundle);
   for (const file of ['prepare-storage.sh', 'merge-codex-config.py', 'codex-config.toml']) {
@@ -65,6 +66,8 @@ async function prepareFixture() {
        const db = openDatabase(process.argv[1]);
        db.prepare('INSERT INTO user (id, name, email, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?)')
          .run('persistence-user', 'Synthetic developer', 'developer@example.test', 0, 0);
+       db.prepare('INSERT INTO session (id, expiresAt, token, createdAt, updatedAt, userId) VALUES (?, ?, ?, ?, ?, ?)')
+         .run('persistence-session', 9999999999999, 'synthetic-session-token', 0, 0, 'persistence-user');
        db.prepare('INSERT INTO household (id, name, createdAt) VALUES (?, ?, ?)')
          .run('persistence-household', 'Synthetic household', '2026-01-01');
        db.prepare('INSERT INTO membership (householdId, userId, role) VALUES (?, ?, ?)')
@@ -119,15 +122,19 @@ async function checkProfile(profile, composePath) {
   for (const required of [
     'bash .devcontainer/prepare-storage.sh',
     'python3 .devcontainer/merge-codex-config.py .devcontainer/codex-config.toml /home/vscode/.codex/config.toml',
-    'npm run db:migrate',
+    'npm run db:setup',
   ]) {
     assert.ok(hook.includes(required), `${profile}: creation must run ${required}`);
   }
-  assert.ok(!hook.includes('db:setup'), `${profile}: creation must never reset existing data`);
+  const startMatch = /"postStartCommand"\s*:\s*("(?:[^"\\]|\\.)*")/.exec(configText);
+  assert.ok(startMatch, `${profile}: postStartCommand must be a shell command`);
+  assert.ok(
+    !JSON.parse(startMatch[1]).includes('db:setup'),
+    `${profile}: ordinary startup must not reset application data`,
+  );
   const targets = original.services.app.volumes.map(({ target }) => target);
   const persistent = {
     '/data': 'skyttel-data',
-    '/home/vscode/.codex': 'codex-home',
     '/home/vscode/.codex/sqlite': 'codex-state',
     '/home/vscode/.codex/tmp': 'codex-tmp',
     '/home/vscode/.config': 'config',
@@ -187,14 +194,7 @@ async function checkProfile(profile, composePath) {
     },
     volumes,
   };
-  const currentMounts = model.services.app.volumes;
-  const writeModel = () => writeFile(path, JSON.stringify(model));
-  // Simulate the first upgrade from a disposable Codex home, while retaining
-  // the old config and SQLite volumes exactly as the migration guide requires.
-  model.services.app.volumes = currentMounts.filter(
-    ({ target }) => target !== '/home/vscode/.codex',
-  );
-  await writeModel();
+  await writeFile(path, JSON.stringify(model));
   projects.push({ compose, volumes: Object.values(volumes).map(({ name }) => name) });
   await compose('up', '--detach', '--no-build');
   let container = await compose('ps', '--quiet', 'app');
@@ -224,24 +224,24 @@ async function checkProfile(profile, composePath) {
       '/workspace/.devcontainer-test/codex-config.toml',
       '/home/vscode/.codex/config.toml',
     );
-  const migrate = async () => {
+  const databaseCommand = async (script) => {
     const databasePath = join(directory, `${profile}.sqlite`);
     const envPath = join(directory, `${profile}.env`);
     await writeFile(envPath, '', { mode: 0o600 });
     await command(['cp', `${container}:/data/skyttel.sqlite`, databasePath]);
-    // Execute the real creation migration with repository dependencies, then
+    // Execute the actual setup or migration with repository dependencies, then
     // put its result back. The container needs no second npm installation.
-    await exec(process.execPath, ['--import', 'tsx', 'scripts/migrate-development-database.ts'], {
+    await exec(process.execPath, ['--import', 'tsx', script], {
       cwd: root,
       timeout: 30_000,
       env: {
-        ...process.env,
+        PATH: process.env.PATH,
         NODE_ENV: 'development',
         SKYTTEL_DEV_ENV_FILE: envPath,
         SKYTTEL_DATABASE_PATH: databasePath,
         SKYTTEL_ORIGIN: 'http://localhost:5173',
         SKYTTEL_FIRST_ADMIN_PROVIDER: 'google',
-        SKYTTEL_FIRST_ADMIN_SUBJECT: 'synthetic-first-administrator',
+        SKYTTEL_FIRST_ADMIN_SUBJECT: 'devcontainer-check-administrator',
         BETTER_AUTH_SECRET: 'synthetic-devcontainer-persistence-secret',
         GOOGLE_CLIENT_ID: 'synthetic-google-client',
         GOOGLE_CLIENT_SECRET: 'synthetic-google-secret',
@@ -253,32 +253,15 @@ async function checkProfile(profile, composePath) {
     await command(['cp', databasePath, `${container}:/data/skyttel.sqlite`]);
     await run('sudo', 'chown', 'vscode:vscode', '/data/skyttel.sqlite');
   };
+  const setup = () => databaseCommand('scripts/setup-database.ts');
+  const migrate = () => databaseCommand('scripts/migrate-development-database.ts');
   await prepare();
+  await run('touch', '/data/skyttel.sqlite');
+  await setup();
+  await state('verify-demo');
   await state('seed');
-  await run(
-    'bash',
-    '-ec',
-    'install -d -m 700 "$HOME/.config/skyttel"; install -m 600 "$HOME/.codex/config.toml" "$HOME/.config/skyttel/codex-config.before-persistence.toml"',
-  );
-  await compose('stop');
-  await compose('start');
-  await state('verify-legacy');
-  await compose('down');
-  model.services.app.volumes = currentMounts;
-  await writeModel();
-  await compose('up', '--detach', '--no-build');
-  const replacement = await compose('ps', '--quiet', 'app');
-  assert.notEqual(replacement, container, 'The first transition must create a new container');
-  container = replacement;
-  await prepare();
-  await run(
-    'bash',
-    '-ec',
-    'install -m 600 "$HOME/.config/skyttel/codex-config.before-persistence.toml" "$HOME/.codex/config.toml"',
-  );
   await merge();
   await migrate();
-  await state('finish-transition');
   await state('verify');
   await compose('stop');
   await compose('start');
@@ -290,8 +273,13 @@ async function checkProfile(profile, composePath) {
   await prepare();
   await merge();
   await merge();
-  await migrate();
   await state('verify-recreated');
+  await setup();
+  await state('record-reset');
+  await compose('stop');
+  await compose('start');
+  await migrate();
+  await state('verify-reset');
   const mounts = JSON.parse(await command(['inspect', '--format', '{{json .Mounts}}', container]));
   assert.equal(mounts.length, targets.length);
   for (const mount of mounts) {
@@ -299,7 +287,7 @@ async function checkProfile(profile, composePath) {
     assert.ok(mount.Name.startsWith(`${project}-`), 'Every mount must belong to this test');
   }
   console.log(
-    `${profile}: first transition, restart and recreation preserve SQLite and developer state`,
+    `${profile}: creation seeds demo data; recreation resets application data; restart and migration preserve data; mounted developer state survives`,
   );
 }
 
