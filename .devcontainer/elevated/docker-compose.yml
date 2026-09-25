@@ -28,6 +28,11 @@ services:
         source: ${HOME}/.codex/rules
         target: /home/vscode/.codex/rules
 
+      # Re-use auth file from host
+      - type: bind
+        source: ${HOME}/.codex/auth.json
+        target: /home/vscode/.codex/auth.json
+
       # Keep runtime temp wrappers container-local
       - codex-tmp:/home/vscode/.codex/tmp
       - skyttel-data:/data
