@@ -9,6 +9,8 @@ Fallen fungerar som körbara beskrivningar och stöd för felsökning.
 Automatiserade fall behöver inte upprepas manuellt för specifikation #31.
 Den separata [restlistan #97](https://github.com/viscalyx/skyttel/issues/97)
 innehåller bara kvarvarande mänskliga bedömningar och bekräftelser.
+Förberedelsen för dessa finns i
+[ärendets kommentar](https://github.com/viscalyx/skyttel/issues/97#issuecomment-5835778540).
 Registrera automatiska körningar med version och resultat; skilj dem från
 verkliga leverantörsprov och mänskliga observationer.
 
@@ -19,10 +21,12 @@ De körs uttryckligen med privat konfiguration och redovisas separat från CI.
 ## Köra och förbereda prov
 
 [Testguiden](../development/testing.md) beskriver kommandon för automatiska
-kontroller och rapporter. [Provförberedelsen](setup/browser.md) ger en separat
-lokal provdatabas. Förbered utvecklingsmiljön med
+kontroller och rapporter.
+[Provförberedelsen](../development/devcontainer.md#disposable-local-database)
+ger en separat lokal provdatabas. Förbered utvecklingsmiljön med
 [utvecklingsguiden](../development/devcontainer.md). Områdesfallen länkar
-till de särskilda startguider som behövs för deras provdata och kontroller.
+till utvecklingsguidernas gemensamma miljöer. Särskilda provdata och
+kontroller beskrivs tillsammans med respektive områdesfall.
 
 För [stora kartor](large-map-performance.md) finns en separat mätplan och
 [uppmätta resultat](large-map-results.md).

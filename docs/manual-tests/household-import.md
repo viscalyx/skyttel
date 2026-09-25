@@ -7,7 +7,7 @@ Manuell körning sker efter att hela specifikationen är implementerad.
 
 ## Konfigurerade användare
 
-Använd [en separat lokal provdatabas](setup/browser.md#disposable-local-browser-session)
+Använd [en separat lokal provdatabas](../development/devcontainer.md#disposable-local-database)
 i devcontainern och värddatorns webbläsare. **Alex** är testrollen för den
 konfigurerade första administratörens befintliga Google- eller
 Microsoft-konto; kontot behöver inte heta Alex. Skapa hushållet **Linden**

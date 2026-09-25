@@ -179,6 +179,58 @@ keep before running it or rebuilding the container. Sign in again after the
 reset. `db:migrate`, normal application startup, and container stop/start
 preserve the data.
 
+## Disposable local database
+
+Use a disposable database when investigating a bug or replacing household
+content during development. Run it inside the devcontainer and open
+`http://localhost:5173` in the host browser. Complete
+[local sign-in setup](#set-up-local-sign-in) first and use the configured
+administrator's account. Use only invented household information.
+
+Stop the normal `npm run dev:all` with Ctrl+C and keep ports 3300 and 5173
+free. From the repository root, run this block in a terminal that you keep
+open for the whole check. It creates a new empty database without running
+`db:setup` or changing the ordinary development database. Provider settings
+come from the same private environment file as normal development:
+`SKYTTEL_DEV_ENV_FILE`, or `.devcontainer/.env` when it is not set.
+
+```sh
+umask 077
+SKYTTEL_BROWSER_CASE_DIR=$(mktemp -d /tmp/skyttel-browser-case.XXXXXX)
+printf 'SKYTTEL_DATABASE_PATH=%s/skyttel.sqlite\n' \
+  "$SKYTTEL_BROWSER_CASE_DIR" > "$SKYTTEL_BROWSER_CASE_DIR/case.env"
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_BROWSER_CASE_DIR/case.env" scripts/develop.mjs
+```
+
+Open a fresh private browser window on the host, sign in and create the
+requested household. If two profiles are required, use two separate browser
+profiles, both signed in as the same configured administrator. Session
+cookies are profile-local. Keep any downloaded synthetic archives in a
+separate private folder on the host.
+
+For a restart within the check, press Ctrl+C, wait for both development
+processes to stop, and run only this command in the same terminal. It uses
+the same database, sessions, and household:
+
+```sh
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_BROWSER_CASE_DIR/case.env" scripts/develop.mjs
+```
+
+Reload the browser after startup. Do not rerun the directory-creation block
+or `db:setup` during a persistence check. When finished, stop the server,
+close the test browser windows, remove downloaded test archives, and delete
+only this temporary directory in the same terminal:
+
+```sh
+rm -r -- "${SKYTTEL_BROWSER_CASE_DIR:?}"
+unset SKYTTEL_BROWSER_CASE_DIR
+```
+
+Start the ordinary environment again with `npm run dev:all`. For another
+isolated check, create a fresh directory with the first block.
+
 ## Develop without the container
 
 Install Git and the Node.js version in `.node-version`, using a Node

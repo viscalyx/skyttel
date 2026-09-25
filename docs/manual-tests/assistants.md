@@ -248,7 +248,7 @@ av sparad karta och eget utkast samt återkallelse och ny anslutning från
 Codex CLI i devcontainern.
 
 **Användare:** Den Google-identitet som redan är konfigurerad som första
-administratör i den privata `.env.local`. Samma person använder sin
+administratör i den privata utvecklingsfilen. Samma person använder sin
 befintliga Codex-inloggning. Personerna i demokartan är påhittade objekt,
 inte ytterligare inloggade Skyttel-användare.
 
@@ -277,7 +277,7 @@ Dessa tester är inte bevis för genomfört AI-07.
 **Steg:**
 
 1. Starta `bash scripts/manual-codex-case.sh` i terminal B för guidad körning,
-   eller kör integrationsguidens CLI-kommandon själv vid respektive steg.
+   eller kör förberedelsens CLI-kommandon själv vid respektive steg.
    Kör först `mcp login` enligt guiden.
    Öppna den utskrivna adressen i värddatorns privata webbläsarfönster.
 2. Välj **Fortsätt med Google** och logga in med den konfigurerade
@@ -289,7 +289,7 @@ Dessa tester är inte bevis för genomfört AI-07.
    returadressen från webbläsaren till den väntande CLI-inloggningen.
    Klistra inte in adressen i Codex-konversationen. Webbläsaren kan visa
    anslutningsfel vid returadressen; CLI måste ändå bekräfta inloggningen.
-4. Starta den interaktiva Codex-klienten med integrationsguidens kommando.
+4. Starta den interaktiva Codex-klienten med förberedelsens kommando.
    Be den: ”Använd endast MCP-servern skyttel_development_case. Anropa
    read_map med query Familjens Molnmusik. Visa abonnemangets sparade pris
    och direkta samband. Läs inga lokala filer och använd inte terminalen
@@ -354,7 +354,7 @@ Automatiskt verifierade verktygsregler behöver inte upprepas där.
 AI-08 och AI-12 använder en verklig textklient med kartmedgivande enligt
 [klientens startguide](setup/assistants.md#real-text-client-verification).
 AI-09 till AI-11 använder den
-[kontrollerade lokala MCP-klienten](setup/mcp-controls.md):
+[kontrollerade lokala MCP-klienten](assistant-advanced.md#controlled-mcp-client):
 starta en ny tom provdatabas och hjälpprocess inför varje fall. Guiden ger
 exakta kommandon för OAuth, omstart med samma databas och städning.
 Använd den konfigurerade administratörens egen inloggning och hushållet

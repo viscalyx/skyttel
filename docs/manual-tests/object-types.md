@@ -21,7 +21,7 @@ kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
 formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
-1. Starta appen enligt [provförberedelsen](setup/browser.md#disposable-local-browser-session).
+1. Starta appen enligt [provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Börja varje fall i ett nytt testhushåll utan privata förslag.
 2. Ha båda profilerna öppna när fallet använder två medlemmar. Använd
    [typguiden](../user-guide/object-types.md) för att hitta formulären.

@@ -45,8 +45,9 @@ lost data or reverse a database migration.
    Keep it empty until import. Do not invite ordinary use yet.
 
 For a local synthetic exercise, use the
-[two-installation setup](../manual-tests/setup/local-recovery.md). Local checks
-do not establish hosted HTTPS, disk-service or real-device behavior.
+[two-installation setup](../manual-tests/household-recovery.md#local-recovery-preparation).
+Local checks do not establish hosted HTTPS, disk-service or real-device
+behavior.
 
 ## Pause changes and take the final export
 

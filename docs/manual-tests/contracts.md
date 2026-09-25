@@ -22,7 +22,7 @@ formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
 1. Starta en separat testinstallation enligt
-   [provförberedelsen](setup/browser.md#disposable-local-browser-session).
+   [provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Logga in som Alex och
    skapa ett hushåll om installationen ännu saknar ett.
 2. Börja varje fall utan förslag i **Hela mitt utkast**. Använd en ny
@@ -243,11 +243,14 @@ definitioner eller privata utkast ersätts.
 inloggade hushållsmedlem.
 
 **Förutsättningar:** Följ
-[förberedelsen för äldre avtalsdata](setup/map-fixtures.md#legacy-contract-upgrade).
+[förberedelsen för äldre avtalsdata](../development/testing.md#legacy-contract-upgrade).
 Den ger en separat databas med migrationerna 001–006, egen Bostad och
 Hyresvärd, sparade Björkbacken och samma verifierade användares privata
-namnförslag Björkbacken hemma. Guiden anger definitionernas identiteter,
-revisioner och beskrivningar. Behåll den tillfälliga katalogen och använd
+namnförslag Björkbacken hemma. Bostad har ID `household-home-type`, revision
+7 och beskrivningen **Hushållets egen beskrivning av bostad**. Hyresvärd
+har ID `household-landlord-role`, revision 4 och beskrivningen
+**Hushållets egen beskrivning av hyresvärd**. Objektet har ID
+`home-before-upgrade`. Behåll den tillfälliga katalogen och använd
 `legacy.env` vid varje start; kör inte provdatakommandot igen under fallet.
 
 **Integrationstest:**

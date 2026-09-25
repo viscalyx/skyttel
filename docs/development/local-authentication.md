@@ -685,5 +685,5 @@ To test linking instead, follow the [login-linking steps](../user-guide/access.m
 with an identity that does not already belong to a Skyttel user. Signing in
 separately creates a separate user, which cannot later be merged by linking.
 Additional provider, persistence, and denial checks are described in
-[real-provider verification](../manual-tests/setup/browser.md#verify-real-identity-providers-separately).
+[real-provider verification](../manual-tests/access.md#real-identity-provider-preparation).
 Those checks and real Codex login remain manual and separate from CI.

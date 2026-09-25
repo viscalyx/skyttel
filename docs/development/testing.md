@@ -102,8 +102,114 @@ and inspect its actions and assertions. Rebuild after changing application
 client code before rerunning. If your environment has a graphical display,
 `--debug` instead opens the Playwright Inspector with a visible browser.
 
-For controlled provider delays and failures in a manual browser session,
-use the [local text-assistant launcher](../manual-tests/setup/text-assistant.md).
+### Interactive fixture processes
+
+To investigate browser behavior with controlled provider responses, build
+the application and launch one disposable fixture from the repository root:
+
+```sh
+npm run build
+node --import tsx scripts/manual-text-assistant.ts
+```
+
+Use `scripts/manual-voice.ts` for voice controls, `scripts/manual-costs.ts`
+for usage and costs, or `scripts/manual-export.ts` for an active download.
+Each starts an isolated application with synthetic identities and a new
+temporary database. They need no provider key. Voice and cost fixtures use
+silent media; they do not test physical microphones, speakers or real speech.
+
+Keep the process open. Its `ready` event prints an `origin` and temporary
+`directory`. Forward that port privately to the same host port and open the
+exact `http://127.0.0.1:PORT` origin in a fresh browser profile. Google signs
+in as the synthetic Alex. Create fictional data when the fixture is empty.
+Enter `help` in the launcher terminal to list its controls. The export
+launcher uses `pause`, `inspect`, `resume` and `quit` instead of `help`.
+Enter `quit` or press Ctrl+C and wait for `closed` before removing the port
+forward and closing the browser. Verify the printed temporary directory is
+gone. After a forced stop, stop any surviving process before removing only
+that launcher's printed directory.
+
+The cost integration tests launch `manual-costs.ts` directly. Other suites
+use test helpers directly; starting these interactive processes is optional
+and is not a prerequisite for Playwright or issue #97.
+
+### Offline map fixtures
+
+For interactive upgrade or household-isolation debugging, the helper
+`scripts/prepare-manual-map.ts` prepares synthetic data from verified test
+identities. Complete [local sign-in](devcontainer.md#set-up-local-sign-in)
+first. Stop ordinary development and keep ports 3300 and 5173 free.
+Start a disposable installation from the repository root:
+
+```sh
+umask 077
+SKYTTEL_MANUAL_MAP_DIR=$(mktemp -d /tmp/skyttel-manual-map-XXXXXX)
+printf 'SKYTTEL_DATABASE_PATH=%s/verified.sqlite\n' \
+  "$SKYTTEL_MANUAL_MAP_DIR" > "$SKYTTEL_MANUAL_MAP_DIR/case.env"
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_MANUAL_MAP_DIR/case.env" scripts/develop.mjs
+```
+
+In a new browser profile, sign in as the configured administrator and create
+Linden. Choose one preparation below; use a fresh directory for the other.
+Obtain the selected user's ID in that user's browser Console:
+
+```js
+(await (await fetch('/api/bootstrap')).json()).user.id
+```
+
+Copy only that ID, never cookies or provider tokens. Stop the server before
+running the helper. It refuses an ordinary development database and requires
+an identity established by the actual provider login.
+
+#### Legacy contract upgrade
+
+Use the administrator's ID and run in the same terminal:
+
+```sh
+SKYTTEL_MANUAL_USER_ID='paste-Alex-user-id'
+node --import tsx scripts/prepare-manual-map.ts \
+  legacy-contracts "$SKYTTEL_MANUAL_MAP_DIR" "$SKYTTEL_MANUAL_USER_ID"
+printf 'SKYTTEL_DATABASE_PATH=%s/legacy.sqlite\n' \
+  "$SKYTTEL_MANUAL_MAP_DIR" > "$SKYTTEL_MANUAL_MAP_DIR/legacy.env"
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_MANUAL_MAP_DIR/legacy.env" scripts/develop.mjs
+```
+
+The helper creates a separate `legacy.sqlite` and refuses an existing file.
+Startup upgrades it. Sign in again as the same administrator. For a restart,
+repeat only the last server command; do not rerun the helper or `db:setup`.
+
+#### A second household on the same installation
+
+Before stopping the original `verified.sqlite` installation, sign in as a
+different real test identity in a separate browser profile. Do not invite
+that user to Linden. Obtain that user's ID, stop the server and run:
+
+```sh
+SKYTTEL_MANUAL_USER_ID='paste-Robin-user-id'
+node --import tsx scripts/prepare-manual-map.ts \
+  second-household "$SKYTTEL_MANUAL_MAP_DIR" "$SKYTTEL_MANUAL_USER_ID"
+env -u SKYTTEL_DATABASE_PATH \
+  node --env-file="$SKYTTEL_MANUAL_MAP_DIR/case.env" scripts/develop.mjs
+```
+
+The helper creates Eken for the selected user, who must have no membership.
+Reload both profiles. After later accepting an invitation to Linden, open
+Linden's full address explicitly if that user still lands in Eken.
+For a restart, repeat only the last server command with the same database.
+
+#### Remove the offline fixture
+
+Stop the server, close the browser profiles, then run in the same terminal:
+
+```sh
+rm -r -- "${SKYTTEL_MANUAL_MAP_DIR:?}"
+unset SKYTTEL_MANUAL_MAP_DIR SKYTTEL_MANUAL_USER_ID
+```
+
+Resume ordinary development with `npm run dev:all`. These preparations are
+optional debugging tools; integration tests create their own fixtures.
 
 ## Complete the development checks
 

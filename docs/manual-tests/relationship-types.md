@@ -21,7 +21,7 @@ formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
 objektet eller sambandet öppnar inte formuläret.
 
 1. Starta appen enligt
-   [provförberedelsen](setup/browser.md#disposable-local-browser-session)
+   [provförberedelsen](../development/devcontainer.md#disposable-local-database)
    med riktig SQLite. Börja varje fall i ett nytt hushåll utan privata förslag.
 2. Använd [sambandstypguiden](../user-guide/relationship-types.md) för att hitta
    formulären. Starta bara om den separata testinstallationen.
