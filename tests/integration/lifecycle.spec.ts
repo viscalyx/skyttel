@@ -67,6 +67,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
     const objects = page.getByRole('list', { name: 'Objekt', exact: true });
     const subscription = objects.getByRole('listitem').filter({ hasText: 'Familjemusik' });
     await subscription.getByRole('button', { name: 'Familjemusik', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('ended');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await expect(subscription).toContainText('Upphört');
@@ -93,6 +94,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
     await edges
       .getByRole('button', { name: 'Lo Exempel → Använder → Familjemusik', exact: true })
       .click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Sambandets status').selectOption('ended');
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
@@ -104,6 +106,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
       'Upphört',
     );
     await subscription.getByRole('button', { name: 'Familjemusik', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('active');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
@@ -130,6 +133,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
         .getByRole('list', { name: 'Samband', exact: true })
         .getByRole('button', { name: 'Lo Exempel → Använder → Familjemusik', exact: true })
         .click();
+      await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
       await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalar' });
       await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
       await expect(review).toContainText('Lo Exempel → Betalar → Familjemusik');
@@ -242,6 +246,7 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
       'Upphört',
     );
     await subscription.getByRole('button', { name: 'Familjemusik', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
     await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-20');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
@@ -250,14 +255,16 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await expect(subscription).not.toContainText('Upphört');
     const edges = page.getByRole('list', { name: 'Samband', exact: true });
     const incoming = edges.getByRole('listitem').filter({ hasText: 'Lo Exempel' });
-    await incoming.getByRole('button').click();
+    await incoming.getByRole('button', { name: /^Lo Exempel →/ }).click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Sambandets slutdatum: uppgiftens säkerhet').selectOption('known');
     await page.getByLabel('Sambandets slutdatum', { exact: true }).fill('2031-03-12');
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     await expect(incoming).toContainText('Upphört');
-    await incoming.getByRole('button').click();
+    await incoming.getByRole('button', { name: /^Lo Exempel →/ }).click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Sambandets status').selectOption('active');
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(

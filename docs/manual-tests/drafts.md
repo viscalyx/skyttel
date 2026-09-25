@@ -21,6 +21,12 @@ Använd skilda webbläsarprofiler för administratören och medlemmen.
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 För UTKAST-01 används demodata:
 
 1. Förbered en separat utvecklingsdatabas enligt

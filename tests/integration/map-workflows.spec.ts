@@ -52,6 +52,7 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     await search.fill('åSAS');
     await expect(objects.getByRole('button')).toHaveText(['Åsas tjänst']);
     await objects.getByRole('button', { name: 'Åsas tjänst', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets namn')).toBeFocused();
     await page.getByLabel('Objektets namn').fill('Text som inte skickas');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Inte heller denna text skickas');
@@ -60,6 +61,7 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     await page.keyboard.press('Enter');
     await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeFocused();
     await objects.getByRole('button', { name: 'Åsas tjänst', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets namn')).toHaveValue('Åsas tjänst');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Gemensam musik');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
@@ -97,6 +99,7 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     expect((await read()).objects).toEqual([]);
     await page.getByRole('button', { name: 'Betalkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets identitet')).toHaveValue('unresolved');
     await page.getByLabel('Objektets identitet').selectOption('unspecified');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
@@ -114,6 +117,7 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
     expect(relationship.targetId).toBe(objectId);
     await page.reload();
     await page.getByRole('button', { name: 'Betalkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
     await page.getByLabel('Objektets identitet').selectOption('identified');
     await page.getByLabel('Objektets namn').fill('Hushållskontot');
@@ -125,6 +129,7 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
       'Familjemusik → Betalas med → Hushållskontot',
     );
     await page.getByRole('button', { name: 'Hushållskontot', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets identitet')).toHaveValue('identified');
     const after = await read();
     expect(after.objects).toHaveLength(2);
@@ -179,17 +184,20 @@ test('KARTA-03: equal object names stay distinct when correcting and deleting a 
       exact: true,
     });
     await loginButton.click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await expect(page.getByLabel('Till objekt')).toHaveValue(first ?? '');
     await page.getByLabel('Till objekt').selectOption({ label: secondLabel });
     await page.getByRole('button', { name: 'Stäng sambandet utan att skicka' }).click();
     expect((await read()).relationships).toEqual(saved.relationships);
     await loginButton.click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await expect(page.getByLabel('Till objekt')).toHaveValue(first ?? '');
     await page.getByLabel('Till objekt').selectOption({ label: secondLabel });
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await save(page);
     await page.reload();
     await loginButton.click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await expect(page.getByLabel('Till objekt')).toHaveValue(second ?? '');
     const corrected = await read();
     expect(corrected.objects).toEqual(saved.objects);
@@ -248,6 +256,7 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     const object = saved.objects.find((item) => item.name === 'Musikkonto');
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
     await page.getByRole('button', { name: 'Musikkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await expect(
       review.getByRole('heading', { name: 'Borttagning: Musikkonto', exact: true }),
@@ -278,6 +287,7 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     expect((await read()).objects).toEqual(saved.objects);
     expect((await read()).relationships).toEqual(saved.relationships);
     await page.getByRole('button', { name: 'Musikkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await save(page);
     await page.reload();

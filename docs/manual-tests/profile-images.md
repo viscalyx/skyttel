@@ -14,6 +14,12 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Använd en isolerad installation med påhittade uppgifter. Skapa objektet
    Lo Exempel med en beskrivning och ett privat förslag. Förbered påhittade
    JPEG-, PNG- och WebP-bilder, en textfil döpt till PNG och en fil över 10 MB

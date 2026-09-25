@@ -13,6 +13,12 @@ webbläsarprofil. Alla namn, adresser och beskrivningar nedan är påhittade.
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Förbered en separat testinstallation med en ny, tom databas enligt
    [installationsguiden](../operations/installation.md). Använd inga verkliga
    hushållsuppgifter. Börja varje testfall med en ny testdatabas.

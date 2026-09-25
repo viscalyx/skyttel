@@ -253,12 +253,14 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     await touch('touchMove', [{ ...empty, x: empty.x + 50 }]);
     await touch('touchEnd', []);
     await expect.poll(async () => (await center(page)).x).not.toBe(oldPoint.x);
+    await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
     const projection = () =>
       space(page).evaluate((region) => {
         const points = ['lamp', 'bike'].map((id) => {
-          const line = region.querySelector<SVGLineElement>(`line[data-object-id="${id}"]`);
-          if (!line) throw new Error('Both projected object anchors must remain visible');
-          return { x: line.x1.baseVal.value, y: line.y1.baseVal.value };
+          const node = region.querySelector(`.spatial-node[data-object-id="${id}"]`);
+          if (!node) throw new Error('Both projected objects must remain visible');
+          const box = node.getBoundingClientRect();
+          return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
         });
         return {
           x: (points[0].x + points[1].x) / 2,
@@ -283,6 +285,7 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
       .toBeGreaterThan(10);
     expect((await projection()).separation / panBefore.separation).toBeCloseTo(1, 1);
     expect(await read()).toEqual(saved);
+    await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
     const pinchBefore = await projection();
     await touch('touchStart', [panStart, second]);
     await touch('touchMove', [

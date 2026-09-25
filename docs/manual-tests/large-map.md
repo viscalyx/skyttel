@@ -13,6 +13,12 @@ testmiljön; inga verkliga inloggningsuppgifter behövs.
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Installera projektets beroenden och Chromium enligt
    [testguiden](../development/testing.md).
 2. Kör `MAP_PAUSE=1 npm run measure:map` i utvecklingsmiljön. Öppna den

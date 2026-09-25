@@ -65,6 +65,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     await page.getByLabel('Sök objekt', { exact: true }).fill('Provobjekt 499');
     await expect(objects.getByRole('listitem')).toHaveCount(1);
     await objects.getByRole('button', { name: 'Provobjekt 499', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets namn', { exact: true })).toHaveValue('Provobjekt 499');
     await page.getByLabel('Sök objekt', { exact: true }).fill('');
     await page

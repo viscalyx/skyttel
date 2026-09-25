@@ -458,6 +458,7 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
     await page.getByRole('link', { name: 'Till hushållet', exact: true }).click();
     await page.getByRole('button', { name: 'Lista och detaljer', exact: true }).click();
     await page.getByRole('button', { name: 'Lampan att radera', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(
       page.getByRole('img', { name: 'Profilbild för Lampan att radera' }),
     ).toHaveAttribute('src', new RegExp(`/profile-images/${currentImage}$`));

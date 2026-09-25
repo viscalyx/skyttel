@@ -429,14 +429,17 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     const originalRelationship = (await (await page.request.get(path)).json()).relationships[0];
     await page.reload();
     await page.getByRole('button', { name: 'Alex blå cykel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Samband för Alex blå cykel' })).toContainText(
       'Alex blå cykel → förvaras i → Garaget',
     );
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.getByRole('button', { name: 'Garaget', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     const reverse = page.getByRole('region', { name: 'Samband för Garaget' });
     await expect(reverse).toContainText('Garaget → innehåller → Alex blå cykel');
     await reverse.getByRole('button').click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await expect(page.getByLabel('Från objekt')).toHaveValue('bike');
     await expect(page.getByLabel('Till objekt')).toHaveValue('garage');
     await page.getByRole('button', { name: 'Stäng sambandet utan att skicka' }).click();

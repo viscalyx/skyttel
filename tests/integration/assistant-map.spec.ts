@@ -87,11 +87,7 @@ test('TEXT-08: markering öppnar och centrerar objekt och samband före bekräft
         const bounds = surface?.getBoundingClientRect();
         const box = node?.getBoundingClientRect();
         return {
-          inspector:
-            target.kind === 'object'
-              ? ((document.querySelector('#object-name') as HTMLInputElement | null)?.value ?? null)
-              : ((document.querySelector('#relationship-source') as HTMLSelectElement | null)
-                  ?.value ?? null),
+          inspector: document.querySelector('.map-inspector')?.textContent ?? null,
           visible: Boolean(
             bounds &&
               box &&
@@ -119,10 +115,12 @@ test('TEXT-08: markering öppnar och centrerar objekt och samband före bekräft
     expect(acknowledgements[0]).toMatchObject({
       displayed: true,
       kind: 'object',
-      inspector: 'Lo Exempel',
+      inspector: expect.stringContaining('Lo Exempel'),
       visible: true,
     });
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Påhittad uppgift');
+    await expect(page.getByRole('region', { name: 'Val och redigering' })).toContainText(
+      'Påhittad uppgift',
+    );
     await page.getByText('Navigera rymden', { exact: true }).click();
     for (let index = 0; index < 16; index++)
       await page.getByRole('button', { name: 'Panorera vänster', exact: true }).click();
@@ -132,9 +130,12 @@ test('TEXT-08: markering öppnar och centrerar objekt och samband före bekräft
     expect(acknowledgements[1]).toMatchObject({
       displayed: true,
       kind: 'relationship',
-      inspector: 'lo',
+      inspector: expect.stringContaining(
+        `Lo Exempel → ${initial.relationshipTypes[0].forwardLabel ?? initial.relationshipTypes[0].name} → Molnmusik`,
+      ),
       visible: true,
     });
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('music');
     await page.getByLabel('Till objekt', { exact: true }).selectOption('lo');
     await send('Visa Lo igen.');

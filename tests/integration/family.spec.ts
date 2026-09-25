@@ -109,6 +109,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
       .getByRole('list', { name: 'Samband', exact: true })
       .getByRole('button', { name: /Familjemusik → Betalas med → Obesvarad/ })
       .click();
+    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
     await page.getByLabel('Till objekt').selectOption({ label: 'Betalkonto (Bankkonto)' });
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
@@ -119,6 +120,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
       'Osäkert uppgivet',
     );
     await page.getByRole('button', { name: 'Betalkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     for (const knowledge of ['unknown', 'none']) {
@@ -126,6 +128,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
         .getByRole('list', { name: 'Samband', exact: true })
         .getByRole('button', { name: /Familjemusik → Betalas med/ })
         .click();
+      await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
       await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
       await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
       await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
@@ -168,6 +171,7 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
     await expect(review).toContainText('familjen@example.test');
     await expect(review).toContainText('musik@example.test');
     await page.getByRole('button', { name: 'Familjens musikkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Familjens rättade konto');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     const relationshipReview = review

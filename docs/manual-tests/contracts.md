@@ -15,6 +15,12 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Starta en separat testinstallation enligt
    [utvecklingsguiden](../development/testing.md). Logga in som Alex och
    skapa ett hushåll om installationen ännu saknar ett.

@@ -15,6 +15,12 @@ All mänsklig körning görs efter specifikationens implementation i
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. TEXT-01 använder den
    [verkliga modellens isolerade setup](../development/text-assistant.md#enable-real-provider-access).
    Övriga fall använder den
@@ -355,9 +361,10 @@ före bekräftelsen”.
    ID från `held` och svara med
    `tool NUMMER show_map_item {"kind":"relationship","id":"SAMBANDS-ID"}`.
 4. Kontrollera att båda objekten och det valda sambandet syns igen.
-   Detaljpanelen ska visa Lo som **Från objekt** och Molnmusik som
-   **Till objekt**. Kontrollera `displayed: true` och släpp sluttexten.
-5. Ändra **Till objekt** i formuläret utan att lägga ändringen i utkastet.
+   Detaljpanelen ska visa **Lo Exempel → Använder → Molnmusik**.
+   Kontrollera `displayed: true` och släpp sluttexten.
+5. Välj **Redigera valt samband**. Ändra **Till objekt** i formuläret
+   utan att lägga ändringen i utkastet.
    Skriv **Visa Lo igen** och upprepa visningsanropet från steg 1.
    Kontrollera `displayed: false`, släpp sluttexten och kontrollera att
    formulärets oskickade ändring finns kvar.

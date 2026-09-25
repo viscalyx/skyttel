@@ -54,6 +54,7 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
     });
     await page.goto(installation.origin);
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     const details = page.getByRole('group', { name: 'Objektets detaljer' });
     const source = await sharp({
       create: { width: 600, height: 400, channels: 3, background: '#0088ff' },
@@ -81,6 +82,7 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
     await installation.restart();
     await page.reload();
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(details.getByAltText('Profilbild för Lo Exempel')).toBeVisible();
     await page.getByRole('button', { name: 'Öppna rymdkartan' }).click();
     await expectSpatialPortrait(page, first);
@@ -134,6 +136,7 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
     });
     await page.goto(installation.origin);
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     const details = page.getByRole('group', { name: 'Objektets detaljer' });
     const source = await sharp({
       create: { width: 450, height: 600, channels: 3, background: '#992233' },
@@ -161,6 +164,7 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await details.getByRole('button', { name: 'Ta bort profilbild' }).click();
     await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
     expect((await read()).objects[0].profileImageId).toBeDefined();
@@ -235,6 +239,7 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     });
     await page.goto(installation.origin);
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     const input = page.getByLabel('Välj profilbild');
     const source = await sharp({
       create: { width: 300, height: 300, channels: 3, background: '#332244' },
@@ -251,6 +256,7 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     await expect(page.getByRole('status')).toContainText('Sparat');
     expect((await second.request.get(`${images}/${first}`)).status()).toBe(200);
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await input.setInputFiles({
       name: 'andra.webp',
       mimeType: 'image/webp',
@@ -275,6 +281,7 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     for (const id of [first, replacementId])
       expect((await second.request.get(`${images}/${id}`)).status()).toBe(200);
     await page.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await input.setInputFiles({
       name: 'tredje.webp',
       mimeType: 'image/webp',

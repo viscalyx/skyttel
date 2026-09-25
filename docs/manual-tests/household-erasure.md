@@ -21,6 +21,12 @@ inte ångras i Skyttel. Kör inte testfallen mot ett verkligt hushåll.
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Starta en ny provdatabas enligt nästa avsnitt inför varje fall. Öppna
    <http://localhost:5173>, logga in som Alex och skriv **Linden** i
    **Hushållets namn**. Välj **Skapa hushåll**.

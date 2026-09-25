@@ -19,6 +19,12 @@ Mänsklig körning görs efter hela specifikationen och redovisas i
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Följ [den kontrollerade klientens startguide](../development/manual-mcp-controls.md)
    för en ny tillfällig databas på `http://localhost:3301`, privat
    webbläsarfönster och hushållet **MCP-prov**. Behåll terminal A och

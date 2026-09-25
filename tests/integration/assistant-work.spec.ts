@@ -104,6 +104,7 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
       'Familjens musikkonto → Inloggningsadress → musik@example.test',
     );
     await page.getByRole('button', { name: 'Familjens Molnmusik', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Pris', { exact: true })).toHaveValue('189');
     const lo = await tool(app.origin, token, 'read_map', { query: 'Lo Lind' });
     expect(lo.objects).toEqual(
@@ -326,6 +327,7 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
     await page.reload();
     await expect(page.getByRole('button', { name: 'Hushållskonto', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Betalkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
   } finally {
     await app.close();

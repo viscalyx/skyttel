@@ -12,6 +12,12 @@ Samma kartarbete är tillgängligt för en vanlig hushållsmedlem.
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Använd ett tomt testhushåll med påhittade uppgifter enligt
    [familjeabonnemanget](../users/family-subscription.md).
 2. Skapa abonnemanget **Familjemusik**, personen **Lo Exempel** och tjänsten

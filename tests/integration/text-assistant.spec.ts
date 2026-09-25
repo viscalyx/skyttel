@@ -191,6 +191,7 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Kim Exempel', exact: true })
       .click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text som ska finnas kvar');
     await consent(page);
     await expect(
@@ -314,6 +315,7 @@ test('TEXT-03: nekade sparbesked och modellfel lämnar formulärarbetet tillgän
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Lo Exempel', exact: true })
       .click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets namn', { exact: true }).fill('Lo Lind');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     expect((await (await page.request.get(path)).json()).draft.changes[0].after.name).toBe(
@@ -395,6 +397,7 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Lo Exempel', exact: true })
       .click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd uppgift');
     await send(page, 'Markera Lo igen.');
     await expect(assistant(page).getByRole('status')).not.toContainText('Markerat');

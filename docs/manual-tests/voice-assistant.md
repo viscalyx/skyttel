@@ -14,6 +14,12 @@ ersättare samt resultat. All mänsklig körning sker efter implementationen i
 
 ## Allmän förberedelse
 
+När ett befintligt objekt eller samband ska ändras, välj det först i
+kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
+**Redigera valt objekt** eller **Redigera valt samband** för att öppna
+formuläret. I hel kartvy heter knappen **Redigera val**. Att bara välja
+objektet eller sambandet öppnar inte formuläret.
+
 1. Välj den kontrollerade vägen eller det verkliga talprovet i TAL-01.
    TAL-02 och TAL-03 använder den
    [kontrollerade startguiden](../development/manual-voice-assistant.md).
