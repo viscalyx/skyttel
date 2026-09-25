@@ -9,8 +9,12 @@ import { lastToolResult, modelMessage, modelTool, textModel } from '../../suppor
 let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
 let path: string;
-async function setup(modelFetch?: typeof fetch, modelUsage?: TextModelUsage) {
-  app = await createInstallation(undefined, { modelFetch, modelUsage });
+async function setup(
+  modelFetch?: typeof fetch,
+  modelUsage?: TextModelUsage,
+  assistantDispatch?: NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch'],
+) {
+  app = await createInstallation(undefined, { modelFetch, modelUsage, assistantDispatch });
   browser = await request.newContext();
   await signIn(browser, app.origin);
   const { household } = await (await createHousehold(browser, app.origin)).json();
@@ -268,6 +272,246 @@ test('one current correction and save instruction saves the whole existing draft
   );
 });
 
+test.each(['Kan du spara', 'Kan du spara?', 'Jag vill att du sparar det direkt.'])(
+  'a current natural whole-draft instruction %s produces one verified save',
+  async (text) => {
+    const model = textModel(() => [
+      modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'provider-save' }),
+    ]);
+    await setup(model.provider);
+    await webProposal();
+    const status = await message(await start(), text);
+    expect(status).toMatchObject({ phase: 'ready', receipt: { draftVersion: 1 } });
+    expect(status.review.changes).toEqual([]);
+    expect(model.requests).toHaveLength(1);
+  },
+);
+
+test.each(['unavailable', 'disconnected'])(
+  'a committed receipt remains confirmed when subsequent MCP view refreshes are %s',
+  async (failure) => {
+    let saved = false;
+    let failedReads = 0;
+    const model = textModel(() => [
+      modelTool('save_draft', { version: 1, contentVersion: 1, operationId: 'provider-save' }),
+    ]);
+    await setup(model.provider, undefined, async (request, dispatch) => {
+      const rpc =
+        request.method === 'POST' && new URL(request.url).pathname === '/mcp'
+          ? await request.clone().json()
+          : null;
+      if (saved && rpc?.params?.name?.startsWith('read_my_')) {
+        failedReads++;
+        if (failure === 'disconnected') throw new Error('Synthetic MCP connection lost');
+        return new Response(null, { status: 503 });
+      }
+      const response = await dispatch(request);
+      if (rpc?.params?.name === 'save_draft') saved = true;
+      return response;
+    });
+    await webProposal();
+    const status = await message(await start(), 'Kan du spara?');
+    expect(failedReads).toBeGreaterThan(0);
+    expect(status).toMatchObject({
+      phase: 'ready',
+      reply: 'Sparat. Hela utkastet finns i hushållets karta.',
+      receipt: { draftVersion: 1 },
+    });
+    expect(status.error).toBeUndefined();
+    expect(status.review.changes).toEqual([]);
+    const history = await (
+      await browser.get(`${path.replace('/text-assistant', '/map')}/history`)
+    ).json();
+    expect(history.history).toEqual([status.receipt]);
+    expect(model.requests).toHaveLength(1);
+    const { connections } = await (
+      await browser.get(`${app.origin}/api/assistants/context`)
+    ).json();
+    const revoked = await browser.post(`${app.origin}/api/assistants/${connections[0].id}/revoke`, {
+      headers: { origin: app.origin },
+      data: {},
+    });
+    expect(revoked.status()).toBe(200);
+    expect((await browser.get(`${path}/${status.id}`)).status()).toBe(404);
+  },
+);
+
+test.each(['draft', 'save'])(
+  'one combined %s completion applies the entire batch through MCP without another inference',
+  async (completion) => {
+    let typeId = '';
+    const model = textModel(() => [
+      modelTool('submit_changes', {
+        version: 1,
+        contentVersion: 1,
+        completion,
+        operations: ['bike', 'helmet'].map((id) => ({
+          name: 'propose_object',
+          arguments: { id, baseRevision: null, value: { typeId, name: id, description: '' } },
+        })),
+        questions: completion === 'draft' ? ['Vem använder cykeln?'] : [],
+      }),
+    ]);
+    await setup(model.provider);
+    typeId = (await webProposal()).typeId;
+    const status = await message(
+      await start(),
+      completion === 'save' ? 'Lägg till cykel och hjälm och spara.' : 'Lägg till cykel och hjälm.',
+    );
+    expect(status.phase).toBe('ready');
+    expect(model.requests).toHaveLength(1);
+    const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+    if (completion === 'draft') {
+      expect(status.result).toEqual({ kind: 'draft', message: 'Utkastet är uppdaterat.' });
+      expect(status.modelReply).toBe('Vem använder cykeln?');
+      expect(map.draft.changes.map(({ id }: { id: string }) => id)).toEqual([
+        'web-object',
+        'bike',
+        'helmet',
+      ]);
+      expect(map.objects).toEqual([]);
+    } else {
+      expect(status.receipt.changes).toHaveLength(3);
+      expect(map.objects.map(({ id }: { id: string }) => id).sort()).toEqual([
+        'bike',
+        'helmet',
+        'web-object',
+      ]);
+      expect(map.draft.changes).toEqual([]);
+    }
+  },
+);
+
+test('latest-save details and unsaved undo are grounded in the actual receipt and preserve unrelated proposals', async () => {
+  let mode = 'history';
+  let receipt: { operationId: string; userId: string };
+  const model = textModel(() => [
+    mode === 'history'
+      ? modelTool('report_result', { source: 'latest_save' })
+      : modelTool('submit_changes', {
+          version: 3,
+          contentVersion: 1,
+          completion: 'draft',
+          operations: [{ name: 'propose_undo', arguments: receipt }],
+        }),
+  ]);
+  await setup(model.provider);
+  await webProposal('Cykeln', 'bike');
+  const mapPath = path.replace('/text-assistant', '/map');
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: { version: 1, contentVersion: 1, operationId: 'bike-save' },
+  });
+  expect(saved.status()).toBe(200);
+  receipt = (await saved.json()).receipt;
+  // Only identity belongs in the undo request, not historical draft versions.
+  receipt = { operationId: receipt.operationId, userId: receipt.userId };
+  await webProposal('Hjälmen', 'helmet');
+  const history = await message(await start(), 'Vad sparades senast?');
+  expect(history).toMatchObject({ phase: 'ready', result: { kind: 'history' } });
+  expect(history.reply).toContain('Lade till Cykeln');
+  expect(history.reply).not.toContain('Hjälmen');
+  expect(history.receipt).toBeUndefined();
+  mode = 'undo';
+  const undone = await message(history, 'Ångra det senaste sparandet i utkastet.');
+  expect(undone.result).toEqual({ kind: 'undo', message: 'Ångrat i utkastet.' });
+  const map = await (await browser.get(mapPath)).json();
+  expect(map.objects).toMatchObject([{ id: 'bike', name: 'Cykeln' }]);
+  expect(map.draft.changes).toMatchObject([
+    { id: 'helmet', after: { name: 'Hjälmen' } },
+    { id: 'bike', after: null },
+  ]);
+  expect(model.requests).toHaveLength(2);
+});
+
+test.each([
+  'invalid later operation',
+  'nested save',
+  'too many operations',
+  'unapproved save',
+  'ambiguous save',
+  'stale version',
+])('combined completion rejects %s before changing any proposal', async (scenario) => {
+  let typeId = '';
+  const model = textModel(() => {
+    const operation = {
+      name: 'propose_object',
+      arguments: {
+        id: 'bike',
+        baseRevision: null,
+        value: { typeId, name: 'Cykeln', description: '' },
+      },
+    };
+    return [
+      modelTool('submit_changes', {
+        version: scenario === 'stale version' ? 0 : 1,
+        contentVersion: 1,
+        completion: scenario.includes('save') && scenario !== 'nested save' ? 'save' : 'draft',
+        questions: scenario === 'ambiguous save' ? ['Vilken cykel menar du?'] : [],
+        operations:
+          scenario === 'too many operations'
+            ? Array.from({ length: 25 }, () => operation)
+            : [
+                operation,
+                scenario === 'nested save'
+                  ? { name: 'save_draft', arguments: {} }
+                  : scenario === 'invalid later operation'
+                    ? {
+                        ...operation,
+                        arguments: {
+                          ...operation.arguments,
+                          value: { ...operation.arguments.value, name: '' },
+                        },
+                      }
+                    : operation,
+              ],
+      }),
+    ];
+  });
+  await setup(model.provider);
+  typeId = (await webProposal()).typeId;
+  const session = await start();
+  const view = await message(
+    session,
+    scenario === 'unapproved save' ? 'Lägg till cykeln.' : 'Lägg till cykeln och spara.',
+  );
+  expect(view.phase).toBe('error');
+  expect(view.receipt).toBeUndefined();
+  expect(view.review).toEqual(session.review);
+  expect(view.operations).toEqual([]);
+});
+
+test('restoring an unsaved deletion preserves unrelated proposals and never reports a new save', async () => {
+  const model = textModel(() => [
+    modelTool('submit_changes', {
+      version: 4,
+      contentVersion: 1,
+      completion: 'draft',
+      operations: [{ name: 'discard_proposal', arguments: { id: 'bike', kind: 'object' } }],
+    }),
+  ]);
+  await setup(model.provider);
+  await webProposal('Cykeln', 'bike');
+  const mapPath = path.replace('/text-assistant', '/map');
+  const saved = await browser.post(`${mapPath}/save`, {
+    headers: { origin: app.origin },
+    data: { version: 1, contentVersion: 1, operationId: 'bike-save' },
+  });
+  expect(saved.status()).toBe(200);
+  const removed = await browser.post(`${mapPath}/draft`, {
+    headers: { origin: app.origin },
+    data: { version: 2, contentVersion: 1, id: 'bike', baseRevision: 1, value: null },
+  });
+  expect(removed.status()).toBe(200);
+  await webProposal('Hjälmen', 'helmet');
+  const view = await message(await start(), 'Återställ cykeln som jag tog bort i utkastet.');
+  expect(view.result).toEqual({ kind: 'restored', message: 'Återställt i utkastet.' });
+  expect(view.receipt).toBeUndefined();
+  expect(view.review.changes).toMatchObject([{ id: 'helmet', after: { name: 'Hjälmen' } }]);
+  const map = await (await browser.get(mapPath)).json();
+  expect(map.objects).toMatchObject([{ id: 'bike', name: 'Cykeln' }]);
+});
+
 test.each([
   'Spara inte.',
   'Spara ej.',
@@ -278,6 +522,11 @@ test.each([
   'Om jag säger spara, vad gör du då?',
   'Skriv ”spara” i beskrivningen.',
   'Kan du förklara kommandot "spara"?',
+  'Jag vill inte att du sparar det direkt.',
+  'Kan du spara om jag säger ja?',
+  'Kan du spara bara cykeln?',
+  'Jag undrar om du kan spara.',
+  'Skriv ”jag vill att du sparar det direkt” i beskrivningen.',
   'Läs beskrivningen och berätta vad den betyder.',
 ])('a provider cannot save when the actual current instruction is %s', async (text) => {
   const model = textModel(() => [
@@ -548,6 +797,89 @@ test('a marking is confirmed only after the current browser acknowledges the act
     .toBe('ready');
   expect(view).toMatchObject({ reply: 'Markerat i kartan.', displayedSelection: 'web-object' });
 });
+
+test.each([false, true])(
+  'relationship selection requires a matching current display and rejects a changed draft: %s',
+  async (changeDraft) => {
+    let step = 0;
+    await setup(
+      textModel(() =>
+        step++ === 0
+          ? [modelTool('show_map_item', { kind: 'relationship', id: 'uses' })]
+          : [modelMessage('Visat.')],
+      ).provider,
+    );
+    await webProposal('Cykeln', 'bike');
+    await webProposal('Lo', 'person');
+    const mapPath = path.replace('/text-assistant', '/map');
+    const map = await (await browser.get(mapPath)).json();
+    const proposed = await browser.post(`${mapPath}/relationship`, {
+      headers: { origin: app.origin },
+      data: {
+        version: 2,
+        contentVersion: 1,
+        id: 'uses',
+        baseRevision: null,
+        value: {
+          typeId: map.relationshipTypes[0].id,
+          sourceId: 'person',
+          targetId: 'bike',
+          knowledge: 'known',
+        },
+      },
+    });
+    expect(proposed.status(), await proposed.text()).toBe(200);
+    const session = await start();
+    await browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: {
+        revision: 0,
+        ...displayedVersion(session),
+        requestId: 'relationship-selection',
+        text: 'Markera sambandet.',
+      },
+    });
+    let status = session;
+    await expect
+      .poll(async () => {
+        status = await (await browser.get(`${path}/${session.id}`)).json();
+        return status.selection?.id ?? status.error;
+      })
+      .toBe('uses');
+    expect(status.selection).toMatchObject({
+      kind: 'relationship',
+      id: 'uses',
+      draftVersion: 3,
+      contentVersion: 1,
+    });
+    expect(status.displayedItem).toBeUndefined();
+    if (changeDraft) await webProposal('Hjälmen', 'helmet');
+    const response = await browser.post(`${path}/${session.id}/selection`, {
+      headers: { origin: app.origin },
+      data: {
+        revision: 1,
+        kind: 'relationship',
+        id: 'uses',
+        draftVersion: 3,
+        contentVersion: 1,
+        displayed: true,
+      },
+    });
+    expect(response.status()).toBe(changeDraft ? 409 : 200);
+    await expect
+      .poll(async () => {
+        status = await (await browser.get(`${path}/${session.id}`)).json();
+        return status.phase;
+      })
+      .not.toBe('working');
+    if (changeDraft) expect(status.displayedItem).toBeUndefined();
+    else
+      expect(status).toMatchObject({
+        displayedItem: { kind: 'relationship', id: 'uses' },
+        reply: 'Markerat i kartan.',
+      });
+  },
+);
 
 test('usage emits one stable attempt before dispatch and final bounded metadata without message content', async () => {
   const attempts: TextModelAttempt[] = [];

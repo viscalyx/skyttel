@@ -70,15 +70,27 @@ export function voiceWork({
       return 'Sparresultatet är inte bekräftat. Tidigare sparförsök kontrolleras innan nytt arbete. Säg ”slutför samma sparförsök” om du vill slutföra exakt det väntande försöket.';
     if (view.error)
       return 'Uppdraget kunde inte slutföras. Utkastet finns kvar. Kontrollera det aktuella underlaget och ge ett nytt tydligt uppdrag; inget nytt sparande är bekräftat.';
-    const result = view.receipt
+    const count =
+      view.review.changes.length +
+      (view.review.relationships?.length ?? 0) +
+      (view.review.objectTypes?.length ?? 0) +
+      (view.review.relationshipTypes?.length ?? 0);
+    const fullResult = view.receipt
       ? 'Skyttels resultat (verifierat): Sparat. Hela utkastet finns i hushållets karta.'
       : view.displayedSelection
-        ? 'Skyttels resultat (verifierat): Objektet är markerat i den öppna kartan.'
-        : `Skyttels resultat: Inget nytt sparande eller markering är bekräftad. ${view.review.changes.length} objektförslag i utkastet.`;
+        ? `Skyttels resultat (verifierat): ${view.displayedItem?.kind === 'relationship' ? 'Sambandet' : 'Objektet'} är markerat i den öppna kartan.`
+        : view.result
+          ? `Skyttels resultat (verifierat): ${view.result.message}`
+          : `Utkast: ${count} ${count === 1 ? 'osparat förslag' : 'osparade förslag'}.`;
+    const resultPoints = Array.from(fullResult).slice(0, 480);
+    const resultBudget = view.modelReply ? 210 : 480;
+    while (Buffer.byteLength(resultPoints.join(''), 'utf8') > resultBudget - 3) resultPoints.pop();
+    const result =
+      resultPoints.join('') + (resultPoints.length < Array.from(fullResult).length ? '…' : '');
     if (!view.modelReply) return result;
     // Keep the source boundary and quoted conversation intact within Live's
     // byte limit. Provider prose is data, never part of the verified result.
-    const prefix = `${result}\nModellens obekräftade samtalstext (inte ett resultatbesked): `;
+    const prefix = `${result}\nSamtal (obekräftat): `;
     const points = Array.from(view.modelReply).slice(0, 480);
     while (Buffer.byteLength(prefix + JSON.stringify(points.join('')), 'utf8') > 480) points.pop();
     return prefix + JSON.stringify(points.join(''));

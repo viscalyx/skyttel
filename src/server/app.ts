@@ -25,6 +25,7 @@ import { mapRoutes } from './map-routes.js';
 import { profileImageRoutes } from './profile-image-routes.js';
 import { imageUploadLimit } from './profile-images.js';
 import { textAssistantRoutes } from './text-assistant.js';
+import type { LocalDispatch } from './text-assistant-mcp.js';
 import type { TextModelUsage } from './text-assistant-model.js';
 import { voiceAssistantRoutes } from './voice-assistant.js';
 
@@ -38,6 +39,7 @@ export function createApp({
   liveFetch,
   liveSideband,
   liveUsage,
+  assistantDispatch,
 }: {
   config: Config;
   database: Database.Database;
@@ -48,6 +50,7 @@ export function createApp({
   liveFetch?: typeof fetch;
   liveSideband?: LiveSidebandFactory;
   liveUsage?: LiveUsage;
+  assistantDispatch?: (request: Request, dispatch: LocalDispatch) => Response | Promise<Response>;
 }) {
   const app = new Hono();
   const costs = installationCosts(database);
@@ -212,7 +215,10 @@ export function createApp({
     database,
     auth,
     config,
-    dispatch: (request) => app.fetch(request),
+    dispatch: (request) =>
+      assistantDispatch
+        ? assistantDispatch(request, (next) => app.fetch(next))
+        : app.fetch(request),
     modelFetch,
     modelUsage: (attempt) => {
       costs.model(attempt);

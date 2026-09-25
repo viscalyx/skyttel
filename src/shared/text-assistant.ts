@@ -27,7 +27,10 @@ export interface TextAssistantView {
   error?: string;
   receipt?: SaveReceipt;
   operations: SaveOperation[];
-  selection?: { objectId: string; revision: number };
+  selection?: (
+    | { objectId: string; kind?: undefined; id?: undefined }
+    | (MapSelection & { objectId?: string })
+  ) & { revision: number; draftVersion?: number; contentVersion?: number };
   displayedSelection?: string;
   displayedItem?: MapSelection;
 }

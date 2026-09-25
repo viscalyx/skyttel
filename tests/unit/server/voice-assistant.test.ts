@@ -241,13 +241,9 @@ test('voice commentary separates unverified paraphrased claims and useful questi
   expect(assistant.displayedSelection).toBeUndefined();
   const sent = voice.live.sent.at(-1)?.event as { content: string };
   const [result, conversation] = sent.content.split('\n');
-  expect(result).toBe(
-    'Skyttels resultat: Inget nytt sparande eller markering är bekräftad. 1 objektförslag i utkastet.',
-  );
+  expect(result).toBe('Utkast: 1 osparat förslag.');
   expect(result).not.toContain('lagrade');
-  expect(conversation).toBe(
-    `Modellens obekräftade samtalstext (inte ett resultatbesked): ${JSON.stringify(modelReply)}`,
-  );
+  expect(conversation).toBe(`Samtal (obekräftat): ${JSON.stringify(modelReply)}`);
   expect(Buffer.byteLength(sent.content, 'utf8')).toBeLessThanOrEqual(480);
   const after = await (await browser.get(mapPath)).json();
   expect(after.objects).toEqual(before.objects);
@@ -268,16 +264,94 @@ test('long quoted model conversation cannot break the source boundary or Live co
   const sent = voice.live.sent.at(-1)?.event as { content: string };
   const lines = sent.content.split('\n');
   expect(lines).toHaveLength(2);
-  expect(lines[0]).toBe(
-    'Skyttels resultat: Inget nytt sparande eller markering är bekräftad. 0 objektförslag i utkastet.',
-  );
-  const label = 'Modellens obekräftade samtalstext (inte ett resultatbesked): ';
+  expect(lines[0]).toBe('Utkast: 0 osparade förslag.');
+  const label = 'Samtal (obekräftat): ';
   expect(lines[1].startsWith(label)).toBe(true);
   const excerpt = JSON.parse(lines[1].slice(label.length));
   expect(excerpt).toContain('Vem betalar?');
   expect(modelReply.startsWith(excerpt)).toBe(true);
   expect(Buffer.byteLength(sent.content, 'utf8')).toBeLessThanOrEqual(480);
   expect((await voice.poll()).assistant.modelReply).toBe(modelReply);
+});
+
+test('combined type proposals speak the verified draft result and retain the useful directed question', async () => {
+  const question =
+    'Vilken person använder Familjens musik: Lo eller Alex? Om båda använder tjänsten kan jag lägga till båda sambanden, men jag behöver veta om det gäller deras egna tjänstekonton eller samma gemensamma tjänstekonto.';
+  const model = textModel(() => [
+    modelTool('submit_changes', {
+      version: 0,
+      contentVersion: 1,
+      completion: 'draft',
+      questions: [question],
+      operations: [
+        {
+          name: 'propose_relationship_type',
+          arguments: {
+            id: 'shares',
+            baseRevision: null,
+            value: {
+              name: 'Delar',
+              description: '',
+              forwardLabel: 'delar med',
+              reverseLabel: 'delar med',
+            },
+          },
+        },
+      ],
+    }),
+  ]);
+  const voice = await setupVoice(model.provider);
+  voice.transcript('Lägg till sambandstypen Delar.');
+  voice.delegate();
+  await expect
+    .poll(
+      () =>
+        voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
+    )
+    .toBe(1);
+  const status = await voice.poll();
+  expect(status.assistant.result).toEqual({ kind: 'draft', message: 'Utkastet är uppdaterat.' });
+  const sent = voice.live.sent.at(-1)?.event as { content: string };
+  const content = sent.content;
+  expect(content).toContain('Skyttels resultat (verifierat): Utkastet är uppdaterat.');
+  expect(content).toContain(JSON.stringify(question));
+  expect(Buffer.byteLength(content, 'utf8')).toBeLessThanOrEqual(480);
+  expect(model.requests).toHaveLength(1);
+});
+
+test('large verified draft details finish within the Live limit and remain available in the text result', async () => {
+  const model = textModel(() => [modelTool('report_result', { source: 'draft' })]);
+  const voice = await setupVoice(model.provider);
+  const mapPath = voice.path.replace('/text-assistant', '/map');
+  const map = await (await browser.get(mapPath)).json();
+  for (let i = 0; i < 4; i++) {
+    const response = await browser.post(`${mapPath}/draft`, {
+      headers: { origin: app.origin },
+      data: {
+        version: i,
+        contentVersion: 1,
+        id: `bike-${i}`,
+        baseRevision: null,
+        value: { typeId: map.types[0].id, name: `${i} ${'Cykel '.repeat(30)}`, description: '' },
+      },
+    });
+    expect(response.status()).toBe(200);
+  }
+  await voice.poll();
+  voice.transcript('Beskriv hela utkastet.');
+  voice.delegate();
+  await expect
+    .poll(
+      () =>
+        voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
+    )
+    .toBe(1);
+  const status = await voice.poll();
+  expect(status.assistant.result.message).toContain('3 Cykel');
+  const sent = voice.live.sent.at(-1)?.event as { content: string };
+  const content = sent.content;
+  expect(content).toContain('Lägg till 0 Cykel');
+  expect(Buffer.byteLength(content, 'utf8')).toBeLessThanOrEqual(480);
 });
 
 test.each([

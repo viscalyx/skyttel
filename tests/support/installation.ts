@@ -41,6 +41,7 @@ export async function createInstallation(
     liveSideband?: LiveSidebandFactory;
     liveUsage?: LiveUsage;
     browserProviderScript?: string;
+    assistantDispatch?: Parameters<typeof createApp>[0]['assistantDispatch'];
   } = {},
 ) {
   const directory = await mkdtemp(join(tmpdir(), 'skyttel-test-'));
@@ -124,6 +125,7 @@ export async function createInstallation(
       liveFetch: databaseOptions.liveFetch,
       liveSideband: databaseOptions.liveSideband,
       liveUsage: databaseOptions.liveUsage,
+      assistantDispatch: databaseOptions.assistantDispatch,
     });
     closeApp = app.close;
     handle = async (request) => {

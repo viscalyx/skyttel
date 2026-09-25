@@ -12,7 +12,7 @@ import { MapError } from './map.js';
 export type LocalDispatch = (request: Request) => Response | Promise<Response>;
 
 // A normal OAuth client using the actual HTTP/MCP entrance. SQLite is used only
-// to revoke this client's authentication material, never to read map content.
+// for authentication and content-generation guards, never to read map content.
 export async function connectTextAssistant({
   database,
   origin,
@@ -146,6 +146,16 @@ export async function connectTextAssistant({
       tools: catalog.tools,
       instructions: client.getInstructions() ?? '',
       expiresAt: Date.now() + Math.min(tokens.expires_in, 1800) * 1000,
+      checkAccess() {
+        authorize();
+        const grant = database
+          .prepare(
+            'SELECT household.contentVersion FROM assistant_connection JOIN household ON household.id = assistant_connection.householdId WHERE clientId = ?',
+          )
+          .get(clientId) as { contentVersion: number } | undefined;
+        if (closed || !grant) throw new MapError('forbidden', 403);
+        authorize(grant.contentVersion);
+      },
       async call(name: string, args: Record<string, unknown>, guard?: AssistantTaskGuard) {
         if (closed) throw new MapError('assistant_session_expired', 409);
         return assistantTaskAccess.run(
