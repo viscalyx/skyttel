@@ -27,7 +27,7 @@ controls. The [authentication guide](authentication.md) explains where each
 identity setting comes from. It uses production sign-in and the production
 database to identify the first administrator.
 
-For a local developer installation, copy the blank example and edit only
+For a local container installation, copy the blank example and edit only
 the local file. Keep an existing `.env.local` if one is already present:
 
 ```sh
@@ -52,7 +52,7 @@ technical logs.
 | `BETTER_AUTH_SECRET` | A randomly generated secret of at least 32 characters. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Credentials for the installation's Google web application. |
 | `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET` | Credentials for the installation's Microsoft web application. |
-| `OPENAI_API_KEY` | Optional server-only project key for Skyttel's text assistant. Without it, manual map work remains available. |
+| `OPENAI_API_KEY` | Optional server-only project key for Skyttel's text and voice assistants. Without it, manual map work remains available. |
 | `PORT` | Optional; defaults to `3000`. Compose uses port `3000`. |
 | `HOST` | Optional; defaults to `0.0.0.0`. |
 <!-- markdownlint-enable MD013 -->
@@ -60,22 +60,54 @@ technical logs.
 Both providers must be configured. Invalid or incomplete configuration stops
 startup before the application accepts traffic.
 
-To enable the approved text assistant, follow the
-[provider setup](../development/text-assistant.md#enable-real-provider-access).
-Keep its optional key out of browser build variables and technical logs.
+## Enable the built-in assistants
+
+Create a project API key in the
+[OpenAI API dashboard](https://platform.openai.com/api-keys). Keep project
+access and billing under the operator's control. Put `OPENAI_API_KEY` in the
+server's private environment and restart with the same persistent disk and
+authentication secret. Text and voice use the same key. Never put it in a
+`VITE_` variable, browser setting, image layer, screenshot or test report.
+
+Voice needs the production HTTPS origin for microphone access. Permit
+outbound HTTPS and WebSocket connections to OpenAI from the server, and
+WebRTC media connectivity from the user's browser. Each user must approve
+the separate AI and map-work choices and explicitly start text or voice.
+Starting voice requests microphone access; browser autoplay restrictions
+may require **Spela upp ljud**.
+
+Before opening access, check the real providers with invented household
+information using the [text](../manual-tests/text-assistant.md) and
+[voice](../manual-tests/voice-assistant.md) acceptance cases. Automated
+provider substitutes do not establish real model or device behavior.
+
+## Recover assistant access
+
+A missing key leaves normal map editing and external MCP clients available.
+An invalid key, quota problem or provider outage reports an assistant error.
+Correct or rotate the key in the server's private settings and restart with
+the same disk and authentication secret. Keep provider error bodies,
+requests and credentials out of shared diagnostics.
+
+A denied microphone, blocked audio or broken voice connection leaves text
+and forms usable. Check browser permissions, secure origin and network
+access, then start a fresh voice connection. Voice does not reconnect
+automatically. After an application restart, start a new assistant session
+and complete fresh consent.
+
+Stopping a session or losing a connection does not undo a completed save.
+Check the durable save result before trying again. For an unresolved save,
+use **Slutför samma sparförsök** to retry the pending operation. Keep the
+existing database; do not reset it to clear an uncertain result.
 
 ## Register identity providers
 
-Follow the guide for the installation you are configuring:
+Follow [production authentication](authentication.md) for provider accounts,
+registration, publishing choices, credentials, and checks on the deployed
+service. On Render, follow the [deployment sequence](render.md).
 
-- [Production authentication](authentication.md) covers provider accounts,
-  registration, publishing choices, credentials, and checks on the deployed
-  service. On Render, follow the [deployment sequence](render.md).
-- [Local authentication](../development/local-authentication.md) covers
-  developer registration, localhost callbacks, and local verification.
-
-Both use a Google OAuth web application and a Microsoft Entra web
-application. Register the exact callbacks for the installation's origin:
+Use a Google OAuth web application and a Microsoft Entra web application.
+Register the exact callbacks for the installation's origin:
 
 ```text
 https://skyttel.example.com/api/auth/callback/google
@@ -97,8 +129,6 @@ Before a production credential expires, follow
 [provider secret renewal](authentication.md#renew-provider-secrets).
 Create and verify a replacement in the same registration before removing the
 old credential, and reload the application's environment after changing it.
-The developer guide has a separate
-[local Microsoft renewal procedure](../development/local-authentication.md#renew-the-microsoft-secret-before-it-expires).
 
 ## Designate the first administrator
 
@@ -118,9 +148,6 @@ authenticated user rather than assuming that the first account is correct.
 Replace the placeholder and deploy the changed environment before creating
 the household. No separate local installation is needed for production setup.
 
-For developer installations, follow the
-[local first-household procedure](../development/local-authentication.md#continue-with-the-first-household).
-
 Only the configured provider and identifier can create the installation's
 first household. Once the household exists, current membership controls
 access. Changing the first-administrator configuration does not transfer an
@@ -130,7 +157,7 @@ Provider accounts attach to a stable Skyttel user. Matching email addresses
 do not link accounts automatically. Users can explicitly link Google and
 Microsoft from **Inloggningssätt** by verifying both identities; either
 linked provider then reaches the same user and household. See the
-[login-linking steps](../users/access.md#link-google-and-microsoft).
+[login-linking steps](../user-guide/access.md#koppla-google-och-microsoft).
 
 ## Build, start, and restart
 
@@ -159,7 +186,7 @@ container restarts and replacements. `docker compose down` keeps that volume;
 adding `--volumes` deletes it and its household data.
 
 Before updating, read the [operator upgrade notes](operator-upgrade-notes.md),
-download a [complete household export](../users/household-export.md), and
+download a [complete household export](../user-guide/household-export.md), and
 retain the matching application image. Build the
 new image, keep the same volume and secret, and run `docker compose up -d`
 again. Do not run old and new application versions against the same SQLite

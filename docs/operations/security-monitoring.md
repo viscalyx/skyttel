@@ -140,7 +140,7 @@ for package findings, exploit details, or installation-specific information.
 Do not put household data, credentials, or raw scanner reports in the public
 status issue. Reproduce the exact digest scan in a trusted environment when
 private investigation needs details. Keep raw output in private storage.
-Use the [security policy](../development/security-checks.md) for assessment
+Use the [security policy](security-checks.md) for assessment
 and time-limited exceptions. Do not extend exceptions automatically.
 
 The maintainer fixes source or dependencies in a reviewed pull request.

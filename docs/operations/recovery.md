@@ -45,8 +45,8 @@ lost data or reverse a database migration.
    Keep it empty until import. Do not invite ordinary use yet.
 
 For a local synthetic exercise, use the
-[two-installation setup](../development/local-recovery.md). Local checks do
-not establish hosted HTTPS, disk-service or real-device behavior.
+[two-installation setup](../manual-tests/setup/local-recovery.md). Local checks
+do not establish hosted HTTPS, disk-service or real-device behavior.
 
 ## Pause changes and take the final export
 
@@ -62,7 +62,7 @@ drafts; both are included. Unsent form text is not exported.
 1. Stop active assistant work and close other editing sessions. No user may
    make further changes on the source after the final export begins.
 2. As a source administrator, follow
-   [full household export](../users/household-export.md). Download the
+   [full household export](../user-guide/household-export.md). Download the
    complete ZIP to private storage and keep its original name. If any new
    write occurs during this interval, repeat the final export.
 3. Stop the source application after the download finishes. Retain its disk
@@ -78,7 +78,7 @@ during the move.
 ## Import the complete archive
 
 As the destination administrator, follow
-[household import](../users/household-import.md): open **Administrera tillgång**,
+[household import](../user-guide/household-import.md): open **Administrera tillgång**,
 choose **Återimportera hushållet**, select the ZIP and choose
 **Kontrollera importfil**. Read the counts and replacement warning, then
 confirm **Ersätt hushållets innehåll**. Import replaces the destination
@@ -95,7 +95,7 @@ After completion, choose **Läs in det återställda hushållet**.
 ## Establish current access and private ownership
 
 Import does not authorize the historical users. Use the normal
-[membership controls](../users/access.md) to invite current users and assign
+[membership controls](../user-guide/access.md) to invite current users and assign
 administrator roles. Each intended owner must sign in at the destination
 with their own Google or Microsoft account and accept access first.
 
@@ -133,7 +133,7 @@ displaced draft and view remain available for that reassignment.
 
 This assignment does not link Google and Microsoft logins. A person who
 wants both current logins linked must complete
-[proof of both identities](../users/access.md#link-google-and-microsoft).
+[proof of both identities](../user-guide/access.md#koppla-google-och-microsoft).
 Historical account access is not required to assign content, and the
 assignment cannot bypass current membership or provider authentication.
 Reconnect assistants through fresh consent at the destination.

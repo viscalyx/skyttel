@@ -215,11 +215,11 @@ explain the settings and permission requirements.
    shown by GitHub's verification command is not part of this value.
 
 1. Follow the
-   [release verification procedure](../development/container-releases.md#review-a-published-release)
+   [release verification procedure](container-releases.md#review-a-published-release)
    before using the image. The registry check reports
    `✓ Verification succeeded!` and lists the matching attestation.
 1. After verification succeeds, run the separate command under
-   [Print deployment values](../development/container-releases.md#print-deployment-values).
+   [Print deployment values](container-releases.md#print-deployment-values).
    That command prints **Image URL**, **Application version**, and
    **Source commit**. Copy the complete value after `Image URL:` for step 3.
    If you cannot run the command-line checks, ask a maintainer to verify

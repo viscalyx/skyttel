@@ -33,7 +33,7 @@ not receive installation cost access.
 Choose **Månad (UTC)** and read **Prisunderlag**. Select
 **Ändra månadens antaganden**, enter the actual assumptions for this
 installation, and choose **Spara månadens antaganden**. See the
-[cost view guide](../users/costs.md) for the screen controls.
+[cost view guide](../user-guide/costs.md) for the screen controls.
 
 The initial assumptions are examples, not detected deployment settings:
 

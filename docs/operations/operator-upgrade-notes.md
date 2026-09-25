@@ -32,7 +32,7 @@ The optional voice assistant uses the existing private AI provider setup.
 Keep a secure browser origin and permit the provider's server connections
 and browser media traffic. Users must explicitly start microphone access;
 blocked audio requires a browser playback action. See the
-[voice setup and recovery guide](../development/voice-assistant.md).
+[voice setup and recovery guide](installation.md#enable-the-built-in-assistants).
 
 A broken voice connection stops associated work. It does not undo a completed
 save. Check durable save receipts before retrying uncertain work. Final voice
@@ -66,7 +66,7 @@ Each user makes separate AI and map-work choices. The assistant uses the
 same current household access and map rules as external MCP clients.
 Stopping a session does not reverse a committed save: check its durable
 result before trying again. See the
-[setup and recovery guidance](../development/text-assistant.md).
+[setup and recovery guidance](installation.md#recover-assistant-access).
 Real-model checks remain separate from deterministic provider substitutes.
 
 ### Permanent household erasure
