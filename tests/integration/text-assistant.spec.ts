@@ -470,3 +470,109 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
     await app.close();
   }
 });
+
+test('TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto', async ({ page }) => {
+  let step = 0;
+  const model = textModel((body) => {
+    const current = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    ).draft;
+    const turn = step++;
+    return [
+      turn === 1
+        ? modelTool('save_draft', {
+            version: current.version,
+            contentVersion: current.contentVersion,
+            operationId: 'details-save',
+          })
+        : modelTool('report_result', { source: turn === 0 ? 'draft' : 'latest_save' }),
+    ];
+  });
+  const app = await createInstallation(undefined, { modelFetch: model.provider });
+  try {
+    const { path } = await arrange(page, app);
+    const read = async () => (await page.request.get(path)).json();
+    const post = async (route: string, data: object) => {
+      const state = await read();
+      const response = await page.request.post(`${path}/${route}`, {
+        headers: { origin: app.origin },
+        data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    };
+    const state = await read();
+    const usageType = state.relationshipTypes.find(
+      (type: { name: string }) => type.name === 'Använder',
+    );
+    const paymentType = state.relationshipTypes.find(
+      (type: { name: string }) => type.name === 'Betalar',
+    );
+    const service = {
+      typeId: state.types.find((type: { name: string }) => type.name === 'Tjänst').id,
+      name: 'Tonrum',
+      description: '',
+    };
+    const relationship = { sourceId: 'lo', targetId: 'tonrum', knowledge: 'known' };
+    await post('draft', {
+      id: 'tonrum',
+      baseRevision: null,
+      value: { ...service, lifecycle: 'active' },
+    });
+    await post('relationship', {
+      id: 'lo-tonrum',
+      baseRevision: null,
+      value: { ...relationship, typeId: usageType.id },
+    });
+    await post('save', { operationId: 'details-baseline' });
+    await post('draft', {
+      id: 'tonrum',
+      baseRevision: 1,
+      value: { ...service, lifecycle: 'ended' },
+    });
+    await post('relationship', {
+      id: 'lo-tonrum',
+      baseRevision: 1,
+      value: { ...relationship, typeId: paymentType.id },
+    });
+    await page.reload();
+    await consent(page);
+    const listMode = page.getByRole('button', { name: 'Lista och detaljer', exact: true });
+    await listMode.click();
+    const panel = assistant(page);
+    const report = panel
+      .getByRole('heading', { name: 'Besked från Skyttel', exact: true })
+      .locator('..');
+    const beforeReview = await read();
+
+    await send(page, 'Läs upp hela utkastet.');
+    await expect(report).toContainText('Utkast:');
+    await expect(report).toContainText('Tonrum (Gäller: aktuellt → upphört)');
+    await expect(report).toContainText('Lo Exempel Använder Tonrum → Lo Exempel Betalar Tonrum');
+    await expect(listMode).toHaveAttribute('aria-pressed', 'true');
+    expect(await read()).toEqual(beforeReview);
+
+    await send(page, 'Spara hela utkastet nu.');
+    await expect(panel.getByRole('status')).toHaveText(
+      'Sparat. Hela utkastet finns i hushållets karta.',
+    );
+    const saved = await read();
+    expect(saved.draft.changes).toEqual([]);
+    expect(saved.draft.relationships ?? []).toEqual([]);
+    expect(saved.objects.find((object: { id: string }) => object.id === 'tonrum').lifecycle).toBe(
+      'ended',
+    );
+    expect(saved.relationships).toMatchObject([{ typeId: paymentType.id }]);
+    const operations = await (await page.request.get(`${path}/operations`)).json();
+
+    await send(page, 'Vad sparades senast?');
+    await expect(report).toContainText('Sparandet:');
+    await expect(report).toContainText('Tonrum (Gäller: aktuellt → upphört)');
+    await expect(report).toContainText('Lo Exempel Använder Tonrum → Lo Exempel Betalar Tonrum');
+    await expect(listMode).toHaveAttribute('aria-pressed', 'true');
+    expect(await read()).toEqual(saved);
+    expect(await (await page.request.get(`${path}/operations`)).json()).toEqual(operations);
+    expect(model.requests).toHaveLength(3);
+  } finally {
+    await app.close();
+  }
+});

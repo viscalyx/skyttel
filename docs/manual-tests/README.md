@@ -37,7 +37,8 @@ betyder inte att dess manuella prov är genomfört.
   samtidigt synliga objekt och samband i karta och detaljpanel även på
   telefon, med skyddad formulärtext samt obekräftad samtalstext
   skild från resultat samt synliga samband, typer och före-/eftervärden
-  i hela ändringslistan. Kontrollerade lokala
+  i hela ändringslistan och begärda samtalsdetaljer från utkast och kvitto.
+  Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
 
 - [Permanent radering](household-erasure.md): uttrycklig granskning och

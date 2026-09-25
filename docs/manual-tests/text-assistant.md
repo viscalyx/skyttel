@@ -1,7 +1,8 @@
 # Manuella testfall för Skyttels textassistent
 
 Fallen provar samlat utkast, rättelse och sparande, sena svar, avbrott,
-kvittoåterhämtning och faktisk markering. Anteckna commit, webbläsare,
+kvittoåterhämtning, begärda samtalsdetaljer och faktisk markering.
+Anteckna commit, webbläsare,
 modell eller kontrollerad ersättare samt godkänt eller underkänt resultat.
 All mänsklig körning görs efter specifikationens implementation i
 [#97](https://github.com/viscalyx/skyttel/issues/97).
@@ -32,7 +33,7 @@ objektet eller sambandet öppnar inte formuläret.
    Välj **Lägg i mitt utkast** och lämna förslaget osparat.
 3. Starta textassistenten med båda uttryckliga valen. Kontrollera först
    att enbart AI-valet inte räcker för att aktivera startknappen.
-4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-08.
+4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-09.
    Behåll samma databas under ett omstartsprov. Avsluta med `quit` och
    stäng provfönstret enligt startguidens städningssteg.
 
@@ -383,3 +384,67 @@ före bekräftelsen”, både dator- och telefonvarianten.
   eller hushållets innehåll ändras.
 - Oskickad formulärtext förhindrar ett nytt urval. Ingen ny bekräftad
   markering påstås, och formulärets uppgifter finns kvar.
+
+### TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto
+
+**Syfte:** Granska verkliga före- och eftervärden i samtalet och få samma
+detaljer från kvittot efter ett kort sparbesked.
+
+**Användare:** Alex i den kontrollerade installationen.
+
+**Förutsättningar:** Lo-förslaget finns. Terminalen håller modellsvar.
+Alla uppgifter är påhittade.
+
+**Integrationstest:**
+[text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
+testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto”.
+
+**Steg:**
+
+1. Skapa **Tonrum**, typ **Tjänst**, genom formuläret. Välj **Gäller
+   fortfarande** under **Objektets status**. Lägg objektet och sambandet
+   **Lo Exempel → Använder → Tonrum** i utkastet. Spara hela utkastet.
+2. Redigera sambandet och byt typen till **Betalar**. Lägg rättelsen i
+   utkastet. Redigera sedan Tonrum, välj statusen **Upphört** och lägg
+   även den rättelsen i utkastet. Lämna båda osparade.
+3. Välj **Lista och detaljer** och skicka **Läs upp hela utkastet.** i
+   assistenten. Ersätt `NUMMER` med det aktuella `held`-numret i terminalen:
+
+   ```text
+   tool NUMMER report_result {"source":"draft"}
+   ```
+
+4. Under **Besked från Skyttel**, kräv **Utkast:**, **Gäller: aktuellt →
+   upphört** för Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel
+   Betalar Tonrum**. Kontrollera att båda rättelserna fortfarande ligger
+   i utkastet och att **Lista och detaljer** förblir valt.
+5. Skicka **Spara hela utkastet nu.** Läs `version` och `contentVersion`
+   från det nya `held.draft`. Ersätt `NUMMER`, `VERSION` och `CONTENT`:
+
+   ```text
+   tool NUMMER save_draft {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-details-save"}
+   ```
+
+6. Kräv det korta beskedet **Sparat. Hela utkastet finns i hushållets
+   karta.** och ett tomt utkast. Öppna **Visa kvittot** och kontrollera
+   att Tonrums status och sambandets nya typ ingår i sparandet.
+7. Skicka **Vad sparades senast?** Använd det nya `held`-numret:
+
+   ```text
+   tool NUMMER report_result {"source":"latest_save"}
+   ```
+
+8. Kräv **Sparandet:** och samma tidigare och nya status respektive
+   sambandstyp under **Besked från Skyttel**. Kontrollera att utkastet
+   förblir tomt och att inget nytt sparförsök tillkommer under **Tidigare
+   sparförsök**. **Lista och detaljer** ska fortfarande vara valt.
+
+**Förväntat resultat:**
+
+- Både det osparade utkastet och det senaste kvittot beskriver den
+  verkliga ändringen från aktuellt till upphört och från Använder till
+  Betalar. Förevärdet får inte beskrivas med den nya sambandstypen.
+- Begärda detaljer visas som besked från Skyttel. Granskningen kräver
+  ingen kartmarkering och ändrar eller sparar inga uppgifter.
+- Själva sparandet bekräftas kort. Detaljer ges när de efterfrågas och
+  bygger då på det beständiga kvittot.
