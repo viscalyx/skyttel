@@ -66,6 +66,16 @@ Filinnehållet hör varken hemma i Git, avbildningen eller offentliga loggar.
 Om du själv väljer ett annat lagringssätt behöver du även ordna dess
 beständighet. Personliga val skrivs inte över vid ombyggnad.
 
+Samma bevarande gäller personliga modell-, godkännande-, plugin- och
+skillinställningar. Skapandet uppdaterar den reserverade behörighetsprofilen
+`permissions.skyttel-development` och tilliten till `/workspace`.
+Standardprofil och lagringssätt för inloggning fylls bara i om de saknas.
+Projektets `.codex/config.toml` väljer profil, `approval_policy = "never"`
+och projektets begränsningar för plugins och skills när du arbetar i Skyttel.
+De personliga värdena ligger kvar för andra projekt. Använd ett eget namn
+för personliga behörighetsprofiler; se
+[konfigurationens lager](codex-permissions.md).
+
 Aktivera vid behov inloggning med enhetskod i kontots säkerhetsinställningar
 eller genom arbetsytans administratör. Kör sedan i containerterminalen:
 
@@ -134,6 +144,63 @@ ersätts av egen inloggning eller den frivilliga kopieringen ovan.
 filsystem behöver sparas före denna första övergång. Vid följande ombyggnader
 bevaras hela Codex-katalogen med undantag för dess separata monteringar,
 som har egen lagring enligt [volymtabellen](devcontainer.md#state-and-rebuilds).
+
+## Kontrollera personliga inställningar utan ombyggnad
+
+Kontrollera sammanslagningen med en tillfällig syntetisk konfiguration före
+ombyggnaden. Följande kommando ändrar ingen riktig användarkonfiguration,
+startar ingen Codex-session och kräver ingen inloggning. Det kontrollerar
+även att projektets avsiktliga begränsningar finns kvar.
+
+<!-- markdownlint-disable MD013 -->
+```sh
+python3 - <<'PY'
+from pathlib import Path
+import runpy
+import tempfile
+import tomllib
+
+merge = runpy.run_path('.devcontainer/merge-codex-config.py')
+managed = Path('.devcontainer/codex-config.toml').read_text()
+personal = '''approval_policy = "on-request"
+default_permissions = ":read-only"
+model = "personal-sentinel"
+[plugins.plugin-management]
+enabled = true
+[[skills.config]]
+path = "/home/vscode/.codex/skills/.system/skill-creator/SKILL.md"
+enabled = true
+'''
+with tempfile.TemporaryDirectory(prefix='skyttel-config-') as directory:
+    path = Path(directory) / 'config.toml'
+    path.write_text(personal)
+    for _ in range(2):
+        merged = merge['merge_config'](path.read_text(), managed)
+        merge['write_atomic'](path, merged)
+    actual = tomllib.loads(path.read_text())
+    expected = tomllib.loads(personal)
+    for key, value in expected.items():
+        assert actual[key] == value, key
+    assert actual['cli_auth_credentials_store'] == 'file'
+    assert actual['projects']['/workspace']['trust_level'] == 'trusted'
+    assert actual['permissions'] == tomllib.loads(managed)['permissions']
+    assert merge['merge_config'](path.read_text(), managed) == path.read_text()
+project = tomllib.loads(Path('.codex/config.toml').read_text())
+assert project['approval_policy'] == 'never'
+assert project['default_permissions'] == 'skyttel-development'
+assert project['plugins']['plugin-management']['enabled'] is False
+assert all(entry['enabled'] is False for entry in project['skills']['config'])
+assert project['permissions']['skyttel-development']['extends'] == ':workspace'
+print('Personliga val bevarade; projektets policy kvar.')
+PY
+```
+<!-- markdownlint-enable MD013 -->
+
+Förvänta bevarade personliga val efter båda sammanslagningarna. Provet
+kontrollerar filinnehåll; verklig inläsning i CLI och VS Code samt ombyggnad
+följer det manuella provet nedan. Inställningar som redan saknas i din
+personliga fil kan inte återskapas av sammanslagningen; återställ dem från
+egen kopia eller välj dem igen i användarkonfigurationen.
 
 ## Manuellt prov av omstart och ombyggnad
 

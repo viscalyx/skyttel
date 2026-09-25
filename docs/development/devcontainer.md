@@ -192,8 +192,12 @@ host bind mount.
 Restarting or rebuilding the same Compose project retains its volumes.
 Rebuilding runs `npm run db:migrate`, retaining application content, sessions,
 drafts, and receipts. Only an explicit `npm run db:setup` resets the data.
-Personal Codex settings survive; creation merges the managed permissions
-while preserving personal settings outside those managed sections.
+Personal Codex settings survive, including approval, model, plugin, and
+skill choices stored in the user configuration. Creation refreshes only
+the reserved `permissions.skyttel-development` profile and `/workspace`
+trust, and seeds missing permission and credential-store defaults.
+Skyttel's trusted project configuration selects that profile and applies
+its approval, plugin, and skill policy without replacing personal defaults.
 Before the first rebuild that adds `codex-home`, preserve any configuration
 from the disposable container filesystem using the
 [transition steps](devcontainer-persistence.md#bevara-befintliga-inställningar-vid-första-övergången).
@@ -259,10 +263,13 @@ uses Docker copy and exec to work in both environments.
 
 ## Codex permissions and remaining verification
 
-Creation configures Codex permissions in `~/.codex/config.toml`.
-The `skyttel-development` profile allows workspace writes and networking
-to `localhost`, `127.0.0.1`, and `::1`, with approval policy `never`.
-Repository settings also apply; see [Codex command permissions](codex-permissions.md).
+Creation prepares the named Codex permission profile and workspace trust in
+`~/.codex/config.toml`. The `skyttel-development` profile allows workspace
+writes and networking to `localhost`, `127.0.0.1`, and `::1`.
+The repository's `.codex/config.toml` selects that profile and approval policy
+`never`, together with its plugin and skill restrictions. User settings for
+other projects remain stored; see
+[Codex command permissions](codex-permissions.md).
 
 Use the normal profile first. It includes the host Docker socket, which lets
 commands manage host containers; use it for trusted development work.

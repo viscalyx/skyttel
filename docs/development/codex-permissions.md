@@ -3,6 +3,21 @@
 The repository configures Codex in `.codex/config.toml`. Terminal command
 approvals live alongside that file in `.codex/rules/`.
 
+The trusted project configuration selects `approval_policy = "never"` and
+the `skyttel-development` permission profile, and disables the listed plugins
+and skills for Skyttel. These project settings override personal defaults
+without rewriting `~/.codex/config.toml`. The CLI and VS Code extension use
+the same configuration layers; see
+[OpenAI's configuration precedence](https://learn.chatgpt.com/docs/config-file/config-basic#configuration-precedence).
+
+Devcontainer creation refreshes the environment-specific
+`permissions.skyttel-development` definition and the trust entry for
+`/workspace`. It seeds the default permission profile and file credential
+store only when those user settings are absent. Personal model, approval,
+plugin, skill, and other permission-profile choices remain stored, including
+choices inside legacy managed blocks. Keep personal permission profiles under
+their own names because `skyttel-development` is reserved for this environment.
+
 The `github.rules` file allows `gh` with any subcommand and arguments to run
 outside the sandbox without a command approval prompt. This includes commands
 that modify or delete GitHub resources. The rule does not restrict the target
