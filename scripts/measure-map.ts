@@ -90,6 +90,7 @@ try {
       ).toHaveCount(1);
       const searchMs = performance.now() - searchStarted;
       await found.click();
+      await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
       await page
         .getByLabel('Beskrivning', { exact: true })
         .fill(`Påhittad rättelse ${run} ${cache}`);

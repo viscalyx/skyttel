@@ -142,10 +142,13 @@ async function message(session: TextAssistantView, text: string) {
   expect(result.status(), await result.text()).toBe(202);
   let status = await result.json();
   await expect
-    .poll(async () => {
-      status = await (await browser.get(`${path}/${session.id}`)).json();
-      return status.phase;
-    })
+    .poll(
+      async () => {
+        status = await (await browser.get(`${path}/${session.id}`)).json();
+        return status.phase;
+      },
+      { timeout: 5_000 },
+    )
     .not.toBe('working');
   return status;
 }
