@@ -492,6 +492,16 @@
   padding: 0;
   margin: 0 0.3rem 0 0;
 }
+@media (orientation: landscape) and (max-height: 500px) {
+  .presentation-map .spatial-bottom-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .presentation-map .spatial-bottom-bar > * {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
 .label-note {
   margin: 0;
   font-size: 0.8rem;

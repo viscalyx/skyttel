@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
+import { cdp, page, userEvent } from 'vitest/browser';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
 import '../../src/client/styles.css';
 import type { MapState } from '../../src/shared/map.js';
@@ -128,6 +128,30 @@ test('phone starts with the list and preserves an edited name through full-map n
     .element(page.getByLabelText('Objektets namn', { exact: true }))
     .toHaveValue('Alex ändrat');
   expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
+});
+
+test('landscape toolbar overflow preserves canvas height and reachable controls', async ({
+  onTestFinished,
+}) => {
+  const session = cdp();
+  await session.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+  });
+  onTestFinished(async () => {
+    await session.send('Emulation.setEmulatedMedia', { features: [] });
+  });
+  await open(640);
+  await page.viewport(640, 390);
+  await page.getByRole('button', { name: 'Öppna rymdkartan', exact: true }).click();
+  const toolbar = document.querySelector('.spatial-bottom-bar') as HTMLElement;
+  await expect.poll(() => toolbar.scrollWidth > toolbar.clientWidth).toBe(true);
+  const height = () => document.querySelector('canvas')?.getBoundingClientRect().height;
+  await expect.poll(height).toBeGreaterThan(200);
+  const heightHelp = page.getByLabelText('Visa höjdhjälp', { exact: true });
+  await heightHelp.click();
+  await expect.element(heightHelp).toBeChecked();
+  await expect.element(heightHelp).toBeInViewport();
+  await expect.poll(height).toBeGreaterThan(200);
 });
 
 test('full map fills the available desktop and landscape phone area', async () => {

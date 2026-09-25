@@ -194,6 +194,7 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('privata utkast');
     const review = await tool(app.origin, token, 'read_my_draft');
     const attempt = {
       version: review.version,

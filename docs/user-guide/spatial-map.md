@@ -67,6 +67,8 @@ detaljerna ger tillgång till hela innehållet även när etiketter ligger
 utanför det synliga utsnittet. På en smal telefon kan även en mindre
 karta få överlappande eller delvis dolda etiketter. Använd zoom,
 panorering, objektfokus eller listan för att nå dem.
+På låga skärmar i liggande läge kan du rulla kartans nedersta verktygsrad
+i sidled för att nå alla val utan att minska kartytan.
 
 ## Ändra och granska
 
