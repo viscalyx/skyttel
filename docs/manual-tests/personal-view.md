@@ -42,13 +42,18 @@ reload, clients and server restart”.
 1. Dra Lampan åt sidan och nedåt. Håll Shift och dra uppåt. Kontrollera
    höjdhjälpens start och riktning under draget.
 2. Välj Lampan i listan och öppna kartan. Öppna Ordna min vy, fokusera
-   Flytta nedåt i rummet och tryck Enter. Aktivera Visa stjärnhimmel.
+   Flytta nedåt i rummet och håll Shift utan att dra. Släpp Shift och
+   välj Visa höjdhjälp för att granska flyttningens start. Tryck Enter på
+   Flytta nedåt i rummet. Slå av och på höjdhjälpen och kontrollera att
+   starten behålls. Aktivera Visa stjärnhimmel.
 3. Ladda om, starta om servern och öppna samma hushåll i en annan klient
    med Alex inloggning.
 
 **Förväntat resultat:**
 
 - Vanligt drag flyttar i bildplanet. Shift-drag ändrar bara rummets höjd.
+  Shift visar höjdhjälp före drag. Senaste start och höjdskillnad går att
+  granska efteråt. Höjdknapparna aktiverar också hjälpen.
 - Knappar fungerar med tangentbord. Flyttar och stjärnval återkommer
   efter omstart och i den andra klienten.
 - Hushållets sparade uppgifter och utkast ändras inte av flyttningen.

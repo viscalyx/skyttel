@@ -66,7 +66,9 @@ selection”.
    före och efter rotation och panorering. Byt till Samlad vy och välj
    Lo Exempels runda symbol. Kontrollera att sambandets etikett visas.
    Filtrera på Person och kontrollera att tjänsten döljs.
-2. Välj Visa hela rymden och Ctrl-klicka Lo Exempel. Kontrollera fokus.
+2. Välj Visa hela rymden och Ctrl-högerklicka Lo Exempel. Kontrollera
+   fokus utan att objektmenyn öppnas. Rulla lodrätt över tom rymd,
+   objektsymbolen och namnet. Kontrollera att alla tre panorerar likadant.
 3. Panorera med knappen under Navigera rymden. Välj Visa hela rymden.
 4. Sök efter Lo. Flytta tangentbordsfokus till en kameraknapp och tryck
    Escape.
@@ -174,8 +176,9 @@ changes”.
 **Steg:**
 
 1. Öppna Samlad vy och välj Lo Exempels runda symbol. Kontrollera namn,
-   typikoner och sambandets etikett. Välj Alla etiketter, panorera och
-   välj Återställ vy.
+   typikoner och sambandets etikett. Välj Alla etiketter, slå av och på
+   valet igen och kontrollera att kameran står kvar. Panorera och välj
+   Återställ vy.
 2. Välj sambandet i listan med tangentbord. Ange känt slutdatum
    2026-12-31 utan att skicka formuläret.
 3. Öppna kartan, ändra fönsterstorlek och öppna detaljer och utkast.
@@ -255,3 +258,34 @@ draft symbols”.
   kvar efter sparande och omstart; plusmarkeringarna försvinner.
 - Sambandets rättelse visar tilde och tar bort dess Upphört-markering.
   Molnmusiks status påverkas inte.
+
+### RYMD-08: fokusera och granska tidigare och föreslagna samband
+
+**Syfte:** Förstå en ändrad betalare utan att ändra det sparade sambandet.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Lo Exempel, Kim Exempel och Molnmusik är sparade.
+Lo Exempel → Betalar → Molnmusik är ett sparat samband. Ett förslag ändrar
+betalaren till Kim Exempel.
+
+**Integrationstest:**
+[spatial.spec.ts](../../tests/integration/spatial.spec.ts),
+testfallet “RYMD-08: focus retains old and proposed relationship endpoints
+and opens the saved route read-only”.
+
+**Steg:**
+
+1. Öppna Samlad vy och Ctrl-högerklicka Molnmusik.
+2. Kontrollera Lo Exempel och Kim Exempel med båda betalningssambanden.
+3. Välj den tidigare etiketten Lo Exempel → Betalar → Molnmusik med ×.
+4. Läs Tidigare samband. Ctrl-klicka sedan Kim Exempel och välj det
+   föreslagna betalningssambandet.
+
+**Förväntat resultat:**
+
+- Molnmusiks fokus visar både sparad och föreslagen betalare.
+- Den böjda tidigare linjen och etiketten leder till läsbara tidigare
+  värden utan redigeringsfält. Fokus på Molnmusik behålls vid valet.
+- Det föreslagna sambandet öppnar redigeringen med Kim som Från objekt.
+  Granskningen ändrar inga uppgifter i utkastet eller den sparade kartan.

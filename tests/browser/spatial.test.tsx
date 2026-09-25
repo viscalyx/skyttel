@@ -91,9 +91,13 @@ state.draft.relationships = state.relationships.map((edge, index) => ({
 function MapView({
   mapState = state,
   relationships = mapState.relationships,
+  active = true,
+  revealRequest,
 }: {
   mapState?: MapState;
   relationships?: MapState['relationships'];
+  active?: boolean;
+  revealRequest?: { id: string; objectIds: string[]; relationshipId?: string };
 } = {}) {
   const [view, setView] = useState<PersonalView>({
     contentVersion: 1,
@@ -103,6 +107,7 @@ function MapView({
   const [selection, setSelection] = useState<{
     kind: 'object' | 'relationship';
     id: string;
+    previous?: boolean;
   } | null>(null);
   const [objects, setObjects] = useState(
     new Map(mapState.objects.map((object) => [object.id, object])),
@@ -130,7 +135,8 @@ function MapView({
           configure: async (settings) =>
             setView((previous) => ({ ...previous, settings: { ...settings, version: 1 } })),
         }}
-        active
+        active={active}
+        revealRequest={revealRequest}
         state={mapState}
         objects={objects}
         relationships={new Map(relationships.map((edge) => [edge.id, edge]))}
@@ -140,9 +146,9 @@ function MapView({
           setSelection({ kind: 'object', id: object.id });
           setMessage(object.name);
         }}
-        onSelectRelationship={(edge) => {
-          setSelection({ kind: 'relationship', id: edge.id });
-          setMessage(`Samband: ${edge.knowledge}`);
+        onSelectRelationship={(edge, previous) => {
+          setSelection({ kind: 'relationship', id: edge.id, previous });
+          setMessage(previous ? `Tidigare: ${edge.sourceId}` : `Samband: ${edge.knowledge}`);
         }}
         onFocus={(id) => {
           setSelection({ kind: 'object', id });
@@ -207,6 +213,28 @@ test('the approved spatial presentation uses compact pictogram nodes, separate n
   await expect.poll(() => document.querySelectorAll('.spatial-edge').length).toBe(2);
 });
 
+test('an explicit reveal opens an inactive scene and brings requested objects into its viewport', async () => {
+  const view = render(<MapView active={false} />);
+  view.rerender(<MapView revealRequest={{ id: 'show-music', objectIds: ['music'] }} />);
+  const surface = document.querySelector('.spatial-surface') as HTMLElement;
+  await expect.poll(() => surface.dataset.revealRequest).toBe('show-music');
+  const music = page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true });
+  const inside = () => {
+    const a = surface.getBoundingClientRect();
+    const b = music.element().getBoundingClientRect();
+    return b.left >= a.left && b.right <= a.right && b.top >= a.top && b.bottom <= a.bottom;
+  };
+  await expect.poll(inside).toBe(true);
+  await page.getByText('Navigera rymden', { exact: true }).click();
+  for (let index = 0; index < 10; index++)
+    await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
+  expect(inside()).toBe(false);
+  view.rerender(<MapView revealRequest={{ id: 'show-music-again', objectIds: ['music'] }} />);
+  await expect.poll(() => surface.dataset.revealRequest).toBe('show-music-again');
+  await expect.poll(inside).toBe(true);
+  expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
+});
+
 test('changing a relationship retains its prior route while the current route remains selectable', async () => {
   const before = state.relationships[0];
   const after = { ...before, sourceId: 'kim' };
@@ -232,6 +260,15 @@ test('changing a relationship retains its prior route while the current route re
   expect(previous?.textContent).toContain('Lo Exempel → använder → Musikspelaren');
   expect(previous?.getAttribute('d')).toContain('Q');
   expect(getComputedStyle(previous as Element).strokeDasharray).not.toBe('none');
+  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  const priorLabel = page.getByRole('button', {
+    name: 'Välj tidigare samband: Lo Exempel → använder → Musikspelaren',
+    exact: true,
+  });
+  await expect.element(priorLabel).toHaveTextContent('× → använder');
+  await priorLabel.click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Tidigare: lo');
+  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
   await page
     .getByRole('button', {
       name: 'Välj samband: Kim Exempel → använder → Musikspelaren',
@@ -244,8 +281,17 @@ test('changing a relationship retains its prior route while the current route re
 test('personal placement buttons move the selected object in three dimensions without editing household facts', async () => {
   render(<MapView />);
   await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
+  await userEvent.keyboard('{Shift>}');
+  await expect.element(page.getByText('Startläge', { exact: true })).toBeVisible();
+  await userEvent.keyboard('{/Shift}');
+  await expect.element(page.getByText('Startläge', { exact: true })).not.toBeInTheDocument();
   await page.getByText('Ordna min vy', { exact: true }).click();
   await page.getByRole('button', { name: 'Flytta uppåt i rummet', exact: true }).click();
+  await expect.element(page.getByLabelText('Visa höjdhjälp', { exact: true })).toBeChecked();
+  await expect.element(page.getByText('↑ 1 steg högre än start', { exact: true })).toBeVisible();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
+  await expect.element(page.getByText('↑ 1 steg högre än start', { exact: true })).toBeVisible();
   const first = JSON.parse(document.querySelector('[data-placement]')?.textContent ?? '[]');
   expect(first).toHaveLength(1);
   await page.getByRole('button', { name: 'Flytta nedåt i rummet', exact: true }).click();
@@ -357,6 +403,69 @@ test('personal display controls retain corner choices, independent pan inversion
   await page.getByText('Navigera rymden', { exact: true }).click();
   for (const label of ['Panorera vänster', 'Panorera höger', 'Panorera uppåt', 'Panorera nedåt'])
     await page.getByRole('button', { name: label, exact: true }).click();
+});
+
+test('wheel pan follows both system axes over canvas, icons and labels; Ctrl alone zooms', async () => {
+  render(<MapView />);
+  const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  await expect.element(lo).toBeVisible();
+  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+  const position = () => {
+    const bounds = lo.element().getBoundingClientRect();
+    return { x: bounds.x, y: bounds.y };
+  };
+  const music = page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true });
+  const separation = () => {
+    const a = position();
+    const b = music.element().getBoundingClientRect();
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
+  const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+  for (const target of [
+    canvas,
+    lo.element(),
+    page.getByText('Lo Exempel', { exact: true }).element(),
+  ]) {
+    const before = position();
+    const distance = separation();
+    const wheel = new WheelEvent('wheel', { deltaY: 20, bubbles: true, cancelable: true });
+    target.dispatchEvent(wheel);
+    await expect.poll(() => position().y).toBeCloseTo(before.y - 20, 0);
+    expect(position().x).toBeCloseTo(before.x, 0);
+    expect(separation()).toBeCloseTo(distance, 0);
+    expect(wheel.defaultPrevented).toBe(true);
+  }
+  const before = position();
+  canvas.dispatchEvent(
+    new WheelEvent('wheel', { deltaX: 2, deltaY: 1, deltaMode: 1, bubbles: true }),
+  );
+  await expect.poll(() => position().x).toBeCloseTo(before.x - 32, 0);
+  expect(position().y).toBeCloseTo(before.y - 16, 0);
+  const pageScroll = position();
+  canvas.dispatchEvent(new WheelEvent('wheel', { deltaY: 0.01, deltaMode: 2, bubbles: true }));
+  await expect.poll(() => position().y).toBeCloseTo(pageScroll.y - canvas.clientHeight * 0.01, 0);
+  await page.getByText('Ordna min vy', { exact: true }).click();
+  await page.getByLabelText('Vänd panorering i höjdled', { exact: true }).click();
+  const inverted = position();
+  lo.element().dispatchEvent(new WheelEvent('wheel', { deltaX: 10, deltaY: 20, bubbles: true }));
+  await expect.poll(() => position().y).toBeCloseTo(inverted.y + 20, 0);
+  expect(position().x).toBeCloseTo(inverted.x - 10, 0);
+  await page.getByLabelText('Vänd panorering i sidled', { exact: true }).click();
+  const bothInverted = position();
+  canvas.dispatchEvent(new WheelEvent('wheel', { deltaX: 10, deltaY: 20, bubbles: true }));
+  await expect.poll(() => position().x).toBeCloseTo(bothInverted.x + 10, 0);
+  expect(position().y).toBeCloseTo(bothInverted.y + 20, 0);
+  const distance = separation();
+  const pinch = new WheelEvent('wheel', {
+    deltaY: -30,
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  lo.element().dispatchEvent(pinch);
+  await expect.poll(separation).toBeGreaterThan(distance);
+  expect(pinch.defaultPrevented).toBe(true);
+  expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
 });
 
 test('native empty-space mouse, wheel and touch navigation changes the camera without moving objects', async () => {
@@ -504,6 +613,7 @@ test('painted stars respond to rotation and zoom while panning and object moveme
   const panned = await starPixels();
   expect(common(original, panned)).toBeGreaterThan(0.85);
   await page.getByRole('button', { name: 'Flytta uppåt i rummet', exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   expect(common(panned, await starPixels())).toBeGreaterThan(0.85);
   await page.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
   const rotated = await starPixels();
@@ -612,6 +722,26 @@ test('dense labels remain readable and explicit all-label mode retains access to
   await expect.poll(() => document.querySelectorAll('.spatial-name').length).toBe(100);
 });
 
+test('all labels only opens a closer view when needed and retains an already close camera', async () => {
+  render(<MapView />);
+  const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  await expect.element(lo).toBeVisible();
+  const location = () => (lo.element() as HTMLElement).style.cssText;
+  const toggle = page.getByLabelText('Alla etiketter', { exact: true });
+  await toggle.click();
+  const working = location();
+  await toggle.click();
+  expect(location()).toBe(working);
+  await toggle.click();
+  expect(location()).toBe(working);
+  await toggle.click();
+  await page.getByText('Navigera rymden', { exact: true }).click();
+  await page.getByRole('button', { name: 'Zooma in', exact: true }).click();
+  const close = location();
+  await toggle.click();
+  expect(location()).toBe(close);
+});
+
 test('direction rendering retains selectable self references and explicitly absent targets', async () => {
   render(
     <MapView
@@ -642,6 +772,9 @@ test('direction rendering retains selectable self references and explicitly abse
 test('context menu edits, focuses, cancels and removes only the chosen object', async () => {
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  await lo.click({ button: 'right', modifiers: ['Control'] });
+  await expect.element(page.getByRole('status')).toHaveTextContent('Kopplingar för lo');
+  expect(document.querySelector('dialog')?.open).toBe(false);
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');

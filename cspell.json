@@ -5,6 +5,7 @@
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
     "bortpanorerad",
+    "nedåtknapparna",
     "lifecycles",
     "samtalsdel",
     "samtalsdelen",

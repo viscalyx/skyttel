@@ -507,9 +507,6 @@
   pointer-events: stroke;
   cursor: pointer;
 }
-.connection.previous {
-  pointer-events: none;
-}
 .spatial-axis {
   position: absolute;
   width: min(90px, 25%);

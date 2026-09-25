@@ -81,6 +81,7 @@ betyder inte att dess manuella prov är genomfört.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt och bevara ofullständiga uppgifter.
 - [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
+  fokus på tidigare och föreslagna samband med läsbara tidigare värden,
   fokus, filter, namn vid runda symboler, sambandsetiketter vid val,
   bevarat etikettläge vid återställning, pekmenyer, upphörd status,
   ändringssymboler och bevarad oskickad text vid vybyte, orientering och

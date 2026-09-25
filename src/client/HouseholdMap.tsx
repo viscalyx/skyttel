@@ -147,6 +147,7 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   const [selection, setSelection] = useState<{
     kind: 'object' | 'relationship';
     id: string;
+    previous?: boolean;
   } | null>(null);
   const [pending, setPending] = useState(false);
   const [blocked, setBlocked] = useState(false);
@@ -662,7 +663,10 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
       if (!change.after && change.before) spatialEdges.set(change.id, change.before);
     }
     const connected = new Set([focusId]);
-    for (const edge of spatialEdges.values()) {
+    const beforeEdges = (state?.draft.relationships ?? []).flatMap((change) =>
+      change.before ? [change.before] : [],
+    );
+    for (const edge of [...spatialEdges.values(), ...beforeEdges]) {
       if (edge.sourceId === focusId || edge.targetId === focusId) {
         connected.add(edge.sourceId);
         connected.add(edge.targetId);
@@ -715,10 +719,18 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
   const unresolved =
     state?.draft.changes.some((change) => change.after?.identity === 'unresolved') ||
     state?.draft.relationships?.some((change) => change.after?.knowledge === 'unresolved');
-  function editRelationship(edge?: MapRelationship) {
+  function editRelationship(edge?: MapRelationship, previous = false) {
     if (!state) return;
     setDetailsOpen(true);
-    if (edge) setSelection({ kind: 'relationship', id: edge.id });
+    if (edge) setSelection({ kind: 'relationship', id: edge.id, previous });
+    if (previous) {
+      setEditor(null);
+      setEdgeEditor(null);
+      setTypeEditor(null);
+      setEdgeTypeEditor(null);
+      setDirty(false);
+      return;
+    }
     if (edge && edgeEditor?.id === edge.id) return;
     const proposal = state.draft.relationships?.find((change) => change.id === edge?.id);
     setEditor(null);
@@ -1137,6 +1149,24 @@ export function HouseholdMap({ householdId }: { householdId: string }) {
                   </ul>
                 </section>
               )}
+              {selection?.kind === 'relationship' &&
+                selection.previous &&
+                (() => {
+                  const before = state.draft.relationships?.find(
+                    (change) => change.id === selection.id,
+                  )?.before;
+                  return before ? (
+                    <section aria-label="Tidigare samband">
+                      <h2>Tidigare samband</h2>
+                      <p>× Ersätts i utkastet. Detta är det sparade sambandet före ändringen.</p>
+                      <p>{relationshipLabel(before, effectiveState ?? state, displayed)}</p>
+                      <LifecycleDetails value={before} />
+                      <button type="button" onClick={() => setSelection(null)}>
+                        Stäng tidigare samband
+                      </button>
+                    </section>
+                  ) : null;
+                })()}
               {edgeEditor && (
                 <RelationshipEditor
                   key={edgeEditor.id}

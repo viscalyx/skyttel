@@ -6,6 +6,7 @@ export function cameraGestures(
     pan: (x: number, y: number) => void;
     zoom: (factor: number) => void;
   },
+  surface: HTMLElement = canvas,
 ) {
   const pointers = new Map<number, { x: number; y: number; button: number }>();
   let enabled = true;
@@ -44,9 +45,9 @@ export function cameraGestures(
   function wheel(event: WheelEvent) {
     event.preventDefault();
     if (!enabled) return;
-    if (event.ctrlKey || (!event.deltaX && !event.shiftKey))
-      camera.zoom(Math.exp(event.deltaY * 0.002));
-    else camera.pan(event.deltaX || event.deltaY, event.deltaX ? event.deltaY : 0);
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? surface.clientHeight : 1;
+    if (event.ctrlKey) camera.zoom(Math.exp(event.deltaY * unit * 0.002));
+    else camera.pan(-event.deltaX * unit, -event.deltaY * unit);
   }
   function context(event: Event) {
     event.preventDefault();
@@ -56,7 +57,7 @@ export function cameraGestures(
   canvas.addEventListener('pointerup', end);
   canvas.addEventListener('pointercancel', cancel);
   canvas.addEventListener('lostpointercapture', end);
-  canvas.addEventListener('wheel', wheel, { passive: false });
+  surface.addEventListener('wheel', wheel, { passive: false });
   canvas.addEventListener('contextmenu', context);
   window.addEventListener('blur', cancel);
   return {
@@ -70,7 +71,7 @@ export function cameraGestures(
       canvas.removeEventListener('pointerup', end);
       canvas.removeEventListener('pointercancel', cancel);
       canvas.removeEventListener('lostpointercapture', end);
-      canvas.removeEventListener('wheel', wheel);
+      surface.removeEventListener('wheel', wheel);
       canvas.removeEventListener('contextmenu', context);
       window.removeEventListener('blur', cancel);
     },

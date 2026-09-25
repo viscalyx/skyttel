@@ -201,8 +201,26 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await page.getByRole('button', { name: 'Visa hela rymden', exact: true }).click();
     await space
       .getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true })
-      .click({ modifiers: ['Control'] });
+      .click({ button: 'right', modifiers: ['Control'] });
     await expect(page.getByText('Fokus: Lo Exempel', { exact: true })).toBeVisible();
+    await expect(space.getByRole('dialog')).not.toBeVisible();
+    const loIcon = space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+    for (const hit of [
+      space.locator('canvas'),
+      loIcon,
+      space.locator('[data-object-label="lo"]'),
+    ]) {
+      const before = await loIcon.boundingBox();
+      const target = await hit.boundingBox();
+      if (!target) throw new Error('Navigation target must be visible');
+      await page.mouse.move(target.x + 10, target.y + 10);
+      await page.mouse.wheel(0, 12);
+      await expect
+        .poll(async () => (await loIcon.boundingBox())?.y)
+        .toBeLessThan((before?.y ?? 0) - 5);
+      expect((await loIcon.boundingBox())?.x).toBeCloseTo(before?.x ?? 0, 0);
+    }
+
     await page.getByText('Navigera rymden', { exact: true }).click();
     await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
     const position = async () => {
@@ -501,8 +519,10 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await expect
       .poll(async () => separation(await geometry()))
       .toBeGreaterThan(separation(overview) * 1.2);
+    const labelView = await space.locator('.spatial-node').first().getAttribute('style');
     await space.getByLabel('Alla etiketter', { exact: true }).uncheck();
     await space.getByLabel('Alla etiketter', { exact: true }).check();
+    expect(await space.locator('.spatial-node').first().getAttribute('style')).toBe(labelView);
     await expect(
       space.getByText('Närmare utsnitt. Panorera för att se fler etiketter.', { exact: true }),
     ).toBeVisible();
@@ -662,6 +682,90 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await expect(edge).not.toContainText('Upphört');
     await expect(edge).toContainText('~');
     await expect(music.getByText('Upphört', { exact: true })).toBeVisible();
+  } finally {
+    await installation.close();
+  }
+});
+
+test('RYMD-08: focus retains old and proposed relationship endpoints and opens the saved route read-only', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { path, read } = await arrange(page, installation.origin);
+    let state = await read();
+    await page.request.post(`${path}/draft`, {
+      headers: { origin: installation.origin },
+      data: {
+        version: state.draft.version,
+        id: 'kim',
+        baseRevision: null,
+        value: {
+          name: 'Kim Exempel',
+          description: '',
+          typeId: state.types.find((type) => type.name === 'Person')?.id,
+        },
+      },
+    });
+    state = await read();
+    await page.request.post(`${path}/relationship`, {
+      headers: { origin: installation.origin },
+      data: {
+        version: state.draft.version,
+        id: 'payer',
+        baseRevision: null,
+        value: {
+          typeId: state.relationshipTypes.find((type) => type.name === 'Betalar')?.id,
+          sourceId: 'lo',
+          targetId: 'music',
+          knowledge: 'known',
+        },
+      },
+    });
+    state = await read();
+    await page.request.post(`${path}/save`, {
+      headers: { origin: installation.origin },
+      data: { version: state.draft.version, operationId: 'saved-payer' },
+    });
+    state = await read();
+    const edge = state.relationships[0];
+    await page.request.post(`${path}/relationship`, {
+      headers: { origin: installation.origin },
+      data: {
+        version: state.draft.version,
+        id: edge.id,
+        baseRevision: edge.revision,
+        value: { ...edge, sourceId: 'kim' },
+      },
+    });
+    await page.goto(installation.origin);
+    await page.getByRole('button', { name: 'Samlad vy', exact: true }).click();
+    const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    await space
+      .getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true })
+      .click({ button: 'right', modifiers: ['Control'] });
+    for (const name of ['Lo Exempel', 'Kim Exempel'])
+      await expect(
+        space.getByRole('button', { name: `Välj objekt: ${name}`, exact: true }),
+      ).toBeVisible();
+    const previous = space.getByRole('button', {
+      name: 'Välj tidigare samband: Lo Exempel → Betalar → Molnmusik',
+      exact: true,
+    });
+    await expect(previous).toContainText('×');
+    await previous.click();
+    const inspector = page.getByRole('region', { name: 'Tidigare samband', exact: true });
+    await expect(inspector).toContainText('Lo Exempel → Betalar → Molnmusik');
+    await expect(inspector.locator('input, select, textarea')).toHaveCount(0);
+    await expect(page.getByText('Fokus: Molnmusik', { exact: true })).toBeVisible();
+    await space
+      .getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true })
+      .click({ modifiers: ['Control'] });
+    await space
+      .getByRole('button', { name: 'Välj samband: Kim Exempel → Betalar → Molnmusik', exact: true })
+      .click();
+    await expect(page.getByLabel('Från objekt')).toHaveValue('kim');
+    expect((await read()).draft.version).toBe(state.draft.version + 1);
   } finally {
     await installation.close();
   }

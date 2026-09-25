@@ -89,11 +89,21 @@ test('PLACERING-01: mouse, height and keyboard movement persist across reload, c
     expect(raised.z).toBe(first.z);
     expect(raised.y).toBeGreaterThan(first.y);
     await selectAndArrange(page);
+    await space(page).getByRole('button', { name: 'Flytta nedåt i rummet', exact: true }).focus();
+    await page.keyboard.down('Shift');
+    await expect(space(page).getByText('Höjdflyttning · personlig vy')).toBeVisible();
+    await page.keyboard.up('Shift');
+    await space(page).getByLabel('Visa höjdhjälp', { exact: true }).check();
+    await expect(space(page).getByText(/^↑ .* steg högre än start$/)).toBeVisible();
     const down = space(page).getByRole('button', { name: 'Flytta nedåt i rummet', exact: true });
     await down.focus();
     await page.keyboard.press('Enter');
     await expect.poll(async () => (await read()).positions[0].version).toBe(3);
     expect((await read()).positions[0].y).toBeCloseTo(raised.y - 1);
+    await expect(space(page).getByLabel('Visa höjdhjälp', { exact: true })).toBeChecked();
+    await space(page).getByLabel('Visa höjdhjälp', { exact: true }).uncheck();
+    await space(page).getByLabel('Visa höjdhjälp', { exact: true }).check();
+    await expect(space(page).getByText('Höjdflyttning · personlig vy')).toBeVisible();
     await space(page).getByLabel('Visa stjärnhimmel', { exact: true }).check();
     await expect.poll(async () => (await read()).settings.stars).toBe(true);
     const expected = await read();
@@ -168,6 +178,10 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
       type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel',
       points: { id: number; x: number; y: number }[],
     ) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points });
+    const surface = await space(page).locator('canvas').boundingBox();
+    if (!surface) throw new Error('Touch gestures require a visible map');
+    const anchorX = (x: number, distance: number) =>
+      x + distance < surface.x + surface.width - 10 ? x + distance : x - distance;
     let start = await center(page);
     await touch('touchStart', [{ id: 1, ...start }]);
     await touch('touchMove', [{ id: 1, x: start.x + 40, y: start.y + 20 }]);
@@ -175,7 +189,7 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     await expect.poll(async () => (await read()).positions[0]?.version).toBe(1);
     const before = (await read()).positions[0];
     start = await center(page);
-    const anchor = { id: 2, x: start.x + 110, y: start.y };
+    const anchor = { id: 2, x: anchorX(start.x, 110), y: start.y };
     await touch('touchStart', [{ id: 1, ...start }]);
     await touch('touchStart', [{ id: 1, ...start }, anchor]);
     await touch('touchMove', [{ id: 1, x: start.x, y: start.y - 40 }, anchor]);
@@ -194,7 +208,7 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     await touch('touchCancel', []);
     expect(await read()).toEqual(saved);
     start = await center(page);
-    const finger = { id: 2, x: start.x + 100, y: start.y };
+    const finger = { id: 2, x: anchorX(start.x, 100), y: start.y };
     await touch('touchStart', [{ id: 1, ...start }]);
     await touch('touchStart', [{ id: 1, ...start }, finger]);
     await touch('touchMove', [{ id: 1, x: start.x, y: start.y - 30 }, finger]);

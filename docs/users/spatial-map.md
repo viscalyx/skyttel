@@ -34,8 +34,10 @@ byter sida. Sökning och ändrat fokus börjar på första sidan igen.
 
 ## Navigera rymden
 
-Dra i tom rymd för att rotera. Använd mushjulet eller nyp med två fingrar
-för att zooma. Två fingrar panorerar; med mus kan du dra med höger knapp.
+Dra i tom rymd för att rotera. Rullning med mushjul eller styrplatta
+panorerar i båda riktningarna, även över symboler och etiketter. Håll Ctrl
+med mushjulet eller nyp med två fingrar för att zooma. På pekskärm
+panorerar två fingrar tillsammans; med mus kan du dra med höger knapp.
 Under **Navigera rymden** finns också knappar för panorering, rotation,
 lutning och zoom. Kartdrag markerar inte etiketternas text.
 
@@ -48,8 +50,9 @@ många etiketter som visas; innehållet och dina personliga placeringar ändras
 inte. Sök, välj i listan och använd fokus för att följa ett tätt sammanhang.
 Bakgrundens samband tonas ned mer i täta vyer; valda samband framhävs.
 
-**Alla etiketter** ger ett närmare utsnitt som går att panorera och visar
-även etiketter som överlappar. Korta stödlinjer
+**Alla etiketter** öppnar vid behov ett närmare utsnitt som går att
+panorera och visar även etiketter som överlappar. Ett redan nära utsnitt
+behålls när du slår av och på valet. Korta stödlinjer
 till etiketter är heldragna och långa stödlinjer är streckade. Listan och
 detaljerna ger tillgång till hela innehållet även när etiketter ligger
 utanför det synliga utsnittet. På en smal telefon kan även en mindre
@@ -57,6 +60,11 @@ karta få överlappande eller delvis dolda etiketter. Använd zoom,
 panorering, objektfokus eller listan för att nå dem.
 
 ## Ändra och granska
+
+Ctrl-klick, även med höger musknapp, visar objektets kopplingar.
+Vid ändrade samband visar fokus både tidigare och föreslagna ändpunkter.
+Välj den tidigare, böjda linjen eller dess etikett med × för att läsa det
+sparade sambandet utan att ändra det.
 
 Högerklick eller långtryck på ett objekt ger **Redigera objekt**,
 **Visa kopplingar** och **Ta bort objekt**. I listan finns också
@@ -110,7 +118,11 @@ Dra ett objekt för att flytta det i kamerans bildplan. Håll Shift när du
 drar med mus för att flytta längs rummets höjdaxel. Med pekskärm flyttar
 första fingret objektet. Lägg ett andra finger stilla på kartan och dra
 det första uppåt eller nedåt för höjdled. Höjdhjälpen visar start och
-riktning och är märkt som personlig vy. Släpp det andra fingret först
+riktning och är märkt som personlig vy. Håll Shift med ett valt objekt
+för att förhandsvisa hjälpen. **Visa höjdhjälp** under kartan håller den
+synlig och låter dig granska senaste höjdflyttningens start efter draget.
+Uppåt- och nedåtknapparna visar också hjälpen. Valet gäller den öppna sidan.
+Släpp det andra fingret först
 för att återgå till vanlig flyttning. Släpp sedan det första för att spara.
 
 Om det andra fingret flyttas, det första släpps före det andra, fler

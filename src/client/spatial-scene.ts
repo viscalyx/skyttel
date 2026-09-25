@@ -30,6 +30,7 @@ export function spatialScene(
   onProject: (points: ProjectedPoint[]) => void,
   onOrientation: (axes: Position[]) => void = () => {},
   onMotion: () => void = () => {},
+  surface: HTMLElement = canvas,
 ) {
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -43,24 +44,28 @@ export function spatialScene(
   // adapter; Three retains camera projection and public orbit mathematics.
   controls.disconnect();
   let settings: Pick<ViewSettings, 'invertX' | 'invertY'> = { invertX: false, invertY: false };
-  const gestures = cameraGestures(canvas, {
-    rotate(x, y) {
-      controls.rotateLeft(x);
-      controls.rotateUp(y);
-      controls.update();
-      onMotion();
+  const gestures = cameraGestures(
+    canvas,
+    {
+      rotate(x, y) {
+        controls.rotateLeft(x);
+        controls.rotateUp(y);
+        controls.update();
+        onMotion();
+      },
+      pan(x, y) {
+        controls.pan(x * (settings.invertX ? -1 : 1), y * (settings.invertY ? -1 : 1));
+        controls.update();
+        onMotion();
+      },
+      zoom(factor) {
+        controls.dollyIn(factor);
+        controls.update();
+        onMotion();
+      },
     },
-    pan(x, y) {
-      controls.pan(x * (settings.invertX ? -1 : 1), y * (settings.invertY ? -1 : 1));
-      controls.update();
-      onMotion();
-    },
-    zoom(factor) {
-      controls.dollyIn(factor);
-      controls.update();
-      onMotion();
-    },
-  });
+    surface,
+  );
   controls.enableDamping = false;
   controls.minDistance = 2;
   controls.maxDistance = 100000;
@@ -300,6 +305,44 @@ export function spatialScene(
       else draw();
     },
     reset,
+    openLabelView() {
+      if (!canvas.clientWidth || !canvas.clientHeight) return false;
+      const bounds = new Box3().setFromPoints([...nodes].map((id) => locations.get(id) as Vector3));
+      if (bounds.isEmpty()) return false;
+      const center = bounds.getCenter(new Vector3());
+      const extent = Math.max(
+        5,
+        ...[...nodes].map((id) => (locations.get(id) as Vector3).distanceTo(center) + 2),
+      );
+      const panelScale = Math.max(1, 830 / canvas.clientWidth, 540 / canvas.clientHeight);
+      const distance = Math.max(2, (extent * 1.6) / Math.min(camera.aspect, 1) / panelScale);
+      if (controls.getDistance() <= distance + 0.001) return false;
+      controls.dollyIn(distance / controls.getDistance());
+      controls.update();
+      onMotion();
+      return true;
+    },
+    reveal(ids: string[]) {
+      const values = ids.flatMap((id) =>
+        nodes.has(id) && locations.has(id) ? [locations.get(id) as Vector3] : [],
+      );
+      if (!values.length) return false;
+      if (!canvas.clientWidth || !canvas.clientHeight) return false;
+      needsFrame = false;
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+      const center = new Box3().setFromPoints(values).getCenter(new Vector3());
+      const extent = Math.max(5, ...values.map((point) => point.distanceTo(center) + 2));
+      const direction = camera.position.clone().sub(controls.target).normalize();
+      controls.target.copy(center);
+      camera.position
+        .copy(center)
+        .add(direction.multiplyScalar((extent * 2.6) / Math.min(camera.aspect, 1)));
+      controls.update();
+      draw();
+      onMotion();
+      return true;
+    },
     configure(value: ViewSettings) {
       settings = value;
       stars.visible = value.stars;

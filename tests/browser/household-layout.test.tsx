@@ -38,6 +38,10 @@ const state: MapState = {
 
 async function open(width: number) {
   await page.viewport(width, 960);
+  await expect.poll(() => window.innerWidth).toBe(width);
+  await expect
+    .poll(() => window.matchMedia('(min-width: 1100px) and (pointer: fine)').matches)
+    .toBe(width >= 1100);
   vi.stubGlobal('fetch', async (url: string) => {
     if (url.endsWith('/view'))
       return Response.json({

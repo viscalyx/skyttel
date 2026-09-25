@@ -39,15 +39,17 @@ export function useObjectMovement(
 ) {
   const gesture = useRef<Gesture | null>(null);
   const suppressed = useRef(false);
-  const [guide, setGuide] = useState<{ start: Position; end: Position } | null>(null);
+  const [guide, setGuide] = useState<{ id: string; start: Position; end: Position } | null>(null);
+  const [heightActive, setHeightActive] = useState(false);
   const cancel = useCallback(() => {
     const current = gesture.current;
     if (current) {
       scene.current?.place(current.id, current.origin);
       suppressed.current = true;
+      setGuide(null);
     }
     gesture.current = null;
-    setGuide(null);
+    setHeightActive(false);
     cancelHold();
   }, [scene, cancelHold]);
   useEffect(() => {
@@ -70,7 +72,13 @@ export function useObjectMovement(
   }
   return {
     guide,
+    heightActive,
     cancel,
+    recordMove(id: string, start: Position, end: Position, height: boolean) {
+      setGuide((previous) =>
+        height ? { id, start: previous?.id === id ? previous.start : start, end } : null,
+      );
+    },
     suppressClick() {
       const value = suppressed.current;
       suppressed.current = false;
@@ -139,7 +147,8 @@ export function useObjectMovement(
       );
       if (position) {
         const end = scene.current?.place(current.id, position) ?? position;
-        setGuide(height ? { start: current.segment, end } : null);
+        setGuide(height ? { id: current.id, start: current.segment, end } : null);
+        setHeightActive(height);
       }
       event.preventDefault();
       event.stopPropagation();
@@ -150,7 +159,7 @@ export function useObjectMovement(
       if (event.pointerId === current.second?.id) {
         current.second = undefined;
         rebase(current, event.shiftKey);
-        setGuide(null);
+        setHeightActive(false);
         return;
       }
       if (event.pointerId !== current.primary) return;
@@ -159,7 +168,7 @@ export function useObjectMovement(
         return;
       }
       gesture.current = null;
-      setGuide(null);
+      setHeightActive(false);
       cancelHold();
       const position = scene.current?.position(current.id);
       if (current.moved && position) void onMove(current.id, position);

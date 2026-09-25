@@ -67,20 +67,22 @@ export function SpatialMap({
   onReset,
   onRemove,
   personal,
+  revealRequest,
 }: {
   state: MapState;
   active: boolean;
   objects: Map<string, MapObject>;
   relationships: Map<string, MapRelationship>;
-  selection: { kind: 'object' | 'relationship'; id: string } | null;
+  selection: { kind: 'object' | 'relationship'; id: string; previous?: boolean } | null;
   disabled: boolean;
   onSelect: (object: MapObject) => void;
-  onSelectRelationship: (edge: MapRelationship) => void;
+  onSelectRelationship: (edge: MapRelationship, previous?: boolean) => void;
   onFocus: (id: string) => void;
   onClear: () => void;
   onReset: () => void;
   onRemove: (object: MapObject) => void;
   personal?: ReturnType<typeof usePersonalView>;
+  revealRequest?: { id: string; objectIds: string[]; relationshipId?: string };
 }) {
   const labelPrefix = useId();
   const [activated, setActivated] = useState(active);
@@ -112,6 +114,7 @@ export function SpatialMap({
   }, [menuObject]);
   useEffect(() => () => cancelHold(), [cancelHold]);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const surface = useRef<HTMLDivElement>(null);
   const labelLayer = useRef<HTMLDivElement>(null);
   const labelObserver = useRef<ResizeObserver | null>(null);
   const observeLabel = useCallback((element: HTMLElement | null) => {
@@ -174,11 +177,39 @@ export function SpatialMap({
     else setLocalSettings(next);
   }
   const [points, setPoints] = useState<ProjectedPoint[]>([]);
+  const [completedRevealId, setCompletedRevealId] = useState<string>();
   const [unavailable, setUnavailable] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   const allLabels = preferences.allLabels;
   const previousLabels = useRef(false);
   const [closerLabels, setCloserLabels] = useState(false);
+  const [heightHelp, setHeightHelp] = useState(false);
+  const [shiftHeld, setShiftHeld] = useState(false);
+  useEffect(() => {
+    const down = (event: KeyboardEvent) => {
+      if (
+        active &&
+        event.key === 'Shift' &&
+        !(
+          event.target instanceof Element &&
+          event.target.closest('input, textarea, select, [contenteditable]')
+        )
+      )
+        setShiftHeld(true);
+    };
+    const up = (event: KeyboardEvent) => {
+      if (event.key === 'Shift') setShiftHeld(false);
+    };
+    const blur = () => setShiftHeld(false);
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    window.addEventListener('blur', blur);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', blur);
+    };
+  }, [active]);
   const [resetRequested, setResetRequested] = useState(false);
   const pointer = useRef<{
     id: number;
@@ -212,7 +243,13 @@ export function SpatialMap({
     element.addEventListener('webglcontextlost', lost);
     element.addEventListener('webglcontextrestored', restored);
     try {
-      scene.current = spatialScene(element, setPoints, setOrientation, motion);
+      scene.current = spatialScene(
+        element,
+        setPoints,
+        setOrientation,
+        motion,
+        surface.current ?? element,
+      );
     } catch {
       setUnavailable(true);
     }
@@ -234,13 +271,35 @@ export function SpatialMap({
   useEffect(() => {
     if (!activated) return;
     scene.current?.configure(preferences);
+    if (!active) return;
     if (preferences.allLabels && !previousLabels.current) {
-      scene.current?.navigate('in');
-      scene.current?.navigate('in');
-      setCloserLabels(true);
+      if (scene.current?.openLabelView()) setCloserLabels(true);
     }
     previousLabels.current = preferences.allLabels;
-  }, [preferences, activated]);
+  }, [preferences, activated, active]);
+  useEffect(() => {
+    if (
+      revealRequest &&
+      revealRequest.id !== completedRevealId &&
+      active &&
+      activated &&
+      personalReady &&
+      !contextLost &&
+      revealRequest.objectIds.every((id) => objects.has(id)) &&
+      (!revealRequest.relationshipId || relationships.has(revealRequest.relationshipId)) &&
+      scene.current?.reveal(revealRequest.objectIds)
+    )
+      setCompletedRevealId(revealRequest.id);
+  }, [
+    revealRequest,
+    completedRevealId,
+    active,
+    activated,
+    personalReady,
+    contextLost,
+    objects,
+    relationships,
+  ]);
   useEffect(() => {
     if (!resetRequested) return;
     // Reframe after the shared view has revealed previously filtered objects.
@@ -258,30 +317,59 @@ export function SpatialMap({
     width: 48,
     height: 48,
   }));
-  const edges = [...relationships.values()].flatMap((edge) => {
-    const source = locations.get(edge.sourceId);
-    const target = edge.targetId ? locations.get(edge.targetId) : undefined;
-    if (!source || (edge.targetId && !target)) return [];
-    const end = target ?? {
-      x: source.x + (source.x > surfaceWidth * 0.65 ? -100 : 100),
-      y: source.y + (source.y > surfaceHeight * 0.65 ? -80 : 80),
-    };
-    const tip = arrowTip(source, end, target ? 29 : 0);
-    const start = arrowTip(end, source, 22);
-    const selected =
-      selection?.kind === 'relationship'
-        ? selection.id === edge.id
-        : selection?.id === edge.sourceId || selection?.id === edge.targetId;
-    const kind = proposalKind(state.draft.relationships?.find((change) => change.id === edge.id));
-    const length = Math.hypot(tip.x - start.x, tip.y - start.y) || 1;
-    occupied.push({
-      x: tip.x - ((tip.x - start.x) / length) * 7,
-      y: tip.y - ((tip.y - start.y) / length) * 7,
-      width: 26,
-      height: 26,
-    });
-    return [{ edge, source, start, end, tip, selected, kind }];
+  const previousEdges = (state.draft.relationships ?? []).flatMap(({ before, after }) => {
+    if (
+      !before ||
+      !after ||
+      (before.sourceId === after.sourceId &&
+        before.targetId === after.targetId &&
+        before.typeId === after.typeId &&
+        before.knowledge === after.knowledge)
+    )
+      return [];
+    return [{ edge: before, previous: true }];
   });
+  const edges = [...relationships.values()]
+    .map((edge) => ({ edge, previous: false }))
+    .concat(previousEdges)
+    .flatMap(({ edge, previous }) => {
+      const source = locations.get(edge.sourceId);
+      const target = edge.targetId ? locations.get(edge.targetId) : undefined;
+      if (!source || (edge.targetId && !target)) return [];
+      const end = target ?? {
+        x: source.x + (source.x > surfaceWidth * 0.65 ? -100 : 100),
+        y: source.y + (source.y > surfaceHeight * 0.65 ? -80 : 80),
+      };
+      const tip = arrowTip(source, end, target ? 29 : 0);
+      const start = arrowTip(end, source, 22);
+      const selected =
+        selection?.kind === 'relationship'
+          ? selection.id === edge.id && Boolean(selection.previous) === previous
+          : selection?.id === edge.sourceId || selection?.id === edge.targetId;
+      const kind = previous
+        ? 'removed'
+        : proposalKind(state.draft.relationships?.find((change) => change.id === edge.id));
+      const length = Math.hypot(tip.x - start.x, tip.y - start.y) || 1;
+      occupied.push({
+        x: tip.x - ((tip.x - start.x) / length) * 7,
+        y: tip.y - ((tip.y - start.y) / length) * 7,
+        width: 26,
+        height: 26,
+      });
+      return [
+        {
+          edge,
+          source,
+          start,
+          end,
+          tip,
+          selected,
+          kind,
+          previous,
+          key: `${previous ? 'previous-' : ''}${edge.id}`,
+        },
+      ];
+    });
   type LabelBox = { x: number; y: number; width: number; height: number };
   function place(candidates: LabelBox[], selected = false) {
     let fallback: LabelBox | undefined;
@@ -360,27 +448,9 @@ export function SpatialMap({
     if (box) labels.set(point.id, box);
   }
   const labelEdges = edges.filter(({ selected }) => allLabels || selected);
-  const previousEdges = (state.draft.relationships ?? []).flatMap(({ id, before, after }) => {
-    if (
-      !before ||
-      !after ||
-      !relationships.has(id) ||
-      (before.sourceId === after.sourceId &&
-        before.targetId === after.targetId &&
-        before.typeId === after.typeId &&
-        before.knowledge === after.knowledge)
-    )
-      return [];
-    const source = locations.get(before.sourceId);
-    const target = before.targetId ? locations.get(before.targetId) : undefined;
-    if (!source || !target) return [];
-    const tip = arrowTip(source, target, 29);
-    const start = arrowTip(target, source, 22);
-    return [{ id, before, start, tip }];
-  });
   const labeledEdges = labelEdges.flatMap((edge) => {
     const type = state.relationshipTypes.find((type) => type.id === edge.edge.typeId);
-    const size = labelSizes.get(`relationship-${edge.edge.id}`) ?? {
+    const size = labelSizes.get(`relationship-${edge.key}`) ?? {
       width: Math.min(230, (type?.forwardLabel ?? type?.name ?? '').length * 7 + 24),
       height: 30,
     };
@@ -400,6 +470,20 @@ export function SpatialMap({
   });
   const hiddenLabels = locations.size - labels.size + labelEdges.length - labeledEdges.length;
   const adjacent = new Set<string>();
+  const guideId = movement.heightActive
+    ? movement.guide?.id
+    : selection?.kind === 'object'
+      ? selection.id
+      : undefined;
+  const guidePosition = guideId && locations.has(guideId) ? scene.current?.position(guideId) : null;
+  const heightGuide =
+    guidePosition && (heightHelp || shiftHeld || movement.heightActive)
+      ? {
+          start:
+            movement.guide && movement.guide.id === guideId ? movement.guide.start : guidePosition,
+          end: guidePosition,
+        }
+      : null;
   if (selection?.kind === 'object') {
     adjacent.add(selection.id);
     for (const { edge, selected } of edges)
@@ -472,7 +556,9 @@ export function SpatialMap({
         <p>Rymdkartan kan inte visas. Använd Lista och detaljer för att fortsätta.</p>
       )}
       <div
+        ref={surface}
         className="spatial-surface"
+        data-reveal-request={contextLost || unavailable ? undefined : completedRevealId}
         role="presentation"
         onPointerDownCapture={(event) => {
           if (!event.isPrimary) cancelHold();
@@ -492,6 +578,9 @@ export function SpatialMap({
           ref={canvas}
           role="img"
           aria-label="Rymdens bakgrund. Välj innehåll med etiketterna eller listan."
+          onContextMenu={(event) => {
+            if (event.ctrlKey && !pointer.current?.moved) onClear();
+          }}
           onPointerDown={(event) => {
             if (pointer.current) pointer.current.multiple = true;
             else
@@ -539,10 +628,10 @@ export function SpatialMap({
               <path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke" />
             </marker>
           </defs>
-          {movement.guide && (
+          {heightGuide && (
             <SpatialHeightGuide
-              start={movement.guide.start}
-              end={movement.guide.end}
+              start={heightGuide.start}
+              end={heightGuide.end}
               project={(position) => scene.current?.project(position)}
             />
           )}
@@ -565,9 +654,9 @@ export function SpatialMap({
               )
             );
           })}
-          {labeledEdges.map(({ edge, source, end, x, y }) => (
+          {labeledEdges.map(({ key, source, end, x, y }) => (
             <line
-              key={`edge-leader-${edge.id}`}
+              key={`edge-leader-${key}`}
               className="label-leader"
               x1={(source.x + end.x) / 2}
               y1={(source.y + end.y) / 2}
@@ -580,19 +669,7 @@ export function SpatialMap({
               }
             />
           ))}
-          {previousEdges.map(({ id, before, start, tip }) => (
-            <path
-              key={`previous-${id}`}
-              data-previous-relationship={id}
-              d={`M ${start.x} ${start.y} Q ${(start.x + tip.x) / 2} ${(start.y + tip.y) / 2 + 23} ${tip.x} ${tip.y}`}
-              className="connection removed previous"
-              fill="none"
-              markerEnd="url(#spatial-arrow)"
-            >
-              <title>Tidigare samband: {relationshipLabel(before, state, objects)}</title>
-            </path>
-          ))}
-          {edges.map(({ edge, start, tip, selected, kind }) => {
+          {edges.map(({ edge, start, tip, selected, kind, previous, key }) => {
             const geometry =
               kind === 'removed'
                 ? `M ${start.x} ${start.y} Q ${(start.x + tip.x) / 2} ${(start.y + tip.y) / 2 + 23} ${tip.x} ${tip.y}`
@@ -600,18 +677,18 @@ export function SpatialMap({
             return (
               // biome-ignore lint/a11y/useSemanticElements: SVG geometry supplies pointer selection; the HTML label supplies the keyboard route.
               <g
-                key={edge.id}
+                key={key}
                 role="button"
                 tabIndex={-1}
-                aria-label={`Välj samband: ${relationshipLabel(edge, state, objects)}`}
+                aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
                 onKeyDown={(event) => {
                   if (!disabled && (event.key === 'Enter' || event.key === ' ')) {
                     event.preventDefault();
-                    onSelectRelationship(edge);
+                    onSelectRelationship(edge, previous);
                   }
                 }}
                 onClick={() => {
-                  if (!disabled) onSelectRelationship(edge);
+                  if (!disabled) onSelectRelationship(edge, previous);
                 }}
               >
                 <path d={geometry} className="connection-hit" />
@@ -620,8 +697,14 @@ export function SpatialMap({
                     d={geometry}
                     fill="none"
                     markerEnd="url(#spatial-arrow)"
-                    className={`connection ${kind}${selected ? ' selected' : ''}`}
-                  />
+                    className={`connection ${kind}${previous ? ' previous' : ''}${selected ? ' selected' : ''}`}
+                    data-previous-relationship={previous ? edge.id : undefined}
+                  >
+                    <title>
+                      {previous ? 'Tidigare samband: ' : ''}
+                      {relationshipLabel(edge, state, objects)}
+                    </title>
+                  </path>
                 ) : (
                   <line
                     x1={start.x}
@@ -637,21 +720,25 @@ export function SpatialMap({
           })}
         </svg>
         <div className="spatial-labels" ref={labelLayer}>
-          {labeledEdges.map(({ edge, x, y, selected, kind }) => (
+          {labeledEdges.map(({ edge, x, y, selected, kind, previous, key }) => (
             <button
-              key={edge.id}
-              data-layout-id={`relationship-${edge.id}`}
+              key={key}
+              data-layout-id={`relationship-${key}`}
               ref={observeLabel}
               type="button"
               disabled={disabled}
               className={`spatial-edge ${kind}${selected ? ' selected' : ''}`}
-              aria-label={`Välj samband: ${relationshipLabel(edge, state, objects)}`}
+              aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
               style={{ left: x, top: y }}
-              onClick={() => onSelectRelationship(edge)}
+              onClick={() => onSelectRelationship(edge, previous)}
             >
               <span className="spatial-caption">
                 <ProposalSymbol
-                  change={state.draft.relationships?.find((change) => change.id === edge.id)}
+                  change={
+                    previous
+                      ? { before: edge, after: null }
+                      : state.draft.relationships?.find((change) => change.id === edge.id)
+                  }
                 />{' '}
                 →{' '}
                 {state.relationshipTypes.find((type) => type.id === edge.typeId)?.forwardLabel ??
@@ -701,6 +788,7 @@ export function SpatialMap({
               return (
                 <button
                   key={point.id}
+                  data-object-id={object.id}
                   type="button"
                   disabled={disabled}
                   aria-label={`Välj objekt: ${object.name}`}
@@ -712,7 +800,11 @@ export function SpatialMap({
                   style={{ left: point.x, top: point.y }}
                   onContextMenu={(event) => {
                     event.preventDefault();
-                    openMenu(object, event.currentTarget);
+                    if (event.ctrlKey) {
+                      cancelHold();
+                      movement.cancel();
+                      onFocus(object.id);
+                    } else openMenu(object, event.currentTarget);
                   }}
                   onPointerDown={(event) => {
                     cancelHold();
@@ -813,8 +905,10 @@ export function SpatialMap({
                   const position = scene.current?.position(selection.id);
                   if (position) {
                     const next = { ...position, [axis]: position[axis] + step };
-                    scene.current?.place(selection.id, next);
-                    void personal?.move(selection.id, next);
+                    const end = scene.current?.place(selection.id, next) ?? next;
+                    movement.recordMove(selection.id, position, end, axis === 'y');
+                    if (axis === 'y') setHeightHelp(true);
+                    void personal?.move(selection.id, end);
                   }
                 }}
               >
@@ -891,6 +985,14 @@ export function SpatialMap({
             }}
           />{' '}
           Alla etiketter
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={heightHelp}
+            onChange={(event) => setHeightHelp(event.target.checked)}
+          />
+          Visa höjdhjälp
         </label>
         <label>
           <input
