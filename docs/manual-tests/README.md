@@ -18,6 +18,10 @@ betyder inte att dess manuella prov är genomfört.
   gamla sessioner och sparförsök, omstart och fortsatt export till en tredje
   installation utan gammal databas eller inloggningsbehörighet.
 
+- [Typer, historik och rättelser genom MCP](assistant-advanced.md):
+  egna typer och fält, daterade avtal, riktning och typbyte, skyddade
+  definitioner, granskad sammanslagning med bilder samt ångring efter import.
+
 - [Permanent radering](household-erasure.md): uttrycklig granskning och
   bekräftelse, bevarat oberoende innehåll efter omstart, förlorat svar och
   förnyad granskning efter samtidig ändring samt väntande städning och

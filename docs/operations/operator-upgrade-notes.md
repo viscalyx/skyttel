@@ -59,6 +59,12 @@ owner mapping before a current user can resume it.
 
 ### Assistant map work
 
+Map-work clients can now discover type editing, relevant history, undo and
+object merge tools. Refresh their tool catalogs after rollout. Keep old
+read-only grants unchanged. Verify that clients review the whole resulting
+draft and use current content versions for undo, including imported history.
+Historical author IDs identify saved content and do not grant access.
+
 Keep existing read-only assistant grants unchanged. Clients that need to
 propose and save changes must request new consent for map work. Verify
 that a read-only connection cannot write after rollout. Map-work consent

@@ -69,6 +69,42 @@ Assistenten ansvarar för tolkningen av ditt besked. Servern kontrollerar
 oberoende vad du faktiskt har sagt eller hört. Skyttel lagrar inte hela
 samtalet som hushållsinnehåll.
 
+## Egna typer, historik och rättelser av identitet
+
+Du kan beskriva hyra, lån, kredit och avbetalning med samma frivilliga
+uppgifter som i formulären. Skuld, kreditutrymme och utnyttjad kredit är
+skilda uppgifter och kan ha varsitt datum. Saknade fakta fylls inte i.
+
+Be assistenten läsa hushållets aktuella typer, även när kartan är tom.
+Du kan föreslå egna typer, ändra förifyllda typer och ange fält för text,
+tal, datum och ja/nej. Obesvarat ja/nej är inte nej. Ett använt fälts
+värdeslag ändras genom ett nytt fält; tidigare värden finns kvar tills
+du hanterar dem. Egna samband har benämningar från båda hållen och en
+tydlig riktning, men inga egna fält.
+
+Ett typbyte behåller objektets identitet och samband. Granska både gamla
+och nya fältvärden; lika fältnamn överför inte uppgifter automatiskt.
+En använd definition kan inte tas bort, även om innehållet är upphört
+eller bara används i ett beständigt privat utkast. Felet visar inte
+andra användares privata uppgifter.
+
+Be om relevant historik och välj vilket helt sparande du vill ångra.
+Assistenten kan visa tidigare värden, samband, tidpunkt och författare.
+Ångringen blir ett nytt förslag. Oberoende senare arbete bevaras och
+överlapp behöver lösas. En saknad äldre definition kan återställas
+uttryckligen tillsammans med innehållet. Ett ångringsförslag är inte
+sparat förrän hela utkastet fått ett nytt sparbesked och ett kvitto.
+
+Två lika namn räcker inte för en sammanslagning. Bekräfta vilka objekt
+som är samma företeelse, vilken identitet som ska finnas kvar, vilka
+uppgifter och vilken bild som ska behållas och vad som ska ske med varje
+samband. En felaktig sammanslagning kan ångras genom samma förslagsflöde.
+Typdefinitioner slås inte samman.
+
+Upphört innehåll finns kvar i kartan. Vanlig borttagning kan återställas
+från historiken. Permanent radering är en separat administratörsåtgärd
+och kan ta bort möjligheten att ångra berört innehåll.
+
 ## Återkalla anslutningen
 
 Öppna **Assistentanslutningar** och välj **Återkalla anslutning** för

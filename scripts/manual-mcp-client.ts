@@ -6,6 +6,11 @@ import { createInterface } from 'node:readline';
 // only in this process; it never opens the application database or config files.
 class ControlError extends Error {}
 type Captured = { name: string; arguments: Record<string, unknown> };
+type Tool = {
+  name: string;
+  inputSchema: { properties?: Record<string, unknown> };
+  annotations?: { readOnlyHint?: boolean };
+};
 const emit = (event: string, values = {}) => console.log(JSON.stringify({ event, ...values }));
 
 async function main() {
@@ -138,7 +143,7 @@ async function main() {
     if (typeof credentials.access_token !== 'string')
       throw new ControlError('No access token received.');
     token = credentials.access_token;
-    async function call(name: string, args: Record<string, unknown> = {}) {
+    async function rpc(method: string, params: Record<string, unknown>) {
       const response = await fetch(`${origin.origin}/mcp`, {
         method: 'POST',
         signal: controller.signal,
@@ -150,16 +155,47 @@ async function main() {
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 1,
-          method: 'tools/call',
-          params: { name, arguments: args },
+          method,
+          params,
         }),
       });
       if (!response.ok) throw new ControlError(`MCP HTTP ${response.status}`);
       const body = await response.json();
-      if (body.error || typeof body.result?.content?.[0]?.text !== 'string') {
+      if (body.error || !body.result) throw new ControlError('Invalid MCP response.');
+      return body.result;
+    }
+    async function call(name: string, args: Record<string, unknown> = {}) {
+      const result = await rpc('tools/call', { name, arguments: args });
+      if (typeof result.content?.[0]?.text !== 'string')
         throw new ControlError('Invalid MCP tool response.');
-      }
-      return JSON.parse(body.result.content[0].text);
+      return JSON.parse(result.content[0].text);
+    }
+    async function toolArguments(name: string, json: string, readOnly: boolean) {
+      const catalog = await rpc('tools/list', {});
+      const tool = (catalog.tools as Tool[]).find((item) => item.name === name);
+      if (
+        !tool ||
+        tool.annotations?.readOnlyHint !== readOnly ||
+        ['save_draft', 'prepare_save'].includes(name)
+      )
+        throw new ControlError(
+          'Use an available tool with the correct command; capture-save handles saves.',
+        );
+      const args: unknown = JSON.parse(json);
+      if (!args || typeof args !== 'object' || Array.isArray(args))
+        throw new ControlError('Tool arguments must be a JSON object.');
+      const properties = tool.inputSchema.properties ?? {};
+      if (
+        Object.keys(args).some(
+          (key) => !Object.hasOwn(properties, key) || ['version', 'contentVersion'].includes(key),
+        ) ||
+        (!readOnly &&
+          (!Object.hasOwn(properties, 'version') || !Object.hasOwn(properties, 'contentVersion')))
+      )
+        throw new ControlError(
+          "Use only the tool's documented arguments; versions are captured automatically.",
+        );
+      return args as Record<string, unknown>;
     }
     function captured(label: string) {
       const request = captures.get(label);
@@ -188,6 +224,9 @@ async function main() {
             commands: [
               'read',
               'map [query]',
+              'tools',
+              'read-tool TOOL JSON',
+              'capture-tool LABEL TOOL JSON',
               'capture-save LABEL',
               'capture-object LABEL {"id":"manual-bank","type":"Bankkonto","name":"Betalkonto","identity":"unresolved"}',
               'send LABEL',
@@ -197,6 +236,40 @@ async function main() {
               'quit',
             ],
           });
+        } else if (command === 'tools') {
+          emit('result', { value: await rpc('tools/list', {}) });
+        } else if (command === 'read-tool' || command === 'capture-tool') {
+          const parts = line
+            .trim()
+            .match(
+              command === 'read-tool'
+                ? /^read-tool\s+(\S+)\s+([\s\S]+)$/
+                : /^capture-tool\s+\S+\s+(\S+)\s+([\s\S]+)$/,
+            );
+          if (!parts) throw new ControlError('Supply the tool name and one JSON object.');
+          const [, name, json] = parts;
+          const args = await toolArguments(name, json, command === 'read-tool');
+          if (command === 'read-tool') {
+            emit('result', { value: await call(name, args) });
+          } else {
+            const review = await call('read_my_draft');
+            if (review.error) {
+              emit('result', { value: review });
+              continue;
+            }
+            remember(
+              label,
+              {
+                name,
+                arguments: {
+                  ...args,
+                  version: review.version,
+                  contentVersion: review.contentVersion,
+                },
+              },
+              review,
+            );
+          }
         } else if (command === 'read' || command === 'map') {
           const query = line.trim().slice(command.length).trim();
           emit('result', {

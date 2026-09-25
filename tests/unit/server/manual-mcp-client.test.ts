@@ -30,7 +30,9 @@ test('manual MCP controls authenticate independently, retain stale requests and 
   });
   async function next(event: string) {
     await expect
-      .poll(() => events.some((item) => item.event === event) || exited, { timeout: 10_000 })
+      .poll(() => events.some((item) => item.event === event || item.event === 'error') || exited, {
+        timeout: 10_000,
+      })
       .toBe(true);
     const index = events.findIndex((item) => item.event === event);
     expect(index, output).toBeGreaterThanOrEqual(0);
@@ -139,6 +141,52 @@ test('manual MCP controls authenticate independently, retain stale requests and 
     const saved = await command('send specified-save');
     expect(saved.value.receipt.changes).toHaveLength(1);
     expect(saved.value.receipt.changes[0].after.identity).toBe('unspecified');
+    const tools = await command('tools');
+    expect(tools.value.tools).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'propose_undo' })]),
+    );
+    const receiptReference = JSON.stringify({
+      operationId: saved.value.receipt.operationId,
+      userId: saved.value.receipt.userId,
+    });
+    const history = await command(`read-tool read_history ${receiptReference}`);
+    expect(history.value.receipt).toEqual(saved.value.receipt);
+    const undo = await command(`capture-tool undo propose_undo ${receiptReference}`, 'captured');
+    expect(undo.arguments).toMatchObject(JSON.parse(receiptReference));
+    const beforeUndo = await command('read');
+    expect(beforeUndo.value.changes).toEqual([]);
+    await propose('Intervening');
+    expect((await command('send undo')).value.error).toBe('draft_conflict');
+    expect(
+      await command(`capture-tool undo propose_undo ${receiptReference}`, 'error'),
+    ).toMatchObject({ message: expect.stringContaining('never overwritten') });
+    await command(`capture-tool current-undo propose_undo ${receiptReference}`, 'captured');
+    const proposedUndo = await command('send current-undo');
+    expect(proposedUndo.value.changes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'manual-bank', after: null }),
+        expect.objectContaining({ id: 'Intervening' }),
+      ]),
+    );
+    // Generic controls cannot send writes as reads, bypass save recovery, or
+    // replace the authenticated scope and automatically captured versions.
+    for (const invalid of [
+      `read-tool propose_undo ${receiptReference}`,
+      'capture-tool wrong-read read_history {}',
+      'capture-tool wrong-save save_draft {}',
+      'capture-tool wrong-prepare prepare_save {}',
+      'capture-tool wrong-admin erase_household {}',
+      'capture-tool wrong-version propose_undo {"version":0}',
+      'capture-tool wrong-content propose_undo {"contentVersion":1}',
+      'capture-tool wrong-actor propose_undo {"actorId":"another"}',
+      'read-tool read_history {"householdId":"another"}',
+      'read-tool read_history []',
+      'capture-tool wrong-json propose_undo null',
+    ]) {
+      expect(await command(invalid, 'error')).toHaveProperty('message');
+    }
+    expect((await command('read')).value).toEqual(proposedUndo.value);
+    expect((await (await browser.get(mapPath)).json()).objects).toHaveLength(3);
     const connections = await (await browser.get(`${app.origin}/api/assistants/context`)).json();
     expect(connections.connections).toHaveLength(1);
     const revoked = await browser.post(

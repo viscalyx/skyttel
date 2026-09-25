@@ -132,6 +132,65 @@ export async function checkContainerAssistants({
   assert.deepEqual(await result(writable.token, 'save_draft', attempt), saved);
   const map = await result(writable.token, 'read_map', { objectId: proposal.id });
   assert.equal(map.objects.length, 1);
+  const history = await result(writable.token, 'read_history', { objectId: proposal.id });
+  assert.equal(history.history[0].operationId, saved.receipt.operationId);
+  assert.ok(!JSON.stringify(history).includes('Synthetic container map work'));
+  const selected = await result(writable.token, 'read_history', {
+    operationId: saved.receipt.operationId,
+    userId: saved.receipt.userId,
+  });
+  assert.deepEqual(selected.receipt, saved.receipt);
+  let advanced = await result(writable.token, 'read_my_draft', {});
+  const advancedTypeId = `container-type-${randomUUID()}`;
+  const definition = {
+    version: advanced.version,
+    contentVersion: advanced.contentVersion,
+    id: advancedTypeId,
+    baseRevision: null,
+    value: {
+      name: 'Synthetic device',
+      description: '',
+      fields: [{ id: 'enabled', name: 'Enabled', description: '', kind: 'boolean' }],
+    },
+  };
+  assert.ok((await tool(readOnly.token, 'propose_object_type', definition)).result.isError);
+  advanced = await result(writable.token, 'propose_object_type', definition);
+  const deviceId = `container-device-${randomUUID()}`;
+  advanced = await result(writable.token, 'propose_object', {
+    version: advanced.version,
+    contentVersion: advanced.contentVersion,
+    id: deviceId,
+    baseRevision: null,
+    value: {
+      typeId: advancedTypeId,
+      name: 'Synthetic device',
+      description: '',
+      customValues: { enabled: false },
+    },
+  });
+  advanced = await result(writable.token, 'propose_undo', {
+    version: advanced.version,
+    contentVersion: advanced.contentVersion,
+    operationId: saved.receipt.operationId,
+    userId: saved.receipt.userId,
+  });
+  assert.equal(advanced.changes.length, 2);
+  assert.equal(advanced.objectTypes.length, 1);
+  await result(writable.token, 'save_draft', {
+    version: advanced.version,
+    contentVersion: advanced.contentVersion,
+    operationId: `container-advanced-save-${randomUUID()}`,
+  });
+  await command(['restart', name]);
+  await waitUntilReady(name);
+  assert.equal(
+    (await result(writable.token, 'read_map', { objectId: proposal.id })).objects.length,
+    0,
+  );
+  assert.deepEqual(
+    (await result(writable.token, 'read_map', { objectId: deviceId })).objects[0].customValues,
+    { enabled: false },
+  );
   const context = JSON.parse(
     (await request(name, '/api/assistants/context', { headers: { cookie: fixture.cookie } })).body,
   );
@@ -160,6 +219,6 @@ export async function checkContainerAssistants({
   });
   assert.equal(revoked.status, 401);
   console.log(
-    'PASS: production OAuth map consent, read-only isolation, whole MCP save, restart receipt recovery, and revocation',
+    'PASS: production OAuth map consent, read-only isolation, types, scoped history, whole MCP undo, restart receipt recovery, and revocation',
   );
 }

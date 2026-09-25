@@ -92,6 +92,9 @@ Never overwrite or reconstruct a captured request to perform an exact retry.
 | --- | --- |
 | `read` | Read the whole current private draft. |
 | `map Lo` | Read saved objects matching Lo and their direct context. |
+| `tools` | List the current authenticated MCP tools, their argument schemas and read-only annotations. |
+| `read-tool TOOL JSON` | Call a listed read-only tool with its documented arguments. |
+| `capture-tool LABEL TOOL JSON` | Retain a listed proposal with the supplied arguments and freshly read draft/content versions. Does not submit it. |
 | `capture-save old` | Read and display the whole draft; retain its exact versions and a new operation ID under `old`. Does not save. |
 | `send old` | Send the captured request unchanged. |
 | `status old` | Read that save's durable operation status. |
@@ -122,6 +125,46 @@ send bank
 Capturing a proposal does not submit it. Labels are unique for the process;
 use the exact labels in the manual case in a fresh helper session. No shell,
 database, authentication override or arbitrary JavaScript command is exposed.
+
+### Advanced proposals and historical receipts
+
+Run `tools` to inspect the exact public argument schema. Use `read-tool` for
+current definitions, a merge review, or relevant history. `capture-tool`
+accepts only listed non-read-only tools with draft and content versions.
+Supply all other documented arguments as one JSON object. The helper rejects
+unknown top-level fields and caller-supplied versions; the server validates
+the complete values when `send` submits the request. Use `capture-save` for
+saving: generic commands reject both `save_draft` and `prepare_save`.
+
+For example, prepare a new synthetic object type with a yes/no field:
+
+<!-- markdownlint-disable MD013 -->
+```text
+read-tool read_type_catalog {}
+capture-tool type-example propose_object_type {"id":"manual-device","baseRevision":null,"value":{"name":"Provenhet","description":"Påhittad typ","fields":[{"id":"manual-enabled","name":"Aktiv","description":"","kind":"boolean"}]}}
+send type-example
+read
+```
+<!-- markdownlint-enable MD013 -->
+
+Check the entire draft before capturing and sending a save. Leaving the
+yes/no field unanswered is distinct from explicitly supplying `false` on
+an object. The area's manual case provides the complete scenario and
+expected results.
+
+For history, run `read-tool read_history {}` and copy the relevant
+`operationId` and historical `userId` from that result into the documented
+JSON arguments for `read_history` or `propose_undo`. These are content
+references, never authentication overrides. The historical author may be
+unmapped after import. Undo captures today's draft/content versions; never
+copy versions from the old receipt. For a merge, read `read_merge_review`
+with the selected IDs and retain its exact `reviewed` value alongside the
+explicit fact and relationship choices in `propose_merge`.
+
+To test stale input, capture first, change the draft or relevant saved
+content in the browser, then run `send` with the original label. The helper
+does not refresh that request. Read the returned conflict and whole draft;
+a fresh capture with a new label is a new proposal, not an exact retry.
 
 ## Cleanup
 

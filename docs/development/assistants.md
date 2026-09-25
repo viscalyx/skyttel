@@ -124,14 +124,62 @@ The adapter uses the authenticated connection's actor with `householdMap`;
 it never treats an imported content-owner ID as a login identity. All
 ordinary map constraints, identity questions, current definitions,
 financial facts, image preservation and conflict rules come from the
-same domain boundary as the forms. Type-definition editing, merge,
-history and undo tools are separate extensions. No conversation is stored.
+same domain boundary as the forms. No conversation is stored.
 
 `current.objects` keeps full saved values for changed objects. Other endpoints
 contain only ID, name and type, matching `read_map`'s identity context. A
 relationship-only proposal does not expand those endpoints' other links.
 Read further details explicitly only when needed for the task. The entire
 private draft and its before/after values remain available for review.
+
+## Types, history and identity correction
+
+The same map-work consent enables the following tools. Existing read-only
+grants keep their original tool set. All mutations return the complete own
+draft review and require current draft and content versions.
+
+- `propose_object_type` creates or edits the complete definition, including
+  text, number, date and boolean fields. Omitted object values stay
+  unanswered; `false` is an explicit answer. A used field kind requires a
+  new field. Existing values are never converted automatically.
+- `propose_relationship_type` sets a name, description and forward/reverse
+  labels. Relationship types have no custom fields. Use `value: null` on
+  either definition tool for ordinary removal. Current and ended content
+  and persistent drafts protect used definitions, including at save time.
+  A private-use error does not expose another user's proposal.
+- `propose_object` also changes an object's type. Keep its stable ID and
+  explicitly review the complete target values against the new definition.
+  Matching field names do not transfer values. The draft retains both type
+  definitions and before/after facts; existing relationships retain their IDs.
+- `read_history` returns at most 20 save summaries by default, newest first.
+  `limit` supports 1–50 and `offset` uses `nextOffset` when `hasMore` is true.
+  Optional `objectId` selects saves that changed the object or its direct
+  relationships. Summaries contain author, time, operation ID and counts,
+  without old object text. Supply both `operationId` and historical `userId`
+  to read the complete selected save, including facts and definitions needed
+  to review whole-save undo. Do not send all receipts to a model by default.
+- `propose_undo` uses that selected operation and historical author, but
+  today's `version` and `contentVersion`. Historical authorship never grants
+  access or selects the acting user. Independent later facts survive; own
+  overlapping proposals block undo. Required removed definitions appear as
+  explicit restoration proposals. Review and save the entire resulting
+  draft; the proposal itself is not a completed restoration.
+- `read_merge_review` requires explicit `survivorId` and `absorbedId`. It
+  returns effective own-draft values, direct relationships and definitions
+  in `reviewed`, and per-field `choices` with presence markers. Other
+  endpoints contain only ID, name and type. Equal names do not prove identity.
+- `propose_merge` accepts the exact `reviewed` object, explicit fact choices
+  (`survivor`, `absorbed`, `omit`), a `keep`/`remove` choice for every reviewed
+  relationship, and `identityConfirmed`. False leaves an unresolved identity
+  that blocks saving. Stale review and duplicate redirected links are rejected.
+  A selected absorbed image is copied to the survivor when needed. Whole-save
+  undo can restore the original identities, images and relationships.
+
+Ordinary removal remains reversible while retained history exists. Ended
+content stays on the current map. Permanent erasure is administrative and
+can remove historical restoration paths. Export, import, erasure, access
+management, automatic field conversion and type-definition merging remain
+outside these tools.
 
 ## Local deterministic verification
 
@@ -142,9 +190,11 @@ checks are:
 npm run build
 npm run test:unit -- tests/unit/server/assistants.test.ts
 npm run test:unit -- tests/unit/server/assistant-work.test.ts
+npm run test:unit -- tests/unit/server/assistant-advanced.test.ts
 npm run test:unit -- tests/unit/client/assistants.test.tsx
 npm run test:integration -- tests/integration/assistants.spec.ts
 npm run test:integration -- tests/integration/assistant-work.spec.ts
+npm run test:integration -- tests/integration/assistant-advanced.spec.ts
 ```
 
 The tests run the actual app over loopback HTTP with temporary SQLite.
