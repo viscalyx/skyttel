@@ -245,12 +245,16 @@ original, copied and private image versions”.
 **Syfte:** Kontrollera att ändrad roll och återkallat medlemskap stoppar
 en pågående överföring och tar bort dess tillfälliga serverkopia.
 
-**Användare:** Alex och Robin som administratörer i separata profiler.
+**Användare:** Alex som administratör i webbläsaren och Robin som
+administratör i en separat, kontrollerad HTTP-klient.
 
-**Förutsättningar:** Hushållet innehåller många sparade bildversioner så
-att exporten är stor. Begränsa nätverkshastigheten i Robins webbläsarverktyg
-så att hämtningen inte hinner slutföras före ändringen. Integrationstestet
-använder en stor bildhistorik och pausar läsningen av en riktig HTTP-ström.
+**Förutsättningar:** Använd
+[exportförberedelsen](../development/manual-export.md) i stället för den
+allmänna förberedelsen. Den startar en isolerad app med riktig SQLite,
+kontrollerade externa inloggningssvar och 100 syntetiska bildversioner.
+Alex och Robin får sina separata sessioner genom appens vanliga inloggning.
+Håll kontrollklienten och en andra terminal för filkontrollen öppna.
+Använd inte webbläsarens hastighetsbegränsning som bevis för aktiv server.
 
 **Integrationstest:**
 [household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts),
@@ -259,21 +263,31 @@ and removes its private copy”.
 
 **Steg:**
 
-1. Förbered fullständig export som Robin och välj **Hämta ZIP-fil**.
-   Kontrollera i nätverksverktygen att överföringen fortfarande pågår.
-2. Välj **Gör till medlem** för Robin som Alex i profil A.
-3. Återställ nätverkshastigheten i profil B och låt överföringen avslutas.
-   Kontrollera att ingen komplett ZIP-fil erbjuds.
-4. Gör Robin till administratör igen. Upprepa förberedelse och hämtning,
-   men välj denna gång **Återkalla tillgång** för Robin som Alex och
-   bekräfta återkallelsen.
-5. Kontrollera med testinstallationens operatör att de tillfälliga
-   exportfilerna tas bort efter båda ändringarna.
+1. Skriv `pause` i kontrollklienten. Kräv händelsen `paused` med
+   `archiveBytes > 16777216`, `receivedBytes > 0`,
+   `sourceReadBytes < archiveBytes` och `active: true`. Kontrollera den
+   privata filens storlek och rättigheter med guidens `ls`-kommandon.
+2. Skriv `inspect` och kontrollera på nytt `active: true` samt olästa byte
+   i serverns källfil. Välj omedelbart **Gör till medlem** för Robin som
+   Alex. Gör kontrollen inom en minut, före angiven `expiresAt`.
+3. Skriv `resume`. Kräv färre mottagna byte än hela arkivet,
+   `interrupted: true`, `beforeExpiry: true`, `scratchEmpty: true` och
+   `retryStatus: 403`. Kör guidens separata kontroll av
+   `.skyttel-exports`: resultatet ska vara `[]` och slutstatus noll.
+4. Gör Robin till administratör igen som Alex. Upprepa steg 1–3 med ett
+   nytt export-ID, men välj denna gång **Återkalla tillgång** och bekräfta
+   återkallelsen direkt efter `inspect`. Kontrollera åter både det
+   ofullständiga svaret, nekad ny hämtning och den tomma serverkatalogen.
+5. Skriv `quit` och kontrollera att den tillfälliga katalogen försvinner
+   enligt guidens avslutningskommando. Anteckna resultatet för båda
+   åtkomständringarna; en utgången export eller `active: false` räknas inte.
 
 **Förväntat resultat:**
 
 - Både rolländring och återkallat medlemskap avbryter den aktiva hämtningen.
-  Den ofullständiga filen erbjuds inte som en lyckad export.
+  Kontrollklienten tar emot färre byte än det annonserade arkivets storlek
+  och redovisar avbrott. Ingen komplett ZIP kan återskapas från svaret.
+  Klienten skriver ingen fil; webbläsarens filerbjudande provas i EXPORT-01.
 - Den tillfälliga serverkopian tas bort och samma hämtning kan inte
   återupptas. Redan mottagna data eller data i nätverkets buffertar kan
   inte återkallas.

@@ -36,7 +36,8 @@ betyder inte att dess manuella prov är genomfört.
 - [Fullständig export](household-export.md): privata uppgifter före
   export, nedladdning, avbrott, återkallad aktiv hämtning, giltighetstid samt
   bevarade identiteter, bildversioner, utkast och placeringar efter
-  sammanslagning.
+  sammanslagning. En lokal kontrollklient pausar en stor HTTP-överföring,
+  mäter olästa byte i serverns källfil och kontrollerar borttagna exportfiler.
 
 - [Sammanslagning](object-merge.md): uttrycklig identitet, val av uppgifter
   och samband, privata förslag, kontrollerat förlorat sparsvar, omstart
