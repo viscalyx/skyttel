@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import { readFile, writeFile } from 'node:fs/promises';
-import { availableParallelism, cpus, loadavg, platform, release, totalmem } from 'node:os';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { availableParallelism, cpus, loadavg, platform, release, tmpdir, totalmem } from 'node:os';
+import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, expect } from '@playwright/test';
 import type { MapState } from '../src/shared/map.js';
@@ -161,10 +162,11 @@ try {
         sample.overlappingPairs === 0,
     ),
   };
-  await writeFile(
-    process.env.MAP_REPORT ?? '/tmp/skyttel-map-measurement.json',
-    `${JSON.stringify(report, null, 2)}\n`,
-  );
+  const reportPath =
+    process.env.MAP_REPORT ??
+    join(await mkdtemp(join(tmpdir(), 'skyttel-map-measurement-')), 'report.json');
+  await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(`Measurement report: ${reportPath}`);
   if (!report.targetsMet) process.exitCode = 1;
 } finally {
   await browser.close();

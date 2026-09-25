@@ -153,7 +153,9 @@ async function checkProfile(profile, composePath) {
   }
   const shared = [
     '/workspace',
-    ...['sessions', 'plugins', 'skills', 'rules'].map((name) => `/home/vscode/.codex/${name}`),
+    ...['sessions', 'plugins', 'skills', 'rules', 'auth.json'].map(
+      (name) => `/home/vscode/.codex/${name}`,
+    ),
   ];
   for (const target of shared) {
     const actual = original.services.app.volumes.find((mount) => mount.target === target);
@@ -189,6 +191,9 @@ async function checkProfile(profile, composePath) {
           type: 'volume',
           source: `storage-${index}`,
           target,
+          ...(target === '/home/vscode/.codex/auth.json'
+            ? { volume: { subpath: 'auth.json' } }
+            : {}),
         })),
       },
     },
@@ -196,6 +201,21 @@ async function checkProfile(profile, composePath) {
   };
   await writeFile(path, JSON.stringify(model));
   projects.push({ compose, volumes: Object.values(volumes).map(({ name }) => name) });
+  // Seed a file in isolated storage so the auth mount remains a file, without
+  // reading or mounting host credentials. All other replacements are directories.
+  const authVolume = volumes[`storage-${targets.indexOf('/home/vscode/.codex/auth.json')}`].name;
+  await command(['volume', 'create', authVolume]);
+  await command([
+    'run',
+    '--rm',
+    '--user',
+    'root',
+    '--mount',
+    `type=volume,source=${authVolume},target=/fixture`,
+    image,
+    'touch',
+    '/fixture/auth.json',
+  ]);
   await compose('up', '--detach', '--no-build');
   let container = await compose('ps', '--quiet', 'app');
   const run = (...args) => command(['exec', container, ...args]);

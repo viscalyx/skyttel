@@ -14,6 +14,9 @@ host terminal with Bash or Zsh; on Windows, use a WSL Linux shell:
 ```sh
 mkdir -p "$HOME/.codex/sessions" "$HOME/.codex/plugins" \
   "$HOME/.codex/skills" "$HOME/.codex/rules"
+if [ ! -e "$HOME/.codex/auth.json" ]; then
+  (umask 077; printf '{}\n' > "$HOME/.codex/auth.json")
+fi
 cp -n .devcontainer/.env.example .devcontainer/.env
 chmod 600 .devcontainer/.env
 openssl rand -base64 48
@@ -225,7 +228,9 @@ checks use synthetic providers and do not require a real key.
 The devcontainer installs Codex tooling. If you use it, sign in from the
 container's CLI or VS Code extension. The host directories prepared above
 share sessions, plugins, skills, and rules with the container; editing their
-contents also changes the host copies. A host `auth.json` is not required.
+contents also changes the host copies. Both profiles also mount the host's
+`~/.codex/auth.json` as a file. The preparation command creates an empty
+placeholder only when the file is absent; it preserves existing credentials.
 Keep credentials out of the repository and container image.
 
 ## State and rebuilds
@@ -241,11 +246,14 @@ Keep additional Git worktrees outside the checkout and install dependencies
 for each. Changing profiles or the Compose project name selects different
 volumes; removing volumes deletes their contents.
 
-Codex sessions, plugins, skills, and rules use host directories. Codex's
-SQLite state and temporary files have separate named volumes. The current
-Compose files do not mount the whole `~/.codex` directory: back up personal
-`config.toml` and file-based credentials outside the disposable container
-filesystem before rebuilding, or sign in and configure Codex again afterward.
+Codex sessions, plugins, skills, and rules use host directories; `auth.json`
+uses a host file. These mounts survive container recreation. Codex's SQLite
+state and temporary files have separate named volumes. The Compose files do
+not mount the whole `~/.codex` directory: back up personal `config.toml`
+outside the disposable container filesystem before rebuilding.
+Setup replaces managed configuration blocks and applies the repository's
+approval policy, default permissions, workspace trust, and disabled plugins
+and skills. Keep unrelated personal settings outside managed blocks.
 
 Rebuild after changing `.node-version` or the npm pin in `package.json`.
 Keep the private environment file and authentication secret when rebuilding.

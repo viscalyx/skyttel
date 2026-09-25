@@ -80,19 +80,27 @@ def verify_storage(recreated=False):
     expected = tomllib.loads((BUNDLE / 'codex-config.toml').read_text())
     assert parsed['projects']['/workspace']['trust_level'] == 'trusted'
     assert parsed['permissions'] == expected['permissions']
+    assert parsed['approval_policy'] == expected['approval_policy']
+    assert parsed['default_permissions'] == expected['default_permissions']
+    assert parsed['plugins'] == expected['plugins']
     auth = HOME / '.codex/auth.json'
+    assert json.loads(auth.read_text()) == {'synthetic_marker': 'not-a-credential'}
+    assert auth.stat().st_mode & 0o777 == 0o600
     if recreated:
         assert parsed.get('model') != 'personal-sentinel'
         assert parsed['default_permissions'] == expected['default_permissions']
         assert not (HOME / '.codex/persistence-sentinel.txt').exists()
-        assert not auth.exists()
+        assert parsed['skills'] == expected['skills']
         assert not Path('/tmp/disposable-layer-sentinel.txt').exists()
     else:
         for key, value in tomllib.loads(PERSONAL).items():
+            if key in ('approval_policy', 'default_permissions', 'plugins', 'skills'):
+                continue
             assert parsed[key] == value, key
+        assert parsed['skills']['config'] == (
+            tomllib.loads(PERSONAL)['skills']['config'] + expected['skills']['config']
+        )
         assert (HOME / '.codex/persistence-sentinel.txt').read_text() == 'retained\n'
-        assert json.loads(auth.read_text()) == {'synthetic_marker': 'not-a-credential'}
-        assert auth.stat().st_mode & 0o777 == 0o600
         assert Path('/tmp/disposable-layer-sentinel.txt').read_text() == 'must disappear'
 
 

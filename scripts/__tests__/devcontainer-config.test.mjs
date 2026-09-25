@@ -45,7 +45,7 @@ test('first creation supplies defaults and private file permissions', async (t) 
   assert.equal((await stat(config.path)).mode & 0o777, 0o600);
 });
 
-test('repeated setup preserves personal choices, other projects and file permissions', async (t) => {
+test('repeated setup enforces managed settings and preserves unrelated personal choices', async (t) => {
   const config = await fixture(
     t,
     `# Personal choices survive rebuilding.
@@ -55,8 +55,13 @@ cli_auth_credentials_store = "keyring"
 model = "personal-sentinel"
 [plugins.plugin-management]
 enabled = true
+[plugins.personal]
+enabled = true
 [[skills.config]]
 path = "/synthetic/skills/SKILL.md"
+enabled = true
+[[skills.config]]
+path = "/home/vscode/.codex/skills/.system/review-agent/SKILL.md"
 enabled = true
 [projects."/other-project"]
 trust_level = "untrusted"
@@ -70,6 +75,17 @@ extends = ":read-only"
 `,
   );
   const expected = config.parse();
+  expected.approval_policy = 'never';
+  expected.default_permissions = 'skyttel-development';
+  expected.plugins['plugin-management'].enabled = false;
+  expected.plugins['openai-templates'] = { enabled: false };
+  expected.skills.config = [
+    { path: '/synthetic/skills/SKILL.md', enabled: true },
+    ...['plugin-creator', 'review-agent', 'skill-creator', 'skill-installer'].map((name) => ({
+      path: `/home/vscode/.codex/skills/.system/${name}/SKILL.md`,
+      enabled: false,
+    })),
+  ];
   expected.projects['/workspace'].trust_level = 'trusted';
   const first = config.run();
   assert.equal(first.status, 0, first.stderr);
@@ -84,7 +100,7 @@ extends = ":read-only"
   assert.equal((await stat(config.path)).mode & 0o777, 0o640);
 });
 
-test('first transition retains personal values inside legacy managed blocks', async (t) => {
+test('first transition replaces legacy managed blocks and preserves personal settings outside them', async (t) => {
   const config = await fixture(
     t,
     `# >>> skyttel azure dev managed root
@@ -92,6 +108,7 @@ model = "legacy-personal-model"
 approval_policy = "on-request"
 default_permissions = ":read-only"
 # <<< skyttel azure dev managed root
+cli_auth_credentials_store = "keyring"
 # >>> skyttel azure dev managed profile
 [permissions.skyttel-development]
 extends = ":read-only"
@@ -101,9 +118,10 @@ extends = ":read-only"
   const result = config.run();
   assert.equal(result.status, 0, result.stderr);
   const actual = config.parse();
-  assert.equal(actual.model, 'legacy-personal-model');
-  assert.equal(actual.approval_policy, 'on-request');
-  assert.equal(actual.default_permissions, ':read-only');
+  assert.equal(actual.model, undefined);
+  assert.equal(actual.cli_auth_credentials_store, 'keyring');
+  assert.equal(actual.approval_policy, 'never');
+  assert.equal(actual.default_permissions, 'skyttel-development');
   assert.equal(actual.permissions['skyttel-development'].extends, ':workspace');
 });
 
