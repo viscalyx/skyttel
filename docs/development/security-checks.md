@@ -64,7 +64,9 @@ reports belong in the private channel linked in [SECURITY.md](../../SECURITY.md)
 Remediate first. `.github/security-exceptions.json` starts empty. An exception
 applies only to one Grype vulnerability ID, package name, installed version,
 package type, and image ID. It must record an owner, rationale, HTTPS evidence,
-reviewer, creation time, and expiry no more than 30 days after creation.
+reviewer, a nonempty `actionPlan`, creation time, and expiry no more than 30 days
+after creation. The action plan states how the owner will remediate the finding
+and when to review progress, including how to track an unavailable upstream fix.
 The current time must fall within that interval. Expired, malformed, duplicate,
 wildcard, or unmatched records fail even if another finding is excepted.
 

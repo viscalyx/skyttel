@@ -25,6 +25,7 @@ function reviewedException(imageId = digest('e')) {
     owner: 'maintainer',
     reviewer: 'reviewer',
     rationale: 'Synthetic exception',
+    actionPlan: 'Check the upstream fix weekly and release the patched package before expiry.',
     evidence: 'https://example.test/assessment',
     created: '2026-09-23T00:00:00Z',
     expires: '2026-09-25T00:00:00Z',
@@ -224,6 +225,11 @@ test('same reviewed exact-image policy accepts valid exceptions and blocks expir
   const exception = reviewedException();
   state.exceptions.exceptions = [exception];
   assert.equal((await run()).status, 'passed');
+  delete exception.actionPlan;
+  assert.equal((await run()).status, 'blocked');
+  exception.actionPlan = '   ';
+  assert.equal((await run()).status, 'blocked');
+  exception.actionPlan = 'Release the patched package before expiry.';
   exception.expires = '2026-09-24T09:00:00Z';
   assert.equal((await run()).status, 'blocked');
   exception.expires = '2026-09-25T00:00:00Z';

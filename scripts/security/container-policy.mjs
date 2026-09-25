@@ -80,6 +80,7 @@ function validateExceptions(records, imageId, retainedImageIds, now) {
       'owner',
       'reviewer',
       'rationale',
+      'actionPlan',
       'evidence',
       'created',
       'expires',

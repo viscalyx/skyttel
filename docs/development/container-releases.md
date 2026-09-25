@@ -216,6 +216,12 @@ are restored when present. Existing files must match before missing files
 are added. A retained candidate is reused without rebuilding it. A failure
 before candidate verification completes does not create a verified artifact.
 
+Each candidate attempt also retains available scan reports and identity files
+in `release-candidate-diagnostics-<attempt>`, including reports from failed
+Grype checks and ZAP scans. This diagnostic artifact excludes the image archive
+and cannot be restored or published as a verified candidate. A scanner failure
+can leave partial reports; inspect the failed step alongside these files.
+
 The release artifacts request 90 days of Actions retention, subject to
 repository policy. This is recovery storage for incomplete runs. An expired
 verified artifact stops the retry; do not manufacture another image under
