@@ -135,8 +135,12 @@ test('PANEL-02: mobile panel choice retains conversation, object text and deskto
     const position = await bounds(panel);
     expect(position.x).toBeLessThan(clickPosition.x);
     await page.setViewportSize({ width: 900, height: 1000 });
-    const fitted = await bounds(panel);
-    expect(fitted.x + fitted.width).toBeLessThanOrEqual(900);
+    await expect
+      .poll(async () => {
+        const fitted = await bounds(panel);
+        return fitted.x + fitted.width;
+      })
+      .toBeLessThanOrEqual(900);
     await page.setViewportSize({ width: 1440, height: 1000 });
     await expect.poll(async () => (await bounds(panel)).x).toBe(position.x);
     await page

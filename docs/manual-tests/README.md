@@ -38,6 +38,11 @@ fallens formulär, listor, typer, historik och utkast. Välj **Samtal och text**
 före samtalsfallen. På telefon öppnar **Visa verktygens namn** även de
 kompletterande verktygen.
 
+Välj ett objekt i Lista för att öppna dess panel. När ett fall återvänder
+till ett redan öppet objekt, välj objektet i **Öppna paneler**. Stäng
+arbetsytan inför kartgester om panelerna täcker kartan eller dess reglage;
+öppna Lista igen för sökning, filter, samband och utkast.
+
 **Min profil** innehåller användar-ID, inbjudningar, **Inloggningssätt**,
 **Månadskostnad** för driftansvarig och **Logga ut**. **Inställningar**
 innehåller **Administrera tillgång** för administratören och
