@@ -46,6 +46,8 @@ funktion. **Stäng arbetsytan** återgår till kartan och behåller oskickad tex
 
 ## Områden
 
+- [Fria paneler](workspace-panels.md): flera objekt och samtal, placering,
+  mobil panelväljare och bevarat oskickat arbete.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman och fokus, stängbar vägledning, hjälp, formulär på telefon samt
   laddning och återhämtning efter nätfel.

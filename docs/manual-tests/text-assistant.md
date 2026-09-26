@@ -353,7 +353,7 @@ före bekräftelsen”, både dator- och telefonvarianten.
 
 **Steg:**
 
-1. Välj **Lista och detaljer**. Skriv **Visa Lo i kartan** i assistenten.
+1. Öppna **Samtal och text**. Skriv **Visa Lo i kartan** i assistenten.
    Kopiera Lo-förslagets ID från terminalens `held`. Svara med
    `tool NUMMER show_map_item {"kind":"object","id":"LO-ID"}`;
    byt `NUMMER` och `LO-ID` mot provets verkliga värden.
@@ -361,9 +361,11 @@ före bekräftelsen”, både dator- och telefonvarianten.
    Detaljpanelen ska samtidigt synas med Lo och beskrivningen
    **Påhittad uppgift**, utan att du behöver rulla sidan för att hitta den.
    Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
-   `reply NUMMER Här är urvalet.` och kontrollera **Markerat i kartan**.
+   `reply NUMMER Här är urvalet.`, välj **Samtal och text** i panelväljaren
+   och kontrollera **Markerat i kartan**.
 3. Öppna **Navigera rymden** och panorera tills objekten inte syns.
-   Skriv **Visa sambandet mellan Lo och Molnmusik**. Kopiera sambandets
+   Öppna samtalspanelen och skriv **Visa sambandet mellan Lo och Molnmusik**.
+   Kopiera sambandets
    ID från `held` och svara med
    `tool NUMMER show_map_item {"kind":"relationship","id":"SAMBANDS-ID"}`.
 4. Kontrollera att båda objekten och det valda sambandet syns igen.
@@ -371,7 +373,8 @@ före bekräftelsen”, både dator- och telefonvarianten.
    Kontrollera `displayed: true` och släpp sluttexten.
 5. Välj **Redigera valt samband**. Ändra **Till objekt** i formuläret
    utan att lägga ändringen i utkastet.
-   Skriv **Visa Lo igen** och upprepa visningsanropet från steg 1.
+   Välj samtalspanelen, skriv **Visa Lo igen** och upprepa
+   visningsanropet från steg 1.
    Kontrollera `displayed: false`, släpp sluttexten och kontrollera att
    formulärets oskickade ändring finns kvar.
 6. Stäng formuläret och upprepa steg 1–5 med ett smalt telefonfönster.

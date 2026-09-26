@@ -30,6 +30,15 @@ const originalScrollIntoView = Object.getOwnPropertyDescriptor(
   'scrollIntoView',
 );
 beforeEach(async () => {
+  // jsdom has no media queries or layout observer; browser tests cover panel geometry.
+  vi.stubGlobal('matchMedia', () => Object.assign(new EventTarget(), { matches: false }));
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
   // jsdom has no layout; browser tests verify actual focus scrolling.
   Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
     configurable: true,
@@ -1076,7 +1085,7 @@ test('view changes retain unsent object text and filters can clear without chang
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
   await userEvent.clear(screen.getByLabelText('Beskrivning'));
   await userEvent.type(screen.getByLabelText('Beskrivning'), 'Oskickad vytext');
-  await userEvent.click(screen.getByRole('button', { name: 'Samlad vy' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
   await userEvent.click(screen.getByRole('button', { name: 'Stäng arbetsytan' }));
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
   expect((screen.getByLabelText('Beskrivning') as HTMLTextAreaElement).value).toBe(
@@ -1084,6 +1093,10 @@ test('view changes retain unsent object text and filters can clear without chang
   );
   await userEvent.click(screen.getByRole('button', { name: 'Stäng arbetsytan' }));
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
+  await userEvent.selectOptions(
+    screen.getByLabelText(/^Öppna paneler/),
+    screen.getByRole('option', { name: 'Lo Rymdprov' }),
+  );
   await userEvent.click(screen.getByRole('button', { name: 'Stäng utan att skicka texten' }));
   await userEvent.click(screen.getByRole('button', { name: 'Redigera Lo Rymdprov' }));
   await userEvent.click(screen.getByRole('button', { name: 'Visa objektets kopplingar' }));

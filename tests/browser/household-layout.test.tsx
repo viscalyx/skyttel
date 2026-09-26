@@ -69,25 +69,39 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test('desktop keeps the map beside a bounded work panel with conversation, selection and list', async () => {
+test('desktop keeps the map and bounded conversation, object and list panels available', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   const surface = document.querySelector('.spatial-surface');
-  const inspector = page.getByRole('region', { name: 'Val och redigering' });
-  await expect.element(inspector).toBeVisible();
+  const list = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+  await expect.element(list).toBeVisible();
   expect(surface).not.toBeNull();
   const bounds = surface?.getBoundingClientRect();
-  const details = inspector.element().getBoundingClientRect();
+  expect(bounds?.width).toBeGreaterThan(1300);
+  await page
+    .getByRole('navigation', { name: 'Kartans verktyg' })
+    .getByRole('button', { name: 'Samtal och text', exact: true })
+    .click();
   const speech = page.getByRole('region', { name: 'Talsamtal' }).element().getBoundingClientRect();
-  expect(bounds?.width).toBeGreaterThan(800);
-  expect(details.left).toBeGreaterThan(bounds?.right ?? 0);
-  expect(details.right).toBeLessThanOrEqual(1440);
   expect(speech.height).toBeGreaterThan(0);
-  expect(
-    page.getByRole('button', { name: 'Alex', exact: true }).element().getBoundingClientRect().top,
-  ).toBeGreaterThan(details.top);
-  await page.getByRole('button', { name: 'Alex', exact: true }).click();
-  await expect.element(page.getByText('Namn: Alex', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await list.getByRole('button', { name: 'Alex', exact: true }).click();
+  const object = page.getByRole('region', { name: 'Alex', exact: true });
+  await expect.element(object.getByText('Namn: Alex', { exact: true })).toBeVisible();
+  for (const panel of [
+    list,
+    object,
+    page.getByRole('region', { name: 'Samtal och text', exact: true }),
+  ]) {
+    await expect.element(panel).toBeVisible();
+    const box = panel.element().getBoundingClientRect();
+    expect(box.width).toBeGreaterThan(250);
+    expect(box.width).toBeLessThan(600);
+    expect(box.left).toBeGreaterThanOrEqual(0);
+    expect(box.right).toBeLessThanOrEqual(1440);
+    expect(box.top).toBeGreaterThanOrEqual(0);
+    expect(box.bottom).toBeLessThanOrEqual(960);
+  }
   await expect
     .element(page.getByLabelText('Objektets namn', { exact: true }))
     .not.toBeInTheDocument();
@@ -100,31 +114,37 @@ test('phone opens the list from the map and preserves an edited name through map
     .not.toBeInTheDocument();
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page.getByRole('button', { name: 'Alex', exact: true }).click();
-  await expect.element(page.getByRole('button', { name: 'Alex', exact: true })).toHaveFocus();
-  await userEvent.keyboard('{Tab}');
-  await expect
-    .element(page.getByRole('button', { name: 'Redigera Alex', exact: true }))
-    .toHaveFocus();
+  const object = page.getByRole('region', { name: 'Alex', exact: true });
+  await expect.element(object.getByRole('heading', { name: 'Alex', exact: true })).toHaveFocus();
+  object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).element().focus();
   await userEvent.keyboard('{Enter}');
   await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveFocus();
   await page.getByLabelText('Objektets namn', { exact: true }).fill('Alex ändrat');
+  const objectElement = object.element();
   await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
   await expect
     .element(page.elementLocator(document.querySelector('.assistant-bar') as HTMLElement))
     .not.toBeVisible();
-  await expect
-    .element(page.elementLocator(document.querySelector('.map-inspector') as HTMLElement))
-    .not.toBeVisible();
+  await expect.element(page.elementLocator(objectElement)).not.toBeVisible();
   const bounds = document.querySelector('.spatial-surface')?.getBoundingClientRect();
   expect(bounds?.height).toBeGreaterThan(500);
   expect(bounds?.width).toBeGreaterThan(340);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await page
+    .getByLabelText(/^Öppna paneler/)
+    .selectOptions(page.getByRole('option', { name: 'Alex', exact: true }));
   await expect
     .element(page.getByLabelText('Objektets namn', { exact: true }))
     .toHaveValue('Alex ändrat');
   await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Kartans verktyg' })
+    .getByRole('button', { name: 'Samtal och text', exact: true })
+    .click();
   await expect.element(page.getByRole('region', { name: 'Talsamtal' })).toBeVisible();
+  await page
+    .getByLabelText(/^Öppna paneler/)
+    .selectOptions(page.getByRole('option', { name: 'Alex', exact: true }));
   await expect
     .element(page.getByLabelText('Objektets namn', { exact: true }))
     .toHaveValue('Alex ändrat');
@@ -169,9 +189,14 @@ test('full map fills the available desktop and landscape phone area', async () =
     .element(page.getByLabelText('Objektets namn', { exact: true }))
     .not.toBeInTheDocument();
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Lista och utkast', exact: true })
+    .getByRole('button', { name: 'Alex', exact: true })
+    .click();
+  const object = page.getByRole('region', { name: 'Alex', exact: true });
+  await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
   await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Alex');
-  const work = page.elementLocator(document.querySelector('.assistant-workspace') as HTMLElement);
+  const work = object;
   await expect.element(work).toBeVisible();
   expect(work.element().getBoundingClientRect().height).toBeLessThanOrEqual(390);
   expect(work.element().getBoundingClientRect().width).toBeLessThan(844);
