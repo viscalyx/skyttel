@@ -8,7 +8,7 @@ import {
   factText,
 } from './detail-study-model.js';
 import type { StudyObject, StudyRelationship } from './map-study-types.js';
-import type { TypeStudyDefinition, TypeStudyField } from './type-study-model.js';
+import type { TypeStudyDefinition, TypeStudyField, TypeStudyModel } from './type-study-model.js';
 import './detail-study-panel.css';
 
 export type DetailStudyVariant = 'A' | 'B' | 'C';
@@ -30,6 +30,8 @@ type DetailStudyPanelProps = {
   onTypes?: () => void;
   onRelationship?: (id?: string) => void;
   reverseLabels?: Record<string, string>;
+  creation?: boolean;
+  types?: TypeStudyModel;
 };
 
 type Section = 'basic' | 'money' | 'time';
@@ -63,10 +65,12 @@ export function DetailStudyPanel({
   onRelated,
   relationships,
   objects,
-  definition,
+  definition: configuredDefinition,
   onTypes,
   onRelationship,
   reverseLabels,
+  creation = false,
+  types,
 }: DetailStudyPanelProps) {
   const id = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -76,6 +80,20 @@ export function DetailStudyPanel({
   const current = model.current(object.id);
   const buffer = model.buffer(object.id);
   const record = editing ? buffer : current;
+  const definition = types ? model.typeDefinition(object.id, editing) : configuredDefinition;
+  const typeChanged = !creation && editing && buffer.typeId !== current.typeId;
+  const displacedFields = editing ? (buffer.displacedFields ?? []) : [];
+  const visibleBuiltins = new Set(
+    definition?.fields
+      .filter((field) => definition.sections.some((section) => section.id === field.sectionId))
+      .map((field) => field.builtin),
+  );
+  const retainedFacts = financialFields
+    .filter(({ key }) => !visibleBuiltins.has(key) && record.facts[key].knowledge !== 'unset')
+    .map(({ key }) => key);
+  const retainedDescription = Boolean(
+    record.description.trim() && !visibleBuiltins.has('description'),
+  );
   const unsent = model.unsentIds.includes(object.id);
   const errors = model.errors[object.id] ?? {};
   const errorEntries = Object.entries(errors);
@@ -102,7 +120,7 @@ export function DetailStudyPanel({
   }
 
   function sectionFor(field: string): Section {
-    return field === 'name' || field === 'description'
+    return ['name', 'description', 'typeId', 'identity', 'fieldsHandled'].includes(field)
       ? 'basic'
       : dateKeys.some((key) => field.startsWith(key))
         ? 'time'
@@ -171,6 +189,61 @@ export function DetailStudyPanel({
           />
         </label>
         {error('name')}
+        {types && (
+          <>
+            <label htmlFor={`${id}-typeId`}>
+              {creation ? 'Objekttyp' : 'Byt typ'}
+              <select
+                id={`${id}-typeId`}
+                data-detail-field="typeId"
+                value={record.typeId ?? ''}
+                onChange={(event) => model.changeType(object.id, event.target.value)}
+                aria-invalid={Boolean(errors.typeId)}
+                aria-describedby={errors.typeId ? `${id}-typeId-error` : `${id}-typeId-hint`}
+                disabled={blocked}
+              >
+                <option value="">Välj objekttyp</option>
+                {types.definitions
+                  .filter((type) => type.kind === 'object')
+                  .map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            {error('typeId')}
+            <p className="ds-type-hint" id={`${id}-typeId-hint`}>
+              {creation
+                ? 'Typen bestämmer vilka egenskaper och avsnitt som visas. Uppgifterna är valfria.'
+                : 'Du kan byta till vilken objekttyp som helst. Objektet och dess samband finns kvar.'}
+            </p>
+            <label htmlFor={`${id}-identity`}>
+              Identitet
+              <select
+                id={`${id}-identity`}
+                data-detail-field="identity"
+                value={record.identity ?? 'identified'}
+                onChange={(event) =>
+                  change({ identity: event.target.value as DetailRecord['identity'] })
+                }
+                aria-describedby={`${id}-identity-hint`}
+                disabled={blocked}
+              >
+                <option value="identified">Identifierat objekt</option>
+                <option value="unspecified">Ospecificerat objekt</option>
+                <option value="unanswered">Obesvarad identitetsfråga</option>
+              </select>
+            </label>
+            <p className="ds-type-hint" id={`${id}-identity-hint`}>
+              {record.identity === 'unanswered'
+                ? 'Du kan lägga objektet i utkastet nu. Välj identifierat eller ospecificerat innan du sparar hushållets karta.'
+                : record.identity === 'unspecified'
+                  ? 'Objektet är omnämnt men ännu inte närmare identifierat, till exempel bankkontot som betalar hyran.'
+                  : 'Du vet vilket objekt uppgifterna gäller.'}
+            </p>
+          </>
+        )}
         {includeDescription && (
           <label htmlFor={`${id}-description`}>
             Beskrivning
@@ -191,6 +264,18 @@ export function DetailStudyPanel({
           <dt>Namn</dt>
           <dd>{record.name}</dd>
         </div>
+        {types && (
+          <div>
+            <dt>Identitet</dt>
+            <dd>
+              {record.identity === 'unanswered'
+                ? 'Obesvarad identitetsfråga'
+                : record.identity === 'unspecified'
+                  ? 'Ospecificerat objekt'
+                  : 'Identifierat objekt'}
+            </dd>
+          </div>
+        )}
         {includeDescription && (
           <div>
             <dt>Beskrivning</dt>
@@ -392,6 +477,67 @@ export function DetailStudyPanel({
     );
   }
 
+  function typeChangeSummary() {
+    if (!types || (!typeChanged && !displacedFields.length)) return null;
+    return (
+      <section className="ds-type-change" aria-label="Vad typbytet innebär">
+        <h3>{creation ? 'Du har bytt objekttyp' : 'Vad typbytet innebär'}</h3>
+        {typeChanged && (
+          <p>
+            {model.typeDefinition(object.id)?.name ?? object.type} →{' '}
+            {definition?.name ?? 'Välj en objekttyp'}
+          </p>
+        )}
+        <p>
+          Namn, beskrivning, ekonomiska uppgifter och samband behålls. Den nya typens egna fält
+          börjar utan svar.
+        </p>
+        {displacedFields.length > 0 && (
+          <>
+            <h4>Tidigare fältvärden</h4>
+            <p>
+              De här värdena följer inte med till den nya typen, även om ett fält har samma namn.
+              Fyll i de nya fälten med det du vill behålla innan du fortsätter.
+            </p>
+            {displacedFields.map((batch) => (
+              <div className="ds-displaced-fields" key={batch.id}>
+                <strong>Från {batch.typeName}</strong>
+                <dl className="ds-fact-list">
+                  {batch.fields.map((field) => (
+                    <div key={field.id}>
+                      <dt>{field.name}</dt>
+                      <dd>
+                        {field.kind === 'boolean'
+                          ? field.value === 'true'
+                            ? 'Ja'
+                            : 'Nej'
+                          : field.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ))}
+            <label className="ds-fields-handled" htmlFor={`${id}-fieldsHandled`}>
+              <input
+                id={`${id}-fieldsHandled`}
+                data-detail-field="fieldsHandled"
+                type="checkbox"
+                checked={buffer.fieldsHandled ?? false}
+                onChange={(event) => change({ fieldsHandled: event.target.checked })}
+                aria-invalid={Boolean(errors.fieldsHandled)}
+                aria-describedby={errors.fieldsHandled ? `${id}-fieldsHandled-error` : undefined}
+                disabled={blocked}
+              />
+              <span>Jag har hanterat tidigare fältvärden för typbytet</span>
+            </label>
+            {error('fieldsHandled')}
+          </>
+        )}
+      </section>
+    );
+  }
+
   return (
     <div className={`ds-panel ds-variant-${variant}`} ref={panelRef}>
       <div className="ds-context-actions">
@@ -399,11 +545,13 @@ export function DetailStudyPanel({
           Tillbaka till listan
         </button>
         <button type="button" onClick={onMap}>
-          Visa i kartan
+          {creation ? 'Till kartan' : 'Visa i kartan'}
         </button>
       </div>
       <div className="ds-state" aria-live="polite">
-        <span className="ds-type">{definition?.name ?? object.type}</span>
+        <span className="ds-type">
+          {definition?.name ?? (creation ? 'Nytt objekt' : object.type)}
+        </span>
         {object.ended && <span>◷ Upphört</span>}
         {model.staged[object.id] && <span>✎ Privat förslag i ditt utkast</span>}
         {unsent && <span>✎ Oskickad redigering</span>}
@@ -414,11 +562,13 @@ export function DetailStudyPanel({
         {editing ? (
           <>
             <button type="button" className="ds-primary" onClick={stage} disabled={blocked}>
-              Lägg i utkast
+              {creation ? 'Lägg till i utkastet' : 'Lägg i utkast'}
             </button>
-            <button type="button" onClick={onRead}>
-              Tillbaka till uppgifter
-            </button>
+            {!creation && (
+              <button type="button" onClick={onRead}>
+                Tillbaka till uppgifter
+              </button>
+            )}
           </>
         ) : (
           <button
@@ -433,8 +583,9 @@ export function DetailStudyPanel({
       </div>
       {editing && (
         <p className="ds-edit-hint">
-          Belopp, villkor och datum är valfria. Lägg ändringarna i ditt privata utkast när de är
-          redo.
+          {creation
+            ? 'Ange namn och välj en typ. Objektet visas i kartan och listan när du lägger till det i ditt privata utkast.'
+            : 'Belopp, villkor och datum är valfria. Lägg ändringarna i ditt privata utkast när de är redo.'}
         </p>
       )}
       {editing && errorEntries.length > 0 && (
@@ -455,16 +606,22 @@ export function DetailStudyPanel({
         </div>
       )}
 
-      {definition && (
+      {(definition || types) && (
         <>
           {basic(false)}
+          {typeChangeSummary()}
           {onTypes && (
-            <button type="button" onClick={onTypes}>
-              Anpassa typen i Inställningar
+            <button type="button" onClick={onTypes} disabled={blocked}>
+              {definition ? 'Anpassa typen i Inställningar' : 'Hantera typer i Inställningar'}
             </button>
           )}
+          {!definition && (
+            <p className="ds-type-hint">
+              Välj en objekttyp för att visa dess egenskaper och avsnitt.
+            </p>
+          )}
           <div className="ds-accordions">
-            {definition.sections.map((section) => (
+            {definition?.sections.map((section) => (
               <details key={section.id} className="ds-section" open>
                 <summary>
                   <strong>{section.name}</strong>
@@ -484,9 +641,34 @@ export function DetailStudyPanel({
               </details>
             ))}
           </div>
+          {types && (retainedDescription || retainedFacts.length > 0) && (
+            <details className="ds-section ds-retained-fields">
+              <summary>
+                <strong>Uppgifter utanför typens avsnitt</strong>
+                <span>
+                  {retainedFacts.length + Number(retainedDescription)} uppgifter finns kvar
+                </span>
+              </summary>
+              <div className="ds-section-content">
+                <p className="ds-type-hint">
+                  De här uppgifterna hör till objektet och behålls vid typbyte. Du kan placera
+                  egenskaperna i typens avsnitt från Inställningar.
+                </p>
+                {retainedDescription &&
+                  configuredField({
+                    id: 'builtin-description',
+                    name: 'Beskrivning',
+                    kind: 'text',
+                    sectionId: '',
+                    builtin: 'description',
+                  })}
+                {facts(retainedFacts)}
+              </div>
+            </details>
+          )}
         </>
       )}
-      {!definition && variant === 'A' && (
+      {!definition && !types && variant === 'A' && (
         <div className="ds-document">
           {(['basic', 'money', 'time'] as const).map((section) => (
             <section key={section} aria-label={sectionNames[section]}>
@@ -496,7 +678,7 @@ export function DetailStudyPanel({
           ))}
         </div>
       )}
-      {!definition && variant === 'B' && (
+      {!definition && !types && variant === 'B' && (
         <div className="ds-accordions">
           {(['basic', 'money', 'time'] as const).map((section) => (
             <details key={section} className="ds-section" open={section !== 'time'}>
@@ -521,7 +703,7 @@ export function DetailStudyPanel({
           ))}
         </div>
       )}
-      {!definition && variant === 'C' && (
+      {!definition && !types && variant === 'C' && (
         <div className="ds-tabbed">
           <nav className="ds-tab-buttons" aria-label="Avsnitt i objektets uppgifter">
             {(['basic', 'money', 'time'] as const).map((section) => (
@@ -559,59 +741,64 @@ export function DetailStudyPanel({
           </button>
         </details>
       )}
-      <details className="ds-relationships">
-        <summary>Samband ({connected.length})</summary>
-        {onRelationship && (
-          <button type="button" onClick={() => onRelationship()}>
-            Nytt samband
-          </button>
-        )}
-        {connected.length ? (
-          <ul>
-            {connected.map((edge) => {
-              const other = objectById.get(edge.from === object.id ? edge.to : edge.from);
-              const otherName = other ? model.current(other.id).name : 'Okänt objekt';
-              return (
-                <li key={edge.id}>
-                  {onRelationship && (
-                    <button type="button" onClick={() => onRelationship(edge.id)}>
-                      Redigera sambandet
-                    </button>
-                  )}
-                  <span>
-                    {edge.to === object.id && reverseLabels?.[edge.id] ? (
-                      <>
-                        {current.name} <b>{reverseLabels[edge.id]}</b> {otherName}
-                      </>
-                    ) : (
-                      <>
-                        {edge.from === object.id ? current.name : otherName} <b>{edge.label}</b>{' '}
-                        {edge.to === object.id ? current.name : otherName}
-                      </>
+      {!creation && (
+        <details className="ds-relationships">
+          <summary>Samband ({connected.length})</summary>
+          {onRelationship && (
+            <button type="button" onClick={() => onRelationship()}>
+              Nytt samband
+            </button>
+          )}
+          {connected.length ? (
+            <ul>
+              {connected.map((edge) => {
+                const other = objectById.get(edge.from === object.id ? edge.to : edge.from);
+                const otherName = other ? model.current(other.id).name : 'Okänt objekt';
+                return (
+                  <li key={edge.id}>
+                    {onRelationship && (
+                      <button type="button" onClick={() => onRelationship(edge.id)}>
+                        Redigera sambandet
+                      </button>
                     )}
-                  </span>
-                  {edge.change && (
-                    <span className="ds-muted">
-                      {edge.change === 'removed'
-                        ? '− Föreslaget borttaget'
-                        : edge.change === 'added'
-                          ? '＋ Föreslaget nytt'
-                          : '✎ Ändringsförslag'}
+                    <span>
+                      {edge.to === object.id && reverseLabels?.[edge.id] ? (
+                        <>
+                          {current.name} <b>{reverseLabels[edge.id]}</b> {otherName}
+                        </>
+                      ) : (
+                        <>
+                          {edge.from === object.id ? current.name : otherName} <b>{edge.label}</b>{' '}
+                          {edge.to === object.id ? current.name : otherName}
+                        </>
+                      )}
                     </span>
-                  )}
-                  {other && (
-                    <button type="button" onClick={() => onRelated(other.id)}>
-                      Öppna {otherName}
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p>Inga samband i provunderlaget.</p>
-        )}
-      </details>
+                    {edge.change && (
+                      <span className="ds-muted">
+                        {edge.change === 'removed'
+                          ? '− Föreslaget borttaget'
+                          : edge.change === 'added'
+                            ? '＋ Föreslaget nytt'
+                            : '✎ Ändringsförslag'}
+                      </span>
+                    )}
+                    {other && (
+                      <button type="button" onClick={() => onRelated(other.id)}>
+                        Öppna {otherName}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p>Inga samband i provunderlaget.</p>
+          )}
+        </details>
+      )}
+      {creation && (
+        <p className="ds-type-hint">Du kan lägga till samband när objektet finns i utkastet.</p>
+      )}
     </div>
   );
 }

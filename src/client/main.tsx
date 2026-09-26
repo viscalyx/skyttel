@@ -13,7 +13,8 @@ const Prototype =
   prototype === 'voice' ||
   prototype === 'lists' ||
   prototype === 'details' ||
-  prototype === 'types'
+  prototype === 'types' ||
+  prototype === 'objects'
     ? (await import('./MapStudyEntry.js')).MapStudyEntry
     : prototype === 'navigation'
       ? (await import('./NavigationPrototype.js')).NavigationPrototype

@@ -11,6 +11,9 @@ och C. Alla förifyllda och egna typer ska kunna redigeras. Egenskaper ska
 kunna flyttas mellan egna avsnitt eller döljas utan att värden försvinner.
 Sambandstyper ska kunna användas mellan valfria objekt.
 
+[Typredigeringen är godkänd](https://github.com/viscalyx/skyttel/issues/107#issuecomment-5847845443).
+Nästa prov gäller [skapande och typbyte av objekt](../object-study-assets/README.md).
+
 ## Grund och produktionsstöd
 
 Grenen `prototype/skyttel-types-sections` utgår från

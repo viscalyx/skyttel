@@ -70,6 +70,23 @@
   letter-spacing: 2px;
 }
 
+.np-root .os-save-error {
+  padding: 10px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.np-root .os-save-error p {
+  margin: 0 0 6px;
+}
+
+.np-root .os-save-error button {
+  min-height: 36px;
+  max-width: 100%;
+  white-space: normal;
+}
+
 .np-root .np-status-actions {
   display: flex;
   align-items: center;

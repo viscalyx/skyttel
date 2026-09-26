@@ -97,6 +97,43 @@
 .np-root .ds-edit-hint {
   margin-top: -5px;
 }
+.np-root .ds-type-hint {
+  margin: 0;
+  color: var(--vp-muted);
+  font-size: 12px;
+}
+.np-root .ds-type-change {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--vp-control-line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vp-accent) 5%, var(--vp-surface));
+  overflow-wrap: anywhere;
+}
+.np-root .ds-type-change p {
+  margin: 0;
+}
+.np-root .ds-displaced-fields {
+  display: grid;
+  gap: 3px;
+}
+.np-root .ds-panel .ds-fields-handled {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-height: 44px;
+  padding-block: 7px;
+  cursor: pointer;
+}
+.np-root .ds-panel .ds-fields-handled input {
+  flex: 0 0 20px;
+  width: 20px;
+  min-height: 20px;
+  height: 20px;
+  accent-color: var(--vp-accent);
+}
 .np-root .ds-document {
   display: grid;
   gap: 20px;

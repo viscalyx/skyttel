@@ -42,7 +42,9 @@ const variants = {
 
 function useStudyState() {
   const [params, setParams] = useSearchParams();
-  const candidate = ['voice', 'lists', 'details', 'types'].includes(params.get('prototype') ?? '')
+  const candidate = ['voice', 'lists', 'details', 'types', 'objects'].includes(
+    params.get('prototype') ?? '',
+  )
     ? 'A'
     : params.get('variant');
   const variant: StudyVariant = candidate === 'B' || candidate === 'C' ? candidate : 'A';
@@ -51,7 +53,7 @@ function useStudyState() {
   );
   const [proposals, setProposals] = useState(
     () =>
-      ['voice', 'lists', 'details', 'types'].includes(params.get('prototype') ?? '') &&
+      ['voice', 'lists', 'details', 'types', 'objects'].includes(params.get('prototype') ?? '') &&
       params.get('changes') === 'example',
   );
   const [savedProposals, setSavedProposals] = useState(false);
@@ -218,6 +220,7 @@ export function MapStudyMap({
   descriptions,
   objectChanges,
   objectTypeNames,
+  objectOverrides,
   relationshipOverrides,
 }: {
   selectedId: string;
@@ -233,11 +236,13 @@ export function MapStudyMap({
   descriptions?: Record<string, string>;
   objectChanges?: Record<string, StudyObject['change']>;
   objectTypeNames?: Record<string, string>;
+  objectOverrides?: StudyObject[];
   relationshipOverrides?: StudyRelationship[];
 }) {
   const originalStudy = useStudy();
   const study = {
     ...originalStudy,
+    objects: objectOverrides ?? originalStudy.objects,
     relationships: relationshipOverrides ?? originalStudy.relationships,
   };
   const [relationsOpen, setRelationsOpen] = useState(false);
@@ -282,6 +287,7 @@ export function MapStudyMap({
     () =>
       study.objects.map((object) => ({
         ...object,
+        position: study.positions[object.id] ?? object.position,
         name: staged[object.id] ?? names[object.id] ?? object.name,
         description: descriptions?.[object.id] ?? object.description,
         type: objectTypeNames?.[object.id] ?? object.type,
@@ -294,7 +300,7 @@ export function MapStudyMap({
                 ? objectChanges[object.id]
                 : object.change,
       })),
-    [study.objects, names, staged, descriptions, objectChanges, objectTypeNames],
+    [study.objects, study.positions, names, staged, descriptions, objectChanges, objectTypeNames],
   );
   const name = (id: string) =>
     staged[id] ?? names[id] ?? study.objects.find((object) => object.id === id)?.name ?? id;
@@ -459,6 +465,8 @@ export function MapStudyPages({
   onEdit,
   names,
   staged,
+  objectOverrides,
+  relationshipOverrides,
 }: {
   page: 'list' | 'detail';
   selectedId: string;
@@ -470,8 +478,15 @@ export function MapStudyPages({
   onEdit: () => void;
   names: Record<string, string>;
   staged: Record<string, string>;
+  objectOverrides?: StudyObject[];
+  relationshipOverrides?: StudyRelationship[];
 }) {
-  const study = useStudy();
+  const originalStudy = useStudy();
+  const study = {
+    ...originalStudy,
+    objects: objectOverrides ?? originalStudy.objects,
+    relationships: relationshipOverrides ?? originalStudy.relationships,
+  };
   const subject = study.objects.find((object) => object.id === selectedId);
   const name = (id: string) =>
     staged[id] ?? names[id] ?? study.objects.find((object) => object.id === id)?.name ?? id;
