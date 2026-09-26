@@ -244,16 +244,6 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     await expect.poll(async () => (await center(page)).x).not.toBeCloseTo(start.x);
     await touch('touchEnd', []);
     expect(await read()).toEqual(saved);
-    await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
-    const box = await space(page).locator('canvas').boundingBox();
-    if (!box) throw new Error('Canvas must be visible');
-    const empty = { id: 1, x: box.x + 20, y: box.y + 25 };
-    const oldPoint = await center(page);
-    await touch('touchStart', [empty]);
-    await touch('touchMove', [{ ...empty, x: empty.x + 50 }]);
-    await touch('touchEnd', []);
-    await expect.poll(async () => (await center(page)).x).not.toBe(oldPoint.x);
-    await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
     const projection = () =>
       space(page).evaluate((region) => {
         const points = ['lamp', 'bike'].map((id) => {
@@ -268,7 +258,23 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
           separation: Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y),
         };
       });
-    const panBefore = await projection();
+    const resetView = async () => {
+      const before = await projection();
+      await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
+      // Reset updates projected positions in a React effect after the click.
+      await expect.poll(projection).not.toEqual(before);
+      return projection();
+    };
+    await resetView();
+    const box = await space(page).locator('canvas').boundingBox();
+    if (!box) throw new Error('Canvas must be visible');
+    const empty = { id: 1, x: box.x + 20, y: box.y + 25 };
+    const oldPoint = await center(page);
+    await touch('touchStart', [empty]);
+    await touch('touchMove', [{ ...empty, x: empty.x + 50 }]);
+    await touch('touchEnd', []);
+    await expect.poll(async () => (await center(page)).x).not.toBe(oldPoint.x);
+    const panBefore = await resetView();
     const panStart = { id: 1, x: box.x + 70, y: box.y + 65 };
     const second = { id: 2, x: panStart.x + 150, y: panStart.y };
     await touch('touchStart', [panStart, second]);
@@ -287,8 +293,7 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
       .poll(async () => (await projection()).separation / panBefore.separation)
       .toBeCloseTo(1, 1);
     expect(await read()).toEqual(saved);
-    await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
-    const pinchBefore = await projection();
+    const pinchBefore = await resetView();
     await touch('touchStart', [panStart, second]);
     await touch('touchMove', [
       { ...panStart, x: panStart.x - 35 },

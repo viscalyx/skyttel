@@ -63,6 +63,9 @@ async function targets(github, current) {
   // The latest distinct accepted predecessor is retained for recovery. Failed
   // attempts, tags, newly built candidates and duplicate retries cannot select it.
   for await (const record of pages(github, '/deployments?environment=production')) {
+    // Environment jobs can also be marked as production without image evidence.
+    // Validate image claims only after selecting records that contain them.
+    if (record.production_environment !== true || record.payload?.image === undefined) continue;
     const states = [];
     for await (const state of pages(github, `/deployments/${record.id}/statuses`)) {
       states.push(state.state);
@@ -71,6 +74,7 @@ async function targets(github, current) {
     requireState(
       imagePattern.test(record.payload?.image) &&
         /^[a-f0-9]{40}$/u.test(record.sha) &&
+        typeof record.payload.version === 'string' &&
         /^[0-9A-Za-z.+-]{1,160}$/u.test(record.payload.version) &&
         Number.isSafeInteger(record.id),
     );

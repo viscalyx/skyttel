@@ -112,12 +112,17 @@ function fixture() {
     }
     if (url.pathname.endsWith('/deployments')) {
       return Response.json([
-        { id: 5, payload: { image: image('e') } },
-        ...state.retained.map((entry) => ({
-          id: entry.deployment,
-          sha: entry.commit,
-          payload: { image: entry.image, version: entry.version },
-        })),
+        { id: 6, production_environment: true, payload: {} },
+        { id: 5, production_environment: true, payload: { image: image('e') } },
+        ...state.retained.flatMap((entry) => [
+          {
+            id: entry.deployment,
+            sha: entry.commit,
+            production_environment: true,
+            payload: { image: entry.image, version: entry.version },
+          },
+          { id: entry.deployment + 10, production_environment: true, payload: {} },
+        ]),
       ]);
     }
     if (url.pathname.endsWith('/statuses')) {
@@ -151,7 +156,7 @@ function fixture() {
   return { state, run };
 }
 
-test('verifies live HTTPS, accepted retained digests and fresh scheduled evidence using GET only', async () => {
+test('verifies live HTTPS and retained digests despite automatic job records using GET only', async () => {
   const { state, run } = fixture();
   const result = await run();
   assert.equal(result.outcome, 'success', result.reason);
