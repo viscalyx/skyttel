@@ -31,6 +31,9 @@
   top: var(--mp-work-top);
   bottom: var(--mp-work-bottom);
 }
+.np-root.map-study .np-window:has(.mp-details) .np-window-move-label {
+  display: none;
+}
 .np-root.map-study .np-status-panel {
   max-height: calc(100dvh - var(--mp-work-top) - var(--mp-work-bottom));
 }

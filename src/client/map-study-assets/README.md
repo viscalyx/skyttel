@@ -89,8 +89,9 @@ förslag. Namn och hjälptext följer ikonens aktuella handling.
 ## Pröva samma uppgifter
 
 1. Klicka på Familjeabonnemang. Objektet och dess samband markeras.
-   Dubbelklicka för detaljer och följ **betalas från** till Gemensamt
-   bankkonto. Ctrl-klicka på flera objekt och dubbelklicka sedan på ett
+   Dubbelklicka för detaljer. Följ **betalas från** i kartan eller genom
+   söklistans **Samband** till Gemensamt bankkonto.
+   Ctrl-klicka på flera objekt och dubbelklicka sedan på ett
    markerat objekt: alla markeringar ska finnas kvar. Jämför med
    Ctrl+Alt-klick, **Visa detaljer** och sökträffar.
 2. Öppna **Provlägen** och välj en tät karta. Befintliga placeringar och
@@ -134,6 +135,11 @@ listan öppen och **Visa detaljer** ger tillgång till uppgifterna.
 Objekt och samband har separata listval, med 50 poster per sida.
 Samband skrivs som källa, riktning, betydelse och mål.
 Kartarbete kräver inte kartgester.
+
+Objektets detaljpanel visar dess uppgifter utan en upprepad lista över
+direkta samband. Sambanden läses i kartan eller i söklistans **Samband**.
+Fönstertiteln saknar den synliga undertiteln **Flytta**; panelen kan
+fortfarande dras och flyttas med tangentbord eller flyttknappar.
 
 **Navigera** ger knappar för panorering, rotation, lutning och zoom.
 Bakgrundsdrag roterar; Skift och dragning panorerar. Kartans piltangenter

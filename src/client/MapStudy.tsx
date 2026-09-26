@@ -774,8 +774,6 @@ export function MapStudyPages({
           </button>
         </section>
       )}
-      <h3>{linked.length} direkta samband</h3>
-      {edgeRows(linked)}
       <details className="mp-placement">
         <summary>Ordna min vy</summary>
         <p>
