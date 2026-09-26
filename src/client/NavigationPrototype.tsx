@@ -153,7 +153,14 @@ export function NavigationPrototype() {
   const [params, setParams] = useSearchParams();
   const voiceMode = params.get('prototype') === 'voice';
   const feedbackVariant: VoiceStudyVariant =
-    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
+    params.get('variant') === 'A'
+      ? 'A'
+      : params.get('variant') === 'B'
+        ? 'B'
+        : params.get('variant') === 'C'
+          ? 'C'
+          : 'D';
+  const newColor = params.get('new') === 'green' ? 'green' : 'blue';
   const candidate = params.get('variant') ?? 'B';
   const variant: Variant = study ? 'B' : candidate in variants ? (candidate as Variant) : 'B';
   const candidatePage = params.get('view') ?? 'map';
@@ -666,7 +673,7 @@ export function NavigationPrototype() {
     // Bara kartobjekt som faktiskt skyms undantas från pek- och tangentbordsordningen.
     const surfaces = [
       ...root.querySelectorAll<HTMLElement>(
-        '.vp-d-toolbox, .vp-d-status, .np-panel, .np-lab, .np-map-controls',
+        '.vp-d-toolbox, .vp-d-status, .np-panel, .np-lab, .np-map-controls, .voice-map-key',
       ),
     ];
     const updateCoveredObjects = () => {
@@ -1028,6 +1035,7 @@ export function NavigationPrototype() {
       ref={rootRef}
       className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}${voiceMode ? ' voice-study-host' : ''}`}
       data-feedback-variant={voiceMode ? feedbackVariant : undefined}
+      data-new-color={voiceMode ? newColor : undefined}
       data-theme={theme}
       data-variant={variant}
       data-expanded={expanded}
@@ -1610,12 +1618,38 @@ export function NavigationPrototype() {
           </section>
         )}
       </VisualPrototypeDFrame>
+      {voiceMode && ready && feedbackVariant === 'D' && (
+        <aside className="voice-map-key" aria-label="Markeringar för privata förslag">
+          <strong>
+            {saveState === 'unknown'
+              ? 'Sparresultat oklart · markeringarna finns kvar'
+              : saveState === 'pending'
+                ? 'Sparar · väntar på bekräftelse'
+                : draftCount
+                  ? 'Privata förslag · inte sparat'
+                  : 'Markeringar i kartan'}
+          </strong>
+          <div>
+            <span className="voice-map-added">
+              <b aria-hidden="true">+</b> Nytt
+            </span>
+            <span className="voice-map-changed">
+              <b aria-hidden="true">✎</b> Ändrat
+            </span>
+            <span className="voice-map-removed">
+              <b aria-hidden="true">×</b> Tas bort
+            </span>
+          </div>
+        </aside>
+      )}
       {voiceMode && ready ? (
         <VoiceStudyLab
           model={voiceStudy}
           variant={feedbackVariant}
           onVariant={(next) => updateParams({ variant: next }, true)}
           onNoGraphics={() => study?.setNoGraphics(!study.noGraphics)}
+          newColor={newColor}
+          onNewColor={(color) => updateParams({ new: color }, true)}
         />
       ) : study ? (
         <MapStudyLab

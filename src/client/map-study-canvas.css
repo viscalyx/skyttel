@@ -235,6 +235,72 @@
 .ms-name-muted {
   color: var(--vp-muted);
 }
+.voice-study-host .ms-change-added {
+  --ms-change-color: var(--mp-added, var(--vp-accent));
+}
+.voice-study-host .ms-change-changed {
+  --ms-change-color: var(--mp-changed, var(--vp-text));
+}
+.voice-study-host .ms-change-removed {
+  --ms-change-color: var(--mp-removed, var(--vp-text));
+}
+.voice-study-host .ms-marker[class*="ms-change-"] .ms-marker-dot {
+  color: var(--ms-change-color);
+  border-color: var(--ms-change-color);
+  background: color-mix(in srgb, var(--ms-change-color) 8%, var(--vp-surface));
+}
+.voice-study-host .ms-marker.ms-marker-selected .ms-marker-dot {
+  box-shadow:
+    0 0 0 3px var(--vp-map-bg),
+    0 0 0 5px var(--vp-accent);
+}
+.voice-study-host .ms-marker-change {
+  top: -5px;
+  right: -7px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--ms-change-color);
+  border-radius: 5px;
+  color: var(--ms-change-color);
+  background: var(--vp-surface);
+  font-size: 1rem;
+}
+.voice-study-host .ms-change-removed .ms-marker-change {
+  border-style: dashed;
+}
+.voice-study-host .ms-edge[class*="ms-change-"] .ms-edge-line {
+  stroke: var(--ms-change-color);
+  stroke-width: 2.5;
+}
+.voice-study-host .ms-edge[class*="ms-change-"] .ms-edge-arrow {
+  fill: var(--ms-change-color);
+}
+.voice-study-host .ms-edge[class*="ms-change-"] .ms-edge-change {
+  color: var(--ms-change-color);
+  fill: var(--ms-change-color);
+}
+.voice-study-host .ms-edge-selected .ms-edge-underlay {
+  stroke: var(--vp-text);
+  stroke-width: 7;
+}
+.voice-study-host .ms-edge.ms-edge-selected .ms-edge-line {
+  stroke-width: 4;
+}
+.voice-study-host .ms-edge-selected.ms-change-removed .ms-edge-underlay {
+  stroke-dasharray: 7 5;
+}
+.voice-study-host .ms-name[class*="ms-change-"] {
+  color: var(--ms-change-color);
+  border-color: var(--ms-change-color);
+  background: var(--vp-surface);
+}
+.voice-study-host .ms-name.ms-change-removed {
+  border-style: dashed;
+}
+.voice-study-host .ms-name-selected {
+  outline: 2px solid var(--vp-accent);
+  outline-offset: 2px;
+}
 .ms-name-measurements {
   visibility: hidden;
 }

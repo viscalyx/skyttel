@@ -39,7 +39,9 @@ function useStudyState() {
   const candidate = params.get('prototype') === 'voice' ? 'A' : params.get('variant');
   const variant: StudyVariant = candidate === 'B' || candidate === 'C' ? candidate : 'A';
   const [density, setDensity] = useState<'sparse' | 'dense' | 'large'>('sparse');
-  const [proposals, setProposals] = useState(false);
+  const [proposals, setProposals] = useState(
+    () => params.get('prototype') === 'voice' && params.get('changes') === 'example',
+  );
   const [savedProposals, setSavedProposals] = useState(false);
   const [positions, setPositions] = useState<Record<string, StudyPosition>>({});
   const [focusId, setFocusId] = useState<string | null>(null);

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './voice-study.css';
 
-export type VoiceStudyVariant = 'A' | 'B' | 'C';
+export type VoiceStudyVariant = 'A' | 'B' | 'C' | 'D';
 export type VoiceSaveState = 'idle' | 'pending' | 'saved' | 'failed' | 'unknown' | 'conflict';
 export type VoiceStudySaveState = VoiceSaveState;
 type Microphone = 'off' | 'connecting' | 'listening' | 'paused' | 'error';
@@ -25,6 +25,7 @@ const example = 'Ändra familjeabonnemanget';
 const exampleMeaning =
   'Familjeabonnemanget: 189 → 199 kr per månad, betalas med Kort 4242. Lägg till Filmlyktan och Lo som användare.';
 const variants = {
+  D: { name: 'Kartan berättar', description: 'Förändringarna syns direkt på objekt och samband.' },
   A: { name: 'Senaste beskedet', description: 'Ett besked i fokus, med nästa möjliga handling.' },
   B: { name: 'Två spår', description: 'Samtalets läge och kartans ändringar visas var för sig.' },
   C: { name: 'Händelseföljd', description: 'De senaste stegen visar hur tal blir ett resultat.' },
@@ -496,6 +497,13 @@ export function VoiceStudyFeedback(props: FeedbackProps) {
           {model.alert}
         </p>
       )}
+      {variant === 'D' && (
+        <div className="voice-study-map-status">
+          <strong>{model.draftStatus}</strong>
+          <span>{model.assistantStatus}</span>
+          {model.clarification && <p>Vilket kort menar du? Bekräfta Kort 4242 före sparande.</p>}
+        </div>
+      )}
       {variant === 'A' && (
         <div className="voice-study-latest">
           <span className="voice-study-eyebrow">{model.assistantStatus}</span>
@@ -728,13 +736,17 @@ export function VoiceStudyLab({
   variant,
   onVariant,
   onNoGraphics,
+  newColor,
+  onNewColor,
 }: {
   model: VoiceStudyModel;
   variant: VoiceStudyVariant;
   onVariant: (variant: VoiceStudyVariant) => void;
   onNoGraphics?: () => void;
+  newColor?: 'blue' | 'green';
+  onNewColor?: (color: 'blue' | 'green') => void;
 }) {
-  const keys: VoiceStudyVariant[] = ['A', 'B', 'C'];
+  const keys: VoiceStudyVariant[] = ['D', 'A', 'B', 'C'];
   function cycle(direction: number) {
     onVariant(keys[(keys.indexOf(variant) + direction + keys.length) % keys.length]);
   }
@@ -753,7 +765,12 @@ export function VoiceStudyLab({
         return;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault();
-        onVariant(keys[(keys.indexOf(variant) + (event.key === 'ArrowRight' ? 1 : -1) + 3) % 3]);
+        onVariant(
+          keys[
+            (keys.indexOf(variant) + (event.key === 'ArrowRight' ? 1 : -1) + keys.length) %
+              keys.length
+          ],
+        );
       }
     }
     window.addEventListener('keydown', onKey);
@@ -786,6 +803,25 @@ export function VoiceStudyLab({
               Simulerat tal, AI och sparande. Inget ljud spelas in eller skickas. Alla uppgifter är
               påhittade.
             </p>
+            {onNewColor && (
+              <fieldset className="voice-study-color-choice">
+                <legend>Färg för nya objekt och samband</legend>
+                <button
+                  type="button"
+                  aria-pressed={newColor === 'blue'}
+                  onClick={() => onNewColor('blue')}
+                >
+                  Blått för nytt
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={newColor === 'green'}
+                  onClick={() => onNewColor('green')}
+                >
+                  Grönt för nytt
+                </button>
+              </fieldset>
+            )}
             <div className="voice-study-lab-group">
               <strong>För samtalet framåt</strong>
               <button
@@ -881,8 +917,8 @@ export function VoiceStudyLab({
               Tillstånd: mikrofon {model.mic} · assistent {model.assistant} · sparande{' '}
               {model.saveState} · {model.draftCount} förslag · medgivanden{' '}
               {model.consented ? 'klara' : 'saknas'} · fråga{' '}
-              {model.clarification ? 'öppen' : 'ingen'}. Samma tillstånd följer med mellan A, B och
-              C.
+              {model.clarification ? 'öppen' : 'ingen'}. Samma tillstånd följer med mellan
+              alternativen.
             </p>
           </div>
         </details>

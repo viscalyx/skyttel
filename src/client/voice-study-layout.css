@@ -1,6 +1,79 @@
 /* Samtalsprovets återkoppling ligger kvar när fria arbetspaneler öppnas. */
 .vp-root.vp-variant-D.np-root.map-study.voice-study-host {
+  --mp-added: #78b7ff;
+  --mp-changed: #fbbf24;
+  --mp-removed: #ff858a;
   --mp-work-top: max(78px, calc(var(--np-status-height) + 42px));
+}
+.vp-root.vp-variant-D.np-root.map-study.voice-study-host[data-theme="light"] {
+  --mp-added: #2764ba;
+  --mp-changed: #9b6000;
+  --mp-removed: #c83346;
+}
+.vp-root.vp-variant-D.np-root.map-study.voice-study-host[data-new-color="green"] {
+  --mp-added: #64dfa0;
+}
+.vp-root.vp-variant-D.np-root.map-study.voice-study-host[data-new-color="green"][data-theme="light"] {
+  --mp-added: #187747;
+}
+.voice-study-host .voice-map-key {
+  position: absolute;
+  z-index: 7;
+  left: var(--np-panel-left);
+  top: 65px;
+  padding: 10px 14px;
+  border: 1px solid var(--vp-line);
+  border-radius: 12px;
+  background: var(--vp-surface);
+  color: var(--vp-muted);
+  font-size: 12px;
+}
+.voice-map-key strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.voice-map-key > div {
+  display: flex;
+  gap: 17px;
+}
+.voice-map-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.voice-map-key b {
+  font-size: 17px;
+}
+.voice-map-added {
+  color: var(--mp-added);
+}
+.voice-map-changed {
+  color: var(--mp-changed);
+}
+.voice-map-removed {
+  color: var(--mp-removed);
+}
+.voice-study-map-status {
+  display: grid;
+  gap: 3px;
+}
+.voice-study-map-status > strong {
+  font-size: 13px;
+}
+.voice-study-map-status > span {
+  color: var(--vp-muted);
+  font-size: 11px;
+}
+.voice-study-color-choice {
+  margin: 14px 0;
+  padding: 10px;
+  border: 1px solid var(--vp-control-line);
+  border-radius: 8px;
+}
+.voice-study-color-choice button + button {
+  margin-left: 6px;
 }
 .np-root.map-study.voice-study-host .vp-d-status {
   display: block;
@@ -57,6 +130,15 @@
   }
 }
 @media (max-width: 600px) {
+  .voice-study-host .voice-map-key {
+    left: 12px;
+    top: var(--mp-work-top);
+    max-width: calc(100% - 24px);
+    padding: 7px 10px;
+  }
+  .voice-study-host[data-open-work="true"] .voice-map-key {
+    visibility: hidden;
+  }
   .vp-root.vp-variant-D.np-root.map-study.voice-study-host {
     --mp-work-top: min(calc(var(--np-top-clearance) - 18px), 142px);
   }

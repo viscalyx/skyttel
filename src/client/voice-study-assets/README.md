@@ -5,6 +5,33 @@ Kastbart beslutsunderlag för
 Alternativen väntar på beställarens återkoppling. De är inte fastställda
 designbeslut.
 
+## Aktuell prövning: kartan berättar
+
+Beställarens inriktning är att förändringarna ska framgå direkt i kartan.
+**D · Kartan berättar** prövar detta med ett mindre statuskort och
+markeringar på objekt, samband och deras namn. A/B/C finns kvar som
+tidigare jämförelser av statuskort.
+
+[Öppna D med exempeländringar synliga](http://localhost:4176/?prototype=voice&variant=D&changes=example&theme=light).
+Ingen talstart behövs för att se exemplet.
+
+- **Amber och penna:** ett befintligt objekt eller samband föreslås ändras.
+- **Rött och kryss:** något föreslås tas bort. Den tidigare kopplingen
+  finns kvar som en streckad linje tills sparandet är bekräftat.
+- **Blått och plus:** ett objekt eller samband föreslås läggas till.
+  **Prova tillstånd** har även **Grönt för nytt** så att färgerna kan
+  jämföras utan att kartan eller utkastet ändras.
+
+Urval har en separat ring och ändrar inte förslagets färg. Text och
+symboler kompletterar färgerna. Förändrade objekt och samband prioriteras
+när namn placeras i kartan; listan ger tillgång även när etiketter inte
+ryms. En förklaring av markeringarna ligger på kartan.
+
+Markeringarna beskriver privata förslag. De finns kvar under sparande
+och vid okänt resultat. Ett verifierat kvitto gör förslagen till vanliga
+uppgifter och tar bort den tidigare betalningskopplingen.
+Färgvalet för nya uppgifter är fortfarande ett förslag till beställaren.
+
 ## Grund och avgränsning
 
 Grenen `prototype/skyttel-voice-feedback` utgår från godkänd
@@ -33,6 +60,8 @@ npm run prototype:voice
   samtalets tillstånd och kartans ändringar har var sin rad.
 - [C · Händelseföljd](http://localhost:4176/?prototype=voice&variant=C):
   de senaste händelserna visas med den nyaste överst.
+- [D · Kartan berättar](http://localhost:4176/?prototype=voice&variant=D&changes=example):
+  kartan visar förändringarna med färger och symboler.
 
 Pilarna i provpanelen byter alternativ. Samtalet, utkastet, mikrofonens
 tillstånd och kartan finns kvar vid byte. Alternativets bokstav gäller
@@ -72,6 +101,15 @@ Det är en skiss av konflikthanteringens presentation; andra konfliktval
 och fri rättelse av alla fält återstår att pröva i fortsatt dialog.
 
 ## Skärmbilder
+
+Aktuellt kartförslag:
+
+- [Blått för nytt, ljust tema](D-blatt.png).
+- [Grönt för nytt, ljust tema](D-gront.png).
+- [Mörkt tema](D-morkt.png).
+- [Mobil i mörkt tema](D-mobil.png).
+
+Tidigare jämförelse av statuskort, från den första prototypomgången:
 
 | Alternativ | Dator | Mobil |
 | --- | --- | --- |
@@ -137,6 +175,13 @@ okänt resultat och kontroll följd av kvitto. Kvitto och objektuppgifter
 visar resultatet efter sparandet. Manuella ändringar använder samma
 sparande och blir kvar vid avvisat försök. Mobilvyer omfattar 390 × 844
 och 320 × 400; korta vyer rullar internt. Ljust och mörkt tema ingår.
+
+För D ingår växling mellan blått och grönt, markering av förändrade
+objekt, namn och samband, och att förslagens markeringar finns kvar vid
+okänt sparresultat men försvinner efter verifierat kvitto. Mobilprovet
+omfattar 390 × 844. Färgerna har beräknad kontrast mot de använda
+bakgrundsfärgerna: lägsta värde är 4,61:1 för amber mot ljus kartbakgrund.
+Den neutrala bakgrunden bakom namn och linjer skiljer dem från stjärnorna.
 
 Typkontroll, Biome, Markdown och stavning kontrolleras för underlaget.
 Produktionsbygget körs med `NODE_ENV=production npm run build`.

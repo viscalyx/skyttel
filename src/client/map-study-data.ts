@@ -166,7 +166,7 @@ export function changeLabel(change?: 'added' | 'changed' | 'removed') {
   return change === 'added'
     ? '+ Nytt förslag'
     : change === 'changed'
-      ? '~ Ändrat förslag'
+      ? '✎ Ändrat förslag'
       : change === 'removed'
         ? '× Föreslås tas bort'
         : '';

@@ -50,10 +50,20 @@ type Props = {
 };
 
 type Box = { x: number; y: number; width: number; height: number };
-type Name = { id: string; text: string; kind: 'object' | 'relationship'; priority: number };
+type Name = {
+  id: string;
+  text: string;
+  kind: 'object' | 'relationship';
+  priority: number;
+  change?: StudyObject['change'];
+};
 
-const changeSymbol = { added: '+', changed: '~', removed: '×' };
-const changeName = { added: 'tillagt', changed: 'ändrat', removed: 'borttaget' };
+const changeSymbol = { added: '+', changed: '✎', removed: '×' };
+const changeName = {
+  added: 'föreslås läggas till',
+  changed: 'föreslås ändras',
+  removed: 'föreslås tas bort',
+};
 const dragThreshold = 8;
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
@@ -203,7 +213,9 @@ export function MapStudyCanvas(props: Props) {
     let halfHeight = canvas.height / 2 - markerMargin;
     const overlays = root
       .closest('.map-study')
-      ?.querySelectorAll('.vp-d-toolbox, .vp-d-status, .mp-lab, .mp-selection-actions');
+      ?.querySelectorAll(
+        '.vp-d-toolbox, .vp-d-status, .mp-lab, .mp-selection-actions, .voice-map-key',
+      );
     for (const overlay of overlays ?? []) {
       const box = overlay.getBoundingClientRect();
       if (!box.width || !box.height) continue;
@@ -467,19 +479,21 @@ export function MapStudyCanvas(props: Props) {
       id: object.id,
       text: `${object.change ? `${changeSymbol[object.change]} ` : ''}${object.name}${object.ended ? ' · upphört' : ''}`,
       kind: 'object',
+      change: object.change,
       priority: selection.has(object.id)
         ? 0
         : object.id === hoverId
           ? 1
-          : emphasized.has(object.id)
-            ? 4
-            : object.change
-              ? 5
+          : object.change
+            ? 2
+            : emphasized.has(object.id)
+              ? 4
               : 6,
     }));
     for (const edge of relationships.filter(
       (relationship) =>
         relationship.id === selectedRelationship ||
+        relationship.change ||
         selection.has(relationship.from) ||
         selection.has(relationship.to),
     )) {
@@ -487,6 +501,7 @@ export function MapStudyCanvas(props: Props) {
         id: `edge:${edge.id}`,
         text: `${edge.change ? `${changeSymbol[edge.change]} ` : ''}${edge.label}`,
         kind: 'relationship',
+        change: edge.change,
         priority: edge.id === selectedRelationship ? 2 : 3,
       });
     }
@@ -997,7 +1012,7 @@ export function MapStudyCanvas(props: Props) {
                   aria-label={`${object.name}, ${object.type}${object.change ? `, ${changeName[object.change]}` : ''}${object.ended ? ', upphört' : ''}`}
                   aria-pressed={selected}
                   tabIndex={selected ? 0 : -1}
-                  title={`${object.name} · ${object.type}`}
+                  title={`${object.name} · ${object.type}${object.change ? ` · ${changeName[object.change]} · ${object.description}` : ''}`}
                   onFocus={() => setHoverId(object.id)}
                   onBlur={() => setHoverId(null)}
                   onPointerEnter={(event) => {
@@ -1033,7 +1048,7 @@ export function MapStudyCanvas(props: Props) {
                 key={label.id}
                 data-object-id={label.kind === 'object' ? label.id : undefined}
                 data-edge-id={label.kind === 'relationship' ? label.id.slice(5) : undefined}
-                className={`ms-name ${selection.has(label.id) ? 'ms-name-selected' : ''} ${label.kind === 'relationship' ? 'ms-name-relationship' : ''} ${faded && label.kind === 'object' && !emphasized.has(label.id) && !selection.has(label.id) ? 'ms-name-muted' : ''}`}
+                className={`ms-name ${label.change ? `ms-change-${label.change}` : ''} ${selection.has(label.id) ? 'ms-name-selected' : ''} ${label.kind === 'relationship' ? 'ms-name-relationship' : ''} ${faded && label.kind === 'object' && !emphasized.has(label.id) && !selection.has(label.id) ? 'ms-name-muted' : ''}`}
                 style={{ left: label.x, top: label.y, width: label.width }}
               >
                 {label.text}
@@ -1045,7 +1060,7 @@ export function MapStudyCanvas(props: Props) {
               <span
                 key={name.id}
                 data-name-id={name.id}
-                className={`ms-name ${selection.has(name.id) ? 'ms-name-selected' : ''} ${name.kind === 'relationship' ? 'ms-name-relationship' : ''}`}
+                className={`ms-name ${name.change ? `ms-change-${name.change}` : ''} ${selection.has(name.id) ? 'ms-name-selected' : ''} ${name.kind === 'relationship' ? 'ms-name-relationship' : ''}`}
               >
                 {name.text}
               </span>
