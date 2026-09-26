@@ -24,7 +24,9 @@ Ingen talstart behövs för att se exemplet.
 Urval har en separat ring och ändrar inte förslagets färg. Text och
 symboler kompletterar färgerna. Förändrade objekt och samband prioriteras
 när namn placeras i kartan; listan ger tillgång även när etiketter inte
-ryms. En förklaring av markeringarna ligger på kartan.
+ryms. En förklaring av markeringarna visas på kartan bara när utkastet
+innehåller ändringar. Den döljs när utkastet är tomt, även efter ett
+bekräftat sparande.
 
 Markeringarna beskriver privata förslag. De finns kvar under sparande
 och vid okänt resultat. Ett verifierat kvitto gör förslagen till vanliga

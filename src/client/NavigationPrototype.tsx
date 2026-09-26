@@ -1616,16 +1616,14 @@ export function NavigationPrototype() {
           </section>
         )}
       </VisualPrototypeDFrame>
-      {voiceMode && ready && feedbackVariant === 'D' && (
+      {voiceMode && ready && feedbackVariant === 'D' && draftCount > 0 && (
         <aside className="voice-map-key" aria-label="Markeringar för privata förslag">
           <strong>
             {saveState === 'unknown'
               ? 'Sparresultat oklart · markeringarna finns kvar'
               : saveState === 'pending'
                 ? 'Sparar · väntar på bekräftelse'
-                : draftCount
-                  ? 'Privata förslag · inte sparat'
-                  : 'Markeringar i kartan'}
+                : 'Privata förslag · inte sparat'}
           </strong>
           <div>
             <span className="voice-map-added">
