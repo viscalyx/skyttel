@@ -18,9 +18,8 @@ Ingen talstart behövs för att se exemplet.
 - **Amber och penna:** ett befintligt objekt eller samband föreslås ändras.
 - **Rött och kryss:** något föreslås tas bort. Den tidigare kopplingen
   finns kvar som en streckad linje tills sparandet är bekräftat.
-- **Blått och plus:** ett objekt eller samband föreslås läggas till.
-  **Prova tillstånd** har även **Grönt för nytt** så att färgerna kan
-  jämföras utan att kartan eller utkastet ändras.
+- **Grönt och plus:** ett objekt eller samband föreslås läggas till.
+  Grönt är beställarens val för nytt; det blå alternativet är borttaget.
 
 Urval har en separat ring och ändrar inte förslagets färg. Text och
 symboler kompletterar färgerna. Förändrade objekt och samband prioriteras
@@ -30,7 +29,8 @@ ryms. En förklaring av markeringarna ligger på kartan.
 Markeringarna beskriver privata förslag. De finns kvar under sparande
 och vid okänt resultat. Ett verifierat kvitto gör förslagen till vanliga
 uppgifter och tar bort den tidigare betalningskopplingen.
-Färgvalet för nya uppgifter är fortfarande ett förslag till beställaren.
+Färgerna är fastställda genom beställarens återkoppling. Det samlade
+samtalsbeslutet är fortfarande öppet.
 
 ## Grund och avgränsning
 
@@ -104,7 +104,6 @@ och fri rättelse av alla fält återstår att pröva i fortsatt dialog.
 
 Aktuellt kartförslag:
 
-- [Blått för nytt, ljust tema](D-blatt.png).
 - [Grönt för nytt, ljust tema](D-gront.png).
 - [Mörkt tema](D-morkt.png).
 - [Mobil i mörkt tema](D-mobil.png).
@@ -176,8 +175,8 @@ visar resultatet efter sparandet. Manuella ändringar använder samma
 sparande och blir kvar vid avvisat försök. Mobilvyer omfattar 390 × 844
 och 320 × 400; korta vyer rullar internt. Ljust och mörkt tema ingår.
 
-För D ingår växling mellan blått och grönt, markering av förändrade
-objekt, namn och samband, och att förslagens markeringar finns kvar vid
+För D ingår markering av förändrade objekt, namn och samband, och att
+förslagens markeringar finns kvar vid
 okänt sparresultat men försvinner efter verifierat kvitto. Mobilprovet
 omfattar 390 × 844. Färgerna har beräknad kontrast mot de använda
 bakgrundsfärgerna: lägsta värde är 4,61:1 för amber mot ljus kartbakgrund.

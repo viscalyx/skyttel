@@ -1,20 +1,14 @@
 /* Samtalsprovets återkoppling ligger kvar när fria arbetspaneler öppnas. */
 .vp-root.vp-variant-D.np-root.map-study.voice-study-host {
-  --mp-added: #78b7ff;
+  --mp-added: #64dfa0;
   --mp-changed: #fbbf24;
   --mp-removed: #ff858a;
   --mp-work-top: max(78px, calc(var(--np-status-height) + 42px));
 }
 .vp-root.vp-variant-D.np-root.map-study.voice-study-host[data-theme="light"] {
-  --mp-added: #2764ba;
+  --mp-added: #187747;
   --mp-changed: #9b6000;
   --mp-removed: #c83346;
-}
-.vp-root.vp-variant-D.np-root.map-study.voice-study-host[data-new-color="green"] {
-  --mp-added: #64dfa0;
-}
-.vp-root.vp-variant-D.np-root.map-study.voice-study-host[data-new-color="green"][data-theme="light"] {
-  --mp-added: #187747;
 }
 .voice-study-host .voice-map-key {
   position: absolute;
@@ -65,15 +59,6 @@
 .voice-study-map-status > span {
   color: var(--vp-muted);
   font-size: 11px;
-}
-.voice-study-color-choice {
-  margin: 14px 0;
-  padding: 10px;
-  border: 1px solid var(--vp-control-line);
-  border-radius: 8px;
-}
-.voice-study-color-choice button + button {
-  margin-left: 6px;
 }
 .np-root.map-study.voice-study-host .vp-d-status {
   display: block;

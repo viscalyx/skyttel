@@ -736,15 +736,11 @@ export function VoiceStudyLab({
   variant,
   onVariant,
   onNoGraphics,
-  newColor,
-  onNewColor,
 }: {
   model: VoiceStudyModel;
   variant: VoiceStudyVariant;
   onVariant: (variant: VoiceStudyVariant) => void;
   onNoGraphics?: () => void;
-  newColor?: 'blue' | 'green';
-  onNewColor?: (color: 'blue' | 'green') => void;
 }) {
   const keys: VoiceStudyVariant[] = ['D', 'A', 'B', 'C'];
   function cycle(direction: number) {
@@ -803,25 +799,6 @@ export function VoiceStudyLab({
               Simulerat tal, AI och sparande. Inget ljud spelas in eller skickas. Alla uppgifter är
               påhittade.
             </p>
-            {onNewColor && (
-              <fieldset className="voice-study-color-choice">
-                <legend>Färg för nya objekt och samband</legend>
-                <button
-                  type="button"
-                  aria-pressed={newColor === 'blue'}
-                  onClick={() => onNewColor('blue')}
-                >
-                  Blått för nytt
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={newColor === 'green'}
-                  onClick={() => onNewColor('green')}
-                >
-                  Grönt för nytt
-                </button>
-              </fieldset>
-            )}
             <div className="voice-study-lab-group">
               <strong>För samtalet framåt</strong>
               <button

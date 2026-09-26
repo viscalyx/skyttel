@@ -160,7 +160,6 @@ export function NavigationPrototype() {
         : params.get('variant') === 'C'
           ? 'C'
           : 'D';
-  const newColor = params.get('new') === 'green' ? 'green' : 'blue';
   const candidate = params.get('variant') ?? 'B';
   const variant: Variant = study ? 'B' : candidate in variants ? (candidate as Variant) : 'B';
   const candidatePage = params.get('view') ?? 'map';
@@ -1035,7 +1034,6 @@ export function NavigationPrototype() {
       ref={rootRef}
       className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}${voiceMode ? ' voice-study-host' : ''}`}
       data-feedback-variant={voiceMode ? feedbackVariant : undefined}
-      data-new-color={voiceMode ? newColor : undefined}
       data-theme={theme}
       data-variant={variant}
       data-expanded={expanded}
@@ -1648,8 +1646,6 @@ export function NavigationPrototype() {
           variant={feedbackVariant}
           onVariant={(next) => updateParams({ variant: next }, true)}
           onNoGraphics={() => study?.setNoGraphics(!study.noGraphics)}
-          newColor={newColor}
-          onNewColor={(color) => updateParams({ new: color }, true)}
         />
       ) : study ? (
         <MapStudyLab
