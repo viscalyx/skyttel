@@ -54,6 +54,7 @@ function useStudyState() {
   const [listKind, setListKind] = useState<'objects' | 'relationships'>('objects');
   const [page, setPage] = useState(0);
   const [noGraphics, setNoGraphics] = useState(false);
+  const [stars, setStars] = useState(true);
   const [cameraDescription, setCameraDescription] = useState('Överblick');
   const [movement, setMovement] = useState('');
   const cameraRef = useRef<StudyCamera | null>(null);
@@ -162,6 +163,8 @@ function useStudyState() {
     setPage,
     noGraphics,
     setNoGraphics,
+    stars,
+    setStars,
     cameraDescription,
     setCameraDescription,
     cameraRef,
@@ -266,6 +269,7 @@ export function MapStudyMap({
           emphasisEdges={emphasisEdges}
           variant={study.variant}
           theme={theme}
+          stars={study.stars}
           onSelect={(id) => {
             study.setSelectedEdge(null);
             onSelect(id);
@@ -319,6 +323,14 @@ export function MapStudyMap({
         {navigationOpen && (
           <div className="mp-navigation np-stack">
             <p>Flytta vyn med knapparna. Ett objektval flyttar inte kameran.</p>
+            <button
+              type="button"
+              aria-pressed={study.stars}
+              onClick={() => study.setStars(!study.stars)}
+            >
+              {study.stars ? 'Dölj stjärnhimmel' : 'Visa stjärnhimmel'}
+            </button>
+            <p>Systemets minskade rörelse stänger av stjärnhimlen.</p>
             <div className="mp-button-grid">
               {cameraButtons.map(([action, label]) => (
                 <button

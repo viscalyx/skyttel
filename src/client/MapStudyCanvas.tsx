@@ -13,6 +13,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { defaultViewSettings } from '../shared/personal-view.js';
 import type {
   StudyCamera,
   StudyCameraAction,
@@ -21,6 +22,7 @@ import type {
   StudyRelationship,
   StudyVariant,
 } from './map-study-types.js';
+import { type ProjectedPoint, type SpatialCameraSnapshot, spatialScene } from './spatial-scene.js';
 import './map-study-canvas.css';
 
 type Props = {
@@ -32,6 +34,7 @@ type Props = {
   emphasisEdges: string[];
   variant: StudyVariant;
   theme: 'light' | 'dark';
+  stars?: boolean;
   onSelect: (id: string) => void;
   onSelectRelationship: (id: string) => void;
   onMove: (id: string, position: StudyPosition) => void;
@@ -39,84 +42,20 @@ type Props = {
   onCameraChange: (description: string) => void;
 };
 
-type Camera = {
-  center: StudyPosition;
-  radius: number;
-  yaw: number;
-  pitch: number;
-  zoom: number;
-  panX: number;
-  panY: number;
-};
-type Point = { x: number; y: number; depth: number; perspective: number };
 type Box = { x: number; y: number; width: number; height: number };
 type Name = { id: string; text: string; kind: 'object' | 'relationship'; priority: number };
 type Gesture = {
   pointer: number;
   x: number;
   y: number;
-  camera: Camera;
   moved: boolean;
-  mode: 'rotate' | 'pan' | 'object';
-  object?: StudyObject;
+  object: StudyObject;
+  position: StudyPosition;
 };
 
 const changeSymbol = { added: '+', changed: '~', removed: '×' };
 const changeName = { added: 'tillagt', changed: 'ändrat', removed: 'borttaget' };
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
-
-function frameObjects(objects: StudyObject[], previous?: Camera): Camera {
-  const points = objects.map((object) => object.position);
-  const center = { x: 0, y: 0, z: 0 };
-  for (const axis of ['x', 'y', 'z'] as const) {
-    center[axis] = points.length
-      ? (Math.min(...points.map((point) => point[axis])) +
-          Math.max(...points.map((point) => point[axis]))) /
-        2
-      : 0;
-  }
-  const radius = Math.max(
-    80,
-    ...points.map((point) =>
-      Math.hypot(point.x - center.x, point.y - center.y, point.z - center.z),
-    ),
-  );
-  return {
-    center,
-    radius,
-    yaw: previous?.yaw ?? 0.24,
-    pitch: previous?.pitch ?? -0.16,
-    zoom: 1,
-    panX: 0,
-    panY: 0,
-  };
-}
-
-function rotated(point: StudyPosition, camera: Camera) {
-  const x = point.x - camera.center.x;
-  const y = point.y - camera.center.y;
-  const z = point.z - camera.center.z;
-  const side = Math.cos(camera.yaw) * x + Math.sin(camera.yaw) * z;
-  const depth = -Math.sin(camera.yaw) * x + Math.cos(camera.yaw) * z;
-  return {
-    x: side,
-    y: Math.cos(camera.pitch) * y - Math.sin(camera.pitch) * depth,
-    z: Math.sin(camera.pitch) * y + Math.cos(camera.pitch) * depth,
-  };
-}
-
-function project(point: StudyPosition, camera: Camera, width: number, height: number): Point {
-  const view = rotated(point, camera);
-  const distance = camera.radius * 5;
-  const perspective = distance / Math.max(distance * 0.12, distance - view.z);
-  const scale = (Math.min(width, height) * 0.32 * camera.zoom) / camera.radius;
-  return {
-    x: width / 2 + (view.x * perspective + camera.panX) * scale,
-    y: height / 2 + (-view.y * perspective + camera.panY) * scale,
-    depth: view.z,
-    perspective,
-  };
-}
 
 function overlaps(a: Box, b: Box) {
   return (
@@ -164,16 +103,25 @@ export function MapStudyCanvas(props: Props) {
     emphasisEdges,
     variant,
     theme,
+    stars = true,
     cameraRef,
   } = props;
   const rootRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sceneRef = useRef<ReturnType<typeof spatialScene> | null>(null);
   const measurementRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const latest = useRef(props);
   latest.current = props;
-  const [camera, setCamera] = useState(() => frameObjects(objects));
-  const currentCamera = useRef(camera);
-  const history = useRef<Camera[]>([]);
+  const [camera, setCamera] = useState<SpatialCameraSnapshot | null>(null);
+  const [projected, setProjected] = useState<ProjectedPoint[]>([]);
+  const [graphicsError, setGraphicsError] = useState<string | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  const history = useRef<SpatialCameraSnapshot[]>([]);
+  const cameraGesture = useRef<SpatialCameraSnapshot | null>(null);
+  const touchPoints = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<Gesture | null>(null);
   const ignoreClick = useRef(false);
   const [size, setSize] = useState({ width: 800, height: 600 });
@@ -188,47 +136,47 @@ export function MapStudyCanvas(props: Props) {
   const faded = emphasisIds.length > 0;
   const sparse = objects.length < 20;
 
-  const updateCamera = useCallback((next: Camera, remember = false) => {
-    if (remember) history.current = [...history.current.slice(-29), currentCamera.current];
-    currentCamera.current = next;
-    setCamera(next);
+  const synchronizeCamera = useCallback(() => {
+    const snapshot = sceneRef.current?.snapshot();
+    if (!snapshot) return;
+    setCamera((previous) =>
+      JSON.stringify(previous) === JSON.stringify(snapshot) ? previous : snapshot,
+    );
+    const distance = Math.hypot(
+      snapshot.position.x - snapshot.target.x,
+      snapshot.position.y - snapshot.target.y,
+      snapshot.position.z - snapshot.target.z,
+    );
+    latest.current.onCameraChange(
+      `Kameravstånd ${Math.round(distance)}. ${history.current.length} tidigare vyer.`,
+    );
+  }, []);
+
+  const rememberCamera = useCallback(() => {
+    const snapshot = sceneRef.current?.snapshot();
+    if (snapshot) history.current = [...history.current.slice(-29), snapshot];
   }, []);
 
   function navigate(action: StudyCameraAction) {
-    const next = { ...currentCamera.current };
-    const step = (next.radius * 0.13) / next.zoom;
-    if (action === 'left') next.panX += step;
-    if (action === 'right') next.panX -= step;
-    if (action === 'up') next.panY += step;
-    if (action === 'down') next.panY -= step;
-    if (action === 'in') next.zoom = clamp(next.zoom * 1.2, 0.15, 14);
-    if (action === 'out') next.zoom = clamp(next.zoom / 1.2, 0.15, 14);
-    if (action === 'rotate-left') next.yaw -= 0.16;
-    if (action === 'rotate-right') next.yaw += 0.16;
-    if (action === 'tilt-up') next.pitch = clamp(next.pitch - 0.12, -1.3, 1.3);
-    if (action === 'tilt-down') next.pitch = clamp(next.pitch + 0.12, -1.3, 1.3);
-    updateCamera(next, true);
+    if (graphicsError) return;
+    rememberCamera();
+    sceneRef.current?.navigate(action);
   }
 
   function frame(ids?: string[]) {
-    const targets = ids?.length
-      ? latest.current.objects.filter((object) => ids.includes(object.id))
-      : latest.current.objects;
-    if (targets.length) updateCamera(frameObjects(targets, currentCamera.current), true);
+    if (graphicsError) return;
+    rememberCamera();
+    if (ids?.length) sceneRef.current?.reveal(ids);
+    else sceneRef.current?.reset();
+    synchronizeCamera();
   }
 
   function back() {
     const previous = history.current.pop();
-    if (previous) updateCamera(previous);
+    if (previous && !graphicsError) sceneRef.current?.restore(previous);
   }
 
   useImperativeHandle(cameraRef, () => ({ navigate, frame, back }));
-
-  useEffect(() => {
-    latest.current.onCameraChange(
-      `Zoom ${Math.round(camera.zoom * 100)} %, rotation ${Math.round((camera.yaw * 180) / Math.PI)}°, lutning ${Math.round((camera.pitch * 180) / Math.PI)}°. ${history.current.length} tidigare vyer.`,
-    );
-  }, [camera]);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -245,33 +193,132 @@ export function MapStudyCanvas(props: Props) {
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
+    const canvas = canvasRef.current;
+    if (!root || !canvas) return;
+    let remembered = false;
+    const cameraPointers = new Set<number>();
     let lastWheel = -Infinity;
-    const wheel = (event: WheelEvent) => {
-      // Ctrl/meta and two-finger browser zoom always retain their native behaviour.
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
-      event.preventDefault();
+    const pointerStart = (event: globalThis.PointerEvent) => {
+      if (event.target !== canvas && !cameraPointers.size) return;
+      if (!cameraPointers.size) {
+        cameraGesture.current = sceneRef.current?.snapshot() ?? null;
+        remembered = false;
+      }
+      cameraPointers.add(event.pointerId);
+    };
+    const pointerEnd = (event: globalThis.PointerEvent) => {
+      cameraPointers.delete(event.pointerId);
+      if (!cameraPointers.size) {
+        const start = cameraGesture.current;
+        cameraGesture.current = null;
+        if (event.type === 'pointercancel' && start) sceneRef.current?.restore(start);
+      }
+    };
+    const wheelStart = () => {
       const now = performance.now();
-      const current = currentCamera.current;
-      updateCamera(
-        { ...current, zoom: clamp(current.zoom * Math.exp(-event.deltaY * 0.0015), 0.15, 14) },
-        now - lastWheel > 400,
-      );
+      if (now - lastWheel > 400) rememberCamera();
       lastWheel = now;
     };
-    root.addEventListener('wheel', wheel, { passive: false });
-    return () => root.removeEventListener('wheel', wheel);
-  }, [updateCamera]);
+    const cancelObject = () => {
+      const drag = gesture.current;
+      gesture.current = null;
+      if (drag?.moved) sceneRef.current?.place(drag.object.id, drag.object.position);
+      touchPoints.current.clear();
+    };
+    const lost = (event: Event) => {
+      event.preventDefault();
+      sceneRef.current?.contextLost(true);
+      cancelObject();
+      setGraphicsError(
+        'Grafiken har avbrutits. Öppna text och lista för att fortsätta med alla objekt och samband.',
+      );
+    };
+    const restored = () =>
+      queueMicrotask(() => {
+        sceneRef.current?.contextLost(false);
+        setGraphicsError(null);
+      });
+    canvas.addEventListener('webglcontextlost', lost);
+    canvas.addEventListener('webglcontextrestored', restored);
+    root.addEventListener('pointerdown', pointerStart, true);
+    root.addEventListener('pointerup', pointerEnd, true);
+    root.addEventListener('pointercancel', pointerEnd, true);
+    root.addEventListener('wheel', wheelStart, { capture: true, passive: true });
+    window.addEventListener('blur', cancelObject);
+    try {
+      sceneRef.current = spatialScene(
+        canvas,
+        (values) => {
+          setProjected(values);
+          synchronizeCamera();
+        },
+        undefined,
+        () => {
+          const snapshot = sceneRef.current?.snapshot();
+          if (
+            cameraGesture.current &&
+            !remembered &&
+            JSON.stringify(snapshot) !== JSON.stringify(cameraGesture.current)
+          ) {
+            history.current = [...history.current.slice(-29), cameraGesture.current];
+            remembered = true;
+          }
+          synchronizeCamera();
+        },
+        root,
+      );
+    } catch {
+      setGraphicsError(
+        'Grafiken kunde inte starta. Öppna text och lista för att läsa och ändra alla objekt och samband.',
+      );
+    }
+    return () => {
+      canvas.removeEventListener('webglcontextlost', lost);
+      canvas.removeEventListener('webglcontextrestored', restored);
+      root.removeEventListener('pointerdown', pointerStart, true);
+      root.removeEventListener('pointerup', pointerEnd, true);
+      root.removeEventListener('pointercancel', pointerEnd, true);
+      root.removeEventListener('wheel', wheelStart, true);
+      window.removeEventListener('blur', cancelObject);
+      sceneRef.current?.dispose();
+      sceneRef.current = null;
+    };
+  }, [rememberCamera, synchronizeCamera]);
+
+  useEffect(() => {
+    if (
+      objects.some((object) =>
+        Object.values(object.position).some((value) => !Number.isFinite(value)),
+      )
+    )
+      return;
+    sceneRef.current?.update(
+      objects.map((object) => object.id),
+      objects.map((object) => ({ id: object.id, version: 0, ...object.position })),
+      relationships.map((edge) => ({ sourceId: edge.from, targetId: edge.to })),
+    );
+  }, [objects, relationships]);
+
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const changed = () => setReducedMotion(preference.matches);
+    preference.addEventListener('change', changed);
+    return () => preference.removeEventListener('change', changed);
+  }, []);
+
+  useEffect(() => {
+    sceneRef.current?.configure(
+      { ...defaultViewSettings, stars: stars && !reducedMotion },
+      {
+        background: theme === 'light' ? '#eef3f3' : '#101b29',
+        starColor: theme === 'light' ? '#486b7a' : undefined,
+      },
+    );
+  }, [theme, stars, reducedMotion]);
 
   const points = useMemo(
-    () =>
-      new Map(
-        objects.map((object) => [
-          object.id,
-          project(object.position, camera, size.width, size.height),
-        ]),
-      ),
-    [objects, camera, size],
+    () => new Map(projected.filter((point) => point.visible).map((point) => [point.id, point])),
+    [projected],
   );
   const edges = useMemo(() => {
     const pairCounts = new Map<string, number>();
@@ -448,76 +495,60 @@ export function MapStudyCanvas(props: Props) {
   }, [names, measurements, points, edges, size, statusHeight, sparse]);
 
   function beginPointer(event: PointerEvent<HTMLElement>) {
-    if (event.button !== 0 || event.ctrlKey || event.metaKey) return;
-    if (gesture.current) return;
+    if (graphicsError || event.button !== 0) return;
+    if (event.pointerType === 'touch') {
+      touchPoints.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (touchPoints.current.size > 1 && gesture.current) {
+        sceneRef.current?.place(gesture.current.object.id, gesture.current.object.position);
+        gesture.current = null;
+        rememberCamera();
+        sceneRef.current?.beginCameraGesture(touchPoints.current);
+        return;
+      }
+    }
+    if (gesture.current || touchPoints.current.size > 1) return;
     const target = event.target as Element;
     ignoreClick.current = false;
     if (target.closest('[data-edge-id]')) return;
     const objectId = target.closest('[data-object-id]')?.getAttribute('data-object-id');
     const object = objects.find((candidate) => candidate.id === objectId);
+    if (!object) {
+      event.currentTarget.focus({ preventScroll: true });
+      return;
+    }
     gesture.current = {
       pointer: event.pointerId,
       x: event.clientX,
       y: event.clientY,
-      camera: currentCamera.current,
       moved: false,
-      mode: object ? 'object' : event.shiftKey ? 'pan' : 'rotate',
       object,
+      position: object.position,
     };
     ignoreClick.current = false;
     event.currentTarget.setPointerCapture(event.pointerId);
-    if (!object) event.currentTarget.focus({ preventScroll: true });
   }
 
   function movePointer(event: PointerEvent<HTMLElement>) {
+    if (event.pointerType === 'touch' && touchPoints.current.has(event.pointerId))
+      touchPoints.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     const drag = gesture.current;
     if (!drag || drag.pointer !== event.pointerId) return;
     const dx = event.clientX - drag.x;
     const dy = event.clientY - drag.y;
     if (!drag.moved && Math.hypot(dx, dy) < 5) return;
-    if (!drag.moved && drag.mode !== 'object')
-      history.current = [...history.current.slice(-29), drag.camera];
     drag.moved = true;
     ignoreClick.current = true;
-    const scale =
-      (Math.min(size.width, size.height) * 0.32 * drag.camera.zoom) / drag.camera.radius;
-    if (drag.mode === 'object' && drag.object) {
-      const perspective = project(
-        drag.object.position,
-        drag.camera,
-        size.width,
-        size.height,
-      ).perspective;
-      const side = dx / scale / perspective;
-      const vertical = -dy / scale / perspective;
-      const depth = -Math.sin(drag.camera.pitch) * vertical;
-      const original = drag.object.position;
-      latest.current.onMove(drag.object.id, {
-        x: original.x + Math.cos(drag.camera.yaw) * side - Math.sin(drag.camera.yaw) * depth,
-        y: original.y + Math.cos(drag.camera.pitch) * vertical,
-        z: original.z + Math.sin(drag.camera.yaw) * side + Math.cos(drag.camera.yaw) * depth,
-      });
-    } else if (drag.mode === 'pan') {
-      updateCamera({
-        ...drag.camera,
-        panX: drag.camera.panX + dx / scale,
-        panY: drag.camera.panY + dy / scale,
-      });
-    } else {
-      updateCamera({
-        ...drag.camera,
-        yaw: drag.camera.yaw + dx * 0.006,
-        pitch: clamp(drag.camera.pitch + dy * 0.006, -1.3, 1.3),
-      });
-    }
+    const next = sceneRef.current?.displacement(drag.object.position, dx, dy, event.shiftKey);
+    if (next) drag.position = sceneRef.current?.place(drag.object.id, next) ?? next;
   }
 
   function endPointer(event: PointerEvent<HTMLElement>) {
+    touchPoints.current.delete(event.pointerId);
     const drag = gesture.current;
     if (!drag || drag.pointer !== event.pointerId) return;
-    if (event.type === 'pointercancel' && drag.moved && drag.object)
-      latest.current.onMove(drag.object.id, drag.object.position);
-    if (event.type === 'pointercancel' && drag.moved && !drag.object) updateCamera(drag.camera);
+    if (event.type === 'pointercancel')
+      sceneRef.current?.place(drag.object.id, drag.object.position);
+    else if (drag.moved) latest.current.onMove(drag.object.id, drag.position);
     // Pointer capture retargets click to the surface, so selection happens explicitly here.
     if (!drag.moved && drag.object && event.type !== 'pointercancel')
       latest.current.onSelect(drag.object.id);
@@ -530,8 +561,7 @@ export function MapStudyCanvas(props: Props) {
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.key === 'Escape' && gesture.current) {
       const drag = gesture.current;
-      if (drag.object) latest.current.onMove(drag.object.id, drag.object.position);
-      else updateCamera(drag.camera);
+      sceneRef.current?.place(drag.object.id, drag.object.position);
       gesture.current = null;
       event.preventDefault();
       event.stopPropagation();
@@ -571,7 +601,8 @@ export function MapStudyCanvas(props: Props) {
       ref={rootRef}
       className={`ms-canvas ms-canvas-${variant} ${sparse ? 'ms-canvas-sparse' : ''}`}
       data-theme={theme}
-      data-camera={`${camera.yaw.toFixed(3)},${camera.pitch.toFixed(3)},${camera.zoom.toFixed(3)},${camera.panX.toFixed(2)},${camera.panY.toFixed(2)},${camera.radius.toFixed(2)},${camera.center.x.toFixed(2)},${camera.center.y.toFixed(2)},${camera.center.z.toFixed(2)}`}
+      data-camera={JSON.stringify(camera)}
+      data-stars={stars && !reducedMotion ? 'true' : 'false'}
       // biome-ignore lint/a11y/noNoninteractiveTabindex: The 3D surface needs keyboard focus for its documented arrow controls.
       tabIndex={0}
       aria-label="Hushållets interaktiva tredimensionella karta"
@@ -589,21 +620,21 @@ export function MapStudyCanvas(props: Props) {
       onPointerCancel={endPointer}
       onLostPointerCapture={() => {
         const drag = gesture.current;
-        if (drag?.moved && drag.object) latest.current.onMove(drag.object.id, drag.object.position);
-        else if (drag?.moved) updateCamera(drag.camera);
+        if (drag?.moved) sceneRef.current?.place(drag.object.id, drag.object.position);
         gesture.current = null;
       }}
     >
+      <canvas ref={canvasRef} className="ms-renderer" tabIndex={-1} aria-hidden="true" />
       <p id={helpId} className="ms-screen-reader">
         Dra bakgrunden för att rotera. Håll Skift och dra för att förflytta vyn. Piltangenter
         förflyttar vyn; Skift och pilar roterar. Plus och minus zoomar i kartan. Ctrl eller kommando
         med plus och minus behåller webbläsarens zoom. Dra ett objekt för att flytta det. Samtliga
         objekt och samband finns även i textvyn.
       </p>
-      {invalid ? (
+      {invalid || graphicsError ? (
         <p className="ms-graphics-error" role="alert">
-          Kartan kan inte ritas eftersom en position saknas. Öppna textvyn för att läsa objekten och
-          sambanden.
+          {graphicsError ??
+            'Kartan kan inte ritas eftersom en position saknas. Öppna text och lista för att läsa objekten och sambanden.'}
         </p>
       ) : (
         <>
@@ -624,6 +655,7 @@ export function MapStudyCanvas(props: Props) {
                   key={relationship.id}
                   className={`ms-edge ${selected ? 'ms-edge-selected' : ''} ${emphasizedEdges.has(relationship.id) ? 'ms-edge-emphasized' : ''} ${muted ? 'ms-edge-muted' : ''} ${relationship.change ? `ms-change-${relationship.change}` : ''}`}
                 >
+                  <path className="ms-edge-underlay" d={d} />
                   <path className="ms-edge-line" d={d} />
                   <polygon className="ms-edge-arrow" points={arrow} />
                   {relationship.change && (
@@ -669,9 +701,9 @@ export function MapStudyCanvas(props: Props) {
               ))}
           </svg>
           {visibleObjects
-            .sort((a, b) => (points.get(a.id)?.depth ?? 0) - (points.get(b.id)?.depth ?? 0))
+            .sort((a, b) => (points.get(b.id)?.depth ?? 0) - (points.get(a.id)?.depth ?? 0))
             .map((object, index) => {
-              const point = points.get(object.id) as Point;
+              const point = points.get(object.id) as ProjectedPoint;
               const selected = object.id === selectedId;
               const muted = faded && !emphasized.has(object.id) && !selected;
               return (
@@ -685,7 +717,7 @@ export function MapStudyCanvas(props: Props) {
                       left: point.x,
                       top: point.y,
                       zIndex: selected ? 4 : 2,
-                      '--ms-depth': clamp(point.perspective, 0.7, 1.5),
+                      '--ms-depth': point.scale,
                       '--ms-order': index,
                     } as CSSProperties
                   }

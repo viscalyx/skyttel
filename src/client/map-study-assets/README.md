@@ -9,6 +9,8 @@ Prototypen bygger vidare på den godkända navigationsgrenen, version
 [`6586ee7`](https://github.com/viscalyx/skyttel/tree/6586ee7).
 D:s skal, logotyper, temaval och B:s fria paneler är gemensamma. A, B och C
 i detta underlag gäller kartans utforskning, inte panelmodellen.
+Kameran och stjärnhimlen använder den befintliga rymdkartans kod enligt
+[förtydligandet om återanvändning](https://github.com/viscalyx/skyttel/issues/105#issuecomment-5845606335).
 
 ## Öppna underlaget
 
@@ -86,6 +88,9 @@ Bakgrundsdrag roterar; Skift och dragning panorerar. Kartans piltangenter
 panorerar, Skift och pilar roterar, plus/minus zoomar. Webbläsarens
 zoomkommandon lämnas orörda. Objekt kan dras eller flyttas med knappar.
 Avbruten dragning återställer startpositionen.
+Den befintliga kartans gester hanterar två fingrars panorering och zoom.
+Stjärnhimlen kan slås av och på under **Navigera**. Den följer kamerans
+rotation och zoom, men inte panorering eller objektens placeringar.
 
 Kamerabyten sker utan animation. Korta mobilvyer använder sidrullning så
 att status och provpanelen inte täcker kartan. Fria arbetspaneler har
@@ -107,6 +112,7 @@ den godkända mobilväljaren och intern rullning.
 TypeScript, Biome, Markdown och stavningskontroller passerar.
 Produktionsbygget passerar och innehåller inte kartprovets ingång,
 komponenter eller stilmallar.
+Den befintliga kartmotorns sju webbläsartester passerar efter anpassningen.
 
 Lokala Chromium-kontroller omfattar följande:
 
@@ -120,6 +126,9 @@ Lokala Chromium-kontroller omfattar följande:
   överlappande namnlappar i det glesa provet.
 - Kamera som består vid urval, variantbyte och nya provförslag.
   Avbruten objektdragning återställer startpositionen.
+- Paneldrag som inte flyttar kameran och rotation genom dragning i fri
+  kartyta efter panelplacering. Återgång till föregående kameravy och
+  emulerad pekrotation på mobil ingår.
 - Oskickat namn, samtalstext och mikrofontillstånd genom alternativbyten
   och tillfälliga inställningar.
 - Sparfel som behåller utkastet och lyckat kvitto som tar bort
@@ -127,8 +136,9 @@ Lokala Chromium-kontroller omfattar följande:
 - Sammanhängande följning av samband och global sökning efter sista
   objektet i provet med 500 objekt och 1 500 samband.
 - Systemvalet för minskad rörelse utan pågående animationer.
-- Kartans linjer och pilar har minst 4,17:1 kontrast i mörkt tema och
-  3,58:1 i ljust tema, inklusive den svaga bakgrundstoningen.
+- Kartans linjer och pilar har 4,75:1 kontrast i mörkt tema och 3,88:1
+  i ljust tema mot bakgrundsfärgen. En opak bakgrund bakom sambandslinjen
+  håller stjärnorna borta från linjens bakgrund.
 
 Detta är en designbedömning, inte verifierad WCAG 2.2 AA-överensstämmelse.
 Fysiska iPhone-/iPad-prov, verkligt tal, skärmläsare och en fullständig
@@ -136,10 +146,14 @@ bedömning av alla sidor och flöden återstår inom den tidigare beslutade
 avgränsningen. Skärmläsarordningen kan granskas i den semantiska listan
 och fria paneler, men den är inte verifierad med ett hjälpmedel här.
 
-Prototypens perspektivprojektion prövar kameror och läsbarhet utan den
-färdiga kartmotorn. Den är inte ett prestandabevis för produktion eller
-ett nytt teknikval. Pekning använder en enkel draggest; flerfingergester
-är inte färdigmodellerade. Knappar och textvägen finns för samma arbete.
+Prototypen använder befintliga `spatial-scene.ts` och
+`spatial-navigation.ts` för WebGL, kamera, stjärnhimmel och kameragester.
+Små tillägg på prototypgrenen ger återgång till föregående kameravy och
+anpassning till ljust och mörkt tema. Vanliga anrop behåller sitt
+ursprungliga beteende. Det är inte ett nytt teknikval eller ett
+prestandabevis för produktion. Objektens dragning prövar bildplanet;
+knapparna ger alla sex riktningar. Det befintliga höjddraget behöver
+fortsatt prövning tillsammans med panelerna.
 Närliggande markörer kan överlappa i täta utsnitt; använd zoom, fokus och
 listan. Läsbarheten hos den rumsliga överblicken kräver användarens
 bedömning, särskilt på mobil.

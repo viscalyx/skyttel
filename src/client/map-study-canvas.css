@@ -1,4 +1,4 @@
-/* Kastbar SVG-projektion med bestående kamera och DOM-mätta namn. */
+/* Kastbar presentation av spatialScene med DOM-mätta namn. */
 .ms-canvas {
   --ms-graph-line: var(--vp-graph-line);
   position: absolute;
@@ -6,19 +6,13 @@
   isolation: isolate;
   overflow: hidden;
   color: var(--vp-text);
-  background:
-    radial-gradient(
-      ellipse at 48% 45%,
-      color-mix(in srgb, var(--vp-accent), transparent 94%),
-      transparent 70%
-    ),
-    var(--vp-map-bg);
-  touch-action: pinch-zoom;
+  background: var(--vp-map-bg);
+  touch-action: none;
   cursor: grab;
   user-select: none;
 }
 .ms-canvas[data-theme="light"] {
-  /* At least 3.5:1, including the darkest part of the subtle map gradient. */
+  /* At least 3.88:1 against the map-coloured stroke beneath each connection. */
   --ms-graph-line: #607e87;
 }
 .ms-canvas:active {
@@ -28,6 +22,7 @@
   outline: 3px solid var(--vp-accent);
   outline-offset: -4px;
 }
+.ms-renderer,
 .ms-connections,
 .ms-label-layer,
 .ms-name-measurements {
@@ -36,9 +31,20 @@
   width: 100%;
   height: 100%;
 }
+.ms-renderer {
+  display: block;
+  z-index: 0;
+  touch-action: none;
+}
 .ms-connections {
   overflow: visible;
   z-index: 1;
+  pointer-events: none;
+}
+.ms-edge-underlay {
+  fill: none;
+  stroke: var(--vp-map-bg);
+  stroke-width: 5;
 }
 .ms-edge-line {
   fill: none;
@@ -47,6 +53,9 @@
 }
 .ms-edge-arrow {
   fill: var(--ms-graph-line);
+  stroke: var(--vp-map-bg);
+  stroke-width: 2;
+  paint-order: stroke;
   pointer-events: none;
 }
 .ms-edge-emphasized .ms-edge-line {
@@ -110,7 +119,7 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  touch-action: pinch-zoom;
+  touch-action: none;
   cursor: move;
 }
 .vp-root .ms-marker:hover {

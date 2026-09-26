@@ -24,6 +24,15 @@ export type ProjectedPoint = {
   depth: number;
 };
 
+/** Camera-only state for explicit return to an earlier view. */
+export type SpatialCameraSnapshot = {
+  position: Position;
+  target: Position;
+  overviewDistance: number;
+};
+
+export type SpatialAppearance = { background: string; starColor?: string };
+
 /** Owns only graphics and the camera. Household content stays in the shared editor. */
 export function spatialScene(
   canvas: HTMLCanvasElement,
@@ -74,7 +83,7 @@ export function spatialScene(
   const defaults = new Map<string, Vector3>();
   const starGeometry = new BufferGeometry();
   const starVertices = [];
-  const starColours = [];
+  const starColours: number[] = [];
   const starSizes = [];
   const starOpacity = [];
   let seed = 83127;
@@ -207,6 +216,22 @@ export function spatialScene(
   resize.observe(canvas);
   reset();
   return {
+    snapshot(): SpatialCameraSnapshot {
+      return {
+        position: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+        target: { x: controls.target.x, y: controls.target.y, z: controls.target.z },
+        overviewDistance,
+      };
+    },
+    restore(snapshot: SpatialCameraSnapshot) {
+      needsFrame = false;
+      camera.position.set(snapshot.position.x, snapshot.position.y, snapshot.position.z);
+      controls.target.set(snapshot.target.x, snapshot.target.y, snapshot.target.z);
+      overviewDistance = snapshot.overviewDistance;
+      controls.update();
+      draw();
+      onMotion();
+    },
     update(
       ids: string[],
       saved: PersonalPosition[] = [],
@@ -343,10 +368,23 @@ export function spatialScene(
       onMotion();
       return true;
     },
-    configure(value: ViewSettings) {
+    configure(value: ViewSettings, appearance?: SpatialAppearance) {
       settings = value;
       stars.visible = value.stars;
-      sky.background = new Color(value.stars ? '#09121f' : '#132e25');
+      sky.background = new Color(appearance?.background ?? (value.stars ? '#09121f' : '#132e25'));
+      if (appearance) {
+        const colours = starGeometry.getAttribute('color');
+        const tint = appearance.starColor ? new Color(appearance.starColor) : null;
+        for (let index = 0; index < colours.count; index++) {
+          colours.setXYZ(
+            index,
+            tint?.r ?? starColours[index * 3],
+            tint?.g ?? starColours[index * 3 + 1],
+            tint?.b ?? starColours[index * 3 + 2],
+          );
+        }
+        colours.needsUpdate = true;
+      }
       draw();
     },
     beginCameraGesture: gestures.beginTouch,
