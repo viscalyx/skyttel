@@ -2,8 +2,12 @@
 
 Kastbart underlag för
 [Hur visar rymdkartan överblick, fokus och detaljer på mobil och dator?](https://github.com/viscalyx/skyttel/issues/105).
-Beställaren föredrar A som fortsatt riktning. Vanligt klick markerar;
-detaljer öppnas uttryckligen. Helheten väntar på fortsatt återkoppling.
+**A · Fri överblick med samtliga dokumenterade tillägg är godkänd av
+beställaren den 26 september 2026.** Vanligt klick markerar; detaljer
+öppnas uttryckligen. B och C finns kvar som jämförelseunderlag.
+[Det fastställda kartbeslutet](https://github.com/viscalyx/skyttel/issues/105#issuecomment-5846524059)
+samlar beteenden, avgränsningar och kvarstående arbete. Den här grenen
+är grund för fortsatt prototyparbete, inte produktionskod.
 
 Prototypen bygger vidare på den godkända navigationsgrenen, version
 [`6586ee7`](https://github.com/viscalyx/skyttel/tree/6586ee7).
@@ -332,13 +336,16 @@ prestandabevis för produktion. `use-object-movement.ts`,
 `SpatialHeightGuide` och `SpatialObjectGlyph` återanvänds för objektdrag,
 höjdguide och typikoner. Knapparna ger alla sex riktningar.
 Närliggande markörer kan överlappa i täta utsnitt; använd zoom, fokus och
-listan. Läsbarheten hos den rumsliga överblicken kräver användarens
-bedömning, särskilt på mobil.
+listan. Läsbarheten i täta mobilkartor följs upp i den samlade
+UI/UX-bedömningen och vid genomförandet.
 
 Flerval använder Ctrl/Cmd-klick; det ersätter det tidigare önskemålet om
 Skift-klick. Skift används för höjdflyttning och panorering.
 Önskemålet om stjärnrörelse vid panorering återstår att lösa. Den
 nuvarande stjärnhimlen reagerar på rotation och zoom, men inte panorering.
+Detta är kvarstående arbete efter godkännandet av A. Godkännandet gäller
+kartans utformning och arbetssätt; det ersätter inte verifiering av den
+färdiga applikationen.
 
 ## Produktregler som ligger fast
 
