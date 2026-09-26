@@ -235,6 +235,7 @@ export function VisualPrototype() {
     return () => observer.disconnect();
   }, [variant]);
   useEffect(() => {
+    if (variant === 'D') return;
     if (detail) {
       detailTrigger.current = document.activeElement as HTMLElement;
       document.getElementById('vp-detail-title')?.focus({ preventScroll: true });
@@ -243,7 +244,7 @@ export function VisualPrototype() {
       if (detail) document.querySelector('.vp-detail')?.scrollIntoView({ block: 'start' });
       else document.querySelector('.vp-root')?.scrollTo({ top: 0 });
     }
-  }, [detail]);
+  }, [detail, variant]);
   function cycle(direction: number) {
     const keys: Variant[] = ['A', 'B', 'C', 'D'];
     const next = keys[(keys.indexOf(variant) + direction + keys.length) % keys.length];
@@ -258,15 +259,16 @@ export function VisualPrototype() {
   useEffect(() => {
     function key(event: KeyboardEvent) {
       const target = event.target as HTMLElement;
+      if (event.key === 'Escape') {
+        setDetail(false);
+        setUtility(null);
+        return;
+      }
       if (target.closest('input, textarea, select, [contenteditable="true"], [role="slider"]'))
         return;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault();
         cycle(event.key === 'ArrowLeft' ? -1 : 1);
-      }
-      if (event.key === 'Escape') {
-        setDetail(false);
-        setUtility(null);
       }
     }
     window.addEventListener('keydown', key);
@@ -470,7 +472,7 @@ export function VisualPrototype() {
           </div>
           <div className="vp-switcher-options">
             <button type="button" onClick={() => setDetail(!detail)} aria-pressed={detail}>
-              {detail ? 'Visa bara kartan' : 'Visa formulär'}
+              {detail ? 'Visa bara kartan' : variant === 'D' ? 'Visa detaljer' : 'Visa formulär'}
             </button>
             <label>
               Tillstånd{' '}

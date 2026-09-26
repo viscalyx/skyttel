@@ -226,9 +226,11 @@ function Connections({
 export function VisualPrototypeMap({
   variant,
   onSelect,
+  onSelectObject,
 }: {
   variant: Variant;
   onSelect: () => void;
+  onSelectObject?: (object: { id: string; name: string; type: string }, anchor: DOMRect) => void;
 }) {
   const points = positions[variant];
   return (
@@ -287,14 +289,24 @@ export function VisualPrototypeMap({
           </>
         );
         const className = `vp-map-node vp-map-node-${id}${id === 'subscription' ? ' vp-map-node-selected' : ''}`;
-        return id === 'subscription' ? (
+        return id === 'subscription' || onSelectObject ? (
           <button
             key={id}
             type="button"
             className={className}
             style={positionStyle(points[id], compactPositions[id])}
-            onClick={onSelect}
-            aria-label="Visa Familjeabonnemang, 189 kronor per månad"
+            onClick={(event) => {
+              if (onSelectObject) {
+                onSelectObject({ id, name, type }, event.currentTarget.getBoundingClientRect());
+              } else {
+                onSelect();
+              }
+            }}
+            aria-label={
+              id === 'subscription'
+                ? 'Visa Familjeabonnemang, 189 kronor per månad'
+                : `Visa ${name}`
+            }
           >
             {content}
           </button>

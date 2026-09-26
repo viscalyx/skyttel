@@ -26,7 +26,8 @@ Riktningen finns kvar i adressen vid omladdning.
 Panelen längst ned med A–D är provets verktyg och ingår inte i Skyttels
 föreslagna gränssnitt.
 
-Välj **Visa formulär** eller familjeabonnemanget för att öppna detaljvyn.
+Välj **Visa formulär** i A–C eller **Visa detaljer** i D för att öppna
+detaljvyn. Du kan också välja objekt direkt i kartan.
 På mobil rullar prototypen till formuläret. Stäng det med krysset för att
 återgå till kartan. Välj **Tillstånd** för att jämföra lyssnande, privat
 utkast, pågående sparande, sparbesked och fel.
@@ -85,13 +86,17 @@ fyller hela den synliga webbläsarytan. Logotypen är mindre framträdande
 och verktygen ligger i en flytande verktygslåda. Den kan expanderas för
 att visa namn och fler förklaringar. Både ljust och mörkt tema ingår.
 
-Starta det simulerade samtalet med mikrofonknappen. Knappen visar då en
-vågform. Välj **Simulera hörbart tal** i prototypkontrollerna för rörelse
+Starta det simulerade samtalet med mikrofonknappen. Knappen blir då en
+cirklad stoppikon. Vågformen visas i rutan med samtalets status tills
+röstläget stoppas. Välj **Simulera hörbart tal** i prototypkontrollerna
+för rörelse
 och **Simulera tystnad** för stillhet. Med minskad rörelse förblir
 vågformen stilla och status visas med text. Ingen riktig mikrofon används.
 
 Temat väljs i verktygslådan och finns kvar i adressen vid omladdning.
-Informationspanelen öppnas ovanpå kartan. Verktygslådans placering,
+Alla synliga kartobjekt kan öppnas. Detaljrutan visar det valda objektet
+nära punkten där du klickar, med placeringen begränsad av skärmens kanter.
+Klick utanför rutan eller Escape stänger den. Verktygslådans placering,
 expansion och samtalsmarkering är hypoteser att reagera på; de är inte
 ett slutligt navigations- eller talbeslut.
 På mobil prövas en vågrät kompakt verktygsrad; expanderad visar den
@@ -107,6 +112,12 @@ verktygen med namn under logotypen.
 - [Ljust, mobil: formulär](D-light-mobil-formular.png)
 - [Mörkt: expanderade verktyg och simulerat samtal](D-dark-dator-samtal.png)
 - [Ljust: expanderade verktyg och simulerat samtal](D-light-dator-samtal.png)
+- [Mörkt, dator: detaljruta nära Alex](D-dark-dator-objekt.png)
+- [Ljust, dator: detaljruta nära Alex](D-light-dator-objekt.png)
+- [Mörkt, mobil: detaljruta nära Alex](D-dark-mobil-objekt.png)
+- [Ljust, mobil: detaljruta nära Alex](D-light-mobil-objekt.png)
+- [Mörkt, mobil: vågform i samtalsstatus](D-dark-mobil-samtal.png)
+- [Ljust, mobil: vågform i samtalsstatus](D-light-mobil-samtal.png)
 
 ## Gemensamma utgångspunkter att bedöma
 
@@ -135,7 +146,8 @@ tillståndsexempel, inte ett påstående om faktiskt sparad information.
 Prototypen gäller uttryck och visuella principer. Navigation, faktisk
 3D-interaktion, samtalets tillståndsmodell och detaljerade
 redigeringsbeteenden avgörs i andra beslutsärenden. Alla kompletterande
-vyer är exempel; endast familjeabonnemanget har en detaljvy.
+vyer är exempel. A–C visar bara familjeabonnemangets detaljvy. D har
+detaljer för alla objekt; familjeabonnemanget visar också ett formulär.
 
 Beställaren vill pröva ljust och mörkt temaval i D. När riktningen är
 vald behöver användarens återkoppling precisera vilka
@@ -158,6 +170,12 @@ och kodkontroller går igenom.
 
 Skärmbilderna visar dessa två storlekar. Detta är en lokal designkontroll,
 inte verifiering på fysiska enheter, med hjälpmedel eller med verkligt tal.
+
+Alla åtta objekt på dator och de sex synliga mobilobjekten är prövade med
+rätt detaljrubrik, placering inom skärmen och stängning vid klick utanför.
+De två övriga objekten finns i mobilens lista. Escape stänger även när
+ett formulärfält har fokus. I båda teman förblir stängknappen nåbar vid
+320 pixlars bredd, dubblerad text och synligt privat utkast.
 
 ## Tillgänglighetsbedömning av skissen
 

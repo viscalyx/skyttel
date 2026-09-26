@@ -1,11 +1,116 @@
 // Kastbar variant D: en obruten karta med flytande verktyg, i ljust och mörkt tema.
-import { useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Brand, Detail, PrototypeIcon, Status } from './VisualPrototype.js';
 import { VisualPrototypeMap } from './VisualPrototypeMap.js';
 import './visual-prototype-d.css';
 
 type Scene = 'ready' | 'listening' | 'draft' | 'saving' | 'saved' | 'error';
 type Theme = 'dark' | 'light';
+type MapObject = { id: string; name: string; type: string };
+const objectDetails: Record<
+  string,
+  { name: string; type: string; description: string; rows: [string, string][] }
+> = {
+  alex: {
+    name: 'Alex',
+    type: 'Person',
+    description: 'En person i hushållet Lind.',
+    rows: [
+      ['Står på avtalet', 'Familjeabonnemang'],
+      ['Använder', 'Alex musikkonto'],
+    ],
+  },
+  lo: {
+    name: 'Lo',
+    type: 'Person',
+    description: 'En person i hushållet Lind.',
+    rows: [['Använder', 'Musikgläntan']],
+  },
+  music: {
+    name: 'Musikgläntan',
+    type: 'Musiktjänst',
+    description: 'Musik för hela hushållet.',
+    rows: [
+      ['Tillgång genom', 'Familjeabonnemang'],
+      ['Används av', 'Alex och Lo'],
+      ['Tjänstekonto', 'Alex musikkonto'],
+    ],
+  },
+  subscription: {
+    name: 'Familjeabonnemang',
+    type: 'Abonnemang',
+    description: '189 kr / månad · Musik för hela hushållet.',
+    rows: [
+      ['Ger tillgång till', 'Musikgläntan'],
+      ['Betalas från', 'Gemensamt bankkonto'],
+    ],
+  },
+  account: {
+    name: 'Alex musikkonto',
+    type: 'Tjänstekonto',
+    description: 'Alex eget konto hos musiktjänsten.',
+    rows: [
+      ['Hör till', 'Musikgläntan'],
+      ['Används av', 'Alex'],
+      ['Inloggningsadress', 'alex@example.test'],
+    ],
+  },
+  email: {
+    name: 'alex@example.test',
+    type: 'E-postadress',
+    description: 'En e-postadress i hushållets karta.',
+    rows: [['Inloggningsadress för', 'Alex musikkonto']],
+  },
+  bank: {
+    name: 'Gemensamt bankkonto',
+    type: 'Bankkonto',
+    description: 'Betalningsmedel för hushållets avtal.',
+    rows: [
+      ['Används för', 'Familjeabonnemang'],
+      ['Kopplat kort', 'Kort ·· 4242'],
+    ],
+  },
+  card: {
+    name: 'Kort ·· 4242',
+    type: 'Betalkort',
+    description: 'Ett betalkort i hushållets karta.',
+    rows: [
+      ['Kopplat till', 'Gemensamt bankkonto'],
+      ['Kortnummer', 'Slutar på 4242'],
+    ],
+  },
+};
+
+function ObjectDetail({ object, onClose }: { object: MapObject; onClose: () => void }) {
+  const content = objectDetails[object.id];
+  return (
+    <aside className="vp-detail vp-d-object-detail" aria-labelledby="vp-detail-title">
+      <div className="vp-detail-top">
+        <span className="vp-eyebrow">{object.type}</span>
+        <button
+          type="button"
+          className="vp-icon-button"
+          aria-label="Stäng detaljer"
+          onClick={onClose}
+        >
+          <PrototypeIcon name="close" />
+        </button>
+      </div>
+      <h2 id="vp-detail-title" tabIndex={-1}>
+        {object.name}
+      </h2>
+      <p className="vp-muted">{content.description}</p>
+      <dl className="vp-d-object-facts">
+        {content.rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </aside>
+  );
+}
 
 function ThemeIcon({ theme }: { theme: Theme }) {
   return (
@@ -52,8 +157,109 @@ export function VisualPrototypeD({
   const [expanded, setExpanded] = useState(false);
   const [utility, setUtility] = useState<'text' | 'list' | null>(null);
   const [message, setMessage] = useState('');
+  const [selected, setSelected] = useState<MapObject>({
+    id: 'subscription',
+    ...objectDetails.subscription,
+  });
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const [popupStyle, setPopupStyle] = useState<CSSProperties>({ visibility: 'hidden' });
+  const popupRef = useRef<HTMLDivElement | null>(null);
+  const objectTrigger = useRef<HTMLElement | null>(null);
+  const wasDetailOpen = useRef(false);
   const utilityTrigger = useRef<HTMLElement | null>(null);
   const listening = scene === 'listening';
+  useLayoutEffect(() => {
+    if (!detail || !popupRef.current) return;
+    const popup = popupRef.current;
+    function positionPopup() {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const root = popup.closest('.vp-root');
+      const clearance = root
+        ? Number.parseFloat(getComputedStyle(root).getPropertyValue('--vp-switcher-clearance')) ||
+          150
+        : 150;
+      const toolbox = document.querySelector('.vp-d-toolbox')?.getBoundingClientRect();
+      const status = document.querySelector('.vp-d-status')?.getBoundingClientRect();
+      const node = document.querySelector(`.vp-map-node-${selected.id}`)?.getBoundingClientRect();
+      const origin = node ?? anchor ?? new DOMRect(viewportWidth / 2, viewportHeight / 2, 0, 0);
+      const width = Math.min(354, viewportWidth - 24);
+      const minTop =
+        viewportWidth <= 600
+          ? Math.max(12, (toolbox?.bottom ?? 0) + 12, (status?.bottom ?? 0) + 12)
+          : 12;
+      const availableBottom = viewportHeight - clearance;
+      const maxHeight = Math.min(520, Math.max(100, availableBottom - minTop - 12));
+      const height = Math.min(popup.scrollHeight || 400, maxHeight);
+      let left = origin.right + 12;
+      let top = origin.top - 12;
+      if (left + width > viewportWidth - 12) left = origin.left - width - 12;
+      if (left < 12) {
+        left = Math.max(12, Math.min(origin.left, viewportWidth - width - 12));
+        top =
+          origin.bottom + 12 + height <= availableBottom
+            ? origin.bottom + 12
+            : origin.top - height - 12;
+      }
+      top = Math.max(minTop, Math.min(top, availableBottom - height));
+      if (
+        toolbox &&
+        left < toolbox.right + 12 &&
+        left + width > toolbox.left &&
+        top < toolbox.bottom + 12 &&
+        top + height > toolbox.top
+      ) {
+        if (toolbox.right + width + 24 <= viewportWidth) left = toolbox.right + 12;
+        else top = Math.max(top, toolbox.bottom + 12);
+      }
+      setPopupStyle({ left, top, width, maxHeight, visibility: 'visible' });
+    }
+    positionPopup();
+    const observer = new ResizeObserver(positionPopup);
+    observer.observe(popup);
+    for (const element of document.querySelectorAll('.vp-switcher, .vp-d-status, .vp-d-toolbox'))
+      observer.observe(element);
+    window.addEventListener('resize', positionPopup);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', positionPopup);
+    };
+  }, [detail, selected.id, anchor]);
+  useEffect(() => {
+    if (detail) {
+      if (!wasDetailOpen.current && !objectTrigger.current)
+        objectTrigger.current = document.activeElement as HTMLElement;
+      document
+        .querySelector<HTMLElement>(`.vp-d-popup[data-object-id="${selected.id}"] #vp-detail-title`)
+        ?.focus({ preventScroll: true });
+    } else if (wasDetailOpen.current) {
+      if (objectTrigger.current?.isConnected) objectTrigger.current.focus({ preventScroll: true });
+      objectTrigger.current = null;
+      setSelected({ id: 'subscription', ...objectDetails.subscription });
+      setAnchor(null);
+    }
+    wasDetailOpen.current = detail;
+  }, [detail, selected.id]);
+  useEffect(() => {
+    if (!detail) return;
+    function dismissOutside(event: PointerEvent) {
+      const target = event.target as HTMLElement;
+      if (target.closest('.vp-d-popup, .vp-map-node, .vp-switcher')) return;
+      setDetail(false);
+    }
+    document.addEventListener('pointerdown', dismissOutside);
+    return () => document.removeEventListener('pointerdown', dismissOutside);
+  }, [detail, setDetail]);
+  useEffect(() => {
+    const status = document.querySelector('.vp-d-status');
+    const app = status?.closest('.vp-app-D') as HTMLElement | null;
+    if (!status || !app) return;
+    const observer = new ResizeObserver(() => {
+      app.style.setProperty('--vp-d-status-height', `${status.getBoundingClientRect().height}px`);
+    });
+    observer.observe(status);
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     if (!utility) return;
     document.getElementById('vp-d-utility-title')?.focus({ preventScroll: true });
@@ -78,12 +284,25 @@ export function VisualPrototypeD({
     utilityTrigger.current?.focus({ preventScroll: true });
   }
 
+  function selectObject(object: MapObject, bounds: DOMRect) {
+    objectTrigger.current = (
+      document.activeElement?.closest('.vp-d-utility')
+        ? document.querySelector(`.vp-map-node-${object.id}`)
+        : document.activeElement
+    ) as HTMLElement;
+    setSelected(object);
+    setAnchor(bounds);
+    setUtility(null);
+    setDetail(true);
+  }
+
   return (
     <div
       className={`vp-app vp-app-D${expanded ? ' vp-d-expanded' : ''}${detail ? ' vp-d-detail-open' : ''}`}
     >
       <VisualPrototypeMap
         variant="A"
+        onSelectObject={selectObject}
         onSelect={() => {
           setUtility(null);
           setDetail(true);
@@ -107,19 +326,21 @@ export function VisualPrototypeD({
             }}
           >
             {listening ? (
-              <span
-                className={`vp-d-waveform${sound ? ' vp-d-waveform-sound' : ''}`}
+              <svg
+                className="vp-icon vp-d-stop-icon"
+                viewBox="0 0 24 24"
                 aria-hidden="true"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
               >
-                {[0, 1, 2, 3, 4].map((bar) => (
-                  <i key={bar} />
-                ))}
-              </span>
+                <circle cx="12" cy="12" r="10" />
+                <rect x="8" y="8" width="8" height="8" rx="1" fill="currentColor" stroke="none" />
+              </svg>
             ) : (
               <PrototypeIcon name="mic" />
             )}
             <span className="vp-d-label">{listening ? 'Avsluta samtal' : 'Prata med Skyttel'}</span>
-            {listening && <span className="vp-d-stop" aria-hidden="true" />}
           </button>
           <button
             type="button"
@@ -175,7 +396,21 @@ export function VisualPrototypeD({
       </div>
       <div className="vp-d-status">
         <Status scene={scene} onSave={() => setScene('saving')} />
-        {listening && <p className="vp-d-sound-status">{sound ? 'Tal hörs' : 'Väntar på tal'}</p>}
+        {listening && (
+          <div className="vp-d-audio-feedback" role="status">
+            <span
+              className={`vp-d-waveform${sound ? ' vp-d-waveform-sound' : ''}`}
+              aria-hidden="true"
+            >
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
+                <i key={bar} />
+              ))}
+            </span>
+            <p className="vp-d-sound-status">
+              {sound ? 'Tal hörs' : 'Tyst just nu · Lyssnar fortfarande'}
+            </p>
+          </div>
+        )}
       </div>
 
       {utility && (
@@ -222,50 +457,45 @@ export function VisualPrototypeD({
             <>
               <p className="vp-muted">Samma hushåll, utan att navigera i rymdkartan.</p>
               <ul className="vp-d-object-list">
-                <li>
-                  <strong>Alex</strong>
-                  <span>Står på familjeabonnemanget. Använder Alex musikkonto.</span>
-                </li>
-                <li>
-                  <strong>Lo</strong>
-                  <span>Använder Musikgläntan.</span>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUtility(null);
-                      setDetail(true);
-                    }}
-                  >
-                    <span>
-                      <strong>Familjeabonnemang</strong>
+                {Object.entries(objectDetails).map(([id, object]) => (
+                  <li key={id}>
+                    <button
+                      type="button"
+                      onClick={(event) =>
+                        selectObject({ id, ...object }, event.currentTarget.getBoundingClientRect())
+                      }
+                    >
                       <span>
-                        189 kr / månad · Ger tillgång till Musikgläntan. Betalas från Gemensamt
-                        bankkonto.
+                        <strong>{object.name}</strong>
+                        <span>
+                          {object.type} · {object.description}
+                        </span>
                       </span>
-                    </span>
-                    <PrototypeIcon name="arrow" />
-                  </button>
-                </li>
-                <li>
-                  <strong>Musikgläntan</strong>
-                  <span>Musiktjänst. Alex musikkonto hör till tjänsten.</span>
-                </li>
-                <li>
-                  <strong>Alex musikkonto</strong>
-                  <span>Tjänstekonto · Inloggningsadress: alex@example.test</span>
-                </li>
-                <li>
-                  <strong>Gemensamt bankkonto</strong>
-                  <span>Bankkonto · Kort ·· 4242 är kopplat till bankkontot.</span>
-                </li>
+                      <PrototypeIcon name="arrow" />
+                    </button>
+                  </li>
+                ))}
               </ul>
             </>
           )}
         </aside>
       )}
-      {detail && <Detail onClose={() => setDetail(false)} onChange={() => setScene('draft')} />}
+      {detail && (
+        <div
+          ref={popupRef}
+          className="vp-d-popup"
+          data-object-id={selected.id}
+          role="dialog"
+          aria-labelledby="vp-detail-title"
+          style={popupStyle}
+        >
+          {selected.id === 'subscription' ? (
+            <Detail onClose={() => setDetail(false)} onChange={() => setScene('draft')} />
+          ) : (
+            <ObjectDetail object={selected} onClose={() => setDetail(false)} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
