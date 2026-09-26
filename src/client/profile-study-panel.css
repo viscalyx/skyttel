@@ -1,0 +1,152 @@
+/* Profilbilden använder B-avsnittens storlek, fokus och färger. */
+.np-root .psi-profile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.np-root .psi-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 11px;
+  border-bottom: 1px solid var(--vp-line);
+  background: color-mix(in srgb, var(--vp-accent) 5%, var(--vp-surface));
+  border-radius: 7px 7px 0 0;
+}
+.np-root .psi-heading > span {
+  color: var(--vp-muted);
+  font-size: 11px;
+}
+.np-root .psi-content {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 11px;
+}
+.np-root .psi-content p {
+  margin: 0;
+}
+.np-root .psi-preview {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+}
+.np-root .psi-preview img,
+.np-root .psi-empty {
+  flex: 0 0 96px;
+  width: 96px;
+  height: 96px;
+  max-width: 100%;
+  object-fit: contain;
+  border: 1px solid var(--vp-line);
+  border-radius: 8px;
+  background: var(--vp-surface);
+}
+.np-root .psi-empty {
+  display: grid;
+  place-items: center;
+  color: var(--vp-muted);
+  font-size: 34px;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--vp-accent) 5%, var(--vp-surface));
+}
+.np-root .psi-image-caption {
+  display: grid;
+  gap: 5px;
+  flex: 1 1 130px;
+  min-width: 0;
+}
+.np-root .psi-status {
+  font-weight: 600;
+}
+.np-root .psi-file-name,
+.np-root .psi-help {
+  color: var(--vp-muted);
+  font-size: 12px;
+}
+.np-root .psi-stage-text {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--vp-control-line);
+  border-radius: 7px;
+}
+.np-root .psi-stage-text button,
+.np-root .psi-remove {
+  justify-self: start;
+  text-align: left;
+}
+.np-root .psi-picker {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 500;
+}
+.np-root .psi-profile .psi-picker input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px;
+  overflow: hidden;
+}
+.np-root .psi-picker input::file-selector-button {
+  margin-inline-end: 8px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 4px 7px;
+  color: var(--vp-text);
+  border: 1px solid var(--vp-control-line);
+  border-radius: 5px;
+  background: var(--vp-surface);
+  font: inherit;
+}
+.np-root .psi-error {
+  padding: 10px;
+  border: 2px solid var(--vp-accent);
+  border-radius: 7px;
+  font-weight: 600;
+}
+.np-root .psi-error:focus {
+  outline: 2px solid var(--vp-accent);
+  outline-offset: 2px;
+}
+.np-root .psi-draft,
+.np-root .psi-draft-object {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.np-root .psi-draft-object {
+  padding: 12px;
+  border: 1px solid var(--vp-line);
+  border-radius: 8px;
+}
+.np-root .psi-draft :is(h3, h4, h5, p) {
+  margin: 0;
+}
+.np-root .psi-draft :is(h4, h5) {
+  font-size: 13px;
+}
+.np-root .psi-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.np-root .psi-comparison > div {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  flex: 1 1 120px;
+  min-width: 0;
+}
+.np-root .psi-comparison img {
+  width: 96px;
+  height: 96px;
+  max-width: 100%;
+  object-fit: contain;
+  border: 1px solid var(--vp-line);
+  border-radius: 8px;
+}

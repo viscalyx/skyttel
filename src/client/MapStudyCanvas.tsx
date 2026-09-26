@@ -22,8 +22,8 @@ import type {
   StudyRelationship,
   StudyVariant,
 } from './map-study-types.js';
+import { ProfileStudyGlyph } from './ProfileStudyGlyph.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
-import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
 import { type ProjectedPoint, type SpatialCameraSnapshot, spatialScene } from './spatial-scene.js';
 import { useObjectMovement } from './use-object-movement.js';
 import './map-study-canvas.css';
@@ -1022,17 +1022,7 @@ export function MapStudyCanvas(props: Props) {
                   onPointerLeave={() => setHoverId(null)}
                 >
                   <span className="ms-marker-dot" aria-hidden="true">
-                    <SpatialObjectGlyph
-                      typeName={
-                        object.type === 'Musiktjänst'
-                          ? 'Tjänst'
-                          : object.type === 'Betalkort'
-                            ? 'Kort'
-                            : object.type
-                      }
-                      name={object.name}
-                      householdId="prototype"
-                    />
+                    <ProfileStudyGlyph object={object} />
                   </span>
                   {object.change && (
                     <span className="ms-marker-change" aria-hidden="true">

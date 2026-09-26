@@ -1,6 +1,7 @@
 // Kastbart listprov: kompakt lista, typkatalog och sök med förhandsvisning i samma fria panel.
 import { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import type { StudyObject, StudyRelationship } from './map-study-types.js';
+import { ProfileStudyGlyph } from './ProfileStudyGlyph.js';
 import './list-study-list.css';
 
 export type ListStudyVariant = 'A' | 'B' | 'C';
@@ -207,7 +208,14 @@ export function ListStudyList({
           aria-label={`Visa ${nameOf(object)} i kartan`}
           title={noGraphics ? 'Kartan är avstängd' : `Visa ${nameOf(object)} i kartan`}
         >
-          <strong>{nameOf(object)}</strong>
+          <strong className="ls-name-with-image">
+            {object.profileImageUrl && (
+              <span className="ls-profile-image" aria-hidden="true">
+                <ProfileStudyGlyph object={object} />
+              </span>
+            )}
+            {nameOf(object)}
+          </strong>
           <span className="ls-row-meta">
             {object.type} {statuses(object)}
           </span>

@@ -32,6 +32,9 @@ import {
   NavigationPrototypeWindows,
   type PrototypeWindowAnchor,
 } from './NavigationPrototypeWindows.js';
+import { ProfileStudyDraft, ProfileStudyPanel } from './ProfileStudyPanel.js';
+import profileExample from './profile-study-assets/provbild-musik.png';
+import { useProfileStudy } from './profile-study-model.js';
 import { RelationshipStudyPanel, useRelationshipStudy } from './RelationshipStudy.js';
 import { TypeStudySettings } from './TypeStudySettings.js';
 import { useTypeStudy } from './type-study-model.js';
@@ -161,7 +164,8 @@ function Panel({
 export function NavigationPrototype() {
   const study = useMapStudy();
   const [params, setParams] = useSearchParams();
-  const objectsMode = params.get('prototype') === 'objects';
+  const imagesMode = params.get('prototype') === 'images';
+  const objectsMode = params.get('prototype') === 'objects' || imagesMode;
   const typesMode = params.get('prototype') === 'types' || objectsMode;
   const activeUtilityPages = typesMode ? [...utilityPages, 'types' as const] : utilityPages;
   const detailsMode = params.get('prototype') === 'details' || typesMode;
@@ -188,10 +192,23 @@ export function NavigationPrototype() {
     detailsMode && params.get('changes') === 'example',
     typesMode ? typeModel : undefined,
   );
+  const profileModel = useProfileStudy();
+  const profileBusy = imagesMode && profileModel.loadingIds.length > 0;
   const projectedRelationships = typesMode
     ? relationshipModel.relationships
     : (study?.relationships ?? []);
-  const projectedObjects = objectsMode ? detailModel.objects : (study?.objects ?? []);
+  const projectedObjects = (objectsMode ? detailModel.objects : (study?.objects ?? [])).map(
+    (object) =>
+      imagesMode
+        ? {
+            ...object,
+            profileImageUrl: profileModel.current(object.id)?.url,
+            change:
+              object.change ??
+              (Object.hasOwn(profileModel.staged, object.id) ? ('changed' as const) : undefined),
+          }
+        : object,
+  );
   const navObjects = study ? projectedObjects : defaultNavObjects;
   const objectTypeNames = Object.fromEntries(
     projectedObjects.map((object) => [
@@ -291,6 +308,18 @@ export function NavigationPrototype() {
     windows.some(
       (item) => item.objectId === selected && (!compactWindows || item.id === visibleWindowId),
     );
+  const hiddenProfileError = imagesMode
+    ? Object.entries(profileModel.errors).find(
+        ([id]) =>
+          !workVisible ||
+          !windows.some(
+            (item) =>
+              item.objectId === id &&
+              item.page === 'edit' &&
+              (!compactWindows || item.id === visibleWindowId),
+          ),
+      )
+    : undefined;
   const administrator = role === 'administrator' || role === 'administrator-operator';
   const operator = role === 'operator' || role === 'administrator-operator';
   const baseObject = navObjects.find((object) => object.id === selected) ?? navObjects[0];
@@ -300,7 +329,10 @@ export function NavigationPrototype() {
   };
   const hasStudyProposals = study?.proposals ?? false;
   const draftCount = detailsMode
-    ? detailModel.draftCount +
+    ? new Set([
+        ...Object.keys(detailModel.staged),
+        ...(imagesMode ? Object.keys(profileModel.staged) : []),
+      ]).size +
       (hasStudyProposals ? 3 : 0) +
       (typesMode ? typeModel.draftCount + relationshipModel.draftCount : 0)
     : Object.keys(staged).length + (hasStudyProposals ? 4 : 0);
@@ -311,6 +343,7 @@ export function NavigationPrototype() {
       : undefined,
     draftCount,
     saveState,
+    saveBlocked: profileBusy,
     onPropose: () => {
       if (detailsMode) detailModel.proposeVoicePrice();
       study?.setProposals(true);
@@ -614,6 +647,7 @@ export function NavigationPrototype() {
       setMessage('');
       setBuffers({});
       if (detailsMode) detailModel.reset();
+      if (imagesMode) profileModel.reset();
       if (typesMode) {
         typeModel.reset();
         relationshipModel.reset();
@@ -668,6 +702,7 @@ export function NavigationPrototype() {
     else beginSave();
   }
   function beginSave() {
+    if (profileBusy) return;
     if (objectsMode && detailModel.unresolvedIds.length > 0) {
       setIdentitySaveBlocked(true);
       return;
@@ -681,6 +716,7 @@ export function NavigationPrototype() {
     if (outcome === 'saved') {
       setReceipt([
         ...(detailsMode ? detailModel.receiptLines() : []),
+        ...(imagesMode ? profileModel.receiptLines(projectedObjects) : []),
         ...(typesMode
           ? [
               ...typeModel.receiptLines(),
@@ -708,6 +744,7 @@ export function NavigationPrototype() {
       setSavedNames((previous) => ({ ...previous, ...staged }));
       setStaged({});
       if (detailsMode) detailModel.commit();
+      if (imagesMode) profileModel.commit();
       if (typesMode) {
         typeModel.commit();
         relationshipModel.commit();
@@ -898,11 +935,49 @@ export function NavigationPrototype() {
   });
 
   function contents(contentPage: NavPage, objectId = selected) {
-    const blocked = ['pending', 'unknown', 'conflict'].includes(saveState);
+    const blocked = ['pending', 'unknown', 'conflict'].includes(saveState) || profileBusy;
     const noteChange = () => {
       voiceStudy.noteManualChange();
       setSaveState('idle');
     };
+    const stageDetails = (id: string) => {
+      if (blocked) return;
+      let valid = false;
+      if (id === 'new-object') {
+        const created = detailModel.stageCreation();
+        if (created) {
+          valid = true;
+          noteChange();
+          setWindows((previous) => previous.filter((entry) => entry.page !== 'new-object'));
+          selectObject(created);
+        }
+      } else if (detailModel.stage(id)) {
+        valid = true;
+        noteChange();
+      }
+      if (!valid)
+        requestAnimationFrame(() => {
+          const windowId = id === 'new-object' ? id : `object-${id}`;
+          rootRef.current
+            ?.querySelector<HTMLElement>(`[data-window-id="${CSS.escape(windowId)}"] .ds-errors`)
+            ?.focus();
+        });
+    };
+    const profile = (id: string, creation = false) =>
+      imagesMode ? (
+        <ProfileStudyPanel
+          objectId={id}
+          name={detailModel.current(id).name || 'det nya objektet'}
+          model={profileModel}
+          creation={creation}
+          unsent={detailModel.unsentIds.includes(id)}
+          editing={creation || contentPage === 'edit'}
+          blocked={blocked}
+          onStageText={() => stageDetails(id)}
+          onEdit={() => go('edit', id)}
+          onChange={noteChange}
+        />
+      ) : undefined;
     if (objectsMode && contentPage === 'new-object')
       return (
         <DetailStudyPanel
@@ -913,17 +988,10 @@ export function NavigationPrototype() {
           model={detailModel}
           editing
           blocked={blocked}
+          profile={profile('new-object', true)}
           onEdit={() => {}}
           onRead={() => {}}
-          onStage={() => {
-            if (blocked) return;
-            const id = detailModel.stageCreation();
-            if (id) {
-              noteChange();
-              setWindows((previous) => previous.filter((entry) => entry.page !== 'new-object'));
-              selectObject(id);
-            }
-          }}
+          onStage={() => stageDetails('new-object')}
           onTypes={() => {
             setTypeSettingsId(detailModel.buffer('new-object').typeId || undefined);
             go('types');
@@ -970,6 +1038,7 @@ export function NavigationPrototype() {
           variant={detailVariant}
           object={subject}
           model={detailModel}
+          profile={profile(objectId)}
           types={objectsMode ? typeModel : undefined}
           definition={typesMode ? typeModel.get(typeModel.objectTypeId(subject)) : undefined}
           onTypes={
@@ -993,7 +1062,7 @@ export function NavigationPrototype() {
               : undefined
           }
           editing={contentPage === 'edit'}
-          blocked={['pending', 'unknown', 'conflict'].includes(saveState)}
+          blocked={blocked}
           onEdit={() => go('edit', objectId)}
           onRead={() => {
             setWindows((previous) =>
@@ -1002,13 +1071,7 @@ export function NavigationPrototype() {
               ),
             );
           }}
-          onStage={() => {
-            if (['pending', 'unknown', 'conflict'].includes(saveState)) return;
-            if (detailModel.stage(objectId)) {
-              voiceStudy.noteManualChange();
-              setSaveState('idle');
-            }
-          }}
+          onStage={() => stageDetails(objectId)}
           onList={returnToList}
           onMap={() => revealStudyObject(objectId)}
           onRelated={selectObject}
@@ -1050,7 +1113,8 @@ export function NavigationPrototype() {
                         ...object,
                         description: detailModel.descriptions[object.id] ?? object.description,
                         type: typesMode ? objectTypeNames[object.id] : object.type,
-                        change: object.id === 'subscription' ? undefined : object.change,
+                        change:
+                          object.id === 'subscription' && !imagesMode ? undefined : object.change,
                       }))
                     : projectedObjects
                 }
@@ -1121,6 +1185,7 @@ export function NavigationPrototype() {
               ))}
             </ul>
           )}
+          {imagesMode && <ProfileStudyDraft model={profileModel} objects={projectedObjects} />}
           {typesMode && (
             <ul>
               {[
@@ -1573,6 +1638,21 @@ export function NavigationPrototype() {
                 onDraft={() => openVoicePage(saveState === 'saved' ? 'save-attempts' : 'draft')}
                 onSave={beginSave}
               />
+              {profileBusy && (
+                <p className="vs-unsent" role="status">
+                  Förbereder profilbilden. Vänta innan du sparar.
+                </p>
+              )}
+              {hiddenProfileError && (
+                <div className="os-save-error" role="alert">
+                  <p>
+                    {detailModel.current(hiddenProfileError[0]).name}: {hiddenProfileError[1]}
+                  </p>
+                  <button type="button" onClick={() => go('edit', hiddenProfileError[0])}>
+                    Visa bildfelet
+                  </button>
+                </div>
+              )}
               {objectsMode && identitySaveBlocked && detailModel.unresolvedIds.length > 0 && (
                 <div className="os-save-error" role="alert">
                   <p>
@@ -1653,7 +1733,16 @@ export function NavigationPrototype() {
                   names={displayedNames}
                   staged={displayedStaged}
                   descriptions={detailsMode ? detailModel.descriptions : undefined}
-                  objectChanges={detailsMode ? { subscription: undefined } : undefined}
+                  objectChanges={
+                    detailsMode
+                      ? {
+                          subscription:
+                            imagesMode && Object.hasOwn(profileModel.staged, 'subscription')
+                              ? 'changed'
+                              : undefined,
+                        }
+                      : undefined
+                  }
                   objectTypeNames={typesMode ? objectTypeNames : undefined}
                   objectOverrides={objectsMode ? projectedObjects : undefined}
                   relationshipOverrides={typesMode ? projectedRelationships : undefined}
@@ -2023,24 +2112,28 @@ export function NavigationPrototype() {
           comparison={
             listsMode && study
               ? {
-                  label: objectsMode
-                    ? 'Kastbart prov: skapa och byta typ'
-                    : typesMode
-                      ? 'Kastbar typprototyp'
-                      : detailsMode
-                        ? 'Kastbar detaljprototyp'
-                        : undefined,
+                  label: imagesMode
+                    ? 'Kastbart prov: profilbilder'
+                    : objectsMode
+                      ? 'Kastbart prov: skapa och byta typ'
+                      : typesMode
+                        ? 'Kastbar typprototyp'
+                        : detailsMode
+                          ? 'Kastbar detaljprototyp'
+                          : undefined,
                   fixed: typesMode,
                   key: detailsMode ? detailVariant : listVariant,
-                  name: objectsMode
-                    ? 'Skapa objekt och byta typ'
-                    : typesMode
-                      ? 'Avsnitt från hushållets typer'
-                      : detailsMode
-                        ? { A: 'Läs och ändra', B: 'Avsnitt', C: 'Flikar' }[detailVariant]
-                        : { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[
-                            listVariant
-                          ],
+                  name: imagesMode
+                    ? 'Profilbild i samma utkast'
+                    : objectsMode
+                      ? 'Skapa objekt och byta typ'
+                      : typesMode
+                        ? 'Avsnitt från hushållets typer'
+                        : detailsMode
+                          ? { A: 'Läs och ändra', B: 'Avsnitt', C: 'Flikar' }[detailVariant]
+                          : { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[
+                              listVariant
+                            ],
                   description: detailsMode
                     ? 'Detaljer och redigering · godkänd lista B och talåterkoppling D'
                     : 'Hitta rätt objekt · godkänd karta och talåterkoppling D',
@@ -2069,6 +2162,29 @@ export function NavigationPrototype() {
                       {typesMode && (
                         <button type="button" onClick={() => go('settings')}>
                           Öppna Inställningar
+                        </button>
+                      )}
+                      {imagesMode && (
+                        <button
+                          type="button"
+                          disabled={
+                            profileBusy ||
+                            ['pending', 'unknown', 'conflict'].includes(saveState) ||
+                            detailModel.unsentIds.includes('subscription')
+                          }
+                          onClick={async () => {
+                            const response = await fetch(profileExample);
+                            const file = new File([await response.blob()], 'provbild-musik.png', {
+                              type: 'image/png',
+                            });
+                            if (await profileModel.pick('subscription', file)) {
+                              voiceStudy.noteManualChange();
+                              setSaveState('idle');
+                              go('edit', 'subscription');
+                            }
+                          }}
+                        >
+                          Använd provbild på Familjeabonnemang
                         </button>
                       )}
                       {objectsMode && (
@@ -2109,7 +2225,9 @@ export function NavigationPrototype() {
                         {browse.onlySelected ? 'markerade' : 'alla'}.
                       </p>
                       <p>
-                        {objectsMode ? (
+                        {imagesMode ? (
+                          'B ligger fast. Pröva att lägga till, byta och ta bort profilbild. Bild och text delar samma utkast och kvitto. Allt finns bara i minnet; ingen fil laddas upp. Bilder granskas i webbläsaren i detta prov.'
+                        ) : objectsMode ? (
                           'B ligger fast. Pröva ett nytt objekt eller byt typ på Familjeabonnemang. Egna fält från den tidigare typen visas för hantering. Bilder, historik och fullständiga konfliktval återstår. Allt provtillstånd finns bara i minnet.'
                         ) : typesMode ? (
                           'B ligger fast. Pröva redigerbara typer, avsnitt och egenskaper i Inställningar. Samband kan koppla vilka objekt som helst. Allt sparande är simulerat i samma privata utkast.'

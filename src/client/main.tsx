@@ -14,7 +14,8 @@ const Prototype =
   prototype === 'lists' ||
   prototype === 'details' ||
   prototype === 'types' ||
-  prototype === 'objects'
+  prototype === 'objects' ||
+  prototype === 'images'
     ? (await import('./MapStudyEntry.js')).MapStudyEntry
     : prototype === 'navigation'
       ? (await import('./NavigationPrototype.js')).NavigationPrototype

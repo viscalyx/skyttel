@@ -42,7 +42,7 @@ const variants = {
 
 function useStudyState() {
   const [params, setParams] = useSearchParams();
-  const candidate = ['voice', 'lists', 'details', 'types', 'objects'].includes(
+  const candidate = ['voice', 'lists', 'details', 'types', 'objects', 'images'].includes(
     params.get('prototype') ?? '',
   )
     ? 'A'
@@ -53,8 +53,9 @@ function useStudyState() {
   );
   const [proposals, setProposals] = useState(
     () =>
-      ['voice', 'lists', 'details', 'types', 'objects'].includes(params.get('prototype') ?? '') &&
-      params.get('changes') === 'example',
+      ['voice', 'lists', 'details', 'types', 'objects', 'images'].includes(
+        params.get('prototype') ?? '',
+      ) && params.get('changes') === 'example',
   );
   const [savedProposals, setSavedProposals] = useState(false);
   const [positions, setPositions] = useState<Record<string, StudyPosition>>({});

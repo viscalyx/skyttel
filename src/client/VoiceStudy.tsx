@@ -15,6 +15,7 @@ export type VoiceStudyOptions = {
   enabled?: boolean;
   draftCount: number;
   saveState: VoiceSaveState;
+  saveBlocked?: boolean;
   currentPrice?: string;
   onPropose: () => void;
   onSave: () => void;
@@ -92,7 +93,12 @@ export function useVoiceStudy(options: VoiceStudyOptions) {
     options.saveState === 'pending' ||
     options.saveState === 'conflict';
   const canSave =
-    enabled && options.draftCount > 0 && !clarification && !blockedSave && assistant !== 'working';
+    enabled &&
+    options.draftCount > 0 &&
+    !clarification &&
+    !blockedSave &&
+    !options.saveBlocked &&
+    assistant !== 'working';
 
   function startSession(mode: 'voice' | 'text') {
     if (!enabled || !externalAi || !mapWork) {

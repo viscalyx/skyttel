@@ -9,6 +9,7 @@ export type StudyObject = {
   position: StudyPosition;
   change?: 'added' | 'changed' | 'removed';
   ended?: boolean;
+  profileImageUrl?: string;
 };
 export type StudyRelationship = {
   id: string;

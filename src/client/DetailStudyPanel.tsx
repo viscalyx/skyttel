@@ -32,6 +32,7 @@ type DetailStudyPanelProps = {
   reverseLabels?: Record<string, string>;
   creation?: boolean;
   types?: TypeStudyModel;
+  profile?: ReactNode;
 };
 
 type Section = 'basic' | 'money' | 'time';
@@ -71,6 +72,7 @@ export function DetailStudyPanel({
   reverseLabels,
   creation = false,
   types,
+  profile,
 }: DetailStudyPanelProps) {
   const id = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -606,6 +608,7 @@ export function DetailStudyPanel({
         </div>
       )}
 
+      {profile}
       {(definition || types) && (
         <>
           {basic(false)}

@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "prototype:images": "vite --host 0.0.0.0 --port 4181 --strictPort",
     "prototype:objects": "vite --host 0.0.0.0 --port 4180 --strictPort",
     "prototype:types": "vite --host 0.0.0.0 --port 4179 --strictPort",
     "prototype:details": "vite --host 0.0.0.0 --port 4178 --strictPort",

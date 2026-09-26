@@ -5,6 +5,9 @@ Kastbart provunderlag för
 Frågan är hur ett nytt objekt och ett typbyte fungerar inom de godkända
 detaljavsnitten i B, med samma karta, privata utkast och sparbesked.
 
+[Skapande och typbyte är godkänt](https://github.com/viscalyx/skyttel/issues/107#issuecomment-5847984799).
+Nästa prov gäller [profilbilder](../profile-study-assets/README.md).
+
 ## Fast grund
 
 Grenen `prototype/skyttel-object-creation` börjar på godkända
