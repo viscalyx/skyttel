@@ -3,7 +3,8 @@
 Skyttel använder hela Lucides officiella katalog från version
 1.48.0: 1 854 ikoner. Katalogen innehåller varje SVG:s element och attribut
 samt dess engelska taggar, kategorier och alternativa namn. Sökningen
-kompletterar dessa med svenska benämningar och sökord i
+kompletterar dessa med svenska benämningar, sökord och översättningar av
+samtliga kategorier i
 `../object-icons.ts`.
 
 Underlaget är låst till commit

@@ -110,6 +110,51 @@ const swedishTerms: Record<string, string[]> = {
   heart: ['hjärta', 'hälsa'],
 };
 
+const swedishCategories: Record<string, string> = {
+  accessibility: 'tillgänglighet',
+  account: 'konto',
+  animals: 'djur',
+  arrows: 'pilar',
+  buildings: 'byggnader',
+  charts: 'diagram',
+  communication: 'kommunikation',
+  connectivity: 'anslutning',
+  cursors: 'pekare',
+  design: 'formgivning',
+  development: 'utveckling',
+  devices: 'enheter',
+  emoji: 'känslor',
+  files: 'filer',
+  finance: 'ekonomi',
+  'food-beverage': 'mat dryck',
+  gaming: 'spel',
+  home: 'hem',
+  layout: 'layout',
+  mail: 'post',
+  math: 'matematik',
+  medical: 'medicin hälsa',
+  multimedia: 'media',
+  nature: 'natur',
+  navigation: 'navigering',
+  notifications: 'meddelanden',
+  people: 'människor',
+  photography: 'fotografi',
+  science: 'vetenskap',
+  seasons: 'årstider',
+  security: 'säkerhet',
+  shapes: 'former',
+  shopping: 'handel',
+  social: 'socialt',
+  sports: 'sport',
+  sustainability: 'hållbarhet',
+  text: 'text',
+  time: 'tid',
+  tools: 'verktyg',
+  transportation: 'transport',
+  travel: 'resor',
+  weather: 'väder',
+};
+
 // SVG-element och attribut valideras när det låsta underlaget importeras.
 const rawCatalog = source as unknown as {
   id: string;
@@ -128,7 +173,13 @@ export const objectIcons: ObjectIcon[] = rawCatalog.map((icon) => {
   return {
     id: icon.id,
     label: labels[icon.id] ?? icon.id.replaceAll('-', ' '),
-    keywords: [...new Set([...english, ...aliases])],
+    keywords: [
+      ...new Set([
+        ...english,
+        ...aliases,
+        ...icon.categories.map((category) => swedishCategories[category]),
+      ]),
+    ],
     nodes: icon.nodes,
   };
 });

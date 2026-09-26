@@ -50,6 +50,8 @@ restart before explicit reset”.
 
 - Formuläret stannar öppet vid den första knappen. Ikonvalet hör till samma
   privata objektförslag och kan inte ersätta oskickad text.
+- Efter att uppgifterna lagts i utkastet flyttas fokus till ikonsökningen,
+  om användaren inte redan har valt ett annat fält under väntan.
 - Bilden har företräde. Bildborttagning återger Cykel och typbytet behåller
   valet. Ikon och beskrivning finns kvar efter sparande och omstart.
 - Standardvalet blir ett privat förslag och delas först efter sparandet.
@@ -74,7 +76,8 @@ pagination work in narrow themes”.
 2. Sök telescope. Gå till motsvarande val med tangentbord och tryck Enter.
    Kontrollera markeringen. Sök sedan ingen-symbol-xyz och läs beskedet.
 3. Välj **Rensa sökningen**. Kontrollera fokus i sökfältet. Välj **Nästa**
-   och kontrollera fokus på den första ikonen på nästa sida.
+   och kontrollera fokus på den första ikonen på nästa sida. Välj
+   **Föregående** och kontrollera att första sidan visas igen.
 4. Sök bike och kontrollera att Cykel går att välja. Kontrollera läsbarhet,
    synligt fokus och att kontrollerna ryms utan vågrät sidrullning.
 

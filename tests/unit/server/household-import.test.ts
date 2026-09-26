@@ -66,6 +66,13 @@ test.each([14, 15, 16, 17])(
     const bytes = altered((parts) => {
       const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
       manifest.schemaVersion = schemaVersion;
+      if (schemaVersion < 17) {
+        const content = JSON.parse(new TextDecoder().decode(parts['content.json']));
+        for (const object of content.objects) delete object.iconId;
+        parts['content.json'] = new TextEncoder().encode(JSON.stringify(content));
+        manifest.parts[0].bytes = parts['content.json'].length;
+        manifest.parts[0].sha256 = createHash('sha256').update(parts['content.json']).digest('hex');
+      }
       parts['manifest.json'] = new TextEncoder().encode(JSON.stringify(manifest));
     });
     const prepared = await upload(bytes);
@@ -78,6 +85,7 @@ test.each([14, 15, 16, 17])(
     expect(await confirmed.json()).toMatchObject({ status: 'completed', contentVersion: 2 });
     const map = await (await client.request(`${path}/map`)).json();
     expect(map.objects).toEqual([expect.objectContaining({ id: 'lamp', name: 'Lampa' })]);
+    expect(map.objects[0]).not.toHaveProperty('iconId');
     const { history } = await (await client.request(`${path}/map/history`)).json();
     expect(history).toEqual([expect.objectContaining({ operationId: 'lamp-save' })]);
   },

@@ -18,12 +18,13 @@ export function ObjectIconPicker({
   hasImage: boolean;
   disabled: boolean;
   needsText: boolean;
-  onStageText: () => void;
+  onStageText: () => Promise<boolean>;
   onChange: (id: string | null) => void;
 }) {
   const id = useId();
   const [query, setQuery] = useState('');
   const [requestedPage, setPage] = useState(0);
+  const [stageFocus, setStageFocus] = useState<HTMLElement | null>(null);
   const search = useRef<HTMLInputElement>(null);
   const results = useRef<HTMLFieldSetElement>(null);
   const pageFocus = useRef<number | null>(null);
@@ -31,6 +32,12 @@ export function ObjectIconPicker({
   const pages = Math.max(1, Math.ceil(matches.length / 24));
   const page = Math.min(requestedPage, pages - 1);
   const blocked = disabled || needsText;
+  useLayoutEffect(() => {
+    if (!stageFocus || blocked) return;
+    if (document.activeElement === stageFocus || document.activeElement === document.body)
+      search.current?.focus();
+    setStageFocus(null);
+  }, [stageFocus, blocked]);
   useLayoutEffect(() => {
     if (pageFocus.current !== page) return;
     pageFocus.current = null;
@@ -74,7 +81,14 @@ export function ObjectIconPicker({
               Lägg först objektet och dina oskickade uppgifter i utkastet. Sedan kan du ändra
               ikonen.
             </p>
-            <button type="button" disabled={disabled} onClick={onStageText}>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={async (event) => {
+                const trigger = event.currentTarget;
+                if (await onStageText()) setStageFocus(trigger);
+              }}
+            >
               Lägg uppgifterna i utkastet först
             </button>
           </div>

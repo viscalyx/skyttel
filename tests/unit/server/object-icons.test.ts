@@ -1,4 +1,10 @@
+import { createHash } from 'node:crypto';
+import { copyFileSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { unzipSync, zipSync } from 'fflate';
 import { afterEach, beforeEach, expect, test } from 'vitest';
+import { openDatabase } from '../../../src/server/database.js';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
 import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
 import { applicationFixture } from './fixture.js';
@@ -197,6 +203,39 @@ test('merge requires an icon choice, preserves originals on cancellation and und
   const scope = path.replace('/map', '');
   const prepared = await (await client.json(`${scope}/exports`, {})).json();
   const bytes = await (await client.request(`${scope}/exports/${prepared.id}`)).arrayBuffer();
+  const parts = unzipSync(new Uint8Array(bytes));
+  const content = JSON.parse(Buffer.from(parts['content.json']).toString());
+  const mergeReceipt = content.saves.find(
+    (entry: { operationId: string }) => entry.operationId === 'merged',
+  ).receipt;
+  const records = [
+    content.objects[0],
+    content.objects.find((entry: { id: string }) => entry.id === 'other'),
+    content.drafts[0].changes[0].after,
+    mergeReceipt.changes[0].merge.objects[0],
+    content.history[0].changes[0].after,
+  ];
+  for (const record of records) {
+    const original = record.iconId;
+    record.iconId = 'not-a-valid-icon';
+    parts['content.json'] = Buffer.from(JSON.stringify(content));
+    const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
+    manifest.parts[0].bytes = parts['content.json'].length;
+    manifest.parts[0].sha256 = createHash('sha256').update(parts['content.json']).digest('hex');
+    parts['manifest.json'] = Buffer.from(JSON.stringify(manifest));
+    const invalid = await client.request(`${scope}/imports`, {
+      method: 'POST',
+      headers: {
+        origin: fixture.config.origin,
+        'content-type': 'application/zip',
+        'X-Skyttel-Content-Version': '1',
+      },
+      body: new Uint8Array(zipSync(parts)),
+    });
+    expect(invalid.status).toBe(400);
+    if (original === undefined) delete record.iconId;
+    else record.iconId = original;
+  }
   const upload = await client.request(`${scope}/imports`, {
     method: 'POST',
     headers: {
@@ -233,4 +272,62 @@ test('merge requires an icon choice, preserves originals on cancellation and und
       expect.objectContaining({ id: 'other', iconId: 'music' }),
     ]),
   );
+});
+
+test('upgrading a schema 16 object and older private proposal keeps the canonical default and ordinary save', async () => {
+  fixture.close();
+  const directory = mkdtempSync(join(tmpdir(), 'skyttel-icon-upgrade-'));
+  try {
+    for (const name of readdirSync('migrations').filter(
+      (name) => name.endsWith('.sql') && name < '017',
+    ))
+      copyFileSync(join('migrations', name), join(directory, name));
+    fixture = await applicationFixture({ migrationsDirectory: directory });
+    client = fixture.client();
+    await client.signIn();
+    const { household } = await (await client.json('/api/households', { name: 'Linden' })).json();
+    const { user } = await (await client.request('/api/bootstrap')).json();
+    path = `/api/households/${household.id}/map`;
+    const type = fixture.database
+      .prepare('SELECT * FROM object_type WHERE householdId = ? LIMIT 1')
+      .get(household.id) as MapState['types'][number];
+    const object = {
+      id: 'object',
+      householdId: household.id,
+      typeId: type.id,
+      revision: 1,
+      name: 'Min cykel',
+      description: '',
+    };
+    fixture.database
+      .prepare(
+        'INSERT INTO map_object (id, householdId, typeId, revision, name, description) VALUES (?, ?, ?, 1, ?, ?)',
+      )
+      .run(object.id, household.id, type.id, object.name, object.description);
+    fixture.database
+      .prepare('INSERT INTO map_draft (householdId, userId, version, changes) VALUES (?, ?, 1, ?)')
+      .run(
+        household.id,
+        user.id,
+        JSON.stringify([
+          {
+            id: 'object',
+            before: object,
+            after: { ...object, description: 'Äldre förslag' },
+            type,
+          },
+        ]),
+      );
+    openDatabase(fixture.config.databasePath).close();
+    expect((await read()).objects).toEqual([object]);
+    expect(draftConflicts(await read())).toEqual([]);
+    const receipt = await save('legacy-proposal');
+    expect(receipt.changes[0].after).toMatchObject({ description: 'Äldre förslag' });
+    expect(receipt.changes[0].after).not.toHaveProperty('iconId');
+    expect((await propose({ iconId: 'bike', typeId: type.id })).status).toBe(200);
+    await save('own-icon');
+    expect((await read()).objects[0]).toMatchObject({ iconId: 'bike' });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

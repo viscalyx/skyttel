@@ -27,6 +27,7 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     await details.getByLabel('Objektets namn', { exact: true }).fill('Min cykel');
     await details.getByLabel('Beskrivning', { exact: true }).fill('Bevara texten');
     await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
+    await expect(picker.getByRole('searchbox', { name: 'Sök ikon' })).toBeFocused();
     await picker.getByRole('searchbox', { name: 'Sök ikon' }).fill('cykel');
     await picker.getByRole('button', { name: 'Välj Cykel', exact: true }).click();
     await expect.poll(async () => (await read()).draft.changes[0].after?.iconId).toBe('bike');
@@ -120,6 +121,10 @@ test('IKON-02: full catalog search, empty results and keyboard pagination work i
         await expect(
           picker.getByRole('group', { name: 'Välj ikon för Lo' }).getByRole('button').first(),
         ).toBeFocused();
+        await picker.getByRole('button', { name: 'Föregående', exact: true }).click();
+        await expect(
+          picker.getByRole('button', { name: 'Föregående', exact: true }),
+        ).toBeDisabled();
         await search.fill('bike');
         await expect(picker.getByRole('button', { name: 'Välj Cykel', exact: true })).toBeVisible();
         const box = await picker.boundingBox();

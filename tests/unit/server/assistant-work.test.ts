@@ -58,6 +58,8 @@ test('assistant icon search and set/reset proposals share the private object and
   const token = await connect();
   const found = await tool(token, 'search_object_icons', { query: 'cykel' });
   expect(found.value.icons).toContainEqual({ id: 'bike', label: 'Cykel' });
+  const scientific = await tool(token, 'search_object_icons', { query: 'vetenskap telescope' });
+  expect(scientific.value.icons).toContainEqual({ id: 'telescope', label: 'telescope' });
   const state = await (await browser.get(path)).json();
   const value = { typeId: state.types[0].id, name: 'Cykel', description: '', iconId: 'bike' };
   const proposal = {

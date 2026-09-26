@@ -166,18 +166,17 @@ export function ObjectWork({
                   editor.contentVersion !== state.contentVersion
                 }
                 needsText={dirty || !object}
-                onStageText={() => {
+                onStageText={async () => {
                   if (
                     !form.current?.reportValidity() ||
                     (editor.displacedFields?.length && !editor.fieldsHandled)
                   )
-                    return;
-                  void stageObject(editor).then((next) => {
-                    if (next) {
-                      setEditor(next);
-                      setDirty(false);
-                    }
-                  });
+                    return false;
+                  const next = await stageObject(editor);
+                  if (!next) return false;
+                  setEditor(next);
+                  setDirty(false);
+                  return true;
                 }}
                 onChange={(iconId) => {
                   const value = { ...editor.value };
