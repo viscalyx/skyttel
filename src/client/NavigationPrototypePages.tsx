@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 export type NavPage =
   | 'map'
   | 'list'
@@ -134,8 +136,6 @@ type Props = {
   empty: boolean;
   administrator: boolean;
   operator: boolean;
-  theme: 'dark' | 'light';
-  toggleTheme: () => void;
   logout: () => void;
 };
 
@@ -150,6 +150,7 @@ const administrativePages: NavPage[] = [
 const laterDecision = <p className="np-muted">Innehållets detaljer prövas i ett annat beslut.</p>;
 
 export function NavigationPrototypePages(props: Props) {
+  const nameId = useId();
   const {
     page,
     go,
@@ -171,8 +172,6 @@ export function NavigationPrototypePages(props: Props) {
     empty,
     administrator,
     operator,
-    theme,
-    toggleTheme,
     logout,
   } = props;
   const displayedObjects = navObjects.map((item) => ({
@@ -289,10 +288,10 @@ export function NavigationPrototypePages(props: Props) {
         <p className="np-kicker">
           {object.type} · {object.name}
         </p>
-        <label className="np-fields" htmlFor="np-object-name">
+        <label className="np-fields" htmlFor={nameId}>
           Namn
           <input
-            id="np-object-name"
+            id={nameId}
             value={buffer}
             disabled={saving}
             onChange={(event) => setBuffer(event.target.value)}
@@ -394,14 +393,6 @@ export function NavigationPrototypePages(props: Props) {
         <details className="np-personal-settings">
           <summary>Dina inställningar</summary>
           <div className="np-stack">
-            <dl className="np-facts">
-              <dt>Tema</dt>
-              <dd>{theme === 'dark' ? 'Mörkt' : 'Ljust'}</dd>
-            </dl>
-            <button type="button" onClick={toggleTheme}>
-              Byt till {theme === 'dark' ? 'ljust' : 'mörkt'} tema
-            </button>
-            <p className="np-muted">Temat gäller din egen vy.</p>
             {menu(['login-methods', 'invitations', 'assistants'])}
             <button type="button" onClick={logout}>
               Logga ut

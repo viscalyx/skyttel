@@ -1,5 +1,5 @@
 // Kastbar navigationsstudie på befintlig ingång, ?prototype=navigation&variant=A/B/C.
-// Tre strukturer inom godkända D. Endast påhittade uppgifter och tillstånd i minnet.
+// B prövar fria paneler inom godkända D. A/C är jämförelser. Påhittat innehåll i minnet.
 import {
   type CSSProperties,
   type ReactNode,
@@ -15,6 +15,12 @@ import {
   navObjects,
   pageTitles,
 } from './NavigationPrototypePages.js';
+import {
+  NavigationPrototypeTheme,
+  type ThemeMode,
+  usePrototypeTheme,
+} from './NavigationPrototypeTheme.js';
+import { NavigationPrototypeWindows } from './NavigationPrototypeWindows.js';
 import { PrototypeIcon } from './VisualPrototype.js';
 import { VisualPrototypeDFrame } from './VisualPrototypeDFrame.js';
 import { VisualPrototypeMap } from './VisualPrototypeMap.js';
@@ -28,9 +34,9 @@ const variants = {
       'Samtalet ersätter redigeringen i samma panel. Du byter tillbaka för att fortsätta.',
   },
   B: {
-    name: 'Två paneler',
+    name: 'Fria paneler',
     description:
-      'Redigeringen ligger kvar när samtalet öppnas bredvid. På mobil växlar du mellan två paneler.',
+      'Öppna flera objekt och samtalet. Flytta panelerna var för sig. På mobil väljer du bland öppna paneler.',
   },
   C: {
     name: 'Flikar i panelen',
@@ -38,6 +44,7 @@ const variants = {
   },
 };
 type Variant = keyof typeof variants;
+type WorkWindow = { id: string; page: NavPage; objectId?: string };
 type Scenario =
   | 'normal'
   | 'empty'
@@ -129,11 +136,14 @@ function Panel({
 
 export function NavigationPrototype() {
   const [params, setParams] = useSearchParams();
-  const candidate = params.get('variant') ?? 'A';
-  const variant: Variant = candidate in variants ? (candidate as Variant) : 'A';
+  const candidate = params.get('variant') ?? 'B';
+  const variant: Variant = candidate in variants ? (candidate as Variant) : 'B';
   const candidatePage = params.get('view') ?? 'map';
   const page: NavPage = candidatePage in pageTitles ? (candidatePage as NavPage) : 'map';
-  const theme = params.get('theme') === 'light' ? 'light' : 'dark';
+  const themeCandidate = params.get('theme');
+  const themeMode: ThemeMode =
+    themeCandidate === 'light' || themeCandidate === 'dark' ? themeCandidate : 'system';
+  const theme = usePrototypeTheme(themeMode);
   const [scenario, setScenario] = useState<Scenario>('normal');
   const [role, setRole] = useState<
     'member' | 'administrator' | 'operator' | 'administrator-operator'
@@ -157,15 +167,25 @@ export function NavigationPrototype() {
     'Skyttel: Berätta vad du vill lägga till eller hitta.',
   ]);
   const [voice, setVoice] = useState(false);
-  const [conversationOpen, setConversationOpen] = useState(false);
-  const [mobileConversation, setMobileConversation] = useState(false);
+  const initialWindow: WorkWindow | null =
+    page !== 'map' && !utilityPages.includes(page)
+      ? {
+          id: page === 'edit' || page === 'detail' ? 'object-subscription' : page,
+          page,
+          objectId: page === 'edit' || page === 'detail' ? 'subscription' : undefined,
+        }
+      : null;
+  const [windows, setWindows] = useState<WorkWindow[]>(() =>
+    initialWindow ? [initialWindow] : [],
+  );
+  const [activeWindow, setActiveWindow] = useState<string | null>(initialWindow?.id ?? null);
+  const [layoutVersion, setLayoutVersion] = useState(0);
   const [tabs, setTabs] = useState<NavPage[]>([]);
   const [trail, setTrail] = useState<NavPage[]>([]);
   const [saveState, setSaveState] = useState<'idle' | 'pending' | 'saved' | 'failed'>('idle');
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({});
   const [inspector, setInspector] = useState(false);
-  const [compact, setCompact] = useState(window.innerWidth <= 1000);
   const rootRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -174,22 +194,23 @@ export function NavigationPrototype() {
   const operator = role === 'operator' || role === 'administrator-operator';
   const baseObject = navObjects.find((object) => object.id === selected) ?? navObjects[0];
   const currentObject = { ...baseObject, name: savedNames[selected] ?? baseObject.name };
-  const buffer =
-    buffers[selected] ?? staged[selected] ?? savedNames[selected] ?? currentObject.name;
   const draftCount = Object.keys(staged).length;
   const unsentCount = Object.keys(buffers).filter(
     (id) =>
       buffers[id] !==
       (staged[id] ?? savedNames[id] ?? navObjects.find((object) => object.id === id)?.name),
   ).length;
-  const showConversation = variant === 'B' && conversationOpen && ready && !utility;
+  const showConversation = variant === 'B' && windows.some((item) => item.page === 'conversation');
   const mainPage = page === 'conversation' && variant === 'B' ? 'map' : page;
   const displayedPage = utility ?? mainPage;
   const permitted =
     (!restricted.includes(displayedPage) || administrator) &&
     (displayedPage !== 'costs' || operator);
   const personalPage = ['login-methods', 'invitations', 'costs'].includes(displayedPage);
-  const showPanel = displayedPage !== 'map' && (ready || (scenario === 'access' && personalPage));
+  const showPanel =
+    (variant !== 'B' || !!utility) &&
+    displayedPage !== 'map' &&
+    (ready || (scenario === 'access' && personalPage));
 
   function updateParams(updates: Record<string, string>, replace = false) {
     const next = new URLSearchParams(params);
@@ -204,7 +225,28 @@ export function NavigationPrototype() {
       else rootRef.current?.querySelector<HTMLButtonElement>('[data-tool="list"]')?.focus();
     });
   }
-  function go(next: NavPage) {
+  function openWindow(next: NavPage, objectId = selected) {
+    if (next === 'map') return;
+    const objectPage = next === 'edit' || next === 'detail';
+    const id = objectPage ? `object-${objectId}` : next;
+    setWindows((previous) => {
+      const existing = previous.find((item) => item.id === id);
+      if (existing) {
+        // Att återöppna objektet ska inte dölja dess pågående redigering.
+        if (next === 'detail' && existing.page === 'edit') return previous;
+        return previous.map((item) => (item.id === id ? { ...item, page: next } : item));
+      }
+      return [...previous, { id, page: next, objectId: objectPage ? objectId : undefined }];
+    });
+    setActiveWindow(id);
+  }
+  function closeWindow(id: string) {
+    const remaining = windows.filter((item) => item.id !== id);
+    setWindows(remaining);
+    if (activeWindow === id) setActiveWindow(remaining.at(-1)?.id ?? null);
+    if (!remaining.length) restoreFocus();
+  }
+  function go(next: NavPage, objectId = selected) {
     returnFocus.current = document.activeElement as HTMLElement;
     setExpanded(false);
     setAnchor(null);
@@ -214,13 +256,11 @@ export function NavigationPrototype() {
       updateParams({ panel: next });
       return;
     }
-    if (next === 'conversation' && variant === 'B') {
-      setConversationOpen(true);
-      setMobileConversation(true);
+    if (variant === 'B') {
+      openWindow(next, objectId);
       updateParams({ panel: '' });
       return;
     }
-    setMobileConversation(false);
     if (next !== page) setTrail((previous) => [...previous, page]);
     if (next !== 'map' && next !== 'more')
       setTabs((previous) => (previous.includes(next) ? previous : [...previous, next]));
@@ -230,11 +270,12 @@ export function NavigationPrototype() {
     setUtilityTrail([]);
     updateParams({ panel: '' });
     requestAnimationFrame(() => {
-      rootRef.current
-        ?.querySelector<HTMLElement>(
-          `.np-panel-host:not([hidden]) h2, .np-conversation-host:not([hidden]) h2, [data-tool="settings"]`,
-        )
-        ?.focus({ preventScroll: true });
+      const root = rootRef.current;
+      const target =
+        root?.querySelector<HTMLElement>('.np-window[data-active="true"]:not([hidden]) h2') ??
+        root?.querySelector<HTMLElement>('.np-panel-host:not([hidden]) h2') ??
+        root?.querySelector<HTMLElement>('[data-tool="settings"]');
+      target?.focus({ preventScroll: true });
     });
   }
   function closePanel() {
@@ -243,7 +284,6 @@ export function NavigationPrototype() {
       return;
     }
     setAnchor(null);
-    setMobileConversation(false);
     setTabs((previous) => previous.filter((tab) => tab !== page));
     setTrail([]);
     updateParams({ view: 'map' });
@@ -278,8 +318,14 @@ export function NavigationPrototype() {
     }));
     setMessage((previous) => previous || 'Vilka använder tjänsten?');
     setTabs(step === 0 ? ['edit'] : ['edit', 'conversation']);
-    setConversationOpen(step > 0 && nextVariant === 'B');
-    setMobileConversation(step === 1 && nextVariant === 'B');
+    if (nextVariant === 'B') {
+      setWindows((previous) => {
+        const others = previous.filter((item) => item.id !== 'object-subscription');
+        return [{ id: 'object-subscription', page: 'edit', objectId: 'subscription' }, ...others];
+      });
+      openWindow('edit', 'subscription');
+      if (step === 1) openWindow('conversation');
+    }
     setTrail([]);
     setAnchor(null);
     updateParams(
@@ -297,10 +343,7 @@ export function NavigationPrototype() {
       return;
     }
     setAnchor(null);
-    if (page === 'conversation' && next === 'B') {
-      setConversationOpen(true);
-      setMobileConversation(true);
-    }
+    if (next === 'B' && page !== 'map') openWindow(page);
     updateParams({ variant: next }, true);
   }
   function switchVariant(direction: number) {
@@ -317,18 +360,30 @@ export function NavigationPrototype() {
     }));
     setSelected('subscription');
     setExpanded(window.innerWidth > 600);
+    if (variant === 'B') openWindow('edit', 'subscription');
     updateParams({ view: 'edit', panel: 'settings' });
+  }
+  function showFreePanels() {
+    setGuide(null);
+    setScenario('normal');
+    setStatusOpen(false);
+    setExpanded(false);
+    openWindow('edit', 'subscription');
+    openWindow('edit', 'music');
+    openWindow('conversation');
+    updateParams({ variant: 'B', view: 'map', panel: '' });
   }
   function selectObject(id: string) {
     setSelected(id);
-    go('detail');
+    go('detail', id);
   }
   function resetSession(next: Scenario) {
     setScenario(next);
     setAnchor(null);
     if (['access', 'signin', 'setup'].includes(next)) {
       setVoice(false);
-      setConversationOpen(false);
+      setWindows([]);
+      setActiveWindow(null);
       setMessage('');
       setBuffers({});
       setStaged({});
@@ -352,13 +407,19 @@ export function NavigationPrototype() {
     }
     setVoice((previous) => !previous);
   }
-  function stage() {
+  function stage(objectId = selected) {
     if (saveState === 'pending') return;
-    setStaged((previous) => ({ ...previous, [selected]: buffer }));
+    const value =
+      buffers[objectId] ??
+      staged[objectId] ??
+      savedNames[objectId] ??
+      navObjects.find((item) => item.id === objectId)?.name ??
+      '';
+    setStaged((previous) => ({ ...previous, [objectId]: value }));
     setSaveState('idle');
     setBuffers((previous) => {
       const next = { ...previous };
-      delete next[selected];
+      delete next[objectId];
       return next;
     });
     go('draft');
@@ -375,12 +436,6 @@ export function NavigationPrototype() {
     setSaveState(success ? 'saved' : 'failed');
   }
 
-  useEffect(() => {
-    const query = window.matchMedia('(max-width: 1000px)');
-    const resize = () => setCompact(query.matches);
-    query.addEventListener('change', resize);
-    return () => query.removeEventListener('change', resize);
-  }, []);
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -418,13 +473,7 @@ export function NavigationPrototype() {
   useEffect(() => {
     if (!ready && !showPanel && scenario in scenarios)
       rootRef.current?.querySelector<HTMLElement>('#np-gate-title')?.focus();
-    if (showConversation && compact) {
-      const selector = mobileConversation ? '.np-conversation-host' : '.np-panel-host';
-      rootRef.current
-        ?.querySelector<HTMLElement>(`${selector}:not([hidden]) h2`)
-        ?.focus({ preventScroll: true });
-    }
-  }, [ready, showPanel, scenario, showConversation, compact, mobileConversation]);
+  }, [ready, showPanel, scenario]);
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -451,17 +500,22 @@ export function NavigationPrototype() {
     };
     updateCoveredObjects();
     const observer = new ResizeObserver(updateCoveredObjects);
+    const movement = new MutationObserver(updateCoveredObjects);
     for (const surface of surfaces) observer.observe(surface);
+    for (const surface of surfaces)
+      movement.observe(surface, { attributes: true, attributeFilter: ['style', 'hidden'] });
     window.addEventListener('resize', updateCoveredObjects);
     root.addEventListener('scroll', updateCoveredObjects);
     return () => {
       observer.disconnect();
+      movement.disconnect();
       window.removeEventListener('resize', updateCoveredObjects);
       root.removeEventListener('scroll', updateCoveredObjects);
     };
   });
   useEffect(() => {
     function keyboard(event: KeyboardEvent) {
+      if (event.defaultPrevented) return;
       const target = event.target as HTMLElement;
       if (event.key === 'Escape' && !target.closest('.np-lab')) {
         if (statusOpen) {
@@ -477,15 +531,17 @@ export function NavigationPrototype() {
           setExpanded(false);
           return;
         }
-        if (showConversation && (mobileConversation || target.closest('.np-conversation-panel'))) {
-          setConversationOpen(false);
-          setMobileConversation(false);
-          restoreFocus();
+        if (variant === 'B' && activeWindow) {
+          closeWindow(activeWindow);
           return;
         }
         if (page !== 'map') closePanel();
       }
-      if (target.closest('input, textarea, select, [contenteditable="true"], [role="tablist"]'))
+      if (
+        target.closest(
+          'input, textarea, select, [contenteditable="true"], [role="tablist"], .np-windows, .np-theme',
+        )
+      )
         return;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault();
@@ -496,7 +552,7 @@ export function NavigationPrototype() {
     return () => window.removeEventListener('keydown', keyboard);
   });
   useLayoutEffect(() => {
-    if (!anchor || page !== 'detail') return;
+    if (variant === 'B' || !anchor || page !== 'detail') return;
     const position = () => {
       const area = workspaceRef.current?.getBoundingClientRect();
       if (!area) return;
@@ -528,9 +584,9 @@ export function NavigationPrototype() {
       observer.disconnect();
       window.removeEventListener('resize', position);
     };
-  }, [anchor, page]);
+  }, [anchor, page, variant]);
   useEffect(() => {
-    if (!anchor) return;
+    if (variant === 'B' || !anchor) return;
     const dismiss = (event: PointerEvent) => {
       const target = event.target as HTMLElement;
       if (target.closest('.np-panel, .vp-d-toolbox, .np-lab, .vp-d-status, .vp-map-node')) return;
@@ -540,20 +596,26 @@ export function NavigationPrototype() {
     return () => document.removeEventListener('pointerdown', dismiss);
   });
 
-  function contents(contentPage: NavPage) {
+  function contents(contentPage: NavPage, objectId = selected) {
+    const value =
+      buffers[objectId] ??
+      staged[objectId] ??
+      savedNames[objectId] ??
+      navObjects.find((item) => item.id === objectId)?.name ??
+      '';
     return (
       <NavigationPrototypePages
         page={contentPage}
-        go={go}
-        selected={selected}
+        go={(next) => go(next, objectId)}
+        selected={objectId}
         selectObject={selectObject}
         query={query}
         setQuery={setQuery}
-        buffer={buffer}
-        setBuffer={(value) => setBuffers((previous) => ({ ...previous, [selected]: value }))}
+        buffer={value}
+        setBuffer={(value) => setBuffers((previous) => ({ ...previous, [objectId]: value }))}
         staged={staged}
         savedNames={savedNames}
-        stage={stage}
+        stage={() => stage(objectId)}
         message={message}
         setMessage={setMessage}
         transcript={transcript}
@@ -571,8 +633,6 @@ export function NavigationPrototype() {
         empty={scenario === 'empty'}
         administrator={administrator}
         operator={operator}
-        theme={theme}
-        toggleTheme={() => updateParams({ theme: theme === 'dark' ? 'light' : 'dark' }, true)}
         logout={() => resetSession('signin')}
       />
     );
@@ -591,7 +651,7 @@ export function NavigationPrototype() {
     status = 'Nätanslutningen saknas · kontrollera anslutningen. Oskickat arbete finns kvar.';
   if (scenario === 'no-voice') status = 'Tal är inte tillgängligt · skriv i samtalet';
   if (!ready) status = scenarios[scenario];
-  const panelHidden = statusOpen || (showConversation && mobileConversation && compact);
+  const panelHidden = statusOpen;
 
   const statusTitle =
     saveState === 'pending'
@@ -646,7 +706,7 @@ export function NavigationPrototype() {
   return (
     <div
       ref={rootRef}
-      className={`vp-root vp-variant-D np-root${mobileConversation ? ' np-mobile-conversation' : ''}`}
+      className="vp-root vp-variant-D np-root"
       data-theme={theme}
       data-variant={variant}
       data-expanded={expanded}
@@ -709,7 +769,8 @@ export function NavigationPrototype() {
                 'Objekt och samband',
                 () => go('list'),
                 'list',
-                page === 'list',
+                page === 'list' ||
+                  (variant === 'B' && windows.some((item) => item.page === 'list')),
               )}
             </>
           )
@@ -717,6 +778,11 @@ export function NavigationPrototype() {
         footer={
           ready && (
             <>
+              <NavigationPrototypeTheme
+                mode={themeMode}
+                onChange={(mode) => updateParams({ theme: mode }, true)}
+                expanded={expanded}
+              />
               {toolbarButton(
                 'settings',
                 'Inställningar',
@@ -808,6 +874,22 @@ export function NavigationPrototype() {
         }
       >
         <main className="np-workspace" id="np-work" tabIndex={-1} ref={workspaceRef}>
+          {variant === 'B' && ready && (
+            <NavigationPrototypeWindows
+              windows={windows.map((item) => ({
+                id: item.id,
+                title: item.objectId
+                  ? `${pageTitles[item.page]} · ${savedNames[item.objectId] ?? navObjects.find((object) => object.id === item.objectId)?.name}`
+                  : pageTitles[item.page],
+                content: contents(item.page, item.objectId),
+              }))}
+              activeId={activeWindow}
+              onActivate={setActiveWindow}
+              onClose={closeWindow}
+              hidden={!!utility || statusOpen}
+              layoutVersion={layoutVersion}
+            />
+          )}
           {ready && variant === 'C' && !utility && page === 'map' && tabs.length > 0 && (
             <nav className="np-return-tabs np-tabs" aria-label="Öppna verktyg">
               <span>Karta</span>
@@ -818,31 +900,36 @@ export function NavigationPrototype() {
               ))}
             </nav>
           )}
-          {ready && camera === 'focus' && !showPanel && !showConversation && (
-            <nav className="np-map-controls" aria-label="Kartans vy">
-              <button
-                type="button"
-                onClick={() => {
-                  setCamera('overview');
-                  if (page !== 'map') closePanel();
-                }}
-              >
-                Överblick
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setCamera((previous) => (previous === 'focus' ? 'overview' : 'focus'))
-                }
-                aria-pressed={camera === 'focus'}
-              >
-                Fokus: {currentObject.name}
-              </button>
-            </nav>
-          )}
+          {ready &&
+            camera === 'focus' &&
+            !showPanel &&
+            !showConversation &&
+            !(variant === 'B' && windows.length) && (
+              <nav className="np-map-controls" aria-label="Kartans vy">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCamera('overview');
+                    if (page !== 'map') closePanel();
+                  }}
+                >
+                  Överblick
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCamera((previous) => (previous === 'focus' ? 'overview' : 'focus'))
+                  }
+                  aria-pressed={camera === 'focus'}
+                >
+                  Fokus: {currentObject.name}
+                </button>
+              </nav>
+            )}
           {ready &&
             !showPanel &&
             !showConversation &&
+            !(variant === 'B' && windows.length) &&
             ['empty', 'no-graphics'].includes(scenario) && (
               <section className="np-empty">
                 <p className="np-kicker">
@@ -926,43 +1013,6 @@ export function NavigationPrototype() {
                     Tillbaka till arbetet
                   </button>
                 )}
-              </Panel>
-            </div>
-          )}
-          {showConversation && compact && (
-            <nav className="np-mobile-switch" aria-label="Arbete och samtal">
-              <button
-                type="button"
-                aria-pressed={!mobileConversation}
-                onClick={() => setMobileConversation(false)}
-              >
-                Arbete
-              </button>
-              <button
-                type="button"
-                aria-pressed={mobileConversation}
-                onClick={() => setMobileConversation(true)}
-              >
-                Samtal
-              </button>
-            </nav>
-          )}
-          {showConversation && (
-            <div
-              className="np-conversation-host"
-              hidden={statusOpen || (compact && !mobileConversation)}
-            >
-              <Panel
-                page="conversation"
-                className="np-conversation-panel"
-                onClose={() => {
-                  setConversationOpen(false);
-                  setMobileConversation(false);
-                  if (page === 'conversation') updateParams({ view: 'map' });
-                  restoreFocus();
-                }}
-              >
-                {contents('conversation')}
               </Panel>
             </div>
           )}
@@ -1092,7 +1142,7 @@ export function NavigationPrototype() {
                       type="button"
                       onClick={() => {
                         setSelected(Object.keys(buffers)[0]);
-                        go('edit');
+                        go('edit', Object.keys(buffers)[0]);
                       }}
                     >
                       Fortsätt redigera
@@ -1106,14 +1156,6 @@ export function NavigationPrototype() {
                   {scenario === 'network' && (
                     <button type="button" onClick={() => setScenario('normal')}>
                       Försök ansluta igen
-                    </button>
-                  )}
-                  {showConversation && compact && (
-                    <button
-                      type="button"
-                      onClick={() => setMobileConversation((previous) => !previous)}
-                    >
-                      {mobileConversation ? 'Visa arbetsverktyget' : 'Visa samtalet'}
                     </button>
                   )}
                 </div>
@@ -1153,6 +1195,16 @@ export function NavigationPrototype() {
           ))}
         </div>
         <p className="np-lab-description">{variants[variant].description}</p>
+        <div className="np-lab-row">
+          <button type="button" onClick={showFreePanels}>
+            Öppna två objekt och samtalet
+          </button>
+          {variant === 'B' && windows.length > 0 && (
+            <button type="button" onClick={() => setLayoutVersion((previous) => previous + 1)}>
+              Ordna paneler
+            </button>
+          )}
+        </div>
         <div className="np-lab-row">
           <button type="button" onClick={() => showComparisonStep(0)}>
             Jämför samma arbetsflöde
@@ -1197,7 +1249,7 @@ export function NavigationPrototype() {
                 Stäng jämförelsen
               </button>
             </div>
-            <p>Byt A/B/C ovan för att se exakt samma steg med en annan panelmodell.</p>
+            <p>B är vald riktning. A och C finns kvar som jämförelse.</p>
           </section>
         )}
         {guide === 'settings' && (

@@ -1,13 +1,16 @@
-# Tre sätt att organisera Skyttels arbetsyta
+# Fria paneler på Skyttels arbetsyta
 
 Kastbart underlag för beställarens prövning av
 [Hur organiseras hela Skyttel med rymdkartan som huvudsaklig arbetsyta?](https://github.com/viscalyx/skyttel/issues/104).
-Panelmodellen och gränsen för fortsatt tal är öppna frågor.
+B är vald riktning och utvecklas till flera fristående, flyttbara paneler.
+Denna iteration prövar hur panelerna fungerar tillsammans på dator och
+mobil. Gränsen för fortsatt tal är fortfarande en öppen fråga.
 
 Bekräftade beslut och beställarens preciseringar finns i ärendet:
 
 - [Ramar för prototypen och bevarande av arbete](https://github.com/viscalyx/skyttel/issues/104#issuecomment-5845195246).
 - [Informationsikonens innehåll](https://github.com/viscalyx/skyttel/issues/104#issuecomment-5845197848).
+- [B med fria paneler och temaval i verktygslådan](https://github.com/viscalyx/skyttel/issues/104#issuecomment-5845398082).
 
 ## Samma grund som D · Fri rymd
 
@@ -20,7 +23,8 @@ hushållsrubrik, kartbakgrund och det lilla statuskortet. D:s stilmall
 ovanpå den grunden.
 
 **Öppna ursprungliga D** i provpanelen visar D separat för jämförelse.
-Logotyperna samt ljust och mörkt tema finns kvar.
+Logotyperna finns kvar. Navigationsprovet har också ett temaval direkt i
+verktygslådan.
 
 ## Öppna prototypen
 
@@ -31,44 +35,49 @@ tillgängliga, kör:
 npm run prototype:navigation
 ```
 
-- [A · Byt panel](http://localhost:4174/?prototype=navigation&variant=A)
-- [B · Två paneler](http://localhost:4174/?prototype=navigation&variant=B)
-- [C · Flikar i panelen](http://localhost:4174/?prototype=navigation&variant=C)
+- [B · Fria paneler](http://localhost:4174/?prototype=navigation&variant=B)
+- [A · Byt panel, tidigare jämförelse](http://localhost:4174/?prototype=navigation&variant=A)
+- [C · Flikar i panelen, tidigare jämförelse](http://localhost:4174/?prototype=navigation&variant=C)
 
-Välj A, B eller C i provpanelen längst ned. Höger- och vänsterpil fungerar
-också utanför inmatningskontroller. Alternativet finns i adressen.
+B öppnas även när adressen saknar alternativ. Välj A, B eller C i
+provpanelen längst ned. Alternativet finns i adressen.
 
-## Jämför samma arbetsflöde
+## Pröva två objekt och samtalet
 
-Välj **Jämför samma arbetsflöde**. Guiden förbereder samma namnändring och
-oskickade samtalstext i alla tre alternativ:
+Välj **Öppna två objekt och samtalet** i provpanelen. Det öppnar tre
+fristående paneler: redigering av Familjeabonnemang, redigering av
+Musikgläntan och Samtal.
 
-1. **Redigera:** exemplet föreslår namnet Familjens musik om du inte redan
-   har skrivit något. Redigera namnet och behåll texten medan du jämför.
-2. **Öppna samtalet:** se vad som händer med redigeringen när samtalet
-   öppnas.
-3. **Återgå till redigeringen:** fortsätt med texten som finns kvar.
+1. Skriv olika namn i de två redigeringarna och en oskickad mening i
+   samtalet. Varje objekt behåller sin egen redigering.
+2. Flytta panelerna var för sig och pröva vilka delar av kartan som ska
+   vara synliga. **Ordna paneler** återställer placeringen inom arbetsytan.
+3. Öppna ett annat objekt via kartan eller listan. Objektet får en egen
+   panel. Ett objekt som redan är öppet återkommer i sin befintliga panel.
+4. Stäng en panel och öppna den igen. Den oskickade texten finns kvar.
+5. Byt till mobilstorlek. **Öppna paneler** visar antalet paneler och en
+   väljare med alla deras titlar. En panel visas åt gången. Återgå till
+   datorstorlek för att se panelernas placering igen.
 
-Byt A/B/C på samma steg för att jämföra panelmodellerna. Skillnaden blir
-tydligast i steg 2:
+På dator kan du dra panelens rubrik för att flytta den. När rubrikens
+**Flytta** har fokus fungerar piltangenterna; Skift och piltangent tar ett
+större steg. Klicka på rubriken för knapparna **Vänster**, **Uppåt**,
+**Nedåt**, **Höger** och **Återställ position**. På mobil väljer du panel
+i stället för att placera flera paneler bredvid varandra.
 
-<!-- markdownlint-disable MD013 -->
-| Alternativ | När samtalet öppnas | Tillbaka till redigeringen |
-| --- | --- | --- |
-| A · Byt panel | Samtalet ersätter redigeringen i samma panel. | Byt tillbaka till redigeringsverktyget. |
-| B · Två paneler | Samtalet öppnas bredvid redigeringen på dator. På mobil visas en panel åt gången. | Redigeringen ligger kvar; på mobil väljer du Arbete. |
-| C · Flikar i panelen | Samtal och redigering får varsin flik i samma panel. | Välj fliken Ändra uppgifter. |
-<!-- markdownlint-enable MD013 -->
+## Välj tema i verktygslådan
 
-Guiden visar ett förberett exempel. Stäng jämförelsen för att utforska
-verktygen fritt. Ingen panelmodell är godkänd genom denna skiss.
+Öppna **Tema** direkt i verktygslådan och välj **Ljust**, **Mörkt** eller
+**System**. System följer enhetens inställning, även om den ändras medan
+prototypen är öppen. Temavalet gäller hela arbetsytan och stänger inga
+arbetspaneler. Utan temaval i adressen använder prototypen System.
 
-### Jämför skärmbilder
+### Skärmbilder
 
 - [D:s gemensamma grund](D-grund.png).
-- A, steg 2: [dator](A-dator.png), [mobil](A-mobil.png).
-- B, steg 2: [dator](B-dator.png), [mobil](B-mobil.png).
-- C, steg 2: [dator](C-dator.png), [mobil](C-mobil.png).
+- Fria paneler: [dator](B-fria-paneler-dator.png),
+  [mobil](B-fria-paneler-mobil.png).
+- [Temaval direkt i verktygslådan](Tema-toolbar.png).
 - [Inställningar på dator](Installningar-dator.png).
 - [Information på dator](Information-dator.png).
 - [Aktuell status på mobil](Status-mobil.png).
@@ -78,7 +87,7 @@ verktygen fritt. Ingen panelmodell är godkänd genom denna skiss.
 **Inställningar** öppnar en tillfällig panel med personliga val,
 inloggningssätt och assistenter. Där finns också tydliga grupper för
 hushållets administration och driftens kostnader. **Tillbaka till
-arbetet** återvisar verktyget som var öppet, med innehållet kvar.
+arbetet** återvisar de öppna arbetspanelerna, med innehållet kvar.
 
 **Information** öppnar hjälp och information om Skyttel. Den förklarar
 kartan och listan, tal och text, det privata utkastet samt hur man
@@ -136,36 +145,65 @@ panelen Aktuell status.
    inbjudan finns kvar som ingångar. En driftansvarig kan öppna driftens
    kostnader utan att hushållskartan blir synlig.
 
-Detaljer från kartobjekt öppnas nära objektet. **Ändra uppgifter** öppnar
-en större panel. Klick utanför eller Escape stänger detaljrutan. Att
-öppna ett verktyg flyttar inte automatiskt kartans kamera.
+I B öppnas kartobjekt i egna paneler. **Ändra uppgifter** fortsätter i
+objektets panel. Att öppna ett verktyg flyttar inte automatiskt kartans
+kamera.
+
+## A och C som jämförelse
+
+A och C finns kvar som tidigare jämförelsealternativ. **Jämför samma
+arbetsflöde** visar tre steg: redigera ett namn, öppna samtalet och återgå
+till redigeringen. Byt alternativ på samma steg för att se skillnaden.
+
+<!-- markdownlint-disable MD013 -->
+| Alternativ | När samtalet öppnas | Tillbaka till redigeringen |
+| --- | --- | --- |
+| A · Byt panel | Samtalet ersätter redigeringen i samma panel. | Byt tillbaka till redigeringsverktyget. |
+| B · Fria paneler | Samtalet öppnas i en egen flyttbar panel. Flera objekt kan vara öppna samtidigt. | Välj objektets panel; på mobil används panelväljaren. |
+| C · Flikar i panelen | Samtal och redigering får varsin flik i samma panel. | Välj fliken Ändra uppgifter. |
+<!-- markdownlint-enable MD013 -->
+
+Äldre skärmbilder av jämförelsen finns för
+[A på dator](A-dator.png), [A på mobil](A-mobil.png),
+[C på dator](C-dator.png) och [C på mobil](C-mobil.png).
 
 ## Återkoppling som återstår
 
-Prövningen behöver avgöra vilken panelmodell som passar arbetet och var
-talet ska fortsätta lyssna. Använd steg 2 i jämförelsen för panelvalet och
-det särskilda administrationsexemplet för talfrågan. Beslut och nya
-preciseringar dokumenteras i ärendet.
+Prövningen gäller detaljerna i de fria panelerna: placering, flyttning,
+val mellan flera öppna objekt och hur samma arbete fungerar på mobil.
+Använd det särskilda administrationsexemplet för att bedöma var talet
+ska fortsätta lyssna. Beslut och nya preciseringar dokumenteras i ärendet.
 
 Prototypen bevarar urval, sökning, oskickad redigering, oskickad
 samtalstext och privat utkast mellan verktygsbyten och skärmstorlekar.
 Inställningar och information öppnas tillfälligt över det pågående
 arbetet. Stängning av ett verktyg kastar inte dess oskickade innehåll.
 
-I C är stängning av en flik skilt från att visa kartan med flikarna kvar.
-B:s separata samtalspanel kan öppnas och stängas självständigt. Vanliga
-sidbyten och tillfälliga paneler kan följas med webbläsarens tillbaka och
-framåt.
+B:s öppna paneler och deras positioner finns bara i prototypens minne.
+Att öppna eller stänga en arbetspanel ger ingen historik för panelerna i
+webbläsaren. Tillfälliga inställnings- och informationspaneler använder
+adressen och kan följas med webbläsarens tillbaka och framåt.
+
+Variant och tema kan delas i en länk. En direktadress till en vy kan
+öppna en arbetspanel vid start; flera öppna paneler och deras positioner
+återställs inte vid omladdning. Detta är en begränsning i provet och
+anger ingen regel för vad produkten ska bevara mellan sessioner.
 
 ## Kontroller och avgränsningar
 
 TypeScript, Biome och dokumentkontroller passerar. Lokala Chromium-prov
-kontrollerar jämförelsestegen i A/B/C, tillfälliga paneler, bevarad
-redigering och samtalstext samt ingångarna till administration och
-driftkostnader. Samtal, Information och återgång går att använda vid
-390 × 844, 320 × 568 och 320 × 400 pixlar med intern rullning eller
-sidrullning när det behövs. Skärmbilderna visar 1440 × 1000 och
-390 × 844 pixlar.
+verifierar två oberoende redigeringar och samtal, individuellt stängda
+och återöppnade paneler, fler än tre öppna paneler samt separata
+objektvärden i utkastet. Innehåll och placering bevaras vid tillfälliga
+vyer. Dragning, tangentbordspilar, flyttknappar, återställd placering och
+mobilens panelväljare fungerar. Panelerna hålls inom arbetsytan när
+fönstret blir mindre.
+
+Temaval, fokusåtergång och System-temats reaktion på en ändrad
+enhetsinställning verifieras i webbläsaren. Popupen ryms vid 390 × 844,
+320 × 568 och 320 × 400 pixlar. Redigering, utkast och samtal går att
+använda även vid 320 × 400 med intern rullning och sidrullning.
+De nya skärmbilderna visar 1440 × 1000 och 390 × 844 pixlar.
 
 Originalvyn D efter extraktionen av det gemensamma skalet jämförs med
 upstream-versionen vid 1440 × 1000 och 390 × 844 pixlar i båda teman.
