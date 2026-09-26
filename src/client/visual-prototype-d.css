@@ -83,6 +83,12 @@
   width: 30px;
   height: 36px;
 }
+.vp-variant-D[data-theme="dark"] .vp-d-brand .vp-brand img {
+  box-sizing: content-box;
+  padding: 4px;
+  border-radius: 10px;
+  background: #dce7ef;
+}
 .vp-variant-D .vp-d-brand .vp-brand > span {
   display: none;
   font-size: 22px;

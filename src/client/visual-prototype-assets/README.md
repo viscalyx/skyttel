@@ -5,8 +5,9 @@ Kastbar prototyp för beslutet
 i kartan
 [Gör rymdkartan och tal till grunden för Skyttels UI/UX](https://github.com/viscalyx/skyttel/issues/101).
 
-Underlaget är till för beställaren och kommande designarbete. Alternativen
-är förslag för återkoppling. Ingen riktning är godkänd ännu.
+Underlaget är till för beställaren och kommande designarbete. Beställaren
+bedömer D positivt; logotypens kontrast i mörkt tema prövas inför det
+samlade visuella beslutet.
 
 ## Öppna och jämför
 
@@ -101,6 +102,16 @@ expansion och samtalsmarkering är hypoteser att reagera på; de är inte
 ett slutligt navigations- eller talbeslut.
 På mobil prövas en vågrät kompakt verktygsrad; expanderad visar den
 verktygen med namn under logotypen.
+
+I mörkt tema får logotypen en liten ljus, rundad bakgrund som gör dess
+mörkblå del tydligare. Bildens färger och storlek behålls. Bakgrunden
+följer med i både kompakt och expanderad verktygslåda.
+
+[Närbild av logotypen i mörkt tema](D-dark-logotyp.png).
+
+Listans utformning för flera hundra objekt prövas i
+[Hur utformas listor, detaljer och redigering som öppnas vid behov?](https://github.com/viscalyx/skyttel/issues/107).
+Den lilla exempellistan här är inte ett beslutat mönster för stora listor.
 
 - [Mörkt, dator: karta](D-dark-dator-karta.png)
 - [Mörkt, dator: formulär](D-dark-dator-formular.png)
