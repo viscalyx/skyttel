@@ -112,7 +112,7 @@ function fixture() {
     }
     if (url.pathname.endsWith('/deployments')) {
       return Response.json([
-        { id: 6, production_environment: false, payload: {} },
+        { id: 6, production_environment: true, payload: {} },
         { id: 5, production_environment: true, payload: { image: image('e') } },
         ...state.retained.flatMap((entry) => [
           {
@@ -121,7 +121,7 @@ function fixture() {
             production_environment: true,
             payload: { image: entry.image, version: entry.version },
           },
-          { id: entry.deployment + 10, production_environment: false, payload: {} },
+          { id: entry.deployment + 10, production_environment: true, payload: {} },
         ]),
       ]);
     }

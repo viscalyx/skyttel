@@ -157,36 +157,60 @@ test('scans live and last distinct accepted rollback digests, without rebuilding
 });
 
 test('automatic environment records do not hide accepted live and rollback images', async () => {
-  const { state, run } = fixture();
-  const [failed, current, duplicate, rollback] = state.records;
-  state.records = [
-    { id: 6, production_environment: false, payload: {} },
-    failed,
-    current,
-    { id: 5, production_environment: false, payload: {} },
-    duplicate,
-    rollback,
-  ];
-  state.states[6] = ['success'];
-  state.states[5] = ['inactive', 'success'];
+  for (const productionEnvironment of [true, false]) {
+    const { state, run } = fixture();
+    const [failed, current, duplicate, rollback] = state.records;
+    state.records = [
+      { id: 6, production_environment: productionEnvironment, payload: {} },
+      failed,
+      current,
+      { id: 5, production_environment: productionEnvironment, payload: {} },
+      duplicate,
+      rollback,
+    ];
+    state.states[6] = ['success'];
+    state.states[5] = ['inactive', 'success'];
 
-  const result = await run();
-  assert.equal(result.status, 'passed');
-  assert.deepEqual(state.scans, [image('b'), image('c')]);
-  assert.deepEqual(
-    result.targets.map((target) => [target.role, target.deployment]),
-    [
-      ['running', 3],
-      ['rollback', 1],
-    ],
-  );
-  assert.equal(state.issues.length, 0);
+    const result = await run();
+    assert.equal(result.status, 'passed');
+    assert.deepEqual(state.scans, [image('b'), image('c')]);
+    assert.deepEqual(
+      result.targets.map((target) => [target.role, target.deployment]),
+      [
+        ['running', 3],
+        ['rollback', 1],
+      ],
+    );
+    assert.equal(state.issues.length, 0);
+  }
 });
 
 test('malformed accepted production records leave status unknown without falling back or scanning', async () => {
-  for (const id of [3, 2]) {
+  for (const id of [3, 2, 1]) {
+    for (const payload of [
+      { image: null, version: `0.1.${id}` },
+      { image: '', version: `0.1.${id}` },
+      { image: 'ghcr.io/viscalyx/skyttel:latest', version: `0.1.${id}` },
+      { image: image(id === 1 ? 'c' : 'b') },
+    ]) {
+      const { state, run } = fixture();
+      state.records.find((record) => record.id === id).payload = payload;
+
+      const result = await run();
+      assert.equal(result.status, 'unknown');
+      assert.equal(result.reason, 'deployment_evidence_unavailable');
+      assert.deepEqual(result.targets, []);
+      assert.deepEqual(state.scans, []);
+      assert.equal(result.notification, 'accepted-by-github');
+      assert.equal(state.issues[0].state, 'open');
+    }
+  }
+});
+
+test('production records without image payloads cannot establish accepted live evidence', async () => {
+  for (const payload of [{}, null, undefined]) {
     const { state, run } = fixture();
-    state.records.find((record) => record.id === id).payload = {};
+    state.records = [{ ...deployment(3, 'b'), payload }];
 
     const result = await run();
     assert.equal(result.status, 'unknown');
