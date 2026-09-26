@@ -5,9 +5,11 @@ Kastbar prototyp för beslutet
 i kartan
 [Gör rymdkartan och tal till grunden för Skyttels UI/UX](https://github.com/viscalyx/skyttel/issues/101).
 
-Underlaget är till för beställaren och kommande designarbete. Beställaren
-bedömer D positivt; logotypens kontrast i mörkt tema prövas inför det
-samlade visuella beslutet.
+Underlaget är till för beställaren och kommande designarbete. D är
+godkänd som Skyttels visuella grund. Det gällande beslutet och dess
+avgränsningar finns i
+[Vilket visuellt uttryck gör hela Skyttel professionellt och sammanhållet?](https://github.com/viscalyx/skyttel/issues/103#issuecomment-5844269210).
+Prototypen bevaras som kastbart underlag på sin separata gren.
 
 ## Öppna och jämför
 
@@ -29,9 +31,10 @@ föreslagna gränssnitt.
 
 Välj **Visa formulär** i A–C eller **Visa detaljer** i D för att öppna
 detaljvyn. Du kan också välja objekt direkt i kartan.
-På mobil rullar prototypen till formuläret. Stäng det med krysset för att
-återgå till kartan. Välj **Tillstånd** för att jämföra lyssnande, privat
-utkast, pågående sparande, sparbesked och fel.
+I A–C rullar mobilprototypen till formuläret. D visar detaljer nära det
+valda kartobjektet. Stäng med krysset för att återgå till kartan. Välj
+**Tillstånd** för att jämföra lyssnande, privat utkast, pågående sparande,
+sparbesked och fel.
 
 ## Alternativens avsikt
 
@@ -82,7 +85,7 @@ och behaglig.
 
 ### D · Fri rymd
 
-Beställarens riktning för fortsatt prövning utgår från Nattljus: kartan
+Prototyp D utgår från Nattljus: kartan
 fyller hela den synliga webbläsarytan. Logotypen är mindre framträdande
 och verktygen ligger i en flytande verktygslåda. Den kan expanderas för
 att visa namn och fler förklaringar. Både ljust och mörkt tema ingår.
@@ -90,17 +93,17 @@ att visa namn och fler förklaringar. Både ljust och mörkt tema ingår.
 Starta det simulerade samtalet med mikrofonknappen. Knappen blir då en
 cirklad stoppikon. Vågformen visas i rutan med samtalets status tills
 röstläget stoppas. Välj **Simulera hörbart tal** i prototypkontrollerna
-för rörelse
-och **Simulera tystnad** för stillhet. Med minskad rörelse förblir
+för rörelse och **Simulera tystnad** för stillhet. Med minskad rörelse förblir
 vågformen stilla och status visas med text. Ingen riktig mikrofon används.
 
 Temat väljs i verktygslådan och finns kvar i adressen vid omladdning.
 Alla synliga kartobjekt kan öppnas. Detaljrutan visar det valda objektet
 nära punkten där du klickar, med placeringen begränsad av skärmens kanter.
 Klick utanför rutan eller Escape stänger den. Verktygslådans placering,
-expansion och samtalsmarkering är hypoteser att reagera på; de är inte
-ett slutligt navigations- eller talbeslut.
-På mobil prövas en vågrät kompakt verktygsrad; expanderad visar den
+expansion och samtalsmarkering visar den godkända visuella riktningen.
+Fullständig navigation och samtalsbeteenden preciseras i andra
+beslutsärenden.
+På mobil visas en vågrät kompakt verktygsrad; expanderad visar den
 verktygen med namn under logotypen.
 
 I mörkt tema får logotypen en liten ljus, rundad bakgrund som gör dess
@@ -132,8 +135,8 @@ Den lilla exempellistan här är inte ett beslutat mönster för stora listor.
 
 ## Gemensamma utgångspunkter att bedöma
 
-- De angivna stora och små logotypfilerna används oförändrade. Symbolen
-  får en lugn plats bredvid namnet i sidhuvudet.
+- De angivna stora och små logotypfilerna används oförändrade. I A–C
+  finns symbol och namn i sidhuvudet; D använder verktygslådan.
 - Rubrik, objektnamn, belopp och kompletterande text har skilda nivåer.
   Formulären har synliga etiketter. Pröva även de mindre karttexterna.
 - Ikoner har samma linjekaraktär. Ikonknappar har tillgängliga namn.
@@ -160,10 +163,9 @@ redigeringsbeteenden avgörs i andra beslutsärenden. Alla kompletterande
 vyer är exempel. A–C visar bara familjeabonnemangets detaljvy. D har
 detaljer för alla objekt; familjeabonnemanget visar också ett formulär.
 
-Beställaren vill pröva ljust och mörkt temaval i D. När riktningen är
-vald behöver användarens återkoppling precisera vilka
-ytor, typsnitt, storlekar, färger och rörelser som ska ligga till grund
-för fortsatt designarbete.
+Fortsatt designarbete utgår från D i båda teman. Beslutets detaljer
+finns i ärendets avslutande kommentar, länkad ovan. Kartans återstående
+beslutsärenden preciserar hur riktningen används i fullständiga flöden.
 
 ## Kontroll av underlaget
 
@@ -216,8 +218,9 @@ Bedömningen utgår bland annat från W3C:s vägledning om
 överlappande etiketter och nodrutor vid dubblerad textstorlek. Denna
 komposition ska därför inte låsas som en tillgänglig kartlösning.
 Fortsatt design måste pröva läsbara etiketter vid förstoring och ett
-likvärdigt text- och listalternativ för allt hushållsarbete. Skissens
-begränsade lista och enda detaljvy visar inte detta fullständiga flöde.
+likvärdigt text- och listalternativ för allt hushållsarbete. Prototypens
+exempelvyer visar inte detta fullständiga flöde. Frågan ingår uttryckligen i
+[Hur visar rymdkartan överblick, fokus och detaljer på mobil och dator?](https://github.com/viscalyx/skyttel/issues/105).
 
 Textprovet ändrar teckenstorlekar i sidan; det ersätter inte prov med
 verklig webbläsarzoom. Fullständiga flöden, samtliga tillstånd,
