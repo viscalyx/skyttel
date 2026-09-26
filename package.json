@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "prototype:map": "vite --host 0.0.0.0 --port 4175 --strictPort",
     "prototype:navigation": "vite --host 0.0.0.0 --port 4174 --strictPort",
     "prototype:visual": "vite --host 0.0.0.0 --port 4173 --strictPort",
     "dev": "tsx watch src/server/index.ts",

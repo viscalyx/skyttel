@@ -1,0 +1,334 @@
+/* Kastbart kartprov på D:s färger och B:s fria paneler. */
+.np-root.map-study .mp-map-area {
+  position: absolute;
+  inset: 0;
+}
+.np-root.map-study .mp-canvas-host {
+  position: absolute;
+  inset: 135px 24px calc(var(--np-lab-height) + 118px) 105px;
+  min-height: 230px;
+}
+.np-root.map-study [hidden] {
+  display: none;
+}
+.np-root.map-study .mp-map-tools {
+  position: absolute;
+  z-index: 2;
+  top: 77px;
+  left: var(--np-panel-left);
+  right: 24px;
+  pointer-events: none;
+}
+.np-root.map-study .mp-map-tools-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.np-root.map-study .mp-map-tools button {
+  pointer-events: auto;
+  background: var(--vp-surface);
+  font-size: 0.8em;
+}
+.np-root.map-study .mp-navigation {
+  pointer-events: auto;
+  width: 350px;
+  max-width: 100%;
+  max-height: 45dvh;
+  overflow: auto;
+  padding: 16px;
+  margin-top: 10px;
+  border: 1px solid var(--vp-control-line);
+  border-radius: 16px;
+  background: var(--vp-surface);
+  box-shadow: var(--vp-d-shadow);
+}
+.np-root.map-study .mp-button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.np-root.map-study .mp-button-grid button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.84em;
+}
+.np-root.map-study :is(.mp-context-ribbon, .mp-path-ribbon, .mp-focus-notice) {
+  position: absolute;
+  left: var(--np-panel-left);
+  right: 24px;
+  bottom: calc(var(--np-lab-height) + 30px);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  max-height: 30dvh;
+  overflow: auto;
+  border: 1px solid var(--vp-control-line);
+  border-radius: 18px;
+  background: var(--vp-surface);
+  box-shadow: var(--vp-d-shadow);
+  font-size: 0.85em;
+}
+.np-root.map-study .mp-context-ribbon > div {
+  display: grid;
+  gap: 3px;
+  margin-right: auto;
+}
+.np-root.map-study .mp-context-ribbon ul {
+  flex-basis: 100%;
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.np-root.map-study .mp-context-ribbon :where(ul) button {
+  width: 100%;
+  text-align: left;
+  justify-content: start;
+}
+.np-root.map-study .mp-eyebrow {
+  color: var(--vp-muted);
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.np-root.map-study .mp-path-ribbon ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+.np-root.map-study .mp-path-ribbon button[aria-current] {
+  color: var(--vp-ink);
+  background: var(--vp-accent);
+}
+.np-root.map-study .mp-focus-notice {
+  bottom: calc(var(--np-lab-height) + 134px);
+  max-width: 440px;
+}
+.np-root.map-study :is(.mp-object-list, .mp-relations) {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+.np-root.map-study .mp-object-list button {
+  display: grid;
+  width: 100%;
+  gap: 4px;
+  text-align: left;
+  justify-content: stretch;
+}
+.np-root.map-study .mp-object-list span {
+  font-size: 0.85em;
+  color: var(--vp-muted);
+}
+.np-root.map-study button[aria-pressed="true"] {
+  border-color: var(--vp-accent);
+}
+.np-root.map-study .mp-relations li {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--vp-line);
+  border-radius: 12px;
+}
+.np-root.map-study .mp-relations li[data-selected="true"] {
+  border-color: var(--vp-accent);
+  border-width: 2px;
+}
+.np-root.map-study .mp-relations p {
+  display: grid;
+  gap: 5px;
+}
+.np-root.map-study .mp-relations p span {
+  color: var(--vp-muted);
+}
+.np-root.map-study .mp-change {
+  font-size: 0.88em;
+  font-weight: 650;
+  color: var(--vp-accent);
+}
+.np-root.map-study .mp-selected-edge {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  background: color-mix(in srgb, var(--vp-accent), var(--vp-surface) 90%);
+  border: 1px solid var(--vp-accent);
+  border-radius: 14px;
+}
+.np-root.map-study .mp-details h3 {
+  margin: 0;
+}
+.np-root.map-study .mp-placement {
+  padding-top: 10px;
+  border-top: 1px solid var(--vp-line);
+}
+.np-root.map-study .mp-placement summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 10px 0;
+}
+.np-root.map-study .mp-placement p {
+  margin: 12px 0;
+}
+.np-root.map-study .mp-graphics-notice {
+  position: absolute;
+  top: 220px;
+  left: 50%;
+  width: min(450px, calc(100% - 48px));
+  transform: translateX(-50%);
+  padding: 22px;
+  background: var(--vp-surface);
+  border: 1px solid var(--vp-line);
+  border-radius: 20px;
+}
+.np-root.map-study .mp-lab {
+  width: min(760px, calc(100% - 24px));
+}
+.np-root.map-study .mp-prototype-label {
+  font-weight: 750;
+  font-size: 0.75em;
+  letter-spacing: 0.1em;
+}
+.np-root.map-study .mp-state-line {
+  display: block;
+  margin-top: 7px;
+  text-align: center;
+  font-size: 0.92em;
+}
+.np-root.map-study .mp-lab-expanded {
+  padding: 15px 5px;
+}
+.np-root.map-study .mp-state {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 7px;
+  margin: 0;
+}
+.np-root.map-study .mp-state dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.np-root.map-study .mp-list :is(input, select) {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 1000px) and (min-width: 601px) {
+  .np-root.map-study .mp-canvas-host {
+    left: 105px;
+  }
+}
+@media (max-width: 600px) {
+  .np-root.map-study .np-d-navigation {
+    min-height: max(
+      100dvh,
+      calc(var(--np-top-clearance) + var(--np-status-height) + var(--np-lab-height) + 420px)
+    );
+  }
+  .np-root.map-study .mp-map-tools {
+    left: 12px;
+    right: 12px;
+    top: var(--np-top-clearance);
+  }
+  .np-root.map-study .mp-map-tools-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .np-root.map-study .mp-map-tools button {
+    padding: 7px;
+    font-size: 0.75em;
+    min-width: 0;
+  }
+  .np-root.map-study .mp-canvas-host {
+    inset: calc(var(--np-top-clearance) + 102px) 8px
+      calc(var(--np-lab-height) + var(--np-status-height) + 152px);
+    min-height: 235px;
+  }
+  .np-root.map-study :is(.mp-context-ribbon, .mp-path-ribbon, .mp-focus-notice) {
+    left: 12px;
+    right: 12px;
+    bottom: calc(var(--np-lab-height) + var(--np-status-height) + 42px);
+    padding: 10px;
+    gap: 6px;
+    font-size: 0.72em;
+    max-height: 135px;
+  }
+  .np-root.map-study .mp-context-ribbon > div {
+    flex: 1 1 100%;
+  }
+  .np-root.map-study .mp-context-ribbon button {
+    padding: 7px;
+  }
+  .np-root.map-study .mp-focus-notice {
+    bottom: calc(var(--np-lab-height) + var(--np-status-height) + 180px);
+  }
+  .np-root.map-study .mp-path-ribbon .mp-eyebrow {
+    flex-basis: 100%;
+  }
+  .np-root.map-study .mp-path-ribbon ol {
+    flex-basis: 100%;
+  }
+  .np-root.map-study .mp-path-ribbon button {
+    padding: 6px;
+  }
+  .np-root.map-study .mp-prototype-label {
+    display: none;
+  }
+  .np-root.map-study .mp-lab .mp-switcher {
+    gap: 5px;
+  }
+  .np-root.map-study .mp-lab .mp-switcher strong {
+    font-size: 0.95em;
+  }
+  .np-root.map-study .mp-lab .np-lab-description {
+    font-size: 0.95em;
+  }
+  .np-root.map-study .mp-graphics-notice {
+    top: calc(var(--np-top-clearance) + 110px);
+  }
+}
+/* Korta vyer får ett vanligt sidflöde så att provpanelen inte täcker kartan. */
+@media (max-width: 600px) and (max-height: 740px) {
+  .np-root.map-study .np-d-navigation {
+    min-height: calc(var(--np-top-clearance) + var(--np-status-height) + 500px);
+  }
+  .np-root.map-study .mp-lab {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    max-height: none;
+  }
+  .np-root.map-study .vp-d-status {
+    bottom: 20px;
+  }
+  .np-root.map-study .mp-canvas-host {
+    bottom: calc(var(--np-status-height) + 174px);
+  }
+  .np-root.map-study :is(.mp-context-ribbon, .mp-path-ribbon) {
+    bottom: calc(var(--np-status-height) + 34px);
+  }
+  .np-root.map-study .mp-focus-notice {
+    bottom: calc(var(--np-status-height) + 174px);
+  }
+  .np-root.map-study .np-workspace {
+    bottom: calc(var(--np-status-height) + 38px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .np-root.map-study *,
+  .np-root.map-study *::before,
+  .np-root.map-study *::after {
+    animation: none;
+    transition: none;
+  }
+}

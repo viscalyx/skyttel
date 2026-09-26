@@ -9,10 +9,11 @@ import {
   useState,
 } from 'react';
 import { useSearchParams } from 'react-router';
+import { MapStudyLab, MapStudyMap, MapStudyPages, useMapStudy } from './MapStudy.js';
 import {
+  navObjects as defaultNavObjects,
   NavigationPrototypePages,
   type NavPage,
-  navObjects,
   pageTitles,
 } from './NavigationPrototypePages.js';
 import {
@@ -135,9 +136,11 @@ function Panel({
 }
 
 export function NavigationPrototype() {
+  const study = useMapStudy();
+  const navObjects = study?.objects ?? defaultNavObjects;
   const [params, setParams] = useSearchParams();
   const candidate = params.get('variant') ?? 'B';
-  const variant: Variant = candidate in variants ? (candidate as Variant) : 'B';
+  const variant: Variant = study ? 'B' : candidate in variants ? (candidate as Variant) : 'B';
   const candidatePage = params.get('view') ?? 'map';
   const page: NavPage = candidatePage in pageTitles ? (candidatePage as NavPage) : 'map';
   const themeCandidate = params.get('theme');
@@ -194,7 +197,8 @@ export function NavigationPrototype() {
   const operator = role === 'operator' || role === 'administrator-operator';
   const baseObject = navObjects.find((object) => object.id === selected) ?? navObjects[0];
   const currentObject = { ...baseObject, name: savedNames[selected] ?? baseObject.name };
-  const draftCount = Object.keys(staged).length;
+  const hasStudyProposals = study?.proposals ?? false;
+  const draftCount = Object.keys(staged).length + (hasStudyProposals ? 4 : 0);
   const unsentCount = Object.keys(buffers).filter(
     (id) =>
       buffers[id] !==
@@ -387,6 +391,7 @@ export function NavigationPrototype() {
       setMessage('');
       setBuffers({});
       setStaged({});
+      study?.resetProposals();
       setSavedNames({});
       setTranscript([]);
       setQuery('');
@@ -432,9 +437,14 @@ export function NavigationPrototype() {
     if (success) {
       setSavedNames((previous) => ({ ...previous, ...staged }));
       setStaged({});
+      study?.commitProposals();
     }
     setSaveState(success ? 'saved' : 'failed');
   }
+
+  useEffect(() => {
+    if (hasStudyProposals) setSaveState('idle');
+  }, [hasStudyProposals]);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -543,7 +553,7 @@ export function NavigationPrototype() {
         )
       )
         return;
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      if (!study && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
         event.preventDefault();
         switchVariant(event.key === 'ArrowLeft' ? -1 : 1);
       }
@@ -597,6 +607,18 @@ export function NavigationPrototype() {
   });
 
   function contents(contentPage: NavPage, objectId = selected) {
+    if (study && (contentPage === 'list' || contentPage === 'detail')) {
+      return (
+        <MapStudyPages
+          page={contentPage}
+          selectedId={objectId}
+          onSelect={selectObject}
+          onEdit={() => go('edit', objectId)}
+          names={savedNames}
+          staged={staged}
+        />
+      );
+    }
     const value =
       buffers[objectId] ??
       staged[objectId] ??
@@ -605,6 +627,7 @@ export function NavigationPrototype() {
       '';
     return (
       <NavigationPrototypePages
+        objects={navObjects}
         page={contentPage}
         go={(next) => go(next, objectId)}
         selected={objectId}
@@ -614,6 +637,20 @@ export function NavigationPrototype() {
         buffer={value}
         setBuffer={(value) => setBuffers((previous) => ({ ...previous, [objectId]: value }))}
         staged={staged}
+        additionalDraftCount={hasStudyProposals ? 4 : 0}
+        additionalDraft={
+          hasStudyProposals ? (
+            <ul>
+              <li>Familjeabonnemang: priset ändras från 189 till 199 kr per månad.</li>
+              <li>
+                Betalningssambandet ändras från Gemensamt bankkonto till Kort ·· 4242. Den tidigare
+                kopplingen visas i kartan.
+              </li>
+              <li>Ny tjänst: Filmlyktan.</li>
+              <li>Nytt samband: Lo använder Filmlyktan.</li>
+            </ul>
+          ) : undefined
+        }
         savedNames={savedNames}
         stage={() => stage(objectId)}
         message={message}
@@ -706,7 +743,7 @@ export function NavigationPrototype() {
   return (
     <div
       ref={rootRef}
-      className="vp-root vp-variant-D np-root"
+      className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}`}
       data-theme={theme}
       data-variant={variant}
       data-expanded={expanded}
@@ -858,18 +895,30 @@ export function NavigationPrototype() {
             data-camera={camera}
             inert={!ready || scenario === 'no-graphics' || scenario === 'empty'}
           >
-            {ready && scenario !== 'no-graphics' && scenario !== 'empty' && (
-              <VisualPrototypeMap
-                variant="A"
-                selectedId={selected}
-                names={savedNames}
-                onSelect={() => selectObject('subscription')}
-                onSelectObject={(object, origin) => {
-                  selectObject(object.id);
-                  setAnchor(origin);
-                }}
-              />
-            )}
+            {ready &&
+              scenario !== 'no-graphics' &&
+              scenario !== 'empty' &&
+              (study ? (
+                <MapStudyMap
+                  selectedId={selected}
+                  onSelect={selectObject}
+                  onList={() => go('list')}
+                  theme={theme}
+                  names={savedNames}
+                  staged={staged}
+                />
+              ) : (
+                <VisualPrototypeMap
+                  variant="A"
+                  selectedId={selected}
+                  names={savedNames}
+                  onSelect={() => selectObject('subscription')}
+                  onSelectObject={(object, origin) => {
+                    selectObject(object.id);
+                    setAnchor(origin);
+                  }}
+                />
+              ))}
           </div>
         }
       >
@@ -900,7 +949,8 @@ export function NavigationPrototype() {
               ))}
             </nav>
           )}
-          {ready &&
+          {!study &&
+            ready &&
             camera === 'focus' &&
             !showPanel &&
             !showConversation &&
@@ -1174,184 +1224,198 @@ export function NavigationPrototype() {
           </section>
         )}
       </VisualPrototypeDFrame>
-      <aside className="np-lab" aria-label="Prototypens provverktyg">
-        <div className="np-lab-row">
-          <strong>Navigation på prototyp D</strong>
-          <span>Påhittat innehåll · inget sparas</span>
-          <a href={`/?prototype=visual&variant=D&theme=${theme}`} target="_blank" rel="noreferrer">
-            Öppna ursprungliga D
-          </a>
-        </div>
-        <div className="np-lab-row np-variant-choices">
-          {(Object.keys(variants) as Variant[]).map((key) => (
+      {study ? (
+        <MapStudyLab
+          selectedId={selected}
+          onList={() => go('list')}
+          onSelect={selectObject}
+          savePending={saveState === 'pending'}
+          onResolveSave={resolveSave}
+        />
+      ) : (
+        <aside className="np-lab" aria-label="Prototypens provverktyg">
+          <div className="np-lab-row">
+            <strong>Navigation på prototyp D</strong>
+            <span>Påhittat innehåll · inget sparas</span>
+            <a
+              href={`/?prototype=visual&variant=D&theme=${theme}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Öppna ursprungliga D
+            </a>
+          </div>
+          <div className="np-lab-row np-variant-choices">
+            {(Object.keys(variants) as Variant[]).map((key) => (
+              <button
+                type="button"
+                key={key}
+                aria-pressed={variant === key}
+                onClick={() => chooseVariant(key)}
+              >
+                {key} · {variants[key].name}
+              </button>
+            ))}
+          </div>
+          <p className="np-lab-description">{variants[variant].description}</p>
+          <div className="np-lab-row">
+            <button type="button" onClick={showFreePanels}>
+              Öppna två objekt och samtalet
+            </button>
+            {variant === 'B' && windows.length > 0 && (
+              <button type="button" onClick={() => setLayoutVersion((previous) => previous + 1)}>
+                Ordna paneler
+              </button>
+            )}
+          </div>
+          <div className="np-lab-row">
+            <button type="button" onClick={() => showComparisonStep(0)}>
+              Jämför samma arbetsflöde
+            </button>
+            <button type="button" onClick={showSettingsExample}>
+              Visa administration och kostnader
+            </button>
             <button
               type="button"
-              key={key}
-              aria-pressed={variant === key}
-              onClick={() => chooseVariant(key)}
+              onClick={() => setInspector((previous) => !previous)}
+              aria-expanded={inspector}
             >
-              {key} · {variants[key].name}
+              Provlägen och tillstånd
             </button>
-          ))}
-        </div>
-        <p className="np-lab-description">{variants[variant].description}</p>
-        <div className="np-lab-row">
-          <button type="button" onClick={showFreePanels}>
-            Öppna två objekt och samtalet
-          </button>
-          {variant === 'B' && windows.length > 0 && (
-            <button type="button" onClick={() => setLayoutVersion((previous) => previous + 1)}>
-              Ordna paneler
-            </button>
+          </div>
+          {guide === 'compare' && (
+            <section className="np-guide" aria-label="Guidad jämförelse">
+              <p>
+                <strong>Steg {guideStep + 1} av 3:</strong>{' '}
+                {guideStep === 0
+                  ? 'Du redigerar namnet. Lägg ändringen i utkastet när du är klar.'
+                  : guideStep === 1
+                    ? `Nu öppnas samtalet. ${variants[variant].description}`
+                    : 'Du är tillbaka i redigeringen. Texten finns kvar i alla tre alternativ.'}
+              </p>
+              <div className="np-lab-row">
+                <button
+                  type="button"
+                  disabled={guideStep === 0}
+                  onClick={() => showComparisonStep(guideStep - 1)}
+                >
+                  Föregående steg
+                </button>
+                <button
+                  type="button"
+                  disabled={guideStep === 2}
+                  onClick={() => showComparisonStep(guideStep + 1)}
+                >
+                  {guideStep === 0 ? 'Öppna samtalet' : 'Återgå till redigeringen'}
+                </button>
+                <button type="button" onClick={() => setGuide(null)}>
+                  Stäng jämförelsen
+                </button>
+              </div>
+              <p>B är godkänd. A och C finns kvar som jämförelse.</p>
+            </section>
           )}
-        </div>
-        <div className="np-lab-row">
-          <button type="button" onClick={() => showComparisonStep(0)}>
-            Jämför samma arbetsflöde
-          </button>
-          <button type="button" onClick={showSettingsExample}>
-            Visa administration och kostnader
-          </button>
-          <button
-            type="button"
-            onClick={() => setInspector((previous) => !previous)}
-            aria-expanded={inspector}
-          >
-            Provlägen och tillstånd
-          </button>
-        </div>
-        {guide === 'compare' && (
-          <section className="np-guide" aria-label="Guidad jämförelse">
-            <p>
-              <strong>Steg {guideStep + 1} av 3:</strong>{' '}
-              {guideStep === 0
-                ? 'Du redigerar namnet. Lägg ändringen i utkastet när du är klar.'
-                : guideStep === 1
-                  ? `Nu öppnas samtalet. ${variants[variant].description}`
-                  : 'Du är tillbaka i redigeringen. Texten finns kvar i alla tre alternativ.'}
-            </p>
-            <div className="np-lab-row">
-              <button
-                type="button"
-                disabled={guideStep === 0}
-                onClick={() => showComparisonStep(guideStep - 1)}
-              >
-                Föregående steg
-              </button>
-              <button
-                type="button"
-                disabled={guideStep === 2}
-                onClick={() => showComparisonStep(guideStep + 1)}
-              >
-                {guideStep === 0 ? 'Öppna samtalet' : 'Återgå till redigeringen'}
-              </button>
-              <button type="button" onClick={() => setGuide(null)}>
-                Stäng jämförelsen
-              </button>
-            </div>
-            <p>B är godkänd. A och C finns kvar som jämförelse.</p>
-          </section>
-        )}
-        {guide === 'settings' && (
-          <section className="np-guide" aria-label="Administration och kostnader">
-            <p>
-              <strong>Inställningar öppnas tillfälligt ovanpå ditt arbete.</strong> Administration
-              gäller vem som får använda hushållet och export/radering. Driftens kostnader gäller
-              vad det kostar att köra Skyttel.
-            </p>
-            <div className="np-lab-row">
-              <button type="button" onClick={() => go('administration')}>
-                Öppna administration
-              </button>
-              <button type="button" onClick={() => go('costs')}>
-                Öppna driftens kostnader
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeUtility();
-                  setGuide(null);
-                }}
-              >
-                Tillbaka till redigeringen
-              </button>
-            </div>
-            <p>
-              Provpersonen har båda behörigheterna. Exemplet startar simulerat tal. Panelbyten
-              behåller mikrofonens tillstånd.
-            </p>
-          </section>
-        )}
-        {saveState === 'pending' && (
-          <div className="np-lab-row">
-            <span>Sparandet väntar på simulerat svar:</span>
-            <button type="button" onClick={() => resolveSave(true)}>
-              Simulera kvitto
-            </button>
-            <button type="button" onClick={() => resolveSave(false)}>
-              Simulera sparfel
-            </button>
-          </div>
-        )}
-        {inspector && (
-          <div className="np-inspector">
-            <div className="np-lab-row">
-              <label>
-                Provläge
-                <select
-                  value={scenario}
-                  onChange={(event) => resetSession(event.target.value as Scenario)}
+          {guide === 'settings' && (
+            <section className="np-guide" aria-label="Administration och kostnader">
+              <p>
+                <strong>Inställningar öppnas tillfälligt ovanpå ditt arbete.</strong> Administration
+                gäller vem som får använda hushållet och export/radering. Driftens kostnader gäller
+                vad det kostar att köra Skyttel.
+              </p>
+              <div className="np-lab-row">
+                <button type="button" onClick={() => go('administration')}>
+                  Öppna administration
+                </button>
+                <button type="button" onClick={() => go('costs')}>
+                  Öppna driftens kostnader
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeUtility();
+                    setGuide(null);
+                  }}
                 >
-                  {Object.entries(scenarios).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Behörighet
-                <select
-                  value={role}
-                  onChange={(event) => setRole(event.target.value as typeof role)}
-                >
-                  <option value="member">Medlem</option>
-                  <option value="administrator">Administratör</option>
-                  <option value="operator">Driftansvarig och medlem</option>
-                  <option value="administrator-operator">Administratör och driftansvarig</option>
-                </select>
-              </label>
-              <button
-                type="button"
-                onClick={() => updateParams({ theme: theme === 'dark' ? 'light' : 'dark' }, true)}
-              >
-                {theme === 'dark' ? 'Ljust tema' : 'Mörkt tema'}
+                  Tillbaka till redigeringen
+                </button>
+              </div>
+              <p>
+                Provpersonen har båda behörigheterna. Exemplet startar simulerat tal. Panelbyten
+                behåller mikrofonens tillstånd.
+              </p>
+            </section>
+          )}
+          {saveState === 'pending' && (
+            <div className="np-lab-row">
+              <span>Sparandet väntar på simulerat svar:</span>
+              <button type="button" onClick={() => resolveSave(true)}>
+                Simulera kvitto
+              </button>
+              <button type="button" onClick={() => resolveSave(false)}>
+                Simulera sparfel
               </button>
             </div>
-            <dl>
-              <dt>Öppet verktyg</dt>
-              <dd>{pageTitles[page]}</dd>
-              <dt>Urval och kamera</dt>
-              <dd>
-                {currentObject.name} · {camera === 'overview' ? 'överblick' : 'fokus'}
-              </dd>
-              <dt>Samtal</dt>
-              <dd>
-                {voice ? 'Lyssnar' : 'Stoppat'} · {transcript.length} textrader · {message.length}{' '}
-                oskickade tecken
-              </dd>
-              <dt>Arbete</dt>
-              <dd>
-                {unsentCount} oskickade redigeringar · {draftCount} ändringar i privat utkast
-              </dd>
-            </dl>
-            <p>
-              Byten bevarar innehållet i minnet. Inloggning och förlorad åtkomst tömmer
-              provsessionen. Omladdning börjar om. Kartans fokus är schematiskt.
-            </p>
-          </div>
-        )}
-      </aside>
+          )}
+          {inspector && (
+            <div className="np-inspector">
+              <div className="np-lab-row">
+                <label>
+                  Provläge
+                  <select
+                    value={scenario}
+                    onChange={(event) => resetSession(event.target.value as Scenario)}
+                  >
+                    {Object.entries(scenarios).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Behörighet
+                  <select
+                    value={role}
+                    onChange={(event) => setRole(event.target.value as typeof role)}
+                  >
+                    <option value="member">Medlem</option>
+                    <option value="administrator">Administratör</option>
+                    <option value="operator">Driftansvarig och medlem</option>
+                    <option value="administrator-operator">Administratör och driftansvarig</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => updateParams({ theme: theme === 'dark' ? 'light' : 'dark' }, true)}
+                >
+                  {theme === 'dark' ? 'Ljust tema' : 'Mörkt tema'}
+                </button>
+              </div>
+              <dl>
+                <dt>Öppet verktyg</dt>
+                <dd>{pageTitles[page]}</dd>
+                <dt>Urval och kamera</dt>
+                <dd>
+                  {currentObject.name} · {camera === 'overview' ? 'överblick' : 'fokus'}
+                </dd>
+                <dt>Samtal</dt>
+                <dd>
+                  {voice ? 'Lyssnar' : 'Stoppat'} · {transcript.length} textrader · {message.length}{' '}
+                  oskickade tecken
+                </dd>
+                <dt>Arbete</dt>
+                <dd>
+                  {unsentCount} oskickade redigeringar · {draftCount} ändringar i privat utkast
+                </dd>
+              </dl>
+              <p>
+                Byten bevarar innehållet i minnet. Inloggning och förlorad åtkomst tömmer
+                provsessionen. Omladdning börjar om. Kartans fokus är schematiskt.
+              </p>
+            </div>
+          )}
+        </aside>
+      )}
     </div>
   );
 }

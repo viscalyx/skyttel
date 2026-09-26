@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
 export type NavPage =
   | 'map'
@@ -116,6 +116,7 @@ export const navObjects = [
 ];
 
 type Props = {
+  objects?: typeof navObjects;
   page: NavPage;
   go: (page: NavPage) => void;
   selected: string;
@@ -125,6 +126,8 @@ type Props = {
   buffer: string;
   setBuffer: (value: string) => void;
   staged: Record<string, string>;
+  additionalDraft?: ReactNode;
+  additionalDraftCount?: number;
   savedNames: Record<string, string>;
   stage: () => void;
   message: string;
@@ -152,6 +155,7 @@ const laterDecision = <p className="np-muted">Innehållets detaljer prövas i et
 export function NavigationPrototypePages(props: Props) {
   const nameId = useId();
   const {
+    objects = navObjects,
     page,
     go,
     selected,
@@ -161,6 +165,8 @@ export function NavigationPrototypePages(props: Props) {
     buffer,
     setBuffer,
     staged,
+    additionalDraft,
+    additionalDraftCount = 0,
     savedNames,
     stage,
     message,
@@ -174,12 +180,13 @@ export function NavigationPrototypePages(props: Props) {
     operator,
     logout,
   } = props;
-  const displayedObjects = navObjects.map((item) => ({
+  const displayedObjects = objects.map((item) => ({
     ...item,
     name: savedNames[item.id] ?? item.name,
   }));
   const object = displayedObjects.find((item) => item.id === selected) ?? displayedObjects[3];
   const changes = Object.entries(staged);
+  const draftCount = changes.length + additionalDraftCount;
   const menu = (pages: NavPage[]) => (
     <div className="np-menu">
       {pages.map((target) => (
@@ -311,23 +318,21 @@ export function NavigationPrototypePages(props: Props) {
     return (
       <div className="np-stack">
         <p>Bara du ser ditt utkast. Sparade ändringar blir synliga för hela hushållet.</p>
-        {changes.length === 0 ? (
-          <p className="np-message">Ditt utkast är tomt.</p>
-        ) : (
-          changes.map(([id, name]) => (
-            <div className="np-item" key={id}>
-              <div>
-                <span className="np-kicker">Ändrat namn</span>
-                <strong>{displayedObjects.find((item) => item.id === id)?.name}</strong>
-                <p>Föreslaget namn: {name}</p>
-              </div>
+        {draftCount === 0 && <p className="np-message">Ditt utkast är tomt.</p>}
+        {additionalDraft}
+        {changes.map(([id, name]) => (
+          <div className="np-item" key={id}>
+            <div>
+              <span className="np-kicker">Ändrat namn</span>
+              <strong>{displayedObjects.find((item) => item.id === id)?.name}</strong>
+              <p>Föreslaget namn: {name}</p>
             </div>
-          ))
-        )}
+          </div>
+        ))}
         <button
           type="button"
           className="np-primary"
-          disabled={!changes.length || saving}
+          disabled={!draftCount || saving}
           onClick={save}
         >
           {saving ? 'Sparar hela utkastet…' : 'Spara hela utkastet'}
@@ -377,9 +382,9 @@ export function NavigationPrototypePages(props: Props) {
             Skicka
           </button>
         </form>
-        {changes.length > 0 && (
+        {draftCount > 0 && (
           <button type="button" onClick={() => go('draft')}>
-            Visa mitt utkast ({changes.length})
+            Visa mitt utkast ({draftCount})
           </button>
         )}
       </div>
