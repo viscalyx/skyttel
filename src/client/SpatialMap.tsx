@@ -880,6 +880,7 @@ export function SpatialMap({
                       name={object.name}
                       householdId={object.householdId}
                       profileImageId={object.profileImageId}
+                      iconId={object.iconId}
                     />
                   </span>
                   <ProposalSymbol

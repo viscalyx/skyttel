@@ -566,6 +566,7 @@ export function HouseholdMap({
       | 'undo'
       | 'discard-change',
     body: unknown,
+    retainObject?: (draft: MapDraft) => void,
   ) {
     if (!state || pending || blocked) return false;
     setPending(true);
@@ -607,14 +608,17 @@ export function HouseholdMap({
               : 'Förslaget finns i ditt privata utkast. Kartan är inte ändrad.',
         );
       }
-      setMergeOpen(false);
+      if (retainObject) retainObject(draft);
+      else {
+        setMergeOpen(false);
 
-      setEdgeEditor(null);
-      setTypeEditor(null);
-      setEdgeTypeEditor(null);
-      setDirty(false);
-      setBlocked(false);
-      newButton.current?.focus();
+        setEdgeEditor(null);
+        setTypeEditor(null);
+        setEdgeTypeEditor(null);
+        setDirty(false);
+        setBlocked(false);
+        newButton.current?.focus();
+      }
       return true;
     } catch (failure) {
       if (
@@ -991,7 +995,11 @@ export function HouseholdMap({
     return value ? (
       <>
         <p>Namn: {value.name}</p>
-        <ProfileImage householdId={householdId} value={value} />
+        <ProfileImage
+          householdId={householdId}
+          value={value}
+          typeName={definition?.name ?? typeName(value.typeId)}
+        />
         <p>Objekttyp: {definition?.name ?? typeName(value.typeId)}</p>
         <p>Beskrivning: {value.description || 'Ingen beskrivning'}</p>
         <FinancialFactsDetails facts={value.financialFacts} />
@@ -1271,6 +1279,23 @@ export function HouseholdMap({
                         }}
                         action={(body) => action('draft', body)}
                         changeImage={changeImage}
+                        stageObject={async (editor) => {
+                          let next: ObjectEditor | undefined;
+                          await action(
+                            'draft',
+                            {
+                              ...editor,
+                              value: { ...editor.value, iconId: editor.value.iconId ?? null },
+                            },
+                            (draft) => {
+                              const value = draft.changes.find(
+                                (change) => change.id === editor.id,
+                              )?.after;
+                              if (value) next = { ...editor, value, version: draft.version };
+                            },
+                          );
+                          return next;
+                        }}
                         details={details(selectedObject ?? panel.initial.value)}
                         relationships={
                           selectedObject &&
@@ -1561,6 +1586,14 @@ export function HouseholdMap({
                         {object.name}
                       </button>
                       <span> {typeName(object.typeId)}</span>
+                      <div className="object-list-appearance">
+                        <ProfileImage
+                          householdId={householdId}
+                          value={object}
+                          typeName={typeName(object.typeId)}
+                          compact
+                        />
+                      </div>
                       <ProposalSymbol
                         change={state.draft.changes.find((change) => change.id === object.id)}
                       />

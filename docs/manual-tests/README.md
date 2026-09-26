@@ -117,6 +117,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   och samband, privata förslag, kontrollerat förlorat sparsvar, omstart
   och ångring av hela sparandet.
 
+- [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
+  mobil, bildens företräde, typbyte, omstart och återgång till standardikon.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
   rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, ångring,
   kvitton och bildåtkomst.

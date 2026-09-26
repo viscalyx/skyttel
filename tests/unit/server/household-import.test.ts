@@ -60,7 +60,7 @@ function changedContent(change: (content: Record<string, unknown>) => void) {
   });
 }
 
-test.each([14, 15, 16])(
+test.each([14, 15, 16, 17])(
   'schema %i household archives remain importable with their saved content and history',
   async (schemaVersion) => {
     const bytes = altered((parts) => {
@@ -104,7 +104,7 @@ test('invalid archives leave all live content and access unchanged before confir
     }),
     altered((parts) => {
       const manifest = JSON.parse(new TextDecoder().decode(parts['manifest.json']));
-      manifest.schemaVersion = 17;
+      manifest.schemaVersion = 99;
       parts['manifest.json'] = new TextEncoder().encode(JSON.stringify(manifest));
     }),
     changedContent((content) => {
