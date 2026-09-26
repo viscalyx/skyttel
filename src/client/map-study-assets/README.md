@@ -47,7 +47,8 @@ kvar vid bytet. Välj tema i den gemensamma verktygslådan.
   kartan börjar en ny sammanhängande kedja när du följer nästa samband.
 
 Alla objekt och samband finns kvar i överblicken. Klick i kartan markerar
-utan att flytta kameran eller öppna en panel. **Visa nära i kartan**,
+utan att flytta kameran eller öppna en panel. **Fokusera markering**,
+**Visa nära i kartan**,
 **Rama in sammanhanget** och
 **Visa hela kartan** är uttryckliga kamerahandlingar. **Lämna fokus**
 behåller kameran.
@@ -86,6 +87,22 @@ har utåtriktade pilar och sparar vyn du lämnar. Knappen byter sedan till
 sparade vyn även efter rotation, panorering, variantbyte eller nya
 förslag. Namn och hjälptext följer ikonens aktuella handling.
 
+**Fokusera markering** ligger bredvid överblicksknappen. Den panorerar
+och anpassar zoomen så att de markerade objekten och ändpunkterna för
+alla deras direkta samband ryms i vyn, med samma kamerariktning.
+Det gäller både ett och flera markerade objekt; grannarnas övriga
+samband utökar inte utsnittet. Fokuseringen lämnar marginal för de fasta
+verktygen. Urvalet och öppna paneler består. Knappen är inaktiv när
+inget är markerat eller kartgrafiken är dold.
+
+Rotation sker runt det markerade objektets aktuella position. Vid
+flerval används medelpunkten av alla markerade objekts koordinater i
+tre dimensioner. Markering flyttar inte kameran, och rotationscentrum
+behåller sin plats på skärmen när rotationen börjar. Panorering och
+zoom fungerar som tidigare. Utan markering används det vanliga
+rotationscentrumet. Samma regel gäller mus, pekskärm, tangentbord och
+navigeringens knappar.
+
 ## Pröva samma uppgifter
 
 1. Klicka på Familjeabonnemang. Objektet och dess samband markeras.
@@ -97,6 +114,10 @@ förslag. Namn och hjälptext följer ikonens aktuella handling.
 2. Öppna **Provlägen** och välj en tät karta. Befintliga placeringar och
    kamera ligger kvar. Använd **Visa hela kartan** för att se hela rymden.
    Rotera och luta för att pröva djupet mellan och inom grupperna.
+   Markera ett objekt och rotera igen: det ska ligga kvar på samma
+   plats i bilden. Markera flera och pröva deras gemensamma mittpunkt.
+   Välj **Fokusera markering** för att rama in urvalet och alla dess
+   direkta grannar. Grannarna blir inte markerade av fokuseringen.
 3. Slå på **Visa privata förslag**. Familjeabonnemangets pris ändras,
    betalningen föreslås gå via kortet och Filmlyktan med ett samband till
    Lo tillkommer. Den tidigare betalningskopplingen finns kvar som ett
@@ -203,6 +224,8 @@ mobilväljaren.
 - Mininavigering: [dator](A-mininavigering.png),
   [mobil](A-mininavigering-mobil.png).
 - [Navigering och detaljer samtidigt](A-navigation-coexist.png).
+- Fokuserat flerval: [dator](A-fokusera-markering.png),
+  [mobil](A-fokusera-markering-mobil.png).
 - [Samma rumsliga grupper efter rotation och lutning](A-djup-roterad.png).
 - [Höjdguide på mobil](A-hojdguide-mobil.png).
 - Ett sammanhang: [dator](B-dator.png), [mobil](B-mobil.png).
@@ -251,6 +274,14 @@ Lokala Chromium-kontroller omfattar följande:
   överlappande namnlappar i det glesa provet.
 - Kamera som består vid kartklick, variantbyte och nya provförslag.
   Avbruten objektdragning återställer startpositionen.
+- Rotation runt valt objekt eller urvalets medelpunkt i tre dimensioner.
+  Punkten ligger kvar på samma skärmplats genom knappar, tangentbord,
+  musdrag och emulerad pekrotation. Nya markeringar och flyttade objekt
+  styr nästa rotation utan att markeringen i sig flyttar kameran.
+- **Fokusera markering** ramar in urvalet och dess direkta grannar på
+  mobil och dator, med marginal för fasta verktyg. Grannarna blir inte
+  markerade. Kamerans riktning, öppna paneler och sparad återgångsvy
+  består. Tomt urval och dold kartgrafik ger en inaktiv knapp.
 - Verktygslådans överblicksknapp återställer den sparade vyn även efter
   mellanliggande kamerarörelser och nya provobjekt. Upprepade tryck på
   Home ramar in hela kartan och behåller samma återgångsvy.
@@ -288,8 +319,9 @@ och fria paneler, men den är inte verifierad med ett hjälpmedel här.
 
 Prototypen använder befintliga `spatial-scene.ts` och
 `spatial-navigation.ts` för WebGL, kamera, stjärnhimmel och kameragester.
-Små tillägg på prototypgrenen ger återgång till föregående kameravy och
-anpassning till ljust och mörkt tema. Vanliga anrop behåller sitt
+Små tillägg på prototypgrenen ger återgång till föregående kameravy,
+rotation runt markeringen och anpassning till ljust och mörkt tema.
+Vanliga anrop behåller sitt
 ursprungliga beteende. Det är inte ett nytt teknikval eller ett
 prestandabevis för produktion. `use-object-movement.ts`,
 `SpatialHeightGuide` och `SpatialObjectGlyph` återanvänds för objektdrag,

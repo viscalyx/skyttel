@@ -190,6 +190,45 @@ export function MapStudyCanvas(props: Props) {
     synchronizeCamera();
   }
 
+  function focusSelection(ids: string[]) {
+    const scene = sceneRef.current;
+    const root = rootRef.current;
+    if (!scene || !root || !ids.length || graphicsError) return;
+    const canvas = root.getBoundingClientRect();
+    const centerX = canvas.left + canvas.width / 2;
+    const centerY = canvas.top + canvas.height / 2;
+    const markerMargin = 32;
+    let halfWidth = canvas.width / 2 - markerMargin;
+    let halfHeight = canvas.height / 2 - markerMargin;
+    const overlays = root
+      .closest('.map-study')
+      ?.querySelectorAll('.vp-d-toolbox, .vp-d-status, .mp-lab, .mp-selection-actions');
+    for (const overlay of overlays ?? []) {
+      const box = overlay.getBoundingClientRect();
+      if (!box.width || !box.height) continue;
+      if (box.top < centerY && box.bottom > centerY) {
+        if (box.right <= centerX)
+          halfWidth = Math.min(halfWidth, centerX - box.right - markerMargin);
+        if (box.left >= centerX) halfWidth = Math.min(halfWidth, box.left - centerX - markerMargin);
+      }
+      if (box.left < centerX && box.right > centerX) {
+        if (box.bottom <= centerY)
+          halfHeight = Math.min(halfHeight, centerY - box.bottom - markerMargin);
+        if (box.top >= centerY) halfHeight = Math.min(halfHeight, box.top - centerY - markerMargin);
+      }
+    }
+    const aspect = canvas.width / canvas.height;
+    const widthFraction = (2 * Math.max(24, halfWidth)) / canvas.width;
+    const heightFraction = (2 * Math.max(24, halfHeight)) / canvas.height;
+    const padding = Math.max(
+      1.35,
+      Math.min(aspect, 1) / Math.min(aspect * widthFraction, heightFraction),
+    );
+    rememberCamera();
+    scene.reveal(ids, padding);
+    synchronizeCamera();
+  }
+
   function back() {
     const previous = history.current.pop();
     if (previous && !graphicsError) sceneRef.current?.restore(previous);
@@ -217,7 +256,7 @@ export function MapStudyCanvas(props: Props) {
     }
   }
 
-  useImperativeHandle(cameraRef, () => ({ navigate, frame, back, toggleOverview }));
+  useImperativeHandle(cameraRef, () => ({ navigate, frame, focusSelection, back, toggleOverview }));
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -308,6 +347,25 @@ export function MapStudyCanvas(props: Props) {
           synchronizeCamera();
         },
         root,
+        {
+          getRotationCenter: () => {
+            const positions = latest.current.selectedIds.flatMap((id) => {
+              const position =
+                sceneRef.current?.position(id) ??
+                latest.current.objects.find((object) => object.id === id)?.position;
+              return position && Object.values(position).every(Number.isFinite) ? [position] : [];
+            });
+            if (!positions.length) return null;
+            return positions.reduce(
+              (center, position) => ({
+                x: center.x + position.x / positions.length,
+                y: center.y + position.y / positions.length,
+                z: center.z + position.z / positions.length,
+              }),
+              { x: 0, y: 0, z: 0 },
+            );
+          },
+        },
       );
     } catch {
       setGraphicsError(

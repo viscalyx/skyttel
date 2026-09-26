@@ -468,6 +468,18 @@ export function NavigationPrototype() {
         ?.focus({ preventScroll: true });
     });
   }
+  function focusStudySelection() {
+    if (!study || !selection.ids.length) return;
+    const selectedIds = new Set(selection.ids);
+    const visibleIds = new Set(selectedIds);
+    for (const edge of study.relationships) {
+      if (selectedIds.has(edge.from)) visibleIds.add(edge.to);
+      if (selectedIds.has(edge.to)) visibleIds.add(edge.from);
+    }
+    study.cameraRef.current?.focusSelection(
+      study.objects.filter((object) => visibleIds.has(object.id)).map((object) => object.id),
+    );
+  }
   function resetSession(next: Scenario) {
     setScenario(next);
     setAnchor(null);
@@ -959,6 +971,18 @@ export function NavigationPrototype() {
                   >
                     <PrototypeIcon name="compass" />
                     <span className="vp-d-label">Navigera</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="vp-d-action np-tool"
+                    data-tool="focus-selection"
+                    aria-label="Fokusera markering"
+                    title="Fokusera markering och direkt kopplade objekt"
+                    disabled={study.noGraphics || !selection.ids.length}
+                    onClick={focusStudySelection}
+                  >
+                    <PrototypeIcon name="focus-selection" />
+                    <span className="vp-d-label">Fokusera markering</span>
                   </button>
                   <button
                     type="button"

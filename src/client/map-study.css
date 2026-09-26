@@ -615,6 +615,11 @@
     font-size: 0.95em;
   }
 }
+@media (max-width: 350px) {
+  .np-root.map-study .np-d-navigation:not(.vp-d-expanded) .vp-d-brand {
+    display: none;
+  }
+}
 @media (max-width: 600px) and (max-height: 600px) {
   .np-root.map-study[data-navigation-open="true"][data-open-work="true"]
     .np-d-navigation:not(.vp-d-expanded)

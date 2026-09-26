@@ -32,6 +32,7 @@ export type SpatialCameraSnapshot = {
 };
 
 export type SpatialAppearance = { background: string; starColor?: string };
+export type SpatialSceneOptions = { getRotationCenter?: () => Position | null };
 
 /** Owns only graphics and the camera. Household content stays in the shared editor. */
 export function spatialScene(
@@ -40,6 +41,7 @@ export function spatialScene(
   onOrientation: (axes: Position[]) => void = () => {},
   onMotion: () => void = () => {},
   surface: HTMLElement = canvas,
+  options: SpatialSceneOptions = {},
 ) {
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -52,14 +54,43 @@ export function spatialScene(
   // Pointer transitions and independent pan directions belong to our gesture
   // adapter; Three retains camera projection and public orbit mathematics.
   controls.disconnect();
+  let correctingRotation = false;
+  function rotateCamera(rotate: () => void) {
+    const center = options.getRotationCenter?.();
+    if (!center || ![center.x, center.y, center.z].every(Number.isFinite)) {
+      rotate();
+      controls.update();
+      return;
+    }
+    const orientation = camera.quaternion.clone();
+    const offset = new Vector3(center.x, center.y, center.z).sub(controls.target);
+    // OrbitControls' public rotation methods update immediately. Publish only
+    // the corrected pose, never their intermediate orbit around the old target.
+    correctingRotation = true;
+    try {
+      rotate();
+      controls.update();
+      const rotation = camera.quaternion.clone().multiply(orientation.invert());
+      const translation = offset.clone().sub(offset.applyQuaternion(rotation));
+      // Rotate camera and target rigidly around the chosen point. Keeping the
+      // target offset avoids recentering or zooming when the selection changes.
+      camera.position.add(translation);
+      controls.target.add(translation);
+      controls.update();
+    } finally {
+      correctingRotation = false;
+    }
+    draw();
+  }
   let settings: Pick<ViewSettings, 'invertX' | 'invertY'> = { invertX: false, invertY: false };
   const gestures = cameraGestures(
     canvas,
     {
       rotate(x, y) {
-        controls.rotateLeft(x);
-        controls.rotateUp(y);
-        controls.update();
+        rotateCamera(() => {
+          controls.rotateLeft(x);
+          controls.rotateUp(y);
+        });
         onMotion();
       },
       pan(x, y) {
@@ -147,7 +178,7 @@ export function spatialScene(
   let needsFrame = true;
   let overviewDistance = 30;
   function draw() {
-    if (lost) return;
+    if (lost || correctingRotation) return;
     camera.updateMatrixWorld();
     // The distant sky uses orientation and zoom only, so neither camera
     // translation nor object placement gives it parallax or domain meaning.
@@ -347,7 +378,7 @@ export function spatialScene(
       onMotion();
       return true;
     },
-    reveal(ids: string[]) {
+    reveal(ids: string[], padding = 1) {
       const values = ids.flatMap((id) =>
         nodes.has(id) && locations.has(id) ? [locations.get(id) as Vector3] : [],
       );
@@ -362,7 +393,12 @@ export function spatialScene(
       controls.target.copy(center);
       camera.position
         .copy(center)
-        .add(direction.multiplyScalar((extent * 2.6) / Math.min(camera.aspect, 1)));
+        .add(
+          direction.multiplyScalar(
+            (extent * 2.6 * Math.max(1, Number.isFinite(padding) ? padding : 1)) /
+              Math.min(camera.aspect, 1),
+          ),
+        );
       controls.update();
       draw();
       onMotion();
@@ -416,17 +452,22 @@ export function spatialScene(
       };
     },
     navigate(command: string) {
-      if (command === 'left') controls.pan(50 * (settings.invertX ? -1 : 1), 0);
-      if (command === 'right') controls.pan(-50 * (settings.invertX ? -1 : 1), 0);
-      if (command === 'up') controls.pan(0, 50 * (settings.invertY ? -1 : 1));
-      if (command === 'down') controls.pan(0, -50 * (settings.invertY ? -1 : 1));
-      if (command === 'rotate-left') controls.rotateLeft(0.15);
-      if (command === 'rotate-right') controls.rotateLeft(-0.15);
-      if (command === 'tilt-up') controls.rotateUp(0.15);
-      if (command === 'tilt-down') controls.rotateUp(-0.15);
-      if (command === 'in') controls.dollyIn(0.8);
-      if (command === 'out') controls.dollyOut(0.8);
-      controls.update();
+      if (['rotate-left', 'rotate-right', 'tilt-up', 'tilt-down'].includes(command)) {
+        rotateCamera(() => {
+          if (command === 'rotate-left') controls.rotateLeft(0.15);
+          if (command === 'rotate-right') controls.rotateLeft(-0.15);
+          if (command === 'tilt-up') controls.rotateUp(0.15);
+          if (command === 'tilt-down') controls.rotateUp(-0.15);
+        });
+      } else {
+        if (command === 'left') controls.pan(50 * (settings.invertX ? -1 : 1), 0);
+        if (command === 'right') controls.pan(-50 * (settings.invertX ? -1 : 1), 0);
+        if (command === 'up') controls.pan(0, 50 * (settings.invertY ? -1 : 1));
+        if (command === 'down') controls.pan(0, -50 * (settings.invertY ? -1 : 1));
+        if (command === 'in') controls.dollyIn(0.8);
+        if (command === 'out') controls.dollyOut(0.8);
+        controls.update();
+      }
       draw();
       onMotion();
     },

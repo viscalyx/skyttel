@@ -32,6 +32,7 @@ export type StudyCameraAction =
 export type StudyCamera = {
   navigate: (action: StudyCameraAction) => void;
   frame: (ids?: string[]) => void;
+  focusSelection: (ids: string[]) => void;
   back: () => void;
   toggleOverview: () => void;
 };
