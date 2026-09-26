@@ -55,6 +55,8 @@ function useStudyState() {
   const [page, setPage] = useState(0);
   const [noGraphics, setNoGraphics] = useState(false);
   const [stars, setStars] = useState(true);
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [canReturnFromOverview, setCanReturnFromOverview] = useState(false);
   const [cameraDescription, setCameraDescription] = useState('Överblick');
   const [movement, setMovement] = useState('');
   const cameraRef = useRef<StudyCamera | null>(null);
@@ -121,6 +123,8 @@ function useStudyState() {
     setSelectedEdge(null);
   }
   function resetProposals() {
+    setNavigationOpen(false);
+    setCanReturnFromOverview(false);
     setProposals(false);
     setSavedProposals(false);
     setPositions({});
@@ -165,6 +169,10 @@ function useStudyState() {
     setNoGraphics,
     stars,
     setStars,
+    navigationOpen,
+    setNavigationOpen,
+    canReturnFromOverview,
+    setCanReturnFromOverview,
     cameraDescription,
     setCameraDescription,
     cameraRef,
@@ -213,8 +221,15 @@ export function MapStudyMap({
   staged: Record<string, string>;
 }) {
   const study = useStudy();
-  const [navigationOpen, setNavigationOpen] = useState(false);
   const [relationsOpen, setRelationsOpen] = useState(false);
+  const navigationTitle = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (study.navigationOpen) navigationTitle.current?.focus({ preventScroll: true });
+  }, [study.navigationOpen]);
+  function closeNavigation() {
+    study.setNavigationOpen(false);
+    document.querySelector<HTMLButtonElement>('[data-tool="navigate"]')?.focus();
+  }
   const subject =
     study.objects.find((object) => object.id === (study.focusId ?? selectedId)) ?? study.objects[3];
   const linked = study.relationships.filter(
@@ -282,6 +297,7 @@ export function MapStudyMap({
           onMove={study.move}
           cameraRef={study.cameraRef}
           onCameraChange={study.setCameraDescription}
+          onOverviewChange={study.setCanReturnFromOverview}
         />
       </div>
       {study.noGraphics && (
@@ -296,32 +312,21 @@ export function MapStudyMap({
         </section>
       )}
       <div className="mp-map-tools">
-        <div className="mp-map-tools-row">
-          <button type="button" onClick={onList}>
-            Sök i kartan
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              study.setFocusId(null);
-              study.cameraRef.current?.frame();
+        {study.navigationOpen && (
+          <section
+            id="mp-navigation"
+            className="mp-navigation np-stack"
+            aria-labelledby="mp-navigation-title"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.stopPropagation();
+                closeNavigation();
+              }
             }}
           >
-            Rama in allt
-          </button>
-          <button type="button" onClick={() => study.cameraRef.current?.back()}>
-            Föregående kameravy
-          </button>
-          <button
-            type="button"
-            onClick={() => setNavigationOpen(!navigationOpen)}
-            aria-expanded={navigationOpen}
-          >
-            Navigera
-          </button>
-        </div>
-        {navigationOpen && (
-          <div className="mp-navigation np-stack">
+            <h2 ref={navigationTitle} id="mp-navigation-title" tabIndex={-1}>
+              Navigera i kartan
+            </h2>
             <p>Flytta vyn med knapparna. Ett objektval flyttar inte kameran.</p>
             <button
               type="button"
@@ -350,10 +355,10 @@ export function MapStudyMap({
                 Zooma ut
               </button>
             </div>
-            <button type="button" onClick={() => setNavigationOpen(false)}>
+            <button type="button" onClick={closeNavigation}>
               Stäng navigering
             </button>
-          </div>
+          </section>
         )}
       </div>
       {study.variant === 'B' && (
@@ -825,8 +830,8 @@ export function MapStudyLab({
             <option value="large">Stor · 500 objekt och 1 500 samband</option>
           </select>
           <p>
-            Nya provobjekt flyttar inte befintliga objekt eller kameran. Välj Rama in allt för en ny
-            överblick.
+            Nya provobjekt flyttar inte befintliga objekt eller kameran. Välj Visa hela kartan i
+            verktygslådan för en ny överblick. Samma knapp tar dig tillbaka till vyn du lämnade.
           </p>
           <div className="mp-button-grid">
             <button

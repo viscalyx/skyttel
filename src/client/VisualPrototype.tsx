@@ -41,6 +41,9 @@ export function PrototypeIcon({ name }: { name: string }) {
   const paths: Record<string, string> = {
     mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8',
     search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
+    compass: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M16 8l-2 6-6 2 2-6 6-2',
+    frame: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 8l-5-5m13 5 5-5m-5 13 5 5M8 16l-5 5',
+    'restore-view': 'M7 3H3v4M17 3h4v4M21 17v4h-4M7 21H3v-4M8 9h5a4 4 0 1 1 0 8M8 9l3-3M8 9l3 3',
     list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
     edit: 'm15 4 5 5M4 15 16 3l5 5L9 20l-6 1 1-6',
     close: 'm6 6 12 12M18 6 6 18',

@@ -33,4 +33,5 @@ export type StudyCamera = {
   navigate: (action: StudyCameraAction) => void;
   frame: (ids?: string[]) => void;
   back: () => void;
+  toggleOverview: () => void;
 };

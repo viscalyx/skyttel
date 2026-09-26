@@ -252,6 +252,7 @@ export function NavigationPrototype() {
   }
   function go(next: NavPage, objectId = selected) {
     returnFocus.current = document.activeElement as HTMLElement;
+    study?.setNavigationOpen(false);
     setExpanded(false);
     setAnchor(null);
     setStatusOpen(false);
@@ -802,12 +803,53 @@ export function NavigationPrototype() {
                 page === 'conversation' || showConversation,
               )}
               {toolbarButton(
-                'list',
-                'Objekt och samband',
+                study ? 'search' : 'list',
+                study ? 'Sök i kartan' : 'Objekt och samband',
                 () => go('list'),
                 'list',
                 page === 'list' ||
                   (variant === 'B' && windows.some((item) => item.page === 'list')),
+              )}
+              {study && (
+                <>
+                  <button
+                    type="button"
+                    className="vp-d-action np-tool"
+                    data-tool="navigate"
+                    aria-label="Navigera"
+                    title="Navigera"
+                    aria-controls="mp-navigation"
+                    aria-expanded={study.navigationOpen}
+                    onClick={() => {
+                      setExpanded(false);
+                      setStatusOpen(false);
+                      study.setNavigationOpen(!study.navigationOpen);
+                    }}
+                  >
+                    <PrototypeIcon name="compass" />
+                    <span className="vp-d-label">Navigera</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="vp-d-action np-tool"
+                    data-tool="overview"
+                    aria-label={
+                      study.canReturnFromOverview ? 'Återgå till föregående vy' : 'Visa hela kartan'
+                    }
+                    title={
+                      study.canReturnFromOverview ? 'Återgå till föregående vy' : 'Visa hela kartan'
+                    }
+                    disabled={study.noGraphics}
+                    onClick={() => study.cameraRef.current?.toggleOverview()}
+                  >
+                    <PrototypeIcon name={study.canReturnFromOverview ? 'restore-view' : 'frame'} />
+                    <span className="vp-d-label">
+                      {study.canReturnFromOverview
+                        ? 'Återgå till föregående vy'
+                        : 'Visa hela kartan'}
+                    </span>
+                  </button>
+                </>
               )}
             </>
           )

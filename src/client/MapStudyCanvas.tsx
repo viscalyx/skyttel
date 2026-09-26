@@ -40,6 +40,7 @@ type Props = {
   onMove: (id: string, position: StudyPosition) => void;
   cameraRef: RefObject<StudyCamera | null>;
   onCameraChange: (description: string) => void;
+  onOverviewChange: (canReturn: boolean) => void;
 };
 
 type Box = { x: number; y: number; width: number; height: number };
@@ -120,6 +121,7 @@ export function MapStudyCanvas(props: Props) {
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
   const history = useRef<SpatialCameraSnapshot[]>([]);
+  const overviewReturn = useRef<SpatialCameraSnapshot | null>(null);
   const cameraGesture = useRef<SpatialCameraSnapshot | null>(null);
   const touchPoints = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<Gesture | null>(null);
@@ -176,7 +178,29 @@ export function MapStudyCanvas(props: Props) {
     if (previous && !graphicsError) sceneRef.current?.restore(previous);
   }
 
-  useImperativeHandle(cameraRef, () => ({ navigate, frame, back }));
+  function showOverview() {
+    const scene = sceneRef.current;
+    if (!scene || graphicsError) return;
+    overviewReturn.current ??= scene.snapshot();
+    scene.reset();
+    latest.current.onOverviewChange(true);
+    synchronizeCamera();
+  }
+
+  function toggleOverview() {
+    const scene = sceneRef.current;
+    if (!scene || graphicsError) return;
+    if (overviewReturn.current) {
+      scene.restore(overviewReturn.current);
+      overviewReturn.current = null;
+      latest.current.onOverviewChange(false);
+      synchronizeCamera();
+    } else {
+      showOverview();
+    }
+  }
+
+  useImperativeHandle(cameraRef, () => ({ navigate, frame, back, toggleOverview }));
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -195,6 +219,8 @@ export function MapStudyCanvas(props: Props) {
     const root = rootRef.current;
     const canvas = canvasRef.current;
     if (!root || !canvas) return;
+    overviewReturn.current = null;
+    latest.current.onOverviewChange(false);
     let remembered = false;
     const cameraPointers = new Set<number>();
     let lastWheel = -Infinity;
@@ -583,7 +609,7 @@ export function MapStudyCanvas(props: Props) {
     } else if (event.key === 'Home') {
       event.preventDefault();
       event.stopPropagation();
-      frame();
+      showOverview();
     }
   }
 

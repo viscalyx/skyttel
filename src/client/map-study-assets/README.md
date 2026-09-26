@@ -12,6 +12,12 @@ i detta underlag gäller kartans utforskning, inte panelmodellen.
 Kameran och stjärnhimlen använder den befintliga rymdkartans kod enligt
 [förtydligandet om återanvändning](https://github.com/viscalyx/skyttel/issues/105#issuecomment-5845606335).
 
+Rymdkartan täcker hela viewporten. Verktygslåda, status och fria paneler
+ligger ovanpå kartan även på små skärmar. Exempelobjekten ligger i fyra
+rumsliga grupper med djup både inom och mellan grupperna, som flera
+planetsystem. Grupperingen är en personlig placering och tillför inga
+nya uppgifter eller samband.
+
 ## Öppna underlaget
 
 På grenen `prototype/skyttel-map-exploration`, med projektets beroenden
@@ -42,15 +48,23 @@ kvar vid bytet. Välj tema i den gemensamma verktygslådan.
 
 Alla objekt och samband finns kvar i överblicken. Urval och fokus
 flyttar inte kameran. **Visa nära i kartan**, **Rama in sammanhanget** och
-**Rama in allt** är uttryckliga kamerahandlingar. **Föregående kameravy**
-återgår till föregående läge. **Lämna fokus** behåller kameran.
+**Visa hela kartan** är uttryckliga kamerahandlingar. **Lämna fokus**
+behåller kameran.
+
+Verktygslådan innehåller **Sök i kartan** med förstoringsglas,
+**Navigera** med kompass och en växlande kameraknapp. **Visa hela kartan**
+har utåtriktade pilar och sparar vyn du lämnar. Knappen byter sedan till
+**Återgå till föregående vy**, med en återgångspil. Den återställer den
+sparade vyn även efter rotation, panorering, variantbyte eller nya
+förslag. Namn och hjälptext följer ikonens aktuella handling.
 
 ## Pröva samma uppgifter
 
 1. Välj Familjeabonnemang och följ **betalas från** till Gemensamt
    bankkonto. Läs riktning och ändpunkter i panelen. Jämför A, B och C.
 2. Öppna **Provlägen** och välj en tät karta. Befintliga placeringar och
-   kamera ligger kvar. Använd **Rama in allt** för att se hela ytan.
+   kamera ligger kvar. Använd **Visa hela kartan** för att se hela rymden.
+   Rotera och luta för att pröva djupet mellan och inom grupperna.
 3. Slå på **Visa privata förslag**. Familjeabonnemangets pris ändras,
    betalningen föreslås gå via kortet och Filmlyktan med ett samband till
    Lo tillkommer. Den tidigare betalningskopplingen finns kvar som ett
@@ -78,7 +92,7 @@ prioriteras. Antalet synliga namn anges; objektens personliga placeringar
 ändras inte för att ge plats åt text. Ikonerna finns kvar när namn inte
 ryms. Stora kartor använder mindre markörer för överblick.
 
-Text och lista är åtkomliga direkt i verktygslådan och via **Sök i kartan**.
+Text och lista är åtkomliga via **Sök i kartan** i verktygslådan.
 Sökningen omfattar samtliga sidor och lämnar kameran orörd. Objekt och
 samband har separata listval, med 50 poster per sida. Samband skrivs som
 källa, riktning, betydelse och mål. Kartarbete kräver inte kartgester.
@@ -92,13 +106,15 @@ Den befintliga kartans gester hanterar två fingrars panorering och zoom.
 Stjärnhimlen kan slås av och på under **Navigera**. Den följer kamerans
 rotation och zoom, men inte panorering eller objektens placeringar.
 
-Kamerabyten sker utan animation. Korta mobilvyer använder sidrullning så
-att status och provpanelen inte täcker kartan. Fria arbetspaneler har
-den godkända mobilväljaren och intern rullning.
+Kamerabyten sker utan animation. Korta mobilvyer använder intern rullning
+i flytande verktyg och paneler. Kartan behåller viewportens storlek när
+paneler öppnas, stängs eller flyttas. Fria arbetspaneler har den godkända
+mobilväljaren.
 
 ## Skärmbilder
 
 - Fri överblick: [dator](A-dator.png), [mobil](A-mobil.png).
+- [Samma rumsliga grupper efter rotation och lutning](A-djup-roterad.png).
 - Ett sammanhang: [dator](B-dator.png), [mobil](B-mobil.png).
 - Följ en kedja: [dator](C-dator.png), [mobil](C-mobil.png).
 - [Tät karta med privata förslag](B-tat-med-forslag.png).
@@ -117,6 +133,9 @@ Den befintliga kartmotorns sju webbläsartester passerar efter anpassningen.
 Lokala Chromium-kontroller omfattar följande:
 
 - A, B och C vid 1440 × 1000 och 390 × 844 utan horisontellt sidspill.
+- Kartan täcker viewporten även när sökning, objektdetaljer,
+  navigeringsverktyg och provlägen öppnas. Även 320 × 400 och verklig
+  webbläsarzoom på 200 procent ingår.
 - Textsökning och objektdetaljer vid 320 × 568 och 320 × 400.
 - Verklig flikzoom på 200 procent: sidans bredd går från 1440 till
   720 CSS-pixlar och pixelkvoten från 1 till 2. Sökning och detaljer
@@ -126,6 +145,11 @@ Lokala Chromium-kontroller omfattar följande:
   överlappande namnlappar i det glesa provet.
 - Kamera som består vid urval, variantbyte och nya provförslag.
   Avbruten objektdragning återställer startpositionen.
+- Verktygslådans överblicksknapp återställer den sparade vyn även efter
+  mellanliggande kamerarörelser och nya provobjekt. Upprepade tryck på
+  Home ramar in hela kartan och behåller samma återgångsvy.
+- Navigeringspanelen får tangentbordsfokus när den öppnas. Escape
+  stänger den och återför fokus till verktygslådans kompass.
 - Paneldrag som inte flyttar kameran och rotation genom dragning i fri
   kartyta efter panelplacering. Återgång till föregående kameravy och
   emulerad pekrotation på mobil ingår.
@@ -169,3 +193,9 @@ Personliga placeringar och kameravyer beskriver presentation. En verklig
 implementation ska fortfarande bevara personliga placeringar över besök
 och enheter. Skissens minnestillstånd ändrar inte den produktregeln.
 Inga nya domänbegrepp eller produktförmågor beslutas genom provkoden.
+
+Exempelpositionerna är deterministiska: samma objekt behåller sina
+koordinater när provets täthet eller privata förslag ändras. Spridningen
+är kontrollerad i alla tre axlar och saknar ett gemensamt plan, även
+inom de tätare grupperna. Detta prövar den önskade rumskänslan; det är
+ingen automatisk omplacering av användarens objekt.
