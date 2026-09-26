@@ -59,6 +59,10 @@
   flex: 1 1 130px;
   min-width: 0;
 }
+.np-root .psi-empty svg {
+  width: 48px;
+  height: 48px;
+}
 .np-root .psi-status {
   font-weight: 600;
 }

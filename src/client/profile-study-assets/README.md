@@ -1,5 +1,9 @@
 # Pröva profilbilder inom B
 
+Profilbildernas riktning är godkänd med ett önskat sökbart ikonval.
+Se [delbeslutet](https://github.com/viscalyx/skyttel/issues/107#issuecomment-5848133931)
+och [vidarebyggnaden med bild och valfri ikon](../icon-study-assets/README.md).
+
 Kastbart underlag för
 [Hur utformas listor, detaljer och redigering som öppnas vid behov?](https://github.com/viscalyx/skyttel/issues/107).
 Frågan är hur bildval, byte, borttagning och återkoppling fungerar inom

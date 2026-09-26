@@ -1,12 +1,16 @@
 // Kastbart bildavsnitt i B:s detaljer. Bildvalet blir direkt ett privat förslag.
 import { type ChangeEvent, useId, useLayoutEffect, useRef, useState } from 'react';
+import { IconStudyGlyph } from './IconStudyGlyph.js';
+import { findIconStudyIcon } from './icon-study-catalog.js';
 import type { ProfileStudyModel } from './profile-study-model.js';
+import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
 import './profile-study-panel.css';
 
 type ProfileStudyPanelProps = {
   objectId: string;
   name: string;
   model: ProfileStudyModel;
+  fallback?: { iconId: string | null; typeName: string };
   creation: boolean;
   unsent: boolean;
   blocked: boolean;
@@ -20,6 +24,7 @@ export function ProfileStudyPanel({
   objectId,
   name,
   model,
+  fallback,
   creation,
   unsent,
   blocked,
@@ -91,7 +96,19 @@ export function ProfileStudyPanel({
             />
           ) : (
             <div className="psi-empty" aria-hidden="true">
-              {name.trim().slice(0, 1).toLocaleUpperCase('sv') || '—'}
+              {fallback ? (
+                findIconStudyIcon(fallback.iconId) ? (
+                  <IconStudyGlyph iconId={fallback.iconId} />
+                ) : (
+                  <SpatialObjectGlyph
+                    typeName={fallback.typeName}
+                    name={name}
+                    householdId="prototype"
+                  />
+                )
+              ) : (
+                name.trim().slice(0, 1).toLocaleUpperCase('sv') || '—'
+              )}
             </div>
           )}
           <div className="psi-image-caption">
@@ -108,8 +125,9 @@ export function ProfileStudyPanel({
         {editing ? (
           <>
             <p id={`${id}-formats`} className="psi-help">
-              JPEG, PNG eller WebP, högst 10 MB och 40 miljoner bildpunkter. Bilden blir högst 300 ×
-              300 bildpunkter. En animerad bild blir en stillbild.
+              Ett foto eller en logotyp kan användas för alla objekttyper. JPEG, PNG eller WebP,
+              högst 10 MB och 40 miljoner bildpunkter. Bilden blir högst 300 × 300 bildpunkter. En
+              animerad bild blir en stillbild.
             </p>
             <p id={`${id}-draft`} className="psi-help">
               Bildvalet blir direkt ett privat förslag. Spara hela utkastet för att dela det med

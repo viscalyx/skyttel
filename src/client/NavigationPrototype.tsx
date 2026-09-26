@@ -11,6 +11,9 @@ import {
 import { useSearchParams } from 'react-router';
 import { DetailStudyPanel, type DetailStudyVariant } from './DetailStudyPanel.js';
 import { factText, useDetailStudy } from './detail-study-model.js';
+import { IconStudyDraft, IconStudyPanel } from './IconStudyPanel.js';
+import { findIconStudyIcon } from './icon-study-catalog.js';
+import { useIconStudy } from './icon-study-model.js';
 import {
   initialListStudyBrowseState,
   ListStudyList,
@@ -164,7 +167,8 @@ function Panel({
 export function NavigationPrototype() {
   const study = useMapStudy();
   const [params, setParams] = useSearchParams();
-  const imagesMode = params.get('prototype') === 'images';
+  const iconsMode = params.get('prototype') === 'icons';
+  const imagesMode = params.get('prototype') === 'images' || iconsMode;
   const objectsMode = params.get('prototype') === 'objects' || imagesMode;
   const typesMode = params.get('prototype') === 'types' || objectsMode;
   const activeUtilityPages = typesMode ? [...utilityPages, 'types' as const] : utilityPages;
@@ -193,6 +197,7 @@ export function NavigationPrototype() {
     typesMode ? typeModel : undefined,
   );
   const profileModel = useProfileStudy();
+  const iconModel = useIconStudy();
   const profileBusy = imagesMode && profileModel.loadingIds.length > 0;
   const projectedRelationships = typesMode
     ? relationshipModel.relationships
@@ -203,9 +208,13 @@ export function NavigationPrototype() {
         ? {
             ...object,
             profileImageUrl: profileModel.current(object.id)?.url,
+            iconId: iconsMode ? iconModel.current(object.id) : undefined,
             change:
               object.change ??
-              (Object.hasOwn(profileModel.staged, object.id) ? ('changed' as const) : undefined),
+              (Object.hasOwn(profileModel.staged, object.id) ||
+              (iconsMode && Object.hasOwn(iconModel.staged, object.id))
+                ? ('changed' as const)
+                : undefined),
           }
         : object,
   );
@@ -332,6 +341,7 @@ export function NavigationPrototype() {
     ? new Set([
         ...Object.keys(detailModel.staged),
         ...(imagesMode ? Object.keys(profileModel.staged) : []),
+        ...(iconsMode ? Object.keys(iconModel.staged) : []),
       ]).size +
       (hasStudyProposals ? 3 : 0) +
       (typesMode ? typeModel.draftCount + relationshipModel.draftCount : 0)
@@ -648,6 +658,7 @@ export function NavigationPrototype() {
       setBuffers({});
       if (detailsMode) detailModel.reset();
       if (imagesMode) profileModel.reset();
+      if (iconsMode) iconModel.reset();
       if (typesMode) {
         typeModel.reset();
         relationshipModel.reset();
@@ -717,6 +728,9 @@ export function NavigationPrototype() {
       setReceipt([
         ...(detailsMode ? detailModel.receiptLines() : []),
         ...(imagesMode ? profileModel.receiptLines(projectedObjects) : []),
+        ...(iconsMode
+          ? iconModel.receiptLines(projectedObjects, (id) => findIconStudyIcon(id)?.label ?? id)
+          : []),
         ...(typesMode
           ? [
               ...typeModel.receiptLines(),
@@ -745,6 +759,7 @@ export function NavigationPrototype() {
       setStaged({});
       if (detailsMode) detailModel.commit();
       if (imagesMode) profileModel.commit();
+      if (iconsMode) iconModel.commit();
       if (typesMode) {
         typeModel.commit();
         relationshipModel.commit();
@@ -965,18 +980,43 @@ export function NavigationPrototype() {
     };
     const profile = (id: string, creation = false) =>
       imagesMode ? (
-        <ProfileStudyPanel
-          objectId={id}
-          name={detailModel.current(id).name || 'det nya objektet'}
-          model={profileModel}
-          creation={creation}
-          unsent={detailModel.unsentIds.includes(id)}
-          editing={creation || contentPage === 'edit'}
-          blocked={blocked}
-          onStageText={() => stageDetails(id)}
-          onEdit={() => go('edit', id)}
-          onChange={noteChange}
-        />
+        <>
+          <ProfileStudyPanel
+            objectId={id}
+            name={detailModel.current(id).name || 'det nya objektet'}
+            model={profileModel}
+            fallback={
+              iconsMode
+                ? {
+                    iconId: iconModel.current(id),
+                    typeName: detailModel.typeDefinition(id)?.name ?? '',
+                  }
+                : undefined
+            }
+            creation={creation}
+            unsent={detailModel.unsentIds.includes(id)}
+            editing={creation || contentPage === 'edit'}
+            blocked={blocked}
+            onStageText={() => stageDetails(id)}
+            onEdit={() => go('edit', id)}
+            onChange={noteChange}
+          />
+          {iconsMode && (
+            <IconStudyPanel
+              objectId={id}
+              name={detailModel.current(id).name || 'det nya objektet'}
+              model={iconModel}
+              creation={creation}
+              unsent={detailModel.unsentIds.includes(id)}
+              editing={creation || contentPage === 'edit'}
+              hasImage={Boolean(profileModel.current(id))}
+              blocked={blocked}
+              onStageText={() => stageDetails(id)}
+              onEdit={() => go('edit', id)}
+              onChange={noteChange}
+            />
+          )}
+        </>
       ) : undefined;
     if (objectsMode && contentPage === 'new-object')
       return (
@@ -1186,6 +1226,7 @@ export function NavigationPrototype() {
             </ul>
           )}
           {imagesMode && <ProfileStudyDraft model={profileModel} objects={projectedObjects} />}
+          {iconsMode && <IconStudyDraft model={iconModel} objects={projectedObjects} />}
           {typesMode && (
             <ul>
               {[
@@ -1737,7 +1778,8 @@ export function NavigationPrototype() {
                     detailsMode
                       ? {
                           subscription:
-                            imagesMode && Object.hasOwn(profileModel.staged, 'subscription')
+                            (imagesMode && Object.hasOwn(profileModel.staged, 'subscription')) ||
+                            (iconsMode && Object.hasOwn(iconModel.staged, 'subscription'))
                               ? 'changed'
                               : undefined,
                         }
@@ -2112,28 +2154,32 @@ export function NavigationPrototype() {
           comparison={
             listsMode && study
               ? {
-                  label: imagesMode
-                    ? 'Kastbart prov: profilbilder'
-                    : objectsMode
-                      ? 'Kastbart prov: skapa och byta typ'
-                      : typesMode
-                        ? 'Kastbar typprototyp'
-                        : detailsMode
-                          ? 'Kastbar detaljprototyp'
-                          : undefined,
+                  label: iconsMode
+                    ? 'Kastbart prov: bild och ikon'
+                    : imagesMode
+                      ? 'Kastbart prov: profilbilder'
+                      : objectsMode
+                        ? 'Kastbart prov: skapa och byta typ'
+                        : typesMode
+                          ? 'Kastbar typprototyp'
+                          : detailsMode
+                            ? 'Kastbar detaljprototyp'
+                            : undefined,
                   fixed: typesMode,
                   key: detailsMode ? detailVariant : listVariant,
-                  name: imagesMode
-                    ? 'Profilbild i samma utkast'
-                    : objectsMode
-                      ? 'Skapa objekt och byta typ'
-                      : typesMode
-                        ? 'Avsnitt från hushållets typer'
-                        : detailsMode
-                          ? { A: 'Läs och ändra', B: 'Avsnitt', C: 'Flikar' }[detailVariant]
-                          : { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[
-                              listVariant
-                            ],
+                  name: iconsMode
+                    ? 'Profilbild med valfri ikon'
+                    : imagesMode
+                      ? 'Profilbild i samma utkast'
+                      : objectsMode
+                        ? 'Skapa objekt och byta typ'
+                        : typesMode
+                          ? 'Avsnitt från hushållets typer'
+                          : detailsMode
+                            ? { A: 'Läs och ändra', B: 'Avsnitt', C: 'Flikar' }[detailVariant]
+                            : { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[
+                                listVariant
+                              ],
                   description: detailsMode
                     ? 'Detaljer och redigering · godkänd lista B och talåterkoppling D'
                     : 'Hitta rätt objekt · godkänd karta och talåterkoppling D',
@@ -2225,7 +2271,9 @@ export function NavigationPrototype() {
                         {browse.onlySelected ? 'markerade' : 'alla'}.
                       </p>
                       <p>
-                        {imagesMode ? (
+                        {iconsMode ? (
+                          'B ligger fast. Alla objekt kan ha en profilbild eller logotyp och en valfri ikon. Sök efter en ikon i detaljerna. Bilden visas först, sedan ditt ikonval och annars typens standardikon. Allt delar samma utkast och kvitto och finns bara i minnet.'
+                        ) : imagesMode ? (
                           'B ligger fast. Pröva att lägga till, byta och ta bort profilbild. Bild och text delar samma utkast och kvitto. Allt finns bara i minnet; ingen fil laddas upp. Bilder granskas i webbläsaren i detta prov.'
                         ) : objectsMode ? (
                           'B ligger fast. Pröva ett nytt objekt eller byt typ på Familjeabonnemang. Egna fält från den tidigare typen visas för hantering. Bilder, historik och fullständiga konfliktval återstår. Allt provtillstånd finns bara i minnet.'

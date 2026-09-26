@@ -209,7 +209,7 @@ export function ListStudyList({
           title={noGraphics ? 'Kartan är avstängd' : `Visa ${nameOf(object)} i kartan`}
         >
           <strong className="ls-name-with-image">
-            {object.profileImageUrl && (
+            {(object.profileImageUrl || object.iconId !== undefined) && (
               <span className="ls-profile-image" aria-hidden="true">
                 <ProfileStudyGlyph object={object} />
               </span>

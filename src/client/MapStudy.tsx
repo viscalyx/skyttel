@@ -42,7 +42,7 @@ const variants = {
 
 function useStudyState() {
   const [params, setParams] = useSearchParams();
-  const candidate = ['voice', 'lists', 'details', 'types', 'objects', 'images'].includes(
+  const candidate = ['voice', 'lists', 'details', 'types', 'objects', 'images', 'icons'].includes(
     params.get('prototype') ?? '',
   )
     ? 'A'
@@ -53,7 +53,7 @@ function useStudyState() {
   );
   const [proposals, setProposals] = useState(
     () =>
-      ['voice', 'lists', 'details', 'types', 'objects', 'images'].includes(
+      ['voice', 'lists', 'details', 'types', 'objects', 'images', 'icons'].includes(
         params.get('prototype') ?? '',
       ) && params.get('changes') === 'example',
   );

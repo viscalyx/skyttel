@@ -10,6 +10,7 @@ export type StudyObject = {
   change?: 'added' | 'changed' | 'removed';
   ended?: boolean;
   profileImageUrl?: string;
+  iconId?: string | null;
 };
 export type StudyRelationship = {
   id: string;
