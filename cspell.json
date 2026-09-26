@@ -4,6 +4,12 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "Kastbar",
+    "detaljvy",
+    "detaljvyn",
+    "logotypfilerna",
+    "Ikonknappar",
+    "talhandlingen",
     "filbehörigheter",
     "devcontaineravbildning",
     "miljöfil",
