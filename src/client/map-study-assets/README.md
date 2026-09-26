@@ -39,7 +39,7 @@ kvar vid bytet. Välj tema i den gemensamma verktygslådan.
 ## Vad alternativen prövar
 
 - **A · Fri överblick:** kartan och dess etiketter bär orienteringen.
-  Valt objekts direkta samband framhävs. Uppgifter öppnas vid behov.
+  Alla markerade objekts direkta samband framhävs. Uppgifter öppnas vid behov.
 - **B · Ett sammanhang:** det valda objektets kopplingar framhävs och en
   separat remsa samlar deras läsning. Du kan rama in sammanhanget.
 - **C · Följ en kedja:** en synlig väg visar de samband du följer. Välj
@@ -52,11 +52,32 @@ utan att flytta kameran eller öppna en panel. **Visa nära i kartan**,
 **Visa hela kartan** är uttryckliga kamerahandlingar. **Lämna fokus**
 behåller kameran.
 
-**Ctrl-klick** markerar objektet och öppnar dess uppgifter direkt.
-Cmd-klick fungerar också. **Visa detaljer** finns vid markeringen och
-i verktygslådan, så samma handling fungerar med pekskärm och tangentbord.
-Enter eller mellanslag på ett objekt markerar; Ctrl/Cmd och Enter öppnar
-uppgifterna. En redan öppen redigering återanvänds med arbetet bevarat.
+**Ctrl-klick** lägger till eller tar bort ett objekt ur markeringen.
+Cmd-klick fungerar också. Samband från samtliga markerade objekt framhävs
+i alla tre alternativen. Ett vanligt klick på ett omarkerat objekt
+ersätter urvalet; klick på ett redan markerat objekt behåller de andra.
+
+**Dubbelklick** öppnar objektets detaljer. Om objektet redan är markerat
+behålls hela urvalet. Annars markerar det första klicket objektet ensamt.
+Vid tomt urval blir målet markerat och får sin detaljpanel öppnad.
+
+**Ctrl+Alt-klick** öppnar också detaljer. På Mac motsvarar det
+Control+Option; även Cmd+Option fungerar. Den genvägen och knappen
+**Visa detaljer** behåller övriga markeringar och lägger till målet vid
+behov. Markeringen finns kvar när detaljpanelen stängs. En redan öppen
+redigering återanvänds med arbetet bevarat.
+
+**Visa detaljer** finns i verktygslådan och söklistan som alternativ för
+pekskärm, tangentbord och skärmläsare. Ingen separat detaljknapp ligger
+vid markeringen i kartan.
+Enter eller mellanslag på ett objekt markerar; Ctrl/Cmd med samma tangent
+växlar markeringen.
+Ctrl/Cmd+Alt och Enter öppnar detaljer. **Klick på tom rymd** tömmer
+urvalet och släcker all framhävning av samband. Dragning för att rotera
+eller panorera behåller urvalet. Detaljpaneler och kameravy finns kvar.
+Listans **Avmarkera alla** ger samma handling utan visuell kartnavigering.
+Listans **Lägg till i markeringen** och **Avmarkera** ger flerval utan
+modifierartangenter och utan att flytta kameran eller stänga listan.
 
 Verktygslådan innehåller **Sök i kartan** med förstoringsglas,
 **Navigera** med kompass och en växlande kameraknapp. **Visa hela kartan**
@@ -68,8 +89,10 @@ förslag. Namn och hjälptext följer ikonens aktuella handling.
 ## Pröva samma uppgifter
 
 1. Klicka på Familjeabonnemang. Objektet och dess samband markeras.
-   Öppna **Visa detaljer** och följ **betalas från** till Gemensamt
-   bankkonto. Jämför vanligt klick, Ctrl-klick och sökträffar.
+   Dubbelklicka för detaljer och följ **betalas från** till Gemensamt
+   bankkonto. Ctrl-klicka på flera objekt och dubbelklicka sedan på ett
+   markerat objekt: alla markeringar ska finnas kvar. Jämför med
+   Ctrl+Alt-klick, **Visa detaljer** och sökträffar.
 2. Öppna **Provlägen** och välj en tät karta. Befintliga placeringar och
    kamera ligger kvar. Använd **Visa hela kartan** för att se hela rymden.
    Rotera och luta för att pröva djupet mellan och inom grupperna.
@@ -133,6 +156,8 @@ mobilväljaren.
 ## Skärmbilder
 
 - Fri överblick: [dator](A-dator.png), [mobil](A-mobil.png).
+- [Flerval med alla direkta samband](A-flerval.png) och
+  [samma urval efter dubbelklick till detaljer](A-flerval-detaljer.png).
 - [Samma rumsliga grupper efter rotation och lutning](A-djup-roterad.png).
 - [Höjdguide på mobil](A-hojdguide-mobil.png).
 - Ett sammanhang: [dator](B-dator.png), [mobil](B-mobil.png).
@@ -157,9 +182,15 @@ Lokala Chromium-kontroller omfattar följande:
   navigeringsverktyg och provlägen öppnas. Även 320 × 400 och verklig
   webbläsarzoom på 200 procent ingår.
 - Textsökning och objektdetaljer vid 320 × 568 och 320 × 400.
-- Vanligt kartklick markerar utan panel eller kameraflytt. Ctrl-klick,
-  Cmd-klick och Ctrl-högerklick öppnar rätt objekt. Separat detaljknapp
-  fungerar med tangentbord och på mobil.
+- Vanligt kartklick markerar utan panel eller kameraflytt. Ctrl/Cmd-klick
+  växlar flerval och alla markerade objekts samband framhävs.
+- Dubbelklick och Ctrl/Cmd+Alt-klick öppnar rätt objekt och bevarar
+  befintligt urval. Dubbelklick med tomt urval markerar målet och öppnar
+  dess detaljer. Separat detaljknapp fungerar med tangentbord och på mobil.
+- Listans markeringsknappar ger flerval med tangentbord och pekskärm,
+  även när kartgrafiken är dold.
+- Klick på tom rymd avmarkerar samtliga objekt och samband. Rotation
+  och panorering genom dragning behåller markeringarna.
 - Sökträff visar en synlig markering, stänger enbart söklistan och
   bevarar annan pågående redigering och mikrofontillstånd. Listans
   separata detaljknapp fungerar även utan kartgrafik.

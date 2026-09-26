@@ -159,7 +159,14 @@ export function NavigationPrototype() {
   const [guide, setGuide] = useState<'compare' | 'settings' | null>(null);
   const [guideStep, setGuideStep] = useState(0);
   const [expanded, setExpanded] = useState(false);
-  const [selected, setSelected] = useState('subscription');
+  const [selection, setSelection] = useState({
+    primaryId: 'subscription',
+    ids: ['subscription'],
+  });
+  const selected = selection.primaryId;
+  function setSelected(id: string) {
+    setSelection({ primaryId: id, ids: [id] });
+  }
   const [camera, setCamera] = useState<'overview' | 'focus'>('overview');
   const [query, setQuery] = useState('');
   const [buffers, setBuffers] = useState<Record<string, string>>({});
@@ -379,11 +386,31 @@ export function NavigationPrototype() {
     updateParams({ variant: 'B', view: 'map', panel: '' });
   }
   function selectObject(id: string) {
-    setSelected(id);
+    if (study) {
+      setSelection((previous) => ({
+        primaryId: id,
+        ids: previous.ids.includes(id) ? previous.ids : [...previous.ids, id],
+      }));
+    } else setSelected(id);
     go('detail', id);
   }
-  function markObject(id: string) {
-    setSelected(id);
+  function markObject(id: string, additive = false) {
+    setSelection((previous) => {
+      const included = previous.ids.includes(id);
+      if (!additive) {
+        return { primaryId: id, ids: included ? previous.ids : [id] };
+      }
+      const ids = included ? previous.ids.filter((value) => value !== id) : [...previous.ids, id];
+      return {
+        primaryId: included ? (ids.at(-1) ?? id) : id,
+        ids,
+      };
+    });
+  }
+  function clearSelection() {
+    setSelection((previous) => ({ ...previous, ids: [] }));
+    study?.setSelectedEdge(null);
+    study?.setFocusId(null);
   }
   function revealStudyObject(id: string) {
     setSelected(id);
@@ -631,6 +658,9 @@ export function NavigationPrototype() {
         <MapStudyPages
           page={contentPage}
           selectedId={objectId}
+          selectedIds={selection.ids}
+          onToggleSelection={(id) => markObject(id, true)}
+          onClearSelection={clearSelection}
           onReveal={revealStudyObject}
           onOpenDetails={selectObject}
           onEdit={() => go('edit', objectId)}
@@ -744,6 +774,7 @@ export function NavigationPrototype() {
     action: () => void,
     key: string,
     active = false,
+    disabled = false,
   ) {
     return (
       <button
@@ -753,6 +784,7 @@ export function NavigationPrototype() {
         aria-label={label}
         title={label}
         aria-expanded={active}
+        disabled={disabled}
         onClick={action}
       >
         <PrototypeIcon name={name} />
@@ -833,10 +865,13 @@ export function NavigationPrototype() {
                 <>
                   {toolbarButton(
                     'details',
-                    `Visa detaljer för ${currentObject.name}`,
+                    selection.ids.length
+                      ? `Visa detaljer för ${currentObject.name}`
+                      : 'Markera ett objekt för att visa detaljer',
                     () => selectObject(selected),
                     'details',
                     windows.some((item) => item.objectId === selected),
+                    !selection.ids.length,
                   )}
                   <button
                     type="button"
@@ -969,7 +1004,9 @@ export function NavigationPrototype() {
               (study ? (
                 <MapStudyMap
                   selectedId={selected}
+                  selectedIds={selection.ids}
                   onSelect={markObject}
+                  onClearSelection={clearSelection}
                   onOpenDetails={selectObject}
                   showSelectionActions={!windows.length && !utility && !statusOpen}
                   onList={() => go('list')}

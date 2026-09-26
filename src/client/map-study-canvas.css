@@ -46,6 +46,9 @@
   z-index: 6;
   pointer-events: none;
 }
+.ms-height-layer .spatial-height-guide > svg {
+  pointer-events: auto;
+}
 .ms-height-layer .spatial-height-guide > path[stroke],
 .ms-height-layer .spatial-height-guide > circle[stroke] {
   stroke: var(--vp-accent);
@@ -258,7 +261,7 @@
   border-radius: 5px;
   font-size: 0.75rem;
   line-height: 1.4;
-  pointer-events: none;
+  pointer-events: auto;
 }
 .ms-label-status .ms-gesture-hint {
   display: block;

@@ -2,6 +2,7 @@
 .vp-root.vp-variant-D.np-root.map-study {
   --mp-work-top: 78px;
   --mp-work-bottom: calc(min(var(--np-lab-height), 112px) + 24px);
+  --mp-selection-height: 36px;
   overflow: hidden;
 }
 .np-root.map-study .np-d-navigation {
@@ -43,10 +44,9 @@
   left: var(--np-panel-left);
   display: flex;
   align-items: center;
-  gap: 10px;
   width: max-content;
-  max-width: min(380px, calc(100% - var(--np-panel-left) - 24px));
-  padding: 6px 8px 6px 12px;
+  max-width: min(240px, calc(100% - var(--np-panel-left) - 24px));
+  padding: 8px 12px;
   border: 1px solid var(--vp-control-line);
   border-radius: 12px;
   background: var(--vp-surface);
@@ -59,12 +59,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
-}
-.np-root.map-study .mp-selection-actions > button {
-  flex: 0 0 auto;
-  min-height: 44px;
-  padding: 8px 11px;
-  font-size: 12px;
 }
 .np-root.map-study .mp-map-tools {
   position: absolute;
@@ -170,6 +164,7 @@
 }
 .np-root.map-study .mp-object-list > li {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   padding: 6px;
   border: 1px solid var(--vp-line);
@@ -183,8 +178,13 @@
   justify-content: stretch;
 }
 .np-root.map-study .mp-object-list > li > button + button {
+  min-width: 0;
+  padding: 8px;
   font-size: 12px;
   color: var(--vp-accent);
+}
+.np-root.map-study .mp-object-list > li > button:first-child {
+  grid-column: 1 / -1;
 }
 .np-root.map-study .mp-object-list span {
   font-size: 0.85em;
@@ -348,6 +348,7 @@
     max-height: calc(100dvh - var(--mp-work-top) - var(--mp-work-bottom));
   }
   .np-root.map-study .mp-selection-actions {
+    top: var(--mp-work-top);
     left: 12px;
     max-width: calc(100% - 24px);
   }
@@ -381,7 +382,14 @@
       135px,
       max(
         44px,
-        calc(100dvh - var(--mp-work-top) - var(--np-lab-height) - var(--np-status-height) - 94px)
+        calc(
+          100dvh -
+          var(--mp-work-top) -
+          var(--np-lab-height) -
+          var(--np-status-height) -
+          var(--mp-selection-height) -
+          36px
+        )
       )
     );
   }

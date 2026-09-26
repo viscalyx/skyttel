@@ -32,13 +32,15 @@ type Props = {
   objects: StudyObject[];
   relationships: StudyRelationship[];
   selectedId: string;
+  selectedIds: string[];
   selectedRelationship: string | null;
   emphasisIds: string[];
   emphasisEdges: string[];
   variant: StudyVariant;
   theme: 'light' | 'dark';
   stars?: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, additive?: boolean) => void;
+  onClearSelection: () => void;
   onOpenDetails: (id: string) => void;
   onSelectRelationship: (id: string) => void;
   onMove: (id: string, position: StudyPosition) => void;
@@ -68,6 +70,7 @@ export function MapStudyCanvas(props: Props) {
     objects,
     relationships,
     selectedId,
+    selectedIds,
     selectedRelationship,
     emphasisIds,
     emphasisEdges,
@@ -93,8 +96,16 @@ export function MapStudyCanvas(props: Props) {
   const overviewReturn = useRef<SpatialCameraSnapshot | null>(null);
   const cameraGesture = useRef<SpatialCameraSnapshot | null>(null);
   const activeObject = useRef<string | null>(null);
-  const clickGuard = useRef<{ pointer: number; x: number; y: number; moved: boolean } | null>(null);
-  const contextOpened = useRef<string | null>(null);
+  const clickGuard = useRef<{
+    pointer: number;
+    x: number;
+    y: number;
+    moved: boolean;
+    handled: boolean;
+    suppressed: boolean;
+    empty: boolean;
+    active: boolean;
+  } | null>(null);
   const [shiftHeld, setShiftHeld] = useState(false);
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [measurements, setMeasurements] = useState<
@@ -104,6 +115,7 @@ export function MapStudyCanvas(props: Props) {
   const [guidePanel, setGuidePanel] = useState<Box>({ x: 12, y: 12, width: 310, height: 80 });
   const [hoverId, setHoverId] = useState<string | null>(null);
   const helpId = useId();
+  const selection = useMemo(() => new Set(selectedIds), [selectedIds]);
   const emphasized = useMemo(() => new Set(emphasisIds), [emphasisIds]);
   const emphasizedEdges = useMemo(() => new Set(emphasisEdges), [emphasisEdges]);
   const faded = emphasisIds.length > 0;
@@ -129,7 +141,10 @@ export function MapStudyCanvas(props: Props) {
     const up = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Shift') setShiftHeld(false);
     };
-    const blur = () => setShiftHeld(false);
+    const blur = () => {
+      setShiftHeld(false);
+      if (clickGuard.current) clickGuard.current.suppressed = true;
+    };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
     window.addEventListener('blur', blur);
@@ -393,22 +408,21 @@ export function MapStudyCanvas(props: Props) {
       id: object.id,
       text: `${object.change ? `${changeSymbol[object.change]} ` : ''}${object.name}${object.ended ? ' · upphört' : ''}`,
       kind: 'object',
-      priority:
-        object.id === selectedId
-          ? 0
-          : object.id === hoverId
-            ? 1
-            : emphasized.has(object.id)
-              ? 4
-              : object.change
-                ? 5
-                : 6,
+      priority: selection.has(object.id)
+        ? 0
+        : object.id === hoverId
+          ? 1
+          : emphasized.has(object.id)
+            ? 4
+            : object.change
+              ? 5
+              : 6,
     }));
     for (const edge of relationships.filter(
       (relationship) =>
         relationship.id === selectedRelationship ||
-        relationship.from === selectedId ||
-        relationship.to === selectedId,
+        selection.has(relationship.from) ||
+        selection.has(relationship.to),
     )) {
       result.push({
         id: `edge:${edge.id}`,
@@ -418,7 +432,7 @@ export function MapStudyCanvas(props: Props) {
       });
     }
     return result.sort((a, b) => a.priority - b.priority);
-  }, [objects, relationships, selectedId, selectedRelationship, hoverId, emphasized]);
+  }, [objects, relationships, selection, selectedRelationship, hoverId, emphasized]);
 
   useLayoutEffect(() => {
     const layer = measurementRef.current;
@@ -445,7 +459,11 @@ export function MapStudyCanvas(props: Props) {
     return () => observer.disconnect();
   }, [names]);
 
-  const guideId = movement.heightActive ? movement.guide?.id : selectedId;
+  const guideId = movement.heightActive
+    ? movement.guide?.id
+    : selection.has(selectedId)
+      ? selectedId
+      : null;
   const guidePosition = guideId ? sceneRef.current?.position(guideId) : null;
   const heightGuide =
     guidePosition && (shiftHeld || movement.heightActive)
@@ -584,16 +602,24 @@ export function MapStudyCanvas(props: Props) {
     const objectId = (event.target as Element)
       .closest('[data-object-id]')
       ?.getAttribute('data-object-id');
-    if (objectId && event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    if (
+      objectId &&
+      (event.key === 'Enter' || event.key === ' ') &&
+      (!event.altKey || event.ctrlKey || event.metaKey)
+    ) {
       event.preventDefault();
       event.stopPropagation();
-      latest.current.onOpenDetails(objectId);
+      if (event.repeat || activeObject.current) return;
+      const additive = event.ctrlKey || event.metaKey;
+      if (additive && event.altKey && event.key === 'Enter') latest.current.onOpenDetails(objectId);
+      else latest.current.onSelect(objectId, additive);
       return;
     }
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.key === 'Escape' && activeObject.current) {
       movement.cancel();
       activeObject.current = null;
+      if (clickGuard.current) clickGuard.current.suppressed = true;
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -641,36 +667,62 @@ export function MapStudyCanvas(props: Props) {
       onKeyDown={keyboard}
       onPointerDownCapture={(event) => {
         if (event.isPrimary) {
-          contextOpened.current = null;
+          movement.suppressClick();
           clickGuard.current = {
             pointer: event.pointerId,
             x: event.clientX,
             y: event.clientY,
             moved: false,
+            handled: false,
+            suppressed: false,
+            empty:
+              event.button === 0 &&
+              (event.target === canvasRef.current || event.target === rootRef.current),
+            active: true,
           };
-        }
+        } else if (clickGuard.current) clickGuard.current.suppressed = true;
         movement.down(event);
       }}
       onPointerMoveCapture={(event) => {
         const guard = clickGuard.current;
         if (
           guard?.pointer === event.pointerId &&
-          Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > 8
+          Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > (guard.empty ? 0 : 8)
         )
           guard.moved = true;
         movement.move(event);
       }}
       onPointerUpCapture={(event) => {
+        const guard = clickGuard.current;
+        if (guard?.pointer === event.pointerId) {
+          guard.active = false;
+          if (guard.empty) {
+            const target = document.elementFromPoint(event.clientX, event.clientY);
+            if (
+              Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > 0 ||
+              (target !== canvasRef.current && target !== rootRef.current)
+            )
+              guard.suppressed = true;
+          }
+        }
         movement.end(event);
         activeObject.current = null;
       }}
       onPointerCancelCapture={() => {
         movement.cancel();
         activeObject.current = null;
+        if (clickGuard.current) {
+          clickGuard.current.suppressed = true;
+          clickGuard.current.active = false;
+        }
       }}
       onClickCapture={(event) => {
         const suppressed = movement.suppressClick();
-        if (event.detail > 0 && (suppressed || clickGuard.current?.moved)) {
+        if (
+          event.detail > 0 &&
+          (suppressed || clickGuard.current?.moved || clickGuard.current?.suppressed)
+        ) {
+          if (clickGuard.current) clickGuard.current.suppressed = true;
           event.preventDefault();
           event.stopPropagation();
         }
@@ -679,16 +731,49 @@ export function MapStudyCanvas(props: Props) {
         const target = event.target as Element;
         const objectId = target.closest('[data-object-id]')?.getAttribute('data-object-id');
         if (objectId) {
-          if (event.detail > 0 && contextOpened.current === objectId) {
-            contextOpened.current = null;
-            return;
+          if (event.detail > 1) return;
+          if (event.detail > 0 && clickGuard.current) {
+            if (clickGuard.current.handled) return;
+            clickGuard.current.handled = true;
           }
-          if (event.ctrlKey || event.metaKey) latest.current.onOpenDetails(objectId);
-          else latest.current.onSelect(objectId);
+          const additive = event.ctrlKey || event.metaKey;
+          if (additive && event.altKey) latest.current.onOpenDetails(objectId);
+          else latest.current.onSelect(objectId, additive);
           return;
         }
         const edge = target.closest('[data-edge-id]')?.getAttribute('data-edge-id');
-        if (edge) latest.current.onSelectRelationship(edge);
+        if (edge) {
+          latest.current.onSelectRelationship(edge);
+          return;
+        }
+        const guard = clickGuard.current;
+        if (
+          (target === canvasRef.current || target === rootRef.current) &&
+          event.detail === 1 &&
+          guard?.empty &&
+          !guard.active &&
+          !guard.moved &&
+          !guard.suppressed &&
+          !guard.handled
+        ) {
+          guard.handled = true;
+          latest.current.onClearSelection();
+        }
+      }}
+      onDoubleClick={(event) => {
+        const objectId = (event.target as Element)
+          .closest('[data-object-id]')
+          ?.getAttribute('data-object-id');
+        if (!objectId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (
+          clickGuard.current?.moved ||
+          clickGuard.current?.suppressed ||
+          ((event.ctrlKey || event.metaKey) && event.altKey)
+        )
+          return;
+        latest.current.onOpenDetails(objectId);
       }}
       onContextMenu={(event) => {
         const objectId = (event.target as Element)
@@ -696,17 +781,23 @@ export function MapStudyCanvas(props: Props) {
           ?.getAttribute('data-object-id');
         if (!event.ctrlKey || !objectId) return;
         event.preventDefault();
+        const suppressed = movement.suppressClick();
         movement.cancel();
         activeObject.current = null;
-        if (clickGuard.current?.moved) return;
-        contextOpened.current = objectId;
-        latest.current.onOpenDetails(objectId);
+        const guard = clickGuard.current;
+        if (suppressed || guard?.moved || guard?.suppressed || guard?.handled) return;
+        if (guard) guard.handled = true;
+        if (event.altKey) latest.current.onOpenDetails(objectId);
+        else latest.current.onSelect(objectId, true);
       }}
       onPointerDown={beginPointer}
       onLostPointerCapture={(event) => {
+        const guard = clickGuard.current;
+        if (guard?.active && guard.pointer === event.pointerId) guard.suppressed = true;
         if (event.target === rootRef.current && activeObject.current) {
           movement.cancel();
           activeObject.current = null;
+          if (clickGuard.current) clickGuard.current.suppressed = true;
         }
       }}
     >
@@ -714,10 +805,13 @@ export function MapStudyCanvas(props: Props) {
       <p id={helpId} className="ms-screen-reader">
         Dra bakgrunden för att rotera. Håll Skift och dra för att förflytta vyn. Piltangenter
         förflyttar vyn; Skift och pilar roterar. Plus och minus zoomar i kartan. Ctrl eller kommando
-        med plus och minus behåller webbläsarens zoom. Klick markerar ett objekt. Ctrl eller
-        kommando med klick eller Enter markerar och öppnar uppgifterna. Dra ett objekt för att
-        flytta det. Skift eller ett andra stillastående finger ger höjdflyttning. Alla objekt och
-        samband finns även i textvyn.
+        med plus och minus behåller webbläsarens zoom. Klick, Enter eller mellanslag markerar ett
+        objekt. Håll Ctrl eller kommando samtidigt för att lägga till eller ta bort objekt ur
+        urvalet. Klick i tom rymd avmarkerar allt och släcker framhävda samband. Dubbelklick öppnar
+        detaljer. Ctrl eller kommando tillsammans med Alt och klick eller Enter öppnar också
+        detaljer. På Mac heter Alt-tangenten Option. Dra ett objekt för att flytta det. Skift eller
+        ett andra stillastående finger ger höjdflyttning. Alla objekt och samband finns även i
+        textvyn.
       </p>
       {invalid || graphicsError ? (
         <p className="ms-graphics-error" role="alert">
@@ -817,7 +911,7 @@ export function MapStudyCanvas(props: Props) {
             .sort((a, b) => (points.get(b.id)?.depth ?? 0) - (points.get(a.id)?.depth ?? 0))
             .map((object, index) => {
               const point = points.get(object.id) as ProjectedPoint;
-              const selected = object.id === selectedId;
+              const selected = selection.has(object.id);
               const muted = faded && !emphasized.has(object.id) && !selected;
               return (
                 <button
@@ -876,7 +970,7 @@ export function MapStudyCanvas(props: Props) {
                 key={label.id}
                 data-object-id={label.kind === 'object' ? label.id : undefined}
                 data-edge-id={label.kind === 'relationship' ? label.id.slice(5) : undefined}
-                className={`ms-name ${label.id === selectedId ? 'ms-name-selected' : ''} ${label.kind === 'relationship' ? 'ms-name-relationship' : ''} ${faded && label.kind === 'object' && !emphasized.has(label.id) && label.id !== selectedId ? 'ms-name-muted' : ''}`}
+                className={`ms-name ${selection.has(label.id) ? 'ms-name-selected' : ''} ${label.kind === 'relationship' ? 'ms-name-relationship' : ''} ${faded && label.kind === 'object' && !emphasized.has(label.id) && !selection.has(label.id) ? 'ms-name-muted' : ''}`}
                 style={{ left: label.x, top: label.y, width: label.width }}
               >
                 {label.text}
@@ -888,7 +982,7 @@ export function MapStudyCanvas(props: Props) {
               <span
                 key={name.id}
                 data-name-id={name.id}
-                className={`ms-name ${name.id === selectedId ? 'ms-name-selected' : ''} ${name.kind === 'relationship' ? 'ms-name-relationship' : ''}`}
+                className={`ms-name ${selection.has(name.id) ? 'ms-name-selected' : ''} ${name.kind === 'relationship' ? 'ms-name-relationship' : ''}`}
               >
                 {name.text}
               </span>
@@ -899,7 +993,8 @@ export function MapStudyCanvas(props: Props) {
             objektmarkörer i vyn.
             <span> Alla objekt och samband finns i textvyn.</span>
             <span className="ms-gesture-hint">
-              Klick markerar · Ctrl/⌘-klick öppnar · Skift eller ett stilla andra finger ger
+              Klick markerar · Tom rymd avmarkerar allt · Ctrl/⌘-klick ändrar urvalet · Dubbelklick
+              eller Ctrl/⌘+Alt-klick öppnar detaljer · Skift eller ett stilla andra finger ger
               höjdflyttning.
             </span>
           </p>
