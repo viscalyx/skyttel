@@ -1,0 +1,355 @@
+/* Kastbara listvarianter i den redan godkända fria panelen. */
+.np-root .ls-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  color: var(--vp-text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.np-root .ls-list :is(input, select) {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--vp-text);
+  background: var(--vp-surface);
+  border: 1px solid var(--vp-control-line);
+  border-radius: 7px;
+  padding: 7px 8px;
+  min-height: 36px;
+}
+.np-root .ls-list :is(button, select, input):focus-visible,
+.np-root .ls-list :is(.ls-results, .ls-preview):focus-visible {
+  outline: 2px solid var(--vp-accent);
+  outline-offset: -2px;
+}
+.np-root .ls-list input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  accent-color: var(--vp-accent);
+}
+.np-root .ls-list button {
+  padding: 7px 9px;
+  min-height: 36px;
+  font-size: 12px;
+  line-height: 1.3;
+  border-radius: 7px;
+}
+.np-root .ls-list button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.np-root .ls-list :is(h3, h4) {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.np-root .ls-list .ls-search,
+.np-root .ls-list .ls-filter-fields label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-weight: 600;
+}
+.np-root .ls-search input {
+  width: 100%;
+}
+.np-root .ls-list :is(.ls-filter-disclosure, .ls-catalogue-disclosure) > summary {
+  min-height: 32px;
+  padding: 6px 0;
+  color: var(--vp-accent);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.np-root .ls-list summary:focus-visible {
+  outline: 2px solid var(--vp-accent);
+  outline-offset: 2px;
+}
+.np-root .ls-filter-content {
+  display: grid;
+  gap: 8px;
+  padding-block: 7px;
+}
+.np-root .ls-filter-fields {
+  display: flex;
+  gap: 8px;
+}
+.np-root .ls-list .ls-filter-fields label {
+  flex: 1 1 0;
+}
+.np-root .ls-selection-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.np-root .ls-list .ls-selection-filter > label,
+.np-root .ls-list .ls-preview-mark {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.np-root .ls-selection-filter button {
+  border: 0;
+  color: var(--vp-accent);
+  padding-inline: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.np-root .ls-result-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px 12px;
+}
+.np-root .ls-result-summary > span,
+.np-root .ls-hint,
+.np-root .ls-kicker {
+  color: var(--vp-muted);
+  font-size: 11px;
+}
+.np-root .ls-list .ls-hint {
+  margin-top: -5px;
+}
+.np-root .ls-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.np-root .ls-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px;
+  min-height: 55px;
+  border-bottom: 1px solid var(--vp-line);
+}
+.np-root .ls-row[data-marked="true"] {
+  background: color-mix(in srgb, var(--vp-accent) 9%, transparent);
+}
+.np-root .ls-list .ls-mark {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  cursor: pointer;
+}
+.np-root .ls-list .ls-object-name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  align-self: stretch;
+  min-width: 0;
+  padding: 7px 4px;
+  border: 0;
+  text-align: left;
+}
+.np-root .ls-object-name strong,
+.np-root .ls-pick-copy strong {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  font-weight: 600;
+}
+.np-root .ls-list .ls-object-name:disabled {
+  opacity: 1;
+}
+.np-root .ls-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  color: var(--vp-muted);
+  font-size: 10px;
+}
+.np-root .ls-object-status {
+  white-space: nowrap;
+}
+.np-root .ls-proposal {
+  color: var(--vp-accent);
+}
+.np-root .ls-list .ls-details-button {
+  padding-inline: 5px;
+  border-color: transparent;
+  color: var(--vp-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: 11px;
+}
+.np-root .ls-type-catalogue {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.np-root .ls-type-catalogue button {
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+  text-align: left;
+}
+.np-root .ls-type-catalogue button > span {
+  overflow-wrap: anywhere;
+}
+.np-root .ls-type-catalogue b {
+  font-size: 11px;
+}
+.np-root .ls-list button[aria-pressed="true"] {
+  border-color: var(--vp-accent);
+  background: color-mix(in srgb, var(--vp-accent) 11%, transparent);
+  color: var(--vp-accent);
+}
+.np-root .ls-grouped-results {
+  display: grid;
+  gap: 14px;
+}
+.np-root .ls-type-group {
+  border: 1px solid var(--vp-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.np-root .ls-type-group > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--vp-accent) 8%, transparent);
+}
+.np-root .ls-type-group > header span {
+  color: var(--vp-muted);
+  font-size: 11px;
+}
+.np-root .ls-type-group li:last-child {
+  border-bottom: 0;
+}
+.np-root .ls-preview {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--vp-control-line);
+  border-left: 3px solid var(--vp-accent);
+  border-radius: 8px;
+}
+.np-root .ls-preview-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.np-root .ls-preview-heading > div {
+  min-width: 0;
+}
+.np-root .ls-preview-heading button {
+  flex: 0 0 32px;
+  min-height: 32px;
+}
+.np-root .ls-preview-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 11px;
+}
+.np-root .ls-preview-status:empty {
+  display: none;
+}
+.np-root .ls-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.np-root .ls-list .ls-back-results {
+  justify-self: start;
+  min-height: 28px;
+  padding: 3px 0;
+  border: 0;
+  color: var(--vp-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.np-root .ls-list .ls-preview-mark {
+  padding-inline: 5px;
+}
+.np-root .ls-preview-relationships {
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.np-root .ls-preview-relationships li {
+  display: grid;
+  gap: 4px;
+  padding: 7px 0;
+  border-top: 1px solid var(--vp-line);
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+.np-root .ls-preview-relationships button {
+  justify-self: start;
+  padding: 3px 0;
+  min-height: 28px;
+  border: 0;
+  color: var(--vp-accent);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.np-root .ls-pick-results button {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 8px;
+  border-radius: 0;
+  border-color: transparent;
+  border-bottom-color: var(--vp-line);
+  text-align: left;
+}
+.np-root .ls-pick-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.np-root .ls-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding-top: 3px;
+}
+.np-root .ls-list .ls-pagination label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  text-align: center;
+  font-size: 10px;
+}
+.np-root .ls-pagination button,
+.np-root .ls-pagination select {
+  padding-inline: 6px;
+  font-size: 11px;
+}
+.np-root .ls-empty {
+  display: grid;
+  gap: 12px;
+  padding: 18px 8px;
+  border-block: 1px solid var(--vp-line);
+}
+@media (max-width: 600px) {
+  .np-root .ls-list {
+    gap: 8px;
+  }
+  .np-root .ls-list .ls-browse-hint {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,48 @@
+/* Kastbar liststudie ovanpå godkänd karta A, fria paneler och talåterkoppling D. */
+.list-study-host .ls-lab-state {
+  margin: 3px 0 0;
+  text-align: center;
+  font-size: 11px;
+}
+.list-study-host .ls-return {
+  margin-bottom: 12px;
+}
+.np-root.list-study-host .ls-content-kind {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+.np-root.list-study-host .ls-content-kind button {
+  min-height: 28px;
+  padding: 4px 6px;
+  border: 0;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.list-study-host .voice-study-lab-menu select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  color: var(--vp-text);
+  background: var(--vp-surface);
+  border: 1px solid var(--vp-control-line);
+  border-radius: 8px;
+}
+.list-study-host .voice-study-lab-menu label {
+  display: grid;
+  gap: 5px;
+}
+@media (min-width: 1001px) {
+  .list-study-host .np-window[data-window-id="list"] {
+    width: 460px;
+  }
+}
+@media (max-height: 500px) {
+  .list-study-host .ls-lab-state {
+    display: none;
+  }
+}

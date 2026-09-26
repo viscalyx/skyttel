@@ -9,6 +9,11 @@ import {
   useState,
 } from 'react';
 import { useSearchParams } from 'react-router';
+import {
+  initialListStudyBrowseState,
+  ListStudyList,
+  type ListStudyVariant,
+} from './ListStudyList.js';
 import { MapStudyLab, MapStudyMap, MapStudyPages, useMapStudy } from './MapStudy.js';
 import {
   navObjects as defaultNavObjects,
@@ -39,6 +44,7 @@ import {
 import './visual-prototype-d.css';
 import './navigation-prototype.css';
 import './voice-study-layout.css';
+import './list-study-layout.css';
 
 const variants = {
   A: {
@@ -151,9 +157,15 @@ export function NavigationPrototype() {
   const study = useMapStudy();
   const navObjects = study?.objects ?? defaultNavObjects;
   const [params, setParams] = useSearchParams();
-  const voiceMode = params.get('prototype') === 'voice';
-  const feedbackVariant: VoiceStudyVariant =
-    params.get('variant') === 'A'
+  const listsMode = params.get('prototype') === 'lists';
+  const voiceMode = params.get('prototype') === 'voice' || listsMode;
+  const listVariant: ListStudyVariant =
+    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
+  const [browse, setBrowse] = useState(initialListStudyBrowseState);
+  const listMemory = useRef({ scrollTop: 0, focusId: null as string | null });
+  const feedbackVariant: VoiceStudyVariant = listsMode
+    ? 'D'
+    : params.get('variant') === 'A'
       ? 'A'
       : params.get('variant') === 'B'
         ? 'B'
@@ -282,6 +294,17 @@ export function NavigationPrototype() {
       rootRef.current
         ?.querySelector<HTMLElement>(`.np-window[data-window-id="${next}"]:not([hidden]) h2`)
         ?.focus({ preventScroll: true });
+    });
+  }
+  function returnToList() {
+    go('list');
+    requestAnimationFrame(() => {
+      const list = rootRef.current?.querySelector<HTMLElement>('[data-window-id="list"]');
+      const id = listMemory.current.focusId;
+      const target = id
+        ? list?.querySelector<HTMLElement>(`[data-list-object="${CSS.escape(id)}"]`)
+        : null;
+      (target ?? list?.querySelector<HTMLElement>('h2'))?.focus({ preventScroll: true });
     });
   }
   function restoreFocus() {
@@ -789,6 +812,60 @@ export function NavigationPrototype() {
   });
 
   function contents(contentPage: NavPage, objectId = selected) {
+    if (listsMode && study && contentPage === 'list')
+      return (
+        <>
+          {study.listKind === 'objects' ? (
+            <>
+              <nav className="ls-content-kind" aria-label="Listans innehåll">
+                <span>Objekt</span>
+                <button type="button" onClick={() => study.setListKind('relationships')}>
+                  Visa samband som lista
+                </button>
+              </nav>
+              <ListStudyList
+                variant={listVariant}
+                objects={study.objects}
+                relationships={study.relationships}
+                names={savedNames}
+                staged={staged}
+                selectedIds={selection.ids}
+                state={browse}
+                onState={setBrowse}
+                memory={listMemory.current}
+                onMark={(id) => {
+                  study.setSelectedEdge(null);
+                  study.setFocusId(null);
+                  markObject(id, true);
+                }}
+                onClearSelection={clearSelection}
+                onReveal={(id) => {
+                  study.setSelectedEdge(null);
+                  revealStudyObject(id);
+                }}
+                onDetails={(id) => {
+                  study.setSelectedEdge(null);
+                  selectObject(id);
+                }}
+                noGraphics={study.noGraphics}
+              />
+            </>
+          ) : (
+            <MapStudyPages
+              page="list"
+              selectedId={selected}
+              selectedIds={selection.ids}
+              onToggleSelection={(id) => markObject(id, true)}
+              onClearSelection={clearSelection}
+              onReveal={revealStudyObject}
+              onOpenDetails={selectObject}
+              onEdit={() => go('edit', objectId)}
+              names={savedNames}
+              staged={staged}
+            />
+          )}
+        </>
+      );
     if (voiceMode && contentPage === 'conversation')
       return <VoiceStudyConversation model={voiceStudy} onDraft={() => openVoicePage('draft')} />;
     if (voiceMode && contentPage === 'draft')
@@ -874,18 +951,25 @@ export function NavigationPrototype() {
       );
     if (study && (contentPage === 'list' || contentPage === 'detail')) {
       return (
-        <MapStudyPages
-          page={contentPage}
-          selectedId={objectId}
-          selectedIds={selection.ids}
-          onToggleSelection={(id) => markObject(id, true)}
-          onClearSelection={clearSelection}
-          onReveal={revealStudyObject}
-          onOpenDetails={selectObject}
-          onEdit={() => go('edit', objectId)}
-          names={savedNames}
-          staged={staged}
-        />
+        <>
+          {listsMode && (
+            <button type="button" className="ls-return" onClick={returnToList}>
+              ← Tillbaka till listan
+            </button>
+          )}
+          <MapStudyPages
+            page={contentPage}
+            selectedId={objectId}
+            selectedIds={selection.ids}
+            onToggleSelection={(id) => markObject(id, true)}
+            onClearSelection={clearSelection}
+            onReveal={revealStudyObject}
+            onOpenDetails={selectObject}
+            onEdit={() => go('edit', objectId)}
+            names={savedNames}
+            staged={staged}
+          />
+        </>
       );
     }
     const value =
@@ -1032,7 +1116,8 @@ export function NavigationPrototype() {
   return (
     <div
       ref={rootRef}
-      className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}${voiceMode ? ' voice-study-host' : ''}`}
+      className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}${voiceMode ? ' voice-study-host' : ''}${listsMode ? ' list-study-host' : ''}`}
+      data-list-variant={listsMode ? listVariant : undefined}
       data-feedback-variant={voiceMode ? feedbackVariant : undefined}
       data-theme={theme}
       data-variant={variant}
@@ -1644,6 +1729,61 @@ export function NavigationPrototype() {
           variant={feedbackVariant}
           onVariant={(next) => updateParams({ variant: next }, true)}
           onNoGraphics={() => study?.setNoGraphics(!study.noGraphics)}
+          comparison={
+            listsMode && study
+              ? {
+                  key: listVariant,
+                  name: { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[
+                    listVariant
+                  ],
+                  description: 'Hitta rätt objekt · godkänd karta och talåterkoppling D',
+                  state: `${study.objects.length} objekt · ${selection.ids.length} markerade · ${unsentCount} oskickade redigeringar · ${draftCount} förslag`,
+                  onCycle: (direction) => {
+                    const keys: ListStudyVariant[] = ['A', 'B', 'C'];
+                    updateParams(
+                      { variant: keys[(keys.indexOf(listVariant) + direction + 3) % 3] },
+                      true,
+                    );
+                  },
+                  controls: (
+                    <div className="voice-study-lab-group">
+                      <strong>Hitta och välj i listan</strong>
+                      <button type="button" onClick={returnToList}>
+                        Öppna listan
+                      </button>
+                      <label>
+                        Påhittat hushåll
+                        <select
+                          value={study.density === 'large' ? 'large' : 'sparse'}
+                          onChange={(event) => {
+                            study.setDensity(event.target.value as 'large' | 'sparse');
+                            setBrowse((previous) => ({ ...previous, page: 0 }));
+                            listMemory.current.scrollTop = 0;
+                            updateParams(
+                              { size: event.target.value === 'large' ? 'large' : 'small' },
+                              true,
+                            );
+                          }}
+                        >
+                          <option value="sparse">Litet · 8 objekt</option>
+                          <option value="large">Stort · 500 objekt</option>
+                        </select>
+                      </label>
+                      <p>
+                        Sökning: {browse.query || 'ingen'} · typ: {browse.type || 'alla'} ·
+                        sortering: {browse.sort === 'name' ? 'namn' : 'typ'} · urval:{' '}
+                        {browse.onlySelected ? 'markerade' : 'alla'}.
+                      </p>
+                      <p>
+                        Denna omgång prövar listans struktur och vägen till detaljer. Redigering
+                        visar ännu bara den godkända grundens namnprov. Täta formulär och fler
+                        konfliktval följer efter återkopplingen.
+                      </p>
+                    </div>
+                  ),
+                }
+              : undefined
+          }
         />
       ) : study ? (
         <MapStudyLab

@@ -1,6 +1,6 @@
 // Kastbar talstudie: tre strukturer på samma karta, ?prototype=voice&variant=A/B/C.
 // Endast påhittade uppgifter i minnet. Inget ljud, ingen AI och inga riktiga sparanden.
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import './voice-study.css';
 
 export type VoiceStudyVariant = 'A' | 'B' | 'C' | 'D';
@@ -736,14 +736,27 @@ export function VoiceStudyLab({
   variant,
   onVariant,
   onNoGraphics,
+  comparison,
 }: {
   model: VoiceStudyModel;
   variant: VoiceStudyVariant;
   onVariant: (variant: VoiceStudyVariant) => void;
   onNoGraphics?: () => void;
+  comparison?: {
+    key: string;
+    name: string;
+    description: string;
+    state: string;
+    onCycle: (direction: number) => void;
+    controls: ReactNode;
+  };
 }) {
   const keys: VoiceStudyVariant[] = ['D', 'A', 'B', 'C'];
   function cycle(direction: number) {
+    if (comparison) {
+      comparison.onCycle(direction);
+      return;
+    }
     onVariant(keys[(keys.indexOf(variant) + direction + keys.length) % keys.length]);
   }
   useEffect(() => {
@@ -761,6 +774,10 @@ export function VoiceStudyLab({
         return;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault();
+        if (comparison) {
+          comparison.onCycle(event.key === 'ArrowRight' ? 1 : -1);
+          return;
+        }
         onVariant(
           keys[
             (keys.indexOf(variant) + (event.key === 'ArrowRight' ? 1 : -1) + keys.length) %
@@ -779,15 +796,19 @@ export function VoiceStudyLab({
       aria-label="Prototypens provkontroller"
     >
       <div className="voice-study-lab-switcher">
-        <span className="voice-study-lab-label">Kastbar talprototyp</span>
+        <span className="voice-study-lab-label">
+          {comparison ? 'Kastbar listprototyp' : 'Kastbar talprototyp'}
+        </span>
         <button type="button" aria-label="Föregående variant" onClick={() => cycle(-1)}>
           ←
         </button>
         <span>
           <strong>
-            {variant} · {variants[variant].name}
+            {comparison
+              ? `${comparison.key} · ${comparison.name}`
+              : `${variant} · ${variants[variant].name}`}
           </strong>
-          <small>{variants[variant].description}</small>
+          <small>{comparison?.description ?? variants[variant].description}</small>
         </span>
         <button type="button" aria-label="Nästa variant" onClick={() => cycle(1)}>
           →
@@ -799,6 +820,7 @@ export function VoiceStudyLab({
               Simulerat tal, AI och sparande. Inget ljud spelas in eller skickas. Alla uppgifter är
               påhittade.
             </p>
+            {comparison?.controls}
             <div className="voice-study-lab-group">
               <strong>För samtalet framåt</strong>
               <button
@@ -900,6 +922,11 @@ export function VoiceStudyLab({
           </div>
         </details>
       </div>
+      {comparison && (
+        <p className="ls-lab-state" role="status">
+          {comparison.state}
+        </p>
+      )}
     </aside>
   );
 }
