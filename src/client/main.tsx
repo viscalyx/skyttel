@@ -9,7 +9,7 @@ const prototype = import.meta.env.DEV
   ? new URLSearchParams(window.location.search).get('prototype')
   : null;
 const Prototype =
-  prototype === 'map'
+  prototype === 'map' || prototype === 'voice'
     ? (await import('./MapStudyEntry.js')).MapStudyEntry
     : prototype === 'navigation'
       ? (await import('./NavigationPrototype.js')).NavigationPrototype

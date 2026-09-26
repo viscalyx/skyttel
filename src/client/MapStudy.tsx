@@ -36,7 +36,7 @@ const variants = {
 
 function useStudyState() {
   const [params, setParams] = useSearchParams();
-  const candidate = params.get('variant');
+  const candidate = params.get('prototype') === 'voice' ? 'A' : params.get('variant');
   const variant: StudyVariant = candidate === 'B' || candidate === 'C' ? candidate : 'A';
   const [density, setDensity] = useState<'sparse' | 'dense' | 'large'>('sparse');
   const [proposals, setProposals] = useState(false);

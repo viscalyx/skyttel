@@ -28,8 +28,17 @@ import {
 import { PrototypeIcon } from './VisualPrototype.js';
 import { VisualPrototypeDFrame } from './VisualPrototypeDFrame.js';
 import { VisualPrototypeMap } from './VisualPrototypeMap.js';
+import {
+  useVoiceStudy,
+  VoiceStudyConversation,
+  VoiceStudyFeedback,
+  VoiceStudyLab,
+  type VoiceStudySaveState,
+  type VoiceStudyVariant,
+} from './VoiceStudy.js';
 import './visual-prototype-d.css';
 import './navigation-prototype.css';
+import './voice-study-layout.css';
 
 const variants = {
   A: {
@@ -142,6 +151,9 @@ export function NavigationPrototype() {
   const study = useMapStudy();
   const navObjects = study?.objects ?? defaultNavObjects;
   const [params, setParams] = useSearchParams();
+  const voiceMode = params.get('prototype') === 'voice';
+  const feedbackVariant: VoiceStudyVariant =
+    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
   const candidate = params.get('variant') ?? 'B';
   const variant: Variant = study ? 'B' : candidate in variants ? (candidate as Variant) : 'B';
   const candidatePage = params.get('view') ?? 'map';
@@ -179,7 +191,7 @@ export function NavigationPrototype() {
   const [transcript, setTranscript] = useState<string[]>([
     'Skyttel: Berätta vad du vill lägga till eller hitta.',
   ]);
-  const [voice, setVoice] = useState(false);
+  const [legacyVoice, setVoice] = useState(false);
   const initialWindow: WorkWindow | null =
     page !== 'map' && !utilityPages.includes(page)
       ? {
@@ -198,7 +210,8 @@ export function NavigationPrototype() {
   const [layoutVersion, setLayoutVersion] = useState(0);
   const [tabs, setTabs] = useState<NavPage[]>([]);
   const [trail, setTrail] = useState<NavPage[]>([]);
-  const [saveState, setSaveState] = useState<'idle' | 'pending' | 'saved' | 'failed'>('idle');
+  const [saveState, setSaveState] = useState<VoiceStudySaveState>('idle');
+  const [receipt, setReceipt] = useState<string[]>([]);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const [popupStyle, setPopupStyle] = useState<CSSProperties>({});
   const [inspector, setInspector] = useState(false);
@@ -222,6 +235,19 @@ export function NavigationPrototype() {
   const currentObject = { ...baseObject, name: savedNames[selected] ?? baseObject.name };
   const hasStudyProposals = study?.proposals ?? false;
   const draftCount = Object.keys(staged).length + (hasStudyProposals ? 4 : 0);
+  const voiceStudy = useVoiceStudy({
+    enabled: voiceMode && ready,
+    draftCount,
+    saveState,
+    onPropose: () => {
+      study?.setProposals(true);
+      setSaveState('idle');
+    },
+    onSave: beginSave,
+    onResolveSave: resolveVoiceSave,
+    onReviewConflict: () => setSaveState('idle'),
+  });
+  const voice = voiceMode ? voiceStudy.micActive : legacyVoice;
   const unsentCount = Object.keys(buffers).filter(
     (id) =>
       buffers[id] !==
@@ -243,6 +269,14 @@ export function NavigationPrototype() {
     const next = new URLSearchParams(params);
     for (const [key, value] of Object.entries(updates)) next.set(key, value);
     setParams(next, { replace });
+  }
+  function openVoicePage(next: 'conversation' | 'draft' | 'save-attempts') {
+    go(next);
+    requestAnimationFrame(() => {
+      rootRef.current
+        ?.querySelector<HTMLElement>(`.np-window[data-window-id="${next}"]:not([hidden]) h2`)
+        ?.focus({ preventScroll: true });
+    });
   }
   function restoreFocus() {
     requestAnimationFrame(() => {
@@ -484,6 +518,8 @@ export function NavigationPrototype() {
     setScenario(next);
     setAnchor(null);
     if (['access', 'signin', 'setup'].includes(next)) {
+      if (voiceMode) voiceStudy.resetSession();
+      setReceipt([]);
       setVoice(false);
       setWindows([]);
       setActiveWindow(null);
@@ -505,6 +541,11 @@ export function NavigationPrototype() {
     if (['no-voice', 'network', 'missing', 'loading'].includes(next)) setVoice(false);
   }
   function toggleVoice() {
+    if (voiceMode) {
+      if (!voiceStudy.sessionActive) openVoicePage('conversation');
+      voiceStudy.toggleMic();
+      return;
+    }
     if (scenario === 'no-voice' || scenario === 'network') {
       go('conversation');
       return;
@@ -512,7 +553,7 @@ export function NavigationPrototype() {
     setVoice((previous) => !previous);
   }
   function stage(objectId = selected) {
-    if (saveState === 'pending') return;
+    if (saveState === 'pending' || saveState === 'unknown' || saveState === 'conflict') return;
     const value =
       buffers[objectId] ??
       staged[objectId] ??
@@ -520,6 +561,7 @@ export function NavigationPrototype() {
       navObjects.find((item) => item.id === objectId)?.name ??
       '';
     setStaged((previous) => ({ ...previous, [objectId]: value }));
+    if (voiceMode) voiceStudy.noteManualChange();
     setSaveState('idle');
     setBuffers((previous) => {
       const next = { ...previous };
@@ -529,7 +571,35 @@ export function NavigationPrototype() {
     go('draft');
   }
   function save() {
-    if (draftCount > 0) setSaveState(scenario === 'network' ? 'failed' : 'pending');
+    if (voiceMode) voiceStudy.saveDraft();
+    else beginSave();
+  }
+  function beginSave() {
+    if (draftCount > 0 && !['pending', 'unknown', 'conflict'].includes(saveState))
+      setSaveState(scenario === 'network' ? 'failed' : 'pending');
+  }
+  function resolveVoiceSave(outcome: 'saved' | 'failed' | 'unknown' | 'conflict') {
+    if (!['pending', 'unknown', 'conflict'].includes(saveState)) return;
+    if (outcome === 'saved') {
+      setReceipt([
+        ...Object.entries(staged).map(
+          ([id, name]) =>
+            `${navObjects.find((item) => item.id === id)?.name ?? id}: namn ändrat till ${name}.`,
+        ),
+        ...(hasStudyProposals
+          ? [
+              'Familjeabonnemang: 189 → 199 kr per månad.',
+              'Betalning: Gemensamt bankkonto → Kort ·· 4242.',
+              'Ny tjänst: Filmlyktan.',
+              'Nytt samband: Lo använder Filmlyktan.',
+            ]
+          : []),
+      ]);
+      setSavedNames((previous) => ({ ...previous, ...staged }));
+      setStaged({});
+      study?.commitProposals();
+    }
+    setSaveState(outcome);
   }
   function resolveSave(success: boolean) {
     if (saveState !== 'pending') return;
@@ -713,6 +783,89 @@ export function NavigationPrototype() {
   });
 
   function contents(contentPage: NavPage, objectId = selected) {
+    if (voiceMode && contentPage === 'conversation')
+      return <VoiceStudyConversation model={voiceStudy} onDraft={() => openVoicePage('draft')} />;
+    if (voiceMode && contentPage === 'draft')
+      return (
+        <div className="np-stack">
+          <p>
+            Ditt privata utkast · {draftCount} {draftCount === 1 ? 'ändring' : 'ändringar'}.
+            Hushållets karta ändras när du sparar.
+          </p>
+          {hasStudyProposals && (
+            <ul>
+              <li>Familjeabonnemang: 189 → 199 kr per månad.</li>
+              <li>Betalning: Gemensamt bankkonto → Kort ·· 4242.</li>
+              <li>Ny tjänst: Filmlyktan.</li>
+              <li>Nytt samband: Lo använder Filmlyktan.</li>
+            </ul>
+          )}
+          {Object.entries(staged).map(([id, name]) => (
+            <p key={id}>
+              {navObjects.find((item) => item.id === id)?.name}: namn ändras till{' '}
+              <strong>{name}</strong>.
+            </p>
+          ))}
+          {unsentCount > 0 && (
+            <p>
+              {unsentCount} oskickade redigeringar finns kvar i sina fönster och ingår ännu inte i
+              utkastet.
+            </p>
+          )}
+          <button
+            type="button"
+            className="np-primary"
+            disabled={!voiceStudy.canSave}
+            onClick={save}
+          >
+            {saveState === 'pending' ? 'Sparar hela utkastet…' : 'Spara hela utkastet'}
+          </button>
+          {!voiceStudy.canSave && draftCount > 0 && saveState !== 'pending' && (
+            <p>Öppna samtalet för att hantera frågan eller kontrollera sparresultatet.</p>
+          )}
+          <button type="button" onClick={() => go('conversation')}>
+            Öppna samtalet
+          </button>
+          <button type="button" onClick={() => go('save-attempts')}>
+            Sparförsök och kvitton
+          </button>
+        </div>
+      );
+    if (voiceMode && contentPage === 'save-attempts')
+      return (
+        <div className="np-stack">
+          <h3>{saveState === 'unknown' ? 'Sparresultatet är oklart' : 'Senaste sparförsök'}</h3>
+          <p>
+            {saveState === 'unknown'
+              ? 'Kontrollera samma försök innan du ändrar något eller försöker spara igen.'
+              : saveState === 'pending'
+                ? 'Sparandet pågår. Ett kvitto visas först när resultatet har bekräftats.'
+                : saveState === 'conflict'
+                  ? 'Hushållets uppgifter har ändrats. Hantera konflikten före ett nytt sparbesked.'
+                  : saveState === 'failed'
+                    ? 'Försöket sparade inget. Ditt privata utkast finns kvar.'
+                    : receipt.length
+                      ? 'Verifierat resultat i provet. Kvittot gäller följande ändringar.'
+                      : 'Inget sparande är bekräftat i den här provomgången.'}
+          </p>
+          {receipt.length > 0 && (
+            <section aria-label="Senaste simulerade kvitto">
+              <h4>
+                {saveState === 'saved' ? 'Senaste kvitto' : 'Kvitto från föregående sparförsök'} ·
+                simulerat
+              </h4>
+              <ul>
+                {receipt.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <button type="button" onClick={() => go('conversation')}>
+            Öppna samtalet
+          </button>
+        </div>
+      );
     if (study && (contentPage === 'list' || contentPage === 'detail')) {
       return (
         <MapStudyPages
@@ -792,7 +945,7 @@ export function NavigationPrototype() {
           setMessage('');
         }}
         save={save}
-        saving={saveState === 'pending'}
+        saving={['pending', 'unknown', 'conflict'].includes(saveState)}
         empty={scenario === 'empty'}
         administrator={administrator}
         operator={operator}
@@ -801,8 +954,8 @@ export function NavigationPrototype() {
     );
   }
 
-  let status = 'Hushållets gemensamma karta';
-  if (voice) status = 'Lyssnar · talet är simulerat';
+  let status = voiceMode ? voiceStudy.statusText : 'Hushållets gemensamma karta';
+  if (voice && !voiceMode) status = 'Lyssnar · talet är simulerat';
   if (draftCount)
     status += ` · Privat utkast: ${draftCount} ändring${draftCount === 1 ? '' : 'ar'}`;
   if (unsentCount) status += ` · ${unsentCount} oskickad redigering`;
@@ -810,6 +963,8 @@ export function NavigationPrototype() {
   if (saveState === 'pending') status += ' · Sparar hela utkastet… väntar på resultat';
   if (saveState === 'saved') status += ' · Senaste utkastet sparat (simulerat kvitto)';
   if (saveState === 'failed') status += ' · Kunde inte spara · ditt privata utkast finns kvar';
+  if (saveState === 'unknown') status += ' · Sparresultatet är oklart · kontrollera samma försök';
+  if (saveState === 'conflict') status += ' · Konflikt · inget sparat från det här försöket';
   if (scenario === 'network')
     status = 'Nätanslutningen saknas · kontrollera anslutningen. Oskickat arbete finns kvar.';
   if (scenario === 'no-voice') status = 'Tal är inte tillgängligt · skriv i samtalet';
@@ -871,7 +1026,8 @@ export function NavigationPrototype() {
   return (
     <div
       ref={rootRef}
-      className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}`}
+      className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}${voiceMode ? ' voice-study-host' : ''}`}
+      data-feedback-variant={voiceMode ? feedbackVariant : undefined}
       data-theme={theme}
       data-variant={variant}
       data-expanded={expanded}
@@ -894,12 +1050,12 @@ export function NavigationPrototype() {
               <button
                 type="button"
                 className={`vp-d-action vp-d-talk${voice ? ' vp-d-talk-active' : ''}`}
-                aria-label={voice ? 'Stoppa tal' : 'Starta tal'}
-                title={voice ? 'Stoppa tal' : 'Starta tal'}
+                aria-label={voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Starta tal'}
+                title={voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Starta tal'}
                 aria-pressed={voice}
                 onClick={toggleVoice}
               >
-                {voice ? (
+                {voice && !voiceMode ? (
                   <svg
                     className="vp-icon vp-d-stop-icon"
                     viewBox="0 0 24 24"
@@ -922,7 +1078,9 @@ export function NavigationPrototype() {
                 ) : (
                   <PrototypeIcon name="mic" />
                 )}
-                <span className="vp-d-label">{voice ? 'Stoppa tal' : 'Prata med Skyttel'}</span>
+                <span className="vp-d-label">
+                  {voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Prata med Skyttel'}
+                </span>
               </button>
               {toolbarButton(
                 'text',
@@ -1049,42 +1207,61 @@ export function NavigationPrototype() {
           )
         }
         status={
-          <>
-            <div className="vp-status" role="status" aria-live="polite">
-              <span className="vp-status-symbol">
-                <PrototypeIcon
-                  name={
-                    saveState === 'failed' || scenario === 'network'
-                      ? 'alert'
-                      : voice
-                        ? 'mic'
-                        : 'check'
-                  }
-                />
+          voiceMode && ready ? (
+            <>
+              <VoiceStudyFeedback
+                model={voiceStudy}
+                variant={feedbackVariant}
+                onConversation={() => openVoicePage('conversation')}
+                onDraft={() => openVoicePage(saveState === 'saved' ? 'save-attempts' : 'draft')}
+                onSave={beginSave}
+              />
+              {unsentCount > 0 && (
+                <p className="vs-unsent" role="status">
+                  {unsentCount}{' '}
+                  {unsentCount === 1 ? 'oskickad redigering' : 'oskickade redigeringar'} · finns
+                  kvar i sina fönster
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="vp-status" role="status" aria-live="polite">
+                <span className="vp-status-symbol">
+                  <PrototypeIcon
+                    name={
+                      saveState === 'failed' || scenario === 'network'
+                        ? 'alert'
+                        : voice
+                          ? 'mic'
+                          : 'check'
+                    }
+                  />
+                </span>
+                <div>
+                  <strong>{ready ? statusTitle : scenarios[scenario]}</strong>
+                  <span>
+                    {scenario === 'network'
+                      ? 'Nätanslutningen saknas. Ditt arbete finns kvar.'
+                      : statusSubtitle}
+                  </span>
+                </div>
+              </div>
+              {voice && (
+                <div className="vp-d-audio-feedback">
+                  <span className="vp-d-waveform" aria-hidden="true">
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
+                      <i key={bar} />
+                    ))}
+                  </span>
+                  <p className="vp-d-sound-status">Tyst just nu · Lyssnar fortfarande</p>
+                </div>
+              )}
+              <span className="np-sr-status" role="status">
+                {status}
               </span>
-              <div>
-                <strong>{ready ? statusTitle : scenarios[scenario]}</strong>
-                <span>
-                  {scenario === 'network'
-                    ? 'Nätanslutningen saknas. Ditt arbete finns kvar.'
-                    : statusSubtitle}
-                </span>
-              </div>
-            </div>
-            {voice && (
-              <div className="vp-d-audio-feedback">
-                <span className="vp-d-waveform" aria-hidden="true">
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
-                    <i key={bar} />
-                  ))}
-                </span>
-                <p className="vp-d-sound-status">Tyst just nu · Lyssnar fortfarande</p>
-              </div>
-            )}
-            <span className="np-sr-status" role="status">
-              {status}
-            </span>
-          </>
+            </>
+          )
         }
         map={
           <div
@@ -1369,8 +1546,11 @@ export function NavigationPrototype() {
               {ready && (
                 <div className="np-status-actions">
                   {voice && (
-                    <button type="button" onClick={() => setVoice(false)}>
-                      Stoppa tal
+                    <button
+                      type="button"
+                      onClick={() => (voiceMode ? voiceStudy.endVoice() : setVoice(false))}
+                    >
+                      Stäng av rösten
                     </button>
                   )}
                   {draftCount > 0 && (
@@ -1384,7 +1564,11 @@ export function NavigationPrototype() {
                       >
                         Visa utkast
                       </button>
-                      <button type="button" onClick={save} disabled={saveState === 'pending'}>
+                      <button
+                        type="button"
+                        onClick={save}
+                        disabled={voiceMode ? !voiceStudy.canSave : saveState === 'pending'}
+                      >
                         Spara hela utkastet
                       </button>
                     </>
@@ -1426,7 +1610,14 @@ export function NavigationPrototype() {
           </section>
         )}
       </VisualPrototypeDFrame>
-      {study ? (
+      {voiceMode && ready ? (
+        <VoiceStudyLab
+          model={voiceStudy}
+          variant={feedbackVariant}
+          onVariant={(next) => updateParams({ variant: next }, true)}
+          onNoGraphics={() => study?.setNoGraphics(!study.noGraphics)}
+        />
+      ) : study ? (
         <MapStudyLab
           selectedId={selected}
           onList={() => go('list')}
