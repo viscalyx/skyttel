@@ -3,9 +3,10 @@
 Kastbart underlag för första omgången i
 [Hur utformas listor, detaljer och redigering som öppnas vid behov?](https://github.com/viscalyx/skyttel/issues/107).
 Underlaget prövar hur användaren hittar och väljer rätt objekt bland få
-eller flera hundra objekt. **B · Typkatalog** är vald riktning för
-fortsatt arbete. Valet innebär inte ett slutligt godkännande av hela
-beslutsärendet.
+eller flera hundra objekt. **B · Typkatalog** är godkänd av beställaren
+den 26 september 2026 i version `6381878`, med samlade filter och flera
+typval. Godkännandet gäller listmönstret; detaljer och redigering samt
+övriga öppna delar av beslutsärendet återstår.
 
 Beställarens återkoppling placerar typkatalogen under **Filter** och
 behåller **Sortering** som en separat kontroll. I vidarebyggnaden samlas
@@ -13,8 +14,8 @@ typkatalog och **Bara markerade** under **Filter**, som öppnas vid behov.
 Flera typer kan kryssas i samtidigt. Resultaten omfattar objekt av någon
 av de valda typerna. Utan valda typer visas alla typer; **Alla typer**
 nollställer typvalen. Listan behåller sin gruppering efter typ och
-sorteringen styrs separat. Den reviderade utformningen inväntar
-återkoppling; övriga frågor i samma beslut finns kvar nedan.
+sorteringen styrs separat. Beställarens godkännande är:
+”Prototyp B ser bra ut.” Övriga frågor i samma beslut finns kvar nedan.
 
 ## Godkänd grund
 
