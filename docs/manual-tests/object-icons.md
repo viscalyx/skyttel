@@ -88,3 +88,35 @@ pagination work in narrow themes”.
 - Tangentbordet kan välja ikoner och byta sida. Fokus stannar i det aktiva
   arbetsflödet. Resultat och valt läge har text och tillgängliga namn.
 - Smala vyer och båda teman behåller läsbara, åtkomliga kontroller.
+
+### IKON-03: Nå ikonval och sparande i ett kort fönster
+
+**Syfte:** Verifiera att förstoring inte gör formuläret oåtkomligt.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Hushållet har inget objekt med namnet Lilla cykeln.
+Använd ett webbläsarfönster på ungefär 1 280 × 1 000 bildpunkter och
+webbläsarens zoom på 400 procent, eller en vy på 320 × 250 CSS-bildpunkter.
+
+**Integrationstest:**
+[object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
+testfallet “IKON-03: a short viewport keeps icon controls, unsent text and
+shared save reachable”.
+
+**Steg:**
+
+1. Öppna **Lista** och **Nytt objekt**. Skriv Lilla cykeln och en beskrivning.
+2. Rulla till **Ikon** och välj **Lägg uppgifterna i utkastet först**.
+   Kontrollera fokus i **Sök ikon**. Sök cykel och välj **Cykel**.
+3. Rulla tillbaka och välj **Typens standardikon**. Kontrollera markeringen
+   och att beskrivningen finns kvar.
+4. Välj **Lägg i mitt utkast** och **Spara hela utkastet**. Läs bekräftelsen
+   och kontrollera det sparade objektets namn, beskrivning och standardikon.
+
+**Förväntat resultat:**
+
+- Formulär, sidval, status och sparande går att nå genom att rulla.
+  Verktygsraden täcker inte den kontroll som används.
+- Oskickad text bevaras. Ikonens återgång till standard sparas med objektet.
+- Innehållet kräver ingen vågrät sidrullning.

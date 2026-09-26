@@ -139,3 +139,53 @@ test('IKON-02: full catalog search, empty results and keyboard pagination work i
     await installation.close();
   }
 });
+
+test('IKON-03: a short viewport keeps icon controls, unsent text and shared save reachable', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
+    const picker = details.getByRole('region', { name: 'Ikon', exact: true });
+    await details.getByLabel('Objektets namn', { exact: true }).fill('Lilla cykeln');
+    await details.getByLabel('Beskrivning', { exact: true }).fill('Min oskickade text');
+    // The layout size of a 1280 × 1000 browser at 400% browser zoom.
+    await page.setViewportSize({ width: 320, height: 250 });
+    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
+    const search = picker.getByRole('searchbox', { name: 'Sök ikon' });
+    await expect(search).toBeFocused();
+    await search.fill('cykel');
+    await picker.getByRole('button', { name: 'Välj Cykel', exact: true }).click();
+    await expect(picker.getByRole('button', { name: 'Välj Cykel', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await picker.getByRole('button', { name: 'Typens standardikon', exact: true }).click();
+    await expect(
+      picker.getByRole('button', { name: 'Typens standardikon', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(details.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Min oskickade text',
+    );
+    await details.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Sparat');
+    const saved: MapState = await (await page.request.get(path)).json();
+    expect(saved.objects[0]).toMatchObject({
+      name: 'Lilla cykeln',
+      description: 'Min oskickade text',
+    });
+    expect(saved.objects[0]).not.toHaveProperty('iconId');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  } finally {
+    await installation.close();
+  }
+});
