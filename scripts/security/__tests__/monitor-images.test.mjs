@@ -8,6 +8,7 @@ const image = (character) => `ghcr.io/viscalyx/skyttel@${digest(character)}`;
 const deployment = (id, character) => ({
   id,
   sha: 'a'.repeat(40),
+  production_environment: true,
   payload: { image: image(character), version: `0.1.${id}` },
 });
 const finding = {
@@ -153,6 +154,62 @@ test('scans live and last distinct accepted rollback digests, without rebuilding
     built: '2026-09-24T06:00:00.000Z',
   });
   assert.equal(state.issues.length, 0);
+});
+
+test('automatic environment records do not hide accepted live and rollback images', async () => {
+  const { state, run } = fixture();
+  const [failed, current, duplicate, rollback] = state.records;
+  state.records = [
+    { id: 6, production_environment: false, payload: {} },
+    failed,
+    current,
+    { id: 5, production_environment: false, payload: {} },
+    duplicate,
+    rollback,
+  ];
+  state.states[6] = ['success'];
+  state.states[5] = ['inactive', 'success'];
+
+  const result = await run();
+  assert.equal(result.status, 'passed');
+  assert.deepEqual(state.scans, [image('b'), image('c')]);
+  assert.deepEqual(
+    result.targets.map((target) => [target.role, target.deployment]),
+    [
+      ['running', 3],
+      ['rollback', 1],
+    ],
+  );
+  assert.equal(state.issues.length, 0);
+});
+
+test('malformed accepted production records leave status unknown without falling back or scanning', async () => {
+  for (const id of [3, 2]) {
+    const { state, run } = fixture();
+    state.records.find((record) => record.id === id).payload = {};
+
+    const result = await run();
+    assert.equal(result.status, 'unknown');
+    assert.equal(result.reason, 'deployment_evidence_unavailable');
+    assert.deepEqual(result.targets, []);
+    assert.deepEqual(state.scans, []);
+    assert.equal(result.notification, 'accepted-by-github');
+    assert.equal(state.issues[0].state, 'open');
+  }
+});
+
+test('image payloads without an explicit production record cannot establish accepted live evidence', async () => {
+  for (const productionEnvironment of [false, undefined]) {
+    const { state, run } = fixture();
+    state.records = [{ ...deployment(3, 'b'), production_environment: productionEnvironment }];
+
+    const result = await run();
+    assert.equal(result.status, 'unknown');
+    assert.equal(result.reason, 'deployment_evidence_unavailable');
+    assert.deepEqual(result.targets, []);
+    assert.deepEqual(state.scans, []);
+    assert.equal(state.issues[0].state, 'open');
+  }
 });
 
 test('first accepted deployment has no rollback target; missing or drifted records give unknown', async () => {

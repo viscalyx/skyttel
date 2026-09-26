@@ -63,6 +63,9 @@ async function targets(github, current) {
   // The latest distinct accepted predecessor is retained for recovery. Failed
   // attempts, tags, newly built candidates and duplicate retries cannot select it.
   for await (const record of pages(github, '/deployments?environment=production')) {
+    // Jobs using the environment also create records without image evidence.
+    // The verified release workflow explicitly marks its image records as production.
+    if (record.production_environment !== true) continue;
     const states = [];
     for await (const state of pages(github, `/deployments/${record.id}/statuses`)) {
       states.push(state.state);
