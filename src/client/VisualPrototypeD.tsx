@@ -1,6 +1,7 @@
 // Kastbar variant D: en obruten karta med flytande verktyg, i ljust och mörkt tema.
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Brand, Detail, PrototypeIcon, Status } from './VisualPrototype.js';
+import { Detail, PrototypeIcon, Status } from './VisualPrototype.js';
+import { VisualPrototypeDFrame } from './VisualPrototypeDFrame.js';
 import { VisualPrototypeMap } from './VisualPrototypeMap.js';
 import './visual-prototype-d.css';
 
@@ -297,23 +298,21 @@ export function VisualPrototypeD({
   }
 
   return (
-    <div
-      className={`vp-app vp-app-D${expanded ? ' vp-d-expanded' : ''}${detail ? ' vp-d-detail-open' : ''}`}
-    >
-      <VisualPrototypeMap
-        variant="A"
-        onSelectObject={selectObject}
-        onSelect={() => {
-          setUtility(null);
-          setDetail(true);
-        }}
-      />
-
-      <nav className="vp-d-toolbox" aria-label="Kartans verktyg">
-        <div className="vp-d-brand">
-          <Brand />
-        </div>
-        <div className="vp-d-actions">
+    <VisualPrototypeDFrame
+      expanded={expanded}
+      detailOpen={detail}
+      map={
+        <VisualPrototypeMap
+          variant="A"
+          onSelectObject={selectObject}
+          onSelect={() => {
+            setUtility(null);
+            setDetail(true);
+          }}
+        />
+      }
+      actions={
+        <>
           <button
             type="button"
             className={`vp-d-action vp-d-talk${listening ? ' vp-d-talk-active' : ''}`}
@@ -364,8 +363,10 @@ export function VisualPrototypeD({
             <PrototypeIcon name="list" />
             <span className="vp-d-label">Kartan som lista</span>
           </button>
-        </div>
-        <div className="vp-d-toolbox-footer">
+        </>
+      }
+      footer={
+        <>
           <button
             type="button"
             className="vp-d-action"
@@ -387,32 +388,29 @@ export function VisualPrototypeD({
             <PrototypeIcon name={expanded ? 'back' : 'arrow'} />
             <span className="vp-d-label">Fäll ihop</span>
           </button>
-        </div>
-      </nav>
-
-      <div className="vp-d-context">
-        <span className="vp-d-context-dot" />
-        Hushållet Lind<span>Gemensam karta</span>
-      </div>
-      <div className="vp-d-status">
-        <Status scene={scene} onSave={() => setScene('saving')} />
-        {listening && (
-          <div className="vp-d-audio-feedback" role="status">
-            <span
-              className={`vp-d-waveform${sound ? ' vp-d-waveform-sound' : ''}`}
-              aria-hidden="true"
-            >
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
-                <i key={bar} />
-              ))}
-            </span>
-            <p className="vp-d-sound-status">
-              {sound ? 'Tal hörs' : 'Tyst just nu · Lyssnar fortfarande'}
-            </p>
-          </div>
-        )}
-      </div>
-
+        </>
+      }
+      status={
+        <>
+          <Status scene={scene} onSave={() => setScene('saving')} />
+          {listening && (
+            <div className="vp-d-audio-feedback" role="status">
+              <span
+                className={`vp-d-waveform${sound ? ' vp-d-waveform-sound' : ''}`}
+                aria-hidden="true"
+              >
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
+                  <i key={bar} />
+                ))}
+              </span>
+              <p className="vp-d-sound-status">
+                {sound ? 'Tal hörs' : 'Tyst just nu · Lyssnar fortfarande'}
+              </p>
+            </div>
+          )}
+        </>
+      }
+    >
       {utility && (
         <aside className="vp-d-utility" aria-labelledby="vp-d-utility-title">
           <div className="vp-detail-top">
@@ -496,6 +494,6 @@ export function VisualPrototypeD({
           )}
         </div>
       )}
-    </div>
+    </VisualPrototypeDFrame>
   );
 }

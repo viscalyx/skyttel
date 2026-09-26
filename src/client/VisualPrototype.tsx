@@ -48,6 +48,8 @@ export function PrototypeIcon({ name }: { name: string }) {
     clock: 'M12 8v5l3 2M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0',
     alert: 'M12 8v5M12 17h.01M12 3 2 21h20L12 3',
     settings: 'M4 7h16M4 17h16M8 4v6M16 14v6',
+    info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 11v6M12 7h.01',
+    activity: 'M3 12h4l3-7 4 14 3-7h4',
     arrow: 'm9 5 7 7-7 7',
     back: 'm15 5-7 7 7 7',
     text: 'M4 5h16M12 5v15M8 20h8',

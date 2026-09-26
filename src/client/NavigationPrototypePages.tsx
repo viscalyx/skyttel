@@ -43,14 +43,14 @@ export const pageTitles: Record<NavPage, string> = {
   assistants: 'Assistenter',
   consent: 'Assistentens åtkomst',
   'save-attempts': 'Sparförsök och kvitton',
-  administration: 'Administration',
+  administration: 'Hushållets administration',
   export: 'Exportera hushållet',
   import: 'Återimportera hushållet',
   erasure: 'Permanent radering',
   owners: 'Koppla historiskt innehåll',
   members: 'Medlemmar och inbjudningar',
-  costs: 'Kostnadsöversikt',
-  help: 'Hitta i Skyttel',
+  costs: 'Driftens kostnader',
+  help: 'Information',
 };
 
 export const navObjects = [
@@ -248,6 +248,7 @@ export function NavigationPrototypePages(props: Props) {
             Öppna samtal
           </button>
         )}
+        {menu(['types', 'history'])}
       </div>
     );
   }
@@ -385,38 +386,101 @@ export function NavigationPrototypePages(props: Props) {
       </div>
     );
   if (page === 'more')
-    return (
-      <div className="np-stack">
-        {menu(['settings', 'types', 'history', 'save-attempts', 'assistants', 'help'])}
-        {administrator && menu(['administration'])}
-        {operator && menu(['costs'])}
-      </div>
-    );
+    return <div className="np-stack">{menu(['types', 'history', 'save-attempts'])}</div>;
   if (page === 'settings')
     return (
       <div className="np-stack">
-        <dl className="np-facts">
-          <dt>Tema</dt>
-          <dd>{theme === 'dark' ? 'Mörkt' : 'Ljust'}</dd>
-        </dl>
-        <button type="button" onClick={toggleTheme}>
-          Byt till {theme === 'dark' ? 'ljust' : 'mörkt'} tema
-        </button>
-        <p className="np-muted">Inställningen gäller din egen vy.</p>
-        {menu(['login-methods', 'invitations'])}
-        <button type="button" onClick={logout}>
-          Logga ut
-        </button>
+        <p>Du kan återgå till arbetet när som helst. Oskickad text och redigering finns kvar.</p>
+        <details className="np-personal-settings">
+          <summary>Dina inställningar</summary>
+          <div className="np-stack">
+            <dl className="np-facts">
+              <dt>Tema</dt>
+              <dd>{theme === 'dark' ? 'Mörkt' : 'Ljust'}</dd>
+            </dl>
+            <button type="button" onClick={toggleTheme}>
+              Byt till {theme === 'dark' ? 'ljust' : 'mörkt'} tema
+            </button>
+            <p className="np-muted">Temat gäller din egen vy.</p>
+            {menu(['login-methods', 'invitations', 'assistants'])}
+            <button type="button" onClick={logout}>
+              Logga ut
+            </button>
+          </div>
+        </details>
+        <section className="np-stack" aria-labelledby="np-household-administration">
+          <h3 id="np-household-administration">Hushållets administration</h3>
+          <p>
+            Hantera vilka som har tillgång till hushållet samt export, återimport och permanent
+            radering av hushållets information.
+          </p>
+          {administrator ? (
+            menu(['administration'])
+          ) : (
+            <p className="np-muted">Tillgängligt för hushållets administratörer.</p>
+          )}
+        </section>
+        <section className="np-stack" aria-labelledby="np-operation-costs">
+          <h3 id="np-operation-costs">Driftens kostnader</h3>
+          <p>Följ kostnaderna för att köra Skyttel, till exempel användningen av assistenten.</p>
+          <p className="np-muted">Hushållets abonnemang och avtal hör till kartan och listan.</p>
+          {operator ? (
+            menu(['costs'])
+          ) : (
+            <p className="np-muted">Tillgängligt för installationens driftansvariga.</p>
+          )}
+        </section>
       </div>
     );
   if (page === 'administration')
     return (
       <div className="np-stack">
-        <p>Hantera tillgång till hushållet och hushållets information.</p>
+        <p>
+          Här hanterar hushållets administratörer medlemskap, inbjudningar, export, återimport och
+          permanent radering av hushållets information.
+        </p>
         {menu(['members', 'owners', 'export', 'import', 'erasure'])}
         <p className="np-muted">
           Alla hushållets medlemmar kan arbeta med hela den gemensamma kartan.
         </p>
+      </div>
+    );
+  if (page === 'help')
+    return (
+      <div className="np-stack">
+        <h3>Hjälp och information om Skyttel</h3>
+        <p>
+          Skyttel hjälper hushållet att hålla ihop personer, saker, tjänster och avtal i en gemensam
+          karta.
+        </p>
+        <section className="np-stack" aria-labelledby="np-help-map">
+          <h4 id="np-help-map">Karta och lista</h4>
+          <p>
+            Kartan ger en rumslig överblick. Listan visar samma information och låter dig söka efter
+            objekt. Välj ett objekt för att se dess uppgifter och samband.
+          </p>
+        </section>
+        <section className="np-stack" aria-labelledby="np-help-conversation">
+          <h4 id="np-help-conversation">Tala eller skriv</h4>
+          <p>
+            Använd mikrofonen för att tala med Skyttel eller öppna Samtal för att skriva. Där kan du
+            fråga om kartan och föreslå ändringar.
+          </p>
+        </section>
+        <section className="np-stack" aria-labelledby="np-help-draft">
+          <h4 id="np-help-draft">Ditt privata utkast</h4>
+          <p>
+            Dina förslag samlas i Mitt utkast. Bara du ser dem tills du sparar hela utkastet till
+            hushållets gemensamma karta.
+          </p>
+        </section>
+        <section className="np-stack" aria-labelledby="np-help-settings">
+          <h4 id="np-help-settings">Tillfälligt i inställningarna</h4>
+          <p>
+            Öppna inställningarna när du behöver ändra något. När du stänger dem fortsätter du där
+            du var, med oskickad text, redigering, urval och sökning kvar.
+          </p>
+        </section>
       </div>
     );
 
@@ -536,20 +600,14 @@ export function NavigationPrototypePages(props: Props) {
     },
     costs: {
       introduction:
-        'Installationens driftansvariga ser kostnader för driften av Skyttel. Rollen som driftansvarig är fristående från hushållets administratörsroll.',
+        'Här följer installationens driftansvariga kostnaderna för att köra Skyttel. Hushållets abonnemang och avtal finns i kartan och listan.',
       facts: [
         ['Samtal denna månad', '12,40 kr · påhittat exempel'],
         ['Fördelning', 'Kostnader kan följas över tid.'],
-      ],
-    },
-    help: {
-      introduction:
-        'Kartan och listan visar samma hushållsinformation. Välj ett objekt för att läsa dess uppgifter och samband.',
-      facts: [
-        ['Karta och lista', 'Byt mellan en rumslig överblick och en sökbar lista.'],
-        ['Samtal', 'Ha kvar samtalet medan du undersöker kartan.'],
-        ['Mitt utkast', 'Samla dina förslag och spara hela utkastet när du är redo.'],
-        ['Mer', 'Hitta inställningar, typer, historik, assistenter och administration.'],
+        [
+          'Behörighet',
+          'Rollen som driftansvarig är fristående från hushållets administratörsroll.',
+        ],
       ],
     },
   };
@@ -567,7 +625,7 @@ export function NavigationPrototypePages(props: Props) {
       </dl>
       {page === 'assistants' && menu(['consent'])}
       {page === 'new-relationship' && empty && menu(['new-object'])}
-      {page !== 'help' && laterDecision}
+      {laterDecision}
     </div>
   ) : null;
 }
