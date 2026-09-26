@@ -11,13 +11,9 @@ import {
 } from 'react';
 import { useSearchParams } from 'react-router';
 import { MapStudyCanvas } from './MapStudyCanvas.js';
+import { MapStudyNavigation } from './MapStudyNavigation.js';
 import { changeLabel, studyData } from './map-study-data.js';
-import type {
-  StudyCamera,
-  StudyCameraAction,
-  StudyPosition,
-  StudyVariant,
-} from './map-study-types.js';
+import type { StudyCamera, StudyPosition, StudyVariant } from './map-study-types.js';
 import './map-study.css';
 
 const variants = {
@@ -194,17 +190,6 @@ function useStudy() {
   return study;
 }
 
-const cameraButtons: [StudyCameraAction, string][] = [
-  ['left', 'Panorera vänster'],
-  ['right', 'Panorera höger'],
-  ['up', 'Panorera uppåt'],
-  ['down', 'Panorera nedåt'],
-  ['rotate-left', 'Rotera vänster'],
-  ['rotate-right', 'Rotera höger'],
-  ['tilt-up', 'Luta uppåt'],
-  ['tilt-down', 'Luta nedåt'],
-];
-
 export function MapStudyMap({
   selectedId,
   selectedIds,
@@ -230,10 +215,6 @@ export function MapStudyMap({
 }) {
   const study = useStudy();
   const [relationsOpen, setRelationsOpen] = useState(false);
-  const navigationTitle = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    if (study.navigationOpen) navigationTitle.current?.focus({ preventScroll: true });
-  }, [study.navigationOpen]);
   function closeNavigation() {
     study.setNavigationOpen(false);
     document.querySelector<HTMLButtonElement>('[data-tool="navigate"]')?.focus();
@@ -287,6 +268,8 @@ export function MapStudyMap({
   );
   const name = (id: string) =>
     staged[id] ?? names[id] ?? study.objects.find((object) => object.id === id)?.name ?? id;
+  const movableObject =
+    selectedIds.length === 1 ? objects.find((object) => object.id === selectedIds[0]) : undefined;
   return (
     <div className="mp-map-area">
       <div className="mp-canvas-host" hidden={study.noGraphics}>
@@ -340,54 +323,14 @@ export function MapStudyMap({
         </section>
       )}
       <div className="mp-map-tools">
-        {study.navigationOpen && (
-          <section
-            id="mp-navigation"
-            className="mp-navigation np-stack"
-            aria-labelledby="mp-navigation-title"
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                event.stopPropagation();
-                closeNavigation();
-              }
-            }}
-          >
-            <h2 ref={navigationTitle} id="mp-navigation-title" tabIndex={-1}>
-              Navigera i kartan
-            </h2>
-            <p>Flytta vyn med knapparna. Ett objektval flyttar inte kameran.</p>
-            <button
-              type="button"
-              aria-pressed={study.stars}
-              onClick={() => study.setStars(!study.stars)}
-            >
-              {study.stars ? 'Dölj stjärnhimmel' : 'Visa stjärnhimmel'}
-            </button>
-            <p>Systemets minskade rörelse stänger av stjärnhimlen.</p>
-            <div className="mp-button-grid">
-              {cameraButtons.map(([action, label]) => (
-                <button
-                  key={action}
-                  type="button"
-                  onClick={() => study.cameraRef.current?.navigate(action)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="mp-button-grid">
-              <button type="button" onClick={() => study.cameraRef.current?.navigate('in')}>
-                Zooma in
-              </button>
-              <button type="button" onClick={() => study.cameraRef.current?.navigate('out')}>
-                Zooma ut
-              </button>
-            </div>
-            <button type="button" onClick={closeNavigation}>
-              Stäng navigering
-            </button>
-          </section>
-        )}
+        <MapStudyNavigation
+          open={study.navigationOpen}
+          onClose={closeNavigation}
+          onNavigate={(action) => study.cameraRef.current?.navigate(action)}
+          movableObject={movableObject}
+          onMove={study.move}
+          movement={study.movement}
+        />
       </div>
       {study.variant === 'B' && selectedIds.length > 0 && (
         <aside className="mp-context-ribbon" aria-label="Valt sammanhang">
@@ -715,14 +658,6 @@ export function MapStudyPages({
     (edge) => edge.from === selectedId || edge.to === selectedId,
   );
   const selectedEdge = linked.find((edge) => edge.id === study.selectedEdge);
-  const directions: [string, StudyPosition][] = [
-    ['Vänster', { x: -45, y: 0, z: 0 }],
-    ['Höger', { x: 45, y: 0, z: 0 }],
-    ['Uppåt', { x: 0, y: 45, z: 0 }],
-    ['Nedåt', { x: 0, y: -45, z: 0 }],
-    ['Framåt', { x: 0, y: 0, z: 45 }],
-    ['Bakåt', { x: 0, y: 0, z: -45 }],
-  ];
   return (
     <div className="np-stack mp-details">
       <p className="np-kicker">
@@ -774,30 +709,6 @@ export function MapStudyPages({
           </button>
         </section>
       )}
-      <details className="mp-placement">
-        <summary>Ordna min vy</summary>
-        <p>
-          Flytta endast din personliga placering. Avstånd och höjd beskriver inga hushållsuppgifter.
-        </p>
-        <div className="mp-button-grid">
-          {directions.map(([label, offset]) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() =>
-                study.move(selectedId, {
-                  x: subject.position.x + offset.x,
-                  y: subject.position.y + offset.y,
-                  z: subject.position.z + offset.z,
-                })
-              }
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <p role="status">{study.movement}</p>
-      </details>
     </div>
   );
 }

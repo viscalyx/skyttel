@@ -128,6 +128,7 @@ type Props = {
   staged: Record<string, string>;
   additionalDraft?: ReactNode;
   additionalDraftCount?: number;
+  mapSettings?: ReactNode;
   savedNames: Record<string, string>;
   stage: () => void;
   message: string;
@@ -395,6 +396,7 @@ export function NavigationPrototypePages(props: Props) {
     return (
       <div className="np-stack">
         <p>Du kan återgå till arbetet när som helst. Oskickad text och redigering finns kvar.</p>
+        {props.mapSettings}
         <details className="np-personal-settings">
           <summary>Dina inställningar</summary>
           <div className="np-stack">

@@ -107,8 +107,12 @@ förslag. Namn och hjälptext följer ikonens aktuella handling.
    välj **Simulera sparfel** eller **Simulera kvitto** i provpanelen.
    Ett lyckat kvitto lämnar de sparade uppgifterna kvar utan
    förslagsmarkeringar. Tal och sparande är helt simulerade.
-5. Öppna **Ordna min vy** i ett objekts panel. Flytta objektet med de sex
-   riktningsknapparna. Hushållets uppgifter och privata utkast ändras inte.
+5. Markera ett objekt och öppna **Navigera** i verktygslådan.
+   **Flytta Familjeabonnemang**, eller namnet på det valda objektet,
+   visas under kamerans knappar när exakt ett objekt är markerat.
+   Flytta det namngivna objektet med de sex riktningsknapparna.
+   Hushållets uppgifter och privata utkast ändras inte. Växla till
+   miniläget och pröva samma knappar med enbart ikoner.
 6. Dölj kartgrafiken under **Provlägen**. Sök, läs samband, följ deras
    ändpunkter och öppna samma uppgifter genom **Sök i kartan** och
    listans separata **Visa detaljer**-knappar.
@@ -141,7 +145,37 @@ direkta samband. Sambanden läses i kartan eller i söklistans **Samband**.
 Fönstertiteln saknar den synliga undertiteln **Flytta**; panelen kan
 fortfarande dras och flyttas med tangentbord eller flyttknappar.
 
-**Navigera** ger knappar för panorering, rotation, lutning och zoom.
+**Navigera** ger knappar med ikoner och text för panorering, rotation,
+lutning och zoom. Även växling mellan lägen och stängning har ikoner.
+Under kamerans kontroller finns **Flytta [objektets namn]** för det
+ensamt markerade objektet. Flyttknapparna finns här i stället för i
+objektets detaljpanel och påverkar bara det angivna objektets placering.
+Sektionen döljs vid tomt urval eller flerval. Kamerans knappar behåller
+sina platser när objektsektionen visas och döljs. Panelen rullar internt
+på korta skärmar så att alla flyttknappar kan nås.
+
+Navigeringspanelen kan växlas till ett miniläge med bara kontrollikoner.
+Verktygstips och tillgängliga namn beskriver varje handling och anger
+vilket objekt flyttknapparna påverkar. Minifönstret går att flytta på
+skärmen utan att ändra kameran eller objektens placeringar. Båda lägena
+har en liten dragbar titelrad: ikonen för mini/normal till vänster,
+texten **Navigation** i mitten och ett kryss till höger för att stänga.
+Dra titelraden eller fokusera den och använd
+piltangenterna för att flytta fönstret.
+Escape avbryter en pågående dragning. Läget och placeringen finns kvar
+när panelen stängs och öppnas. Placeringen anpassas vid behov för att
+detaljfönster också ska synas. Växla tillbaka för att visa knapptexterna.
+
+Objektdetaljer och navigering kan vara öppna samtidigt. Navigeringen
+placeras bredvid detaljfönstren på dator; på små skärmar får de skilda
+ytor med intern rullning. Toolbarens detaljikon visar om det markerade
+objektets panel visas, även när flera fönster är öppna.
+
+Nya detaljfönster öppnas nära kartobjektet som valts. Placeringen
+anpassas efter skärmkanten och navigeringens utrymme. Ett redan öppet
+fönster behåller den placering du gett det. Mobilens kompakta fönstervy
+använder sin tillgängliga yta.
+
 Bakgrundsdrag roterar; Skift och dragning panorerar. Kartans piltangenter
 panorerar, Skift och pilar roterar, plus/minus zoomar. Webbläsarens
 zoomkommandon lämnas orörda. Objekt kan dras eller flyttas med knappar.
@@ -151,7 +185,8 @@ En höjdguide visar förflyttningen. Du kan växla Skift under dragningen;
 sidled och djup låses medan höjdflytten pågår.
 Ett andra stillastående finger ger samma höjdflytt på pekskärm.
 Den befintliga kartans gester hanterar två fingrars panorering och zoom.
-Stjärnhimlen kan slås av och på under **Navigera**. Den följer kamerans
+Stjärnhimlen kan slås av och på under **Inställningar → Rymdkartan**.
+Den följer kamerans
 rotation och zoom, men inte panorering eller objektens placeringar.
 
 Kamerabyten sker utan animation. Korta mobilvyer använder intern rullning
@@ -164,6 +199,10 @@ mobilväljaren.
 - Fri överblick: [dator](A-dator.png), [mobil](A-mobil.png).
 - [Flerval med alla direkta samband](A-flerval.png) och
   [samma urval efter dubbelklick till detaljer](A-flerval-detaljer.png).
+- [Navigeringspanel med objektflytt](A-navigering.png).
+- Mininavigering: [dator](A-mininavigering.png),
+  [mobil](A-mininavigering-mobil.png).
+- [Navigering och detaljer samtidigt](A-navigation-coexist.png).
 - [Samma rumsliga grupper efter rotation och lutning](A-djup-roterad.png).
 - [Höjdguide på mobil](A-hojdguide-mobil.png).
 - Ett sammanhang: [dator](B-dator.png), [mobil](B-mobil.png).
@@ -217,6 +256,16 @@ Lokala Chromium-kontroller omfattar följande:
   Home ramar in hela kartan och behåller samma återgångsvy.
 - Navigeringspanelen får tangentbordsfokus när den öppnas. Escape
   stänger den och återför fokus till verktygslådans kompass.
+- Objektflytt genom navigeringens sex riktningar ändrar endast det
+  markerade objektet. Kameran, övriga placeringar och utkastet består.
+  Kameraknapparna ligger kvar när urvalet växlar mellan noll, ett och flera.
+- Normal navigering och miniläge visar detaljer samtidigt på dator och
+  mobil utan automatisk överlappning. Båda öppningsordningarna ingår.
+  Detaljikonens markering följer mobilens synliga objektfönster.
+- Nya detaljfönster placeras nära kartobjektet och inom tillgänglig yta.
+  Att återaktivera en redan öppen, flyttad panel bevarar dess placering.
+- Navigeringens titelrad kan dras eller flyttas med piltangenter utan
+  kamerarörelse. Escape avbryter dragningen; krysset stänger fönstret.
 - Paneldrag som inte flyttar kameran och rotation genom dragning i fri
   kartyta efter panelplacering. Återgång till föregående kameravy och
   emulerad pekrotation på mobil ingår.
@@ -249,9 +298,10 @@ Närliggande markörer kan överlappa i täta utsnitt; använd zoom, fokus och
 listan. Läsbarheten hos den rumsliga överblicken kräver användarens
 bedömning, särskilt på mobil.
 
-Skift-klick för flerval och stjärnrörelse vid panorering är noterade
-önskemål att bedöma vidare. De ingår inte i denna version eller i
-originalets kontrollerade beteende.
+Flerval använder Ctrl/Cmd-klick; det ersätter det tidigare önskemålet om
+Skift-klick. Skift används för höjdflyttning och panorering.
+Önskemålet om stjärnrörelse vid panorering återstår att lösa. Den
+nuvarande stjärnhimlen reagerar på rotation och zoom, men inte panorering.
 
 ## Produktregler som ligger fast
 

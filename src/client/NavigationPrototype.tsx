@@ -21,7 +21,10 @@ import {
   type ThemeMode,
   usePrototypeTheme,
 } from './NavigationPrototypeTheme.js';
-import { NavigationPrototypeWindows } from './NavigationPrototypeWindows.js';
+import {
+  NavigationPrototypeWindows,
+  type PrototypeWindowAnchor,
+} from './NavigationPrototypeWindows.js';
 import { PrototypeIcon } from './VisualPrototype.js';
 import { VisualPrototypeDFrame } from './VisualPrototypeDFrame.js';
 import { VisualPrototypeMap } from './VisualPrototypeMap.js';
@@ -45,7 +48,7 @@ const variants = {
   },
 };
 type Variant = keyof typeof variants;
-type WorkWindow = { id: string; page: NavPage; objectId?: string };
+type WorkWindow = { id: string; page: NavPage; objectId?: string; anchor?: PrototypeWindowAnchor };
 type Scenario =
   | 'normal'
   | 'empty'
@@ -189,6 +192,9 @@ export function NavigationPrototype() {
     initialWindow ? [initialWindow] : [],
   );
   const [activeWindow, setActiveWindow] = useState<string | null>(initialWindow?.id ?? null);
+  const [compactWindows, setCompactWindows] = useState(
+    () => window.matchMedia('(max-width: 1000px)').matches,
+  );
   const [layoutVersion, setLayoutVersion] = useState(0);
   const [tabs, setTabs] = useState<NavPage[]>([]);
   const [trail, setTrail] = useState<NavPage[]>([]);
@@ -200,6 +206,16 @@ export function NavigationPrototype() {
   const workspaceRef = useRef<HTMLElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const ready = !['access', 'signin', 'setup', 'loading', 'missing'].includes(scenario);
+  const workVisible = ready && !utility && !statusOpen && windows.length > 0;
+  const visibleWindowId = windows.some((item) => item.id === activeWindow)
+    ? activeWindow
+    : windows[0]?.id;
+  const selectedDetailsVisible =
+    workVisible &&
+    selection.ids.length > 0 &&
+    windows.some(
+      (item) => item.objectId === selected && (!compactWindows || item.id === visibleWindowId),
+    );
   const administrator = role === 'administrator' || role === 'administrator-operator';
   const operator = role === 'operator' || role === 'administrator-operator';
   const baseObject = navObjects.find((object) => object.id === selected) ?? navObjects[0];
@@ -240,6 +256,28 @@ export function NavigationPrototype() {
     if (next === 'map') return;
     const objectPage = next === 'edit' || next === 'detail';
     const id = objectPage ? `object-${objectId}` : next;
+    const marker =
+      study && objectPage
+        ? rootRef.current?.querySelector<HTMLElement>(
+            `.ms-marker[data-object-id="${CSS.escape(objectId)}"]`,
+          )
+        : null;
+    const markerBounds = marker?.getBoundingClientRect();
+    const objectAnchor =
+      markerBounds &&
+      markerBounds.width > 0 &&
+      markerBounds.height > 0 &&
+      markerBounds.right > 0 &&
+      markerBounds.left < window.innerWidth &&
+      markerBounds.bottom > 0 &&
+      markerBounds.top < window.innerHeight
+        ? {
+            left: markerBounds.left,
+            right: markerBounds.right,
+            top: markerBounds.top,
+            bottom: markerBounds.bottom,
+          }
+        : undefined;
     setWindows((previous) => {
       const existing = previous.find((item) => item.id === id);
       if (existing) {
@@ -247,7 +285,10 @@ export function NavigationPrototype() {
         if (next === 'detail' && existing.page === 'edit') return previous;
         return previous.map((item) => (item.id === id ? { ...item, page: next } : item));
       }
-      return [...previous, { id, page: next, objectId: objectPage ? objectId : undefined }];
+      return [
+        ...previous,
+        { id, page: next, objectId: objectPage ? objectId : undefined, anchor: objectAnchor },
+      ];
     });
     setActiveWindow(id);
   }
@@ -259,7 +300,7 @@ export function NavigationPrototype() {
   }
   function go(next: NavPage, objectId = selected) {
     returnFocus.current = document.activeElement as HTMLElement;
-    study?.setNavigationOpen(false);
+    if (next !== 'detail' && next !== 'edit') study?.setNavigationOpen(false);
     setExpanded(false);
     setAnchor(null);
     setStatusOpen(false);
@@ -492,6 +533,13 @@ export function NavigationPrototype() {
     if (hasStudyProposals) setSaveState('idle');
   }, [hasStudyProposals]);
 
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 1000px)');
+    const update = () => setCompactWindows(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -688,6 +736,22 @@ export function NavigationPrototype() {
         setBuffer={(value) => setBuffers((previous) => ({ ...previous, [objectId]: value }))}
         staged={staged}
         additionalDraftCount={hasStudyProposals ? 4 : 0}
+        mapSettings={
+          study ? (
+            <section className="np-stack" aria-labelledby="mp-map-settings-title">
+              <h3 id="mp-map-settings-title">Rymdkartan</h3>
+              <button
+                type="button"
+                aria-pressed={study.stars}
+                onClick={() => study.setStars(!study.stars)}
+              >
+                <PrototypeIcon name="stars" />
+                {study.stars ? 'Dölj stjärnhimmel' : 'Visa stjärnhimmel'}
+              </button>
+              <p className="np-muted">Systemets minskade rörelse stänger av stjärnhimlen.</p>
+            </section>
+          ) : undefined
+        }
         additionalDraft={
           hasStudyProposals ? (
             <ul>
@@ -799,6 +863,8 @@ export function NavigationPrototype() {
       data-theme={theme}
       data-variant={variant}
       data-expanded={expanded}
+      data-navigation-open={study?.navigationOpen ?? false}
+      data-open-work={workVisible}
     >
       <a className="np-skip" href="#np-tools">
         Till verktygen
@@ -870,7 +936,7 @@ export function NavigationPrototype() {
                       : 'Markera ett objekt för att visa detaljer',
                     () => selectObject(selected),
                     'details',
-                    windows.some((item) => item.objectId === selected),
+                    selectedDetailsVisible,
                     !selection.ids.length,
                   )}
                   <button
@@ -884,6 +950,10 @@ export function NavigationPrototype() {
                     onClick={() => {
                       setExpanded(false);
                       setStatusOpen(false);
+                      if (!study.navigationOpen && utility) {
+                        setUtilityTrail([]);
+                        updateParams({ panel: '' });
+                      }
                       study.setNavigationOpen(!study.navigationOpen);
                     }}
                   >
@@ -1038,6 +1108,7 @@ export function NavigationPrototype() {
                   ? `${pageTitles[item.page]} · ${savedNames[item.objectId] ?? navObjects.find((object) => object.id === item.objectId)?.name}`
                   : pageTitles[item.page],
                 content: contents(item.page, item.objectId),
+                anchor: item.anchor,
               }))}
               activeId={activeWindow}
               onActivate={setActiveWindow}

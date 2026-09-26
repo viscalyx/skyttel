@@ -11,7 +11,13 @@ import {
 } from 'react';
 import './navigation-prototype-windows.css';
 
-export type PrototypeWindow = { id: string; title: string; content: ReactNode };
+export type PrototypeWindowAnchor = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>;
+export type PrototypeWindow = {
+  id: string;
+  title: string;
+  content: ReactNode;
+  anchor?: PrototypeWindowAnchor;
+};
 
 type Position = { x: number; y: number };
 type Drag = {
@@ -31,6 +37,21 @@ function startingPosition(index: number, width: number): Position {
   return {
     x: (index % columns) * (panelWidth + panelGap),
     y: Math.floor(index / columns) * 52,
+  };
+}
+
+function anchoredPosition(
+  anchor: PrototypeWindowAnchor,
+  region: HTMLElement,
+  panel?: HTMLElement,
+): Position {
+  const bounds = region.getBoundingClientRect();
+  const width = panel?.offsetWidth ?? panelWidth;
+  const right = anchor.right - bounds.left + 12;
+  const left = anchor.left - bounds.left - width - 12;
+  return {
+    x: right + width <= region.clientWidth ? right : left >= 0 ? left : right,
+    y: anchor.top - bounds.top - 12,
   };
 }
 
@@ -104,9 +125,13 @@ export function NavigationPrototypeWindows({
         let changed = Object.keys(previous).length !== windows.length;
         const next: Record<string, Position> = {};
         windows.forEach((entry, index) => {
+          const panel = panelRefs.current.get(entry.id);
           const proposed =
-            (!resetPositions && previous[entry.id]) || startingPosition(index, region.clientWidth);
-          const position = clampPosition(proposed, region, panelRefs.current.get(entry.id));
+            (!resetPositions && previous[entry.id]) ||
+            (!resetPositions && entry.anchor
+              ? anchoredPosition(entry.anchor, region, panel)
+              : startingPosition(index, region.clientWidth));
+          const position = clampPosition(proposed, region, panel);
           next[entry.id] = position;
           if (position.x !== previous[entry.id]?.x || position.y !== previous[entry.id]?.y) {
             changed = true;
