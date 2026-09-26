@@ -76,6 +76,9 @@ växlar markeringen.
 Ctrl/Cmd+Alt och Enter öppnar detaljer. **Klick på tom rymd** tömmer
 urvalet och släcker all framhävning av samband. Dragning för att rotera
 eller panorera behåller urvalet. Detaljpaneler och kameravy finns kvar.
+Små ofrivilliga rörelser under ett tomrumsklick flyttar inte kameran
+och hindrar inte avmarkering. Ett snabbt nytt klick efter en dragning
+avmarkerar också direkt.
 Listans **Avmarkera alla** ger samma handling utan visuell kartnavigering.
 Listans **Lägg till i markeringen** och **Avmarkera** ger flerval utan
 modifierartangenter och utan att flytta kameran eller stänga listan.
@@ -259,6 +262,8 @@ Lokala Chromium-kontroller omfattar följande:
   även när kartgrafiken är dold.
 - Klick på tom rymd avmarkerar samtliga objekt och samband. Rotation
   och panorering genom dragning behåller markeringarna.
+  Små rörelser under klicket lämnar kameran och dess historik orörda.
+  Nästa tomrumsklick efter dragning fungerar även i snabb följd.
 - Sökträff visar en synlig markering, stänger enbart söklistan och
   bevarar annan pågående redigering och mikrofontillstånd. Listans
   separata detaljknapp fungerar även utan kartgrafik.

@@ -54,6 +54,7 @@ type Name = { id: string; text: string; kind: 'object' | 'relationship'; priorit
 
 const changeSymbol = { added: '+', changed: '~', removed: '×' };
 const changeName = { added: 'tillagt', changed: 'ändrat', removed: 'borttaget' };
+const dragThreshold = 8;
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
 function overlaps(a: Box, b: Box) {
@@ -743,11 +744,15 @@ export function MapStudyCanvas(props: Props) {
       }}
       onPointerMoveCapture={(event) => {
         const guard = clickGuard.current;
-        if (
-          guard?.pointer === event.pointerId &&
-          Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > (guard.empty ? 0 : 8)
-        )
-          guard.moved = true;
+        if (guard?.active && guard.pointer === event.pointerId) {
+          if (Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > dragThreshold)
+            guard.moved = true;
+          else if (guard.empty && !guard.moved && !guard.suppressed) {
+            // Keep click jitter out of the native camera gesture handler too.
+            // A second pointer or an established drag always passes through.
+            event.stopPropagation();
+          }
+        }
         movement.move(event);
       }}
       onPointerUpCapture={(event) => {
@@ -757,7 +762,7 @@ export function MapStudyCanvas(props: Props) {
           if (guard.empty) {
             const target = document.elementFromPoint(event.clientX, event.clientY);
             if (
-              Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > 0 ||
+              Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > dragThreshold ||
               (target !== canvasRef.current && target !== rootRef.current)
             )
               guard.suppressed = true;
@@ -807,7 +812,7 @@ export function MapStudyCanvas(props: Props) {
         const guard = clickGuard.current;
         if (
           (target === canvasRef.current || target === rootRef.current) &&
-          event.detail === 1 &&
+          event.detail > 0 &&
           guard?.empty &&
           !guard.active &&
           !guard.moved &&
