@@ -1249,7 +1249,7 @@ export function NavigationPrototype() {
                 Stäng jämförelsen
               </button>
             </div>
-            <p>B är vald riktning. A och C finns kvar som jämförelse.</p>
+            <p>B är godkänd. A och C finns kvar som jämförelse.</p>
           </section>
         )}
         {guide === 'settings' && (
@@ -1277,8 +1277,8 @@ export function NavigationPrototype() {
               </button>
             </div>
             <p>
-              Provpersonen har båda behörigheterna. Talet är simulerat och fortsätter här för att
-              visa den öppna beslutsfrågan.
+              Provpersonen har båda behörigheterna. Exemplet startar simulerat tal. Panelbyten
+              behåller mikrofonens tillstånd.
             </p>
           </section>
         )}

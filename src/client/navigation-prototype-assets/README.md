@@ -1,16 +1,27 @@
 # Fria paneler på Skyttels arbetsyta
 
-Kastbart underlag för beställarens prövning av
+Godkänt, kastbart designunderlag för
 [Hur organiseras hela Skyttel med rymdkartan som huvudsaklig arbetsyta?](https://github.com/viscalyx/skyttel/issues/104).
-B är vald riktning och utvecklas till flera fristående, flyttbara paneler.
-Denna iteration prövar hur panelerna fungerar tillsammans på dator och
-mobil. Gränsen för fortsatt tal är fortfarande en öppen fråga.
+B med flera fristående, flyttbara paneler är godkänd. Panelbyten behåller
+mikrofonens tillstånd. Arbetspaneler behöver inte återställas efter
+omladdning eller nästa besök. Navigationsfrågorna är avgjorda; detaljer
+för kartan, redigering och administration har egna beslutsärenden.
 
 Bekräftade beslut och beställarens preciseringar finns i ärendet:
 
 - [Ramar för prototypen och bevarande av arbete](https://github.com/viscalyx/skyttel/issues/104#issuecomment-5845195246).
 - [Informationsikonens innehåll](https://github.com/viscalyx/skyttel/issues/104#issuecomment-5845197848).
 - [B med fria paneler och temaval i verktygslådan](https://github.com/viscalyx/skyttel/issues/104#issuecomment-5845398082).
+- [Slutliga beslut och godkänt underlag i navigationsärendet](https://github.com/viscalyx/skyttel/issues/104#issuecomment-5845569635).
+
+## Grund för nästa prototyp
+
+Nästa prototyp ska grenas från den godkända grenen
+[`prototype/skyttel-navigation` i upstream](https://github.com/viscalyx/skyttel/tree/prototype/skyttel-navigation).
+Behåll D:s gemensamma skal, B:s fria paneler, de separata ikonerna för
+Inställningar, Information och Aktuell status samt temavalet Ljust,
+Mörkt och System direkt i verktygslådan. Utveckla nästa beslutsfråga på
+denna grund.
 
 ## Samma grund som D · Fri rymd
 
@@ -121,10 +132,11 @@ driftansvarigas behörigheter så att båda områdena går att se. Roller och
 åtkomstkontroller är fortfarande separata. **Provlägen och tillstånd**
 låter dig pröva medlem, administratör och driftansvarig var för sig.
 
-Exemplet markerar att talet fortsätter medan de här områdena öppnas.
-Det är ett synligt prövningsalternativ för den öppna talfrågan. Ingen
-verklig mikrofon används. **Stoppa tal** finns i verktygslådan och i
-panelen Aktuell status.
+Panelbyten behåller mikrofonens tillstånd, även i inställningar,
+administration och kostnader: aktivt lyssnande fortsätter och en pausad
+mikrofon förblir pausad. Användaren styr mikrofonen i verktygslådan.
+Exemplet visar aktivt tal; ingen verklig mikrofon används. **Stoppa tal**
+finns i verktygslådan och i panelen Aktuell status.
 
 ## Pröva eget arbete och olika tillstånd
 
@@ -167,12 +179,11 @@ till redigeringen. Byt alternativ på samma steg för att se skillnaden.
 [A på dator](A-dator.png), [A på mobil](A-mobil.png),
 [C på dator](C-dator.png) och [C på mobil](C-mobil.png).
 
-## Återkoppling som återstår
+## Bevarande av arbete och paneler
 
-Prövningen gäller detaljerna i de fria panelerna: placering, flyttning,
-val mellan flera öppna objekt och hur samma arbete fungerar på mobil.
-Använd det särskilda administrationsexemplet för att bedöma var talet
-ska fortsätta lyssna. Beslut och nya preciseringar dokumenteras i ärendet.
+B:s layout och panelmodell är godkända: flera objekt och samtalet kan
+vara öppna samtidigt, panelerna kan flyttas och stängas var för sig,
+och mobilvyn låter användaren välja bland öppna paneler.
 
 Prototypen bevarar urval, sökning, oskickad redigering, oskickad
 samtalstext och privat utkast mellan verktygsbyten och skärmstorlekar.
@@ -185,9 +196,12 @@ webbläsaren. Tillfälliga inställnings- och informationspaneler använder
 adressen och kan följas med webbläsarens tillbaka och framåt.
 
 Variant och tema kan delas i en länk. En direktadress till en vy kan
-öppna en arbetspanel vid start; flera öppna paneler och deras positioner
-återställs inte vid omladdning. Detta är en begränsning i provet och
-anger ingen regel för vad produkten ska bevara mellan sessioner.
+öppna en arbetspanel vid start. Arbetspaneler kan annars vara stängda
+efter omladdning eller nästa besök; deras öppna läge och placering
+behöver inte återställas. Beslutet gäller arbetspanelerna. Det innebär
+inte att privata utkast ska raderas eller att objektens personliga
+placeringar i kartan ska återställas. Prototypens påhittade innehåll
+finns enbart i minnet och är ingen modell för beständig lagring.
 
 ## Kontroller och avgränsningar
 
