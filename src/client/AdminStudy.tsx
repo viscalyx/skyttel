@@ -3,13 +3,19 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { NavPage } from './NavigationPrototypePages.js';
 import './admin-study.css';
 
-export type AdminVariant = 'A' | 'B' | 'C';
+export type AdminVariant = 'A' | 'B' | 'C' | 'D';
 type Phase = 'pending' | 'unknown' | 'failed' | 'stale' | 'cleanup' | 'done';
 type Outcome = 'done' | 'unknown' | 'failed' | 'stale' | 'cleanup';
 type Operation = { page: string; label: string; phase: Phase; attempt: number };
-export const adminNames = { A: 'Grupperade avsnitt', B: 'Sidomeny', C: 'Vad vill du göra?' };
+export const adminNames = {
+  A: 'Grupperade avsnitt',
+  B: 'Sidomeny',
+  C: 'Vad vill du göra?',
+  D: 'Egen inställningssida',
+};
 export const adminPages: NavPage[] = [
   'settings',
+  'profile',
   'administration',
   'members',
   'invitations',
@@ -307,7 +313,7 @@ export function AdminOperation({ model, go }: { model: AdminModel; go?: (page: N
 }
 
 type Item = { page: NavPage; title: string; detail: string; group: string };
-const items: Item[] = [
+export const adminItems: Item[] = [
   {
     page: 'login-methods',
     title: 'Inloggningssätt',
@@ -369,6 +375,7 @@ const items: Item[] = [
     group: 'Drift',
   },
 ];
+const items = adminItems;
 type MenuProps = { entries: Item[]; go: (page: NavPage) => void; mapSettings?: ReactNode };
 function Rows({ entries, go }: MenuProps) {
   return (
@@ -461,6 +468,47 @@ export function VariantC({ entries, go, mapSettings }: MenuProps) {
   );
 }
 
+export function VariantD({ entries, go, mapSettings }: MenuProps) {
+  return (
+    <div className="ad-d-overview">
+      <p className="ad-d-intro">Anpassa kartan och hantera hushållets tillgång och information.</p>
+      {Array.from(new Set(entries.map((item) => item.group))).map((group) => (
+        <section key={group} className="ad-d-category">
+          <div>
+            <h2>{group}</h2>
+            <p>
+              {group === 'Hushållets karta'
+                ? 'Gemensamma typer och din upplevelse av kartan.'
+                : group === 'Administration'
+                  ? 'För dig som ansvarar för hushållets tillgång och information.'
+                  : 'Installationens förbrukning och kostnadsantaganden.'}
+            </p>
+          </div>
+          <div className="ad-d-cards">
+            {entries
+              .filter((item) => item.group === group)
+              .map((item) => (
+                <button key={item.page} type="button" onClick={() => go(item.page)}>
+                  <strong>
+                    {item.title}
+                    <span aria-hidden="true">↗</span>
+                  </strong>
+                  <span>{item.detail}</span>
+                </button>
+              ))}
+            {group === 'Hushållets karta' && (
+              <div className="ad-d-appearance">
+                <h3>Kartans utseende</h3>
+                {mapSettings}
+              </div>
+            )}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 export function AdminStudyPage({
   page,
   model: m,
@@ -489,14 +537,7 @@ export function AdminStudyPage({
   const done = op?.phase === 'done';
   const run = (label: string, success: () => void) => m.run(page, label, success);
   let content: ReactNode;
-  if (page === 'settings' || page === 'administration') {
-    const entries = items.filter(
-      (item) =>
-        (item.group !== 'Administration' || administrator) &&
-        (item.group !== 'Drift' || operator) &&
-        (page !== 'administration' || item.group === 'Administration'),
-    );
-    const View = variant === 'B' ? VariantB : variant === 'C' ? VariantC : VariantA;
+  if (page === 'profile') {
     content = (
       <>
         <div className="ad-identity">
@@ -505,14 +546,55 @@ export function AdminStudyPage({
           </span>
           <div>
             <strong>Alex Lind</strong>
-            <p>{administrator ? 'Administratör' : 'Medlem'} · Hushållet Lind</p>
-            {operator && <small>Även driftansvarig för installationen</small>}
+            <p>alex@example.test</p>
+            <small>Skyttel-användare · sky-alex-101</small>
           </div>
         </div>
+        <p>
+          {administrator ? 'Administratör' : 'Medlem'} i Hushållet Lind.
+          {operator && ' Även driftansvarig för installationen.'}
+        </p>
+        <Rows entries={items.filter((item) => item.group === 'Ditt Skyttel')} go={go} />
+        <div className="ad-footer">
+          <span>Inloggad med Google</span>
+          <Button onClick={logout}>Logga ut</Button>
+        </div>
+      </>
+    );
+  } else if (page === 'settings' || page === 'administration') {
+    const entries = items.filter(
+      (item) =>
+        (item.group !== 'Administration' || administrator) &&
+        (item.group !== 'Drift' || operator) &&
+        (variant !== 'D' || item.group !== 'Ditt Skyttel') &&
+        (page !== 'administration' || item.group === 'Administration'),
+    );
+    const View =
+      variant === 'D'
+        ? VariantD
+        : variant === 'B'
+          ? VariantB
+          : variant === 'C'
+            ? VariantC
+            : VariantA;
+    content = (
+      <>
+        {variant !== 'D' && (
+          <div className="ad-identity">
+            <span className="ad-avatar" aria-hidden="true">
+              AL
+            </span>
+            <div>
+              <strong>Alex Lind</strong>
+              <p>{administrator ? 'Administratör' : 'Medlem'} · Hushållet Lind</p>
+              {operator && <small>Även driftansvarig för installationen</small>}
+            </div>
+          </div>
+        )}
         <View entries={entries} go={go} mapSettings={mapSettings} />
         <div className="ad-footer">
           <span>Alla medlemmar kan arbeta med hela kartan.</span>
-          <Button onClick={logout}>Logga ut</Button>
+          {variant !== 'D' && <Button onClick={logout}>Logga ut</Button>}
         </div>
       </>
     );

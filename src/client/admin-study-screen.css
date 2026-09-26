@@ -1,0 +1,341 @@
+/* Kastbar helsida för inställningar i alternativ D. */
+.ad-workspace-shell[hidden] {
+  display: none;
+}
+.ad-workspace-shell {
+  height: 100dvh;
+  width: 100%;
+  position: relative;
+}
+.vp-root.vp-variant-D.np-root.map-study.ad-host:has(.ad-screen) {
+  height: auto;
+  min-height: 100dvh;
+  overflow: auto;
+  background: var(--vp-bg);
+}
+.ad-host .ad-screen {
+  min-height: 100dvh;
+  background: var(--vp-bg);
+  padding-bottom: 150px;
+}
+.ad-host .ad-screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--vp-line);
+  background: var(--vp-surface);
+}
+.ad-host .ad-screen-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 21px;
+  font-weight: 700;
+}
+.ad-host .ad-screen-brand .vp-brand {
+  padding: 0;
+  min-width: 0;
+  width: auto;
+}
+.ad-host .ad-screen-brand :where(.vp-brand) > span {
+  display: none;
+}
+.ad-host .ad-screen-brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+.ad-host .ad-screen-brand small {
+  display: block;
+  color: var(--vp-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.ad-host .ad-screen-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ad-host .ad-screen-actions button {
+  min-height: 44px;
+}
+.ad-host .ad-screen-return {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ad-host .ad-screen-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+.ad-host .ad-screen-nav {
+  padding: 36px 22px;
+  border-right: 1px solid var(--vp-line);
+  min-width: 0;
+}
+.ad-host .ad-screen-household {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 0 12px 20px;
+  margin: 0;
+}
+.ad-host .ad-screen-household small {
+  display: block;
+  margin-top: 5px;
+  color: var(--vp-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.ad-host .ad-screen-nav section {
+  margin-top: 26px;
+}
+.ad-host .ad-screen-nav h2 {
+  padding: 0 12px;
+  margin: 0 0 8px;
+  color: var(--vp-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.ad-host .ad-screen-nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  width: 100%;
+  padding: 11px 12px;
+  margin: 3px 0;
+  text-align: left;
+  font-size: 13px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+}
+.ad-host .ad-screen-nav button[aria-current] {
+  background: var(--vp-accent);
+  color: var(--vp-ink);
+}
+.ad-host .ad-screen-main {
+  display: block;
+  min-width: 0;
+  padding: 40px clamp(24px, 4vw, 72px) 54px;
+}
+.ad-host .ad-screen-main > h1 {
+  width: fit-content;
+  margin: 8px 0 30px;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+.ad-host .ad-screen-main > .ad-content {
+  width: 100%;
+  max-width: 880px;
+}
+.ad-host .ad-screen-overview > .ad-content {
+  max-width: none;
+}
+.ad-host .ad-screen :is(button, input, select, summary) {
+  scroll-margin-block: 160px;
+}
+.ad-host .ad-screen-main :is(input, select) {
+  background: var(--vp-surface);
+  color: var(--vp-text);
+  border: 1px solid var(--vp-control-line);
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+.ad-host .ad-screen-main .ad-check input {
+  padding: 0;
+  min-height: 20px;
+}
+.ad-host .ad-screen-status {
+  position: fixed;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  bottom: 76px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 32px;
+  border-top: 1px solid var(--vp-line);
+  border-bottom: 1px solid var(--vp-line);
+  background: var(--vp-surface);
+}
+.ad-host .ad-screen-status button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+.ad-host .ad-screen-status p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--vp-muted);
+}
+.ad-host .ad-d-overview {
+  display: grid;
+  gap: 36px;
+}
+.ad-host .ad-d-intro {
+  font-size: 17px;
+  color: var(--vp-muted);
+  max-width: 60ch;
+}
+.ad-host .ad-d-category {
+  display: grid;
+  gap: 18px;
+}
+.ad-host .ad-d-category h2 {
+  margin: 0 0 6px;
+  font-size: 21px;
+  font-weight: 600;
+}
+.ad-host .ad-d-category > div > p {
+  color: var(--vp-muted);
+  font-size: 13px;
+}
+.ad-host .ad-d-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+.ad-host .ad-d-cards > button {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 14px;
+  padding: 24px;
+  min-height: 132px;
+  text-align: left;
+  background: var(--vp-surface);
+  border: 1px solid var(--vp-line);
+  border-radius: 16px;
+}
+.ad-host .ad-d-cards > button strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 16px;
+}
+.ad-host .ad-d-cards > button > span {
+  color: var(--vp-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+.ad-host .ad-d-appearance {
+  background: var(--vp-surface);
+  border: 1px solid var(--vp-line);
+  border-radius: 16px;
+  padding: 24px;
+}
+.ad-host .ad-d-appearance .ad-section {
+  border: 0;
+  padding-top: 12px;
+}
+@media (min-width: 1700px) {
+  .ad-host .ad-d-category {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 32px;
+  }
+}
+@media (max-width: 800px) {
+  .ad-host .ad-screen-header {
+    padding: 16px;
+    gap: 12px;
+  }
+  .ad-host .ad-screen-brand {
+    gap: 8px;
+    font-size: 17px;
+  }
+  .ad-host .ad-screen-brand img {
+    width: 30px;
+    height: 36px;
+  }
+  .ad-host .ad-screen-actions {
+    gap: 8px;
+  }
+  .ad-host .ad-screen-return {
+    font-size: 12px;
+    padding: 8px;
+  }
+  .ad-host .ad-screen-layout {
+    grid-template-columns: 1fr;
+  }
+  .ad-host .ad-screen-nav {
+    padding: 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--vp-line);
+  }
+  .ad-host .ad-screen-nav .ad-screen-household {
+    padding-bottom: 4px;
+  }
+  .ad-host .ad-screen-nav section {
+    margin-top: 12px;
+  }
+  .ad-host .ad-screen-nav section button {
+    display: inline-flex;
+    width: auto;
+    margin-right: 5px;
+    border-color: var(--vp-line);
+    font-size: 12px;
+  }
+  .ad-host .ad-screen-main {
+    padding: 26px 20px 48px;
+  }
+  .ad-host .ad-screen-status {
+    position: sticky;
+    top: 0;
+    bottom: auto;
+    margin-bottom: 0;
+    padding: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .ad-host .ad-screen {
+    padding-bottom: 92px;
+  }
+}
+
+.ad-host .ad-screen-nav-details > summary {
+  display: none;
+}
+@media (max-width: 800px) {
+  .ad-host .ad-screen-nav-details > summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid var(--vp-control-line);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .ad-host .ad-screen-nav-details > summary > span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--vp-muted);
+  }
+  .ad-host .ad-screen-nav-details[open] .ad-screen-household {
+    padding-top: 20px;
+  }
+  .ad-host .ad-screen-status {
+    gap: 8px;
+    padding: 8px 16px;
+  }
+  .ad-host .ad-screen-status p {
+    flex: 1;
+    min-width: 120px;
+    font-size: 11px;
+  }
+}

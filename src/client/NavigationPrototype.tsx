@@ -65,6 +65,7 @@ import {
   wideAdminPages,
 } from './AdminStudy.js';
 import { AdminStudyLab } from './AdminStudyLab.js';
+import { AdminStudyScreen } from './AdminStudyScreen.js';
 
 const variants = {
   A: {
@@ -109,6 +110,7 @@ const scenarios: Record<Scenario, string> = {
 };
 const utilityPages: NavPage[] = [
   'settings',
+  'profile',
   'help',
   'login-methods',
   'invitations',
@@ -191,7 +193,13 @@ export function NavigationPrototype() {
   const adminMode = params.get('prototype') === 'administration';
   const adminModel = useAdminStudy();
   const adminVariant: AdminVariant =
-    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
+    params.get('variant') === 'D'
+      ? 'D'
+      : params.get('variant') === 'B'
+        ? 'B'
+        : params.get('variant') === 'C'
+          ? 'C'
+          : 'A';
   const [welcome, setWelcome] = useState(false);
   const iconsMode = params.get('prototype') === 'icons' || adminMode;
   const imagesMode = params.get('prototype') === 'images' || iconsMode;
@@ -283,13 +291,15 @@ export function NavigationPrototype() {
   const [utilityTrail, setUtilityTrail] = useState<NavPage[]>([]);
   const previousAdminPage = useRef(utility);
   const utilityFocusPending = useRef(false);
+  const utilityOrigin = useRef('settings');
   useLayoutEffect(() => {
     if (utility || !utilityFocusPending.current) return;
     utilityFocusPending.current = false;
     const root = rootRef.current;
+    root?.scrollTo(0, 0);
     const target =
       root?.querySelector<HTMLElement>('.np-window[data-active="true"]:not([hidden]) h2') ??
-      root?.querySelector<HTMLElement>('[data-tool="settings"]');
+      root?.querySelector<HTMLElement>(`[data-tool="${utilityOrigin.current}"]`);
     target?.focus({ preventScroll: true });
   });
   useEffect(() => {
@@ -527,6 +537,12 @@ export function NavigationPrototype() {
     setAnchor(null);
     setStatusOpen(false);
     if (activeUtilityPages.includes(next)) {
+      if (!utility)
+        utilityOrigin.current =
+          next === 'profile' ||
+          ['login-methods', 'invitations', 'assistants', 'consent'].includes(next)
+            ? 'profile'
+            : 'settings';
       if (utility) setUtilityTrail((previous) => [...previous, utility]);
       updateParams({ panel: next });
       return;
@@ -1551,6 +1567,12 @@ export function NavigationPrototype() {
               : unsentCount || message
                 ? 'Oskickat innehåll finns kvar.'
                 : 'Inga osparade ändringar';
+  const adminFullPage =
+    adminMode &&
+    adminVariant === 'D' &&
+    showPanel &&
+    displayedPage !== 'profile' &&
+    (adminPages.includes(displayedPage) || displayedPage === 'types');
   function toolbarButton(
     name: string,
     label: string,
@@ -1587,731 +1609,784 @@ export function NavigationPrototype() {
       data-navigation-open={study?.navigationOpen ?? false}
       data-open-work={workVisible}
     >
-      <a className="np-skip" href="#np-tools">
+      <a className="np-skip" href={adminFullPage ? '#ad-screen-content' : '#np-tools'}>
         Till verktygen
       </a>
-      <a className="np-skip" href="#np-work">
+      <a className="np-skip" href={adminFullPage ? '#ad-screen-content' : '#np-work'}>
         Till arbetsytan
       </a>
-      <VisualPrototypeDFrame
-        expanded={expanded}
-        className="np-d-navigation"
-        context={
-          ready ? (
-            adminMode ? (
-              <>
-                {adminModel.values.household}
-                <span>Gemensam karta</span>
-              </>
-            ) : undefined
-          ) : (
-            <>Skyttel</>
-          )
-        }
-        actions={
-          ready && (
-            <>
-              <button
-                type="button"
-                className={`vp-d-action vp-d-talk${voice ? ' vp-d-talk-active' : ''}`}
-                aria-label={voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Starta tal'}
-                title={voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Starta tal'}
-                aria-pressed={voice}
-                onClick={toggleVoice}
-              >
-                {voice && !voiceMode ? (
-                  <svg
-                    className="vp-icon vp-d-stop-icon"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <rect
-                      x="8"
-                      y="8"
-                      width="8"
-                      height="8"
-                      rx="1"
-                      fill="currentColor"
-                      stroke="none"
-                    />
-                  </svg>
-                ) : (
-                  <PrototypeIcon name="mic" />
-                )}
-                <span className="vp-d-label">
-                  {voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Prata med Skyttel'}
-                </span>
-              </button>
-              {toolbarButton(
-                'text',
-                'Samtal och text',
-                () => go('conversation'),
-                'conversation',
-                page === 'conversation' || showConversation,
-              )}
-              {toolbarButton(
-                study ? 'search' : 'list',
-                study ? 'Sök i kartan' : 'Objekt och samband',
-                () => go('list'),
-                'list',
-                page === 'list' ||
-                  (variant === 'B' && windows.some((item) => item.page === 'list')),
-              )}
-              {study && (
+      <div className="ad-workspace-shell" hidden={adminFullPage}>
+        <VisualPrototypeDFrame
+          expanded={expanded}
+          className="np-d-navigation"
+          context={
+            ready ? (
+              adminMode ? (
                 <>
-                  {toolbarButton(
-                    'details',
-                    selection.ids.length
-                      ? `Visa detaljer för ${currentObject.name}`
-                      : 'Markera ett objekt för att visa detaljer',
-                    () => selectObject(selected),
-                    'details',
-                    selectedDetailsVisible,
-                    !selection.ids.length,
-                  )}
-                  <button
-                    type="button"
-                    className="vp-d-action np-tool"
-                    data-tool="navigate"
-                    aria-label="Navigera"
-                    title="Navigera"
-                    aria-controls="mp-navigation"
-                    aria-expanded={study.navigationOpen}
-                    onClick={() => {
-                      setExpanded(false);
-                      setStatusOpen(false);
-                      if (!study.navigationOpen && utility) {
-                        setUtilityTrail([]);
-                        updateParams({ panel: '' });
-                      }
-                      study.setNavigationOpen(!study.navigationOpen);
-                    }}
-                  >
-                    <PrototypeIcon name="compass" />
-                    <span className="vp-d-label">Navigera</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="vp-d-action np-tool"
-                    data-tool="focus-selection"
-                    aria-label="Fokusera markering"
-                    title="Fokusera markering och direkt kopplade objekt"
-                    disabled={study.noGraphics || !selection.ids.length}
-                    onClick={focusStudySelection}
-                  >
-                    <PrototypeIcon name="focus-selection" />
-                    <span className="vp-d-label">Fokusera markering</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="vp-d-action np-tool"
-                    data-tool="overview"
-                    aria-label={
-                      study.canReturnFromOverview ? 'Återgå till föregående vy' : 'Visa hela kartan'
-                    }
-                    title={
-                      study.canReturnFromOverview ? 'Återgå till föregående vy' : 'Visa hela kartan'
-                    }
-                    disabled={study.noGraphics}
-                    onClick={() => study.cameraRef.current?.toggleOverview()}
-                  >
-                    <PrototypeIcon name={study.canReturnFromOverview ? 'restore-view' : 'frame'} />
-                    <span className="vp-d-label">
-                      {study.canReturnFromOverview
-                        ? 'Återgå till föregående vy'
-                        : 'Visa hela kartan'}
-                    </span>
-                  </button>
+                  {adminModel.values.household}
+                  <span>Gemensam karta</span>
                 </>
-              )}
-            </>
-          )
-        }
-        footer={
-          ready && (
-            <>
-              <NavigationPrototypeTheme
-                mode={themeMode}
-                onChange={(mode) => updateParams({ theme: mode }, true)}
-                expanded={expanded}
-              />
-              {toolbarButton(
-                'settings',
-                'Inställningar',
-                () => (utility === 'settings' ? closeUtility() : go('settings')),
-                'settings',
-                utility === 'settings',
-              )}
-              {toolbarButton(
-                'info',
-                'Information',
-                () => (utility === 'help' ? closeUtility() : go('help')),
-                'information',
-                utility === 'help',
-              )}
-              {toolbarButton(
-                'activity',
-                'Aktuell status',
-                () => setStatusOpen((previous) => !previous),
-                'status',
-                statusOpen,
-              )}
-              {toolbarButton(
-                expanded ? 'back' : 'arrow',
-                expanded ? 'Dölj verktygsnamn' : 'Visa verktygsnamn',
-                () => setExpanded((previous) => !previous),
-                'expand',
-                expanded,
-              )}
-            </>
-          )
-        }
-        status={
-          voiceMode && ready ? (
-            <>
-              <VoiceStudyFeedback
-                model={voiceStudy}
-                variant={feedbackVariant}
-                onConversation={() => openVoicePage('conversation')}
-                onDraft={() => openVoicePage(saveState === 'saved' ? 'save-attempts' : 'draft')}
-                onSave={beginSave}
-              />
-              {profileBusy && (
-                <p className="vs-unsent" role="status">
-                  Förbereder profilbilden. Vänta innan du sparar.
-                </p>
-              )}
-              {hiddenProfileError && (
-                <div className="os-save-error" role="alert">
-                  <p>
-                    {detailModel.current(hiddenProfileError[0]).name}: {hiddenProfileError[1]}
-                  </p>
-                  <button type="button" onClick={() => go('edit', hiddenProfileError[0])}>
-                    Visa bildfelet
-                  </button>
-                </div>
-              )}
-              {objectsMode && identitySaveBlocked && detailModel.unresolvedIds.length > 0 && (
-                <div className="os-save-error" role="alert">
-                  <p>
-                    Inget sparades. Ange om {detailModel.current(detailModel.unresolvedIds[0]).name}{' '}
-                    är identifierat eller ospecificerat före sparandet.
-                  </p>
-                  <button type="button" onClick={() => go('edit', detailModel.unresolvedIds[0])}>
-                    Besvara identitetsfrågan
-                  </button>
-                </div>
-              )}
-              {unsentCount > 0 && (
-                <p className="vs-unsent" role="status">
-                  {unsentCount}{' '}
-                  {unsentCount === 1 ? 'oskickad redigering' : 'oskickade redigeringar'} · finns
-                  kvar i sina fönster
-                </p>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="vp-status" role="status" aria-live="polite">
-                <span className="vp-status-symbol">
-                  <PrototypeIcon
-                    name={
-                      saveState === 'failed' || scenario === 'network'
-                        ? 'alert'
-                        : voice
-                          ? 'mic'
-                          : 'check'
-                    }
-                  />
-                </span>
-                <div>
-                  <strong>{ready ? statusTitle : scenarios[scenario]}</strong>
-                  <span>
-                    {scenario === 'network'
-                      ? 'Nätanslutningen saknas. Ditt arbete finns kvar.'
-                      : statusSubtitle}
+              ) : undefined
+            ) : (
+              <>Skyttel</>
+            )
+          }
+          actions={
+            ready && (
+              <>
+                <button
+                  type="button"
+                  className={`vp-d-action vp-d-talk${voice ? ' vp-d-talk-active' : ''}`}
+                  aria-label={voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Starta tal'}
+                  title={voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Starta tal'}
+                  aria-pressed={voice}
+                  onClick={toggleVoice}
+                >
+                  {voice && !voiceMode ? (
+                    <svg
+                      className="vp-icon vp-d-stop-icon"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <rect
+                        x="8"
+                        y="8"
+                        width="8"
+                        height="8"
+                        rx="1"
+                        fill="currentColor"
+                        stroke="none"
+                      />
+                    </svg>
+                  ) : (
+                    <PrototypeIcon name="mic" />
+                  )}
+                  <span className="vp-d-label">
+                    {voiceMode ? voiceStudy.micLabel : voice ? 'Stoppa tal' : 'Prata med Skyttel'}
                   </span>
-                </div>
-              </div>
-              {voice && (
-                <div className="vp-d-audio-feedback">
-                  <span className="vp-d-waveform" aria-hidden="true">
-                    {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
-                      <i key={bar} />
-                    ))}
-                  </span>
-                  <p className="vp-d-sound-status">Tyst just nu · Lyssnar fortfarande</p>
-                </div>
-              )}
-              <span className="np-sr-status" role="status">
-                {status}
-              </span>
-            </>
-          )
-        }
-        map={
-          <div
-            className="np-map-backdrop"
-            data-camera={camera}
-            inert={
-              !ready || scenario === 'no-graphics' || scenario === 'empty' || adminContentLocked
-            }
-          >
-            {ready &&
-              scenario !== 'no-graphics' &&
-              scenario !== 'empty' &&
-              (study ? (
-                <MapStudyMap
-                  selectedId={selected}
-                  selectedIds={selection.ids}
-                  onSelect={markObject}
-                  onClearSelection={clearSelection}
-                  onOpenDetails={selectObject}
-                  showSelectionActions={!windows.length && !utility && !statusOpen}
-                  onList={() => go('list')}
-                  theme={theme}
-                  names={displayedNames}
-                  staged={displayedStaged}
-                  descriptions={detailsMode ? detailModel.descriptions : undefined}
-                  objectChanges={
-                    detailsMode
-                      ? {
-                          subscription:
-                            (imagesMode && Object.hasOwn(profileModel.staged, 'subscription')) ||
-                            (iconsMode && Object.hasOwn(iconModel.staged, 'subscription'))
-                              ? 'changed'
-                              : undefined,
+                </button>
+                {toolbarButton(
+                  'text',
+                  'Samtal och text',
+                  () => go('conversation'),
+                  'conversation',
+                  page === 'conversation' || showConversation,
+                )}
+                {toolbarButton(
+                  study ? 'search' : 'list',
+                  study ? 'Sök i kartan' : 'Objekt och samband',
+                  () => go('list'),
+                  'list',
+                  page === 'list' ||
+                    (variant === 'B' && windows.some((item) => item.page === 'list')),
+                )}
+                {study && (
+                  <>
+                    {toolbarButton(
+                      'details',
+                      selection.ids.length
+                        ? `Visa detaljer för ${currentObject.name}`
+                        : 'Markera ett objekt för att visa detaljer',
+                      () => selectObject(selected),
+                      'details',
+                      selectedDetailsVisible,
+                      !selection.ids.length,
+                    )}
+                    <button
+                      type="button"
+                      className="vp-d-action np-tool"
+                      data-tool="navigate"
+                      aria-label="Navigera"
+                      title="Navigera"
+                      aria-controls="mp-navigation"
+                      aria-expanded={study.navigationOpen}
+                      onClick={() => {
+                        setExpanded(false);
+                        setStatusOpen(false);
+                        if (!study.navigationOpen && utility) {
+                          setUtilityTrail([]);
+                          updateParams({ panel: '' });
                         }
-                      : undefined
-                  }
-                  objectTypeNames={typesMode ? objectTypeNames : undefined}
-                  objectOverrides={objectsMode ? projectedObjects : undefined}
-                  relationshipOverrides={typesMode ? projectedRelationships : undefined}
+                        study.setNavigationOpen(!study.navigationOpen);
+                      }}
+                    >
+                      <PrototypeIcon name="compass" />
+                      <span className="vp-d-label">Navigera</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="vp-d-action np-tool"
+                      data-tool="focus-selection"
+                      aria-label="Fokusera markering"
+                      title="Fokusera markering och direkt kopplade objekt"
+                      disabled={study.noGraphics || !selection.ids.length}
+                      onClick={focusStudySelection}
+                    >
+                      <PrototypeIcon name="focus-selection" />
+                      <span className="vp-d-label">Fokusera markering</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="vp-d-action np-tool"
+                      data-tool="overview"
+                      aria-label={
+                        study.canReturnFromOverview
+                          ? 'Återgå till föregående vy'
+                          : 'Visa hela kartan'
+                      }
+                      title={
+                        study.canReturnFromOverview
+                          ? 'Återgå till föregående vy'
+                          : 'Visa hela kartan'
+                      }
+                      disabled={study.noGraphics}
+                      onClick={() => study.cameraRef.current?.toggleOverview()}
+                    >
+                      <PrototypeIcon
+                        name={study.canReturnFromOverview ? 'restore-view' : 'frame'}
+                      />
+                      <span className="vp-d-label">
+                        {study.canReturnFromOverview
+                          ? 'Återgå till föregående vy'
+                          : 'Visa hela kartan'}
+                      </span>
+                    </button>
+                  </>
+                )}
+              </>
+            )
+          }
+          footer={
+            ready && (
+              <>
+                <NavigationPrototypeTheme
+                  mode={themeMode}
+                  onChange={(mode) => updateParams({ theme: mode }, true)}
+                  expanded={expanded}
                 />
-              ) : (
-                <VisualPrototypeMap
-                  variant="A"
-                  selectedId={selected}
-                  names={savedNames}
-                  onSelect={() => selectObject('subscription')}
-                  onSelectObject={(object, origin) => {
-                    selectObject(object.id);
-                    setAnchor(origin);
-                  }}
+                {toolbarButton(
+                  'settings',
+                  'Inställningar',
+                  () => (utility === 'settings' ? closeUtility() : go('settings')),
+                  'settings',
+                  utility === 'settings',
+                )}
+                {adminMode &&
+                  adminVariant === 'D' &&
+                  toolbarButton(
+                    'profile',
+                    'Din profil',
+                    () => (utility === 'profile' ? closeUtility() : go('profile')),
+                    'profile',
+                    utility === 'profile',
+                  )}
+                {toolbarButton(
+                  'info',
+                  'Information',
+                  () => (utility === 'help' ? closeUtility() : go('help')),
+                  'information',
+                  utility === 'help',
+                )}
+                {toolbarButton(
+                  'activity',
+                  'Aktuell status',
+                  () => setStatusOpen((previous) => !previous),
+                  'status',
+                  statusOpen,
+                )}
+                {toolbarButton(
+                  expanded ? 'back' : 'arrow',
+                  expanded ? 'Dölj verktygsnamn' : 'Visa verktygsnamn',
+                  () => setExpanded((previous) => !previous),
+                  'expand',
+                  expanded,
+                )}
+              </>
+            )
+          }
+          status={
+            voiceMode && ready ? (
+              <>
+                <VoiceStudyFeedback
+                  model={voiceStudy}
+                  variant={feedbackVariant}
+                  onConversation={() => openVoicePage('conversation')}
+                  onDraft={() => openVoicePage(saveState === 'saved' ? 'save-attempts' : 'draft')}
+                  onSave={beginSave}
                 />
-              ))}
-          </div>
-        }
-      >
-        <main className="np-workspace" id="np-work" tabIndex={-1} ref={workspaceRef}>
-          {variant === 'B' && ready && (
-            <NavigationPrototypeWindows
-              windows={windows.map((item) => ({
-                id: item.id,
-                title: item.objectId
-                  ? `${pageTitles[item.page]} · ${displayedStaged[item.objectId] ?? displayedNames[item.objectId] ?? navObjects.find((object) => object.id === item.objectId)?.name}`
-                  : pageTitles[item.page],
-                content: contents(item.page, item.objectId),
-                anchor: item.anchor,
-              }))}
-              activeId={activeWindow}
-              onActivate={setActiveWindow}
-              onClose={closeWindow}
-              hidden={!!utility || statusOpen}
-              layoutVersion={layoutVersion}
-            />
-          )}
-          {ready && variant === 'C' && !utility && page === 'map' && tabs.length > 0 && (
-            <nav className="np-return-tabs np-tabs" aria-label="Öppna verktyg">
-              <span>Karta</span>
-              {tabs.map((tab) => (
-                <button type="button" key={tab} onClick={() => go(tab)}>
-                  {pageTitles[tab]}
-                </button>
-              ))}
-            </nav>
-          )}
-          {!study &&
-            ready &&
-            camera === 'focus' &&
-            !showPanel &&
-            !showConversation &&
-            !(variant === 'B' && windows.length) && (
-              <nav className="np-map-controls" aria-label="Kartans vy">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCamera('overview');
-                    if (page !== 'map') closePanel();
-                  }}
-                >
-                  Överblick
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCamera((previous) => (previous === 'focus' ? 'overview' : 'focus'))
-                  }
-                  aria-pressed={camera === 'focus'}
-                >
-                  Fokus: {currentObject.name}
-                </button>
+                {profileBusy && (
+                  <p className="vs-unsent" role="status">
+                    Förbereder profilbilden. Vänta innan du sparar.
+                  </p>
+                )}
+                {hiddenProfileError && (
+                  <div className="os-save-error" role="alert">
+                    <p>
+                      {detailModel.current(hiddenProfileError[0]).name}: {hiddenProfileError[1]}
+                    </p>
+                    <button type="button" onClick={() => go('edit', hiddenProfileError[0])}>
+                      Visa bildfelet
+                    </button>
+                  </div>
+                )}
+                {objectsMode && identitySaveBlocked && detailModel.unresolvedIds.length > 0 && (
+                  <div className="os-save-error" role="alert">
+                    <p>
+                      Inget sparades. Ange om{' '}
+                      {detailModel.current(detailModel.unresolvedIds[0]).name} är identifierat eller
+                      ospecificerat före sparandet.
+                    </p>
+                    <button type="button" onClick={() => go('edit', detailModel.unresolvedIds[0])}>
+                      Besvara identitetsfrågan
+                    </button>
+                  </div>
+                )}
+                {unsentCount > 0 && (
+                  <p className="vs-unsent" role="status">
+                    {unsentCount}{' '}
+                    {unsentCount === 1 ? 'oskickad redigering' : 'oskickade redigeringar'} · finns
+                    kvar i sina fönster
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="vp-status" role="status" aria-live="polite">
+                  <span className="vp-status-symbol">
+                    <PrototypeIcon
+                      name={
+                        saveState === 'failed' || scenario === 'network'
+                          ? 'alert'
+                          : voice
+                            ? 'mic'
+                            : 'check'
+                      }
+                    />
+                  </span>
+                  <div>
+                    <strong>{ready ? statusTitle : scenarios[scenario]}</strong>
+                    <span>
+                      {scenario === 'network'
+                        ? 'Nätanslutningen saknas. Ditt arbete finns kvar.'
+                        : statusSubtitle}
+                    </span>
+                  </div>
+                </div>
+                {voice && (
+                  <div className="vp-d-audio-feedback">
+                    <span className="vp-d-waveform" aria-hidden="true">
+                      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
+                        <i key={bar} />
+                      ))}
+                    </span>
+                    <p className="vp-d-sound-status">Tyst just nu · Lyssnar fortfarande</p>
+                  </div>
+                )}
+                <span className="np-sr-status" role="status">
+                  {status}
+                </span>
+              </>
+            )
+          }
+          map={
+            <div
+              className="np-map-backdrop"
+              data-camera={camera}
+              inert={
+                !ready || scenario === 'no-graphics' || scenario === 'empty' || adminContentLocked
+              }
+            >
+              {ready &&
+                scenario !== 'no-graphics' &&
+                scenario !== 'empty' &&
+                (study ? (
+                  <MapStudyMap
+                    selectedId={selected}
+                    selectedIds={selection.ids}
+                    onSelect={markObject}
+                    onClearSelection={clearSelection}
+                    onOpenDetails={selectObject}
+                    showSelectionActions={!windows.length && !utility && !statusOpen}
+                    onList={() => go('list')}
+                    theme={theme}
+                    names={displayedNames}
+                    staged={displayedStaged}
+                    descriptions={detailsMode ? detailModel.descriptions : undefined}
+                    objectChanges={
+                      detailsMode
+                        ? {
+                            subscription:
+                              (imagesMode && Object.hasOwn(profileModel.staged, 'subscription')) ||
+                              (iconsMode && Object.hasOwn(iconModel.staged, 'subscription'))
+                                ? 'changed'
+                                : undefined,
+                          }
+                        : undefined
+                    }
+                    objectTypeNames={typesMode ? objectTypeNames : undefined}
+                    objectOverrides={objectsMode ? projectedObjects : undefined}
+                    relationshipOverrides={typesMode ? projectedRelationships : undefined}
+                  />
+                ) : (
+                  <VisualPrototypeMap
+                    variant="A"
+                    selectedId={selected}
+                    names={savedNames}
+                    onSelect={() => selectObject('subscription')}
+                    onSelectObject={(object, origin) => {
+                      selectObject(object.id);
+                      setAnchor(origin);
+                    }}
+                  />
+                ))}
+            </div>
+          }
+        >
+          <main className="np-workspace" id="np-work" tabIndex={-1} ref={workspaceRef}>
+            {variant === 'B' && ready && (
+              <NavigationPrototypeWindows
+                windows={windows.map((item) => ({
+                  id: item.id,
+                  title: item.objectId
+                    ? `${pageTitles[item.page]} · ${displayedStaged[item.objectId] ?? displayedNames[item.objectId] ?? navObjects.find((object) => object.id === item.objectId)?.name}`
+                    : pageTitles[item.page],
+                  content: contents(item.page, item.objectId),
+                  anchor: item.anchor,
+                }))}
+                activeId={activeWindow}
+                onActivate={setActiveWindow}
+                onClose={closeWindow}
+                hidden={!!utility || statusOpen}
+                layoutVersion={layoutVersion}
+              />
+            )}
+            {ready && variant === 'C' && !utility && page === 'map' && tabs.length > 0 && (
+              <nav className="np-return-tabs np-tabs" aria-label="Öppna verktyg">
+                <span>Karta</span>
+                {tabs.map((tab) => (
+                  <button type="button" key={tab} onClick={() => go(tab)}>
+                    {pageTitles[tab]}
+                  </button>
+                ))}
               </nav>
             )}
-          {ready &&
-            !showPanel &&
-            !showConversation &&
-            !(variant === 'B' && windows.length) &&
-            (!adminMode || scenario !== 'empty' || welcome) &&
-            ['empty', 'no-graphics'].includes(scenario) && (
-              <section className="np-empty">
-                <p className="np-kicker">
-                  {scenario === 'empty' ? 'Börja med något du känner till' : 'Samma arbete i text'}
-                </p>
-                <h1>
-                  {scenario === 'empty' ? 'Vad hör ihop hemma hos er?' : 'Kartan kan inte visas'}
-                </h1>
-                <p>
-                  {scenario === 'empty'
-                    ? 'Berätta om en tjänst, en bostad eller ett avtal. Kartan växer när du väljer att spara.'
-                    : 'Du kan hitta objekt, läsa samband och ändra uppgifter i listan.'}
-                </p>
-                <button
-                  className="np-primary"
-                  type="button"
-                  onClick={scenario === 'empty' ? toggleVoice : () => go('list')}
-                >
-                  {scenario === 'empty' ? 'Börja prata' : 'Öppna objekt och samband'}
-                </button>
-                <button type="button" onClick={() => go('conversation')}>
-                  Skriv i stället
-                </button>
-                {scenario === 'empty' && (
-                  <button type="button" onClick={() => go(adminMode ? 'list' : 'new-object')}>
-                    {adminMode ? 'Öppna listan' : 'Lägg till manuellt'}
+            {!study &&
+              ready &&
+              camera === 'focus' &&
+              !showPanel &&
+              !showConversation &&
+              !(variant === 'B' && windows.length) && (
+                <nav className="np-map-controls" aria-label="Kartans vy">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCamera('overview');
+                      if (page !== 'map') closePanel();
+                    }}
+                  >
+                    Överblick
                   </button>
-                )}
-                {adminMode && (
-                  <button type="button" onClick={() => setWelcome(false)}>
-                    Stäng vägledningen
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCamera((previous) => (previous === 'focus' ? 'overview' : 'focus'))
+                    }
+                    aria-pressed={camera === 'focus'}
+                  >
+                    Fokus: {currentObject.name}
                   </button>
-                )}
-              </section>
-            )}
-          {showPanel && (
-            <div
-              className={`np-panel-host${adminMode && wideAdminPages.includes(displayedPage) ? ' ad-wide' : ''}${adminMode && displayedPage === 'settings' ? ` ad-settings-${adminVariant}` : ''}`}
-              hidden={panelHidden}
-            >
-              <Panel
-                page={displayedPage}
-                locked={adminContentLocked}
-                onClose={closePanel}
-                onBack={utility || trail.length ? goBack : undefined}
-                className={anchor && !utility && mainPage === 'detail' ? 'np-anchored-detail' : ''}
-                style={anchor && !utility && mainPage === 'detail' ? popupStyle : undefined}
-                extra={
-                  variant === 'C' &&
-                  !utility && (
-                    <nav className="np-tabs" aria-label="Öppna verktyg">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          go('map');
-                          restoreFocus();
-                        }}
-                      >
-                        Karta
-                      </button>
-                      {tabs.map((tab) => (
+                </nav>
+              )}
+            {ready &&
+              !showPanel &&
+              !showConversation &&
+              !(variant === 'B' && windows.length) &&
+              (!adminMode || scenario !== 'empty' || welcome) &&
+              ['empty', 'no-graphics'].includes(scenario) && (
+                <section className="np-empty">
+                  <p className="np-kicker">
+                    {scenario === 'empty'
+                      ? 'Börja med något du känner till'
+                      : 'Samma arbete i text'}
+                  </p>
+                  <h1>
+                    {scenario === 'empty' ? 'Vad hör ihop hemma hos er?' : 'Kartan kan inte visas'}
+                  </h1>
+                  <p>
+                    {scenario === 'empty'
+                      ? 'Berätta om en tjänst, en bostad eller ett avtal. Kartan växer när du väljer att spara.'
+                      : 'Du kan hitta objekt, läsa samband och ändra uppgifter i listan.'}
+                  </p>
+                  <button
+                    className="np-primary"
+                    type="button"
+                    onClick={scenario === 'empty' ? toggleVoice : () => go('list')}
+                  >
+                    {scenario === 'empty' ? 'Börja prata' : 'Öppna objekt och samband'}
+                  </button>
+                  <button type="button" onClick={() => go('conversation')}>
+                    Skriv i stället
+                  </button>
+                  {scenario === 'empty' && (
+                    <button type="button" onClick={() => go(adminMode ? 'list' : 'new-object')}>
+                      {adminMode ? 'Öppna listan' : 'Lägg till manuellt'}
+                    </button>
+                  )}
+                  {adminMode && (
+                    <button type="button" onClick={() => setWelcome(false)}>
+                      Stäng vägledningen
+                    </button>
+                  )}
+                </section>
+              )}
+            {showPanel && !adminFullPage && (
+              <div
+                className={`np-panel-host${adminMode && wideAdminPages.includes(displayedPage) ? ' ad-wide' : ''}${adminMode && displayedPage === 'settings' ? ` ad-settings-${adminVariant}` : ''}`}
+                hidden={panelHidden}
+              >
+                <Panel
+                  page={displayedPage}
+                  locked={adminContentLocked}
+                  onClose={closePanel}
+                  onBack={utility || trail.length ? goBack : undefined}
+                  className={
+                    anchor && !utility && mainPage === 'detail' ? 'np-anchored-detail' : ''
+                  }
+                  style={anchor && !utility && mainPage === 'detail' ? popupStyle : undefined}
+                  extra={
+                    variant === 'C' &&
+                    !utility && (
+                      <nav className="np-tabs" aria-label="Öppna verktyg">
                         <button
                           type="button"
-                          key={tab}
-                          aria-current={page === tab ? 'page' : undefined}
-                          onClick={() => go(tab)}
+                          onClick={() => {
+                            go('map');
+                            restoreFocus();
+                          }}
                         >
-                          {pageTitles[tab]}
+                          Karta
                         </button>
-                      ))}
-                    </nav>
-                  )
-                }
-              >
-                {utility && (
-                  <p className="np-temporary-note">
-                    Tillfällig vy · ditt pågående arbete finns kvar.
-                  </p>
-                )}
-                {permitted ? (
-                  contents(displayedPage)
-                ) : (
-                  <p>
-                    Du saknar behörighet till den här delen. Hushållets karta är fortfarande
-                    tillgänglig.
-                  </p>
-                )}
-                {utility && (
-                  <button
-                    className="np-return-work"
-                    type="button"
-                    disabled={adminContentLocked}
-                    onClick={closeUtility}
-                  >
-                    Tillbaka till arbetet
-                  </button>
-                )}
-              </Panel>
-            </div>
-          )}
-          {adminMode &&
-            !ready &&
-            !showPanel &&
-            ['signin', 'setup', 'access'].includes(scenario) && (
-              <AdminGate
-                scenario={scenario}
-                model={adminModel}
-                operator={operator}
-                go={go}
-                enter={(empty) => {
-                  setScenario(empty ? 'empty' : 'normal');
-                  if (empty) setRole('administrator');
-                  setWelcome(true);
-                }}
-                setup={() => resetSession('setup')}
-                logout={() => resetSession('signin')}
-              />
-            )}
-          {adminMode &&
-            ready &&
-            welcome &&
-            !utility &&
-            windows.length === 0 &&
-            scenario !== 'empty' && (
-              <aside className="ad-welcome">
-                <h2>Vad vill du börja med?</h2>
-                <p>
-                  Tala, skriv eller använd listan. Dina förslag blir gemensamma först när du sparar
-                  hela utkastet.
-                </p>
-                <div className="ad-actions">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWelcome(false);
-                      toggleVoice();
-                    }}
-                  >
-                    Tala
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWelcome(false);
-                      go('conversation');
-                    }}
-                  >
-                    Skriv
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWelcome(false);
-                      go('list');
-                    }}
-                  >
-                    Öppna listan
-                  </button>
-                  <button type="button" onClick={() => setWelcome(false)}>
-                    Stäng vägledningen
-                  </button>
-                </div>
-              </aside>
-            )}
-          {!ready &&
-            !showPanel &&
-            !(adminMode && ['signin', 'setup', 'access'].includes(scenario)) && (
-              <section className="np-gate np-stack" aria-labelledby="np-gate-title">
-                <p className="np-kicker">Skyttel</p>
-                <h1 id="np-gate-title" tabIndex={-1}>
-                  {scenario === 'signin' ? 'Välkommen hem till din karta' : scenarios[scenario]}
-                </h1>
-                {scenario === 'signin' && (
-                  <>
-                    <p>Logga in för att öppna hushållets karta.</p>
-                    <button
-                      className="np-primary"
-                      type="button"
-                      onClick={() => setScenario('normal')}
-                    >
-                      Fortsätt med Google · prov
-                    </button>
-                    <button type="button" onClick={() => setScenario('setup')}>
-                      Fortsätt med Microsoft · ny användare i provet
-                    </button>
-                  </>
-                )}
-                {scenario === 'setup' && (
-                  <>
-                    <p>Välkommen, Alex. Ge hushållets karta ett namn för att börja.</p>
-                    <label htmlFor="np-household">Hushållets namn</label>
-                    <input id="np-household" defaultValue="Hushållet Lind" />
-                    <button
-                      className="np-primary"
-                      type="button"
-                      onClick={() => setScenario('empty')}
-                    >
-                      Öppna hushållets karta
-                    </button>
-                  </>
-                )}
-                {scenario === 'loading' && (
-                  <p role="status">
-                    Öppnar hushållets karta… välj ett annat provläge för att fortsätta.
-                  </p>
-                )}
-                {scenario === 'access' && (
-                  <>
-                    <p>
-                      Du har inte längre tillgång till hushållet. Samtalet har stoppats och
-                      hushållsinnehållet har dolts.
+                        {tabs.map((tab) => (
+                          <button
+                            type="button"
+                            key={tab}
+                            aria-current={page === tab ? 'page' : undefined}
+                            onClick={() => go(tab)}
+                          >
+                            {pageTitles[tab]}
+                          </button>
+                        ))}
+                      </nav>
+                    )
+                  }
+                >
+                  {utility && (
+                    <p className="np-temporary-note">
+                      Tillfällig vy · ditt pågående arbete finns kvar.
                     </p>
-                    <button type="button" onClick={() => go('login-methods')}>
-                      Inloggningssätt
-                    </button>
-                    <button type="button" onClick={() => go('invitations')}>
-                      Inbjudan och användar-ID
-                    </button>
-                    <button type="button" onClick={() => resetSession('signin')}>
-                      Till inloggning
-                    </button>
-                  </>
-                )}
-                {scenario === 'missing' && (
-                  <>
-                    <p>Adressen leder inte till någon vy. Ditt pågående arbete finns kvar.</p>
-                    <button type="button" onClick={() => setScenario('normal')}>
-                      Tillbaka till kartan
-                    </button>
-                  </>
-                )}
-                {operator && scenario === 'access' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      go('costs');
-                    }}
-                  >
-                    Öppna kostnadsöversikt
-                  </button>
-                )}
-              </section>
-            )}
-        </main>
-
-        {statusOpen && ready && (
-          <section className="np-panel np-status-panel" aria-labelledby="np-status-title">
-            <header className="np-panel-header">
-              <h2 id="np-status-title" tabIndex={-1}>
-                Aktuell status
-              </h2>
-              <button
-                type="button"
-                aria-label="Stäng aktuell status"
-                onClick={() => {
-                  setStatusOpen(false);
-                  rootRef.current?.querySelector<HTMLElement>('[data-tool="status"]')?.focus();
-                }}
-              >
-                <PrototypeIcon name="close" />
-              </button>
-            </header>
-            <div className="np-panel-body np-stack">
-              <p>{status}</p>
-              <p className="np-muted">
-                Här ser du pågående arbete och resultat. Hjälp finns under Information; val och
-                administration under Inställningar.
-              </p>
-              {ready && (
-                <div className="np-status-actions">
-                  {voice && (
+                  )}
+                  {permitted ? (
+                    contents(displayedPage)
+                  ) : (
+                    <p>
+                      Du saknar behörighet till den här delen. Hushållets karta är fortfarande
+                      tillgänglig.
+                    </p>
+                  )}
+                  {utility && (
                     <button
+                      className="np-return-work"
                       type="button"
-                      onClick={() => (voiceMode ? voiceStudy.endVoice() : setVoice(false))}
+                      disabled={adminContentLocked}
+                      onClick={closeUtility}
                     >
-                      Stäng av rösten
+                      Tillbaka till arbetet
                     </button>
                   )}
-                  {draftCount > 0 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStatusOpen(false);
-                          go('draft');
-                        }}
-                      >
-                        Visa utkast
-                      </button>
-                      <button
-                        type="button"
-                        onClick={save}
-                        disabled={voiceMode ? !voiceStudy.canSave : saveState === 'pending'}
-                      >
-                        Spara hela utkastet
-                      </button>
-                    </>
-                  )}
-                  {unsentCount > 0 && (
+                </Panel>
+              </div>
+            )}
+            {adminMode &&
+              !ready &&
+              !showPanel &&
+              ['signin', 'setup', 'access'].includes(scenario) && (
+                <AdminGate
+                  scenario={scenario}
+                  model={adminModel}
+                  operator={operator}
+                  go={go}
+                  enter={(empty) => {
+                    setScenario(empty ? 'empty' : 'normal');
+                    if (empty) setRole('administrator');
+                    setWelcome(true);
+                  }}
+                  setup={() => resetSession('setup')}
+                  logout={() => resetSession('signin')}
+                />
+              )}
+            {adminMode &&
+              ready &&
+              welcome &&
+              !utility &&
+              windows.length === 0 &&
+              scenario !== 'empty' && (
+                <aside className="ad-welcome">
+                  <h2>Vad vill du börja med?</h2>
+                  <p>
+                    Tala, skriv eller använd listan. Dina förslag blir gemensamma först när du
+                    sparar hela utkastet.
+                  </p>
+                  <div className="ad-actions">
                     <button
                       type="button"
                       onClick={() => {
-                        if (unsentIds.length) {
-                          if (objectsMode && unsentIds[0] === 'new-object') go('new-object');
-                          else {
-                            setSelected(unsentIds[0]);
-                            go('edit', unsentIds[0]);
-                          }
-                        } else if (typeModel.unsentIds.length) go('types');
-                        else {
-                          relationshipModel.select(relationshipModel.unsentIds[0]);
-                          go('new-relationship');
-                        }
+                        setWelcome(false);
+                        toggleVoice();
                       }}
                     >
-                      Fortsätt redigera
+                      Tala
                     </button>
-                  )}
-                  {message && (
-                    <button type="button" onClick={() => go('conversation')}>
-                      Fortsätt skriva
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWelcome(false);
+                        go('conversation');
+                      }}
+                    >
+                      Skriv
                     </button>
-                  )}
-                  {scenario === 'network' && (
-                    <button type="button" onClick={() => setScenario('normal')}>
-                      Försök ansluta igen
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWelcome(false);
+                        go('list');
+                      }}
+                    >
+                      Öppna listan
                     </button>
-                  )}
-                </div>
+                    <button type="button" onClick={() => setWelcome(false)}>
+                      Stäng vägledningen
+                    </button>
+                  </div>
+                </aside>
               )}
+            {!ready &&
+              !showPanel &&
+              !(adminMode && ['signin', 'setup', 'access'].includes(scenario)) && (
+                <section className="np-gate np-stack" aria-labelledby="np-gate-title">
+                  <p className="np-kicker">Skyttel</p>
+                  <h1 id="np-gate-title" tabIndex={-1}>
+                    {scenario === 'signin' ? 'Välkommen hem till din karta' : scenarios[scenario]}
+                  </h1>
+                  {scenario === 'signin' && (
+                    <>
+                      <p>Logga in för att öppna hushållets karta.</p>
+                      <button
+                        className="np-primary"
+                        type="button"
+                        onClick={() => setScenario('normal')}
+                      >
+                        Fortsätt med Google · prov
+                      </button>
+                      <button type="button" onClick={() => setScenario('setup')}>
+                        Fortsätt med Microsoft · ny användare i provet
+                      </button>
+                    </>
+                  )}
+                  {scenario === 'setup' && (
+                    <>
+                      <p>Välkommen, Alex. Ge hushållets karta ett namn för att börja.</p>
+                      <label htmlFor="np-household">Hushållets namn</label>
+                      <input id="np-household" defaultValue="Hushållet Lind" />
+                      <button
+                        className="np-primary"
+                        type="button"
+                        onClick={() => setScenario('empty')}
+                      >
+                        Öppna hushållets karta
+                      </button>
+                    </>
+                  )}
+                  {scenario === 'loading' && (
+                    <p role="status">
+                      Öppnar hushållets karta… välj ett annat provläge för att fortsätta.
+                    </p>
+                  )}
+                  {scenario === 'access' && (
+                    <>
+                      <p>
+                        Du har inte längre tillgång till hushållet. Samtalet har stoppats och
+                        hushållsinnehållet har dolts.
+                      </p>
+                      <button type="button" onClick={() => go('login-methods')}>
+                        Inloggningssätt
+                      </button>
+                      <button type="button" onClick={() => go('invitations')}>
+                        Inbjudan och användar-ID
+                      </button>
+                      <button type="button" onClick={() => resetSession('signin')}>
+                        Till inloggning
+                      </button>
+                    </>
+                  )}
+                  {scenario === 'missing' && (
+                    <>
+                      <p>Adressen leder inte till någon vy. Ditt pågående arbete finns kvar.</p>
+                      <button type="button" onClick={() => setScenario('normal')}>
+                        Tillbaka till kartan
+                      </button>
+                    </>
+                  )}
+                  {operator && scenario === 'access' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        go('costs');
+                      }}
+                    >
+                      Öppna kostnadsöversikt
+                    </button>
+                  )}
+                </section>
+              )}
+          </main>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setStatusOpen(false);
-                  go('save-attempts');
-                }}
-              >
-                Sparförsök och kvitton
-              </button>
-            </div>
-          </section>
-        )}
-      </VisualPrototypeDFrame>
-      {voiceMode && ready && feedbackVariant === 'D' && draftCount > 0 && (
+          {statusOpen && ready && (
+            <section className="np-panel np-status-panel" aria-labelledby="np-status-title">
+              <header className="np-panel-header">
+                <h2 id="np-status-title" tabIndex={-1}>
+                  Aktuell status
+                </h2>
+                <button
+                  type="button"
+                  aria-label="Stäng aktuell status"
+                  onClick={() => {
+                    setStatusOpen(false);
+                    rootRef.current?.querySelector<HTMLElement>('[data-tool="status"]')?.focus();
+                  }}
+                >
+                  <PrototypeIcon name="close" />
+                </button>
+              </header>
+              <div className="np-panel-body np-stack">
+                <p>{status}</p>
+                <p className="np-muted">
+                  Här ser du pågående arbete och resultat. Hjälp finns under Information; val och
+                  administration under Inställningar.
+                </p>
+                {ready && (
+                  <div className="np-status-actions">
+                    {voice && (
+                      <button
+                        type="button"
+                        onClick={() => (voiceMode ? voiceStudy.endVoice() : setVoice(false))}
+                      >
+                        Stäng av rösten
+                      </button>
+                    )}
+                    {draftCount > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStatusOpen(false);
+                            go('draft');
+                          }}
+                        >
+                          Visa utkast
+                        </button>
+                        <button
+                          type="button"
+                          onClick={save}
+                          disabled={voiceMode ? !voiceStudy.canSave : saveState === 'pending'}
+                        >
+                          Spara hela utkastet
+                        </button>
+                      </>
+                    )}
+                    {unsentCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (unsentIds.length) {
+                            if (objectsMode && unsentIds[0] === 'new-object') go('new-object');
+                            else {
+                              setSelected(unsentIds[0]);
+                              go('edit', unsentIds[0]);
+                            }
+                          } else if (typeModel.unsentIds.length) go('types');
+                          else {
+                            relationshipModel.select(relationshipModel.unsentIds[0]);
+                            go('new-relationship');
+                          }
+                        }}
+                      >
+                        Fortsätt redigera
+                      </button>
+                    )}
+                    {message && (
+                      <button type="button" onClick={() => go('conversation')}>
+                        Fortsätt skriva
+                      </button>
+                    )}
+                    {scenario === 'network' && (
+                      <button type="button" onClick={() => setScenario('normal')}>
+                        Försök ansluta igen
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusOpen(false);
+                    go('save-attempts');
+                  }}
+                >
+                  Sparförsök och kvitton
+                </button>
+              </div>
+            </section>
+          )}
+        </VisualPrototypeDFrame>
+      </div>
+      {adminFullPage && (
+        <AdminStudyScreen
+          page={displayedPage}
+          go={go}
+          onReturn={closeUtility}
+          administrator={administrator}
+          operator={operator}
+          member={ready}
+          household={adminModel.values.household}
+          status={status}
+          micLabel={voiceStudy.micLabel}
+          micActive={voice}
+          onMic={toggleVoice}
+          locked={adminContentLocked}
+          theme={
+            <NavigationPrototypeTheme
+              mode={themeMode}
+              onChange={(mode) => updateParams({ theme: mode }, true)}
+              expanded={false}
+            />
+          }
+        >
+          {permitted ? (
+            contents(displayedPage)
+          ) : (
+            <p>
+              Du saknar behörighet till den här sidan. Välj en annan inställning eller gå tillbaka.
+            </p>
+          )}
+        </AdminStudyScreen>
+      )}
+      {voiceMode && ready && !adminFullPage && feedbackVariant === 'D' && draftCount > 0 && (
         <aside className="voice-map-key" aria-label="Markeringar för privata förslag">
           <strong>
             {saveState === 'unknown'

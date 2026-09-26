@@ -27,7 +27,9 @@ export function AdminStudyLab({
 }) {
   const [open, setOpen] = useState(false);
   const cycle = (direction: number) =>
-    onVariant((['A', 'B', 'C'] as const)[(['A', 'B', 'C'].indexOf(variant) + direction + 3) % 3]);
+    onVariant(
+      (['A', 'B', 'C', 'D'] as const)[(['A', 'B', 'C', 'D'].indexOf(variant) + direction + 4) % 4],
+    );
   useEffect(() => {
     function key(event: KeyboardEvent) {
       const target = event.target as HTMLElement;

@@ -24,20 +24,32 @@ npm run prototype:administration
 
 [Öppna A på port 4183](http://localhost:4183/?prototype=administration&variant=A&panel=settings&theme=light).
 Den gemensamma förhandsvisningen finns på
-[port 5173](http://localhost:5173/?prototype=administration&variant=B&panel=settings&theme=light).
+[port 5173, alternativ D](http://localhost:5173/?prototype=administration&variant=D&panel=settings&theme=light).
 
 Pilarna i den flytande nederkanten byter utformning. Adressens
-`variant=A`, `variant=B` eller `variant=C` bevarar valet vid omladdning.
+`variant=A`, `variant=B`, `variant=C` eller `variant=D` bevarar valet
+vid omladdning.
 
 - **A · Grupperade avsnitt:** alla ingångar i en smal, rullbar panel.
 - **B · Sidomeny:** välj ett avsnitt och se dess innehåll bredvid.
   Mobil placerar avsnittsvalen ovanför innehållet.
 - **C · Vad vill du göra?:** en sökbar uppgiftslista med ansvarsnivån
   vid varje uppgift.
+- **D · Egen inställningssida:** hela viewporten används av en separat
+  sida med sidnavigering, rymlig översikt och egna undersidor. Kartan
+  visas inte bakom sidan. Mobil har utfällbar navigering. **Din profil**
+  i kartans verktygslåda samlar kontouppgifter, inloggningssätt,
+  användar-ID, assistentanslutningar och utloggning.
 
-De tre utformningarna använder samma administrativa flöden. Temat väljs
+De fyra utformningarna använder samma administrativa flöden. Temat väljs
 i den befintliga verktygslådan. Provlägen ligger separat från appens
 verktyg och innehåller situation, behörighet och nästa simulerade svar.
+
+D prövar beställarens nya önskemål om hela viewporten och en separat
+profilingång. Det är ett alternativ till panelerna i A–C, inte ett
+slutligt godkännande. På inställningssidan finns **Tillbaka till kartan**,
+temaval och synlig mikrofonstatus. Pågående kartarbete och
+mikrofontillstånd består när användaren går dit och tillbaka.
 
 ## Pröva flödena
 
@@ -110,6 +122,12 @@ fokusåtergång och stängning av första vägledningen. Mörkt tema granskas
 visuellt. Förstorad rottext ger inget sidspill; detta ersätter inte
 prov med verklig webbläsarzoom.
 
+För D passerar prov av hela viewporten, profilens kontoingångar och
+utloggningsknapp, återgång med oskickad objekttext och aktiv mikrofon,
+fokus och rullning vid sidbyte, utfällbar mobilnavigering samt import
+vid 390 och 320 pixlar. A–D går att växla mellan. Kartan är dold och
+kan inte användas med tangentbord medan inställningssidan är öppen.
+
 Typkontroll och riktad Biome passerar. Produktionsbygget utesluter
 prototypen. Projektets befintliga varning om stort klientpaket kvarstår.
 
@@ -130,6 +148,11 @@ Fysiska målplattformar, skärmläsare, extern autentisering och hela
 
 ## Bilder
 
+- [D:s inställningssida på dator](D-dator.png)
+- [D:s inställningssida på mobil](D-mobil.png)
+- [D:s profil på dator](D-profil-dator.png)
+- [D:s import på mobil](D-import-mobil.png)
+- [D i mörkt tema](D-morkt.png)
 - [A på dator](A-dator.png)
 - [B på dator](B-dator.png)
 - [B i mörkt tema](B-morkt.png)

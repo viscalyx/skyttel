@@ -11,6 +11,7 @@ export type NavPage =
   | 'draft'
   | 'more'
   | 'settings'
+  | 'profile'
   | 'login-methods'
   | 'invitations'
   | 'types'
@@ -38,6 +39,7 @@ export const pageTitles: Record<NavPage, string> = {
   draft: 'Mitt utkast',
   more: 'Mer',
   settings: 'Inställningar',
+  profile: 'Din profil',
   'login-methods': 'Inloggningssätt',
   invitations: 'Inbjudan och användar-ID',
   types: 'Objekt- och sambandstyper',
