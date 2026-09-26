@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { type FinancialField, financialFields } from '../shared/financial-facts.js';
 import type { StudyObject } from './map-study-types.js';
+import type { TypeStudyDefinition, TypeStudyModel } from './type-study-model.js';
 
 export type DetailFact = {
   knowledge: 'unset' | 'known' | 'uncertain' | 'unknown' | 'none';
@@ -13,6 +14,7 @@ export type DetailRecord = {
   name: string;
   description: string;
   facts: Record<FinancialField, DetailFact>;
+  customValues: Record<string, string>;
 };
 
 const knowledgeLabels = {
@@ -39,7 +41,10 @@ function validDate(value: string) {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-export function recordErrors(record: DetailRecord): Record<string, string> {
+export function recordErrors(
+  record: DetailRecord,
+  type?: TypeStudyDefinition,
+): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!record.name.trim()) errors.name = 'Ange ett namn för objektet.';
   for (const field of financialFields) {
@@ -53,6 +58,15 @@ export function recordErrors(record: DetailRecord): Record<string, string> {
     }
     if (field.dated && fact.knowledge !== 'unset' && fact.reportedOn && !validDate(fact.reportedOn))
       errors[`${field.key}-reportedOn`] = 'Ange ett giltigt datum för uppgiften.';
+  }
+  for (const field of type?.fields ?? []) {
+    if (field.builtin) continue;
+    const value = record.customValues[field.id] ?? '';
+    if (!value) continue;
+    if (field.kind === 'number' && !Number.isFinite(Number(value)))
+      errors[field.id] = `Ange ett tal för ${field.name}.`;
+    if (field.kind === 'date' && !validDate(value))
+      errors[field.id] = `Ange ett giltigt datum för ${field.name}.`;
   }
   return errors;
 }
@@ -83,6 +97,7 @@ function defaultRecord(id: string, objects: StudyObject[]): DetailRecord {
           ? 'Hushållets påhittade filmtjänst.'
           : (object?.description ?? ''),
     facts,
+    customValues: {},
   };
 }
 
@@ -90,6 +105,9 @@ function normalized(record: DetailRecord): DetailRecord {
   return {
     ...record,
     name: record.name.trim(),
+    customValues: Object.fromEntries(
+      Object.entries(record.customValues).filter(([, value]) => value !== ''),
+    ),
     facts: Object.fromEntries(
       financialFields.map(({ key, dated }) => {
         const fact = record.facts[key];
@@ -120,6 +138,9 @@ function sameRecord(left: DetailRecord, right: DetailRecord) {
   return (
     a.name === b.name &&
     a.description === b.description &&
+    [...new Set([...Object.keys(a.customValues), ...Object.keys(b.customValues)])].every(
+      (key) => a.customValues[key] === b.customValues[key],
+    ) &&
     financialFields.every(({ key }) => sameFact(a.facts[key], b.facts[key]))
   );
 }
@@ -131,7 +152,15 @@ function voicePrice(record: DetailRecord): DetailRecord {
   };
 }
 
-export function useDetailStudy(objects: StudyObject[], initialVoiceProposal: boolean) {
+export function useDetailStudy(
+  objects: StudyObject[],
+  initialVoiceProposal: boolean,
+  types?: TypeStudyModel,
+) {
+  function definition(id: string) {
+    const object = objects.find((item) => item.id === id);
+    return object && types ? types.get(types.objectTypeId(object)) : undefined;
+  }
   const [saved, setSaved] = useState<Record<string, DetailRecord>>(() =>
     Object.fromEntries(objects.map((object) => [object.id, defaultRecord(object.id, objects)])),
   );
@@ -158,6 +187,19 @@ export function useDetailStudy(objects: StudyObject[], initialVoiceProposal: boo
     if (!entry) return latest;
     // Talets nya förslag följer med i orörda fält; egen oskickad text består.
     return {
+      customValues: Object.fromEntries(
+        [
+          ...new Set([
+            ...Object.keys(entry.value.customValues),
+            ...Object.keys(latest.customValues),
+          ]),
+        ].map((key) => [
+          key,
+          entry.value.customValues[key] === entry.base.customValues[key]
+            ? (latest.customValues[key] ?? '')
+            : (entry.value.customValues[key] ?? ''),
+        ]),
+      ),
       name: entry.value.name === entry.base.name ? latest.name : entry.value.name,
       description:
         entry.value.description === entry.base.description
@@ -175,7 +217,8 @@ export function useDetailStudy(objects: StudyObject[], initialVoiceProposal: boo
   }
   function edit(id: string, next: DetailRecord) {
     setBuffers((previous) => ({ ...previous, [id]: { base: current(id), value: next } }));
-    if (errors[id]) setErrors((previous) => ({ ...previous, [id]: recordErrors(next) }));
+    if (errors[id])
+      setErrors((previous) => ({ ...previous, [id]: recordErrors(next, definition(id)) }));
   }
   function resetBuffer(id: string) {
     setBuffers((previous) => {
@@ -191,7 +234,7 @@ export function useDetailStudy(objects: StudyObject[], initialVoiceProposal: boo
   }
   function stage(id: string) {
     const value = buffer(id);
-    const problems = recordErrors(value);
+    const problems = recordErrors(value, definition(id));
     if (Object.keys(problems).length) {
       setErrors((previous) => ({ ...previous, [id]: problems }));
       return false;
@@ -233,6 +276,25 @@ export function useDetailStudy(objects: StudyObject[], initialVoiceProposal: boo
           lines.push(
             `${after.name}: ${label} ${factText(before.facts[key])} → ${factText(after.facts[key])}.`,
           );
+      }
+      for (const key of new Set([
+        ...Object.keys(before.customValues),
+        ...Object.keys(after.customValues),
+      ])) {
+        if (before.customValues[key] !== after.customValues[key]) {
+          const field = definition(id)?.fields.find((item) => item.id === key);
+          const text = (value: string | undefined) =>
+            value
+              ? field?.kind === 'boolean'
+                ? value === 'true'
+                  ? 'Ja'
+                  : 'Nej'
+                : value
+              : 'Ej uppgivet';
+          lines.push(
+            `${after.name}: ${field?.name ?? key} ${text(before.customValues[key])} → ${text(after.customValues[key])}.`,
+          );
+        }
       }
       return lines;
     });

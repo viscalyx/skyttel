@@ -8,6 +8,7 @@ import {
   factText,
 } from './detail-study-model.js';
 import type { StudyObject, StudyRelationship } from './map-study-types.js';
+import type { TypeStudyDefinition, TypeStudyField } from './type-study-model.js';
 import './detail-study-panel.css';
 
 export type DetailStudyVariant = 'A' | 'B' | 'C';
@@ -25,6 +26,10 @@ type DetailStudyPanelProps = {
   onRelated: (id: string) => void;
   relationships: StudyRelationship[];
   objects: StudyObject[];
+  definition?: TypeStudyDefinition;
+  onTypes?: () => void;
+  onRelationship?: (id?: string) => void;
+  reverseLabels?: Record<string, string>;
 };
 
 type Section = 'basic' | 'money' | 'time';
@@ -58,6 +63,10 @@ export function DetailStudyPanel({
   onRelated,
   relationships,
   objects,
+  definition,
+  onTypes,
+  onRelationship,
+  reverseLabels,
 }: DetailStudyPanelProps) {
   const id = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -146,7 +155,7 @@ export function DetailStudyPanel({
     ) : null;
   }
 
-  function basic() {
+  function basic(includeDescription = true) {
     return editing ? (
       <div className="ds-basic-fields">
         <label htmlFor={`${id}-name`}>
@@ -162,17 +171,19 @@ export function DetailStudyPanel({
           />
         </label>
         {error('name')}
-        <label htmlFor={`${id}-description`}>
-          Beskrivning
-          <textarea
-            id={`${id}-description`}
-            data-detail-field="description"
-            value={record.description}
-            rows={3}
-            onChange={(event) => change({ description: event.target.value })}
-            disabled={blocked}
-          />
-        </label>
+        {includeDescription && (
+          <label htmlFor={`${id}-description`}>
+            Beskrivning
+            <textarea
+              id={`${id}-description`}
+              data-detail-field="description"
+              value={record.description}
+              rows={3}
+              onChange={(event) => change({ description: event.target.value })}
+              disabled={blocked}
+            />
+          </label>
+        )}
       </div>
     ) : (
       <dl className="ds-fact-list ds-basic-read">
@@ -180,17 +191,20 @@ export function DetailStudyPanel({
           <dt>Namn</dt>
           <dd>{record.name}</dd>
         </div>
-        <div>
-          <dt>Beskrivning</dt>
-          <dd>{record.description || 'Ej uppgivet'}</dd>
-        </div>
+        {includeDescription && (
+          <div>
+            <dt>Beskrivning</dt>
+            <dd>{record.description || 'Ej uppgivet'}</dd>
+          </div>
+        )}
       </dl>
     );
   }
 
-  function factField(key: FinancialField) {
-    const field = financialFields.find((item) => item.key === key);
-    if (!field) return null;
+  function factField(key: FinancialField, label?: string) {
+    const meta = financialFields.find((item) => item.key === key);
+    if (!meta) return null;
+    const field = { ...meta, label: label ?? meta.label };
     const fact = record.facts[key];
     const hasValue = fact.knowledge === 'known' || fact.knowledge === 'uncertain';
     const valueProps = {
@@ -261,7 +275,7 @@ export function DetailStudyPanel({
 
   function facts(keys: FinancialField[]) {
     return editing ? (
-      <div className="ds-financial-fields">{keys.map(factField)}</div>
+      <div className="ds-financial-fields">{keys.map((key) => factField(key))}</div>
     ) : (
       <dl className="ds-fact-list">
         {keys.map((key) => (
@@ -316,6 +330,68 @@ export function DetailStudyPanel({
         : 'Inga datum uppgivna';
   }
 
+  function configuredField(field: TypeStudyField) {
+    if (field.builtin && field.builtin !== 'description' && editing)
+      return factField(field.builtin, field.name);
+    const value =
+      field.builtin === 'description' ? record.description : (record.customValues[field.id] ?? '');
+    if (!editing)
+      return (
+        <dl key={field.id} className="ds-fact-list">
+          <div>
+            <dt>{field.name}</dt>
+            <dd>
+              {field.builtin && field.builtin !== 'description'
+                ? factText(record.facts[field.builtin])
+                : value
+                  ? field.kind === 'boolean'
+                    ? value === 'true'
+                      ? 'Ja'
+                      : 'Nej'
+                    : value
+                  : 'Ej uppgivet'}
+            </dd>
+          </div>
+        </dl>
+      );
+    const fieldKey = field.builtin === 'description' ? 'description' : field.id;
+    const props = {
+      id: `${id}-${fieldKey}`,
+      'data-detail-field': fieldKey,
+      value,
+      disabled: blocked,
+      'aria-invalid': Boolean(errors[fieldKey]),
+      'aria-describedby': errors[fieldKey] ? `${id}-${fieldKey}-error` : undefined,
+      onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+        field.builtin === 'description'
+          ? change({ description: event.target.value })
+          : change({ customValues: { ...buffer.customValues, [field.id]: event.target.value } }),
+    };
+    return (
+      <div key={field.id} className="ds-basic-fields">
+        <label htmlFor={props.id}>
+          {field.name}
+          {field.builtin === 'description' ? (
+            <textarea {...props} rows={3} />
+          ) : field.kind === 'boolean' ? (
+            <select {...props}>
+              <option value="">Ej uppgivet</option>
+              <option value="true">Ja</option>
+              <option value="false">Nej</option>
+            </select>
+          ) : (
+            <input
+              {...props}
+              type={field.kind === 'date' ? 'date' : 'text'}
+              inputMode={field.kind === 'number' ? 'decimal' : undefined}
+            />
+          )}
+        </label>
+        {error(fieldKey)}
+      </div>
+    );
+  }
+
   return (
     <div className={`ds-panel ds-variant-${variant}`} ref={panelRef}>
       <div className="ds-context-actions">
@@ -327,7 +403,7 @@ export function DetailStudyPanel({
         </button>
       </div>
       <div className="ds-state" aria-live="polite">
-        <span className="ds-type">{object.type}</span>
+        <span className="ds-type">{definition?.name ?? object.type}</span>
         {object.ended && <span>◷ Upphört</span>}
         {model.staged[object.id] && <span>✎ Privat förslag i ditt utkast</span>}
         {unsent && <span>✎ Oskickad redigering</span>}
@@ -379,7 +455,38 @@ export function DetailStudyPanel({
         </div>
       )}
 
-      {variant === 'A' && (
+      {definition && (
+        <>
+          {basic(false)}
+          {onTypes && (
+            <button type="button" onClick={onTypes}>
+              Anpassa typen i Inställningar
+            </button>
+          )}
+          <div className="ds-accordions">
+            {definition.sections.map((section) => (
+              <details key={section.id} className="ds-section" open>
+                <summary>
+                  <strong>{section.name}</strong>
+                  <span>
+                    {definition.fields.filter((field) => field.sectionId === section.id).length}{' '}
+                    egenskaper
+                  </span>
+                </summary>
+                <div className="ds-section-content">
+                  {definition.fields
+                    .filter((field) => field.sectionId === section.id)
+                    .map(configuredField)}
+                  {!definition.fields.some((field) => field.sectionId === section.id) && (
+                    <p>Avsnittet har ännu inga egenskaper.</p>
+                  )}
+                </div>
+              </details>
+            ))}
+          </div>
+        </>
+      )}
+      {!definition && variant === 'A' && (
         <div className="ds-document">
           {(['basic', 'money', 'time'] as const).map((section) => (
             <section key={section} aria-label={sectionNames[section]}>
@@ -389,7 +496,7 @@ export function DetailStudyPanel({
           ))}
         </div>
       )}
-      {variant === 'B' && (
+      {!definition && variant === 'B' && (
         <div className="ds-accordions">
           {(['basic', 'money', 'time'] as const).map((section) => (
             <details key={section} className="ds-section" open={section !== 'time'}>
@@ -414,7 +521,7 @@ export function DetailStudyPanel({
           ))}
         </div>
       )}
-      {variant === 'C' && (
+      {!definition && variant === 'C' && (
         <div className="ds-tabbed">
           <nav className="ds-tab-buttons" aria-label="Avsnitt i objektets uppgifter">
             {(['basic', 'money', 'time'] as const).map((section) => (
@@ -454,6 +561,11 @@ export function DetailStudyPanel({
       )}
       <details className="ds-relationships">
         <summary>Samband ({connected.length})</summary>
+        {onRelationship && (
+          <button type="button" onClick={() => onRelationship()}>
+            Nytt samband
+          </button>
+        )}
         {connected.length ? (
           <ul>
             {connected.map((edge) => {
@@ -461,9 +573,22 @@ export function DetailStudyPanel({
               const otherName = other ? model.current(other.id).name : 'Okänt objekt';
               return (
                 <li key={edge.id}>
+                  {onRelationship && (
+                    <button type="button" onClick={() => onRelationship(edge.id)}>
+                      Redigera sambandet
+                    </button>
+                  )}
                   <span>
-                    {edge.from === object.id ? current.name : otherName} <b>{edge.label}</b>{' '}
-                    {edge.to === object.id ? current.name : otherName}
+                    {edge.to === object.id && reverseLabels?.[edge.id] ? (
+                      <>
+                        {current.name} <b>{reverseLabels[edge.id]}</b> {otherName}
+                      </>
+                    ) : (
+                      <>
+                        {edge.from === object.id ? current.name : otherName} <b>{edge.label}</b>{' '}
+                        {edge.to === object.id ? current.name : otherName}
+                      </>
+                    )}
                   </span>
                   {edge.change && (
                     <span className="ds-muted">

@@ -746,6 +746,7 @@ export function VoiceStudyLab({
   onVariant: (variant: VoiceStudyVariant) => void;
   onNoGraphics?: () => void;
   comparison?: {
+    fixed?: boolean;
     label?: string;
     key: string;
     name: string;
@@ -777,6 +778,7 @@ export function VoiceStudyLab({
       )
         return;
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        if (comparison?.fixed) return;
         event.preventDefault();
         if (comparison) {
           comparison.onCycle(event.key === 'ArrowRight' ? 1 : -1);
@@ -803,7 +805,12 @@ export function VoiceStudyLab({
         <span className="voice-study-lab-label">
           {comparison?.label ?? (comparison ? 'Kastbar listprototyp' : 'Kastbar talprototyp')}
         </span>
-        <button type="button" aria-label="Föregående variant" onClick={() => cycle(-1)}>
+        <button
+          type="button"
+          aria-label="Föregående variant"
+          onClick={() => cycle(-1)}
+          disabled={comparison?.fixed}
+        >
           ←
         </button>
         <span>
@@ -814,7 +821,12 @@ export function VoiceStudyLab({
           </strong>
           <small>{comparison?.description ?? variants[variant].description}</small>
         </span>
-        <button type="button" aria-label="Nästa variant" onClick={() => cycle(1)}>
+        <button
+          type="button"
+          aria-label="Nästa variant"
+          onClick={() => cycle(1)}
+          disabled={comparison?.fixed}
+        >
           →
         </button>
         <details className="voice-study-lab-controls">

@@ -13,7 +13,13 @@ import { useSearchParams } from 'react-router';
 import { MapStudyCanvas } from './MapStudyCanvas.js';
 import { MapStudyNavigation } from './MapStudyNavigation.js';
 import { changeLabel, studyData } from './map-study-data.js';
-import type { StudyCamera, StudyObject, StudyPosition, StudyVariant } from './map-study-types.js';
+import type {
+  StudyCamera,
+  StudyObject,
+  StudyPosition,
+  StudyRelationship,
+  StudyVariant,
+} from './map-study-types.js';
 import './map-study.css';
 
 const variants = {
@@ -36,7 +42,7 @@ const variants = {
 
 function useStudyState() {
   const [params, setParams] = useSearchParams();
-  const candidate = ['voice', 'lists', 'details'].includes(params.get('prototype') ?? '')
+  const candidate = ['voice', 'lists', 'details', 'types'].includes(params.get('prototype') ?? '')
     ? 'A'
     : params.get('variant');
   const variant: StudyVariant = candidate === 'B' || candidate === 'C' ? candidate : 'A';
@@ -45,7 +51,7 @@ function useStudyState() {
   );
   const [proposals, setProposals] = useState(
     () =>
-      ['voice', 'lists', 'details'].includes(params.get('prototype') ?? '') &&
+      ['voice', 'lists', 'details', 'types'].includes(params.get('prototype') ?? '') &&
       params.get('changes') === 'example',
   );
   const [savedProposals, setSavedProposals] = useState(false);
@@ -211,6 +217,8 @@ export function MapStudyMap({
   staged,
   descriptions,
   objectChanges,
+  objectTypeNames,
+  relationshipOverrides,
 }: {
   selectedId: string;
   selectedIds: string[];
@@ -224,8 +232,14 @@ export function MapStudyMap({
   staged: Record<string, string>;
   descriptions?: Record<string, string>;
   objectChanges?: Record<string, StudyObject['change']>;
+  objectTypeNames?: Record<string, string>;
+  relationshipOverrides?: StudyRelationship[];
 }) {
-  const study = useStudy();
+  const originalStudy = useStudy();
+  const study = {
+    ...originalStudy,
+    relationships: relationshipOverrides ?? originalStudy.relationships,
+  };
   const [relationsOpen, setRelationsOpen] = useState(false);
   function closeNavigation() {
     study.setNavigationOpen(false);
@@ -270,6 +284,7 @@ export function MapStudyMap({
         ...object,
         name: staged[object.id] ?? names[object.id] ?? object.name,
         description: descriptions?.[object.id] ?? object.description,
+        type: objectTypeNames?.[object.id] ?? object.type,
         change:
           object.change === 'added'
             ? object.change
@@ -279,7 +294,7 @@ export function MapStudyMap({
                 ? objectChanges[object.id]
                 : object.change,
       })),
-    [study.objects, names, staged, descriptions, objectChanges],
+    [study.objects, names, staged, descriptions, objectChanges, objectTypeNames],
   );
   const name = (id: string) =>
     staged[id] ?? names[id] ?? study.objects.find((object) => object.id === id)?.name ?? id;

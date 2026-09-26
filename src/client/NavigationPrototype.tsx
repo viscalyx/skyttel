@@ -32,6 +32,9 @@ import {
   NavigationPrototypeWindows,
   type PrototypeWindowAnchor,
 } from './NavigationPrototypeWindows.js';
+import { RelationshipStudyPanel, useRelationshipStudy } from './RelationshipStudy.js';
+import { TypeStudySettings } from './TypeStudySettings.js';
+import { useTypeStudy } from './type-study-model.js';
 import { PrototypeIcon } from './VisualPrototype.js';
 import { VisualPrototypeDFrame } from './VisualPrototypeDFrame.js';
 import { VisualPrototypeMap } from './VisualPrototypeMap.js';
@@ -159,10 +162,17 @@ export function NavigationPrototype() {
   const study = useMapStudy();
   const navObjects = study?.objects ?? defaultNavObjects;
   const [params, setParams] = useSearchParams();
-  const detailsMode = params.get('prototype') === 'details';
+  const typesMode = params.get('prototype') === 'types';
+  const activeUtilityPages = typesMode ? [...utilityPages, 'types' as const] : utilityPages;
+  const detailsMode = params.get('prototype') === 'details' || typesMode;
   const listsMode = params.get('prototype') === 'lists' || detailsMode;
-  const detailVariant: DetailStudyVariant =
-    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
+  const detailVariant: DetailStudyVariant = typesMode
+    ? 'B'
+    : params.get('variant') === 'B'
+      ? 'B'
+      : params.get('variant') === 'C'
+        ? 'C'
+        : 'A';
   const voiceMode = params.get('prototype') === 'voice' || listsMode;
   const listVariant: ListStudyVariant = detailsMode
     ? 'B'
@@ -171,11 +181,24 @@ export function NavigationPrototype() {
       : params.get('variant') === 'C'
         ? 'C'
         : 'B';
+  const typeModel = useTypeStudy(study?.objects ?? [], study?.relationships ?? []);
+  const relationshipModel = useRelationshipStudy(study?.relationships ?? [], typeModel);
   const detailModel = useDetailStudy(
     study?.objects ?? [],
     detailsMode && params.get('changes') === 'example',
+    typesMode ? typeModel : undefined,
+  );
+  const projectedRelationships = typesMode
+    ? relationshipModel.relationships
+    : (study?.relationships ?? []);
+  const objectTypeNames = Object.fromEntries(
+    (study?.objects ?? []).map((object) => [
+      object.id,
+      typeModel.get(typeModel.objectTypeId(object))?.name ?? object.type,
+    ]),
   );
   const [browse, setBrowse] = useState(initialListStudyBrowseState);
+  const [typeSettingsId, setTypeSettingsId] = useState<string | undefined>();
   const listMemory = useRef({ scrollTop: 0, focusId: null as string | null });
   const feedbackVariant: VoiceStudyVariant = listsMode
     ? 'D'
@@ -200,7 +223,7 @@ export function NavigationPrototype() {
   >('administrator-operator');
   const utilityCandidate = params.get('panel') as NavPage | null;
   const utility =
-    utilityCandidate && utilityPages.includes(utilityCandidate) ? utilityCandidate : null;
+    utilityCandidate && activeUtilityPages.includes(utilityCandidate) ? utilityCandidate : null;
   const [utilityTrail, setUtilityTrail] = useState<NavPage[]>([]);
   const [statusOpen, setStatusOpen] = useState(false);
   const [guide, setGuide] = useState<'compare' | 'settings' | null>(null);
@@ -227,7 +250,7 @@ export function NavigationPrototype() {
   ]);
   const [legacyVoice, setVoice] = useState(false);
   const initialWindow: WorkWindow | null =
-    page !== 'map' && !utilityPages.includes(page)
+    page !== 'map' && !activeUtilityPages.includes(page)
       ? {
           id: page === 'edit' || page === 'detail' ? 'object-subscription' : page,
           page,
@@ -272,7 +295,9 @@ export function NavigationPrototype() {
   };
   const hasStudyProposals = study?.proposals ?? false;
   const draftCount = detailsMode
-    ? detailModel.draftCount + (hasStudyProposals ? 3 : 0)
+    ? detailModel.draftCount +
+      (hasStudyProposals ? 3 : 0) +
+      (typesMode ? typeModel.draftCount + relationshipModel.draftCount : 0)
     : Object.keys(staged).length + (hasStudyProposals ? 4 : 0);
   const voiceStudy = useVoiceStudy({
     enabled: voiceMode && ready,
@@ -298,7 +323,8 @@ export function NavigationPrototype() {
           buffers[id] !==
           (staged[id] ?? savedNames[id] ?? navObjects.find((object) => object.id === id)?.name),
       );
-  const unsentCount = unsentIds.length;
+  const unsentCount =
+    unsentIds.length + (typesMode ? typeModel.unsentIds.length + relationshipModel.unsentCount : 0);
   const showConversation = variant === 'B' && windows.some((item) => item.page === 'conversation');
   const mainPage = page === 'conversation' && variant === 'B' ? 'map' : page;
   const displayedPage = utility ?? mainPage;
@@ -395,7 +421,7 @@ export function NavigationPrototype() {
     setExpanded(false);
     setAnchor(null);
     setStatusOpen(false);
-    if (utilityPages.includes(next)) {
+    if (activeUtilityPages.includes(next)) {
       if (utility) setUtilityTrail((previous) => [...previous, utility]);
       updateParams({ panel: next });
       return;
@@ -583,6 +609,10 @@ export function NavigationPrototype() {
       setMessage('');
       setBuffers({});
       if (detailsMode) detailModel.reset();
+      if (typesMode) {
+        typeModel.reset();
+        relationshipModel.reset();
+      }
       setStaged({});
       study?.resetProposals();
       setSavedNames({});
@@ -641,6 +671,17 @@ export function NavigationPrototype() {
     if (outcome === 'saved') {
       setReceipt([
         ...(detailsMode ? detailModel.receiptLines() : []),
+        ...(typesMode
+          ? [
+              ...typeModel.receiptLines(),
+              ...relationshipModel.receiptLines(
+                (study?.objects ?? []).map((object) => ({
+                  ...object,
+                  name: detailModel.current(object.id).name,
+                })),
+              ),
+            ]
+          : []),
         ...Object.entries(staged).map(
           ([id, name]) =>
             `${navObjects.find((item) => item.id === id)?.name ?? id}: namn ändrat till ${name}.`,
@@ -657,6 +698,10 @@ export function NavigationPrototype() {
       setSavedNames((previous) => ({ ...previous, ...staged }));
       setStaged({});
       if (detailsMode) detailModel.commit();
+      if (typesMode) {
+        typeModel.commit();
+        relationshipModel.commit();
+      }
       study?.commitProposals();
     }
     setSaveState(outcome);
@@ -843,6 +888,38 @@ export function NavigationPrototype() {
   });
 
   function contents(contentPage: NavPage, objectId = selected) {
+    const blocked = ['pending', 'unknown', 'conflict'].includes(saveState);
+    const noteChange = () => {
+      voiceStudy.noteManualChange();
+      setSaveState('idle');
+    };
+    if (typesMode && contentPage === 'types')
+      return (
+        <TypeStudySettings
+          key={typeSettingsId ?? 'catalog'}
+          initialTypeId={typeSettingsId}
+          model={typeModel}
+          blocked={blocked}
+          onStage={noteChange}
+          onOpenObject={() => selectObject('subscription')}
+        />
+      );
+    if (typesMode && contentPage === 'new-relationship' && study)
+      return (
+        <RelationshipStudyPanel
+          model={relationshipModel}
+          types={typeModel}
+          objects={study.objects.map((object) => ({
+            ...object,
+            name: detailModel.current(object.id).name,
+            type: objectTypeNames[object.id],
+          }))}
+          blocked={blocked}
+          onStage={noteChange}
+          onTypes={() => go('types')}
+          onOpenObject={selectObject}
+        />
+      );
     if (detailsMode && study && (contentPage === 'detail' || contentPage === 'edit')) {
       const subject = study.objects.find((object) => object.id === objectId);
       if (!subject) return <p>Objektet ingår inte i det valda provhushållet.</p>;
@@ -851,6 +928,23 @@ export function NavigationPrototype() {
           variant={detailVariant}
           object={subject}
           model={detailModel}
+          definition={typesMode ? typeModel.get(typeModel.objectTypeId(subject)) : undefined}
+          onTypes={
+            typesMode
+              ? () => {
+                  setTypeSettingsId(typeModel.objectTypeId(subject));
+                  go('types');
+                }
+              : undefined
+          }
+          onRelationship={
+            typesMode
+              ? (id) => {
+                  relationshipModel.select(id);
+                  go('new-relationship');
+                }
+              : undefined
+          }
           editing={contentPage === 'edit'}
           blocked={['pending', 'unknown', 'conflict'].includes(saveState)}
           onEdit={() => go('edit', objectId)}
@@ -871,7 +965,21 @@ export function NavigationPrototype() {
           onList={returnToList}
           onMap={() => revealStudyObject(objectId)}
           onRelated={selectObject}
-          relationships={study.relationships}
+          relationships={projectedRelationships}
+          reverseLabels={
+            typesMode
+              ? Object.fromEntries(
+                  projectedRelationships.map((edge) => {
+                    const value = relationshipModel.current(edge.id);
+                    const label = typeModel.get(value.typeId)?.reverseLabel;
+                    return [
+                      edge.id,
+                      label ? `${label}${value.knowledge === 'uncertain' ? ' (osäkert)' : ''}` : '',
+                    ];
+                  }),
+                )
+              : undefined
+          }
           objects={study.objects}
         />
       );
@@ -894,11 +1002,12 @@ export function NavigationPrototype() {
                     ? study.objects.map((object) => ({
                         ...object,
                         description: detailModel.descriptions[object.id] ?? object.description,
+                        type: typesMode ? objectTypeNames[object.id] : object.type,
                         change: object.id === 'subscription' ? undefined : object.change,
                       }))
                     : study.objects
                 }
-                relationships={study.relationships}
+                relationships={projectedRelationships}
                 names={displayedNames}
                 staged={displayedStaged}
                 stagedLabel={detailsMode ? '✎ Ändringsförslag' : undefined}
@@ -959,6 +1068,21 @@ export function NavigationPrototype() {
           {detailsMode && detailModel.receiptLines().length > 0 && (
             <ul>
               {detailModel.receiptLines().map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          )}
+          {typesMode && (
+            <ul>
+              {[
+                ...typeModel.receiptLines(),
+                ...relationshipModel.receiptLines(
+                  (study?.objects ?? []).map((object) => ({
+                    ...object,
+                    name: detailModel.current(object.id).name,
+                  })),
+                ),
+              ].map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
@@ -1073,18 +1197,31 @@ export function NavigationPrototype() {
         additionalDraftCount={hasStudyProposals ? 4 : 0}
         mapSettings={
           study ? (
-            <section className="np-stack" aria-labelledby="mp-map-settings-title">
-              <h3 id="mp-map-settings-title">Rymdkartan</h3>
-              <button
-                type="button"
-                aria-pressed={study.stars}
-                onClick={() => study.setStars(!study.stars)}
-              >
-                <PrototypeIcon name="stars" />
-                {study.stars ? 'Dölj stjärnhimmel' : 'Visa stjärnhimmel'}
-              </button>
-              <p className="np-muted">Systemets minskade rörelse stänger av stjärnhimlen.</p>
-            </section>
+            <>
+              {typesMode && (
+                <section className="np-stack">
+                  <h3>Hushållets typer</h3>
+                  <p>
+                    Alla medlemmar kan ändra objekttyper, sambandstyper, avsnitt och egenskaper.
+                  </p>
+                  <button type="button" onClick={() => go('types')}>
+                    Objekt- och sambandstyper
+                  </button>
+                </section>
+              )}
+              <section className="np-stack" aria-labelledby="mp-map-settings-title">
+                <h3 id="mp-map-settings-title">Rymdkartan</h3>
+                <button
+                  type="button"
+                  aria-pressed={study.stars}
+                  onClick={() => study.setStars(!study.stars)}
+                >
+                  <PrototypeIcon name="stars" />
+                  {study.stars ? 'Dölj stjärnhimmel' : 'Visa stjärnhimmel'}
+                </button>
+                <p className="np-muted">Systemets minskade rörelse stänger av stjärnhimlen.</p>
+              </section>
+            </>
           ) : undefined
         }
         additionalDraft={
@@ -1457,6 +1594,8 @@ export function NavigationPrototype() {
                   staged={displayedStaged}
                   descriptions={detailsMode ? detailModel.descriptions : undefined}
                   objectChanges={detailsMode ? { subscription: undefined } : undefined}
+                  objectTypeNames={typesMode ? objectTypeNames : undefined}
+                  relationshipOverrides={typesMode ? projectedRelationships : undefined}
                 />
               ) : (
                 <VisualPrototypeMap
@@ -1750,8 +1889,14 @@ export function NavigationPrototype() {
                     <button
                       type="button"
                       onClick={() => {
-                        setSelected(unsentIds[0]);
-                        go('edit', unsentIds[0]);
+                        if (unsentIds.length) {
+                          setSelected(unsentIds[0]);
+                          go('edit', unsentIds[0]);
+                        } else if (typeModel.unsentIds.length) go('types');
+                        else {
+                          relationshipModel.select(relationshipModel.unsentIds[0]);
+                          go('new-relationship');
+                        }
                       }}
                     >
                       Fortsätt redigera
@@ -1814,16 +1959,26 @@ export function NavigationPrototype() {
           comparison={
             listsMode && study
               ? {
-                  label: detailsMode ? 'Kastbar detaljprototyp' : undefined,
+                  label: typesMode
+                    ? 'Kastbar typprototyp'
+                    : detailsMode
+                      ? 'Kastbar detaljprototyp'
+                      : undefined,
+                  fixed: typesMode,
                   key: detailsMode ? detailVariant : listVariant,
-                  name: detailsMode
-                    ? { A: 'Läs och ändra', B: 'Avsnitt', C: 'Flikar' }[detailVariant]
-                    : { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[listVariant],
+                  name: typesMode
+                    ? 'Avsnitt från hushållets typer'
+                    : detailsMode
+                      ? { A: 'Läs och ändra', B: 'Avsnitt', C: 'Flikar' }[detailVariant]
+                      : { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[
+                          listVariant
+                        ],
                   description: detailsMode
                     ? 'Detaljer och redigering · godkänd lista B och talåterkoppling D'
                     : 'Hitta rätt objekt · godkänd karta och talåterkoppling D',
                   state: `${study.objects.length} objekt · ${selection.ids.length} markerade · ${unsentCount} oskickade redigeringar · ${draftCount} förslag`,
                   onCycle: (direction) => {
+                    if (typesMode) return;
                     const keys: ListStudyVariant[] = ['A', 'B', 'C'];
                     updateParams(
                       {
@@ -1843,6 +1998,11 @@ export function NavigationPrototype() {
                       <strong>
                         {detailsMode ? 'Pröva uppgifter och redigering' : 'Hitta och välj i listan'}
                       </strong>
+                      {typesMode && (
+                        <button type="button" onClick={() => go('settings')}>
+                          Öppna Inställningar
+                        </button>
+                      )}
                       {detailsMode && (
                         <button type="button" onClick={() => selectObject('subscription')}>
                           Öppna Familjeabonnemang
@@ -1876,7 +2036,9 @@ export function NavigationPrototype() {
                         {browse.onlySelected ? 'markerade' : 'alla'}.
                       </p>
                       <p>
-                        {detailsMode ? (
+                        {typesMode ? (
+                          'B ligger fast. Pröva redigerbara typer, avsnitt och egenskaper i Inställningar. Samband kan koppla vilka objekt som helst. Allt sparande är simulerat i samma privata utkast.'
+                        ) : detailsMode ? (
                           'Denna omgång prövar namn, beskrivning, ekonomiska uppgifter och osäkerhet. Sambandsredigering, egna typer, fält, bilder, historik och fler konfliktval återstår. Listan använder godkända B.'
                         ) : (
                           <>

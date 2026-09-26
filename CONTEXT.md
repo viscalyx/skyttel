@@ -35,8 +35,14 @@ En objekt- eller sambandstyp som finns i hushållets karta från början
 och ingår bland dess redigerbara typdefinitioner.
 
 **Eget fält**:
-En namngiven uppgift som hushållet definierar för en objekttyp,
+En namngiven uppgift som hushållet definierar för en objekttyp eller
+sambandstyp,
 exempelvis installationsdatum för en solcellsanläggning.
+
+**Avsnitt**:
+En namngiven grupp av egenskaper i uppgifterna för ett objekt eller
+samband. Hushållet definierar avsnitten och deras egenskaper på typen.
+Att flytta en egenskap mellan avsnitt ändrar inte dess värde eller betydelse.
 
 ## Personer, företag, föreningar och tjänster
 

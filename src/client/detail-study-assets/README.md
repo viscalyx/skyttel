@@ -4,7 +4,9 @@ Kastbart underlag för nästa omgång i
 [Hur utformas listor, detaljer och redigering som öppnas vid behov?](https://github.com/viscalyx/skyttel/issues/107).
 Frågan är hur uppgifter och redigering av ett befintligt objekt blir
 överskådliga, även med många fält och ofullständig information.
-Ingen av detaljvarianterna är godkänd ännu.
+**B · Avsnitt** är vald riktning. Vidarebyggnaden ska ge både objekt-
+och sambandstyper redigerbara egenskaper och egna avsnitt under
+Inställningar. Se [nästa prototypunderlag](../type-study-assets/README.md).
 
 ## Grund och avgränsning
 

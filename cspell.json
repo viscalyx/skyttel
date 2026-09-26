@@ -4,6 +4,10 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "döljning",
+    "originalkoden",
+    "originalkodens",
+    "standardvy",
     "flikval",
     "fokusordning",
     "talstart",
