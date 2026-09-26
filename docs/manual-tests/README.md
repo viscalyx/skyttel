@@ -58,7 +58,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   teman och typdefinitioner i kartans samlade utkast.
 
 - [Fria paneler](workspace-panels.md): flera objekt och samtal, placering,
-  mobil panelväljare, återöppning av nya objekt och bevarade samband och typer.
+  mobil panelväljare, återöppning av nya objekt, bevarade samband och typer
+  samt fortsatt sökning medan ett förslag skickas.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman och fokus, stängbar vägledning, hjälp, formulär på telefon samt
   laddning och återhämtning efter nätfel.
@@ -139,6 +140,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   tillgång med bevarat innehåll i kartan.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt och bevara ofullständiga uppgifter.
+- [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
+  textkontroller, aktiv detaljikon och placering nära objektet.
 - [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
   fokus på tidigare och föreslagna samband med läsbara tidigare värden,
   fokus, filter, namn vid runda symboler, sambandsetiketter vid val,

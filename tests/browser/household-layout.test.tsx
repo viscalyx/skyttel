@@ -110,6 +110,65 @@ test('compact profile returns to visible work and dismisses before keyboard focu
   ).toBe(true);
 });
 
+test('map selection gestures preserve membership and open retained details only when requested', async () => {
+  await open(1440);
+  const alex = page.getByRole('button', { name: 'Välj objekt: Alex', exact: true });
+  const music = page.getByRole('button', { name: 'Välj objekt: Tonmoln', exact: true });
+  const details = page
+    .getByRole('navigation', { name: 'Kartans verktyg' })
+    .getByRole('button', { name: 'Visa detaljer', exact: true });
+  const panel = page.getByRole('region', { name: 'Tonmoln', exact: true });
+  const positions = () =>
+    [alex, music].map((node) => {
+      const { x, y } = node.element().getBoundingClientRect();
+      return { x, y };
+    });
+  await expect.element(alex).toBeVisible();
+  await expect.element(music).toBeVisible();
+  // Native pointer actionability waits for the initial projection to stop moving.
+  await alex.hover();
+  await music.hover();
+  const before = positions();
+  await alex.click();
+  await music.click({ modifiers: ['Control'] });
+  await alex.click();
+  await expect.element(alex).toHaveAttribute('aria-pressed', 'true');
+  await expect.element(music).toHaveAttribute('aria-pressed', 'true');
+  await expect.element(panel).not.toBeInTheDocument();
+  await expect.element(details).toHaveAttribute('aria-pressed', 'false');
+  await music.click({ modifiers: ['Meta'] });
+  await expect.element(music).toHaveAttribute('aria-pressed', 'false');
+  await music.click();
+  await expect.element(alex).toHaveAttribute('aria-pressed', 'false');
+  await music.dblClick();
+  await expect.element(panel).toBeVisible();
+  await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+  await panel.getByLabelText('Beskrivning', { exact: true }).fill('Oskickat arbete');
+  await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+  await alex.click({ modifiers: ['Control', 'Alt'] });
+  await expect.element(page.getByRole('region', { name: 'Alex', exact: true })).toBeVisible();
+  await expect.element(music).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+  await music.click({ modifiers: ['Meta', 'Alt'] });
+  await expect
+    .element(panel.getByLabelText('Beskrivning', { exact: true }))
+    .toHaveValue('Oskickat arbete');
+  await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+  await alex.click({ button: 'right', modifiers: ['Control'] });
+  await expect.element(alex).toHaveAttribute('aria-pressed', 'false');
+  await expect.element(details).toHaveAttribute('aria-pressed', 'false');
+  // Some platforms follow the context-menu gesture with a click from the same press.
+  alex
+    .element()
+    .dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true, detail: 1 }));
+  await expect.element(alex).toHaveAttribute('aria-pressed', 'false');
+  await alex.click({ button: 'right', modifiers: ['Control', 'Alt'] });
+  await expect.element(page.getByRole('region', { name: 'Alex', exact: true })).toBeVisible();
+  await expect.element(alex).toHaveAttribute('aria-pressed', 'true');
+  await expect.element(music).toHaveAttribute('aria-pressed', 'true');
+  expect(positions()).toEqual(before);
+});
+
 test('desktop keeps the map and bounded conversation, object and list panels available', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
@@ -264,6 +323,9 @@ test('a smaller desktop keeps the panel reachable and restores its chosen positi
 
 test('panel placement has reversible keyboard and click controls with a reset and focus return', async () => {
   await open(1440);
+  // Leave room below the object's new nearby panel for both movement
+  // directions even while the optional move controls are expanded.
+  await page.viewport(1440, 1400);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page.getByRole('button', { name: 'Alex', exact: true }).click();
   const object = page.getByRole('region', { name: 'Alex', exact: true });
@@ -315,6 +377,7 @@ test('panel placement has reversible keyboard and click controls with a reset an
 
 test('native panel dragging moves only the held primary pointer and recovers after touch cancellation', async () => {
   await open(1440);
+  await page.viewport(1440, 1400);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page.getByRole('button', { name: 'Alex', exact: true }).click();
   const object = page.getByRole('region', { name: 'Alex', exact: true });

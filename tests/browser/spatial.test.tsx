@@ -695,8 +695,8 @@ test('graphics navigation and label modes expose selectable objects and directed
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await expect.element(lo).toBeVisible();
-  await lo.click({ modifiers: ['Control'] });
-  await expect.element(page.getByRole('status')).toHaveTextContent('Kopplingar för lo');
+  await lo.click({ button: 'right', modifiers: ['Control'] });
+  await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
   await lo.click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
   await page.getByText('Navigera rymden', { exact: true }).click();
@@ -848,7 +848,7 @@ test('context menu edits, focuses, cancels and removes only the chosen object', 
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await lo.click({ button: 'right', modifiers: ['Control'] });
-  await expect.element(page.getByRole('status')).toHaveTextContent('Kopplingar för lo');
+  await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
   expect(document.querySelector('dialog')?.open).toBe(false);
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
