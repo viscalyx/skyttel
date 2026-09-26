@@ -12,7 +12,8 @@ testidentitet och påhittade uppgifter.
 
 1. Förbered en
    [separat provdatabas](../development/devcontainer.md#disposable-local-database)
-   och logga in. Skapa ett hushåll med objekten Cykeln, Bilen och Garaget.
+   och logga in. Skapa ett tomt hushåll för PANEL-01. I övriga fall behövs
+   objekten Cykeln, Bilen och Garaget.
 2. Spara hela utkastet. Börja varje fall med stängda paneler utan oskickad
    text. Behåll fliken mellan stegen.
 3. För samtalet krävs en
@@ -29,7 +30,7 @@ testidentitet och påhittade uppgifter.
 
 **Användare:** Alex.
 
-**Förutsättningar:** De tre objekten finns i den sparade kartan.
+**Förutsättningar:** Provhushållets karta är tom.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
@@ -38,20 +39,27 @@ reuse each object”.
 
 **Steg:**
 
-1. Öppna Lista och välj Cykeln. Kontrollera rubrikfokus, välj
+1. Öppna Lista och välj **Nytt objekt**. Skriv Cykeln som namn och stäng
+   panelen med krysset. Upprepa med Bilen och Garaget utan att skicka något.
+2. Öppna varje formulär med **Fortsätt** under **Påbörjade objekt** i Lista.
+   Kontrollera namnet, lägg det i utkastet och spara alla tre tillsammans.
+3. Öppna Lista och välj Cykeln. Kontrollera rubrikfokus, välj
    **Redigera valt objekt** och skriv en beskrivning utan att skicka den.
-2. Öppna Lista igen och upprepa för Bilen och Garaget. Öppna även
+4. Öppna Lista igen och upprepa för Bilen och Garaget. Öppna även
    **Samtal och text**.
-3. Välj Cykeln i **Öppna paneler** och stäng den med **Stäng Cykeln**.
-   Öppna Cykeln från listan två gånger.
-4. Välj varje objektpanel och lägg dess text i utkastet. Välj
+5. Välj Cykeln i **Öppna paneler** och stäng den med **Stäng Cykeln**.
+   Öppna Cykeln från listan två gånger och kontrollera rubrikfokus även
+   när panelen redan är öppen.
+6. Välj varje objektpanel och lägg dess text i utkastet. Välj
    **Spara hela utkastet** från **Lista och utkast**.
-5. Läs sparbeskedet, ladda om och öppna de tre objekten igen.
+7. Läs sparbeskedet, ladda om och öppna de tre objekten igen.
 
 **Förväntat resultat:**
 
 - Alla tre objekt och samtalet kan vara öppna samtidigt på dator.
 - Varje objekt återanvänder sin panel och sin egen oskickade text.
+- Även nya objekt som aldrig har skickats till utkastet finns kvar efter
+  panelstängning och kan återöppnas från **Påbörjade objekt**.
 - Panelstängning skickar eller kastar ingen text. Den uttryckliga
   handlingen **Stäng utan att skicka texten** kastar formulärtexten.
 - Alla tre förslag kan läggas i samma privata utkast och sparas tillsammans.
@@ -75,10 +83,13 @@ and desktop positions”.
 1. Öppna Cykeln på dator och skriv en oskickad beskrivning.
 2. Fokusera **Flytta Cykeln** och flytta med piltangenter. Klicka på
    rubrikens flyttkontroll, välj **Vänster** och stäng flyttknapparna med
-   Escape. Dra därefter rubriken. Anteckna placeringen.
+   Escape. Dra därefter rubriken. Anteckna placeringen. Minska datorfönstret
+   och kontrollera att panelen ryms; återställ fönstret och kontrollera
+   att panelen återfår placeringen.
 3. Öppna samtalet, lämna nödvändiga medgivanden och starta textassistenten.
    Skriv ett meddelande utan att skicka det.
 4. Minska fönstret till telefonbredd. Välj varje panel med **Öppna paneler**.
+   Öppna Lista och välj Cykeln igen; kontrollera rubrikfokus.
    Stäng samtalspanelen och öppna den igen från verktygsfältet.
 5. Återgå till den ursprungliga datorbredden och välj Cykeln.
 
@@ -123,3 +134,34 @@ text and blocks stale staging”.
   utkastet över det nyare förslaget.
 - Efter uttrycklig stängning av formuläret bygger nästa redigering på det
   aktuella förslaget. Inget gemensamt sparande sker automatiskt.
+
+### PANEL-04: kartval bevarar oskickade samband och typer
+
+**Syfte:** Bevara formulärtext när ett samband markeras i kartan.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Cykeln och Garaget finns med ett sparat samband.
+
+**Integrationstest:**
+[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
+testfallet “PANEL-04: map selection preserves unsent relationship and type forms”.
+
+**Steg:**
+
+1. Slå på **Alla etiketter** i kartan. Öppna Lista och välj **Nytt samband**.
+   Välj Cykeln som **Från objekt**.
+2. Välj **Stäng arbetsytan** och markera det sparade sambandet i kartan.
+   Öppna Lista igen och kontrollera ditt oskickade val. Välj
+   **Stäng sambandet utan att skicka**.
+3. Upprepa med **Ny objekttyp**: skriv **Oskickad typ** i **Typens namn**,
+   stäng arbetsytan, markera sambandet och öppna Lista. Kontrollera texten
+   och välj **Stäng typformuläret utan att skicka**.
+4. Upprepa med **Ny sambandstyp** och **Oskickad riktning** i
+   **Sambandstypens namn**. Avsluta med **Stäng sambandstypen utan att skicka**.
+
+**Förväntat resultat:**
+
+- Markeringen ändrar inte eller kastar något oskickat formulär.
+- Endast uttrycklig stängning av formuläret kastar den oskickade texten.
+- Inget nytt förslag eller sparande uppstår av navigeringen.

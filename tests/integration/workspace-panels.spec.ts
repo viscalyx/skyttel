@@ -22,7 +22,17 @@ test('PANEL-01: independent object panels preserve unsent work and reuse each ob
     await openWorkspace(page);
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
       await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-      await page.getByLabel('Objektets namn').fill(name);
+      await page
+        .getByRole('region', { name: 'Nytt objekt', exact: true })
+        .getByLabel('Objektets namn')
+        .fill(name);
+      await page.getByRole('button', { name: 'Stäng Nytt objekt', exact: true }).click();
+    }
+    for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
+      await page.getByRole('button', { name: `Fortsätt: ${name}`, exact: true }).click();
+      await expect(
+        page.getByRole('region', { name: 'Nytt objekt', exact: true }).getByLabel('Objektets namn'),
+      ).toHaveValue(name);
       await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     }
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
@@ -55,6 +65,7 @@ test('PANEL-01: independent object panels preserve unsent work and reuse each ob
     await openWorkspace(page);
     await objects.getByRole('button', { name: 'Cykeln', exact: true }).click();
     await expect(cycle).toHaveCount(1);
+    await expect(cycle.getByRole('heading', { name: 'Cykeln', exact: true })).toBeFocused();
     await expect(
       page
         .getByRole('region', { name: 'Bilen', exact: true })
@@ -123,6 +134,11 @@ test('PANEL-02: mobile panel choice retains conversation, object text and deskto
     await page.mouse.up();
     const position = await bounds(panel);
     expect(position.x).toBeLessThan(clickPosition.x);
+    await page.setViewportSize({ width: 900, height: 1000 });
+    const fitted = await bounds(panel);
+    expect(fitted.x + fitted.width).toBeLessThanOrEqual(900);
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await expect.poll(async () => (await bounds(panel)).x).toBe(position.x);
     await page
       .getByRole('navigation', { name: 'Kartans verktyg' })
       .getByRole('button', { name: 'Samtal och text', exact: true })
@@ -156,6 +172,13 @@ test('PANEL-02: mobile panel choice retains conversation, object text and deskto
           }),
         ).toBe(true);
       }
+      await openWorkspace(page);
+      await page
+        .getByRole('list', { name: 'Objekt', exact: true })
+        .getByRole('button', { name: 'Cykeln', exact: true })
+        .click();
+      await expect(panel.getByRole('heading', { name: 'Cykeln', exact: true })).toBeFocused();
+      await chooser.selectOption({ label: 'Samtal och text' });
       await expect(conversation.getByLabel('Meddelande till textassistenten')).toHaveValue(
         'Oskickad samtalstext',
       );
@@ -260,6 +283,93 @@ test('PANEL-03: an intervening proposal for the same object preserves text and b
     await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(object.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Assistentens nyare förslag',
+    );
+  } finally {
+    await installation.close();
+  }
+});
+
+test('PANEL-04: map selection preserves unsent relationship and type forms', async ({ page }) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const headers = { origin: installation.origin };
+    const initial: MapState = await (await page.request.get(path)).json();
+    for (const [version, id, name] of [
+      [0, 'bike', 'Cykeln'],
+      [1, 'garage', 'Garaget'],
+    ] as const) {
+      expect(
+        (
+          await page.request.post(`${path}/draft`, {
+            headers,
+            data: {
+              version,
+              contentVersion: initial.contentVersion,
+              id,
+              baseRevision: null,
+              value: { typeId: initial.types[0].id, name, description: '' },
+            },
+          })
+        ).ok(),
+      ).toBe(true);
+    }
+    expect(
+      (
+        await page.request.post(`${path}/relationship`, {
+          headers,
+          data: {
+            version: 2,
+            contentVersion: initial.contentVersion,
+            id: 'edge',
+            baseRevision: null,
+            value: {
+              typeId: initial.relationshipTypes[0].id,
+              sourceId: 'bike',
+              targetId: 'garage',
+              knowledge: 'known',
+            },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    expect(
+      (
+        await page.request.post(`${path}/save`, {
+          headers,
+          data: { version: 3, contentVersion: initial.contentVersion, operationId: 'setup' },
+        })
+      ).ok(),
+    ).toBe(true);
+    await page.goto(installation.origin);
+    await page.getByLabel('Alla etiketter', { exact: true }).check();
+    await openWorkspace(page);
+    for (const [button, label, value, close] of [
+      ['Nytt samband', 'Från objekt', 'bike', 'Stäng sambandet utan att skicka'],
+      ['Ny objekttyp', 'Typens namn', 'Oskickad typ', 'Stäng typformuläret utan att skicka'],
+      [
+        'Ny sambandstyp',
+        'Sambandstypens namn',
+        'Oskickad riktning',
+        'Stäng sambandstypen utan att skicka',
+      ],
+    ]) {
+      await page.getByRole('button', { name: button, exact: true }).click();
+      if (button === 'Nytt samband')
+        await page.getByLabel(label, { exact: true }).selectOption(value);
+      else await page.getByLabel(label, { exact: true }).fill(value);
+      await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+      const edge = page.locator('.spatial-labels').getByRole('button', { name: /^Välj samband:/ });
+      await edge.focus();
+      await page.keyboard.press('Enter');
+      await openWorkspace(page);
+      await expect(page.getByLabel(label, { exact: true })).toHaveValue(value);
+      await page.getByRole('button', { name: close, exact: true }).click();
+    }
+    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
+      'Inga förslag',
     );
   } finally {
     await installation.close();

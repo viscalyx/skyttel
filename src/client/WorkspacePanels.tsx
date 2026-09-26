@@ -10,13 +10,11 @@ import {
   useState,
 } from 'react';
 
-export type PanelAnchor = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>;
 export type WorkspacePanel = {
   id: string;
   title: string;
   content: ReactNode;
   open: boolean;
-  anchor?: PanelAnchor;
 };
 
 type Position = { x: number; y: number };
@@ -40,17 +38,6 @@ function startingPosition(index: number, width: number): Position {
   };
 }
 
-function anchoredPosition(anchor: PanelAnchor, region: HTMLElement, panel?: HTMLElement): Position {
-  const bounds = region.getBoundingClientRect();
-  const width = panel?.offsetWidth ?? panelWidth;
-  const right = anchor.right - bounds.left + 12;
-  const left = anchor.left - bounds.left - width - 12;
-  return {
-    x: right + width <= region.clientWidth ? right : left >= 0 ? left : right,
-    y: anchor.top - bounds.top - 12,
-  };
-}
-
 function clampPosition(position: Position, region: HTMLElement, panel?: HTMLElement): Position {
   return {
     x: Math.round(
@@ -65,6 +52,7 @@ function clampPosition(position: Position, region: HTMLElement, panel?: HTMLElem
 export function WorkspacePanels({
   windows,
   activeId,
+  focusRequest,
   onActivate,
   onClose,
   hidden = false,
@@ -73,6 +61,7 @@ export function WorkspacePanels({
 }: {
   windows: WorkspacePanel[];
   activeId: string | null;
+  focusRequest: number;
   onActivate: (id: string) => void;
   onClose: (id: string) => void;
   hidden?: boolean;
@@ -88,6 +77,8 @@ export function WorkspacePanels({
   const dragRef = useRef<Drag | null>(null);
   const previousIds = useRef(new Set<string>());
   const previousHidden = useRef(hidden);
+  const previousFocusRequest = useRef(focusRequest);
+  const rememberedPositions = useRef<Record<string, Position>>({});
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [stack, setStack] = useState<string[]>([]);
   const [moveMenuId, setMoveMenuId] = useState<string | null>(null);
@@ -116,7 +107,7 @@ export function WorkspacePanels({
   useLayoutEffect(() => {
     const region = regionRef.current;
     if (!region || compact || hidden) return;
-    const fitPanels = (resetPositions = false) => {
+    const fitPanels = () => {
       if (!region.clientWidth || !region.clientHeight) return;
       setPositions((previous) => {
         let changed = false;
@@ -124,10 +115,8 @@ export function WorkspacePanels({
         windows.forEach((entry, index) => {
           const panel = panelRefs.current.get(entry.id);
           const proposed =
-            (!resetPositions && previous[entry.id]) ||
-            (!resetPositions && entry.anchor
-              ? anchoredPosition(entry.anchor, region, panel)
-              : startingPosition(index, region.clientWidth));
+            rememberedPositions.current[entry.id] || startingPosition(index, region.clientWidth);
+          rememberedPositions.current[entry.id] = proposed;
           const position = clampPosition(proposed, region, panel);
           next[entry.id] = position;
           if (position.x !== previous[entry.id]?.x || position.y !== previous[entry.id]?.y) {
@@ -147,19 +136,22 @@ export function WorkspacePanels({
   useEffect(() => {
     const added = opened.filter((entry) => !previousIds.current.has(entry.id));
     const reopened = previousHidden.current && !hidden;
+    const requested = previousFocusRequest.current !== focusRequest;
     previousIds.current = new Set(opened.map((entry) => entry.id));
     previousHidden.current = hidden;
+    previousFocusRequest.current = focusRequest;
     if (hidden) return;
     const target =
+      (requested ? visibleId : undefined) ??
       added.find((entry) => entry.id === visibleId)?.id ??
       added.at(-1)?.id ??
       (reopened ? visibleId : undefined);
     if (target) {
-      const previousFocus = reopened ? lastFocus.current.get(target) : undefined;
+      const previousFocus = reopened && !requested ? lastFocus.current.get(target) : undefined;
       if (previousFocus?.isConnected && previousFocus.offsetHeight) previousFocus.focus();
       else panelRefs.current.get(target)?.querySelector('h2')?.focus();
     }
-  }, [opened, hidden, visibleId]);
+  }, [opened, hidden, visibleId, focusRequest]);
 
   const activate = (id: string) => {
     onActivate(id);
@@ -172,6 +164,7 @@ export function WorkspacePanels({
     const region = regionRef.current;
     if (!region || compact) return;
     const next = clampPosition(position, region, panelRefs.current.get(id));
+    rememberedPositions.current[id] = next;
     setPositions((previous) => ({ ...previous, [id]: next }));
     return next;
   };

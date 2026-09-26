@@ -109,16 +109,25 @@ export function HouseholdMap({
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergeGeneration, setMergeGeneration] = useState(1);
   const [objectPanels, setObjectPanels] = useState<
-    { id: string; title: string; initial: ObjectEditor; editing: number }[]
+    {
+      id: string;
+      title: string;
+      initial: ObjectEditor;
+      editing: number;
+      newObject: boolean;
+      unsentName: string;
+    }[]
   >([]);
   const [objectDirty, setObjectDirty] = useState<Record<string, boolean>>({});
   const [openPanels, setOpenPanels] = useState<string[]>([]);
   const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [panelFocusRequest, setPanelFocusRequest] = useState(0);
   const currentPanel = useRef(activePanel);
   currentPanel.current = activePanel;
   function openPanel(id: string) {
     setOpenPanels((previous) => (previous.includes(id) ? previous : [...previous, id]));
     setActivePanel(id);
+    setPanelFocusRequest((previous) => previous + 1);
     setPresentation('combined');
     setRevealRequest(undefined);
   }
@@ -752,7 +761,14 @@ export function HouseholdMap({
           )
         : [
             ...previous,
-            { id, initial, title: object?.name ?? 'Nytt objekt', editing: editing ? 1 : 0 },
+            {
+              id,
+              initial,
+              title: object?.name ?? 'Nytt objekt',
+              editing: editing ? 1 : 0,
+              newObject: !object,
+              unsentName: '',
+            },
           ],
     );
     if (object) setSelection({ kind: 'object', id });
@@ -876,7 +892,7 @@ export function HouseholdMap({
   }
   function selectRelationship(edge: MapRelationship, previous = false) {
     setSelection({ kind: 'relationship', id: edge.id, previous });
-
+    if (legacyDirty) return;
     if (previous || edgeEditor?.id !== edge.id) setEdgeEditor(null);
     setTypeEditor(null);
     setEdgeTypeEditor(null);
@@ -1125,6 +1141,7 @@ export function HouseholdMap({
             <WorkspacePanels
               hidden={!active || !workOpen}
               activeId={activePanel}
+              focusRequest={panelFocusRequest}
               onActivate={(id) => {
                 setActivePanel(id);
                 if (id !== activePanel) setRevealRequest(undefined);
@@ -1153,7 +1170,11 @@ export function HouseholdMap({
                     open: openPanels.includes(panel.id),
                     content: (
                       <ObjectWork
-                        initial={selectedObject ? objectEditor(selectedObject) : panel.initial}
+                        initial={
+                          selectedObject
+                            ? objectEditor(selectedObject)
+                            : { ...panel.initial, version: state.draft.version }
+                        }
                         object={selectedObject}
                         state={state}
                         effectiveTypes={effectiveTypes}
@@ -1164,8 +1185,19 @@ export function HouseholdMap({
                         onDirty={(value) =>
                           setObjectDirty((previous) => ({ ...previous, [panel.id]: value }))
                         }
+                        onName={(name) => {
+                          if (!panel.newObject) return;
+                          setObjectPanels((previous) =>
+                            previous.map((entry) =>
+                              entry.id === panel.id ? { ...entry, unsentName: name } : entry,
+                            ),
+                          );
+                        }}
                         onDone={() => {
                           closePanel(panel.id);
+                          setObjectPanels((previous) =>
+                            previous.filter((entry) => entry.id !== panel.id),
+                          );
                           openPanel('work');
                           requestAnimationFrame(() => {
                             if (currentPanel.current === 'work') newButton.current?.focus();
@@ -1544,6 +1576,27 @@ export function HouseholdMap({
                 >
                   Nytt objekt
                 </button>
+                {objectPanels.some((panel) => panel.newObject && !displayed.has(panel.id)) && (
+                  <section aria-label="Påbörjade objekt">
+                    <h3>Påbörjade objekt</h3>
+                    <p>Dessa formulär är inte skickade till ditt utkast.</p>
+                    <ul>
+                      {objectPanels
+                        .filter((panel) => panel.newObject && !displayed.has(panel.id))
+                        .map((panel, index) => (
+                          <li key={panel.id}>
+                            <button
+                              type="button"
+                              disabled={pending || blocked}
+                              onClick={() => openPanel(panel.id)}
+                            >
+                              Fortsätt: {panel.unsentName || `Nytt objekt ${index + 1}`}
+                            </button>
+                          </li>
+                        ))}
+                    </ul>
+                  </section>
+                )}
                 <button
                   type="button"
                   disabled={pending || dirty || blocked}

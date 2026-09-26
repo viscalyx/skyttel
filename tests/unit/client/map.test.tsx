@@ -99,6 +99,36 @@ async function save() {
   await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Sparat:'));
 }
 
+test('closed new objects can be reopened individually and staged together without losing text', async () => {
+  await open();
+  for (const name of ['Cykeln', 'Bilen']) {
+    await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+    const panel = within(screen.getByRole('region', { name: 'Nytt objekt' }));
+    await userEvent.type(panel.getByLabelText('Objektets namn'), name);
+    await userEvent.type(panel.getByLabelText('Beskrivning'), `Oskickat om ${name}`);
+    await userEvent.click(screen.getByRole('button', { name: 'Stäng Nytt objekt' }));
+  }
+  for (const name of ['Cykeln', 'Bilen']) {
+    await userEvent.click(screen.getByRole('button', { name: `Fortsätt: ${name}` }));
+    const panel = within(screen.getByRole('region', { name: 'Nytt objekt' }));
+    expect((panel.getByLabelText('Objektets namn') as HTMLInputElement).value).toBe(name);
+    expect((panel.getByLabelText('Beskrivning') as HTMLTextAreaElement).value).toBe(
+      `Oskickat om ${name}`,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: `Fortsätt: ${name}` })).toBeNull(),
+    );
+  }
+  await save();
+  for (const name of ['Cykeln', 'Bilen']) {
+    await userEvent.click(screen.getByRole('button', { name }));
+    expect(screen.getByRole('region', { name }).textContent).toContain(
+      `Beskrivning: Oskickat om ${name}`,
+    );
+  }
+});
+
 test('workspace theme persists and System follows device preference changes', async () => {
   // jsdom has no device preference; keep its external browser event boundary.
   // YTA-02 also exercises this flow with Chromium's actual media preference.

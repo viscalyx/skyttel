@@ -116,7 +116,7 @@ det är inte ångring av ett tidigare sparande.
 
 ## Enheter och begränsningar
 
-Lista och detaljer ger hela det vanliga kartarbetet med tangentbord utan
+Lista och objektpanelerna ger hela det vanliga kartarbetet med tangentbord utan
 rumslig navigering. Fokusmarkeringar, fältnamn och statusbesked finns kvar.
 Kameran byter läge direkt utan animation och systemets minskade rörelse
 respekteras. Om grafiken avbryts finns utkast och oskickad text kvar.

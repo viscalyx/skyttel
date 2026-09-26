@@ -257,7 +257,7 @@ later refreshes preserve the camera”.
 
 **Steg:**
 
-1. Välj Lampan via Lista och detaljer och öppna rymdkartan. Öppna Ordna
+1. Välj Lampan via Lista och stäng arbetsytan. Öppna Ordna
    min vy. Använd Flytta höger i rummet upprepade gånger tills Lampan
    ligger helt utanför den ursprungliga vyn. Vänta på beskedet att din
    personliga vy är sparad. Gör samma sak med Cykeln, utan att ändra kameran.

@@ -27,6 +27,7 @@ export function ObjectWork({
   blocked,
   editing,
   onDirty,
+  onName,
   onDone,
   action,
   changeImage,
@@ -42,6 +43,7 @@ export function ObjectWork({
   blocked: boolean;
   editing: number;
   onDirty: (dirty: boolean) => void;
+  onName: (name: string) => void;
   onDone: () => void;
   action: (body: unknown) => Promise<boolean>;
   changeImage: (editor: ObjectEditor, file: File | null) => Promise<ObjectEditor | undefined>;
@@ -150,6 +152,7 @@ export function ObjectWork({
                 value={editor.value.name}
                 onChange={(event) => {
                   setDirty(true);
+                  onName(event.target.value);
                   setEditor({
                     ...editor,
                     value: { ...editor.value, name: event.target.value },

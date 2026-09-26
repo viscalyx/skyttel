@@ -80,6 +80,8 @@ Flytta datorpanelen genom att dra rubriken, använda piltangenter på
 flyttkontrollen eller öppna dess flyttknappar. Panelernas kryss stänger dem
 utan att kasta oskickad text. **Stäng arbetsytan** döljer panelerna för att
 visa hela kartan. Öppna ett verktyg och välj din panel för att fortsätta.
+Nya objekt som ännu inte skickats till utkastet kan öppnas igen med
+**Fortsätt** under **Påbörjade objekt** i Lista.
 Placeringar och oskickad text bevaras vid skärmbyte under samma session.
 Läs om [navigering och personlig vy](spatial-map.md) för att söka,
 fokusera på ett objekt och ordna placeringarna så att de passar dig.
