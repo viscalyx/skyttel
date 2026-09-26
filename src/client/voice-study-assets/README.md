@@ -2,13 +2,14 @@
 
 Kastbart beslutsunderlag för
 [Hur görs tal till det primära arbetssättet med tydlig återkoppling?](https://github.com/viscalyx/skyttel/issues/106).
-Alternativen väntar på beställarens återkoppling. De är inte fastställda
-designbeslut.
+**D · Kartan berättar** är godkänd av beställaren den 26 september 2026,
+inklusive grönt för nytt och legend bara när utkastet innehåller ändringar.
+A/B/C finns kvar som jämförelseunderlag.
 
-## Aktuell prövning: kartan berättar
+## Godkänd grund: kartan berättar
 
 Beställarens inriktning är att förändringarna ska framgå direkt i kartan.
-**D · Kartan berättar** prövar detta med ett mindre statuskort och
+**D · Kartan berättar** visar detta med ett mindre statuskort och
 markeringar på objekt, samband och deras namn. A/B/C finns kvar som
 tidigare jämförelser av statuskort.
 
@@ -31,8 +32,10 @@ bekräftat sparande.
 Markeringarna beskriver privata förslag. De finns kvar under sparande
 och vid okänt resultat. Ett verifierat kvitto gör förslagen till vanliga
 uppgifter och tar bort den tidigare betalningskopplingen.
-Färgerna är fastställda genom beställarens återkoppling. Det samlade
-samtalsbeslutet är fortfarande öppet.
+Den godkända prototypen är grund för fortsatt prototyparbete.
+Kvarstående rättelse- och konfliktval följs upp i
+[listor, detaljer och redigering](https://github.com/viscalyx/skyttel/issues/107)
+och i [helhetsbedömningen](https://github.com/viscalyx/skyttel/issues/109).
 
 ## Grund och avgränsning
 
@@ -100,7 +103,8 @@ Pröva även **Tal klart: oklart kort**, **Mikrofon nekad**, **Nätet bryts**,
 tills den besvaras. Konfliktprovet visar återkopplingen för ett konkurrerande
 pris och låter dig behålla ditt förslag före ett nytt sparbesked.
 Det är en skiss av konflikthanteringens presentation; andra konfliktval
-och fri rättelse av alla fält återstår att pröva i fortsatt dialog.
+och fri rättelse av alla fält återstår i list-, detalj- och
+redigeringsbeslutet och i helhetsbedömningen.
 
 ## Skärmbilder
 
