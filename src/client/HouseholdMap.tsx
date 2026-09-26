@@ -783,7 +783,7 @@ export function HouseholdMap({
             },
           ],
     );
-    if (object) selectObject(object, true, false);
+    if (object) selectObject(object, 'include');
     openPanel(id);
   }
   const { displayed, displayedEdges, visibleObjects, visibleEdges } = useMemo(() => {
@@ -898,19 +898,20 @@ export function HouseholdMap({
     });
     setDirty(true);
   }
-  function selectObject(object: MapObject, additive = false, toggle = true) {
+  function selectObject(object: MapObject, mode: 'select' | 'toggle' | 'include' = 'select') {
     setSelection((previous) => {
       const ids = previous?.kind === 'object' ? (previous.ids ?? [previous.id]) : [];
       const selected = ids.includes(object.id);
-      const next = additive
-        ? selected
-          ? toggle
-            ? ids.filter((id) => id !== object.id)
-            : ids
-          : [...ids, object.id]
-        : selected
-          ? ids
-          : [object.id];
+      const next =
+        mode !== 'select'
+          ? selected
+            ? mode === 'toggle'
+              ? ids.filter((id) => id !== object.id)
+              : ids
+            : [...ids, object.id]
+          : selected
+            ? ids
+            : [object.id];
       if (!next.length) return null;
       return {
         kind: 'object',
@@ -1163,7 +1164,7 @@ export function HouseholdMap({
             selection={selection}
             selectedIds={selectedIds}
             disabled={pending || blocked}
-            onSelect={selectObject}
+            onSelect={(object, additive) => selectObject(object, additive ? 'toggle' : 'select')}
             onEdit={edit}
             onOpenDetails={(object) => edit(object, false)}
             onSelectRelationship={selectRelationship}
@@ -1557,7 +1558,7 @@ export function HouseholdMap({
                           aria-label={`Markera ${object.name}`}
                           aria-pressed={selectedIds.includes(object.id)}
                           disabled={pending || blocked}
-                          onClick={() => selectObject(object, true)}
+                          onClick={() => selectObject(object, 'toggle')}
                         >
                           Markera
                         </button>
