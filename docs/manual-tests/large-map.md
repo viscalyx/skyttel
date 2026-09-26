@@ -49,7 +49,7 @@ relationship reachable”.
 
 **Steg:**
 
-1. Öppna **Samlad vy**. Läs beskedet om färre etiketter och kontrollera
+1. Öppna **Lista**. Läs beskedet om färre etiketter och kontrollera
    att sökning, listor och navigering är tillgängliga.
 2. Bläddra genom objektsidorna och sambandssidorna med sidvalet. Kontrollera
    räknaren och att den sista sidan nås. Välj **Provobjekt 499** genom sökning

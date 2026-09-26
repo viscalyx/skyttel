@@ -413,7 +413,8 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 2. Redigera sambandet och byt typen till **Betalar**. Lägg rättelsen i
    utkastet. Redigera sedan Tonrum, välj statusen **Upphört** och lägg
    även den rättelsen i utkastet. Lämna båda osparade.
-3. Välj **Lista och detaljer** och skicka **Läs upp hela utkastet.** i
+3. Öppna **Lista** och välj sedan samtalspanelen. Skicka
+   **Läs upp hela utkastet.** i
    assistenten. Ersätt `NUMMER` med det aktuella `held`-numret i terminalen:
 
    ```text
@@ -423,7 +424,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 4. Under **Besked från Skyttel**, kräv **Utkast:**, **Gäller: aktuellt →
    upphört** för Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel
    Betalar Tonrum**. Kontrollera att båda rättelserna fortfarande ligger
-   i utkastet och att **Lista och detaljer** förblir valt.
+   i utkastet och att **Lista och utkast** fortfarande finns i panelväljaren.
 5. Skicka **Spara hela utkastet nu.** Läs `version` och `contentVersion`
    från det nya `held.draft`. Ersätt `NUMMER`, `VERSION` och `CONTENT`:
 
@@ -443,7 +444,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 8. Kräv **Sparandet:** och samma tidigare och nya status respektive
    sambandstyp under **Besked från Skyttel**. Kontrollera att utkastet
    förblir tomt och att inget nytt sparförsök tillkommer under **Tidigare
-   sparförsök**. **Lista och detaljer** ska fortfarande vara valt.
+   sparförsök**. Listpanelen ska fortfarande finnas i panelväljaren.
 
 **Förväntat resultat:**
 

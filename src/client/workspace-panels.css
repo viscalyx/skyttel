@@ -367,3 +367,11 @@
 .household-map.workspace-shell .spatial-bottom-bar {
   bottom: calc(12px + var(--feedback-height, 0px) + var(--voice-height, 0px));
 }
+.workspace-windows > .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
