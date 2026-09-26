@@ -6,24 +6,22 @@ import './list-study-list.css';
 export type ListStudyVariant = 'A' | 'B' | 'C';
 export type ListStudyBrowseState = {
   query: string;
-  type: string;
+  types: string[];
   sort: 'name' | 'type';
   page: number;
   onlySelected: boolean;
   selectedResult: string | null;
   filtersOpen: boolean;
-  catalogueOpen: boolean;
 };
 
 export const initialListStudyBrowseState: ListStudyBrowseState = {
   query: '',
-  type: '',
+  types: [],
   sort: 'name',
   page: 0,
   onlySelected: false,
   selectedResult: null,
   filtersOpen: false,
-  catalogueOpen: true,
 };
 export default initialListStudyBrowseState;
 
@@ -87,7 +85,7 @@ export function ListStudyList({
     a.localeCompare(b, 'sv'),
   );
   const filtered = matching
-    .filter((object) => !state.type || object.type === state.type)
+    .filter((object) => !state.types.length || state.types.includes(object.type))
     .sort((a, b) => {
       const byName = nameOf(a).localeCompare(nameOf(b), 'sv', { numeric: true });
       return state.sort === 'type' ? a.type.localeCompare(b.type, 'sv') || byName : byName;
@@ -134,9 +132,12 @@ export function ListStudyList({
     });
   }
 
-  function chooseType(type: string) {
-    filter({ type, catalogueOpen: false });
-    showResults();
+  function toggleType(type: string) {
+    filter({
+      types: state.types.includes(type)
+        ? state.types.filter((value) => value !== type)
+        : [...state.types, type],
+    });
   }
 
   function inspect(objectId: string, fromResult = false) {
@@ -235,36 +236,6 @@ export function ListStudyList({
         />
       </label>
 
-      {variant === 'B' && (
-        <details
-          className="ls-catalogue-disclosure"
-          open={state.catalogueOpen}
-          onToggle={(event) => {
-            const catalogueOpen = event.currentTarget.open;
-            if (catalogueOpen !== state.catalogueOpen) onState({ ...state, catalogueOpen });
-          }}
-        >
-          <summary>Typkatalog · {state.type || 'Alla typer'}</summary>
-          <nav className="ls-type-catalogue" aria-label="Bläddra bland objekttyper">
-            <button type="button" aria-pressed={!state.type} onClick={() => chooseType('')}>
-              <span>Alla typer</span>
-              <b>{matching.length}</b>
-            </button>
-            {types.map((type) => (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={state.type === type}
-                onClick={() => chooseType(type)}
-              >
-                <span>{type}</span>
-                <b>{matching.filter((object) => object.type === type).length}</b>
-              </button>
-            ))}
-          </nav>
-        </details>
-      )}
-
       <details
         className="ls-filter-disclosure"
         open={state.filtersOpen}
@@ -274,43 +245,52 @@ export function ListStudyList({
         }}
       >
         <summary>
-          Filter och sortering
-          {variant !== 'B' && state.type && ` · ${state.type}`}
+          {variant === 'B' ? 'Filter' : 'Filter och sortering'}
+          {state.types.length > 0 &&
+            ` · ${state.types.length > 2 ? `${state.types.length} typer` : state.types.join(', ')}`}
           {state.onlySelected && ' · Bara markerade'}
-          {state.sort === 'type' && ' · Typordning'}
-          {!state.onlySelected &&
+          {variant !== 'B' && state.sort === 'type' && ' · Typordning'}
+          {variant !== 'B' &&
+            !state.onlySelected &&
             selectedIds.length > 0 &&
             ` · ${selectedIds.length} ${selectedIds.length === 1 ? 'markerat' : 'markerade'}`}
         </summary>
         <div className="ls-filter-content">
-          <div className="ls-filter-fields">
-            {variant !== 'B' && (
-              <label htmlFor={`${id}-type`}>
-                Typ
+          <fieldset className="ls-type-filter">
+            <legend>Objekttyper</legend>
+            <p className="ls-hint">Välj en eller flera typer. Utan val visas alla typer.</p>
+            <button type="button" className="ls-all-types" onClick={() => filter({ types: [] })}>
+              Alla typer · {matching.length}
+            </button>
+            <div className={`ls-type-catalogue${variant === 'B' ? '' : ' ls-types-plain'}`}>
+              {types.map((type) => (
+                <label key={type} data-checked={state.types.includes(type)}>
+                  <input
+                    type="checkbox"
+                    checked={state.types.includes(type)}
+                    onChange={() => toggleType(type)}
+                  />
+                  <span>{type}</span>
+                  <b>{matching.filter((object) => object.type === type).length}</b>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {variant !== 'B' && (
+            <div className="ls-filter-fields">
+              <label htmlFor={`${id}-sort`}>
+                Sortera
                 <select
-                  id={`${id}-type`}
-                  value={state.type}
-                  onChange={(event) => filter({ type: event.target.value })}
+                  id={`${id}-sort`}
+                  value={state.sort}
+                  onChange={(event) => filter({ sort: event.target.value as 'name' | 'type' })}
                 >
-                  <option value="">Alla typer</option>
-                  {types.map((type) => (
-                    <option key={type}>{type}</option>
-                  ))}
+                  <option value="name">Namn, A–Ö</option>
+                  <option value="type">Typ, sedan namn</option>
                 </select>
               </label>
-            )}
-            <label htmlFor={`${id}-sort`}>
-              Sortera
-              <select
-                id={`${id}-sort`}
-                value={state.sort}
-                onChange={(event) => filter({ sort: event.target.value as 'name' | 'type' })}
-              >
-                <option value="name">Namn, A–Ö</option>
-                <option value="type">Typ, sedan namn</option>
-              </select>
-            </label>
-          </div>
+            </div>
+          )}
           <div className="ls-selection-filter">
             <label>
               <input
@@ -326,8 +306,34 @@ export function ListStudyList({
               </button>
             )}
           </div>
+          {variant === 'B' && (
+            <button
+              type="button"
+              className="ls-show-results"
+              onClick={() => {
+                onState({ ...state, filtersOpen: false });
+                showResults();
+              }}
+            >
+              Visa {filtered.length} objekt
+            </button>
+          )}
         </div>
       </details>
+
+      {variant === 'B' && (
+        <label className="ls-sort-control" htmlFor={`${id}-sort`}>
+          Sortering
+          <select
+            id={`${id}-sort`}
+            value={state.sort}
+            onChange={(event) => filter({ sort: event.target.value as 'name' | 'type' })}
+          >
+            <option value="name">Namn, A–Ö</option>
+            <option value="type">Typ, sedan namn</option>
+          </select>
+        </label>
+      )}
 
       {variant === 'C' && preview && (
         <section
@@ -439,7 +445,7 @@ export function ListStudyList({
             <p>Prova ett annat sökord, välj alla typer eller visa även omarkerade objekt.</p>
             <button
               type="button"
-              onClick={() => filter({ query: '', type: '', onlySelected: false })}
+              onClick={() => filter({ query: '', types: [], onlySelected: false })}
             >
               Rensa sökning och filter
             </button>

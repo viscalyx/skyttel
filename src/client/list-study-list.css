@@ -55,7 +55,7 @@
 .np-root .ls-search input {
   width: 100%;
 }
-.np-root .ls-list :is(.ls-filter-disclosure, .ls-catalogue-disclosure) > summary {
+.np-root .ls-list .ls-filter-disclosure > summary {
   min-height: 32px;
   padding: 6px 0;
   color: var(--vp-accent);
@@ -70,6 +70,34 @@
   display: grid;
   gap: 8px;
   padding-block: 7px;
+}
+.np-root .ls-type-filter {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.np-root .ls-type-filter legend {
+  padding: 0 0 10px;
+  font-weight: 600;
+}
+.np-root .ls-list .ls-all-types {
+  justify-self: start;
+}
+.np-root .ls-list .ls-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.np-root .ls-sort-control select {
+  flex: 1;
+  min-width: 0;
+}
+.np-root .ls-list .ls-show-results {
+  justify-self: start;
 }
 .np-root .ls-filter-fields {
   display: flex;
@@ -185,14 +213,28 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
-.np-root .ls-type-catalogue button {
-  display: flex;
-  justify-content: space-between;
+.np-root .ls-list .ls-type-catalogue label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 44px;
   gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--vp-control-line);
+  border-radius: 7px;
   text-align: left;
+  cursor: pointer;
 }
-.np-root .ls-type-catalogue button > span {
+.np-root .ls-type-catalogue label[data-checked="true"] {
+  background: color-mix(in srgb, var(--vp-accent) 11%, transparent);
+  border-color: var(--vp-accent);
+}
+.np-root .ls-type-catalogue label > span {
   overflow-wrap: anywhere;
+}
+.np-root .ls-list .ls-types-plain label {
+  border-color: transparent;
+  padding-inline: 0;
 }
 .np-root .ls-type-catalogue b {
   font-size: 11px;

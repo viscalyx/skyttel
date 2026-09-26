@@ -160,7 +160,7 @@ export function NavigationPrototype() {
   const listsMode = params.get('prototype') === 'lists';
   const voiceMode = params.get('prototype') === 'voice' || listsMode;
   const listVariant: ListStudyVariant =
-    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
+    params.get('variant') === 'A' ? 'A' : params.get('variant') === 'C' ? 'C' : 'B';
   const [browse, setBrowse] = useState(initialListStudyBrowseState);
   const listMemory = useRef({ scrollTop: 0, focusId: null as string | null });
   const feedbackVariant: VoiceStudyVariant = listsMode
@@ -1770,8 +1770,9 @@ export function NavigationPrototype() {
                         </select>
                       </label>
                       <p>
-                        Sökning: {browse.query || 'ingen'} · typ: {browse.type || 'alla'} ·
-                        sortering: {browse.sort === 'name' ? 'namn' : 'typ'} · urval:{' '}
+                        Sökning: {browse.query || 'ingen'} · typer:{' '}
+                        {browse.types.join(', ') || 'alla'} · sortering:{' '}
+                        {browse.sort === 'name' ? 'namn' : 'typ'} · urval:{' '}
                         {browse.onlySelected ? 'markerade' : 'alla'}.
                       </p>
                       <p>

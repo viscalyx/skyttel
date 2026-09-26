@@ -3,7 +3,18 @@
 Kastbart underlag för första omgången i
 [Hur utformas listor, detaljer och redigering som öppnas vid behov?](https://github.com/viscalyx/skyttel/issues/107).
 Underlaget prövar hur användaren hittar och väljer rätt objekt bland få
-eller flera hundra objekt. Inget av listalternativen är godkänt ännu.
+eller flera hundra objekt. **B · Typkatalog** är vald riktning för
+fortsatt arbete. Valet innebär inte ett slutligt godkännande av hela
+beslutsärendet.
+
+Beställarens återkoppling placerar typkatalogen under **Filter** och
+behåller **Sortering** som en separat kontroll. I vidarebyggnaden samlas
+typkatalog och **Bara markerade** under **Filter**, som öppnas vid behov.
+Flera typer kan kryssas i samtidigt. Resultaten omfattar objekt av någon
+av de valda typerna. Utan valda typer visas alla typer; **Alla typer**
+nollställer typvalen. Listan behåller sin gruppering efter typ och
+sorteringen styrs separat. Den reviderade utformningen inväntar
+återkoppling; övriga frågor i samma beslut finns kvar nedan.
 
 ## Godkänd grund
 
@@ -26,12 +37,12 @@ På prototypgrenen, med projektets beroenden tillgängliga:
 npm run prototype:lists
 ```
 
-[Öppna kartan](http://localhost:4177/?prototype=lists&variant=A&theme=light).
-Välj **Sök i kartan** för att öppna listan. För jämförelse går det även
-att öppna respektive alternativ med listan framme:
+[Öppna kartan med B](http://localhost:4177/?prototype=lists&variant=B&theme=light).
+Välj **Sök i kartan** för att öppna listan, eller
+[öppna B · Typkatalog direkt](http://localhost:4177/?prototype=lists&variant=B&view=list&theme=light).
+De tidigare alternativen finns kvar som jämförelseunderlag:
 
 - [A · Kompakt lista](http://localhost:4177/?prototype=lists&variant=A&view=list&theme=light).
-- [B · Typkatalog](http://localhost:4177/?prototype=lists&variant=B&view=list&theme=light).
 - [C · Sök och inspektera](http://localhost:4177/?prototype=lists&variant=C&view=list&theme=light).
 
 Pilarna längst ned byter alternativ utan omladdning. Där visas också
@@ -44,14 +55,19 @@ grundens kontroller för simulerat tal, sparande och användning utan grafik.
 
 1. Sök efter **cykeln 42** i det stora hushållet. Öppna detaljer för
    träffen och gå tillbaka till listan. Sökningen och urvalet finns kvar.
-2. Töm sökningen. Öppna **Filter och sortering**, filtrera på **Avtal**,
-   byt sortering och bläddra till nästa sida. Markera flera objekt och
-   välj att bara visa markerade.
+2. Töm sökningen i B. Öppna **Filter** och kryssa i både **Avtal** och
+   **Fordon** i typkatalogen. Kontrollera att båda typerna visas i sina
+   grupper över listsidorna. Stäng Filter, byt ordning med kontrollen
+   **Sortering** och bläddra till nästa sida. Markera flera objekt,
+   öppna samma Filter igen och välj **Bara markerade**. Välj **Alla typer**
+   för att nollställa typvalen; markeringarna finns kvar. Avmarkera
+   **Bara markerade** för att visa alla objekt igen.
 3. Välj ett objekts handling för att visa det i kartan. Listan stängs
    medan detaljer i andra paneler finns kvar. Öppna listan igen och
    fortsätt från samma sökning och sida.
-4. Jämför typkatalogen i B med den kompakta listan i A. I C väljer du
-   först en träff och läser en förhandsvisning med dess samband.
+4. Bedöm B med typkatalogen under Filter och separat Sortering. A:s
+   kompakta lista och C:s förhandsvisning finns kvar för jämförelse.
+   I C väljer du först en träff och läser dess samband i förhandsvisningen.
 5. Öppna **Visa samband som lista**. Den godkända grundens textalternativ
    för samband finns kvar. Välj **Objekt** för att återgå till jämförelsen.
 6. Öppna detaljer, välj **Ändra uppgifter** och skriv ett namn. Byt
@@ -68,7 +84,8 @@ utkast.
 
 ## Återstående frågor i samma beslut
 
-Nästa omgång bygger vidare på återkopplingen om listans struktur.
+Fortsatt arbete utgår från B, flera samtidiga typval under Filter och
+separat Sortering.
 Det befintliga namnprovet är inte ett färdigt redigeringsförslag.
 Följande ingår fortfarande i beslutsärendet:
 
@@ -104,6 +121,14 @@ till Filmlyktan i både kartan och listan; mikrofonen behåller sitt
 tillstånd vid variantbyte. Manuellt utkast, okänt sparresultat, kontroll
 och kvitto använder D:s befintliga flöde. Textarbete utan grafik ingår.
 
+Kontrollresultaten ovan omfattar det första jämförelseunderlaget.
+B:s samlade Filter och separata Sortering har även ett riktat prov:
+123 avtal och 62 fordon ger 185 träffar när båda typerna är valda.
+Typval med tangentbord, nollställning med Alla typer, kombination med
+Bara markerade, sidbyte och bevarande efter stängning passerar.
+Sorteringen ändrar inte resultatmängden. Mobilprov omfattar 390 × 844
+och 320 × 400 utan horisontell sidrullning.
+
 Skärmbilder finns för de tre alternativen:
 
 | Alternativ | Dator | Mobil |
@@ -112,7 +137,12 @@ Skärmbilder finns för de tre alternativen:
 | B · Typkatalog | [Dator](B-dator.png) | [Mobil](B-mobil.png) |
 | C · Sök och inspektera | [Dator](C-dator.png) | [Mobil](C-mobil.png) |
 
-Se också [tal och listan i mörkt tema](tal-och-lista-morkt.png) samt
+Aktuella B-bilder visar den reviderade utformningen. Filter med flera
+ikryssade typer visas på [dator](B-filter-dator.png) och
+[mobil](B-filter-mobil.png).
+
+Det första jämförelseunderlaget visar också
+[tal och listan i mörkt tema](tal-och-lista-morkt.png) samt
 [en kort mobilvy](kort-mobil.png). Mobilprov omfattar 390 × 844 och
 320 × 400; innehållet rullar inom panelerna utan horisontell sidrullning.
 Typkontroll, Biome, Markdown och stavningskontroll gäller underlaget.
