@@ -2,7 +2,8 @@
 
 Kastbart beslutsunderlag för
 [Hur får inloggning, inställningar och administration samma genomarbetade upplevelse?](https://github.com/viscalyx/skyttel/issues/108).
-Underlaget inväntar beställarens återkoppling.
+**D · Egen inställningssida** är godkänd i version `87ddb01`.
+Se [det avslutande designbeslutet](https://github.com/viscalyx/skyttel/issues/108#issuecomment-5848747133).
 
 ## Grund och fastställda val
 
@@ -11,9 +12,9 @@ Grenen `prototype/skyttel-administration` börjar på godkända
 Kartan A, fria paneler, listmönster B, bild/ikonval och
 D · Kartan berättar ligger fast.
 
-Beställaren godkänner större fokuserade paneler för omfattande
-administration, direkt öppning av kartan med stängbar vägledning och
-en stegvis inbjudningsguide. Se
+Det avslutande designbeslutet fastställer D:s egna inställningssida
+och separata profil. Direkt öppning av kartan med stängbar vägledning
+och den stegvisa inbjudningsguiden består enligt
 [delbeslutet och prototypstarten](https://github.com/viscalyx/skyttel/issues/108#issuecomment-5848466538).
 
 ## Öppna och jämför
@@ -22,7 +23,7 @@ en stegvis inbjudningsguide. Se
 npm run prototype:administration
 ```
 
-[Öppna A på port 4183](http://localhost:4183/?prototype=administration&variant=A&panel=settings&theme=light).
+[Öppna godkända D på port 4183](http://localhost:4183/?prototype=administration&variant=D&panel=settings&theme=light).
 Den gemensamma förhandsvisningen finns på
 [port 5173, alternativ D](http://localhost:5173/?prototype=administration&variant=D&panel=settings&theme=light).
 
@@ -45,9 +46,9 @@ De fyra utformningarna använder samma administrativa flöden. Temat väljs
 i den befintliga verktygslådan. Provlägen ligger separat från appens
 verktyg och innehåller situation, behörighet och nästa simulerade svar.
 
-D prövar beställarens nya önskemål om hela viewporten och en separat
-profilingång. Det är ett alternativ till panelerna i A–C, inte ett
-slutligt godkännande. På inställningssidan finns **Tillbaka till kartan**,
+D är den godkända utformningen med hela viewporten och en separat
+profilingång. A–C finns kvar som jämförelseunderlag.
+På inställningssidan finns **Tillbaka till kartan**,
 temaval och synlig mikrofonstatus. Pågående kartarbete och
 mikrofontillstånd består när användaren går dit och tillbaka.
 
