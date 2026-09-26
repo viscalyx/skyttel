@@ -1,18 +1,20 @@
-// Kastbar visuell studie: tre riktningar på /?prototype=visual&variant=A.
+// Kastbar visuell studie: fyra riktningar på /?prototype=visual&variant=D.
 // Endast påhittade uppgifter. Ingen anslutning till hushåll, mikrofon eller API.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import largeLogo from '../../docs/images/shuttle-logo-transparent.png';
 import smallLogo from '../../docs/images/shuttle-logo-transparent-small.png';
+import { VisualPrototypeD } from './VisualPrototypeD.js';
 import { VisualPrototypeMap } from './VisualPrototypeMap.js';
 import './visual-prototype.css';
 
-type Variant = 'A' | 'B' | 'C';
+type Variant = 'A' | 'B' | 'C' | 'D';
 type Scene = 'ready' | 'listening' | 'draft' | 'saving' | 'saved' | 'error';
 const variants = {
   A: { name: 'Nattljus', description: 'Mörk helhet · svävande ytor · lågmält färgljus' },
   B: { name: 'Dagsljus', description: 'Ljus helhet · tydliga linjer · generöst med luft' },
   C: { name: 'Horisont', description: 'Mörk karta · ljusa arbetsytor · tydliga nivåer' },
+  D: { name: 'Fri rymd', description: 'Hela ytan · flytande verktyg · ljust och mörkt' },
 };
 const statuses: Record<Scene, { title: string; text: string; icon: string }> = {
   ready: { title: 'Din gemensamma karta', text: 'Inga osparade ändringar', icon: 'check' },
@@ -66,7 +68,7 @@ export function PrototypeIcon({ name }: { name: string }) {
   );
 }
 
-function Brand({ large = false }: { large?: boolean }) {
+export function Brand({ large = false }: { large?: boolean }) {
   return (
     <div className={`vp-brand ${large ? 'vp-brand-large' : ''}`}>
       <img src={large ? largeLogo : smallLogo} alt="" />
@@ -77,7 +79,7 @@ function Brand({ large = false }: { large?: boolean }) {
   );
 }
 
-function Detail({ onClose, onChange }: { onClose: () => void; onChange: () => void }) {
+export function Detail({ onClose, onChange }: { onClose: () => void; onChange: () => void }) {
   const [name, setName] = useState('Familjeabonnemang');
   const [price, setPrice] = useState('189');
   return (
@@ -94,7 +96,9 @@ function Detail({ onClose, onChange }: { onClose: () => void; onChange: () => vo
         </button>
       </div>
       <div className="vp-detail-symbol">♫</div>
-      <h2 id="vp-detail-title">Familjeabonnemang</h2>
+      <h2 id="vp-detail-title" tabIndex={-1}>
+        Familjeabonnemang
+      </h2>
       <p className="vp-muted">Musikgläntan · Musik för hela hushållet</p>
       <div className="vp-amount">
         189 <span>kr / månad</span>
@@ -149,7 +153,7 @@ function Detail({ onClose, onChange }: { onClose: () => void; onChange: () => vo
   );
 }
 
-function Status({ scene, onSave }: { scene: Scene; onSave: () => void }) {
+export function Status({ scene, onSave }: { scene: Scene; onSave: () => void }) {
   const status = statuses[scene];
   return (
     <div className={`vp-status vp-status-${scene}`} role="status">
@@ -195,20 +199,53 @@ function Voice({ scene, setScene }: { scene: Scene; setScene: (scene: Scene) => 
 export function VisualPrototype() {
   const [params, setParams] = useSearchParams();
   const candidate = params.get('variant');
-  const variant: Variant = candidate === 'B' || candidate === 'C' ? candidate : 'A';
+  const variant: Variant =
+    candidate === 'B' || candidate === 'C' || candidate === 'D' ? candidate : 'A';
+  const theme = params.get('theme') === 'light' ? 'light' : 'dark';
+  function setTheme(next: 'dark' | 'light') {
+    setParams(
+      (previous) => {
+        previous.set('theme', next);
+        return previous;
+      },
+      { replace: true },
+    );
+  }
+  const [sound, setSound] = useState(false);
   const [detail, setDetail] = useState(false);
   const [scene, setScene] = useState<Scene>('ready');
   const [utility, setUtility] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [query, setQuery] = useState('');
+  const detailTrigger = useRef<HTMLElement | null>(null);
   useEffect(() => {
+    const switcher = document.querySelector('.vp-switcher');
+    const root = document.querySelector('.vp-root');
+    if (!switcher || !root) return;
+    const observer = new ResizeObserver(() => {
+      const height = switcher.getBoundingClientRect().height;
+      const inFlow = height > (variant === 'D' ? 190 : 130);
+      root.classList.toggle('vp-large-controls', inFlow);
+      (root as HTMLElement).style.setProperty(
+        '--vp-switcher-clearance',
+        `${inFlow ? 20 : height + 28}px`,
+      );
+    });
+    observer.observe(switcher);
+    return () => observer.disconnect();
+  }, [variant]);
+  useEffect(() => {
+    if (detail) {
+      detailTrigger.current = document.activeElement as HTMLElement;
+      document.getElementById('vp-detail-title')?.focus({ preventScroll: true });
+    } else detailTrigger.current?.focus({ preventScroll: true });
     if (window.matchMedia('(max-width: 760px)').matches) {
       if (detail) document.querySelector('.vp-detail')?.scrollIntoView({ block: 'start' });
       else document.querySelector('.vp-root')?.scrollTo({ top: 0 });
     }
   }, [detail]);
   function cycle(direction: number) {
-    const keys: Variant[] = ['A', 'B', 'C'];
+    const keys: Variant[] = ['A', 'B', 'C', 'D'];
     const next = keys[(keys.indexOf(variant) + direction + keys.length) % keys.length];
     setParams(
       (previous) => {
@@ -264,144 +301,157 @@ export function VisualPrototype() {
     </div>
   );
   return (
-    <div className={`vp-root vp-variant-${variant}`}>
+    <div className={`vp-root vp-variant-${variant}`} data-theme={theme}>
       <div className="vp-study-note">
         VISUELL PROTOTYP <span>Påhittat hushåll · Tal och sparande är simulerade</span>
       </div>
-      <div className={`vp-app ${detail ? 'vp-with-detail' : ''}`}>
-        <header className="vp-header">
-          <Brand large={variant === 'B'} />
-          <div className="vp-household">
-            <span>Hushållet Lind</span>
-            <span className="vp-household-sub">Er gemensamma karta</span>
-          </div>
-          <button
-            className="vp-profile"
-            type="button"
-            onClick={() => setUtility(utility === 'profile' ? null : 'profile')}
-            aria-label="Visa exempel på användarmeny"
-          >
-            AL
-          </button>
-        </header>
-        {variant === 'B' && (
-          <div className="vp-editorial">
-            <span className="vp-eyebrow">DITT HUSHÅLL, SAMMANHÄNGANDE</span>
-            <h1>
-              {'Det hänger '}
-              <br />
-              ihop.
-            </h1>
-            <p>
-              {'Människorna, tjänsterna '}
-              <br />
-              och allt däremellan.
-            </p>
-            <div className="vp-editorial-rule" />
-            <span className="vp-editorial-index">01 / HUSHÅLLSKARTAN</span>
-          </div>
-        )}
-        <main className="vp-workspace">
-          <div className="vp-map-heading">
-            <div>
-              <span className="vp-eyebrow">HUSHÅLLET LIND</span>
-              <h1>Din hushållskarta</h1>
+      {variant === 'D' ? (
+        <VisualPrototypeD
+          scene={scene}
+          setScene={setScene}
+          detail={detail}
+          setDetail={setDetail}
+          theme={theme}
+          setTheme={setTheme}
+          sound={sound}
+          setSound={setSound}
+        />
+      ) : (
+        <div className={`vp-app ${detail ? 'vp-with-detail' : ''}`}>
+          <header className="vp-header">
+            <Brand large={variant === 'B'} />
+            <div className="vp-household">
+              <span>Hushållet Lind</span>
+              <span className="vp-household-sub">Er gemensamma karta</span>
             </div>
-            {toolbar}
-          </div>
-          <div className="vp-map-area">
-            <VisualPrototypeMap variant={variant} onSelect={() => setDetail(true)} />
-            <div className="vp-map-caption">
-              <span className="vp-map-caption-dot" />
-              Gemensam karta<span className="vp-caption-secondary">Illustrerad rymdvy</span>
-            </div>
-          </div>
-          <div className="vp-bottom">
-            <Status scene={scene} onSave={() => setScene('saving')} />
-            <Voice scene={scene} setScene={setScene} />
-          </div>
-        </main>
-        {detail && <Detail onClose={() => setDetail(false)} onChange={() => setScene('draft')} />}
-        {utility && (
-          <section className="vp-utility" aria-label="Kompletterande exempelvy">
-            <div className="vp-detail-top">
-              <h2>
-                {utility === 'text'
-                  ? 'Skriv till Skyttel'
-                  : utility === 'search'
-                    ? 'Sök i kartan'
-                    : utility === 'list'
-                      ? 'Objekt i kartan'
-                      : 'Alex Lind'}
-              </h2>
-              <button
-                type="button"
-                className="vp-icon-button"
-                onClick={() => setUtility(null)}
-                aria-label="Stäng exempelvy"
-              >
-                <PrototypeIcon name="close" />
-              </button>
-            </div>
-            {utility === 'text' ? (
-              <form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  setScene('draft');
-                  setUtility(null);
-                }}
-              >
-                <label htmlFor="vp-message">Ditt meddelande</label>
-                <textarea
-                  id="vp-message"
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  placeholder="Berätta om ett samband…"
-                />
-                <button type="submit" className="vp-primary">
-                  Visa exempelutkast
-                </button>
-              </form>
-            ) : utility === 'profile' ? (
-              <p>
-                Skyttel-användare · Administratör
+            <button
+              className="vp-profile"
+              type="button"
+              onClick={() => setUtility(utility === 'profile' ? null : 'profile')}
+              aria-label="Visa exempel på användarmeny"
+            >
+              AL
+            </button>
+          </header>
+          {variant === 'B' && (
+            <div className="vp-editorial">
+              <span className="vp-eyebrow">DITT HUSHÅLL, SAMMANHÄNGANDE</span>
+              <h1>
+                {'Det hänger '}
                 <br />
-                <span className="vp-muted">Menyns innehåll prövas i ett senare beslut.</span>
+                ihop.
+              </h1>
+              <p>
+                {'Människorna, tjänsterna '}
+                <br />
+                och allt däremellan.
               </p>
-            ) : (
-              <>
-                <label htmlFor="vp-search">Hitta ett objekt</label>
-                <input
-                  id="vp-search"
-                  placeholder="Sök namn…"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-                <div className="vp-example-list">
-                  {['Familjeabonnemang', 'Musikgläntan', 'Alex', 'Lo', 'Gemensamt bankkonto']
-                    .filter((name) =>
-                      name.toLocaleLowerCase('sv').includes(query.toLocaleLowerCase('sv')),
-                    )
-                    .map((name) => (
-                      <button
-                        type="button"
-                        key={name}
-                        disabled={name !== 'Familjeabonnemang'}
-                        onClick={() => {
-                          setDetail(true);
-                          setUtility(null);
-                        }}
-                      >
-                        {name}
-                        {name === 'Familjeabonnemang' && <PrototypeIcon name="arrow" />}
-                      </button>
-                    ))}
-                </div>
-              </>
-            )}
-          </section>
-        )}
-      </div>
+              <div className="vp-editorial-rule" />
+              <span className="vp-editorial-index">01 / HUSHÅLLSKARTAN</span>
+            </div>
+          )}
+          <main className="vp-workspace">
+            <div className="vp-map-heading">
+              <div>
+                <span className="vp-eyebrow">HUSHÅLLET LIND</span>
+                <h1>Din hushållskarta</h1>
+              </div>
+              {toolbar}
+            </div>
+            <div className="vp-map-area">
+              <VisualPrototypeMap variant={variant} onSelect={() => setDetail(true)} />
+              <div className="vp-map-caption">
+                <span className="vp-map-caption-dot" />
+                Gemensam karta<span className="vp-caption-secondary">Illustrerad rymdvy</span>
+              </div>
+            </div>
+            <div className="vp-bottom">
+              <Status scene={scene} onSave={() => setScene('saving')} />
+              <Voice scene={scene} setScene={setScene} />
+            </div>
+          </main>
+          {detail && <Detail onClose={() => setDetail(false)} onChange={() => setScene('draft')} />}
+          {utility && (
+            <section className="vp-utility" aria-label="Kompletterande exempelvy">
+              <div className="vp-detail-top">
+                <h2>
+                  {utility === 'text'
+                    ? 'Skriv till Skyttel'
+                    : utility === 'search'
+                      ? 'Sök i kartan'
+                      : utility === 'list'
+                        ? 'Objekt i kartan'
+                        : 'Alex Lind'}
+                </h2>
+                <button
+                  type="button"
+                  className="vp-icon-button"
+                  onClick={() => setUtility(null)}
+                  aria-label="Stäng exempelvy"
+                >
+                  <PrototypeIcon name="close" />
+                </button>
+              </div>
+              {utility === 'text' ? (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setScene('draft');
+                    setUtility(null);
+                  }}
+                >
+                  <label htmlFor="vp-message">Ditt meddelande</label>
+                  <textarea
+                    id="vp-message"
+                    value={text}
+                    onChange={(event) => setText(event.target.value)}
+                    placeholder="Berätta om ett samband…"
+                  />
+                  <button type="submit" className="vp-primary">
+                    Visa exempelutkast
+                  </button>
+                </form>
+              ) : utility === 'profile' ? (
+                <p>
+                  Skyttel-användare · Administratör
+                  <br />
+                  <span className="vp-muted">Menyns innehåll prövas i ett senare beslut.</span>
+                </p>
+              ) : (
+                <>
+                  <label htmlFor="vp-search">Hitta ett objekt</label>
+                  <input
+                    id="vp-search"
+                    placeholder="Sök namn…"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                  <div className="vp-example-list">
+                    {['Familjeabonnemang', 'Musikgläntan', 'Alex', 'Lo', 'Gemensamt bankkonto']
+                      .filter((name) =>
+                        name.toLocaleLowerCase('sv').includes(query.toLocaleLowerCase('sv')),
+                      )
+                      .map((name) => (
+                        <button
+                          type="button"
+                          key={name}
+                          disabled={name !== 'Familjeabonnemang'}
+                          onClick={() => {
+                            setDetail(true);
+                            setUtility(null);
+                          }}
+                        >
+                          {name}
+                          {name === 'Familjeabonnemang' && <PrototypeIcon name="arrow" />}
+                        </button>
+                      ))}
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+        </div>
+      )}
       {import.meta.env.DEV && (
         <section className="vp-switcher" aria-label="Prototypens visningskontroller">
           <div className="vp-switcher-main">
@@ -433,7 +483,22 @@ export function VisualPrototype() {
                 <option value="error">Sparfel</option>
               </select>
             </label>
+            {variant === 'D' && (
+              <button
+                type="button"
+                disabled={scene !== 'listening'}
+                aria-pressed={sound}
+                onClick={() => setSound(!sound)}
+              >
+                {sound ? 'Simulera tystnad' : 'Simulera hörbart tal'}
+              </button>
+            )}
           </div>
+          {variant === 'D' && (
+            <p className="vp-simulation-note">
+              Visuell prototyp · {theme === 'dark' ? 'Mörkt' : 'Ljust'} tema · Ingen riktig mikrofon
+            </p>
+          )}
         </section>
       )}
     </div>

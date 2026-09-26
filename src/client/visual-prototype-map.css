@@ -77,11 +77,11 @@
 }
 .vp-map-connections path {
   fill: none;
-  stroke: var(--vp-line);
+  stroke: var(--vp-graph-line);
   stroke-width: 1.3;
 }
 .vp-map-connections path.vp-map-connection-emphasis {
-  stroke: color-mix(in srgb, var(--vp-accent), var(--vp-line) 55%);
+  stroke: color-mix(in srgb, var(--vp-accent), var(--vp-graph-line) 55%);
   stroke-width: 1.5;
 }
 
