@@ -6,10 +6,12 @@ export function SpatialHeightGuide({
   start,
   end,
   project,
+  panelBounds,
 }: {
   start: Position;
   end: Position;
   project: (position: Position) => ScreenPoint | null | undefined;
+  panelBounds?: { x: number; y: number; width: number };
 }) {
   const origin = project(start);
   const current = project(end);
@@ -92,9 +94,22 @@ export function SpatialHeightGuide({
           Hjälpplan
         </text>
       </g>
-      <svg x="12" y="12" width="calc(100% - 24px)" height="80" overflow="hidden">
+      <svg
+        x={panelBounds?.x ?? 12}
+        y={panelBounds?.y ?? 12}
+        width={panelBounds?.width ?? 'calc(100% - 24px)'}
+        height="80"
+        overflow="hidden"
+      >
         <title>Höjdflyttning: {description}</title>
-        <rect width="310" height="76" rx="7" fill="#0a202b" fillOpacity="0.96" stroke="#549aac" />
+        <rect
+          width={panelBounds?.width ?? 310}
+          height="76"
+          rx="7"
+          fill="#0a202b"
+          fillOpacity="0.96"
+          stroke="#549aac"
+        />
         <text x="12" y="22" fill="#8ae6f8" fontSize="13">
           Höjdflyttning · personlig vy
         </text>

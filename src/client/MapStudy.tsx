@@ -208,6 +208,8 @@ const cameraButtons: [StudyCameraAction, string][] = [
 export function MapStudyMap({
   selectedId,
   onSelect,
+  onOpenDetails,
+  showSelectionActions,
   onList,
   theme,
   names,
@@ -215,6 +217,8 @@ export function MapStudyMap({
 }: {
   selectedId: string;
   onSelect: (id: string) => void;
+  onOpenDetails: (id: string) => void;
+  showSelectionActions: boolean;
   onList: () => void;
   theme: 'light' | 'dark';
   names: Record<string, string>;
@@ -235,27 +239,26 @@ export function MapStudyMap({
   const linked = study.relationships.filter(
     (edge) => edge.from === subject.id || edge.to === subject.id,
   );
-  const emphasisIds =
-    study.variant === 'B' || study.focusId
+  const markedRelationship = study.relationships.find((edge) => edge.id === study.selectedEdge);
+  const emphasisIds = markedRelationship
+    ? [markedRelationship.from, markedRelationship.to]
+    : study.variant !== 'C' || study.focusId
       ? [subject.id, ...linked.flatMap((edge) => [edge.from, edge.to])]
-      : study.variant === 'C'
-        ? study.trail
-        : [];
-  const emphasisEdges =
-    study.variant === 'B' || study.focusId
+      : study.trail;
+  const emphasisEdges = markedRelationship
+    ? [markedRelationship.id]
+    : study.variant !== 'C' || study.focusId
       ? linked.map((edge) => edge.id)
-      : study.variant === 'C'
-        ? study.relationships
-            .filter((edge) =>
-              study.trail.some(
-                (id, index) =>
-                  index > 0 &&
-                  ((edge.from === id && edge.to === study.trail[index - 1]) ||
-                    (edge.to === id && edge.from === study.trail[index - 1])),
-              ),
-            )
-            .map((edge) => edge.id)
-        : [];
+      : study.relationships
+          .filter((edge) =>
+            study.trail.some(
+              (id, index) =>
+                index > 0 &&
+                ((edge.from === id && edge.to === study.trail[index - 1]) ||
+                  (edge.to === id && edge.from === study.trail[index - 1])),
+            ),
+          )
+          .map((edge) => edge.id);
   const objects = useMemo(
     () =>
       study.objects.map((object) => ({
@@ -287,7 +290,13 @@ export function MapStudyMap({
           stars={study.stars}
           onSelect={(id) => {
             study.setSelectedEdge(null);
+            study.setFocusId(null);
             onSelect(id);
+          }}
+          onOpenDetails={(id) => {
+            study.setSelectedEdge(null);
+            study.setFocusId(null);
+            onOpenDetails(id);
           }}
           onSelectRelationship={(id) => {
             study.setSelectedEdge(id);
@@ -300,6 +309,14 @@ export function MapStudyMap({
           onOverviewChange={study.setCanReturnFromOverview}
         />
       </div>
+      {showSelectionActions && (
+        <aside className="mp-selection-actions" aria-label="Markerat objekt">
+          <span>{name(selectedId)}</span>
+          <button type="button" onClick={() => onOpenDetails(selectedId)}>
+            Visa detaljer
+          </button>
+        </aside>
+      )}
       {study.noGraphics && (
         <section className="mp-graphics-notice np-stack">
           <h2>Kartgrafiken är dold i provet</h2>
@@ -448,14 +465,16 @@ export function MapStudyMap({
 export function MapStudyPages({
   page,
   selectedId,
-  onSelect,
+  onReveal,
+  onOpenDetails,
   onEdit,
   names,
   staged,
 }: {
   page: 'list' | 'detail';
   selectedId: string;
-  onSelect: (id: string) => void;
+  onReveal: (id: string) => void;
+  onOpenDetails: (id: string) => void;
   onEdit: () => void;
   names: Record<string, string>;
   staged: Record<string, string>;
@@ -466,7 +485,7 @@ export function MapStudyPages({
     staged[id] ?? names[id] ?? study.objects.find((object) => object.id === id)?.name ?? id;
   function follow(from: string, id: string) {
     study.follow(from, id);
-    onSelect(id);
+    onOpenDetails(id);
   }
   function edgeRows(edges: typeof study.relationships) {
     return (
@@ -488,7 +507,7 @@ export function MapStudyPages({
                 type="button"
                 onClick={() => {
                   study.setSelectedEdge(edge.id);
-                  onSelect(edge.from);
+                  onOpenDetails(edge.from);
                 }}
               >
                 Visa samband
@@ -533,7 +552,10 @@ export function MapStudyPages({
     const start = currentPage * 50;
     return (
       <div className="np-stack mp-list">
-        <p>Hela hushållets innehåll. Sökningen omfattar alla sidor och ändrar inte kameran.</p>
+        <p>
+          Sök i hela hushållets innehåll. Välj en träff för att markera och visa den i kartan.
+          Detaljer öppnas med en separat knapp.
+        </p>
         <label htmlFor="mp-search">Sök objekt eller samband</label>
         <input
           id="mp-search"
@@ -593,7 +615,7 @@ export function MapStudyPages({
                   aria-pressed={selectedId === object.id}
                   onClick={() => {
                     study.setSelectedEdge(null);
-                    onSelect(object.id);
+                    onReveal(object.id);
                   }}
                 >
                   <strong>{name(object.id)}</strong>
@@ -612,6 +634,16 @@ export function MapStudyPages({
                       )}
                     </span>
                   )}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Visa detaljer för ${name(object.id)}`}
+                  onClick={() => {
+                    study.setSelectedEdge(null);
+                    onOpenDetails(object.id);
+                  }}
+                >
+                  Visa detaljer
                 </button>
               </li>
             ))}

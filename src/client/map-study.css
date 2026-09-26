@@ -36,6 +36,36 @@
 .np-root.map-study [hidden] {
   display: none;
 }
+.np-root.map-study .mp-selection-actions {
+  position: absolute;
+  z-index: 3;
+  top: var(--mp-work-top);
+  left: var(--np-panel-left);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: min(380px, calc(100% - var(--np-panel-left) - 24px));
+  padding: 6px 8px 6px 12px;
+  border: 1px solid var(--vp-control-line);
+  border-radius: 12px;
+  background: var(--vp-surface);
+  box-shadow: 0 3px 14px #0002;
+  font-size: 12px;
+}
+.np-root.map-study .mp-selection-actions > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.np-root.map-study .mp-selection-actions > button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 11px;
+  font-size: 12px;
+}
 .np-root.map-study .mp-map-tools {
   position: absolute;
   z-index: 6;
@@ -138,12 +168,23 @@
   gap: 10px;
   list-style: none;
 }
+.np-root.map-study .mp-object-list > li {
+  display: grid;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--vp-line);
+  border-radius: 14px;
+}
 .np-root.map-study .mp-object-list button {
   display: grid;
   width: 100%;
   gap: 4px;
   text-align: left;
   justify-content: stretch;
+}
+.np-root.map-study .mp-object-list > li > button + button {
+  font-size: 12px;
+  color: var(--vp-accent);
 }
 .np-root.map-study .mp-object-list span {
   font-size: 0.85em;
@@ -284,6 +325,9 @@
     align-content: flex-start;
     max-height: 132px;
   }
+  .np-root.map-study .np-d-navigation:not(.vp-d-expanded) .vp-d-actions {
+    display: contents;
+  }
   .np-root.map-study .vp-d-context {
     display: none;
   }
@@ -302,6 +346,10 @@
   .np-root.map-study .np-status-panel {
     top: var(--mp-work-top);
     max-height: calc(100dvh - var(--mp-work-top) - var(--mp-work-bottom));
+  }
+  .np-root.map-study .mp-selection-actions {
+    left: 12px;
+    max-width: calc(100% - 24px);
   }
   .np-root.map-study .mp-map-tools {
     left: 12px;
@@ -324,6 +372,18 @@
     gap: 6px;
     font-size: 0.72em;
     max-height: min(28dvh, 135px);
+  }
+  .np-root.map-study
+    .mp-map-area:has(.mp-selection-actions)
+    :is(.mp-context-ribbon, .mp-path-ribbon) {
+    max-height: min(
+      28dvh,
+      135px,
+      max(
+        44px,
+        calc(100dvh - var(--mp-work-top) - var(--np-lab-height) - var(--np-status-height) - 94px)
+      )
+    );
   }
   .np-root.map-study .mp-context-ribbon > div {
     flex: 1 1 100%;

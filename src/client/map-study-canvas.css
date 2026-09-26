@@ -24,6 +24,7 @@
 }
 .ms-renderer,
 .ms-connections,
+.ms-height-layer,
 .ms-label-layer,
 .ms-name-measurements {
   position: absolute;
@@ -40,6 +41,17 @@
   overflow: visible;
   z-index: 1;
   pointer-events: none;
+}
+.ms-height-layer {
+  z-index: 6;
+  pointer-events: none;
+}
+.ms-height-layer .spatial-height-guide > path[stroke],
+.ms-height-layer .spatial-height-guide > circle[stroke] {
+  stroke: var(--vp-accent);
+}
+.ms-height-layer .spatial-height-guide > circle[r="3"] {
+  fill: var(--vp-accent);
 }
 .ms-edge-underlay {
   fill: none;
@@ -111,10 +123,10 @@
   display: grid;
   place-items: center;
   transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  min-height: 30px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -129,55 +141,30 @@
 .ms-marker-dot {
   display: grid;
   place-items: center;
-  width: calc(13px * var(--ms-depth));
-  height: calc(13px * var(--ms-depth));
+  width: max(32px, calc(35px * var(--ms-depth)));
+  height: max(32px, calc(35px * var(--ms-depth)));
   border: 2px solid var(--vp-control-line);
-  border-radius: 50%;
+  border-radius: 11px;
+  color: var(--vp-text);
   background: var(--vp-surface);
   box-shadow: 0 1px 5px #0002;
   pointer-events: none;
 }
-.vp-root .ms-canvas-sparse .ms-marker {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  min-height: 46px;
-}
-.ms-canvas-sparse .ms-marker-dot {
-  width: calc(35px * var(--ms-depth));
-  height: calc(35px * var(--ms-depth));
-  border-radius: 11px;
-  color: var(--vp-text);
-}
-.ms-object-glyph {
+.ms-marker .spatial-type-icon {
   width: 22px;
   height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.ms-glyph-initial {
-  font-size: 20px;
-  line-height: 1;
-  font-weight: 650;
 }
 .ms-marker-muted .ms-marker-dot {
   border-color: var(--ms-graph-line);
   background: var(--vp-map-bg);
 }
 .ms-marker-selected .ms-marker-dot {
-  width: 19px;
-  height: 19px;
-  border-color: var(--vp-accent);
-  background: var(--vp-accent);
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--vp-accent), transparent 78%);
-}
-.ms-canvas-sparse .ms-marker-selected .ms-marker-dot {
   width: 42px;
   height: 42px;
   color: var(--vp-ink);
+  border-color: var(--vp-accent);
+  background: var(--vp-accent);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--vp-accent), transparent 78%);
 }
 .ms-marker.ms-change-added .ms-marker-dot {
   border-color: var(--vp-accent);
@@ -273,6 +260,10 @@
   line-height: 1.4;
   pointer-events: none;
 }
+.ms-label-status .ms-gesture-hint {
+  display: block;
+  margin-top: 4px;
+}
 .ms-graphics-error {
   position: absolute;
   z-index: 10;
@@ -297,7 +288,7 @@
   border: 0;
 }
 @media (max-width: 600px) {
-  .ms-label-status span {
+  .ms-label-status span:not(.ms-gesture-hint) {
     display: none;
   }
 }

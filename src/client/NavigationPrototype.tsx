@@ -382,6 +382,24 @@ export function NavigationPrototype() {
     setSelected(id);
     go('detail', id);
   }
+  function markObject(id: string) {
+    setSelected(id);
+  }
+  function revealStudyObject(id: string) {
+    setSelected(id);
+    study?.setFocusId(null);
+    if (!study || study.noGraphics) return;
+    const neighbors = study.relationships
+      .filter((edge) => edge.from === id || edge.to === id)
+      .flatMap((edge) => [edge.from, edge.to]);
+    study.cameraRef.current?.frame([...new Set([id, ...neighbors])]);
+    closeWindow('list');
+    requestAnimationFrame(() => {
+      rootRef.current
+        ?.querySelector<HTMLElement>(`.ms-marker[data-object-id="${CSS.escape(id)}"]`)
+        ?.focus({ preventScroll: true });
+    });
+  }
   function resetSession(next: Scenario) {
     setScenario(next);
     setAnchor(null);
@@ -613,7 +631,8 @@ export function NavigationPrototype() {
         <MapStudyPages
           page={contentPage}
           selectedId={objectId}
-          onSelect={selectObject}
+          onReveal={revealStudyObject}
+          onOpenDetails={selectObject}
           onEdit={() => go('edit', objectId)}
           names={savedNames}
           staged={staged}
@@ -812,6 +831,13 @@ export function NavigationPrototype() {
               )}
               {study && (
                 <>
+                  {toolbarButton(
+                    'details',
+                    `Visa detaljer för ${currentObject.name}`,
+                    () => selectObject(selected),
+                    'details',
+                    windows.some((item) => item.objectId === selected),
+                  )}
                   <button
                     type="button"
                     className="vp-d-action np-tool"
@@ -943,7 +969,9 @@ export function NavigationPrototype() {
               (study ? (
                 <MapStudyMap
                   selectedId={selected}
-                  onSelect={selectObject}
+                  onSelect={markObject}
+                  onOpenDetails={selectObject}
+                  showSelectionActions={!windows.length && !utility && !statusOpen}
                   onList={() => go('list')}
                   theme={theme}
                   names={savedNames}
@@ -1270,7 +1298,7 @@ export function NavigationPrototype() {
         <MapStudyLab
           selectedId={selected}
           onList={() => go('list')}
-          onSelect={selectObject}
+          onSelect={revealStudyObject}
           savePending={saveState === 'pending'}
           onResolveSave={resolveSave}
         />

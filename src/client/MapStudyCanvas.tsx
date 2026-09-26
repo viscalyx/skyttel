@@ -22,7 +22,10 @@ import type {
   StudyRelationship,
   StudyVariant,
 } from './map-study-types.js';
+import { SpatialHeightGuide } from './SpatialHeightGuide.js';
+import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
 import { type ProjectedPoint, type SpatialCameraSnapshot, spatialScene } from './spatial-scene.js';
+import { useObjectMovement } from './use-object-movement.js';
 import './map-study-canvas.css';
 
 type Props = {
@@ -36,6 +39,7 @@ type Props = {
   theme: 'light' | 'dark';
   stars?: boolean;
   onSelect: (id: string) => void;
+  onOpenDetails: (id: string) => void;
   onSelectRelationship: (id: string) => void;
   onMove: (id: string, position: StudyPosition) => void;
   cameraRef: RefObject<StudyCamera | null>;
@@ -45,14 +49,6 @@ type Props = {
 
 type Box = { x: number; y: number; width: number; height: number };
 type Name = { id: string; text: string; kind: 'object' | 'relationship'; priority: number };
-type Gesture = {
-  pointer: number;
-  x: number;
-  y: number;
-  moved: boolean;
-  object: StudyObject;
-  position: StudyPosition;
-};
 
 const changeSymbol = { added: '+', changed: '~', removed: '×' };
 const changeName = { added: 'tillagt', changed: 'ändrat', removed: 'borttaget' };
@@ -64,33 +60,6 @@ function overlaps(a: Box, b: Box) {
     a.x + a.width + 5 > b.x &&
     a.y < b.y + b.height + 5 &&
     a.y + a.height + 5 > b.y
-  );
-}
-
-function StudyGlyph({ object }: { object: StudyObject }) {
-  const type = object.type.toLocaleLowerCase('sv');
-  if (type === 'person') return <span className="ms-glyph-initial">{object.name.slice(0, 1)}</span>;
-  const path = type.includes('musik')
-    ? 'M9 17V5l10-2v12M9 8l10-2M9 17c0 1.7-1.8 3-4 3s-3-1.3-3-3 1.8-3 4-3c1.2 0 2.2.3 3 1m10 0c0 1.7-1.8 3-4 3s-3-1.3-3-3 1.8-3 4-3c1.2 0 2.2.3 3 1'
-    : type.includes('e-post')
-      ? 'M4 5h16v14H4z M4 6l8 7 8-7'
-      : type.includes('bank')
-        ? 'M3 8l9-5 9 5H3z M6 12v6m6-6v6m6-6v6M3 21h18'
-        : type.includes('kort')
-          ? 'M3 5h18v14H3z M3 10h18M6 15h4'
-          : type.includes('avtal') || type.includes('abonnemang')
-            ? 'M5 4h14v17H5z M8 2v5m8-5v5M5 10h14M8 14h8M8 17h5'
-            : type.includes('konto')
-              ? 'M3 4h18v16H3z M7 9a2 2 0 1 0 4 0 2 2 0 0 0-4 0M5 17a4 4 0 0 1 8 0m3-8h2m-2 4h2'
-              : type.includes('bostad') || type.includes('garage')
-                ? 'M3 11l9-8 9 8M5 10v11h14V10M9 21v-7h6v7'
-                : type.includes('fordon')
-                  ? 'M2 16a4 4 0 1 0 8 0 4 4 0 0 0-8 0m12 0a4 4 0 1 0 8 0 4 4 0 0 0-8 0M6 16l4-9 8 9H6m3-9h5m2-3h3l-1 12'
-                  : 'M5 6h14v12H5z M10 9l5 3-5 3z';
-  return (
-    <svg className="ms-object-glyph" viewBox="0 0 24 24" aria-hidden="true">
-      <path d={path} />
-    </svg>
   );
 }
 
@@ -123,20 +92,53 @@ export function MapStudyCanvas(props: Props) {
   const history = useRef<SpatialCameraSnapshot[]>([]);
   const overviewReturn = useRef<SpatialCameraSnapshot | null>(null);
   const cameraGesture = useRef<SpatialCameraSnapshot | null>(null);
-  const touchPoints = useRef(new Map<number, { x: number; y: number }>());
-  const gesture = useRef<Gesture | null>(null);
-  const ignoreClick = useRef(false);
+  const activeObject = useRef<string | null>(null);
+  const clickGuard = useRef<{ pointer: number; x: number; y: number; moved: boolean } | null>(null);
+  const contextOpened = useRef<string | null>(null);
+  const [shiftHeld, setShiftHeld] = useState(false);
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [measurements, setMeasurements] = useState<
     Record<string, { width: number; height: number }>
   >({});
   const [statusHeight, setStatusHeight] = useState(32);
+  const [guidePanel, setGuidePanel] = useState<Box>({ x: 12, y: 12, width: 310, height: 80 });
   const [hoverId, setHoverId] = useState<string | null>(null);
   const helpId = useId();
   const emphasized = useMemo(() => new Set(emphasisIds), [emphasisIds]);
   const emphasizedEdges = useMemo(() => new Set(emphasisEdges), [emphasisEdges]);
   const faded = emphasisIds.length > 0;
-  const sparse = objects.length < 20;
+  const cancelHold = useCallback(() => {}, []);
+  const movement = useObjectMovement(sceneRef, {
+    enabled: !graphicsError,
+    active: true,
+    cancelHold,
+    onMove: (id, position) => latest.current.onMove(id, position),
+  });
+
+  useEffect(() => {
+    const down = (event: globalThis.KeyboardEvent) => {
+      if (
+        event.key === 'Shift' &&
+        !(
+          event.target instanceof Element &&
+          event.target.closest('input, textarea, select, [contenteditable]')
+        )
+      )
+        setShiftHeld(true);
+    };
+    const up = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Shift') setShiftHeld(false);
+    };
+    const blur = () => setShiftHeld(false);
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    window.addEventListener('blur', blur);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', blur);
+    };
+  }, []);
 
   const synchronizeCamera = useCallback(() => {
     const snapshot = sceneRef.current?.snapshot();
@@ -225,7 +227,12 @@ export function MapStudyCanvas(props: Props) {
     const cameraPointers = new Set<number>();
     let lastWheel = -Infinity;
     const pointerStart = (event: globalThis.PointerEvent) => {
-      if (event.target !== canvas && !cameraPointers.size) return;
+      if (
+        event.target !== canvas &&
+        !(event.target instanceof Element && event.target.closest('[data-object-id]')) &&
+        !cameraPointers.size
+      )
+        return;
       if (!cameraPointers.size) {
         cameraGesture.current = sceneRef.current?.snapshot() ?? null;
         remembered = false;
@@ -245,16 +252,11 @@ export function MapStudyCanvas(props: Props) {
       if (now - lastWheel > 400) rememberCamera();
       lastWheel = now;
     };
-    const cancelObject = () => {
-      const drag = gesture.current;
-      gesture.current = null;
-      if (drag?.moved) sceneRef.current?.place(drag.object.id, drag.object.position);
-      touchPoints.current.clear();
-    };
     const lost = (event: Event) => {
       event.preventDefault();
       sceneRef.current?.contextLost(true);
-      cancelObject();
+      movement.cancel();
+      activeObject.current = null;
       setGraphicsError(
         'Grafiken har avbrutits. Öppna text och lista för att fortsätta med alla objekt och samband.',
       );
@@ -270,7 +272,6 @@ export function MapStudyCanvas(props: Props) {
     root.addEventListener('pointerup', pointerEnd, true);
     root.addEventListener('pointercancel', pointerEnd, true);
     root.addEventListener('wheel', wheelStart, { capture: true, passive: true });
-    window.addEventListener('blur', cancelObject);
     try {
       sceneRef.current = spatialScene(
         canvas,
@@ -305,11 +306,10 @@ export function MapStudyCanvas(props: Props) {
       root.removeEventListener('pointerup', pointerEnd, true);
       root.removeEventListener('pointercancel', pointerEnd, true);
       root.removeEventListener('wheel', wheelStart, true);
-      window.removeEventListener('blur', cancelObject);
       sceneRef.current?.dispose();
       sceneRef.current = null;
     };
-  }, [rememberCamera, synchronizeCamera]);
+  }, [rememberCamera, synchronizeCamera, movement.cancel]);
 
   useEffect(() => {
     if (
@@ -445,8 +445,52 @@ export function MapStudyCanvas(props: Props) {
     return () => observer.disconnect();
   }, [names]);
 
+  const guideId = movement.heightActive ? movement.guide?.id : selectedId;
+  const guidePosition = guideId ? sceneRef.current?.position(guideId) : null;
+  const heightGuide =
+    guidePosition && (shiftHeld || movement.heightActive)
+      ? {
+          start:
+            movement.guide && movement.guide.id === guideId ? movement.guide.start : guidePosition,
+          end: guidePosition,
+        }
+      : null;
+  const heightGuideVisible = Boolean(heightGuide);
+  const guideScale = Math.max(1, (camera?.overviewDistance ?? 30) / 100);
+
+  useLayoutEffect(() => {
+    if (!heightGuideVisible || !rootRef.current) return;
+    const root = rootRef.current;
+    const map = root.closest('.map-study');
+    const canvasBox = root.getBoundingClientRect();
+    const selection = map?.querySelector('.mp-selection-actions')?.getBoundingClientRect();
+    const toolbox = map?.querySelector('.vp-d-toolbox')?.getBoundingClientRect();
+    const context = map?.querySelector('.vp-d-context')?.getBoundingClientRect();
+    const verticalTools = toolbox && toolbox.height > toolbox.width;
+    const x = selection
+      ? selection.left - canvasBox.left
+      : verticalTools
+        ? toolbox.right - canvasBox.left + 16
+        : 12;
+    const y = Math.max(
+      12,
+      selection ? selection.bottom - canvasBox.top + 12 : 0,
+      context ? context.bottom - canvasBox.top + 12 : 0,
+      toolbox && !verticalTools ? toolbox.bottom - canvasBox.top + 12 : 0,
+    );
+    const next = {
+      x: Math.max(12, x),
+      y,
+      width: Math.min(310, size.width - Math.max(12, x) - 12),
+      height: 80,
+    };
+    setGuidePanel((previous) =>
+      JSON.stringify(previous) === JSON.stringify(next) ? previous : next,
+    );
+  });
+
   const labels = useMemo(() => {
-    const clearance = sparse ? 23 : 11;
+    const clearance = 23;
     const markerBoxes: Box[] = [...points.values()].map((point) => ({
       x: point.x - clearance,
       y: point.y - clearance,
@@ -456,6 +500,7 @@ export function MapStudyCanvas(props: Props) {
     const occupied: Box[] = [
       { x: 0, y: size.height - statusHeight - 22, width: size.width, height: statusHeight + 22 },
     ];
+    if (heightGuideVisible) occupied.push(guidePanel);
     const placed: (Name & Box & { point: { x: number; y: number } })[] = [];
     for (const name of names) {
       const dimensions = measurements[name.id];
@@ -518,77 +563,37 @@ export function MapStudyCanvas(props: Props) {
       }
     }
     return placed;
-  }, [names, measurements, points, edges, size, statusHeight, sparse]);
+  }, [names, measurements, points, edges, size, statusHeight, heightGuideVisible, guidePanel]);
 
   function beginPointer(event: PointerEvent<HTMLElement>) {
-    if (graphicsError || event.button !== 0) return;
-    if (event.pointerType === 'touch') {
-      touchPoints.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      if (touchPoints.current.size > 1 && gesture.current) {
-        sceneRef.current?.place(gesture.current.object.id, gesture.current.object.position);
-        gesture.current = null;
-        rememberCamera();
-        sceneRef.current?.beginCameraGesture(touchPoints.current);
-        return;
-      }
-    }
-    if (gesture.current || touchPoints.current.size > 1) return;
+    if (graphicsError || event.button !== 0 || !event.isPrimary) return;
     const target = event.target as Element;
-    ignoreClick.current = false;
     if (target.closest('[data-edge-id]')) return;
     const objectId = target.closest('[data-object-id]')?.getAttribute('data-object-id');
-    const object = objects.find((candidate) => candidate.id === objectId);
-    if (!object) {
+    if (!objectId) {
       event.currentTarget.focus({ preventScroll: true });
       return;
     }
-    gesture.current = {
-      pointer: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-      moved: false,
-      object,
-      position: object.position,
-    };
-    ignoreClick.current = false;
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function movePointer(event: PointerEvent<HTMLElement>) {
-    if (event.pointerType === 'touch' && touchPoints.current.has(event.pointerId))
-      touchPoints.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    const drag = gesture.current;
-    if (!drag || drag.pointer !== event.pointerId) return;
-    const dx = event.clientX - drag.x;
-    const dy = event.clientY - drag.y;
-    if (!drag.moved && Math.hypot(dx, dy) < 5) return;
-    drag.moved = true;
-    ignoreClick.current = true;
-    const next = sceneRef.current?.displacement(drag.object.position, dx, dy, event.shiftKey);
-    if (next) drag.position = sceneRef.current?.place(drag.object.id, next) ?? next;
-  }
-
-  function endPointer(event: PointerEvent<HTMLElement>) {
-    touchPoints.current.delete(event.pointerId);
-    const drag = gesture.current;
-    if (!drag || drag.pointer !== event.pointerId) return;
-    if (event.type === 'pointercancel')
-      sceneRef.current?.place(drag.object.id, drag.object.position);
-    else if (drag.moved) latest.current.onMove(drag.object.id, drag.position);
-    // Pointer capture retargets click to the surface, so selection happens explicitly here.
-    if (!drag.moved && drag.object && event.type !== 'pointercancel')
-      latest.current.onSelect(drag.object.id);
-    gesture.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId))
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (!event.ctrlKey && !event.metaKey) {
+      activeObject.current = objectId;
+      movement.start(objectId, event);
+    }
   }
 
   function keyboard(event: KeyboardEvent<HTMLElement>) {
+    const objectId = (event.target as Element)
+      .closest('[data-object-id]')
+      ?.getAttribute('data-object-id');
+    if (objectId && event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      event.stopPropagation();
+      latest.current.onOpenDetails(objectId);
+      return;
+    }
     if (event.ctrlKey || event.metaKey || event.altKey) return;
-    if (event.key === 'Escape' && gesture.current) {
-      const drag = gesture.current;
-      sceneRef.current?.place(drag.object.id, drag.object.position);
-      gesture.current = null;
+    if (event.key === 'Escape' && activeObject.current) {
+      movement.cancel();
+      activeObject.current = null;
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -625,7 +630,7 @@ export function MapStudyCanvas(props: Props) {
   return (
     <section
       ref={rootRef}
-      className={`ms-canvas ms-canvas-${variant} ${sparse ? 'ms-canvas-sparse' : ''}`}
+      className={`ms-canvas ms-canvas-${variant}`}
       data-theme={theme}
       data-camera={JSON.stringify(camera)}
       data-stars={stars && !reducedMotion ? 'true' : 'false'}
@@ -634,28 +639,85 @@ export function MapStudyCanvas(props: Props) {
       aria-label="Hushållets interaktiva tredimensionella karta"
       aria-describedby={helpId}
       onKeyDown={keyboard}
+      onPointerDownCapture={(event) => {
+        if (event.isPrimary) {
+          contextOpened.current = null;
+          clickGuard.current = {
+            pointer: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+            moved: false,
+          };
+        }
+        movement.down(event);
+      }}
+      onPointerMoveCapture={(event) => {
+        const guard = clickGuard.current;
+        if (
+          guard?.pointer === event.pointerId &&
+          Math.hypot(event.clientX - guard.x, event.clientY - guard.y) > 8
+        )
+          guard.moved = true;
+        movement.move(event);
+      }}
+      onPointerUpCapture={(event) => {
+        movement.end(event);
+        activeObject.current = null;
+      }}
+      onPointerCancelCapture={() => {
+        movement.cancel();
+        activeObject.current = null;
+      }}
+      onClickCapture={(event) => {
+        const suppressed = movement.suppressClick();
+        if (event.detail > 0 && (suppressed || clickGuard.current?.moved)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
       onClick={(event) => {
-        const edge = (event.target as Element)
-          .closest('[data-edge-id]')
-          ?.getAttribute('data-edge-id');
-        if (edge && !ignoreClick.current) latest.current.onSelectRelationship(edge);
+        const target = event.target as Element;
+        const objectId = target.closest('[data-object-id]')?.getAttribute('data-object-id');
+        if (objectId) {
+          if (event.detail > 0 && contextOpened.current === objectId) {
+            contextOpened.current = null;
+            return;
+          }
+          if (event.ctrlKey || event.metaKey) latest.current.onOpenDetails(objectId);
+          else latest.current.onSelect(objectId);
+          return;
+        }
+        const edge = target.closest('[data-edge-id]')?.getAttribute('data-edge-id');
+        if (edge) latest.current.onSelectRelationship(edge);
+      }}
+      onContextMenu={(event) => {
+        const objectId = (event.target as Element)
+          .closest('[data-object-id]')
+          ?.getAttribute('data-object-id');
+        if (!event.ctrlKey || !objectId) return;
+        event.preventDefault();
+        movement.cancel();
+        activeObject.current = null;
+        if (clickGuard.current?.moved) return;
+        contextOpened.current = objectId;
+        latest.current.onOpenDetails(objectId);
       }}
       onPointerDown={beginPointer}
-      onPointerMove={movePointer}
-      onPointerUp={endPointer}
-      onPointerCancel={endPointer}
-      onLostPointerCapture={() => {
-        const drag = gesture.current;
-        if (drag?.moved) sceneRef.current?.place(drag.object.id, drag.object.position);
-        gesture.current = null;
+      onLostPointerCapture={(event) => {
+        if (event.target === rootRef.current && activeObject.current) {
+          movement.cancel();
+          activeObject.current = null;
+        }
       }}
     >
       <canvas ref={canvasRef} className="ms-renderer" tabIndex={-1} aria-hidden="true" />
       <p id={helpId} className="ms-screen-reader">
         Dra bakgrunden för att rotera. Håll Skift och dra för att förflytta vyn. Piltangenter
         förflyttar vyn; Skift och pilar roterar. Plus och minus zoomar i kartan. Ctrl eller kommando
-        med plus och minus behåller webbläsarens zoom. Dra ett objekt för att flytta det. Samtliga
-        objekt och samband finns även i textvyn.
+        med plus och minus behåller webbläsarens zoom. Klick markerar ett objekt. Ctrl eller
+        kommando med klick eller Enter markerar och öppnar uppgifterna. Dra ett objekt för att
+        flytta det. Skift eller ett andra stillastående finger ger höjdflyttning. Alla objekt och
+        samband finns även i textvyn.
       </p>
       {invalid || graphicsError ? (
         <p className="ms-graphics-error" role="alert">
@@ -699,8 +761,7 @@ export function MapStudyCanvas(props: Props) {
                     aria-label={`${objects.find((object) => object.id === relationship.from)?.name ?? ''} ${relationship.label} ${objects.find((object) => object.id === relationship.to)?.name ?? ''}${relationship.change ? `, ${changeName[relationship.change]}` : ''}`}
                     onClick={(event) => {
                       event.stopPropagation();
-                      if (!ignoreClick.current)
-                        latest.current.onSelectRelationship(relationship.id);
+                      latest.current.onSelectRelationship(relationship.id);
                     }}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -726,6 +787,32 @@ export function MapStudyCanvas(props: Props) {
                 />
               ))}
           </svg>
+          {heightGuide && (
+            <svg
+              className="ms-height-layer"
+              width={size.width}
+              height={size.height}
+              aria-label="Hjälp för höjdflyttning"
+            >
+              <title>Höjdflyttning i den personliga vyn</title>
+              <SpatialHeightGuide
+                panelBounds={guidePanel}
+                start={{ x: 0, y: 0, z: 0 }}
+                end={{
+                  x: (heightGuide.end.x - heightGuide.start.x) / guideScale,
+                  y: (heightGuide.end.y - heightGuide.start.y) / guideScale,
+                  z: (heightGuide.end.z - heightGuide.start.z) / guideScale,
+                }}
+                project={(position) =>
+                  sceneRef.current?.project({
+                    x: heightGuide.start.x + position.x * guideScale,
+                    y: heightGuide.start.y + position.y * guideScale,
+                    z: heightGuide.start.z + position.z * guideScale,
+                  })
+                }
+              />
+            </svg>
+          )}
           {visibleObjects
             .sort((a, b) => (points.get(b.id)?.depth ?? 0) - (points.get(a.id)?.depth ?? 0))
             .map((object, index) => {
@@ -737,6 +824,9 @@ export function MapStudyCanvas(props: Props) {
                   key={object.id}
                   type="button"
                   data-object-id={object.id}
+                  data-position={JSON.stringify(
+                    sceneRef.current?.position(object.id) ?? object.position,
+                  )}
                   className={`ms-marker ${selected ? 'ms-marker-selected' : ''} ${muted ? 'ms-marker-muted' : ''} ${object.change ? `ms-change-${object.change}` : ''}`}
                   style={
                     {
@@ -754,15 +844,23 @@ export function MapStudyCanvas(props: Props) {
                   onFocus={() => setHoverId(object.id)}
                   onBlur={() => setHoverId(null)}
                   onPointerEnter={(event) => {
-                    if (event.pointerType !== 'touch' && !gesture.current) setHoverId(object.id);
+                    if (event.pointerType !== 'touch' && !activeObject.current)
+                      setHoverId(object.id);
                   }}
                   onPointerLeave={() => setHoverId(null)}
-                  onClick={(event) => {
-                    if (event.detail === 0) latest.current.onSelect(object.id);
-                  }}
                 >
                   <span className="ms-marker-dot" aria-hidden="true">
-                    {sparse && <StudyGlyph object={object} />}
+                    <SpatialObjectGlyph
+                      typeName={
+                        object.type === 'Musiktjänst'
+                          ? 'Tjänst'
+                          : object.type === 'Betalkort'
+                            ? 'Kort'
+                            : object.type
+                      }
+                      name={object.name}
+                      householdId="prototype"
+                    />
                   </span>
                   {object.change && (
                     <span className="ms-marker-change" aria-hidden="true">
@@ -800,6 +898,10 @@ export function MapStudyCanvas(props: Props) {
             {namedObjects} av {objects.length} namn får plats · {visibleObjects.length}{' '}
             objektmarkörer i vyn.
             <span> Alla objekt och samband finns i textvyn.</span>
+            <span className="ms-gesture-hint">
+              Klick markerar · Ctrl/⌘-klick öppnar · Skift eller ett stilla andra finger ger
+              höjdflyttning.
+            </span>
           </p>
         </>
       )}

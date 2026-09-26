@@ -2,8 +2,8 @@
 
 Kastbart underlag för
 [Hur visar rymdkartan överblick, fokus och detaljer på mobil och dator?](https://github.com/viscalyx/skyttel/issues/105).
-De tre alternativen väntar på beställarens återkoppling. Inget nytt
-designbeslut är fastställt.
+Beställaren föredrar A som fortsatt riktning. Vanligt klick markerar;
+detaljer öppnas uttryckligen. Helheten väntar på fortsatt återkoppling.
 
 Prototypen bygger vidare på den godkända navigationsgrenen, version
 [`6586ee7`](https://github.com/viscalyx/skyttel/tree/6586ee7).
@@ -39,17 +39,24 @@ kvar vid bytet. Välj tema i den gemensamma verktygslådan.
 ## Vad alternativen prövar
 
 - **A · Fri överblick:** kartan och dess etiketter bär orienteringen.
-  Uppgifter öppnas i fria paneler när du väljer ett objekt eller samband.
+  Valt objekts direkta samband framhävs. Uppgifter öppnas vid behov.
 - **B · Ett sammanhang:** det valda objektets kopplingar framhävs och en
   separat remsa samlar deras läsning. Du kan rama in sammanhanget.
 - **C · Följ en kedja:** en synlig väg visar de samband du följer. Välj
   ett tidigare steg för att gå tillbaka. Ett hopp till en annan del av
   kartan börjar en ny sammanhängande kedja när du följer nästa samband.
 
-Alla objekt och samband finns kvar i överblicken. Urval och fokus
-flyttar inte kameran. **Visa nära i kartan**, **Rama in sammanhanget** och
+Alla objekt och samband finns kvar i överblicken. Klick i kartan markerar
+utan att flytta kameran eller öppna en panel. **Visa nära i kartan**,
+**Rama in sammanhanget** och
 **Visa hela kartan** är uttryckliga kamerahandlingar. **Lämna fokus**
 behåller kameran.
+
+**Ctrl-klick** markerar objektet och öppnar dess uppgifter direkt.
+Cmd-klick fungerar också. **Visa detaljer** finns vid markeringen och
+i verktygslådan, så samma handling fungerar med pekskärm och tangentbord.
+Enter eller mellanslag på ett objekt markerar; Ctrl/Cmd och Enter öppnar
+uppgifterna. En redan öppen redigering återanvänds med arbetet bevarat.
 
 Verktygslådan innehåller **Sök i kartan** med förstoringsglas,
 **Navigera** med kompass och en växlande kameraknapp. **Visa hela kartan**
@@ -60,8 +67,9 @@ förslag. Namn och hjälptext följer ikonens aktuella handling.
 
 ## Pröva samma uppgifter
 
-1. Välj Familjeabonnemang och följ **betalas från** till Gemensamt
-   bankkonto. Läs riktning och ändpunkter i panelen. Jämför A, B och C.
+1. Klicka på Familjeabonnemang. Objektet och dess samband markeras.
+   Öppna **Visa detaljer** och följ **betalas från** till Gemensamt
+   bankkonto. Jämför vanligt klick, Ctrl-klick och sökträffar.
 2. Öppna **Provlägen** och välj en tät karta. Befintliga placeringar och
    kamera ligger kvar. Använd **Visa hela kartan** för att se hela rymden.
    Rotera och luta för att pröva djupet mellan och inom grupperna.
@@ -78,7 +86,8 @@ förslag. Namn och hjälptext följer ikonens aktuella handling.
 5. Öppna **Ordna min vy** i ett objekts panel. Flytta objektet med de sex
    riktningsknapparna. Hushållets uppgifter och privata utkast ändras inte.
 6. Dölj kartgrafiken under **Provlägen**. Sök, läs samband, följ deras
-   ändpunkter och öppna samma uppgifter genom **Objekt och samband**.
+   ändpunkter och öppna samma uppgifter genom **Sök i kartan** och
+   listans separata **Visa detaljer**-knappar.
 
 Provreglaget för förslag byter exempeldata; det är ett provverktyg och
 ingår inte i förslaget till användargränssnitt. Efter ett simulerat
@@ -90,18 +99,28 @@ tillfällig information i skissen.
 Namnlappar mäts och placeras där de får plats. Valet och dess samband
 prioriteras. Antalet synliga namn anges; objektens personliga placeringar
 ändras inte för att ge plats åt text. Ikonerna finns kvar när namn inte
-ryms. Stora kartor använder mindre markörer för överblick.
+ryms. Originalets typikoner används även i täta och stora kartor.
 
 Text och lista är åtkomliga via **Sök i kartan** i verktygslådan.
-Sökningen omfattar samtliga sidor och lämnar kameran orörd. Objekt och
-samband har separata listval, med 50 poster per sida. Samband skrivs som
-källa, riktning, betydelse och mål. Kartarbete kräver inte kartgester.
+Sökningen omfattar samtliga sidor. Att skriva ändrar inte kameran.
+När du väljer en objektträff markeras objektet och visas tillsammans
+med sina direkta grannar i kartan. Söklistan stängs; andra öppna paneler
+och oskickat arbete finns kvar. Ingen detaljpanel öppnas automatiskt.
+Söktexten finns kvar när du öppnar listan igen. Utan kartgrafik stannar
+listan öppen och **Visa detaljer** ger tillgång till uppgifterna.
+Objekt och samband har separata listval, med 50 poster per sida.
+Samband skrivs som källa, riktning, betydelse och mål.
+Kartarbete kräver inte kartgester.
 
 **Navigera** ger knappar för panorering, rotation, lutning och zoom.
 Bakgrundsdrag roterar; Skift och dragning panorerar. Kartans piltangenter
 panorerar, Skift och pilar roterar, plus/minus zoomar. Webbläsarens
 zoomkommandon lämnas orörda. Objekt kan dras eller flyttas med knappar.
 Avbruten dragning återställer startpositionen.
+Skift-drag på ett objekt flyttar det i höjdled, längs kartans Y-axel.
+En höjdguide visar förflyttningen. Du kan växla Skift under dragningen;
+sidled och djup låses medan höjdflytten pågår.
+Ett andra stillastående finger ger samma höjdflytt på pekskärm.
 Den befintliga kartans gester hanterar två fingrars panorering och zoom.
 Stjärnhimlen kan slås av och på under **Navigera**. Den följer kamerans
 rotation och zoom, men inte panorering eller objektens placeringar.
@@ -115,6 +134,7 @@ mobilväljaren.
 
 - Fri överblick: [dator](A-dator.png), [mobil](A-mobil.png).
 - [Samma rumsliga grupper efter rotation och lutning](A-djup-roterad.png).
+- [Höjdguide på mobil](A-hojdguide-mobil.png).
 - Ett sammanhang: [dator](B-dator.png), [mobil](B-mobil.png).
 - Följ en kedja: [dator](C-dator.png), [mobil](C-mobil.png).
 - [Tät karta med privata förslag](B-tat-med-forslag.png).
@@ -137,13 +157,23 @@ Lokala Chromium-kontroller omfattar följande:
   navigeringsverktyg och provlägen öppnas. Även 320 × 400 och verklig
   webbläsarzoom på 200 procent ingår.
 - Textsökning och objektdetaljer vid 320 × 568 och 320 × 400.
+- Vanligt kartklick markerar utan panel eller kameraflytt. Ctrl-klick,
+  Cmd-klick och Ctrl-högerklick öppnar rätt objekt. Separat detaljknapp
+  fungerar med tangentbord och på mobil.
+- Sökträff visar en synlig markering, stänger enbart söklistan och
+  bevarar annan pågående redigering och mikrofontillstånd. Listans
+  separata detaljknapp fungerar även utan kartgrafik.
+- Skift-drag ändrar bara höjd och lämnar kameran stilla. Byte av
+  modifierartangent under dragning ger inget hopp; Escape återställer
+  startpositionen. Emulerat andra stillastående pekfinger ger höjdflytt.
+- Alla 500 objektmarkörer har originalets typikon i det stora provet.
 - Verklig flikzoom på 200 procent: sidans bredd går från 1440 till
   720 CSS-pixlar och pixelkvoten från 1 till 2. Sökning och detaljer
   fungerar utan horisontellt sidspill. Zoomnivån styrs och avläses via
   [Chromiums flik-API](https://developer.chrome.com/docs/extensions/reference/api/tabs#method-setZoom).
 - Separat dubblering av kartans text med bibehållna markörer och utan
   överlappande namnlappar i det glesa provet.
-- Kamera som består vid urval, variantbyte och nya provförslag.
+- Kamera som består vid kartklick, variantbyte och nya provförslag.
   Avbruten objektdragning återställer startpositionen.
 - Verktygslådans överblicksknapp återställer den sparade vyn även efter
   mellanliggande kamerarörelser och nya provobjekt. Upprepade tryck på
@@ -175,12 +205,16 @@ Prototypen använder befintliga `spatial-scene.ts` och
 Små tillägg på prototypgrenen ger återgång till föregående kameravy och
 anpassning till ljust och mörkt tema. Vanliga anrop behåller sitt
 ursprungliga beteende. Det är inte ett nytt teknikval eller ett
-prestandabevis för produktion. Objektens dragning prövar bildplanet;
-knapparna ger alla sex riktningar. Det befintliga höjddraget behöver
-fortsatt prövning tillsammans med panelerna.
+prestandabevis för produktion. `use-object-movement.ts`,
+`SpatialHeightGuide` och `SpatialObjectGlyph` återanvänds för objektdrag,
+höjdguide och typikoner. Knapparna ger alla sex riktningar.
 Närliggande markörer kan överlappa i täta utsnitt; använd zoom, fokus och
 listan. Läsbarheten hos den rumsliga överblicken kräver användarens
 bedömning, särskilt på mobil.
+
+Skift-klick för flerval och stjärnrörelse vid panorering är noterade
+önskemål att bedöma vidare. De ingår inte i denna version eller i
+originalets kontrollerade beteende.
 
 ## Produktregler som ligger fast
 
