@@ -4,6 +4,13 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "talmarkering",
+    "Talmarkeringen",
+    "upptäckbarhet",
+    "Hopplänkar",
+    "stängknappar",
+    "kastbara",
+    "fokusväxling",
     "kastbart",
     "exempelvyer",
     "stängknappen",

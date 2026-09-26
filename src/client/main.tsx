@@ -5,9 +5,15 @@ import { App } from './App.js';
 import { BuildNotice } from './build-guard.js';
 import './styles.css';
 
-const isVisualPrototype =
-  import.meta.env.DEV && new URLSearchParams(window.location.search).get('prototype') === 'visual';
-const Prototype = isVisualPrototype ? (await import('./VisualPrototype.js')).VisualPrototype : null;
+const prototype = import.meta.env.DEV
+  ? new URLSearchParams(window.location.search).get('prototype')
+  : null;
+const Prototype =
+  prototype === 'navigation'
+    ? (await import('./NavigationPrototype.js')).NavigationPrototype
+    : prototype === 'visual'
+      ? (await import('./VisualPrototype.js')).VisualPrototype
+      : null;
 
 const root = document.getElementById('root');
 if (!root) throw new Error('The application root element is missing.');

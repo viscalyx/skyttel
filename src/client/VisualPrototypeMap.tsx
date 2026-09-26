@@ -227,10 +227,14 @@ export function VisualPrototypeMap({
   variant,
   onSelect,
   onSelectObject,
+  selectedId = 'subscription',
+  names = {},
 }: {
   variant: Variant;
   onSelect: () => void;
   onSelectObject?: (object: { id: string; name: string; type: string }, anchor: DOMRect) => void;
+  selectedId?: string;
+  names?: Record<string, string>;
 }) {
   const points = positions[variant];
   return (
@@ -252,7 +256,8 @@ export function VisualPrototypeMap({
           {label}
         </span>
       ))}
-      {objects.map(({ id, name, type, icon }) => {
+      {objects.map(({ id, name: initialName, type, icon }) => {
+        const name = names[id] ?? initialName;
         const content = (
           <>
             <span className={`vp-map-glyph vp-map-glyph-${id}`} aria-hidden="true">
@@ -288,7 +293,7 @@ export function VisualPrototypeMap({
             )}
           </>
         );
-        const className = `vp-map-node vp-map-node-${id}${id === 'subscription' ? ' vp-map-node-selected' : ''}`;
+        const className = `vp-map-node vp-map-node-${id}${id === selectedId ? ' vp-map-node-selected' : ''}`;
         return id === 'subscription' || onSelectObject ? (
           <button
             key={id}
@@ -303,9 +308,7 @@ export function VisualPrototypeMap({
               }
             }}
             aria-label={
-              id === 'subscription'
-                ? 'Visa Familjeabonnemang, 189 kronor per månad'
-                : `Visa ${name}`
+              id === 'subscription' ? `Visa ${name}, 189 kronor per månad` : `Visa ${name}`
             }
           >
             {content}
