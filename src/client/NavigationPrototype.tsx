@@ -56,6 +56,15 @@ import './visual-prototype-d.css';
 import './navigation-prototype.css';
 import './voice-study-layout.css';
 import './list-study-layout.css';
+import {
+  AdminGate,
+  AdminStudyPage,
+  type AdminVariant,
+  adminPages,
+  useAdminStudy,
+  wideAdminPages,
+} from './AdminStudy.js';
+import { AdminStudyLab } from './AdminStudyLab.js';
 
 const variants = {
   A: {
@@ -130,6 +139,7 @@ function Panel({
   extra,
   className = '',
   style,
+  locked = false,
 }: {
   page: NavPage;
   children: ReactNode;
@@ -138,6 +148,7 @@ function Panel({
   extra?: ReactNode;
   className?: string;
   style?: CSSProperties;
+  locked?: boolean;
 }) {
   const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -148,14 +159,24 @@ function Panel({
       {extra}
       <header className="np-panel-header">
         {onBack && (
-          <button type="button" onClick={onBack} aria-label="Tillbaka till föregående verktyg">
+          <button
+            type="button"
+            disabled={locked}
+            onClick={onBack}
+            aria-label="Tillbaka till föregående verktyg"
+          >
             <PrototypeIcon name="back" />
           </button>
         )}
         <h2 ref={title} tabIndex={-1} id={`np-title-${page}`}>
           {pageTitles[page]}
         </h2>
-        <button type="button" onClick={onClose} aria-label={`Stäng ${pageTitles[page]}`}>
+        <button
+          type="button"
+          disabled={locked}
+          onClick={onClose}
+          aria-label={`Stäng ${pageTitles[page]}`}
+        >
           <PrototypeIcon name="close" />
         </button>
       </header>
@@ -167,7 +188,12 @@ function Panel({
 export function NavigationPrototype() {
   const study = useMapStudy();
   const [params, setParams] = useSearchParams();
-  const iconsMode = params.get('prototype') === 'icons';
+  const adminMode = params.get('prototype') === 'administration';
+  const adminModel = useAdminStudy();
+  const adminVariant: AdminVariant =
+    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
+  const [welcome, setWelcome] = useState(false);
+  const iconsMode = params.get('prototype') === 'icons' || adminMode;
   const imagesMode = params.get('prototype') === 'images' || iconsMode;
   const objectsMode = params.get('prototype') === 'objects' || imagesMode;
   const typesMode = params.get('prototype') === 'types' || objectsMode;
@@ -255,6 +281,31 @@ export function NavigationPrototype() {
   const utility =
     utilityCandidate && activeUtilityPages.includes(utilityCandidate) ? utilityCandidate : null;
   const [utilityTrail, setUtilityTrail] = useState<NavPage[]>([]);
+  const previousAdminPage = useRef(utility);
+  const utilityFocusPending = useRef(false);
+  useLayoutEffect(() => {
+    if (utility || !utilityFocusPending.current) return;
+    utilityFocusPending.current = false;
+    const root = rootRef.current;
+    const target =
+      root?.querySelector<HTMLElement>('.np-window[data-active="true"]:not([hidden]) h2') ??
+      root?.querySelector<HTMLElement>('[data-tool="settings"]');
+    target?.focus({ preventScroll: true });
+  });
+  useEffect(() => {
+    if (!adminMode || previousAdminPage.current === utility) return;
+    if (previousAdminPage.current === 'members' && adminModel.values.code) {
+      adminModel.value('code', '');
+      adminModel.step('members', 0);
+    }
+    if (
+      previousAdminPage.current === 'export' &&
+      (adminModel.exportReady || (adminModel.operation?.page === 'export' && adminModel.busy))
+    ) {
+      adminModel.cancelExport();
+    }
+    previousAdminPage.current = utility;
+  });
   const [statusOpen, setStatusOpen] = useState(false);
   const [guide, setGuide] = useState<'compare' | 'settings' | null>(null);
   const [guideStep, setGuideStep] = useState(0);
@@ -463,7 +514,13 @@ export function NavigationPrototype() {
     if (activeWindow === id) setActiveWindow(remaining.at(-1)?.id ?? null);
     if (!remaining.length) restoreFocus();
   }
+  const adminContentLocked =
+    adminMode &&
+    adminModel.busy &&
+    ['import', 'erasure'].includes(adminModel.operation?.page ?? '') &&
+    (adminModel.steps[adminModel.operation?.page ?? ''] ?? 0) === 1;
   function go(next: NavPage, objectId = selected) {
+    if (adminContentLocked && next !== adminModel.operation?.page) return;
     returnFocus.current = document.activeElement as HTMLElement;
     if (next !== 'detail' && next !== 'edit') study?.setNavigationOpen(false);
     setExpanded(false);
@@ -485,16 +542,10 @@ export function NavigationPrototype() {
     updateParams({ view: next, panel: '' });
   }
   function closeUtility() {
+    if (adminContentLocked) return;
+    utilityFocusPending.current = true;
     setUtilityTrail([]);
     updateParams({ panel: '' });
-    requestAnimationFrame(() => {
-      const root = rootRef.current;
-      const target =
-        root?.querySelector<HTMLElement>('.np-window[data-active="true"]:not([hidden]) h2') ??
-        root?.querySelector<HTMLElement>('.np-panel-host:not([hidden]) h2') ??
-        root?.querySelector<HTMLElement>('[data-tool="settings"]');
-      target?.focus({ preventScroll: true });
-    });
   }
   function closePanel() {
     if (utility) {
@@ -508,6 +559,7 @@ export function NavigationPrototype() {
     restoreFocus();
   }
   function goBack() {
+    if (adminContentLocked) return;
     if (utility) {
       const previous = utilityTrail.at(-1);
       if (!previous) {
@@ -646,6 +698,7 @@ export function NavigationPrototype() {
     );
   }
   function resetSession(next: Scenario) {
+    if (adminMode && ['access', 'signin', 'setup'].includes(next)) adminModel.clearSession();
     setScenario(next);
     setAnchor(null);
     if (['access', 'signin', 'setup'].includes(next)) {
@@ -679,6 +732,7 @@ export function NavigationPrototype() {
     if (['no-voice', 'network', 'missing', 'loading'].includes(next)) setVoice(false);
   }
   function toggleVoice() {
+    if (adminContentLocked) return;
     if (voiceMode) {
       if (!voiceStudy.sessionActive) openVoicePage('conversation');
       voiceStudy.toggleMic();
@@ -713,6 +767,7 @@ export function NavigationPrototype() {
     else beginSave();
   }
   function beginSave() {
+    if (adminContentLocked) return;
     if (profileBusy) return;
     if (objectsMode && detailModel.unresolvedIds.length > 0) {
       setIdentitySaveBlocked(true);
@@ -792,7 +847,7 @@ export function NavigationPrototype() {
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const lab = root.querySelector<HTMLElement>('.np-lab');
+    const lab = root.querySelector<HTMLElement>('.ad-switcher, .np-lab');
     const toolbox = root.querySelector<HTMLElement>('.vp-d-toolbox');
     const summary = root.querySelector<HTMLElement>('.vp-d-status');
     const measure = () => {
@@ -833,7 +888,7 @@ export function NavigationPrototype() {
     // Bara kartobjekt som faktiskt skyms undantas från pek- och tangentbordsordningen.
     const surfaces = [
       ...root.querySelectorAll<HTMLElement>(
-        '.vp-d-toolbox, .vp-d-status, .np-panel, .np-lab, .np-map-controls, .voice-map-key',
+        '.vp-d-toolbox, .vp-d-status, .np-panel, .np-lab, .np-map-controls, .voice-map-key, .ad-lab, .ad-lab-panel, .ad-welcome',
       ),
     ];
     const updateCoveredObjects = () => {
@@ -950,6 +1005,41 @@ export function NavigationPrototype() {
   });
 
   function contents(contentPage: NavPage, objectId = selected) {
+    if (adminMode && adminPages.includes(contentPage))
+      return (
+        <AdminStudyPage
+          page={contentPage}
+          model={adminModel}
+          variant={adminVariant}
+          administrator={administrator}
+          operator={operator}
+          go={go}
+          logout={() => resetSession('signin')}
+          onEnter={() => {
+            setRole('member');
+            setScenario('normal');
+            setWelcome(true);
+            closeUtility();
+          }}
+          mapSettings={
+            study ? (
+              <div className="ad-section">
+                <button
+                  type="button"
+                  aria-pressed={study.stars}
+                  onClick={() => study.setStars(!study.stars)}
+                >
+                  {study.stars ? 'Dölj stjärnhimmel' : 'Visa stjärnhimmel'}
+                </button>
+                <p className="ad-muted">
+                  Systemets minskade rörelse stänger av stjärnhimlen. Temavalet finns i
+                  verktygslådan.
+                </p>
+              </div>
+            ) : undefined
+          }
+        />
+      );
     const blocked = ['pending', 'unknown', 'conflict'].includes(saveState) || profileBusy;
     const noteChange = () => {
       voiceStudy.noteManualChange();
@@ -1488,7 +1578,7 @@ export function NavigationPrototype() {
   return (
     <div
       ref={rootRef}
-      className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}${voiceMode ? ' voice-study-host' : ''}${listsMode ? ' list-study-host' : ''}`}
+      className={`vp-root vp-variant-D np-root${study ? ' map-study' : ''}${voiceMode ? ' voice-study-host' : ''}${listsMode ? ' list-study-host' : ''}${adminMode ? ' ad-host' : ''}`}
       data-list-variant={listsMode ? listVariant : undefined}
       data-feedback-variant={voiceMode ? feedbackVariant : undefined}
       data-theme={theme}
@@ -1506,7 +1596,18 @@ export function NavigationPrototype() {
       <VisualPrototypeDFrame
         expanded={expanded}
         className="np-d-navigation"
-        context={ready ? undefined : <>Skyttel</>}
+        context={
+          ready ? (
+            adminMode ? (
+              <>
+                {adminModel.values.household}
+                <span>Gemensam karta</span>
+              </>
+            ) : undefined
+          ) : (
+            <>Skyttel</>
+          )
+        }
         actions={
           ready && (
             <>
@@ -1756,7 +1857,9 @@ export function NavigationPrototype() {
           <div
             className="np-map-backdrop"
             data-camera={camera}
-            inert={!ready || scenario === 'no-graphics' || scenario === 'empty'}
+            inert={
+              !ready || scenario === 'no-graphics' || scenario === 'empty' || adminContentLocked
+            }
           >
             {ready &&
               scenario !== 'no-graphics' &&
@@ -1863,6 +1966,7 @@ export function NavigationPrototype() {
             !showPanel &&
             !showConversation &&
             !(variant === 'B' && windows.length) &&
+            (!adminMode || scenario !== 'empty' || welcome) &&
             ['empty', 'no-graphics'].includes(scenario) && (
               <section className="np-empty">
                 <p className="np-kicker">
@@ -1887,16 +1991,25 @@ export function NavigationPrototype() {
                   Skriv i stället
                 </button>
                 {scenario === 'empty' && (
-                  <button type="button" onClick={() => go('new-object')}>
-                    Lägg till manuellt
+                  <button type="button" onClick={() => go(adminMode ? 'list' : 'new-object')}>
+                    {adminMode ? 'Öppna listan' : 'Lägg till manuellt'}
+                  </button>
+                )}
+                {adminMode && (
+                  <button type="button" onClick={() => setWelcome(false)}>
+                    Stäng vägledningen
                   </button>
                 )}
               </section>
             )}
           {showPanel && (
-            <div className="np-panel-host" hidden={panelHidden}>
+            <div
+              className={`np-panel-host${adminMode && wideAdminPages.includes(displayedPage) ? ' ad-wide' : ''}${adminMode && displayedPage === 'settings' ? ` ad-settings-${adminVariant}` : ''}`}
+              hidden={panelHidden}
+            >
               <Panel
                 page={displayedPage}
+                locked={adminContentLocked}
                 onClose={closePanel}
                 onBack={utility || trail.length ? goBack : undefined}
                 className={anchor && !utility && mainPage === 'detail' ? 'np-anchored-detail' : ''}
@@ -1942,86 +2055,161 @@ export function NavigationPrototype() {
                   </p>
                 )}
                 {utility && (
-                  <button className="np-return-work" type="button" onClick={closeUtility}>
+                  <button
+                    className="np-return-work"
+                    type="button"
+                    disabled={adminContentLocked}
+                    onClick={closeUtility}
+                  >
                     Tillbaka till arbetet
                   </button>
                 )}
               </Panel>
             </div>
           )}
-          {!ready && !showPanel && (
-            <section className="np-gate np-stack" aria-labelledby="np-gate-title">
-              <p className="np-kicker">Skyttel</p>
-              <h1 id="np-gate-title" tabIndex={-1}>
-                {scenario === 'signin' ? 'Välkommen hem till din karta' : scenarios[scenario]}
-              </h1>
-              {scenario === 'signin' && (
-                <>
-                  <p>Logga in för att öppna hushållets karta.</p>
-                  <button
-                    className="np-primary"
-                    type="button"
-                    onClick={() => setScenario('normal')}
-                  >
-                    Fortsätt med Google · prov
-                  </button>
-                  <button type="button" onClick={() => setScenario('setup')}>
-                    Fortsätt med Microsoft · ny användare i provet
-                  </button>
-                </>
-              )}
-              {scenario === 'setup' && (
-                <>
-                  <p>Välkommen, Alex. Ge hushållets karta ett namn för att börja.</p>
-                  <label htmlFor="np-household">Hushållets namn</label>
-                  <input id="np-household" defaultValue="Hushållet Lind" />
-                  <button className="np-primary" type="button" onClick={() => setScenario('empty')}>
-                    Öppna hushållets karta
-                  </button>
-                </>
-              )}
-              {scenario === 'loading' && (
-                <p role="status">
-                  Öppnar hushållets karta… välj ett annat provläge för att fortsätta.
+          {adminMode &&
+            !ready &&
+            !showPanel &&
+            ['signin', 'setup', 'access'].includes(scenario) && (
+              <AdminGate
+                scenario={scenario}
+                model={adminModel}
+                operator={operator}
+                go={go}
+                enter={(empty) => {
+                  setScenario(empty ? 'empty' : 'normal');
+                  if (empty) setRole('administrator');
+                  setWelcome(true);
+                }}
+                setup={() => resetSession('setup')}
+                logout={() => resetSession('signin')}
+              />
+            )}
+          {adminMode &&
+            ready &&
+            welcome &&
+            !utility &&
+            windows.length === 0 &&
+            scenario !== 'empty' && (
+              <aside className="ad-welcome">
+                <h2>Vad vill du börja med?</h2>
+                <p>
+                  Tala, skriv eller använd listan. Dina förslag blir gemensamma först när du sparar
+                  hela utkastet.
                 </p>
-              )}
-              {scenario === 'access' && (
-                <>
-                  <p>
-                    Du har inte längre tillgång till hushållet. Samtalet har stoppats och
-                    hushållsinnehållet har dolts.
+                <div className="ad-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWelcome(false);
+                      toggleVoice();
+                    }}
+                  >
+                    Tala
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWelcome(false);
+                      go('conversation');
+                    }}
+                  >
+                    Skriv
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWelcome(false);
+                      go('list');
+                    }}
+                  >
+                    Öppna listan
+                  </button>
+                  <button type="button" onClick={() => setWelcome(false)}>
+                    Stäng vägledningen
+                  </button>
+                </div>
+              </aside>
+            )}
+          {!ready &&
+            !showPanel &&
+            !(adminMode && ['signin', 'setup', 'access'].includes(scenario)) && (
+              <section className="np-gate np-stack" aria-labelledby="np-gate-title">
+                <p className="np-kicker">Skyttel</p>
+                <h1 id="np-gate-title" tabIndex={-1}>
+                  {scenario === 'signin' ? 'Välkommen hem till din karta' : scenarios[scenario]}
+                </h1>
+                {scenario === 'signin' && (
+                  <>
+                    <p>Logga in för att öppna hushållets karta.</p>
+                    <button
+                      className="np-primary"
+                      type="button"
+                      onClick={() => setScenario('normal')}
+                    >
+                      Fortsätt med Google · prov
+                    </button>
+                    <button type="button" onClick={() => setScenario('setup')}>
+                      Fortsätt med Microsoft · ny användare i provet
+                    </button>
+                  </>
+                )}
+                {scenario === 'setup' && (
+                  <>
+                    <p>Välkommen, Alex. Ge hushållets karta ett namn för att börja.</p>
+                    <label htmlFor="np-household">Hushållets namn</label>
+                    <input id="np-household" defaultValue="Hushållet Lind" />
+                    <button
+                      className="np-primary"
+                      type="button"
+                      onClick={() => setScenario('empty')}
+                    >
+                      Öppna hushållets karta
+                    </button>
+                  </>
+                )}
+                {scenario === 'loading' && (
+                  <p role="status">
+                    Öppnar hushållets karta… välj ett annat provläge för att fortsätta.
                   </p>
-                  <button type="button" onClick={() => go('login-methods')}>
-                    Inloggningssätt
+                )}
+                {scenario === 'access' && (
+                  <>
+                    <p>
+                      Du har inte längre tillgång till hushållet. Samtalet har stoppats och
+                      hushållsinnehållet har dolts.
+                    </p>
+                    <button type="button" onClick={() => go('login-methods')}>
+                      Inloggningssätt
+                    </button>
+                    <button type="button" onClick={() => go('invitations')}>
+                      Inbjudan och användar-ID
+                    </button>
+                    <button type="button" onClick={() => resetSession('signin')}>
+                      Till inloggning
+                    </button>
+                  </>
+                )}
+                {scenario === 'missing' && (
+                  <>
+                    <p>Adressen leder inte till någon vy. Ditt pågående arbete finns kvar.</p>
+                    <button type="button" onClick={() => setScenario('normal')}>
+                      Tillbaka till kartan
+                    </button>
+                  </>
+                )}
+                {operator && scenario === 'access' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      go('costs');
+                    }}
+                  >
+                    Öppna kostnadsöversikt
                   </button>
-                  <button type="button" onClick={() => go('invitations')}>
-                    Inbjudan och användar-ID
-                  </button>
-                  <button type="button" onClick={() => resetSession('signin')}>
-                    Till inloggning
-                  </button>
-                </>
-              )}
-              {scenario === 'missing' && (
-                <>
-                  <p>Adressen leder inte till någon vy. Ditt pågående arbete finns kvar.</p>
-                  <button type="button" onClick={() => setScenario('normal')}>
-                    Tillbaka till kartan
-                  </button>
-                </>
-              )}
-              {operator && scenario === 'access' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    go('costs');
-                  }}
-                >
-                  Öppna kostnadsöversikt
-                </button>
-              )}
-            </section>
-          )}
+                )}
+              </section>
+            )}
         </main>
 
         {statusOpen && ready && (
@@ -2145,7 +2333,84 @@ export function NavigationPrototype() {
           </div>
         </aside>
       )}
-      {voiceMode && ready ? (
+      {adminMode ? (
+        <AdminStudyLab
+          model={adminModel}
+          variant={adminVariant}
+          onVariant={(next) => {
+            if (!adminContentLocked) updateParams({ variant: next, panel: 'settings' }, true);
+          }}
+          role={role}
+          onRole={(next) => {
+            adminModel.clearSession();
+            setRole(next as typeof role);
+          }}
+          onScenario={(next) => {
+            resetSession(next as Scenario);
+            setWelcome(next === 'empty');
+          }}
+          go={go}
+          panel={utility}
+          scenario={scenario}
+        >
+          <details>
+            <summary>Kartans provverktyg</summary>
+            <div className="ad-actions">
+              <button
+                type="button"
+                disabled={voiceStudy.mic !== 'connecting'}
+                onClick={voiceStudy.finishConnection}
+              >
+                Anslutning klar
+              </button>
+              <button
+                type="button"
+                disabled={voiceStudy.mic !== 'listening'}
+                onClick={voiceStudy.proposeExample}
+              >
+                Tal klart: familjeabonnemang
+              </button>
+              <button
+                type="button"
+                disabled={voiceStudy.assistant !== 'working'}
+                onClick={voiceStudy.finishWork}
+              >
+                Arbete klart
+              </button>
+              <button
+                type="button"
+                disabled={voiceStudy.assistant !== 'speaking'}
+                onClick={voiceStudy.finishSpeech}
+              >
+                Svar klart
+              </button>
+              <button
+                type="button"
+                disabled={!voiceStudy.sessionActive}
+                onClick={() => voiceStudy.simulateFailure('microphone')}
+              >
+                Mikrofon nekad
+              </button>
+              <button
+                type="button"
+                disabled={!voiceStudy.sessionActive}
+                onClick={() => voiceStudy.simulateFailure('network')}
+              >
+                Nätet bryts
+              </button>
+              <button type="button" onClick={() => resolveVoiceSave('saved')}>
+                Kvitto: sparat
+              </button>
+              <button type="button" onClick={() => resolveVoiceSave('unknown')}>
+                Kvitto: okänt
+              </button>
+              <button type="button" onClick={() => study?.setNoGraphics(!study.noGraphics)}>
+                Växla grafik
+              </button>
+            </div>
+          </details>
+        </AdminStudyLab>
+      ) : voiceMode && ready ? (
         <VoiceStudyLab
           model={voiceStudy}
           variant={feedbackVariant}
