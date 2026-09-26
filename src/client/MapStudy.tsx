@@ -13,7 +13,7 @@ import { useSearchParams } from 'react-router';
 import { MapStudyCanvas } from './MapStudyCanvas.js';
 import { MapStudyNavigation } from './MapStudyNavigation.js';
 import { changeLabel, studyData } from './map-study-data.js';
-import type { StudyCamera, StudyPosition, StudyVariant } from './map-study-types.js';
+import type { StudyCamera, StudyObject, StudyPosition, StudyVariant } from './map-study-types.js';
 import './map-study.css';
 
 const variants = {
@@ -36,7 +36,7 @@ const variants = {
 
 function useStudyState() {
   const [params, setParams] = useSearchParams();
-  const candidate = ['voice', 'lists'].includes(params.get('prototype') ?? '')
+  const candidate = ['voice', 'lists', 'details'].includes(params.get('prototype') ?? '')
     ? 'A'
     : params.get('variant');
   const variant: StudyVariant = candidate === 'B' || candidate === 'C' ? candidate : 'A';
@@ -45,7 +45,7 @@ function useStudyState() {
   );
   const [proposals, setProposals] = useState(
     () =>
-      ['voice', 'lists'].includes(params.get('prototype') ?? '') &&
+      ['voice', 'lists', 'details'].includes(params.get('prototype') ?? '') &&
       params.get('changes') === 'example',
   );
   const [savedProposals, setSavedProposals] = useState(false);
@@ -209,6 +209,8 @@ export function MapStudyMap({
   theme,
   names,
   staged,
+  descriptions,
+  objectChanges,
 }: {
   selectedId: string;
   selectedIds: string[];
@@ -220,6 +222,8 @@ export function MapStudyMap({
   theme: 'light' | 'dark';
   names: Record<string, string>;
   staged: Record<string, string>;
+  descriptions?: Record<string, string>;
+  objectChanges?: Record<string, StudyObject['change']>;
 }) {
   const study = useStudy();
   const [relationsOpen, setRelationsOpen] = useState(false);
@@ -265,14 +269,17 @@ export function MapStudyMap({
       study.objects.map((object) => ({
         ...object,
         name: staged[object.id] ?? names[object.id] ?? object.name,
+        description: descriptions?.[object.id] ?? object.description,
         change:
           object.change === 'added'
             ? object.change
             : staged[object.id]
               ? ('changed' as const)
-              : object.change,
+              : objectChanges && object.id in objectChanges
+                ? objectChanges[object.id]
+                : object.change,
       })),
-    [study.objects, names, staged],
+    [study.objects, names, staged, descriptions, objectChanges],
   );
   const name = (id: string) =>
     staged[id] ?? names[id] ?? study.objects.find((object) => object.id === id)?.name ?? id;

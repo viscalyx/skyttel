@@ -15,6 +15,7 @@ export type VoiceStudyOptions = {
   enabled?: boolean;
   draftCount: number;
   saveState: VoiceSaveState;
+  currentPrice?: string;
   onPropose: () => void;
   onSave: () => void;
   onResolveSave: (outcome: 'saved' | 'failed' | 'unknown' | 'conflict') => void;
@@ -50,6 +51,7 @@ export function useVoiceStudy(options: VoiceStudyOptions) {
   const pendingProposal = useRef(false);
   const previousSaveState = useRef(options.saveState);
   const enabled = options.enabled !== false;
+  const currentPrice = options.currentPrice ?? '199 kr';
   const consented = externalAi && mapWork && sessionActive;
   const micActive = mic === 'listening';
 
@@ -74,7 +76,7 @@ export function useVoiceStudy(options: VoiceStudyOptions) {
       saved: 'Sparat. Hela utkastet är bekräftat av kvittot.',
       failed: 'Inget sparades. Utkastet finns kvar.',
       unknown: 'Sparutfallet är okänt. Kontrollera försöket innan du fortsätter.',
-      conflict: 'Inget sparades. Familjeabonnemangets pris har ändrats av någon annan.',
+      conflict: `Inget sparades. Familjeabonnemangets pris har ändrats av någon annan. Ditt förslag är ${currentPrice}.`,
     };
     const message = messages[options.saveState];
     if (message) {
@@ -83,7 +85,7 @@ export function useVoiceStudy(options: VoiceStudyOptions) {
       setEvents((current) => [...current.slice(-2), { id, label: 'Sparande', text: message }]);
       if (options.saveState !== 'pending') setChecking(false);
     }
-  }, [enabled, options.saveState]);
+  }, [enabled, options.saveState, currentPrice]);
 
   const blockedSave =
     options.saveState === 'unknown' ||
@@ -302,7 +304,7 @@ export function useVoiceStudy(options: VoiceStudyOptions) {
     if (options.saveState !== 'conflict') return;
     options.onReviewConflict?.();
     announce(
-      'Ditt prisförslag behålls i utkastet. Granska det och ge ett nytt sparbesked.',
+      `Ditt prisförslag, ${currentPrice}, behålls i utkastet. Granska det och ge ett nytt sparbesked.`,
       'Konflikt löst',
     );
   }
@@ -349,7 +351,7 @@ export function useVoiceStudy(options: VoiceStudyOptions) {
     options.saveState === 'unknown'
       ? 'Sparutfallet är okänt. Kontrollera samma försök innan du ändrar eller sparar mer.'
       : options.saveState === 'conflict'
-        ? 'Priskonflikt: någon annan har sparat 219 kr för Familjeabonnemanget. Ditt förslag är 199 kr. Inget från försöket är sparat.'
+        ? `Priskonflikt: någon annan har sparat 219 kr för Familjeabonnemanget. Ditt förslag är ${currentPrice}. Inget från försöket är sparat.`
         : options.saveState === 'failed'
           ? 'Det senaste sparförsöket avvisades. Utkastet finns kvar för ett nytt sparbesked.'
           : error;
@@ -374,6 +376,7 @@ export function useVoiceStudy(options: VoiceStudyOptions) {
     statusText,
     draftCount: options.draftCount,
     saveState: options.saveState,
+    currentPrice,
     transcript,
     textBuffer,
     setTextBuffer,
@@ -569,6 +572,21 @@ export function VoiceStudyConversation({
 }) {
   return (
     <div className="voice-study voice-study-conversation">
+      {model.saveState === 'conflict' && (
+        <div className="voice-study-question">
+          <strong>Vilket pris ska Familjeabonnemanget ha?</strong>
+          <p>
+            Ditt förslag: {model.currentPrice}. Sparat av någon annan: 219 kr. Ett val uppdaterar
+            bara utkastet.
+          </p>
+          <button type="button" onClick={model.resolveConflict}>
+            Behåll mitt förslag: {model.currentPrice}
+          </button>
+          <button type="button" onClick={onDraft}>
+            Granska hela utkastet
+          </button>
+        </div>
+      )}
       {!model.sessionActive ? (
         <section className="voice-study-consent" aria-label="Starta ett samtal">
           <span className="voice-study-eyebrow">Tala med Skyttel</span>
@@ -659,21 +677,6 @@ export function VoiceStudyConversation({
               </button>
             </div>
           )}
-          {model.saveState === 'conflict' && (
-            <div className="voice-study-question">
-              <strong>Vilket pris ska Familjeabonnemanget ha?</strong>
-              <p>
-                Ditt förslag: 199 kr. Sparat av någon annan: 219 kr. Ett val uppdaterar bara
-                utkastet.
-              </p>
-              <button type="button" onClick={model.resolveConflict}>
-                Behåll mitt förslag: 199 kr
-              </button>
-              <button type="button" onClick={onDraft}>
-                Granska hela utkastet
-              </button>
-            </div>
-          )}
           <form
             className="voice-study-composer"
             onSubmit={(event) => {
@@ -743,6 +746,7 @@ export function VoiceStudyLab({
   onVariant: (variant: VoiceStudyVariant) => void;
   onNoGraphics?: () => void;
   comparison?: {
+    label?: string;
     key: string;
     name: string;
     description: string;
@@ -797,7 +801,7 @@ export function VoiceStudyLab({
     >
       <div className="voice-study-lab-switcher">
         <span className="voice-study-lab-label">
-          {comparison ? 'Kastbar listprototyp' : 'Kastbar talprototyp'}
+          {comparison?.label ?? (comparison ? 'Kastbar listprototyp' : 'Kastbar talprototyp')}
         </span>
         <button type="button" aria-label="Föregående variant" onClick={() => cycle(-1)}>
           ←

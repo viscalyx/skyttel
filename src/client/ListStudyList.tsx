@@ -31,6 +31,7 @@ type ListStudyListProps = {
   relationships: StudyRelationship[];
   names: Record<string, string>;
   staged: Record<string, string>;
+  stagedLabel?: string;
   selectedIds: string[];
   state: ListStudyBrowseState;
   onState: (next: ListStudyBrowseState) => void;
@@ -55,6 +56,7 @@ export function ListStudyList({
   relationships,
   names,
   staged,
+  stagedLabel = '✎ Namnförslag',
   selectedIds,
   state,
   onState,
@@ -174,7 +176,7 @@ export function ListStudyList({
           <span className="ls-object-status ls-proposal">{proposalLabels[object.change]}</span>
         )}
         {staged[object.id] !== undefined && (
-          <span className="ls-object-status ls-proposal">✎ Namnförslag</span>
+          <span className="ls-object-status ls-proposal">{stagedLabel}</span>
         )}
       </>
     );

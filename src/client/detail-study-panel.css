@@ -1,0 +1,327 @@
+/* Kastbara detaljvarianter; använder D-skalets färger och godkända fria panel. */
+.np-root .ds-panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  color: var(--vp-text);
+  font-size: 13px;
+  line-height: 1.45;
+  container-type: inline-size;
+}
+.np-root .ds-panel :is(button, input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.np-root .ds-panel :is(input, select, textarea) {
+  display: block;
+  width: 100%;
+  margin: 0;
+  color: var(--vp-text);
+  background: var(--vp-surface);
+  border: 1px solid var(--vp-control-line);
+}
+.np-root .ds-panel textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+.np-root .ds-panel button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.np-root .ds-panel :is(button, input, select, textarea, summary):focus-visible,
+.np-root .ds-panel .ds-errors:focus {
+  outline: 2px solid var(--vp-accent);
+  outline-offset: 2px;
+}
+.np-root .ds-panel :is(h3, h4) {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.np-root .ds-context-actions,
+.np-root .ds-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.np-root .ds-context-actions {
+  justify-content: space-between;
+}
+.np-root .ds-panel .ds-context-actions button,
+.np-root .ds-panel .ds-section-edit {
+  min-height: 30px;
+  padding: 4px 0;
+  border: 0;
+  color: var(--vp-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-align: left;
+}
+.np-root .ds-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  font-size: 11px;
+}
+.np-root .ds-state span {
+  padding-block: 3px;
+}
+.np-root .ds-state .ds-type {
+  padding-inline: 7px;
+  border: 1px solid var(--vp-line);
+  border-radius: 5px;
+}
+.np-root .ds-edit-actions {
+  position: sticky;
+  top: -1px;
+  z-index: 1;
+  padding-block: 7px;
+  background: var(--vp-surface);
+  border-bottom: 1px solid var(--vp-line);
+}
+.np-root .ds-panel .ds-primary {
+  border-color: var(--vp-accent);
+  color: var(--vp-accent);
+  background: color-mix(in srgb, var(--vp-accent) 9%, var(--vp-surface));
+  font-weight: 600;
+}
+.np-root .ds-muted,
+.np-root .ds-edit-hint {
+  color: var(--vp-muted);
+  font-size: 11px;
+}
+.np-root .ds-edit-hint {
+  margin-top: -5px;
+}
+.np-root .ds-document {
+  display: grid;
+  gap: 20px;
+}
+.np-root .ds-document > section {
+  display: grid;
+  gap: 9px;
+}
+.np-root .ds-fact-list {
+  margin: 0;
+}
+.np-root .ds-fact-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--vp-line);
+}
+.np-root .ds-fact-list dt {
+  color: var(--vp-muted);
+  font-size: 12px;
+}
+.np-root .ds-fact-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.np-root .ds-fact-list [data-unspecified="true"] dd {
+  color: var(--vp-muted);
+}
+.np-root .ds-basic-read > div {
+  grid-template-columns: 1fr;
+  gap: 3px;
+}
+.np-root .ds-basic-fields,
+.np-root .ds-financial-fields {
+  display: grid;
+  gap: 13px;
+}
+.np-root .ds-panel .ds-basic-fields label,
+.np-root .ds-panel .ds-financial-field label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+.np-root .ds-panel .ds-basic-fields :is(input, textarea),
+.np-root .ds-panel .ds-financial-field :is(input, select, textarea) {
+  min-height: 36px;
+  margin: 0;
+  padding: 7px 9px;
+  background: var(--vp-surface);
+  border-radius: 7px;
+}
+.np-root .ds-financial-field {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+.np-root .ds-financial-field legend {
+  padding: 0 0 5px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.np-root .ds-fact-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.np-root .ds-knowledge-label {
+  flex: 1 1 145px;
+}
+.np-root .ds-value-label {
+  flex: 1 1 130px;
+}
+.np-root .ds-fact-inputs[data-long-value="true"] .ds-value-label {
+  flex-basis: 100%;
+}
+.np-root .ds-panel .ds-reported-date {
+  margin-top: 5px;
+}
+.np-root .ds-panel .ds-reported-date input {
+  max-width: 190px;
+}
+.np-root .ds-field-error {
+  color: var(--vp-text);
+  border-left: 3px solid var(--vp-accent);
+  padding-left: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.np-root .ds-panel [aria-invalid="true"] {
+  border-width: 2px;
+  border-color: var(--vp-accent);
+}
+.np-root .ds-errors {
+  padding: 12px;
+  border: 2px solid var(--vp-accent);
+  border-radius: 7px;
+  font-size: 12px;
+}
+.np-root .ds-errors ul {
+  margin: 5px 0 0;
+  padding-left: 18px;
+}
+.np-root .ds-panel .ds-errors button {
+  min-height: 28px;
+  padding: 3px 0;
+  border: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.np-root .ds-panel summary {
+  padding-block: 9px;
+  cursor: pointer;
+}
+.np-root .ds-panel summary::marker {
+  color: var(--vp-accent);
+}
+.np-root .ds-credit > summary {
+  font-size: 12px;
+  font-weight: 600;
+}
+.np-root .ds-credit > summary > span {
+  display: block;
+  padding-left: 15px;
+  color: var(--vp-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+.np-root .ds-credit .ds-financial-fields {
+  padding-top: 5px;
+}
+.np-root .ds-accordions {
+  display: grid;
+  gap: 8px;
+}
+.np-root .ds-section {
+  border: 1px solid var(--vp-line);
+  border-radius: 8px;
+}
+.np-root .ds-section > summary {
+  padding: 11px;
+  background: color-mix(in srgb, var(--vp-accent) 5%, var(--vp-surface));
+}
+.np-root .ds-section > summary > span {
+  display: block;
+  margin: 3px 0 0 14px;
+  color: var(--vp-muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.np-root .ds-section-content {
+  display: grid;
+  gap: 8px;
+  padding: 10px 11px;
+}
+.np-root .ds-panel .ds-section-edit {
+  justify-self: start;
+}
+.np-root .ds-tab-buttons {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--vp-line);
+}
+.np-root .ds-panel .ds-tab-buttons button {
+  flex: 1 0 auto;
+}
+.np-root .ds-panel .ds-tab-buttons button[aria-pressed="true"] {
+  border-color: var(--vp-accent);
+  color: var(--vp-accent);
+  background: color-mix(in srgb, var(--vp-accent) 10%, var(--vp-surface));
+}
+.np-root .ds-tab-content {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+.np-root .ds-buffer-actions,
+.np-root .ds-relationships {
+  padding-top: 3px;
+  border-top: 1px solid var(--vp-line);
+  font-size: 12px;
+}
+.np-root .ds-buffer-actions p {
+  margin-bottom: 8px;
+  color: var(--vp-muted);
+}
+.np-root .ds-relationships ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.np-root .ds-relationships li {
+  display: grid;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--vp-line);
+  overflow-wrap: anywhere;
+}
+.np-root .ds-panel .ds-relationships button {
+  justify-self: start;
+  text-align: left;
+}
+.np-root .ds-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@container (max-width: 300px) {
+  .np-root .ds-fact-list > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}

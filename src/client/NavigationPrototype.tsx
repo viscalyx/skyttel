@@ -9,6 +9,8 @@ import {
   useState,
 } from 'react';
 import { useSearchParams } from 'react-router';
+import { DetailStudyPanel, type DetailStudyVariant } from './DetailStudyPanel.js';
+import { factText, useDetailStudy } from './detail-study-model.js';
 import {
   initialListStudyBrowseState,
   ListStudyList,
@@ -157,10 +159,22 @@ export function NavigationPrototype() {
   const study = useMapStudy();
   const navObjects = study?.objects ?? defaultNavObjects;
   const [params, setParams] = useSearchParams();
-  const listsMode = params.get('prototype') === 'lists';
+  const detailsMode = params.get('prototype') === 'details';
+  const listsMode = params.get('prototype') === 'lists' || detailsMode;
+  const detailVariant: DetailStudyVariant =
+    params.get('variant') === 'B' ? 'B' : params.get('variant') === 'C' ? 'C' : 'A';
   const voiceMode = params.get('prototype') === 'voice' || listsMode;
-  const listVariant: ListStudyVariant =
-    params.get('variant') === 'A' ? 'A' : params.get('variant') === 'C' ? 'C' : 'B';
+  const listVariant: ListStudyVariant = detailsMode
+    ? 'B'
+    : params.get('variant') === 'A'
+      ? 'A'
+      : params.get('variant') === 'C'
+        ? 'C'
+        : 'B';
+  const detailModel = useDetailStudy(
+    study?.objects ?? [],
+    detailsMode && params.get('changes') === 'example',
+  );
   const [browse, setBrowse] = useState(initialListStudyBrowseState);
   const listMemory = useRef({ scrollTop: 0, focusId: null as string | null });
   const feedbackVariant: VoiceStudyVariant = listsMode
@@ -205,6 +219,8 @@ export function NavigationPrototype() {
   const [buffers, setBuffers] = useState<Record<string, string>>({});
   const [staged, setStaged] = useState<Record<string, string>>({});
   const [savedNames, setSavedNames] = useState<Record<string, string>>({});
+  const displayedNames = detailsMode ? detailModel.names.saved : savedNames;
+  const displayedStaged = detailsMode ? detailModel.names.staged : staged;
   const [message, setMessage] = useState('');
   const [transcript, setTranscript] = useState<string[]>([
     'Skyttel: Berätta vad du vill lägga till eller hitta.',
@@ -250,14 +266,23 @@ export function NavigationPrototype() {
   const administrator = role === 'administrator' || role === 'administrator-operator';
   const operator = role === 'operator' || role === 'administrator-operator';
   const baseObject = navObjects.find((object) => object.id === selected) ?? navObjects[0];
-  const currentObject = { ...baseObject, name: savedNames[selected] ?? baseObject.name };
+  const currentObject = {
+    ...baseObject,
+    name: displayedStaged[selected] ?? displayedNames[selected] ?? baseObject.name,
+  };
   const hasStudyProposals = study?.proposals ?? false;
-  const draftCount = Object.keys(staged).length + (hasStudyProposals ? 4 : 0);
+  const draftCount = detailsMode
+    ? detailModel.draftCount + (hasStudyProposals ? 3 : 0)
+    : Object.keys(staged).length + (hasStudyProposals ? 4 : 0);
   const voiceStudy = useVoiceStudy({
     enabled: voiceMode && ready,
+    currentPrice: detailsMode
+      ? factText(detailModel.current('subscription').facts.price)
+      : undefined,
     draftCount,
     saveState,
     onPropose: () => {
+      if (detailsMode) detailModel.proposeVoicePrice();
       study?.setProposals(true);
       setSaveState('idle');
     },
@@ -266,11 +291,14 @@ export function NavigationPrototype() {
     onReviewConflict: () => setSaveState('idle'),
   });
   const voice = voiceMode ? voiceStudy.micActive : legacyVoice;
-  const unsentCount = Object.keys(buffers).filter(
-    (id) =>
-      buffers[id] !==
-      (staged[id] ?? savedNames[id] ?? navObjects.find((object) => object.id === id)?.name),
-  ).length;
+  const unsentIds = detailsMode
+    ? detailModel.unsentIds
+    : Object.keys(buffers).filter(
+        (id) =>
+          buffers[id] !==
+          (staged[id] ?? savedNames[id] ?? navObjects.find((object) => object.id === id)?.name),
+      );
+  const unsentCount = unsentIds.length;
   const showConversation = variant === 'B' && windows.some((item) => item.page === 'conversation');
   const mainPage = page === 'conversation' && variant === 'B' ? 'map' : page;
   const displayedPage = utility ?? mainPage;
@@ -554,6 +582,7 @@ export function NavigationPrototype() {
       setActiveWindow(null);
       setMessage('');
       setBuffers({});
+      if (detailsMode) detailModel.reset();
       setStaged({});
       study?.resetProposals();
       setSavedNames({});
@@ -611,13 +640,14 @@ export function NavigationPrototype() {
     if (!['pending', 'unknown', 'conflict'].includes(saveState)) return;
     if (outcome === 'saved') {
       setReceipt([
+        ...(detailsMode ? detailModel.receiptLines() : []),
         ...Object.entries(staged).map(
           ([id, name]) =>
             `${navObjects.find((item) => item.id === id)?.name ?? id}: namn ändrat till ${name}.`,
         ),
         ...(hasStudyProposals
           ? [
-              'Familjeabonnemang: 189 → 199 kr per månad.',
+              ...(detailsMode ? [] : ['Familjeabonnemang: 189 → 199 kr per månad.']),
               'Betalning: Gemensamt bankkonto → Kort ·· 4242.',
               'Ny tjänst: Filmlyktan.',
               'Nytt samband: Lo använder Filmlyktan.',
@@ -626,6 +656,7 @@ export function NavigationPrototype() {
       ]);
       setSavedNames((previous) => ({ ...previous, ...staged }));
       setStaged({});
+      if (detailsMode) detailModel.commit();
       study?.commitProposals();
     }
     setSaveState(outcome);
@@ -812,6 +843,39 @@ export function NavigationPrototype() {
   });
 
   function contents(contentPage: NavPage, objectId = selected) {
+    if (detailsMode && study && (contentPage === 'detail' || contentPage === 'edit')) {
+      const subject = study.objects.find((object) => object.id === objectId);
+      if (!subject) return <p>Objektet ingår inte i det valda provhushållet.</p>;
+      return (
+        <DetailStudyPanel
+          variant={detailVariant}
+          object={subject}
+          model={detailModel}
+          editing={contentPage === 'edit'}
+          blocked={['pending', 'unknown', 'conflict'].includes(saveState)}
+          onEdit={() => go('edit', objectId)}
+          onRead={() => {
+            setWindows((previous) =>
+              previous.map((entry) =>
+                entry.objectId === objectId ? { ...entry, page: 'detail' } : entry,
+              ),
+            );
+          }}
+          onStage={() => {
+            if (['pending', 'unknown', 'conflict'].includes(saveState)) return;
+            if (detailModel.stage(objectId)) {
+              voiceStudy.noteManualChange();
+              setSaveState('idle');
+            }
+          }}
+          onList={returnToList}
+          onMap={() => revealStudyObject(objectId)}
+          onRelated={selectObject}
+          relationships={study.relationships}
+          objects={study.objects}
+        />
+      );
+    }
     if (listsMode && study && contentPage === 'list')
       return (
         <>
@@ -825,10 +889,19 @@ export function NavigationPrototype() {
               </nav>
               <ListStudyList
                 variant={listVariant}
-                objects={study.objects}
+                objects={
+                  detailsMode
+                    ? study.objects.map((object) => ({
+                        ...object,
+                        description: detailModel.descriptions[object.id] ?? object.description,
+                        change: object.id === 'subscription' ? undefined : object.change,
+                      }))
+                    : study.objects
+                }
                 relationships={study.relationships}
-                names={savedNames}
-                staged={staged}
+                names={displayedNames}
+                staged={displayedStaged}
+                stagedLabel={detailsMode ? '✎ Ändringsförslag' : undefined}
                 selectedIds={selection.ids}
                 state={browse}
                 onState={setBrowse}
@@ -860,8 +933,8 @@ export function NavigationPrototype() {
               onReveal={revealStudyObject}
               onOpenDetails={selectObject}
               onEdit={() => go('edit', objectId)}
-              names={savedNames}
-              staged={staged}
+              names={displayedNames}
+              staged={displayedStaged}
             />
           )}
         </>
@@ -877,10 +950,17 @@ export function NavigationPrototype() {
           </p>
           {hasStudyProposals && (
             <ul>
-              <li>Familjeabonnemang: 189 → 199 kr per månad.</li>
+              {!detailsMode && <li>Familjeabonnemang: 189 → 199 kr per månad.</li>}
               <li>Betalning: Gemensamt bankkonto → Kort ·· 4242.</li>
               <li>Ny tjänst: Filmlyktan.</li>
               <li>Nytt samband: Lo använder Filmlyktan.</li>
+            </ul>
+          )}
+          {detailsMode && detailModel.receiptLines().length > 0 && (
+            <ul>
+              {detailModel.receiptLines().map((line) => (
+                <li key={line}>{line}</li>
+              ))}
             </ul>
           )}
           {Object.entries(staged).map(([id, name]) => (
@@ -1373,8 +1453,10 @@ export function NavigationPrototype() {
                   showSelectionActions={!windows.length && !utility && !statusOpen}
                   onList={() => go('list')}
                   theme={theme}
-                  names={savedNames}
-                  staged={staged}
+                  names={displayedNames}
+                  staged={displayedStaged}
+                  descriptions={detailsMode ? detailModel.descriptions : undefined}
+                  objectChanges={detailsMode ? { subscription: undefined } : undefined}
                 />
               ) : (
                 <VisualPrototypeMap
@@ -1397,7 +1479,7 @@ export function NavigationPrototype() {
               windows={windows.map((item) => ({
                 id: item.id,
                 title: item.objectId
-                  ? `${pageTitles[item.page]} · ${savedNames[item.objectId] ?? navObjects.find((object) => object.id === item.objectId)?.name}`
+                  ? `${pageTitles[item.page]} · ${displayedStaged[item.objectId] ?? displayedNames[item.objectId] ?? navObjects.find((object) => object.id === item.objectId)?.name}`
                   : pageTitles[item.page],
                 content: contents(item.page, item.objectId),
                 anchor: item.anchor,
@@ -1668,8 +1750,8 @@ export function NavigationPrototype() {
                     <button
                       type="button"
                       onClick={() => {
-                        setSelected(Object.keys(buffers)[0]);
-                        go('edit', Object.keys(buffers)[0]);
+                        setSelected(unsentIds[0]);
+                        go('edit', unsentIds[0]);
                       }}
                     >
                       Fortsätt redigera
@@ -1732,22 +1814,40 @@ export function NavigationPrototype() {
           comparison={
             listsMode && study
               ? {
-                  key: listVariant,
-                  name: { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[
-                    listVariant
-                  ],
-                  description: 'Hitta rätt objekt · godkänd karta och talåterkoppling D',
+                  label: detailsMode ? 'Kastbar detaljprototyp' : undefined,
+                  key: detailsMode ? detailVariant : listVariant,
+                  name: detailsMode
+                    ? { A: 'Läs och ändra', B: 'Avsnitt', C: 'Flikar' }[detailVariant]
+                    : { A: 'Kompakt lista', B: 'Typkatalog', C: 'Sök och inspektera' }[listVariant],
+                  description: detailsMode
+                    ? 'Detaljer och redigering · godkänd lista B och talåterkoppling D'
+                    : 'Hitta rätt objekt · godkänd karta och talåterkoppling D',
                   state: `${study.objects.length} objekt · ${selection.ids.length} markerade · ${unsentCount} oskickade redigeringar · ${draftCount} förslag`,
                   onCycle: (direction) => {
                     const keys: ListStudyVariant[] = ['A', 'B', 'C'];
                     updateParams(
-                      { variant: keys[(keys.indexOf(listVariant) + direction + 3) % 3] },
+                      {
+                        variant:
+                          keys[
+                            (keys.indexOf(detailsMode ? detailVariant : listVariant) +
+                              direction +
+                              3) %
+                              3
+                          ],
+                      },
                       true,
                     );
                   },
                   controls: (
                     <div className="voice-study-lab-group">
-                      <strong>Hitta och välj i listan</strong>
+                      <strong>
+                        {detailsMode ? 'Pröva uppgifter och redigering' : 'Hitta och välj i listan'}
+                      </strong>
+                      {detailsMode && (
+                        <button type="button" onClick={() => selectObject('subscription')}>
+                          Öppna Familjeabonnemang
+                        </button>
+                      )}
                       <button type="button" onClick={returnToList}>
                         Öppna listan
                       </button>
@@ -1776,9 +1876,15 @@ export function NavigationPrototype() {
                         {browse.onlySelected ? 'markerade' : 'alla'}.
                       </p>
                       <p>
-                        Denna omgång prövar listans struktur och vägen till detaljer. Redigering
-                        visar ännu bara den godkända grundens namnprov. Täta formulär och fler
-                        konfliktval följer efter återkopplingen.
+                        {detailsMode ? (
+                          'Denna omgång prövar namn, beskrivning, ekonomiska uppgifter och osäkerhet. Sambandsredigering, egna typer, fält, bilder, historik och fler konfliktval återstår. Listan använder godkända B.'
+                        ) : (
+                          <>
+                            Denna omgång prövar listans struktur och vägen till detaljer. Redigering
+                            visar ännu bara den godkända grundens namnprov. Täta formulär och fler
+                            konfliktval följer efter återkopplingen.
+                          </>
+                        )}
                       </p>
                     </div>
                   ),
