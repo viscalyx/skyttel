@@ -1,0 +1,75 @@
+.spatial-view-actions {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+.spatial-view-actions button {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--space-control, #607c89);
+  border-radius: 12px;
+  box-shadow: var(--space-shadow);
+}
+.spatial-view-actions svg {
+  width: 22px;
+  height: 22px;
+}
+.workspace-camera-tools,
+.workspace-camera-tools .spatial-view-actions {
+  display: contents;
+}
+.workspace-tools .spatial-view-actions button {
+  box-shadow: none;
+}
+.spatial-view-actions > button > span {
+  display: none;
+}
+@media (max-width: 700px) {
+  .spatial-view-actions {
+    top: 100px;
+    right: 12px;
+  }
+  .workspace-tools:has(.workspace-camera-tools):not(.expanded) {
+    width: 296px;
+    flex-wrap: wrap;
+  }
+  .workspace-shell:has(.workspace-camera-tools) .workspace-context {
+    top: 120px;
+  }
+  .workspace-shell:has(.workspace-camera-tools) .workspace-work-close {
+    top: 116px;
+  }
+  .workspace-shell:has(.workspace-camera-tools):not(.workspace-revealing) .workspace-windows {
+    top: calc(var(--work-offset, 0px) + 178px);
+    height: calc(
+      var(--work-height, 100dvh) -
+      190px -
+      var(--feedback-height, 0px) -
+      var(--voice-height, 0px)
+    );
+  }
+  .workspace-shell:has(.workspace-camera-tools).workspace-revealing .map-space {
+    top: 142px;
+  }
+}
+@media (max-width: 700px) and (max-height: 450px) {
+  .household-map.workspace-shell:has(.workspace-camera-tools).workspace-open:not(
+    .workspace-revealing
+  ) {
+    padding-top: 128px;
+    scroll-padding-top: 128px;
+  }
+  .household-map.workspace-shell:has(.workspace-camera-tools).workspace-open:not(
+      .workspace-revealing
+    )
+    :is(.workspace-windows, .workspace-work-close) {
+    top: auto;
+    height: auto;
+  }
+}

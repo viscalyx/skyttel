@@ -1,5 +1,7 @@
 import './spatial.css';
+import './spatial-camera.css';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
 import { LifecycleStatus } from './Lifecycle.js';
@@ -12,6 +14,7 @@ import { navigationDragThreshold } from './spatial-navigation.js';
 import { type ProjectedPoint, spatialScene } from './spatial-scene.js';
 import { useObjectMovement } from './use-object-movement.js';
 import type { usePersonalView } from './use-personal-view.js';
+import { WorkspaceIcon } from './WorkspaceTools.js';
 
 export function ProposalSymbol({ change }: { change?: { before: unknown; after: unknown } }) {
   if (!change) return null;
@@ -74,6 +77,10 @@ export function SpatialMap({
   onRemove,
   personal,
   revealRequest,
+  focusRequest,
+  onFocusSelection,
+  onShowOverview,
+  cameraMount,
 }: {
   theme?: 'light' | 'dark';
   state: MapState;
@@ -93,6 +100,10 @@ export function SpatialMap({
   onRemove: (object: MapObject) => void;
   personal?: ReturnType<typeof usePersonalView>;
   revealRequest?: { id: string; objectIds: string[]; relationshipId?: string };
+  focusRequest?: { id: string; objectIds: string[] };
+  onFocusSelection?: () => void;
+  onShowOverview?: () => void;
+  cameraMount?: HTMLElement | null;
 }) {
   const labelPrefix = useId();
   const [activated, setActivated] = useState(active);
@@ -201,6 +212,9 @@ export function SpatialMap({
   }
   const [points, setPoints] = useState<ProjectedPoint[]>([]);
   const [completedRevealId, setCompletedRevealId] = useState<string>();
+  const [completedFocusId, setCompletedFocusId] = useState<string>();
+  const [overviewShown, setOverviewShown] = useState(false);
+  const [overviewRequested, setOverviewRequested] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   const allLabels = preferences.allLabels;
@@ -301,6 +315,10 @@ export function SpatialMap({
   }, [objects, relationships, activated, personal?.view?.positions, personalReady]);
   useEffect(() => {
     if (!activated) return;
+    scene.current?.select(selectedIds);
+  }, [activated, selectedIds]);
+  useEffect(() => {
+    if (!activated) return;
     scene.current?.configure({ ...preferences, stars: preferences.stars && !reducedMotion }, theme);
     if (!active) return;
     if (preferences.allLabels && !previousLabels.current) {
@@ -336,6 +354,84 @@ export function SpatialMap({
     objects,
     relationships,
   ]);
+  const focusObjects = useCallback((ids: string[]) => {
+    const element = canvas.current;
+    if (!element) return false;
+    const bounds = element.getBoundingClientRect();
+    // Reserve actual fixed tools, including expanded controls and live status.
+    // Free detail panels retain their position and are never closed by focus.
+    let area = { left: 0, top: 0, right: bounds.width, bottom: bounds.height };
+    const overlays = element
+      .closest('.household-map')
+      ?.querySelectorAll(
+        '.workspace-tools, .workspace-context, .workspace-feedback, .workspace-voice-controls, .spatial-tools, .spatial-bottom-bar, .spatial-view-actions',
+      );
+    for (const overlay of overlays ?? []) {
+      const box = overlay.getBoundingClientRect();
+      if (!box.width || !box.height) continue;
+      const obstacle = {
+        left: box.left - bounds.left,
+        right: box.right - bounds.left,
+        top: box.top - bounds.top,
+        bottom: box.bottom - bounds.top,
+      };
+      if (
+        obstacle.left >= area.right ||
+        obstacle.right <= area.left ||
+        obstacle.top >= area.bottom ||
+        obstacle.bottom <= area.top
+      )
+        continue;
+      const candidates = [
+        { ...area, left: Math.max(area.left, obstacle.right + 12) },
+        { ...area, right: Math.min(area.right, obstacle.left - 12) },
+        { ...area, top: Math.max(area.top, obstacle.bottom + 12) },
+        { ...area, bottom: Math.min(area.bottom, obstacle.top - 12) },
+      ];
+      const size = (value: typeof area) =>
+        Math.max(0, value.right - value.left) * Math.max(0, value.bottom - value.top);
+      area = candidates.reduce((largest, candidate) =>
+        size(candidate) > size(largest) ? candidate : largest,
+      );
+    }
+    const marginX = Math.min(64, (area.right - area.left) / 4);
+    const marginY = Math.min(64, (area.bottom - area.top) / 4);
+    return (
+      scene.current?.focus(ids, {
+        left: area.left + marginX,
+        right: area.right - marginX,
+        top: area.top + marginY,
+        bottom: area.bottom - marginY,
+      }) ?? false
+    );
+  }, []);
+  useEffect(() => {
+    if (
+      focusRequest &&
+      focusRequest.id !== completedFocusId &&
+      active &&
+      personalReady &&
+      !contextLost &&
+      !unavailable &&
+      focusRequest.objectIds.every((id) => objects.has(id)) &&
+      focusObjects(focusRequest.objectIds)
+    )
+      setCompletedFocusId(focusRequest.id);
+  }, [
+    focusRequest,
+    completedFocusId,
+    active,
+    personalReady,
+    contextLost,
+    unavailable,
+    objects,
+    focusObjects,
+  ]);
+  useEffect(() => {
+    if (!overviewRequested) return;
+    setOverviewShown(scene.current?.toggleOverview() ?? false);
+    setOverviewRequested(false);
+  }, [overviewRequested]);
   useEffect(() => {
     if (!resetRequested) return;
     // Reframe after the shared view has revealed previously filtered objects.
@@ -529,12 +625,55 @@ export function SpatialMap({
         if (edge.targetId) adjacent.add(edge.targetId);
       }
   }
+  const cameraTools = (
+    <nav className="spatial-view-actions" aria-label="Kameravy">
+      <button
+        type="button"
+        title="Fokusera markering"
+        aria-label="Fokusera markering"
+        disabled={!selectedIds.length || !active || !personalReady || unavailable || contextLost}
+        onClick={() => {
+          if (onFocusSelection) onFocusSelection();
+          else {
+            const ids = new Set(selectedIds);
+            for (const edge of relationships.values()) {
+              if (
+                !selectedIds.includes(edge.sourceId) &&
+                (!edge.targetId || !selectedIds.includes(edge.targetId))
+              )
+                continue;
+              ids.add(edge.sourceId);
+              if (edge.targetId) ids.add(edge.targetId);
+            }
+            focusObjects([...ids]);
+          }
+        }}
+      >
+        <WorkspaceIcon name="focus" />
+        <span>Fokusera markering</span>
+      </button>
+      <button
+        type="button"
+        title={overviewShown ? 'Återgå till föregående vy' : 'Visa hela kartan'}
+        aria-label={overviewShown ? 'Återgå till föregående vy' : 'Visa hela kartan'}
+        disabled={!active || !personalReady || unavailable || contextLost}
+        onClick={() => {
+          if (!overviewShown) onShowOverview?.();
+          setOverviewRequested(true);
+        }}
+      >
+        <WorkspaceIcon name={overviewShown ? 'returnView' : 'overview'} />
+        <span>{overviewShown ? 'Återgå till föregående vy' : 'Visa hela kartan'}</span>
+      </button>
+    </nav>
+  );
   return (
     <section
       className={`spatial-map${!allLabels && hiddenLabels > 0 ? ' crowded' : ''}`}
       aria-label="Rymdkarta"
     >
       <h2>Rymdkarta</h2>
+      {cameraMount ? createPortal(cameraTools, cameraMount) : cameraTools}
       <dialog
         ref={menu}
         className="spatial-menu"

@@ -75,6 +75,24 @@ panorerar två fingrar tillsammans; med mus kan du dra med höger knapp.
 Under **Navigera rymden** finns också knappar för panorering, rotation,
 lutning och zoom. Kartdrag markerar inte etiketternas text.
 
+Med ett markerat objekt roterar du kring dess aktuella personliga
+placering. Med flera markerade objekt används deras medelpunkt i tre
+dimensioner. Markering och rotationsstart flyttar inte kameran, och centrum
+behåller sin plats i bilden under rotation. Samma regel gäller mus,
+pekskärm, knappar och tangentbord. Utan markering roterar kameran som
+vanligt; panorering och zoom fungerar också som vanligt.
+
+**Fokusera markering** bredvid överblicksknappen hämtar in markeringen och
+dess direkta grannar med marginal till kartans verktyg. Kamerariktning,
+markeringar och öppna paneler behålls. Grannarnas andra samband utökar inte
+utsnittet, och grannarna ändrar inte rotationscentrum. Knappen är inaktiv
+med tomt urval eller dold eller avbruten kartgrafik.
+
+**Visa hela kartan** ramar in hela kartan och växlar till **Återgå till
+föregående vy**. Den tidigare vyn finns kvar även om du panorerar, roterar,
+zoomar eller fokuserar markeringen innan du återgår. Urval och oskickad
+paneltext behålls.
+
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
 hushållsuppgifter.
