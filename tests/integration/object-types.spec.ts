@@ -100,7 +100,9 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await expect(review).toContainText('Objekttyp: Solcellsanläggning');
     await page.reload();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Paneler på taket', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Visa detaljer för Paneler på taket', exact: true })
+      .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('');
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('');
@@ -110,7 +112,9 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await expect(page.getByRole('status')).toContainText('Sparat');
     await page.reload();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Paneler på taket', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Visa detaljer för Paneler på taket', exact: true })
+      .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('');
     await page.getByLabel('Leverantör', { exact: true }).fill('Exempelsol');
@@ -124,7 +128,9 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await expect(page.getByRole('status')).toContainText('Sparat');
     await page.reload();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Paneler på taket', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Visa detaljer för Paneler på taket', exact: true })
+      .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('false');
     await page.getByLabel('Leverantör', { exact: true }).fill('Ny leverantör');
@@ -138,7 +144,9 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await expect(page.getByRole('status')).toContainText('Sparat');
     await page.reload();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Paneler på taket', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Visa detaljer för Paneler på taket', exact: true })
+      .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Ny leverantör');
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('-14.25');
@@ -404,7 +412,7 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
     expect(after.objects).toHaveLength(1);
     await page.reload();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Alex', exact: true }).click();
+    await page.getByRole('button', { name: 'Visa detaljer för Alex', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Smeknamn', { exact: true })).toHaveValue('');
     const { history } = await (await page.request.get(`${path}/history`)).json();

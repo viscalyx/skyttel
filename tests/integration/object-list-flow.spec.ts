@@ -1,0 +1,85 @@
+import { expect, test } from '@playwright/test';
+import {
+  activatePanel,
+  createHousehold,
+  openSettings,
+  openWorkspace,
+  signIn,
+} from '../support/client.js';
+import { createInstallation } from '../support/installation.js';
+
+test('LISTA-05: short-screen list returns preserve the visible result and keyboard focus', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { user } = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    installation.seedLargeMap(user.id, household.id);
+    await page.setViewportSize({ width: 320, height: 250 });
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+    const result = work.getByRole('button', {
+      name: 'Visa detaljer för Provobjekt 045',
+      exact: true,
+    });
+    await result.click({ trial: true });
+    await result.focus();
+    const flow = page.locator('.household-map');
+    const remembered = await flow.evaluate((element) => element.scrollTop);
+    expect(remembered).toBeGreaterThan(500);
+    await result.click();
+    const detail = page.getByRole('region', { name: 'Provobjekt 045', exact: true });
+    await expect(
+      detail.getByRole('heading', { name: 'Provobjekt 045', exact: true }),
+    ).toBeFocused();
+    await activatePanel(page, 'Lista och utkast');
+    expect(await flow.evaluate((element) => element.scrollTop)).toBe(remembered);
+    await expect(result).toBeFocused();
+    expect(
+      await result.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return (
+          box.top >= 0 &&
+          box.bottom <= innerHeight &&
+          element.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
+        );
+      }),
+    ).toBe(true);
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    expect(await flow.evaluate((element) => element.scrollTop)).toBe(remembered);
+    expect(
+      await page.evaluate(() => {
+        const element = document.activeElement;
+        if (!element || element === document.body) return false;
+        const box = element.getBoundingClientRect();
+        return (
+          box.top >= 0 &&
+          box.bottom <= innerHeight &&
+          element.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
+        );
+      }),
+    ).toBe(true);
+    const mapResult = work.getByRole('button', {
+      name: 'Visa Provobjekt 045 i kartan',
+      exact: true,
+    });
+    await mapResult.click({ trial: true });
+    await mapResult.focus();
+    const mapScroll = await flow.evaluate((element) => element.scrollTop);
+    await mapResult.click();
+    await expect(work).not.toBeVisible();
+    await openWorkspace(page);
+    expect(await flow.evaluate((element) => element.scrollTop)).toBe(mapScroll);
+    await expect(mapResult).toBeFocused();
+    const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
+    await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+    await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
+    await expect(work.getByLabel('Sök objekt', { exact: true })).toBeFocused();
+  } finally {
+    await installation.close();
+  }
+});

@@ -94,7 +94,9 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     const initial = await read();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Alex blå cykel', exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Visa detaljer för Alex blå cykel', exact: true })
+      .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objekttyp', { exact: true }).selectOption('vehicle');
     const previous = page.getByRole('region', { name: 'Tidigare fältvärden' });
