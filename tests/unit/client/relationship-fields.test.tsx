@@ -48,9 +48,7 @@ test('relationship field definitions and answers use the same visible map draft 
   const user = userEvent.setup();
   await open();
   await userEvent.click(screen.getByRole('button', { name: 'Ny sambandstyp' }));
-  const editor = within(
-    screen.getByRole('group', { name: 'Sambandstypens definition' }),
-  );
+  const editor = within(screen.getByRole('group', { name: 'Sambandstypens definition' }));
   for (const [label, text] of [
     ['Sambandstypens namn', 'Förvaring'],
     ['Sambandstypens beskrivning', 'Var saker finns'],
