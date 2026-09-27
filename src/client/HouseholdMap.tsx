@@ -208,6 +208,8 @@ export function HouseholdMap({
   }>();
   const [cameraMount, setCameraMount] = useState<HTMLDivElement | null>(null);
   const [toolsExpanded, setToolsExpanded] = useState(false);
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [navigationMount, setNavigationMount] = useState<HTMLDivElement | null>(null);
   const revealAbort = useRef<AbortController | null>(null);
   useEffect(() => () => revealAbort.current?.abort(), []);
   const listModeButton = useRef<HTMLButtonElement>(null);
@@ -220,7 +222,7 @@ export function HouseholdMap({
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, []);
-  const mapCovered = narrow && workOpen && !revealRequest;
+  const mapCovered = narrow && workOpen && !revealRequest && !navigationOpen;
   function openWork(target: WorkspaceTarget) {
     workTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -1141,6 +1143,7 @@ export function HouseholdMap({
         }
       }}
       aria-label="Hushållskarta"
+      data-navigation-open={navigationOpen}
       data-theme={theme.theme}
       onKeyDown={(event) => {
         if (
@@ -1299,10 +1302,13 @@ export function HouseholdMap({
           Till kartan
         </button>
       )}
+      <div className="workspace-navigation-mount" ref={setNavigationMount} hidden={!active} />
       {state && (
         <div className="map-space" hidden={!active} inert={mapCovered} aria-hidden={mapCovered}>
           <SpatialMap
             cameraMount={cameraMount}
+            navigationMount={navigationMount}
+            onNavigationChange={setNavigationOpen}
             onCameraAction={() => setToolsExpanded(false)}
             theme={theme.theme}
             revealRequest={revealRequest}
@@ -1441,35 +1447,16 @@ export function HouseholdMap({
                         }}
                         details={details(selectedObject ?? panel.initial.value)}
                         relationships={
-                          selectedObject &&
-                          effectiveState && (
-                            <section aria-label={`Samband för ${selectedObject.name}`}>
-                              <h2>Samband för {selectedObject.name}</h2>
-                              <ul>
-                                {[...displayedEdges.values()]
-                                  .filter(
-                                    (edge) =>
-                                      edge.sourceId === selectedObject.id ||
-                                      edge.targetId === selectedObject.id,
-                                  )
-                                  .map((edge) => (
-                                    <li key={edge.id}>
-                                      <button
-                                        type="button"
-                                        disabled={pending || dirty || blocked}
-                                        onClick={() => selectRelationship(edge)}
-                                      >
-                                        {relationshipLabel(
-                                          edge,
-                                          effectiveState,
-                                          displayed,
-                                          selectedObject.id,
-                                        )}
-                                      </button>
-                                    </li>
-                                  ))}
-                              </ul>
-                            </section>
+                          selectedObject && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                focusObject(selectedObject.id);
+                                openWork('list');
+                              }}
+                            >
+                              Visa samband i listan
+                            </button>
                           )
                         }
                       />
@@ -1900,12 +1887,17 @@ export function HouseholdMap({
                         disabled={pending || dirty || blocked}
                         onClick={() => selectRelationship(edge)}
                       >
-                        {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                        {relationshipLabel(
+                          edge,
+                          effectiveState ?? state,
+                          displayed,
+                          focusId ?? undefined,
+                        )}
                       </button>
                       {selection?.kind === 'relationship' && selection.id === edge.id && (
                         <button
                           type="button"
-                          aria-label={`Redigera ${relationshipLabel(edge, effectiveState ?? state, displayed)}`}
+                          aria-label={`Redigera ${relationshipLabel(edge, effectiveState ?? state, displayed, focusId ?? undefined)}`}
                           disabled={pending || blocked}
                           onClick={() => editRelationship(edge)}
                         >
@@ -1918,7 +1910,13 @@ export function HouseholdMap({
                       )}
                       <details>
                         <summary>
-                          Åtgärder för {relationshipLabel(edge, effectiveState ?? state, displayed)}
+                          Åtgärder för{' '}
+                          {relationshipLabel(
+                            edge,
+                            effectiveState ?? state,
+                            displayed,
+                            focusId ?? undefined,
+                          )}
                         </summary>
                         <button
                           type="button"
