@@ -1059,6 +1059,7 @@ export function HouseholdMap({
     };
     const abort = new AbortController();
     revealAbort.current = abort;
+    workspace.current.scrollTop = 0;
     const cancel = () => abort.abort();
     signal.addEventListener('abort', cancel, { once: true });
     setQuery('');

@@ -13,6 +13,9 @@ Samtalspanelen kan stängas utan att samtalet avslutas. Det kompakta kortet
 visar fortfarande status, nödvändiga frågor och fel. **Öppna samtalet**
 tar dig tillbaka till dialogen, även från Inställningar. Samtalet och
 oskickad text finns kvar när du växlar tillbaka till kartan.
+I korta fönster kan du rulla ned till samtalskortet och panelväljaren.
+Vid en begärd kartmarkering visas kartan och uppgifterna bredvid varandra
+så att kortet inte täcker dem. Verktygsradens mikrofonkontroll finns kvar.
 
 Beskriv vad du vill hitta, lägga till eller rätta. Assistenten använder
 hushållets egna typer och ditt befintliga privata utkast. Förslag från

@@ -487,8 +487,9 @@ svensk talförståelse, högtalare eller fysisk mikrofon.
 - Mikrofonpaus stoppar eget ljud utan att stoppa inkommande ljud eller
   skapa en ny leverantörsanslutning. Tangentbordsfokus följer återgången.
 - Prova även ljust och mörkt tema, smal skärm och faktisk webbläsarzoom
-  200 och 400 procent. Kortets kontroller nås med tangentbord och egen
-  rullning utan horisontell sidrullning. Anteckna faktiskt provade storlekar.
+  200 och 400 procent. Kortets kontroller nås med tangentbord och rullning
+  i kortet eller arbetsytan utan horisontell sidrullning. Prova även
+  kartmarkering och navigering med stängd dialog. Anteckna faktiskt provade storlekar.
 
 ### TAL-08: nödvändiga frågor och fel nås med stängd samtalstext
 
