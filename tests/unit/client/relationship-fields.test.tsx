@@ -45,12 +45,18 @@ async function open() {
 }
 
 test('relationship field definitions and answers use the same visible map draft and retain focus after removal', async () => {
+  const user = userEvent.setup();
   await open();
   await userEvent.click(screen.getByRole('button', { name: 'Ny sambandstyp' }));
-  await userEvent.type(screen.getByLabelText('Sambandstypens namn'), 'Förvaring');
-  await userEvent.type(screen.getByLabelText('Sambandstypens beskrivning'), 'Var saker finns');
-  await userEvent.type(screen.getByLabelText('Benämning från startobjektet'), 'förvaras i');
-  await userEvent.type(screen.getByLabelText('Benämning från målobjektet'), 'innehåller');
+  for (const [label, text] of [
+    ['Sambandstypens namn', 'Förvaring'],
+    ['Sambandstypens beskrivning', 'Var saker finns'],
+    ['Benämning från startobjektet', 'förvaras i'],
+    ['Benämning från målobjektet', 'innehåller'],
+  ]) {
+    await user.click(screen.getByLabelText(label));
+    await user.paste(text);
+  }
   await userEvent.click(screen.getByRole('button', { name: 'Lägg till fält' }));
   expect(document.activeElement).toBe(screen.getByLabelText('Fältets namn'));
   await userEvent.click(screen.getByRole('button', { name: 'Ta bort fält: Eget fält 1' }));
@@ -65,8 +71,10 @@ test('relationship field definitions and answers use the same visible map draft 
     const field = within(
       screen.getAllByRole('group', { name: /^Eget fält/ }).at(-1) as HTMLElement,
     );
-    await userEvent.type(field.getByLabelText('Fältets namn'), name);
-    await userEvent.type(field.getByLabelText('Fältets beskrivning'), 'Valfri uppgift');
+    await user.click(field.getByLabelText('Fältets namn'));
+    await user.paste(name);
+    await user.click(field.getByLabelText('Fältets beskrivning'));
+    await user.paste('Valfri uppgift');
     await userEvent.selectOptions(field.getByLabelText('Värdeslag'), kind);
   }
   await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }));
