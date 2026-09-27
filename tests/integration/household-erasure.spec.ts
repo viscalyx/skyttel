@@ -458,7 +458,7 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
     await page.getByRole('link', { name: 'Till hushållet', exact: true }).click();
     await openWorkspace(page);
     await page
-      .getByRole('button', { name: 'Visa detaljer för Lampan att radera', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Lampan att radera', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(

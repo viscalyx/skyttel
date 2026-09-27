@@ -106,7 +106,7 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
       'Familjens musikkonto → Inloggningsadress → musik@example.test',
     );
     await page
-      .getByRole('button', { name: 'Visa detaljer för Familjens Molnmusik', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Pris', { exact: true })).toHaveValue('189');
@@ -338,9 +338,9 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
     await page.reload();
     await openWorkspace(page);
     await expect(
-      page.getByRole('button', { name: 'Visa detaljer för Hushållskonto', exact: true }),
+      page.getByRole('button', { name: 'Uppgifter för Hushållskonto', exact: true }),
     ).toHaveCount(0);
-    await page.getByRole('button', { name: 'Visa detaljer för Betalkonto', exact: true }).click();
+    await page.getByRole('button', { name: 'Uppgifter för Betalkonto', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
   } finally {

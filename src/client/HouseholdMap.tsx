@@ -1794,7 +1794,7 @@ export function HouseholdMap({
                         <button
                           type="button"
                           className="object-list-details"
-                          aria-label={`Visa detaljer för ${object.name}`}
+                          aria-label={`Uppgifter för ${object.name}`}
                           disabled={pending || blocked}
                           onClick={() => edit(object, false)}
                         >

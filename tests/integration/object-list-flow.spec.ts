@@ -22,7 +22,7 @@ test('LISTA-05: short-screen list returns preserve the visible result and keyboa
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
     const result = work.getByRole('button', {
-      name: 'Visa detaljer för Provobjekt 045',
+      name: 'Uppgifter för Provobjekt 045',
       exact: true,
     });
     await result.click({ trial: true });

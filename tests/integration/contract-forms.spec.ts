@@ -49,7 +49,7 @@ test('AVTAL-01: optional rent facts can be reviewed, found and corrected after r
     ]);
     await expect(objects).toContainText('Hyresavtal');
     await objects
-      .getByRole('button', { name: 'Visa detaljer för Hyra för lägenheten', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Hyra för lägenheten', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
@@ -66,7 +66,7 @@ test('AVTAL-01: optional rent facts can be reviewed, found and corrected after r
     await page.reload();
     await openWorkspace(page);
     await page
-      .getByRole('button', { name: 'Visa detaljer för Hyra för lägenheten', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Hyra för lägenheten', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
@@ -136,7 +136,7 @@ test('AVTAL-02: dated debt and credit keep distinct values and incomplete meanin
     await page.reload();
     await openWorkspace(page);
     await page
-      .getByRole('button', { name: 'Visa detaljer för Familjens kreditavtal', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Familjens kreditavtal', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
@@ -174,7 +174,7 @@ test('AVTAL-02: dated debt and credit keep distinct values and incomplete meanin
     await page.reload();
     await openWorkspace(page);
     await page
-      .getByRole('button', { name: 'Visa detaljer för Familjens kreditavtal', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Familjens kreditavtal', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();

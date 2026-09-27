@@ -231,7 +231,7 @@ test('MCP-06: importerad historik ångras med färskt underlag', async ({ page }
     await page.goto(target.origin);
     await openWorkspace(page);
     await expect(
-      page.getByRole('button', { name: 'Visa detaljer för Historisk lampa', exact: true }),
+      page.getByRole('button', { name: 'Uppgifter för Historisk lampa', exact: true }),
     ).toBeVisible();
     const selected = await targetMcp.tool('read_history', {
       operationId: saved.operationId,
@@ -386,9 +386,7 @@ test('MCP-03: typbyte och riktade samband återställs med äldre typer', async 
     await mcp.save('restore-bike');
     await page.reload();
     await openWorkspace(page);
-    await page
-      .getByRole('button', { name: 'Visa detaljer för Alex blå cykel', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Nummer', { exact: true })).toHaveValue('SYNTH-42');
     await expect(page.getByText('förvaras i', { exact: false }).first()).toBeVisible();
@@ -561,9 +559,7 @@ test('MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej', async 
     await app.restart();
     await page.reload();
     await openWorkspace(page);
-    await page
-      .getByRole('button', { name: 'Visa detaljer för Paneler på taket', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Exempelsol');
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('12.5');
@@ -572,7 +568,7 @@ test('MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej', async 
     await expect(page.getByLabel('Effektanteckning', { exact: true })).toHaveValue('');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page
-      .getByRole('button', { name: 'Visa detaljer för Paneler på garaget', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Paneler på garaget', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('false');
@@ -697,9 +693,7 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
     await app.restart();
     await page.reload();
     await openWorkspace(page);
-    await page
-      .getByRole('button', { name: 'Visa detaljer för Exempelkredit', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Uppgifter för Exempelkredit', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
     await expect(page.getByLabel('Beviljat kreditutrymme', { exact: true })).toHaveValue('80 000');
@@ -721,7 +715,7 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
       'Bilens avbetalning',
     ])
       await expect(
-        page.getByRole('button', { name: `Visa detaljer för ${name}`, exact: true }),
+        page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }),
       ).toBeVisible();
     await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
       'Bilens avbetalning → Finansierar → Familjens bil',

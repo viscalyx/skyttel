@@ -26,6 +26,12 @@ test('LISTA-01: multiple type filters combine with search and marks across 500 o
     await page.goto(installation.origin);
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+    const details = work.getByRole('button', {
+      name: 'Uppgifter för Provobjekt 000',
+      exact: true,
+    });
+    await expect(details).toHaveText('Uppgifter');
+    await expect(details).toHaveAccessibleName('Uppgifter för Provobjekt 000');
     await work.getByRole('button', { name: 'Markera Provobjekt 000', exact: true }).click();
     await work.getByRole('button', { name: 'Markera Provobjekt 001', exact: true }).click();
     await work.getByText('Filter', { exact: true }).click();
@@ -237,7 +243,7 @@ test('LISTA-02: sorting, pages and scroll survive details, settings and map-resu
         names.push(
           ...(await work
             .getByRole('list', { name: 'Objekt', exact: true })
-            .getByRole('button', { name: /^Visa detaljer för/ })
+            .getByRole('button', { name: /^Uppgifter för/ })
             .evaluateAll((buttons) =>
               buttons.map((button) => button.getAttribute('aria-label') ?? ''),
             )),
@@ -250,7 +256,7 @@ test('LISTA-02: sorting, pages and scroll survive details, settings and map-resu
     expect(namesBySort[1].sort()).toEqual(namesBySort[0].sort());
     await expect(work.getByText('Tjänst · 100 träffar', { exact: true })).toBeVisible();
     const details = work.getByRole('button', {
-      name: 'Visa detaljer för Provobjekt 496',
+      name: 'Uppgifter för Provobjekt 496',
       exact: true,
     });
     await details.scrollIntoViewIfNeeded();
@@ -361,7 +367,7 @@ for (const width of [390, 320]) {
           'Kartan kan inte visas. Använd Uppgifter för att läsa och redigera objekten.',
         ),
       ).toBeVisible();
-      await work.getByRole('button', { name: 'Visa detaljer för Lo Exempel', exact: true }).click();
+      await work.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
       const details = page.getByRole('region', { name: 'Lo Exempel', exact: true });
       await expect(details.getByRole('heading', { name: 'Lo Exempel', exact: true })).toBeFocused();
       await details.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();

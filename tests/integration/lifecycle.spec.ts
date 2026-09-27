@@ -68,7 +68,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
     const objects = page.getByRole('list', { name: 'Objekt', exact: true });
     const subscription = objects.getByRole('listitem').filter({ hasText: 'Familjemusik' });
     await subscription
-      .getByRole('button', { name: 'Visa detaljer för Familjemusik', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('ended');
@@ -110,7 +110,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
       'Upphört',
     );
     await subscription
-      .getByRole('button', { name: 'Visa detaljer för Familjemusik', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('active');
@@ -257,7 +257,7 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
       'Upphört',
     );
     await subscription
-      .getByRole('button', { name: 'Visa detaljer för Familjemusik', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();

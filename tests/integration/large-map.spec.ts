@@ -55,10 +55,10 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
         .getByRole('combobox', { name: 'Sida för objekt', exact: true })
         .selectOption(String(index));
       for (const name of await objects
-        .getByRole('button', { name: /^Visa detaljer för/ })
+        .getByRole('button', { name: /^Uppgifter för/ })
         .evaluateAll((buttons) =>
           buttons.map(
-            (button) => button.getAttribute('aria-label')?.replace('Visa detaljer för ', '') ?? '',
+            (button) => button.getAttribute('aria-label')?.replace('Uppgifter för ', '') ?? '',
           ),
         ))
         names.add(name);
@@ -75,7 +75,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     await page.getByLabel('Sök objekt', { exact: true }).fill('Provobjekt 499');
     await expect(objects.getByRole('listitem')).toHaveCount(1);
     await objects
-      .getByRole('button', { name: 'Visa detaljer för Provobjekt 499', exact: true })
+      .getByRole('button', { name: 'Uppgifter för Provobjekt 499', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets namn', { exact: true })).toHaveValue('Provobjekt 499');
@@ -85,7 +85,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
       .getByRole('button', { name: 'Visa valt innehåll i listan' })
       .click();
     await expect(
-      objects.getByRole('button', { name: 'Visa detaljer för Provobjekt 499', exact: true }),
+      objects.getByRole('button', { name: 'Uppgifter för Provobjekt 499', exact: true }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Visa objektets kopplingar', exact: true }).click();
     await expect(relationships.getByRole('listitem')).not.toHaveCount(0);
