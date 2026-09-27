@@ -41,6 +41,7 @@ afterEach(() => {
 async function open() {
   render(<HouseholdMap householdId={householdId} />);
   await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  await screen.findByRole('button', { name: 'Nytt samband' });
 }
 
 test('relationship field definitions and answers use the same visible map draft and retain focus after removal', async () => {
