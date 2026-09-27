@@ -591,3 +591,42 @@ private draft and an atomic household save”.
   därefter ett enda kvitto för alla ändringar. Databasen och servern är
   riktiga; tal och modellresultat ersätts vid de externa tjänsternas
   gränser. Provet verifierar inte fysisk mikrofon eller verkligt svenskt tal.
+
+### UTKAST-15: besvara nödvändig fråga före ett nytt sparbesked
+
+**Syfte:** Samma nödvändiga fråga ska hindra sparande från både statuskortet
+och utkastets arbetsyta. Ett svar ska inte i sig spara utkastet.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Ett tomt hushåll och textassistent med båda medgivandena.
+Provet kräver att samtalet visar en nödvändig fråga. Om tjänsten inte ger
+en sådan fråga, anteckna att den delen inte har verifierats.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+testfallet “UTKAST-15: a necessary answer gates both save actions until a
+fresh explicit save”.
+
+**Steg:**
+
+1. Lägg **Lo Exempel** i utkastet via formuläret. Starta textassistenten
+   och be den förbereda uppgiften och fråga vilket kort som avses.
+2. Stäng arbetsytan när statusen visar **Nödvändigt svar**. Kontrollera
+   att frågan finns kvar och att kortet inte erbjuder sparande.
+3. Öppna Lista och **Hela mitt utkast**. Kontrollera att **Spara hela
+   utkastet** är inaktiverad även där. Kartan har ännu inga sparade objekt.
+4. Välj **Svara i samtalet**, svara **Kortet Lo Exempel avses** och skicka.
+   Vänta tills frågan är besvarad. Stäng arbetsytan igen.
+5. Kontrollera att sparande nu erbjuds men inte har genomförts. Välj
+   **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
+
+**Förväntat resultat:**
+
+- Varken statuskortet eller arbetsytan kringgår den nödvändiga frågan.
+  Det privata förslaget finns kvar medan frågan besvaras.
+- Att svara skapar inget sparförsök. Först det nya uttryckliga sparbeskedet
+  ger ett kvitto och gör uppgifterna till sparat kartinnehåll.
+- Integrationstestet styr frågan vid modellgränsen men använder riktig
+  server och SQLite. Det jämför tomma sparförsök före beskedet och ett
+  enda lyckat försök med samma verkliga kvitto i historiken efteråt.

@@ -171,7 +171,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner
   vid borttagning efter typbyten. Följ status och legend med stängda
   paneler, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
-  ett samlat utkast från formulär, text och tal efter omstart.
+  ett samlat utkast från formulär, text och tal efter omstart. Besvara
+  nödvändiga frågor före ett nytt uttryckligt sparbesked.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,

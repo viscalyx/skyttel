@@ -11,7 +11,7 @@ import {
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
-import { modelTool, textModel } from '../support/text-model.js';
+import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 
 for (const width of [1440, 390, 320])
   test(`UTKAST-12: closed panels retain private proposals through an unknown save at ${width}px and verify the same receipt`, async ({
@@ -347,6 +347,98 @@ test('UTKAST-13: a verified save keeps a newer field focused and current status 
     await expect(trigger).toBeFocused();
   } finally {
     release?.();
+    await installation.close();
+  }
+});
+
+test('UTKAST-15: a necessary answer gates both save actions until a fresh explicit save', async ({
+  page,
+}) => {
+  let calls = 0;
+  const model = textModel((body) => {
+    if (calls++ > 0) return [modelMessage('Frågan är besvarad. Förslaget väntar på sparbesked.')];
+    const current = JSON.parse(
+      String(body.input.findLast((item) => item.role === 'user')?.content),
+    ).draft;
+    const change = current.changes[0];
+    return [
+      modelTool('submit_changes', {
+        version: current.version,
+        contentVersion: current.contentVersion,
+        completion: 'draft',
+        questions: ['Vilket kort avses?'],
+        operations: [
+          {
+            name: 'propose_object',
+            arguments: {
+              id: change.id,
+              baseRevision: null,
+              value: { ...change.after, description: 'Förslag väntar på svar' },
+            },
+          },
+        ],
+      }),
+    ];
+  });
+  const installation = await createInstallation(undefined, { modelFetch: model.provider });
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page.getByLabel('Objektets namn').fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await openConversation(page);
+    await page.getByLabel(/Jag tillåter att OpenAI/).check();
+    await page.getByLabel(/Jag tillåter förslag och sparande/).check();
+    await page.getByRole('button', { name: 'Starta textassistenten', exact: true }).click();
+    await page
+      .getByLabel('Meddelande till textassistenten')
+      .fill('Förbered uppgiften och fråga vilket kort som avses.');
+    await page.getByRole('button', { name: 'Skicka', exact: true }).click();
+    await openMap(page);
+    const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+    await expect(status.getByRole('region', { name: 'Nödvändigt svar' })).toContainText(
+      'Vilket kort avses?',
+    );
+    await expect(
+      status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+    ).toHaveCount(0);
+    await openWorkspace(page);
+    await expect(
+      page
+        .getByRole('region', { name: 'Hela mitt utkast', exact: true })
+        .getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+    ).toBeDisabled();
+    expect((await read()).objects).toEqual([]);
+    expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
+    await status.getByRole('button', { name: 'Svara i samtalet', exact: true }).click();
+    await page.getByLabel('Meddelande till textassistenten').fill('Kortet Lo Exempel avses.');
+    await page.getByRole('button', { name: 'Skicka', exact: true }).click();
+    await expect(status.getByRole('region', { name: 'Nödvändigt svar' })).toHaveCount(0);
+    await openMap(page);
+    const save = status.getByRole('button', { name: 'Spara hela utkastet', exact: true });
+    await expect(save).toBeEnabled();
+    expect(calls).toBe(2);
+    expect((await read()).objects).toEqual([]);
+    expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
+    await save.click();
+    await expect(status).toContainText('Sparat · kvitto bekräftat');
+    const saved = await read();
+    expect(saved.objects.map(({ name, description }) => ({ name, description }))).toEqual([
+      { name: 'Lo Exempel', description: 'Förslag väntar på svar' },
+    ]);
+    expect(saved.draft.changes).toEqual([]);
+    const { operations } = await (await page.request.get(`${path}/operations`)).json();
+    expect(operations).toHaveLength(1);
+    expect(operations[0].status).toBe('succeeded');
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
+      operations[0].receipt,
+    ]);
+  } finally {
     await installation.close();
   }
 });

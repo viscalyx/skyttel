@@ -27,6 +27,10 @@ utkastet hämtas försvinner förslagsmarkeringarna och legenden.
 utan att skicka innan du sparar med kartans knapp. Oskickade
 samtalsmeddelanden finns kvar i samtalet och ingår inte i sparandet.
 
+Besvara nödvändiga frågor i samtalet innan du sparar. Varken statuskortet
+eller utkastets sparknapp kringgår frågan. Ett svar sparar inte i sig
+förslagen; ge ett nytt uttryckligt sparbesked när uppgifterna stämmer.
+
 ## Granska, spara eller kasta förslag
 
 1. Lägg formulärets ändringar i utkastet med **Lägg i mitt utkast** eller

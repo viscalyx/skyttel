@@ -50,6 +50,8 @@ function errorMessage(code: string) {
   return 'Assistenten kunde inte slutföra uppdraget. Kontrollera utkastet och tidigare sparförsök. Du kan fortsätta i kartans formulär.';
 }
 
+type AssistantActivity = { working: boolean; needsAnswer: boolean };
+
 export function TextAssistant({
   active: workVisible = true,
   householdId,
@@ -67,7 +69,7 @@ export function TextAssistant({
   statusOpen = false,
   onCloseStatus,
 }: {
-  statusContent?: (assistant: { working: boolean; needsAnswer: boolean }) => ReactNode;
+  statusContent?: (assistant: AssistantActivity) => ReactNode;
   statusOpen?: boolean;
   onCloseStatus?: () => void;
   active?: boolean;
@@ -78,7 +80,7 @@ export function TextAssistant({
   onMapChange: () => void;
   onAccessLost: () => void;
   onSelectItem: (target: MapSelection, signal: AbortSignal) => Promise<boolean>;
-  children?: ReactNode;
+  children?: ReactNode | ((assistant: AssistantActivity) => ReactNode);
   draftSummary?: ReactNode;
   inspector?: ReactNode;
   renderWorkspace?: (work: ReactNode, conversation: ReactNode) => ReactNode;
@@ -359,6 +361,8 @@ export function TextAssistant({
         review?.unresolvedIdentities.length ||
         review?.conflicts.length),
   );
+  const activity = { working: session?.phase === 'working', needsAnswer };
+  const work = typeof children === 'function' ? children(activity) : children;
   const conversationControls = session && (
     <div className="conversation-controls">
       <div
@@ -790,7 +794,7 @@ export function TextAssistant({
             </div>
           )}
           {voice}
-          {statusContent?.({ working: session?.phase === 'working', needsAnswer })}
+          {statusContent?.(activity)}
           {statusOpen && text && (
             <p>
               Oskickat samtalsmeddelande finns kvar.{' '}
@@ -807,7 +811,7 @@ export function TextAssistant({
         renderWorkspace(
           <>
             {inspector}
-            {children}
+            {work}
           </>,
           <>
             <div ref={voiceSlot} />
@@ -819,7 +823,7 @@ export function TextAssistant({
         <>
           <div ref={voiceSlot} />
           <div className="assistant-layout" hidden={!workVisible}>
-            {children && <div className="assistant-map-panel">{children}</div>}
+            {work && <div className="assistant-map-panel">{work}</div>}
             <div className="assistant-side">
               {inspector && <div className="assistant-panel">{inspector}</div>}
               {changes}
