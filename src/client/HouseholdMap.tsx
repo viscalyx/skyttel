@@ -88,6 +88,7 @@ export function HouseholdMap({
   onSettings,
   onReturnToMap,
   typeSettingsTarget,
+  mapSettingsTarget,
 }: {
   householdId: string;
   active?: boolean;
@@ -99,6 +100,7 @@ export function HouseholdMap({
   onSettings?: () => void;
   onReturnToMap?: () => void;
   typeSettingsTarget?: HTMLElement | null;
+  mapSettingsTarget?: HTMLElement | null;
 }) {
   const theme = useWorkspaceTheme();
   const [typeHost] = useState(() => document.createElement('div'));
@@ -1371,6 +1373,7 @@ export function HouseholdMap({
               setFocusId(null);
             }}
             personal={personal}
+            settingsMount={mapSettingsTarget}
             active={active && !mapCovered}
             state={effectiveState ?? state}
             objects={visibleObjects}
