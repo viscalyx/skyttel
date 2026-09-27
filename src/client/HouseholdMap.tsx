@@ -1470,7 +1470,11 @@ export function HouseholdMap({
             !revealRequest
           }
           householdId={householdId}
-          onMapChange={() => setLoad((value) => value + 1)}
+          onMapChange={() => {
+            // The local save owns completion and the following map refresh.
+            // A session poll must not replace its pending state with recovery.
+            if (!pending || !saveAttempt.current) setLoad((value) => value + 1);
+          }}
           onAccessLost={loseAccess}
           onSelectItem={revealAssistantItem}
           renderWorkspace={(work, conversation) => (

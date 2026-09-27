@@ -588,8 +588,10 @@ private draft and an atomic household save”.
   efter omstart, men inga privata förslag från administratören.
 - Det automatiserade provet håller den riktiga sparbegäran före
   genomförandet och kontrollerar oförändrat utkast, tom sparad karta och
-  därefter ett enda kvitto för alla ändringar. Databasen och servern är
-  riktiga; tal och modellresultat ersätts vid de externa tjänsternas
+  därefter ett enda kvitto för alla ändringar. En samtidig uppdatering
+  från samtalet får inte ändra ett pågående sparande till okänt utfall.
+  Databasen och servern är riktiga; tal och modellresultat ersätts vid
+  de externa tjänsternas
   gränser. Provet verifierar inte fysisk mikrofon eller verkligt svenskt tal.
 
 ### UTKAST-15: besvara nödvändig fråga före ett nytt sparbesked

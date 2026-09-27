@@ -147,6 +147,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
   });
   const member = await browser.newContext();
   let release: (() => void) | undefined;
+  let releasePoll: (() => void) | undefined;
   try {
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
@@ -234,6 +235,15 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Texten ska finnas kvar',
     );
+    const saving = new Promise<void>((resolve) => {
+      releasePoll = resolve;
+    });
+    await page.route('**/text-assistant/*', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue();
+      // Read the genuine updated session only after the local save is in flight.
+      await saving;
+      await route.fulfill({ response: await route.fetch() });
+    });
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await openMap(page);
     await expect(status).toContainText('4 förslag · privat utkast');
@@ -244,11 +254,18 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     let waiting = false;
     await page.route('**/map/save', async (route) => {
       waiting = true;
+      releasePoll?.();
       await held;
       await route.continue();
     });
     await status.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect.poll(() => waiting).toBe(true);
+    await openConversation(page);
+    await expect(page.getByRole('region', { name: 'Assistentens hela utkast' })).toContainText(
+      'Oskickad cykel',
+      { timeout: 10000 },
+    );
+    await openMap(page);
     await expect(status).toContainText('Väntar på sparkvitto');
     const before = await read();
     expect(before.objects).toEqual([]);
@@ -293,6 +310,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     expect((await (await member.request.get(`${path}/history`)).json()).history).toEqual(history);
   } finally {
     release?.();
+    releasePoll?.();
     await member.close();
     await installation.close();
   }
