@@ -33,7 +33,7 @@ services:
         source: ${HOME}/.codex/auth.json
         target: /home/vscode/.codex/auth.json
 
-      # Persist Claude Code sign-in, settings, and history across rebuilds
+      # Persist the Claude Code sign-in; creation removes all other state here
       - claude-state:/home/vscode/.claude
 
       # Keep runtime temp wrappers container-local
@@ -53,8 +53,6 @@ services:
       SKYTTEL_DATABASE_PATH: /data/skyttel.sqlite
       HOST: 0.0.0.0
       PORT: 3300
-      # Keep Claude Code's global .claude.json inside the persisted volume
-      CLAUDE_CONFIG_DIR: /home/vscode/.claude
       NODE_ENV: ${NODE_ENV:-development}
       DOTNET_CLI_TELEMETRY_OPTOUT: ${DOTNET_CLI_TELEMETRY_OPTOUT:-1}
       DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE: ${DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE:-true}

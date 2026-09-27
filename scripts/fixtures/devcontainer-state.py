@@ -13,12 +13,14 @@ HOME = Path.home()
 BUNDLE = Path('/workspace/.devcontainer-test')
 DATABASE = Path('/data/skyttel.sqlite')
 CONFIG = HOME / '.codex/config.toml'
+CLAUDE = HOME / '.claude'
+CLAUDE_SIGN_IN = CLAUDE / '.credentials.json'
+CLAUDE_STATE = CLAUDE / 'projects/persistence-sentinel.txt'
 MARKERS = [
     HOME / path / 'persistence-sentinel.txt'
     for path in (
-        '.claude', '.codex/sqlite', '.codex/tmp', '.codex/sessions',
-        '.codex/plugins', '.codex/skills', '.codex/rules', '.config',
-        '.vscode-server', 'worktrees',
+        '.codex/sqlite', '.codex/tmp', '.codex/sessions', '.codex/plugins',
+        '.codex/skills', '.codex/rules', '.config', '.vscode-server', 'worktrees',
     )
 ] + [Path('/workspace/node_modules/persistence-sentinel.txt')]
 PERSONAL = '''model = "personal-sentinel"
@@ -87,7 +89,10 @@ def verify_storage(recreated=False):
     auth = HOME / '.codex/auth.json'
     assert json.loads(auth.read_text()) == {'synthetic_marker': 'not-a-credential'}
     assert auth.stat().st_mode & 0o777 == 0o600
+    assert json.loads(CLAUDE_SIGN_IN.read_text()) == {'synthetic_marker': 'not-a-credential'}
+    assert CLAUDE_SIGN_IN.stat().st_mode & 0o777 == 0o600
     if recreated:
+        assert [path.name for path in CLAUDE.iterdir()] == ['.credentials.json']
         assert parsed.get('model') != 'personal-sentinel'
         assert parsed['default_permissions'] == expected['default_permissions']
         assert not (HOME / '.codex/persistence-sentinel.txt').exists()
@@ -102,6 +107,7 @@ def verify_storage(recreated=False):
             tomllib.loads(PERSONAL)['skills']['config'] + expected['skills']['config']
         )
         assert (HOME / '.codex/persistence-sentinel.txt').read_text() == 'retained\n'
+        assert CLAUDE_STATE.read_text() == 'retained\n'
         assert Path('/tmp/disposable-layer-sentinel.txt').read_text() == 'must disappear'
 
 
@@ -118,6 +124,10 @@ if action == 'seed':
     auth = HOME / '.codex/auth.json'
     auth.write_text(json.dumps({'synthetic_marker': 'not-a-credential'}))
     auth.chmod(0o600)
+    CLAUDE_STATE.parent.mkdir(parents=True, exist_ok=True)
+    CLAUDE_STATE.write_text('retained\n')
+    CLAUDE_SIGN_IN.write_text(json.dumps({'synthetic_marker': 'not-a-credential'}))
+    CLAUDE_SIGN_IN.chmod(0o600)
     Path('/tmp/disposable-layer-sentinel.txt').write_text('must disappear')
 elif action in ('verify', 'verify-recreated'):
     assert database_snapshot() == (BUNDLE / 'database-digest.txt').read_text()
