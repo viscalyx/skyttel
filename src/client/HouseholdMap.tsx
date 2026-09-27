@@ -1090,7 +1090,7 @@ export function HouseholdMap({
   function typeName(id: string) {
     return effectiveTypes.find((type) => type.id === id)?.name ?? id;
   }
-  function details(value: ObjectValue | null, definition?: ObjectType) {
+  function details(value: ObjectValue | null, definition?: ObjectType, showHidden = true) {
     return value ? (
       <>
         <p>Namn: {value.name}</p>
@@ -1103,6 +1103,7 @@ export function HouseholdMap({
         <p>Beskrivning: {value.description || 'Ingen beskrivning'}</p>
         <FinancialFactsDetails facts={value.financialFacts} />
         <CustomFieldsDetails
+          showHidden={showHidden}
           type={definition ?? effectiveTypes.find((type) => type.id === value.typeId)}
           values={value.customValues}
         />
@@ -1445,7 +1446,7 @@ export function HouseholdMap({
                           );
                           return next;
                         }}
-                        details={details(selectedObject ?? panel.initial.value)}
+                        details={details(selectedObject ?? panel.initial.value, undefined, false)}
                         relationships={
                           selectedObject && (
                             <button
