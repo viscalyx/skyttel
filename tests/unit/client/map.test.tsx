@@ -166,6 +166,20 @@ test('object pages retain sorting and selected-item access through panel closure
   ).toBe('true');
 });
 
+test('current status distinguishes a previous verified receipt from newly staged private proposals', async () => {
+  await open();
+  await add('Lo Exempel');
+  await save();
+  await add('Blå cykeln');
+  const status = screen.getByRole('region', { name: 'Aktuell status' });
+  expect(status.textContent).toContain('1 förslag · privat utkast');
+  expect(status.textContent).toContain('Tidigare sparande · kvitto bekräftat');
+  expect(screen.getByRole('region', { name: 'Förslag i kartan' })).toBeTruthy();
+  const state: MapState = await (await client.request(path)).json();
+  expect(state.objects.map((object) => object.name)).toEqual(['Lo Exempel']);
+  expect(state.draft.changes.map((change) => change.after?.name)).toEqual(['Blå cykeln']);
+});
+
 test('closed new objects can be reopened individually and staged together without losing text', async () => {
   await open();
   for (const name of ['Cykeln', 'Bilen']) {
@@ -615,6 +629,10 @@ test.each([
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('Utfallet är okänt');
   expect(screen.getByRole('status').textContent).not.toContain('Sparat:');
+  expect(screen.getByRole('region', { name: 'Aktuell status' }).textContent).toContain(
+    'Sparutfall okänt',
+  );
+  expect(screen.getByRole('region', { name: 'Förslag i kartan' })).toBeTruthy();
   expect((screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled).toBe(
     true,
   );
@@ -671,6 +689,12 @@ test('a confirmed receipt remains successful when refreshing the map fails', asy
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('sparade enligt kvittot');
   expect(screen.getByRole('status').textContent).toContain('Sparat: Lo Exempel');
+  expect(screen.getByRole('region', { name: 'Aktuell status' }).textContent).toContain(
+    'Sparat · kvitto bekräftat',
+  );
+  expect(screen.getByRole('region', { name: 'Aktuell status' }).textContent).not.toContain(
+    'Sparutfall okänt',
+  );
   expect(screen.queryByRole('button', { name: 'Hämta samma kvitto igen' })).toBeNull();
   failRead = false;
   await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
