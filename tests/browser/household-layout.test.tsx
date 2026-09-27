@@ -461,6 +461,72 @@ test('panel placement has reversible keyboard and click controls with a reset an
   expect(position()).toEqual(initial);
 });
 
+test('desktop panels reserve only the status column and retain chosen positions as the card changes', async () => {
+  await open(1440);
+  await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+  const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+  const handle = work.getByRole('button', { name: 'Flytta Lista och utkast', exact: true });
+  const box = () => work.element().getBoundingClientRect();
+  handle.element().focus();
+  await userEvent.keyboard(`{Shift>}${'{ArrowDown}'.repeat(20)}{/Shift}`);
+  expect(box().right).toBeLessThan(status.element().getBoundingClientRect().left);
+  expect(box().bottom).toBeGreaterThan(status.element().getBoundingClientRect().top);
+
+  await userEvent.keyboard(`{Shift>}${'{ArrowRight}'.repeat(25)}{/Shift}`);
+  await expect
+    .poll(() => box().bottom)
+    .toBeLessThanOrEqual(status.element().getBoundingClientRect().top - 12);
+  expect(box().right).toBeGreaterThan(status.element().getBoundingClientRect().left);
+  const body = work.element().querySelector<HTMLElement>('.workspace-panel-body');
+  expect(body?.scrollHeight).toBeGreaterThan(body?.clientHeight ?? 0);
+  const chosen = box().toJSON();
+
+  await page.getByRole('button', { name: 'Aktuell status', exact: true }).click();
+  await expect
+    .poll(() => box().bottom)
+    .toBeLessThanOrEqual(status.element().getBoundingClientRect().top - 12);
+  expect(box().height).toBeLessThan(chosen.height);
+  await page.getByRole('button', { name: 'Stäng aktuell status', exact: true }).click();
+  await expect.poll(() => box().toJSON()).toEqual(chosen);
+  await page.viewport(900, 960);
+  await expect.poll(() => box().right).toBeLessThanOrEqual(876);
+  await expect
+    .poll(() => box().bottom)
+    .toBeLessThanOrEqual(status.element().getBoundingClientRect().top - 12);
+  await page.viewport(1440, 960);
+  await expect.poll(() => box().toJSON()).toEqual(chosen);
+  await handle.click();
+  await work.getByRole('button', { name: 'Återställ position', exact: true }).click();
+  expect(box().x).toBe(112);
+  expect(box().y).toBe(110);
+});
+
+test.each([390, 250])(
+  'wide short work at %i pixels keeps panel actions and status reachable',
+  async (height) => {
+    await open(1440);
+    await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
+    await page.getByRole('button', { name: 'Lista', exact: true }).click();
+    const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+    work.getByRole('button', { name: 'Flytta Lista och utkast', exact: true }).element().focus();
+    await userEvent.keyboard(`{Shift>}${'{ArrowRight}'.repeat(25)}{/Shift}`);
+    await page.getByRole('button', { name: 'Aktuell status', exact: true }).click();
+    await page.viewport(1440, height);
+    const handle = work.getByRole('button', { name: 'Flytta Lista och utkast', exact: true });
+    await handle.click();
+    await expect.element(handle).toHaveAttribute('aria-expanded', 'true');
+    await handle.click();
+    await work.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page.getByLabelText('Objektets namn').fill('Behåll bred text');
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    await page.getByRole('button', { name: 'Stäng aktuell status', exact: true }).click();
+    await expect.element(page.getByLabelText('Objektets namn')).toHaveValue('Behåll bred text');
+  },
+);
+
 test('native panel dragging moves only the held primary pointer and recovers after touch cancellation', async () => {
   await open(1440);
   // Leave room for the movement disclosure above the persistent status card.

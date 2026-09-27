@@ -68,8 +68,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   laddning och återhämtning efter nätfel.
 
 - [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
-  mikrofon, sökning, urval, personlig vy och samma sparförsök vid
-  tillfälliga vybyten; avveckling vid utloggning, återkallad tillgång
+  mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
+  sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad tillgång
   och ersatt hushållsinnehåll.
 
 - [Månadskostnad](costs.md): separata Render-, Live- och Terra-belopp,

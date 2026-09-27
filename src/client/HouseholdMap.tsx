@@ -1191,6 +1191,7 @@ export function HouseholdMap({
         )
           return;
         if (event.target.closest('.workspace-window')) {
+          setToolsExpanded(false);
           lastWorkFocus.current = event.target;
           lastOutsideFocus.current = null;
         } else {
@@ -1480,8 +1481,9 @@ export function HouseholdMap({
           }}
           onAccessLost={loseAccess}
           onSelectItem={revealAssistantItem}
-          renderWorkspace={(work, conversation) => (
+          renderWorkspace={(work, conversation, floatingStatus) => (
             <WorkspacePanels
+              floatingStatus={floatingStatus}
               hidden={!active || !workOpen}
               restoreFocusOnReveal={!profileRequested}
               activeId={activePanel}

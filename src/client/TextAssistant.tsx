@@ -1,4 +1,12 @@
-import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import type { ObjectType, ObjectValue } from '../shared/map.js';
 import type { MapSelection, TextAssistantView } from '../shared/text-assistant.js';
@@ -83,7 +91,11 @@ export function TextAssistant({
   children?: ReactNode | ((assistant: AssistantActivity) => ReactNode);
   draftSummary?: ReactNode;
   inspector?: ReactNode;
-  renderWorkspace?: (work: ReactNode, conversation: ReactNode) => ReactNode;
+  renderWorkspace?: (
+    work: ReactNode,
+    conversation: ReactNode,
+    floatingStatus: RefObject<HTMLDivElement | null>,
+  ) => ReactNode;
 }) {
   const path = `/api/households/${encodeURIComponent(householdId)}/text-assistant`;
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -827,6 +839,7 @@ export function TextAssistant({
             {conversation}
             {changes}
           </>,
+          floatingVoice,
         )
       ) : (
         <>
