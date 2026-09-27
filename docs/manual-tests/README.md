@@ -53,6 +53,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 
 ## Områden
 
+- [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
+  fönsterflytt, samtidiga detaljer och sex beständiga personliga riktningar.
+
 - [Inställningar och profil](settings-profile.md): helsida, mobilnavigation,
   återgång med fokus, synligt tangentbordsfokus i båda riktningar, läsbara
   teman och typdefinitioner i kartans samlade utkast.
@@ -182,8 +185,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   bevarar identitet och samband samt följer historikens ångring.
   Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
-  båda objekten, redigerbara definitioner, privata förslag, dubbletter
-  och samtidiga sparanden utan delsparande.
+  båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
+  noll och Nej, uttrycklig hantering vid typbyte, privata förslag,
+  dubbletter och samtidiga sparanden utan delsparande.
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
   utkast samt uttrycklig återställning av saknade definitioner med innehållet.
