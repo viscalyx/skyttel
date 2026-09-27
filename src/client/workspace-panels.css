@@ -358,6 +358,19 @@
   }
 }
 
+@media (max-width: 700px) and (min-height: 451px) {
+  .household-map.workspace-shell.workspace-revealing .workspace-voice-controls {
+    max-height: 18dvh;
+  }
+  .household-map.workspace-shell.workspace-revealing .map-space {
+    bottom: calc(60dvh + 12px);
+  }
+  .household-map.workspace-shell.workspace-revealing .workspace-windows {
+    top: 40dvh;
+    height: calc(60dvh - var(--voice-height, 0px) - 36px);
+  }
+}
+
 .household-map.workspace-shell .spatial-tools {
   bottom: calc(76px + var(--feedback-height, 0px) + var(--voice-height, 0px));
 }

@@ -218,6 +218,9 @@ and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
 **Användare:** Alex i den kontrollerade installationen.
 
 **Förutsättningar:** Lo-förslaget finns och rösten är igång.
+Använd en telefonbred vy, 390 × 844 CSS-pixlar i det automatiska provet.
+Markeringen och detaljpanelens sammanfattning ska vara synliga samtidigt
+som röstkortet är öppet; kortet får inte täcka detaljpanelens kontroller.
 
 **Integrationstest:**
 [voice-assistant.spec.ts](../../tests/integration/voice-assistant.spec.ts),

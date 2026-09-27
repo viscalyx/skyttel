@@ -747,6 +747,7 @@ test('TAL-02: negativa besked och förlorad anslutning stoppar sena röständrin
 test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röstomstart', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   let step = 0;
   const model = textModel(() => {
     step++;
@@ -770,11 +771,17 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await expect(assistant(page).getByRole('status', { includeHidden: true })).toHaveText(
       'Markerat i kartan.',
     );
-    await openConversation(page);
-    await expect(assistant(page).getByRole('status')).toHaveText('Markerat i kartan.');
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
+    await page
+      .getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true })
+      .click({ trial: true });
+    await expect(
+      page.getByRole('region', { name: 'Lo Exempel', exact: true }).getByText('Namn: Lo Exempel'),
+    ).toBeVisible();
+    await openConversation(page);
+    await expect(assistant(page).getByRole('status')).toHaveText('Markerat i kartan.');
     await expect
       .poll(
         () => live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
