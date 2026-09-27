@@ -49,8 +49,13 @@ export function readObjectProperties(
     )
       invalid();
   } else if (previous?.propertyOrder !== undefined || builtins !== undefined) {
+    const fields = (type.fields ?? []).map(({ id }) => `field:${id}`);
+    const previousFields = (previous?.fields ?? []).map(({ id }) => `field:${id}`);
+    const unchangedFields =
+      fields.length === previousFields.length &&
+      fields.every((ref, index) => ref === previousFields[index]);
     propertyOrder = orderedReferences(
-      (type.fields ?? []).map(({ id }) => `field:${id}`),
+      unchangedFields ? (previous?.propertyOrder ?? fields) : fields,
       references,
       previous?.propertyOrder ?? [],
     );

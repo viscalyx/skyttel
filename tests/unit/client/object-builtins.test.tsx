@@ -179,7 +179,7 @@ test('section editors keep complete financial facts and shared description throu
     financialFacts: { ...financialFacts, debt: { ...financialFacts.debt, value: '12 000' } },
   });
   expect(state.draft.changes[0].after?.customValues).toBeUndefined();
-  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
+  const review = within(await screen.findByRole('region', { name: 'Hela mitt utkast' }));
   expect(
     review.getByText(
       'Senast uppgiven skuld: 12 000 (Osäkert uppgivet) — datum för uppgiften: 2026-09-01',
@@ -224,7 +224,7 @@ test('legacy custom placement remains visible once while canonical presentation 
   ).toBe(200);
   render(<HouseholdMap householdId={householdId} />);
   await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
+  const review = within(await screen.findByRole('region', { name: 'Hela mitt utkast' }));
   expect(review.getAllByText('Tidigare fält: 0')).toHaveLength(1);
   expect(
     within(review.getByRole('region', { name: 'Egna fält' })).getByText('Tidigare fält: 0'),
@@ -240,6 +240,63 @@ test('legacy custom placement remains visible once while canonical presentation 
   expect((await read()).types.find(({ id }) => id === 'legacy')).not.toHaveProperty('sections');
   await userEvent.click(screen.getByRole('button', { name: 'Visa historik' }));
   const history = within(await screen.findByRole('region', { name: 'Ändringshistorik' }));
+  await history.findByText('Tidigare fält: 0');
   expect(history.getAllByText('Tidigare fält: 0')).toHaveLength(1);
   expect(history.getByText('Dolt fält: Nej')).toBeTruthy();
+});
+
+test('explicit custom-only order controls object editing and review without inventing built-in metadata', async () => {
+  expect(
+    (
+      await client.json(`${path}/object-type`, {
+        version: 0,
+        id: 'ordered',
+        baseRevision: null,
+        value: {
+          name: 'Sorterat avtal',
+          description: '',
+          fields: [
+            { id: 'first', name: 'Första fältet', description: '', kind: 'number' },
+            { id: 'second', name: 'Andra fältet', description: '', kind: 'text' },
+          ],
+          propertyOrder: ['field:second', 'field:first'],
+        },
+      })
+    ).status,
+  ).toBe(200);
+  render(<HouseholdMap householdId={householdId} />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Nytt objekt' }));
+  const form = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
+  await userEvent.selectOptions(form.getByLabelText('Objekttyp', { exact: true }), 'ordered');
+  await userEvent.type(form.getByLabelText('Objektets namn'), 'Sorterade uppgifter');
+  const fields = form.getByRole('group', { name: 'Egna fält' });
+  expect([...fields.querySelectorAll('label')].map((label) => label.textContent)).toEqual([
+    'Andra fältet',
+    'Första fältet',
+  ]);
+  await userEvent.type(form.getByLabelText('Andra fältet', { exact: true }), 'Två');
+  await userEvent.type(form.getByLabelText('Första fältet', { exact: true }), '0');
+  await userEvent.type(form.getByLabelText('Beskrivning', { exact: true }), 'Gemensam text');
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i mitt utkast' }));
+  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  const review = within(await screen.findByRole('region', { name: 'Hela mitt utkast' }));
+  expect(
+    [...review.getByRole('region', { name: 'Egna fält' }).querySelectorAll('p')].map(
+      (element) => element.textContent,
+    ),
+  ).toEqual(['Andra fältet: Två', 'Första fältet: 0']);
+  expect(review.getByText('Beskrivning: Gemensam text')).toBeTruthy();
+  await userEvent.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
+  await screen.findByText(/^Sparat:/);
+  const state = await read();
+  expect(state.types.find(({ id }) => id === 'ordered')).not.toHaveProperty('builtins');
+  expect(state.types.find(({ id }) => id === 'ordered')?.propertyOrder).toEqual([
+    'field:second',
+    'field:first',
+  ]);
+  expect(state.objects[0]).toMatchObject({
+    description: 'Gemensam text',
+    customValues: { first: 0, second: 'Två' },
+  });
 });

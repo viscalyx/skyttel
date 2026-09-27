@@ -74,7 +74,7 @@ export function ObjectPropertiesEditor({
       onChange={(description) => onChange({ ...value, description })}
     />
   );
-  if (type.builtins === undefined)
+  if (type.builtins === undefined && type.propertyOrder === undefined)
     return (
       <>
         {description()}
@@ -160,7 +160,7 @@ export function ObjectPropertiesDetails({
   value: ObjectValue;
   showHidden?: boolean;
 }) {
-  if (type.builtins === undefined)
+  if (type.builtins === undefined && type.propertyOrder === undefined)
     return (
       <>
         <p>Beskrivning: {value.description || 'Ingen beskrivning'}</p>

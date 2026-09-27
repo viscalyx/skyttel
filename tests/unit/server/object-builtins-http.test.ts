@@ -189,6 +189,50 @@ test('older clients can insert, reorder and remove custom definitions while cano
   );
 });
 
+test('older-client label edits retain an explicit mixed order when custom membership and order are unchanged', async () => {
+  const arranged = {
+    ...definition,
+    fields: [
+      ...(definition.fields ?? []),
+      {
+        id: 'extra',
+        name: 'Extra fält',
+        description: '',
+        kind: 'text',
+        sectionId: 'facts',
+      },
+    ],
+    propertyOrder: [
+      'builtin:debt',
+      'field:extra',
+      'builtin:description',
+      'field:note',
+      'builtin:startDate',
+    ],
+  };
+  expect((await define(arranged)).status()).toBe(200);
+  await save('arranged');
+  expect(
+    (
+      await define({
+        name: 'Äldre klient rättar namn',
+        description: '',
+        fields: arranged.fields,
+        sections: arranged.sections,
+      })
+    ).status(),
+  ).toBe(200);
+  expect((await read()).draft.objectTypes?.[0].after).toMatchObject({
+    builtins: arranged.builtins,
+    propertyOrder: arranged.propertyOrder,
+  });
+  await save('label-only');
+  await installation.restart();
+  expect((await read()).types.find(({ id }) => id === 'contract')?.propertyOrder).toEqual(
+    arranged.propertyOrder,
+  );
+});
+
 test('invalid canonical keys, kinds, duplicate references and relationship properties reject atomically', async () => {
   const before = await read();
   for (const value of [
