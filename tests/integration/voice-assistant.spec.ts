@@ -610,6 +610,16 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
           .microphoneTracks.every((track) => track.state === 'ended'),
       ),
     ).toBe(true);
+    await assistant(page).getByRole('button', { name: 'Avsluta samtalet' }).click();
+    await consent(page);
+    await assistant(page).getByText('Tidigare sparförsök', { exact: true }).click();
+    await expect(
+      assistant(page).locator('details').filter({ hasText: 'Tidigare sparförsök' }),
+    ).toContainText('Familjens Molnmusik');
+    expect(
+      await (await page.request.get(`${app.origin}/api/households/${household.id}/map`)).json(),
+    ).toEqual(map);
+    expect(model.requests).toHaveLength(4);
   } finally {
     await app.close();
   }

@@ -121,6 +121,9 @@ and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
    befintliga betalningsroller. Utkastet ska vara tomt, osänd formulärtext
    bevarad och tidigare okända/osäkra uppgifter oförändrade.
 8. Stäng rösten och kontrollera avslutade spår enligt startguiden.
+   Avsluta samtalet, starta en ny textanslutning med båda medgivandena och
+   öppna **Tidigare sparförsök**. Familjens kvitto och sparade karta ska
+   finnas kvar utan ett nytt modelluppdrag.
    Avsluta med `quit` och kontrollera att den tillfälliga katalogen försvinner.
 
 **Steg, verkligt svenskt tal:**
@@ -466,7 +469,7 @@ svensk talförståelse, högtalare eller fysisk mikrofon.
    stå stilla, samtidigt som **Skyttel talar** visas.
 4. Pausa mikrofonen med kartverktygets cirkel och stoppruta. Kräv
    **Mikrofonen är pausad** och fortsatt **Skyttel talar**. `stats()` ska
-   visa ett öppet par, ett ljudobjekt, levande avstängt mikrofonspår och
+   visa en öppen anslutning, ett ljudobjekt, levande avstängt mikrofonspår och
    levande påslaget inkommande spår.
 5. Skriv **Kvar i samtalet** utan att skicka. Öppna Inställningar.
    Återuppta mikrofonen i kortet. Fokusera **Öppna samtalet** med tangentbord

@@ -364,6 +364,14 @@
 .household-map.workspace-shell .spatial-bottom-bar {
   bottom: calc(12px + var(--feedback-height, 0px) + var(--voice-height, 0px));
 }
+/* Revealed map targets use a separate column (or upper mobile surface).
+   The voice card must not lift map controls over that reserved target area. */
+.household-map.workspace-shell.workspace-revealing .spatial-tools {
+  bottom: calc(76px + var(--feedback-height, 0px));
+}
+.household-map.workspace-shell.workspace-revealing .spatial-bottom-bar {
+  bottom: calc(12px + var(--feedback-height, 0px));
+}
 .workspace-windows > .visually-hidden {
   position: absolute;
   width: 1px;
