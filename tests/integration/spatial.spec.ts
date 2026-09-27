@@ -755,6 +755,10 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
         .getByTitle('Nytt förslag')
         .evaluate((element) => getComputedStyle(element).backgroundColor);
       expect(endedColor).not.toBe(proposalColor);
+      await expect(symbolContainer.getByTitle('Nytt förslag')).toHaveCSS(
+        'color',
+        'rgb(24, 119, 71)',
+      );
     }
     await expect(lo).not.toContainText('Upphört');
     await expect(musicNode).toHaveAccessibleDescription(/Upphört/);
@@ -776,7 +780,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast', exact: true }).click();
     await openMap(page);
     await expect(edge).not.toContainText('Upphört');
-    await expect(edge).toContainText('~');
+    await expect(edge).toContainText('✎');
     await expect(music.getByText('Upphört', { exact: true })).toBeVisible();
   } finally {
     await installation.close();

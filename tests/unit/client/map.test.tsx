@@ -547,6 +547,10 @@ test.each([
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('Utfallet är okänt');
   expect(screen.getByRole('status').textContent).not.toContain('Sparat:');
+  expect(screen.getByRole('region', { name: 'Aktuell status' }).textContent).toContain(
+    'Sparutfall okänt',
+  );
+  expect(screen.getByRole('region', { name: 'Förslag i kartan' })).toBeTruthy();
   expect((screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled).toBe(
     true,
   );
@@ -603,6 +607,12 @@ test('a confirmed receipt remains successful when refreshing the map fails', asy
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('sparade enligt kvittot');
   expect(screen.getByRole('status').textContent).toContain('Sparat: Lo Exempel');
+  expect(screen.getByRole('region', { name: 'Aktuell status' }).textContent).toContain(
+    'Sparat · kvitto bekräftat',
+  );
+  expect(screen.getByRole('region', { name: 'Aktuell status' }).textContent).not.toContain(
+    'Sparutfall okänt',
+  );
   expect(screen.queryByRole('button', { name: 'Hämta samma kvitto igen' })).toBeNull();
   failRead = false;
   await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));

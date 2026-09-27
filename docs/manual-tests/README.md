@@ -169,7 +169,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   och konfliktval samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner
-  vid borttagning efter typbyten.
+  vid borttagning efter typbyten. Följ status och legend med stängda
+  paneler, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
+  ett samlat utkast från formulär, text och tal efter omstart.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,

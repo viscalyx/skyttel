@@ -269,12 +269,13 @@ draft symbols”.
 
 **Förväntat resultat:**
 
-- Molnmusik visar Upphört vid namnet och plus vid den runda symbolen.
+- Molnmusik visar Upphört vid namnet och grönt plus vid den runda symbolen.
   Sambandets etikett visar både Upphört och plus. Status och förslag har
   olika färger. Lo Exempel visar inget Upphört trots slutdatumet.
 - Namn, typikon och riktning är fortfarande begripliga. Upphört finns
   kvar efter sparande och omstart; plusmarkeringarna försvinner.
-- Sambandets rättelse visar tilde och tar bort dess Upphört-markering.
+- Sambandets rättelse visar amberfärgad penna och tar bort dess
+  Upphört-markering.
   Molnmusiks status påverkas inte.
 
 ### RYMD-08: fokusera och granska tidigare och föreslagna samband

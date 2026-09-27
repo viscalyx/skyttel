@@ -26,6 +26,8 @@ import {
 import { mergeFor } from '../shared/object-merge.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
+import { DraftStatus } from './DraftStatus.js';
+import './draft-status.css';
 import { FinancialFactsDetails } from './FinancialFacts.js';
 import { LifecycleDetails, LifecycleStatus } from './Lifecycle.js';
 import { MapHistory } from './MapHistory.js';
@@ -267,6 +269,7 @@ export function HouseholdMap({
   const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const [statusOpen, setStatusOpen] = useState(false);
   const failedProposalOrigin = useRef<HTMLElement | null>(null);
   const [proposalRecoveryFocus, setProposalRecoveryFocus] = useState<{
     origin: Element | null;
@@ -284,7 +287,7 @@ export function HouseholdMap({
     )
       return;
     const target = error
-      ? workspace.current?.querySelector<HTMLButtonElement>('.workspace-feedback button')
+      ? workspace.current?.querySelector<HTMLButtonElement>('[data-refresh-map]')
       : proposalRecoveryFocus.target;
     if (target && !target.matches(':disabled') && restoreOutsideFocus(target)) return;
     restoreOutsideFocus(
@@ -448,8 +451,41 @@ export function HouseholdMap({
       editorDialog.current?.querySelector<HTMLSelectElement>('#relationship-source')?.focus();
   }, [edgeEditor?.id, active]);
 
+  function reloadMap(origin: HTMLElement) {
+    if (failedProposalOrigin.current) {
+      setProposalRecoveryFocus({ origin, target: failedProposalOrigin.current });
+      setPending(true);
+    }
+    setLoad((value) => value + 1);
+  }
+
+  function retrySave(operation: SaveOperation) {
+    void save(
+      {
+        operationId: operation.operationId,
+        version: operation.draftVersion,
+        contentVersion: operation.contentVersion,
+        householdId: operation.householdId,
+        userId: operation.userId,
+      },
+      true,
+    );
+  }
+
+  function saveDraft() {
+    if (!state) return;
+    void save({
+      version: state.draft.version,
+      operationId: crypto.randomUUID(),
+      contentVersion: state.contentVersion,
+      userId: state.userId,
+      householdId,
+    });
+  }
+
   async function save(attempt: SaveAttempt, recover = false) {
     if (!state || pending) return;
+    const saveOrigin = document.activeElement;
     saveAttempt.current = attempt;
     setPending(true);
     setError('');
@@ -508,7 +544,7 @@ export function HouseholdMap({
       setState(latest);
       setOperations(recent);
       setBlocked(recent.some((item) => item.status === 'pending'));
-      if (!dirty) newButton.current?.focus();
+      if (!dirty && document.activeElement === saveOrigin) newButton.current?.focus();
     } catch (failure) {
       setBlocked(true);
       if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) {
@@ -969,6 +1005,7 @@ export function HouseholdMap({
         state.draft.objectTypes?.length ||
         state.draft.relationshipTypes?.length),
   );
+  const pendingOperation = operations.find((operation) => operation.status === 'pending');
   const unresolved =
     state?.draft.changes.some((change) => change.after?.identity === 'unresolved') ||
     state?.draft.relationships?.some((change) => change.after?.knowledge === 'unresolved');
@@ -1173,6 +1210,8 @@ export function HouseholdMap({
             Till samtal och text
           </button>
           <WorkspaceTools
+            statusOpen={statusOpen}
+            onStatus={() => setStatusOpen((value) => !value)}
             voiceControl={voiceControl}
             cameraMount={setCameraMount}
             expanded={toolsExpanded}
@@ -1254,30 +1293,22 @@ export function HouseholdMap({
               : 'Arbetar…'
             : status}
         </p>
-        {error && (
+        {!state && error && (
           <p role="alert" className="error">
             {error}
           </p>
         )}
-        {(error || blocked) && (
+        {!state && (error || blocked) && (
           <button
             type="button"
             disabled={pending}
-            onClick={(event) => {
-              if (failedProposalOrigin.current) {
-                setProposalRecoveryFocus({
-                  origin: event.currentTarget,
-                  target: failedProposalOrigin.current,
-                });
-                setPending(true);
-              }
-              setLoad((value) => value + 1);
-            }}
+            data-refresh-map
+            onClick={(event) => reloadMap(event.currentTarget)}
           >
             Hämta aktuellt underlag
           </button>
         )}
-        {saveAttempt.current && blocked && (
+        {!state && saveAttempt.current && blocked && (
           <button
             type="button"
             disabled={pending}
@@ -1344,9 +1375,66 @@ export function HouseholdMap({
       )}
       {state && (
         <TextAssistant
+          statusOpen={statusOpen}
+          onCloseStatus={() => {
+            setStatusOpen(false);
+            workspace.current
+              ?.querySelector<HTMLButtonElement>(
+                '.workspace-tools button[aria-label="Aktuell status"]',
+              )
+              ?.focus();
+          }}
+          statusContent={({ working, needsAnswer }) => (
+            <DraftStatus
+              draft={state.draft}
+              operation={pendingOperation ?? operations[0]}
+              saving={Boolean(pending && saveAttempt.current)}
+              unknown={Boolean(blocked && saveAttempt.current && !pending)}
+              dirty={dirty}
+              unresolved={Boolean(unresolved)}
+              conflicts={conflicts.length > 0}
+              expanded={statusOpen}
+              error={error}
+              working={pending && !saveAttempt.current}
+              onRefresh={(origin) => reloadMap(origin)}
+              onRecover={
+                (saveAttempt.current || pendingOperation) && blocked
+                  ? () => {
+                      if (saveAttempt.current) void save(saveAttempt.current, true);
+                      else if (pendingOperation) retrySave(pendingOperation);
+                    }
+                  : undefined
+              }
+              pending={pending}
+              showSave={(statusOpen || !workOpen) && !working && !needsAnswer}
+              disabled={
+                pending ||
+                blocked ||
+                dirty ||
+                !hasChanges ||
+                Boolean(unresolved) ||
+                conflicts.length > 0
+              }
+              onSave={saveDraft}
+              onDraft={() => {
+                setStatusOpen(false);
+                openPanel(
+                  'work',
+                  document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title'),
+                );
+              }}
+              onContinue={() => {
+                setStatusOpen(false);
+                const objectId = Object.keys(objectDirty).find((id) => objectDirty[id]);
+                if (objectId) openPanel(objectId);
+                else openWork('list');
+              }}
+            />
+          )}
           onVoiceControl={setVoiceControl}
           active={active}
           onOpenConversation={() => {
+            setStatusOpen(false);
             openWork('conversation');
             routeOutsideFocus.current = null;
             if (!active) onReturnToMap?.();
@@ -1952,22 +2040,7 @@ export function HouseholdMap({
                   Nytt samband
                 </button>
                 <div className="map-definition-tools">
-                  <SaveOperations
-                    operations={operations}
-                    disabled={pending}
-                    onRetry={(operation) =>
-                      void save(
-                        {
-                          operationId: operation.operationId,
-                          version: operation.draftVersion,
-                          contentVersion: operation.contentVersion,
-                          householdId: operation.householdId,
-                          userId: operation.userId,
-                        },
-                        true,
-                      )
-                    }
-                  />
+                  <SaveOperations operations={operations} disabled={pending} onRetry={retrySave} />
                   <MapHistory
                     generation={state.contentVersion}
                     path={path}
@@ -2495,16 +2568,8 @@ export function HouseholdMap({
                         unresolved ||
                         conflicts.length > 0
                       }
-                      onClick={() => {
-                        saveAttempt.current = {
-                          version: state.draft.version,
-                          operationId: crypto.randomUUID(),
-                          contentVersion: state.contentVersion,
-                          userId: state.userId,
-                          householdId,
-                        };
-                        void save(saveAttempt.current);
-                      }}
+                      hidden={statusOpen}
+                      onClick={saveDraft}
                     >
                       Spara hela utkastet
                     </button>

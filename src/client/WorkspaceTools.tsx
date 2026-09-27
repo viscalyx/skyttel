@@ -5,6 +5,7 @@ import type { VoiceControl } from './VoiceAssistant.js';
 const paths = {
   mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8',
   stop: '',
+  activity: 'M3 12h4l3-8 4 16 3-8h4',
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   text: 'M4 5h16M12 5v15M8 20h8',
   search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
@@ -59,7 +60,11 @@ export function WorkspaceTools({
   cameraMount,
   expanded,
   onExpandedChange,
+  statusOpen = false,
+  onStatus,
 }: {
+  statusOpen?: boolean;
+  onStatus?: () => void;
   onOpen: (target: WorkspaceTarget) => void;
   account?: ReactNode;
   onSettings?: () => void;
@@ -177,6 +182,22 @@ export function WorkspaceTools({
         )}
         <div className="workspace-camera-tools" ref={cameraMount} />
         <div className="workspace-tools-footer">
+          {onStatus && (
+            <button
+              type="button"
+              title="Aktuell status"
+              aria-label="Aktuell status"
+              aria-expanded={statusOpen}
+              data-secondary
+              onClick={() => {
+                setUtility(null);
+                onStatus();
+              }}
+            >
+              <WorkspaceIcon name="activity" />
+              <span>Aktuell status</span>
+            </button>
+          )}
           {(
             [
               ['settings', 'Inställningar', 'settings'],
