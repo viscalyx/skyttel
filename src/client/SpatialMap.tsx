@@ -192,6 +192,17 @@ export function SpatialMap({
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   );
+  const [shortViewport, setShortViewport] = useState(
+    () => window.matchMedia?.('(max-width: 700px) and (max-height: 450px)').matches ?? false,
+  );
+  useEffect(() => {
+    const viewport = window.matchMedia?.('(max-width: 700px) and (max-height: 450px)');
+    if (!viewport) return;
+    const update = () => setShortViewport(viewport.matches);
+    update();
+    viewport.addEventListener('change', update);
+    return () => viewport.removeEventListener('change', update);
+  }, []);
   useEffect(() => {
     const preference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     if (!preference) return;
@@ -364,9 +375,11 @@ export function SpatialMap({
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        '.workspace-tools, .workspace-context, .workspace-feedback, .workspace-voice-controls, .spatial-tools, .spatial-bottom-bar, .spatial-view-actions',
+        '.workspace-tools, .workspace-context, .workspace-feedback, .workspace-voice-controls, .spatial-tools, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions',
       );
     for (const overlay of overlays ?? []) {
+      const closedTools = overlay.closest('details:not([open])');
+      if (closedTools && closedTools !== overlay) continue;
       const box = overlay.getBoundingClientRect();
       if (!box.width || !box.height) continue;
       const obstacle = {
@@ -394,8 +407,9 @@ export function SpatialMap({
         size(candidate) > size(largest) ? candidate : largest,
       );
     }
-    const marginX = Math.min(64, (area.right - area.left) / 4);
-    const marginY = Math.min(64, (area.bottom - area.top) / 4);
+    if (area.right - area.left <= 48 || area.bottom - area.top <= 48) return false;
+    const marginX = Math.min(64, Math.max(24, (area.right - area.left) / 4));
+    const marginY = Math.min(64, Math.max(24, (area.bottom - area.top) / 4));
     return (
       scene.current?.focus(ids, {
         left: area.left + marginX,
@@ -1163,56 +1177,59 @@ export function SpatialMap({
           {personal.message}
         </p>
       )}
-      <div className="spatial-bottom-bar">
-        <button
-          type="button"
-          onClick={() => {
-            setCloserLabels(false);
-            onReset();
-            setResetRequested(true);
-          }}
-        >
-          Återställ vy
-        </button>
-        <label>
-          <input
-            type="checkbox"
-            checked={allLabels}
-            disabled={personal && (!personal.view || personal.pending)}
-            onChange={(event) => {
-              configure({ allLabels: event.target.checked });
+      <details className="spatial-display-tools" open={!shortViewport}>
+        <summary>Visningsval</summary>
+        <div className="spatial-bottom-bar">
+          <button
+            type="button"
+            onClick={() => {
+              setCloserLabels(false);
+              onReset();
+              setResetRequested(true);
             }}
-          />{' '}
-          Alla etiketter
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={heightHelp}
-            onChange={(event) => setHeightHelp(event.target.checked)}
-          />
-          Visa höjdhjälp
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={preferences.stars && !reducedMotion}
-            disabled={reducedMotion || Boolean(personal && (!personal.view || personal.pending))}
-            onChange={(event) => configure({ stars: event.target.checked })}
-          />
-          Visa stjärnhimmel
-        </label>
-        {reducedMotion && <span>Minskad rörelse: stjärnhimlen är avstängd.</span>}
-      </div>
-      {!allLabels && hiddenLabels > 0 && (
-        <p className="label-note">
-          {hiddenLabels} etiketter döljs för läsbarhet. Alla objekt och samband finns i listan. Sök
-          eller välj ett objekt och visa dess kopplingar.
-        </p>
-      )}
-      {allLabels && closerLabels && (
-        <p className="label-note">Närmare utsnitt. Panorera för att se fler etiketter.</p>
-      )}
+          >
+            Återställ vy
+          </button>
+          <label>
+            <input
+              type="checkbox"
+              checked={allLabels}
+              disabled={personal && (!personal.view || personal.pending)}
+              onChange={(event) => {
+                configure({ allLabels: event.target.checked });
+              }}
+            />{' '}
+            Alla etiketter
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={heightHelp}
+              onChange={(event) => setHeightHelp(event.target.checked)}
+            />
+            Visa höjdhjälp
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={preferences.stars && !reducedMotion}
+              disabled={reducedMotion || Boolean(personal && (!personal.view || personal.pending))}
+              onChange={(event) => configure({ stars: event.target.checked })}
+            />
+            Visa stjärnhimmel
+          </label>
+          {reducedMotion && <span>Minskad rörelse: stjärnhimlen är avstängd.</span>}
+        </div>
+        {!allLabels && hiddenLabels > 0 && (
+          <p className="label-note">
+            {hiddenLabels} etiketter döljs för läsbarhet. Alla objekt och samband finns i listan.
+            Sök eller välj ett objekt och visa dess kopplingar.
+          </p>
+        )}
+        {allLabels && closerLabels && (
+          <p className="label-note">Närmare utsnitt. Panorera för att se fler etiketter.</p>
+        )}
+      </details>
     </section>
   );
 }

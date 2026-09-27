@@ -362,7 +362,15 @@ export function spatialScene(
       const values = ids.flatMap((id) =>
         nodes.has(id) && locations.has(id) ? [locations.get(id) as Vector3] : [],
       );
-      if (!values.length || !canvas.clientWidth || !canvas.clientHeight) return false;
+      if (
+        !values.length ||
+        !canvas.clientWidth ||
+        !canvas.clientHeight ||
+        !Object.values(area).every(Number.isFinite) ||
+        area.right <= area.left ||
+        area.bottom <= area.top
+      )
+        return false;
       needsFrame = false;
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
       camera.updateProjectionMatrix();

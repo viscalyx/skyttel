@@ -262,6 +262,15 @@ test('focus fits deep positions inside the free tool rectangle without turning t
   expect(scene.project({ x: 10, y: 8, z: 25 }).x).toBeCloseTo(pivot.x, 9);
   expect(scene.project({ x: 10, y: 8, z: 25 }).y).toBeCloseTo(pivot.y, 9);
   expect(scene.focus(['missing'], { left: 0, right: 960, top: 0, bottom: 600 })).toBe(false);
+  const fitted = points();
+  for (const area of [
+    { left: 10, right: 10, top: 0, bottom: 600 },
+    { left: 0, right: 960, top: 60, bottom: 20 },
+    { left: Number.NaN, right: 960, top: 0, bottom: 600 },
+  ]) {
+    expect(scene.focus(['a', 'b'], area)).toBe(false);
+    expect(points()).toEqual(fitted);
+  }
 });
 
 test('overview restores the saved complete camera after intervening navigation and focus', async () => {

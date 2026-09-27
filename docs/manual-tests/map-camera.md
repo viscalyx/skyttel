@@ -46,7 +46,7 @@ on screen without a selection jump”.
 **Förväntat resultat:**
 
 - Lo behåller sin plats i bilden under rotationen och är fortsatt markerad.
-- Hushållets uppgifter och objektens placeringar ändras inte.
+- Rotation ändrar inte hushållets uppgifter eller objektens placeringar.
 - Efter den uttryckliga flyttningen roterar kartan kring Los nya läge.
 
 ### KAMERA-02: Fokusera direkta grannar och återgå till sparad vy
@@ -111,3 +111,37 @@ narrow focus controls survive unavailable graphics”.
 - Knapparna har begripliga namn, synligt tangentbordsfokus och pekmål som
   ryms i vyn. Kartgrafik som döljs eller avbryts kan inte fokuseras.
 - Urval och pågående arbete finns kvar efter panelbyte och grafikavbrott.
+
+### KAMERA-04: Fokusera i en kort vy med åtkomliga verktyg
+
+**Syfte:** Verifiera kartutrymme och verktyg vid kraftig webbläsarzoom.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Börja med Lo markerad. Prova 400 procent riktig
+webbläsarzoom från en vy på 1280 × 1000 bildpunkter, så innehållet får
+320 × 250 CSS-bildpunkter. Anteckna faktiskt mått och zoomnivå.
+
+**Integrationstest:**
+[map-camera.spec.ts](../../tests/integration/map-camera.spec.ts),
+testfallet “KAMERA-04: short viewports retain a usable focus rectangle
+and reachable camera and display controls”. Testet använder motsvarande
+CSS-mått; riktig webbläsarzoom provas separat.
+
+**Steg:**
+
+1. Fokusera **Fokusera markering** med tangentbord och tryck Enter.
+2. Kontrollera Lo och Kim mellan övre och nedre verktyg. Välj översikt
+   och återgå till den föregående vyn.
+3. Öppna **Visningsval**, slå på och av **Alla etiketter** och stäng valet.
+4. Öppna **Navigera rymden**, rotera och stäng navigeringen.
+5. Välj **Visa verktygens namn** och kontrollera att **Samtal och text**
+   samt **Visa detaljer** går att nå.
+
+**Förväntat resultat:**
+
+- Både markeringen och dess direkta granne får plats i fri kartarea med
+  marginal till verktygen och går att välja. Kamerafokus ligger kvar på
+  den aktiverade knappen.
+- Kamera- och visningskontroller går att använda. Inga kontroller kräver
+  vågrät rullning av sidan.

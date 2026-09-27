@@ -93,6 +93,11 @@ föregående vy**. Den tidigare vyn finns kvar även om du panorerar, roterar,
 zoomar eller fokuserar markeringen innan du återgår. Urval och oskickad
 paneltext behålls.
 
+I en mycket kort och smal vy samlas återställning, etiketter och
+stjärnhimmel under **Visningsval**. **Navigera rymden** och **Ordna min vy**
+går fortfarande att öppna nedtill. **Visa verktygens namn** öppnar hela
+verktygsfältet med samtal och detaljer.
+
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
 hushållsuppgifter.

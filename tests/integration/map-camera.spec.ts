@@ -258,3 +258,47 @@ test('KAMERA-03: mouse and touch rotation preserve the pivot and narrow focus co
     await installation.close();
   }
 });
+
+test('KAMERA-04: short viewports retain a usable focus rectangle and reachable camera and display controls', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await page.setViewportSize({ width: 320, height: 1000 });
+    const { lo, map } = await arrange(page, installation.origin);
+    await lo.click();
+    await page.setViewportSize({ width: 320, height: 250 });
+    const focus = page.getByRole('button', { name: 'Fokusera markering', exact: true });
+    await focus.click({ trial: true });
+    await focus.focus();
+    await page.keyboard.press('Enter');
+    await expect(focus).toBeFocused();
+    const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
+    for (const node of [lo, kim]) {
+      await expect.poll(async () => (await center(node)).x).toBeGreaterThanOrEqual(32);
+      await expect.poll(async () => (await center(node)).x).toBeLessThanOrEqual(288);
+      await expect.poll(async () => (await center(node)).y).toBeGreaterThanOrEqual(110);
+      await expect.poll(async () => (await center(node)).y).toBeLessThanOrEqual(172);
+      await node.click({ trial: true });
+    }
+    await page.screenshot({ path: test.info().outputPath('short-focus.png') });
+    await page.getByRole('button', { name: 'Visa hela kartan', exact: true }).click();
+    await page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Visa hela kartan', exact: true })).toBeVisible();
+    await map.getByText('Visningsval', { exact: true }).click();
+    await map.getByLabel('Alla etiketter', { exact: true }).check();
+    await map.getByLabel('Alla etiketter', { exact: true }).uncheck();
+    await map.getByText('Visningsval', { exact: true }).click();
+    await map.getByText('Navigera rymden', { exact: true }).click();
+    await map.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
+    await map.getByText('Navigera rymden', { exact: true }).click();
+    await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+    await page.getByRole('button', { name: 'Samtal och text', exact: true }).click({ trial: true });
+    await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click({ trial: true });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  } finally {
+    await installation.close();
+  }
+});
