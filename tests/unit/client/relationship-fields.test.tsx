@@ -49,7 +49,7 @@ test('relationship field definitions and answers use the same visible map draft 
   await open();
   await userEvent.click(screen.getByRole('button', { name: 'Ny sambandstyp' }));
   const editor = within(
-    screen.getByRole('group', { name: 'Sambandstypens definition', exact: true }),
+    screen.getByRole('group', { name: 'Sambandstypens definition' }),
   );
   for (const [label, text] of [
     ['Sambandstypens namn', 'Förvaring'],
