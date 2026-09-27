@@ -342,7 +342,7 @@
   right: 24px;
   bottom: calc(var(--feedback-height, 0px) + 24px);
   width: min(380px, calc(100vw - 24px));
-  max-height: 30dvh;
+  max-height: min(400px, 45dvh);
   overflow: auto;
   z-index: 25;
 }
@@ -351,9 +351,6 @@
   position: static;
   width: auto;
   max-height: none;
-}
-.workspace-voice-controls:has(.voice-assistant[data-voice-state="idle"]):not(:has([role="alert"])) {
-  display: none;
 }
 @media (max-width: 700px) {
   .household-map.workspace-shell .workspace-voice-controls {

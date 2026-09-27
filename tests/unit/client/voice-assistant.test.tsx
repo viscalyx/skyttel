@@ -226,7 +226,7 @@ test.each(['stop', 'revoked'])(
       await fragment('output', 'För sent.', 7000, 7500);
       expect(log.textContent).not.toContain('För sent.');
       expect(log.textContent).toContain('Kim betalar för musiken.');
-      await userEvent.click(screen.getByRole('button', { name: 'Avsluta textassistenten' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Avsluta samtalet' }));
     } else {
       await userEvent.type(screen.getByLabelText('Meddelande till textassistenten'), 'Privat text');
       await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
