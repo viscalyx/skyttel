@@ -688,7 +688,7 @@ test('phone opens the list from the map and preserves an edited name through map
   expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
 });
 
-test('landscape toolbar overflow preserves canvas height and reachable controls', async ({
+test('landscape display options preserve canvas height and reachable controls', async ({
   onTestFinished,
 }) => {
   const session = cdp();
@@ -700,8 +700,9 @@ test('landscape toolbar overflow preserves canvas height and reachable controls'
   });
   await open(640);
   await page.viewport(640, 390);
+  await page.getByText('Visningsval', { exact: true }).click();
   const toolbar = document.querySelector('.spatial-bottom-bar') as HTMLElement;
-  await expect.poll(() => toolbar.scrollWidth > toolbar.clientWidth).toBe(true);
+  await expect.poll(() => toolbar.scrollWidth <= toolbar.clientWidth).toBe(true);
   const height = () => document.querySelector('canvas')?.getBoundingClientRect().height;
   await expect.poll(height).toBeGreaterThan(200);
   const heightHelp = page.getByLabelText('Visa höjdhjälp', { exact: true });
