@@ -223,7 +223,7 @@ export function ObjectPropertiesDetails({
       )}
       {showHidden && (
         <CustomFieldsDetails
-          type={{ ...type, sections: [] }}
+          type={{ fields: objectTypePresentation(type).fields, sections: [] }}
           values={value.customValues}
           showHidden
         />

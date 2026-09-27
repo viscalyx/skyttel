@@ -186,3 +186,60 @@ test('section editors keep complete financial facts and shared description throu
     ),
   ).toBeTruthy();
 });
+
+test('legacy custom placement remains visible once while canonical presentation and hidden review coexist', async () => {
+  expect(
+    (
+      await client.json(`${path}/object-type`, {
+        version: 0,
+        id: 'legacy',
+        baseRevision: null,
+        value: {
+          name: 'Äldre avtal',
+          description: '',
+          builtins: [],
+          fields: [
+            { id: 'visible', name: 'Tidigare fält', description: '', kind: 'number' },
+            { id: 'hidden', name: 'Dolt fält', description: '', kind: 'boolean', sectionId: '' },
+          ],
+        },
+      })
+    ).status,
+  ).toBe(200);
+  expect(
+    (
+      await client.json(`${path}/draft`, {
+        version: 1,
+        id: 'legacy-object',
+        baseRevision: null,
+        value: {
+          typeId: 'legacy',
+          name: 'Äldre uppgifter',
+          description: 'Gemensam text',
+          customValues: { visible: 0, hidden: false },
+          financialFacts: { debt: { knowledge: 'unknown', reportedOn: '2026-09-01' } },
+        },
+      })
+    ).status,
+  ).toBe(200);
+  render(<HouseholdMap householdId={householdId} />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
+  expect(review.getAllByText('Tidigare fält: 0')).toHaveLength(1);
+  expect(
+    within(review.getByRole('region', { name: 'Egna fält' })).getByText('Tidigare fält: 0'),
+  ).toBeTruthy();
+  const hidden = within(review.getByRole('region', { name: 'Dolda fält – bevarade värden' }));
+  expect(hidden.queryByText('Tidigare fält: 0')).toBeNull();
+  expect(hidden.getByText('Dolt fält: Nej')).toBeTruthy();
+  expect(
+    review.getByText('Senast uppgiven skuld: Okänt — datum för uppgiften: 2026-09-01'),
+  ).toBeTruthy();
+  await userEvent.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
+  await screen.findByText(/^Sparat:/);
+  expect((await read()).types.find(({ id }) => id === 'legacy')).not.toHaveProperty('sections');
+  await userEvent.click(screen.getByRole('button', { name: 'Visa historik' }));
+  const history = within(await screen.findByRole('region', { name: 'Ändringshistorik' }));
+  expect(history.getAllByText('Tidigare fält: 0')).toHaveLength(1);
+  expect(history.getByText('Dolt fält: Nej')).toBeTruthy();
+});
