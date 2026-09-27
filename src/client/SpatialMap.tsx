@@ -72,6 +72,7 @@ export function SpatialMap({
   onCameraAction,
   navigationMount,
   onNavigationChange,
+  openWork,
 }: {
   theme?: 'light' | 'dark';
   state: MapState;
@@ -98,6 +99,7 @@ export function SpatialMap({
   onCameraAction?: () => void;
   navigationMount?: HTMLElement | null;
   onNavigationChange?: (open: boolean) => void;
+  openWork?: readonly string[];
 }) {
   const labelPrefix = useId();
   const [navigationOpen, setNavigationOpen] = useState(false);
@@ -700,6 +702,7 @@ export function SpatialMap({
   const navigation = (
     <MapNavigation
       open={navigationOpen}
+      openWork={openWork}
       onClose={() => changeNavigation(false)}
       onNavigate={(command) => scene.current?.navigate(command)}
       object={selectedIds.length === 1 ? objects.get(selectedIds[0]) : undefined}

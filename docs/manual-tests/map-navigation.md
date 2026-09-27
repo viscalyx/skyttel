@@ -71,7 +71,8 @@ usable areas in both opening orders”.
 
 **Steg:**
 
-1. Markera Lo. Öppna **Navigera** och sedan **Visa detaljer**.
+1. Markera Lo. Öppna **Navigera**, flytta fönstret in över den blivande
+   arbetsytan och öppna sedan **Visa detaljer**.
 2. Välj **Redigera valt objekt** och skriv en oskickad beskrivning.
 3. Rulla inuti navigationen till **Flytta Lo Exempel: bakåt** och flytta.
    Vänta på beskedet att den personliga vyn är sparad.
@@ -83,6 +84,9 @@ usable areas in both opening orders”.
 
 - Navigation och detaljer öppnas i skilda ytor. Deras innehåll går att
   rulla när utrymmet är litet, med åtkomliga kontroller och synligt fokus.
+- En tidigare flyttad navigation återgår till sin reserverade yta när
+  detaljer öppnas. Med öppet arbete sker samma sak vid storleksändring
+  eller byte mellan normal- och miniläge. Detaljpanelens placering består.
 - Oskickad text och detaljer består under navigering och objektflytt.
 - Detaljerna visar ingen separat undertitel **Flytta** eller upprepad
   lista över direkta samband. Sambanden nås genom listalternativet.

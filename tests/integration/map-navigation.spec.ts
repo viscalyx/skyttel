@@ -174,13 +174,25 @@ test('NAVIGATION-02: navigation and unsent details retain separate usable areas 
         await lo.click();
         const trigger = page.getByRole('button', { name: 'Navigera', exact: true });
         const details = page.getByRole('button', { name: 'Visa detaljer', exact: true });
-        if (navigationFirst) await trigger.click();
+        if (navigationFirst) {
+          await trigger.click();
+          const handle = page.getByRole('group', { name: 'Navigation', exact: true });
+          if (width > 1000)
+            for (let step = 0; step < 17; step++) await handle.press('Shift+ArrowLeft');
+          await handle.press('Shift+ArrowDown');
+          await handle.press('Shift+ArrowDown');
+        }
         if (!(await details.isVisible()))
           await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
         await details.click();
         if (!navigationFirst) await trigger.click();
         const panel = page.getByRole('region', { name: 'Lo Exempel', exact: true });
         const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
+        await expect(
+          navigationFirst
+            ? panel.getByRole('heading', { name: 'Lo Exempel', exact: true })
+            : navigation.getByRole('group', { name: 'Navigation', exact: true }),
+        ).toBeFocused();
         await navigation
           .getByRole('button', { name: 'Stäng navigering', exact: true })
           .click({ trial: true });
@@ -197,12 +209,33 @@ test('NAVIGATION-02: navigation and unsent details retain separate usable areas 
             a.y + a.height <= b.y ||
             b.y + b.height <= a.y,
         ).toBe(true);
+        if (width > 1000) {
+          const handle = navigation.getByRole('group', { name: 'Navigation', exact: true });
+          await handle.focus();
+          await handle.press('Shift+ArrowLeft');
+          expect((await navigation.boundingBox())?.x).toBe(a.x - 40);
+          await page.setViewportSize({ width: width - 20, height });
+          await expect.poll(async () => (await navigation.boundingBox())?.x).toBe(a.x - 20);
+          await page.setViewportSize({ width, height });
+          await expect(handle).toBeFocused();
+          await expect.poll(() => panel.boundingBox()).toEqual(b);
+          await handle.press('Shift+ArrowLeft');
+        }
         await navigation
           .getByRole('button', { name: 'Flytta Lo Exempel: bakåt', exact: true })
           .click();
         await expect(page.getByText('Din personliga vy är sparad.', { exact: true })).toBeVisible();
         await navigation.getByRole('button', { name: 'Panorera höger', exact: true }).click();
         await navigation.getByRole('button', { name: 'Visa mininavigering' }).click();
+        await expect(
+          navigation.getByRole('button', { name: 'Visa normal navigering' }),
+        ).toBeFocused();
+        if (width > 1000) {
+          const mini = await navigation.boundingBox();
+          if (!mini) throw new Error('Mini navigation must remain visible.');
+          expect(mini.x + mini.width).toBe(width - 24);
+          expect(await panel.boundingBox()).toEqual(b);
+        }
         await navigation.getByRole('button', { name: 'Zooma in', exact: true }).click();
         await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
           'Oskickad text medan jag navigerar',

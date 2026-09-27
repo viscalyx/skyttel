@@ -113,6 +113,9 @@ Navigation och detaljer kan vara öppna samtidigt. På dator reserveras
 utrymme bredvid panelerna. På smala skärmar får de skilda ytor och
 innehållet rullas inuti respektive yta. **Visa samband i listan** i
 objektdetaljerna öppnar dess kopplingar i det redigerbara textalternativet.
+En flyttad navigation återgår till sin reserverade yta när arbete öppnas,
+eller när fönsterstorlek eller navigeringsläge ändras medan arbete är öppet.
+Detaljpanelernas egna placeringar behålls.
 
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga

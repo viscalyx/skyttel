@@ -45,6 +45,7 @@ type Drag = {
 
 export function MapNavigation({
   open,
+  openWork,
   onClose,
   onNavigate,
   object,
@@ -54,6 +55,7 @@ export function MapNavigation({
   children,
 }: {
   open: boolean;
+  openWork?: readonly string[];
   onClose: () => void;
   onNavigate: (action: (typeof cameraButtons)[number][0]) => void;
   object?: { id: string; name: string };
@@ -81,6 +83,9 @@ export function MapNavigation({
     handle.current?.focus({ preventScroll: true });
   }, [open]);
   useLayoutEffect(() => {
+    if (open && openWork?.length) setPosition(null);
+  }, [open, openWork]);
+  useLayoutEffect(() => {
     const element = panel.current;
     if (!open || !element) return;
     const measure = () =>
@@ -97,14 +102,18 @@ export function MapNavigation({
           : next;
       });
     measure();
+    const resize = () => {
+      measure();
+      if (openWork?.length) setPosition(null);
+    };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
-    window.addEventListener('resize', measure);
+    window.addEventListener('resize', resize);
     return () => {
       observer.disconnect();
-      window.removeEventListener('resize', measure);
+      window.removeEventListener('resize', resize);
     };
-  }, [open]);
+  }, [open, openWork]);
   const cancelDrag = useCallback(() => {
     const current = drag.current;
     if (!current) return;
@@ -227,7 +236,10 @@ export function MapNavigation({
           type="button"
           aria-label={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
           title={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
-          onClick={() => setMini(!mini)}
+          onClick={() => {
+            if (openWork?.length) setPosition(null);
+            setMini(!mini);
+          }}
         >
           <WorkspaceIcon name={mini ? 'maximize' : 'minimize'} />
         </button>

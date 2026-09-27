@@ -1310,6 +1310,7 @@ export function HouseholdMap({
             cameraMount={cameraMount}
             navigationMount={navigationMount}
             onNavigationChange={setNavigationOpen}
+            openWork={workOpen ? openPanels : undefined}
             onCameraAction={() => setToolsExpanded(false)}
             theme={theme.theme}
             revealRequest={revealRequest}
