@@ -1130,7 +1130,7 @@ export function HouseholdMap({
     <section
       ref={workspace}
       tabIndex={-1}
-      className={`household-map${active ? ' workspace-shell' : ''}${workOpen ? ' workspace-open' : ''}${revealRequest ? ' workspace-revealing' : ''} presentation-${active ? presentation : 'list'}${detailsOpen ? ' map-details-open' : ''}${editorOpen ? ' map-editor-open' : ''}`}
+      className={`household-map${active ? ' workspace-shell' : ''}${workOpen ? ' workspace-open' : ''}${revealRequest && !navigationOpen ? ' workspace-revealing' : ''} presentation-${active ? presentation : 'list'}${detailsOpen ? ' map-details-open' : ''}${editorOpen ? ' map-editor-open' : ''}`}
       onFocusCapture={(event) => {
         if (
           !active ||
