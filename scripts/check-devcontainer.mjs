@@ -46,12 +46,7 @@ async function prepareFixture() {
   assert.equal(manifest.scripts['db:setup'], 'tsx scripts/setup-database.ts');
   assert.equal(manifest.scripts['db:migrate'], 'tsx scripts/migrate-development-database.ts');
   await mkdir(bundle);
-  for (const file of [
-    'prepare-storage.sh',
-    'keep-claude-code-sign-in.sh',
-    'merge-codex-config.py',
-    'codex-config.toml',
-  ]) {
+  for (const file of ['prepare-storage.sh', 'merge-codex-config.py', 'codex-config.toml']) {
     await copyFile(join(root, '.devcontainer', file), join(bundle, file));
   }
   await copyFile(
@@ -126,18 +121,12 @@ async function checkProfile(profile, composePath) {
   const hook = JSON.parse(hookMatch[1]);
   for (const required of [
     'bash .devcontainer/prepare-storage.sh',
-    'bash .devcontainer/keep-claude-code-sign-in.sh',
     'python3 .devcontainer/merge-codex-config.py .devcontainer/codex-config.toml /home/vscode/.codex/config.toml',
     'bash .devcontainer/install-claude-code.sh',
     'npm run db:setup',
   ]) {
     assert.ok(hook.includes(required), `${profile}: creation must run ${required}`);
   }
-  assert.ok(
-    hook.indexOf('bash .devcontainer/keep-claude-code-sign-in.sh') <
-      hook.indexOf('bash .devcontainer/install-claude-code.sh'),
-    `${profile}: creation must clear Claude Code state before installing it`,
-  );
   const startMatch = /"postStartCommand"\s*:\s*("(?:[^"\\]|\\.)*")/.exec(configText);
   assert.ok(startMatch, `${profile}: postStartCommand must be a shell command`);
   assert.ok(
@@ -183,6 +172,11 @@ async function checkProfile(profile, composePath) {
   }
   assert.deepEqual(targets.toSorted(), [...Object.keys(persistent), ...shared].toSorted());
   assert.equal(original.services.app.environment.SKYTTEL_DATABASE_PATH, '/data/skyttel.sqlite');
+  assert.equal(
+    original.services.app.environment.CLAUDE_CONFIG_DIR,
+    '/home/vscode/.claude',
+    `${profile}: Claude Code's global configuration must stay in its persistent volume`,
+  );
   assert.equal(original.services.app.build.dockerfile, '.devcontainer/Dockerfile');
   const volumes = Object.fromEntries(
     targets.map((_, index) => [`storage-${index}`, { name: `${project}-storage-${index}` }]),
@@ -247,10 +241,7 @@ async function checkProfile(profile, composePath) {
       .filter(({ type }) => type === 'bind')
       .map(({ target }) => target),
   ]);
-  const prepare = async () => {
-    await run('bash', '/workspace/.devcontainer-test/prepare-storage.sh');
-    await run('bash', '/workspace/.devcontainer-test/keep-claude-code-sign-in.sh');
-  };
+  const prepare = () => run('bash', '/workspace/.devcontainer-test/prepare-storage.sh');
   const state = (action) =>
     run('python3', '/workspace/.devcontainer-test/devcontainer-state.py', action);
   const merge = () =>
@@ -323,7 +314,7 @@ async function checkProfile(profile, composePath) {
     assert.ok(mount.Name.startsWith(`${project}-`), 'Every mount must belong to this test');
   }
   console.log(
-    `${profile}: creation seeds demo data; recreation resets application data; restart and migration preserve data; mounted developer state survives; only the Claude Code sign-in survives recreation`,
+    `${profile}: creation seeds demo data; recreation resets application data; restart and migration preserve data; mounted developer state survives`,
   );
 }
 
