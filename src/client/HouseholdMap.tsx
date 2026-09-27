@@ -1378,11 +1378,16 @@ export function HouseholdMap({
           statusOpen={statusOpen}
           onCloseStatus={() => {
             setStatusOpen(false);
-            workspace.current
-              ?.querySelector<HTMLButtonElement>(
-                '.workspace-tools button[aria-label="Aktuell status"]',
-              )
-              ?.focus();
+            const trigger = workspace.current?.querySelector<HTMLButtonElement>(
+              '.workspace-tools button[aria-label="Aktuell status"]',
+            );
+            if (trigger?.offsetHeight) trigger.focus();
+            else
+              workspace.current
+                ?.querySelector<HTMLButtonElement>(
+                  '.workspace-tools button[aria-label="Visa verktygens namn"]',
+                )
+                ?.focus();
           }}
           statusContent={({ working, needsAnswer }) => (
             <DraftStatus

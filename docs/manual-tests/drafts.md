@@ -471,7 +471,8 @@ okänt resultat och verifierat sparande.
 
 **Användare:** Administratören.
 
-**Förutsättningar:** Ett tomt hushåll enligt förberedelsen. För ett okänt
+**Förutsättningar:** Ett tomt hushåll enligt förberedelsen. Upprepa med
+1440, 390 och 320 pixlars bredd. För ett okänt
 resultat före serverns sparande kan webbläsarens nätverksblockering användas
 för adressen som slutar med `/map/save`, enligt
 [SPAR-02](operations.md#spar-02-återförsöka-ett-väntande-sparande-från-en-annan-klient).
@@ -479,22 +480,27 @@ för adressen som slutar med `/map/save`, enligt
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
 testfallet “UTKAST-12: closed panels retain private proposals through an
-unknown save and verify the same receipt”.
+unknown save at 1440px/390px/320px and verify the same receipt”.
 
 **Steg:**
 
 1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng arbetsytan.
 2. Kontrollera statuskortets **1 förslag · privat utkast**, mikrofonens
    avstängda läge och legenden för grönt plus, amberfärgad penna och rött kryss.
-3. Blockera sparadressen och välj **Spara hela utkastet** i kortet.
+3. Öppna verktygens namn vid behov. Fokusera **Aktuell status** och tryck
+   Retur. Kontrollera rubrikens fokus och att verktygen fälls ihop.
+4. Blockera sparadressen och välj **Spara hela utkastet** i kortet.
    Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
-4. Ta bort blockeringen och välj **Hämta samma kvitto igen**. Läs resultatet
-   och öppna **Sparförsök och kvitton**.
+5. Ta bort blockeringen och välj **Hämta samma kvitto igen**. Läs resultatet.
+   Stäng aktuell status och kontrollera fokus. Öppna **Sparförsök och kvitton**.
 
 **Förväntat resultat:**
 
 - Sparandet kräver ingen extra granskningsdialog. Ett obekräftat försök
   visas aldrig som säkert lyckat eller säkert misslyckat.
+- Kortets knappar kan användas utan att verktygen täcker dem. Stängning
+  återför fokus till **Aktuell status** på dator eller **Visa verktygens
+  namn** när statusknappen är dold i mobilens hopfällda verktyg.
 - Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns
   en gång i kartan. Legenden försvinner när det bekräftat tomma utkastet
   hämtas. Sparförsöken innehåller ett enda försök.

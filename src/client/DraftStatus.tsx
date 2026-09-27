@@ -51,7 +51,9 @@ export function DraftStatus({
     : unknown || operation?.status === 'pending'
       ? 'Sparutfall okänt'
       : operation?.status === 'succeeded'
-        ? 'Sparat · kvitto bekräftat'
+        ? count > 0 && draft.version > operation.draftVersion
+          ? 'Tidigare sparande · kvitto bekräftat'
+          : 'Sparat · kvitto bekräftat'
         : operation?.status === 'rejected'
           ? 'Sparandet avvisades · inget sparat av försöket'
           : '';

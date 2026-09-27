@@ -13,66 +13,83 @@ import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { modelTool, textModel } from '../support/text-model.js';
 
-test('UTKAST-12: closed panels retain private proposals through an unknown save and verify the same receipt', async ({
-  page,
-}) => {
-  const installation = await createInstallation();
-  let release: (() => void) | undefined;
-  try {
-    await signIn(page.request, installation.origin);
-    const { household } = await (await createHousehold(page.request, installation.origin)).json();
-    const path = `${installation.origin}/api/households/${household.id}/map`;
-    await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Familjeabonnemanget');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await openMap(page);
-    const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
-    const legend = page.getByRole('region', { name: 'Förslag i kartan', exact: true });
-    await expect(status).toContainText('1 förslag · privat utkast');
-    await expect(status).toContainText('Mikrofonen är av');
-    await expect(legend).toContainText('Föreslås läggas till');
-    const held = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    let receipt: SaveReceipt | undefined;
-    await page.route('**/map/save', async (route) => {
-      const response = await route.fetch();
-      expect(response.status()).toBe(200);
-      receipt = (await response.json()).receipt;
-      await held;
-      await route.abort();
-    });
-    await status.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(status).toContainText('Väntar på sparkvitto');
-    await expect(legend).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Välj objekt: Familjeabonnemanget', exact: true }),
-    ).toBeVisible();
-    await expect.poll(() => receipt).toBeTruthy();
-    release?.();
-    await expect(status).toContainText('Sparutfall okänt');
-    await expect(legend).toBeVisible();
-    await expect(
-      status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
-    ).toBeDisabled();
-    await page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }).click();
-    await expect(status).toContainText('Sparat · kvitto bekräftat');
-    await expect(legend).toHaveCount(0);
-    const saved: MapState = await (await page.request.get(path)).json();
-    expect(saved.objects.map((object) => object.name)).toEqual(['Familjeabonnemanget']);
-    expect(saved.draft.changes).toEqual([]);
-    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
-    const { operations } = await (await page.request.get(`${path}/operations`)).json();
-    expect(operations).toHaveLength(1);
-    expect(operations[0].operationId).toBe(receipt?.operationId);
-    expect(operations[0].receipt).toEqual(receipt);
-  } finally {
-    release?.();
-    await installation.close();
-  }
-});
+for (const width of [1440, 390, 320])
+  test(`UTKAST-12: closed panels retain private proposals through an unknown save at ${width}px and verify the same receipt`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    let release: (() => void) | undefined;
+    try {
+      await page.setViewportSize({ width, height: 844 });
+      await signIn(page.request, installation.origin);
+      const { household } = await (await createHousehold(page.request, installation.origin)).json();
+      const path = `${installation.origin}/api/households/${household.id}/map`;
+      await page.goto(installation.origin);
+      await openWorkspace(page);
+      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page.getByLabel('Objektets namn').fill('Familjeabonnemanget');
+      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await openMap(page);
+      const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+      const legend = page.getByRole('region', { name: 'Förslag i kartan', exact: true });
+      await expect(status).toContainText('1 förslag · privat utkast');
+      await expect(status).toContainText('Mikrofonen är av');
+      await expect(legend).toContainText('Föreslås läggas till');
+      const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
+      const statusButton = tools.getByRole('button', { name: 'Aktuell status', exact: true });
+      if (!(await statusButton.isVisible()))
+        await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+      await statusButton.focus();
+      await page.keyboard.press('Enter');
+      await expect(
+        status.getByRole('heading', { name: 'Aktuell status', exact: true }),
+      ).toBeFocused();
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let receipt: SaveReceipt | undefined;
+      await page.route('**/map/save', async (route) => {
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        receipt = (await response.json()).receipt;
+        await held;
+        await route.abort();
+      });
+      await status.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await expect(status).toContainText('Väntar på sparkvitto');
+      await expect(legend).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Välj objekt: Familjeabonnemanget', exact: true }),
+      ).toBeVisible();
+      await expect.poll(() => receipt).toBeTruthy();
+      release?.();
+      await expect(status).toContainText('Sparutfall okänt');
+      await expect(legend).toBeVisible();
+      await expect(
+        status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      await page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }).click();
+      await expect(status).toContainText('Sparat · kvitto bekräftat');
+      await expect(legend).toHaveCount(0);
+      const saved: MapState = await (await page.request.get(path)).json();
+      expect(saved.objects.map((object) => object.name)).toEqual(['Familjeabonnemanget']);
+      expect(saved.draft.changes).toEqual([]);
+      expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
+      const { operations } = await (await page.request.get(`${path}/operations`)).json();
+      expect(operations).toHaveLength(1);
+      expect(operations[0].operationId).toBe(receipt?.operationId);
+      expect(operations[0].receipt).toEqual(receipt);
+      await status.getByRole('button', { name: 'Stäng aktuell status', exact: true }).click();
+      await expect(
+        width > 700
+          ? statusButton
+          : tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }),
+      ).toBeFocused();
+    } finally {
+      release?.();
+      await installation.close();
+    }
+  });
 
 test('UTKAST-14: manual text and voice proposals share one durable private draft and an atomic household save', async ({
   page,

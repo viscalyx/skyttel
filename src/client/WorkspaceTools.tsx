@@ -191,6 +191,7 @@ export function WorkspaceTools({
               data-secondary
               onClick={() => {
                 setUtility(null);
+                onExpandedChange(false);
                 onStatus();
               }}
             >
