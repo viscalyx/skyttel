@@ -227,6 +227,11 @@ export function HouseholdMap({
     return () => window.removeEventListener('resize', resize);
   }, []);
   const mapCovered = narrow && workOpen && !revealRequest && !navigationOpen;
+  useLayoutEffect(() => {
+    // Panel focus can scroll the ordinary work flow before navigation closes.
+    // Reset only when the requested reveal layout has actually been committed.
+    if (revealRequest && !navigationOpen && workspace.current) workspace.current.scrollTop = 0;
+  }, [revealRequest, navigationOpen]);
   function openWork(target: WorkspaceTarget) {
     workTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -1061,7 +1066,6 @@ export function HouseholdMap({
     };
     const abort = new AbortController();
     revealAbort.current = abort;
-    workspace.current.scrollTop = 0;
     const cancel = () => abort.abort();
     signal.addEventListener('abort', cancel, { once: true });
     setQuery('');

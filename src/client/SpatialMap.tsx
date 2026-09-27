@@ -349,16 +349,20 @@ export function SpatialMap({
       personalReady &&
       !contextLost &&
       revealRequest.objectIds.every((id) => objects.has(id)) &&
-      (!revealRequest.relationshipId || relationships.has(revealRequest.relationshipId)) &&
-      scene.current?.reveal(revealRequest.objectIds)
+      (!revealRequest.relationshipId || relationships.has(revealRequest.relationshipId))
     ) {
-      setNavigationOpen(false);
-      onNavigationChange?.(false);
-      setCompletedRevealId(revealRequest.id);
+      if (navigationOpen) {
+        // Framing uses the committed canvas dimensions after navigation closes.
+        setNavigationOpen(false);
+        onNavigationChange?.(false);
+        return;
+      }
+      if (scene.current?.reveal(revealRequest.objectIds)) setCompletedRevealId(revealRequest.id);
     }
   }, [
     revealRequest,
     completedRevealId,
+    navigationOpen,
     active,
     activated,
     personalReady,
