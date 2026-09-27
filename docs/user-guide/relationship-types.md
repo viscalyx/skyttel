@@ -75,10 +75,11 @@ och Nej. Äldre definitioner visas först under **Egna fält**.
 
 ## Läs och rätta från båda objekten
 
-Öppna cykelns detaljer för att se **Cykeln → förvaras i → Garaget**.
-Öppna garaget för att se **Garaget → innehåller → Cykeln**. Klicka på
-sambandet från valfritt håll för att öppna samma koppling. Formuläret
-visar alltid dess startobjekt och målobjekt i den sparade riktningen.
+Öppna cykelns detaljer och välj **Visa samband i listan** för att se
+**Cykeln → förvaras i → Garaget**. Gör samma sak från garagets detaljer
+för att se **Garaget → innehåller → Cykeln**. Klicka på sambandet från
+valfritt håll för att öppna samma koppling. Formuläret visar alltid dess
+startobjekt och målobjekt i den sparade riktningen.
 
 Du kan ändra typ eller ändpunkter och lägga till fler samband. Andra
 betydelser mellan samma objekt är tillåtna. Ett upprepat tillägg med
