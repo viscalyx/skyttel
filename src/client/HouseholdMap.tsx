@@ -247,6 +247,7 @@ export function HouseholdMap({
   function dismissGuidance() {
     setGuidance(false);
     workspace.current?.querySelector<HTMLButtonElement>('.workspace-tools button')?.focus();
+    if (workspace.current) workspace.current.scrollTop = 0;
   }
   function closeWork() {
     setPresentation('map');

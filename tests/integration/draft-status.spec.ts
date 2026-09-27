@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
+import type { PersonalView } from '../../src/shared/personal-view.js';
 import {
   createHousehold,
   openConversation,
@@ -442,3 +443,94 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
     await installation.close();
   }
 });
+
+for (const viewport of [
+  { width: 1440, height: 1000 },
+  { width: 640, height: 500 },
+  { width: 320, height: 250 },
+])
+  test(`UTKAST-16: navigation and current status keep lower controls usable in both opening orders at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    try {
+      await page.setViewportSize(viewport);
+      await signIn(page.request, installation.origin);
+      const { household } = await (await createHousehold(page.request, installation.origin)).json();
+      const path = `${installation.origin}/api/households/${household.id}/map`;
+      const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+      const initial = await read();
+      const post = async (route: string, data: unknown) => {
+        const response = await page.request.post(`${path}/${route}`, {
+          headers: { origin: installation.origin },
+          data,
+        });
+        expect(response.status(), await response.text()).toBe(200);
+      };
+      await post('draft', {
+        version: 0,
+        id: 'lo',
+        baseRevision: null,
+        value: { typeId: initial.types[0].id, name: 'Lo Exempel', description: '' },
+      });
+      await post('save', { version: 1, operationId: 'navigation-status-baseline' });
+      await post('draft', {
+        version: (await read()).draft.version,
+        id: 'bike',
+        baseRevision: null,
+        value: { typeId: initial.types[0].id, name: 'Blå cykeln', description: '' },
+      });
+      await page.goto(installation.origin);
+      await openMap(page);
+      await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
+      const shared = await read();
+      const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
+      const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
+      const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+      const view = async (): Promise<PersonalView> =>
+        (await page.request.get(`${path}/view`)).json();
+      let version = 0;
+      for (const first of ['navigation', 'status']) {
+        if (first === 'navigation')
+          await tools.getByRole('button', { name: 'Navigera', exact: true }).click();
+        const trigger = tools.getByRole('button', { name: 'Aktuell status', exact: true });
+        if (!(await trigger.isVisible()))
+          await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+        await trigger.click();
+        await expect(
+          status.getByRole('heading', { name: 'Aktuell status', exact: true }),
+        ).toBeFocused();
+        if (first === 'status')
+          await tools.getByRole('button', { name: 'Navigera', exact: true }).click();
+        const navigationBox = await navigation.boundingBox();
+        const statusBox = await status.boundingBox();
+        if (!navigationBox || !statusBox) throw new Error('Both surfaces must be visible.');
+        expect(
+          navigationBox.x + navigationBox.width <= statusBox.x ||
+            statusBox.x + statusBox.width <= navigationBox.x ||
+            navigationBox.y + navigationBox.height <= statusBox.y ||
+            statusBox.y + statusBox.height <= navigationBox.y,
+        ).toBe(true);
+        for (const direction of ['vänster', 'höger', 'uppåt', 'nedåt', 'framåt', 'bakåt']) {
+          const move = navigation.getByRole('button', {
+            name: `Flytta Lo Exempel: ${direction}`,
+            exact: true,
+          });
+          await move.focus();
+          await move.click();
+          await expect.poll(async () => (await view()).positions[0]?.version).toBe(++version);
+        }
+        expect(await read()).toEqual(shared);
+        const save = status.getByRole('button', { name: 'Spara hela utkastet', exact: true });
+        await save.focus();
+        await save.click({ trial: true });
+        await expect(save).toBeFocused();
+        await status.getByRole('button', { name: 'Stäng aktuell status', exact: true }).click();
+        await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+        await expect(tools.getByRole('button', { name: 'Navigera', exact: true })).toBeFocused();
+        expect(await read()).toEqual(shared);
+      }
+    } finally {
+      await installation.close();
+    }
+  });

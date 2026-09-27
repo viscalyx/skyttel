@@ -630,3 +630,41 @@ fresh explicit save”.
 - Integrationstestet styr frågan vid modellgränsen men använder riktig
   server och SQLite. Det jämför tomma sparförsök före beskedet och ett
   enda lyckat försök med samma verkliga kvitto i historiken efteråt.
+
+### UTKAST-16: använd Navigation och aktuell status tillsammans
+
+**Syfte:** Behålla åtkomst till personlig placering och sparande när båda
+ytorna är öppna, även när förstoring kräver rullning.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Lo Exempel är sparad i kartan. Blå cykeln finns som
+nytt privat förslag. Börja med stängd arbetsyta och stängd vägledning.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+testfallen “UTKAST-16: navigation and current status keep lower controls
+usable in both opening orders at 1440px”, samma titel med “640px” och “320px”.
+
+**Steg:**
+
+1. Markera Lo Exempel i kartan. Öppna **Navigera** och sedan **Aktuell
+   status** från verktygen. Expandera verktygens namn om det behövs.
+2. Kontrollera att statusrubriken får synligt fokus. Använd tangentbord
+   och pekare för att flytta Lo i alla sex riktningar i Navigation.
+   Rulla vid behov till de nedre kontrollerna.
+3. Flytta fokus till **Spara hela utkastet** i statuskortet och kontrollera
+   att knappen går att nå utan att spara. Det privata förslaget ska bestå.
+4. Stäng aktuell status och sedan Navigation. Kontrollera fokus på
+   **Navigera**. Upprepa med aktuell status öppnad före Navigation.
+5. Upprepa på smal skärm och vid hög förstoring.
+
+**Förväntat resultat:**
+
+- Alla personliga flyttriktningar och statusens sparknapp är åtkomliga
+  i båda öppningsordningarna, även när ytorna behöver rullas.
+- Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma
+  innehåll och Blå cykelns privata förslag består utan sparförsök.
+- Fokus följer den uttryckliga handlingen och går tillbaka till verktygen
+  vid stängning. Navigation, status och verktygen täcker inte den kontroll
+  som används.
