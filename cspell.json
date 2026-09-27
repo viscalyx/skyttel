@@ -318,7 +318,9 @@
     "ikonkatalogens",
     "Lucides",
     "ikonfiler",
-    "ikonsökningen"
+    "ikonsökningen",
+    "ikonförslag",
+    "fokusval"
   ],
   "overrides": [
     {

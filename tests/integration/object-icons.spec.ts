@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import {
@@ -186,6 +186,149 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
       true,
     );
   } finally {
+    await installation.close();
+  }
+});
+
+test('IKON-04: delayed keyboard icon choice and reset restore focus without replacing a later choice', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  let release = () => {};
+  try {
+    await signIn(page.request, installation.origin);
+    await createHousehold(page.request, installation.origin);
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
+    const picker = page.getByRole('region', { name: 'Ikon', exact: true });
+    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
+    await picker.getByRole('searchbox').fill('cykel');
+    async function choose(button: Locator, nextFocus?: Locator) {
+      let reached = () => {};
+      const ready = new Promise<void>((resolve) => {
+        reached = resolve;
+      });
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await page.route('**/map/draft', async (route) => {
+        const response = await route.fetch();
+        reached();
+        await held;
+        await route.fulfill({ response });
+      });
+      await button.focus();
+      await page.keyboard.press('Enter');
+      await ready;
+      if (nextFocus) await nextFocus.focus();
+      release();
+      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect(nextFocus ?? button).toBeFocused();
+      await page.unroute('**/map/draft');
+    }
+    await choose(picker.getByRole('button', { name: 'Välj Cykel', exact: true }));
+    await choose(picker.getByRole('button', { name: 'Typens standardikon', exact: true }));
+    await choose(
+      picker.getByRole('button', { name: 'Välj Cykel', exact: true }),
+      page.getByRole('button', { name: 'Sök i kartan', exact: true }),
+    );
+  } finally {
+    release();
+    await installation.close();
+  }
+});
+
+test('IKON-05: a failed icon request focuses recovery and a successful retry returns to the picker', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  let release = () => {};
+  try {
+    await signIn(page.request, installation.origin);
+    await createHousehold(page.request, installation.origin);
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
+    const picker = page.getByRole('region', { name: 'Ikon', exact: true });
+    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
+    await picker.getByRole('searchbox').fill('cykel');
+    await page.route(
+      '**/map/draft',
+      (route) => route.fulfill({ status: 503, json: { error: 'temporarily_unavailable' } }),
+      { times: 1 },
+    );
+    const cycle = picker.getByRole('button', { name: 'Välj Cykel', exact: true });
+    await cycle.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('alert')).toContainText('Ändringen kunde inte bekräftas');
+    const recovery = page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true });
+    await expect(recovery).toBeFocused();
+    await expect(cycle).toBeDisabled();
+    await page.keyboard.press('Enter');
+    await expect(cycle).toBeEnabled();
+    await expect(cycle).toBeFocused();
+    await expect(cycle).toHaveAttribute('aria-pressed', 'false');
+    await page.keyboard.press('Enter');
+    await expect(cycle).toHaveAttribute('aria-pressed', 'true');
+    await expect(cycle).toBeFocused();
+    // Losing a successful response can leave the original editor stale after recovery.
+    await page.route(
+      '**/map/draft',
+      async (route) => {
+        expect((await route.fetch()).ok()).toBe(true);
+        await route.fulfill({ status: 503, json: { error: 'response_lost' } });
+      },
+      { times: 1 },
+    );
+    const reset = picker.getByRole('button', { name: 'Typens standardikon', exact: true });
+    await reset.focus();
+    await page.keyboard.press('Enter');
+    await expect(recovery).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('heading', { name: 'Lo', exact: true })).toBeFocused();
+    await expect(reset).toBeDisabled();
+    await expect(page.getByRole('alert')).toContainText('äldre utkast');
+    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await page.getByRole('button', { name: 'Lo', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await expect(reset).toHaveAttribute('aria-pressed', 'true');
+    await picker.getByRole('searchbox').fill('cykel');
+    const toolbar = page.getByRole('button', { name: 'Sök i kartan', exact: true });
+    for (const operation of ['reject', 'recover']) {
+      let reached = () => {};
+      const ready = new Promise<void>((resolve) => {
+        reached = resolve;
+      });
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await page.route(
+        operation === 'reject' ? '**/map/draft' : /\/map\?reload=/,
+        async (route) => {
+          const response = operation === 'recover' ? await route.fetch() : undefined;
+          reached();
+          await held;
+          await route.fulfill(
+            response ? { response } : { status: 503, json: { error: 'temporarily_unavailable' } },
+          );
+        },
+        { times: 1 },
+      );
+      await (operation === 'reject' ? cycle : recovery).focus();
+      await page.keyboard.press('Enter');
+      await ready;
+      await toolbar.focus();
+      release();
+      if (operation === 'reject')
+        await expect(page.getByRole('alert')).toContainText('Ändringen kunde inte bekräftas');
+      else await expect(cycle).toBeEnabled();
+      await expect(toolbar).toBeFocused();
+    }
+  } finally {
+    release();
     await installation.close();
   }
 });

@@ -19,12 +19,15 @@ export function ObjectIconPicker({
   disabled: boolean;
   needsText: boolean;
   onStageText: () => Promise<boolean>;
-  onChange: (id: string | null) => void;
+  onChange: (id: string | null) => Promise<boolean>;
 }) {
   const id = useId();
   const [query, setQuery] = useState('');
   const [requestedPage, setPage] = useState(0);
-  const [stageFocus, setStageFocus] = useState<HTMLElement | null>(null);
+  const [proposalFocus, setProposalFocus] = useState<{
+    origin: HTMLElement;
+    target: HTMLElement;
+  } | null>(null);
   const search = useRef<HTMLInputElement>(null);
   const results = useRef<HTMLFieldSetElement>(null);
   const pageFocus = useRef<number | null>(null);
@@ -33,11 +36,19 @@ export function ObjectIconPicker({
   const page = Math.min(requestedPage, pages - 1);
   const blocked = disabled || needsText;
   useLayoutEffect(() => {
-    if (!stageFocus || blocked) return;
-    if (document.activeElement === stageFocus || document.activeElement === document.body)
-      search.current?.focus();
-    setStageFocus(null);
-  }, [stageFocus, blocked]);
+    if (!proposalFocus || blocked) return;
+    setProposalFocus(null);
+    const { origin, target } = proposalFocus;
+    if (
+      (document.activeElement === origin || document.activeElement === document.body) &&
+      target.isConnected &&
+      !target.closest('[hidden], [inert], [aria-hidden="true"]') &&
+      !target.matches(':disabled') &&
+      getComputedStyle(target).visibility !== 'hidden' &&
+      getComputedStyle(target).display !== 'none'
+    )
+      target.focus();
+  }, [proposalFocus, blocked]);
   useLayoutEffect(() => {
     if (pageFocus.current !== page) return;
     pageFocus.current = null;
@@ -86,7 +97,8 @@ export function ObjectIconPicker({
               disabled={disabled}
               onClick={async (event) => {
                 const trigger = event.currentTarget;
-                if (await onStageText()) setStageFocus(trigger);
+                if ((await onStageText()) && search.current)
+                  setProposalFocus({ origin: trigger, target: search.current });
               }}
             >
               Lägg uppgifterna i utkastet först
@@ -134,8 +146,10 @@ export function ObjectIconPicker({
             type="button"
             disabled={blocked}
             aria-pressed={!value}
-            onClick={() => {
-              if (value) onChange(null);
+            onClick={async (event) => {
+              const trigger = event.currentTarget;
+              if (value && (await onChange(null)))
+                setProposalFocus({ origin: trigger, target: trigger });
             }}
           >
             <span className="object-icon-default-symbol" aria-hidden="true" />
@@ -160,8 +174,10 @@ export function ObjectIconPicker({
                 className="object-icon-choice"
                 aria-label={`Välj ${icon.label}`}
                 aria-pressed={value === icon.id}
-                onClick={() => {
-                  if (value !== icon.id) onChange(icon.id);
+                onClick={async (event) => {
+                  const trigger = event.currentTarget;
+                  if (value !== icon.id && (await onChange(icon.id)))
+                    setProposalFocus({ origin: trigger, target: trigger });
                 }}
               >
                 <ObjectIconGlyph iconId={icon.id} className="object-icon-glyph" />

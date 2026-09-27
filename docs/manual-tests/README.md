@@ -120,7 +120,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
   mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart
-  och återgång till standardikon.
+  och återgång till standardikon samt fokus vid fördröjda svar och återförsök.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
   rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, ångring,
   kvitton och bildåtkomst.

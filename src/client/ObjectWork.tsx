@@ -178,13 +178,14 @@ export function ObjectWork({
                   setDirty(false);
                   return true;
                 }}
-                onChange={(iconId) => {
+                onChange={async (iconId) => {
                   const value = { ...editor.value };
                   if (iconId) value.iconId = iconId;
                   else delete value.iconId;
-                  void stageObject({ ...editor, value }).then((next) => {
-                    if (next) setEditor(next);
-                  });
+                  const next = await stageObject({ ...editor, value });
+                  if (!next) return false;
+                  setEditor(next);
+                  return true;
                 }}
               />
               <label htmlFor={`${prefix}-object-name`}>Objektets namn</label>

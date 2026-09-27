@@ -257,6 +257,31 @@ export function HouseholdMap({
   const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
+  const failedProposalOrigin = useRef<HTMLElement | null>(null);
+  const [proposalRecoveryFocus, setProposalRecoveryFocus] = useState<{
+    origin: Element | null;
+    target: HTMLElement | null;
+  } | null>(null);
+  useLayoutEffect(() => {
+    if (!proposalRecoveryFocus || pending) return;
+    setProposalRecoveryFocus(null);
+    if (!error) failedProposalOrigin.current = null;
+    if (
+      !active ||
+      !state ||
+      (document.activeElement !== proposalRecoveryFocus.origin &&
+        document.activeElement !== document.body)
+    )
+      return;
+    const target = error
+      ? workspace.current?.querySelector<HTMLButtonElement>('.workspace-feedback button')
+      : proposalRecoveryFocus.target;
+    if (target && !target.matches(':disabled') && restoreOutsideFocus(target)) return;
+    restoreOutsideFocus(
+      workspace.current?.querySelector<HTMLElement>('.workspace-window[data-active="true"] h2') ??
+        null,
+    );
+  });
   useLayoutEffect(() => {
     const measure = () => {
       const feedback = workspace.current?.querySelector<HTMLElement>('.workspace-feedback');
@@ -612,6 +637,7 @@ export function HouseholdMap({
               : 'Förslaget finns i ditt privata utkast. Kartan är inte ändrad.',
         );
       }
+      failedProposalOrigin.current = null;
       if (retainObject) retainObject(draft);
       else {
         setMergeOpen(false);
@@ -626,6 +652,10 @@ export function HouseholdMap({
       }
       return true;
     } catch (failure) {
+      if (retainObject && submittedFocus instanceof HTMLElement) {
+        failedProposalOrigin.current = submittedFocus;
+        setProposalRecoveryFocus({ origin: submittedFocus, target: null });
+      }
       if (
         failure instanceof MapRequestError &&
         [
@@ -1194,7 +1224,14 @@ export function HouseholdMap({
           <button
             type="button"
             disabled={pending}
-            onClick={() => {
+            onClick={(event) => {
+              if (failedProposalOrigin.current) {
+                setProposalRecoveryFocus({
+                  origin: event.currentTarget,
+                  target: failedProposalOrigin.current,
+                });
+                setPending(true);
+              }
               setLoad((value) => value + 1);
             }}
           >

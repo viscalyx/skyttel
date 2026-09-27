@@ -120,3 +120,64 @@ shared save reachable”.
   Verktygsraden täcker inte den kontroll som används.
 - Oskickad text bevaras. Ikonens återgång till standard sparas med objektet.
 - Innehållet kräver ingen vågrät sidrullning.
+
+### IKON-04: Behåll tangentbordsfokus efter ikonval och återgång
+
+**Syfte:** Verifiera fokus efter ett fördröjt privat ikonförslag.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Objektet Lo finns i det privata utkastet. Använd
+webbläsarens utvecklarverktyg för att tillfälligt begränsa nätverkshastigheten.
+
+**Integrationstest:**
+[object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
+testfallet “IKON-04: delayed keyboard icon choice and reset restore focus
+without replacing a later choice”.
+
+**Steg:**
+
+1. Redigera Lo och sök cykel. Gå till **Cykel** med tangentbord och tryck Enter.
+2. Vänta på markeringen. Kontrollera att Cykel fortfarande har synligt fokus.
+3. Gå till **Typens standardikon** och tryck Enter. Kontrollera fokus efter svaret.
+4. Välj Cykel igen. Medan svaret väntar, flytta fokus till **Sök i kartan**.
+   Kontrollera fokus efter svaret. Återställ nätverkshastigheten.
+
+**Förväntat resultat:**
+
+- Lyckade val och återgång till standard lämnar fokus på den använda knappen.
+- Ett senare fokusval i verktygsraden bevaras när svaret kommer.
+
+### IKON-05: Återhämta ett misslyckat ikonförslag med tangentbord
+
+**Syfte:** Verifiera nåbar återhämtning och återförsök utan förlorat fokus.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Objektet Lo finns i det privata utkastet. Använd
+utvecklarverktygens nätverkspanel för att blockera anrop till `*/map/draft`.
+
+**Integrationstest:**
+[object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
+testfallet “IKON-05: a failed icon request focuses recovery and a successful
+retry returns to the picker”.
+
+**Steg:**
+
+1. Redigera Lo och sök cykel. Välj **Cykel** med Enter medan anropet är blockerat.
+2. Läs felet. Kontrollera fokus på **Hämta aktuellt underlag**.
+3. Ta bort blockeringen och aktivera den fokuserade knappen med Enter.
+4. Kontrollera att Cykel åter kan väljas och har fokus. Tryck Enter igen och
+   kontrollera att valet lyckas med synligt fokus kvar.
+
+**Förväntat resultat:**
+
+- Felet gör återhämtningen åtkomlig. Den tidigare privata informationen bevaras.
+- Efter lyckad hämtning återkommer fokus till ikonen. Återförsöket går att utföra
+  med tangentbord och hör till samma privata utkast.
+
+Integrationsfallet provar dessutom ett tappat svar efter att den riktiga servern
+tagit emot förslaget. När hämtningen då visar att formuläret är inaktuellt går
+fokus till den synliga panelrubriken. Den gamla kontrollen förblir spärrad tills
+aktuella uppgifter öppnas. Fördröjda fel och hämtningar får inte flytta fokus från
+ett senare valt verktyg. Dessa kontrollerade svar provas automatiserat.
