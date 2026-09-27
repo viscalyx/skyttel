@@ -97,6 +97,8 @@ I en mycket kort och smal vy samlas återställning, etiketter och
 stjärnhimmel under **Visningsval**. **Navigera rymden** och **Ordna min vy**
 går fortfarande att öppna nedtill. **Visa verktygens namn** öppnar hela
 verktygsfältet med samtal och detaljer.
+Kamerans fokus, översikt och återgång fäller ihop verktygsnamnen så kartan
+får plats. Öppna arbetspaneler behålls.
 
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga

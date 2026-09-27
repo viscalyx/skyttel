@@ -81,6 +81,7 @@ export function SpatialMap({
   onFocusSelection,
   onShowOverview,
   cameraMount,
+  onCameraAction,
 }: {
   theme?: 'light' | 'dark';
   state: MapState;
@@ -104,6 +105,7 @@ export function SpatialMap({
   onFocusSelection?: () => void;
   onShowOverview?: () => void;
   cameraMount?: HTMLElement | null;
+  onCameraAction?: () => void;
 }) {
   const labelPrefix = useId();
   const [activated, setActivated] = useState(active);
@@ -647,6 +649,7 @@ export function SpatialMap({
         aria-label="Fokusera markering"
         disabled={!selectedIds.length || !active || !personalReady || unavailable || contextLost}
         onClick={() => {
+          onCameraAction?.();
           if (onFocusSelection) onFocusSelection();
           else {
             const ids = new Set(selectedIds);
@@ -672,6 +675,7 @@ export function SpatialMap({
         aria-label={overviewShown ? 'Återgå till föregående vy' : 'Visa hela kartan'}
         disabled={!active || !personalReady || unavailable || contextLost}
         onClick={() => {
+          onCameraAction?.();
           if (!overviewShown) onShowOverview?.();
           setOverviewRequested(true);
         }}

@@ -274,17 +274,29 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
     await page.keyboard.press('Enter');
     await expect(focus).toBeFocused();
     const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
-    for (const node of [lo, kim]) {
-      await expect.poll(async () => (await center(node)).x).toBeGreaterThanOrEqual(32);
-      await expect.poll(async () => (await center(node)).x).toBeLessThanOrEqual(288);
-      await expect.poll(async () => (await center(node)).y).toBeGreaterThanOrEqual(110);
-      await expect.poll(async () => (await center(node)).y).toBeLessThanOrEqual(172);
-      await node.click({ trial: true });
+    async function expectUsableFocus() {
+      for (const node of [lo, kim]) {
+        await expect.poll(async () => (await center(node)).x).toBeGreaterThanOrEqual(32);
+        await expect.poll(async () => (await center(node)).x).toBeLessThanOrEqual(288);
+        await expect.poll(async () => (await center(node)).y).toBeGreaterThanOrEqual(110);
+        await expect.poll(async () => (await center(node)).y).toBeLessThanOrEqual(172);
+        await node.click({ trial: true });
+      }
     }
+    await expectUsableFocus();
     await page.screenshot({ path: test.info().outputPath('short-focus.png') });
+    const expand = page.getByRole('button', { name: 'Visa verktygens namn', exact: true });
+    await expand.click();
     await page.getByRole('button', { name: 'Visa hela kartan', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }),
+    ).toBeFocused();
+    await expect(expand).toBeVisible();
+    await expand.click();
     await page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Visa hela kartan', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Visa hela kartan', exact: true })).toBeFocused();
+    await expect(expand).toBeVisible();
+    await expectUsableFocus();
     await map.getByText('Visningsval', { exact: true }).click();
     await map.getByLabel('Alla etiketter', { exact: true }).check();
     await map.getByLabel('Alla etiketter', { exact: true }).uncheck();
@@ -292,9 +304,14 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
     await map.getByText('Navigera rymden', { exact: true }).click();
     await map.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
     await map.getByText('Navigera rymden', { exact: true }).click();
-    await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+    await expand.click();
     await page.getByRole('button', { name: 'Samtal och text', exact: true }).click({ trial: true });
     await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click({ trial: true });
+    await focus.focus();
+    await page.keyboard.press('Enter');
+    await expect(focus).toBeFocused();
+    await expect(expand).toBeVisible();
+    await expectUsableFocus();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

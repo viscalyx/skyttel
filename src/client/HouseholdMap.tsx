@@ -207,6 +207,7 @@ export function HouseholdMap({
     objectIds: string[];
   }>();
   const [cameraMount, setCameraMount] = useState<HTMLDivElement | null>(null);
+  const [toolsExpanded, setToolsExpanded] = useState(false);
   const revealAbort = useRef<AbortController | null>(null);
   useEffect(() => () => revealAbort.current?.abort(), []);
   const listModeButton = useRef<HTMLButtonElement>(null);
@@ -1167,6 +1168,8 @@ export function HouseholdMap({
           </button>
           <WorkspaceTools
             cameraMount={setCameraMount}
+            expanded={toolsExpanded}
+            onExpandedChange={setToolsExpanded}
             onOpen={openWork}
             account={account}
             profileRequested={profileRequested}
@@ -1300,6 +1303,7 @@ export function HouseholdMap({
         <div className="map-space" hidden={!active} inert={mapCovered} aria-hidden={mapCovered}>
           <SpatialMap
             cameraMount={cameraMount}
+            onCameraAction={() => setToolsExpanded(false)}
             theme={theme.theme}
             revealRequest={revealRequest}
             focusRequest={cameraFocusRequest}

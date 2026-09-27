@@ -47,6 +47,8 @@ export function WorkspaceTools({
   detailsAvailable = false,
   detailsVisible = false,
   cameraMount,
+  expanded,
+  onExpandedChange,
 }: {
   onOpen: (target: WorkspaceTarget) => void;
   account?: ReactNode;
@@ -58,8 +60,9 @@ export function WorkspaceTools({
   detailsAvailable?: boolean;
   detailsVisible?: boolean;
   cameraMount?: (element: HTMLDivElement | null) => void;
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const [utility, setUtility] = useState<'help' | 'profile' | null>(
     profileRequested ? 'profile' : null,
   );
@@ -126,7 +129,7 @@ export function WorkspaceTools({
             data-secondary={target === 'draft' || target === 'search' || undefined}
             className={target === 'voice' ? 'workspace-talk' : undefined}
             onClick={() => {
-              setExpanded(false);
+              onExpandedChange(false);
               setUtility(null);
               onOpen(target);
             }}
@@ -143,7 +146,7 @@ export function WorkspaceTools({
             aria-pressed={detailsVisible}
             disabled={!detailsAvailable}
             onClick={() => {
-              setExpanded(false);
+              onExpandedChange(false);
               setUtility(null);
               onDetails();
             }}
@@ -186,7 +189,7 @@ export function WorkspaceTools({
             ref={expansionControl}
             aria-label={expanded ? 'Dölj verktygens namn' : 'Visa verktygens namn'}
             aria-expanded={expanded}
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => onExpandedChange(!expanded)}
           >
             <WorkspaceIcon name="expand" />
             <span>Fäll ihop</span>

@@ -137,6 +137,8 @@ CSS-mått; riktig webbläsarzoom provas separat.
 4. Öppna **Navigera rymden**, rotera och stäng navigeringen.
 5. Välj **Visa verktygens namn** och kontrollera att **Samtal och text**
    samt **Visa detaljer** går att nå.
+6. Aktivera kamerafokus med tangentbord från det utökade verktygsfältet.
+   Upprepa med översikt och återgång efter att verktygsnamnen öppnats igen.
 
 **Förväntat resultat:**
 
@@ -145,3 +147,5 @@ CSS-mått; riktig webbläsarzoom provas separat.
   den aktiverade knappen.
 - Kamera- och visningskontroller går att använda. Inga kontroller kräver
   vågrät rullning av sidan.
+- Kameraåtgärder fäller ihop verktygsnamnen och behåller fokus på samma
+  knapp. Urval och öppna arbetspaneler finns kvar.
