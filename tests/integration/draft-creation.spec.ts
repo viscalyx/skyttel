@@ -36,7 +36,16 @@ test('KARTA-09: unsent creation uses new draft types and objects in one durable 
       await field.getByLabel('Värdeslag').selectOption(kind);
     }
     await definition.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
+    await expect(page.getByRole('status')).toContainText('Förslaget finns i ditt privata utkast');
+    const typedDraft = await read();
+    expect(typedDraft.draft.objectTypes).toHaveLength(1);
+    expect(typedDraft.draft.changes).toEqual([]);
+    expect(typedDraft.objects).toEqual(initial.objects);
+    expect(typedDraft.types).toEqual(initial.types);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Aktuell status', exact: true })).toContainText(
+      'Oskickad formulärtext finns kvar',
+    );
     await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Oskickat före den nya typen',
     );
