@@ -4,7 +4,7 @@ import { unzipSync } from 'fflate';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings } from '../../src/shared/personal-view.js';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 async function arrange(page: Page) {
@@ -501,3 +501,94 @@ test('EXPORT-08: canceling preparation with an unseen ready response explains cl
     await fixture.installation.close();
   }
 });
+
+for (const width of [1280, 390, 320]) {
+  test(`EXPORT-09: keyboard export controls retain focus and unsent map work at ${width}px`, async ({
+    page,
+  }) => {
+    const fixture = await arrange(page);
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let prepared = () => {};
+    const serverReady = new Promise<void>((resolve) => {
+      prepared = resolve;
+    });
+    try {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      const before = await fixture.read();
+      await page.goto(fixture.installation.origin);
+      await openWorkspace(page);
+      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page.getByLabel('Objektets namn').fill('Oskickad exportcykel');
+      await page.getByLabel('Beskrivning', { exact: true }).fill('Texten finns kvar');
+      await openSettings(page);
+      const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+      if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
+      await navigation.getByRole('link', { name: 'Fullständig export', exact: true }).click();
+      const section = page.getByRole('region', { name: 'Fullständig export' });
+      await expect(section.getByRole('heading', { level: 1 })).toBeFocused();
+      await expect(page.getByLabel('Objektets namn')).not.toBeVisible();
+      for (const theme of ['light', 'dark'] as const) {
+        await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+        await section.getByRole('button', { name: 'Förbered fullständig export' }).focus();
+        await page.keyboard.press('Enter');
+        const download = section.getByRole('button', { name: 'Hämta ZIP-fil' });
+        await expect(download).toBeFocused();
+        await download.click({ trial: true });
+        const box = await download.boundingBox();
+        expect(box?.height).toBeGreaterThanOrEqual(44);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        await section.getByRole('button', { name: 'Avbryt export' }).focus();
+        await page.keyboard.press('Enter');
+        await expect(section.getByRole('status')).toHaveText('Exporten har avbrutits.');
+        await expect(
+          section.getByRole('button', { name: 'Förbered fullständig export' }),
+        ).toBeFocused();
+      }
+      await page.route(
+        `${fixture.path}/exports`,
+        async (route) => {
+          const response = await route.fetch();
+          expect(response.status()).toBe(201);
+          prepared();
+          await held;
+          await route.fulfill({ response });
+        },
+        { times: 1 },
+      );
+      await section.getByRole('button', { name: 'Förbered fullständig export' }).focus();
+      await page.keyboard.press('Enter');
+      await serverReady;
+      const returnLink = page.getByRole('link', { name: 'Tillbaka till kartan', exact: true });
+      await returnLink.focus();
+      release();
+      await expect(section.getByRole('status')).toContainText('Exporten är klar att hämta');
+      await expect(returnLink).toBeFocused();
+      await section.getByRole('button', { name: 'Hämta ZIP-fil' }).focus();
+      const downloaded = page.waitForEvent('download');
+      await page.keyboard.press('Enter');
+      const result = await archive(await downloaded);
+      expect(result.content.objects).toEqual([
+        expect.objectContaining({ id: 'shared-object', name: 'Gemensam lampa' }),
+      ]);
+      await expect(
+        section.getByRole('button', { name: 'Förbered fullständig export' }),
+      ).toBeFocused();
+      await returnLink.click();
+      await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickad exportcykel');
+      await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+        'Texten finns kvar',
+      );
+      await expect(page.getByLabel('Beskrivning', { exact: true })).toBeFocused();
+      expect(await fixture.read()).toEqual(before);
+    } finally {
+      release();
+      await fixture.installation.close();
+    }
+  });
+}

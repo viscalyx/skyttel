@@ -330,6 +330,47 @@ explains cleanup uncertainty”.
   ersätter den tidigare kopian och erbjuder en ny fungerande hämtning.
 - Avbrottet eller exporten ändrar inte hushållets innehåll.
 
+### EXPORT-09: Tangentbord, tema och bevarat kartarbete
+
+**Syfte:** Behålla användbart fokus genom exporten och återgå till
+oskickad redigering utan att hushållets karta ändras.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Upprepa på dator samt med 390 och 320 pixlars bredd,
+i ljust och mörkt tema. Välj minskad rörelse i systemet. Fördröj vid behov
+en förberedelse med webbläsarens nätverksverktyg.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+testfallet “EXPORT-09: keyboard export controls retain focus and unsent map
+work at 1280px”, samma titel med “390px” och “320px”.
+
+**Steg:**
+
+1. Öppna Lista, välj Nytt objekt och skriv namn och beskrivning. Låt
+   formuläret vara oskickat med fokus i beskrivningen.
+2. Öppna Inställningar och Fullständig export. På mobil, fäll först ut
+   Välj inställning. Kontrollera fokus på exportens rubrik.
+3. Använd tangentbordet för att förbereda en export. Kontrollera fokus
+   på Hämta ZIP-fil när filen blir klar. Avbryt med tangentbordet och
+   kontrollera fokus på Förbered fullständig export.
+4. Upprepa med det andra temat. Kontrollera läsbar text, synligt fokus,
+   åtkomliga knappar och att sidan inte behöver rullas i sidled.
+5. Förbered igen och flytta under väntan fokus till Tillbaka till kartan.
+   Kontrollera att svaret låter ditt nya fokus vara kvar.
+6. Hämta ZIP-filen med tangentbordet. Kontrollera fokus på knappen för
+   ny förberedelse och återgå sedan till kartan.
+
+**Förväntat resultat:**
+
+- Förberedelse, avbrott och hämtning lämnar fokus på nästa användbara
+  exportkontroll. Ett senare eget fokusval skrivs inte över.
+- Kartans kontroller är dolda i Inställningar. Vid återgång finns namn
+  och beskrivning kvar, med fokus i beskrivningen. Ingenting är sparat.
+- Den hämtade filen innehåller hushållets sparade information och privata
+  utkast. Oskickad text i formulär är ännu inte del av exporten.
+
 ## Controlled export fixture
 
 This disposable Linux fixture prepares
