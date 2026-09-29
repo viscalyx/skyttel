@@ -386,3 +386,104 @@ import after a lost response and restart”.
   försvinner. Robin hittar samma beständiga försök med aktuell behörighet.
 - Omstart bevarar försökets identitet och resultat. Ingen ny ersättning
   begärs och inget privat arbete blandas ihop.
+
+### IMPORT-10: återfå en ny granskning efter tappat förberedelsesvar
+
+**Syfte:** Kontrollera att en äldre slutförd import inte döljer en ny
+förberedelse som samma administratör ännu inte har bekräftat.
+
+**Användare:** Alex i två separata webbläsarprofiler.
+
+**Förutsättningar:** En separat provinstallation och en fullständig export.
+Genomför först IMPORT-01. Behåll servern igång under detta fall; en
+obekräftad förberedelse upphör efter tio minuter eller vid omstart.
+
+**Integrationstest:**
+[household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
+testfallet “IMPORT-10: the current administrator recovers a lost
+preparation before an older completed import”.
+
+**Steg:**
+
+1. Öppna importen i profil A och välj exportfilen på nytt. Kör följande
+   kod i utvecklarverktygens Console före **Kontrollera importfil**.
+2. Välj **Kontrollera importfil**. Fortsätt endast om konsolen visar
+   ID för en kontrollerad förberedelse. Läs felbeskedet i gränssnittet.
+3. Logga in med samma konto i en ny profil B och öppna importen.
+   Kontrollera att den nya granskningen och samma ID visas, istället
+   för att den äldre importen visas som resultatet av det nya försöket.
+4. Kontrollera att innehållet fortfarande är oförändrat och att
+   ersättning kräver en ny markering av bekräftelsen.
+5. Bekräfta ersättningen i profil B. Kontrollera det slutförda resultatet.
+
+```javascript
+(() => {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const request = new Request(input, init);
+    if (request.method !== 'POST'
+        || !/\/imports$/.test(new URL(request.url).pathname)) {
+      return originalFetch(input, init);
+    }
+    window.fetch = originalFetch;
+    const response = await originalFetch(input, init);
+    const result = await response.clone().json();
+    if (!response.ok || result.status !== 'ready') return response;
+    console.info('IMPORT-10: kontrollerad förberedelse', result.id);
+    throw new TypeError('Synthetic lost preparation response');
+  };
+})();
+```
+
+**Förväntat resultat:**
+
+- Samma administratör återfår den nya granskningen utan ny uppladdning.
+  En annan administratör får inte bekräfta den obekräftade förberedelsen.
+- Den äldre slutförda importen används inte som besked för det nya
+  försöket. Ingen ny ersättning sker innan ett uttryckligt beslut.
+
+### IMPORT-11: slutför samma rensning med en annan administratör
+
+**Syfte:** Kontrollera att en verklig rensningsspärr består efter
+ersättningen och kan lösas av en annan aktuell administratör.
+
+**Användare:** Alex och Robin som aktuella administratörer i separata
+webbläsarprofiler samt driftansvarig för den lokala provinstallationen.
+
+**Förutsättningar:** En separat provinstallation och en fullständig export.
+Bjud in Robin och ge rollen administratör. Kör servern utan rootbehörighet.
+Driftansvarig behöver kunna ändra rättigheter för provets tillfälliga filer.
+Gör aldrig detta i en installation som används för riktigt hushållsarbete.
+
+**Integrationstest:**
+[household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
+testfallet “IMPORT-11: another administrator finishes the same gated
+cleanup after the original administrator loses authority”.
+
+**Steg:**
+
+1. Alex väljer exportfilen och **Kontrollera importfil**. Anteckna
+   försökets visade ID före bekräftelsen.
+2. Driftansvarig hittar katalogen `.skyttel-imports` bredvid provets
+   SQLite-fil och dess underkatalog med samma ID. Sätt endast den
+   underkatalogens rättigheter till `500` med `chmod`. Behåll terminalen.
+3. Alex bekräftar ersättningen. Kontrollera beskedet att innehållet är
+   ersatt men att tillfälliga filer behöver rensas. Försök öppna kartan
+   och göra en export i Robins profil; båda ska vara spärrade.
+4. Robin ändrar Alex roll till medlem genom administrationen. Öppna
+   sedan importen i Robins profil. Samma ID och väntande rensning ska
+   visas automatiskt. Ny uppladdning ska vara spärrad.
+5. Driftansvarig återställer underkatalogens rättigheter till `700`.
+   Robin väljer **Slutför importens rensning**. Kontrollera att samma
+   försök blir slutfört och att katalogen försvinner.
+6. Läs in kartan igen. Kontrollera återställt innehåll och privat arbete.
+   Starta om med samma databas och kontrollera försökets resultat igen.
+   Vid avbrutet test: återställ alltid katalogens rättigheter till `700`.
+
+**Förväntat resultat:**
+
+- Ersättningen är beständig trots att rensningen misslyckas. Kartan och
+  ny export är spärrade tills rensningen faktiskt lyckas.
+- Alex kan inte läsa eller slutföra importförsöket efter rolländringen.
+  Robin kan följa och slutföra exakt samma försök utan en ny ersättning.
+- Samma resultat och oförändrat återställt innehåll består efter omstart.
