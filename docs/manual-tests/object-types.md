@@ -387,7 +387,8 @@ identity, edges and history through restart and undo”.
    förslag. Spara hela utkastet och kontrollera cykelns och sambandets ID.
 4. Byt typdefinitionens namn från Cykel till Trampcykel och dess fältnamn
    till Tidigare Nummer och Tidigare Försäkrad. Spara. Starta om och öppna
-   **Visa historik**. Hitta typbytet från Cykel till Motorfordon.
+   **Visa historik**. Välj **Visa ändringarna** vid typbytet från Cykel
+   till Motorfordon.
 5. Kontrollera tidigare typnamn, Nummer `SYNTH-42`, sparande användare
    och tidpunkt. Välj **Ångra sparandet** för typbytet och granska förslaget.
    Spara hela utkastet, starta om och läs kartan igen.
