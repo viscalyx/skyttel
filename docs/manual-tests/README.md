@@ -197,6 +197,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   sparade uppgifter kvar och ett nytt uttryckligt sparbesked.
   Återgå till hela utkastet efter ett konfliktval och bevara senare
   sökfokus när svaret fördröjs.
+  Återfinn privata konfliktval efter tappade svar och bekräfta samma
+  kvitto efter ett nytt uttryckligt sparande utan dubbletter.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,

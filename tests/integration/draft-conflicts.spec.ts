@@ -1,5 +1,10 @@
 import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
-import type { MapState, ObjectValue, RelationshipValue } from '../../src/shared/map.js';
+import type {
+  MapState,
+  ObjectValue,
+  RelationshipValue,
+  SaveReceipt,
+} from '../../src/shared/map.js';
 import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 
@@ -649,6 +654,132 @@ test('UTKAST-23: delayed conflict resolution preserves a newer search and the pr
     await app.installation.close();
   }
 });
+
+for (const width of [1440, 390]) {
+  test(`UTKAST-24: lost resolution and save responses recover the private choice and one fresh receipt at ${width}px`, async ({
+    page,
+    browser,
+  }) => {
+    const other = await browser.newContext();
+    const app = await collaborators(page.request, other.request);
+    try {
+      await page.setViewportSize({ width, height: 844 });
+      const initial = await app.read();
+      const value = { typeId: initial.types[0].id, name: 'Lo Lind', description: '' };
+      await app.propose(page.request, 'draft', 'lo', value);
+      await app.propose(page.request, 'draft', 'chair', { ...value, name: 'Privat stol' });
+      await app.propose(other.request, 'draft', 'lo', {
+        ...value,
+        name: 'Lo Berg',
+        description: 'Spelar piano',
+      });
+      expect((await app.save(other.request, 'other-name')).status()).toBe(200);
+      const saved = await app.read();
+      const historyBefore = (await (await page.request.get(`${app.path}/history`)).json()).history;
+      const operationsBefore = (await (await page.request.get(`${app.path}/operations`)).json())
+        .operations;
+      let privateResult: MapState['draft'] | undefined;
+      await page.route('**/map/resolve', async (route) => {
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        privateResult = await response.json();
+        await route.abort('failed');
+      });
+      await page.goto(app.installation.origin);
+      await openWorkspace(page);
+      const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+      await review.getByRole('button', { name: 'Behåll mitt förslag', exact: true }).click();
+      await expect(page.getByRole('alert')).toContainText('Ändringen kunde inte bekräftas');
+      await expect(
+        review.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      expect(privateResult).toBeDefined();
+      const resolved = await app.read();
+      expect(resolved.draft).toEqual(privateResult);
+      expect(resolved.draft.changes).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'lo',
+            after: expect.objectContaining({ name: 'Lo Lind', description: 'Spelar piano' }),
+          }),
+          expect.objectContaining({
+            id: 'chair',
+            after: expect.objectContaining({ name: 'Privat stol' }),
+          }),
+        ]),
+      );
+      expect(resolved.objects).toEqual(saved.objects);
+      expect(resolved.relationships).toEqual(saved.relationships);
+      expect((await (await page.request.get(`${app.path}/history`)).json()).history).toEqual(
+        historyBefore,
+      );
+      expect((await (await page.request.get(`${app.path}/operations`)).json()).operations).toEqual(
+        operationsBefore,
+      );
+      await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+      await expect(review).not.toContainText('Konflikt: sparat i kartan nu');
+      await expect(review).toContainText('Spelar piano');
+      await expect(
+        review.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeEnabled();
+      await page.reload();
+      await openWorkspace(page);
+      await expect(review).toContainText('Lo Lind');
+      await expect(review).toContainText('Privat stol');
+      expect((await app.read()).draft).toEqual(privateResult);
+      expect((await app.read(other.request)).objects).toEqual(saved.objects);
+      await openMap(page);
+      const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+      await expect(status).toContainText('2 förslag · privat utkast');
+      let receipt: SaveReceipt | undefined;
+      let saveRequests = 0;
+      await page.route('**/map/save', async (route) => {
+        saveRequests += 1;
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        receipt = (await response.json()).receipt;
+        await route.abort('failed');
+      });
+      await status.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await expect(status).toContainText('Sparutfall okänt');
+      await expect(
+        status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      expect(receipt).toBeDefined();
+      await status.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }).click();
+      await expect(status).toContainText('Sparat · kvitto bekräftat');
+      await expect(status).toContainText('Inga osparade förslag');
+      const shared = await app.read(other.request);
+      expect(shared.objects.find(({ id }) => id === 'lo')).toMatchObject({
+        name: 'Lo Lind',
+        description: 'Spelar piano',
+      });
+      expect(shared.objects.find(({ id }) => id === 'chair')).toMatchObject({
+        name: 'Privat stol',
+      });
+      expect((await app.read()).draft.changes).toEqual([]);
+      expect(saveRequests).toBe(1);
+      expect((await (await page.request.get(`${app.path}/history`)).json()).history).toEqual([
+        ...historyBefore,
+        receipt,
+      ]);
+      const { operations } = await (await page.request.get(`${app.path}/operations`)).json();
+      expect(operations).toHaveLength(operationsBefore.length + 1);
+      expect(operations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            operationId: receipt?.operationId,
+            status: 'succeeded',
+            receipt,
+          }),
+        ]),
+      );
+    } finally {
+      await other.close();
+      await app.installation.close();
+    }
+  });
+}
 
 test('UTKAST-05: a conflict choice preserves independent proposals and requires a new save', async ({
   page,

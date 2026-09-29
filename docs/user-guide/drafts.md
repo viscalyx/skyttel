@@ -110,6 +110,9 @@ och välj därefter **Spara hela utkastet**. Tidigare sparbesked återanvänds
 inte. Om underlaget ändras medan du väljer avvisas även ett gammalt
 konfliktval; hämta aktuellt underlag och välj igen.
 
+När valet är klart får rubriken **Hela mitt utkast** fokus. Om du går
+vidare till ett annat fält medan svaret väntar stannar fokus där.
+
 Om svaret på ett konfliktval försvinner är valet ännu inte bekräftat i
 din visning. Välj **Hämta aktuellt underlag** och granska det beständiga
 utkastet. Hämta inte ett sparkvitto för själva konfliktvalet: det sparar

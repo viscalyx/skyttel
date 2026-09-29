@@ -908,6 +908,47 @@ and the private result”.
 - Lo Lind finns i det privata utkastet. Lo Berg är fortfarande gemensamt
   sparat och ingen historikgrupp eller kvitto tillkommer.
 
+### UTKAST-24: återfinn konfliktval och ett enda nytt sparkvitto
+
+**Syfte:** Skilja ett beständigt privat konfliktval från ett gemensamt
+sparande när deras svar försvinner på vägen till webbläsaren.
+
+**Användare:** Alex och Robin i skilda sessioner i samma hushåll.
+
+**Förutsättningar:** Lo Exempel är sparat. Alex föreslår Lo Lind och
+det nya objektet Privat stol. Robin sparar Lo Berg med beskrivningen
+Spelar piano. Testmiljön kan släppa fram en riktig förfrågan och avbryta
+enbart svaret efter serverns behandling. Upprepa på dator och telefon.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallen “UTKAST-24: lost resolution and save responses recover the private
+choice and one fresh receipt at 1440px”, samma titel med “390px”.
+
+**Steg:**
+
+1. Alex öppnar Lista och väljer Behåll mitt förslag. Avbryt svaret efter
+   att servern behandlar valet. Läs felet och kontrollera att sparande spärras.
+2. Kontrollera Robins karta och historiken. Välj Hämta aktuellt underlag
+   som Alex. Granska Lo Lind, Spelar piano och Privat stol i utkastet.
+3. Ladda om Alex sida, öppna Lista och kontrollera att samma privata
+   resultat finns kvar. Ge fortfarande inget sparbesked.
+4. Stäng panelerna. Välj Spara hela utkastet i statuskortet och avbryt
+   svaret efter att servern genomför sparandet.
+5. Läs Sparutfall okänt. Välj Hämta samma kvitto igen. Kontrollera Robins
+   karta, det tomma privata utkastet och den nya historikgruppen.
+
+**Förväntat resultat:**
+
+- Ett tappat konfliktvalssvar skapar inget sparförsök eller kvitto.
+  Den gemensamma kartan behåller Lo Berg och saknar Privat stol.
+- Uppdatering och omladdning återfinner Lo Lind, den oberoende beskrivningen
+  och stolen i samma privata utkast. Ett nytt sparbesked krävs fortfarande.
+- Det uttryckliga sparandet gör båda förslagen gemensamma tillsammans.
+  Ett tappat sparkvitto spärrar ett nytt sparande tills utfallet kontrolleras.
+- Återhämtningen ger exakt samma kvitto. Endast ett nytt sparförsök och
+  en historikgrupp tillkommer; kartan sparas inte en andra gång.
+
 ### UTKAST-16: använd Navigation och aktuell status tillsammans
 
 **Syfte:** Behålla åtkomst till personlig placering och sparande när båda
