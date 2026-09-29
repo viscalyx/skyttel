@@ -124,6 +124,8 @@ test('LISTA-06: an inactive visible list opens details on the first pointer clic
     await expect(
       detail.getByRole('heading', { name: 'Provobjekt 045', exact: true }),
     ).toBeFocused();
+    await activatePanel(page, 'Lista och utkast');
+    expect(await body.evaluate((element) => element.scrollTop)).toBe(remembered);
     const after = await (await page.request.get(path)).json();
     expect(after.objects).toEqual(saved.objects);
     expect(after.relationships).toEqual(saved.relationships);

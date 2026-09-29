@@ -98,6 +98,7 @@ export function ObjectList({
       )
         return false;
       if (getComputedStyle(body).overflowY !== 'visible') {
+        // Ordinary panel returns keep the panel owner's heading focus.
         body.scrollTop = scroll.current;
         return false;
       }
@@ -114,16 +115,16 @@ export function ObjectList({
   }, [resumeFocus]);
   useLayoutEffect(() => {
     const body = listRef.current?.closest<HTMLElement>('.workspace-panel-body');
-    if (!body) return;
+    if (!body || !active) return;
     const flow = body.closest<HTMLElement>('.household-map');
     const remember = () => {
       if (!body.offsetHeight) return;
       scroll.current = body.scrollTop;
-      if (active && flow && getComputedStyle(body).overflowY === 'visible')
+      if (flow && getComputedStyle(body).overflowY === 'visible')
         flowScroll.current = flow.scrollTop;
     };
     body.addEventListener('scroll', remember, { passive: true });
-    if (active) flow?.addEventListener('scroll', remember, { passive: true });
+    flow?.addEventListener('scroll', remember, { passive: true });
     return () => {
       body.removeEventListener('scroll', remember);
       flow?.removeEventListener('scroll', remember);
@@ -155,6 +156,9 @@ export function ObjectList({
       ref={listRef}
       onFocusCapture={(event) => {
         listFocus.current = event.target;
+        // A visible inactive panel may have scrolled before its first click.
+        const body = event.currentTarget.closest<HTMLElement>('.workspace-panel-body');
+        if (body) scroll.current = body.scrollTop;
       }}
     >
       <label htmlFor={`${id}-search`}>

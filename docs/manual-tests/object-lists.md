@@ -215,9 +215,11 @@ without moving the result”.
 3. Tryck ned musknappen på träffens **Uppgifter**. Kontrollera att träffen
    stannar under pekaren när listan blir aktiv. Släpp musknappen.
 4. Kontrollera rätt objektpanel och rubrikfokus utan ett extra klick.
+5. Välj Lista och utkast i panelväljaren och kontrollera samma rulläge.
 
 **Förväntat resultat:**
 
 - Det första klicket öppnar rätt uppgifter. Listans rulläge och träffens
-  position ändras inte medan musknappen hålls nere.
+  position ändras inte medan musknappen hålls nere. En uttrycklig återgång
+  till listan behåller rulläget.
 - Hushållets objekt, samband och utkast ändras inte av att uppgifterna öppnas.

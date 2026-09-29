@@ -277,9 +277,12 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await page.getByRole('checkbox', { name: 'Person', exact: true }).check();
     await openMap(page);
     await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+    await openWorkspace(page);
     await expect(page.getByLabel('Sök objekt')).toHaveValue('');
+    await page.getByText('Filter', { exact: true }).click();
     await expect(page.getByRole('checkbox', { name: 'Person', exact: true })).not.toBeChecked();
     await expect(page.getByText('Fokus: Lo Exempel', { exact: true })).toHaveCount(0);
+    await openMap(page);
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true }),
