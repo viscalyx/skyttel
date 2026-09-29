@@ -301,6 +301,7 @@ test('TYP-11: repeated type changes keep distinct former answers and complete co
       after: { ...common, typeId: 'vehicle', profileImageId: imageId, customValues: { serial: 'B-final' } },
     });
     expect(staged.draft.changes[0].after?.customValues).toEqual({ serial: 'B-final' });
+    expect(staged.draft.changes[0].after?.financialFacts).toEqual(common.financialFacts);
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
@@ -315,6 +316,9 @@ test('TYP-11: repeated type changes keep distinct former answers and complete co
     expect(saved.objects.find((object) => object.id === 'bike')).toMatchObject({
       ...common, typeId: 'vehicle', profileImageId: imageId, customValues: { serial: 'B-final' },
     });
+    expect(saved.objects.find((object) => object.id === 'bike')?.financialFacts).toEqual(
+      common.financialFacts,
+    );
     expect(saved.relationships).toEqual(initial.relationships);
     await page.getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true }).click();
     await expect(panel).toContainText('Nummer: B-final');
