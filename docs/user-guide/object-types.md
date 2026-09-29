@@ -115,6 +115,12 @@ Lämna **Obesvarat** för uppgifter du inte känner till; det är skilt från
 **Nej**. Bekräfta **Jag har hanterat tidigare fältvärden för typbytet** när
 du har rättat de nya fälten eller valt att lämna dem obesvarade.
 
+Om du byter typ flera gånger under redigeringen visas de tidigare svaren
+i skilda grupper med sin ursprungliga typ. Även när du byter tillbaka
+börjar de nya fälten tomma. Bekräfta hanteringen på nytt efter varje byte.
+Gemensamma ekonomiska uppgifter behåller belopp, säkerhet och datum;
+profilbilden och ditt ikonval finns också kvar.
+
 Välj **Lägg i mitt utkast**. I **Hela mitt utkast** ser du tidigare typ och
 värden samt den nya typen och dess värden. Typbytet och fälträttelserna
 sparas tillsammans med resten av utkastet. Ett fel stoppar hela sparandet.

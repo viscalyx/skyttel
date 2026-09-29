@@ -193,8 +193,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   gemensamma egenskaper med bevarad säkerhet och datum, tangentbord
   och bevarat arbete på mobil, dator och korta fönster med synlig status. Samtidiga
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
-  som objektens innehåll. Typbyten granskar tidigare och nya värden,
-  bevarar identitet och samband samt följer historikens ångring.
+  som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
+  kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
+  bild, ikon och samband samt följer historikens ångring.
   Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
