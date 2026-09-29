@@ -290,6 +290,57 @@ and can be discarded”.
 
 ## Skapa och spara kartans innehåll
 
+### KARTA-09: skapa typer, objekt och samband i samma privata utkast
+
+**Syfte:** Behåll ett påbörjat objekt medan dess typ skapas i Inställningar
+och spara nya definitioner, objekt och samband tillsammans.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Tom karta och tomt utkast. Behåll databasen vid omstart.
+
+**Integrationstest:**
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts),
+testfallet “KARTA-09: unsent creation uses new draft types and objects in
+one durable relationship save”.
+
+**Steg:**
+
+1. Välj **Nytt objekt** och försök lägga det i utkastet utan namn.
+   Kontrollera fokus. Ange sedan **Paneler på taket** och beskrivningen
+   **Oskickat före den nya typen** utan att lägga objektet i utkastet.
+2. Öppna **Inställningar → Typer och egna fält**. Skapa objekttypen
+   **Solutrustning** med beskrivningen **Hushållets elproduktion** och
+   avsnittet **Uppgifter**. Lägg till **Placering** som text och
+   **Reserv** som ja/nej. Lägg typförslaget i utkastet.
+3. Välj **Tillbaka till kartan**. Kontrollera det påbörjade objektets namn
+   och beskrivning. Välj typen Solutrustning. Kontrollera att fälten i
+   Uppgifter är obesvarade. Ange Placering **Södertak** och Reserv **Nej**
+   och lägg objektet i utkastet med **Identifierat objekt**.
+4. Skapa **Batteriet** av samma nya typ. Välj **Ospecificerat objekt**,
+   lämna de egna fälten obesvarade och lägg objektet i utkastet.
+5. Skapa sambandstypen **Komplettering**, beskrivningen **Delar som används
+   ihop**, benämningen **kompletteras av** från startobjektet och
+   **kompletterar** från målobjektet. Lägg definitionen i utkastet.
+6. Skapa ett samband av den nya typen från Paneler på taket till Batteriet.
+   Välj **Osäkert uppgivet** och lägg sambandet i utkastet. Granska alla
+   fem förslag utan att spara dem.
+7. Starta om installationen och ladda om. Granska samma utkast och välj
+   **Spara hela utkastet**. Invänta kvittot. Starta om och ladda om igen.
+
+**Förväntat resultat:**
+
+- Ett tomt namn stoppar förslaget och får fokus. Det påbörjade objektets
+  namn och beskrivning finns kvar när den nya typen väljs efter Inställningar.
+- Typens valfria fält visas i Uppgifter. **Nej** på panelerna är skilt
+  från Batteriets obesvarade Reserv. Identifierat och ospecificerat består.
+- Nya objekt- och sambandstyper samt båda objekten kan användas i sambandet
+  innan något sparas gemensamt. De fem förslagen finns kvar efter omstart.
+- Ett uttryckligt sparande omfattar båda definitionerna, de två objekten
+  och deras riktade, osäkra samband. Efter nästa omstart finns samma
+  identiteter, uppgifter och samband; utkastet är tomt. Integrationstestet
+  kontrollerar dessutom att allt ingår i ett enda verkligt kvitto.
+
 ### KARTA-06: återuppta, rätta och kasta ett beständigt objektförslag
 
 **Syfte:** Kontrollera att ett objektförslag bevaras före sparandet och

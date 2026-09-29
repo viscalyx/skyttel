@@ -151,7 +151,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   tillgång med bevarat innehåll i kartan.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt, bevara ofullständiga uppgifter och rätta obesvarad
-  identitet från aktuell status med bevarad oskickad text.
+  identitet från aktuell status med bevarad oskickad text. Påbörjade objekt
+  kan få en ny typ från Inställningar och sparas med nya samband i ett kvitto.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon och placering nära objektet.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta

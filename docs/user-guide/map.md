@@ -65,6 +65,13 @@ kartarbetet vara spärrat tills innehållet är tillgängligt igen.
 5. Välj **Lägg i mitt utkast**. Objektet kan nu användas i andra förslag,
    exempelvis ett nytt samband, före det gemensamma sparandet.
 
+Du kan börja skriva objektet innan dess typ finns. Besök **Inställningar →
+Typer och egna fält**, skapa typen och lägg typförslaget i utkastet. När du
+väljer **Tillbaka till kartan** finns den oskickade objekttexten kvar och
+den nya typen går att välja. Även en ny sambandstyp kan användas direkt
+mellan objekt i samma privata utkast. Definitioner, objekt och samband
+blir gemensamma först när du sparar hela utkastet.
+
 Samma namn betyder inte att två objekt är samma sak. Läs beskrivningen
 och identiteten innan du väljer ett befintligt objekt. Bekräftade
 dubbletter kan [slås samman](object-merge.md).
