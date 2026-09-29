@@ -717,8 +717,10 @@ export function HouseholdMap({
         setEdgeTypeEditor(null);
         setDirty(false);
         setBlocked(false);
-        if (document.activeElement === submittedFocus || document.activeElement === document.body)
-          newButton.current?.focus();
+        if (document.activeElement === submittedFocus || document.activeElement === document.body) {
+          if (kind === 'resolve') openPanel('work', document.getElementById('draft-title'));
+          else newButton.current?.focus();
+        }
       }
       return true;
     } catch (failure) {
