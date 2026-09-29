@@ -113,7 +113,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   återhämtning efter omstart. Radering av en tidigare typ tar bort dess
   sista historiska bildversion utan att ta bort objektets nuvarande bild.
 
-- [Fullständig återimport](household-import.md): uttrycklig ersättning,
+- [Fullständig återimport](household-import.md): egna inställningssidor,
+  bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
   bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,
   lokalt prov med tappat sparbesked, avvisade gamla sparbegäranden,
   ny förberedelse efter omstart, samma importförsök i en annan

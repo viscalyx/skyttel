@@ -487,3 +487,43 @@ cleanup after the original administrator loses authority”.
 - Alex kan inte läsa eller slutföra importförsöket efter rolländringen.
   Robin kan följa och slutföra exakt samma försök utan en ny ersättning.
 - Samma resultat och oförändrat återställt innehåll består efter omstart.
+
+### IMPORT-12: egna inställningssidor och skyddat kartarbete
+
+**Syfte:** Bevara oskickat kartarbete vid vanlig navigering och stoppa
+det gamla arbetet när hushållets innehåll ersätts.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** En separat provinstallation och en fullständig export.
+Använd tangentbord och kontrollera både mobil och dator.
+
+**Integrationstest:**
+[household-import-settings.spec.ts](../../tests/integration/household-import-settings.spec.ts),
+testfallet “IMPORT-12: protected Settings recovery pages preserve ordinary
+work and retire it after replacement”.
+
+**Steg:**
+
+1. Öppna formuläret för ett nytt objekt. Skriv ett namn men lägg inte
+   förslaget i utkastet. Låt fokus vara i namnfältet.
+2. Öppna **Inställningar → Återimportera hushållet**. På mobil fäller
+   du först ut **Välj inställning**. Kontrollera att sidrubriken får
+   synligt fokus och att kartan inte kan användas bakom sidan.
+3. Välj exportfilen. Aktivera **Kontrollera importfil** med tangentbordet.
+   Läs **Ersätts** och **Behålls**; ersättning kräver fortfarande bekräftelse.
+4. Besök **Koppla historiskt innehåll** genom inställningarnas navigation.
+   Hämta aktuell metadata och läs identitetsvarningen, utan att ändra något.
+5. Välj **Tillbaka till kartan**. Kontrollera samma oskickade namn och fokus.
+6. Gå tillbaka till importen och välj **Hämta importens status**. Granska
+   samma förberedelse, markera bekräftelsen och genomför ersättningen.
+7. Kontrollera slutfört resultat och fokus på återinläsningen. Återgå till
+   kartan. Det gamla oskickade formuläret ska försvinna; inget gammalt
+   förslag får följa med till det ersatta innehållet.
+
+**Förväntat resultat:**
+
+- Import och historisk identitetsgranskning har egna sidor i Inställningar.
+  Vanlig navigering behåller oskickad text och dess fokus utan att spara den.
+- Ersättning kräver uttryckligt beslut. Därefter kan det gamla kartarbetet
+  inte fortsätta mot det återställda innehållet.
