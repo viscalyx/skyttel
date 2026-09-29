@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { chmodSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { unzipSync, zipSync } from 'fflate';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { applicationFixture } from './fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -176,15 +176,25 @@ test('a failed replacement rolls back the entire household and returns a durable
   expect((await (await client.request(`${path}/imports/${ready.id}`)).json()).status).toBe(
     'failed',
   );
+  expect(await (await client.request(`${path}/imports`)).json()).toMatchObject({
+    attempt: { id: ready.id, status: 'failed', contentVersion: 1, confirmationContentVersion: 1 },
+    ready: null,
+  });
 });
 
 test('upload, confirmation and status require current administrator access to the selected household', async () => {
+  expect(await (await client.request(`${path}/imports`)).json()).toEqual({
+    attempt: null,
+    ready: null,
+  });
   const ready = await (await upload()).json();
+  expect(ready.confirmationContentVersion).toBe(1);
   const body = { contentVersion: 1, confirmed: true };
   fixture.setSubject('robin');
   const member = fixture.client();
   await member.signIn();
   const { user } = await (await member.request('/api/bootstrap')).json();
+  expect((await member.request(`${path}/imports`)).status).toBe(403);
   const { code } = await (await client.json(`${path}/invitations`, { userId: user.id })).json();
   expect((await member.json('/api/invitations/accept', { code })).status).toBe(200);
   for (const [actor, expected] of [
@@ -194,20 +204,44 @@ test('upload, confirmation and status require current administrator access to th
     expect((await upload(archive, actor)).status).toBe(expected);
     expect((await actor.json(`${path}/imports/${ready.id}/confirm`, body)).status).toBe(expected);
     expect((await actor.request(`${path}/imports/${ready.id}`)).status).toBe(expected);
+    expect((await actor.request(`${path}/imports`)).status).toBe(expected);
   }
   expect((await upload(archive, client, '/api/households/another')).status).toBe(403);
   expect(
     (await client.json(`/api/households/another/imports/${ready.id}/confirm`, body)).status,
   ).toBe(403);
   expect((await client.request(`/api/households/another/imports/${ready.id}`)).status).toBe(403);
+  expect((await client.request('/api/households/another/imports')).status).toBe(403);
   expect(
     (await client.json(`${path}/members/${user.id}/role`, { role: 'administrator' })).status,
   ).toBe(200);
+  expect(await (await member.request(`${path}/imports`)).json()).toEqual({
+    attempt: null,
+    ready: null,
+  });
   const memberReady = await (await upload(archive, member)).json();
+  expect(await (await member.request(`${path}/imports`)).json()).toEqual({
+    attempt: null,
+    ready: memberReady,
+  });
+  expect(await (await client.request(`${path}/imports`)).json()).toEqual({ attempt: null, ready });
+  expect((await member.request(`${path}/imports/${ready.id}`)).status).toBe(404);
+  expect((await member.json(`${path}/imports/${ready.id}/confirm`, body)).status).toBe(404);
+  expect(Object.keys(ready).sort()).toEqual([
+    'confirmationContentVersion',
+    'contentVersion',
+    'counts',
+    'expiresAt',
+    'id',
+    'sourceHouseholdId',
+    'status',
+  ]);
+  expect(JSON.stringify(ready)).not.toContain('Lampa');
   expect((await client.json(`${path}/members/${user.id}/revoke`, {})).status).toBe(200);
   expect((await upload(archive, member)).status).toBe(403);
   expect((await member.json(`${path}/imports/${memberReady.id}/confirm`, body)).status).toBe(403);
   expect((await member.request(`${path}/imports/${memberReady.id}`)).status).toBe(403);
+  expect((await member.request(`${path}/imports`)).status).toBe(403);
   expect((await (await client.request(`${path}/map`)).json()).contentVersion).toBe(1);
 });
 
@@ -357,6 +391,10 @@ test('losing administrator authority during cancellation fails the prepared impo
       })
     ).json(),
   ).toMatchObject({ status: 'prepared' });
+  expect(await (await other.request(`${path}/imports`)).json()).toMatchObject({
+    attempt: { id: ready.id, status: 'prepared', contentVersion: 1, confirmationContentVersion: 1 },
+    ready: null,
+  });
   expect((await other.json(`${path}/members/${owner.id}/role`, { role: 'member' })).status).toBe(
     200,
   );
@@ -433,7 +471,22 @@ test('completed outcomes survive repeated confirmation and reject altered confir
   const ready = await (await upload()).json();
   const body = { confirmed: true, contentVersion: 1 };
   const first = await (await client.json(`${path}/imports/${ready.id}/confirm`, body)).json();
-  expect(first).toMatchObject({ status: 'completed', contentVersion: 2 });
+  expect(first).toMatchObject({
+    status: 'completed',
+    contentVersion: 2,
+    confirmationContentVersion: 1,
+  });
+  expect(await (await client.request(`${path}/imports`)).json()).toEqual({
+    attempt: first,
+    ready: null,
+  });
+  expect(Object.keys(first).sort()).toEqual([
+    'confirmationContentVersion',
+    'contentVersion',
+    'counts',
+    'id',
+    'status',
+  ]);
   expect(await (await client.json(`${path}/imports/${ready.id}/confirm`, body)).json()).toEqual(
     first,
   );
@@ -450,6 +503,44 @@ test('completed outcomes survive repeated confirmation and reject altered confir
     (await client.json(`${path}/imports/${ready.id}/confirm`, { ...body, extra: true })).status,
   ).toBe(400);
   expect((await client.request(`${path}/imports/missing`)).status).toBe(404);
+  const { user } = await (await client.request('/api/bootstrap')).json();
+  // Arrange a second authorized household to prove the collection is scoped
+  // even when the caller has administrator authority on both households.
+  fixture.database
+    .prepare('INSERT INTO household (id, name, createdAt) VALUES (?, ?, ?)')
+    .run('another', 'Annat hushåll', '2026-01-01T00:00:00Z');
+  fixture.database
+    .prepare('INSERT INTO membership (householdId, userId, role) VALUES (?, ?, ?)')
+    .run('another', user.id, 'administrator');
+  expect(await (await client.request('/api/households/another/imports')).json()).toEqual({
+    attempt: null,
+    ready: null,
+  });
+  expect((await client.request(`/api/households/another/imports/${ready.id}`)).status).toBe(404);
+});
+
+test('discovery never offers an expired unconfirmed archive and leaves household content unchanged', async () => {
+  const ready = await (await upload()).json();
+  const before = await (await client.request(`${path}/map`)).json();
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.parse(ready.expiresAt) + 1);
+  try {
+    expect(await (await client.request(`${path}/imports`)).json()).toEqual({
+      attempt: null,
+      ready: null,
+    });
+    expect((await client.request(`${path}/imports/${ready.id}`)).status).toBe(404);
+    expect(
+      (
+        await client.json(`${path}/imports/${ready.id}/confirm`, {
+          confirmed: true,
+          contentVersion: 1,
+        })
+      ).status,
+    ).toBe(404);
+    expect(await (await client.request(`${path}/map`)).json()).toEqual(before);
+  } finally {
+    clock.mockRestore();
+  }
 });
 
 test('custom definitions, ended facts, removed catalog entries and unsaved private work roundtrip together', async () => {

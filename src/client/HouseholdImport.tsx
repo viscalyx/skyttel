@@ -141,9 +141,12 @@ export function HouseholdImport({
       remember({ id: value.id, contentVersion: state.contentVersion });
     } catch (failure) {
       if (!controller.signal.aborted) {
-        if (submitted && (!(failure instanceof MapRequestError) || failure.status >= 500))
+        if (submitted && (!(failure instanceof MapRequestError) || failure.status >= 500)) {
           setDiscoveryNeeded(true);
-        fail(failure);
+          setError(
+            'Svaret från filkontrollen saknas. Hämta importens status för att återfå din granskning innan du väljer en ny fil. Innehållet har inte ersatts.',
+          );
+        } else fail(failure);
       }
     } finally {
       if (!controller.signal.aborted) setBusy(false);
