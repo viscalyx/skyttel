@@ -707,13 +707,16 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
    men behåll Sparad ekonomi och Sparad skuld. Dölj anteckningsfältet
    med värdet kvar och föreslå att sambandets mål är okänt. Spara allt.
 5. Alex laddar om kartan utan att kasta sitt utkast. Stäng arbetspaneler
-   och vägledning. Öppna **Visa 4 konflikter** i aktuell status.
+   och vägledning. Öppna **Visa 4 konflikter** i aktuell status med
+   tangentbord och pekare.
 6. Använd tangentbordet för att besöka objekttyp, sambandstyp, samband
    och objekt från listan. Återgå till kartan mellan destinationerna.
 7. Läs objektets tre underlag. Upprepa på telefon och i ett kort fönster.
 
 **Förväntat resultat:**
 
+- Konfliktlistans öppningskontroll är tydlig och går att träffa utan
+  att aktivera knappen för hela utkastet intill.
 - Varje val öppnar rätt ändringsrubrik med synligt, åtkomligt fokus.
   Sambandsnamnet visar riktning, båda objekten och den osäkra uppgiften.
 - Det tidigare underlaget visar Sparad ekonomi och Sparad skuld 1 200.

@@ -204,8 +204,12 @@ for (const { width, height } of [
       ]) {
         await openMap(page);
         const disclosure = status.getByText('Visa 4 konflikter', { exact: true });
-        if (!(await status.getByRole('button', { name: label, exact: true }).isVisible()))
+        if (!(await status.getByRole('button', { name: label, exact: true }).isVisible())) {
+          await disclosure.focus();
+          await expectFocusedTargetUncovered(page);
+          expect((await disclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44);
           await disclosure.click();
+        }
         await status.getByRole('button', { name: label, exact: true }).focus();
         await page.keyboard.press('Enter');
         await expect(review.getByRole('heading', { name: title, exact: true })).toBeFocused();
