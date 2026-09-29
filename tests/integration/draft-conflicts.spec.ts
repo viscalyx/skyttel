@@ -365,7 +365,9 @@ for (const width of [1440, 390]) {
       await expectFocusedTargetUncovered(page);
       await expect(editor.getByLabel('Från objekt')).toHaveValue('lo');
       await expect(editor.getByLabel('Sambandstyp', { exact: true })).toHaveValue(edge.typeId);
-      await expect(editor.getByLabel('Uppgiftens säkerhet')).toHaveValue('uncertain');
+      await expect(editor.getByLabel('Uppgiftens säkerhet', { exact: true })).toHaveValue(
+        'uncertain',
+      );
       await expect(
         editor.getByLabel('Till objekt').getByRole('option', { name: /Molnmusik/ }),
       ).toHaveCount(0);
