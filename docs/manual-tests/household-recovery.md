@@ -287,6 +287,86 @@ unset SKYTTEL_MOVE_SOURCE_ZIP SKYTTEL_MOVE_TARGET_ZIP SKYTTEL_MOVE_THIRD_ZIP
 - Robins undanträngda privata arbete går att koppla tillbaka även efter
   ännu en export och import. Medlemskap ändras inte av innehållskopplingen.
 
+### FLYTT-02: kontrollera ett oklart ägarbyte och bevara båda privata arbetena
+
+**Syfte:** Följ ett uttryckligt ägarbyte efter tappat svar genom aktuell
+läsning och bevara två oberoende privata tillstånd utan obehörig insyn.
+
+**Användare:** Alex på källan och Robin som administratör på målet.
+
+**Förutsättningar:** Två separata provinstallationer enligt förberedelsen.
+Spara ett gemensamt objekt på källan och anteckna dess kvitto. Lägg ett
+nytt privat objekt i utkastet utan att spara och flytta det gemensamma
+objektet i din personliga vy. Exportera och återimportera på målet.
+Namnen får vara lika; verifiera den nuvarande personens användar-ID.
+
+**Integrationstest:**
+[household-owners-ui.spec.ts](../../tests/integration/household-owners-ui.spec.ts),
+testfallet “FLYTT-02: an uncertain explicit identity assignment is read
+back while both private states and historical receipts remain intact”.
+
+**Steg:**
+
+1. På målet: kontrollera att källans privata utkast inte visas för Robin.
+   Skapa ett annat privat objektförslag och en annan personlig placering.
+   Anteckna Robins innehålls-ID. Förbered ett känt väntande försök med
+   FLYTT-01:s kod och namnet `destination` efter att en extra kartflik
+   har öppnat ett nytt oskickat objektformulär.
+2. Öppna **Inställningar → Koppla historiskt innehåll** och hämta aktuell
+   metadata. Välj källans historiska identitet och Robins verifierade
+   användar-ID. Kontrollera antal, tidigare koppling och följderna för
+   Robins oberoende privata arbete. Inga privata innehållsvärden ska visas.
+3. Kör följande kod i Console före bekräftelsen. Markera sedan
+   identitetsbekräftelsen och genomför kopplingen med tangentbordet.
+   Fortsätt endast om konsolen visar **FLYTT-02: kopplingen finns på servern**.
+4. Kontrollera okänt utfall, spärrad granskning och fokus på
+   **Hämta aktuella innehållskopplingar**. Slå tillfälligt på Offline i
+   utvecklarverktygens Network, välj hämtningen och kontrollera att
+   granskningen fortfarande är spärrad. Slå av Offline.
+5. Hämta igen. Välj källans identitet och kontrollera den aktuella
+   kopplingen. Hämtningen ska inte påstå att den bekräftar en tidigare
+   begäran och ska inte skicka ett nytt ägarbyte.
+6. Kontrollera källans privata utkast och placering i Robins aktuella
+   karta. Den extra flikens gamla oskickade formulär ska försvinna och
+   det gamla sparförsöket ska avvisas. Historikens kvitto ska vara oförändrat.
+7. Välj Robins tidigare innehålls-ID och samma medlem. Granska följderna
+   och bekräfta uttryckligen igen. Robins oberoende privata utkast och
+   placering ska återkomma. Starta om målet med samma databas och kontrollera
+   båda dessa uppgifter samt det oförändrade historiska kvittot.
+
+```javascript
+(() => {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const request = new Request(input, init);
+    if (request.method !== 'POST'
+        || !/\/content-owners\/assign$/.test(new URL(request.url).pathname)) {
+      return originalFetch(input, init);
+    }
+    window.fetch = originalFetch;
+    const body = await request.json();
+    const response = await originalFetch(input, init);
+    const result = await response.clone().json();
+    if (!response.ok || !result.identities?.some(identity =>
+      identity.id === body.identityId && identity.userId === body.userId)) {
+      return response;
+    }
+    console.info('FLYTT-02: kopplingen finns på servern');
+    throw new TypeError('Synthetic lost ownership response');
+  };
+})();
+```
+
+**Förväntat resultat:**
+
+- Samma namn eller e-postadress ger ingen automatisk innehållskoppling.
+  Granskningen visar identiteter, medlems-ID och antal utan privata värden.
+- Okänt utfall och misslyckad hämtning medför ingen blind upprepning.
+  Aktuell läsning behövs innan ett nytt uttryckligt val kan göras.
+- Båda privata utkasten och placeringarna bevaras separat och kan kopplas
+  tillbaka. Historiska författare, tidpunkter och kvitton ändras inte.
+- Gamla öppna formulär och sparförsök kan inte ändra den nya generationen.
+
 ## Local recovery preparation
 
 This setup gives a human two disposable compiled installations in the

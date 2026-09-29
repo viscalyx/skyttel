@@ -11,8 +11,10 @@ Använd [en separat lokal provdatabas](../development/devcontainer.md#disposable
 i devcontainern och värddatorns webbläsare. **Alex** är testrollen för den
 konfigurerade första administratörens befintliga Google- eller
 Microsoft-konto; kontot behöver inte heta Alex. Skapa hushållet **Linden**
-med påhittade uppgifter. När två profiler behövs loggar båda in med samma
-konto. Ingen inbjudan, publik webbadress eller tunnel behövs.
+med påhittade uppgifter. Om fallet inte säger annat loggar två profiler in
+med samma konto. IMPORT-09, IMPORT-11 och IMPORT-13 använder även **Robin**,
+en annan verifierad användare som bjuds in till provhushållet. Fallens
+steg anger respektive roll. Ingen publik webbadress eller tunnel behövs.
 
 ## Allmän förberedelse
 
@@ -530,3 +532,38 @@ work and retire it after replacement”.
   Vanlig navigering behåller oskickad text och dess fokus utan att spara den.
 - Ersättning kräver uttryckligt beslut. Därefter kan det gamla kartarbetet
   inte fortsätta mot det återställda innehållet.
+
+### IMPORT-13: åtkomst till import och historisk identitetsgranskning
+
+**Syfte:** Kontrollera att direkta adresser och förlorad administratörsroll
+inte ger tillgång till administrativa innehållsåtgärder.
+
+**Användare:** Alex som administratör och Robin i en separat profil.
+
+**Förutsättningar:** En separat provinstallation. Robin har ännu inte
+fått tillgång till hushållet. Spara adresserna till de två sidorna i
+Inställningar för att kunna öppna dem direkt.
+
+**Integrationstest:**
+[household-import-settings.spec.ts](../../tests/integration/household-import-settings.spec.ts),
+testfallet “IMPORT-13: import and identity Settings destinations enforce
+current household administrator access”.
+
+**Steg:**
+
+1. Öppna importens adress i en utloggad profil. Kontrollera att
+   inloggning krävs och att filval saknas.
+2. Robin loggar in utan inbjudan och öppnar adressen för historiskt
+   innehåll. Ingen metadata eller kontroll för innehållskoppling ska visas.
+3. Bjud in Robin och acceptera som medlem. Öppna båda adresserna igen.
+   Sidorna ska neka administration utan filval eller identitetsgranskning.
+4. Alex ger Robin rollen administratör och öppnar importen i sin egen
+   profil. Robin ändrar sedan Alex roll till medlem.
+5. Kontrollera att Alex öppna importsida förlorar sina administrativa
+   kontroller. Båda sidorna kräver fortsatt aktuell administratörsroll.
+
+**Förväntat resultat:**
+
+- Inloggning, aktuellt medlemskap och administratörsroll krävs. En direkt
+  adress kringgår inte skyddet och visar inga privata innehållsvärden.
+- När rollen försvinner tas kontrollerna bort även på en öppen sida.

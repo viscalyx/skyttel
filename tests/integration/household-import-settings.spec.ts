@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
-import { createInstallation } from '../support/installation.js';
+import { createInstallation, robin } from '../support/installation.js';
 
 test('IMPORT-12: protected Settings recovery pages preserve ordinary work and retire it after replacement', async ({
   page,
@@ -96,6 +96,85 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
       contentVersion: 2,
     });
   } finally {
+    await installation.close();
+  }
+});
+
+test('IMPORT-13: import and identity Settings destinations enforce current household administrator access', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const other = await browser.newContext();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const { user: administrator } = await (
+      await page.request.get(`${installation.origin}/api/bootstrap`)
+    ).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const headers = { origin: installation.origin };
+    const guest = await other.newPage();
+    await guest.goto(`${installation.origin}/households/${household.id}/settings/import`);
+    await expect(guest.getByLabel('Skyttel-export (ZIP)')).toHaveCount(0);
+    await expect(guest.getByRole('button', { name: /Fortsätt med Google/ })).toBeVisible();
+    installation.setIdentity(robin);
+    await signIn(other.request, installation.origin, 'microsoft');
+    const { user } = await (await other.request.get(`${installation.origin}/api/bootstrap`)).json();
+    await guest.goto(`${installation.origin}/households/${household.id}/settings/content-owners`);
+    await expect(
+      guest.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }),
+    ).toHaveCount(0);
+    const { code } = await (
+      await page.request.post(`${path}/invitations`, { headers, data: { userId: user.id } })
+    ).json();
+    expect(
+      (
+        await other.request.post(`${installation.origin}/api/invitations/accept`, {
+          headers,
+          data: { code },
+        })
+      ).status(),
+    ).toBe(200);
+    for (const destination of ['import', 'content-owners']) {
+      await guest.goto(`${installation.origin}/households/${household.id}/settings/${destination}`);
+      await expect(
+        guest.getByRole('heading', { name: 'Du kan inte administrera hushållet' }),
+      ).toBeVisible();
+      await expect(guest.getByLabel('Skyttel-export (ZIP)')).toHaveCount(0);
+      await expect(
+        guest.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }),
+      ).toHaveCount(0);
+      await page.goto(`${installation.origin}/households/wrong/settings/${destination}`);
+      await expect(
+        page.getByRole('heading', { name: 'Du kan inte administrera hushållet' }),
+      ).toBeVisible();
+    }
+    expect(
+      (
+        await page.request.post(`${path}/members/${user.id}/role`, {
+          headers,
+          data: { role: 'administrator' },
+        })
+      ).status(),
+    ).toBe(200);
+    await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
+    await expect(page.getByLabel('Skyttel-export (ZIP)')).toBeEnabled();
+    expect(
+      (
+        await other.request.post(`${path}/members/${administrator.id}/role`, {
+          headers,
+          data: { role: 'member' },
+        })
+      ).status(),
+    ).toBe(200);
+    await expect(
+      page.getByRole('heading', { name: 'Du kan inte administrera hushållet' }),
+    ).toBeVisible();
+    await expect(page.getByLabel('Skyttel-export (ZIP)')).toHaveCount(0);
+    expect((await page.request.get(`${path}/imports`)).status()).toBe(403);
+  } finally {
+    await other.close();
     await installation.close();
   }
 });
