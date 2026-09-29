@@ -336,7 +336,7 @@ testfallet “MCP-06: importerad historik ångras med färskt underlag”.
    Namnet är ett syntetiskt provobjekt; Person ger ingen inloggning.
 2. Öppna **Inställningar → Fullständig export**. Läs informationen om
    insynen i privata uppgifter, skapa och ladda ned ZIP-filen. Följ
-   [exportens användarsteg](household-export.md) om panelen är obekant.
+   [exportens användarsteg](household-export.md) om sidan är obekant.
 3. Återkalla terminalanslutningen, avsluta den och stoppa servern. Behåll
    exporten. Städa den första provdatabasen enligt startguiden. Skapa en
    ny tom tillfällig databas med samma guide, logga in i ett nytt privat

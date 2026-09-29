@@ -15,6 +15,10 @@ utkast, personliga placeringar och visningsval ingår, tillsammans med
 bilder som behövs för innehållet och dess historik. Administratören kan
 alltså läsa andras privata information i filen.
 
+Oskickad formulärtext ingår ännu inte. Lägg först ändringarna i ditt
+privata utkast om de ska följa med i exporten; du behöver inte spara dem
+i den gemensamma kartan.
+
 Förvara filen säkert. Dela den bara med personer som ska få läsa hela
 innehållet. Tänk även på vem som kommer åt mappen där webbläsaren sparar
 nedladdningar. Filen är inte lösenordsskyddad.

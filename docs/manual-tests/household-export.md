@@ -371,6 +371,53 @@ work at 1280px”, samma titel med “390px” och “320px”.
 - Den hämtade filen innehåller hushållets sparade information och privata
   utkast. Oskickad text i formulär är ännu inte del av exporten.
 
+### EXPORT-10: Återimportera den hämtade filen och kontrollera efter omstart
+
+**Syfte:** Kontrollera att ZIP-filen som webbläsaren hämtar är användbar
+för fullständig återimport av gemensamma, privata och historiska uppgifter.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Använd ett separat testhushåll som får ersättas.
+Förbered två objekt och ett samband med egna fält för text, tal, datum
+och ja/nej. Ange bland annat noll och nej. Ordna beskrivning och egna fält
+i typavsnitt, dölj ett eget fält och en osäkert uppgiven skuld med datum.
+Spara uppgifterna och två olika profilbilder i separata sparanden.
+Lägg därefter ett nytt objekt i det privata utkastet utan att spara det
+gemensamt. Flytta ett objekt personligen och slå på stjärnor.
+Anteckna innehåll, bildversioner, historik, utkast och användarnas roller.
+En driftansvarig ska kunna starta om testinstallationen.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+testfallet “EXPORT-10: the downloaded current-format archive restores shared,
+private and historical content after restart”.
+
+**Steg:**
+
+1. Öppna Inställningar och Fullständig export. Förbered och hämta ZIP-filen.
+   Kontrollera med ett ZIP-verktyg att filen innehåller `manifest.json`,
+   `content.json` och `images.bin`. Innehållet ska sakna inloggningshemligheter
+   och medlemskap, och varje gemensamt objekt ska finnas en gång.
+2. Ändra ett gemensamt objektnamn och spara hela utkastet. Anteckna det nya
+   namnet så att det går att skilja den nuvarande kartan från exporten.
+3. Öppna Administrera tillgång och välj den hämtade filen under
+   Återimportera hushållet. Kontrollera filen. Kontrollera att den nya
+   kartan är kvar och att ersättningsknappen kräver uttrycklig bekräftelse.
+4. Markera bekräftelsen och välj Ersätt hushållets innehåll.
+   Kontrollera beskedet om ersättning och bevarad åtkomst.
+5. Låt den driftansvariga starta om testinstallationen och ladda om sidan.
+   Återgå till kartan och jämför med anteckningarna före exporten.
+
+**Förväntat resultat:**
+
+- Den hämtade filen går att återimportera. Ursprungliga namn, samband,
+  typavsnitt, ordning, egna värden, noll, nej och dolda uppgifter består.
+- Historiken och båda bildversionerna finns kvar. Det privata förslaget
+  återkommer i utkastet och blir inte ett gemensamt objekt.
+- Personliga placeringar och stjärnval består efter omstart. Nuvarande
+  användare och roller behåller sin åtkomst.
+
 ## Controlled export fixture
 
 This disposable Linux fixture prepares
