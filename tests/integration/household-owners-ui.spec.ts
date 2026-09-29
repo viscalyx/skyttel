@@ -204,7 +204,16 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
     await expect(confirm).toBeDisabled();
     const selected = await (await targetClient.get(`${path}/map`)).json();
     expect(selected.userId).toBe(historic.userId);
-    expect(selected.draft).toEqual(historic.draft);
+    expect(historic.draft.changes).toHaveLength(1);
+    expect(selected.draft).toEqual({
+      ...historic.draft,
+      changes: [
+        {
+          ...historic.draft.changes[0],
+          type: { ...historic.draft.changes[0].type, householdId: target.id },
+        },
+      ],
+    });
     expect((await (await targetClient.get(`${path}/map/view`)).json()).positions).toEqual(
       historicView.positions,
     );
