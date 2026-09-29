@@ -516,7 +516,12 @@ test('EXPORT-08: canceling preparation with an unseen ready response explains cl
   }
 });
 
-for (const width of [1280, 390, 320]) {
+for (const { width, height } of [
+  { width: 1280, height: 900 },
+  { width: 390, height: 900 },
+  { width: 320, height: 900 },
+  { width: 640, height: 500 },
+]) {
   test(`EXPORT-09: keyboard export controls retain focus and unsent map work at ${width}px`, async ({
     page,
   }) => {
@@ -530,7 +535,7 @@ for (const width of [1280, 390, 320]) {
       prepared = resolve;
     });
     try {
-      await page.setViewportSize({ width, height: 900 });
+      await page.setViewportSize({ width, height });
       await page.emulateMedia({ reducedMotion: 'reduce' });
       const before = await fixture.read();
       await page.goto(fixture.installation.origin);
@@ -544,6 +549,24 @@ for (const width of [1280, 390, 320]) {
       await navigation.getByRole('link', { name: 'Fullständig export', exact: true }).click();
       const section = page.getByRole('region', { name: 'Fullständig export' });
       await expect(section.getByRole('heading', { level: 1 })).toBeFocused();
+      if (width <= 800) await expect(navigation.locator('details')).not.toHaveAttribute('open');
+      await expect
+        .poll(() =>
+          section.getByRole('heading', { level: 1 }).evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            return (
+              document.activeElement === element &&
+              box.top >= 0 &&
+              box.bottom <= innerHeight &&
+              box.left >= 0 &&
+              box.right <= innerWidth &&
+              element.contains(
+                document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+              )
+            );
+          }),
+        )
+        .toBe(true);
       await expect(page.getByLabel('Objektets namn')).not.toBeVisible();
       for (const theme of ['light', 'dark'] as const) {
         await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });

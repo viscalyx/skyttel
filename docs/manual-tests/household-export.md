@@ -337,21 +337,23 @@ oskickad redigering utan att hushållets karta ändras.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** Upprepa på dator samt med 390 och 320 pixlars bredd,
-i ljust och mörkt tema. Välj minskad rörelse i systemet. Fördröj vid behov
-en förberedelse med webbläsarens nätverksverktyg.
+**Förutsättningar:** Upprepa på dator, med 390 och 320 pixlars bredd samt
+i ett kort fönster på 640 × 500 pixlar, i ljust och mörkt tema. Välj
+minskad rörelse i systemet. Fördröj vid behov en förberedelse med
+webbläsarens nätverksverktyg.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallet “EXPORT-09: keyboard export controls retain focus and unsent map
-work at 1280px”, samma titel med “390px” och “320px”.
+work at 1280px”, samma titel med “390px”, “320px” och “640px”.
 
 **Steg:**
 
 1. Öppna Lista, välj Nytt objekt och skriv namn och beskrivning. Låt
    formuläret vara oskickat med fokus i beskrivningen.
 2. Öppna Inställningar och Fullständig export. På mobil, fäll först ut
-   Välj inställning. Kontrollera fokus på exportens rubrik.
+   Välj inställning. Kontrollera att exportens fokuserade rubrik syns
+   även efter att navigationen fälls ihop.
 3. Använd tangentbordet för att förbereda en export. Kontrollera fokus
    på Hämta ZIP-fil när filen blir klar. Avbryt med tangentbordet och
    kontrollera fokus på Förbered fullständig export.
