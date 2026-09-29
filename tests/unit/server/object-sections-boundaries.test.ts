@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest';
 import type { ImportContent } from '../../../src/server/import-schema.js';
 import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
 import { mergeObjects } from '../../../src/shared/object-merge.js';
-import { createHousehold, signIn } from '../../support/client.js';
+import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { createInstallation } from '../../support/installation.js';
 
 let installation: Awaited<ReturnType<typeof createInstallation>>;
@@ -215,7 +215,7 @@ test('cancelled and saved merges preserve whole canonical facts and undo keeps a
     ).status(),
   ).toBe(200);
   await save('undo-merge');
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   state = await read();
   for (const original of originals) {
     const { revision: _revision, ...value } = original;
@@ -319,7 +319,7 @@ test('archive 21 preserves canonical property placement, sections and hidden val
   expect(await read()).toEqual(before);
   row.propertyOrder[0] = reference;
   await restore(source);
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   const imported = await read();
   expect(imported.types.find(({ id }) => id === 'solar')).toMatchObject(definition);
   expect(imported.objects.find(({ id }) => id === 'first')).toMatchObject({

@@ -1,7 +1,7 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import type { MapState, ObjectType, SaveReceipt } from '../../../src/shared/map.js';
-import { createHousehold, signIn } from '../../support/client.js';
+import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { createInstallation, robin } from '../../support/installation.js';
 
 let installation: Awaited<ReturnType<typeof createInstallation>>;
@@ -94,7 +94,7 @@ test('canonical presentation and complete facts survive atomic receipt, restart 
     type: definition,
     after: { financialFacts, description: 'Gemensam text' },
   });
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   expect((await read()).types.find(({ id }) => id === 'contract')).toMatchObject(definition);
   const shared = (await read()).objects[0];
   expect(shared.financialFacts).toEqual(financialFacts);
@@ -183,7 +183,7 @@ test('older clients can insert, reorder and remove custom definitions while cano
     'field:new',
   ]);
   await save('restore-field');
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   expect((await read()).types.find(({ id }) => id === 'contract')?.builtins).toEqual(
     definition.builtins,
   );
@@ -227,7 +227,7 @@ test('older-client label edits retain an explicit mixed order when custom member
     propertyOrder: arranged.propertyOrder,
   });
   await save('label-only');
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   expect((await read()).types.find(({ id }) => id === 'contract')?.propertyOrder).toEqual(
     arranged.propertyOrder,
   );
@@ -557,7 +557,7 @@ test('restoring object values keeps present hidden presentation while restoring 
   ).toBe(200);
   expect((await read()).draft.objectTypes?.[0].after).toMatchObject(definition);
   await save('type-restored');
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   expect((await read()).types.find(({ id }) => id === 'contract')).toMatchObject(definition);
 });
 
@@ -611,7 +611,7 @@ test('undo rejects an overlapping private canonical edit and combines a separate
     sectionId: 'facts',
   });
   await save('combined');
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   expect((await read()).objects[0].financialFacts).toEqual(financialFacts);
   expect((await read()).types.find(({ id }) => id === 'contract')?.builtins).toContainEqual({
     key: 'debt',
