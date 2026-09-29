@@ -41,7 +41,7 @@ afterEach(() => {
 async function open() {
   render(<HouseholdMap householdId={householdId} />);
   await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  const work = within(await screen.findByRole('region', { name: 'Lista och utkast', exact: true }));
+  const work = within(await screen.findByRole('region', { name: 'Lista och utkast' }));
   await work.findByRole('button', { name: 'Nytt samband' });
   return work;
 }
