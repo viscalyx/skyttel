@@ -766,6 +766,46 @@ independent saved facts until a fresh save”.
   beskrivningen Spelar piano. Ett nytt uttryckligt sparande ger ett
   kvitto och gör just dessa uppgifter gemensamma.
 
+### UTKAST-20: rätta ett samband med borttaget mål
+
+**Syfte:** Välja ett nytt giltigt mål i ett konfliktförslag utan att
+återuppliva det borttagna objektet eller spara andra förslag i förtid.
+
+**Användare:** Alex och Robin i skilda sessioner i samma hushåll.
+
+**Förutsättningar:** Lo Exempel, Molnmusik och Garaget finns sparade.
+Alex föreslår Lo Exempel → Använder → Molnmusik med osäker uppgift,
+och lägger det nya objektet Privat stol i samma privata utkast.
+Robin tar bort Molnmusik och sparar. Upprepa på dator och telefon.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallen “UTKAST-20: a relationship correction replaces a deleted endpoint
+and still requires a fresh save at 1440px”, samma titel med “390px”.
+
+**Steg:**
+
+1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
+   hämta aktuellt underlag, eller ladda om sidan.
+2. Stäng arbetsytan, öppna statuskortets konfliktlista och välj sambandet.
+   Läs informationen om borttaget objekt. Behåll mitt förslag ska saknas.
+3. Använd tangentbordet till **Rätta sambandet** och tryck Enter.
+   Kontrollera fokus på Från objekt och förslagets riktning och säkerhet.
+4. Välj Garaget som Till objekt. Molnmusik ska inte kunna väljas.
+   Välj Lägg sambandet i mitt utkast och granska förslaget.
+5. Kontrollera Robins karta före Alex nya sparbesked. Spara därefter
+   hela Alex utkast och ladda om Robins karta.
+
+**Förväntat resultat:**
+
+- Försöket med borttaget mål sparar varken sambandet eller Privat stol.
+  Statusens korrigering öppnar det befintliga privata sambandsförslaget.
+- Rättelsen behåller samma samband, riktning och osäkra uppgift. Konflikten
+  försvinner när målet är giltigt. Privat stol finns kvar i utkastet.
+- Rättelsen skapar inget kvitto och ändrar inget i den gemensamma kartan.
+  Först ett nytt uttryckligt sparande delar sambandet och stolen.
+- Molnmusik förblir borttaget. Det nya sambandet går från Lo till Garaget.
+
 ### UTKAST-16: använd Navigation och aktuell status tillsammans
 
 **Syfte:** Behålla åtkomst till personlig placering och sparande när båda

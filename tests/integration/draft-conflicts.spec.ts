@@ -315,6 +315,94 @@ test('UTKAST-19: an own object correction preserves unsent work and independent 
   }
 });
 
+for (const width of [1440, 390]) {
+  test(`UTKAST-20: a relationship correction replaces a deleted endpoint and still requires a fresh save at ${width}px`, async ({
+    page,
+    browser,
+  }) => {
+    const other = await browser.newContext();
+    const app = await collaborators(page.request, other.request, [
+      ['lo', 'Lo Exempel'],
+      ['service', 'Molnmusik'],
+      ['garage', 'Garaget'],
+    ]);
+    try {
+      await page.setViewportSize({ width, height: 900 });
+      const state = await app.read();
+      const edge: RelationshipValue = {
+        typeId: state.relationshipTypes[0].id,
+        sourceId: 'lo',
+        targetId: 'service',
+        knowledge: 'uncertain',
+      };
+      await app.propose(page.request, 'relationship', 'pending-edge', edge);
+      await app.propose(page.request, 'draft', 'independent', {
+        typeId: state.types[0].id,
+        name: 'Privat stol',
+        description: '',
+      });
+      await app.propose(other.request, 'draft', 'service', null);
+      expect((await app.save(other.request, 'delete-endpoint')).status()).toBe(200);
+      expect((await app.save(page.request, 'blocked-endpoint')).status()).toBe(409);
+      const saved = await app.read();
+      await page.goto(app.installation.origin);
+      await openMap(page);
+      const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+      await status.getByText('Visa 1 konflikt', { exact: true }).click();
+      await status
+        .getByRole('button', {
+          name: 'Samband: Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)',
+          exact: true,
+        })
+        .click();
+      const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+      await expect(review).toContainText('Sambandet hänvisar till ett borttaget objekt');
+      await expect(review.getByRole('button', { name: 'Behåll mitt förslag' })).toHaveCount(0);
+      await review.getByRole('button', { name: 'Rätta sambandet', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      const editor = page.getByRole('group', { name: 'Sambandets detaljer', exact: true });
+      await expect(editor.getByLabel('Från objekt')).toBeFocused();
+      await expectFocusedTargetUncovered(page);
+      await expect(editor.getByLabel('Från objekt')).toHaveValue('lo');
+      await expect(editor.getByLabel('Sambandstyp', { exact: true })).toHaveValue(edge.typeId);
+      await expect(editor.getByLabel('Uppgiftens säkerhet')).toHaveValue('uncertain');
+      await expect(
+        editor.getByLabel('Till objekt').getByRole('option', { name: /Molnmusik/ }),
+      ).toHaveCount(0);
+      await editor.getByLabel('Till objekt').selectOption('garage');
+      await editor.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+      await expect(review).not.toContainText('Sambandet hänvisar till ett borttaget objekt');
+      await expect(review).toContainText('Lo Exempel → Använder → Garaget (Osäkert uppgivet)');
+      await expect(review).toContainText('Privat stol');
+      const corrected = await app.read();
+      expect(corrected.objects).toEqual(saved.objects);
+      expect(corrected.relationships).toEqual([]);
+      expect(corrected.draft.relationships?.[0]).toMatchObject({
+        id: 'pending-edge',
+        before: null,
+        after: { ...edge, targetId: 'garage' },
+      });
+      expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(
+        2,
+      );
+      await review.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await expect(page.getByRole('status')).toContainText('Sparat:');
+      const shared = await app.read(other.request);
+      expect(shared.relationships).toEqual([
+        expect.objectContaining({ id: 'pending-edge', ...edge, targetId: 'garage' }),
+      ]);
+      expect(shared.objects.some(({ name }) => name === 'Privat stol')).toBe(true);
+      expect(shared.objects.some(({ id }) => id === 'service')).toBe(false);
+      expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(
+        3,
+      );
+    } finally {
+      await other.close();
+      await app.installation.close();
+    }
+  });
+}
+
 test('UTKAST-05: a conflict choice preserves independent proposals and requires a new save', async ({
   page,
   browser,
