@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReadyExport } from '../shared/household-export.js';
 import { MapRequestError, request } from './map-request.js';
 import './household-export.css';
@@ -20,6 +20,18 @@ export function HouseholdExport({
   const blobTimer = useRef<number | undefined>(undefined);
   const active = useRef<AbortController | null>(null);
   const knownExport = useRef<ReadyExport | null>(null);
+  const primary = useRef<HTMLButtonElement>(null);
+  const submittedFocus = useRef<Element | null>(null);
+  useLayoutEffect(() => {
+    if (busy) return;
+    const previous = submittedFocus.current;
+    submittedFocus.current = null;
+    if (
+      previous &&
+      (document.activeElement === previous || document.activeElement === document.body)
+    )
+      primary.current?.focus();
+  }, [busy]);
   const releaseBlob = useCallback(() => {
     window.clearTimeout(blobTimer.current);
     if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
@@ -72,6 +84,7 @@ export function HouseholdExport({
   }
 
   async function prepare() {
+    submittedFocus.current = document.activeElement;
     discardKnownExport();
     releaseBlob();
     const controller = new AbortController();
@@ -96,6 +109,7 @@ export function HouseholdExport({
 
   async function download() {
     if (!ready) return;
+    submittedFocus.current = document.activeElement;
     const controller = new AbortController();
     active.current = controller;
     setBusy('downloading');
@@ -139,6 +153,7 @@ export function HouseholdExport({
   }
 
   async function cancel() {
+    submittedFocus.current = document.activeElement;
     const exportToCancel = knownExport.current;
     active.current?.abort();
     const controller = new AbortController();
@@ -196,31 +211,24 @@ export function HouseholdExport({
         <li>Inga inloggningssessioner, aktiva token eller serverhemligheter</li>
       </ul>
       <p>Vid ett större driftfel kan ändringar sedan din senaste egna export gå förlorade.</p>
-      {ready ? (
-        <>
-          {!busy && (
-            <p role="status">
-              Exporten är klar att hämta. Hämta den före{' '}
-              <time dateTime={ready.expiresAt}>
-                {new Date(ready.expiresAt).toLocaleString('sv-SE')}
-              </time>
-              . Filen kan hämtas en gång.
-            </p>
-          )}
-          <button type="button" disabled={busy !== null} onClick={() => void download()}>
-            Hämta ZIP-fil
-          </button>
-        </>
-      ) : (
-        <button
-          type="button"
-          className="primary"
-          disabled={busy !== null}
-          onClick={() => void prepare()}
-        >
-          Förbered fullständig export
-        </button>
+      {ready && !busy && (
+        <p role="status">
+          Exporten är klar att hämta. Hämta den före{' '}
+          <time dateTime={ready.expiresAt}>
+            {new Date(ready.expiresAt).toLocaleString('sv-SE')}
+          </time>
+          . Filen kan hämtas en gång.
+        </p>
       )}
+      <button
+        ref={primary}
+        type="button"
+        className="primary"
+        disabled={busy !== null}
+        onClick={() => void (ready ? download() : prepare())}
+      >
+        {ready ? 'Hämta ZIP-fil' : 'Förbered fullständig export'}
+      </button>
       {(ready || busy) && (
         <button type="button" disabled={busy === 'canceling'} onClick={() => void cancel()}>
           Avbryt export
