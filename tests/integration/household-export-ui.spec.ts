@@ -47,6 +47,7 @@ async function arrange(page: Page) {
     headers,
     read,
     administration: `${installation.origin}/households/${household.id}/administration`,
+    exportPage: `${installation.origin}/households/${household.id}/settings/export`,
   };
 }
 
@@ -168,7 +169,8 @@ test('EXPORT-01: an administrator downloads the complete household archive by ke
     ).toBeVisible();
     await openSettings(memberPage);
     await expect(memberPage.getByRole('link', { name: 'Administrera tillgång' })).toHaveCount(0);
-    await memberPage.goto(fixture.administration);
+    await expect(memberPage.getByRole('link', { name: 'Fullständig export' })).toHaveCount(0);
+    await memberPage.goto(fixture.exportPage);
     await expect(
       memberPage.getByRole('heading', { name: 'Du kan inte administrera hushållet' }),
     ).toBeVisible();
@@ -178,10 +180,26 @@ test('EXPORT-01: an administrator downloads the complete household archive by ke
 
     const downloads: Download[] = [];
     page.on('download', (download) => downloads.push(download));
-    await page.goto(fixture.administration);
+    await page.goto(installation.origin);
+    await openSettings(page);
+    await page
+      .getByRole('navigation', { name: 'Inställningarnas sidor' })
+      .getByRole('link', { name: 'Fullständig export', exact: true })
+      .focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(fixture.exportPage);
+    await expect(
+      page.getByRole('heading', { name: 'Fullständig export', level: 1, exact: true }),
+    ).toBeFocused();
+    await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).not.toBeVisible();
     const section = page.getByRole('region', { name: 'Fullständig export' });
     await expect(section).toContainText('andra användares privata utkast och personliga vyer');
     await expect(section).toContainText('bilder och ändringshistorik');
+    await expect(section).toContainText('Som administratör kan du läsa');
+    await expect(section).toContainText('Filen är inte lösenordsskyddad');
+    await expect(section).toContainText(
+      'Inga inloggningssessioner, aktiva token eller serverhemligheter',
+    );
     await expect(section).toContainText('Förvara filen säkert');
     await expect(section).toContainText('sedan din senaste egna export');
     await section.getByRole('button', { name: 'Förbered fullständig export' }).focus();

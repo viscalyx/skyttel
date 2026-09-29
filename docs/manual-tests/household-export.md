@@ -49,11 +49,12 @@ archive by keyboard”.
 
 **Steg:**
 
-1. Kontrollera som Robin att **Administrera tillgång** saknas. Öppna samma
-   administrationsadress som Alex använder och kontrollera att ingen
+1. Kontrollera som Robin att **Fullständig export** saknas i Inställningar.
+   Öppna samma exportadress som Alex använder och kontrollera att ingen
    export erbjuds.
-2. Öppna **Administrera tillgång** som Alex. Läs **Fullständig export**
-   innan du trycker på någon exportknapp.
+2. Öppna **Inställningar** som Alex. Använd tangentbordet till
+   **Fullständig export** i sidnavigationen och tryck Enter. Kontrollera
+   fokus på sidrubriken och läs informationen före exportknapparna.
 3. Använd Tab till **Förbered fullständig export** och tryck Enter.
    Vänta tills exporten är klar och kontrollera den visade sluttiden.
 4. Använd tangentbordet till **Hämta ZIP-fil** och tryck Enter. Spara
@@ -66,8 +67,12 @@ archive by keyboard”.
 
 - Endast administratören kan förbereda export. Före starten framgår att
   andras privata utkast, personliga vyer, bilder och historik ingår,
-  att filen behöver förvaras säkert och att senare ändringar kan gå
-  förlorade vid ett större driftfel.
+  att administratören kan läsa det privata innehållet, att filen inte är
+  lösenordsskyddad och behöver förvaras säkert. Inloggningssessioner,
+  aktiva token och serverhemligheter ingår inte. Senare ändringar kan
+  gå förlorade vid ett större driftfel.
+- Exporten har en egen sida med fokus på rubriken. Kartan är dold och
+  dess kontroller går inte att nå med tangentbordet från exportsidan.
 - Förberedelsen startar ingen nedladdning. En färdig export visar en
   sluttid och kan hämtas med tangentbordet.
 - Webbläsaren erbjuder en ZIP-fil först efter att hela filen tas emot.
@@ -83,7 +88,7 @@ att en ny export kan förberedas.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** Administrationssidan är öppen.
+**Förutsättningar:** Inställningar → Fullständig export är öppen.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
@@ -154,7 +159,7 @@ clears the ready download”.
 2. Välj **Gör till medlem** för Alex som Robin i profil B.
 3. Återgå till Alex profil. Om **Hämta ZIP-fil** fortfarande visas,
    välj den direkt. Annars kontrollera att exportflödet redan stängs.
-4. Ladda om administrationsadressen som Alex och kontrollera tillgången.
+4. Ladda om exportadressen som Alex och kontrollera tillgången.
 
 **Förväntat resultat:**
 
