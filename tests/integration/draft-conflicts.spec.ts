@@ -77,6 +77,174 @@ async function expectFocusedTargetUncovered(page: Page) {
     .toBe(true);
 }
 
+for (const { width, height } of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+  { width: 320, height: 844 },
+  { width: 640, height: 456 },
+]) {
+  test(`UTKAST-18: status reaches all conflict kinds and preserves complete snapshot values at ${width}px`, async ({
+    page,
+    browser,
+  }) => {
+    const other = await browser.newContext();
+    const app = await collaborators(page.request, other.request);
+    try {
+      await page.setViewportSize({ width, height });
+      const initial = await app.read();
+      const objectType = initial.types[0];
+      const edgeType = initial.relationshipTypes[0];
+      const edgeDefinition = {
+        name: edgeType.name,
+        description: edgeType.description,
+        forwardLabel: edgeType.forwardLabel ?? edgeType.name,
+        reverseLabel: edgeType.reverseLabel ?? edgeType.name,
+        fields: edgeType.fields,
+        sections: edgeType.sections,
+      };
+      const definition = {
+        ...objectType,
+        sections: [{ id: 'finance', name: 'Sparad ekonomi' }],
+        fields: [
+          { id: 'note', name: 'Dold anteckning', description: '', kind: 'text', sectionId: '' },
+        ],
+        builtins: [{ key: 'debt', name: 'Sparad skuld', sectionId: 'finance' }],
+        propertyOrder: ['builtin:debt', 'field:note'],
+      };
+      async function proposeType(
+        client: APIRequestContext,
+        kind: 'object-type' | 'relationship-type',
+        value: unknown,
+      ) {
+        const state = await app.read(client);
+        const type = (kind === 'object-type' ? state.types : state.relationshipTypes)[0];
+        expect(
+          (
+            await app.post(client, kind, {
+              version: state.draft.version,
+              id: type.id,
+              baseRevision: type.revision,
+              value,
+            })
+          ).status(),
+        ).toBe(200);
+      }
+      await proposeType(page.request, 'object-type', definition);
+      const original: ObjectValue = {
+        typeId: objectType.id,
+        name: 'Lo Exempel',
+        description: 'Tidigare beskrivning',
+        customValues: { note: 'Tidigare dold uppgift' },
+        financialFacts: { debt: { knowledge: 'known', value: '1 200', reportedOn: '2026-09-01' } },
+      };
+      await app.propose(page.request, 'draft', 'lo', original);
+      const edge: RelationshipValue = {
+        typeId: edgeType.id,
+        sourceId: 'lo',
+        targetId: 'service',
+        knowledge: 'known',
+      };
+      await app.propose(page.request, 'relationship', 'edge', edge);
+      expect((await app.save(page.request, 'base-values')).status()).toBe(200);
+      await proposeType(page.request, 'object-type', {
+        ...definition,
+        name: 'Min objekttyp',
+        sections: [{ id: 'finance', name: 'Mitt ekonomiska avsnitt' }],
+        builtins: [{ key: 'debt', name: 'Min skuld', sectionId: 'finance' }],
+      });
+      await proposeType(page.request, 'relationship-type', {
+        ...edgeDefinition,
+        name: 'Min sambandstyp',
+        forwardLabel: 'använder enligt mig',
+        reverseLabel: 'används av mig',
+      });
+      await app.propose(page.request, 'draft', 'lo', {
+        ...original,
+        name: 'Lo Lind',
+        customValues: { note: 'Min dolda uppgift' },
+        financialFacts: { debt: { knowledge: 'known', value: '1 700', reportedOn: '2026-09-03' } },
+      });
+      await app.propose(page.request, 'relationship', 'edge', { ...edge, knowledge: 'uncertain' });
+      await proposeType(other.request, 'object-type', {
+        ...definition,
+        description: 'Annans typförklaring',
+      });
+      await proposeType(other.request, 'relationship-type', {
+        ...edgeDefinition,
+        description: 'Annans sambandstyp',
+      });
+      await app.propose(other.request, 'draft', 'lo', {
+        ...original,
+        name: 'Lo Berg',
+        description: 'Annans beskrivning',
+        customValues: { note: 'Annans dolda uppgift' },
+        financialFacts: {
+          debt: { knowledge: 'uncertain', value: '2 000', reportedOn: '2026-09-02' },
+        },
+      });
+      await app.propose(other.request, 'relationship', 'edge', {
+        ...edge,
+        targetId: null,
+        knowledge: 'unknown',
+      });
+      expect((await app.save(other.request, 'concurrent-values')).status()).toBe(200);
+      const unchanged = await app.read();
+      await page.goto(app.installation.origin);
+      await openMap(page);
+      const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+      const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+      for (const [label, title] of [
+        ['Objekttyp: Min objekttyp', 'Ändrad objekttyp: Min objekttyp'],
+        ['Sambandstyp: Min sambandstyp', 'Ändrad sambandstyp: Min sambandstyp'],
+        ['Samband: Lo Lind → använder enligt mig → Molnmusik (Osäkert uppgivet)', 'Samband'],
+        ['Objekt: Lo Lind', 'Ändring: Lo Lind'],
+      ]) {
+        await openMap(page);
+        const disclosure = status.getByText('Visa 4 konflikter', { exact: true });
+        if (!(await status.getByRole('button', { name: label, exact: true }).isVisible()))
+          await disclosure.click();
+        await status.getByRole('button', { name: label, exact: true }).focus();
+        await page.keyboard.press('Enter');
+        await expect(review.getByRole('heading', { name: title, exact: true })).toBeFocused();
+        await expectFocusedTargetUncovered(page);
+      }
+      const object = review.getByRole('article').filter({
+        has: page.getByRole('heading', { name: 'Ändring: Lo Lind', exact: true }),
+      });
+      await expect(
+        object
+          .getByRole('region', { name: 'Mitt ekonomiska avsnitt', exact: true })
+          .filter({ hasText: 'Min skuld: 1 700 — datum för uppgiften: 2026-09-03' }),
+      ).toBeVisible();
+      await expect(
+        object
+          .getByRole('region', { name: 'Sparad ekonomi', exact: true })
+          .filter({ hasText: 'Sparad skuld: 1 200 — datum för uppgiften: 2026-09-01' }),
+      ).toBeVisible();
+      await expect(
+        object.getByRole('region', { name: 'Sparad ekonomi', exact: true }).filter({
+          hasText: 'Sparad skuld: 2 000 (Osäkert uppgivet) — datum för uppgiften: 2026-09-02',
+        }),
+      ).toBeVisible();
+      for (const value of ['Tidigare dold uppgift', 'Min dolda uppgift', 'Annans dolda uppgift'])
+        await expect(object.getByText(`Dold anteckning: ${value}`, { exact: true })).toBeVisible();
+      await expect(
+        review.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      expect(await app.read()).toEqual(unchanged);
+      expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(
+        3,
+      );
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+    } finally {
+      await other.close();
+      await app.installation.close();
+    }
+  });
+}
+
 test('UTKAST-05: a conflict choice preserves independent proposals and requires a new save', async ({
   page,
   browser,

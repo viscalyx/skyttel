@@ -673,6 +673,59 @@ conflict without losing unsent work”.
   kvitto. Den gemensamma kartan innehåller Lo Berg och Alex privata
   utkast innehåller fortfarande Lo Lind.
 
+### UTKAST-18: hitta alla konfliktslag och läs varje underlags hela värden
+
+**Syfte:** skilja objekt, samband och båda typdefinitionerna åt i status
+och läsa tidigare, föreslagna och aktuella värden med rätt avsnitt.
+
+**Användare:** Alex och Robin i skilda sessioner i samma hushåll.
+
+**Förutsättningar:** Lo Exempel och Molnmusik samt ett samband mellan dem
+finns sparade. Los typ har avsnittet Sparad ekonomi med den gemensamma
+egenskapen skuld, benämnd Sparad skuld. Skulden är 1 200, känd och daterad
+2026-09-01. Det egna textfältet Dold anteckning har ett påhittat värde.
+Fältet kan tillfälligt visas när en anteckning behöver redigeras och döljas
+igen innan respektive typförslag läggs i utkastet.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallen “UTKAST-18: status reaches all conflict kinds and preserves
+complete snapshot values at 1440px”, samma titel med “390px”, “320px”
+och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
+
+**Steg:**
+
+1. Alex ändrar Lo till Lo Lind, föreslår skuld 1 700 med känd säkerhet
+   och datum 2026-09-03 samt en egen anteckning.
+2. I samma privata utkast föreslår Alex objekttypens namn Min objekttyp,
+   avsnittet Mitt ekonomiska avsnitt och skuldens visningsnamn Min skuld.
+   Dölj anteckningsfältet med värdet kvar.
+3. Alex föreslår också Min sambandstyp med riktningen **använder enligt
+   mig**, samt osäker uppgift för sambandet från Lo till Molnmusik.
+4. Robin föreslår Lo Berg, skuld 2 000 med osäker säkerhet och datum
+   2026-09-02 samt en annan anteckning. Ändra båda typbeskrivningarna
+   men behåll Sparad ekonomi och Sparad skuld. Dölj anteckningsfältet
+   med värdet kvar och föreslå att sambandets mål är okänt. Spara allt.
+5. Alex laddar om kartan utan att kasta sitt utkast. Stäng arbetspaneler
+   och vägledning. Öppna **Visa 4 konflikter** i aktuell status.
+6. Använd tangentbordet för att besöka objekttyp, sambandstyp, samband
+   och objekt från listan. Återgå till kartan mellan destinationerna.
+7. Läs objektets tre underlag. Upprepa på telefon och i ett kort fönster.
+
+**Förväntat resultat:**
+
+- Varje val öppnar rätt ändringsrubrik med synligt, åtkomligt fokus.
+  Sambandsnamnet visar riktning, båda objekten och den osäkra uppgiften.
+- Det tidigare underlaget visar Sparad ekonomi och Sparad skuld 1 200.
+  Förslaget visar Mitt ekonomiska avsnitt och Min skuld 1 700.
+  Aktuellt sparat värde visar Sparad ekonomi och Sparad skuld 2 000,
+  med osäkerheten och datumet från Robins sparande.
+- Alla tre underlag innehåller sina anteckningar trots att fältet är
+  dolt. Ingen uppgift försvinner eller får fel betydelse från ett annat
+  underlags typdefinition.
+- Hela sparandet är spärrat. Navigeringen ändrar inte kartan, privata
+  förslag eller historik, och innehållet kräver ingen vågrät rullning.
+
 ### UTKAST-16: använd Navigation och aktuell status tillsammans
 
 **Syfte:** Behålla åtkomst till personlig placering och sparande när båda

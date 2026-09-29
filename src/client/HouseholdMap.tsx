@@ -777,7 +777,10 @@ export function HouseholdMap({
       <div className="conflict-review">
         <h4>Konflikt: sparat i kartan nu</h4>
         {conflict.kind === 'object' ? (
-          details(conflict.current)
+          details(
+            conflict.current,
+            state?.types.find((type) => type.id === conflict.current?.typeId),
+          )
         ) : (
           <p>
             {conflict.current && state

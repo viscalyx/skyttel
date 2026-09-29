@@ -182,7 +182,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
   och aktuell status tillsammans utan att tappa åtkomst till kontrollerna.
   Öppna en namngiven konflikt från status med tangentbord och återgå till
-  ett annat oskickat objektformulär med texten kvar.
+  ett annat oskickat objektformulär med texten kvar. Följ alla fyra
+  konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella
+  avsnitt, dolda värden och hela ekonomiska uppgifter.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
