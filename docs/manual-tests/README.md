@@ -184,7 +184,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   Öppna en namngiven konflikt från status med tangentbord och återgå till
   ett annat oskickat objektformulär med texten kvar. Följ alla fyra
   konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella
-  avsnitt, dolda värden och hela ekonomiska uppgifter.
+  avsnitt, dolda värden och hela ekonomiska uppgifter. Rätta ett
+  konfliktobjekt med annan oskickad text kvar och bevara oberoende
+  sparade uppgifter före ett nytt uttryckligt sparande.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,

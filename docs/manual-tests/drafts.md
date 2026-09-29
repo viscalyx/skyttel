@@ -726,6 +726,46 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
 - Hela sparandet är spärrat. Navigeringen ändrar inte kartan, privata
   förslag eller historik, och innehållet kräver ingen vågrät rullning.
 
+### UTKAST-19: rätta objektkonflikten och bevara oskickad text
+
+**Syfte:** Skriva en egen rättelse utan att tappa annan redigering eller
+oberoende sparade uppgifter, och kräva ett nytt uttryckligt sparande.
+
+**Användare:** Alex och Robin i skilda sessioner i samma hushåll.
+
+**Förutsättningar:** Lo Exempel finns sparad utan beskrivning. Alex har
+namnförslaget Lo Lind i sitt privata utkast. Robin ändrar namnet till
+Lo Berg, lägger till beskrivningen Spelar piano och sparar hela utkastet.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallet “UTKAST-19: an own object correction preserves unsent work and
+independent saved facts until a fresh save”.
+
+**Steg:**
+
+1. Alex öppnar Nytt objekt, skriver Oskickad cykel och beskrivningen
+   Behåll den här texten. Stäng arbetsytan utan att skicka texten.
+2. Öppna statuskortets konfliktlista och välj Objekt: Lo Lind.
+   Använd tangentbordet till **Rätta objektet** och tryck Enter.
+3. Kontrollera rätt objektpanel och rubrikfokus. Ändra namnet till
+   Lo Alm och välj Lägg i mitt utkast.
+4. Välj Fortsätt redigera i statuskortet. Kontrollera den oskickade
+   cykelns namn och beskrivning, och stäng sedan utan att skicka texten.
+5. Välj Behåll mitt förslag för Lo Alm. Kontrollera kartan hos Robin
+   innan Alex väljer Spara hela utkastet.
+6. Spara Alex utkast och ladda om Robins karta.
+
+**Förväntat resultat:**
+
+- Rätta objektet öppnar det befintliga förslaget med synligt fokus.
+  Annan oskickad formulärtext finns kvar och spärrar konfliktvalen.
+- Rättelsen och konfliktvalet ändrar bara Alex utkast. Inget kvitto
+  skapas, och Robin ser fortfarande Lo Berg före det nya sparandet.
+- Efter konfliktvalet innehåller förslaget både Lo Alm och den oberoende
+  beskrivningen Spelar piano. Ett nytt uttryckligt sparande ger ett
+  kvitto och gör just dessa uppgifter gemensamma.
+
 ### UTKAST-16: använd Navigation och aktuell status tillsammans
 
 **Syfte:** Behålla åtkomst till personlig placering och sparande när båda

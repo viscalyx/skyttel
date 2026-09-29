@@ -245,6 +245,78 @@ for (const { width, height } of [
   });
 }
 
+test('UTKAST-19: an own object correction preserves unsent work and independent saved facts until a fresh save', async ({
+  page,
+  browser,
+}) => {
+  const other = await browser.newContext();
+  const app = await collaborators(page.request, other.request);
+  try {
+    const { types } = await app.read();
+    const value = { typeId: types[0].id, name: 'Lo Lind', description: '' };
+    await app.propose(page.request, 'draft', 'lo', value);
+    await app.propose(other.request, 'draft', 'lo', {
+      ...value,
+      name: 'Lo Berg',
+      description: 'Spelar piano',
+    });
+    expect((await app.save(other.request, 'independent-description')).status()).toBe(200);
+    const saved = await app.read();
+    await page.goto(app.installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const unsent = page.getByRole('region', { name: 'Nytt objekt', exact: true });
+    await unsent.getByLabel('Objektets namn').fill('Oskickad cykel');
+    await unsent.getByLabel('Beskrivning', { exact: true }).fill('Behåll den här texten');
+    await openMap(page);
+    const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+    await status.getByText('Visa 1 konflikt', { exact: true }).click();
+    await status.getByRole('button', { name: 'Objekt: Lo Lind', exact: true }).click();
+    const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+    await review.getByRole('button', { name: 'Rätta objektet', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    const correction = page.getByRole('region', { name: 'Lo Lind', exact: true });
+    await expect(correction.getByRole('heading', { name: 'Lo Lind', exact: true })).toBeFocused();
+    await expectFocusedTargetUncovered(page);
+    await expect(correction.getByLabel('Objektets namn')).toHaveValue('Lo Lind');
+    await correction.getByLabel('Objektets namn').fill('Lo Alm');
+    await correction.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await expect(
+      review.getByRole('heading', { name: 'Ändring: Lo Alm', exact: true }),
+    ).toBeVisible();
+    await expect(review.getByRole('button', { name: 'Behåll mitt förslag' })).toBeDisabled();
+    await status.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await expect(unsent.getByLabel('Objektets namn')).toHaveValue('Oskickad cykel');
+    await expect(unsent.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Behåll den här texten',
+    );
+    const corrected = await app.read();
+    expect(corrected.objects).toEqual(saved.objects);
+    expect(corrected.draft.changes).toHaveLength(1);
+    expect(corrected.draft.changes[0].after?.name).toBe('Lo Alm');
+    expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(2);
+    await unsent.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await review.getByRole('button', { name: 'Behåll mitt förslag' }).click();
+    await expect(page.getByRole('status')).toContainText('Granska hela utkastet');
+    expect((await app.read()).objects).toEqual(saved.objects);
+    expect((await app.read()).draft.changes[0].after).toMatchObject({
+      name: 'Lo Alm',
+      description: 'Spelar piano',
+    });
+    expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(2);
+    await review.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Sparat: Lo Alm');
+    expect((await app.read(other.request)).objects.find(({ id }) => id === 'lo')).toMatchObject({
+      name: 'Lo Alm',
+      description: 'Spelar piano',
+    });
+    expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(3);
+  } finally {
+    await other.close();
+    await app.installation.close();
+  }
+});
+
 test('UTKAST-05: a conflict choice preserves independent proposals and requires a new save', async ({
   page,
   browser,
