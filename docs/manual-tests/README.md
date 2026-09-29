@@ -193,6 +193,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   konfliktobjekt med annan oskickad text kvar och bevara oberoende
   sparade uppgifter före ett nytt uttryckligt sparande. Rätta ett sambands
   borttagna mål utan att återuppliva objektet eller spara i förtid.
+  Rätta objekt- och sambandstyper genom inställningarna med oberoende
+  sparade uppgifter kvar och ett nytt uttryckligt sparbesked.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,

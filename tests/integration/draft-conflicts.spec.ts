@@ -405,6 +405,152 @@ for (const width of [1440, 390]) {
   });
 }
 
+for (const kind of ['object-type', 'relationship-type'] as const) {
+  for (const width of [1440, 390]) {
+    test(`UTKAST-21: ${kind} correction opens retained settings and preserves independent edits until a fresh save at ${width}px`, async ({
+      page,
+      browser,
+    }) => {
+      const other = await browser.newContext();
+      const app = await collaborators(page.request, other.request);
+      try {
+        await page.setViewportSize({ width, height: 844 });
+        const initial = await app.read();
+        const isObjectType = kind === 'object-type';
+        const type = isObjectType ? initial.types[0] : initial.relationshipTypes[0];
+        const definition = {
+          name: type.name,
+          description: type.description,
+          fields: type.fields ?? [],
+          sections: type.sections,
+          ...(isObjectType
+            ? {
+                builtins: initial.types[0].builtins,
+                propertyOrder: initial.types[0].propertyOrder,
+              }
+            : {
+                forwardLabel: initial.relationshipTypes[0].forwardLabel ?? type.name,
+                reverseLabel: initial.relationshipTypes[0].reverseLabel ?? type.name,
+              }),
+        };
+        for (const [client, name, description] of [
+          [page.request, 'Min typ', definition.description],
+          [other.request, 'Annans typ', 'Oberoende typförklaring'],
+        ] as const) {
+          const state = await app.read(client);
+          expect(
+            (
+              await app.post(client, kind, {
+                version: state.draft.version,
+                id: type.id,
+                baseRevision: type.revision,
+                value: { ...definition, name, description },
+              })
+            ).status(),
+          ).toBe(200);
+        }
+        expect((await app.save(other.request, 'other-type')).status()).toBe(200);
+        const saved = await app.read();
+        expect((await app.save(page.request, 'blocked-type')).status()).toBe(409);
+        expect((await app.read()).draft).toEqual(saved.draft);
+        await page.goto(app.installation.origin);
+        await openWorkspace(page);
+        await openMap(page);
+        const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+        await status.getByText('Visa 1 konflikt', { exact: true }).click();
+        await status
+          .getByRole('button', {
+            name: `${isObjectType ? 'Objekttyp' : 'Sambandstyp'}: Min typ`,
+            exact: true,
+          })
+          .click();
+        const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+        await expect(review).toContainText('Annans typ');
+        await expect(review).toContainText('Oberoende typförklaring');
+        await review
+          .getByRole('button', {
+            name: isObjectType ? 'Rätta objekttypen' : 'Rätta sambandstypen',
+            exact: true,
+          })
+          .focus();
+        await page.keyboard.press('Enter');
+        await expect(page).toHaveURL(/\/settings\/types$/);
+        await expect(
+          page.getByRole('heading', { name: 'Typer och egna fält', exact: true }),
+        ).toBeFocused();
+        await expectFocusedTargetUncovered(page);
+        const editor = page.getByRole('group', {
+          name: isObjectType ? 'Objekttypens definition' : 'Sambandstypens definition',
+          exact: true,
+        });
+        const name = editor.getByLabel(isObjectType ? 'Typens namn' : 'Sambandstypens namn', {
+          exact: true,
+        });
+        await expect(name).toHaveValue('Min typ');
+        await name.fill('Rättad typ');
+        await editor
+          .getByRole('button', {
+            name: isObjectType
+              ? 'Lägg typförslaget i mitt utkast'
+              : 'Lägg sambandstypen i mitt utkast',
+            exact: true,
+          })
+          .click();
+        await expect(editor).toHaveCount(0);
+        await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+        await openWorkspace(page);
+        await expect(review).toContainText('Rättad typ');
+        await review
+          .getByRole('button', {
+            name: isObjectType ? 'Behåll min typdefinition' : 'Behåll min sambandstyp',
+            exact: true,
+          })
+          .click();
+        await expect(page.getByRole('status')).toContainText('Granska hela utkastet');
+        const corrected = await app.read();
+        expect(corrected.types).toEqual(saved.types);
+        expect(corrected.relationshipTypes).toEqual(saved.relationshipTypes);
+        expect(corrected.objects).toEqual(saved.objects);
+        expect(corrected.relationships).toEqual(saved.relationships);
+        const changes = isObjectType
+          ? corrected.draft.objectTypes
+          : corrected.draft.relationshipTypes;
+        expect(changes).toEqual([
+          expect.objectContaining({
+            id: type.id,
+            after: expect.objectContaining({
+              name: 'Rättad typ',
+              description: 'Oberoende typförklaring',
+            }),
+          }),
+        ]);
+        expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(
+          2,
+        );
+        await review.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+        await expect(page.getByRole('status')).toContainText('Sparat:');
+        const shared = await app.read(other.request);
+        expect(
+          (isObjectType ? shared.types : shared.relationshipTypes).find(({ id }) => id === type.id),
+        ).toMatchObject({
+          id: type.id,
+          name: 'Rättad typ',
+          description: 'Oberoende typförklaring',
+          revision: type.revision + 2,
+        });
+        expect(shared.objects).toEqual(saved.objects);
+        expect(shared.relationships).toEqual(saved.relationships);
+        expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(
+          3,
+        );
+      } finally {
+        await other.close();
+        await app.installation.close();
+      }
+    });
+  }
+}
+
 test('UTKAST-05: a conflict choice preserves independent proposals and requires a new save', async ({
   page,
   browser,

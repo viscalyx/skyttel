@@ -806,6 +806,50 @@ and still requires a fresh save at 1440px”, samma titel med “390px”.
   Först ett nytt uttryckligt sparande delar sambandet och stolen.
 - Molnmusik förblir borttaget. Det nya sambandet går från Lo till Garaget.
 
+### UTKAST-21: rätta typdefinitioner genom inställningarna
+
+**Syfte:** Göra en egen rättelse av objekt- och sambandstyper, bevara
+oberoende sparade uppgifter och kräva ett nytt sparbesked.
+
+**Användare:** Alex och Robin i skilda sessioner i samma hushåll.
+
+**Förutsättningar:** Ett hushåll med sparade objekt och typer. Alex föreslår
+namnet Min typ för en befintlig typ. Robin ändrar samma typs namn till
+Annans typ och beskrivningen till Oberoende typförklaring, och sparar.
+Upprepa för objekttyp och sambandstyp, på dator och telefon.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallen “UTKAST-21: object-type correction opens retained settings and
+preserves independent edits until a fresh save at 1440px”, samma titel med
+“390px”, samt “UTKAST-21: relationship-type correction opens retained
+settings and preserves independent edits until a fresh save at 1440px”,
+samma titel med “390px”.
+
+**Steg:**
+
+1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
+   hämta aktuellt underlag, eller ladda om sidan.
+2. Öppna statuskortets konfliktlista och välj Min typ för rätt slags typ.
+   Läs det egna förslaget och Robins aktuella namn och beskrivning.
+3. Använd tangentbordet till **Rätta objekttypen** eller
+   **Rätta sambandstypen** och tryck Enter. Kontrollera sidan
+   **Typer och egna fält**, rubrikens synliga fokus och rätt typformulär.
+4. Kontrollera att formulärets namn är Min typ. Ändra det till Rättad typ
+   och lägg typförslaget i utkastet.
+5. Välj Tillbaka till kartan, öppna Lista och granska hela utkastet.
+   Behåll den egna typdefinitionen. Kontrollera Robins karta före sparande.
+6. Välj Spara hela utkastet och ladda om Robins karta.
+
+**Förväntat resultat:**
+
+- Rättelsen öppnar rätt befintligt formulär på den vanliga inställningssidan.
+  Sparade objekt och samband förblir oförändrade genom hela flödet.
+- Rättelsen och konfliktvalet ändrar bara Alex utkast. Annans typ och den
+  oberoende beskrivningen är fortfarande gemensamma före ett nytt sparande.
+- Konfliktvalet bevarar Oberoende typförklaring tillsammans med Rättad typ.
+  Ett nytt uttryckligt sparande delar dessa uppgifter och skapar ett kvitto.
+
 ### UTKAST-16: använd Navigation och aktuell status tillsammans
 
 **Syfte:** Behålla åtkomst till personlig placering och sparande när båda
