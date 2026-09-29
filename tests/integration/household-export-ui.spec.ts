@@ -854,3 +854,91 @@ test('EXPORT-10: the downloaded current-format archive restores shared, private 
     await fixture.installation.close();
   }
 });
+
+for (const phase of ['ready', 'downloading'] as const) {
+  test(`EXPORT-11: leaving a ${phase} export retires the copy and preserves unsent map work`, async ({
+    page,
+  }) => {
+    const fixture = await arrange(page);
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let received = () => {};
+    const serverDelivered = new Promise<void>((resolve) => {
+      received = resolve;
+    });
+    let delivered = () => {};
+    const browserDelivery = new Promise<void>((resolve) => {
+      delivered = resolve;
+    });
+    try {
+      const before = await fixture.read();
+      const downloads: Download[] = [];
+      page.on('download', (download) => downloads.push(download));
+      await page.goto(fixture.installation.origin);
+      await openWorkspace(page);
+      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page.getByLabel('Objektets namn').fill('Oskickat vid avbruten export');
+      await page.getByLabel('Beskrivning', { exact: true }).fill('Bevara min redigering');
+      await openSettings(page);
+      const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+      await navigation.getByRole('link', { name: 'Fullständig export', exact: true }).click();
+      const section = page.getByRole('region', { name: 'Fullständig export' });
+      const preparedResponse = page.waitForResponse(
+        (response) =>
+          response.url() === `${fixture.path}/exports` && response.request().method() === 'POST',
+      );
+      await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
+      const ready = await (await preparedResponse).json();
+      await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toBeVisible();
+      if (phase === 'downloading') {
+        // Hold delivery of the real complete response, not archive creation or cleanup.
+        await page.route(
+          `${fixture.path}/exports/${ready.id}`,
+          async (route) => {
+            const response = await route.fetch();
+            expect(response.status()).toBe(200);
+            expect((await response.body()).length).toBe(ready.bytes);
+            received();
+            await held;
+            await route.fulfill({ response });
+            delivered();
+          },
+          { times: 1 },
+        );
+        await section.getByRole('button', { name: 'Hämta ZIP-fil' }).click();
+        await serverDelivered;
+        await expect(section.getByRole('status')).toHaveText('Hämtar och kontrollerar ZIP-filen…');
+      }
+      const canceled = page.waitForResponse(`${fixture.path}/exports/${ready.id}/cancel`);
+      await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+      expect((await canceled).status()).toBe(200);
+      expect((await page.request.get(`${fixture.path}/exports/${ready.id}`)).status()).toBe(404);
+      release();
+      if (phase === 'downloading') await browserDelivery;
+      await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickat vid avbruten export');
+      await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+        'Bevara min redigering',
+      );
+      await expect(page.getByLabel('Beskrivning', { exact: true })).toBeFocused();
+      expect(downloads).toHaveLength(0);
+      expect(await fixture.read()).toEqual(before);
+      await openSettings(page);
+      await navigation.getByRole('link', { name: 'Fullständig export', exact: true }).click();
+      await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toHaveCount(0);
+      await expect(section.getByRole('status')).toHaveCount(0);
+      await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
+      const downloaded = page.waitForEvent('download');
+      await section.getByRole('button', { name: 'Hämta ZIP-fil' }).click();
+      const result = await archive(await downloaded);
+      expect(result.content.objects).toEqual([
+        expect.objectContaining({ id: 'shared-object', name: 'Gemensam lampa' }),
+      ]);
+      expect(downloads).toHaveLength(1);
+    } finally {
+      release();
+      await fixture.installation.close();
+    }
+  });
+}

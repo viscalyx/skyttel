@@ -418,6 +418,46 @@ private and historical content after restart”.
 - Personliga placeringar och stjärnval består efter omstart. Nuvarande
   användare och roller behåller sin åtkomst.
 
+### EXPORT-11: Lämna en färdig export eller en pågående hämtning
+
+**Syfte:** Kontrollera att sidbyte avbryter exporten utan att kasta
+oskickad redigering eller erbjuda en sen fil.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Hushållet har ett sparat objekt. Använd webbläsarens
+nätverksverktyg för att fördröja filhämtningen i den andra omgången.
+Integrationstestet håller leveransen av ett verkligt färdigt ZIP-svar;
+serverns aktiva överföring och rensning provas separat i EXPORT-07.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+testfallen “EXPORT-11: leaving a ready export retires the copy and preserves
+unsent map work” och “EXPORT-11: leaving a downloading export retires the copy
+and preserves unsent map work”.
+
+**Steg:**
+
+1. Öppna Lista, välj Nytt objekt och skriv ett namn och en beskrivning.
+   Låt formuläret vara oskickat med fokus i beskrivningen.
+2. Öppna Inställningar och Fullständig export. Förbered en export.
+3. Välj Tillbaka till kartan innan hämtningen startar. Kontrollera att
+   formulärets namn, beskrivning och fokus finns kvar utan nedladdning.
+4. Öppna Fullständig export igen. Kontrollera att ingen tidigare hämtning
+   eller resultat visas. Förbered och hämta en ny export.
+5. Upprepa steg 1–4, men starta den fördröjda hämtningen innan sidbytet.
+   Kontrollera väntemeddelandet och återgå sedan till kartan. Återställ
+   nätverket och kontrollera att ingen fil erbjuds från den lämnade exporten.
+
+**Förväntat resultat:**
+
+- Sidbytet bevarar oskickat arbete och fokus. Exporten ändrar inte kartan
+  eller det privata utkastet och skapar inget sparande.
+- Ingen fil erbjuds efter sidbytet, inte heller när ett sent svar kommer
+  fram. Den kända exportens avbrott bekräftas och samma kopia kan inte hämtas.
+- Återbesöket börjar med en ny förberedelse. Dess ZIP-fil innehåller det
+  sparade innehållet; den oskickade redigeringen är ännu inte del av utkastet.
+
 ## Controlled export fixture
 
 This disposable Linux fixture prepares

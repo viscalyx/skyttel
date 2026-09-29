@@ -116,7 +116,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 - [Fullständig export](household-export.md): egen sida i Inställningar,
   privata uppgifter före export, tangentbord, fokus, bevarat kartarbete,
   nedladdning, verklig återimport av den hämtade filen efter omstart,
-  avbrott med oklart rensningsresultat,
+  avbrott med oklart rensningsresultat, sidbyte under hämtning,
   återkallad aktiv hämtning, giltighetstid samt
   bevarade identiteter, bildversioner, utkast och placeringar efter
   sammanslagning. En lokal kontrollklient pausar en stor HTTP-överföring,
