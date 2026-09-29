@@ -160,6 +160,24 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
         })
       ).status(),
     ).toBe(200);
+    const initial = await (await page.request.get(`${path}/map`)).json();
+    expect(
+      (
+        await page.request.post(`${path}/map/draft`, {
+          headers,
+          data: {
+            id: 'cleanup-private',
+            version: initial.draft.version,
+            baseRevision: null,
+            value: {
+              name: 'Privat arbete genom rensningen',
+              description: '',
+              typeId: initial.types[0].id,
+            },
+          },
+        })
+      ).status(),
+    ).toBe(200);
     const original = await (await page.request.get(`${path}/map`)).json();
     const exported = await (
       await page.request.post(`${path}/exports`, { headers, data: {} })
