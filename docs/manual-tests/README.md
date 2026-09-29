@@ -116,7 +116,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 - [Fullständig återimport](household-import.md): uttrycklig ersättning,
   bevarad åtkomst, privata uppgifter, bildhistorik, äldre fältbetydelser,
   lokalt prov med tappat sparbesked, avvisade gamla sparbegäranden,
-  ny förberedelse efter omstart och ångring med aktuellt underlag.
+  ny förberedelse efter omstart, samma importförsök i en annan
+  administratörs webbläsare och ångring med aktuellt underlag.
 
 - [Fullständig export](household-export.md): egen sida i Inställningar,
   privata uppgifter före export, tangentbord, fokus, bevarat kartarbete,

@@ -329,3 +329,60 @@ after restart without changing content”.
   arkiv påstås inte vara en genomförd import.
 - Den nya filen kräver ny granskning och ett nytt uttryckligt beslut.
   Därefter kan samma giltiga export återimporteras.
+
+### IMPORT-09: hitta samma ersättning i en annan administratörs webbläsare
+
+**Syfte:** Följ ett bekräftat importförsök trots tappat svar, ny webbläsare
+och omstart utan att ersätta innehållet en gång till.
+
+**Användare:** Alex och Robin som aktuella administratörer i separata
+webbläsarprofiler. Bjud först in Robin och ge rollen administratör.
+
+**Förutsättningar:** En separat provinstallation och export enligt den
+allmänna förberedelsen. Robin har inte öppnat importen tidigare. Använd
+Chromium med utvecklarverktyg i Alex profil.
+
+**Integrationstest:**
+[household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
+testfallet “IMPORT-09: another administrator discovers the same committed
+import after a lost response and restart”.
+
+**Steg:**
+
+1. Alex väljer exportfilen och **Kontrollera importfil**. Läs granskningen.
+2. Kör följande kod i utvecklarverktygens Console innan bekräftelsen.
+   Den släpper igenom serverns begäran och kastar bort ett lyckat svar.
+   Fortsätt endast om konsolen senare visar det slutförda försökets ID.
+3. Alex markerar bekräftelsen och väljer **Ersätt hushållets innehåll**.
+   Kontrollera beskedet **Utfallet är okänt** och att nytt filval är spärrat.
+4. Robin öppnar importen i sin egen webbläsare. Kontrollera att slutfört
+   resultat visas för samma försökets ID, utan uppladdning eller bekräftelse.
+5. Kontrollera återställt innehåll, privata utkast och aktuell tillgång.
+   Starta om servern med samma databas och ladda om Robins importvy.
+   Samma försök och resultat ska fortfarande visas.
+
+```javascript
+(() => {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const request = new Request(input, init);
+    if (request.method !== 'POST'
+        || !/\/imports\/[^/]+\/confirm$/.test(new URL(request.url).pathname)) {
+      return originalFetch(input, init);
+    }
+    window.fetch = originalFetch;
+    const response = await originalFetch(input, init);
+    const result = await response.clone().json();
+    if (!response.ok || result.status !== 'completed') return response;
+    console.info('IMPORT-09: slutfört försök', result.id);
+    throw new TypeError('Synthetic lost import response');
+  };
+})();
+```
+
+**Förväntat resultat:**
+
+- Alex får inget falskt framgångs- eller misslyckandebesked när svaret
+  försvinner. Robin hittar samma beständiga försök med aktuell behörighet.
+- Omstart bevarar försökets identitet och resultat. Ingen ny ersättning
+  begärs och inget privat arbete blandas ihop.
