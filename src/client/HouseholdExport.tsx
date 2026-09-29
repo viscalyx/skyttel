@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReadyExport } from '../shared/household-export.js';
 import { MapRequestError, request } from './map-request.js';
+import './household-export.css';
 
 export function HouseholdExport({
   householdId,
@@ -164,19 +165,32 @@ export function HouseholdExport({
 
   if (accessLost) return null;
   return (
-    <section aria-labelledby="household-export-heading" aria-busy={busy !== null}>
-      <h2 id="household-export-heading" className="section-heading">
+    <section
+      className="panel household-export"
+      aria-labelledby="household-export-heading"
+      aria-busy={busy !== null}
+    >
+      <h1 id="household-export-heading" tabIndex={-1}>
         Fullständig export
-      </h2>
-      <p>
-        Exporten innehåller hela hushållets information, inklusive andra användares privata utkast
-        och personliga vyer, bilder och ändringshistorik. Som administratör kan du läsa även detta
-        privata innehåll i exporten.
-      </p>
-      <p>
-        Förvara filen säkert och dela den bara med personer som ska få läsa allt innehåll. Vid ett
-        större driftfel kan ändringar sedan din senaste egna export gå förlorade.
-      </p>
+      </h1>
+      <p className="eyebrow">Fullständig kopia</p>
+      <h2>Ta med hela hushållets information</h2>
+      <div className="export-private-content">
+        <p>
+          Exporten innehåller även andra användares privata utkast och personliga vyer. Som
+          administratör kan du läsa även detta privata innehåll i exporten.
+        </p>
+        <p>
+          Filen är inte lösenordsskyddad. Förvara filen säkert och dela den bara med personer som
+          ska få läsa allt innehåll.
+        </p>
+      </div>
+      <ul className="export-contents">
+        <li>Gemensam karta, typdefinitioner, bilder och ändringshistorik</li>
+        <li>Privata utkast, personliga placeringar och visningsval, sparförsök och kvitton</li>
+        <li>Inga inloggningssessioner, aktiva token eller serverhemligheter</li>
+      </ul>
+      <p>Vid ett större driftfel kan ändringar sedan din senaste egna export gå förlorade.</p>
       {ready ? (
         <>
           {!busy && (
@@ -222,6 +236,11 @@ export function HouseholdExport({
           {error}
         </p>
       )}
+      <p className="muted export-cleanup">
+        När du lämnar exportsidan avbryts pågående arbete och Skyttel försöker ta bort den
+        tillfälliga kopian. Om borttagningen inte kan bekräftas kan kopian finnas kvar tills
+        giltighetstiden går ut. Efter avbrott eller utgången tid förbereder du en ny export.
+      </p>
     </section>
   );
 }

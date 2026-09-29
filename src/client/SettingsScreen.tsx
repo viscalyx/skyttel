@@ -34,7 +34,13 @@ export function settingsEntries(
           {
             to: `${householdPath}/administration`,
             title: 'Administrera tillgång',
-            description: 'Medlemmar och inbjudningar, export, återimport och permanent radering.',
+            description: 'Medlemmar och inbjudningar, återimport och permanent radering.',
+            group: 'Administration',
+          },
+          {
+            to: `${householdPath}/settings/export`,
+            title: 'Fullständig export',
+            description: 'Hämta hela hushållets information, inklusive privata uppgifter.',
             group: 'Administration',
           },
         ]

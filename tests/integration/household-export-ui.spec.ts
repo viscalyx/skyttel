@@ -277,7 +277,7 @@ test('EXPORT-02: an administrator cancels an export and prepares another', async
     const before = await fixture.read();
     const downloads: Download[] = [];
     page.on('download', (download) => downloads.push(download));
-    await page.goto(fixture.administration);
+    await page.goto(fixture.exportPage);
     const section = page.getByRole('region', { name: 'Fullständig export' });
     const preparedResponse = page.waitForResponse(
       (response) =>
@@ -314,7 +314,7 @@ test('EXPORT-03: an interrupted download offers a new export without reporting s
   try {
     const downloads: Download[] = [];
     page.on('download', (download) => downloads.push(download));
-    await page.goto(fixture.administration);
+    await page.goto(fixture.exportPage);
     const section = page.getByRole('region', { name: 'Fullständig export' });
     await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
     await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toBeVisible();
@@ -361,7 +361,7 @@ test('EXPORT-04: a changed administrator role blocks export and clears the ready
     ).json();
     const downloads: Download[] = [];
     page.on('download', (download) => downloads.push(download));
-    await page.goto(fixture.administration);
+    await page.goto(fixture.exportPage);
     const section = page.getByRole('region', { name: 'Fullständig export' });
     await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
     await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toBeVisible();
@@ -411,7 +411,7 @@ test('EXPORT-05: an expired export requires a new preparation', async ({ page })
   try {
     const downloads: Download[] = [];
     page.on('download', (download) => downloads.push(download));
-    await page.goto(fixture.administration);
+    await page.goto(fixture.exportPage);
     const section = page.getByRole('region', { name: 'Fullständig export' });
     await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
     await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toBeVisible();
