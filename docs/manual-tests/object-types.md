@@ -316,9 +316,9 @@ hiding, type changes, history and undo at 1280px”, samma titel med “390px”
    ekonomiska uppgifter. Granska det tidigare egna värdet och bekräfta
    **Jag har hanterat tidigare fältvärden för typbytet**. Lägg i utkastet
    och spara genom Lista.
-7. Öppna Visa historik. Granska typbytet, tidigare Anteckning och skuldens
-   säkerhet och datum. Välj Ångra sparandet, granska och spara förslaget.
-   Starta om och kontrollera Husets lån igen.
+7. Öppna Visa historik och Visa ändringarna för typbytet. Granska typbytet,
+   tidigare Anteckning och skuldens säkerhet och datum. Välj Ångra sparandet,
+   granska och spara förslaget. Starta om och kontrollera Husets lån igen.
 
 **Förväntat resultat:**
 
