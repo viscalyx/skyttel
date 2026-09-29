@@ -178,12 +178,12 @@ for (const width of [1280, 390, 320]) {
         await openWorkspace(page);
         const saved = await read();
         expect(saved.objects).toHaveLength(2);
-        expect(saved.objects.find(({ id }) => id === panels?.id)).toMatchObject(
-          panels?.after ?? {},
-        );
-        expect(saved.objects.find(({ id }) => id === battery?.id)).toMatchObject(
-          battery?.after ?? {},
-        );
+        expect(saved.objects.find(({ id }) => id === panels?.id)).toMatchObject({
+          ...panels?.after,
+        });
+        expect(saved.objects.find(({ id }) => id === battery?.id)).toMatchObject({
+          ...battery?.after,
+        });
         expect(saved.relationships).toEqual([
           expect.objectContaining({ id: edge?.id, ...edge?.after }),
         ]);

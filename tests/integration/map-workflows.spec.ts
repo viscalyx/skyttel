@@ -1,8 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import {
-  createHousehold,
   openMap as closeWorkspace,
+  createHousehold,
   openWorkspace,
   signIn,
 } from '../support/client.js';
