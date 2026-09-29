@@ -33,6 +33,11 @@
   display: grid;
   gap: 4px;
 }
+.draft-conflict-links > summary {
+  min-height: 44px;
+  align-content: center;
+  cursor: pointer;
+}
 .draft-conflict-links ul {
   display: grid;
   gap: 8px;
