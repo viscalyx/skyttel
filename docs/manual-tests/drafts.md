@@ -712,6 +712,8 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
 6. Använd tangentbordet för att besöka objekttyp, sambandstyp, samband
    och objekt från listan. Återgå till kartan mellan destinationerna.
 7. Läs objektets tre underlag. Upprepa på telefon och i ett kort fönster.
+8. Behåll den föreslagna objekttypen med tangentbordet medan konfliktlistan
+   i status är öppen. Fortsätt granska de återstående konflikterna.
 
 **Förväntat resultat:**
 
@@ -728,6 +730,10 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
   underlags typdefinition.
 - Hela sparandet är spärrat. Navigeringen ändrar inte kartan, privata
   förslag eller historik, och innehållet kräver ingen vågrät rullning.
+- Efter typvalet har hela utkastets rubrik synligt fokus utan att döljas
+  bakom status. De tre återstående konflikterna spärrar fortfarande
+  sparandet. Valet ändrar bara det privata utkastet; kartan och historiken
+  är oförändrade.
 
 ### UTKAST-19: rätta objektkonflikten och bevara oskickad text
 

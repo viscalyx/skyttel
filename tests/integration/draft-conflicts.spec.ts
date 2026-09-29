@@ -245,6 +245,25 @@ for (const { width, height } of [
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
+      await review.getByRole('button', { name: 'Behåll min typdefinition', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(
+        review.getByRole('heading', { name: 'Hela mitt utkast', exact: true }),
+      ).toBeFocused();
+      await expectFocusedTargetUncovered(page);
+      await expect(status.getByText('Visa 3 konflikter', { exact: true })).toBeVisible();
+      await expect(
+        review.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      expect(await app.read()).toMatchObject({
+        objects: unchanged.objects,
+        relationships: unchanged.relationships,
+        types: unchanged.types,
+        relationshipTypes: unchanged.relationshipTypes,
+      });
+      expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(
+        3,
+      );
     } finally {
       await other.close();
       await app.installation.close();
