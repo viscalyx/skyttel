@@ -102,7 +102,7 @@ export function HouseholdMap({
   householdName?: string;
   account?: ReactNode;
   profileRequested?: boolean;
-  onSettings?: () => void;
+  onSettings?: (section?: 'types') => void;
   onReturnToMap?: () => void;
   typeSettingsTarget?: HTMLElement | null;
   mapSettingsTarget?: HTMLElement | null;
@@ -1178,6 +1178,32 @@ export function HouseholdMap({
     });
     setDirty(true);
   }
+  function editObjectType(type: ObjectType) {
+    if (!state || legacyDirty) return;
+    const proposal = state.draft.objectTypes?.find((item) => item.id === type.id);
+    setEdgeEditor(null);
+    setDirty(false);
+    setEdgeTypeEditor(null);
+    setTypeEditor({
+      type,
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      baseRevision: proposal ? (proposal.before?.revision ?? null) : type.revision,
+    });
+  }
+  function editRelationshipType(type: RelationshipType) {
+    if (!state || legacyDirty) return;
+    const proposal = state.draft.relationshipTypes?.find((item) => item.id === type.id);
+    setEdgeEditor(null);
+    setTypeEditor(null);
+    setDirty(false);
+    setEdgeTypeEditor({
+      type,
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      baseRevision: proposal ? (proposal.before?.revision ?? null) : type.revision,
+    });
+  }
   function selectObject(
     object: MapObject,
     mode: 'select' | 'toggle' | 'include' | 'replace' = 'select',
@@ -2237,23 +2263,7 @@ export function HouseholdMap({
                                   <button
                                     type="button"
                                     disabled={pending || dirty || blocked}
-                                    onClick={() => {
-                                      const proposal = state.draft.objectTypes?.find(
-                                        (item) => item.id === type.id,
-                                      );
-
-                                      setEdgeEditor(null);
-                                      setDirty(false);
-                                      setEdgeTypeEditor(null);
-                                      setTypeEditor({
-                                        type,
-                                        version: state.draft.version,
-                                        contentVersion: state.contentVersion,
-                                        baseRevision: proposal
-                                          ? (proposal.before?.revision ?? null)
-                                          : type.revision,
-                                      });
-                                    }}
+                                    onClick={() => editObjectType(type)}
                                   >
                                     Ändra typ: {type.name}
                                   </button>
@@ -2322,23 +2332,7 @@ export function HouseholdMap({
                                   <button
                                     type="button"
                                     disabled={pending || dirty || blocked}
-                                    onClick={() => {
-                                      const proposal = state.draft.relationshipTypes?.find(
-                                        (item) => item.id === type.id,
-                                      );
-
-                                      setEdgeEditor(null);
-                                      setTypeEditor(null);
-                                      setDirty(false);
-                                      setEdgeTypeEditor({
-                                        type,
-                                        version: state.draft.version,
-                                        contentVersion: state.contentVersion,
-                                        baseRevision: proposal
-                                          ? (proposal.before?.revision ?? null)
-                                          : type.revision,
-                                      });
-                                    }}
+                                    onClick={() => editRelationshipType(type)}
                                   >
                                     Ändra sambandstyp: {type.name}
                                   </button>
@@ -2463,6 +2457,19 @@ export function HouseholdMap({
                                   behåller ditt förslag. Granska hela utkastet före ett nytt
                                   sparbesked.
                                 </p>
+                                {change.after && (
+                                  <button
+                                    type="button"
+                                    disabled={pending || blocked || legacyDirty}
+                                    onClick={() => {
+                                      if (!change.after) return;
+                                      editRelationshipType(change.after);
+                                      onSettings?.('types');
+                                    }}
+                                  >
+                                    Rätta sambandstypen
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   disabled={pending || blocked || dirty}
@@ -2540,6 +2547,19 @@ export function HouseholdMap({
                                   Välj definition för utkastet och granska hela utkastet före ett
                                   nytt sparbesked.
                                 </p>
+                                {change.after && (
+                                  <button
+                                    type="button"
+                                    disabled={pending || blocked || legacyDirty}
+                                    onClick={() => {
+                                      if (!change.after) return;
+                                      editObjectType(change.after);
+                                      onSettings?.('types');
+                                    }}
+                                  >
+                                    Rätta objekttypen
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   disabled={pending || blocked || dirty}
