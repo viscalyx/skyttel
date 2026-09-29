@@ -110,11 +110,24 @@ export function discoverHouseholdImport(
   householdId: string,
 ): ImportDiscovery {
   authorize(database, actorId, householdId);
+  const store = storeFor(database);
   const job = database
     .prepare(`SELECT * FROM content_maintenance WHERE householdId = ? AND kind = 'import'
       ORDER BY phase IN ('prepared', 'cleanup') DESC, createdAt DESC, rowid DESC LIMIT 1`)
     .get(householdId) as ContentMaintenance | undefined;
-  return { attempt: job ? durableStatus(job) : null };
+  const ready = [...store.jobs.values()]
+    .reverse()
+    .find(
+      (candidate) =>
+        candidate.actorId === actorId &&
+        candidate.householdId === householdId &&
+        Date.parse(candidate.expiresAt) > Date.now() &&
+        !storedImport(database, householdId, candidate.id),
+    );
+  return {
+    attempt: job ? durableStatus(job) : null,
+    ready: ready ? readyStatus(ready) : null,
+  };
 }
 function storedImport(database: Database.Database, householdId: string, id: string) {
   return database

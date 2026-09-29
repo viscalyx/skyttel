@@ -50,10 +50,15 @@ export function HouseholdImport({
     setBusy(true);
     setError('');
     void request<ImportDiscovery>(`${path}/imports`, undefined, controller.signal)
-      .then(({ attempt: found }) => {
+      .then(({ attempt: durable, ready }) => {
         if (controller.signal.aborted) return;
+        const found =
+          durable && ['prepared', 'cleanup'].includes(durable.status)
+            ? durable
+            : (ready ?? durable);
         setResult(found);
-        if (found && ['prepared', 'cleanup'].includes(found.status))
+        setConfirmed(false);
+        if (found && ['ready', 'prepared', 'cleanup'].includes(found.status))
           remember({ id: found.id, contentVersion: found.confirmationContentVersion });
         setDiscoveryNeeded(false);
       })
@@ -110,8 +115,11 @@ export function HouseholdImport({
     setError('');
     setConfirmed(false);
     setResult(null);
+    remember(null);
+    let submitted = false;
     try {
       const state = await request<MapState>(`${path}/map`, undefined, controller.signal);
+      submitted = true;
       const response = await fetch(`${path}/imports`, {
         method: 'POST',
         credentials: 'same-origin',
@@ -132,7 +140,11 @@ export function HouseholdImport({
       setResult(value as ImportStatus);
       remember({ id: value.id, contentVersion: state.contentVersion });
     } catch (failure) {
-      if (!controller.signal.aborted) fail(failure);
+      if (!controller.signal.aborted) {
+        if (submitted && (!(failure instanceof MapRequestError) || failure.status >= 500))
+          setDiscoveryNeeded(true);
+        fail(failure);
+      }
     } finally {
       if (!controller.signal.aborted) setBusy(false);
     }

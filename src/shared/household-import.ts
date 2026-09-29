@@ -9,4 +9,4 @@ export type ImportStatus = {
   error?: string;
 };
 
-export type ImportDiscovery = { attempt: ImportStatus | null };
+export type ImportDiscovery = { attempt: ImportStatus | null; ready: ImportStatus | null };
