@@ -60,7 +60,7 @@ test('IMPORT-09: another administrator discovers the same committed import after
       await page.request.post(`${path}/exports`, { headers, data: {} })
     ).json();
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
-    const administration = `${installation.origin}/households/${household.id}/administration`;
+    const administration = `${installation.origin}/households/${household.id}/settings/import`;
     await page.goto(administration);
     await page.getByLabel('Skyttel-export (ZIP)').setInputFiles({
       name: 'skyttel.zip',
@@ -183,7 +183,7 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
       await page.request.post(`${path}/exports`, { headers, data: {} })
     ).json();
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
-    const administration = `${installation.origin}/households/${household.id}/administration`;
+    const administration = `${installation.origin}/households/${household.id}/settings/import`;
     await page.goto(administration);
     await page.getByLabel('Skyttel-export (ZIP)').setInputFiles({
       name: 'skyttel.zip',
@@ -276,7 +276,7 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
       })
     ).json();
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
-    const administration = `${installation.origin}/households/${household.id}/administration`;
+    const administration = `${installation.origin}/households/${household.id}/settings/import`;
     const file = { name: 'skyttel.zip', mimeType: 'application/zip', buffer: archive };
     await page.goto(administration);
     await page.getByLabel('Skyttel-export (ZIP)').setInputFiles(file);

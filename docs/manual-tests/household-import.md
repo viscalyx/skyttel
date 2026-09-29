@@ -44,7 +44,7 @@ household content with the keyboard”.
 
 **Steg:**
 
-1. Öppna **Administrera tillgång** och läs **Återimportera hushållet**.
+1. Öppna **Inställningar → Återimportera hushållet** och läs omfattningen.
 2. Välj ZIP-filen. Använd Tab till **Kontrollera importfil** och Enter.
 3. Läs sammanställningen. Kontrollera i den andra profilen att **Senare
    namn** fortfarande finns. Ersättningsknappen ska ännu vara avstängd.
@@ -104,7 +104,8 @@ restart”.
    öppna aktuell karta och kontrollera att **Senare objekt** finns; det
    visar att servern sparade innan svaret försvann. Börja skriva ett nytt
    objektförslag, men låt formuläret vara öppet utan att skicka det.
-5. Öppna en andra flik i profil B och gå till Administration. Välj exporten
+5. Öppna en andra flik i profil B och gå till
+   **Inställningar → Återimportera hushållet**. Välj exporten
    från steg 3, granska rätt hushåll och bekräfta ersättningen. Försök sedan
    lägga den första flikens gamla öppna objektförslag i utkastet, innan
    servern startas om. Kontrollera att förslaget avvisas och inte syns i
@@ -281,7 +282,8 @@ fresh whole-save undo”.
    ångringsförslaget. Kontrollera att objektet saknas och fältet är text
    igen. Behåll även detta kvitto.
 4. Hämta en fullständig export. Återimportera filen till samma hushåll
-   genom Administration och bekräfta ersättningen. Starta om servern med
+   genom **Inställningar → Återimportera hushållet** och bekräfta ersättningen.
+   Starta om servern med
    samma databas och öppna hushållet igen.
 5. Kontrollera båda kvittona i historiken. Ångra sparandet från steg 3
    med aktuellt underlag och spara hela förslaget. Starta om igen och
@@ -313,9 +315,10 @@ after restart without changing content”.
 
 **Steg:**
 
-1. Välj exportfilen i Administration och tryck **Kontrollera importfil**.
+1. Välj exportfilen i **Inställningar → Återimportera hushållet** och tryck
+   **Kontrollera importfil**.
    Granska sammanställningen men bekräfta inte ersättning.
-2. Starta om servern med samma databas. Ladda om administrationssidan.
+2. Starta om servern med samma databas. Ladda om importsidan.
    Tryck **Hämta importens status** innan du väljer någon ny fil.
 3. Läs beskedet om den saknade förberedelsen och kontrollera att kartan
    fortfarande har sitt tidigare innehåll.

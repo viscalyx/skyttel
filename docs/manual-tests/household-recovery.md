@@ -75,7 +75,8 @@ assigns private ownership and remains portable after restart”.
    och kör `read` en sista gång i kontrollklienten för att bekräfta att
    behörigheten fortfarande fungerar. Stoppa sedan endast källservern i
    terminal A. Behåll profilen, konfigurationen, arkivet och kontrollklienten.
-6. I profil B: återimportera källarkivet genom Administration på målet.
+6. I profil B: återimportera källarkivet genom
+   **Inställningar → Återimportera hushållet** på målet.
    Granska och bekräfta uttryckligen. Läs in hushållet igen. Kartan och
    historiken ska finnas, men Robins privata utkast ska vara tomt; källans
    tredje bild ska inte visas som Robins förslag. Ingen identitet kopplas
@@ -83,7 +84,8 @@ assigns private ownership and remains portable after restart”.
 7. Lägg **Nytt privat arbete** i Robins utkast utan att spara. Anteckna
    Robins historiska innehålls-ID. Kör samma förberedelsekod i profil B med
    namnet `destination`, och behåll även den JSON-filen privat.
-8. Öppna **Koppla historiskt innehåll**, **Hämta aktuella innehållskopplingar**.
+8. Öppna **Inställningar → Koppla historiskt innehåll** och välj
+   **Hämta aktuella innehållskopplingar**.
    Välj källans historiska ID och Robins aktuella verifierade användar-ID.
    Läs att Robins tidigare privata arbete bevaras utan aktuell ägare.
    Bekräftelseknappen ska vara avstängd tills rutan om identifierad person

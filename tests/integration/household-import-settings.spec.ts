@@ -10,6 +10,20 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
+    const initial = await (await page.request.get(`${path}/map`)).json();
+    expect(
+      (
+        await page.request.post(`${path}/map/draft`, {
+          headers: { origin: installation.origin },
+          data: {
+            id: 'retained-private',
+            version: initial.draft.version,
+            baseRevision: null,
+            value: { name: 'Redan privat arbete', description: '', typeId: initial.types[0].id },
+          },
+        })
+      ).status(),
+    ).toBe(200);
     const before = await (await page.request.get(`${path}/map`)).json();
     const exported = await (
       await page.request.post(`${path}/exports`, {

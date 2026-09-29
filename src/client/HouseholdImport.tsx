@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ImportDiscovery, ImportStatus } from '../shared/household-import.js';
 import type { MapState } from '../shared/map.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { MapRequestError, request } from './map-request.js';
+import './household-recovery.css';
 
 type Attempt = { id: string; contentVersion: number };
 
@@ -33,6 +34,19 @@ export function HouseholdImport({
   const knownAttempt = useRef(attempt);
   const [discoveryNeeded, setDiscoveryNeeded] = useState(!attempt);
   const active = useRef<AbortController | null>(null);
+  const submittedFocus = useRef<Element | null>(null);
+  const nextAction = useRef<HTMLButtonElement>(null);
+  const reviewHeading = useRef<HTMLLegendElement>(null);
+  useLayoutEffect(() => {
+    if (busy) return;
+    const previous = submittedFocus.current;
+    submittedFocus.current = null;
+    if (
+      previous &&
+      (document.activeElement === previous || document.activeElement === document.body)
+    )
+      (result?.status === 'ready' ? reviewHeading.current : nextAction.current)?.focus();
+  }, [busy, result?.status]);
   useEffect(() => () => active.current?.abort(), []);
   const remember = useCallback(
     (value: Attempt | null) => {
@@ -109,6 +123,7 @@ export function HouseholdImport({
   }
   async function prepare() {
     if (!file || busy) return;
+    submittedFocus.current = document.activeElement;
     const controller = new AbortController();
     active.current = controller;
     setBusy(true);
@@ -154,6 +169,7 @@ export function HouseholdImport({
   }
   async function recover(confirm = false) {
     if (!attempt || busy) return;
+    submittedFocus.current = document.activeElement;
     setBusy(true);
     setError('');
     if (confirm) setResult(null);
@@ -171,16 +187,35 @@ export function HouseholdImport({
     }
   }
   const uncertain = discoveryNeeded || Boolean(attempt && result?.status !== 'ready');
+  const step = result?.status === 'ready' ? 1 : result || attempt ? 2 : 0;
+  const attemptId = result?.id ?? attempt?.id;
   return (
-    <section aria-labelledby="household-import-heading" aria-busy={busy}>
-      <h2 id="household-import-heading" className="section-heading">
+    <section
+      className="panel household-import"
+      aria-labelledby="household-import-heading"
+      aria-busy={busy}
+    >
+      <h1 id="household-import-heading" tabIndex={-1}>
         Återimportera hushållet
-      </h2>
-      <p>
-        En fullständig import ersätter hushållets karta, bilder, ändringshistorik, alla privata
-        utkast och personliga vyer. Nuvarande medlemmar, administratörer, inbjudningar och
-        inloggningar behålls.
-      </p>
+      </h1>
+      <ol className="import-steps" aria-label="Importens steg">
+        {['Välj underlag', 'Granska ersättningen', 'Resultat'].map((label, index) => (
+          <li
+            key={label}
+            aria-current={step === index ? 'step' : undefined}
+            data-reached={index <= step}
+          >
+            <span>{index + 1}</span> {label}
+          </li>
+        ))}
+      </ol>
+      {result?.status !== 'ready' && (
+        <p className="recovery-note">
+          En fullständig import ersätter hushållets karta, bilder, ändringshistorik, alla privata
+          utkast och personliga vyer. Nuvarande medlemmar, administratörer, inbjudningar och
+          inloggningar behålls.
+        </p>
+      )}
       <p>
         Exportera först om du vill behålla det innehåll som finns nu. Gamla identiteter i filen ger
         inte någon ny åtkomst. Privata utkast från andra installationer förblir utan ägare tills en
@@ -205,7 +240,24 @@ export function HouseholdImport({
       </button>
       {result?.status === 'ready' && (
         <fieldset>
-          <legend>Granska ersättningen</legend>
+          <legend ref={reviewHeading} tabIndex={-1}>
+            Granska ersättningen
+          </legend>
+          <div className="import-comparison">
+            <section>
+              <h2>Ersätts</h2>
+              <p>Karta, bilder, ändringshistorik, alla privata utkast och personliga vyer.</p>
+              <p>
+                {result.counts.objects ?? 0} objekt och {result.counts.relationships ?? 0} samband i
+                filen.
+              </p>
+            </section>
+            <section>
+              <h2>Behålls</h2>
+              <p>Nuvarande medlemmar, administratörer, inbjudningar och inloggningar.</p>
+              <p>Historiska identiteter ger ingen ny tillgång. Två kartor slås inte ihop.</p>
+            </section>
+          </div>
           <p>
             Filen är kontrollerad. Den innehåller {result.counts.objects ?? 0} objekt,{' '}
             {result.counts.relationships ?? 0} samband och {result.counts.saves ?? 0} sparanden.
@@ -215,7 +267,11 @@ export function HouseholdImport({
             Alla användare måste läsa in aktuellt innehåll efter ersättningen. Gamla osparade
             formulär kan inte sparas.
           </p>
-          <label>
+          <p>
+            Förberedelsen gäller i tio minuter och försvinner vid en omstart. Granska den på nytt om
+            den inte längre finns.
+          </p>
+          <label className="recovery-confirmation">
             <input
               type="checkbox"
               checked={confirmed}
@@ -224,25 +280,36 @@ export function HouseholdImport({
             />
             Jag vill ersätta allt hushållsinnehåll med den kontrollerade filen.
           </label>
-          <button type="button" disabled={!confirmed || busy} onClick={() => void recover(true)}>
+          <button
+            type="button"
+            className="primary"
+            disabled={!confirmed || busy}
+            onClick={() => void recover(true)}
+          >
             Ersätt hushållets innehåll
           </button>
         </fieldset>
       )}
       {attempt && (
-        <button type="button" disabled={busy} onClick={() => void recover()}>
+        <button
+          ref={result?.status === 'cleanup' ? undefined : nextAction}
+          type="button"
+          disabled={busy}
+          onClick={() => void recover()}
+        >
           Hämta importens status
         </button>
       )}
       {discoveryNeeded && (
-        <button type="button" disabled={busy} onClick={() => discover()}>
+        <button ref={nextAction} type="button" disabled={busy} onClick={() => discover()}>
           Hämta importens status
         </button>
       )}
-      {result && (
-        <p>
-          Importförsök: <span>{result.id}</span>
-        </p>
+      {attemptId && (
+        <dl className="recovery-facts">
+          <dt>{result?.status === 'ready' ? 'Obekräftad förberedelse' : 'Importförsök'}</dt>
+          <dd>{attemptId}</dd>
+        </dl>
       )}
       {result?.status === 'prepared' && (
         <p role="status">Importen pågår. Hämta status igen innan du fortsätter.</p>
@@ -252,7 +319,13 @@ export function HouseholdImport({
           <p role="status">
             Innehållet är ersatt. Tillfälliga filer behöver rensas innan kartan kan öppnas.
           </p>
-          <button type="button" disabled={busy} onClick={() => void recover(true)}>
+          <button
+            ref={nextAction}
+            type="button"
+            className="primary"
+            disabled={busy}
+            onClick={() => void recover(true)}
+          >
             Slutför importens rensning
           </button>
         </>
@@ -260,7 +333,12 @@ export function HouseholdImport({
       {result?.status === 'completed' && (
         <>
           <p role="status">Hushållets innehåll är ersatt. Nuvarande åtkomst är bevarad.</p>
-          <button type="button" onClick={() => window.location.reload()}>
+          <button
+            ref={nextAction}
+            type="button"
+            className="primary"
+            onClick={() => window.location.reload()}
+          >
             Läs in det återställda hushållet
           </button>
         </>
