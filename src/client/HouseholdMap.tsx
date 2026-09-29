@@ -773,6 +773,13 @@ export function HouseholdMap({
       conflict.kind === 'object' ? state?.draft.changes : state?.draft.relationships
     )?.find((change) => change.id === conflict.id);
     const deleted = Boolean(proposal?.before && !conflict.current);
+    const editableObject =
+      conflict.kind === 'object' &&
+      !deleted &&
+      state &&
+      !mergeFor(state.draft, 'object', conflict.id)
+        ? displayed.get(conflict.id)
+        : undefined;
     return (
       <div className="conflict-review">
         <h4>Konflikt: sparat i kartan nu</h4>
@@ -799,6 +806,15 @@ export function HouseholdMap({
           </>
         )}
         <p>Välj vilket värde du vill behålla. Valet ändrar bara ditt utkast.</p>
+        {editableObject && (
+          <button
+            type="button"
+            disabled={pending || blocked || legacyDirty}
+            onClick={() => edit(editableObject)}
+          >
+            Rätta objektet
+          </button>
+        )}
         {conflict.type !== undefined && (
           <p>
             Typdefinitionen har ändrats:{' '}
