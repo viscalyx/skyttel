@@ -2177,7 +2177,7 @@ export function HouseholdMap({
                           </details>
                           <button
                             type="button"
-                            disabled={pending || dirty || blocked}
+                            disabled={pending || legacyDirty || blocked}
                             onClick={() => {
                               setEdgeEditor(null);
                               setDirty(true);
