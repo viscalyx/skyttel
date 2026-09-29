@@ -55,7 +55,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 ## Områden
 
 - [Objektlistor](object-lists.md): typgrupper, flera typfilter, markeringar,
-  separat sortering, sidval, bevarat rulläge och uttryckligt kartfokus.
+  separat sortering, sidval, bevarat rulläge, första klicket i en inaktiv
+  lista och uttryckligt kartfokus.
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
   fönsterflytt, samtidiga detaljer och sex beständiga personliga riktningar.

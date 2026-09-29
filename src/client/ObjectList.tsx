@@ -90,7 +90,6 @@ export function ObjectList({
       if (
         !body ||
         !flow ||
-        getComputedStyle(body).overflowY !== 'visible' ||
         !target?.isConnected ||
         !list?.contains(target) ||
         !target.offsetHeight ||
@@ -98,6 +97,10 @@ export function ObjectList({
         target.matches(':disabled')
       )
         return false;
+      if (getComputedStyle(body).overflowY !== 'visible') {
+        body.scrollTop = scroll.current;
+        return false;
+      }
       flow.scrollTop = flowScroll.current;
       target.focus({ preventScroll: true });
       const bounds = target.getBoundingClientRect();
@@ -111,17 +114,16 @@ export function ObjectList({
   }, [resumeFocus]);
   useLayoutEffect(() => {
     const body = listRef.current?.closest<HTMLElement>('.workspace-panel-body');
-    if (!body || !active) return;
+    if (!body) return;
     const flow = body.closest<HTMLElement>('.household-map');
-    body.scrollTop = scroll.current;
     const remember = () => {
       if (!body.offsetHeight) return;
       scroll.current = body.scrollTop;
-      if (flow && getComputedStyle(body).overflowY === 'visible')
+      if (active && flow && getComputedStyle(body).overflowY === 'visible')
         flowScroll.current = flow.scrollTop;
     };
     body.addEventListener('scroll', remember, { passive: true });
-    flow?.addEventListener('scroll', remember, { passive: true });
+    if (active) flow?.addEventListener('scroll', remember, { passive: true });
     return () => {
       body.removeEventListener('scroll', remember);
       flow?.removeEventListener('scroll', remember);

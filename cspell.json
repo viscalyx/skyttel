@@ -338,7 +338,8 @@
     "ikonförslag",
     "fokusval",
     "talstart",
-    "döljning"
+    "döljning",
+    "tabbordningen"
   ],
   "overrides": [
     {

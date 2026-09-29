@@ -193,3 +193,31 @@ med 320 × 250 CSS-pixlar och verklig webbläsarzoom på 400 procent.
   behåller sitt eget fokusmål.
 - Vanliga paneler och kartans särskilda visning behåller sina fokusregler.
   Inga fördröjda fokusbyten får flytta ett senare valt fält.
+
+### LISTA-06: en synlig inaktiv lista öppnar uppgifter vid första klicket
+
+**Syfte:** Kunna använda en listträff direkt när ett annat fönster är aktivt.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Testhushållet med 500 objekt på en datorskärm där
+Lista och Samtal och text kan visas samtidigt.
+
+**Integrationstest:**
+[object-list-flow.spec.ts](../../tests/integration/object-list-flow.spec.ts),
+“LISTA-06: an inactive visible list opens details on the first pointer click
+without moving the result”.
+
+**Steg:**
+
+1. Öppna Lista och därefter Samtal och text. Låt samtalsfönstret vara aktivt.
+2. Rulla listan till **Provobjekt 045** utan att först klicka i listan.
+3. Tryck ned musknappen på träffens **Uppgifter**. Kontrollera att träffen
+   stannar under pekaren när listan blir aktiv. Släpp musknappen.
+4. Kontrollera rätt objektpanel och rubrikfokus utan ett extra klick.
+
+**Förväntat resultat:**
+
+- Det första klicket öppnar rätt uppgifter. Listans rulläge och träffens
+  position ändras inte medan musknappen hålls nere.
+- Hushållets objekt, samband och utkast ändras inte av att uppgifterna öppnas.

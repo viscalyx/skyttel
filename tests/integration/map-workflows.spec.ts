@@ -51,9 +51,9 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     const objects = page.getByRole('list', { name: 'Objekt', exact: true });
     const search = page.getByLabel('Sök objekt');
     await search.fill('åSAS');
-    await expect(objects.getByRole('listitem').locator(':scope > button')).toHaveText([
-      'Åsas tjänst',
-    ]);
+    await expect(
+      objects.getByRole('button', { name: /^Visa .+ i kartan$/ }).locator('strong'),
+    ).toHaveText(['Åsas tjänst']);
     await objects.getByRole('button', { name: 'Uppgifter för Åsas tjänst', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets namn')).toBeFocused();
@@ -304,8 +304,8 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     await expect(
       page
         .getByRole('list', { name: 'Objekt', exact: true })
-        .getByRole('listitem')
-        .locator(':scope > button'),
+        .getByRole('button', { name: /^Visa .+ i kartan$/ })
+        .locator('strong'),
     ).toHaveText(['Familjemusik', 'Kim', 'Molnmusik']);
     await expect(
       page.getByRole('list', { name: 'Samband', exact: true }).getByRole('button'),

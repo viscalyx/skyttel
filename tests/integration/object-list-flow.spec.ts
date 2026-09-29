@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   activatePanel,
   createHousehold,
+  openConversation,
   openSettings,
   openWorkspace,
   signIn,
@@ -79,6 +80,54 @@ test('LISTA-05: short-screen list returns preserve the visible result and keyboa
     await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
     await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
     await expect(work.getByLabel('Sök objekt', { exact: true })).toBeFocused();
+  } finally {
+    await installation.close();
+  }
+});
+
+test('LISTA-06: an inactive visible list opens details on the first pointer click without moving the result', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { user } = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    installation.seedLargeMap(user.id, household.id);
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const saved = await (await page.request.get(path)).json();
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+    const body = work.locator('.workspace-panel-body');
+    await openConversation(page);
+    await expect(work).toBeVisible();
+    await expect(work).toHaveAttribute('data-active', 'false');
+    const result = work.getByRole('button', {
+      name: 'Uppgifter för Provobjekt 045',
+      exact: true,
+    });
+    await result.scrollIntoViewIfNeeded();
+    const remembered = await body.evaluate((element) => element.scrollTop);
+    expect(remembered).toBeGreaterThan(500);
+    await expect(result).not.toBeFocused();
+    const bounds = await result.boundingBox();
+    if (!bounds) throw new Error('The visible result must have a pointer target');
+    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    await page.mouse.down();
+    await expect(work).toHaveAttribute('data-active', 'true');
+    expect(await body.evaluate((element) => element.scrollTop)).toBe(remembered);
+    expect(await result.boundingBox()).toEqual(bounds);
+    await page.mouse.up();
+    const detail = page.getByRole('region', { name: 'Provobjekt 045', exact: true });
+    await expect(
+      detail.getByRole('heading', { name: 'Provobjekt 045', exact: true }),
+    ).toBeFocused();
+    const after = await (await page.request.get(path)).json();
+    expect(after.objects).toEqual(saved.objects);
+    expect(after.relationships).toEqual(saved.relationships);
+    expect(after.draft).toEqual(saved.draft);
   } finally {
     await installation.close();
   }

@@ -278,7 +278,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await openMap(page);
     await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
     await expect(page.getByLabel('Sök objekt')).toHaveValue('');
-    await expect(page.getByLabel('Person', { exact: true })).not.toBeChecked();
+    await expect(page.getByRole('checkbox', { name: 'Person', exact: true })).not.toBeChecked();
     await expect(page.getByText('Fokus: Lo Exempel', { exact: true })).toHaveCount(0);
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     await expect(
@@ -615,9 +615,17 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     ).toBeFocused();
     await openWorkspace(page);
     await objectRow.focus();
-    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(
+      page.getByRole('button', { name: 'Visa Lo Exempel i kartan', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
     await expect(
       page.getByRole('button', { name: 'Markera Lo Exempel', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(
+      page.getByRole('button', { name: 'Visa Lo Exempel i kartan', exact: true }),
     ).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(
