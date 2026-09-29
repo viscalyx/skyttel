@@ -789,6 +789,13 @@ export function HouseholdMap({
       !mergeFor(state.draft, 'object', conflict.id)
         ? displayed.get(conflict.id)
         : undefined;
+    const editableRelationship =
+      conflict.kind === 'relationship' &&
+      !deleted &&
+      state &&
+      !mergeFor(state.draft, 'relationship', conflict.id)
+        ? displayedEdges.get(conflict.id)
+        : undefined;
     return (
       <div className="conflict-review">
         <h4>Konflikt: sparat i kartan nu</h4>
@@ -822,6 +829,15 @@ export function HouseholdMap({
             onClick={() => edit(editableObject)}
           >
             Rätta objektet
+          </button>
+        )}
+        {editableRelationship && (
+          <button
+            type="button"
+            disabled={pending || blocked || legacyDirty}
+            onClick={() => editRelationship(editableRelationship)}
+          >
+            Rätta sambandet
           </button>
         )}
         {conflict.type !== undefined && (
