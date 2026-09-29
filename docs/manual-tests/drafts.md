@@ -850,6 +850,64 @@ samma titel med “390px”.
 - Konfliktvalet bevarar Oberoende typförklaring tillsammans med Rättad typ.
   Ett nytt uttryckligt sparande delar dessa uppgifter och skapar ett kvitto.
 
+### UTKAST-22: konfliktval återför fokus till hela utkastet
+
+**Syfte:** Fortsätta granskningen med tangentbord när konfliktens egna
+valknappar försvinner utan att kartan sparas automatiskt.
+
+**Användare:** Alex och Robin i skilda sessioner i samma hushåll.
+
+**Förutsättningar:** Lo Exempel är sparat. Alex föreslår Lo Lind och
+Robin sparar Lo Berg. Prova på telefon. Upprepa för båda konfliktvalen.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallen “UTKAST-22: a saved conflict choice returns focus to the draft
+without saving” och “UTKAST-22: a proposed conflict choice returns focus
+to the draft without saving”.
+
+**Steg:**
+
+1. Alex öppnar statuskortets konfliktlista och väljer Objekt: Lo Lind.
+2. Använd tangentbordet till Använd sparat värde eller Behåll mitt förslag,
+   och tryck Enter. Ge inget sparbesked.
+3. Kontrollera fokus, privat utkast, Robins sparade karta och historiken.
+
+**Förväntat resultat:**
+
+- Fokus hamnar på den synliga rubriken Hela mitt utkast när konfliktvalet
+  är klart. Konfliktens valknappar försvinner och beskedet ber om granskning.
+- Sparat värde tar bort namnförslaget. Eget förslag behåller Lo Lind i
+  utkastet. Båda valen lämnar Lo Berg gemensamt sparat och skapar inget kvitto.
+
+### UTKAST-23: fördröjt konfliktval bevarar senare sökfokus
+
+**Syfte:** Fortsätta söka medan servern bekräftar ett privat konfliktval
+utan att ett senare fokusval avbryts.
+
+**Användare:** Alex och Robin i skilda sessioner i samma hushåll.
+
+**Förutsättningar:** Samma namnkonflikt som i UTKAST-22. Testmiljön kan
+fördröja svaret efter att den riktiga servern behandlar ett konfliktval.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallet “UTKAST-23: delayed conflict resolution preserves a newer search
+and the private result”.
+
+**Steg:**
+
+1. Alex öppnar Lista och väljer Behåll mitt förslag. Fördröj svaret.
+2. Kontrollera att valknappen är inaktiv. Skriv Lo i Sök objekt.
+3. Släpp fram det riktiga svaret. Läs beskedet och kontrollera sökfältet,
+   utkastet, Robins karta och historiken. Ge inget sparbesked.
+
+**Förväntat resultat:**
+
+- Sökfältet behåller texten Lo och synligt fokus efter att svaret kommer.
+- Lo Lind finns i det privata utkastet. Lo Berg är fortfarande gemensamt
+  sparat och ingen historikgrupp eller kvitto tillkommer.
+
 ### UTKAST-16: använd Navigation och aktuell status tillsammans
 
 **Syfte:** Behålla åtkomst till personlig placering och sparande när båda

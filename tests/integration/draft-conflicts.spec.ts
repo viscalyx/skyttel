@@ -551,6 +551,105 @@ for (const kind of ['object-type', 'relationship-type'] as const) {
   }
 }
 
+for (const choice of ['saved', 'proposed'] as const) {
+  test(`UTKAST-22: a ${choice} conflict choice returns focus to the draft without saving`, async ({
+    page,
+    browser,
+  }) => {
+    const other = await browser.newContext();
+    const app = await collaborators(page.request, other.request);
+    try {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const initial = await app.read();
+      const value = { typeId: initial.types[0].id, name: 'Lo Lind', description: '' };
+      await app.propose(page.request, 'draft', 'lo', value);
+      await app.propose(other.request, 'draft', 'lo', { ...value, name: 'Lo Berg' });
+      expect((await app.save(other.request, 'other-name')).status()).toBe(200);
+      const saved = await app.read();
+      await page.goto(app.installation.origin);
+      await openWorkspace(page);
+      await openMap(page);
+      const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+      await status.getByText('Visa 1 konflikt', { exact: true }).click();
+      await status.getByRole('button', { name: 'Objekt: Lo Lind', exact: true }).click();
+      const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+      const decision = review.getByRole('button', {
+        name: choice === 'saved' ? 'Använd sparat värde' : 'Behåll mitt förslag',
+        exact: true,
+      });
+      await decision.focus();
+      await page.keyboard.press('Enter');
+      await expect(
+        review.getByRole('heading', { name: 'Hela mitt utkast', exact: true }),
+      ).toBeFocused();
+      await expectFocusedTargetUncovered(page);
+      await expect(page.getByRole('status')).toContainText('Granska hela utkastet');
+      await expect(review).not.toContainText('Konflikt: sparat i kartan nu');
+      const resolved = await app.read();
+      expect(resolved.objects).toEqual(saved.objects);
+      expect(resolved.relationships).toEqual(saved.relationships);
+      expect(resolved.draft.changes).toHaveLength(choice === 'saved' ? 0 : 1);
+      if (choice === 'proposed') expect(resolved.draft.changes[0].after?.name).toBe('Lo Lind');
+      expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(
+        2,
+      );
+    } finally {
+      await other.close();
+      await app.installation.close();
+    }
+  });
+}
+
+test('UTKAST-23: delayed conflict resolution preserves a newer search and the private result', async ({
+  page,
+  browser,
+}) => {
+  const other = await browser.newContext();
+  const app = await collaborators(page.request, other.request);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  try {
+    const initial = await app.read();
+    const value = { typeId: initial.types[0].id, name: 'Lo Lind', description: '' };
+    await app.propose(page.request, 'draft', 'lo', value);
+    await app.propose(other.request, 'draft', 'lo', { ...value, name: 'Lo Berg' });
+    expect((await app.save(other.request, 'other-name')).status()).toBe(200);
+    const saved = await app.read();
+    let resolved = false;
+    await page.route('**/map/resolve', async (route) => {
+      const response = await route.fetch();
+      resolved = true;
+      await held;
+      await route.fulfill({ response });
+    });
+    await page.goto(app.installation.origin);
+    await openWorkspace(page);
+    const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+    const decision = review.getByRole('button', { name: 'Behåll mitt förslag', exact: true });
+    await decision.click();
+    await expect.poll(() => resolved).toBe(true);
+    await expect(decision).toBeDisabled();
+    const search = page.getByRole('searchbox', { name: 'Sök objekt', exact: true });
+    await search.fill('Lo');
+    release();
+    await expect(page.getByRole('status')).toContainText('Granska hela utkastet');
+    await expect(search).toBeFocused();
+    await expect(search).toHaveValue('Lo');
+    await expectFocusedTargetUncovered(page);
+    const state = await app.read();
+    expect(state.objects).toEqual(saved.objects);
+    expect(state.relationships).toEqual(saved.relationships);
+    expect(state.draft.changes[0].after?.name).toBe('Lo Lind');
+    expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(2);
+  } finally {
+    release();
+    await other.close();
+    await app.installation.close();
+  }
+});
+
 test('UTKAST-05: a conflict choice preserves independent proposals and requires a new save', async ({
   page,
   browser,

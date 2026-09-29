@@ -195,6 +195,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   borttagna mål utan att återuppliva objektet eller spara i förtid.
   Rätta objekt- och sambandstyper genom inställningarna med oberoende
   sparade uppgifter kvar och ett nytt uttryckligt sparbesked.
+  Återgå till hela utkastet efter ett konfliktval och bevara senare
+  sökfokus när svaret fördröjs.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
