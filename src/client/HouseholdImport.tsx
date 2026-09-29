@@ -36,6 +36,7 @@ export function HouseholdImport({
   useEffect(() => () => active.current?.abort(), []);
   const remember = useCallback(
     (value: Attempt | null) => {
+      knownAttempt.current = value;
       setAttempt(value);
       if (value) sessionStorage.setItem(storageKey, JSON.stringify(value));
       else sessionStorage.removeItem(storageKey);
@@ -43,12 +44,14 @@ export function HouseholdImport({
     [storageKey],
   );
   const discover = useCallback(() => {
+    if (knownAttempt.current) return;
     const controller = new AbortController();
     active.current = controller;
     setBusy(true);
     setError('');
     void request<ImportDiscovery>(`${path}/imports`, undefined, controller.signal)
       .then(({ attempt: found }) => {
+        if (controller.signal.aborted) return;
         setResult(found);
         if (found && ['prepared', 'cleanup'].includes(found.status))
           remember({ id: found.id, contentVersion: found.confirmationContentVersion });

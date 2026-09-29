@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { HouseholdImport } from '../../../src/client/HouseholdImport.js';
@@ -13,6 +13,7 @@ const prepareButton = () =>
 const confirmButton = () =>
   screen.getByRole('button', { name: 'Ersätt hushållets innehåll' }) as HTMLButtonElement;
 async function prepare() {
+  await waitFor(() => expect(fileInput().disabled).toBe(false));
   await userEvent.upload(fileInput(), uploaded());
   await userEvent.click(prepareButton());
   await screen.findByRole('group', { name: 'Granska ersättningen' });
@@ -24,11 +25,19 @@ async function confirm() {
 function network(handle: (url: string, init?: RequestInit) => Promise<Response>) {
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     if (url === `${path}/map`) return Response.json({ contentVersion: 3 });
-    if (url === `${path}/imports`) return Response.json(ready, { status: 201 });
+    if (url === `${path}/imports`)
+      return init?.method === 'POST'
+        ? Response.json(ready, { status: 201 })
+        : Response.json({ attempt: null });
     return handle(url, init);
   });
 }
-beforeEach(() => sessionStorage.clear());
+beforeEach(() => {
+  sessionStorage.clear();
+  network(async () => {
+    throw new Error('Unexpected import request');
+  });
+});
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -152,12 +161,15 @@ test.each([
   'archive_too_large',
   'archive_identity_conflict',
 ])('a rejected %s file permits another selection without reporting replacement', async (error) => {
-  vi.stubGlobal('fetch', async (url: string) =>
-    url.endsWith('/map')
-      ? Response.json({ contentVersion: 3 })
-      : Response.json({ error }, { status: 400 }),
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) =>
+    url === `${path}/imports` && init?.method === 'GET'
+      ? Response.json({ attempt: null })
+      : url.endsWith('/map')
+        ? Response.json({ contentVersion: 3 })
+        : Response.json({ error }, { status: 400 }),
   );
   render(<HouseholdImport householdId="linden" onAccessLost={vi.fn()} />);
+  await waitFor(() => expect(fileInput().disabled).toBe(false));
   await userEvent.upload(fileInput(), uploaded());
   await userEvent.click(prepareButton());
   expect((await screen.findByRole('alert')).textContent).toContain('Filen kan inte importeras');
@@ -168,8 +180,13 @@ test.each([
 
 test.each([401, 403])('denied preparation with %s refreshes current access', async (status) => {
   const lost = vi.fn();
-  vi.stubGlobal('fetch', async () => Response.json({ error: 'forbidden' }, { status }));
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) =>
+    url === `${path}/imports` && init?.method === 'GET'
+      ? Response.json({ attempt: null })
+      : Response.json({ error: 'forbidden' }, { status }),
+  );
   render(<HouseholdImport householdId="linden" onAccessLost={lost} />);
+  await waitFor(() => expect(fileInput().disabled).toBe(false));
   await userEvent.upload(fileInput(), uploaded());
   await userEvent.click(prepareButton());
   await screen.findByRole('alert');
@@ -181,6 +198,8 @@ test('failed preparation can be retried and leaving the page cancels its upload'
   let available = false;
   let signal: AbortSignal | null | undefined;
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url === `${path}/imports` && init?.method === 'GET')
+      return Response.json({ attempt: null });
     if (!available) throw new TypeError('Offline');
     if (url.endsWith('/map')) return Response.json({ contentVersion: 3 });
     signal = init?.signal;
@@ -189,6 +208,7 @@ test('failed preparation can be retried and leaving the page cancels its upload'
     });
   });
   const view = render(<HouseholdImport householdId="linden" onAccessLost={vi.fn()} />);
+  await waitFor(() => expect(fileInput().disabled).toBe(false));
   await userEvent.upload(fileInput(), uploaded());
   await userEvent.click(prepareButton());
   expect((await screen.findByRole('alert')).textContent).toContain('Kontrollera anslutningen');
@@ -203,10 +223,10 @@ test('failed preparation can be retried and leaving the page cancels its upload'
 
 test.each(['not json', '{"id":7}', 'null'])(
   'invalid saved recovery data %s does not stop a fresh import',
-  (value) => {
+  async (value) => {
     sessionStorage.setItem(storageKey, value);
     render(<HouseholdImport householdId="linden" onAccessLost={vi.fn()} />);
-    expect(fileInput().disabled).toBe(false);
+    await waitFor(() => expect(fileInput().disabled).toBe(false));
     expect(screen.queryByRole('button', { name: 'Hämta importens status' })).toBeNull();
   },
 );
