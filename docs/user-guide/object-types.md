@@ -124,8 +124,9 @@ profilbilden och ditt ikonval finns också kvar.
 Välj **Lägg i mitt utkast**. I **Hela mitt utkast** ser du tidigare typ och
 värden samt den nya typen och dess värden. Typbytet och fälträttelserna
 sparas tillsammans med resten av utkastet. Ett fel stoppar hela sparandet.
-Tidigare sparade värden finns kvar i historiken. Oskickade formulärvärden
-försvinner om du stänger formuläret utan att lägga förslaget i utkastet.
+Tidigare sparade värden finns kvar i historiken. **Stäng utan att skicka
+texten** tar bort oskickade formulärvärden. Panelens kryss behåller i stället
+texten så att du kan fortsätta i samma objekt senare.
 
 Ett typbyte gäller ett objekt. Ett namnbyte på typdefinitionen ändrar
 benämningen för alla objekt av den typen. Sammanslagning gäller flera

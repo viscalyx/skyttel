@@ -131,8 +131,9 @@ oskickad text i både det objektet och ett annat formulär.
 
 **Integrationstest:**
 [map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts),
-testfallet “KARTA-08: a closed-panel identity blocker opens the exact
-retained object without sending other text”.
+testfallen “KARTA-08: a closed-panel identity blocker opens the exact
+retained object without sending other text at 1280px in light”, samma titel
+med “390px” eller “320px” och “dark”. Kör varje bredd i båda temana.
 
 **Steg:**
 
@@ -301,8 +302,9 @@ och spara nya definitioner, objekt och samband tillsammans.
 
 **Integrationstest:**
 [draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts),
-testfallet “KARTA-09: unsent creation uses new draft types and objects in
-one durable relationship save”.
+testfallen “KARTA-09: unsent creation uses new draft types and objects in
+one durable relationship save at 1280px in light”, samma titel med “390px”
+eller “320px” och “dark”. Kör varje bredd i båda temana.
 
 **Steg:**
 

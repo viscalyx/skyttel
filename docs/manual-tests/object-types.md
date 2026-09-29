@@ -484,8 +484,9 @@ På cykeln ska följande gemensamma ekonomiska uppgifter finnas:
 
 **Integrationstest:**
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts),
-testfallet “TYP-11: repeated type changes keep distinct former answers and
-complete common values through save and restart”.
+testfallen “TYP-11: repeated type changes keep distinct former answers and
+complete common values through save and restart at 1280px in light”, samma
+titel med “390px” eller “320px” och “dark”. Kör varje bredd i båda temana.
 
 **Steg:**
 
