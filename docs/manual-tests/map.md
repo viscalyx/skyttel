@@ -119,6 +119,52 @@ identified without changing its links”.
   Familjemusik → Betalas med → Hushållskontot. Bankkontot visar
   Identifierat objekt och Gemensamt bankkonto. Ingen dubblett skapas.
 
+### KARTA-08: rätta obesvarad identitet från status med stängda formulär
+
+**Syfte:** Nå rätt objekt från ett blockerande identitetsbesked och bevara
+oskickad text i både det objektet och ett annat formulär.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Spara abonnemanget **Familjemusik** med beskrivningen
+**Sparad beskrivning**. Behåll databasen under omstarten.
+
+**Integrationstest:**
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts),
+testfallet “KARTA-08: a closed-panel identity blocker opens the exact
+retained object without sending other text”.
+
+**Steg:**
+
+1. Lägg bankkontot **Betalkonto** i utkastet med identiteten
+   **Obesvarad identitetsfråga**. Lägg också sambandet
+   **Familjemusik → Betalas med → Betalkonto** i utkastet.
+2. Öppna Betalkontos redigering, skriv **Oskickat om Betalkonto** som
+   beskrivning och stäng panelen med **Stäng Betalkonto**.
+3. Öppna Familjemusiks redigering, skriv **Oskickat om Familjemusik**
+   som beskrivning och stäng panelen med **Stäng Familjemusik**.
+   Välj **Stäng arbetsytan**.
+4. Använd tangentbordet för att aktivera **Red ut identiteter i utkastet**
+   i **Aktuell status**. Aktivera **Red ut identiteten för Betalkonto**
+   vid objektets förslag. Kontrollera fokus och beskrivning.
+5. Välj **Ospecificerat objekt** och **Lägg i mitt utkast**.
+   Öppna Familjemusik igen och kontrollera dess oskickade text.
+   Välj **Stäng utan att skicka texten** i det formuläret.
+6. Spara hela utkastet uttryckligen. Starta om installationen, ladda om
+   sidan och kontrollera båda objekten och sambandet.
+
+**Förväntat resultat:**
+
+- Status förklarar både identitetsfrågan och den oskickade texten.
+  Tangentbordet når utkastet och därefter Betalkontos bevarade redigering
+  med synligt fokus. Beskrivningen **Oskickat om Betalkonto** finns kvar.
+- Rättelsen ändrar bara Betalkontos förslag. Sparandet är fortfarande
+  blockerat medan Familjemusiks oskickade text finns kvar.
+- Den gemensamma kartan ändras först efter det uttryckliga sparandet.
+  Efter omstart är Betalkonto ospecificerat med den rättade beskrivningen.
+  Familjemusik behåller **Sparad beskrivning**. Sambandet går fortfarande
+  till samma Betalkonto utan en dubblett.
+
 ### KARTA-05: skilj på obesvarat, osäkert, okänt och uttryckligen inget
 
 **Syfte:** Kontrollera att sambandsuppgifter bevarar sin betydelse och att
