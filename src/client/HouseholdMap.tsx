@@ -718,7 +718,8 @@ export function HouseholdMap({
         setDirty(false);
         setBlocked(false);
         if (document.activeElement === submittedFocus || document.activeElement === document.body) {
-          if (kind === 'resolve') openPanel('work', document.getElementById('draft-title'));
+          if (kind === 'undo' || kind === 'resolve')
+            openPanel('work', document.getElementById('draft-title'));
           else newButton.current?.focus();
         }
       }
@@ -746,6 +747,12 @@ export function HouseholdMap({
         ].includes(failure.code)
       ) {
         setError(rejectionMessage(failure.code));
+        if (
+          kind === 'undo' &&
+          submittedFocus instanceof HTMLElement &&
+          (document.activeElement === submittedFocus || document.activeElement === document.body)
+        )
+          openPanel('work', submittedFocus);
         return false;
       }
       setBlocked(true);
