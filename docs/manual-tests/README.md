@@ -181,6 +181,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   ett samlat utkast från formulär, text och tal efter omstart. Besvara
   nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
   och aktuell status tillsammans utan att tappa åtkomst till kontrollerna.
+  Öppna en namngiven konflikt från status med tangentbord och återgå till
+  ett annat oskickat objektformulär med texten kvar.
 - [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,

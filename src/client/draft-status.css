@@ -33,6 +33,17 @@
   display: grid;
   gap: 4px;
 }
+.draft-conflict-links ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+.draft-conflict-links button {
+  width: 100%;
+  text-align: start;
+  white-space: normal;
+}
 .proposal-legend {
   display: flex;
   flex-wrap: wrap;

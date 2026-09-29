@@ -60,6 +60,10 @@ import './workspace-panels.css';
 import { usePersonalView } from './use-personal-view.js';
 import { useWorkspaceTheme, WorkspaceTheme } from './WorkspaceTheme.js';
 
+function draftEntryId(kind: DraftConflict['kind'], id: string) {
+  return `draft-entry-${kind}-${id}`;
+}
+
 function checkOperations(operations: SaveOperation[], householdId: string, current: MapState) {
   for (const operation of operations)
     checkOperation(operation, {
@@ -1015,6 +1019,43 @@ export function HouseholdMap({
     );
   }
   const savedObjects = new Map((state?.objects ?? []).map((object) => [object.id, object]));
+  const conflictEntries = conflicts.map((conflict) => {
+    let label: string;
+    if (conflict.kind === 'relationship') {
+      const change = state?.draft.relationships?.find((item) => item.id === conflict.id);
+      const value = change?.after ?? change?.before;
+      label = `Samband: ${
+        value && change
+          ? relationshipLabel(
+              value,
+              { relationshipTypes: [change.type] },
+              new Map([
+                ...Object.entries(change.objectNames ?? {}).map(
+                  ([id, name]) => [id, { name }] as const,
+                ),
+                ...displayed,
+              ]),
+            )
+          : conflict.id
+      }`;
+    } else {
+      const changes =
+        conflict.kind === 'object'
+          ? state?.draft.changes
+          : conflict.kind === 'objectType'
+            ? state?.draft.objectTypes
+            : state?.draft.relationshipTypes;
+      const change = changes?.find((item) => item.id === conflict.id);
+      const kind =
+        conflict.kind === 'object'
+          ? 'Objekt'
+          : conflict.kind === 'objectType'
+            ? 'Objekttyp'
+            : 'Sambandstyp';
+      label = `${kind}: ${change?.after?.name ?? change?.before?.name ?? conflict.id}`;
+    }
+    return { id: draftEntryId(conflict.kind, conflict.id), label, entityId: conflict.id };
+  });
   const hasChanges = Boolean(
     state &&
       (state.draft.changes.length ||
@@ -1418,7 +1459,13 @@ export function HouseholdMap({
               unknown={Boolean(blocked && saveAttempt.current && !pending)}
               dirty={dirty}
               unresolved={Boolean(unresolved)}
-              conflicts={conflicts.length > 0}
+              conflicts={conflictEntries.map((entry) => ({
+                id: entry.id,
+                label:
+                  conflictEntries.filter((other) => other.label === entry.label).length > 1
+                    ? `${entry.label} [${entry.entityId}]`
+                    : entry.label,
+              }))}
               expanded={statusOpen}
               error={error}
               working={pending && !saveAttempt.current}
@@ -1448,6 +1495,10 @@ export function HouseholdMap({
                   'work',
                   document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title'),
                 );
+              }}
+              onConflict={(id) => {
+                setStatusOpen(false);
+                openPanel('work', document.getElementById(id));
               }}
               onContinue={() => {
                 setStatusOpen(false);
@@ -2287,7 +2338,7 @@ export function HouseholdMap({
                       {!hasChanges && <p>Inga förslag i utkastet.</p>}
                       {state.draft.relationshipTypes?.map((change) => (
                         <article key={change.id}>
-                          <h3>
+                          <h3 id={draftEntryId('relationshipType', change.id)} tabIndex={-1}>
                             {!change.after
                               ? 'Borttagen sambandstyp'
                               : change.before
@@ -2375,7 +2426,7 @@ export function HouseholdMap({
                       ))}
                       {state.draft.objectTypes?.map((change) => (
                         <article key={change.id}>
-                          <h3>
+                          <h3 id={draftEntryId('objectType', change.id)} tabIndex={-1}>
                             {!change.after
                               ? 'Borttagen objekttyp'
                               : change.before
@@ -2452,7 +2503,7 @@ export function HouseholdMap({
                       ))}
                       {state.draft.changes.map((change) => (
                         <article key={change.id}>
-                          <h3>
+                          <h3 id={draftEntryId('object', change.id)} tabIndex={-1}>
                             {!change.after
                               ? 'Borttagning'
                               : !change.before
@@ -2538,7 +2589,9 @@ export function HouseholdMap({
                       ))}
                       {(state.draft.relationships ?? []).map((change) => (
                         <article key={change.id}>
-                          <h3>{change.after ? 'Samband' : 'Borttagning av samband'}</h3>
+                          <h3 id={draftEntryId('relationship', change.id)} tabIndex={-1}>
+                            {change.after ? 'Samband' : 'Borttagning av samband'}
+                          </h3>
                           <h4>Sparat underlag</h4>
                           <p>
                             {change.before

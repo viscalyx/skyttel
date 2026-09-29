@@ -633,6 +633,46 @@ fresh explicit save”.
   server och SQLite. Det jämför tomma sparförsök före beskedet och ett
   enda lyckat försök med samma verkliga kvitto i historiken efteråt.
 
+### UTKAST-17: nå en objektkonflikt från status med oskickat arbete kvar
+
+**Syfte:** hitta en samtidig ändring från kartans status och behålla ett
+annat oskickat formulär när konfliktens underlag granskas.
+
+**Användare:** Alex och Robin, två medlemmar i samma hushåll, i skilda
+webbläsarsessioner enligt förberedelsen.
+
+**Förutsättningar:** objektet Lo Exempel finns i den sparade kartan. Inget
+av klienternas utkast innehåller tidigare förslag.
+
+**Integrationstest:**
+[draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
+testfallet “UTKAST-17: closed-panel status leads to a concurrent object
+conflict without losing unsent work”.
+
+**Steg:**
+
+1. Öppna Lo Exempels redigering i båda sessionerna. Alex föreslår namnet
+   Lo Lind och Robin föreslår Lo Berg. Lägg båda ändringarna i respektive
+   privat utkast.
+2. Låt Robin spara. Försök därefter spara Alex utkast. Kontrollera att
+   försöket avvisas och välj **Hämta aktuellt underlag**.
+3. Hos Alex: öppna **Nytt objekt**, skriv Oskickad cykel och stäng
+   arbetsytan utan att lägga texten i utkastet.
+4. I **Aktuell status**, öppna **Visa 1 konflikt**. Använd tangentbordet
+   för att välja **Objekt: Lo Lind**.
+5. Läs det tidigare namnet, förslaget och det aktuella sparade namnet.
+   Välj **Fortsätt redigera** i statuskortet.
+
+**Förväntat resultat:**
+
+- Fokus hamnar på den berörda ändringens synliga rubrik i utkastet.
+  Underlag, förslag och aktuellt sparat värde går att skilja åt.
+- Konfliktvalen är spärrade medan oskickad formulärtext återstår.
+  Objektformuläret återkommer med Oskickad cykel kvar.
+- Statusnavigeringen varken sparar, ändrar utkastet eller skapar ett
+  kvitto. Den gemensamma kartan innehåller Lo Berg och Alex privata
+  utkast innehåller fortfarande Lo Lind.
+
 ### UTKAST-16: använd Navigation och aktuell status tillsammans
 
 **Syfte:** Behålla åtkomst till personlig placering och sparande när båda

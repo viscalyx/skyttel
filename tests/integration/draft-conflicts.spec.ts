@@ -1,7 +1,81 @@
-import { type APIRequestContext, expect, test } from '@playwright/test';
+import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
 import type { MapState, ObjectValue, RelationshipValue } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
+
+test('UTKAST-17: closed-panel status leads to a concurrent object conflict without losing unsent work', async ({
+  page,
+  browser,
+}) => {
+  const other = await browser.newContext();
+  const app = await collaborators(page.request, other.request);
+  const member = await other.newPage();
+  try {
+    await page.goto(app.installation.origin);
+    await member.goto(app.installation.origin);
+    for (const client of [page, member]) {
+      await openWorkspace(client);
+      await client
+        .getByRole('button', { name: 'Visa detaljer för Lo Exempel', exact: true })
+        .click();
+      await client.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    }
+    await page.getByLabel('Objektets namn').fill('Lo Lind');
+    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await member.getByLabel('Objektets namn').fill('Lo Berg');
+    await member.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await member.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(member.getByRole('status')).toContainText('Sparat: Lo Berg');
+    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('Inget sparades');
+    await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page.getByLabel('Objektets namn').fill('Oskickad cykel');
+    await openMap(page);
+    const status = page.getByRole('region', { name: 'Aktuell status', exact: true });
+    await status.getByText('Visa 1 konflikt', { exact: true }).click();
+    const destination = status.getByRole('button', { name: 'Objekt: Lo Lind', exact: true });
+    await destination.focus();
+    await page.keyboard.press('Enter');
+    const heading = page.getByRole('heading', { name: 'Ändring: Lo Lind', exact: true });
+    await expect(heading).toBeFocused();
+    await expectFocusedTargetUncovered(page);
+    const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+    await expect(review).toContainText('Lo Exempel');
+    await expect(review).toContainText('Lo Lind');
+    await expect(review).toContainText('Lo Berg');
+    await expect(
+      review.getByRole('button', { name: 'Behåll mitt förslag', exact: true }),
+    ).toBeDisabled();
+    await status.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickad cykel');
+    expect((await app.read()).objects.find((object) => object.id === 'lo')?.name).toBe('Lo Berg');
+    expect((await app.read()).draft.changes.map((change) => change.after?.name)).toEqual([
+      'Lo Lind',
+    ]);
+    expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(2);
+  } finally {
+    await other.close();
+    await app.installation.close();
+  }
+});
+
+async function expectFocusedTargetUncovered(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const target = document.activeElement;
+        if (!(target instanceof HTMLElement)) return false;
+        const bounds = target.getBoundingClientRect();
+        const hit = document.elementFromPoint(
+          bounds.left + bounds.width / 2,
+          bounds.top + bounds.height / 2,
+        );
+        return bounds.top >= 0 && bounds.bottom <= innerHeight && target.contains(hit);
+      }),
+    )
+    .toBe(true);
+}
 
 test('UTKAST-05: a conflict choice preserves independent proposals and requires a new save', async ({
   page,
