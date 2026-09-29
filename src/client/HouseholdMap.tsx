@@ -2547,6 +2547,19 @@ export function HouseholdMap({
                             )}
                           <h4>Förslag</h4>
                           {details(change.after, change.type)}
+                          {change.after?.identity === 'unresolved' &&
+                            !mergeFor(state.draft, 'object', change.id) && (
+                              <button
+                                type="button"
+                                disabled={pending || blocked || legacyDirty}
+                                onClick={() => {
+                                  const object = displayed.get(change.id);
+                                  if (object) edit(object);
+                                }}
+                              >
+                                Red ut identiteten för {change.after.name}
+                              </button>
+                            )}
                           <button
                             type="button"
                             disabled={pending || blocked || dirty}

@@ -87,6 +87,13 @@ En **Obesvarad identitetsfråga** kan finnas i utkastet men måste lösas
 innan det kan sparas. Den betyder inte samma sak som ett avsiktligt
 ospecificerat objekt eller en osäker uppgift.
 
+Välj **Red ut identiteter i utkastet** i **Aktuell status** även om
+objektets panel är stängd. Vid objektets förslag väljer du **Red ut
+identiteten för** följt av objektets namn. Formuläret behåller eventuell
+oskickad text. Besvara identitetsfrågan och lägg rättelsen i utkastet.
+Andra formulär behåller sin text; lägg också den i utkastet eller stäng
+utan att skicka innan du uttryckligen sparar hela utkastet.
+
 Ett upprepat tillägg med samma typ, riktning och ändpunkter visar det
 befintliga sambandet. Olika betydelser mellan samma objekt går bra.
 Läs [sambandstyper och riktning](relationship-types.md) för egna typer
