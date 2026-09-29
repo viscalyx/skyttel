@@ -3,6 +3,7 @@ import { chmodSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { mkdir, open, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type Database from 'better-sqlite3';
+import type { ImportDiscovery, ImportStatus } from '../shared/household-import.js';
 import {
   assertContentAvailable,
   assertContentVersion,
@@ -77,24 +78,43 @@ function counts(content: ImportContent) {
       .map(([name, value]) => [name, (value as unknown[]).length]),
   );
 }
-function readyStatus(job: ReadyImport) {
+function readyStatus(job: ReadyImport): ImportStatus {
   return {
     id: job.id,
     status: 'ready' as const,
     contentVersion: job.contentVersion,
+    confirmationContentVersion: job.contentVersion,
     sourceHouseholdId: job.content.household.id,
     counts: counts(job.content),
     expiresAt: job.expiresAt,
   };
 }
-function durableStatus(job: ContentMaintenance) {
+function durableStatus(job: ContentMaintenance): ImportStatus {
   return {
     id: job.id,
     status: job.phase,
     contentVersion: job.contentVersion,
+    // Applying a replacement advances the row's generation once. Repeated
+    // confirmation is still bound to the original reviewed request identity.
+    confirmationContentVersion:
+      job.contentVersion - (job.phase === 'cleanup' || job.phase === 'completed' ? 1 : 0),
     counts: JSON.parse(job.counts) as Record<string, number>,
     ...(job.error ? { error: job.error } : {}),
   };
+}
+
+/** Discover metadata only; uploaded review material remains actor-bound. */
+export function discoverHouseholdImport(
+  database: Database.Database,
+  actorId: string,
+  householdId: string,
+): ImportDiscovery {
+  authorize(database, actorId, householdId);
+  const job = database
+    .prepare(`SELECT * FROM content_maintenance WHERE householdId = ? AND kind = 'import'
+      ORDER BY phase IN ('prepared', 'cleanup') DESC, createdAt DESC, rowid DESC LIMIT 1`)
+    .get(householdId) as ContentMaintenance | undefined;
+  return { attempt: job ? durableStatus(job) : null };
 }
 function storedImport(database: Database.Database, householdId: string, id: string) {
   return database

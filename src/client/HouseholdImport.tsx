@@ -1,16 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ImportDiscovery, ImportStatus } from '../shared/household-import.js';
 import type { MapState } from '../shared/map.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { MapRequestError, request } from './map-request.js';
 
-type ImportStatus = {
-  id: string;
-  status: 'ready' | 'prepared' | 'cleanup' | 'completed' | 'failed';
-  contentVersion: number;
-  counts: Record<string, number>;
-  expiresAt?: string;
-  error?: string;
-};
 type Attempt = { id: string; contentVersion: number };
 
 export function HouseholdImport({
@@ -37,13 +30,48 @@ export function HouseholdImport({
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const knownAttempt = useRef(attempt);
+  const [discoveryNeeded, setDiscoveryNeeded] = useState(!attempt);
   const active = useRef<AbortController | null>(null);
   useEffect(() => () => active.current?.abort(), []);
-  function remember(value: Attempt | null) {
-    setAttempt(value);
-    if (value) sessionStorage.setItem(storageKey, JSON.stringify(value));
-    else sessionStorage.removeItem(storageKey);
-  }
+  const remember = useCallback(
+    (value: Attempt | null) => {
+      setAttempt(value);
+      if (value) sessionStorage.setItem(storageKey, JSON.stringify(value));
+      else sessionStorage.removeItem(storageKey);
+    },
+    [storageKey],
+  );
+  const discover = useCallback(() => {
+    const controller = new AbortController();
+    active.current = controller;
+    setBusy(true);
+    setError('');
+    void request<ImportDiscovery>(`${path}/imports`, undefined, controller.signal)
+      .then(({ attempt: found }) => {
+        setResult(found);
+        if (found && ['prepared', 'cleanup'].includes(found.status))
+          remember({ id: found.id, contentVersion: found.confirmationContentVersion });
+        setDiscoveryNeeded(false);
+      })
+      .catch((failure: unknown) => {
+        if (controller.signal.aborted) return;
+        if (failure instanceof MapRequestError && [401, 403].includes(failure.status))
+          onAccessLost();
+        setError(
+          'Importens status kunde inte hämtas. Kontrollera anslutningen och hämta status innan du väljer en ny fil.',
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setBusy(false);
+      });
+    return () => controller.abort();
+  }, [path, remember, onAccessLost]);
+  useEffect(() => {
+    // A locally known uncertain attempt must be checked by that exact ID.
+    // A newer operation cannot resolve its outcome.
+    if (!knownAttempt.current) return discover();
+  }, [discover]);
   function fail(failure: unknown, confirming = false) {
     if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) onAccessLost();
     if (
@@ -124,7 +152,7 @@ export function HouseholdImport({
       setBusy(false);
     }
   }
-  const uncertain = Boolean(attempt && result?.status !== 'ready');
+  const uncertain = discoveryNeeded || Boolean(attempt && result?.status !== 'ready');
   return (
     <section aria-labelledby="household-import-heading" aria-busy={busy}>
       <h2 id="household-import-heading" className="section-heading">
@@ -187,6 +215,16 @@ export function HouseholdImport({
         <button type="button" disabled={busy} onClick={() => void recover()}>
           Hämta importens status
         </button>
+      )}
+      {discoveryNeeded && (
+        <button type="button" disabled={busy} onClick={() => discover()}>
+          Hämta importens status
+        </button>
+      )}
+      {result && (
+        <p>
+          Importförsök: <span>{result.id}</span>
+        </p>
       )}
       {result?.status === 'prepared' && (
         <p role="status">Importen pågår. Hämta status igen innan du fortsätter.</p>
