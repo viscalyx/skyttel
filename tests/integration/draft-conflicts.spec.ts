@@ -15,9 +15,7 @@ test('UTKAST-17: closed-panel status leads to a concurrent object conflict witho
     await member.goto(app.installation.origin);
     for (const client of [page, member]) {
       await openWorkspace(client);
-      await client
-        .getByRole('button', { name: 'Visa detaljer för Lo Exempel', exact: true })
-        .click();
+      await client.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
       await client.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     }
     await page.getByLabel('Objektets namn').fill('Lo Lind');
