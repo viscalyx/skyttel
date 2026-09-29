@@ -3,13 +3,18 @@ import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
-for (const width of [1280, 390, 320]) {
+for (const { width, height } of [
+  { width: 1280, height: 900 },
+  { width: 390, height: 900 },
+  { width: 320, height: 900 },
+  { width: 640, height: 456 },
+]) {
   test(`TYP-10: canonical properties retain meaning through sections, hiding, type changes, history and undo at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
     try {
-      await page.setViewportSize({ width, height: 900 });
+      await page.setViewportSize({ width, height });
       await signIn(page.request, installation.origin);
       const { household } = await (await createHousehold(page.request, installation.origin)).json();
       const path = `${installation.origin}/api/households/${household.id}/map`;

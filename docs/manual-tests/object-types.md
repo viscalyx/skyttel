@@ -281,12 +281,13 @@ säkerhet, datum eller tidigare egna värden.
 
 **Förutsättningar:** Börja med ett tomt hushåll. Skapa och spara Annan typ
 utan avsnitt eller egna fält. Använd dator samt 390 och 320 pixlars bredd.
+Pröva även ett kort fönster på 640 × 456 pixlar och verklig webbläsarzoom.
 
 **Integrationstest:**
 [object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts),
 testfallen “TYP-10: canonical properties retain meaning through sections,
-hiding, type changes, history and undo at 1280px”, samma titel med “390px”
-respektive “320px”.
+hiding, type changes, history and undo at 1280px”, samma titel med “390px”,
+“320px” respektive “640px”.
 
 **Steg:**
 
@@ -324,6 +325,8 @@ respektive “320px”.
 - Egenskapernas ordning och placering kan ändras utan att deras betydelse
   ändras. En gemensam egenskap kan inte läggas till två gånger.
 - Saknat namn och känt belopp utan värde stoppas med synligt fokus.
+- I korta fönster går det att rulla till Nytt objekt, formulär och sparande
+  även när privat förslag, status och återkoppling visas samtidigt.
 - Beskrivning, skuld, säkerhet och datum består efter döljning och typbyte.
   Okänt, uttryckligen inget och ej uppgivet förblir olika tillstånd.
 - Typbytet kräver hantering av det gamla egna värdet. Ångring återför
