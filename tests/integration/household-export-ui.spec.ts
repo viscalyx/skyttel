@@ -440,3 +440,64 @@ test('EXPORT-05: an expired export requires a new preparation', async ({ page })
     await fixture.installation.close();
   }
 });
+
+test('EXPORT-08: canceling preparation with an unseen ready response explains cleanup uncertainty', async ({
+  page,
+}) => {
+  const fixture = await arrange(page);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let prepared = (_id: string) => {};
+  const preparedId = new Promise<string>((resolve) => {
+    prepared = resolve;
+  });
+  try {
+    const before = await fixture.read();
+    const downloads: Download[] = [];
+    page.on('download', (download) => downloads.push(download));
+    await page.goto(fixture.exportPage);
+    const section = page.getByRole('region', { name: 'Fullständig export' });
+    // Hold only delivery of the real ready response; the server has made the archive.
+    await page.route(
+      `${fixture.path}/exports`,
+      async (route) => {
+        const response = await route.fetch();
+        expect(response.status()).toBe(201);
+        prepared((await response.json()).id);
+        await held;
+        await route.fulfill({ response });
+      },
+      { times: 1 },
+    );
+    await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
+    const previousId = await preparedId;
+    await expect(section.getByRole('status')).toHaveText('Förbereder exporten…');
+    await section.getByRole('button', { name: 'Avbryt export' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(section.getByRole('status')).toContainText('Förberedelsen har avbrutits');
+    await expect(section.getByRole('status')).toContainText(
+      'En tillfällig kopia kan finnas kvar tills giltighetstiden går ut',
+    );
+    await expect(section.getByRole('button', { name: 'Hämta ZIP-fil' })).toHaveCount(0);
+    release();
+    const fresh = page.waitForResponse(
+      (response) =>
+        response.url() === `${fixture.path}/exports` && response.request().method() === 'POST',
+    );
+    await section.getByRole('button', { name: 'Förbered fullständig export' }).click();
+    const currentId = (await (await fresh).json()).id;
+    expect(currentId).not.toBe(previousId);
+    await expect(section.getByRole('status')).toContainText('Exporten är klar att hämta');
+    expect((await page.request.get(`${fixture.path}/exports/${previousId}`)).status()).toBe(404);
+    const download = page.waitForEvent('download');
+    await section.getByRole('button', { name: 'Hämta ZIP-fil' }).click();
+    await archive(await download);
+    expect(downloads).toHaveLength(1);
+    expect(await fixture.read()).toEqual(before);
+  } finally {
+    release();
+    await fixture.installation.close();
+  }
+});

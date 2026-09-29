@@ -297,6 +297,39 @@ and removes its private copy”.
   återupptas. Redan mottagna data eller data i nätverkets buffertar kan
   inte återkallas.
 
+### EXPORT-08: Avbryt förberedelsen innan svaret kommer fram
+
+**Syfte:** Skilj avbruten förberedelse i webbläsaren från bekräftad
+borttagning av en färdig tillfällig kopia.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** Fullständig export är öppen. Använd webbläsarens
+nätverksverktyg för att fördröja svaret från förberedelsen. Integrationstestet
+håller svaret från en verklig färdig export innan webbläsaren får det.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+testfallet “EXPORT-08: canceling preparation with an unseen ready response
+explains cleanup uncertainty”.
+
+**Steg:**
+
+1. Välj **Förbered fullständig export** och kontrollera väntemeddelandet.
+2. Innan svaret kommer fram, använd tangentbordet till **Avbryt export**.
+3. Läs beskedet och återställ nätverket. Kontrollera att ingen fil erbjuds
+   från det avbrutna försöket.
+4. Förbered en ny export och hämta ZIP-filen. Kontrollera att hushållets
+   karta och privata utkast finns kvar oförändrade.
+
+**Förväntat resultat:**
+
+- Förberedelsen är avbruten i webbläsaren. Beskedet förklarar att en
+  tillfällig kopia kan finnas kvar tills giltighetstiden går ut.
+- Ett sent svar återöppnar inte den avbrutna exporten. Nästa förberedelse
+  ersätter den tidigare kopian och erbjuder en ny fungerande hämtning.
+- Avbrottet eller exporten ändrar inte hushållets innehåll.
+
 ## Controlled export fixture
 
 This disposable Linux fixture prepares

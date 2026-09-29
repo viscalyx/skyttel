@@ -139,6 +139,7 @@ export function HouseholdExport({
   }
 
   async function cancel() {
+    const exportToCancel = knownExport.current;
     active.current?.abort();
     const controller = new AbortController();
     active.current = controller;
@@ -146,16 +147,20 @@ export function HouseholdExport({
     setError(null);
     setReady(null);
     try {
-      if (knownExport.current)
+      if (exportToCancel)
         await request(
-          `${path}/${encodeURIComponent(knownExport.current.id)}/cancel`,
+          `${path}/${encodeURIComponent(exportToCancel.id)}/cancel`,
           {},
           controller.signal,
         );
       if (controller.signal.aborted) return;
       knownExport.current = null;
       setReady(null);
-      setNotice('Exporten har avbrutits.');
+      setNotice(
+        exportToCancel
+          ? 'Exporten har avbrutits.'
+          : 'Förberedelsen har avbrutits i webbläsaren. En tillfällig kopia kan finnas kvar tills giltighetstiden går ut.',
+      );
     } catch (failure) {
       if (!controller.signal.aborted) fail(failure, 'canceling');
     } finally {
