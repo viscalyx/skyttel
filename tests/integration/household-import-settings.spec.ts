@@ -160,6 +160,7 @@ test('IMPORT-13: import and identity Settings destinations enforce current house
     ).toBe(200);
     await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
     await expect(page.getByLabel('Skyttel-export (ZIP)')).toBeEnabled();
+    await guest.bringToFront();
     expect(
       (
         await other.request.post(`${path}/members/${administrator.id}/role`, {
@@ -168,6 +169,11 @@ test('IMPORT-13: import and identity Settings destinations enforce current house
         })
       ).status(),
     ).toBe(200);
+    const refreshedAccess = page.waitForResponse(
+      (response) => response.url().endsWith('/api/bootstrap') && response.status() === 200,
+    );
+    await page.bringToFront();
+    expect((await (await refreshedAccess).json()).household.role).toBe('member');
     await expect(
       page.getByRole('heading', { name: 'Du kan inte administrera hushållet' }),
     ).toBeVisible();

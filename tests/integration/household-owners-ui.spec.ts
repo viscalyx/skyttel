@@ -175,14 +175,24 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
     await page.keyboard.press('Enter');
     await expect(owners.getByRole('alert')).toContainText('Utfallet är okänt');
     await expect(load).toBeFocused();
-    await expect(owners.getByRole('group', { name: 'Granska kopplingen' })).toBeDisabled();
+    await expect(owners.getByLabel('Historisk innehållsidentitet')).toBeDisabled();
+    await expect(owners.getByLabel('Aktuell verifierad medlem')).toBeDisabled();
+    await expect(
+      owners.getByRole('checkbox', { name: 'Jag har identifierat rätt person' }),
+    ).toBeDisabled();
+    await expect(confirm).toBeDisabled();
     await page.route('**/content-owners', async (route) => {
       await route.fetch();
       await route.abort('failed');
     });
     await load.click();
     await expect(owners.getByRole('alert')).toContainText('kunde inte hämtas');
-    await expect(owners.getByRole('group', { name: 'Granska kopplingen' })).toBeDisabled();
+    await expect(owners.getByLabel('Historisk innehållsidentitet')).toBeDisabled();
+    await expect(owners.getByLabel('Aktuell verifierad medlem')).toBeDisabled();
+    await expect(
+      owners.getByRole('checkbox', { name: 'Jag har identifierat rätt person' }),
+    ).toBeDisabled();
+    await expect(confirm).toBeDisabled();
     expect(writes).toBe(1);
     await page.unroute('**/content-owners');
     await load.click();

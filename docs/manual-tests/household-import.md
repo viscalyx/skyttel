@@ -559,8 +559,9 @@ current household administrator access”.
    Sidorna ska neka administration utan filval eller identitetsgranskning.
 4. Alex ger Robin rollen administratör och öppnar importen i sin egen
    profil. Robin ändrar sedan Alex roll till medlem.
-5. Kontrollera att Alex öppna importsida förlorar sina administrativa
-   kontroller. Båda sidorna kräver fortsatt aktuell administratörsroll.
+5. Återvänd till Alex öppna flik och kontrollera att importsidan förlorar
+   sina administrativa kontroller när åtkomsten uppdateras. Båda sidorna
+   kräver fortsatt aktuell administratörsroll.
 
 **Förväntat resultat:**
 
