@@ -195,6 +195,7 @@ test('KARTA-08: a closed-panel identity blocker opens the exact retained object 
       name: 'Red ut identiteter i utkastet',
       exact: true,
     });
+    await expect(resolve).toBeVisible();
     await resolve.focus();
     await page.keyboard.press('Enter');
     const draft = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
@@ -208,6 +209,7 @@ test('KARTA-08: a closed-panel identity blocker opens the exact retained object 
       name: 'Red ut identiteten för Betalkonto',
       exact: true,
     });
+    await expect(correct).toBeVisible();
     await correct.focus();
     await page.keyboard.press('Enter');
     const editor = page.getByRole('region', { name: 'Betalkonto', exact: true });
