@@ -1359,7 +1359,8 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
     lifecycle: 'active',
     endDate: { knowledge: 'uncertain', value: '2000-01-01' },
   });
-  expect(active.draft.relationships).toEqual([]);
+  expect(active.draft.relationships ?? []).toEqual([]);
+  expect(active.draft.changes).toEqual([]);
   const history = await (await client.request(`${path}/history`)).json();
   expect(history.history).toHaveLength(2);
   expect(history.history[0].relationships).toEqual([
@@ -1402,7 +1403,8 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
     endDate: { knowledge: 'uncertain', value: '2000-01-01' },
   });
   expect(final.relationships[0]).not.toHaveProperty('lifecycle');
-  expect(final.draft.relationships).toEqual([]);
+  expect(final.draft.relationships ?? []).toEqual([]);
+  expect(final.draft.changes).toEqual([]);
   await user.click(edges.getByRole('button', { name: /^Lo Exempel → Använder → Familjemusik/ }));
   expect(details.getByText('Status: Följ slutdatum')).toBeTruthy();
   expect(details.getByText('Slutdatum: 2000-01-01 (Osäkert uppgivet)')).toBeTruthy();
