@@ -19,13 +19,16 @@ test('MEDLEM-04: replacing an invitation invalidates the old code and cancellati
     await recipientPage.goto(installation.origin);
     const userId = await recipientPage.getByLabel('Ditt Skyttel-användar-ID').inputValue();
     await page.goto(`${installation.origin}/households/${household.id}/administration`);
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(userId);
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     const oldCode = await page.getByLabel('Inbjudningskod att dela').inputValue();
     await page.reload();
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
     await expect(page.getByLabel('Inbjudningskod att dela')).toHaveCount(0);
     await expect(page.getByRole('list', { name: 'Inbjudningar' })).toContainText('Väntar på svar');
 
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(userId);
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     const newCode = await page.getByLabel('Inbjudningskod att dela').inputValue();
@@ -52,7 +55,9 @@ test('MEDLEM-04: replacing an invitation invalidates the old code and cancellati
     await expect(recipientPage.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
     await expect(recipientPage.getByRole('alert')).toHaveCount(0);
     await page.reload();
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
     await expect(invitations).toContainText('Accepterad');
+    await page.getByRole('button', { name: 'Medlemmar', exact: true }).click();
     await expect(page.getByRole('list', { name: 'Medlemmar' })).toContainText(robin.name);
   } finally {
     await recipient.close();
@@ -91,6 +96,7 @@ test('MEDLEM-05: an expired invitation is visibly unusable and a fresh invitatio
       database.close();
     }
     await page.goto(`${installation.origin}/households/${household.id}/administration`);
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
     const invitations = page.getByRole('list', { name: 'Inbjudningar' });
     await expect(invitations).toContainText('Utgången');
     await expect(invitations.getByRole('button', { name: 'Återkalla inbjudan' })).toHaveCount(0);
@@ -104,6 +110,7 @@ test('MEDLEM-05: an expired invitation is visibly unusable and a fresh invitatio
       recipientPage.getByRole('heading', { name: 'Du har inte tillgång till hushållet' }),
     ).toBeVisible();
 
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(user.id);
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     const newCode = await page.getByLabel('Inbjudningskod att dela').inputValue();
@@ -112,7 +119,9 @@ test('MEDLEM-05: an expired invitation is visibly unusable and a fresh invitatio
     await expect(recipientPage.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
     await expect(recipientPage.getByText('Medlem', { exact: true })).toBeVisible();
     await page.reload();
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
     await expect(invitations).toContainText('Accepterad');
+    await page.getByRole('button', { name: 'Medlemmar', exact: true }).click();
     await expect(page.getByRole('list', { name: 'Medlemmar' })).toContainText(robin.name);
   } finally {
     await recipient.close();
@@ -155,6 +164,7 @@ test('MEDLEM-06: revocation preserves shared objects and only a new invitation r
     await expect(recipientPage.getByRole('status')).toContainText('Sparat');
     await page.goto(`${installation.origin}/households/${household.id}/administration`);
 
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(user.id);
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('har redan tillgång till hushållet');
@@ -184,6 +194,7 @@ test('MEDLEM-06: revocation preserves shared objects and only a new invitation r
     await openSettings(page);
 
     await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(user.id);
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     const newCode = await page.getByLabel('Inbjudningskod att dela').inputValue();
@@ -221,9 +232,11 @@ test('MEDLEM-01: an administrator invites an authenticated user who joins by key
     await page.goto(installation.origin);
     await openSettings(page);
     await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(userId);
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     const code = await page.getByLabel('Inbjudningskod att dela').inputValue();
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
     await expect(page.getByRole('list', { name: 'Inbjudningar' })).toContainText('Väntar på svar');
 
     await recipientPage.getByLabel('Inbjudningskod', { exact: true }).focus();
@@ -242,6 +255,7 @@ test('MEDLEM-01: an administrator invites an authenticated user who joins by key
     ).toBe(true);
     await page.reload();
     await expect(page.getByRole('list', { name: 'Medlemmar' })).toContainText(robin.name);
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
     await expect(page.getByRole('list', { name: 'Inbjudningar' })).toContainText('Accepterad');
     await expect(page.getByLabel('Inbjudningskod att dela')).toHaveCount(0);
   } finally {
@@ -313,12 +327,14 @@ test('MEDLEM-02: invitation errors are recoverable and a revoked code cannot gra
       await recipient.request.get(`${installation.origin}/api/bootstrap`)
     ).json();
     await page.goto(`${installation.origin}/households/${household.id}/administration`);
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill('unknown-user');
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('Skyttel-användaren finns inte');
     await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(user.id);
     await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
     const code = await page.getByLabel('Inbjudningskod att dela').inputValue();
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
     await expect(
       page.getByRole('button', { name: 'Återkalla inbjudan', exact: true }),
     ).toBeVisible();
@@ -375,6 +391,7 @@ test('MEDLEM-03: administrators share responsibility and open clients lose revok
     await robinRow.getByRole('button', { name: 'Gör till administratör' }).click();
     await expect(robinRow.getByText('Administratör', { exact: true })).toBeVisible();
 
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
     const editor = page.getByLabel('Skyttel-användar-ID att bjuda in');
     await editor.fill('påbörjat-id');
     await editor.focus();

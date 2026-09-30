@@ -36,6 +36,13 @@ fallen anger formulär, samtal, profil eller administration.
    Skapa den minst sju dagar före körningen, anteckna koden privat och
    kontrollera att dess **Gäller till** har passerat. Ersätt eller
    återkalla inte inbjudan under väntetiden. Logga in på nytt vid körning.
+4. När ett fall ber dig skapa en inbjudan, öppna **Administrera tillgång**
+   och välj **Jag har personens användar-ID** för att visa ID-fältet.
+   Vid en ny inbjudan efter kopieringssteget väljer du först
+   **Klar med inbjudan**. En omladdning börjar också från första steget.
+5. Välj **Medlemmar** eller **Inbjudningar** för den lista som steget
+   anger. Bara en lista visas åt gången. Byte av lista behåller den
+   aktuella koden och avslutar inte kopieringssteget.
 
 ## Bjuda in och ansluta
 
@@ -55,10 +62,11 @@ joins by keyboard on a phone”.
 
 **Steg:**
 
-1. Välj **Administrera tillgång** som Alex. Ange Robins ID i
+1. Välj **Administrera tillgång** och **Jag har personens användar-ID**
+   som Alex. Ange Robins ID i
    **Skyttel-användar-ID att bjuda in** och välj **Skapa inbjudan**.
-2. Kopiera **Inbjudningskod att dela**. Kontrollera **Väntar på svar**
-   under **Inbjudningar**.
+2. Kopiera **Inbjudningskod att dela**. Välj **Inbjudningar** och
+   kontrollera **Väntar på svar**.
 3. Fokusera **Inbjudningskod** som Robin och skriv koden. Tryck Tab och
    kontrollera att **Acceptera inbjudan** får fokus. Tryck Enter.
 4. Kontrollera hushållets namn och rollen **Medlem** som Robin. Ladda om
@@ -87,11 +95,13 @@ code cannot grant access”.
 
 **Steg:**
 
-1. Öppna **Administrera tillgång** som Alex. Skriv `unknown-user` i
+1. Öppna **Administrera tillgång** och **Jag har personens användar-ID**
+   som Alex. Skriv `unknown-user` i
    **Skyttel-användar-ID att bjuda in** och välj **Skapa inbjudan**.
 2. Kontrollera felmeddelandet och ersätt värdet med Robins faktiska ID.
    Välj **Skapa inbjudan** och kopiera koden.
-3. Välj **Återkalla inbjudan** och **Bekräfta återkallelse**.
+3. Välj **Inbjudningar**, **Återkalla inbjudan** och
+   **Bekräfta återkallelse**.
 4. Ange den kopierade koden som Robin och välj **Acceptera inbjudan**.
 
 **Förväntat resultat:**
@@ -158,7 +168,8 @@ fresh invitation restores the join flow”.
 
 **Steg:**
 
-1. Öppna **Administrera tillgång** som Alex. Granska den gamla inbjudan.
+1. Öppna **Administrera tillgång** och välj **Inbjudningar** som Alex.
+   Granska den gamla inbjudan.
 2. Ange den gamla koden som Robin och välj **Acceptera inbjudan**.
 3. Skapa en ny inbjudan till Robins ID som Alex. Kopiera den nya koden.
 4. Ersätt den gamla koden som Robin med den nya och acceptera.
@@ -234,7 +245,8 @@ lose revoked access without disrupting input”.
 **Steg:**
 
 1. Välj **Gör till administratör** på Robins rad som Alex.
-2. Skriv `påbörjat-id` i **Skyttel-användar-ID att bjuda in** och behåll
+2. Välj **Jag har personens användar-ID**. Skriv `påbörjat-id` i
+   **Skyttel-användar-ID att bjuda in** och behåll
    fokus där under nästa automatiska uppdatering av listorna.
 3. Öppna **Administrera tillgång** som Robin. Kontrollera knapparna
    **Gör till medlem** och **Återkalla tillgång** på raden märkt **(du)**.
