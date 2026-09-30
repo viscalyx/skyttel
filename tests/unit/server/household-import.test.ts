@@ -467,6 +467,103 @@ test('failed removal of an aborted upload prevents false completion and a later 
   expect(existsSync(blockedDirectory)).toBe(false);
 });
 
+test('startup discovers the same interrupted prepared import from its committed gate without replacing content', async () => {
+  const before = await (await client.request(`${path}/map`)).json();
+  const ready = await (await upload()).json();
+  let entered = () => {};
+  const reading = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  let cancelled = () => {};
+  const cancelling = new Promise<void>((resolve) => {
+    cancelled = resolve;
+  });
+  let resume = () => {};
+  const released = new Promise<void>((resolve) => {
+    resume = resolve;
+  });
+  let restored: Awaited<ReturnType<typeof applicationFixture>> | undefined;
+  const uploading = client.request(`${path}/imports`, {
+    method: 'POST',
+    headers: {
+      origin: fixture.config.origin,
+      'content-type': 'application/zip',
+      'X-Skyttel-Content-Version': '1',
+    },
+    body: new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(archive.slice(0, 1));
+      },
+      pull() {
+        entered();
+        return new Promise<void>(() => {});
+      },
+      cancel() {
+        cancelled();
+        return released;
+      },
+    }),
+    duplex: 'half',
+  } as RequestInit);
+  await reading;
+  const confirmation = client.json(`${path}/imports/${ready.id}/confirm`, {
+    confirmed: true,
+    contentVersion: 1,
+  });
+  try {
+    await cancelling;
+    expect((await client.request(`${path}/map`)).status).toBe(409);
+    expect(await (await client.request(`${path}/imports`)).json()).toMatchObject({
+      attempt: {
+        id: ready.id,
+        status: 'prepared',
+        contentVersion: 1,
+        confirmationContentVersion: 1,
+      },
+      ready: null,
+    });
+    const snapshot = join(dirname(fixture.config.databasePath), 'prepared-backup.sqlite');
+    await fixture.database.backup(snapshot);
+    restored = await applicationFixture({ databaseSnapshot: snapshot });
+    const fresh = restored.client();
+    await fresh.signIn();
+    const discovery = await (await fresh.request(`${path}/imports`)).json();
+    expect(discovery).toEqual({
+      attempt: {
+        id: ready.id,
+        status: 'failed',
+        contentVersion: 1,
+        confirmationContentVersion: 1,
+        counts: {},
+        error: 'import_interrupted',
+      },
+      ready: null,
+    });
+    expect(await (await fresh.request(`${path}/imports/${ready.id}`)).json()).toEqual(
+      discovery.attempt,
+    );
+    expect(await (await fresh.request(`${path}/map`)).json()).toEqual(before);
+    expect((await fresh.json(`${path}/exports`, {})).status).toBe(201);
+    expect(
+      await (
+        await fresh.json(`${path}/imports/${ready.id}/confirm`, {
+          confirmed: true,
+          contentVersion: 1,
+        })
+      ).json(),
+    ).toEqual(discovery.attempt);
+    expect(await (await fresh.request(`${path}/map`)).json()).toEqual(before);
+    expect(readdirSync(join(dirname(restored.config.databasePath), '.skyttel-imports'))).toEqual(
+      [],
+    );
+  } finally {
+    resume();
+    await confirmation;
+    await uploading;
+    restored?.close();
+  }
+});
+
 test('completed outcomes survive repeated confirmation and reject altered confirmation identity', async () => {
   const ready = await (await upload()).json();
   const body = { confirmed: true, contentVersion: 1 };
