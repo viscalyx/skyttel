@@ -244,8 +244,11 @@ test('a real image rejection preserves Settings focus until explicit return to t
   await user.click(independent.getByLabelText('Beskrivning', { exact: true }));
   await user.paste('Oskickat under bildförsöket');
   await user.click(screen.getByRole('button', { name: 'Stäng Garaget' }));
-  await user.click(screen.getByRole('button', { name: 'Lista' }));
-  await user.click(screen.getByRole('button', { name: 'Uppgifter för Lo Exempel' }));
+  await user.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Uppgifter för Lo Exempel',
+    }),
+  );
   await user.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
   const details = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
   await user.upload(details.getByLabelText('Välj profilbild'), await file());
@@ -300,8 +303,16 @@ test('a real image rejection preserves Settings focus until explicit return to t
       `/profile-images/${before.draft.changes.find((change) => change.id === 'person')?.after?.profileImageId}`,
     );
     expect(await read()).toEqual(before);
-    await user.click(screen.getByRole('button', { name: 'Lista' }));
-    await user.click(screen.getByRole('button', { name: 'Uppgifter för Garaget' }));
+    const panels = screen.getByRole('combobox', { name: /^Öppna paneler/ });
+    await user.selectOptions(
+      panels,
+      within(panels).getByRole('option', { name: 'Lista och utkast' }),
+    );
+    await user.click(
+      within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+        name: 'Uppgifter för Garaget',
+      }),
+    );
     expect(
       within(screen.getByRole('region', { name: 'Garaget' })).getByDisplayValue(
         'Oskickat under bildförsöket',
