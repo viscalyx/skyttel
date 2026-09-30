@@ -502,7 +502,7 @@
     display: block;
   }
   .household-map.workspace-shell.workspace-open:not(.workspace-revealing) .workspace-work-close {
-    z-index: auto;
+    z-index: 20;
   }
   .household-map.workspace-shell.workspace-open:not(.workspace-revealing)
     .workspace-window-selector {
