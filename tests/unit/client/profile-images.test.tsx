@@ -341,33 +341,51 @@ test('the whole image and description proposal saves once with an exact expanded
   const saved = new Promise<Response>((resolve) => {
     received = resolve;
   });
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   let saveRequests = 0;
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     if (url === `${path}/save` && init?.method === 'POST') saveRequests += 1;
     const response = await request(url, init);
-    if (url === `${path}/save` && init?.method === 'POST') received(response.clone());
+    if (url === `${path}/save` && init?.method === 'POST') {
+      received(response.clone());
+      await held;
+    }
     return response;
   });
-  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
-  await user.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
-  const response = await saved;
-  expect(response.status).toBe(200);
-  const { receipt } = await response.json();
-  expect(receipt).toMatchObject({
-    householdId,
-    draftVersion: proposed.draft.version,
-    changes: [{ before: null, after: proposed.draft.changes[0].after }],
-  });
-  expect(receipt.changes).toHaveLength(1);
-  await screen.findByText('Sparat · kvitto bekräftat');
-  await user.click(screen.getByRole('button', { name: 'Aktuell status' }));
-  const status = within(screen.getByRole('region', { name: 'Aktuell status' }));
-  expect(
-    await status.findByText(`Sparat: Lo Exempel. Kvitto: ${receipt.operationId}.`),
-  ).toBeTruthy();
-  const shared = await read();
-  expect(shared.objects).toHaveLength(1);
-  expect(shared.objects[0]).toMatchObject(proposed.draft.changes[0].after ?? {});
-  expect(shared.draft.changes).toEqual([]);
-  expect(saveRequests).toBe(1);
+  try {
+    const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
+    await user.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
+    const response = await saved;
+    expect(response.status).toBe(200);
+    const { receipt } = await response.json();
+    expect(receipt).toMatchObject({
+      householdId,
+      draftVersion: proposed.draft.version,
+      changes: [{ before: null, after: proposed.draft.changes[0].after }],
+    });
+    expect(receipt.changes).toHaveLength(1);
+    await user.click(screen.getByRole('button', { name: 'Aktuell status' }));
+    const status = within(screen.getByRole('region', { name: 'Aktuell status' }));
+    expect(await status.findByText('Väntar på sparkvitto')).toBeTruthy();
+    expect(
+      status.getByText(`Sparförsök: ${receipt.operationId}. Slutresultatet är inte bekräftat.`),
+    ).toBeTruthy();
+    expect(status.queryByText(/^Sparat:/)).toBeNull();
+    expect(status.queryByText('Sparat · kvitto bekräftat')).toBeNull();
+    release();
+    await screen.findByText('Sparat · kvitto bekräftat');
+    expect(
+      await status.findByText(`Sparat: Lo Exempel. Kvitto: ${receipt.operationId}.`),
+    ).toBeTruthy();
+    const shared = await read();
+    expect(shared.objects).toHaveLength(1);
+    expect(shared.objects[0]).toMatchObject(proposed.draft.changes[0].after ?? {});
+    expect(shared.draft.changes).toEqual([]);
+    expect(saveRequests).toBe(1);
+  } finally {
+    release();
+  }
 });
