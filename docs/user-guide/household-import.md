@@ -33,6 +33,14 @@ obekräftade granskning igen, även i en annan webbläsare. Välj
 En annan administratör får inte bekräfta din obekräftade förberedelse.
 Efter omstart eller utgången tid behöver filen granskas på nytt.
 
+Du kan välja **Avbryt förberedelsen** innan du bekräftar ersättningen.
+Ett lyckat avbrott tar bort den tillfälliga kopian och lämnar hushållets
+innehåll kvar. Om svaret saknas, hämta samma försöks status först. Att filen
+inte längre är tillgänglig betyder att granskningen inte kan användas;
+det är inte ett kvitto på avbrottet. Om tillfälliga filer finns kvar, välj
+**Slutför förberedelsens rensning**. Kartan kan användas under denna
+rensning eftersom ingen ersättning har bekräftats.
+
 Ett bekräftat importförsök har ett beständigt ID. När en aktuell
 administratör öppnar importen i en ny webbläsare visas pågående eller
 senaste bekräftade försök automatiskt, även efter omstart. Jämför ID när
@@ -49,7 +57,7 @@ verifierat konto. Att namn eller andra uppgifter råkar stämma räcker inte.
 Följ [guiden för innehållskopplingar](household-recovery.md) för att granska
 och bekräfta kopplingen utan att skriva över något privat arbete.
 
-Om rensningen inte är klar är innehållet redan ersatt, men kartan hålls
+Om rensningen efter en bekräftad ersättning inte är klar hålls kartan
 stängd tills rensningen lyckas. En aktuell administratör kan välja
 **Slutför importens rensning** för samma försök, även om den ursprungliga
 administratören inte längre har rollen. Åtgärden gör ingen ny ersättning.

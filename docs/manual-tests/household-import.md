@@ -677,14 +677,17 @@ unconfirmed preparation and removes its staged archive”.
 
 **Steg:**
 
-1. Välj exporten och **Kontrollera importfil**. Läs granskningen utan att
-   markera ersättningens bekräftelse.
+1. Börja ett nytt objekt med namnet **Oskickat arbete under avbrottet**
+   utan att skicka förslaget. Öppna importsidan, välj exporten och
+   **Kontrollera importfil**. Läs granskningen utan att markera bekräftelsen.
 2. Använd Tab till **Avbryt förberedelsen** och tryck Enter.
 3. Kontrollera beskedet att förberedelsen är avbruten. Granskningen ska
    försvinna och fokus återgå till filvalet.
-4. Ladda om sidan. Ingen granskning av den avbrutna filen ska komma tillbaka.
-5. Återgå till kartan och kontrollera att den senare ändringen **Senare
-   namn**, privata utkast och aktuell tillgång är oförändrade.
+4. Återgå till kartan. Det oskickade formuläret ska finnas kvar. Kontrollera
+   att den senare ändringen **Senare namn**, privata utkast och aktuell
+   tillgång är oförändrade.
+5. Öppna importen och ladda om sidan. Ingen granskning av den avbrutna filen
+   ska komma tillbaka. Hushållets sparade och privata uppgifter är oförändrade.
 
 **Förväntat resultat:**
 

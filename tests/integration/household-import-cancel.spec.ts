@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { createHousehold, signIn } from '../support/client.js';
+import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 test('IMPORT-16: an administrator explicitly cancels only an unconfirmed preparation and removes its staged archive', async ({
@@ -13,12 +13,74 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
     const headers = { origin: installation.origin };
-    const before = await (await page.request.get(`${path}/map`)).json();
+    const initial = await (await page.request.get(`${path}/map`)).json();
+    const value = { name: 'Exportens namn', description: '', typeId: initial.types[0].id };
+    expect(
+      (
+        await page.request.post(`${path}/map/draft`, {
+          headers,
+          data: { id: 'cancel-object', version: 0, baseRevision: null, value },
+        })
+      ).status(),
+    ).toBe(200);
+    expect(
+      (
+        await page.request.post(`${path}/map/save`, {
+          headers,
+          data: { version: 1, operationId: 'cancel-before-export' },
+        })
+      ).status(),
+    ).toBe(200);
     const exported = await (
       await page.request.post(`${path}/exports`, { headers, data: {} })
     ).json();
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
-    await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
+    const saved = await (await page.request.get(`${path}/map`)).json();
+    expect(
+      (
+        await page.request.post(`${path}/map/draft`, {
+          headers,
+          data: {
+            id: 'cancel-object',
+            version: saved.draft.version,
+            baseRevision: saved.objects[0].revision,
+            value: { ...value, name: 'Senare namn' },
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    expect(
+      (
+        await page.request.post(`${path}/map/save`, {
+          headers,
+          data: { version: saved.draft.version + 1, operationId: 'cancel-after-export' },
+        })
+      ).status(),
+    ).toBe(200);
+    const changed = await (await page.request.get(`${path}/map`)).json();
+    expect(
+      (
+        await page.request.post(`${path}/map/draft`, {
+          headers,
+          data: {
+            id: 'cancel-private',
+            version: changed.draft.version,
+            baseRevision: null,
+            value: { ...value, name: 'Privat arbete efter exporten' },
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    const before = await (await page.request.get(`${path}/map`)).json();
+    expect(before.objects).toEqual([expect.objectContaining({ name: 'Senare namn' })]);
+    expect(before.draft.changes).toHaveLength(1);
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const unsent = page.getByLabel('Objektets namn');
+    await unsent.fill('Oskickat arbete under avbrottet');
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
     const importer = page.getByRole('region', { name: 'Återimportera hushållet', exact: true });
     const file = importer.getByLabel('Skyttel-export (ZIP)');
     await file.setInputFiles({ name: 'skyttel.zip', mimeType: 'application/zip', buffer: archive });
@@ -60,6 +122,10 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
       ).status(),
     ).toBe(404);
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await expect(unsent).toHaveValue('Oskickat arbete under avbrottet');
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
     await page.reload();
     await expect(importer.getByRole('group', { name: 'Granska ersättningen' })).toHaveCount(0);
     await expect(file).toBeEnabled();

@@ -135,6 +135,12 @@ the replacement. An unconfirmed review remains available only to its uploader
 for ten minutes and does not survive restart. Review the archive again when
 that temporary preparation is no longer available.
 
+Cancellation of an unconfirmed review removes its temporary files. If removal
+fails, that review cannot replace content. Its uploader can follow the same
+attempt and retry cleanup while household content remains available. Resolve
+storage permissions before retrying. This cleanup is separate from cleanup
+after a committed replacement, which keeps household content unavailable.
+
 ### Permanent household erasure
 
 Allow free persistent disk space for database reconstruction and normal journal
