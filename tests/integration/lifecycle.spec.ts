@@ -472,3 +472,99 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
     await installation.close();
   }
 });
+
+test('LIVSCYKEL-06: current and previous relationships retain their own accessible status', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { read, post, save } = await arrange(page.request, installation.origin);
+    const initial = await read();
+    const incoming = initial.relationships.find((edge) => edge.id === 'incoming');
+    const pays = initial.relationshipTypes.find((type) => type.name === 'Betalar');
+    expect(
+      (
+        await post('relationship', {
+          version: initial.draft.version,
+          id: 'incoming',
+          baseRevision: incoming?.revision,
+          value: {
+            ...incoming,
+            lifecycle: 'ended',
+            endDate: { knowledge: 'known', value: '2000-01-01' },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    expect(
+      (
+        await post('relationship', {
+          version: (await read()).draft.version,
+          id: 'previous-incoming',
+          baseRevision: null,
+          value: {
+            sourceId: 'service',
+            targetId: 'person',
+            typeId: pays?.id,
+            knowledge: 'known',
+            lifecycle: 'active',
+            endDate: { knowledge: 'known', value: '2000-01-01' },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    expect((await save()).ok()).toBe(true);
+    const saved = await read();
+    const ended = saved.relationships.find((edge) => edge.id === 'incoming');
+    expect(
+      (
+        await post('relationship', {
+          version: saved.draft.version,
+          id: 'incoming',
+          baseRevision: ended?.revision,
+          value: { ...ended, typeId: pays?.id, lifecycle: 'active' },
+        })
+      ).ok(),
+    ).toBe(true);
+    const privateProposal = await read();
+    expect(privateProposal.relationships).toEqual(saved.relationships);
+    await page.goto(installation.origin);
+    await openMap(page);
+    const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    const labels = space.locator('.spatial-labels');
+    const previous = labels.getByRole('button', {
+      name: 'Välj tidigare samband: Lo Exempel → Använder → Familjemusik',
+      exact: true,
+    });
+    const current = labels.getByRole('button', {
+      name: 'Välj samband: Molnmusik → Betalar → Lo Exempel',
+      exact: true,
+    });
+    const proposed = labels.getByRole('button', {
+      name: 'Välj samband: Lo Exempel → Betalar → Familjemusik',
+      exact: true,
+    });
+    await expect(previous.getByText('Upphört', { exact: true })).toBeVisible();
+    await expect(current).toBeVisible();
+    await expect(current).not.toContainText('Upphört');
+    await expect(proposed).not.toContainText('Upphört');
+    await expect(previous).toHaveAccessibleDescription(/Upphört/);
+    await expect(previous).toHaveAccessibleDescription(/Använder/);
+    await expect(current).toHaveAccessibleDescription(/Betalar/);
+    await expect(current).not.toHaveAccessibleDescription(/Upphört/);
+    await expect(proposed).not.toHaveAccessibleDescription(/Upphört/);
+    expect(await read()).toEqual(privateProposal);
+    await installation.restart();
+    await page.reload();
+    await openMap(page);
+    await expect(previous.getByText('Upphört', { exact: true })).toBeVisible();
+    await expect(previous).toHaveAccessibleDescription(/Upphört/);
+    await expect(previous).toHaveAccessibleDescription(/Använder/);
+    await expect(current).not.toHaveAccessibleDescription(/Upphört/);
+    await expect(proposed).not.toHaveAccessibleDescription(/Upphört/);
+    expect(await read()).toEqual(privateProposal);
+  } finally {
+    await installation.close();
+  }
+});

@@ -185,6 +185,46 @@ distinct for valid overlapping identities”.
 - Automationen kontrollerar tillgängliga beskrivningar i webbläsaren.
   Faktiska skärmläsarprov dokumenteras separat när de utförs.
 
+### LIVSCYKEL-06: aktuella och tidigare samband behåller sin egen status
+
+**Syfte:** Kontrollera att ett tidigare sambands beskrivning behåller dess
+namn och status när utkastet ändrar sambandet och andra samband visas samtidigt.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** De sparade objekten och sambanden ovan. Ange känt
+slutdatum **2000-01-01** och status **Upphört** för sambandet från Lo till
+Familjemusik. Lägg till **Molnmusik → Betalar → Lo Exempel** med samma
+slutdatum och status **Gäller fortfarande**. Spara hela utkastet.
+Automationen använder de giltiga identifierarna `incoming` och
+`previous-incoming` via det publika API:et för att prova åtskilda beskrivningar.
+
+**Integrationstest:**
+[lifecycle.spec.ts](../../tests/integration/lifecycle.spec.ts),
+testfallet “LIVSCYKEL-06: current and previous relationships retain their
+own accessible status”.
+
+**Steg:**
+
+1. Redigera sambandet från Lo till Familjemusik. Välj typen **Betalar** och
+   status **Gäller fortfarande**. Lägg sambandet i ditt utkast utan att spara.
+2. Öppna kartan och välj **Alla etiketter**. Granska det tidigare sambandet
+   från Lo, det föreslagna sambandet och det sparade sambandet från Molnmusik.
+3. Läs kontrollernas tillgängliga beskrivningar med webbläsarens
+   tillgänglighetsinspektör eller skärmläsare.
+4. Starta om appen med samma databas, ladda om kartan och kontrollera igen.
+
+**Förväntat resultat:**
+
+- Det tidigare sambandet från Lo visar **Använder** och **Upphört** både
+  med text och i sin tillgängliga beskrivning.
+- Det föreslagna sambandet och sambandet från Molnmusik visar **Betalar**
+  utan Upphört. Deras beskrivningar anger inte att de har upphört.
+- Samma skillnad består efter omstart. Förslaget är fortfarande privat och
+  de sparade sambanden är oförändrade; automationen jämför hela underlaget.
+- Automationen kontrollerar tillgängliga beskrivningar i webbläsaren.
+  Faktiska skärmläsarprov dokumenteras separat när de utförs.
+
 ## Borttagning
 
 ### LIVSCYKEL-03: direkt borttagning bevarar anslutna objekt och historik
