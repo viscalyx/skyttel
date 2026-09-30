@@ -291,13 +291,20 @@ function LoginMethods() {
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(new URLSearchParams(useLocation().search).has('failed'));
+  const [cancelled, setCancelled] = useState(false);
   async function action(step: string, provider?: Provider) {
     setPending(true);
     setError(false);
+    setCancelled(false);
     try {
-      const response = await request<{ url?: string }>(`/api/login-methods/${step}`, { provider });
-      if (step === 'cancel') setRevision((value) => value + 1);
-      else if (response.url && ['http:', 'https:'].includes(new URL(response.url).protocol))
+      const response = await request<{ url?: string; status?: string }>(
+        `/api/login-methods/${step}`,
+        { provider },
+      );
+      if (step === 'cancel') {
+        setCancelled(response.status === 'cancelled');
+        setRevision((value) => value + 1);
+      } else if (response.url && ['http:', 'https:'].includes(new URL(response.url).protocol))
         window.location.assign(response.url);
       else throw new Error('invalid_redirect');
     } catch {
@@ -327,6 +334,12 @@ function LoginMethods() {
       {stage === 'complete' && providers.length === 2 && (
         <p role="status">
           Länkningen är verifierad. Båda inloggningssätten når samma Skyttel-användare.
+        </p>
+      )}
+      {cancelled && stage !== 'complete' && (
+        <p role="status">
+          Länkningen är avbruten. Dina tidigare inloggningar och din tillgång finns kvar. Verifiera
+          på nytt när du vill koppla ett inloggningssätt.
         </p>
       )}
       {providers.length < 2 && (
