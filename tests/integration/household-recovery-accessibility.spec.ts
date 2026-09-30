@@ -25,6 +25,36 @@ async function expectUncoveredFocus(control: Locator) {
     .toBe(true);
 }
 
+async function expectReadableAccent(control: Locator) {
+  await expect(control).toBeVisible();
+  const contrast = await control.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const luminance = (color: string) => {
+      const channels = (color.match(/\d+/g) ?? [])
+        .slice(0, 3)
+        .map(Number)
+        .map((value) => {
+          const unit = value / 255;
+          return unit <= 0.04045 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4;
+        });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const foreground = luminance(style.color);
+    const background = luminance(style.backgroundColor);
+    return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+  });
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
+}
+
+async function expectReadableNavigation(navigation: Locator, name: string, width: number) {
+  if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
+  const current = navigation.getByRole('link', { name, exact: true });
+  await expect(current).toHaveAttribute('aria-current', 'page');
+  await current.scrollIntoViewIfNeeded();
+  await expectReadableAccent(current);
+  if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
+}
+
 for (const { width, height } of [
   { width: 1280, height: 900 },
   { width: 390, height: 900 },
@@ -82,6 +112,7 @@ for (const { width, height } of [
         const importer = page.getByRole('region', { name: 'Återimportera hushållet', exact: true });
         await expectUncoveredFocus(importer.getByRole('heading', { level: 1 }));
         await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
+        await expectReadableNavigation(navigation, 'Återimportera hushållet', width);
         const file = importer.getByLabel('Skyttel-export (ZIP)');
         await file.setInputFiles({
           name: 'invalid.zip',
@@ -165,6 +196,7 @@ for (const { width, height } of [
         await page.keyboard.press('Space');
         await replace.focus();
         await expectUncoveredFocus(replace);
+        await expectReadableAccent(replace);
         expect((await replace.boundingBox())?.height).toBeGreaterThanOrEqual(44);
         await page.keyboard.press('Enter');
         await expect(importer.getByRole('status')).toContainText('Hushållets innehåll är ersatt');
@@ -190,6 +222,7 @@ for (const { width, height } of [
           exact: true,
         });
         await expectUncoveredFocus(owners.getByRole('heading', { level: 1 }));
+        await expectReadableNavigation(navigation, 'Koppla historiskt innehåll', width);
         const load = owners.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' });
         await load.focus();
         await page.keyboard.press('Enter');
@@ -214,6 +247,7 @@ for (const { width, height } of [
         await page.keyboard.press('Space');
         await assign.focus();
         await expectUncoveredFocus(assign);
+        await expectReadableAccent(assign);
         expect((await assign.boundingBox())?.height).toBeGreaterThanOrEqual(44);
         await page.keyboard.press('Enter');
         await expect(owners.getByRole('status')).toContainText('Innehållskopplingen är sparad');
