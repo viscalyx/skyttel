@@ -291,14 +291,22 @@ test('a real image rejection preserves Settings focus until explicit return to t
     expect(screen.queryByRole('heading', { name: 'Inställningar', level: 1 })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Lo Exempel' })).toBe(document.activeElement);
     expect(details.getByDisplayValue('Befintlig text')).toBeTruthy();
-    expect(details.getByText('Ikon: Cykel')).toBeTruthy();
+    expect(
+      within(details.getByRole('region', { name: 'Ikon' })).getByText('Cykel', {
+        selector: 'strong',
+      }),
+    ).toBeTruthy();
     expect(details.getByRole('img').getAttribute('src')).toContain(
-      `/profile-images/${before.draft.changes[0].after?.profileImageId}`,
+      `/profile-images/${before.draft.changes.find((change) => change.id === 'person')?.after?.profileImageId}`,
     );
     expect(await read()).toEqual(before);
     await user.click(screen.getByRole('button', { name: 'Lista' }));
     await user.click(screen.getByRole('button', { name: 'Uppgifter för Garaget' }));
-    expect(independent.getByDisplayValue('Oskickat under bildförsöket')).toBeTruthy();
+    expect(
+      within(screen.getByRole('region', { name: 'Garaget' })).getByDisplayValue(
+        'Oskickat under bildförsöket',
+      ),
+    ).toBeTruthy();
     expect(await read()).toEqual(before);
   } finally {
     release();
