@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { App } from '../../../src/client/App.js';
 import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
 import { applicationFixture } from '../server/fixture.js';
@@ -210,4 +212,132 @@ test('an image error returns to the retained object and expires before an unrela
   expect(after.draft.changes.find((change) => change.id === 'independent')?.after?.name).toBe(
     'Annat förslag',
   );
+});
+
+async function openInApp() {
+  render(
+    <MemoryRouter initialEntries={[`/households/${householdId}`]}>
+      <App />
+    </MemoryRouter>,
+  );
+  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Uppgifter för Lo Exempel' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
+  return within(screen.getByRole('group', { name: 'Objektets detaljer' }));
+}
+
+test('a real image rejection preserves Settings focus until explicit return to the same image work', async () => {
+  const user = userEvent.setup();
+  const details = await openInApp();
+  await user.upload(details.getByLabelText('Välj profilbild'), await file());
+  await screen.findByText('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  const before = await read();
+  await user.clear(details.getByLabelText('Beskrivning', { exact: true }));
+  await user.paste('Oskickat under bildförsöket');
+  const request = globalThis.fetch;
+  let received: (response: Response) => void = () => {};
+  const ready = new Promise<Response>((resolve) => {
+    received = resolve;
+  });
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    const response = await request(url, init);
+    if (url.includes('/profile-images/') && init?.method === 'POST') {
+      received(response.clone());
+      await held;
+    }
+    return response;
+  });
+  try {
+    await user.upload(
+      details.getByLabelText('Välj profilbild'),
+      new File(['invalid'], 'bad.png', { type: 'image/png' }),
+    );
+    expect((await ready).status).toBe(400);
+    await user.click(screen.getByRole('button', { name: 'Stäng Lo Exempel' }));
+    await user.click(screen.getByRole('button', { name: 'Inställningar', exact: true }));
+    const settings = await screen.findByRole('heading', { name: 'Inställningar', level: 1 });
+    expect(settings).toBe(document.activeElement);
+    const settingsReturn = screen.getByRole('link', { name: 'Tillbaka till kartan' });
+    settingsReturn.focus();
+    release();
+    expect((await screen.findByRole('alert')).textContent).toContain('Bilden kunde inte behandlas');
+    expect(settingsReturn).toBe(document.activeElement);
+    expect(screen.getByRole('heading', { name: 'Inställningar', level: 1 })).toBe(settings);
+    expect(screen.queryByRole('group', { name: 'Objektets detaljer' })).toBeNull();
+    expect(await read()).toEqual(before);
+    await user.click(screen.getByRole('button', { name: 'Återgå till bilden för Lo Exempel' }));
+    expect(screen.queryByRole('heading', { name: 'Inställningar', level: 1 })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Lo Exempel' })).toBe(document.activeElement);
+    expect(details.getByDisplayValue('Oskickat under bildförsöket')).toBeTruthy();
+    expect(details.getByText('Ikon: Cykel')).toBeTruthy();
+    expect(details.getByRole('img').getAttribute('src')).toContain(
+      `/profile-images/${before.draft.changes[0].after?.profileImageId}`,
+    );
+    expect(await read()).toEqual(before);
+  } finally {
+    release();
+  }
+});
+
+test('the whole image and description proposal saves once with an exact expanded receipt', async () => {
+  const user = userEvent.setup();
+  const details = await openInApp();
+  await user.upload(details.getByLabelText('Välj profilbild'), await file());
+  await screen.findByText('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  const image = (await read()).draft.changes[0].after?.profileImageId;
+  expect(image).toEqual(expect.any(String));
+  expect(image).not.toBe('');
+  await user.clear(details.getByLabelText('Beskrivning', { exact: true }));
+  await user.paste('Text och bild i samma förslag');
+  await user.click(details.getByRole('button', { name: 'Lägg i mitt utkast' }));
+  await waitFor(() =>
+    expect(screen.queryByRole('group', { name: 'Objektets detaljer' })).toBeNull(),
+  );
+  const proposed = await read();
+  expect(proposed.objects).toEqual([]);
+  expect(proposed.draft.changes).toHaveLength(1);
+  expect(proposed.draft.changes[0].after).toMatchObject({
+    name: 'Lo Exempel',
+    description: 'Text och bild i samma förslag',
+    iconId: 'bike',
+    profileImageId: image,
+  });
+  const request = globalThis.fetch;
+  let received: (response: Response) => void = () => {};
+  const saved = new Promise<Response>((resolve) => {
+    received = resolve;
+  });
+  let saveRequests = 0;
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url === `${path}/save` && init?.method === 'POST') saveRequests += 1;
+    const response = await request(url, init);
+    if (url === `${path}/save` && init?.method === 'POST') received(response.clone());
+    return response;
+  });
+  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
+  await user.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
+  const response = await saved;
+  expect(response.status).toBe(200);
+  const { receipt } = await response.json();
+  expect(receipt).toMatchObject({
+    householdId,
+    draftVersion: proposed.draft.version,
+    changes: [{ before: null, after: proposed.draft.changes[0].after }],
+  });
+  expect(receipt.changes).toHaveLength(1);
+  await screen.findByText('Sparat · kvitto bekräftat');
+  await user.click(screen.getByRole('button', { name: 'Aktuell status', exact: true }));
+  const status = within(screen.getByRole('region', { name: 'Aktuell status' }));
+  expect(
+    await status.findByText(`Sparat: Lo Exempel. Kvitto: ${receipt.operationId}.`),
+  ).toBeTruthy();
+  const shared = await read();
+  expect(shared.objects).toHaveLength(1);
+  expect(shared.objects[0]).toMatchObject(proposed.draft.changes[0].after ?? {});
+  expect(shared.draft.changes).toEqual([]);
+  expect(saveRequests).toBe(1);
 });
