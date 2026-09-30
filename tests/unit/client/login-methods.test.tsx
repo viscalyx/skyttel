@@ -198,3 +198,62 @@ test('a real callback completing before cancellation reports the verified link a
     fixture.close();
   }
 });
+
+test.each(['absent', 'complete'] as const)(
+  'elapsed linking time preserves the real %s state without an expiry claim',
+  async (state) => {
+    const fixture = await applicationFixture();
+    const client = fixture.client();
+    const originalNow = Date.now;
+    const clock = vi.spyOn(Date, 'now');
+    try {
+      await client.signIn();
+      expect((await client.json('/api/households', { name: 'Linden' })).status).toBe(201);
+      const identity = await (await client.request('/api/bootstrap')).json();
+      if (state === 'complete') {
+        const proof = await client.json('/api/login-methods/prove', { provider: 'google' });
+        expect(proof.status).toBe(200);
+        await client.request((await proof.json()).url);
+        const addition = await client.json('/api/login-methods/add', { provider: 'microsoft' });
+        expect(addition.status).toBe(200);
+        fixture.setSubject('completed-microsoft');
+        await client.request((await addition.json()).url);
+      }
+      clock.mockImplementation(() => originalNow() + 11 * 60_000);
+      expect(await (await client.request('/api/login-methods')).json()).toEqual(
+        state === 'complete'
+          ? { providers: ['google', 'microsoft'], stage: 'complete' }
+          : { providers: ['google'], stage: null },
+      );
+      vi.stubGlobal('fetch', (url: string, init?: RequestInit) =>
+        client.request(url, {
+          ...init,
+          headers: { ...init?.headers, origin: fixture.config.origin },
+        }),
+      );
+      render(
+        <MemoryRouter initialEntries={['/login-methods']}>
+          <App />
+        </MemoryRouter>,
+      );
+      await screen.findByText('Google – kopplat');
+      expect(screen.queryByText(/^Verifieringen har gått ut\./)).toBeNull();
+      if (state === 'complete') {
+        expect(screen.getByRole('status').textContent).toBe(
+          'Länkningen är verifierad. Båda inloggningssätten når samma Skyttel-användare.',
+        );
+        expect(screen.getByText('Microsoft – kopplat')).toBeDefined();
+        expect(screen.queryByRole('button', { name: /Koppla|Verifiera/ })).toBeNull();
+      } else {
+        expect(screen.queryByRole('status')).toBeNull();
+        expect(screen.getByRole('button', { name: 'Verifiera Google' })).toBeDefined();
+        expect(screen.queryByText('Microsoft – kopplat')).toBeNull();
+      }
+      expect(await (await client.request('/api/bootstrap')).json()).toEqual(identity);
+    } finally {
+      clock.mockRestore();
+      cleanup();
+      fixture.close();
+    }
+  },
+);

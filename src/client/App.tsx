@@ -336,6 +336,12 @@ function LoginMethods() {
           Länkningen är verifierad. Båda inloggningssätten når samma Skyttel-användare.
         </p>
       )}
+      {stage === 'expired' && (
+        <p role="status">
+          Verifieringen har gått ut. Dina tidigare inloggningar och din tillgång finns kvar.
+          Verifiera på nytt när du vill koppla ett inloggningssätt.
+        </p>
+      )}
       {cancelled && stage !== 'complete' && (
         <p role="status">
           Länkningen är avbruten. Dina tidigare inloggningar och din tillgång finns kvar. Verifiera
