@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import Database from 'better-sqlite3';
 import { unzipSync } from 'fflate';
 import sharp from 'sharp';
@@ -123,110 +123,282 @@ async function reviewInBrowser(page: Page, administration: string) {
   return section;
 }
 
-test('RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map', async ({
-  page,
-}) => {
-  const fixture = await arrange(page);
-  try {
-    const before = await fixture.read();
-    const viewBefore = await (await page.request.get(`${fixture.path}/map/view`)).json();
-    let executions = 0;
-    page.on('request', (request) => {
-      if (request.url().endsWith('/erasure/execute')) executions += 1;
+async function expectErasureFocus(control: Locator) {
+  await expect(control).toBeFocused();
+  await expect
+    .poll(() =>
+      control.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return (
+          box.top >= 0 &&
+          box.left >= 0 &&
+          box.bottom <= innerHeight &&
+          box.right <= innerWidth &&
+          element.contains(
+            document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+          ) &&
+          style.outlineStyle === 'solid' &&
+          Number.parseFloat(style.outlineWidth) >= 2
+        );
+      }),
+    )
+    .toBe(true);
+}
+
+async function expectErasureText(text: Locator) {
+  await expect(text).toBeVisible();
+  expect(
+    await text.evaluate((element) => {
+      const region = element.closest('.household-erasure');
+      if (!region) return false;
+      const bounds = region.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const lines = [...range.getClientRects()];
+      return (
+        lines.length > 0 &&
+        lines.every(
+          (line) =>
+            line.left >= Math.max(0, bounds.left) &&
+            line.right <= Math.min(innerWidth, bounds.right),
+        )
+      );
+    }),
+  ).toBe(true);
+}
+
+async function expectErasureContrast(control: Locator) {
+  await expect(control).toBeVisible();
+  const contrast = await control.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const luminance = (color: string) => {
+      const channels = (color.match(/\d+/g) ?? [])
+        .slice(0, 3)
+        .map(Number)
+        .map((value) => {
+          const unit = value / 255;
+          return unit <= 0.04045 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4;
+        });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const foreground = luminance(style.color);
+    const background = luminance(style.backgroundColor);
+    return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+  });
+  expect(contrast).toBeGreaterThanOrEqual(4.5);
+}
+
+for (const [width, height] of [
+  [1280, 900],
+  [390, 900],
+  [320, 900],
+  [640, 500],
+  [320, 250],
+]) {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at ${width}x${height}px ${theme}`, async ({
+      page,
+    }) => {
+      const fixture = await arrange(page);
+      try {
+        await page.setViewportSize({ width, height });
+        await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+        const before = await fixture.read();
+        const viewBefore = await (await page.request.get(`${fixture.path}/map/view`)).json();
+        let executions = 0;
+        page.on('request', (request) => {
+          if (request.url().endsWith('/erasure/execute')) executions += 1;
+        });
+        await page.goto(fixture.installation.origin);
+        await openWorkspace(page);
+        await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+        const unsent = page.getByLabel('Objektets namn');
+        await unsent.fill('Oskickat arbete före radering');
+        await unsent.focus();
+        await openSettings(page);
+        const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+        const menu = navigation.getByText('Välj inställning', { exact: true });
+        if (width <= 800) {
+          await menu.focus();
+          await page.keyboard.press('Enter');
+        }
+        const destination = navigation.getByRole('link', {
+          name: 'Permanent radering',
+          exact: true,
+        });
+        await expect(destination).toBeVisible();
+        await destination.focus();
+        await page.keyboard.press('Enter');
+        await expect(page).toHaveURL(/\/settings\/erasure$/);
+        const section = page.getByRole('region', { name: 'Permanent radering', exact: true });
+        const stage = section
+          .getByRole('list', { name: 'Raderingens steg' })
+          .locator('[aria-current="step"]');
+        await expect(stage).toContainText('Välj information');
+        await expect(
+          section.getByRole('heading', { name: 'Permanent radering', level: 1 }),
+        ).toBeFocused();
+        await expectErasureFocus(
+          section.getByRole('heading', { name: 'Permanent radering', level: 1 }),
+        );
+        await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
+        if (width <= 800) {
+          await menu.focus();
+          await page.keyboard.press('Enter');
+        }
+        await expect(destination).toHaveAttribute('aria-current', 'page');
+        await destination.scrollIntoViewIfNeeded();
+        await expectErasureContrast(destination);
+        if (width <= 800) {
+          await menu.focus();
+          await page.keyboard.press('Enter');
+        }
+        await expect(unsent).not.toBeVisible();
+        await expect(
+          page.getByRole('region', { name: 'Rymdkarta', exact: true }),
+        ).not.toBeVisible();
+        const selected = section.getByRole('checkbox', { name: 'Lampan att radera', exact: true });
+        await selected.focus();
+        await expectErasureFocus(selected);
+        expect((await selected.boundingBox())?.width).toBeGreaterThanOrEqual(24);
+        expect((await selected.boundingBox())?.height).toBeGreaterThanOrEqual(24);
+        expect((await selected.locator('..').boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        await page.keyboard.press('Space');
+        const inspect = section.getByRole('button', { name: 'Granska raderingen', exact: true });
+        await inspect.focus();
+        await expectErasureFocus(inspect);
+        expect((await inspect.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        await page.keyboard.press('Enter');
+        const scope = section.getByRole('region', { name: 'Omfattning att bekräfta' });
+        await expect(scope).toBeVisible();
+        await expect(stage).toContainText('Granska hela omfattningen');
+        await expectErasureFocus(
+          scope.getByRole('heading', { name: 'Omfattning att bekräfta', exact: true }),
+        );
+        await expect(
+          scope.getByRole('list', { name: 'Berörda objekt', exact: true }),
+        ).toContainText('Lampan att radera');
+        await expect(scope).not.toContainText('Stolen att bevara');
+        await expect(scope).not.toContainText('Oberoende privat förslag');
+        await expect(scope).toContainText('Bildversioner: 1');
+        await expect(scope).toContainText('Personliga placeringar: 1');
+        await expect(scope.getByRole('list', { name: 'Berörda bildversioner' })).toContainText(
+          fixture.imageId as string,
+        );
+        const imageIdentity = scope
+          .getByRole('list', { name: 'Berörda bildversioner' })
+          .getByText(fixture.imageId as string, { exact: true });
+        await expectErasureText(imageIdentity);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        const confirmation = scope.getByLabel('Skriv RADERA PERMANENT', { exact: true });
+        const erase = scope.getByRole('button', { name: 'Radera permanent', exact: true });
+        await expect(erase).toBeDisabled();
+        await confirmation.focus();
+        await expectErasureFocus(confirmation);
+        expect((await confirmation.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        await confirmation.fill('RADERA permanent');
+        await expect(erase).toBeDisabled();
+        await confirmation.fill('RADERA PERMANENT');
+        const cancel = scope.getByRole('button', { name: 'Avbryt', exact: true });
+        await cancel.focus();
+        await expectErasureFocus(cancel);
+        expect((await cancel.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        await page.keyboard.press('Enter');
+        await expect(scope).toHaveCount(0);
+        await expect(stage).toContainText('Välj information');
+        await expectErasureFocus(section.getByText('Välj information att radera', { exact: true }));
+        await expect(selected).toBeChecked();
+        expect(executions).toBe(0);
+        expect(await fixture.read()).toEqual(before);
+        expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual(
+          viewBefore,
+        );
+        await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).focus();
+        await page.keyboard.press('Enter');
+        await expect(unsent).toHaveValue('Oskickat arbete före radering');
+        await expect(unsent).toBeFocused();
+        await openSettings(page);
+        if (width <= 800) {
+          await menu.focus();
+          await page.keyboard.press('Enter');
+        }
+        await destination.focus();
+        await page.keyboard.press('Enter');
+        await selected.focus();
+        await page.keyboard.press('Space');
+        await inspect.focus();
+        await page.keyboard.press('Enter');
+        await expect(confirmation).toHaveValue('');
+        await expect(erase).toBeDisabled();
+        await confirmation.fill('RADERA PERMANENT');
+        await erase.focus();
+        await expectErasureFocus(erase);
+        await expectErasureContrast(erase);
+        expect((await erase.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        const executing = page.waitForResponse(`${fixture.path}/erasure/execute`);
+        await page.keyboard.press('Enter');
+        const executed = await executing;
+        expect(executed.status()).toBe(200);
+        const result: ErasureStatus = (await executed.json()).status;
+        expect(result.phase).toBe('completed');
+        await expect(
+          section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+        ).toBeVisible();
+        const operation = section.getByText(result.operationId, { exact: true });
+        await expectErasureText(operation);
+        await expect(stage).toContainText('Resultat');
+        await expect(
+          section.getByRole('list', { name: 'Raderingens resultat' }).getByRole('listitem'),
+        ).toHaveText([
+          'Objekt: 1',
+          'Samband: 0',
+          'Objekttyper: 0',
+          'Sambandstyper: 0',
+          'Bildversioner: 1',
+        ]);
+        expect(executions).toBe(1);
+        await expect(unsent).toHaveCount(0, { timeout: 10000 });
+        const current = await fixture.read();
+        expect(current.contentVersion).toBe(before.contentVersion + 1);
+        expect(current.objects).toEqual(before.objects.filter((object) => object.id === 'chair'));
+        expect(current.draft).toEqual(before.draft);
+        expect(current.types).toEqual(before.types);
+        expect(current.relationshipTypes).toEqual(before.relationshipTypes);
+        const readMap = section.getByRole('button', { name: 'Läs in kartan på nytt', exact: true });
+        await expect(readMap).toBeFocused();
+        await expectErasureFocus(readMap);
+        await expectErasureContrast(readMap);
+        expect((await readMap.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        await page.keyboard.press('Enter');
+        await expect(page).toHaveURL(fixture.administration.replace(/\/administration$/, ''));
+        await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
+        await expect(unsent).toHaveCount(0);
+        await openWorkspace(page);
+        await expect(
+          page.getByRole('button', { name: 'Uppgifter för Lampan att radera', exact: true }),
+        ).toHaveCount(0);
+        await expect(
+          page.getByRole('button', { name: 'Uppgifter för Stolen att bevara', exact: true }),
+        ).toBeVisible();
+        await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
+          'Oberoende privat förslag',
+        );
+        expect(await fixture.read()).toEqual(current);
+        expect((await (await page.request.get(fixture.path)).json()).household.role).toBe(
+          'administrator',
+        );
+      } finally {
+        await fixture.installation.close();
+      }
     });
-    await page.goto(fixture.installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    const unsent = page.getByLabel('Objektets namn');
-    await unsent.fill('Oskickat arbete före radering');
-    await unsent.focus();
-    await openSettings(page);
-    const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
-    const destination = navigation.getByRole('link', { name: 'Permanent radering', exact: true });
-    await expect(destination).toBeVisible();
-    await destination.focus();
-    await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/\/settings\/erasure$/);
-    const section = page.getByRole('region', { name: 'Permanent radering', exact: true });
-    await expect(
-      section.getByRole('heading', { name: 'Permanent radering', level: 1 }),
-    ).toBeFocused();
-    await expect(unsent).not.toBeVisible();
-    await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).not.toBeVisible();
-    const selected = section.getByRole('checkbox', { name: 'Lampan att radera', exact: true });
-    await selected.focus();
-    await page.keyboard.press('Space');
-    await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
-    const scope = section.getByRole('region', { name: 'Omfattning att bekräfta' });
-    await expect(scope).toBeVisible();
-    await expect(scope.getByRole('list', { name: 'Berörda objekt', exact: true })).toContainText(
-      'Lampan att radera',
-    );
-    await expect(scope).not.toContainText('Stolen att bevara');
-    await expect(scope).not.toContainText('Oberoende privat förslag');
-    await expect(scope).toContainText('Bildversioner: 1');
-    await expect(scope).toContainText('Personliga placeringar: 1');
-    await expect(scope.getByRole('list', { name: 'Berörda bildversioner' })).toContainText(
-      fixture.imageId as string,
-    );
-    const confirmation = scope.getByLabel('Skriv RADERA PERMANENT', { exact: true });
-    const erase = scope.getByRole('button', { name: 'Radera permanent', exact: true });
-    await expect(erase).toBeDisabled();
-    await confirmation.fill('RADERA PERMANENT');
-    await scope.getByRole('button', { name: 'Avbryt', exact: true }).focus();
-    await page.keyboard.press('Enter');
-    await expect(scope).toHaveCount(0);
-    await expect(selected).toBeChecked();
-    expect(executions).toBe(0);
-    expect(await fixture.read()).toEqual(before);
-    expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual(viewBefore);
-    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await expect(unsent).toHaveValue('Oskickat arbete före radering');
-    await expect(unsent).toBeFocused();
-    await openSettings(page);
-    await destination.click();
-    await selected.check();
-    await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
-    await expect(confirmation).toHaveValue('');
-    await expect(erase).toBeDisabled();
-    await confirmation.fill('RADERA PERMANENT');
-    await erase.focus();
-    await page.keyboard.press('Enter');
-    await expect(
-      section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
-    ).toBeVisible();
-    expect(executions).toBe(1);
-    await expect(unsent).toHaveCount(0, { timeout: 10000 });
-    const current = await fixture.read();
-    expect(current.contentVersion).toBe(before.contentVersion + 1);
-    expect(current.objects).toEqual(before.objects.filter((object) => object.id === 'chair'));
-    expect(current.draft).toEqual(before.draft);
-    expect(current.types).toEqual(before.types);
-    expect(current.relationshipTypes).toEqual(before.relationshipTypes);
-    const readMap = section.getByRole('button', { name: 'Läs in kartan på nytt', exact: true });
-    await expect(readMap).toBeFocused();
-    await readMap.click();
-    await expect(page).toHaveURL(fixture.administration.replace(/\/administration$/, ''));
-    await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
-    await expect(unsent).toHaveCount(0);
-    await openWorkspace(page);
-    await expect(
-      page.getByRole('button', { name: 'Uppgifter för Lampan att radera', exact: true }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByRole('button', { name: 'Uppgifter för Stolen att bevara', exact: true }),
-    ).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Oberoende privat förslag',
-    );
-    expect(await fixture.read()).toEqual(current);
-    expect((await (await page.request.get(fixture.path)).json()).household.role).toBe(
-      'administrator',
-    );
-  } finally {
-    await fixture.installation.close();
   }
-});
+}
 
 test('RADERING-01: keyboard review erases selected content and preserves unrelated work after restart', async ({
   page,

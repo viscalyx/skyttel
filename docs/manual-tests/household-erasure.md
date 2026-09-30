@@ -145,11 +145,17 @@ kräv ny uttrycklig bekräftelse innan ett verifierat resultat öppnar aktuell k
 
 **Förutsättningar:** Följ allmän förberedelse med lampans sparade bild och
 stolens oberoende privata förslag. Spara inte hela utkastet.
+Upprepa i ljust och mörkt tema på dator samt vid 390 och 320 pixlars bredd.
+Prova även korta fönster på 640 × 500 och 320 × 250 pixlar.
+Verklig webbläsarzoom vid 200 och 400 procent kontrolleras separat;
+en liten fönsterstorlek är inte i sig ett prov av webbläsarzoom.
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
 testfallet “RADERING-06: dedicated Settings review can be cancelled before
-explicit erasure and a fresh map”.
+explicit erasure and a fresh map at {width}x{height}px {theme}”, med storlekarna
+1280 × 900, 390 × 900, 320 × 900, 640 × 500 och 320 × 250 samt temana
+light och dark.
 
 **Steg:**
 
@@ -158,19 +164,25 @@ explicit erasure and a fresh map”.
 2. Öppna **Inställningar** och välj **Permanent radering** i
    sidnavigationen med tangentbordet. Sidans huvudrubrik får fokus;
    kartan och det oskickade formuläret är dolda.
+   På smala fönster öppnar du **Välj inställning** med Enter.
+   Kontrollera att den valda sidans länk är läsbar innan menyn stängs igen.
 3. Välj **Lampan att radera** och **Granska raderingen**. Kontrollera
    lampans namn, bildversionens hela ID och antalet personliga placeringar.
    Stolen och dess privata förslag ska inte ingå i granskningens omfattning.
-4. Kontrollera att **Radera permanent** är inaktiverad. Skriv
+4. Kontrollera att **Radera permanent** är inaktiverad. Skriv först
+   **RADERA permanent**: knappen ska fortfarande vara inaktiverad. Skriv
    **RADERA PERMANENT**, men välj sedan **Avbryt** med tangentbordet.
-   Granskningen stängs och lampans val finns kvar. Ingen radering genomförs.
+   Granskningen stängs, valrubriken får fokus och lampans val finns kvar.
+   Ingen radering genomförs.
 5. Välj **Tillbaka till kartan**. Den oskickade texten och fokus i
    **Objektets namn** finns kvar. De sparade objekten, deras placeringar
    och stolens privata förslag är oförändrade.
 6. Öppna samma inställningssida igen. Välj lampan och granska på nytt.
    Bekräftelsefältet är tomt och **Radera permanent** är inaktiverad.
    Skriv **RADERA PERMANENT** och välj **Radera permanent** med Enter.
-7. Invänta **Den permanenta raderingen är slutförd.** Välj den fokuserade
+7. Invänta **Den permanenta raderingen är slutförd.** Kontrollera hela
+   raderingsidentifieraren och resultatets ett objekt, en bildversion samt
+   noll samband och typer. Välj den fokuserade
    **Läs in kartan på nytt**. Kontrollera i listan att lampan är borta,
    stolen finns kvar och **Hela mitt utkast** behåller dess privata förslag.
 
@@ -181,6 +193,12 @@ explicit erasure and a fresh map”.
 - En uttryckligt bekräftad radering följs av ett verifierat resultat och
   en ny inläsning av kartan. Gammal oskickad text kan inte fortsätta mot
   det raderade innehållet; administratörens tillgång finns kvar.
+- Stegmarkering, val, granskning och resultat motsvarar samma verkliga åtgärd.
+  Tangentbordsfokus syns och täcks inte; bekräftelse, avbrytande och återgång
+  går att använda utan mus. Hela bild- och raderingsidentifierarna går att läsa
+  utan vågrät rullning. Kontrollera läsbarhet för vald sidlänk samt fokuserade
+  raderings- och återgångsknappar i båda teman. Automationen mäter fokus,
+  pekmål, textradernas utrymme och minst 4,5:1 textkontrast för dessa kontroller.
 
 ## Osäkert och förändrat underlag
 
