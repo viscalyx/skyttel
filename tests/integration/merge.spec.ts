@@ -457,6 +457,48 @@ test('SAMMANSLAGNING-02: refreshed source facts require new choices while indepe
     ).toBeDisabled();
     await expect(form).toContainText('Underlaget för sammanslagningen har ändrats');
     expect((await read()).draft).toEqual(privateDraft);
+    for (const kind of ['object-type', 'relationship', 'relationship-type'] as const) {
+      await form.getByLabel('Välj Beskrivning').selectOption('absorbed');
+      await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
+      await form.getByLabel('Val för samband first').selectOption('remove');
+      await form.getByLabel('Val för samband second').selectOption('keep');
+      const state = await read(other.request);
+      const source =
+        kind === 'object-type'
+          ? state.types[0]
+          : kind === 'relationship'
+            ? state.relationships.find((edge) => edge.id === 'second')!
+            : state.relationshipTypes[0];
+      expect(
+        (
+          await post(other.request, kind, {
+            version: state.draft.version,
+            id: source.id,
+            baseRevision: source.revision,
+            value: {
+              ...source,
+              ...(kind === 'relationship'
+                ? { lifecycle: 'ended' }
+                : { name: `Granskad ${kind === 'object-type' ? 'objekttyp' : 'sambandstyp'}` }),
+            },
+          })
+        ).status(),
+      ).toBe(200);
+      await save(other.request, `source-${kind}`);
+      const staleReview = page.waitForResponse((response) => response.url() === `${path}/merge`);
+      await form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }).click();
+      expect(await (await staleReview).json()).toMatchObject({ error: 'merge_conflict' });
+      expect((await read()).draft).toEqual(privateDraft);
+      await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+      await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('');
+      await expect(
+        form.getByLabel('Jag bekräftar att objekten är samma företeelse'),
+      ).not.toBeChecked();
+      await expect(form.getByLabel('Val för samband first')).toHaveValue('');
+      await expect(form.getByLabel('Val för samband second')).toHaveValue('');
+      await expect(form).toContainText('Underlaget för sammanslagningen har ändrats');
+      expect((await read()).draft).toEqual(privateDraft);
+    }
     await form.getByLabel('Välj Beskrivning').selectOption('absorbed');
     await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
     await form.getByLabel('Val för samband first').selectOption('remove');
@@ -486,7 +528,7 @@ test('SAMMANSLAGNING-02: refreshed source facts require new choices while indepe
       expect.objectContaining({ id: 'second', sourceId: 'a', targetId: 'card' }),
     ]);
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(history).toHaveLength(4);
+    expect(history).toHaveLength(7);
     expect(
       history.at(-1).changes.find((change: { merge?: unknown }) => change.merge).merge.objects[1],
     ).toMatchObject({ id: 'b', description: 'Ändrat efter granskningen', revision: 2 });

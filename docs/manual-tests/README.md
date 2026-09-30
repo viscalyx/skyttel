@@ -134,6 +134,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   och Inställningar behåller granskning och annan oskickad text.
   Typbundna dolda värden, ekonomiska uppgifter, bilder, ikoner och
   sambandsvärden granskas och återläses i båda teman på dator och mobil.
+  Båda deltagarnas oskickade text bevaras tills den överges uttryckligen;
+  kastning återger tidigare privata förslag med samma identiteter.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
   mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart

@@ -112,10 +112,14 @@ while independent changes preserve review”.
 5. Alex försöker lägga sammanslagningen i utkastet. Läs beskedet om ändrat
    underlag och välj **Hämta aktuellt underlag**. Läs den nya beskrivningen
    och kontrollera att tidigare val och identitetsbekräftelse är tömda.
-6. Granska båda objekten igen, välj den nya andra beskrivningen, bekräfta
+6. Granska på nytt. Upprepa försöket med nya val när Robin först ändrar
+   den granskade objekttypens namn, sedan andra sambandet till upphört och
+   slutligen dess sambandstyps namn. Varje ändring ska avvisa det gamla
+   underlaget och tömma granskningen efter hämtning, utan ändrat utkast.
+7. Granska båda objekten igen, välj den nya andra beskrivningen, bekräfta
    samma företeelse och behåll endast det andra sambandet. Lägg förslaget
    i utkastet och välj uttryckligen **Spara hela utkastet**.
-7. Starta om installationen och öppna kartan och historiken igen.
+8. Starta om installationen och öppna kartan och historiken igen.
 
 **Förväntat resultat:**
 
@@ -236,3 +240,48 @@ scenario med 390px och 320px och respektive tema light och dark.
 - Kartan ändras först vid uttryckligt sparande. Ett kvitto omfattar båda
   objekten och sambanden; fullständigt resultat och granskade original
   finns kvar efter omstart. Långa identiteter kan läsas på smal skärm.
+
+### SAMMANSLAGNING-05: behåll deltagarnas oskickade text tills den överges
+
+**Syfte:** Skydda båda objektens öppna formulär och tidigare privata förslag
+när sammanslagningen granskas eller kastas.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Två sparade objekt heter Första Lo och Andra Lo med
+olika beskrivningar. Lägg en ny privat beskrivning för vartdera objektet
+och ett Oberoende privat objekt i utkastet, utan att spara.
+
+**Integrationstest:**
+[merge-participants.spec.ts](../../tests/integration/merge-participants.spec.ts),
+testfallet “SAMMANSLAGNING-05: participant text survives merge and blocks
+discard until explicitly abandoned”.
+
+**Steg:**
+
+1. Öppna och redigera båda objekten i egna paneler. Skriv Första oskickade
+   texten respektive Andra oskickade texten utan att skicka formulären.
+2. Öppna **Slå samman objekt**. Behåll första identiteten och namnet,
+   välj andra beskrivningen och bekräfta samma företeelse. Lägg förslaget
+   i utkastet. Kontrollera att sparande och kastning är spärrade.
+3. Stäng arbetsytan och öppna Lista igen. Återgå till Första Lo: texten
+   finns kvar men formuläret visar äldre underlag och kan inte skickas.
+   Stäng objektpanelen, öppna uppgifterna igen och kontrollera texten.
+4. Återgå till Andra Lo och försök lägga den oskickade texten i utkastet.
+   Läs beskedet om sammanslagningen och kontrollera att texten är kvar.
+5. Kopiera eventuell text som ska behållas. Välj uttryckligen **Stäng
+   utan att skicka texten** för Andra Lo. Kastning är fortfarande spärrad
+   tills samma uttryckliga val görs för Första Lo.
+6. Välj **Kasta sammanslagningen för att rätta**. Läs de ursprungliga
+   privata beskrivningarna och det oberoende förslaget. Starta om
+   installationen och öppna utkastet igen.
+
+**Förväntat resultat:**
+
+- Vanlig panel- och arbetsytestängning kastar inte oskickad text.
+  Äldre underlag och sammanslagna identiteter skyddas av befintliga regler.
+- Ett avvisat enskilt förslag ändrar inte sammanslagningen eller kartan.
+  Kastning väntar tills oskickade formulär hanteras uttryckligen.
+- Båda tidigare privata förslagen återkommer med sina identiteter;
+  oberoende förslag bevaras. Ingen gemensam ändring eller extra kvitto
+  skapas. Utkastet finns kvar efter omstart.
