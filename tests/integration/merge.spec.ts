@@ -411,7 +411,11 @@ test('SAMMANSLAGNING-02: refreshed source facts require new choices while indepe
       ).toBe(200);
     }
     await save(page.request, 'initial');
-    await object(page.request, 'private', { name: 'Eget privat förslag' });
+    const initial = await read();
+    const participantTypeId = initial.objects.find((object) => object.id === 'a')?.typeId;
+    const privateTypeId = initial.types.find((type) => type.id !== participantTypeId)?.id;
+    expect(privateTypeId).toBeTruthy();
+    await object(page.request, 'private', { name: 'Eget privat förslag', typeId: privateTypeId });
     const privateDraft = (await read()).draft;
     await page.goto(installation.origin);
     await openWorkspace(page);
@@ -543,7 +547,11 @@ test('SAMMANSLAGNING-02: refreshed source facts require new choices while indepe
           id: 'independent',
           description: 'En annan medlems oberoende ändring',
         }),
-        expect.objectContaining({ id: 'private', name: 'Eget privat förslag' }),
+        expect.objectContaining({
+          id: 'private',
+          name: 'Eget privat förslag',
+          typeId: privateTypeId,
+        }),
       ]),
     );
     expect(saved.objects.some((item) => item.id === 'b')).toBe(false);

@@ -91,7 +91,9 @@ behåll granskningen när bara oberoende innehåll ändras.
 **Förutsättningar:** Två sparade objekt heter Lo Exempel med olika
 beskrivningar. Båda har varsitt likadant samband till Blått kort. Ett
 fjärde sparat objekt heter Oberoende objekt. Alex har Eget privat förslag
-i sitt utkast. Anteckna de båda objektens och sambandens identiteter.
+i sitt utkast, av en annan objekttyp än de båda Lo. Den privata typen ska
+inte ändras under provet. Anteckna objektens, typernas och sambandens
+identiteter.
 
 **Integrationstest:**
 [merge.spec.ts](../../tests/integration/merge.spec.ts),
