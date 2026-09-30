@@ -397,6 +397,44 @@ Identitetsleverantören är en lokal testadapter, inte ett verkligt konto.
 - Samma Skyttel-användare och hushåll finns kvar. Cykeln och dess beskrivning
   ligger oförändrade i det privata utkastet.
 
+### ACCESS-20: Utgången länkning på öppen sida får en begriplig fortsättning
+
+**Syfte:** Kontrollera att ett försök från en gammal verifierad sida förklarar
+utgången verifiering utan att koppla en identitet eller ändra privata förslag.
+
+**Användare:** Alex med Google.
+
+**Förutsättningar:** Endast Google är kopplat. Anteckna Skyttel-användar-ID
+och hushållets adress. Lägg **Bilen** med beskrivningen **Privat förslag medan
+verifieringen går ut** i det egna utkastet utan att spara.
+
+**Integrationstest:**
+[linking.spec.ts](../../tests/integration/linking.spec.ts),
+testfallet “ACCESS-20: an expired link on an open page explains fresh proof
+after the real rejection”. Samma lokala leverantörsadapter och begränsade
+serverklocka som i ACCESS-19 används; klockan återställs före ny verifiering
+och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
+
+**Steg:**
+
+1. Öppna **Inloggningssätt**, verifiera Alex Google-identitet och kontrollera
+   att **Koppla Microsoft** går att använda.
+2. Låt sidan stå öppen i minst elva minuter utan omladdning. Välj sedan
+   **Koppla Microsoft** och kontrollera beskedet.
+3. Välj **Verifiera Google** och bevisa samma befintliga identitet på nytt.
+4. Välj **Till startsidan**. Kontrollera användar-ID, hushåll och eget utkast.
+
+**Förväntat resultat:**
+
+- Försöket avvisas och sidan förklarar att verifieringen har gått ut.
+  Tidigare inloggningar och tillgång finns kvar; **Verifiera Google** ersätter
+  **Koppla Microsoft**. Inget ogrundat fel om identitet eller leverantör visas.
+- Ingen extern övergång eller automatisk koppling sker efter avvisandet.
+  Endast Google är kopplat. Ny uttrycklig verifiering tar bort beskedet och
+  visar **Koppla Microsoft** igen.
+- Återgången visar samma hushåll och Skyttel-användare. Bilen och hela det
+  privata utkastet är oförändrade; inget sparas automatiskt.
+
 ## Avbruten inloggning
 
 ### ACCESS-12: Ett inloggningsfel tillåter ett nytt försök

@@ -171,6 +171,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   med kartans vägledning, hantera förlorad tillgång och länka inloggningssätt.
   Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.
   Utgången länkning förklarar ny verifiering och bevarar eget utkast och identitet.
+  Även en redan öppen sida hanterar avvisad utgången verifiering utan ny koppling.
 - [Tillgång och medlemskap](membership.md): inbjudningar, utgångna och
   ersatta koder, delad administration samt återkallad och återställd
   tillgång med bevarat innehåll i kartan.

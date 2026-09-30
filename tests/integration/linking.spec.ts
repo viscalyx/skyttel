@@ -373,3 +373,87 @@ test('ACCESS-19: expired linking explains fresh proof and preserves identity and
     await installation.close();
   }
 });
+
+test('ACCESS-20: an expired link on an open page explains fresh proof after the real rejection', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  const originalNow = Date.now;
+  const { origin } = installation;
+  try {
+    await signIn(page.request, origin);
+    const { household } = await (await createHousehold(page.request, origin)).json();
+    const before = await (await page.request.get(`${origin}/api/bootstrap`)).json();
+    const mapPath = `${origin}/api/households/${household.id}/map`;
+    const read = async (): Promise<MapState> => (await page.request.get(mapPath)).json();
+    const initial = await read();
+    expect(
+      (
+        await page.request.post(`${mapPath}/draft`, {
+          headers: { origin },
+          data: {
+            version: initial.draft.version,
+            id: 'open-expiry-private',
+            baseRevision: null,
+            value: {
+              typeId: initial.types.find((type) => type.name === 'Fordon')?.id,
+              name: 'Bilen',
+              description: 'Privat förslag medan verifieringen går ut',
+            },
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    const privateMap = await read();
+    await page.goto(`${origin}/login-methods`);
+    await page.getByRole('button', { name: 'Verifiera Google' }).click();
+    await expect(page.getByRole('button', { name: 'Koppla Microsoft' })).toBeEnabled();
+    expect(await (await page.request.get(`${origin}/api/login-methods`)).json()).toEqual({
+      providers: ['google'],
+      stage: 'verified',
+    });
+
+    // Advance only the real server worker clock while this verified page stays open.
+    // Restore before fresh proof and in finally; browser time/deadlines stay unchanged.
+    Date.now = () => originalNow() + 11 * 60_000;
+    const addition = page.waitForResponse(
+      (response) =>
+        response.url() === `${origin}/api/login-methods/add` &&
+        response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Koppla Microsoft' }).click();
+    const rejected = await addition;
+    expect(rejected.status()).toBe(409);
+    expect(await rejected.json()).toEqual({ error: 'verification_required' });
+    await expect(page.getByRole('status')).toHaveText(
+      'Verifieringen har gått ut. Dina tidigare inloggningar och din tillgång finns kvar. Verifiera på nytt när du vill koppla ett inloggningssätt.',
+    );
+    await expect(page.getByRole('button', { name: 'Verifiera Google' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Koppla Microsoft' })).toHaveCount(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page).toHaveURL(`${origin}/login-methods`);
+    expect(await (await page.request.get(`${origin}/api/login-methods`)).json()).toEqual({
+      providers: ['google'],
+      stage: 'expired',
+    });
+    expect(await (await page.request.get(`${origin}/api/bootstrap`)).json()).toEqual(before);
+    expect(await read()).toEqual(privateMap);
+
+    Date.now = originalNow;
+    await page.getByRole('button', { name: 'Verifiera Google' }).click();
+    await expect(page.getByRole('button', { name: 'Koppla Microsoft' })).toBeVisible();
+    await expect(page.getByRole('status')).toHaveCount(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    expect(await (await page.request.get(`${origin}/api/login-methods`)).json()).toEqual({
+      providers: ['google'],
+      stage: 'verified',
+    });
+    await page.getByRole('link', { name: 'Till startsidan' }).click();
+    await expect(page.getByRole('heading', { name: household.name, exact: true })).toBeVisible();
+    expect(await (await page.request.get(`${origin}/api/bootstrap`)).json()).toEqual(before);
+    expect(await read()).toEqual(privateMap);
+  } finally {
+    Date.now = originalNow;
+    await installation.close();
+  }
+});
