@@ -618,7 +618,13 @@ test('RADERING-07: a known erasure survives Settings navigation and reload despi
           version: otherMap.draft.version,
           contentVersion: otherMap.contentVersion,
           baseRevision: null,
-          value: { name: 'Senare tom sambandstyp', description: '', fields: [] },
+          value: {
+            name: 'Senare tom sambandstyp',
+            description: '',
+            forwardLabel: 'använder',
+            reverseLabel: 'används av',
+            fields: [],
+          },
         })
       ).status(),
     ).toBe(200);

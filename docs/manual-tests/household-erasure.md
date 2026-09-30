@@ -459,6 +459,7 @@ stolen och Alex oberoende privata förslag. Bjud in Robin och ge Robin
 administratörsrollen genom **Administrera tillgång**. Robin skapar och
 sparar den tomma sambandstypen **Senare tom sambandstyp** genom
 **Inställningar → Typer och egna fält**. Inget samband ska använda typen.
+Ange **använder** från startobjektet och **används av** från målobjektet.
 Alex privata förslag ska fortfarande vara osparat. Förbered samma
 kontrollerade bortkastade svar som i RADERING-02 i Alex profil.
 
