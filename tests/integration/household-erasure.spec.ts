@@ -560,7 +560,8 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
     );
     expect(JSON.stringify(content)).not.toContain(fixture.imageId);
     expect(JSON.stringify(content)).toContain('Oberoende privat förslag');
-    await page.getByRole('link', { name: 'Till hushållet', exact: true }).click();
+    await section.getByRole('button', { name: 'Läs in kartan på nytt', exact: true }).click();
+    await page.waitForURL(fixture.administration.replace(/\/administration$/, ''));
     await openWorkspace(page);
     await page
       .getByRole('button', { name: 'Uppgifter för Lampan att radera', exact: true })
