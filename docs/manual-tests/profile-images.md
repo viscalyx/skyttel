@@ -332,3 +332,55 @@ destination at 1440px”, samma titel med “390px” respektive “320px”.
 - Uppdateringen avslutar bildfelet. Det senare samtidighetsfelet återupplivar
   inte bildens återgång. Oskickad text och det andra förslaget finns kvar;
   inget delas med hushållet.
+
+### BILD-06: Dela text, ikon och bild tillsammans för varje objekttyp
+
+**Syfte:** Hantera bilder för alla objekttyper i samma privata objektförslag
+och kvitto samt ta bort senaste bilden utan att få tillbaka en äldre.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Använd ett nytt isolerat hushåll för varje typ. Prova
+Person, Tjänst, Tjänstekonto, Abonnemang, E-postadress, Bankkonto, Kort,
+Företag, Förening, Bostad, Garage, Fordon, Avtal, Hyresavtal, Låneavtal,
+Kreditavtal, Avbetalningsavtal och Försäkringsavtal. Prova också en egen
+typ med namnet Egen bildtyp, skapad genom **Typer och egna fält** i
+Inställningar. Använd två giltiga bilder och `fel.png` från förberedelsen.
+
+**Integrationstest:**
+[profile-image-types.spec.ts](../../tests/integration/profile-image-types.spec.ts),
+testfallet “BILD-06: Person shares text, icon and image in one proposal and
+removes the latest image”, med samma titel där “Person” ersätts av var och
+en av de övriga arton typerna ovan.
+
+**Steg:**
+
+1. Välj **Nytt objekt**. Fyll namn och beskrivning och välj den aktuella
+   typen. Kontrollera att bildvalet är spärrat. Välj **Lägg i mitt utkast**.
+2. Redigera objektet igen. Sök cykel under **Ikon** och välj **Cykel**.
+   Välj den första giltiga bilden och kontrollera förhandsbilden.
+3. Granska hela utkastet. Objektets text, ikon och bild ska ingå i ett
+   objektförslag. Inget ska ännu vara delat med hushållet. Stäng formuläret
+   utan att skicka mer text och välj **Spara hela utkastet**. Läs kvittot.
+4. Redigera objektet igen. Skriv en ny beskrivning och kontrollera att
+   bildvalet är spärrat tills texten läggs i utkastet. Lägg texten i utkastet
+   och redigera objektet igen.
+5. Välj den andra giltiga bilden. Öppna filväljaren igen och avbryt.
+   Välj därefter `fel.png`. Kontrollera att den andra bilden, ikonen
+   och den nya beskrivningen finns kvar efter felet.
+6. Välj **Ta bort profilbild**. Kontrollera att ingen bild visas och att
+   cykelikonen kommer fram. Den första sparade bilden ska inte komma tillbaka.
+7. Granska det enda objektförslaget med den nya texten och utan bild.
+   Stäng formuläret och välj **Spara hela utkastet**. Läs kvittot och
+   historiken för båda sparandena.
+
+**Förväntat resultat:**
+
+- Samma flöde fungerar för alla förifyllda typer och den egna typen.
+- Text, ikon och bild hör till samma objekt med samma identitet och typ.
+  Ett uttryckligt helt sparande delar dem tillsammans med ett kvitto.
+- Avbrutet eller ogiltigt filval ändrar inte det senaste giltiga förslaget.
+  Privat bildbyte och borttagning ändrar inte det tidigare gemensamma objektet.
+- Borttagningen föreslår ingen bild och bevarar vald ikon och den nya texten.
+  Det andra kvittot visar den första sparade bilden före ändringen och
+  ingen bild efteråt. Historiken innehåller de två hela sparandena.

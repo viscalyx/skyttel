@@ -138,6 +138,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, ångring,
   kvitton, bildåtkomst och uttrycklig återgång efter bildfel i en stängd panel
   eller i Inställningar samt avbrutet filval och avslutade felåtergångar.
+  Alla objekttyper delar text, ikon och bild i samma förslag och kvitto;
+  bildborttagning återställer inte en äldre sparad bild.
 
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
   anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
