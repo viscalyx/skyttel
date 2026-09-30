@@ -1601,7 +1601,10 @@ export function HouseholdMap({
                         'objektet',
                       onReturn: () => {
                         setStatusOpen(false);
-                        if (errorDetails.imageObjectId) openPanel(errorDetails.imageObjectId);
+                        const object = errorDetails.imageObjectId
+                          ? displayed.get(errorDetails.imageObjectId)
+                          : undefined;
+                        if (object) edit(object);
                         routeOutsideFocus.current = null;
                         if (!active) onReturnToMap?.();
                       },
