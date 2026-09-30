@@ -187,7 +187,9 @@ for (const width of [1280, 390, 320]) {
           ['Utrustning: Försäkrad', 'survivor'],
           ['Registrering: Nummer', 'absorbed'],
         ])
-          await form.getByLabel(`Välj ${name}`, { exact: true }).selectOption(choice);
+          await form
+            .getByRole('combobox', { name: `Välj ${name}`, exact: true })
+            .selectOption(choice);
         await form.getByLabel('Val för samband first').selectOption('remove');
         await form.getByLabel('Val för samband second').selectOption('keep');
         const submit = form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' });
@@ -196,7 +198,9 @@ for (const width of [1280, 390, 320]) {
           'Välj egna fält från den valda objekttypen',
         );
         expect((await read()).draft).toEqual(original.draft);
-        await form.getByLabel('Välj Registrering: Nummer', { exact: true }).selectOption('omit');
+        await form
+          .getByRole('combobox', { name: 'Välj Registrering: Nummer', exact: true })
+          .selectOption('omit');
         await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
         await expect(form).toContainText('Platser: 0');
         await expect(form).toContainText('Under tak: Nej');

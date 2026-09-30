@@ -57,8 +57,10 @@ test('SAMMANSLAGNING-05: participant text survives merge and blocks discard unti
     const form = page.getByRole('region', { name: 'Sammanslagning', exact: true });
     await form.getByLabel('Objekt som behåller sin identitet').selectOption('a');
     await form.getByLabel('Objekt som tas in i det första').selectOption('b');
-    await form.getByLabel('Välj Namn', { exact: true }).selectOption('survivor');
-    await form.getByLabel('Välj Beskrivning', { exact: true }).selectOption('absorbed');
+    await form.getByRole('combobox', { name: 'Välj Namn', exact: true }).selectOption('survivor');
+    await form
+      .getByRole('combobox', { name: 'Välj Beskrivning', exact: true })
+      .selectOption('absorbed');
     await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
     await form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }).click();
     const draft = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
