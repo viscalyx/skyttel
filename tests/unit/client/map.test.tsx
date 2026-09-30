@@ -1313,13 +1313,13 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
   ).toBe(200);
   const saved = await read();
   await open();
-  const edges = within(screen.getByRole('list', { name: 'Samband', exact: true }));
+  const edges = within(screen.getByRole('list', { name: 'Samband' }));
   await user.click(edges.getByRole('button', { name: /^Lo Exempel → Använder → Familjemusik/ }));
-  const details = within(screen.getByRole('region', { name: 'Val och redigering', exact: true }));
+  const details = within(screen.getByRole('region', { name: 'Val och redigering' }));
   expect(details.getByText('Status: Manuellt upphört')).toBeTruthy();
   expect(details.getByText('Slutdatum: 2000-01-01')).toBeTruthy();
   expect(details.getByText('Upphört', { exact: true })).toBeTruthy();
-  await user.click(details.getByRole('button', { name: 'Redigera valt samband', exact: true }));
+  await user.click(details.getByRole('button', { name: 'Redigera valt samband' }));
   await user.selectOptions(details.getByLabelText('Sambandets status'), 'active');
   await user.selectOptions(
     details.getByLabelText('Sambandets slutdatum: uppgiftens säkerhet'),
@@ -1372,7 +1372,7 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
   await user.click(edges.getByRole('button', { name: /^Lo Exempel → Använder → Familjemusik/ }));
   expect(details.getByText('Status: Gäller fortfarande')).toBeTruthy();
   expect(details.queryByText('Upphört', { exact: true })).toBeNull();
-  await user.click(details.getByRole('button', { name: 'Redigera valt samband', exact: true }));
+  await user.click(details.getByRole('button', { name: 'Redigera valt samband' }));
   await user.selectOptions(details.getByLabelText('Sambandets status'), '');
   expect(
     (details.getByLabelText('Sambandets slutdatum', { exact: true }) as HTMLInputElement).value,
