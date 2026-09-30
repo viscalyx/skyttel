@@ -147,6 +147,44 @@ without changing saved facts”.
 - Automationen kontrollerar webbläsarens tillgängliga beskrivning och
   fokus. Faktiska skärmläsarprov dokumenteras separat när de utförs.
 
+### LIVSCYKEL-05: objekt och samband behåller sina egna beskrivningar
+
+**Syfte:** Kontrollera att namn, typ och status för ett objekt inte ersätts
+av ett annat sambands uppgifter i hjälpmedel.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** De sparade objekten och sambanden ovan. Lägg till
+personen **Kim Exempel** med känt slutdatum **2000-01-01** och status
+**Gäller fortfarande**. Ange **Upphört** för sambandet från Lo till
+Familjemusik och spara hela utkastet. Automationen väljer de giltiga
+identifierarna `relationship-incoming` för Kim och `incoming` för sambandet
+genom det publika API:et för att prova att beskrivningarna hålls åtskilda.
+
+**Integrationstest:**
+[lifecycle.spec.ts](../../tests/integration/lifecycle.spec.ts),
+testfallet “LIVSCYKEL-05: object and relationship descriptions remain
+distinct for valid overlapping identities”.
+
+**Steg:**
+
+1. Öppna kartan och välj **Alla etiketter**. Kontrollera Kim och sambandet
+   från Lo till Familjemusik.
+2. Läs den tillgängliga beskrivningen för Kims namnetikett och objektsymbol
+   med webbläsarens tillgänglighetsinspektör eller skärmläsare.
+3. Läs motsvarande beskrivning för sambandet från Lo till Familjemusik.
+4. Starta om appen med samma databas, ladda om kartan och kontrollera igen.
+
+**Förväntat resultat:**
+
+- Båda kontrollerna för Kim beskriver **Kim Exempel** och typen **Person**.
+  De anger inte Upphört och visar inte det andra sambandets uppgifter.
+- Sambandet visar **Upphört** både med text och i sin tillgängliga beskrivning.
+- Samma namn, typ och status består efter omstart. Visningen ändrar inga
+  sparade uppgifter eller privata förslag; automationen jämför hela underlaget.
+- Automationen kontrollerar tillgängliga beskrivningar i webbläsaren.
+  Faktiska skärmläsarprov dokumenteras separat när de utförs.
+
 ## Borttagning
 
 ### LIVSCYKEL-03: direkt borttagning bevarar anslutna objekt och historik

@@ -403,3 +403,72 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
     await installation.close();
   }
 });
+
+test('LIVSCYKEL-05: object and relationship descriptions remain distinct for valid overlapping identities', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { read, post, save } = await arrange(page.request, installation.origin);
+    const initial = await read();
+    expect(
+      (
+        await post('draft', {
+          version: initial.draft.version,
+          id: 'relationship-incoming',
+          baseRevision: null,
+          value: {
+            name: 'Kim Exempel',
+            description: '',
+            typeId: initial.types.find((type) => type.name === 'Person')?.id,
+            lifecycle: 'active',
+            financialFacts: { endDate: { knowledge: 'known', value: '2000-01-01' } },
+          },
+        })
+      ).ok(),
+    ).toBe(true);
+    const incoming = initial.relationships.find((edge) => edge.id === 'incoming');
+    expect(incoming).toBeDefined();
+    expect(
+      (
+        await post('relationship', {
+          version: (await read()).draft.version,
+          id: 'incoming',
+          baseRevision: incoming?.revision,
+          value: { ...incoming, lifecycle: 'ended' },
+        })
+      ).ok(),
+    ).toBe(true);
+    expect((await save()).ok()).toBe(true);
+    const saved = await read();
+    await page.goto(installation.origin);
+    await openMap(page);
+    const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    const labels = space.locator('.spatial-labels');
+    const edge = labels.getByRole('button', {
+      name: 'Välj samband: Lo Exempel → Använder → Familjemusik',
+      exact: true,
+    });
+    const object = labels.getByRole('button', { name: 'Markera objekt: Kim Exempel', exact: true });
+    const node = space.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
+    await expect(edge.getByText('Upphört', { exact: true })).toBeVisible();
+    await expect(edge).toHaveAccessibleDescription(/Upphört/);
+    await expect(object.getByText('Kim Exempel', { exact: true })).toBeVisible();
+    await expect(object).not.toContainText('Upphört');
+    await expect(object).toHaveAccessibleDescription('Kim Exempel Person');
+    await expect(node).toHaveAccessibleDescription('Kim Exempel Person');
+    await expect(object).not.toHaveAccessibleDescription(/Upphört/);
+    await expect(node).not.toHaveAccessibleDescription(/Upphört/);
+    expect(await read()).toEqual(saved);
+    await installation.restart();
+    await page.reload();
+    await openMap(page);
+    await expect(object).toHaveAccessibleDescription('Kim Exempel Person');
+    await expect(node).toHaveAccessibleDescription('Kim Exempel Person');
+    await expect(edge).toHaveAccessibleDescription(/Upphört/);
+    expect(await read()).toEqual(saved);
+  } finally {
+    await installation.close();
+  }
+});
