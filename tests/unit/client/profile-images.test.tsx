@@ -220,10 +220,13 @@ async function openInApp(name = 'Lo Exempel') {
       <App />
     </MemoryRouter>,
   );
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: `Uppgifter för ${name}` }));
-  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
-  return within(screen.getByRole('group', { name: 'Objektets detaljer' }));
+  const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
+  await userEvent.click(tools.getByLabelText('Lista', { selector: 'button' }));
+  const list = within(await screen.findByRole('region', { name: 'Lista och utkast' }));
+  await userEvent.click(list.getByLabelText(`Uppgifter för ${name}`, { selector: 'button' }));
+  const panel = within(await screen.findByRole('region', { name }));
+  await userEvent.click(panel.getByRole('button', { name: 'Redigera valt objekt' }));
+  return within(panel.getByRole('group', { name: 'Objektets detaljer' }));
 }
 
 test('a real image rejection preserves Settings focus until explicit return to the same image work', async () => {
@@ -243,14 +246,20 @@ test('a real image rejection preserves Settings focus until explicit return to t
   const independent = await openInApp('Garaget');
   await user.click(independent.getByLabelText('Beskrivning', { exact: true }));
   await user.paste('Oskickat under bildförsöket');
-  await user.click(screen.getByRole('button', { name: 'Stäng Garaget' }));
   await user.click(
-    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
-      name: 'Uppgifter för Lo Exempel',
+    within(screen.getByRole('region', { name: 'Garaget' })).getByLabelText('Stäng Garaget', {
+      selector: 'button',
     }),
   );
-  await user.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
-  const details = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
+  await user.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByLabelText(
+      'Uppgifter för Lo Exempel',
+      { selector: 'button' },
+    ),
+  );
+  const target = within(screen.getByRole('region', { name: 'Lo Exempel' }));
+  await user.click(target.getByRole('button', { name: 'Redigera valt objekt' }));
+  const details = within(target.getByRole('group', { name: 'Objektets detaljer' }));
   await user.upload(details.getByLabelText('Välj profilbild'), await file());
   await screen.findByText('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
   const before = await read();
@@ -278,8 +287,13 @@ test('a real image rejection preserves Settings focus until explicit return to t
       new File(['invalid'], 'bad.png', { type: 'image/png' }),
     );
     expect((await ready).status).toBe(400);
-    await user.click(screen.getByRole('button', { name: 'Stäng Lo Exempel' }));
-    await user.click(screen.getByRole('button', { name: 'Inställningar' }));
+    await user.click(target.getByLabelText('Stäng Lo Exempel', { selector: 'button' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Kartans verktyg' })).getByLabelText(
+        'Inställningar',
+        { selector: 'button' },
+      ),
+    );
     const settings = await screen.findByRole('heading', { name: 'Inställningar', level: 1 });
     expect(settings).toBe(document.activeElement);
     const settingsReturn = screen.getByRole('link', { name: 'Tillbaka till kartan' });
@@ -290,7 +304,11 @@ test('a real image rejection preserves Settings focus until explicit return to t
     expect(screen.getByRole('heading', { name: 'Inställningar', level: 1 })).toBe(settings);
     expect(screen.queryByRole('group', { name: 'Objektets detaljer' })).toBeNull();
     expect(await read()).toEqual(before);
-    await user.click(screen.getByRole('button', { name: 'Återgå till bilden för Lo Exempel' }));
+    await user.click(
+      within(screen.getByRole('region', { name: 'Aktuell status' })).getByRole('button', {
+        name: 'Återgå till bilden för Lo Exempel',
+      }),
+    );
     expect(screen.queryByRole('heading', { name: 'Inställningar', level: 1 })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Lo Exempel' })).toBe(document.activeElement);
     expect(details.getByDisplayValue('Befintlig text')).toBeTruthy();
@@ -309,9 +327,10 @@ test('a real image rejection preserves Settings focus until explicit return to t
       within(panels).getByRole('option', { name: 'Lista och utkast' }),
     );
     await user.click(
-      within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
-        name: 'Uppgifter för Garaget',
-      }),
+      within(screen.getByRole('region', { name: 'Lista och utkast' })).getByLabelText(
+        'Uppgifter för Garaget',
+        { selector: 'button' },
+      ),
     );
     expect(
       within(screen.getByRole('region', { name: 'Garaget' })).getByDisplayValue(
