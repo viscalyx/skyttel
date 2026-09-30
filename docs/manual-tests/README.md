@@ -85,6 +85,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 
 - [Återställning och flytt](household-recovery.md): tomma lokala installationer,
   uttrycklig verifierad ägarkoppling, bevarat undanträngt privat arbete,
+  fullständiga valda identiteter utanför vallistorna och förnyad bekräftelse,
   tappat svar vid identitetskoppling, oberoende privata tillstånd,
   gamla sessioner och sparförsök, omstart och fortsatt export till en tredje
   installation utan gammal databas eller inloggningsbehörighet.

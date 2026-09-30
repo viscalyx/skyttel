@@ -647,10 +647,14 @@ review, errors and assignment at 1280px”, samma titel med “390px”,
    **Läs in det återställda hushållet**.
 7. Öppna **Koppla historiskt innehåll** genom Inställningar. Hämta
    underlaget, välj din innehållsidentitet och **Ingen aktuell ägare**.
+   Läs hela den historiska identitetens namn och ID samt valet utan ägare
+   i den separata granskningen utanför vallistorna.
    Läs följderna och bekräfta med tangentbordet. Fokus ska återgå till
    **Hämta aktuella innehållskopplingar** efter det sparade resultatet.
 8. Välj samma identitet och din aktuella verifierade användare. En ny
-   bekräftelse krävs. Bekräfta och kontrollera att ditt privata utkast
+   bekräftelse krävs. Läs båda fullständiga ID:na i granskningen, även på
+   smal skärm och med förstoring. Bekräfta och kontrollera att ditt privata
+   utkast
    finns kvar när du läser in kartan igen.
 9. Upprepa med det andra temat. Alla kontroller, statusbesked och texter
    ska vara läsbara och möjliga att nå utan rullning i sidled.

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { expectContentOwnerReview } from '../support/content-owners.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('FLYTT-02: an uncertain explicit identity assignment is read back while both private states and historical receipts remain intact', async ({
@@ -143,6 +144,7 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
       (await targetClient.post(`${path}/map/operations`, { headers, data: pending })).status(),
     ).toBe(200);
 
+    await page.setViewportSize({ width: 390, height: 900 });
     await page.goto(`${destination.origin}/households/${target.id}/settings/content-owners`);
     const owners = page.getByRole('region', { name: 'Koppla historiskt innehåll', exact: true });
     const load = owners.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' });
@@ -155,6 +157,12 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
     );
     await owners.getByLabel('Historisk innehållsidentitet').selectOption(historic.userId);
     await owners.getByLabel('Aktuell verifierad medlem').selectOption(user.id);
+    expect(historic.userId).not.toBe(user.id);
+    await expectContentOwnerReview(
+      owners,
+      `Alex Exempel (${historic.userId})`,
+      `Alex Exempel (${user.id})`,
+    );
     await expect(owners).toContainText('samma namn eller e-postadress är inget bevis');
     await expect(owners).toContainText(
       `Den valda medlemmen lämnar Alex Exempel (${independent.userId})`,
@@ -162,6 +170,33 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
     await expect(owners).toContainText('inget slås ihop eller skrivs över');
     const confirm = owners.getByRole('button', { name: 'Bekräfta innehållskopplingen' });
     await expect(confirm).toBeDisabled();
+    const confirmed = owners.getByRole('checkbox', { name: 'Jag har identifierat rätt person' });
+    await confirmed.check();
+    await expect(confirm).toBeEnabled();
+    await owners.getByLabel('Aktuell verifierad medlem').selectOption('');
+    await expectContentOwnerReview(
+      owners,
+      `Alex Exempel (${historic.userId})`,
+      'Ingen aktuell ägare',
+    );
+    await expect(confirmed).not.toBeChecked();
+    await expect(confirm).toBeDisabled();
+    await confirmed.check();
+    await owners.getByLabel('Historisk innehållsidentitet').selectOption(independent.userId);
+    await expectContentOwnerReview(
+      owners,
+      `Alex Exempel (${independent.userId})`,
+      'Ingen aktuell ägare',
+    );
+    await expect(confirmed).not.toBeChecked();
+    await expect(confirm).toBeDisabled();
+    await owners.getByLabel('Historisk innehållsidentitet').selectOption(historic.userId);
+    await owners.getByLabel('Aktuell verifierad medlem').selectOption(user.id);
+    await expectContentOwnerReview(
+      owners,
+      `Alex Exempel (${historic.userId})`,
+      `Alex Exempel (${user.id})`,
+    );
     let writes = 0;
     await page.route('**/content-owners/assign', async (route) => {
       writes++;

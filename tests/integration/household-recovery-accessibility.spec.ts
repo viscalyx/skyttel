@@ -1,5 +1,6 @@
 import { expect, type Locator, test } from '@playwright/test';
 import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { expectContentOwnerReview } from '../support/content-owners.js';
 import { createInstallation } from '../support/installation.js';
 
 async function expectUncoveredFocus(control: Locator) {
@@ -240,6 +241,11 @@ for (const { width, height } of [
         await expectUncoveredFocus(identity);
         const member = owners.getByLabel('Aktuell verifierad medlem');
         await member.selectOption('');
+        await expectContentOwnerReview(
+          owners,
+          `Alex Exempel (${original.userId})`,
+          'Ingen aktuell ägare',
+        );
         await member.focus();
         await expectUncoveredFocus(member);
         const confirmed = owners.getByRole('checkbox', {
@@ -263,6 +269,11 @@ for (const { width, height } of [
           true,
         );
         await member.selectOption(user.id);
+        await expectContentOwnerReview(
+          owners,
+          `Alex Exempel (${original.userId})`,
+          `Alex Exempel (${user.id})`,
+        );
         await expect(assign).toBeDisabled();
         await confirmed.focus();
         await page.keyboard.press('Space');

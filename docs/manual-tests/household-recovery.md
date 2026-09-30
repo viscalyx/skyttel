@@ -316,6 +316,12 @@ back while both private states and historical receipts remain intact”.
    metadata. Välj källans historiska identitet och Robins verifierade
    användar-ID. Kontrollera antal, tidigare koppling och följderna för
    Robins oberoende privata arbete. Inga privata innehållsvärden ska visas.
+   Läs hela den valda historiska identitetens namn och ID samt den avsedda
+   medlemmens namn och ID i granskningen utanför vallistorna, även på smal
+   skärm. Markera bekräftelsen och välj **Ingen aktuell ägare**; granskningen
+   ska visa detta och bekräftelsen nollställas. Markera igen och byt historisk
+   identitet; bekräftelsen ska nollställas igen. Välj sedan källans identitet
+   och Robin på nytt och kontrollera båda fullständiga ID:na före nästa steg.
 3. Kör följande kod i Console före bekräftelsen. Markera sedan
    identitetsbekräftelsen och genomför kopplingen med tangentbordet.
    Fortsätt endast om konsolen visar **FLYTT-02: kopplingen finns på servern**.
@@ -361,6 +367,9 @@ back while both private states and historical receipts remain intact”.
 
 - Samma namn eller e-postadress ger ingen automatisk innehållskoppling.
   Granskningen visar identiteter, medlems-ID och antal utan privata värden.
+  Den valda historiska identiteten och den avsedda nya kopplingen går att
+  läsa separat från nuvarande och undanträngd koppling. Hela deras ID:n syns
+  utanför vallistorna; ett nytt val kräver en ny uttrycklig bekräftelse.
 - Okänt utfall och misslyckad hämtning medför ingen blind upprepning.
   Aktuell läsning behövs innan ett nytt uttryckligt val kan göras.
 - Båda privata utkasten och placeringarna bevaras separat och kan kopplas
