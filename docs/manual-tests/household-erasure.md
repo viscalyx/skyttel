@@ -514,6 +514,8 @@ from a fresh export while preserving the current object after restart”.
 - Det nuvarande objektet, dess orange bild, stolens oberoende historik
   och privata förslag samt båda placeringarna finns kvar.
 
+## Följ ett känt försök
+
 ### RADERING-07: Följ ett känt försök när ett senare resultat finns
 
 **Syfte:** Behåll rätt raderingsärende genom vanlig sidnavigation och
@@ -569,3 +571,63 @@ reload despite a newer result”.
   destruktiv begäran. Robins separata radering har sin egen identifierare.
 - Endast de två uttryckligen granskade omfattningarna raderas. Oberoende
   sparat och privat innehåll förblir oförändrat.
+
+### RADERING-09: Ett saknat känt försök har fortfarande okänt utfall
+
+**Syfte:** Kontrollera att ett känt försök utan bekräftat resultat beskrivs
+som okänt även efter navigation och omladdning, utan att ett annat
+slutfört försök används som svar.
+
+**Användare:** Alex som aktuell administratör i profilerna A och B.
+
+**Förutsättningar:** Ny provkarta enligt allmän förberedelse. Logga in med
+samma konto i profil B. Typen **Person** ska vara oanvänd; lampan och stolen
+använder **Fordon**. I profil A öppnar du utvecklarverktygen och använder
+**Network request blocking** för att blockera bara adressmönstret
+`*/erasure/execute`. Blockeringen ska hindra nästa begäran innan servern
+tar emot den. Inga andra adresser ska blockeras.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+testfallet “RADERING-09: an unavailable exact attempt stays explicitly
+unknown after navigation and a newer result”.
+
+**Steg:**
+
+1. Profil A öppnar **Inställningar → Permanent radering**, granskar lampan,
+   skriver **RADERA PERMANENT** och väljer **Radera permanent**. Kontrollera
+   **Utfallet är oklart**. Anteckna den fullständiga identifieraren under
+   **Raderingsförsök** och kontrollera i **Network** att begäran blockerades.
+   Stäng av blockeringen. Välj inte något återförsök av raderingen.
+2. Profil B öppnar raderingssidan, väljer bara den oanvända typen **Person**
+   och granskar. Kontrollera noll objekt, samband, privata ändringar och
+   bildversioner. Bekräfta den separata raderingen uttryckligen. Anteckna
+   dess andra identifierare och slutförda resultat med exakt en objekttyp.
+3. Profil A väljer **Översikt**, återvänder till **Permanent radering**
+   och laddar om sidan. Den första identifieraren ska fortfarande visas
+   tillsammans med ett uttryckligt besked om att utfallet är okänt.
+   **Network** ska visa HTTP 404 för läsningen av just den identifieraren.
+   Profil B:s identifierare, slutförandebesked och resultatantal får inte
+   visas som svar på profil A:s försök.
+4. Blockera tillfälligt bara adressen till profil A:s exakta statusläsning
+   i utvecklarverktygen. Välj **Kontrollera raderingsstatus och läs in
+   aktuellt innehåll**. Samma försök ska fortfarande ha okänt utfall.
+   Ta bort blockeringen och välj samma statusknapp igen. Kontrollera
+   beskedet **Inget bekräftat resultat hittades för ditt försök** och
+   fortsatt okänt utfall. Ingen radering ska skickas automatiskt.
+5. Läs kartan i profil B. Lampan, dess bild, stolen, stolens privata
+   förslag och personliga placeringar ska vara kvar. Bara den separat
+   granskade oanvända typen ska saknas. Kontrollera i profil A:s
+   **Network** att ingen ny `erasure/execute` eller `erasure/resume` har
+   skickats vid navigation, omladdning eller statusläsning.
+
+**Förväntat resultat:**
+
+- HTTP 404 eller en otillgänglig statusläsning bekräftar inte att
+  raderingen är slutförd eller att ingen radering skett. Sidan visar
+  samma kända identifierare och ett uttryckligen okänt utfall.
+- Ett annat ärendes slutförda resultat ersätter inte det saknade resultatet.
+  Efter omladdning återskapas ingen destruktiv begäran från lagrad metadata.
+- Endast profil B:s separat bekräftade typ tas bort. Automationen jämför
+  hela kartan, det oberoende privata utkastet och personliga vyer samt
+  kontrollerar att lampans verkliga bild fortfarande kan läsas.
