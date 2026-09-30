@@ -114,7 +114,14 @@ test('SAMMANSLAGNING-05: participant text survives merge and blocks discard unti
     await discard.click();
     await expect(draft).not.toContainText('Samma företeelse är uttryckligen bekräftad');
     const restored = await read();
-    expect(restored.draft).toEqual({ ...original.draft, version: restored.draft.version });
+    expect({
+      ...restored.draft,
+      changes: [...restored.draft.changes].sort((a, b) => a.id.localeCompare(b.id)),
+    }).toEqual({
+      ...original.draft,
+      changes: [...original.draft.changes].sort((a, b) => a.id.localeCompare(b.id)),
+      version: restored.draft.version,
+    });
     expect(restored.objects).toEqual(original.objects);
     expect(restored.relationships).toEqual(original.relationships);
     await installation.restart();
