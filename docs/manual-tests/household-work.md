@@ -185,11 +185,15 @@ an admitted save before reloading”.
 
 **Steg:**
 
-1. Starta textassistent och röst. Skicka en fråga, invänta det kontrollerade
-   svaret och skriv **Gammalt oskickat svar** utan att skicka det.
-   Öppna **Nytt objekt** och skriv **Gammal oskickad cykel** utan att lägga
-   det i utkastet. Öppna **Lista** igen.
-2. Installera följande utdrag genom **Sources → Snippets** i
+1. I flik A, starta textassistent och röst. Skicka en fråga, invänta det
+   kontrollerade svaret och skriv **Gammalt oskickat svar** utan att skicka
+   det. Öppna **Lista**. Öppna samma installation i en andra vanlig flik B
+   med samma inloggning. Där öppnar du **Nytt objekt** och skriver
+   **Gammal oskickad cykel** utan att lägga det i utkastet. Besök
+   **Inställningar** i flik B utan omladdning och behåll fliken öppen.
+   Ett oskickat objekt spärrar sparandet i sin egen flik; därför används
+   separata flikar för formuläret och det väntande sparandet.
+2. I flik A, installera följande utdrag genom **Sources → Snippets** i
    utvecklarverktygen. Det håller enbart den första sparbegäran efter
    registreringen; inga svar eller uppgifter ersätts.
 
@@ -256,8 +260,9 @@ an admitted save before reloading”.
 
 5. Bekräfta med exakt **RADERA PERMANENT**. Invänta HTTP 202 och besked om
    väntande städning. Anteckna raderingens fullständiga identifierare.
-   **Ladda inte om.** Inom tio sekunder ska mikrofonen stoppas och gammalt
-   kartarbete avslutas. Öppna **Tillbaka till kartan** i en ny flik:
+   **Ladda inte om någon flik.** Inom tio sekunder ska mikrofonen i flik A
+   stoppas och det dolda formuläret i flik B avvecklas. Öppna
+   **Tillbaka till kartan** i en ny flik:
    innehållet ska vara spärrat. En export i en separat flik ska också avvisas.
 6. I ursprungsfliken, tryck Alt+Skift+R för att släppa den gamla sparbegäran.
    **Network** ska visa HTTP 409 med `content_maintenance` för denna

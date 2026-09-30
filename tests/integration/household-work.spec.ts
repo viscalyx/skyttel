@@ -43,6 +43,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
 }) => {
   const installation = await conversationInstallation();
   const reader = new Database(join(installation.directory, 'skyttel.db'), { readonly: true });
+  const otherPage = await page.context().newPage();
   let releaseSave = () => {};
   try {
     await signIn(page.request, installation.origin);
@@ -109,9 +110,13 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     );
     await page.getByLabel('Meddelande till textassistenten').fill('Gammalt oskickat svar');
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Gammal oskickad cykel');
-    await openWorkspace(page);
+    await otherPage.goto(installation.origin);
+    await openWorkspace(otherPage);
+    await otherPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await otherPage.getByLabel('Objektets namn').fill('Gammal oskickad cykel');
+    await openSettings(otherPage);
+    await expect(otherPage.getByLabel('Objektets namn')).toHaveValue('Gammal oskickad cykel');
+    await expect(otherPage.getByLabel('Objektets namn')).not.toBeVisible();
     const held = new Promise<void>((resolve) => {
       releaseSave = resolve;
     });
@@ -166,7 +171,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
       .getByRole('navigation', { name: 'Inställningarnas sidor' })
       .getByRole('link', { name: 'Permanent radering', exact: true })
       .click();
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Gammal oskickad cykel');
+    await expect(otherPage.getByLabel('Objektets namn')).toHaveValue('Gammal oskickad cykel');
     await expect(page.getByLabel('Meddelande till textassistenten')).toHaveValue(
       'Gammalt oskickat svar',
     );
@@ -200,7 +205,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
         timeout: 10000,
       })
       .toEqual([{ enabled: false, state: 'ended' }]);
-    await expect(page.getByLabel('Objektets namn')).toHaveCount(0, { timeout: 10000 });
+    await expect(otherPage.getByLabel('Objektets namn')).toHaveCount(0, { timeout: 10000 });
     await expect(page.getByLabel('Meddelande till textassistenten')).toHaveCount(0);
     await expect(page.getByText('Mikrofonen är på', { exact: true })).toHaveCount(0);
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual({
@@ -210,7 +215,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     releaseSave();
     await saveDelivered;
     await (await oldSave.response())?.finished();
-    await expect(page.getByLabel('Objektets namn')).toHaveCount(0);
+    await expect(otherPage.getByLabel('Objektets namn')).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }),
     ).toHaveCount(0);
@@ -256,6 +261,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     ).toBeVisible();
     await expect(page.getByRole('log', { name: 'Samtalets dialog' })).toHaveCount(0);
     await expect(page.getByLabel('Objektets namn')).toHaveCount(0);
+    await expect(otherPage.getByLabel('Objektets namn')).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }),
     ).toHaveCount(0);
@@ -276,6 +282,7 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     releaseSave();
     if (reader.inTransaction) reader.exec('ROLLBACK');
     reader.close();
+    await otherPage.close();
     await installation.close();
   }
 });
