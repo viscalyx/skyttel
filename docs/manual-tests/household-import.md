@@ -654,8 +654,9 @@ review, errors and assignment at 1280px”, samma titel med “390px”,
    finns kvar när du läser in kartan igen.
 9. Upprepa med det andra temat. Alla kontroller, statusbesked och texter
    ska vara läsbara och möjliga att nå utan rullning i sidled.
-   Kontrollera särskilt den valda sidan i inställningsmenyn och knapparna
-   för ersättning och innehållskoppling när de har tangentbordsfokus.
+   Kontrollera särskilt texten för den valda sidan i inställningsmenyn.
+   Läs också knapparna för ersättning och innehållskoppling när de har
+   tangentbordsfokus.
    På mobil öppnar du menyn för att läsa den valda sidan.
 
 **Förväntat resultat:**
