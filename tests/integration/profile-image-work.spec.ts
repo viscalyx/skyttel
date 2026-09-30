@@ -202,7 +202,9 @@ for (const width of [1440, 390, 320]) {
         page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
       ).toBeDisabled();
       await openSettings(page);
-      await expect(page.getByRole('heading', { name: 'Inställningar', exact: true })).toBeFocused();
+      await expect(
+        page.getByRole('heading', { name: 'Inställningar', level: 1, exact: true }),
+      ).toBeFocused();
       await expect(
         page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
       ).toBeDisabled();
