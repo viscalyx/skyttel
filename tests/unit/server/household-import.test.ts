@@ -724,23 +724,22 @@ test('completed outcomes survive repeated confirmation and reject altered confir
     (await client.json(`${path}/imports/${ready.id}/confirm`, { ...body, extra: true })).status,
   ).toBe(400);
   expect((await client.request(`${path}/imports/missing`)).status).toBe(404);
-  const { user } = await (await client.request('/api/bootstrap')).json();
-  // Arrange a second authorized household to prove the collection is scoped
-  // even when the caller has administrator authority on both households.
-  fixture.database
-    .prepare('INSERT INTO household (id, name, createdAt) VALUES (?, ?, ?)')
-    .run('another', 'Annat hushåll', '2026-01-01T00:00:00Z');
-  fixture.database
-    .prepare('INSERT INTO membership (householdId, userId, role) VALUES (?, ?, ?)')
-    .run('another', user.id, 'administrator');
-  expect(await (await client.request('/api/households/another/imports')).json()).toEqual({
-    attempt: null,
-    ready: null,
-  });
-  expect((await client.request(`/api/households/another/imports/${ready.id}`)).status).toBe(404);
-  expect((await client.json(`/api/households/another/imports/${ready.id}/cancel`, {})).status).toBe(
-    404,
-  );
+  const another = await applicationFixture();
+  try {
+    const administrator = another.client();
+    await administrator.signIn();
+    const created = await administrator.json('/api/households', { name: 'Annat hushåll' });
+    expect(created.status).toBe(201);
+    const { household } = await created.json();
+    const foreignPath = `/api/households/${household.id}/imports`;
+    const discovery = await administrator.request(foreignPath);
+    expect(discovery.status).toBe(200);
+    expect(await discovery.json()).toEqual({ attempt: null, ready: null });
+    expect((await administrator.request(`${foreignPath}/${ready.id}`)).status).toBe(404);
+    expect((await administrator.json(`${foreignPath}/${ready.id}/cancel`, {})).status).toBe(404);
+  } finally {
+    another.close();
+  }
 });
 
 test('discovery never offers an expired unconfirmed archive and leaves household content unchanged', async () => {
