@@ -167,6 +167,14 @@ export function ContentOwners({
           </label>
           {selected && (
             <>
+              <dl className="recovery-facts" aria-label="Vald innehållskoppling">
+                <dt>Vald historisk identitet</dt>
+                <dd>
+                  {selected.name} ({selected.id})
+                </dd>
+                <dt>Avsedd koppling till aktuell medlem</dt>
+                <dd>{userId ? `${memberName(userId)} (${userId})` : 'Ingen aktuell ägare'}</dd>
+              </dl>
               <p className="recovery-facts">
                 Nuvarande koppling: {memberName(selected.userId)}
                 {selected.userId ? ` (${selected.userId})` : ''}. Den historiska identiteten har{' '}

@@ -654,8 +654,7 @@ review, errors and assignment at 1280px”, samma titel med “390px”,
 8. Välj samma identitet och din aktuella verifierade användare. En ny
    bekräftelse krävs. Läs båda fullständiga ID:na i granskningen, även på
    smal skärm och med förstoring. Bekräfta och kontrollera att ditt privata
-   utkast
-   finns kvar när du läser in kartan igen.
+   utkast finns kvar när du läser in kartan igen.
 9. Upprepa med det andra temat. Alla kontroller, statusbesked och texter
    ska vara läsbara och möjliga att nå utan rullning i sidled.
    Kontrollera särskilt texten för den valda sidan i inställningsmenyn.
