@@ -4,7 +4,7 @@ import Database from 'better-sqlite3';
 import { unzipSync } from 'fflate';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 async function arrange(page: Page, formerImageType = false) {
@@ -121,6 +121,111 @@ async function reviewInBrowser(page: Page, administration: string) {
   await expect(section.getByRole('region', { name: 'Omfattning att bekräfta' })).toBeVisible();
   return section;
 }
+
+test('RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map', async ({
+  page,
+}) => {
+  const fixture = await arrange(page);
+  try {
+    const before = await fixture.read();
+    const viewBefore = await (await page.request.get(`${fixture.path}/map/view`)).json();
+    let executions = 0;
+    page.on('request', (request) => {
+      if (request.url().endsWith('/erasure/execute')) executions += 1;
+    });
+    await page.goto(fixture.installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const unsent = page.getByLabel('Objektets namn');
+    await unsent.fill('Oskickat arbete före radering');
+    await unsent.focus();
+    await openSettings(page);
+    const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+    const destination = navigation.getByRole('link', { name: 'Permanent radering', exact: true });
+    await expect(destination).toBeVisible();
+    await destination.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/\/settings\/erasure$/);
+    const section = page.getByRole('region', { name: 'Permanent radering', exact: true });
+    await expect(
+      section.getByRole('heading', { name: 'Permanent radering', level: 1 }),
+    ).toBeFocused();
+    await expect(unsent).not.toBeVisible();
+    await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).not.toBeVisible();
+    const selected = section.getByRole('checkbox', { name: 'Lampan att radera', exact: true });
+    await selected.focus();
+    await page.keyboard.press('Space');
+    await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
+    const scope = section.getByRole('region', { name: 'Omfattning att bekräfta' });
+    await expect(scope).toBeVisible();
+    await expect(scope.getByRole('list', { name: 'Berörda objekt', exact: true })).toContainText(
+      'Lampan att radera',
+    );
+    await expect(scope).not.toContainText('Stolen att bevara');
+    await expect(scope).not.toContainText('Oberoende privat förslag');
+    await expect(scope).toContainText('Bildversioner: 1');
+    await expect(scope).toContainText('Personliga placeringar: 1');
+    await expect(scope.getByRole('list', { name: 'Berörda bildversioner' })).toContainText(
+      fixture.imageId as string,
+    );
+    const confirmation = scope.getByLabel('Skriv RADERA PERMANENT', { exact: true });
+    const erase = scope.getByRole('button', { name: 'Radera permanent', exact: true });
+    await expect(erase).toBeDisabled();
+    await confirmation.fill('RADERA PERMANENT');
+    await scope.getByRole('button', { name: 'Avbryt', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    await expect(scope).toHaveCount(0);
+    await expect(selected).toBeChecked();
+    expect(executions).toBe(0);
+    expect(await fixture.read()).toEqual(before);
+    expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual(viewBefore);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await expect(unsent).toHaveValue('Oskickat arbete före radering');
+    await expect(unsent).toBeFocused();
+    await openSettings(page);
+    await destination.click();
+    await selected.check();
+    await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
+    await expect(confirmation).toHaveValue('');
+    await expect(erase).toBeDisabled();
+    await confirmation.fill('RADERA PERMANENT');
+    await erase.focus();
+    await page.keyboard.press('Enter');
+    await expect(
+      section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toBeVisible();
+    expect(executions).toBe(1);
+    await expect(unsent).toHaveCount(0, { timeout: 10000 });
+    const current = await fixture.read();
+    expect(current.contentVersion).toBe(before.contentVersion + 1);
+    expect(current.objects).toEqual(before.objects.filter((object) => object.id === 'chair'));
+    expect(current.draft).toEqual(before.draft);
+    expect(current.types).toEqual(before.types);
+    expect(current.relationshipTypes).toEqual(before.relationshipTypes);
+    const readMap = section.getByRole('button', { name: 'Läs in kartan på nytt', exact: true });
+    await expect(readMap).toBeFocused();
+    await readMap.click();
+    await expect(page).toHaveURL(fixture.administration.replace(/\/administration$/, ''));
+    await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
+    await expect(unsent).toHaveCount(0);
+    await openWorkspace(page);
+    await expect(
+      page.getByRole('button', { name: 'Uppgifter för Lampan att radera', exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Uppgifter för Stolen att bevara', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
+      'Oberoende privat förslag',
+    );
+    expect(await fixture.read()).toEqual(current);
+    expect((await (await page.request.get(fixture.path)).json()).household.role).toBe(
+      'administrator',
+    );
+  } finally {
+    await fixture.installation.close();
+  }
+});
 
 test('RADERING-01: keyboard review erases selected content and preserves unrelated work after restart', async ({
   page,

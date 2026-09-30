@@ -1,7 +1,8 @@
 # Manuella testfall för permanent radering
 
 Testfallen omfattar administratörens granskning, uttrycklig bekräftelse,
-osäkert resultat, ändrat underlag och väntande städning efter omstart.
+avbruten granskning i Inställningar, osäkert resultat, ändrat underlag
+och väntande städning efter omstart.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -134,6 +135,52 @@ preserves unrelated work after restart”.
 - Stolen, dess bevarade historik, privata förslag och placering finns kvar.
 - Ett besked om slutförd radering visas först när servern bekräftar hela
   rutinen. En tidigare nedladdad export ändras inte av raderingen.
+
+### RADERING-06: Avbryt granskningen och återgå till bevarat arbete
+
+**Syfte:** Granska på en egen inställningssida, avbryt utan radering och
+kräv ny uttrycklig bekräftelse innan ett verifierat resultat öppnar aktuell karta.
+
+**Användare:** Alex i profil A.
+
+**Förutsättningar:** Följ allmän förberedelse med lampans sparade bild och
+stolens oberoende privata förslag. Spara inte hela utkastet.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+testfallet “RADERING-06: dedicated Settings review can be cancelled before
+explicit erasure and a fresh map”.
+
+**Steg:**
+
+1. Öppna **Nytt objekt**. Skriv **Oskickat arbete före radering** i
+   **Objektets namn** utan att lägga texten i utkastet.
+2. Öppna **Inställningar** och välj **Permanent radering** i
+   sidnavigationen med tangentbordet. Sidans huvudrubrik får fokus;
+   kartan och det oskickade formuläret är dolda.
+3. Välj **Lampan att radera** och **Granska raderingen**. Kontrollera
+   lampans namn, bildversionens hela ID och antalet personliga placeringar.
+   Stolen och dess privata förslag ska inte ingå i granskningens omfattning.
+4. Kontrollera att **Radera permanent** är inaktiverad. Skriv
+   **RADERA PERMANENT**, men välj sedan **Avbryt** med tangentbordet.
+   Granskningen stängs och lampans val finns kvar. Ingen radering genomförs.
+5. Välj **Tillbaka till kartan**. Den oskickade texten och fokus i
+   **Objektets namn** finns kvar. De sparade objekten, deras placeringar
+   och stolens privata förslag är oförändrade.
+6. Öppna samma inställningssida igen. Välj lampan och granska på nytt.
+   Bekräftelsefältet är tomt och **Radera permanent** är inaktiverad.
+   Skriv **RADERA PERMANENT** och välj **Radera permanent** med Enter.
+7. Invänta **Den permanenta raderingen är slutförd.** Välj den fokuserade
+   **Läs in kartan på nytt**. Kontrollera i listan att lampan är borta,
+   stolen finns kvar och **Hela mitt utkast** behåller dess privata förslag.
+
+**Förväntat resultat:**
+
+- Avbruten granskning raderar inget och bevarar oberoende arbete.
+- Tidigare bekräftelsetext kan inte användas vid nästa granskning.
+- En uttryckligt bekräftad radering följs av ett verifierat resultat och
+  en ny inläsning av kartan. Gammal oskickad text kan inte fortsätta mot
+  det raderade innehållet; administratörens tillgång finns kvar.
 
 ## Osäkert och förändrat underlag
 

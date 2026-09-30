@@ -109,7 +109,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   Kontrollerade lokala
   leverantörssvar och verklig modellförståelse redovisas separat.
 
-- [Permanent radering](household-erasure.md): uttrycklig granskning och
+- [Permanent radering](household-erasure.md): egen inställningssida,
+  avbruten granskning med bevarat kartarbete, uttrycklig granskning och
   bekräftelse, bevarat oberoende innehåll efter omstart, förlorat svar och
   förnyad granskning efter samtidig ändring samt väntande städning och
   återhämtning efter omstart. Radering av en tidigare typ tar bort dess
