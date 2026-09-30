@@ -2040,7 +2040,7 @@ export function HouseholdMap({
                     <button
                       ref={mergeButton}
                       type="button"
-                      disabled={pending || dirty || blocked}
+                      disabled={pending || legacyDirty || blocked}
                       onClick={() => {
                         setEdgeEditor(null);
                         setMergeGeneration(state.contentVersion);
