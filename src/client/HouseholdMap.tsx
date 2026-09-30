@@ -368,6 +368,10 @@ export function HouseholdMap({
     };
   }, [active, workOpen]);
   const newButton = useRef<HTMLButtonElement>(null);
+  useLayoutEffect(() => {
+    if (mergeOpen)
+      setPanelFocusRequest({ id: 'work', element: document.getElementById('merge-title') });
+  }, [mergeOpen]);
   const [load, setLoad] = useState(0);
 
   const loseAccess = useCallback(() => {

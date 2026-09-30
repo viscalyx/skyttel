@@ -186,7 +186,9 @@ export function ObjectMerge({
   }
   return (
     <section aria-label="Sammanslagning">
-      <h2>Slå samman objekt</h2>
+      <h2 id="merge-title" tabIndex={-1}>
+        Slå samman objekt
+      </h2>
       <p>
         Lika namn eller e-postadresser visar inte att det är samma företeelse. Granska båda
         identiteterna, uppgifterna och varje samband.
