@@ -719,7 +719,8 @@ export function HouseholdMap({
         setDirty(false);
         setBlocked(false);
         if (document.activeElement === submittedFocus || document.activeElement === document.body) {
-          if (kind === 'undo') openPanel('work', document.getElementById('draft-title'));
+          if (kind === 'undo' || kind === 'merge')
+            openPanel('work', document.getElementById('draft-title'));
           else newButton.current?.focus();
         }
       }
