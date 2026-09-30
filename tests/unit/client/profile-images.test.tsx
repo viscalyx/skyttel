@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -147,3 +147,57 @@ test.each([401, 403, 409, 503])(
     else expect(details.getByDisplayValue('Befintlig text')).toBeTruthy();
   },
 );
+
+test('an image error returns to the retained object and expires before an unrelated draft rejection', async () => {
+  const details = await open();
+  await userEvent.upload(details.getByLabelText('Välj profilbild'), await file());
+  await screen.findByText('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  const before = await read();
+  await userEvent.upload(
+    details.getByLabelText('Välj profilbild'),
+    new File(['invalid'], 'bad.png', { type: 'image/png' }),
+  );
+  await screen.findByText(/Bilden kunde inte behandlas/);
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lo Exempel', exact: true }));
+  expect(screen.queryByRole('group', { name: 'Objektets detaljer' })).toBeNull();
+  const returnName = 'Återgå till bilden för Lo Exempel';
+  await userEvent.click(screen.getByRole('button', { name: returnName, exact: true }));
+  expect(screen.getByRole('heading', { name: 'Lo Exempel', exact: true })).toBe(
+    document.activeElement,
+  );
+  expect(details.getByDisplayValue('Befintlig text')).toBeTruthy();
+  expect(await read()).toEqual(before);
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }),
+  );
+  await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+  expect(screen.queryByRole('button', { name: returnName, exact: true })).toBeNull();
+  const description = details.getByLabelText('Beskrivning', { exact: true });
+  await userEvent.clear(description);
+  await userEvent.type(description, 'Ny oskickad text');
+  const current = await read();
+  expect(
+    (
+      await client.json(`${path}/draft`, {
+        id: 'independent',
+        version: current.draft.version,
+        contentVersion: current.contentVersion,
+        baseRevision: null,
+        value: { typeId: current.types[0].id, name: 'Annat förslag', description: '' },
+      })
+    ).status,
+  ).toBe(200);
+  await userEvent.click(details.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }));
+  const alert = await screen.findByRole('alert');
+  expect(alert.textContent).toContain('Avvisat:');
+  expect(screen.queryByRole('button', { name: returnName, exact: true })).toBeNull();
+  expect(details.getByDisplayValue('Ny oskickad text')).toBeTruthy();
+  const after = await read();
+  expect(after.objects).toEqual([]);
+  expect(after.draft.changes.find((change) => change.id === 'person')).toEqual(
+    before.draft.changes[0],
+  );
+  expect(after.draft.changes.find((change) => change.id === 'independent')?.after?.name).toBe(
+    'Annat förslag',
+  );
+});
