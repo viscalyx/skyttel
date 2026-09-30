@@ -463,24 +463,47 @@ test('SAMMANSLAGNING-02: refreshed source facts require new choices while indepe
       await form.getByLabel('Val för samband first').selectOption('remove');
       await form.getByLabel('Val för samband second').selectOption('keep');
       const state = await read(other.request);
+      const objectType = state.types.find(
+        (type) => type.id === state.objects.find((object) => object.id === 'a')?.typeId,
+      )!;
+      const edge = state.relationships.find((edge) => edge.id === 'second')!;
+      const edgeType = state.relationshipTypes.find((type) => type.id === edge.typeId)!;
       const source =
+        kind === 'object-type' ? objectType : kind === 'relationship' ? edge : edgeType;
+      const value =
         kind === 'object-type'
-          ? state.types[0]
+          ? {
+              name: 'Granskad objekttyp',
+              description: objectType.description,
+              fields: objectType.fields ?? [],
+              sections: objectType.sections,
+              builtins: objectType.builtins,
+              propertyOrder: objectType.propertyOrder,
+            }
           : kind === 'relationship'
-            ? state.relationships.find((edge) => edge.id === 'second')!
-            : state.relationshipTypes[0];
+            ? {
+                typeId: edge.typeId,
+                sourceId: edge.sourceId,
+                targetId: edge.targetId,
+                knowledge: edge.knowledge,
+                customValues: edge.customValues,
+                lifecycle: 'ended',
+              }
+            : {
+                name: 'Granskad sambandstyp',
+                description: edgeType.description,
+                forwardLabel: edgeType.forwardLabel ?? edgeType.name,
+                reverseLabel: edgeType.reverseLabel ?? edgeType.name,
+                fields: edgeType.fields ?? [],
+                sections: edgeType.sections,
+              };
       expect(
         (
           await post(other.request, kind, {
             version: state.draft.version,
             id: source.id,
             baseRevision: source.revision,
-            value: {
-              ...source,
-              ...(kind === 'relationship'
-                ? { lifecycle: 'ended' }
-                : { name: `Granskad ${kind === 'object-type' ? 'objekttyp' : 'sambandstyp'}` }),
-            },
+            value,
           })
         ).status(),
       ).toBe(200);
