@@ -267,8 +267,8 @@ discard until explicitly abandoned”.
 3. Stäng arbetsytan och öppna Lista igen. Återgå till Första Lo: texten
    finns kvar men formuläret visar äldre underlag och kan inte skickas.
    Stäng objektpanelen, öppna uppgifterna igen och kontrollera texten.
-4. Återgå till Andra Lo och försök lägga den oskickade texten i utkastet.
-   Läs beskedet om sammanslagningen och kontrollera att texten är kvar.
+4. Återgå till Andra Lo. Även det formuläret ska visa äldre underlag,
+   behålla texten och spärra **Lägg i mitt utkast**.
 5. Kopiera eventuell text som ska behållas. Välj uttryckligen **Stäng
    utan att skicka texten** för Andra Lo. Kastning är fortfarande spärrad
    tills samma uttryckliga val görs för Första Lo.
@@ -280,8 +280,10 @@ discard until explicitly abandoned”.
 
 - Vanlig panel- och arbetsytestängning kastar inte oskickad text.
   Äldre underlag och sammanslagna identiteter skyddas av befintliga regler.
-- Ett avvisat enskilt förslag ändrar inte sammanslagningen eller kartan.
-  Kastning väntar tills oskickade formulär hanteras uttryckligen.
+- Enskilda formulär får inte skriva över sammanslagningen. Integrationstestet
+  kontrollerar även att servern avvisar ett sådant förslag med aktuell
+  utkastsversion utan att ändra något. Kastning väntar tills oskickade
+  formulär hanteras uttryckligen.
 - Båda tidigare privata förslagen återkommer med sina identiteter;
   oberoende förslag bevaras. Ingen gemensam ändring eller extra kvitto
   skapas. Utkastet finns kvar efter omstart.

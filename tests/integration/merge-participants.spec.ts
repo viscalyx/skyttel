@@ -95,10 +95,22 @@ test('SAMMANSLAGNING-05: participant text survives merge and blocks discard unti
     await expect(second.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Andra oskickade texten',
     );
-    const rejected = page.waitForResponse((response) => response.url() === `${path}/draft`);
-    await second.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    expect(await (await rejected).json()).toMatchObject({ error: 'merge_review_required' });
-    await expect(page.getByRole('alert')).toContainText('Detta ingår i en sammanslagning');
+    await expect(second.getByRole('alert')).toContainText('Formuläret bygger på ett äldre utkast');
+    await expect(
+      second.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }),
+    ).toBeDisabled();
+    const rejected = await post('draft', {
+      version: merged.draft.version,
+      contentVersion: merged.contentVersion,
+      id: 'b',
+      baseRevision: original.objects.find((object) => object.id === 'b')?.revision,
+      value: {
+        ...original.draft.changes.find((change) => change.id === 'b')?.after,
+        description: 'Andra oskickade texten',
+      },
+    });
+    expect(rejected.status()).toBe(409);
+    expect(await rejected.json()).toMatchObject({ error: 'merge_review_required' });
     await expect(second.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Andra oskickade texten',
     );
