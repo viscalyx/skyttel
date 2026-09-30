@@ -1,8 +1,26 @@
 import { chmodSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+
+async function prepareReview(page: Page, path: string, archive: Buffer) {
+  await page.getByLabel('Skyttel-export (ZIP)').setInputFiles({
+    name: 'skyttel.zip',
+    mimeType: 'application/zip',
+    buffer: archive,
+  });
+  const preparing = page.waitForResponse(
+    (response) => response.request().method() === 'POST' && response.url() === `${path}/imports`,
+  );
+  await page.getByRole('button', { name: 'Kontrollera importfil' }).click();
+  const response = await preparing;
+  expect(response.status()).toBe(201);
+  const ready = await response.json();
+  expect(ready.status).toBe('ready');
+  await expect(page.getByText(ready.id, { exact: true })).toBeVisible();
+  return ready;
+}
 
 test('IMPORT-16: an administrator explicitly cancels only an unconfirmed preparation and removes its staged archive', async ({
   page,
@@ -131,6 +149,142 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
     await expect(file).toBeEnabled();
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
   } finally {
+    await installation.close();
+  }
+});
+
+test('IMPORT-18: a fresh administrator client can find cancelled files even when another review is ready', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const other = await browser.newContext();
+  let directory = '';
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const before = await (await page.request.get(`${path}/map`)).json();
+    const exported = await (
+      await page.request.post(`${path}/exports`, {
+        headers: { origin: installation.origin },
+        data: {},
+      })
+    ).json();
+    const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
+    const destination = `${installation.origin}/households/${household.id}/settings/import`;
+    await page.goto(destination);
+    const first = await prepareReview(page, path, archive);
+    await signIn(other.request, installation.origin);
+    const second = await other.newPage();
+    await second.goto(destination);
+    await expect(second.getByText(first.id, { exact: true })).toBeVisible();
+    const newer = await prepareReview(second, path, archive);
+    expect(newer.id).not.toBe(first.id);
+    directory = join(installation.directory, '.skyttel-imports', first.id);
+    chmodSync(directory, 0o500);
+    await page.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+    await expect(page.getByText(/Förberedelsen kan inte längre användas/)).toBeVisible();
+    expect(existsSync(directory)).toBe(true);
+    const fresh = await other.newPage();
+    await fresh.goto(destination);
+    await expect(fresh.getByText(first.id, { exact: true })).toBeVisible();
+    const cleanup = fresh.getByRole('button', { name: 'Slutför förberedelsens rensning' });
+    await expect(cleanup).toBeVisible();
+    await expect(fresh.getByLabel('Skyttel-export (ZIP)')).toBeDisabled();
+    expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    chmodSync(directory, 0o700);
+    await cleanup.click();
+    await expect(fresh.getByText(/Förberedelsen är avbruten/)).toBeVisible();
+    expect(existsSync(directory)).toBe(false);
+    await fresh.reload();
+    await expect(fresh.getByText(newer.id, { exact: true })).toBeVisible();
+    await expect(fresh.getByRole('group', { name: 'Granska ersättningen' })).toBeVisible();
+    await expect(
+      fresh.getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' }),
+    ).not.toBeChecked();
+    await fresh.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+    await expect(fresh.getByText(/Förberedelsen är avbruten/)).toBeVisible();
+    expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+  } finally {
+    if (directory && existsSync(directory)) chmodSync(directory, 0o700);
+    await other.close();
+    await installation.close();
+  }
+});
+
+test('IMPORT-19: a retired cancellation response cannot forget a newer preparation after Settings navigation', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  let release = () => {};
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const before = await (await page.request.get(`${path}/map`)).json();
+    const exported = await (
+      await page.request.post(`${path}/exports`, {
+        headers: { origin: installation.origin },
+        data: {},
+      })
+    ).json();
+    const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
+    const destination = `${installation.origin}/households/${household.id}/settings/import`;
+    await page.goto(destination);
+    const first = await prepareReview(page, path, archive);
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let completed = () => {};
+    const serverCompleted = new Promise<void>((resolve) => {
+      completed = resolve;
+    });
+    let delivered = () => {};
+    const responseDelivered = new Promise<void>((resolve) => {
+      delivered = resolve;
+    });
+    await page.route(`${path}/imports/${first.id}/cancel`, async (route) => {
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      expect(await response.json()).toEqual({ cancelled: true });
+      completed();
+      await held;
+      await route.fulfill({ response });
+      delivered();
+    });
+    await page.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+    await serverCompleted;
+    expect(existsSync(join(installation.directory, '.skyttel-imports', first.id))).toBe(false);
+    const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+    await navigation.getByRole('link', { name: 'Koppla historiskt innehåll', exact: true }).click();
+    await navigation.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
+    await page.getByRole('button', { name: 'Hämta importens status' }).click();
+    await expect(page.getByRole('alert')).toContainText('finns inte längre');
+    const newer = await prepareReview(page, path, archive);
+    expect(newer.id).not.toBe(first.id);
+    release();
+    await responseDelivered;
+    await expect(page.getByText(newer.id, { exact: true })).toBeVisible();
+    let discoveries = 0;
+    const readIds: string[] = [];
+    page.on('request', (request) => {
+      if (request.url() === `${path}/imports`) discoveries++;
+      if (request.method() === 'GET' && request.url().startsWith(`${path}/imports/`))
+        readIds.push(request.url());
+    });
+    await page.reload();
+    await expect(page.getByText(newer.id, { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Skyttel-export (ZIP)')).toBeDisabled();
+    await page.getByRole('button', { name: 'Hämta importens status' }).click();
+    await expect(page.getByRole('group', { name: 'Granska ersättningen' })).toBeVisible();
+    expect(discoveries).toBe(0);
+    expect(readIds).toEqual([`${path}/imports/${newer.id}`]);
+    expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    await page.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+    await expect(page.getByText(/Förberedelsen är avbruten/)).toBeVisible();
+  } finally {
+    release();
     await installation.close();
   }
 });

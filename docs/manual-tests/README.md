@@ -123,8 +123,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   efter rolländring, uppföljning av rätt försök trots en senare ersättning
   och ångring med aktuellt underlag. Tangentbord och fokus följs genom
   filfel, granskning, uttryckligt avbrott av obekräftad förberedelse,
-  avbrottets rensningsfel och tappade svar, ersättning och innehållskoppling
-  i båda teman.
+  avbrottets rensningsfel och tappade svar, flera samtidiga granskningar
+  och fördröjda svar efter navigering. Ersättning och innehållskoppling
+  följs i båda teman.
 
 - [Fullständig export](household-export.md): egen sida i Inställningar,
   privata uppgifter före export, tangentbord, fokus, bevarat kartarbete,

@@ -768,3 +768,97 @@ window.fetch = async (...args) => {
   Ingen ny rensning eller ersättning skickas automatiskt.
 - Tillfälliga filer försvinner efter lyckad rensning. Hushållets innehåll,
   privata arbete och innehållsversion är oförändrade, även efter omstart.
+
+### IMPORT-18: hitta väntande avbrott trots en annan granskning
+
+**Syfte:** Hitta och rensa en avbruten förberedelses kvarvarande filer i
+en ny klient utan att förlora en annan obekräftad granskning.
+
+**Användare:** Samma aktuella administratör i två webbläsarprofiler.
+
+**Förutsättningar:** Provinstallation och filrättigheter enligt IMPORT-17.
+Ingen ersättning bekräftas under provet.
+
+**Integrationstest:**
+[household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
+testfallet “IMPORT-18: a fresh administrator client can find cancelled
+files even when another review is ready”.
+
+**Steg:**
+
+1. Kontrollera exportfilen i första profilen och anteckna ID.
+2. Öppna importen i andra profilen. Kontrollera samma fil på nytt och
+   anteckna det nya ID:t. Den första profilens granskning ska vara kvar.
+3. Driftansvarig tar bort skrivbehörigheten från första förberedelsens
+   underkatalog (`chmod 500`). Avbryt den i första profilen och läs att
+   rensning återstår.
+4. Öppna importen i en helt ny flik utan kopierad fliklagring. Det första
+   ID:t och dess väntande rensning ska gå att hitta. Filval är spärrat.
+5. Återställ första katalogens rättigheter (`chmod 700`) och välj
+   **Slutför förberedelsens rensning** i den nya fliken.
+6. Ladda om den nya fliken. Den andra granskningen ska finnas kvar med
+   sitt eget ID och omarkerad bekräftelse. Avbryt även den uttryckligen.
+
+**Förväntat resultat:**
+
+- En annan obekräftad granskning döljer inte kvarvarande filer som
+  administratören behöver hitta och rensa efter ett uttryckligt avbrott.
+- Rensning tar endast bort rätt förberedelse. Den andra granskningen
+  finns kvar, och inget hushållsinnehåll ersätts eller sparas automatiskt.
+
+### IMPORT-19: ett äldre svar får inte glömma en ny förberedelse
+
+**Syfte:** Behålla den aktuella förberedelsens ID när ett äldre avbrottssvar
+kommer tillbaka efter navigering i Inställningar.
+
+**Användare:** Alex som aktuell administratör.
+
+**Förutsättningar:** Giltig export och separat provinstallation. Använd
+utvecklarverktygens Console för det kontrollerade fördröjda svaret.
+
+**Integrationstest:**
+[household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
+testfallet “IMPORT-19: a retired cancellation response cannot forget a
+newer preparation after Settings navigation”.
+
+**Steg:**
+
+1. Kontrollera exportfilen och anteckna ID. Kör koden nedan och välj
+   **Avbryt förberedelsen**. Fortsätt när konsolen visar **Avbrottet är
+   utfört, svaret väntar**.
+2. Öppna **Koppla historiskt innehåll** och återgå till importen. Hämta
+   första försökets status och läs att förberedelsen inte finns längre.
+3. Kontrollera filen igen och anteckna det nya ID:t. Kör
+   `window.releaseImportReply()` i Console för att släppa det äldre svaret.
+4. Ladda om sidan. Det nya ID:t ska finnas kvar med spärrat filval tills
+   **Hämta importens status** läser just den nya förberedelsen.
+5. Läs den nya granskningen och avbryt den uttryckligen. Kartan ska vara
+   oförändrad genom hela provet. Omladdning återställer Console-koden.
+
+```javascript
+const originalFetch = window.fetch;
+const heldReply = new Promise((resolve) => {
+  window.releaseImportReply = resolve;
+});
+window.fetch = async (...args) => {
+  const request = new Request(...args);
+  const response = await originalFetch(...args);
+  const isCancel = /\/imports\/[^/]+\/cancel$/.test(new URL(request.url).pathname);
+  if (request.method === 'POST' && isCancel) {
+    window.fetch = originalFetch;
+    const result = await response.clone().json();
+    if (!response.ok || result.cancelled !== true) return response;
+    console.log('Avbrottet är utfört, svaret väntar');
+    await heldReply;
+    if (request.signal.aborted) throw new DOMException('Avbruten', 'AbortError');
+  }
+  return response;
+};
+```
+
+**Förväntat resultat:**
+
+- Ett svar för en lämnad vy tar inte bort en ny förberedelses identitet.
+  Omladdning följer det lokalt kända nya ID:t genom uttrycklig läsning.
+- Navigering ångrar inte det avbrott som redan utförs på servern och
+  skickar varken ny ersättning eller automatisk upprepning.
