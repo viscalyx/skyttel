@@ -163,6 +163,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   med verklig Google-inloggning i devcontainern, utan CI-hemligheter.
   En kontrollerad lokal MCP-klient behåller gamla begäranden, tappar ett
   lyckat sparbesked och provar exakta återförsök efter serveromstart.
+  Profilens anslutningar får tangentbordsfokus och återgången behåller
+  oskickad text och oberoende privata förslag.
 
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, avbryta extern inloggning, återhämta utgångna försök, börja
