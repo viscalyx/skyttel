@@ -135,6 +135,27 @@ test('BILD-04: a delayed image error returns to its closed object without losing
       'Oskickat om Garaget',
     );
     expect(await read()).toEqual(before);
+    await returnToImage.click();
+    await cycle.getByLabel('Beskrivning', { exact: true }).fill('Kasta just denna oskickade text');
+    await cycle.getByRole('button', { name: 'Stäng utan att skicka texten', exact: true }).click();
+    await expect(cycle).not.toBeVisible();
+    expect(await read()).toEqual(before);
+    await returnToImage.click();
+    await expect(cycle.getByRole('heading', { name: 'Cykeln', exact: true })).toBeFocused();
+    await expect(cycle.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Skickad text om Cykeln',
+    );
+    await expect(cycle.getByAltText('Profilbild för Cykeln')).toHaveAttribute(
+      'src',
+      new RegExp(`/profile-images/${images[1]}$`),
+    );
+    expect(await read()).toEqual(before);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Uppgifter för Garaget', exact: true }).click();
+    await activatePanel(page, 'Garaget');
+    await expect(garage.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Oskickat om Garaget',
+    );
   } finally {
     releaseResponse();
     await installation.close();

@@ -264,6 +264,12 @@ losing newer work”.
    Välj sedan **Återgå till bilden för Cykeln**.
 5. Kontrollera Cykelns beskrivning och gröna bild. Öppna Garaget igen och
    kontrollera den oskickade beskrivningen.
+6. Använd bildfelets återgång till Cykeln igen. Skriv en ny beskrivning
+   och välj uttryckligen **Stäng utan att skicka texten**. Kontrollera att
+   det redan lagda bildförslaget finns kvar i utkastet.
+7. Välj bildfelets återgång igen. Kontrollera Cykelns ursprungliga
+   utkastbeskrivning, gröna bild och ikon. Kontrollera också att Garagets
+   oskickade beskrivning finns kvar när du öppnar Garaget.
 
 För en kontrollerad fördröjning, kör detta i webbläsarens konsol innan steg 3.
 Det verkliga serveranropet och dess svar används. Anropa `releaseImageError()`
@@ -289,6 +295,9 @@ window.fetch = async (...args) => {
 - Den uttryckliga återgången öppnar Cykelns panel och fokuserar dess rubrik.
 - Den senaste giltiga bilden, Cykelns ikon och båda objektens beskrivningar
   finns kvar. Garagets oskickade text har inte skickats eller sparats.
+- Efter att Cykelns nya oskickade text uttryckligen kastas öppnar bildfelets
+  återgång objektets aktuella förslag igen med fokus på rubriken. Den kastade
+  texten återkommer inte; det oberoende arbetet i Garaget finns kvar.
 
 ### BILD-05: Behåll bildarbete genom Inställningar och avsluta felåtergången
 
