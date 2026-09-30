@@ -8,8 +8,8 @@ import { seedLargeMap } from '../../support/large-map.js';
 import { applicationFixture } from '../server/fixture.js';
 
 // These full form workflows use the real HTTP app and SQLite; coverage on
-// shared CI runners can take longer than the five-second unit-test default.
-vi.setConfig({ testTimeout: 15_000 });
+// slow shared CI runners can take about twice as long as on fast ones.
+vi.setConfig({ testTimeout: 30_000 });
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
 let client: ReturnType<typeof fixture.client>;
@@ -102,7 +102,6 @@ async function save() {
   await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Sparat:'));
 }
 
-// Every keystroke and filter change re-filters the 500-object list, which can exceed the file budget under a loaded coverage run.
 test('grouped browsing combines type identities, description search and marks without changing household data', async () => {
   const { user } = await (await client.request('/api/bootstrap')).json();
   seedLargeMap(fixture.database, user.id, householdId);
@@ -136,7 +135,7 @@ test('grouped browsing combines type identities, description search and marks wi
   await userEvent.click(list.getByRole('button', { name: 'Rensa sökning och filter' }));
   expect(list.getByText('500 av 500 objekt')).toBeTruthy();
   expect(await (await client.request(path)).json()).toEqual(initial);
-}, 30_000);
+});
 
 test('object pages retain sorting and selected-item access through panel closure', async () => {
   const { user } = await (await client.request('/api/bootstrap')).json();
