@@ -75,7 +75,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 - [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
   sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad tillgång
-  och ersatt hushållsinnehåll.
+  och ersatt hushållsinnehåll. Väntande permanent radering stoppar mikrofon,
+  dolt formulär och registrerat sparförsök före omladdning; oberoende privat
+  arbete finns kvar efter uttryckligt slutförande.
 
 - [Månadskostnad](costs.md): separata Render-, Live- och Terra-belopp,
   prisunderlag, månadens antaganden, okända värden, kumulativa mätningar,
