@@ -1363,7 +1363,8 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
   expect(active.draft.changes).toEqual([]);
   const history = await (await client.request(`${path}/history`)).json();
   expect(history.history).toHaveLength(2);
-  expect(history.history[0].relationships).toEqual([
+  expect(history.history[0].operationId).toBe('initial-lifecycle');
+  expect(history.history[1].relationships).toEqual([
     expect.objectContaining({
       id: 'incoming',
       before: saved.relationships[0],
