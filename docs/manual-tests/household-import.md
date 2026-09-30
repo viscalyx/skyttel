@@ -639,17 +639,20 @@ review, errors and assignment at 1280px”, samma titel med “390px”,
    finnas kvar när granskningen visas.
 4. Aktivera **Hämta importens status**. Fokus ska gå till
    **Granska ersättningen**. Läs vad som ersätts och behålls.
-5. Markera bekräftelsen med mellanslag och aktivera ersättningsknappen
+5. Aktivera **Avbryt förberedelsen** med Enter. Efter lyckat avbrott ska
+   fokus återgå till filvalet och kartan vara oförändrad. Välj filen och
+   kontrollera den igen. Fokus ska återgå till den nya granskningen.
+6. Markera bekräftelsen med mellanslag och aktivera ersättningsknappen
    med Enter. Efter slutförd ersättning ska fokus ligga på
    **Läs in det återställda hushållet**.
-6. Öppna **Koppla historiskt innehåll** genom Inställningar. Hämta
+7. Öppna **Koppla historiskt innehåll** genom Inställningar. Hämta
    underlaget, välj din innehållsidentitet och **Ingen aktuell ägare**.
    Läs följderna och bekräfta med tangentbordet. Fokus ska återgå till
    **Hämta aktuella innehållskopplingar** efter det sparade resultatet.
-7. Välj samma identitet och din aktuella verifierade användare. En ny
+8. Välj samma identitet och din aktuella verifierade användare. En ny
    bekräftelse krävs. Bekräfta och kontrollera att ditt privata utkast
    finns kvar när du läser in kartan igen.
-8. Upprepa med det andra temat. Alla kontroller, statusbesked och texter
+9. Upprepa med det andra temat. Alla kontroller, statusbesked och texter
    ska vara läsbara och möjliga att nå utan rullning i sidled.
 
 **Förväntat resultat:**

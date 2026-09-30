@@ -134,6 +134,26 @@ for (const { width, height } of [
         await importer.getByRole('button', { name: 'Hämta importens status' }).focus();
         await page.keyboard.press('Enter');
         await expectUncoveredFocus(review.locator('legend'));
+        const cancel = importer.getByRole('button', { name: 'Avbryt förberedelsen', exact: true });
+        await cancel.focus();
+        await expectUncoveredFocus(cancel);
+        expect((await cancel.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        await page.keyboard.press('Enter');
+        await expect(importer.getByRole('status')).toContainText('Förberedelsen är avbruten');
+        await expectUncoveredFocus(file);
+        expect(await (await page.request.get(`${path}/map`)).json()).toEqual({
+          ...original,
+          contentVersion: expectedVersion,
+        });
+        await file.setInputFiles({
+          name: 'skyttel.zip',
+          mimeType: 'application/zip',
+          buffer: archive,
+        });
+        await prepare.focus();
+        await page.keyboard.press('Enter');
+        await expect(review).toBeVisible();
+        await expectUncoveredFocus(review.locator('legend'));
         const confirmation = importer.getByRole('checkbox', {
           name: 'Jag vill ersätta allt hushållsinnehåll',
         });
