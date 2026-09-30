@@ -430,3 +430,135 @@ test('MEDLEM-03: administrators share responsibility and open clients lose revok
     await installation.close();
   }
 });
+
+test('MEDLEM-08: staged invitation copies its one-time code and revocation retires an open recipient workspace', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const recipient = await browser.newContext();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const read = async () => (await page.request.get(`${path}/map`)).json();
+    const post = (suffix: string, data: unknown) =>
+      page.request.post(`${path}/${suffix}`, { headers: { origin: installation.origin }, data });
+    const initial = await read();
+    const value = { typeId: initial.types[0].id, name: 'Bevarad cykel', description: '' };
+    expect(
+      (await post('map/draft', { id: 'cycle', version: 0, baseRevision: null, value })).status(),
+    ).toBe(200);
+    expect(
+      (
+        await post('map/save', {
+          version: (await read()).draft.version,
+          operationId: 'before-invite',
+        })
+      ).status(),
+    ).toBe(200);
+    const saved = await read();
+    expect(
+      (
+        await post('map/draft', {
+          id: 'cycle',
+          version: saved.draft.version,
+          contentVersion: saved.contentVersion,
+          baseRevision: saved.objects[0].revision,
+          value: { ...value, description: 'Alex privata förslag' },
+        })
+      ).status(),
+    ).toBe(200);
+    const before = await read();
+    installation.setIdentity(robin);
+    await signIn(recipient.request, installation.origin, 'microsoft');
+    const recipientPage = await recipient.newPage();
+    await recipientPage.goto(installation.origin);
+    const userId = await recipientPage.getByLabel('Ditt Skyttel-användar-ID').inputValue();
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], {
+      origin: installation.origin,
+    });
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const unsent = page.getByLabel('Objektets namn');
+    await unsent.fill('Alex oskickade arbete');
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Administrera tillgång', exact: true }),
+    ).toBeFocused();
+    await expect(unsent).toHaveValue('Alex oskickade arbete');
+    await expect(unsent).not.toBeVisible();
+    const ready = page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true });
+    await expect(ready).toBeVisible();
+    await expect(page.getByLabel('Skyttel-användar-ID att bjuda in')).toHaveCount(0);
+    await expect(page.getByText(/Ett namn eller en e-postadress/)).toBeVisible();
+    await ready.click();
+    await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(userId);
+    const creating = page.waitForResponse(
+      (response) =>
+        response.url() === `${path}/invitations` && response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
+    const created = await creating;
+    expect(created.status()).toBe(201);
+    const invitation = await created.json();
+    expect(invitation.invitation.userId).toBe(userId);
+    const codeField = page.getByLabel('Inbjudningskod att dela');
+    await expect(codeField).toHaveValue(invitation.code);
+    await expect(page.getByText(/Skicka koden privat till/)).toContainText(userId);
+    await expect(page.getByText(/kan användas en gång/)).toBeVisible();
+    await page.getByRole('button', { name: 'Kopiera koden', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Koden är kopierad');
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(invitation.code);
+    await page.getByRole('button', { name: 'Inbjudningar', exact: true }).click();
+    const invitations = page.getByRole('list', { name: 'Inbjudningar' });
+    await expect(invitations).toContainText('Väntar på svar');
+    await expect(page.getByRole('list', { name: 'Medlemmar' })).not.toBeVisible();
+    await expect(codeField).toHaveValue(invitation.code);
+    await page.getByRole('button', { name: 'Klar med inbjudan', exact: true }).click();
+    await expect(codeField).toHaveCount(0);
+    await expect(ready).toBeVisible();
+    expect(await read()).toEqual(before);
+    await recipientPage.getByLabel('Inbjudningskod', { exact: true }).fill(invitation.code);
+    await recipientPage.getByRole('button', { name: 'Acceptera inbjudan', exact: true }).click();
+    await expect(recipientPage.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
+    await expect(recipientPage.getByText('Medlem', { exact: true })).toBeVisible();
+    await openWorkspace(recipientPage);
+    await recipientPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const recipientUnsent = recipientPage.getByLabel('Objektets namn');
+    await recipientUnsent.fill('Robins oskickade arbete');
+    await expect(invitations).toContainText('Accepterad', { timeout: 10_000 });
+    await page.getByRole('button', { name: 'Medlemmar', exact: true }).click();
+    await expect(invitations).not.toBeVisible();
+    const member = page
+      .getByRole('list', { name: 'Medlemmar' })
+      .getByRole('listitem')
+      .filter({ hasText: userId });
+    await expect(member).toContainText(robin.name);
+    await member.getByRole('button', { name: 'Återkalla tillgång', exact: true }).click();
+    await expect(member).toContainText('Alla befintliga sessioner förlorar tillgång');
+    await expect(member).toContainText('Personer och innehåll i kartan finns kvar');
+    await member.getByRole('button', { name: 'Bekräfta återkallelse', exact: true }).click();
+    await expect(
+      recipientPage.getByRole('heading', { name: 'Du har inte tillgång till hushållet' }),
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(recipientUnsent).toHaveCount(0);
+    expect((await recipient.request.get(`${path}/map`)).status()).toBe(403);
+    await expect(member).toHaveCount(0);
+    expect(await read()).toEqual(before);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await expect(unsent).toHaveValue('Alex oskickade arbete');
+    await expect(unsent).toBeFocused();
+    expect(await read()).toEqual(before);
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
+    await page.reload();
+    await expect(codeField).toHaveCount(0);
+    await expect(ready).toBeVisible();
+  } finally {
+    await recipient.close();
+    await installation.close();
+  }
+});

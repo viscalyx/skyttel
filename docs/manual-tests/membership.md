@@ -300,3 +300,69 @@ new invitation restores membership”.
   återkallelsen.
 - En ny kod ger Robin rollen **Medlem** igen, med tillgång till samma
   sparade objekt.
+
+## Stegvis inbjudan och öppna arbetsytor
+
+### MEDLEM-08: Kopiera en engångskod och återkalla en öppen arbetsyta
+
+**Syfte:** Följ en stegvis inbjudan till faktisk acceptans och kontrollera
+att återkallad tillgång stoppar mottagarens redan öppna, oskickade arbete.
+
+**Användare:** Alex som administratör i profil A och Robin utan tillgång
+i profil B. Använd bara påhittade uppgifter och en separat provinstallation.
+
+**Förutsättningar:** Följ allmän förberedelse. Alex skapar **Bevarad cykel**
+och sparar hela utkastet. Redigera sedan cykeln, skriv **Alex privata förslag**
+i beskrivningen och lägg i utkastet utan att spara. Robin loggar in och
+kopierar sitt faktiska **Ditt Skyttel-användar-ID** från sidan utan tillgång.
+Tillåt webbläsarens urklipp vid kopieringen; ett nekat urklipp provas separat.
+
+**Integrationstest:**
+[membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
+testfallet “MEDLEM-08: staged invitation copies its one-time code and
+revocation retires an open recipient workspace”.
+
+**Steg:**
+
+1. Alex öppnar **Nytt objekt** och skriver **Alex oskickade arbete** utan
+   att lägga texten i utkastet. Öppna **Inställningar → Administrera tillgång**.
+   Huvudrubriken får fokus; kartans oskickade formulär är dolt.
+2. Läs **Be om användar-ID** och förklaringen om att namn eller e-postadress
+   inte säkert identifierar rätt Skyttel-användare. Fältet för mottagarens ID
+   visas först när Alex väljer **Jag har personens användar-ID**.
+3. Fyll i Robins faktiska ID, kontrollera det tillsammans och välj
+   **Skapa inbjudan**. Läs mottagarens ID och uppgifterna om sju dagar,
+   engångsanvändning och att koden bara visas nu.
+4. Välj **Kopiera koden** och invänta **Koden är kopierad**. Kontrollera
+   kopian genom att klistra in den i Robins **Inbjudningskod** utan att
+   acceptera ännu. Dela inte provkoden i skärmbilder eller supportärenden.
+5. Alex väljer vyn **Inbjudningar**. Kontrollera **Väntar på svar** och
+   att medlemslistan är dold. Den aktuella koden finns fortfarande kvar;
+   byte mellan listvyer avslutar inte inbjudans sista steg.
+6. Välj **Klar med inbjudan**. Koden försvinner och det första steget visas
+   igen. Det sparade objektet och Alex privata förslag är oförändrade.
+7. Robin väljer **Acceptera inbjudan** med den kopierade koden och får
+   hushållet med rollen **Medlem**. Öppna **Nytt objekt** och skriv
+   **Robins oskickade arbete** utan att lägga det i utkastet. Behåll sidan öppen.
+8. Alex inväntar **Accepterad**, väljer **Medlemmar** och kontrollerar att
+   inbjudningslistan är dold. Kontrollera Robins namn och fullständiga ID.
+   Välj **Återkalla tillgång**, läs att befintliga sessioner förlorar tillgång
+   medan personer och kartinnehåll finns kvar, och bekräfta återkallelsen.
+9. Utan omladdning ska Robins sida inom tio sekunder visa
+   **Du har inte tillgång till hushållet**. Det oskickade formuläret ska
+   vara borta och Robin ska försvinna från Alex medlemslista.
+10. Alex väljer **Tillbaka till kartan**. **Alex oskickade arbete** och
+    fokus i namnfältet finns kvar. Cykeln och dess privata förslag finns kvar.
+11. Öppna **Administrera tillgång** igen och ladda om sidan. Den tidigare
+    koden ska inte kunna hämtas; den stegvisa inbjudan börjar från första steget.
+
+**Förväntat resultat:**
+
+- En inbjudan följer rätt användar-ID genom förberedelse, skapande och
+  uttrycklig kopiering. Skyttel skickar inget meddelande automatiskt.
+- Medlemmar och inbjudningar visas separat. Den aktuella engångskoden
+  bevaras vid listbyte men rensas när inbjudan avslutas eller sidan lämnas.
+- En verklig andra klient accepterar koden. Återkallelse gäller även den
+  redan öppna arbetsytan och avvecklar skyddat oskickat arbete före omladdning.
+- Alex behåller sparad information, eget privat förslag och oskickad text.
+  Automationen jämför hela kartsvaret och verifierar nekad HTTP-åtkomst för Robin.

@@ -169,7 +169,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   med kartans vägledning, hantera förlorad tillgång och länka inloggningssätt.
 - [Tillgång och medlemskap](membership.md): inbjudningar, utgångna och
   ersatta koder, delad administration samt återkallad och återställd
-  tillgång med bevarat innehåll i kartan.
+  tillgång med bevarat innehåll i kartan. Stegvis inbjudan och verklig kopiering,
+  separata medlems- och inbjudningsvyer samt avvecklat oskickat arbete när en
+  redan öppen mottagarklient förlorar tillgång.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt, bevara ofullständiga uppgifter och rätta obesvarad
   identitet från aktuell status med bevarad oskickad text. Påbörjade objekt
