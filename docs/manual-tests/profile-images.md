@@ -245,11 +245,13 @@ kommer efter att objektets panel stängts.
 **Förutsättningar:** Skapa privata förslag för Cykeln och Garaget med
 beskrivningar. Välj cykelikonen för Cykeln. Använd de syntetiska bilderna
 och den ogiltiga filen från förberedelsen.
+Upprepa i ljust och mörkt tema på dator och vid 320 pixlars fönsterbredd.
 
 **Integrationstest:**
 [profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
 testfallet “BILD-04: a delayed image error returns to its closed object without
-losing newer work”.
+losing newer work at {width}px {colorScheme}”, med bredderna 1440 och 320
+samt temana light och dark.
 
 **Steg:**
 
@@ -267,7 +269,9 @@ losing newer work”.
 6. Använd bildfelets återgång till Cykeln igen. Skriv en ny beskrivning
    och välj uttryckligen **Stäng utan att skicka texten**. Kontrollera att
    det redan lagda bildförslaget finns kvar i utkastet.
-7. Välj bildfelets återgång igen. Kontrollera Cykelns ursprungliga
+7. Ge bildfelets återgång tangentbordsfokus och för pekaren över knappen.
+   Kontrollera läsbar text och synligt fokus. Välj sedan återgången igen.
+   Kontrollera Cykelns ursprungliga
    utkastbeskrivning, gröna bild och ikon. Kontrollera också att Garagets
    oskickade beskrivning finns kvar när du öppnar Garaget.
 
@@ -298,6 +302,9 @@ window.fetch = async (...args) => {
 - Efter att Cykelns nya oskickade text uttryckligen kastas öppnar bildfelets
   återgång objektets aktuella förslag igen med fokus på rubriken. Den kastade
   texten återkommer inte; det oberoende arbetet i Garaget finns kvar.
+- Återgångens text och fokus är läsbara också när pekaren ligger över den
+  fokuserade knappen, i båda teman och på det smala fönstret. Automationen
+  mäter textkontrast på minst 4,5:1.
 
 ### BILD-05: Behåll bildarbete genom Inställningar och avsluta felåtergången
 
