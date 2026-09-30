@@ -13,6 +13,7 @@ import { createInstallation } from '../support/installation.js';
 
 for (const [width, height] of [
   [1440, 1000],
+  [1440, 500],
   [320, 1000],
   [320, 250],
 ]) {
@@ -201,6 +202,17 @@ for (const [width, height] of [
         await expect(garage.getByLabel('Beskrivning', { exact: true })).toHaveValue(
           'Oskickat om Garaget',
         );
+        await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+        await expect(garage).not.toBeVisible();
+        await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
+        expect(await read()).toEqual(before);
+        await openWorkspace(page);
+        await page.getByRole('button', { name: 'Uppgifter för Garaget', exact: true }).click();
+        await activatePanel(page, 'Garaget');
+        await expect(garage.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+          'Oskickat om Garaget',
+        );
+        expect(await read()).toEqual(before);
       } finally {
         releaseResponse();
         await installation.close();

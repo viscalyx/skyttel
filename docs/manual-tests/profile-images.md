@@ -246,14 +246,14 @@ kommer efter att objektets panel stängts.
 beskrivningar. Välj cykelikonen för Cykeln. Använd de syntetiska bilderna
 och den ogiltiga filen från förberedelsen.
 Upprepa i ljust och mörkt tema på dator och vid 320 pixlars fönsterbredd.
-Prova också ett kort fönster på 320 × 250 pixlar. Verklig webbläsarzoom
+Prova också korta fönster på 1440 × 500 och 320 × 250 pixlar. Verklig webbläsarzoom
 kontrolleras separat i flödet vid 200 och 400 procent.
 
 **Integrationstest:**
 [profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
 testfallet “BILD-04: a delayed image error returns to its closed object without
 losing newer work at {width}x{height}px {colorScheme}”, med storlekarna
-1440 × 1000, 320 × 1000 och 320 × 250 samt temana light och dark.
+1440 × 1000, 1440 × 500, 320 × 1000 och 320 × 250 samt temana light och dark.
 
 **Steg:**
 
@@ -277,6 +277,8 @@ losing newer work at {width}x{height}px {colorScheme}”, med storlekarna
    Kontrollera Cykelns ursprungliga
    utkastbeskrivning, gröna bild och ikon. Kontrollera också att Garagets
    oskickade beskrivning finns kvar när du öppnar Garaget.
+8. Välj **Till kartan** för att stänga arbetsytan. Öppna **Lista** och
+   Garaget igen. Kontrollera att den oskickade beskrivningen finns kvar.
 
 För en kontrollerad fördröjning, kör detta i webbläsarens konsol innan steg 3.
 Det verkliga serveranropet och dess svar används. Anropa `releaseImageError()`
@@ -308,6 +310,8 @@ window.fetch = async (...args) => {
 - Återgångens text och fokus är läsbara också när pekaren ligger över den
   fokuserade knappen, i båda teman och på det smala fönstret. Automationen
   mäter textkontrast på minst 4,5:1.
+- Både **Lista** och **Till kartan** går att trycka på i korta fönster.
+  Återgången till kartan ändrar inga privata förslag eller oskickade texter.
 
 ### BILD-05: Behåll bildarbete genom Inställningar och avsluta felåtergången
 
