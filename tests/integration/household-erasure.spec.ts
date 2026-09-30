@@ -1101,3 +1101,164 @@ test('RADERING-09: an unavailable exact attempt stays explicitly unknown after n
     await fixture.installation.close();
   }
 });
+
+test('RADERING-10: a retired status reply cannot replace a newer reviewed erasure after Settings navigation', async ({
+  page,
+}) => {
+  const fixture = await arrange(page);
+  let release = () => {};
+  try {
+    const before = await fixture.read();
+    const viewBefore = await (await page.request.get(`${fixture.path}/map/view`)).json();
+    const unusedType = before.types.find(
+      (type) => !before.objects.some((object) => object.typeId === type.id),
+    );
+    expect(unusedType).toBeDefined();
+    let executeCount = 0;
+    let resumeCount = 0;
+    page.on('request', (request) => {
+      if (request.url().endsWith('/erasure/execute')) executeCount += 1;
+      if (request.url().endsWith('/erasure/resume')) resumeCount += 1;
+    });
+    const section = await reviewInBrowser(page, fixture.administration);
+    const confirmation = section.getByLabel('Skriv RADERA PERMANENT', { exact: true });
+    const erase = section.getByRole('button', { name: 'Radera permanent', exact: true });
+    await confirmation.fill('RADERA PERMANENT');
+    const firstResponse = page.waitForResponse((response) =>
+      response.url().endsWith('/erasure/execute'),
+    );
+    await erase.click();
+    const firstResult = await firstResponse;
+    expect(firstResult.status()).toBe(200);
+    const first: ErasureStatus = (await firstResult.json()).status;
+    expect(first).toMatchObject({ phase: 'completed', counts: { objects: 1, images: 1 } });
+    await expect(section.getByText(first.operationId, { exact: true })).toBeVisible();
+    await expect(
+      section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toBeVisible();
+
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let ready = () => {};
+    const serverRead = new Promise<void>((resolve) => {
+      ready = resolve;
+    });
+    let delivered = () => {};
+    const responseDelivered = new Promise<void>((resolve) => {
+      delivered = resolve;
+    });
+    const firstPath = `${fixture.path}/erasure/${first.operationId}`;
+    const catalogPath = `${fixture.path}/erasure`;
+    await page.route(
+      catalogPath,
+      async (route) => {
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        expect((await response.json()).status).toEqual(first);
+        ready();
+        await held;
+        await route.fulfill({ response });
+        delivered();
+      },
+      { times: 1 },
+    );
+    const exactReading = page.waitForResponse(firstPath);
+    const reading = page.waitForRequest(catalogPath);
+    const readStatus = section.getByRole('button', {
+      name: 'Kontrollera raderingsstatus och läs in aktuellt innehåll',
+    });
+    await readStatus.click();
+    const exactResponse = await exactReading;
+    expect(exactResponse.status()).toBe(200);
+    expect((await exactResponse.json()).status).toEqual(first);
+    const retiredRequest = await reading;
+    await serverRead;
+    const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+    const overview = navigation.getByRole('link', { name: 'Översikt', exact: true });
+    const destination = navigation.getByRole('link', { name: 'Permanent radering', exact: true });
+    await overview.click();
+    await destination.click();
+    await section.getByRole('checkbox', { name: unusedType?.name, exact: true }).check();
+    await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
+    const scope = section.getByRole('region', { name: 'Omfattning att bekräfta' });
+    await expect(
+      scope.getByRole('list', { name: 'Berörda objekttyper', exact: true }),
+    ).toContainText(unusedType?.name as string);
+    await expect(scope).toContainText('Bildversioner: 0');
+    await expect(scope).not.toContainText('Oberoende privat förslag');
+    await expect(confirmation).toHaveValue('');
+    await expect(erase).toBeDisabled();
+    await confirmation.fill('RADERA PERMANENT');
+    const newerResponse = page.waitForResponse((response) =>
+      response.url().endsWith('/erasure/execute'),
+    );
+    await erase.click();
+    const newerResult = await newerResponse;
+    expect(newerResult.status()).toBe(200);
+    const newer: ErasureStatus = (await newerResult.json()).status;
+    expect(newer.operationId).not.toBe(first.operationId);
+    expect(newer).toMatchObject({
+      phase: 'completed',
+      counts: { objects: 0, relationships: 0, objectTypes: 1, relationshipTypes: 0, images: 0 },
+    });
+    await expect(section.getByText(newer.operationId, { exact: true })).toBeVisible();
+    await overview.focus();
+    release();
+    await responseDelivered;
+    await (await retiredRequest.response())?.finished();
+    await expect(overview).toBeFocused();
+    await expect(section.getByText(newer.operationId, { exact: true })).toBeVisible();
+    await expect(section.getByText(first.operationId, { exact: true })).toHaveCount(0);
+    await expect(
+      section.getByRole('list', { name: 'Raderingens resultat' }).getByRole('listitem'),
+    ).toHaveText([
+      'Objekt: 0',
+      'Samband: 0',
+      'Objekttyper: 1',
+      'Sambandstyper: 0',
+      'Bildversioner: 0',
+    ]);
+    const readIds: string[] = [];
+    page.on('request', (request) => {
+      if (
+        request.method() === 'GET' &&
+        [firstPath, `${fixture.path}/erasure/${newer.operationId}`].includes(request.url())
+      )
+        readIds.push(request.url());
+    });
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('heading', { name: 'Inställningar', level: 1 })).toBeFocused();
+    await destination.click();
+    await expect(section.getByText(newer.operationId, { exact: true })).toBeVisible();
+    await page.reload();
+    await readStatus.click();
+    await expect(section.getByText(newer.operationId, { exact: true })).toBeVisible();
+    await expect(section.getByText(first.operationId, { exact: true })).toHaveCount(0);
+    expect(readIds).toContain(`${fixture.path}/erasure/${newer.operationId}`);
+    expect(readIds).not.toContain(firstPath);
+    expect(executeCount).toBe(2);
+    expect(resumeCount).toBe(0);
+    const retained = await fixture.read();
+    expect(retained.contentVersion).toBe(before.contentVersion + 2);
+    expect(retained.objects).toEqual(before.objects.filter(({ id }) => id === 'chair'));
+    expect(retained.draft).toEqual(before.draft);
+    expect(retained.types).toEqual(before.types.filter(({ id }) => id !== unusedType?.id));
+    expect(retained.relationshipTypes).toEqual(before.relationshipTypes);
+    expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual({
+      ...viewBefore,
+      contentVersion: viewBefore.contentVersion + 2,
+      positions: viewBefore.positions.filter(({ id }: { id: string }) => id === 'chair'),
+    });
+    expect(
+      (await page.request.get(`${fixture.path}/profile-images/${fixture.imageId}`)).status(),
+    ).toBe(404);
+    await test.info().attach('retired-and-current-erasure-results', {
+      body: JSON.stringify({ first, newer, readIds }, null, 2),
+      contentType: 'application/json',
+    });
+  } finally {
+    release();
+    await fixture.installation.close();
+  }
+});

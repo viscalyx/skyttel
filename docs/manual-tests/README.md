@@ -119,6 +119,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   väntande städning efter rollbyte, omstart och förlorat svar, med bevarat
   oberoende privat arbete. Ett saknat känt resultat är fortsatt okänt även
   efter omladdning och ett annat ärendes slutförande.
+  Sena statussvar från en lämnad sida ändrar inte ett nyare försök eller fokus.
   Radering av en tidigare typ tar bort dess
   sista historiska bildversion utan att ta bort objektets nuvarande bild.
 

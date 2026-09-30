@@ -631,3 +631,85 @@ unknown after navigation and a newer result”.
 - Endast profil B:s separat bekräftade typ tas bort. Automationen jämför
   hela kartan, det oberoende privata utkastet och personliga vyer samt
   kontrollerar att lampans verkliga bild fortfarande kan läsas.
+
+### RADERING-10: Ett gammalt statussvar ändrar inte ett nyare försök
+
+**Syfte:** Kontrollera att en fördröjd statusläsning från en lämnad sida
+inte ersätter ett senare uttryckligen granskat ärende eller tar dess fokus.
+
+**Användare:** Alex som aktuell administratör.
+
+**Förutsättningar:** Ny provkarta enligt allmän förberedelse. Typen
+**Person** är oanvänd; lampan och stolen använder **Fordon**. Genomför
+steg 1 innan det kontrollerade utdraget nedan installeras. Utdraget håller
+bara leveransen av ett verkligt svar; inga uppgifter eller begäranden ändras.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+testfallet “RADERING-10: a retired status reply cannot replace a newer
+reviewed erasure after Settings navigation”.
+
+**Steg:**
+
+1. Öppna **Inställningar → Permanent radering**, granska lampan och
+   bekräfta uttryckligen. Invänta slutfört resultat med ett objekt och en
+   bildversion. Anteckna den fullständiga identifieraren.
+2. Installera utdraget nedan genom **Sources → Snippets** i
+   utvecklarverktygen. Välj **Kontrollera raderingsstatus och läs in
+   aktuellt innehåll**. Invänta konsolens **RADERING-10: svaret väntar**.
+   **Network** ska visa HTTP 200 för den exakta identifieraren och för
+   den efterföljande innehållsläsningen. Utdraget håller det senare svaret.
+3. Stäng utvecklarverktygen. Välj **Översikt** och återvänd till
+   **Permanent radering**. Välj bara **Person** och granska. Kontrollera
+   noll bildversioner, ett tomt bekräftelsefält och inaktiverad
+   **Radera permanent**. Skriv **RADERA PERMANENT** och bekräfta.
+4. Invänta ett nytt slutfört resultat med en annan identifierare,
+   en objekttyp och noll objekt, samband, sambandstyper och bildversioner.
+   Ge **Översikt** tangentbordsfokus utan att öppna länken.
+5. Tryck Alt+Skift+R för att släppa det gamla svaret. Samma nyare
+   identifierare och resultat ska vara kvar; fokus ska stanna på
+   **Översikt**. Tryck Enter, återvänd till raderingssidan och ladda om.
+   Kontrollera status igen. Bara det nyare försöket ska läsas och visas.
+6. Kontrollera i **Network** att bara de två uttryckliga raderingarna
+   skickas; inget slutförande eller ny radering startar av det gamla svaret.
+   Läs kartan: lampan, dess bild och den oanvända typen ska saknas.
+   Stolen, dess eget privata förslag, övriga typer och dess personliga
+   placering ska vara kvar.
+
+```js
+(() => {
+  const originalFetch = window.fetch;
+  let releaseResponse = () => {};
+  const held = new Promise((resolve) => { releaseResponse = resolve; });
+  function release(event) {
+    if (!event.altKey || !event.shiftKey || event.code !== 'KeyR') return;
+    event.preventDefault();
+    releaseResponse();
+    window.removeEventListener('keydown', release);
+  }
+  window.addEventListener('keydown', release);
+  window.fetch = async function (...args) {
+    const response = await originalFetch.apply(this, args);
+    const url = new URL(response.url);
+    if (url.origin === location.origin &&
+        url.pathname.endsWith('/erasure') && response.ok) {
+      window.fetch = originalFetch;
+      console.info('RADERING-10: svaret väntar');
+      await held;
+    }
+    return response;
+  };
+})();
+```
+
+Om fallet avbryts: tryck Alt+Skift+R och ladda om sidan innan nästa fall.
+
+**Förväntat resultat:**
+
+- Ett svar som hör till den lämnade sidan kan inte ersätta det aktuella
+  försökets identifierare, antal eller fokus. Navigation och omladdning
+  fortsätter att läsa det senare kända försöket.
+- De två verkliga raderingarna behåller var sin identifierare. Att lämna
+  en sida ångrar ingen serveråtgärd och utlöser ingen ny destruktiv begäran.
+- Automationen jämför hela det kvarvarande privata utkastet, objekt,
+  typer och personliga vyer samt bekräftar att lampans bild ger HTTP 404.
