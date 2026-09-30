@@ -214,26 +214,43 @@ test('an image error returns to the retained object and expires before an unrela
   );
 });
 
-async function openInApp() {
+async function openInApp(name = 'Lo Exempel') {
   render(
     <MemoryRouter initialEntries={[`/households/${householdId}`]}>
       <App />
     </MemoryRouter>,
   );
   await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: 'Uppgifter för Lo Exempel' }));
+  await userEvent.click(await screen.findByRole('button', { name: `Uppgifter för ${name}` }));
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
   return within(screen.getByRole('group', { name: 'Objektets detaljer' }));
 }
 
 test('a real image rejection preserves Settings focus until explicit return to the same image work', async () => {
   const user = userEvent.setup();
-  const details = await openInApp();
+  const initial = await read();
+  expect(
+    (
+      await client.json(`${path}/draft`, {
+        id: 'garage',
+        version: initial.draft.version,
+        contentVersion: initial.contentVersion,
+        baseRevision: null,
+        value: { typeId: initial.types[0].id, name: 'Garaget', description: '' },
+      })
+    ).status,
+  ).toBe(200);
+  const independent = await openInApp('Garaget');
+  await user.click(independent.getByLabelText('Beskrivning', { exact: true }));
+  await user.paste('Oskickat under bildförsöket');
+  await user.click(screen.getByRole('button', { name: 'Stäng Garaget' }));
+  await user.click(screen.getByRole('button', { name: 'Lista' }));
+  await user.click(screen.getByRole('button', { name: 'Uppgifter för Lo Exempel' }));
+  await user.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
+  const details = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
   await user.upload(details.getByLabelText('Välj profilbild'), await file());
   await screen.findByText('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
   const before = await read();
-  await user.clear(details.getByLabelText('Beskrivning', { exact: true }));
-  await user.paste('Oskickat under bildförsöket');
   const request = globalThis.fetch;
   let received: (response: Response) => void = () => {};
   const ready = new Promise<Response>((resolve) => {
@@ -252,6 +269,7 @@ test('a real image rejection preserves Settings focus until explicit return to t
     return response;
   });
   try {
+    expect(details.getByLabelText('Välj profilbild')).toHaveProperty('disabled', false);
     await user.upload(
       details.getByLabelText('Välj profilbild'),
       new File(['invalid'], 'bad.png', { type: 'image/png' }),
@@ -272,11 +290,15 @@ test('a real image rejection preserves Settings focus until explicit return to t
     await user.click(screen.getByRole('button', { name: 'Återgå till bilden för Lo Exempel' }));
     expect(screen.queryByRole('heading', { name: 'Inställningar', level: 1 })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Lo Exempel' })).toBe(document.activeElement);
-    expect(details.getByDisplayValue('Oskickat under bildförsöket')).toBeTruthy();
+    expect(details.getByDisplayValue('Befintlig text')).toBeTruthy();
     expect(details.getByText('Ikon: Cykel')).toBeTruthy();
     expect(details.getByRole('img').getAttribute('src')).toContain(
       `/profile-images/${before.draft.changes[0].after?.profileImageId}`,
     );
+    expect(await read()).toEqual(before);
+    await user.click(screen.getByRole('button', { name: 'Lista' }));
+    await user.click(screen.getByRole('button', { name: 'Uppgifter för Garaget' }));
+    expect(independent.getByDisplayValue('Oskickat under bildförsöket')).toBeTruthy();
     expect(await read()).toEqual(before);
   } finally {
     release();
