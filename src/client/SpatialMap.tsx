@@ -1206,11 +1206,13 @@ export function SpatialMap({
               disabled={disabled}
               className={`spatial-edge ${kind}${selected ? ' selected' : ''}`}
               aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
-              aria-describedby={`${relationshipLabelPrefix}-${key}`}
+              aria-describedby={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
               style={{ left: x, top: y }}
               onClick={() => onSelectRelationship(edge, previous)}
             >
-              <span id={`${relationshipLabelPrefix}-${key}`}>
+              <span
+                id={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
+              >
                 <span className="spatial-caption">
                   <ProposalSymbol
                     change={
