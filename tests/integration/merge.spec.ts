@@ -1,7 +1,7 @@
-import { expect, test } from '@playwright/test';
-import type { MapState, SaveReceipt } from '../../src/shared/map.js';
+import { type APIRequestContext, expect, test } from '@playwright/test';
+import type { MapState, ObjectValue, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
-import { createInstallation } from '../support/installation.js';
+import { createInstallation, robin } from '../support/installation.js';
 
 test('SAMMANSLAGNING-01: explicit identities and edge choices survive restart, lost receipt and whole-save undo', async ({
   page,
@@ -171,6 +171,171 @@ test('SAMMANSLAGNING-01: explicit identities and edge choices survive restart, l
       ]),
     );
   } finally {
+    await installation.close();
+  }
+});
+
+test('SAMMANSLAGNING-02: refreshed source facts require new choices while independent changes preserve review', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const other = await browser.newContext();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async (client = page.request): Promise<MapState> =>
+      (await client.get(path)).json();
+    const post = (client: APIRequestContext, route: string, data: unknown) =>
+      client.post(`${path}/${route}`, { headers: { origin: installation.origin }, data });
+    const object = async (client: APIRequestContext, id: string, value: Partial<ObjectValue>) => {
+      const state = await read(client);
+      const before = state.objects.find((item) => item.id === id);
+      expect(
+        (
+          await post(client, 'draft', {
+            version: state.draft.version,
+            id,
+            baseRevision: before?.revision ?? null,
+            value: { typeId: state.types[0].id, name: id, description: '', ...before, ...value },
+          })
+        ).status(),
+      ).toBe(200);
+    };
+    const save = async (client: APIRequestContext, operationId: string) => {
+      expect(
+        (
+          await post(client, 'save', {
+            version: (await read(client)).draft.version,
+            operationId,
+          })
+        ).status(),
+      ).toBe(200);
+    };
+    installation.setIdentity(robin);
+    await signIn(other.request, installation.origin);
+    const { user } = await (await other.request.get(`${installation.origin}/api/bootstrap`)).json();
+    const invitation = await page.request.post(
+      `${installation.origin}/api/households/${household.id}/invitations`,
+      { headers: { origin: installation.origin }, data: { userId: user.id } },
+    );
+    expect(invitation.status()).toBe(200);
+    expect(
+      (
+        await other.request.post(`${installation.origin}/api/invitations/accept`, {
+          headers: { origin: installation.origin },
+          data: { code: (await invitation.json()).code },
+        })
+      ).status(),
+    ).toBe(200);
+    await object(page.request, 'a', { name: 'Lo Exempel', description: 'Första uppgiften' });
+    await object(page.request, 'b', { name: 'Lo Exempel', description: 'Andra uppgiften' });
+    await object(page.request, 'card', { name: 'Blått kort' });
+    await object(page.request, 'independent', { name: 'Oberoende objekt' });
+    for (const [id, sourceId] of [
+      ['first', 'a'],
+      ['second', 'b'],
+    ]) {
+      const state = await read();
+      expect(
+        (
+          await post(page.request, 'relationship', {
+            version: state.draft.version,
+            id,
+            baseRevision: null,
+            value: {
+              typeId: state.relationshipTypes[0].id,
+              sourceId,
+              targetId: 'card',
+              knowledge: 'known',
+            },
+          })
+        ).status(),
+      ).toBe(200);
+    }
+    await save(page.request, 'initial');
+    await object(page.request, 'private', { name: 'Eget privat förslag' });
+    const privateDraft = (await read()).draft;
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Slå samman objekt', exact: true }).click();
+    const form = page.getByRole('region', { name: 'Sammanslagning', exact: true });
+    await form.getByLabel('Objekt som behåller sin identitet').selectOption('a');
+    await form.getByLabel('Objekt som tas in i det första').selectOption('b');
+    await form.getByLabel('Välj Beskrivning').selectOption('absorbed');
+    await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
+    await form.getByLabel('Val för samband first').selectOption('keep');
+    await form.getByLabel('Val för samband second').selectOption('keep');
+    await object(other.request, 'independent', {
+      description: 'En annan medlems oberoende ändring',
+    });
+    await save(other.request, 'independent-change');
+    await form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }).click();
+    await expect(page.getByRole('alert')).toContainText('Samma samband finns redan');
+    expect((await read()).draft).toEqual(privateDraft);
+    await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+    await expect(
+      form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }),
+    ).toBeEnabled();
+    await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
+    await expect(form.getByLabel('Jag bekräftar att objekten är samma företeelse')).toBeChecked();
+    await expect(form.getByLabel('Val för samband second')).toHaveValue('keep');
+    await form.getByLabel('Val för samband first').selectOption('remove');
+    await object(other.request, 'b', { description: 'Ändrat efter granskningen' });
+    await save(other.request, 'source-change');
+    const rejected = page.waitForResponse((response) => response.url() === `${path}/merge`);
+    await form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }).click();
+    expect(await (await rejected).json()).toMatchObject({ error: 'merge_conflict' });
+    expect((await read()).draft).toEqual(privateDraft);
+    await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+    await expect(form).toContainText('Ändrat efter granskningen');
+    await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('');
+    await expect(
+      form.getByLabel('Jag bekräftar att objekten är samma företeelse'),
+    ).not.toBeChecked();
+    await expect(form.getByLabel('Val för samband first')).toHaveValue('');
+    await expect(form.getByLabel('Val för samband second')).toHaveValue('');
+    await expect(
+      form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }),
+    ).toBeDisabled();
+    await expect(form).toContainText('Underlaget för sammanslagningen har ändrats');
+    expect((await read()).draft).toEqual(privateDraft);
+    await form.getByLabel('Välj Beskrivning').selectOption('absorbed');
+    await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
+    await form.getByLabel('Val för samband first').selectOption('remove');
+    await form.getByLabel('Val för samband second').selectOption('keep');
+    await form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }).click();
+    const draft = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+    await expect(draft).toContainText('Ändrat efter granskningen');
+    expect((await read(other.request)).objects).toHaveLength(4);
+    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Sparat:');
+    await installation.restart();
+    await page.reload();
+    await openWorkspace(page);
+    const saved = await read();
+    expect(saved.objects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'a', description: 'Ändrat efter granskningen' }),
+        expect.objectContaining({
+          id: 'independent',
+          description: 'En annan medlems oberoende ändring',
+        }),
+        expect.objectContaining({ id: 'private', name: 'Eget privat förslag' }),
+      ]),
+    );
+    expect(saved.objects.some((item) => item.id === 'b')).toBe(false);
+    expect(saved.relationships).toEqual([
+      expect.objectContaining({ id: 'second', sourceId: 'a', targetId: 'card' }),
+    ]);
+    const { history } = await (await page.request.get(`${path}/history`)).json();
+    expect(history).toHaveLength(4);
+    expect(
+      history.at(-1).changes.find((change: { merge?: unknown }) => change.merge).merge.objects[1],
+    ).toMatchObject({ id: 'b', description: 'Ändrat efter granskningen', revision: 2 });
+  } finally {
+    await other.close();
     await installation.close();
   }
 });

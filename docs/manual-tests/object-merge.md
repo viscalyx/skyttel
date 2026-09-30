@@ -8,7 +8,9 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 Alex är administratör och medlem i hushållet Linden. Använd en andra
 webbläsare med samma inloggning för att kontrollera återupptagning.
-Använd endast påhittade uppgifter och installationens testinloggning.
+Robin är en annan inbjuden medlem i samma hushåll och använder en egen
+webbläsarprofil. Använd endast påhittade uppgifter och installationens
+testinloggning.
 
 ## Allmän förberedelse
 
@@ -78,3 +80,51 @@ restart, lost receipt and whole-save undo”.
 - Ångringen återställer båda ursprungliga identiteterna, beskrivningarna
   och sambanden, inklusive upphörd status. Senare namn och Eget senare
   objekt bevaras. Robin ingår i samma ursprungliga sparande och ångras också.
+
+### SAMMANSLAGNING-02: granska ändrat underlag utan att tappa oberoende val
+
+**Syfte:** Kräv nya uttryckliga val när granskade uppgifter ändras och
+behåll granskningen när bara oberoende innehåll ändras.
+
+**Användare:** Alex och Robin i varsin webbläsarprofil.
+
+**Förutsättningar:** Två sparade objekt heter Lo Exempel med olika
+beskrivningar. Båda har varsitt likadant samband till Blått kort. Ett
+fjärde sparat objekt heter Oberoende objekt. Alex har Eget privat förslag
+i sitt utkast. Anteckna de båda objektens och sambandens identiteter.
+
+**Integrationstest:**
+[merge.spec.ts](../../tests/integration/merge.spec.ts),
+testfallet “SAMMANSLAGNING-02: refreshed source facts require new choices
+while independent changes preserve review”.
+
+**Steg:**
+
+1. Alex öppnar **Slå samman objekt**, väljer de två Lo, den andra
+   beskrivningen och att behålla båda sambanden. Bekräfta samma företeelse.
+2. Robin ändrar beskrivningen på Oberoende objekt och sparar hela utkastet.
+3. Alex lägger sammanslagningen i utkastet och läser dubblettfelet.
+   Välj **Hämta aktuellt underlag**. Kontrollera att identitetsbekräftelse,
+   beskrivningsval och sambandsval finns kvar. Välj nu att ta bort det
+   första sambandet.
+4. Robin ändrar beskrivningen på det andra Lo till Ändrat efter
+   granskningen och sparar hela utkastet.
+5. Alex försöker lägga sammanslagningen i utkastet. Läs beskedet om ändrat
+   underlag och välj **Hämta aktuellt underlag**. Läs den nya beskrivningen
+   och kontrollera att tidigare val och identitetsbekräftelse är tömda.
+6. Granska båda objekten igen, välj den nya andra beskrivningen, bekräfta
+   samma företeelse och behåll endast det andra sambandet. Lägg förslaget
+   i utkastet och välj uttryckligen **Spara hela utkastet**.
+7. Starta om installationen och öppna kartan och historiken igen.
+
+**Förväntat resultat:**
+
+- Oberoende sparade ändringar återställer inte granskningen. Dubblettfel
+  och inaktuellt underlag ändrar inget i Alex privata utkast.
+- Ändrade granskade uppgifter kräver nya val och ny identitetsbekräftelse.
+  Det gamla valet tillämpas inte automatiskt på ett nytt värde.
+- Efter uttryckligt sparande behålls första identiteten, den nya andra
+  beskrivningen, Robins oberoende ändring och Alex privata förslag. Endast
+  det andra sambandet finns kvar och pekar på första objektet.
+- Historiken återger de faktiskt granskade nya uppgifterna. Avvisade
+  försök skapar inga extra sparanden. Resultatet överlever omstart.
