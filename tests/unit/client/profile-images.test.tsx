@@ -258,7 +258,7 @@ test('a real image rejection preserves Settings focus until explicit return to t
     );
     expect((await ready).status).toBe(400);
     await user.click(screen.getByRole('button', { name: 'Stäng Lo Exempel' }));
-    await user.click(screen.getByRole('button', { name: 'Inställningar', exact: true }));
+    await user.click(screen.getByRole('button', { name: 'Inställningar' }));
     const settings = await screen.findByRole('heading', { name: 'Inställningar', level: 1 });
     expect(settings).toBe(document.activeElement);
     const settingsReturn = screen.getByRole('link', { name: 'Tillbaka till kartan' });
@@ -330,7 +330,7 @@ test('the whole image and description proposal saves once with an exact expanded
   });
   expect(receipt.changes).toHaveLength(1);
   await screen.findByText('Sparat · kvitto bekräftat');
-  await user.click(screen.getByRole('button', { name: 'Aktuell status', exact: true }));
+  await user.click(screen.getByRole('button', { name: 'Aktuell status' }));
   const status = within(screen.getByRole('region', { name: 'Aktuell status' }));
   expect(
     await status.findByText(`Sparat: Lo Exempel. Kvitto: ${receipt.operationId}.`),
