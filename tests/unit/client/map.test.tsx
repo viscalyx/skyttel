@@ -102,6 +102,7 @@ async function save() {
   await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Sparat:'));
 }
 
+// Every keystroke and filter change re-filters the 500-object list, which can exceed the file budget under a loaded coverage run.
 test('grouped browsing combines type identities, description search and marks without changing household data', async () => {
   const { user } = await (await client.request('/api/bootstrap')).json();
   seedLargeMap(fixture.database, user.id, householdId);
@@ -135,7 +136,7 @@ test('grouped browsing combines type identities, description search and marks wi
   await userEvent.click(list.getByRole('button', { name: 'Rensa sökning och filter' }));
   expect(list.getByText('500 av 500 objekt')).toBeTruthy();
   expect(await (await client.request(path)).json()).toEqual(initial);
-});
+}, 30_000);
 
 test('object pages retain sorting and selected-item access through panel closure', async () => {
   const { user } = await (await client.request('/api/bootstrap')).json();
