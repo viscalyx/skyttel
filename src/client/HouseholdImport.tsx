@@ -36,6 +36,7 @@ export function HouseholdImport({
   const active = useRef<AbortController | null>(null);
   const submittedFocus = useRef<Element | null>(null);
   const nextAction = useRef<HTMLButtonElement>(null);
+  const fileControl = useRef<HTMLInputElement>(null);
   const reviewHeading = useRef<HTMLLegendElement>(null);
   useLayoutEffect(() => {
     if (busy) return;
@@ -45,7 +46,10 @@ export function HouseholdImport({
       previous &&
       (document.activeElement === previous || document.activeElement === document.body)
     )
-      (result?.status === 'ready' ? reviewHeading.current : nextAction.current)?.focus();
+      (result?.status === 'ready'
+        ? reviewHeading.current
+        : (nextAction.current ?? fileControl.current)
+      )?.focus();
   }, [busy, result?.status]);
   useEffect(() => () => active.current?.abort(), []);
   const remember = useCallback(
@@ -224,6 +228,7 @@ export function HouseholdImport({
       <label>
         Skyttel-export (ZIP)
         <input
+          ref={fileControl}
           type="file"
           accept=".zip,application/zip"
           disabled={busy || uncertain}
