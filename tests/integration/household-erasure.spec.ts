@@ -708,6 +708,7 @@ test('RADERING-07: a known erasure survives Settings navigation and reload despi
     const retainedView = await (await page.request.get(`${fixture.path}/map/view`)).json();
     expect(retainedView).toEqual({
       ...viewBefore,
+      contentVersion: viewBefore.contentVersion + 2,
       positions: viewBefore.positions.filter(({ id }: { id: string }) => id === 'chair'),
     });
     const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
