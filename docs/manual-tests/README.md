@@ -136,6 +136,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   sambandsvärden granskas och återläses i båda teman på dator och mobil.
   Båda deltagarnas oskickade text bevaras tills den överges uttryckligen;
   kastning återger tidigare privata förslag med samma identiteter.
+  Fördröjda svar bevarar senare sökfokus; förlorat förslagssvar följs av
+  återläsning utan nytt förslag eller automatiskt sparande.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
   mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart

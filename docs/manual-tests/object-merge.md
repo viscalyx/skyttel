@@ -285,3 +285,95 @@ discard until explicitly abandoned”.
 - Båda tidigare privata förslagen återkommer med sina identiteter;
   oberoende förslag bevaras. Ingen gemensam ändring eller extra kvitto
   skapas. Utkastet finns kvar efter omstart.
+
+### SAMMANSLAGNING-06: behåll senare sökfokus vid långsamt förslag och fel
+
+**Syfte:** Ge användarens senare fokusval företräde när ett riktigt
+förslag eller avvisande kommer tillbaka.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Två sparade Lo Exempel med olika beskrivningar och
+varsitt likadant samband till Blått kort. Ett oberoende privat förslag
+finns i utkastet. Använd nätverksbegränsning i webbläsarens utvecklarverktyg
+så att svaret hinner inväntas medan sökfältet används.
+
+**Integrationstest:**
+[merge-recovery.spec.ts](../../tests/integration/merge-recovery.spec.ts),
+testfallet “SAMMANSLAGNING-06: delayed real rejection and proposal preserve
+newer search focus”.
+
+**Steg:**
+
+1. Granska de båda Lo, välj andra beskrivningen, bekräfta samma företeelse
+   och välj att behålla båda sambanden.
+2. Lägg sammanslagningen i utkastet. Medan svaret väntar, välj **Sök
+   objekt** och skriv Lo. Läs sedan dubblettfelet utan att flytta fokus.
+3. Välj att ta bort första sambandet och skicka det rättade förslaget.
+   Medan svaret väntar, skriv kort i **Sök objekt**.
+4. Läs beskedet om privat utkast och kontrollera sökfältets fokus och text.
+   Återställ nätverksinställningen.
+
+**Förväntat resultat:**
+
+- Både det avvisade och det lyckade svaret behåller användarens senare
+  sökfokus och text. Dubblettfelet bevarar hela utkastet och granskningen.
+- Det rättade förslaget och det oberoende förslaget finns i samma privata
+  utkast. Gemensam karta och historik ändras inte utan uttryckligt sparande.
+
+### SAMMANSLAGNING-07: återläs ett förslag efter förlorat svar
+
+**Syfte:** Återhämta det faktiska privata förslaget utan automatiskt nytt
+försök eller sparande när svaret går förlorat.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Samma sparade objekt, samband och oberoende privata
+förslag som i SAMMANSLAGNING-06. Återställ installationen först.
+
+**Integrationstest:**
+[merge-recovery.spec.ts](../../tests/integration/merge-recovery.spec.ts),
+testfallet “SAMMANSLAGNING-07: lost proposal reply is read back without
+resubmitting or saving implicitly”.
+
+**Steg:**
+
+1. Granska sammanslagningen, välj andra beskrivningen, behåll endast andra
+   sambandet och bekräfta samma företeelse.
+2. Kör följande engångskod i utvecklarverktygens Console. Den låter
+   servern svara på det riktiga förslaget men tappar svaret för appen.
+   Ladda om om provet avbryts innan förslaget skickas.
+
+   ```javascript
+   const originalFetch = window.fetch;
+   window.fetch = async (...args) => {
+     const response = await originalFetch(...args);
+     if (response.url.endsWith('/map/merge')) {
+       window.fetch = originalFetch;
+       throw new TypeError('Kontrollerat förlorat förslagssvar');
+     }
+     return response;
+   };
+   ```
+
+3. Lägg förslaget i utkastet. Läs beskedet om obekräftad ändring och
+   kontrollera att ett nytt förslag är spärrat.
+4. Välj Offline i utvecklarverktygens nätverksinställning och välj
+   **Hämta aktuellt underlag**. Läs hämtningsfelet; spärren ska bestå.
+5. Återställ nätverket och hämta igen. Läs sammanslagningen och det
+   oberoende förslaget i **Hela mitt utkast**.
+6. Stäng det oskickade granskningsformuläret uttryckligen. Det återlästa
+   privata förslaget ska finnas kvar. Starta om installationen och ladda om.
+7. Granska utkastet igen och välj **Spara hela utkastet**. Läs kvittot,
+   kartan och historiken.
+
+**Förväntat resultat:**
+
+- Okänt utfall framställs inte som ett misslyckat eller sparat förslag.
+  En misslyckad läsning låser fortsatt nytt förslag. Återhämtning skickar
+  inte sammanslagningen igen och sparar inget automatiskt.
+- Samma privata sammanslagning och oberoende förslag överlever omstart.
+  Att stänga granskningsformuläret kastar inte det återlästa utkastet.
+- Endast uttryckligt sparande skapar ett kvitto och gemensamt resultat:
+  första identiteten, andra beskrivningen och det valda sambandet finns
+  kvar tillsammans med det oberoende objektet.
