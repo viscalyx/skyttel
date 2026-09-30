@@ -128,3 +128,51 @@ while independent changes preserve review”.
   det andra sambandet finns kvar och pekar på första objektet.
 - Historiken återger de faktiskt granskade nya uppgifterna. Avvisade
   försök skapar inga extra sparanden. Resultatet överlever omstart.
+
+### SAMMANSLAGNING-03: tangentbord, återgång och oberoende oskickat arbete
+
+**Syfte:** Hålla granskning och oberoende text kvar vid tillfällig
+navigering samt ge synligt fokus vid öppning, avbrott och nytt förslag.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Två sparade objekt heter Lo Exempel med olika
+beskrivningar. Ett tredje sparat objekt heter Oberoende objekt. Inga
+privata förslag eller oskickade formulär finns när provet börjar.
+
+**Integrationstest:**
+[merge.spec.ts](../../tests/integration/merge.spec.ts),
+testfallet “SAMMANSLAGNING-03: keyboard merge review survives panels and
+Settings with independent unsent work”.
+
+**Steg:**
+
+1. Öppna Lista och använd tangentbordet för **Slå samman objekt**.
+   Kontrollera synligt fokus på sammanslagningens rubrik.
+2. Välj båda Lo, den andra beskrivningen och bekräfta samma företeelse.
+3. Öppna uppgifterna för Oberoende objekt och börja redigera beskrivningen.
+   Skriv Oskickat arbete finns kvar utan att lägga texten i utkastet.
+4. Växla till **Lista och utkast**. Besök Inställningar och välj
+   **Tillbaka till kartan**. Stäng arbetsytan och öppna Lista igen.
+   Kontrollera att sammanslagningens val finns kvar efter varje återgång.
+5. Använd tangentbordet för **Stäng sammanslagningen utan att skicka**.
+   Kontrollera fokus på **Slå samman objekt** och att kartan är oförändrad.
+   Återgå till Oberoende objekt och kontrollera den oskickade texten.
+6. Öppna sammanslagningen igen. Kontrollera att det uttryckliga avbrottet
+   tömmer valen. Välj objekten och den andra beskrivningen, bekräfta samma
+   företeelse och lägg sammanslagningen i utkastet med tangentbordet.
+7. Kontrollera fokus på **Hela mitt utkast**. Sparandet ska fortfarande
+   vara spärrat eftersom den andra texten är oskickad. Återgå till den
+   texten och välj **Lägg i mitt utkast**.
+8. Välj **Spara hela utkastet**, invänta kvittot och starta om installationen.
+
+**Förväntat resultat:**
+
+- Tillfällig navigering behåller granskningen och den oberoende texten.
+  Ett uttryckligt avbrott tömmer enbart sammanslagningens formulärval.
+- Öppning, avbrott och skickat förslag ger logiskt, synligt fokus.
+  Oberoende oskickad text hindrar inte att sammanslagningen granskas.
+- Varken navigering eller skickade förslag ändrar den gemensamma kartan.
+  Hela sparandet inväntar att oskickad text hanteras uttryckligen.
+- Ett kvitto omfattar sammanslagningen och den andra beskrivningen.
+  Det första Lo behåller sin identitet; resultatet finns kvar efter omstart.

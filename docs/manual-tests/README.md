@@ -130,7 +130,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 - [Sammanslagning](object-merge.md): uttrycklig identitet, val av uppgifter
   och samband, privata förslag, kontrollerat förlorat sparsvar, omstart
   och ångring av hela sparandet. Ändrat granskat underlag kräver nya val;
-  oberoende samtidiga ändringar bevarar granskningen.
+  oberoende samtidiga ändringar bevarar granskningen. Tangentbord, paneler
+  och Inställningar behåller granskning och annan oskickad text.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
   mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart

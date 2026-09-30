@@ -1,6 +1,12 @@
-import { type APIRequestContext, expect, test } from '@playwright/test';
+import { type APIRequestContext, expect, type Locator, test } from '@playwright/test';
 import type { MapState, ObjectValue, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  activatePanel,
+  createHousehold,
+  openSettings,
+  openWorkspace,
+  signIn,
+} from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('SAMMANSLAGNING-01: explicit identities and edge choices survive restart, lost receipt and whole-save undo', async ({
@@ -170,6 +176,150 @@ test('SAMMANSLAGNING-01: explicit identities and edge choices survive restart, l
         }),
       ]),
     );
+  } finally {
+    await installation.close();
+  }
+});
+
+async function focusedUncovered(target: Locator) {
+  await expect(target).toBeFocused();
+  await expect
+    .poll(() =>
+      target.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        const style = getComputedStyle(element);
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.x >= 0 &&
+          rect.y >= 0 &&
+          rect.right <= innerWidth &&
+          rect.bottom <= innerHeight &&
+          (hit === element || element.contains(hit)) &&
+          style.outlineStyle !== 'none' &&
+          Number.parseFloat(style.outlineWidth) >= 2
+        );
+      }),
+    )
+    .toBe(true);
+}
+
+test('SAMMANSLAGNING-03: keyboard merge review survives panels and Settings with independent unsent work', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+    const post = (route: string, data: unknown) =>
+      page.request.post(`${path}/${route}`, {
+        headers: { origin: installation.origin },
+        data,
+      });
+    for (const [id, name, description] of [
+      ['a', 'Lo Exempel', 'Första uppgiften'],
+      ['b', 'Lo Exempel', 'Andra uppgiften'],
+      ['independent', 'Oberoende objekt', 'Sparad beskrivning'],
+    ]) {
+      const state = await read();
+      expect(
+        (
+          await post('draft', {
+            version: state.draft.version,
+            id,
+            baseRevision: null,
+            value: { typeId: state.types[0].id, name, description },
+          })
+        ).status(),
+      ).toBe(200);
+    }
+    expect(
+      (
+        await post('save', { version: (await read()).draft.version, operationId: 'initial' })
+      ).status(),
+    ).toBe(200);
+    const original = await read();
+    await page.goto(installation.origin);
+    await openWorkspace(page);
+    const launcher = page.getByRole('button', { name: 'Slå samman objekt', exact: true });
+    await launcher.focus();
+    await page.keyboard.press('Enter');
+    const form = page.getByRole('region', { name: 'Sammanslagning', exact: true });
+    await focusedUncovered(form.getByRole('heading', { name: 'Slå samman objekt', exact: true }));
+    await form.getByLabel('Objekt som behåller sin identitet').selectOption('a');
+    await form.getByLabel('Objekt som tas in i det första').selectOption('b');
+    await form.getByLabel('Välj Beskrivning').selectOption('absorbed');
+    await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
+    await page.getByRole('button', { name: 'Uppgifter för Oberoende objekt', exact: true }).click();
+    const independent = page.getByRole('region', { name: 'Oberoende objekt', exact: true });
+    await independent.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await independent.getByLabel('Beskrivning', { exact: true }).fill('Oskickat arbete finns kvar');
+    await activatePanel(page, 'Lista och utkast');
+    await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
+    await expect(form.getByLabel('Jag bekräftar att objekten är samma företeelse')).toBeChecked();
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
+    await expect(form.getByLabel('Jag bekräftar att objekten är samma företeelse')).toBeChecked();
+    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await openWorkspace(page);
+    await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
+    const cancel = form.getByRole('button', { name: 'Stäng sammanslagningen utan att skicka' });
+    await cancel.focus();
+    await page.keyboard.press('Enter');
+    await expect(form).toHaveCount(0);
+    await focusedUncovered(launcher);
+    expect(await read()).toEqual(original);
+    await activatePanel(page, 'Oberoende objekt');
+    await expect(independent.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Oskickat arbete finns kvar',
+    );
+    await activatePanel(page, 'Lista och utkast');
+    await launcher.focus();
+    await page.keyboard.press('Enter');
+    await focusedUncovered(form.getByRole('heading', { name: 'Slå samman objekt', exact: true }));
+    await form.getByLabel('Objekt som behåller sin identitet').selectOption('a');
+    await form.getByLabel('Objekt som tas in i det första').selectOption('b');
+    await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('');
+    await expect(
+      form.getByLabel('Jag bekräftar att objekten är samma företeelse'),
+    ).not.toBeChecked();
+    await form.getByLabel('Välj Beskrivning').selectOption('absorbed');
+    await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
+    await form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }).focus();
+    await page.keyboard.press('Enter');
+    await focusedUncovered(page.getByRole('heading', { name: 'Hela mitt utkast', exact: true }));
+    expect((await read()).objects).toEqual(original.objects);
+    await expect(
+      page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+    ).toBeDisabled();
+    await activatePanel(page, 'Oberoende objekt');
+    await expect(independent.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Oskickat arbete finns kvar',
+    );
+    await independent.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    const draft = await read();
+    expect(draft.draft.changes).toHaveLength(3);
+    expect(draft.objects).toEqual(original.objects);
+    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('status')).toContainText('Sparat:');
+    await installation.restart();
+    await page.reload();
+    await openWorkspace(page);
+    expect((await read()).objects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'a', description: 'Andra uppgiften' }),
+        expect.objectContaining({ id: 'independent', description: 'Oskickat arbete finns kvar' }),
+      ]),
+    );
+    expect((await read()).objects).toHaveLength(2);
+    const { history } = await (await page.request.get(`${path}/history`)).json();
+    expect(history).toHaveLength(2);
+    expect(history.at(-1).changes).toHaveLength(3);
   } finally {
     await installation.close();
   }
