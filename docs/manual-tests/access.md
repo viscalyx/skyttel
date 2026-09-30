@@ -359,6 +359,44 @@ without changing access”.
 - Den korrekta verifieringen tar bort felet och visar **Koppla Microsoft**.
   Alex når samma hushåll och behåller sin Skyttel-användare.
 
+### ACCESS-19: Utgången länkning förklarar ny verifiering
+
+**Syfte:** Kontrollera att utgången verifiering har en begriplig fortsättning
+utan att ändra användaren, hushållet eller privata förslag.
+
+**Användare:** Alex med Google.
+
+**Förutsättningar:** Endast Google är kopplat. Anteckna Skyttel-användar-ID
+och hushållets adress. Lägg ett nytt objekt **Cykeln** med beskrivningen
+**Privat förslag före utgången verifiering** i det egna utkastet utan att spara.
+
+**Integrationstest:**
+[linking.spec.ts](../../tests/integration/linking.spec.ts),
+testfallet “ACCESS-19: expired linking explains fresh proof and preserves
+identity and private work”. Det automatiserade fallet flyttar endast den
+verkliga testserverns klocka framåt och återställer den före ny verifiering
+och vid avslut. Webbläsarens klocka och testets tidsgränser ändras inte.
+Identitetsleverantören är en lokal testadapter, inte ett verkligt konto.
+
+**Steg:**
+
+1. Öppna **Inloggningssätt**, välj **Verifiera Google** och bevisa Alex
+   befintliga identitet. Kontrollera att **Koppla Microsoft** visas.
+2. Vänta minst elva minuter utan att koppla Microsoft. Ladda om sidan.
+   Kontrollera beskedet om utgången verifiering och vägen till ett nytt försök.
+3. Välj **Verifiera Google** och bevisa samma identitet på nytt.
+4. Välj **Till startsidan**. Kontrollera användar-ID, hushåll och eget utkast.
+
+**Förväntat resultat:**
+
+- Ett tydligt statusbesked förklarar att verifieringen har gått ut och att
+  tidigare inloggningar och tillgång finns kvar. **Verifiera Google** går
+  att använda; **Koppla Microsoft** visas inte innan ny verifiering.
+- Endast Google är kopplat. Ny verifiering tar bort utgångsbeskedet och
+  visar **Koppla Microsoft** utan att automatiskt koppla eller spara något.
+- Samma Skyttel-användare och hushåll finns kvar. Cykeln och dess beskrivning
+  ligger oförändrade i det privata utkastet.
+
 ## Avbruten inloggning
 
 ### ACCESS-12: Ett inloggningsfel tillåter ett nytt försök
