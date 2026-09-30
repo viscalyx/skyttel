@@ -368,6 +368,7 @@ export function HouseholdMap({
     };
   }, [active, workOpen]);
   const newButton = useRef<HTMLButtonElement>(null);
+  const mergeButton = useRef<HTMLButtonElement>(null);
   useLayoutEffect(() => {
     if (mergeOpen)
       setPanelFocusRequest({ id: 'work', element: document.getElementById('merge-title') });
@@ -2037,6 +2038,7 @@ export function HouseholdMap({
                       </section>
                     )}
                     <button
+                      ref={mergeButton}
                       type="button"
                       disabled={pending || dirty || blocked}
                       onClick={() => {
@@ -2062,6 +2064,7 @@ export function HouseholdMap({
                         onClose={() => {
                           setMergeOpen(false);
                           setDirty(false);
+                          openPanel('work', mergeButton.current);
                         }}
                       />
                     )}
