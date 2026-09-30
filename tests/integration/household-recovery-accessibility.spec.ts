@@ -47,12 +47,18 @@ async function expectReadableAccent(control: Locator) {
 }
 
 async function expectReadableNavigation(navigation: Locator, name: string, width: number) {
-  if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
+  if (width <= 800) {
+    await navigation.getByText('Välj inställning', { exact: true }).focus();
+    await navigation.page().keyboard.press('Enter');
+  }
   const current = navigation.getByRole('link', { name, exact: true });
   await expect(current).toHaveAttribute('aria-current', 'page');
   await current.scrollIntoViewIfNeeded();
   await expectReadableAccent(current);
-  if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
+  if (width <= 800) {
+    await navigation.getByText('Välj inställning', { exact: true }).focus();
+    await navigation.page().keyboard.press('Enter');
+  }
 }
 
 for (const { width, height } of [
