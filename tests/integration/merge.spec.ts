@@ -220,7 +220,7 @@ test('SAMMANSLAGNING-02: refreshed source facts require new choices while indepe
       `${installation.origin}/api/households/${household.id}/invitations`,
       { headers: { origin: installation.origin }, data: { userId: user.id } },
     );
-    expect(invitation.status()).toBe(200);
+    expect(invitation.status()).toBe(201);
     expect(
       (
         await other.request.post(`${installation.origin}/api/invitations/accept`, {
