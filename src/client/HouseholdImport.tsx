@@ -154,6 +154,7 @@ export function HouseholdImport({
         body: file,
       });
       const value = await response.json();
+      if (controller.signal.aborted) return;
       if (!response.ok) {
         notifyOutdatedClient(value.error);
         throw new MapRequestError(response.status, value.error);
@@ -176,6 +177,8 @@ export function HouseholdImport({
   async function recover(confirm = false) {
     if (!attempt || busy) return;
     submittedFocus.current = document.activeElement;
+    const controller = new AbortController();
+    active.current = controller;
     setBusy(true);
     setError('');
     if (confirm) setResult(null);
@@ -183,18 +186,22 @@ export function HouseholdImport({
       const value = await request<ImportStatus>(
         `${path}/imports/${encodeURIComponent(attempt.id)}${confirm ? '/confirm' : ''}`,
         confirm ? { confirmed: true, contentVersion: attempt.contentVersion } : undefined,
+        controller.signal,
       );
+      if (controller.signal.aborted) return;
       setResult(value);
       if (value.status === 'completed' || value.status === 'failed') remember(null);
     } catch (failure) {
-      fail(failure, confirm);
+      if (!controller.signal.aborted) fail(failure, confirm);
     } finally {
-      setBusy(false);
+      if (!controller.signal.aborted) setBusy(false);
     }
   }
   async function cancel() {
     if (!attempt || busy) return;
     submittedFocus.current = document.activeElement;
+    const controller = new AbortController();
+    active.current = controller;
     setBusy(true);
     setError('');
     setConfirmed(false);
@@ -203,7 +210,9 @@ export function HouseholdImport({
       const value = await request<{ cancelled: true } | ImportStatus>(
         `${path}/imports/${encodeURIComponent(attempt.id)}/cancel`,
         {},
+        controller.signal,
       );
+      if (controller.signal.aborted) return;
       if ('cancelled' in value) {
         remember(null);
         setFile(null);
@@ -211,12 +220,13 @@ export function HouseholdImport({
         setCancelled(true);
       } else setResult(value);
     } catch (failure) {
+      if (controller.signal.aborted) return;
       if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) onAccessLost();
       setError(
         'Svaret från avbrottet saknas. Utfallet är okänt. Hämta importens status innan du försöker något annat.',
       );
     } finally {
-      setBusy(false);
+      if (!controller.signal.aborted) setBusy(false);
     }
   }
   const uncertain = discoveryNeeded || Boolean(attempt && result?.status !== 'ready');

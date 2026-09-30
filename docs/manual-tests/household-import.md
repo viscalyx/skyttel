@@ -862,3 +862,64 @@ window.fetch = async (...args) => {
   Omladdning följer det lokalt kända nya ID:t genom uttrycklig läsning.
 - Navigering ångrar inte det avbrott som redan utförs på servern och
   skickar varken ny ersättning eller automatisk upprepning.
+
+### IMPORT-20: en äldre statusläsning får inte glömma en ny förberedelse
+
+**Syfte:** Behålla den aktuella förberedelsens ID när ett fördröjt svar
+om ett äldre, borttaget försök kommer efter navigering i Inställningar.
+
+**Användare:** Alex som aktuell administratör i två flikar.
+
+**Förutsättningar:** Giltig export och separat provinstallation. Använd
+utvecklarverktygens Console för den kontrollerade fördröjningen.
+
+**Integrationstest:**
+[household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
+testfallet “IMPORT-20: a retired unavailable status response cannot forget
+a newer preparation after Settings navigation”.
+
+**Steg:**
+
+1. Kontrollera exportfilen i första fliken och anteckna ID. Öppna
+   importen i en andra flik med samma inloggning och avbryt just den
+   förberedelsen där. Läs att tillfälliga filer är borttagna.
+2. Kör koden nedan i första fliken och välj **Hämta importens status**.
+   Fortsätt när konsolen visar **Försöket saknas, svaret väntar**.
+3. Öppna **Koppla historiskt innehåll** och återgå till importen i
+   första fliken. Hämta status igen och läs att förberedelsen inte finns.
+4. Kontrollera filen på nytt och anteckna det nya ID:t. Kör
+   `window.releaseImportStatus()` i Console för att släppa det äldre svaret.
+5. Ladda om sidan. Det nya ID:t ska finnas kvar med spärrat filval tills
+   **Hämta importens status** läser just den nya förberedelsen.
+6. Läs granskningen och avbryt den uttryckligen. Kartan ska vara
+   oförändrad. Omladdning återställer Console-koden.
+
+```javascript
+const originalFetch = window.fetch;
+const heldStatus = new Promise((resolve) => {
+  window.releaseImportStatus = resolve;
+});
+window.fetch = async (...args) => {
+  const request = new Request(...args);
+  const response = await originalFetch(...args);
+  const isStatus = /\/imports\/[^/]+$/.test(new URL(request.url).pathname);
+  if (request.method === 'GET' && isStatus) {
+    window.fetch = originalFetch;
+    const result = await response.clone().json();
+    if (response.status !== 404 || result.error !== 'import_unavailable') {
+      return response;
+    }
+    console.log('Försöket saknas, svaret väntar');
+    await heldStatus;
+    if (request.signal.aborted) throw new DOMException('Avbruten', 'AbortError');
+  }
+  return response;
+};
+```
+
+**Förväntat resultat:**
+
+- Ett äldre felsvar efter sidbyte kan inte glömma den nya förberedelsen.
+  Omladdning följs av uttrycklig läsning av rätt, lokalt känt ID.
+- Statusläsningen varken ändrar hushållsinnehåll eller upprepar avbrottet.
+  Den nya granskningen kräver fortfarande ett uttryckligt eget val.

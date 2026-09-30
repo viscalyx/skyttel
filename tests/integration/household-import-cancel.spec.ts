@@ -292,6 +292,94 @@ test('IMPORT-19: a retired cancellation response cannot forget a newer preparati
   }
 });
 
+test('IMPORT-20: a retired unavailable status response cannot forget a newer preparation after Settings navigation', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  let release = () => {};
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const before = await (await page.request.get(`${path}/map`)).json();
+    const exported = await (
+      await page.request.post(`${path}/exports`, {
+        headers: { origin: installation.origin },
+        data: {},
+      })
+    ).json();
+    const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
+    await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
+    const first = await prepareReview(page, path, archive);
+    // Another current administrator client cancels this same unconfirmed preparation.
+    const cancelled = await page.request.post(`${path}/imports/${first.id}/cancel`, {
+      headers: { origin: installation.origin },
+      data: {},
+    });
+    expect(cancelled.status()).toBe(200);
+    expect(await cancelled.json()).toEqual({ cancelled: true });
+    expect(existsSync(join(installation.directory, '.skyttel-imports', first.id))).toBe(false);
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let completed = () => {};
+    const serverCompleted = new Promise<void>((resolve) => {
+      completed = resolve;
+    });
+    let delivered = () => {};
+    const responseDelivered = new Promise<void>((resolve) => {
+      delivered = resolve;
+    });
+    await page.route(
+      `${path}/imports/${first.id}`,
+      async (route) => {
+        const response = await route.fetch();
+        expect(response.status()).toBe(404);
+        expect(await response.json()).toEqual({ error: 'import_unavailable' });
+        completed();
+        await held;
+        await route.fulfill({ response });
+        delivered();
+      },
+      { times: 1 },
+    );
+    const reading = page.waitForRequest(`${path}/imports/${first.id}`);
+    await page.getByRole('button', { name: 'Hämta importens status' }).click();
+    const retiredRequest = await reading;
+    await serverCompleted;
+    const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+    await navigation.getByRole('link', { name: 'Koppla historiskt innehåll', exact: true }).click();
+    await navigation.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
+    await page.getByRole('button', { name: 'Hämta importens status' }).click();
+    await expect(page.getByRole('alert')).toContainText('finns inte längre');
+    const newer = await prepareReview(page, path, archive);
+    expect(newer.id).not.toBe(first.id);
+    release();
+    await responseDelivered;
+    await (await retiredRequest.response())?.finished();
+    let discoveries = 0;
+    const readIds: string[] = [];
+    page.on('request', (request) => {
+      if (request.url() === `${path}/imports`) discoveries++;
+      if (request.method() === 'GET' && request.url().startsWith(`${path}/imports/`))
+        readIds.push(request.url());
+    });
+    await page.reload();
+    await expect(page.getByText(newer.id, { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Skyttel-export (ZIP)')).toBeDisabled();
+    await page.getByRole('button', { name: 'Hämta importens status' }).click();
+    await expect(page.getByRole('group', { name: 'Granska ersättningen' })).toBeVisible();
+    expect(discoveries).toBe(0);
+    expect(readIds).toEqual([`${path}/imports/${newer.id}`]);
+    expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    await page.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+    await expect(page.getByText(/Förberedelsen är avbruten/)).toBeVisible();
+  } finally {
+    release();
+    await installation.close();
+  }
+});
+
 test('IMPORT-17: failed cancellation cleanup and a lost success remain bound to the same unconfirmed preparation', async ({
   page,
   browser,
