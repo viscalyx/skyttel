@@ -177,3 +177,62 @@ Settings with independent unsent work”.
   Hela sparandet inväntar att oskickad text hanteras uttryckligen.
 - Ett kvitto omfattar sammanslagningen och den andra beskrivningen.
   Det första Lo behåller sin identitet; resultatet finns kvar efter omstart.
+
+### SAMMANSLAGNING-04: fullständiga värden, bilder och samband i båda teman
+
+**Syfte:** Bevara typbundna dolda värden, ekonomiska uppgifter, bilder,
+ikonval och sambandsvärden genom uttrycklig granskning och sparande.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Två sparade objekt heter Alex blå cykel. Anteckna
+bådas identiteter. Första har typen Utrustning med dolda fält Nummer
+(tal, värdet 0) och Försäkrad (ja/nej, värdet Nej). Andra har typen
+Registrering med fältet Nummer (text, värdet SYNTH-42). Första är
+ospecificerat och manuellt upphört, andra är identifierat och aktuellt.
+De har olika beskrivningar, profilbilder och ikonerna Cykel respektive Musik.
+
+Första objektets skuld är osäkert uppgiven som 125 000,50 den
+2026-09-01, kreditutrymmet uttryckligen inget den 2026-09-02, utnyttjad
+kredit känt 0 den 2026-09-03 och priset okänt. Andra har känt skuldbelopp
+140 000 från 2026-08-01. Båda förvaras i Garaget genom egna samband av
+samma typ. Andra sambandet är upphört och har de dolda värdena Platser 0
+och Under tak Nej; första har Platser 2 och Under tak Ja.
+
+**Integrationstest:**
+[merge-values.spec.ts](../../tests/integration/merge-values.spec.ts),
+testfallen “SAMMANSLAGNING-04: complete typed values, images, icons and
+edges survive explicit merge and restart at 1280px in light”, samt samma
+scenario med 390px och 320px och respektive tema light och dark.
+
+**Steg:**
+
+1. Kör flödet i både ljust och mörkt tema på dator och smal skärm.
+   Öppna **Slå samman objekt** och välj rätt identiteter.
+2. Läs båda typerna, de dolda värdena, beloppens säkerhet och datum,
+   profilbilderna, livscykeln och alla berörda samband.
+3. Välj första objektets typ, identitetsstatus, livscykel och ekonomiska
+   uppgifter samt andra objektets beskrivning, profilbild och ikon.
+4. Välj första objektets Nummer och Försäkrad, men välj även andra
+   objektets Nummer. Behåll endast andra sambandet. Kontrollera att
+   förslaget spärras med en förklaring om fältens olika typer.
+5. Välj **Utelämna uppgiften** för Registrering: Nummer, bekräfta samma
+   företeelse och lägg sammanslagningen i utkastet. Läs förslaget.
+6. Välj **Spara hela utkastet**, invänta kvittot och starta om installationen.
+7. Öppna historiken och rätt sparandes **Visa ändringarna**, sedan
+   **Granskade objekt före sammanslagningen**. Läs de ursprungliga
+   identiteterna, typerna, värdena, bilderna och sambanden.
+
+**Förväntat resultat:**
+
+- Lika namn eller fältnamn slår inte ihop identiteter eller olika
+  betydelser. Dolda 0 och Nej förblir skilda från obesvarade uppgifter.
+- Hela ekonomiska uppgiften behåller belopp, säkerhet och datum.
+  Okänt och uttryckligen inget förblir olika.
+- Första identiteten behålls med valda uppgifter. Andra bilden kopieras
+  till den identiteten och ikonvalet finns kvar bakom profilbilden.
+- Endast andra sambandet finns kvar med första objektet som ändpunkt,
+  upphörd status och de exakta egna värdena 0 och Nej.
+- Kartan ändras först vid uttryckligt sparande. Ett kvitto omfattar båda
+  objekten och sambanden; fullständigt resultat och granskade original
+  finns kvar efter omstart. Långa identiteter kan läsas på smal skärm.

@@ -132,6 +132,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   och ångring av hela sparandet. Ändrat granskat underlag kräver nya val;
   oberoende samtidiga ändringar bevarar granskningen. Tangentbord, paneler
   och Inställningar behåller granskning och annan oskickad text.
+  Typbundna dolda värden, ekonomiska uppgifter, bilder, ikoner och
+  sambandsvärden granskas och återläses i båda teman på dator och mobil.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
   mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart
