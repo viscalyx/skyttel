@@ -396,7 +396,22 @@
     "talstart",
     "döljning",
     "tabbordningen",
-    "trackpad"
+    "trackpad",
+    "talutvärderingen",
+    "modellistan",
+    "backendmodeller",
+    "ljudtoken",
+    "talscenarierna",
+    "xhigh",
+    "ocachade",
+    "ocachad",
+    "ocachat",
+    "resonemangstokens",
+    "talmodeller",
+    "fullduplexmodell",
+    "backendmodell",
+    "backendens",
+    "backendmodellens"
   ],
   "overrides": [
     {
