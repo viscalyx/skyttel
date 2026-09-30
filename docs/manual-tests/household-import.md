@@ -695,3 +695,73 @@ unconfirmed preparation and removes its staged archive”.
   Hushållet ersätts inte och ingen innehållskoppling ändras.
 - Att lämna sidan är inte samma sak som att avbryta. Ett redan bekräftat
   eller oklart importförsök följs med **Hämta importens status**.
+
+### IMPORT-17: följ avbrottets rensning och tappade svar
+
+**Syfte:** Behåll samma obekräftade förberedelse vid rensningsfel och
+skilj ett saknat svar från ett bekräftat avbrott.
+
+**Användare:** Alex som aktuell administratör i två webbläsarprofiler.
+
+**Förutsättningar:** En separat provinstallation där driftansvarig kan
+ändra filrättigheter och starta om servern. En giltig export och ett
+privat utkast ska finnas. Använd aldrig en produktionsinstallation.
+
+**Integrationstest:**
+[household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
+testfallet “IMPORT-17: failed cancellation cleanup and a lost success
+remain bound to the same unconfirmed preparation”.
+
+**Steg:**
+
+1. Kontrollera exportfilen utan att bekräfta ersättningen. Anteckna
+   förberedelsens ID. Driftansvarig sätter dess underkatalog i
+   `.skyttel-imports` till läs- och sökbehörighet, men tar bort
+   skrivbehörighet (`chmod 500`).
+2. Välj **Avbryt förberedelsen**. Kontrollera att förberedelsen inte
+   längre kan användas och att rensning återstår. Kartan och utkastet
+   ska gå att läsa. Inget lyckat avbrott ska påstås.
+3. Logga in med samma konto i den andra profilen och öppna importen.
+   Samma ID och **Slutför förberedelsens rensning** ska visas. Filval och
+   ersättning ska vara spärrade.
+4. Driftansvarig återställer katalogens rättigheter till `chmod 700`.
+   Kör koden nedan i den andra profilens Console. Aktivera rensningen.
+   Fortsätt endast om konsolen visar **Avbrott utfört, svar dolt**.
+5. Välj **Hämta importens status**. Det första lässvaret försvinner också;
+   samma ID och spärrat filval ska finnas kvar. Välj status en gång till.
+6. Förberedelsen ska nu vara otillgänglig och filvalet tillgängligt.
+   Detta ska inte presenteras som ett kvitto på avbrottet. Starta om
+   servern och ladda om sidan. Kartan och det privata utkastet är kvar.
+
+```javascript
+const originalFetch = window.fetch;
+let cancelledId;
+let hideRead = true;
+window.fetch = async (...args) => {
+  const request = new Request(...args);
+  const url = new URL(request.url);
+  const cancelRoute = /\/imports\/[^/]+\/cancel$/.test(url.pathname);
+  if (request.method === 'POST' && cancelRoute) {
+    const response = await originalFetch(...args);
+    const result = await response.clone().json();
+    if (!response.ok || result.cancelled !== true) return response;
+    cancelledId = url.pathname.replace(/\/cancel$/, '');
+    console.log('Avbrott utfört, svar dolt');
+    throw new TypeError('Synthetic lost cancellation response');
+  }
+  if (request.method === 'GET' && url.pathname === cancelledId && hideRead) {
+    hideRead = false;
+    throw new TypeError('Synthetic failed status read');
+  }
+  return originalFetch(...args);
+};
+```
+
+**Förväntat resultat:**
+
+- Rensningsfel kan följas av samma aktuella administratör i en ny profil.
+  Förberedelsen kan inte ersätta innehåll efter att avbrottet börjar.
+- Ett saknat svar låser filvalet tills just det försöket kan läsas.
+  Ingen ny rensning eller ersättning skickas automatiskt.
+- Tillfälliga filer försvinner efter lyckad rensning. Hushållets innehåll,
+  privata arbete och innehållsversion är oförändrade, även efter omstart.
