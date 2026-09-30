@@ -290,11 +290,13 @@ function LoginMethods() {
     revision,
   );
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState(new URLSearchParams(useLocation().search).has('failed'));
+  const [error, setError] = useState<'request' | 'verification' | null>(
+    new URLSearchParams(useLocation().search).has('failed') ? 'request' : null,
+  );
   const [cancelled, setCancelled] = useState(false);
   async function action(step: string, provider?: Provider) {
     setPending(true);
-    setError(false);
+    setError(null);
     setCancelled(false);
     try {
       const response = await request<{ url?: string; status?: string }>(
@@ -307,8 +309,16 @@ function LoginMethods() {
       } else if (response.url && ['http:', 'https:'].includes(new URL(response.url).protocol))
         window.location.assign(response.url);
       else throw new Error('invalid_redirect');
-    } catch {
-      setError(true);
+    } catch (cause) {
+      if (
+        step === 'add' &&
+        cause instanceof RequestError &&
+        cause.status === 409 &&
+        cause.code === 'verification_required'
+      ) {
+        setError('verification');
+        setRevision((value) => value + 1);
+      } else setError('request');
     } finally {
       setPending(false);
     }
@@ -378,7 +388,7 @@ function LoginMethods() {
         </button>
       )}
       {pending && <p role="status">Kontrollerar inloggningen…</p>}
-      {(error || stage === 'failed') && (
+      {((error && (error !== 'verification' || stage !== 'expired')) || stage === 'failed') && (
         <p role="alert">
           Länkningen kunde inte slutföras. Åtkomst kan ha nekats, fel identitet valts eller
           leverantören kan ha ett fel. En inloggning som tillhör en annan Skyttel-användare kan inte

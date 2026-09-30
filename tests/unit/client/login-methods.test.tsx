@@ -257,3 +257,83 @@ test.each(['absent', 'complete'] as const)(
     }
   },
 );
+
+test('a real cancellation before a stale add click refreshes absent state without claiming expiry', async () => {
+  const fixture = await applicationFixture();
+  const client = fixture.client();
+  try {
+    await client.signIn();
+    const created = await client.json('/api/households', { name: 'Linden' });
+    expect(created.status).toBe(201);
+    const { household } = await created.json();
+    const path = `/api/households/${household.id}/map`;
+    const initial = await (await client.request(path)).json();
+    expect(
+      (
+        await client.json(`${path}/draft`, {
+          id: 'cancelled-private',
+          version: initial.draft.version,
+          baseRevision: null,
+          value: {
+            typeId: initial.types[0].id,
+            name: 'Bevarat efter avbruten verifiering',
+            description: 'Privat förslag utan ny koppling',
+          },
+        })
+      ).status,
+    ).toBe(200);
+    const before = await (await client.request(path)).json();
+    const identity = await (await client.request('/api/bootstrap')).json();
+    const proof = await client.json('/api/login-methods/prove', { provider: 'google' });
+    expect(proof.status).toBe(200);
+    await client.request((await proof.json()).url);
+    const mutations: string[] = [];
+    const replies: { status: number; body: unknown }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      headers.set('origin', fixture.config.origin);
+      if (init?.method === 'POST') mutations.push(url);
+      const response = await client.request(url, { ...init, headers });
+      if (url === '/api/login-methods/add')
+        replies.push({ status: response.status, body: await response.clone().json() });
+      return response;
+    });
+    render(
+      <MemoryRouter initialEntries={['/login-methods']}>
+        <App />
+      </MemoryRouter>,
+    );
+    await screen.findByRole('button', { name: 'Koppla Microsoft' });
+    const cancelled = await client.json('/api/login-methods/cancel', {});
+    expect(cancelled.status).toBe(200);
+    expect(await cancelled.json()).toEqual({ status: 'cancelled' });
+    await userEvent.click(screen.getByRole('button', { name: 'Koppla Microsoft' }));
+    await screen.findByRole('button', { name: 'Verifiera Google' });
+    expect(replies).toEqual([{ status: 409, body: { error: 'verification_required' } }]);
+    expect(screen.getByRole('alert').textContent).toContain('Länkningen kunde inte slutföras');
+    expect(screen.queryByText(/^Verifieringen har gått ut\./)).toBeNull();
+    expect(screen.queryByText(/^Länkningen är avbruten\./)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Koppla Microsoft' })).toBeNull();
+    expect(await (await client.request('/api/login-methods')).json()).toEqual({
+      providers: ['google'],
+      stage: null,
+    });
+    expect(mutations).toEqual(['/api/login-methods/add']);
+    expect(await (await client.request('/api/bootstrap')).json()).toEqual(identity);
+    expect(await (await client.request(path)).json()).toEqual(before);
+  } finally {
+    cleanup();
+    fixture.close();
+  }
+});
+
+test('failed fresh proof still shows its error when the earlier verification has expired', async () => {
+  mount([{ data: { providers: ['google'], stage: 'expired' } }, { status: 503 }]);
+  await userEvent.click(await screen.findByRole('button', { name: 'Verifiera Google' }));
+  expect(await screen.findByRole('alert')).toBeDefined();
+  expect(screen.getByRole('button', { name: 'Verifiera Google' })).toHaveProperty(
+    'disabled',
+    false,
+  );
+  expect(screen.getByRole('status').textContent).toContain('Verifieringen har gått ut');
+});
