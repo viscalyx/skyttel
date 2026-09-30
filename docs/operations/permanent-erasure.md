@@ -17,6 +17,14 @@ changed household requires a new review. Keep the operation identifier
 if the connection fails. Check the status before starting another action.
 Do not assume that a lost reply means that no content was removed.
 
+The page shows the full operation identifier and completed impact counts.
+Within the same browser tab, a known identifier survives ordinary Settings
+navigation and reload. Status reads follow that exact operation, even when
+another administrator completes a newer one. A new tab without a known
+identifier discovers the latest operation; compare identifiers before treating
+that result as recovery of an earlier attempt. An unavailable exact read keeps
+the outcome unknown. It does not start a new erasure or repeat execution.
+
 ## Pending state
 
 The erasure page distinguishes preparation, cleanup, and completion.

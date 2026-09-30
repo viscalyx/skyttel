@@ -43,6 +43,18 @@ för att kontrollera raderingsstatus och läsa in aktuellt innehåll. Skyttel
 behåller samma försök tills utfallet är känt. Du kan också öppna sidan
 igen för att läsa den sparade statusen.
 
+**Raderingsförsök** visar försökets fullständiga identifierare. I samma
+webbläsarflik följer den med när du besöker andra inställningar eller laddar
+om sidan. Statuskontrollen läser just detta försök även om en annan
+administratör slutför en senare radering. Resultatets antal hör till det
+visade försöket. Ett nytt urval och en ny uttrycklig bekräftelse startar
+ett separat försök.
+
+En ny flik utan ett känt försök visar det senaste sparade ärendet. Jämför
+identifierarna innan du drar slutsatser om en tidigare radering. Om ett
+känt försök inte kan återfinnas är utfallet fortfarande oklart. Kontrollera
+status igen; ett saknat svar eller ärende betyder inte att inget raderats.
+
 Under förberedelse och städning är berört innehåll tillfälligt låst.
 Städningen kan påverka åtkomsten för hela installationen. Använd sidans
 fortsättningsknapp för samma radering om den fortfarande väntar. Kontakta

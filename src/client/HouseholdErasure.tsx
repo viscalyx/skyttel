@@ -37,6 +37,49 @@ export function HouseholdErasure({
   onAccessLost: () => void;
 }) {
   const path = `/api/households/${encodeURIComponent(householdId)}/erasure`;
+  const storageKey = `skyttel-erasure:${householdId}`;
+  const [operationId, setOperationId] = useState<string | null>(() => {
+    try {
+      const value = sessionStorage.getItem(storageKey);
+      return value && /^[\w-]{1,128}$/.test(value) ? value : null;
+    } catch {
+      return null;
+    }
+  });
+  const knownOperation = useRef(operationId);
+  const remember = useCallback(
+    (id: string | null) => {
+      knownOperation.current = id;
+      setOperationId(id);
+      if (id) sessionStorage.setItem(storageKey, id);
+      else sessionStorage.removeItem(storageKey);
+    },
+    [storageKey],
+  );
+  const readCurrent = useCallback(
+    async (signal?: AbortSignal) => {
+      const id = knownOperation.current;
+      if (!id) {
+        const catalog = await request<Catalog>(path, undefined, signal);
+        return { catalog, status: catalog.status, catalogUnavailable: false };
+      }
+      // A newer catalog result cannot resolve a locally known operation.
+      const { status } = await request<{ status: ErasureStatus }>(
+        `${path}/${encodeURIComponent(id)}`,
+        undefined,
+        signal,
+      );
+      try {
+        const catalog = await request<Catalog>(path, undefined, signal);
+        return { catalog, status, catalogUnavailable: false };
+      } catch (failure) {
+        if (failure instanceof MapRequestError && [401, 403].includes(failure.status))
+          throw failure;
+        return { catalog: null, status, catalogUnavailable: true };
+      }
+    },
+    [path],
+  );
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [selection, setSelection] = useState<ErasureSelection>([]);
   const [review, setReview] = useState<ErasureReview | null>(null);
@@ -46,7 +89,7 @@ export function HouseholdErasure({
   const [error, setError] = useState<string | null>(null);
   const [accessLost, setAccessLost] = useState(false);
   const [attempt, setAttempt] = useState<Attempt | null>(null);
-  const [uncertain, setUncertain] = useState(false);
+  const [uncertain, setUncertain] = useState(Boolean(operationId));
   const alive = useRef(true);
   const submittedFocus = useRef<Element | null>(null);
   const selectionHeading = useRef<HTMLLegendElement>(null);
@@ -79,11 +122,17 @@ export function HouseholdErasure({
     alive.current = true;
     const controller = new AbortController();
     setBusy(true);
-    void request<Catalog>(path, undefined, controller.signal)
+    void readCurrent(controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return;
-        setCatalog(result);
+        setCatalog(result.catalog);
         setStatus(result.status);
+        remember(result.status?.operationId ?? null);
+        setUncertain(false);
+        if (result.catalogUnavailable)
+          setError(
+            'Raderingsstatusen är återläst, men aktuellt innehåll kunde inte hämtas. Försök läsa in det igen.',
+          );
       })
       .catch((failure: unknown) => {
         if (!controller.signal.aborted && !denied(failure))
@@ -96,8 +145,9 @@ export function HouseholdErasure({
       alive.current = false;
       controller.abort();
     };
-  }, [path, denied]);
+  }, [readCurrent, denied, remember]);
   function select(kind: ErasureKind, id: string, checked: boolean) {
+    remember(null);
     setSelection((previous) =>
       checked
         ? [...previous, { kind, id }]
@@ -130,31 +180,34 @@ export function HouseholdErasure({
     setReview(null);
     setConfirmation('');
     try {
-      const result = await request<Catalog>(path);
+      const result = await readCurrent();
       if (!alive.current) return;
-      setCatalog(result);
-      if (attempt && result.status?.operationId !== attempt.operationId) {
-        setStatus(null);
+      setCatalog(result.catalog);
+      setStatus(result.status);
+      remember(result.status?.operationId ?? null);
+      setSelection([]);
+      setAttempt(null);
+      setUncertain(false);
+      if (result.catalogUnavailable)
         setError(
-          'Inget bekräftat resultat hittades för ditt försök. Utfallet är fortfarande oklart. Återförsök samma radering.',
+          'Raderingsstatusen är återläst, men aktuellt innehåll kunde inte hämtas. Försök läsa in det igen.',
         );
-      } else {
-        setStatus(result.status);
-        setSelection([]);
-        setAttempt(null);
-        setUncertain(false);
-      }
     } catch (failure) {
-      if (alive.current && !denied(failure))
+      if (alive.current && !denied(failure)) {
+        setUncertain(Boolean(knownOperation.current));
         setError(
-          'Raderingsstatus kunde inte hämtas. Utfallet är fortfarande oklart. Försök kontrollera status igen.',
+          failure instanceof MapRequestError && failure.status === 404
+            ? 'Inget bekräftat resultat hittades för ditt försök. Utfallet är fortfarande oklart. Kontrollera samma raderingsstatus igen.'
+            : 'Raderingsstatus kunde inte hämtas. Utfallet är fortfarande oklart. Försök kontrollera status igen.',
         );
+      }
     } finally {
       setBusy(false);
     }
   }
   async function resume() {
     if (!status) return;
+    remember(status.operationId);
     submittedFocus.current = document.activeElement;
     setBusy(true);
     setError(null);
@@ -184,6 +237,7 @@ export function HouseholdErasure({
       operationId: crypto.randomUUID(),
       confirmation,
     };
+    remember(body.operationId);
     setAttempt(body);
     setBusy(true);
     setError(null);
@@ -203,6 +257,7 @@ export function HouseholdErasure({
       setReview(null);
       setConfirmation('');
       if (failure instanceof MapRequestError && failure.code === 'erasure_review_changed') {
+        remember(null);
         setAttempt(null);
         setUncertain(false);
         setError(
@@ -251,6 +306,21 @@ export function HouseholdErasure({
         <p role="alert" className="error">
           {error}
         </p>
+      )}
+      {operationId && (
+        <dl className="recovery-facts">
+          <dt>Raderingsförsök</dt>
+          <dd>{operationId}</dd>
+        </dl>
+      )}
+      {!uncertain && status?.phase === 'completed' && (
+        <ul aria-label="Raderingens resultat">
+          <li>Objekt: {status.counts.objects}</li>
+          <li>Samband: {status.counts.relationships}</li>
+          <li>Objekttyper: {status.counts.objectTypes}</li>
+          <li>Sambandstyper: {status.counts.relationshipTypes}</li>
+          <li>Bildversioner: {status.counts.images}</li>
+        </ul>
       )}
       {!uncertain && status?.phase === 'completed' && (
         <>
