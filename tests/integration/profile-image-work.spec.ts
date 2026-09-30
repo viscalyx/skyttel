@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
-import { activatePanel, createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  activatePanel,
+  createHousehold,
+  openMap,
+  openSettings,
+  openWorkspace,
+  signIn,
+} from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 test('BILD-04: a delayed image error returns to its closed object without losing newer work', async ({
@@ -133,3 +140,134 @@ test('BILD-04: a delayed image error returns to its closed object without losing
     await installation.close();
   }
 });
+
+for (const width of [1440, 390, 320]) {
+  test(`BILD-05: Settings preserves pending image work and retires its error destination at ${width}px`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    let releaseResponse = () => {};
+    try {
+      await page.setViewportSize({ width, height: 900 });
+      await signIn(page.request, installation.origin);
+      const { household } = await (await createHousehold(page.request, installation.origin)).json();
+      const path = `${installation.origin}/api/households/${household.id}/map`;
+      const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+      await page.goto(installation.origin);
+      await openWorkspace(page);
+      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page.getByLabel('Objektets namn', { exact: true }).fill('Bildarbete');
+      await page.getByLabel('Beskrivning', { exact: true }).fill('Behåll bildens text');
+      await expect(page.getByLabel('Välj profilbild')).toBeDisabled();
+      expect((await read()).draft.changes).toEqual([]);
+      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await page.getByRole('button', { name: 'Uppgifter för Bildarbete', exact: true }).click();
+      const panel = page.getByRole('region', { name: 'Bildarbete', exact: true });
+      await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+      const file = panel.getByLabel('Välj profilbild');
+      const before = await read();
+      let uploads = 0;
+      page.on('request', (request) => {
+        if (request.url().includes('/profile-images/') && request.method() === 'POST') uploads++;
+      });
+      await file.setInputFiles([]);
+      await expect(file).toBeEnabled();
+      expect(uploads).toBe(0);
+      expect(await read()).toEqual(before);
+      let responseReady = () => {};
+      const ready = new Promise<void>((resolve) => {
+        responseReady = resolve;
+      });
+      const released = new Promise<void>((resolve) => {
+        releaseResponse = resolve;
+      });
+      await page.route('**/profile-images/*', async (route) => {
+        const response = await route.fetch();
+        expect(response.status()).toBe(400);
+        expect(await response.json()).toEqual({ error: 'invalid_image' });
+        responseReady();
+        await released;
+        await route.fulfill({ response });
+      });
+      await file.setInputFiles({
+        name: 'fel.png',
+        mimeType: 'image/png',
+        buffer: Buffer.from('synthetic invalid pixels'),
+      });
+      await ready;
+      await expect(file).toBeDisabled();
+      await panel.getByRole('button', { name: 'Stäng Bildarbete', exact: true }).click();
+      await openMap(page);
+      await expect(
+        page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      await openSettings(page);
+      await expect(page.getByRole('heading', { name: 'Inställningar', exact: true })).toBeFocused();
+      await expect(
+        page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      ).toBeDisabled();
+      const settingsReturn = page.getByRole('link', { name: 'Tillbaka till kartan', exact: true });
+      await settingsReturn.focus();
+      releaseResponse();
+      await expect(page.getByRole('alert')).toContainText('Bilden kunde inte behandlas');
+      await expect(page).toHaveURL(/\/settings$/);
+      await expect(settingsReturn).toBeFocused();
+      await expect(panel).not.toBeVisible();
+      expect(await read()).toEqual(before);
+      const imageReturn = page.getByRole('button', {
+        name: 'Återgå till bilden för Bildarbete',
+        exact: true,
+      });
+      await imageReturn.click();
+      await expect(page).toHaveURL(new RegExp(`/households/${household.id}$`));
+      await expect(panel.getByRole('heading', { name: 'Bildarbete', exact: true })).toBeFocused();
+      await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+        'Behåll bildens text',
+      );
+      await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+      await expect(page.getByRole('alert')).toHaveCount(0);
+      await expect(imageReturn).toHaveCount(0);
+      expect(await read()).toEqual(before);
+      await panel.getByLabel('Beskrivning', { exact: true }).fill('Oskickat efter bildfelet');
+      await page.route(
+        '**/map/draft',
+        async (route) => {
+          const current = await read();
+          const sibling = await page.request.post(`${path}/draft`, {
+            headers: { origin: installation.origin },
+            data: {
+              id: 'independent',
+              version: current.draft.version,
+              contentVersion: current.contentVersion,
+              baseRevision: null,
+              value: { typeId: current.types[0].id, name: 'Annat förslag', description: '' },
+            },
+          });
+          expect(sibling.status()).toBe(200);
+          const response = await route.fetch();
+          expect(response.status()).toBe(409);
+          await route.fulfill({ response });
+        },
+        { times: 1 },
+      );
+      await panel.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await expect(page.getByRole('alert')).toBeVisible();
+      await expect(page.getByRole('alert')).not.toContainText('Bilden');
+      await expect(imageReturn).toHaveCount(0);
+      await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+        'Oskickat efter bildfelet',
+      );
+      const after = await read();
+      expect(after.objects).toEqual([]);
+      expect(
+        after.draft.changes.find((change) => change.id === before.draft.changes[0].id),
+      ).toEqual(before.draft.changes[0]);
+      expect(after.draft.changes.find((change) => change.id === 'independent')?.after?.name).toBe(
+        'Annat förslag',
+      );
+    } finally {
+      releaseResponse();
+      await installation.close();
+    }
+  });
+}

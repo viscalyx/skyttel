@@ -136,7 +136,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   och återgång till standardikon samt fokus vid fördröjda svar och återförsök.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
   rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, ångring,
-  kvitton, bildåtkomst och uttrycklig återgång efter bildfel i en stängd panel.
+  kvitton, bildåtkomst och uttrycklig återgång efter bildfel i en stängd panel
+  eller i Inställningar samt avbrutet filval och avslutade felåtergångar.
 
 - [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
   anslutning, avgränsade läsningar, egna utkast, hushållsgränser och

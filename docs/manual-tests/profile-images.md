@@ -289,3 +289,46 @@ window.fetch = async (...args) => {
 - Den uttryckliga återgången öppnar Cykelns panel och fokuserar dess rubrik.
 - Den senaste giltiga bilden, Cykelns ikon och båda objektens beskrivningar
   finns kvar. Garagets oskickade text har inte skickats eller sparats.
+
+### BILD-05: Behåll bildarbete genom Inställningar och avsluta felåtergången
+
+**Syfte:** Spärra sparande under bildarbete och låta bildfelets återgång gälla
+bara det aktuella felet, också när Inställningar öppnas.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett nytt isolerat hushåll. Använd den ogiltiga filen och
+den kontrollerade svarsfördröjningen i BILD-04. Ha en andra flik med samma
+inloggade användare tillgänglig för det samtidiga förslaget.
+
+**Integrationstest:**
+[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
+testfallet “BILD-05: Settings preserves pending image work and retires its error
+destination at 1440px”, samma titel med “390px” respektive “320px”.
+
+**Steg:**
+
+1. Skapa Bildarbete med en beskrivning. Kontrollera att bildvalet är spärrat
+   innan **Lägg i mitt utkast**. Lägg uppgifterna i utkastet och redigera
+   objektet igen. Öppna filväljaren och avbryt utan fil.
+2. Håll det verkliga bildsvaret enligt BILD-04. Välj `fel.png`, stäng
+   objektpanelen och arbetsytan. Kontrollera **Spara hela utkastet**.
+3. Öppna Inställningar. Kontrollera sparknappen igen och sätt tangentbordsfokus
+   på **Tillbaka till kartan**. Släpp bildsvaret enligt BILD-04.
+4. Läs felet utan att lämna Inställningar. Välj **Återgå till bilden för
+   Bildarbete** och kontrollera objektets rubrik och beskrivning.
+5. Välj **Hämta aktuellt underlag**. Kontrollera att bildfelet och dess
+   återgångsknapp försvinner. Skriv en ny beskrivning utan att skicka.
+6. Lägg ett annat objektförslag i samma utkast från den andra fliken.
+   Försök lägga den första flikens text i utkastet utan att ladda om den.
+
+**Förväntat resultat:**
+
+- Avbrutet filval lämnar utkastet oförändrat. Väntande bildarbete spärrar
+  hela sparandet både i kartan och i Inställningar.
+- Bildfelet öppnar inte objektet automatiskt och flyttar inte det nyare
+  tangentbordsfokuset. Den uttryckliga återgången lämnar Inställningar och
+  fokuserar rätt objektrubrik. Beskrivningen finns kvar.
+- Uppdateringen avslutar bildfelet. Det senare samtidighetsfelet återupplivar
+  inte bildens återgång. Oskickad text och det andra förslaget finns kvar;
+  inget delas med hushållet.
