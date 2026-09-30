@@ -237,10 +237,7 @@ test('PANEL-02: mobile panel choice retains conversation, object text and deskto
           .poll(() =>
             focusTarget.evaluate((element) => {
               const box = element.getBoundingClientRect();
-              const hit = document.elementFromPoint(
-                box.x + box.width / 2,
-                box.y + box.height / 2,
-              );
+              const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
               return (
                 element === document.activeElement &&
                 box.width > 0 &&
