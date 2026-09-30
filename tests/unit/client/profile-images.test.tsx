@@ -149,6 +149,7 @@ test.each([401, 403, 409, 503])(
 );
 
 test('an image error returns to the retained object and expires before an unrelated draft rejection', async () => {
+  const user = userEvent.setup();
   let details = await open();
   await userEvent.upload(details.getByLabelText('Välj profilbild'), await file());
   await screen.findByText('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
@@ -165,8 +166,8 @@ test('an image error returns to the retained object and expires before an unrela
   expect(screen.getByRole('heading', { name: 'Lo Exempel' })).toBe(document.activeElement);
   expect(details.getByDisplayValue('Befintlig text')).toBeTruthy();
   expect(await read()).toEqual(before);
-  await userEvent.clear(details.getByLabelText('Beskrivning', { exact: true }));
-  await userEvent.type(details.getByLabelText('Beskrivning', { exact: true }), 'Kasta denna text');
+  await user.clear(details.getByLabelText('Beskrivning', { exact: true }));
+  await user.paste('Kasta denna text');
   await userEvent.click(screen.getByRole('button', { name: 'Stäng utan att skicka texten' }));
   expect(screen.queryByRole('group', { name: 'Objektets detaljer' })).toBeNull();
   expect(await read()).toEqual(before);
@@ -182,8 +183,8 @@ test('an image error returns to the retained object and expires before an unrela
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   expect(screen.queryByRole('button', { name: returnName })).toBeNull();
   const description = details.getByLabelText('Beskrivning', { exact: true });
-  await userEvent.clear(description);
-  await userEvent.type(description, 'Ny oskickad text');
+  await user.clear(description);
+  await user.paste('Ny oskickad text');
   const current = await read();
   expect(
     (
