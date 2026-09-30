@@ -150,17 +150,18 @@ Settings with independent unsent work”.
 1. Öppna Lista och använd tangentbordet för **Slå samman objekt**.
    Kontrollera synligt fokus på sammanslagningens rubrik.
 2. Välj båda Lo, den andra beskrivningen och bekräfta samma företeelse.
-3. Öppna uppgifterna för Oberoende objekt och börja redigera beskrivningen.
-   Skriv Oskickat arbete finns kvar utan att lägga texten i utkastet.
+3. Öppna uppgifterna för Oberoende objekt och läs beskrivningen.
 4. Växla till **Lista och utkast**. Besök Inställningar och välj
    **Tillbaka till kartan**. Stäng arbetsytan och öppna Lista igen.
    Kontrollera att sammanslagningens val finns kvar efter varje återgång.
 5. Använd tangentbordet för **Stäng sammanslagningen utan att skicka**.
    Kontrollera fokus på **Slå samman objekt** och att kartan är oförändrad.
-   Återgå till Oberoende objekt och kontrollera den oskickade texten.
+   Återgå till Oberoende objekt och börja redigera beskrivningen. Skriv
+   Oskickat arbete finns kvar utan att lägga texten i utkastet.
 6. Öppna sammanslagningen igen. Kontrollera att det uttryckliga avbrottet
    tömmer valen. Välj objekten och den andra beskrivningen, bekräfta samma
-   företeelse och lägg sammanslagningen i utkastet med tangentbordet.
+   företeelse. Besök Inställningar och återgå med valen kvar. Lägg
+   sammanslagningen i utkastet med tangentbordet.
 7. Kontrollera fokus på **Hela mitt utkast**. Sparandet ska fortfarande
    vara spärrat eftersom den andra texten är oskickad. Återgå till den
    texten och välj **Lägg i mitt utkast**.

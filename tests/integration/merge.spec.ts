@@ -256,8 +256,7 @@ test('SAMMANSLAGNING-03: keyboard merge review survives panels and Settings with
     await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
     await page.getByRole('button', { name: 'Uppgifter för Oberoende objekt', exact: true }).click();
     const independent = page.getByRole('region', { name: 'Oberoende objekt', exact: true });
-    await independent.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await independent.getByLabel('Beskrivning', { exact: true }).fill('Oskickat arbete finns kvar');
+    await expect(independent).toContainText('Sparad beskrivning');
     await activatePanel(page, 'Lista och utkast');
     await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
     await expect(form.getByLabel('Jag bekräftar att objekten är samma företeelse')).toBeChecked();
@@ -275,10 +274,13 @@ test('SAMMANSLAGNING-03: keyboard merge review survives panels and Settings with
     await focusedUncovered(launcher);
     expect(await read()).toEqual(original);
     await activatePanel(page, 'Oberoende objekt');
+    await independent.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await independent.getByLabel('Beskrivning', { exact: true }).fill('Oskickat arbete finns kvar');
     await expect(independent.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Oskickat arbete finns kvar',
     );
     await activatePanel(page, 'Lista och utkast');
+    await expect(launcher).toBeEnabled();
     await launcher.focus();
     await page.keyboard.press('Enter');
     await focusedUncovered(form.getByRole('heading', { name: 'Slå samman objekt', exact: true }));
@@ -290,6 +292,10 @@ test('SAMMANSLAGNING-03: keyboard merge review survives panels and Settings with
     ).not.toBeChecked();
     await form.getByLabel('Välj Beskrivning').selectOption('absorbed');
     await form.getByLabel('Jag bekräftar att objekten är samma företeelse').check();
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
+    await expect(form.getByLabel('Jag bekräftar att objekten är samma företeelse')).toBeChecked();
     await form.getByRole('button', { name: 'Lägg sammanslagningen i mitt utkast' }).focus();
     await page.keyboard.press('Enter');
     await focusedUncovered(page.getByRole('heading', { name: 'Hela mitt utkast', exact: true }));
