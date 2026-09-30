@@ -469,9 +469,11 @@ test('SAMMANSLAGNING-02: refreshed source facts require new choices while indepe
       const state = await read(other.request);
       const objectType = state.types.find(
         (type) => type.id === state.objects.find((object) => object.id === 'a')?.typeId,
-      )!;
-      const edge = state.relationships.find((edge) => edge.id === 'second')!;
-      const edgeType = state.relationshipTypes.find((type) => type.id === edge.typeId)!;
+      );
+      const edge = state.relationships.find((edge) => edge.id === 'second');
+      const edgeType = state.relationshipTypes.find((type) => type.id === edge?.typeId);
+      if (!objectType || !edge || !edgeType)
+        throw new Error('The reviewed objects and affected relationship need their definitions');
       const source =
         kind === 'object-type' ? objectType : kind === 'relationship' ? edge : edgeType;
       const value =
