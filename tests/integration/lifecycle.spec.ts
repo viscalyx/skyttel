@@ -1,6 +1,6 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 async function arrange(client: APIRequestContext, origin: string) {
@@ -312,6 +312,93 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
         ).status(),
       ).toBe(400);
     }
+  } finally {
+    await installation.close();
+  }
+});
+
+test('LIVSCYKEL-04: keyboard relationship targets expose ended status without changing saved facts', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { read, post, save } = await arrange(page.request, installation.origin);
+    const initial = await read();
+    for (const edge of initial.relationships) {
+      expect(
+        (
+          await post('relationship', {
+            version: (await read()).draft.version,
+            id: edge.id,
+            baseRevision: edge.revision,
+            value: {
+              ...edge,
+              endDate: { knowledge: 'known', value: '2000-01-01' },
+              ...(edge.id === 'outgoing' ? { lifecycle: 'active' } : {}),
+            },
+          })
+        ).ok(),
+      ).toBe(true);
+    }
+    expect((await save()).ok()).toBe(true);
+    const saved = await read();
+    await page.goto(installation.origin);
+    await openMap(page);
+    const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    const labels = space.locator('.spatial-labels');
+    const ended = labels.getByRole('button', {
+      name: 'Välj samband: Lo Exempel → Använder → Familjemusik',
+      exact: true,
+    });
+    const active = labels.getByRole('button', {
+      name: 'Välj samband: Familjemusik → Använder → Molnmusik',
+      exact: true,
+    });
+    await expect(ended.getByText('Upphört', { exact: true })).toBeVisible();
+    await expect(active).not.toContainText('Upphört');
+    await expect(ended).toHaveAccessibleDescription(/Upphört/);
+    await expect(active).not.toHaveAccessibleDescription(/Upphört/);
+    await ended.focus();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Tab');
+    await expect(ended).toBeFocused();
+    await expect
+      .poll(() =>
+        ended.evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+          const style = getComputedStyle(element);
+          return (
+            rect.width >= 24 &&
+            rect.height >= 24 &&
+            rect.x >= 0 &&
+            rect.y >= 0 &&
+            rect.right <= innerWidth &&
+            rect.bottom <= innerHeight &&
+            (hit === element || element.contains(hit)) &&
+            style.outlineStyle !== 'none' &&
+            Number.parseFloat(style.outlineWidth) >= 2
+          );
+        }),
+      )
+      .toBe(true);
+    await page.keyboard.press('Enter');
+    await openWorkspace(page);
+    const details = page.getByRole('region', { name: 'Val och redigering', exact: true });
+    await expect(details).toContainText('Lo Exempel → Använder → Familjemusik');
+    await expect(details).toContainText('Status: Följ slutdatum');
+    await expect(details).toContainText('Slutdatum: 2000-01-01');
+    await expect(details.getByText('Upphört', { exact: true })).toBeVisible();
+    expect(await read()).toEqual(saved);
+    await installation.restart();
+    await page.reload();
+    await openMap(page);
+    await expect(ended.getByText('Upphört', { exact: true })).toBeVisible();
+    await expect(ended).toHaveAccessibleDescription(/Upphört/);
+    await expect(active).not.toContainText('Upphört');
+    await expect(active).not.toHaveAccessibleDescription(/Upphört/);
+    expect(await read()).toEqual(saved);
   } finally {
     await installation.close();
   }

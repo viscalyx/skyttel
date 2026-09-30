@@ -105,6 +105,48 @@ dates or status can correct it”.
 - Automationen kontrollerar dessutom via HTTP att ett ogiltigt kalenderdatum
   och ett datumvärde märkt som okänt avvisas utan nya förslag.
 
+### LIVSCYKEL-04: kartans sambandsstatus är åtkomlig med tangentbord
+
+**Syfte:** Kontrollera att kartans samband förmedlar samma status genom
+synlig text och kontrollens tillgängliga beskrivning.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** De sparade objekten och sambanden ovan. Ange ett känt
+slutdatum **2000-01-01** för båda sambanden. Behåll **Följ slutdatum** för
+sambandet från Lo till Familjemusik, men välj **Gäller fortfarande** för
+sambandet från Familjemusik till Molnmusik. Spara hela utkastet.
+
+**Integrationstest:**
+[lifecycle.spec.ts](../../tests/integration/lifecycle.spec.ts),
+testfallet “LIVSCYKEL-04: keyboard relationship targets expose ended status
+without changing saved facts”.
+
+**Steg:**
+
+1. Öppna kartan och välj **Alla etiketter**. Kontrollera de två sambanden.
+2. Använd Tab och Skift+Tab för att nå sambandet från Lo till Familjemusik.
+   Kontrollera synligt fokus och sambandets tillgängliga beskrivning med
+   webbläsarens tillgänglighetsinspektör eller skärmläsare.
+3. Tryck Enter på sambandet och öppna **Lista**. Läs dess uppgifter under
+   **Val och redigering** utan att redigera eller spara något.
+4. Starta om appen med samma databas, ladda om sidan och öppna kartan igen.
+   Kontrollera båda sambandens status och tillgängliga beskrivningar.
+
+**Förväntat resultat:**
+
+- Sambandet från Lo visar **Upphört** med text och samma uppgift finns i
+  kontrollens tillgängliga beskrivning. Dess namn behåller båda objekten
+  och riktningen **Lo Exempel → Använder → Familjemusik**.
+- Sambandet till Molnmusik saknar markeringen Upphört eftersom det
+  uttryckliga statusvalet åsidosätter det passerade slutdatumet.
+- Tangentbordets fokus är synligt och kontrollen går att aktivera.
+  Detaljerna visar **Följ slutdatum**, **2000-01-01** och **Upphört**.
+- Samma status består efter omstart. Inget nytt förslag eller sparande
+  uppstår av visningen. Automationen jämför hela kartunderlaget via HTTP.
+- Automationen kontrollerar webbläsarens tillgängliga beskrivning och
+  fokus. Faktiska skärmläsarprov dokumenteras separat när de utförs.
+
 ## Borttagning
 
 ### LIVSCYKEL-03: direkt borttagning bevarar anslutna objekt och historik
