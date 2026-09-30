@@ -122,7 +122,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   administratörs webbläsare, tappat förberedelsesvar, väntande rensning
   efter rolländring, uppföljning av rätt försök trots en senare ersättning
   och ångring med aktuellt underlag. Tangentbord och fokus följs genom
-  filfel, granskning, ersättning och innehållskoppling i båda teman.
+  filfel, granskning, uttryckligt avbrott av obekräftad förberedelse,
+  ersättning och innehållskoppling i båda teman.
 
 - [Fullständig export](household-export.md): egen sida i Inställningar,
   privata uppgifter före export, tangentbord, fokus, bevarat kartarbete,

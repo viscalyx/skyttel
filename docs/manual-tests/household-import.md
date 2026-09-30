@@ -659,3 +659,36 @@ review, errors and assignment at 1280px”, samma titel med “390px”,
 - Bekräftelser är uttryckliga och kan utföras med tangentbordet.
   Identitetsbytet slår inte ihop eller raderar det privata arbetet.
 - Hela flödet går att använda i båda teman på smal och bred skärm.
+
+### IMPORT-16: avbryt en obekräftad förberedelse
+
+**Syfte:** Ta bort en kontrollerad men ännu obekräftad import utan att
+ersätta hushållets innehåll.
+
+**Användare:** Alex som aktuell administratör.
+
+**Förutsättningar:** En separat provinstallation och giltig export enligt
+den allmänna förberedelsen. Ingen ersättning har bekräftats.
+
+**Integrationstest:**
+[household-import-cancel.spec.ts](../../tests/integration/household-import-cancel.spec.ts),
+testfallet “IMPORT-16: an administrator explicitly cancels only an
+unconfirmed preparation and removes its staged archive”.
+
+**Steg:**
+
+1. Välj exporten och **Kontrollera importfil**. Läs granskningen utan att
+   markera ersättningens bekräftelse.
+2. Använd Tab till **Avbryt förberedelsen** och tryck Enter.
+3. Kontrollera beskedet att förberedelsen är avbruten. Granskningen ska
+   försvinna och fokus återgå till filvalet.
+4. Ladda om sidan. Ingen granskning av den avbrutna filen ska komma tillbaka.
+5. Återgå till kartan och kontrollera att den senare ändringen **Senare
+   namn**, privata utkast och aktuell tillgång är oförändrade.
+
+**Förväntat resultat:**
+
+- Ett uttryckligt avbrott tar bort den obekräftade tillfälliga filen.
+  Hushållet ersätts inte och ingen innehållskoppling ändras.
+- Att lämna sidan är inte samma sak som att avbryta. Ett redan bekräftat
+  eller oklart importförsök följs med **Hämta importens status**.
