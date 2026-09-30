@@ -1,7 +1,7 @@
 # Manuella testfall för profilbilder
 
 Testfallen omfattar privata bildförslag, visning i rymdkartan, historik,
-ångring, fel och åtkomst.
+ångring, fel, åtkomst och återgång till ett objekt efter att dess panel stängts.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -234,3 +234,58 @@ Integrationstestet kontrollerar dessutom att Robin, med giltigt medlemskap
 i ett annat hushåll, inte kan läsa Lindens bilder genom det hushållets
 adress. Det testet skapar det andra hushållet i sin egen databas; den
 manuella kontrollen med en okänd adress ersätter inte medlemskapsprovet.
+
+### BILD-04: Återgå till rätt objekt efter ett fördröjt bildfel
+
+**Syfte:** Behålla senaste bild, ikon och pågående arbete när ett bildfel
+kommer efter att objektets panel stängts.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Skapa privata förslag för Cykeln och Garaget med
+beskrivningar. Välj cykelikonen för Cykeln. Använd de syntetiska bilderna
+och den ogiltiga filen från förberedelsen.
+
+**Integrationstest:**
+[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
+testfallet “BILD-04: a delayed image error returns to its closed object without
+losing newer work”.
+
+**Steg:**
+
+1. Redigera Garaget och skriv en ny beskrivning utan att lägga den i utkastet.
+   Stäng panelen med **Stäng Garaget**.
+2. Redigera Cykeln. Välj först den blå PNG-bilden och sedan den gröna
+   WebP-bilden. Vänta på det privata bildförslaget efter varje val.
+3. Fördröj svaret från bildanropet med webbläsarens utvecklarverktyg enligt
+   instruktionen nedan. Välj `fel.png`. Stäng panelen med **Stäng Cykeln**,
+   öppna listan och skriv början av Garagets namn i **Sök objekt**.
+4. Släpp fram svaret. Läs det globala felet och fortsätt skriva i sökfältet.
+   Välj sedan **Återgå till bilden för Cykeln**.
+5. Kontrollera Cykelns beskrivning och gröna bild. Öppna Garaget igen och
+   kontrollera den oskickade beskrivningen.
+
+För en kontrollerad fördröjning, kör detta i webbläsarens konsol innan steg 3.
+Det verkliga serveranropet och dess svar används. Anropa `releaseImageError()`
+i konsolen i steg 4; kör `window.fetch = originalImageFetch` efter kontrollen:
+
+```js
+window.originalImageFetch = window.fetch;
+let release;
+const held = new Promise(resolve => { release = resolve; });
+window.releaseImageError = release;
+window.fetch = async (...args) => {
+  const response = await originalImageFetch(...args);
+  if (String(args[0]).includes('/profile-images/') && args[1]?.method === 'POST')
+    await held;
+  return response;
+};
+```
+
+**Förväntat resultat:**
+
+- Bildvalet är inaktiverat medan svaret väntar.
+- Felet visas globalt utan att Cykelns panel öppnas eller sökfältets fokus flyttas.
+- Den uttryckliga återgången öppnar Cykelns panel och fokuserar dess rubrik.
+- Den senaste giltiga bilden, Cykelns ikon och båda objektens beskrivningar
+  finns kvar. Garagets oskickade text har inte skickats eller sparats.
