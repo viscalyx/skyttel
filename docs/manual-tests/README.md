@@ -157,7 +157,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   kvitton, bildåtkomst och uttrycklig återgång efter bildfel i en stängd panel
   eller i Inställningar samt avbrutet filval och avslutade felåtergångar.
   Bildfelets återgång behåller läsbar text och tangentbordsfokus under
-  pekaren i båda teman på dator och smala fönster.
+  pekaren i båda teman på dator och smala fönster; listverktyget är nåbart
+  också i korta fönster efter att ett objekt stängts.
   Alla objekttyper delar text, ikon och bild i samma förslag och kvitto;
   bildborttagning återställer inte en äldre sparad bild.
 

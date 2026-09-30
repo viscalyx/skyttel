@@ -246,17 +246,20 @@ kommer efter att objektets panel stängts.
 beskrivningar. Välj cykelikonen för Cykeln. Använd de syntetiska bilderna
 och den ogiltiga filen från förberedelsen.
 Upprepa i ljust och mörkt tema på dator och vid 320 pixlars fönsterbredd.
+Prova också ett kort fönster på 320 × 250 pixlar. Verklig webbläsarzoom
+kontrolleras separat i flödet vid 200 och 400 procent.
 
 **Integrationstest:**
 [profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
 testfallet “BILD-04: a delayed image error returns to its closed object without
-losing newer work at {width}px {colorScheme}”, med bredderna 1440 och 320
-samt temana light och dark.
+losing newer work at {width}x{height}px {colorScheme}”, med storlekarna
+1440 × 1000, 320 × 1000 och 320 × 250 samt temana light och dark.
 
 **Steg:**
 
 1. Redigera Garaget och skriv en ny beskrivning utan att lägga den i utkastet.
-   Stäng panelen med **Stäng Garaget**.
+   Stäng panelen med **Stäng Garaget** och öppna **Lista** från verktygen.
+   Kontrollera att **Till kartan** inte täcker listknappen i det korta fönstret.
 2. Redigera Cykeln. Välj först den blå PNG-bilden och sedan den gröna
    WebP-bilden. Vänta på det privata bildförslaget efter varje val.
 3. Fördröj svaret från bildanropet med webbläsarens utvecklarverktyg enligt

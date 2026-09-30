@@ -11,15 +11,19 @@ import {
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
-for (const width of [1440, 320]) {
+for (const [width, height] of [
+  [1440, 1000],
+  [320, 1000],
+  [320, 250],
+]) {
   for (const colorScheme of ['light', 'dark'] as const) {
-    test(`BILD-04: a delayed image error returns to its closed object without losing newer work at ${width}px ${colorScheme}`, async ({
+    test(`BILD-04: a delayed image error returns to its closed object without losing newer work at ${width}x${height}px ${colorScheme}`, async ({
       page,
     }) => {
       const installation = await createInstallation();
       let releaseResponse = () => {};
       try {
-        await page.setViewportSize({ width, height: 1000 });
+        await page.setViewportSize({ width, height });
         await page.emulateMedia({ colorScheme });
         await signIn(page.request, installation.origin);
         const { household } = await (
