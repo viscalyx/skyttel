@@ -607,3 +607,55 @@ identity after a newer replacement and a lost status response”.
 - En senare ersättning används inte som kvitto för ett äldre oklart försök.
 - Ett misslyckat statusförsök bevarar osäkerheten. Lyckad läsning följer
   samma kända ID utan ny uppladdning eller bekräftelse.
+
+### IMPORT-15: tangentbord genom fel, granskning och innehållskoppling
+
+**Syfte:** Kontrollera att nästa användbara kontroll får synligt fokus
+genom återimport och uttrycklig ändring av en innehållskoppling.
+
+**Användare:** Alex som administratör.
+
+**Förutsättningar:** En separat provinstallation med ett privat utkast
+och en fullständig export av samma hushåll. Skapa också en vanlig textfil
+med namnet `invalid.zip`; den ska inte vara ett ZIP-arkiv. Upprepa i ljust
+och mörkt tema på dator, smal mobil och kort fönster. Välj minskad rörelse.
+
+**Integrationstest:**
+[household-recovery-accessibility.spec.ts](../../tests/integration/household-recovery-accessibility.spec.ts),
+testfallet “IMPORT-15: keyboard recovery controls remain visible through
+review, errors and assignment at 1280px”, samma titel med “390px”,
+“320px” och “640px”.
+
+**Steg:**
+
+1. Öppna Inställningar och välj importsidan med tangentbordet. På mobil
+   öppnar du först **Välj inställning**. Sidans fokuserade rubrik ska synas.
+2. Välj `invalid.zip` och aktivera **Kontrollera importfil** med Enter.
+   Kontrollera det tydliga felet och att fokus återgår till filvalet.
+   Inget hushållsinnehåll ska ändras.
+3. Välj den riktiga exporten och kontrollera filen. Fördröj vid behov
+   svaret med webbläsarens nätverksverktyg. Flytta fokus till
+   **Tillbaka till kartan** medan svaret väntar. Ditt nya fokus ska
+   finnas kvar när granskningen visas.
+4. Aktivera **Hämta importens status**. Fokus ska gå till
+   **Granska ersättningen**. Läs vad som ersätts och behålls.
+5. Markera bekräftelsen med mellanslag och aktivera ersättningsknappen
+   med Enter. Efter slutförd ersättning ska fokus ligga på
+   **Läs in det återställda hushållet**.
+6. Öppna **Koppla historiskt innehåll** genom Inställningar. Hämta
+   underlaget, välj din innehållsidentitet och **Ingen aktuell ägare**.
+   Läs följderna och bekräfta med tangentbordet. Fokus ska återgå till
+   **Hämta aktuella innehållskopplingar** efter det sparade resultatet.
+7. Välj samma identitet och din aktuella verifierade användare. En ny
+   bekräftelse krävs. Bekräfta och kontrollera att ditt privata utkast
+   finns kvar när du läser in kartan igen.
+8. Upprepa med det andra temat. Alla kontroller, statusbesked och texter
+   ska vara läsbara och möjliga att nå utan rullning i sidled.
+
+**Förväntat resultat:**
+
+- Fel, granskning, ersättning och innehållskoppling lämnar fokus på en
+  användbar plats. Ett nyare eget fokusval skrivs inte över av ett svar.
+- Bekräftelser är uttryckliga och kan utföras med tangentbordet.
+  Identitetsbytet slår inte ihop eller raderar det privata arbetet.
+- Hela flödet går att använda i båda teman på smal och bred skärm.

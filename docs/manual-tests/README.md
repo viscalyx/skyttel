@@ -121,7 +121,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   ny förberedelse efter omstart, samma importförsök i en annan
   administratörs webbläsare, tappat förberedelsesvar, väntande rensning
   efter rolländring, uppföljning av rätt försök trots en senare ersättning
-  och ångring med aktuellt underlag.
+  och ångring med aktuellt underlag. Tangentbord och fokus följs genom
+  filfel, granskning, ersättning och innehållskoppling i båda teman.
 
 - [Fullständig export](household-export.md): egen sida i Inställningar,
   privata uppgifter före export, tangentbord, fokus, bevarat kartarbete,
