@@ -158,20 +158,16 @@ test('an image error returns to the retained object and expires before an unrela
     new File(['invalid'], 'bad.png', { type: 'image/png' }),
   );
   await screen.findByText(/Bilden kunde inte behandlas/);
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lo Exempel', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lo Exempel' }));
   expect(screen.queryByRole('group', { name: 'Objektets detaljer' })).toBeNull();
   const returnName = 'Återgå till bilden för Lo Exempel';
-  await userEvent.click(screen.getByRole('button', { name: returnName, exact: true }));
-  expect(screen.getByRole('heading', { name: 'Lo Exempel', exact: true })).toBe(
-    document.activeElement,
-  );
+  await userEvent.click(screen.getByRole('button', { name: returnName }));
+  expect(screen.getByRole('heading', { name: 'Lo Exempel' })).toBe(document.activeElement);
   expect(details.getByDisplayValue('Befintlig text')).toBeTruthy();
   expect(await read()).toEqual(before);
-  await userEvent.click(
-    screen.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }),
-  );
+  await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
-  expect(screen.queryByRole('button', { name: returnName, exact: true })).toBeNull();
+  expect(screen.queryByRole('button', { name: returnName })).toBeNull();
   const description = details.getByLabelText('Beskrivning', { exact: true });
   await userEvent.clear(description);
   await userEvent.type(description, 'Ny oskickad text');
@@ -187,10 +183,10 @@ test('an image error returns to the retained object and expires before an unrela
       })
     ).status,
   ).toBe(200);
-  await userEvent.click(details.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }));
+  await userEvent.click(details.getByRole('button', { name: 'Lägg i mitt utkast' }));
   const alert = await screen.findByRole('alert');
   expect(alert.textContent).toContain('Avvisat:');
-  expect(screen.queryByRole('button', { name: returnName, exact: true })).toBeNull();
+  expect(screen.queryByRole('button', { name: returnName })).toBeNull();
   expect(details.getByDisplayValue('Ny oskickad text')).toBeTruthy();
   const after = await read();
   expect(after.objects).toEqual([]);
