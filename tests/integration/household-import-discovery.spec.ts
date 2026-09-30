@@ -324,3 +324,126 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
     await installation.close();
   }
 });
+
+test('IMPORT-14: a locally known uncertain import keeps its exact identity after a newer replacement and a lost status response', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const other = await browser.newContext();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const headers = { origin: installation.origin };
+    const initial = await (await page.request.get(`${path}/map`)).json();
+    expect(
+      (
+        await page.request.post(`${path}/map/draft`, {
+          headers,
+          data: {
+            id: 'retained',
+            version: 0,
+            baseRevision: null,
+            value: {
+              name: 'Privat arbete i båda ersättningarna',
+              description: '',
+              typeId: initial.types[0].id,
+            },
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    const original = await (await page.request.get(`${path}/map`)).json();
+    const exported = await (
+      await page.request.post(`${path}/exports`, { headers, data: {} })
+    ).json();
+    const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
+    const destination = `${installation.origin}/households/${household.id}/settings/import`;
+    const file = { name: 'skyttel.zip', mimeType: 'application/zip', buffer: archive };
+    let confirmations = 0;
+    let firstId = '';
+    await page.route('**/imports/*/confirm', async (route) => {
+      confirmations++;
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      const result = await response.json();
+      expect(result).toMatchObject({ status: 'completed', contentVersion: 2 });
+      firstId = result.id;
+      await route.abort('failed');
+    });
+    await page.goto(destination);
+    await page.getByLabel('Skyttel-export (ZIP)').setInputFiles(file);
+    await page.getByRole('button', { name: 'Kontrollera importfil' }).click();
+    await page.getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' }).check();
+    await page.getByRole('button', { name: 'Ersätt hushållets innehåll' }).click();
+    await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
+    expect(firstId).not.toBe('');
+    await signIn(other.request, installation.origin);
+    const fresh = await other.newPage();
+    other.on('request', (request) => {
+      if (request.method() === 'POST' && /\/imports\/[^/]+\/confirm$/.test(request.url()))
+        confirmations++;
+    });
+    await fresh.goto(destination);
+    await expect(fresh.getByText(firstId, { exact: true })).toBeVisible();
+    await fresh.getByLabel('Skyttel-export (ZIP)').setInputFiles(file);
+    await fresh.getByRole('button', { name: 'Kontrollera importfil' }).click();
+    await fresh.getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' }).check();
+    const secondConfirmation = fresh.waitForResponse((response) =>
+      /\/imports\/[^/]+\/confirm$/.test(response.url()),
+    );
+    await fresh.getByRole('button', { name: 'Ersätt hushållets innehåll' }).click();
+    const second = await (await secondConfirmation).json();
+    expect(second).toMatchObject({ status: 'completed', contentVersion: 3 });
+    expect(second.id).not.toBe(firstId);
+    await expect(fresh.getByText(second.id, { exact: true })).toBeVisible();
+    await installation.restart();
+    expect((await (await other.request.get(`${path}/imports`)).json()).attempt.id).toBe(second.id);
+    let discoveries = 0;
+    const readIds: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() !== 'GET') return;
+      if (request.url() === `${path}/imports`) discoveries++;
+      if (request.url().startsWith(`${path}/imports/`)) readIds.push(request.url());
+    });
+    await page.reload();
+    const importer = page.getByRole('region', { name: 'Återimportera hushållet', exact: true });
+    await expect(importer.getByText(firstId, { exact: true })).toBeVisible();
+    await expect(importer.getByLabel('Skyttel-export (ZIP)')).toBeDisabled();
+    await page.route(
+      `${path}/imports/${firstId}`,
+      async (route) => {
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        expect(await response.json()).toMatchObject({
+          id: firstId,
+          status: 'completed',
+          contentVersion: 2,
+        });
+        await route.abort('failed');
+      },
+      { times: 1 },
+    );
+    await importer.getByRole('button', { name: 'Hämta importens status' }).click();
+    await expect(importer.getByRole('alert')).toBeVisible();
+    await expect(importer.getByLabel('Skyttel-export (ZIP)')).toBeDisabled();
+    await expect(importer.getByText(firstId, { exact: true })).toBeVisible();
+    await expect(importer.getByText(second.id, { exact: true })).toHaveCount(0);
+    await expect(importer.getByText(/Hushållets innehåll är ersatt/)).toHaveCount(0);
+    await importer.getByRole('button', { name: 'Hämta importens status' }).click();
+    await expect(importer.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
+    await expect(importer.getByText(firstId, { exact: true })).toBeVisible();
+    await expect(importer.getByText(second.id, { exact: true })).toHaveCount(0);
+    expect(discoveries).toBe(0);
+    expect(readIds).toEqual([`${path}/imports/${firstId}`, `${path}/imports/${firstId}`]);
+    expect(confirmations).toBe(2);
+    expect(await (await page.request.get(`${path}/map`)).json()).toEqual({
+      ...original,
+      contentVersion: 3,
+    });
+  } finally {
+    await other.close();
+    await installation.close();
+  }
+});

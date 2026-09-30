@@ -568,3 +568,42 @@ current household administrator access”.
 - Inloggning, aktuellt medlemskap och administratörsroll krävs. En direkt
   adress kringgår inte skyddet och visar inga privata innehållsvärden.
 - När rollen försvinner tas kontrollerna bort även på en öppen sida.
+
+### IMPORT-14: håll ett oklart försök skilt från en senare ersättning
+
+**Syfte:** Kontrollera att ett känt men oklart försök följs med sitt eget
+ID, även när en annan klient genomför en ny ersättning.
+
+**Användare:** Alex i två separata webbläsarprofiler.
+
+**Förutsättningar:** En separat provinstallation och samma giltiga export
+i båda profilerna. Använd utvecklarverktygen i den första profilen.
+
+**Integrationstest:**
+[household-import-discovery.spec.ts](../../tests/integration/household-import-discovery.spec.ts),
+testfallet “IMPORT-14: a locally known uncertain import keeps its exact
+identity after a newer replacement and a lost status response”.
+
+**Steg:**
+
+1. Förbered filen i den första profilen. Kör koden i IMPORT-09 för att
+   kasta bort det riktiga lyckade bekräftelsesvaret. Bekräfta ersättningen
+   och anteckna försökets ID. Utfallet ska visas som okänt.
+2. Öppna importen i den andra profilen. Den visar första försökets resultat.
+   Välj sedan exporten igen, granska och bekräfta en ny ersättning.
+   Anteckna det nya försökets ID; det ska skilja sig från det första.
+3. Starta om servern med samma databas. Ladda om den första profilens
+   importsida. Det första ID:t ska finnas kvar och nytt filval vara spärrat.
+4. Sätt den första profilens Network-panel till **Offline** och välj
+   **Hämta importens status**. Ett fel ska visas utan slutfört resultat.
+   Filvalet förblir spärrat och samma första ID ska fortfarande visas.
+5. Återställ **Online** och hämta status igen. Det första försökets
+   slutförda resultat ska visas. Ingen ny ersättning ska skickas.
+6. Kontrollera att hushållets innehåll och privata arbete motsvarar
+   exporten efter den andra ersättningen.
+
+**Förväntat resultat:**
+
+- En senare ersättning används inte som kvitto för ett äldre oklart försök.
+- Ett misslyckat statusförsök bevarar osäkerheten. Lyckad läsning följer
+  samma kända ID utan ny uppladdning eller bekräftelse.
