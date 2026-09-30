@@ -98,7 +98,7 @@ preserves unrelated work after restart”.
 
 **Steg:**
 
-1. Öppna **Administrera tillgång** och gå till **Permanent radering**.
+1. Öppna **Inställningar → Permanent radering**.
    Läs skillnaden mot vanlig borttagning och upphört innehåll samt
    begränsningarna för nedladdade exporter och leverantörens interna kopior.
 2. Använd Tab till lampans kryssruta och välj den med mellanslag.
@@ -110,7 +110,7 @@ preserves unrelated work after restart”.
    **RADERA PERMANENT** i bekräftelsefältet och aktivera knappen med Enter.
 5. Invänta **Den permanenta raderingen är slutförd.** Starta om enligt
    avsnittet ovan, ladda om sidan och kontrollera samma raderingsstatus.
-6. Välj **Till hushållet** och **Lista**. Sök efter lampan;
+6. Välj **Läs in kartan på nytt** och **Lista**. Sök efter lampan;
    ingen träff ska visas. Öppna stolen och kontrollera dess beskrivning
    samt förslaget under **Hela mitt utkast**. Välj **Visa historik** under
    **Ändringshistorik**: stolen ska finnas i det ursprungliga sparandet,
@@ -198,7 +198,7 @@ bryter motsvarande svar vid nätverket.
 
 Öppna utvecklarverktygen med F12. Under **Sources → Snippets** skapar du
 ett nytt utdrag, lägger in koden nedan och kör det med Ctrl+Enter medan
-administrationssidan är öppen. **Console** ska visa
+raderingssidan är öppen. **Console** ska visa
 **RADERING-02: redo för ett svar.** Kör utdraget bara en gång per försök.
 
 ```js
@@ -246,7 +246,7 @@ status without another erasure”.
    Kontrollera att den genomförda raderingen återfinns.
 4. Kontrollera att **Network** fortfarande visar exakt ett
    `erasure/execute`-anrop. Ladda om sidan och kontrollera samma slutförda
-   resultat. Välj **Till hushållet**: stolen ska finnas och lampan saknas.
+   resultat. Välj **Läs in kartan på nytt**: stolen ska finnas och lampan saknas.
    Omladdning tar även bort utdragets påverkan om fallet avbryts i förtid.
 
 **Förväntat resultat:**
@@ -265,7 +265,7 @@ innehållet ändras efter granskningen.
 **Användare:** Alex i profil A och B.
 
 **Förutsättningar:** Samma nya provkarta är öppen i båda profilerna.
-Profil A visar **Administrera tillgång**. Profil B visar hushållets
+Profil A visar **Inställningar → Permanent radering**. Profil B visar hushållets
 **Lista och utkast** och är inloggad med samma konto som profil A.
 
 **Integrationstest:**
@@ -285,7 +285,7 @@ confirmation before erasure”.
    du **Granska raderingen** igen utan att först ladda om sidan.
 5. Kontrollera att bekräftelsefältet är tomt och knappen inaktiverad.
    Granska, skriv bekräftelsen igen och genomför raderingen.
-6. Invänta slutfört resultat och välj **Till hushållet** i profil A.
+6. Invänta slutfört resultat och välj **Läs in kartan på nytt** i profil A.
    Kontrollera att lampan saknas och att **Hela mitt utkast** visar stolen
    med **Senare privat förslag**.
 
@@ -345,18 +345,18 @@ completes only after the reader releases”.
 1. Välj lampan, granska och bekräfta permanent radering medan operatörens
    läsning är öppen.
 2. Kontrollera beskedet **Raderingen är inte slutförd**. Öppna
-   **Till hushållet** i en ny flik och försök läsa kartan. På den kvarvarande
-   administrationssidan öppnar du länken **Fullständig export** i en ny
+   **Tillbaka till kartan** i en ny flik och försök läsa kartan. I
+   inställningarnas sidmeny öppnar du **Fullständig export** i en ny
    flik och väljer **Förbered fullständig export**.
    Båda försöken ska avvisas; ingen karta eller export ska lämnas ut.
 3. Starta om enligt **Ny lokal provdatabas och omstart** ovan i serverns
    terminal. Låt läsarens andra terminal vara kvar. Ladda om
-   administrationssidan när servern åter är redo.
+   raderingssidan när servern åter är redo.
 4. Kontrollera att raderingen fortfarande inte påstås vara slutförd och
    att **Försök slutföra raderingen** erbjuds.
 5. Tryck Enter i läsarens terminal. Invänta **Läsningen är avslutad**.
-   Välj sedan **Försök slutföra raderingen** på administrationssidan.
-6. Invänta **Den permanenta raderingen är slutförd.** Välj **Till hushållet**
+   Välj sedan **Försök slutföra raderingen** på raderingssidan.
+6. Invänta **Den permanenta raderingen är slutförd.** Välj **Läs in kartan på nytt**
    och kontrollera att lampan saknas, stolen finns och **Hela mitt utkast**
    visar **Oberoende privat förslag**. Öppna och ladda om lampans sparade
    bildadress; **Network** ska visa HTTP 404 utan bild.
@@ -413,7 +413,7 @@ from a fresh export while preserving the current object after restart”.
 
 **Steg:**
 
-1. Öppna **Administrera tillgång → Permanent radering**. Välj bara
+1. Öppna **Inställningar → Permanent radering**. Välj bara
    **Tidigare bildtyp** under objekttyper och välj **Granska raderingen**.
 2. Kontrollera att inga objekt eller personliga placeringar ska raderas.
    **Bildversioner: 1** ska visas. **Berörda bildversioner** ska innehålla
@@ -421,7 +421,7 @@ from a fresh export while preserving the current object after restart”.
 3. Skriv **RADERA PERMANENT**, välj **Radera permanent** och invänta
    **Den permanenta raderingen är slutförd.** Starta om enligt kommandot
    för samma databas ovan. Ladda om och kontrollera slutförd status.
-4. Välj **Till hushållet**. Lampan ska finnas med **Fordon** och orange
+4. Välj **Läs in kartan på nytt**. Lampan ska finnas med **Fordon** och orange
    bild. Stolen och dess privata förslag samt båda placeringarna ska
    finnas kvar. Välj **Visa historik**: stolen ska ha bevarad historik,
    men lampans blå bild och tidigare typ ska inte visas.

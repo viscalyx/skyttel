@@ -3,7 +3,7 @@
 [Till användarguidens innehåll](README.md)
 
 En aktuell administratör kan radera utvald information permanent från
-Skyttel. Öppna **Administrera tillgång** och gå till **Permanent radering**.
+Skyttel. Öppna **Inställningar → Permanent radering**.
 Vanliga medlemmar och externa assistenter kan inte göra detta.
 
 Permanent radering kan inte ångras med Skyttels historik. Använd vanlig
@@ -26,6 +26,10 @@ kvar i historiken.
    omfattningen stämmer. Om något ändras måste du granska igen och skriva
    bekräftelsen på nytt.
 
+**Avbryt** återgår till urvalet utan att radera. Dina val finns kvar, men
+bekräftelsetexten töms. Pågående arbete i kartan bevaras tills en radering
+ändrar innehållet.
+
 Raderingen omfattar också berörd historik, bildversioner och privata
 förslag. Oberoende information bevaras, även i ett utkast eller en sparad
 ändring som också innehåller något som raderas. Ett objekt eller en
@@ -46,8 +50,8 @@ driftansvarig om den inte kommer vidare. En annan aktuell administratör
 kan fortsätta om den som startade raderingen förlorar sin tillgång.
 
 Bara meddelandet **Den permanenta raderingen är slutförd.** bekräftar att
-Skyttels städning är klar. Läs in kartan på nytt efteråt; gamla ändringar
-och sparförsök kan inte läggas tillbaka genom att skickas igen.
+Skyttels städning är klar. Välj **Läs in kartan på nytt** efteråt; gamla
+ändringar och sparförsök kan inte läggas tillbaka genom att skickas igen.
 
 ## Kopior utanför raderingen
 

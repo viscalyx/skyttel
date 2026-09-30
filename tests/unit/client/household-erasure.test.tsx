@@ -272,7 +272,8 @@ test('changing selection removes the old scope and confirmation', async () => {
   await userEvent.click(lamp);
   await userEvent.click(screen.getByRole('button', { name: 'Granska raderingen' }));
   await userEvent.type(await screen.findByLabelText('Skriv RADERA PERMANENT'), 'RADERA PERMANENT');
-  await userEvent.click(lamp);
+  await userEvent.click(screen.getByRole('button', { name: 'Avbryt', exact: true }));
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Lampan' }));
   expect(screen.queryByRole('region', { name: 'Omfattning att bekräfta' })).toBeNull();
   expect(
     (screen.getByRole('button', { name: 'Granska raderingen' }) as HTMLButtonElement).disabled,

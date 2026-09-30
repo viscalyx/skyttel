@@ -112,7 +112,7 @@ async function arrange(page: Page, formerImageType = false) {
 }
 
 async function reviewInBrowser(page: Page, administration: string) {
-  await page.goto(administration);
+  await page.goto(administration.replace(/\/administration$/, '/settings/erasure'));
   const section = page.getByRole('region', { name: 'Permanent radering', exact: true });
   await section.getByRole('checkbox', { name: 'Lampan att radera', exact: true }).focus();
   await page.keyboard.press('Space');
@@ -499,7 +499,7 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
         })
       ).status(),
     ).toBe(200);
-    await page.goto(fixture.administration);
+    await page.goto(fixture.administration.replace(/\/administration$/, '/settings/erasure'));
     const section = page.getByRole('region', { name: 'Permanent radering', exact: true });
     await section.getByRole('checkbox', { name: 'Tidigare bildtyp', exact: true }).check();
     await section.getByRole('button', { name: 'Granska raderingen', exact: true }).click();
