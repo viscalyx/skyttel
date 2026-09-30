@@ -378,3 +378,49 @@ revocation retires an open recipient workspace”.
   redan öppna arbetsytan och avvecklar skyddat oskickat arbete före omladdning.
 - Alex behåller sparad information, eget privat förslag och oskickad text.
   Automationen jämför hela kartsvaret och verifierar nekad HTTP-åtkomst för Robin.
+
+### MEDLEM-09: Kopiera koden manuellt när urklippsknappen misslyckas
+
+**Syfte:** Kontrollera att ett misslyckat kopieringsförsök behåller rätt
+engångskod och ger en användbar väg till faktisk acceptans.
+
+**Användare:** Alex som administratör i profil A och Robin utan tillgång
+i profil B.
+
+**Förutsättningar:** Lägg **Privat under kopiering** med beskrivningen
+**Alex behåller sitt eget förslag** i Alex utkast utan att spara.
+Robin visar sitt faktiska Skyttel-användar-ID. Ordna ett nekat försök att
+skriva till urklipp för Alex sida genom webbläsarens platsinställningar.
+Manuell markering och tangentbordets kopiering ska fortfarande vara tillåtna.
+
+**Integrationstest:**
+[membership-ui.spec.ts](../../tests/integration/membership-ui.spec.ts),
+testfallet “MEDLEM-09: failed clipboard writing keeps the real code usable
+by manual copy and acceptance”. Automationen ersätter endast webbläsarens
+skrivning till urklipp med ett kontrollerat fel. Den verifierar felvägen,
+inte webbläsarens verkliga behörighetsbeslut. Tangentbordets kopiering,
+inklistringen och inbjudningstjänsten används på riktigt.
+
+**Steg:**
+
+1. Öppna **Administrera tillgång**, välj **Jag har personens användar-ID**,
+   ange Robins faktiska ID och välj **Skapa inbjudan**.
+2. Välj **Kopiera koden**. Kontrollera beskedet om att koden inte kunde
+   kopieras och uppmaningen att markera och kopiera fältets text själv.
+3. Kontrollera att **Inbjudningskod att dela** och mottagarens fullständiga
+   ID finns kvar. Markera hela koden och tryck Ctrl+C, eller Cmd+C på Mac.
+4. Fokusera Robins **Inbjudningskod** i den andra profilen. Klistra in med
+   Ctrl+V eller Cmd+V och kontrollera att hela koden stämmer. Välj
+   **Acceptera inbjudan**.
+5. Kontrollera Robins hushåll och roll. Återgå till Alex sida och kontrollera
+   att den accepterade koden försvinner. Välj **Klar med inbjudan**.
+
+**Förväntat resultat:**
+
+- Felet lämnar exakt samma kod och avsedda mottagare tillgängliga för
+  manuell kopiering. Ingen extra inbjudan skapas av kopieringsförsöket.
+- Den manuellt kopierade koden öppnar hushållet som **Medlem** för Robin.
+  Samma inbjudan går från väntande till accepterad, och koden döljs för Alex.
+- Alex privata förslag och den gemensamma kartan är oförändrade. Robin får
+  ett eget tomt utkast och ser inte Alex privata förslag. Automationen
+  jämför hela Alex kartunderlag före och efter flödet.

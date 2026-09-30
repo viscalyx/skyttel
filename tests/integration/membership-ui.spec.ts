@@ -1,6 +1,8 @@
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import Database from 'better-sqlite3';
+import type { Administration } from '../../src/shared/administration.js';
+import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 
@@ -574,6 +576,123 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
     await page.reload();
     await expect(codeField).toHaveCount(0);
     await expect(ready).toBeVisible();
+  } finally {
+    await recipient.close();
+    await installation.close();
+  }
+});
+
+test('MEDLEM-09: failed clipboard writing keeps the real code usable by manual copy and acceptance', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const recipient = await browser.newContext();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}`;
+    const read = async (): Promise<MapState> => (await page.request.get(`${path}/map`)).json();
+    const initial = await read();
+    expect(
+      (
+        await page.request.post(`${path}/map/draft`, {
+          headers: { origin: installation.origin },
+          data: {
+            id: 'clipboard-private',
+            version: initial.draft.version,
+            contentVersion: initial.contentVersion,
+            baseRevision: null,
+            value: {
+              typeId: initial.types[0].id,
+              name: 'Privat under kopiering',
+              description: 'Alex behåller sitt eget förslag',
+            },
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    const before = await read();
+    installation.setIdentity(robin);
+    await signIn(recipient.request, installation.origin, 'microsoft');
+    const recipientPage = await recipient.newPage();
+    await recipientPage.goto(installation.origin);
+    const userId = await recipientPage.getByLabel('Ditt Skyttel-användar-ID').inputValue();
+    // Only the browser API fails. Native keyboard copy/paste and the whole
+    // invitation service remain real; this does not prove a browser permission policy.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.clipboard, 'writeText', {
+        value: async () => {
+          throw new DOMException('Synthetic clipboard denial', 'NotAllowedError');
+        },
+      });
+    });
+    let creations = 0;
+    page.on('request', (request) => {
+      if (request.url() === `${path}/invitations` && request.method() === 'POST') creations += 1;
+    });
+    await page.goto(`${installation.origin}/households/${household.id}/administration`);
+    await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
+    await page.getByLabel('Skyttel-användar-ID att bjuda in').fill(userId);
+    const creating = page.waitForResponse(
+      (response) =>
+        response.url() === `${path}/invitations` && response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Skapa inbjudan', exact: true }).click();
+    const created = await creating;
+    expect(created.status()).toBe(201);
+    const invitation = await created.json();
+    expect(invitation.invitation.userId).toBe(userId);
+    const code = page.getByLabel('Inbjudningskod att dela');
+    await expect(code).toHaveValue(invitation.code);
+    await page.getByRole('button', { name: 'Kopiera koden', exact: true }).click();
+    await expect(page.getByRole('status')).toHaveText(
+      'Koden kunde inte kopieras. Markera och kopiera koden i fältet själv.',
+    );
+    await expect(page.getByText(/Skicka koden privat till/)).toContainText(userId);
+    await expect(code).toHaveValue(invitation.code);
+    const pending: Administration = await (await page.request.get(`${path}/administration`)).json();
+    expect(pending.invitations).toHaveLength(1);
+    expect(pending.invitations[0]).toMatchObject({
+      id: invitation.invitation.id,
+      userId,
+      status: 'pending',
+    });
+    expect(await read()).toEqual(before);
+
+    await code.selectText();
+    await page.keyboard.press('ControlOrMeta+C');
+    await recipientPage.bringToFront();
+    const acceptingCode = recipientPage.getByLabel('Inbjudningskod', { exact: true });
+    await acceptingCode.focus();
+    await recipientPage.keyboard.press('ControlOrMeta+V');
+    await expect(acceptingCode).toHaveValue(invitation.code);
+    const accepting = recipientPage.waitForResponse(
+      (response) =>
+        response.url() === `${installation.origin}/api/invitations/accept` &&
+        response.request().method() === 'POST',
+    );
+    await recipientPage.getByRole('button', { name: 'Acceptera inbjudan', exact: true }).click();
+    expect((await accepting).status()).toBe(200);
+    await expect(recipientPage.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
+    await expect(recipientPage.getByText('Medlem', { exact: true })).toBeVisible();
+    const after: Administration = await (await page.request.get(`${path}/administration`)).json();
+    expect(after.invitations).toHaveLength(1);
+    expect(after.invitations[0]).toMatchObject({
+      id: invitation.invitation.id,
+      userId,
+      status: 'accepted',
+    });
+    expect(after.members.find((member) => member.userId === userId)?.role).toBe('member');
+    expect(creations).toBe(1);
+    expect(await read()).toEqual(before);
+    const recipientMap: MapState = await (await recipient.request.get(`${path}/map`)).json();
+    expect(recipientMap.objects).toEqual(before.objects);
+    expect(recipientMap.draft.changes).toEqual([]);
+    await page.bringToFront();
+    await expect(code).toHaveCount(0, { timeout: 10_000 });
+    await page.getByRole('button', { name: 'Klar med inbjudan', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Jag har personens användar-ID' })).toBeVisible();
   } finally {
     await recipient.close();
     await installation.close();
