@@ -1205,22 +1205,25 @@ export function SpatialMap({
               disabled={disabled}
               className={`spatial-edge ${kind}${selected ? ' selected' : ''}`}
               aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
+              aria-describedby={`${labelPrefix}-relationship-${key}`}
               style={{ left: x, top: y }}
               onClick={() => onSelectRelationship(edge, previous)}
             >
-              <span className="spatial-caption">
-                <ProposalSymbol
-                  change={
-                    previous
-                      ? { before: edge, after: null }
-                      : state.draft.relationships?.find((change) => change.id === edge.id)
-                  }
-                />{' '}
-                →{' '}
-                {state.relationshipTypes.find((type) => type.id === edge.typeId)?.forwardLabel ??
-                  state.relationshipTypes.find((type) => type.id === edge.typeId)?.name}
+              <span id={`${labelPrefix}-relationship-${key}`}>
+                <span className="spatial-caption">
+                  <ProposalSymbol
+                    change={
+                      previous
+                        ? { before: edge, after: null }
+                        : state.draft.relationships?.find((change) => change.id === edge.id)
+                    }
+                  />{' '}
+                  →{' '}
+                  {state.relationshipTypes.find((type) => type.id === edge.typeId)?.forwardLabel ??
+                    state.relationshipTypes.find((type) => type.id === edge.typeId)?.name}
+                </span>
+                <LifecycleStatus value={edge} />
               </span>
-              <LifecycleStatus value={edge} />
             </button>
           ))}
           {[...labels].map(([id, label]) => {
