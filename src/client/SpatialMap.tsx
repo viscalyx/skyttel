@@ -116,6 +116,7 @@ export function SpatialMap({
   openWork?: readonly string[];
 }) {
   const labelPrefix = useId();
+  const relationshipLabelPrefix = useId();
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationTrigger = useRef<HTMLButtonElement>(null);
   function changeNavigation(open: boolean) {
@@ -1205,11 +1206,11 @@ export function SpatialMap({
               disabled={disabled}
               className={`spatial-edge ${kind}${selected ? ' selected' : ''}`}
               aria-label={`Välj ${previous ? 'tidigare samband' : 'samband'}: ${relationshipLabel(edge, state, objects)}`}
-              aria-describedby={`${labelPrefix}-relationship-${key}`}
+              aria-describedby={`${relationshipLabelPrefix}-${key}`}
               style={{ left: x, top: y }}
               onClick={() => onSelectRelationship(edge, previous)}
             >
-              <span id={`${labelPrefix}-relationship-${key}`}>
+              <span id={`${relationshipLabelPrefix}-${key}`}>
                 <span className="spatial-caption">
                   <ProposalSymbol
                     change={
