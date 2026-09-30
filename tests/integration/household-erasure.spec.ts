@@ -3,9 +3,10 @@ import { expect, type Page, test } from '@playwright/test';
 import Database from 'better-sqlite3';
 import { unzipSync } from 'fflate';
 import sharp from 'sharp';
+import type { ErasureStatus } from '../../src/shared/household-erasure.js';
 import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
-import { createInstallation } from '../support/installation.js';
+import { createInstallation, robin } from '../support/installation.js';
 
 async function arrange(page: Page, formerImageType = false) {
   const installation = await createInstallation();
@@ -573,6 +574,174 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
         .getByRole('img', { name: 'Profilbild för Lampan att radera' }),
     ).toHaveAttribute('src', new RegExp(`/profile-images/${currentImage}$`));
   } finally {
+    await fixture.installation.close();
+  }
+});
+
+test('RADERING-07: a known erasure survives Settings navigation and reload despite a newer result', async ({
+  page,
+  browser,
+}) => {
+  const fixture = await arrange(page);
+  const other = await browser.newContext();
+  try {
+    const original = await fixture.read();
+    fixture.installation.setIdentity(robin);
+    await signIn(other.request, fixture.installation.origin, 'microsoft');
+    const { user } = await (
+      await other.request.get(`${fixture.installation.origin}/api/bootstrap`)
+    ).json();
+    const invitation = await fixture.post('invitations', { userId: user.id });
+    expect(invitation.status()).toBe(201);
+    const { code } = await invitation.json();
+    expect(
+      (
+        await other.request.post(`${fixture.installation.origin}/api/invitations/accept`, {
+          headers: { origin: fixture.installation.origin },
+          data: { code },
+        })
+      ).status(),
+    ).toBe(200);
+    expect(
+      (await fixture.post(`members/${user.id}/role`, { role: 'administrator' })).status(),
+    ).toBe(200);
+    const otherPost = (suffix: string, data: unknown) =>
+      other.request.post(`${fixture.path}/${suffix}`, {
+        headers: { origin: fixture.installation.origin },
+        data,
+      });
+    const otherMap: MapState = await (await other.request.get(`${fixture.path}/map`)).json();
+    expect(
+      (
+        await otherPost('map/relationship-type', {
+          id: 'later-unused-type',
+          version: otherMap.draft.version,
+          contentVersion: otherMap.contentVersion,
+          baseRevision: null,
+          value: { name: 'Senare tom sambandstyp', description: '', fields: [] },
+        })
+      ).status(),
+    ).toBe(200);
+    const otherDraft: MapState = await (await other.request.get(`${fixture.path}/map`)).json();
+    expect(
+      (
+        await otherPost('map/save', {
+          version: otherDraft.draft.version,
+          contentVersion: otherDraft.contentVersion,
+          operationId: 'save-unused-type',
+        })
+      ).status(),
+    ).toBe(200);
+    expect((await fixture.read()).draft).toEqual(original.draft);
+    const before = await fixture.read();
+    const viewBefore = await (await page.request.get(`${fixture.path}/map/view`)).json();
+    const section = await reviewInBrowser(page, fixture.administration);
+    let executeCount = 0;
+    let resumeCount = 0;
+    let firstId = '';
+    let firstStatus: ErasureStatus | null = null;
+    page.on('request', (request) => {
+      if (request.url().endsWith('/erasure/execute')) executeCount += 1;
+      if (request.url().endsWith('/erasure/resume')) resumeCount += 1;
+    });
+    await page.route(
+      '**/erasure/execute',
+      async (route) => {
+        firstId = route.request().postDataJSON().operationId;
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        firstStatus = (await response.json()).status;
+        expect(firstStatus).toMatchObject({
+          operationId: firstId,
+          phase: 'completed',
+          counts: { objects: 1, relationshipTypes: 0, images: 1 },
+        });
+        await route.abort('connectionreset');
+      },
+      { times: 1 },
+    );
+    await section.getByLabel('Skriv RADERA PERMANENT', { exact: true }).fill('RADERA PERMANENT');
+    await section.getByRole('button', { name: 'Radera permanent', exact: true }).click();
+    await expect(section.getByRole('alert')).toContainText('Utfallet är oklart');
+    await expect(
+      section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toHaveCount(0);
+    expect(firstId).not.toBe('');
+    const selection = [{ kind: 'relationshipType', id: 'later-unused-type' }];
+    const reviewResponse = await otherPost('erasure/review', { selection });
+    expect(reviewResponse.status()).toBe(200);
+    const review = await reviewResponse.json();
+    expect(review).toMatchObject({ objects: [], relationships: [], privateChanges: 0 });
+    const newer = await otherPost('erasure/execute', {
+      selection,
+      token: review.token,
+      operationId: 'later-erasure',
+      confirmation: 'RADERA PERMANENT',
+    });
+    expect(newer.status()).toBe(200);
+    const newerStatus = (await newer.json()).status;
+    expect(newerStatus).toMatchObject({
+      operationId: 'later-erasure',
+      phase: 'completed',
+      counts: { objects: 0, relationshipTypes: 1, images: 0 },
+    });
+    const catalogStatus = (await (await page.request.get(`${fixture.path}/erasure`)).json()).status;
+    expect(catalogStatus.operationId).toBe('later-erasure');
+    await test.info().attach('actual-erasure-receipts', {
+      body: JSON.stringify({ firstStatus, newerStatus, catalogStatus }, null, 2),
+      contentType: 'application/json',
+    });
+    const retained = await fixture.read();
+    expect(retained.contentVersion).toBe(before.contentVersion + 2);
+    expect(retained.objects).toEqual(before.objects.filter(({ id }) => id === 'chair'));
+    expect(retained.draft).toEqual(before.draft);
+    expect(retained.types).toEqual(before.types);
+    expect(retained.relationshipTypes).toEqual(
+      before.relationshipTypes.filter(({ id }) => id !== 'later-unused-type'),
+    );
+    const retainedView = await (await page.request.get(`${fixture.path}/map/view`)).json();
+    expect(retainedView).toEqual({
+      ...viewBefore,
+      positions: viewBefore.positions.filter(({ id }: { id: string }) => id === 'chair'),
+    });
+    const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+    await navigation.getByRole('link', { name: 'Översikt', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Inställningar', level: 1 })).toBeFocused();
+    await navigation.getByRole('link', { name: 'Permanent radering', exact: true }).click();
+    await page.reload();
+    const read = section.getByRole('button', {
+      name: 'Kontrollera raderingsstatus och läs in aktuellt innehåll',
+    });
+    await read.click();
+    await expect(section.getByText(firstId, { exact: true })).toBeVisible();
+    await expect(section.getByText('later-erasure', { exact: true })).toHaveCount(0);
+    await expect(
+      section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      section.getByRole('list', { name: 'Raderingens resultat' }).getByRole('listitem'),
+    ).toHaveText([
+      'Objekt: 1',
+      'Samband: 0',
+      'Objekttyper: 0',
+      'Sambandstyper: 0',
+      'Bildversioner: 1',
+    ]);
+    await navigation.getByRole('link', { name: 'Översikt', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Inställningar', level: 1 })).toBeFocused();
+    await navigation.getByRole('link', { name: 'Permanent radering', exact: true }).click();
+    await read.click();
+    await expect(section.getByText(firstId, { exact: true })).toBeVisible();
+    await expect(section.getByText('later-erasure', { exact: true })).toHaveCount(0);
+    await expect(
+      section.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toBeVisible();
+    expect(executeCount).toBe(1);
+    expect(resumeCount).toBe(0);
+    expect(await fixture.read()).toEqual(retained);
+    expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual(retainedView);
+  } finally {
+    await other.close();
     await fixture.installation.close();
   }
 });

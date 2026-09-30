@@ -113,7 +113,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   avbruten granskning med bevarat kartarbete, uttrycklig granskning och
   bekräftelse, bevarat oberoende innehåll efter omstart, förlorat svar och
   förnyad granskning efter samtidig ändring samt väntande städning och
-  återhämtning efter omstart. Radering av en tidigare typ tar bort dess
+  återhämtning efter omstart. Kända försök behåller sin identitet genom
+  sidnavigation och omladdning trots senare resultat från en annan
+  administratör. Radering av en tidigare typ tar bort dess
   sista historiska bildversion utan att ta bort objektets nuvarande bild.
 
 - [Fullständig återimport](household-import.md): egna inställningssidor,

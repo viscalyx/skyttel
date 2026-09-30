@@ -445,3 +445,58 @@ from a fresh export while preserving the current object after restart”.
   och en ny fullständig export, även efter omstart.
 - Det nuvarande objektet, dess orange bild, stolens oberoende historik
   och privata förslag samt båda placeringarna finns kvar.
+
+### RADERING-07: Följ ett känt försök när ett senare resultat finns
+
+**Syfte:** Behåll rätt raderingsärende genom vanlig sidnavigation och
+omladdning även om en annan administratör slutför en senare radering.
+
+**Användare:** Alex och Robin, båda aktuella administratörer i skilda
+webbläsarprofiler.
+
+**Förutsättningar:** Förbered en ny provkarta enligt ovan med lampan,
+stolen och Alex oberoende privata förslag. Bjud in Robin och ge Robin
+administratörsrollen genom **Administrera tillgång**. Robin skapar och
+sparar den tomma sambandstypen **Senare tom sambandstyp** genom
+**Inställningar → Typer och egna fält**. Inget samband ska använda typen.
+Alex privata förslag ska fortfarande vara osparat. Förbered samma
+kontrollerade bortkastade svar som i RADERING-02 i Alex profil.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+testfallet “RADERING-07: a known erasure survives Settings navigation and
+reload despite a newer result”.
+
+**Steg:**
+
+1. Alex granskar lampan och skriver **RADERA PERMANENT**. Välj
+   **Radera permanent**. Kontrollera **Utfallet är oklart**, utan något
+   slutförandebesked, och konsolens besked om det bortkastade slutförda
+   svaret. Anteckna försökets identifierare från dess begäran i **Network**.
+2. Robin öppnar **Inställningar → Permanent radering**, markerar bara
+   **Senare tom sambandstyp** och granskar. Inga objekt, bilder eller
+   privata ändringar ska ingå. Bekräfta uttryckligen och invänta slutfört
+   resultat. Anteckna Robins andra identifierare.
+3. Alex väljer **Översikt** i inställningarnas navigation och återvänder
+   till **Permanent radering**. Ladda om sidan. Välj **Kontrollera
+   raderingsstatus och läs in aktuellt innehåll**. Det slutförda resultatet
+   ska tydligt visa Alex
+   ursprungliga identifierare, aldrig Robins senare identifierare.
+   Resultatets antal ska vara ett objekt, en bildversion och noll samband,
+   objekttyper och sambandstyper.
+4. Öppna **Översikt**, återvänd till raderingssidan och kontrollera status
+   igen. Samma ursprungliga identifierare och slutförda resultat ska visas.
+   **Network** ska inte visa någon ny `erasure/execute` eller
+   `erasure/resume` i Alex profil.
+5. Läs in kartan på nytt. Lampan och den senare tomma sambandstypen ska
+   saknas; stolen, dess placering och Alex oberoende privata förslag ska
+   finnas kvar. Övriga typer ska vara oförändrade.
+
+**Förväntat resultat:**
+
+- Ett nytt senaste resultat ersätter inte identiteten hos ett redan känt
+  raderingsförsök när en sida lämnas eller laddas om.
+- Statusläsning återfinner det ursprungliga resultatet utan en ny
+  destruktiv begäran. Robins separata radering har sin egen identifierare.
+- Endast de två uttryckligen granskade omfattningarna raderas. Oberoende
+  sparat och privat innehåll förblir oförändrat.
