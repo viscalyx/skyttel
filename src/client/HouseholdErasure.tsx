@@ -136,7 +136,11 @@ export function HouseholdErasure({
       })
       .catch((failure: unknown) => {
         if (!controller.signal.aborted && !denied(failure))
-          setError('Innehållet och raderingsstatus kunde inte hämtas. Försök läsa in dem igen.');
+          setError(
+            knownOperation.current
+              ? 'Raderingsstatus kunde inte hämtas. Utfallet är fortfarande oklart. Kontrollera samma raderingsstatus igen.'
+              : 'Innehållet och raderingsstatus kunde inte hämtas. Försök läsa in dem igen.',
+          );
       })
       .finally(() => {
         if (!controller.signal.aborted) setBusy(false);
