@@ -115,7 +115,9 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   förnyad granskning efter samtidig ändring samt väntande städning och
   återhämtning efter omstart. Kända försök behåller sin identitet genom
   sidnavigation och omladdning trots senare resultat från en annan
-  administratör. Radering av en tidigare typ tar bort dess
+  administratör. En annan aktuell administratör kan fortsätta samma
+  väntande städning efter rollbyte, omstart och förlorat svar, med bevarat
+  oberoende privat arbete. Radering av en tidigare typ tar bort dess
   sista historiska bildversion utan att ta bort objektets nuvarande bild.
 
 - [Fullständig återimport](household-import.md): egna inställningssidor,

@@ -372,6 +372,74 @@ väntande ärendes **Försök slutföra raderingen** innan nästa fall påbörja
 - När läsningen släpps kan samma ärende slutföras. Lampan och dess bild
   återkommer inte; stolen och dess privata förslag finns kvar.
 
+### RADERING-08: En aktuell administratör fortsätter samma väntande ärende
+
+**Syfte:** Kontrollera aktuell behörighet, ärendets identitet och ett ärligt
+resultat när en annan administratör slutför städningen efter omstart och
+svaret försvinner.
+
+**Användare:** Alex och Robin i skilda webbläsarprofiler samt
+testinstallationens operatör.
+
+**Förutsättningar:** En ny provkarta enligt allmän förberedelse. Bjud in
+Robin och ge Robin administratörsrollen genom **Administrera tillgång**.
+Robin lägger dessutom **Robins eget privata förslag** i stolens
+**Beskrivning** genom **Lägg i mitt utkast**, utan att spara hela utkastet.
+Alex behåller sitt eget oberoende privata förslag. Öppna den separata
+SQLite-läsaren enligt RADERING-04 och behåll den till steg 6 nedan.
+
+**Integrationstest:**
+[household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
+testfallet “RADERING-08: a current administrator continues the same cleanup
+after role loss, restart and a lost resume reply”.
+
+**Steg:**
+
+1. Alex granskar lampan och bekräftar uttryckligen permanent radering.
+   Robins privata beskrivning ska inte visas. Invänta väntande städning
+   och anteckna den fullständiga identifieraren under **Raderingsförsök**.
+2. Robin öppnar **Administrera tillgång** och ändrar Alex till medlem.
+   Alex laddar om raderingssidan. Kontrollera **Du kan inte administrera
+   hushållet** och att ingen knapp för slutförande visas.
+3. Robin öppnar **Inställningar → Permanent radering** i sin profil.
+   Samma identifierare och väntande ärende ska visas utan automatisk
+   radering eller slutförande. Alex privata beskrivning ska inte visas.
+   Försök öppna kartan och förbereda en export i separata flikar;
+   hushållsinnehållet ska fortfarande vara otillgängligt.
+4. Operatören startar om med samma databas och den separata läsaren kvar.
+   Robin laddar om raderingssidan. Kontrollera samma identifierare och
+   välj **Försök slutföra raderingen** medan läsaren fortfarande är öppen.
+5. Kontrollera att inget slutförandebesked visas. Kartan och en ny export
+   ska fortfarande avvisas. I **Network** ger slutförandebegäran HTTP 202
+   med samma identifierare och väntande städning.
+6. Operatören avslutar läsaren med Enter. Robin förbereder utdraget från
+   RADERING-02 i sin webbläsare, men ändrar den enda adressändelsen
+   `/erasure/execute` till `/erasure/resume`. Detta kastar bara bort
+   leveransen av ett verkligt slutfört svar; serverns begäran är oförändrad.
+   Välj **Försök slutföra raderingen** igen.
+7. Kontrollera **Utfallet är oklart**, utan slutförandebesked eller
+   resultatantal. Välj **Översikt**, återvänd till **Permanent radering**
+   och ladda om sidan. Välj **Kontrollera raderingsstatus och läs in
+   aktuellt innehåll**. Samma identifierare ska nu visa slutfört resultat:
+   ett objekt, en bildversion och noll samband, objekttyper och sambandstyper.
+8. Kontrollera i **Network** att navigation och statusläsning inte skickar
+   nya `erasure/execute` eller `erasure/resume`. Välj **Läs in kartan på nytt**.
+   Lampan och dess bild ska saknas. Alex och Robin kontrollerar var för sig
+   stolen och sitt eget privata förslag; båda ska finnas kvar. Alex
+   personliga placering för stolen ska vara kvar.
+
+**Förväntat resultat:**
+
+- Bara en aktuell administratör får läsa och fortsätta ärendet. Automationen
+  kontrollerar också HTTP 403 för Alex exakta statusläsning och slutförande.
+- Ny webbläsarprofil och omstart hittar samma väntande ärende. Ett misslyckat
+  städningsförsök öppnar inte tillgången och påstår inte att allt är klart.
+- Det verkliga slutförandet kan återläsas efter förlorat svar utan en ny
+  radering. Automationen jämför identifierare, antal och hela oberoende
+  privata utkast samt kräver bara en ändring av innehållets generation.
+- Andras privata beskrivningar lämnas inte ut på raderingssidan. Lampans
+  bild ger HTTP 404; kvarvarande objekt, typer och personliga vyer bevaras.
+
 ## Historiska bilder efter typbyte
 
 ### RADERING-05: Radera en tidigare typ och dess sista historiska bild

@@ -752,3 +752,213 @@ test('RADERING-07: a known erasure survives Settings navigation and reload despi
     await fixture.installation.close();
   }
 });
+
+test('RADERING-08: a current administrator continues the same cleanup after role loss, restart and a lost resume reply', async ({
+  page,
+  browser,
+}) => {
+  const fixture = await arrange(page);
+  const other = await browser.newContext();
+  const reader = new Database(join(fixture.installation.directory, 'skyttel.db'), {
+    readonly: true,
+  });
+  try {
+    const { user: initiator } = await (
+      await page.request.get(`${fixture.installation.origin}/api/bootstrap`)
+    ).json();
+    fixture.installation.setIdentity(robin);
+    await signIn(other.request, fixture.installation.origin, 'microsoft');
+    const { user } = await (
+      await other.request.get(`${fixture.installation.origin}/api/bootstrap`)
+    ).json();
+    const invitation = await fixture.post('invitations', { userId: user.id });
+    expect(invitation.status()).toBe(201);
+    const { code } = await invitation.json();
+    expect(
+      (
+        await other.request.post(`${fixture.installation.origin}/api/invitations/accept`, {
+          headers: { origin: fixture.installation.origin },
+          data: { code },
+        })
+      ).status(),
+    ).toBe(200);
+    expect(
+      (await fixture.post(`members/${user.id}/role`, { role: 'administrator' })).status(),
+    ).toBe(200);
+    const otherPost = (suffix: string, data: unknown) =>
+      other.request.post(`${fixture.path}/${suffix}`, {
+        headers: { origin: fixture.installation.origin },
+        data,
+      });
+    const otherRead = async (): Promise<MapState> =>
+      (await other.request.get(`${fixture.path}/map`)).json();
+    const initialOther = await otherRead();
+    const chair = initialOther.objects.find(({ id }) => id === 'chair');
+    expect(
+      (
+        await otherPost('map/draft', {
+          id: 'chair',
+          version: initialOther.draft.version,
+          contentVersion: initialOther.contentVersion,
+          baseRevision: chair?.revision,
+          value: { ...chair, description: 'Robins eget privata förslag' },
+        })
+      ).status(),
+    ).toBe(200);
+    const before = await fixture.read();
+    const otherBefore = await otherRead();
+    const viewBefore = await (await page.request.get(`${fixture.path}/map/view`)).json();
+    const section = await reviewInBrowser(page, fixture.administration);
+    await expect(section).not.toContainText('Robins eget privata förslag');
+    let executeCount = 0;
+    page.on('request', (request) => {
+      if (request.url().endsWith('/erasure/execute')) executeCount += 1;
+    });
+    reader.exec('BEGIN');
+    reader.prepare('SELECT id FROM map_object LIMIT 1').get();
+    await section.getByLabel('Skriv RADERA PERMANENT', { exact: true }).fill('RADERA PERMANENT');
+    const executed = page.waitForResponse((response) =>
+      response.url().endsWith('/erasure/execute'),
+    );
+    await section.getByRole('button', { name: 'Radera permanent', exact: true }).click();
+    const pendingResponse = await executed;
+    expect(pendingResponse.status()).toBe(202);
+    const pending: ErasureStatus = (await pendingResponse.json()).status;
+    expect(pending).toMatchObject({
+      phase: 'cleanup',
+      counts: { objects: 1, relationships: 0, objectTypes: 0, relationshipTypes: 0, images: 1 },
+    });
+    await expect(section.getByText(pending.operationId, { exact: true })).toBeVisible();
+    await expect(
+      section.getByText(/Hushållets innehåll är tillfälligt otillgängligt/),
+    ).toBeVisible();
+    expect((await otherPost(`members/${initiator.id}/role`, { role: 'member' })).status()).toBe(
+      200,
+    );
+    expect(
+      (await page.request.get(`${fixture.path}/erasure/${pending.operationId}`)).status(),
+    ).toBe(403);
+    expect(
+      (await fixture.post('erasure/resume', { operationId: pending.operationId })).status(),
+    ).toBe(403);
+    await page.reload();
+    await expect(
+      page.getByRole('heading', { name: 'Du kan inte administrera hushållet' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Försök slutföra raderingen' })).toHaveCount(0);
+
+    const continuation = await other.newPage();
+    const resumeBodies: unknown[] = [];
+    let otherExecutions = 0;
+    continuation.on('request', (request) => {
+      if (request.url().endsWith('/erasure/resume')) resumeBodies.push(request.postDataJSON());
+      if (request.url().endsWith('/erasure/execute')) otherExecutions += 1;
+    });
+    await continuation.goto(
+      fixture.administration.replace(/\/administration$/, '/settings/erasure'),
+    );
+    const recovery = continuation.getByRole('region', { name: 'Permanent radering', exact: true });
+    const resume = recovery.getByRole('button', {
+      name: 'Försök slutföra raderingen',
+      exact: true,
+    });
+    await expect(recovery.getByText(pending.operationId, { exact: true })).toBeVisible();
+    await expect(resume).toBeEnabled();
+    await expect(recovery.getByRole('checkbox')).toHaveCount(0);
+    await expect(recovery).not.toContainText('Oberoende privat förslag');
+    expect(resumeBodies).toEqual([]);
+    expect(await (await other.request.get(`${fixture.path}/map`)).json()).toEqual({
+      error: 'content_maintenance',
+    });
+    expect(await (await otherPost('exports', {})).json()).toEqual({ error: 'content_maintenance' });
+
+    await fixture.installation.restart();
+    await continuation.reload();
+    await expect(recovery.getByText(pending.operationId, { exact: true })).toBeVisible();
+    await expect(resume).toBeEnabled();
+    const stillPending = continuation.waitForResponse((response) =>
+      response.url().endsWith('/erasure/resume'),
+    );
+    await resume.click();
+    const pendingAgain = await stillPending;
+    expect(pendingAgain.status()).toBe(202);
+    expect((await pendingAgain.json()).status).toEqual(pending);
+    await expect(
+      recovery.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toHaveCount(0);
+    expect(await (await other.request.get(`${fixture.path}/map`)).json()).toEqual({
+      error: 'content_maintenance',
+    });
+    expect(await (await otherPost('exports', {})).json()).toEqual({ error: 'content_maintenance' });
+    reader.exec('ROLLBACK');
+    let completed: ErasureStatus | null = null;
+    await continuation.route(
+      '**/erasure/resume',
+      async (route) => {
+        expect(route.request().postDataJSON()).toEqual({ operationId: pending.operationId });
+        const response = await route.fetch();
+        expect(response.status()).toBe(200);
+        completed = (await response.json()).status;
+        expect(completed).toEqual({ ...pending, phase: 'completed' });
+        await route.abort('connectionreset');
+      },
+      { times: 1 },
+    );
+    await resume.click();
+    await expect(recovery.getByRole('alert')).toContainText('Utfallet är oklart');
+    await expect(
+      recovery.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toHaveCount(0);
+    await expect(recovery.getByRole('list', { name: 'Raderingens resultat' })).toHaveCount(0);
+    const navigation = continuation.getByRole('navigation', { name: 'Inställningarnas sidor' });
+    await navigation.getByRole('link', { name: 'Översikt', exact: true }).click();
+    await navigation.getByRole('link', { name: 'Permanent radering', exact: true }).click();
+    await continuation.reload();
+    await recovery
+      .getByRole('button', { name: 'Kontrollera raderingsstatus och läs in aktuellt innehåll' })
+      .click();
+    await expect(recovery.getByText(pending.operationId, { exact: true })).toBeVisible();
+    await expect(
+      recovery.getByText('Den permanenta raderingen är slutförd.', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      recovery.getByRole('list', { name: 'Raderingens resultat' }).getByRole('listitem'),
+    ).toHaveText([
+      'Objekt: 1',
+      'Samband: 0',
+      'Objekttyper: 0',
+      'Sambandstyper: 0',
+      'Bildversioner: 1',
+    ]);
+    expect(resumeBodies).toEqual([
+      { operationId: pending.operationId },
+      { operationId: pending.operationId },
+    ]);
+    expect(executeCount).toBe(1);
+    expect(otherExecutions).toBe(0);
+    const retained = await fixture.read();
+    expect(retained.contentVersion).toBe(before.contentVersion + 1);
+    expect(retained.objects).toEqual(before.objects.filter(({ id }) => id === 'chair'));
+    expect(retained.draft).toEqual(before.draft);
+    expect(retained.types).toEqual(before.types);
+    expect(retained.relationshipTypes).toEqual(before.relationshipTypes);
+    expect((await otherRead()).draft).toEqual(otherBefore.draft);
+    expect(await (await page.request.get(`${fixture.path}/map/view`)).json()).toEqual({
+      ...viewBefore,
+      contentVersion: viewBefore.contentVersion + 1,
+      positions: viewBefore.positions.filter(({ id }: { id: string }) => id === 'chair'),
+    });
+    expect(
+      (await other.request.get(`${fixture.path}/profile-images/${fixture.imageId}`)).status(),
+    ).toBe(404);
+    await test.info().attach('same-erasure-cleanup-and-resume', {
+      body: JSON.stringify({ pending, completed, resumeBodies }, null, 2),
+      contentType: 'application/json',
+    });
+  } finally {
+    if (reader.inTransaction) reader.exec('ROLLBACK');
+    reader.close();
+    await other.close();
+    await fixture.installation.close();
+  }
+});
