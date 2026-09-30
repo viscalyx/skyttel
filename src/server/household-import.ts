@@ -116,15 +116,16 @@ export function discoverHouseholdImport(
     .prepare(`SELECT * FROM content_maintenance WHERE householdId = ? AND kind = 'import'
       ORDER BY phase IN ('prepared', 'cleanup') DESC, createdAt DESC, rowid DESC LIMIT 1`)
     .get(householdId) as ContentMaintenance | undefined;
-  const ready = [...store.jobs.values()]
+  const reviews = [...store.jobs.values()]
     .reverse()
-    .find(
+    .filter(
       (candidate) =>
         candidate.actorId === actorId &&
         candidate.householdId === householdId &&
         (candidate.cancelling || Date.parse(candidate.expiresAt) > Date.now()) &&
         !storedImport(database, householdId, candidate.id),
     );
+  const ready = reviews.find((candidate) => candidate.cancelling) ?? reviews[0];
   return {
     attempt: job ? durableStatus(job) : null,
     ready: ready ? readyStatus(ready) : null,

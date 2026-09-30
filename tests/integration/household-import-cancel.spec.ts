@@ -253,7 +253,9 @@ test('IMPORT-19: a retired cancellation response cannot forget a newer preparati
       await route.fulfill({ response });
       delivered();
     });
+    const cancelling = page.waitForRequest(`${path}/imports/${first.id}/cancel`);
     await page.getByRole('button', { name: 'Avbryt förberedelsen', exact: true }).click();
+    const retiredRequest = await cancelling;
     await serverCompleted;
     expect(existsSync(join(installation.directory, '.skyttel-imports', first.id))).toBe(false);
     const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
@@ -265,6 +267,7 @@ test('IMPORT-19: a retired cancellation response cannot forget a newer preparati
     expect(newer.id).not.toBe(first.id);
     release();
     await responseDelivered;
+    await (await retiredRequest.response())?.finished();
     await expect(page.getByText(newer.id, { exact: true })).toBeVisible();
     let discoveries = 0;
     const readIds: string[] = [];
