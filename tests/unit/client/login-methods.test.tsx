@@ -3,6 +3,7 @@ import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, expect, test, vi } from 'vitest';
 import { App } from '../../../src/client/App.js';
+import { applicationFixture } from '../server/fixture.js';
 
 const user = { id: 'alex', name: 'Alex Exempel' };
 type Reply = { data?: unknown; status?: number; response?: Promise<Response> };
@@ -110,4 +111,90 @@ test('a forged success query never confirms a link', async () => {
   mount([{ data: { providers: ['google'], stage: null } }], '/login-methods?success=1');
   await screen.findByText('Google – kopplat');
   expect(screen.queryByRole('status')).toBeNull();
+});
+
+test('a real callback completing before cancellation reports the verified link and preserves private work', async () => {
+  const fixture = await applicationFixture();
+  const client = fixture.client();
+  let resumeProvider = () => {};
+  let callback: Promise<Response> | undefined;
+  try {
+    await client.signIn();
+    const created = await client.json('/api/households', { name: 'Linden' });
+    expect(created.status).toBe(201);
+    const { household } = await created.json();
+    const path = `/api/households/${household.id}/map`;
+    const initial = await (await client.request(path)).json();
+    expect(
+      (
+        await client.json(`${path}/draft`, {
+          id: 'retained-private',
+          version: initial.draft.version,
+          baseRevision: null,
+          value: {
+            typeId: initial.types[0].id,
+            name: 'Bevarat privat arbete',
+            description: 'Min privata beskrivning',
+          },
+        })
+      ).status,
+    ).toBe(200);
+    const before = await (await client.request(path)).json();
+    const identity = await (await client.request('/api/bootstrap')).json();
+    const proof = await client.json('/api/login-methods/prove', { provider: 'google' });
+    expect(proof.status).toBe(200);
+    await client.request((await proof.json()).url);
+    expect(await (await client.request('/api/login-methods')).json()).toEqual({
+      providers: ['google'],
+      stage: 'verified',
+    });
+    const addition = await client.json('/api/login-methods/add', { provider: 'microsoft' });
+    expect(addition.status).toBe(200);
+    fixture.setSubject('new-microsoft');
+    const provider = fixture.pauseProvider();
+    resumeProvider = provider.resume;
+    callback = client.request((await addition.json()).url);
+    await provider.reached;
+    let cancelStarted = () => {};
+    const cancelling = new Promise<void>((resolve) => {
+      cancelStarted = resolve;
+    });
+    const receipts: { status: number; body: unknown }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      headers.set('origin', fixture.config.origin);
+      if (url === '/api/login-methods/cancel') cancelStarted();
+      const response = await client.request(url, { ...init, headers });
+      if (url === '/api/login-methods/cancel')
+        receipts.push({ status: response.status, body: await response.clone().json() });
+      return response;
+    });
+    render(
+      <MemoryRouter initialEntries={['/login-methods']}>
+        <App />
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Avbryt länkning' }));
+    await cancelling;
+    expect(screen.queryByText(/^Länkningen är avbruten\./)).toBeNull();
+    resumeProvider();
+    await callback;
+    expect(
+      await screen.findByText(
+        'Länkningen är verifierad. Båda inloggningssätten når samma Skyttel-användare.',
+      ),
+    ).toBeDefined();
+    expect(receipts).toEqual([{ status: 200, body: { status: 'complete' } }]);
+    expect(screen.getByText('Google – kopplat')).toBeDefined();
+    expect(screen.getByText('Microsoft – kopplat')).toBeDefined();
+    expect(screen.queryByText(/^Länkningen är avbruten\./)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Avbryt länkning' })).toBeNull();
+    expect(await (await client.request('/api/bootstrap')).json()).toEqual(identity);
+    expect(await (await client.request(path)).json()).toEqual(before);
+  } finally {
+    resumeProvider();
+    await callback;
+    cleanup();
+    fixture.close();
+  }
 });

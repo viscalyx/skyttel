@@ -169,6 +169,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, avbryta extern inloggning, återhämta utgångna försök, börja
   med kartans vägledning, hantera förlorad tillgång och länka inloggningssätt.
+  Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.
 - [Tillgång och medlemskap](membership.md): inbjudningar, utgångna och
   ersatta koder, delad administration samt återkallad och återställd
   tillgång med bevarat innehåll i kartan.

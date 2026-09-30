@@ -316,12 +316,17 @@ preserves household access”.
 
 1. Öppna **Inloggningssätt**, välj **Verifiera Google** och bevisa Alex
    befintliga identitet. Kontrollera att **Koppla Microsoft** visas.
-2. Välj **Avbryt länkning**. Kontrollera knapparna och ladda om sidan.
+2. Välj **Avbryt länkning**. Kontrollera beskedet att länkningen är avbruten,
+   att tidigare inloggningar och tillgång finns kvar och att en ny verifiering
+   behövs för att börja igen. Kontrollera knapparna och ladda om sidan.
 3. Välj **Till startsidan** och kontrollera hushållet.
 4. Öppna **Inloggningssätt** igen och verifiera Alex Google-identitet på nytt.
 
 **Förväntat resultat:**
 
+- Ett bekräftat avbrytande ger ett tydligt statusbesked. Om den nya
+  identiteten redan har verifierats färdigt visas det verifierade resultatet,
+  inte ett felaktigt besked om avbrytande.
 - Efter avbrytandet visas **Verifiera Google**. **Koppla Microsoft** och
   **Avbryt länkning** försvinner. Endast Google är kopplat efter omladdning.
 - Samma hushåll är tillgängligt. Ny verifiering visar **Koppla Microsoft**.

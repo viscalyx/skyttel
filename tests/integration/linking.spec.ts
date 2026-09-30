@@ -224,7 +224,18 @@ test('ACCESS-10: cancelling a verified link requires fresh proof and preserves h
     await page.goto(`${installation.origin}/login-methods`);
     await page.getByRole('button', { name: 'Verifiera Google' }).click();
     await expect(page.getByRole('button', { name: 'Koppla Microsoft' })).toBeVisible();
+    const cancellation = page.waitForResponse(
+      (response) =>
+        response.url() === `${installation.origin}/api/login-methods/cancel` &&
+        response.request().method() === 'POST',
+    );
     await page.getByRole('button', { name: 'Avbryt länkning' }).click();
+    const cancelled = await cancellation;
+    expect(cancelled.status()).toBe(200);
+    expect(await cancelled.json()).toEqual({ status: 'cancelled' });
+    await expect(page.getByRole('status')).toHaveText(
+      'Länkningen är avbruten. Dina tidigare inloggningar och din tillgång finns kvar. Verifiera på nytt när du vill koppla ett inloggningssätt.',
+    );
     await expect(page.getByRole('button', { name: 'Verifiera Google' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Koppla Microsoft' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Avbryt länkning' })).toHaveCount(0);
