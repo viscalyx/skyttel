@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3';
 import { Hono } from 'hono';
 import type { Auth } from './auth.js';
 import {
+  cancelHouseholdImport,
   confirmHouseholdImport,
   discoverHouseholdImport,
   householdImportStatus,
@@ -62,6 +63,16 @@ export function householdImportRoutes(database: Database.Database, auth: Auth, o
       ),
     );
   });
+  routes.post('/households/:id/imports/:importId/cancel', async (context) =>
+    context.json(
+      await cancelHouseholdImport(
+        database,
+        context.get('userId'),
+        context.req.param('id'),
+        context.req.param('importId'),
+      ),
+    ),
+  );
   routes.get('/households/:id/imports/:importId', (context) =>
     context.json(
       householdImportStatus(

@@ -31,6 +31,7 @@ export function HouseholdImport({
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [cancelled, setCancelled] = useState(false);
   const knownAttempt = useRef(attempt);
   const [discoveryNeeded, setDiscoveryNeeded] = useState(!attempt);
   const active = useRef<AbortController | null>(null);
@@ -76,7 +77,7 @@ export function HouseholdImport({
             : (ready ?? durable);
         setResult(found);
         setConfirmed(false);
-        if (found && ['ready', 'prepared', 'cleanup'].includes(found.status))
+        if (found && ['ready', 'cancel-cleanup', 'prepared', 'cleanup'].includes(found.status))
           remember({ id: found.id, contentVersion: found.confirmationContentVersion });
         setDiscoveryNeeded(false);
       })
@@ -132,6 +133,7 @@ export function HouseholdImport({
     active.current = controller;
     setBusy(true);
     setError('');
+    setCancelled(false);
     setConfirmed(false);
     setResult(null);
     remember(null);
@@ -190,6 +192,33 @@ export function HouseholdImport({
       setBusy(false);
     }
   }
+  async function cancel() {
+    if (!attempt || busy) return;
+    submittedFocus.current = document.activeElement;
+    setBusy(true);
+    setError('');
+    setConfirmed(false);
+    setResult(null);
+    try {
+      const value = await request<{ cancelled: true } | ImportStatus>(
+        `${path}/imports/${encodeURIComponent(attempt.id)}/cancel`,
+        {},
+      );
+      if ('cancelled' in value) {
+        remember(null);
+        setFile(null);
+        if (fileControl.current) fileControl.current.value = '';
+        setCancelled(true);
+      } else setResult(value);
+    } catch (failure) {
+      if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) onAccessLost();
+      setError(
+        'Svaret från avbrottet saknas. Utfallet är okänt. Hämta importens status innan du försöker något annat.',
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   const uncertain = discoveryNeeded || Boolean(attempt && result?.status !== 'ready');
   const step = result?.status === 'ready' ? 1 : result || attempt ? 2 : 0;
   const attemptId = result?.id ?? attempt?.id;
@@ -236,6 +265,7 @@ export function HouseholdImport({
             setFile(event.target.files?.[0] ?? null);
             setResult(null);
             setConfirmed(false);
+            setCancelled(false);
             remember(null);
           }}
         />
@@ -293,11 +323,16 @@ export function HouseholdImport({
           >
             Ersätt hushållets innehåll
           </button>
+          <button type="button" disabled={busy} onClick={() => void cancel()}>
+            Avbryt förberedelsen
+          </button>
         </fieldset>
       )}
       {attempt && (
         <button
-          ref={result?.status === 'cleanup' ? undefined : nextAction}
+          ref={
+            ['cleanup', 'cancel-cleanup'].includes(result?.status ?? '') ? undefined : nextAction
+          }
           type="button"
           disabled={busy}
           onClick={() => void recover()}
@@ -318,6 +353,20 @@ export function HouseholdImport({
       )}
       {result?.status === 'prepared' && (
         <p role="status">Importen pågår. Hämta status igen innan du fortsätter.</p>
+      )}
+      {result?.status === 'cancel-cleanup' && (
+        <>
+          <p role="status">
+            Förberedelsen kan inte längre användas. Tillfälliga filer behöver rensas. Hushållets
+            innehåll är inte ersatt och kartan kan användas.
+          </p>
+          <button ref={nextAction} type="button" disabled={busy} onClick={() => void cancel()}>
+            Slutför förberedelsens rensning
+          </button>
+        </>
+      )}
+      {cancelled && (
+        <p role="status">Förberedelsen är avbruten och tillfälliga filer är borttagna.</p>
       )}
       {result?.status === 'cleanup' && (
         <>

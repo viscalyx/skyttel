@@ -30,6 +30,7 @@ type ReadyImport = {
   fingerprint: string;
   content: ImportContent;
   expiresAt: string;
+  cancelling?: boolean;
   timer?: NodeJS.Timeout;
 };
 type Store = {
@@ -81,7 +82,7 @@ function counts(content: ImportContent) {
 function readyStatus(job: ReadyImport): ImportStatus {
   return {
     id: job.id,
-    status: 'ready' as const,
+    status: job.cancelling ? 'cancel-cleanup' : 'ready',
     contentVersion: job.contentVersion,
     confirmationContentVersion: job.contentVersion,
     sourceHouseholdId: job.content.household.id,
@@ -121,7 +122,7 @@ export function discoverHouseholdImport(
       (candidate) =>
         candidate.actorId === actorId &&
         candidate.householdId === householdId &&
-        Date.parse(candidate.expiresAt) > Date.now() &&
+        (candidate.cancelling || Date.parse(candidate.expiresAt) > Date.now()) &&
         !storedImport(database, householdId, candidate.id),
     );
   return {
@@ -293,10 +294,36 @@ export function householdImportStatus(
     !job ||
     job.actorId !== actorId ||
     job.householdId !== householdId ||
-    Date.parse(job.expiresAt) <= Date.now()
+    (!job.cancelling && Date.parse(job.expiresAt) <= Date.now())
   )
     throw new MapError('import_unavailable', 404);
   return readyStatus(job);
+}
+
+export async function cancelHouseholdImport(
+  database: Database.Database,
+  actorId: string,
+  householdId: string,
+  id: string,
+): Promise<{ cancelled: true } | ImportStatus> {
+  authorize(database, actorId, householdId);
+  const status = householdImportStatus(database, actorId, householdId, id);
+  if (status.status !== 'ready' && status.status !== 'cancel-cleanup')
+    throw new MapError('operation_conflict');
+  const store = storeFor(database);
+  const job = store.jobs.get(id) as ReadyImport;
+  // Claim this unconfirmed preparation before the first filesystem await.
+  // Confirmation commits its durable gate synchronously before its own await.
+  job.cancelling = true;
+  clearTimeout(job.timer);
+  try {
+    await discard(store, job);
+  } catch {
+    authorize(database, actorId, householdId);
+    return readyStatus(job);
+  }
+  authorize(database, actorId, householdId);
+  return { cancelled: true };
 }
 
 export async function confirmHouseholdImport(
@@ -319,6 +346,7 @@ export async function confirmHouseholdImport(
     .update(JSON.stringify({ confirmed: true, contentVersion: body.contentVersion }))
     .digest('hex');
   const status = householdImportStatus(database, actorId, householdId, id);
+  if (status.status === 'cancel-cleanup') throw new MapError('import_cancelled');
   if (status.status !== 'ready') {
     const durable = maintenance.read(id);
     if (durable.requestHash !== requestHash || durable.kind !== 'import')

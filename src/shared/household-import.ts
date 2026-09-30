@@ -1,6 +1,6 @@
 export type ImportStatus = {
   id: string;
-  status: 'ready' | 'prepared' | 'cleanup' | 'completed' | 'failed';
+  status: 'ready' | 'cancel-cleanup' | 'prepared' | 'cleanup' | 'completed' | 'failed';
   contentVersion: number;
   confirmationContentVersion: number;
   sourceHouseholdId?: string;
