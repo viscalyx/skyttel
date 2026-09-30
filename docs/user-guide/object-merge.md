@@ -60,6 +60,13 @@ Hämta aktuellt underlag, hantera beskedet och granska hela resultatet
 innan du ger ett nytt sparbesked. Vid ett oklart resultat kontrollerar
 du det tidigare sparförsöket innan du försöker igen.
 
+Om hämtningen ändrar något av de granskade objekten, sambanden eller deras
+typdefinitioner töms formulärets tidigare uppgiftsval, sambandsval och
+identitetsbekräftelse. Granska det nya underlaget och välj på nytt; ett
+tidigare val får inte automatiskt gälla en ändrad uppgift. Oberoende
+ändringar på andra objekt tömmer inte granskningen. Ditt befintliga
+privata utkast ändras inte av hämtningen eller de nya formulärvalen.
+
 ## Ångra en sparad sammanslagning
 
 Öppna **Visa historik** och hitta rätt ändringsgrupp. Läs identiteter,
