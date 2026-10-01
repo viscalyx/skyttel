@@ -244,6 +244,28 @@
   padding: 0;
   border-radius: 50%;
 }
+.tp-context-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--proposal-changed);
+  font-variant-numeric: tabular-nums;
+}
+.tp-context-mark svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(-90deg);
+}
+.tp-context-mark circle {
+  fill: none;
+  stroke-width: 4;
+}
+.tp-ring {
+  stroke: var(--space-line);
+}
+.tp-ring-fill {
+  stroke: currentColor;
+}
 .tp-stop svg {
   width: 14px;
   height: 14px;
@@ -282,9 +304,14 @@
   border-radius: 10px;
   background: color-mix(in srgb, var(--space-accent), var(--space-surface) 86%);
 }
-.tp-row.working {
+.tp-row:is(.working, .info) {
   max-width: none;
   color: var(--space-muted);
+}
+.tp-row.info {
+  align-self: center;
+  font-size: 12px;
+  text-align: center;
 }
 .tp-notice {
   display: flex;

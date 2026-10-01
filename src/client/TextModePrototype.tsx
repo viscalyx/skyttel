@@ -31,7 +31,7 @@ import './text-mode-prototype.css';
 
 type Kind = 'added' | 'changed' | 'removed';
 type Change = { id: string; kind: Kind; name: string; type: string; what: string };
-type Row = { id: number; role: 'user' | 'skyttel'; text: string; spoken: boolean };
+type Row = { id: number; role: 'user' | 'skyttel' | 'info'; text: string; spoken: boolean };
 type Mic = 'off' | 'starting' | 'on';
 type Unclear = 'no' | 'checking' | 'failed';
 type DraftLayout = 'list' | 'table';
@@ -179,9 +179,35 @@ function useConversation(draftOpenAtStart: boolean) {
     setRows((current) => [...current, { id: nextId.current++, role, text, spoken }]);
   // An invented measure: every row of the conversation and every draft change takes some room.
   const [memoryForced, setMemoryForced] = useState<number | null>(null);
-  const memory = memoryForced ?? Math.min(100, 2 + rows.length * 4 + draft.length * 3);
+  const [autoCompact, setAutoCompact] = useState(true);
+  // The number of rows at the latest summary; only later rows count in full.
+  const [summarisedRows, setSummarisedRows] = useState<number | null>(null);
+  const memory =
+    memoryForced ??
+    Math.min(
+      100,
+      2 +
+        (summarisedRows === null ? 0 : 12) +
+        (rows.length - (summarisedRows ?? 0)) * 4 +
+        draft.length * 3,
+    );
   const memoryFull = memory >= 100;
-  const blocked = !online || unclear !== 'no' || memoryFull;
+  const blocked = !online || unclear !== 'no' || (memoryFull && !autoCompact);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: summarise once when the context fills
+  useEffect(() => {
+    if (!memoryFull || !autoCompact) return;
+    setMemoryForced(null);
+    setSummarisedRows(rows.length + 1);
+    setRows((current) => [
+      ...current,
+      {
+        id: nextId.current++,
+        role: 'info',
+        spoken: false,
+        text: 'Skyttel har sammanfattat samtalet för att få plats i kontexten.',
+      },
+    ]);
+  }, [memoryFull, autoCompact]);
   const busy = Boolean(working) || speaking;
   const consented = started || consentSaved;
 
@@ -292,6 +318,8 @@ function useConversation(draftOpenAtStart: boolean) {
     memoryFull,
     memoryForced,
     setMemoryForced,
+    autoCompact,
+    setAutoCompact,
     micDisabled,
     nextLine: script[step]?.say,
     statusWord: working
@@ -362,6 +390,7 @@ function useConversation(draftOpenAtStart: boolean) {
     newConversation() {
       halt();
       setMemoryForced(null);
+      setSummarisedRows(null);
       setNote('');
       setDraftOpen(draftOpenAtStart);
       setRows([
@@ -397,6 +426,8 @@ function useConversation(draftOpenAtStart: boolean) {
     },
     reset() {
       halt();
+      setMemoryForced(null);
+      setSummarisedRows(null);
       clearTimeout(micTimer.current);
       setConsentSaved(false);
       setStarted(false);
@@ -497,6 +528,26 @@ function VoiceBox({ c }: { c: Conversation }) {
     <div className="tp-voicebox floating tp-surface">
       <Wave active={c.talking || c.speaking} muted={c.mic !== 'on' && !c.speaking} />
       <span role="status">{c.statusWord}</span>
+      {c.memory >= 85 && (
+        <span
+          className="tp-context-mark"
+          role="img"
+          aria-label={`Kontexten är ${c.memory} procent full`}
+          title={`Kontexten är ${c.memory} procent full`}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" className="tp-ring" />
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              className="tp-ring-fill"
+              strokeDasharray={`${(c.memory / 100) * 56.5} 56.5`}
+            />
+          </svg>
+          {c.memory} %
+        </span>
+      )}
       {c.busy && (
         <button
           type="button"
@@ -547,13 +598,12 @@ function Notices({ c }: { c: Conversation }) {
           </span>
         </div>
       )}
-      {c.memoryFull && (
+      {c.memoryFull && !c.autoCompact && (
         <p className="tp-notice" role="alert">
           <span className="tp-notice-symbol" aria-hidden="true">
             !
           </span>
-          Skyttels minne för samtalet är fullt. Välj Nytt samtal för att fortsätta. Utkastet ligger
-          kvar.
+          Kontexten är full. Välj Nytt samtal för att fortsätta. Utkastet ligger kvar.
         </p>
       )}
       {c.note && (
@@ -579,7 +629,9 @@ function Transcript({ c, touch }: { c: Conversation; touch: boolean }) {
       )}
       {c.rows.map((row) => (
         <li key={row.id} className={`tp-row ${row.role}`}>
-          <span className="tp-sr">{row.role === 'user' ? 'Du: ' : 'Skyttel: '}</span>
+          {row.role !== 'info' && (
+            <span className="tp-sr">{row.role === 'user' ? 'Du: ' : 'Skyttel: '}</span>
+          )}
           {row.text}
         </li>
       ))}
@@ -784,14 +836,14 @@ function CloseButton({ c }: { c: Conversation }) {
   );
 }
 
-/** How full Skyttel's memory of the conversation is, as a share of the context window. */
+/** How full the context of the conversation is, as a share of the model's context window. */
 function MemoryMeter({ c }: { c: Conversation }) {
   return (
     <div
       className="tp-meter"
-      title="Så mycket av det Skyttel kan minnas av samtalet som är fyllt. Nytt samtal tömmer minnet."
+      title="Så mycket av samtalets kontext som är fylld. Nytt samtal tömmer den."
     >
-      <span id="tp-meter-label">Minne</span>
+      <span id="tp-meter-label">Kontext</span>
       <meter
         aria-labelledby="tp-meter-label"
         min={0}
@@ -1156,7 +1208,15 @@ export function TextModePrototype() {
             Bruten kontakt
           </label>
           <label>
-            Minne
+            <input
+              type="checkbox"
+              checked={c.autoCompact}
+              onChange={(event) => c.setAutoCompact(event.target.checked)}
+            />
+            Sammanfatta automatiskt vid full kontext
+          </label>
+          <label>
+            Kontext
             <select
               value={c.memoryForced ?? ''}
               onChange={(event) =>

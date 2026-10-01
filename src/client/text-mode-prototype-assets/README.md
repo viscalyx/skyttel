@@ -48,7 +48,8 @@ nederkant) utgick och finns kvar i grenens tidigare incheckningar.
 | Stängd textvy | Om textvyn stängs medan Skyttel arbetar med ett skrivet meddelande får knappen **Skriv till Skyttel** en liten arbetsmarkering. Markeringen ligger ovanpå knappen och ändrar inte verktygsradens plats eller bredd. |
 | Utkastlistan | En tabell som fälls ut till vänster om samtalstexten från knappen **Visa utkastet**, som har en pil åt det håll utkastet öppnas och visar antalet osparade ändringar. Knappen heter **Dölj utkastet** när utkastet är utfällt. På mobil öppnas utkastet mellan knappen och samtalstexten. |
 | Medgivanderutan | Öppnas intill den knapp i verktygsraden som valdes. |
-| Minne | En mätare under textvyns rubrik visar hur många procent av kontextfönstret som är fyllt. När minnet är fullt är **Skicka** avstängd, och ett meddelande säger att **Nytt samtal** tömmer det. Värdena i prototypen är påhittade. |
+| Kontext | En mätare under textvyns rubrik, **Kontext**, visar hur många procent av samtalets kontext som är fylld. Från 85 procent visar även röstrutan en symbol med procenttalet, och rutan blir då bredare. Värdena i prototypen är påhittade. |
+| Full kontext | Ett förslag som inte är beslutat: Skyttel sammanfattar samtalet automatiskt, skriver en rad om det i samtalstexten, och mätaren går ner. Alternativet är att **Skicka** stängs av och ett meddelande pekar på **Nytt samtal**. |
 
 ## Det här går att prova
 
@@ -86,7 +87,8 @@ annars är svåra att nå.
 | Glöm medgivandet | Första starten igen. |
 | Börja om | Prototypens utgångsläge. Manuset börjar om från första repliken. |
 | Bruten kontakt | Meddelandet med symbol och text. Mikrofonen stängs av och **Skicka** är avstängd. |
-| Minne | Mätaren vid 70, 90 eller 100 procent. Annars följer den samtalet. |
+| Sammanfatta automatiskt vid full kontext | Påslaget: Skyttel sammanfattar samtalet vid 100 procent. Avslaget: **Skicka** stängs av och ett meddelande pekar på **Nytt samtal**. |
+| Kontext | Mätaren vid 70, 90 eller 100 procent. Annars följer den samtalet. |
 | Oklart sparande | Skyttels egen kontroll, eller knappen **Kontrollera om utkastet sparades** när den egna kontrollen misslyckas. |
 | Pekskärm utan Escape (som iPad) | Pekskärmens beteende på en bred skärm: **Skicka** blir en stoppikon medan Skyttel arbetar, och ett meddelande åt gången. |
 | Utkastlistan som lista | Utkastlistan som lista i stället för tabell. |
@@ -117,7 +119,8 @@ annars är svåra att nå.
 | `dator-utkast-talat-arbetar.png` | Utkastlistan utfälld medan Skyttel arbetar med ett talat uppdrag. |
 | `dator-utkast.png` | Utkastlistan utfälld medan Skyttel talar. |
 | `dator-bredare.png` | Samtalstexten och utkastlistan gjorda bredare. |
-| `dator-minne-fullt.png` | Mätaren vid 100 procent, med meddelandet om fullt minne. |
+| `dator-kontext-90.png` | Mätaren vid 90 procent, med symbolen i röstrutan. |
+| `dator-kontext-sammanfattad.png` | Efter en automatisk sammanfattning vid full kontext. |
 | `dator-morkt-bruten-kontakt.png` | Mörkt tema med bruten kontakt. |
 | `mobil-arbetar.png` | Mobilstorlek medan Skyttel arbetar. **Skicka** är en stoppikon. |
 | `mobil-rost-utkast.png` | Mobilstorlek med mikrofonen på och utkastlistan utfälld. |
@@ -139,7 +142,10 @@ Beställarens genomgångar den 1 oktober 2026 gav följande.
   stoppikon medan Skyttel arbetar. Mobil enhet betyder pekskärm, så en
   iPad räknas dit.
 - Ett avbrott stoppar både det pågående arbetet och allt som väntar i kön.
-- En mätare visar hur många procent av kontextfönstret som är fyllt.
+- Skyttel minns hela samtalet tills användaren väljer **Nytt samtal**.
+- En mätare, **Kontext**, visar hur många procent av samtalets kontext
+  som är fylld. När användaren pratar visar röstrutan en symbol när
+  kontexten börjar bli full.
 - Om textvyn är stängd medan Skyttel arbetar med ett skrivet meddelande
   visar knappen **Skriv till Skyttel** en arbetsmarkering som inte ändrar
   verktygsradens plats eller bredd.
