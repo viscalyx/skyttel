@@ -37,7 +37,7 @@ piltangenterna. Adressen ändras, så en variant går att länka till.
 | Variant | Adress | Textvyn | Röstrutan | **Avbryt** | Utkastlistan |
 | --- | --- | --- | --- | --- | --- |
 | A, Fritt fönster | `&variant=A` | Flyttbart fönster som kartans övriga verktyg. På mobil ett blad nedifrån. | Egen liten ruta nere till höger. | Talat uppdrag: sist i samtalstexten. Skrivet meddelande: **Skicka** blir **Avbryt**. | Fälls ut till höger om samtalstexten. Fönstret blir bredare. |
-| C, Fast sidofält | `&variant=C` | Sidofält vid högerkanten som knuffar undan kartan. Det ligger under röstrutan. | Samma ruta på samma plats uppe till höger, oavsett om textvyn är öppen eller stängd. | Talat uppdrag: i röstrutan. Skrivet meddelande: **Skicka** blir **Avbryt**. | Fälls ut till vänster om samtalstexten. Sidofältet blir bredare. |
+| C, Fast sidofält | `&variant=C` | Sidofält vid högerkanten som knuffar undan kartan. Det ligger under röstrutan. | Samma ruta på samma plats uppe till höger, oavsett om textvyn är öppen eller stängd. | Talat uppdrag: en stoppikon i röstrutan. Skrivet meddelande: **Skicka** blir **Avbryt**. | Fälls ut till vänster om samtalstexten. Sidofältet blir bredare. |
 
 Raden **Utkast** ovanför samtalstexten fäller ut och fäller ihop
 utkastlistan. På mobil finns ingen plats bredvid samtalstexten, så där
@@ -145,5 +145,13 @@ Beställarens andra genomgång den 1 oktober 2026:
   gäller tills användaren lämnar hushållets karta eller laddar om sidan.
 - Vid bruten kontakt går meddelandefältet att skriva i. Bara **Skicka** är
   avstängd.
+
+Tillägg från beställaren samma dag:
+
+- **Avbryt** i röstrutan är bara en ikon, utan text. Röstrutan har samma
+  storlek hela tiden; platsen för ikonen finns alltid.
+- Samtalstexten är tätare och har mindre text. Raderna har inga synliga
+  namn. Användarens text står i en tonad ruta till höger, och Skyttels text
+  står utan ruta. Skärmläsare får fortfarande veta vem som sa vad.
 
 Ärendet är inte stängt ännu. Beslutet skrivs i ärendet.

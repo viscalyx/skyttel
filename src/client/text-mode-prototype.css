@@ -213,18 +213,45 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
+/* One size at all times: the status word and the stop icon have reserved places. */
 .tp-voicebox.floating {
   position: fixed;
   z-index: 25;
-  padding: 6px 8px 6px 14px;
+  box-sizing: border-box;
+  width: 216px;
+  height: 44px;
+  padding: 0 4px 0 14px;
 }
-.tp-voicebox.floating > :last-child:not(button) {
-  margin-right: 6px;
+.tp-voicebox [role="status"] {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-stop-slot {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+.tp-root .tp-stop {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-color: var(--proposal-removed);
+  border-radius: 50%;
+  color: var(--proposal-removed);
+}
+.tp-stop svg {
+  width: 22px;
+  height: 22px;
 }
 .tp-variant-a .tp-voicebox.floating {
   right: 24px;
@@ -238,44 +265,31 @@
   flex: 1;
   min-height: 96px;
   margin: 0;
-  padding: 12px 14px;
+  padding: 10px 14px;
   overflow-y: auto;
   overscroll-behavior: contain;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 .tp-empty {
   color: var(--space-muted);
-  font-size: 13px;
 }
+/* Skyttel's text is plain; the user's own text sits in a tinted box to the right. */
 .tp-row {
-  max-width: 88%;
-  padding: 8px 12px;
-  border: 1px solid var(--space-line);
-  border-radius: 12px;
-}
-.tp-row.user {
-  align-self: flex-end;
-  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 88%);
-}
-.tp-row strong {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--space-muted);
-  font-size: 12px;
-}
-.tp-row p {
-  margin: 2px 0 0;
+  max-width: 92%;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.tp-spoken svg {
-  display: block;
-  width: 13px;
-  height: 13px;
+.tp-row.user {
+  align-self: flex-end;
+  padding: 4px 10px;
+  border: 1px solid var(--space-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 86%);
 }
 .tp-row.working {
   align-self: stretch;
@@ -284,7 +298,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-style: dashed;
   color: var(--space-muted);
 }
 .tp-notice {

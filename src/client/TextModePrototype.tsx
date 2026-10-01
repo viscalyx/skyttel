@@ -471,7 +471,10 @@ function CancelButton({ c }: { c: Conversation }) {
   ) : null;
 }
 
-/** The small voice box: waveform and one status word. Its full behaviour belongs to issue 182. */
+/**
+ * The small voice box: waveform, one status word and a stop icon. The box keeps one size; the
+ * place for the icon is always there. Its full behaviour belongs to issue 182.
+ */
 function VoiceBox({
   c,
   cancel,
@@ -486,7 +489,21 @@ function VoiceBox({
     <div className={`tp-voicebox${floating ? ' floating tp-surface' : ''}`}>
       <Wave active={c.talking || c.speaking} muted={c.mic !== 'on' && !c.speaking} />
       <span role="status">{c.statusWord}</span>
-      {cancel && <CancelButton c={c} />}
+      <span className="tp-stop-slot">
+        {cancel && c.busy && (
+          <button
+            type="button"
+            className="tp-stop"
+            aria-label="Avbryt"
+            title="Avbryt"
+            onClick={c.cancel}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" />
+            </svg>
+          </button>
+        )}
+      </span>
     </div>
   );
 }
@@ -547,8 +564,8 @@ function Transcript({ c, cancelInLog }: { c: Conversation; cancelInLog?: boolean
       )}
       {c.rows.map((row) => (
         <li key={row.id} className={`tp-row ${row.role}`}>
-          <strong>{row.role === 'user' ? 'Du' : 'Skyttel'}</strong>
-          <p>{row.text}</p>
+          <span className="tp-sr">{row.role === 'user' ? 'Du: ' : 'Skyttel: '}</span>
+          {row.text}
         </li>
       ))}
       {c.busy && (cancelInLog || c.writtenBusy) && (
