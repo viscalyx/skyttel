@@ -36,8 +36,8 @@ piltangenterna. Adressen ändras, så en variant går att länka till.
 
 | Variant | Adress | Textvyn | Röstrutan | **Avbryt** | Utkastlistan |
 | --- | --- | --- | --- | --- | --- |
-| A, Fritt fönster | `&variant=A` | Flyttbart fönster som kartans övriga verktyg. På mobil ett blad nedifrån. | Egen liten ruta vid kartans nederkant. | Sist i samtalstexten, på raden **Skyttel arbetar…**. | Fälls ut till höger om samtalstexten. Fönstret blir bredare. |
-| C, Fast sidofält | `&variant=C` | Kolumn vid högerkanten som knuffar undan kartan. På mobil hela skärmen under verktygsraden. | En rad under kolumnens rubrik. | Bredvid röstrutan under rubriken. | Fälls ut till vänster om samtalstexten. Kolumnen blir bredare. |
+| A, Fritt fönster | `&variant=A` | Flyttbart fönster som kartans övriga verktyg. På mobil ett blad nedifrån. | Egen liten ruta nere till höger. | Talat uppdrag: sist i samtalstexten. Skrivet meddelande: **Skicka** blir **Avbryt**. | Fälls ut till höger om samtalstexten. Fönstret blir bredare. |
+| C, Fast sidofält | `&variant=C` | Sidofält vid högerkanten som knuffar undan kartan. Det ligger under röstrutan. | Samma ruta på samma plats uppe till höger, oavsett om textvyn är öppen eller stängd. | Talat uppdrag: i röstrutan. Skrivet meddelande: **Skicka** blir **Avbryt**. | Fälls ut till vänster om samtalstexten. Sidofältet blir bredare. |
 
 Raden **Utkast** ovanför samtalstexten fäller ut och fäller ihop
 utkastlistan. På mobil finns ingen plats bredvid samtalstexten, så där
@@ -54,16 +54,20 @@ anteckningar stämmer.
 
 - **Första starten.** Välj **Skriv till Skyttel** eller **Prata med
   Skyttel**. Medgivanderutan visas, och knappen som valdes avgör om
-  samtalet startar med text eller röst. Kryssa i **Fråga inte igen för det
-  här hushållet** för att spara medgivandet.
+  samtalet startar med text eller röst. Rutan öppnas intill den knapp som valdes.
+  Kryssa i **Fråga inte igen för det här hushållet** för att spara
+  medgivandet.
 - **Skriva.** Skriv vad som helst och välj **Skicka** eller tryck Enter.
   Skyttel svarar med nästa replik i manuset och lägger ändringar i
   utkastet. Ändringarna syns i kartan med plus, penna och kryss. Skriv
   något med ordet "spara" för att spara utkastet.
 - **Röst och text samtidigt.** Välj **Säg nästa replik** under
-  **Prototyplägen**. Det sagda och Skyttels svar hamnar i samtalstexten
-  med en mikrofonsymbol.
-- **Avbryt.** Välj **Avbryt** medan Skyttel arbetar eller talar.
+  **Prototyplägen**. Det sagda och Skyttels svar hamnar i samtalstexten,
+  utan särskild märkning.
+- **Avbryt.** När ett skrivet meddelande är skickat blir **Skicka** till
+  **Avbryt** tills Skyttel är klar. Escape gör samma sak när fokus är i
+  textvyn. Ett talat uppdrag avbryts i röstrutan. Ett dubbelklick på
+  **Skicka** avbryter inte det nyss skickade meddelandet.
 - **Nytt samtal.** Tömmer samtalstexten. Skyttel säger hur många osparade
   ändringar som ligger kvar i utkastet.
 - **Stänga textvyn.** Samtalet fortsätter, mikrofonen är kvar i sitt läge
@@ -83,9 +87,9 @@ annars är svåra att nå.
 | Börja om | Prototypens utgångsläge. Manuset börjar om från första repliken. |
 | Bruten kontakt | Meddelandet med symbol och text. Mikrofonen stängs av och **Skicka** är avstängd. |
 | Oklart sparande | Skyttels egen kontroll, eller knappen **Kontrollera om utkastet sparades** när den egna kontrollen misslyckas. |
-| Utkastlistan som tabell | Utkastlistan som tabell i stället för lista. |
+| Utkastlistan som lista | Utkastlistan som lista i stället för tabell. |
 | Inställning: utkastlistan utfälld vid nytt samtal | Inställningen som ska finnas i Inställningar. |
-| Medgivanderutan vid knappen | Medgivanderutan intill verktygsraden i stället för mitt på skärmen. |
+| Medgivanderutan mitt på skärmen | Medgivanderutan mitt på skärmen i stället för intill verktygsradens knapp. |
 | Mörkt tema | Mörkt tema. |
 | Visa som mobil | Prototypen i en ram som är 390 × 780 bildpunkter. |
 
@@ -104,15 +108,15 @@ annars är svåra att nå.
 
 | Fil | Visar |
 | --- | --- |
-| `medgivande-dator.png` | Medgivanderutan mitt på skärmen. |
-| `medgivande-vid-knappen.png` | Medgivanderutan intill verktygsraden. |
+| `medgivande-vid-knappen.png` | Medgivanderutan intill verktygsradens knapp. |
+| `A-mobil-medgivande.png`, `C-mobil-medgivande.png` | Medgivanderutan i mobilstorlek. |
+| `A-dator-rost.png`, `C-dator-rost.png` | Bara röstrutan, med textvyn stängd. |
+| `A-dator-skrivet-arbetar.png`, `C-dator-skrivet-arbetar.png` | Skyttel arbetar med ett skrivet meddelande. **Skicka** har blivit **Avbryt**. |
 | `A-dator-samtal.png`, `C-dator-samtal.png` | Textvyn med samtalstext och utkastlistan hopfälld. |
-| `A-dator-utkast-arbetar.png`, `C-dator-utkast-arbetar.png` | Utkastlistan utfälld medan Skyttel arbetar med ett talat uppdrag. |
+| `A-dator-utkast-talat-arbetar.png`, `C-dator-utkast-talat-arbetar.png` | Utkastlistan utfälld medan Skyttel arbetar med ett talat uppdrag. |
 | `A-dator-utkast.png`, `C-dator-utkast.png` | Utkastlistan utfälld medan Skyttel talar. |
-| `A-dator-tabell.png` | Variant A med utkastlistan som tabell. |
-| `C-dator-tabell-morkt-bruten-kontakt.png` | Variant C med utkastlistan som tabell, mörkt tema och bruten kontakt. |
-| `A-dator-stangd-textvy.png`, `C-dator-stangd-textvy.png` | Textvyn stängd medan mikrofonen är på. |
-| `A-mobil.png`, `C-mobil.png` | Varianterna i mobilstorlek. |
+| `C-dator-morkt-bruten-kontakt.png` | Variant C i mörkt tema med bruten kontakt. |
+| `A-mobil.png`, `C-mobil.png` | Varianterna i mobilstorlek med mikrofonen på. |
 | `A-mobil-utkast.png`, `C-mobil-utkast.png` | Mobilstorlek med utkastlistan utfälld. |
 
 ## Beslut
@@ -124,4 +128,22 @@ Beställarens första genomgång den 1 oktober 2026:
   vänster i C.
 - **Skicka** ligger i höjd med meddelandefältets mitt.
 
-Valet mellan A och C är inte gjort ännu. Beställaren väljer i ärendet.
+Beställarens andra genomgång den 1 oktober 2026:
+
+- Det lutar åt variant C. Röstrutan är samma ruta på samma plats hela
+  tiden, och sidofältet med texten ligger under den.
+- Ett talat uppdrag avbryts i röstrutan. För ett skrivet meddelande blir
+  **Skicka** till **Avbryt**, och Escape avbryter.
+- Utkastlistan är en tabell.
+- Medgivanderutan öppnas intill verktygsradens knapp.
+- När mikrofonen är på och användaren skriver svarar Skyttel även med
+  röst. Svaret står alltid i samtalstexten.
+- Talade rader märks inte i samtalstexten.
+- Förbehållet om att samtalstexten kan innehålla fel flyttar till
+  medgivandetexten och **Information och hjälp**.
+- **Nytt samtal** frågar inte om medgivande igen. Ett osparat medgivande
+  gäller tills användaren lämnar hushållets karta eller laddar om sidan.
+- Vid bruten kontakt går meddelandefältet att skriva i. Bara **Skicka** är
+  avstängd.
+
+Ärendet är inte stängt ännu. Beslutet skrivs i ärendet.

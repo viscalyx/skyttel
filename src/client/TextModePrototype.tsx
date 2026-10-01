@@ -12,6 +12,7 @@
  */
 import {
   type PointerEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -144,6 +145,9 @@ function useConversation(draftOpenAtStart: boolean) {
   const [consentSaved, setConsentSaved] = useState(false);
   const [started, setStarted] = useState(false);
   const [asking, setAsking] = useState<'voice' | 'text' | null>(null);
+  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
+  const [origin, setOrigin] = useState<'voice' | 'text' | null>(null);
+  const sentAt = useRef(0);
   const [textOpen, setTextOpen] = useState(false);
   const [mic, setMic] = useState<Mic>('off');
   const [talking, setTalking] = useState(false);
@@ -212,6 +216,7 @@ function useConversation(draftOpenAtStart: boolean) {
     setSpeaking(false);
     setNote('');
     addRow('user', text, spoken);
+    setOrigin(spoken ? 'voice' : 'text');
     setWorking(spoken ? 'voice' : 'text');
     timer.current = setTimeout(() => respond(text), 2400);
   }
@@ -226,7 +231,18 @@ function useConversation(draftOpenAtStart: boolean) {
     }
   }
   const micDisabled = blocked || (working === 'text' && mic === 'off');
+  const writtenBusy = busy && origin === 'text';
+  // The consent box opens beside the pressed tool, so that the pointer has a short way to go.
+  const askBeside = (kind: 'voice' | 'text', button: HTMLElement) => {
+    const box = button.getBoundingClientRect();
+    const narrow = (button.ownerDocument.defaultView?.innerWidth ?? 1280) <= 700;
+    setAnchor(narrow ? { top: box.bottom + 12, left: 12 } : { top: 24, left: box.right + 18 });
+    setAsking(kind);
+  };
   return {
+    anchor,
+    writtenBusy,
+    voiceInUse: mic !== 'off' || speaking || (busy && origin === 'voice'),
     consentSaved,
     started,
     asking,
@@ -263,14 +279,14 @@ function useConversation(draftOpenAtStart: boolean) {
     setUnsent,
     setDraftOpen,
     setUnclear,
-    pressVoice() {
+    pressVoice(button: HTMLElement) {
       if (micDisabled) return;
       if (consented) toggleMic();
-      else setAsking('voice');
+      else askBeside('voice', button);
     },
-    pressText() {
+    pressText(button: HTMLElement) {
       if (consented) setTextOpen((open) => !open);
-      else setAsking('text');
+      else askBeside('text', button);
     },
     closeText: () => setTextOpen(false),
     approve(remember: boolean) {
@@ -283,9 +299,19 @@ function useConversation(draftOpenAtStart: boolean) {
     decline: () => setAsking(null),
     send() {
       const text = unsent.trim();
-      if (!text || blocked) return;
+      // While Skyttel handles a written message the button is Avbryt, so nothing new is sent.
+      if (!text || blocked || writtenBusy) return;
       setUnsent('');
+      sentAt.current = Date.now();
       ask(text, false);
+    },
+    cancelWritten() {
+      // A double click on Skicka must not cancel the message that the first click sent.
+      if (Date.now() - sentAt.current < 500) return;
+      clearTimeout(timer.current);
+      setWorking(null);
+      setSpeaking(false);
+      setNote('Avbrutet. Utkastet är oförändrat.');
     },
     speak() {
       const line = script[step]?.say ?? 'Finns det något mer att göra?';
@@ -521,22 +547,14 @@ function Transcript({ c, cancelInLog }: { c: Conversation; cancelInLog?: boolean
       )}
       {c.rows.map((row) => (
         <li key={row.id} className={`tp-row ${row.role}`}>
-          <strong>
-            {row.role === 'user' ? 'Du' : 'Skyttel'}
-            {row.spoken && (
-              <span className="tp-spoken" title="Sagt med röst">
-                <WorkspaceIcon name="mic" />
-                <span className="tp-sr">sagt med röst</span>
-              </span>
-            )}
-          </strong>
+          <strong>{row.role === 'user' ? 'Du' : 'Skyttel'}</strong>
           <p>{row.text}</p>
         </li>
       ))}
-      {cancelInLog && c.busy && (
+      {c.busy && (cancelInLog || c.writtenBusy) && (
         <li className="tp-row working">
           <span>{c.working ? 'Skyttel arbetar…' : 'Skyttel talar…'}</span>
-          <CancelButton c={c} />
+          {!c.writtenBusy && <CancelButton c={c} />}
         </li>
       )}
     </ol>
@@ -644,12 +662,26 @@ function MessageField({ c }: { c: Conversation }) {
   );
 }
 
+/** Skicka turns into Avbryt while Skyttel handles a written message. */
 function SendButton({ c }: { c: Conversation }) {
-  return (
+  return c.writtenBusy ? (
+    <button type="button" className="tp-cancel" title="Avbryt (Esc)" onClick={c.cancelWritten}>
+      Avbryt
+    </button>
+  ) : (
     <button type="submit" className="primary" disabled={c.blocked || !c.unsent.trim()}>
       Skicka
     </button>
   );
+}
+
+/** Escape in the text view cancels a written message, like the Avbryt button. */
+function escapeCancels(c: Conversation) {
+  return (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Escape' || !c.writtenBusy) return;
+    event.preventDefault();
+    c.cancelWritten();
+  };
 }
 
 function CloseButton({ c }: { c: Conversation }) {
@@ -693,6 +725,7 @@ function VariantA({ c, layout }: { c: Conversation; layout: DraftLayout }) {
         <section
           className={`tp-window tp-surface${c.draftOpen ? ' with-draft' : ''}`}
           aria-label="Skriv till Skyttel"
+          onKeyDown={escapeCancels(c)}
           style={{
             left: position.x,
             top: position.y,
@@ -745,42 +778,45 @@ function VariantA({ c, layout }: { c: Conversation; layout: DraftLayout }) {
   );
 }
 
-/** C: a docked column that pushes the map aside. The voice box and Avbryt sit in its heading. */
+/**
+ * C: a docked side panel that pushes the map aside. The voice box is the same box in the same
+ * place whether the panel is open or not; the panel comes below it.
+ */
 function VariantC({ c, layout }: { c: Conversation; layout: DraftLayout }) {
-  if (!c.textOpen) return <VoiceBox c={c} floating cancel />;
   return (
-    <section
-      className={`tp-side tp-columns tp-surface${c.draftOpen ? ' with-draft' : ''}`}
-      aria-label="Skriv till Skyttel"
-    >
-      <DraftPane c={c} layout={layout} />
-      <div className="tp-conversation">
-        <header className="tp-head">
-          <h2>Skriv till Skyttel</h2>
-          <NewConversationButton c={c} />
-          <CloseButton c={c} />
-        </header>
-        {c.voiceVisible && (
-          <div className="tp-side-voice">
-            <VoiceBox c={c} cancel />
-          </div>
-        )}
-        <DraftToggle c={c} side="left" />
-        <Transcript c={c} />
-        <Notices c={c} />
-        <form
-          className="tp-composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            c.send();
-          }}
+    <>
+      {(c.voiceInUse || !c.textOpen) && <VoiceBox c={c} floating cancel />}
+      {c.textOpen && (
+        <section
+          className={`tp-side tp-columns tp-surface${c.draftOpen ? ' with-draft' : ''}`}
+          aria-label="Skriv till Skyttel"
+          onKeyDown={escapeCancels(c)}
         >
-          <label htmlFor="tp-message">Meddelande till Skyttel</label>
-          <MessageField c={c} />
-          <SendButton c={c} />
-        </form>
-      </div>
-    </section>
+          <DraftPane c={c} layout={layout} />
+          <div className="tp-conversation">
+            <header className="tp-head">
+              <h2>Skriv till Skyttel</h2>
+              <NewConversationButton c={c} />
+              <CloseButton c={c} />
+            </header>
+            <DraftToggle c={c} side="left" />
+            <Transcript c={c} />
+            <Notices c={c} />
+            <form
+              className="tp-composer"
+              onSubmit={(event) => {
+                event.preventDefault();
+                c.send();
+              }}
+            >
+              <label htmlFor="tp-message">Meddelande till Skyttel</label>
+              <MessageField c={c} />
+              <SendButton c={c} />
+            </form>
+          </div>
+        </section>
+      )}
+    </>
   );
 }
 
@@ -795,6 +831,7 @@ function ConsentDialog({ c, anchored }: { c: Conversation; anchored: boolean }) 
     <dialog
       ref={dialog}
       className={`tp-consent${anchored ? ' anchored' : ''}`}
+      style={anchored && c.anchor ? c.anchor : undefined}
       aria-labelledby="tp-consent-title"
       onCancel={c.decline}
     >
@@ -858,7 +895,7 @@ function ToolRail({ c }: { c: Conversation }) {
         aria-label="Prata med Skyttel"
         aria-pressed={c.mic === 'on'}
         disabled={c.micDisabled}
-        onClick={c.pressVoice}
+        onClick={(event) => c.pressVoice(event.currentTarget)}
       >
         <WorkspaceIcon name={c.mic === 'on' ? 'stop' : 'mic'} />
         <span>Prata med Skyttel</span>
@@ -869,7 +906,7 @@ function ToolRail({ c }: { c: Conversation }) {
         title="Skriv till Skyttel"
         aria-label="Skriv till Skyttel"
         aria-expanded={c.textOpen}
-        onClick={c.pressText}
+        onClick={(event) => c.pressText(event.currentTarget)}
       >
         <WorkspaceIcon name="text" />
         <span>Skriv till Skyttel</span>
@@ -923,8 +960,8 @@ export function TextModePrototype() {
   const variant: Variant = variants.find(([key]) => key === params.get('variant'))?.[0] ?? 'A';
   const mobile = params.get('mobile') === '1';
   const dark = params.get('theme') === 'dark';
-  const layout: DraftLayout = params.get('draft') === 'table' ? 'table' : 'list';
-  const anchored = params.get('consent') === 'anchored';
+  const layout: DraftLayout = params.get('draft') === 'list' ? 'list' : 'table';
+  const anchored = params.get('consent') !== 'center';
   const [draftOpenAtStart, setDraftOpenAtStart] = useState(false);
   const c = useConversation(draftOpenAtStart);
   const set = useCallback(
@@ -1061,10 +1098,10 @@ export function TextModePrototype() {
           <label>
             <input
               type="checkbox"
-              checked={layout === 'table'}
-              onChange={(event) => set('draft', event.target.checked ? 'table' : null)}
+              checked={layout === 'list'}
+              onChange={(event) => set('draft', event.target.checked ? 'list' : null)}
             />
-            Utkastlistan som tabell
+            Utkastlistan som lista
           </label>
           <label>
             <input
@@ -1080,10 +1117,10 @@ export function TextModePrototype() {
           <label>
             <input
               type="checkbox"
-              checked={anchored}
-              onChange={(event) => set('consent', event.target.checked ? 'anchored' : null)}
+              checked={!anchored}
+              onChange={(event) => set('consent', event.target.checked ? 'center' : null)}
             />
-            Medgivanderutan vid knappen
+            Medgivanderutan mitt på skärmen
           </label>
           <label>
             <input
