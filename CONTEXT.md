@@ -274,6 +274,15 @@ Textvyn kan stängas utan att samtalet avslutas.
 Den lilla ruta med vågform och statusord som visar att Skyttel lyssnar,
 arbetar eller talar.
 
+**Samtalsnotis**:
+En kort text med symbol som Skyttel visar när något hindrar samtalet eller
+när Skyttel-användaren behöver göra något.
+Samtalsnotisen hör till samtalet och visas vid röstrutans plats eller i
+textvyn.
+
+_Undvik_: Meddelande, varning och besked för samma sak; meddelande avser
+det Skyttel-användaren skriver till Skyttel.
+
 **Kontext**:
 Det av det pågående samtalet som Skyttel har med sig när den svarar.
 Kontextens utrymme är begränsat och beror på vilken AI-modell Skyttel
