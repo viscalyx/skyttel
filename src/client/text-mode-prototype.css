@@ -217,41 +217,32 @@
   font-weight: 600;
   white-space: nowrap;
 }
-/* One size at all times: the status word and the stop icon have reserved places. */
+/* One height at all times; only as wide as the content needs. */
 .tp-voicebox.floating {
   position: fixed;
   z-index: 25;
   box-sizing: border-box;
-  width: 216px;
-  height: 44px;
-  padding: 0 4px 0 14px;
-}
-.tp-voicebox [role="status"] {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.tp-stop-slot {
-  flex: none;
-  width: 36px;
   height: 36px;
+  padding: 0 12px;
+  border-radius: 18px;
+}
+.tp-voicebox.floating:has(.tp-stop) {
+  padding-right: 5px;
 }
 .tp-root .tp-stop {
+  flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 26px;
+  height: 26px;
   min-width: 0;
   min-height: 0;
   padding: 0;
-  border-color: var(--proposal-removed);
   border-radius: 50%;
-  color: var(--proposal-removed);
 }
 .tp-stop svg {
-  width: 22px;
-  height: 22px;
+  width: 14px;
+  height: 14px;
 }
 .tp-variant-a .tp-voicebox.floating {
   right: 24px;

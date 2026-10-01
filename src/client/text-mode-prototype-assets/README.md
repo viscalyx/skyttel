@@ -148,8 +148,8 @@ Beställarens andra genomgång den 1 oktober 2026:
 
 Tillägg från beställaren samma dag:
 
-- **Avbryt** i röstrutan är bara en ikon, utan text. Röstrutan har samma
-  storlek hela tiden; platsen för ikonen finns alltid.
+- **Avbryt** i röstrutan är bara en liten stoppikon, utan text. Röstrutan
+  har samma höjd hela tiden och är bara så bred som innehållet kräver.
 - Samtalstexten är tätare och har mindre text. Raderna har inga synliga
   namn. Användarens text står i en tonad ruta till höger, och Skyttels text
   står utan ruta. Skärmläsare får fortfarande veta vem som sa vad.

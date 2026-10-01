@@ -472,8 +472,8 @@ function CancelButton({ c }: { c: Conversation }) {
 }
 
 /**
- * The small voice box: waveform, one status word and a stop icon. The box keeps one size; the
- * place for the icon is always there. Its full behaviour belongs to issue 182.
+ * The small voice box: waveform, one status word and a small stop icon. The box keeps one height
+ * and is only as wide as its content. Its full behaviour belongs to issue 182.
  */
 function VoiceBox({
   c,
@@ -489,21 +489,19 @@ function VoiceBox({
     <div className={`tp-voicebox${floating ? ' floating tp-surface' : ''}`}>
       <Wave active={c.talking || c.speaking} muted={c.mic !== 'on' && !c.speaking} />
       <span role="status">{c.statusWord}</span>
-      <span className="tp-stop-slot">
-        {cancel && c.busy && (
-          <button
-            type="button"
-            className="tp-stop"
-            aria-label="Avbryt"
-            title="Avbryt"
-            onClick={c.cancel}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" />
-            </svg>
-          </button>
-        )}
-      </span>
+      {cancel && c.busy && (
+        <button
+          type="button"
+          className="tp-stop"
+          aria-label="Avbryt"
+          title="Avbryt"
+          onClick={c.cancel}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
