@@ -177,7 +177,11 @@ function useConversation(draftOpenAtStart: boolean) {
 
   const addRow = (role: Row['role'], text: string, spoken: boolean) =>
     setRows((current) => [...current, { id: nextId.current++, role, text, spoken }]);
-  const blocked = !online || unclear !== 'no';
+  // An invented measure: every row of the conversation and every draft change takes some room.
+  const [memoryForced, setMemoryForced] = useState<number | null>(null);
+  const memory = memoryForced ?? Math.min(100, 2 + rows.length * 4 + draft.length * 3);
+  const memoryFull = memory >= 100;
+  const blocked = !online || unclear !== 'no' || memoryFull;
   const busy = Boolean(working) || speaking;
   const consented = started || consentSaved;
 
@@ -284,6 +288,10 @@ function useConversation(draftOpenAtStart: boolean) {
     blocked,
     busy,
     waiting,
+    memory,
+    memoryFull,
+    memoryForced,
+    setMemoryForced,
     micDisabled,
     nextLine: script[step]?.say,
     statusWord: working
@@ -353,6 +361,7 @@ function useConversation(draftOpenAtStart: boolean) {
     },
     newConversation() {
       halt();
+      setMemoryForced(null);
       setNote('');
       setDraftOpen(draftOpenAtStart);
       setRows([
@@ -537,6 +546,15 @@ function Notices({ c }: { c: Conversation }) {
             </button>
           </span>
         </div>
+      )}
+      {c.memoryFull && (
+        <p className="tp-notice" role="alert">
+          <span className="tp-notice-symbol" aria-hidden="true">
+            !
+          </span>
+          Skyttels minne för samtalet är fullt. Välj Nytt samtal för att fortsätta. Utkastet ligger
+          kvar.
+        </p>
       )}
       {c.note && (
         <p className="tp-note" role="status">
@@ -766,6 +784,28 @@ function CloseButton({ c }: { c: Conversation }) {
   );
 }
 
+/** How full Skyttel's memory of the conversation is, as a share of the context window. */
+function MemoryMeter({ c }: { c: Conversation }) {
+  return (
+    <div
+      className="tp-meter"
+      title="Så mycket av det Skyttel kan minnas av samtalet som är fyllt. Nytt samtal tömmer minnet."
+    >
+      <span id="tp-meter-label">Minne</span>
+      <meter
+        aria-labelledby="tp-meter-label"
+        min={0}
+        max={100}
+        low={60}
+        high={85}
+        optimum={0}
+        value={c.memory}
+      />
+      <span>{c.memory} %</span>
+    </div>
+  );
+}
+
 function NewConversationButton({ c }: { c: Conversation }) {
   return (
     <button type="button" className="tp-small" onClick={c.newConversation}>
@@ -825,7 +865,10 @@ function TextView({
           />
           <div className="tp-conversation">
             <header className="tp-head">
-              <h2>Skriv till Skyttel</h2>
+              <div className="tp-title">
+                <h2>Skriv till Skyttel</h2>
+                <MemoryMeter c={c} />
+              </div>
               <NewConversationButton c={c} />
               <CloseButton c={c} />
             </header>
@@ -1111,6 +1154,20 @@ export function TextModePrototype() {
               onChange={(event) => c.setOnline(!event.target.checked)}
             />
             Bruten kontakt
+          </label>
+          <label>
+            Minne
+            <select
+              value={c.memoryForced ?? ''}
+              onChange={(event) =>
+                c.setMemoryForced(event.target.value ? Number(event.target.value) : null)
+              }
+            >
+              <option value="">Följer samtalet</option>
+              <option value="70">70 %</option>
+              <option value="90">90 %</option>
+              <option value="100">100 % (fullt)</option>
+            </select>
           </label>
           <label>
             Oklart sparande

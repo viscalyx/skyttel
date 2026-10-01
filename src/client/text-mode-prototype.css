@@ -148,8 +148,21 @@
   padding: 8px 8px 8px 16px;
   border-bottom: 1px solid var(--space-line);
 }
-.tp-head h2 {
+.tp-title {
   flex: 1;
+  min-width: 0;
+}
+.tp-meter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--space-muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+.tp-meter meter {
+  width: 64px;
+  height: 8px;
 }
 .tp-wave {
   display: inline-flex;

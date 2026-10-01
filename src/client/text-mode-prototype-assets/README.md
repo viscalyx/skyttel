@@ -48,6 +48,7 @@ nederkant) utgick och finns kvar i grenens tidigare incheckningar.
 | Stängd textvy | Om textvyn stängs medan Skyttel arbetar med ett skrivet meddelande får knappen **Skriv till Skyttel** en liten arbetsmarkering. Markeringen ligger ovanpå knappen och ändrar inte verktygsradens plats eller bredd. |
 | Utkastlistan | En tabell som fälls ut till vänster om samtalstexten från knappen **Visa utkastet**, som har en pil åt det håll utkastet öppnas och visar antalet osparade ändringar. Knappen heter **Dölj utkastet** när utkastet är utfällt. På mobil öppnas utkastet mellan knappen och samtalstexten. |
 | Medgivanderutan | Öppnas intill den knapp i verktygsraden som valdes. |
+| Minne | En mätare under textvyns rubrik visar hur många procent av kontextfönstret som är fyllt. När minnet är fullt är **Skicka** avstängd, och ett meddelande säger att **Nytt samtal** tömmer det. Värdena i prototypen är påhittade. |
 
 ## Det här går att prova
 
@@ -85,6 +86,7 @@ annars är svåra att nå.
 | Glöm medgivandet | Första starten igen. |
 | Börja om | Prototypens utgångsläge. Manuset börjar om från första repliken. |
 | Bruten kontakt | Meddelandet med symbol och text. Mikrofonen stängs av och **Skicka** är avstängd. |
+| Minne | Mätaren vid 70, 90 eller 100 procent. Annars följer den samtalet. |
 | Oklart sparande | Skyttels egen kontroll, eller knappen **Kontrollera om utkastet sparades** när den egna kontrollen misslyckas. |
 | Pekskärm utan Escape (som iPad) | Pekskärmens beteende på en bred skärm: **Skicka** blir en stoppikon medan Skyttel arbetar, och ett meddelande åt gången. |
 | Utkastlistan som lista | Utkastlistan som lista i stället för tabell. |
@@ -115,6 +117,7 @@ annars är svåra att nå.
 | `dator-utkast-talat-arbetar.png` | Utkastlistan utfälld medan Skyttel arbetar med ett talat uppdrag. |
 | `dator-utkast.png` | Utkastlistan utfälld medan Skyttel talar. |
 | `dator-bredare.png` | Samtalstexten och utkastlistan gjorda bredare. |
+| `dator-minne-fullt.png` | Mätaren vid 100 procent, med meddelandet om fullt minne. |
 | `dator-morkt-bruten-kontakt.png` | Mörkt tema med bruten kontakt. |
 | `mobil-arbetar.png` | Mobilstorlek medan Skyttel arbetar. **Skicka** är en stoppikon. |
 | `mobil-rost-utkast.png` | Mobilstorlek med mikrofonen på och utkastlistan utfälld. |
@@ -133,7 +136,10 @@ Beställarens genomgångar den 1 oktober 2026 gav följande.
   textvyn och Skyttel arbetar, och gör annars ingenting. Meddelandefältet
   behåller fokus efter att ett meddelande har skickats.
 - På mobil enhet skickas ett meddelande åt gången, och **Skicka** blir en
-  stoppikon medan Skyttel arbetar.
+  stoppikon medan Skyttel arbetar. Mobil enhet betyder pekskärm, så en
+  iPad räknas dit.
+- Ett avbrott stoppar både det pågående arbetet och allt som väntar i kön.
+- En mätare visar hur många procent av kontextfönstret som är fyllt.
 - Om textvyn är stängd medan Skyttel arbetar med ett skrivet meddelande
   visar knappen **Skriv till Skyttel** en arbetsmarkering som inte ändrar
   verktygsradens plats eller bredd.
