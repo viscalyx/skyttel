@@ -1,21 +1,19 @@
 /*
  * PROTOTYPE - throwaway code, not production code. No tests, no server, no persistence.
  *
- * Question (viscalyx/skyttel#179): what does the voice mode look like when the user starts the
- * conversation with the voice button in the tool rail and only a small waveform shows that the
- * speech is heard?
+ * Question (viscalyx/skyttel#191): what does the conversation look like on a mobile device: where
+ * do the voice box and the conversation notice stand, and how do they and the text view work
+ * together with the on-screen keyboard and with short windows?
  *
- * Plan: three variants of the voice mode on the standalone prototype page, switchable with
- * ?variant= and a floating bar at the bottom. Each variant has its own waveform, its own place and
- * shape for the conversation notice, and its own mark on the text button. The parts can also be
- * mixed with one URL parameter each. The page keeps the text view that viscalyx/skyttel#180
- * decided, with invented household data and scripted replies.
+ * Plan: three variants of the mobile layout on the standalone prototype page, switchable with
+ * ?variant= and a floating bar. Each variant has its own place for the voice box and the
+ * conversation notice on a narrow screen, and its own rule for the text view in a short window.
+ * The two parts can also be mixed with one URL parameter each. The page keeps the design that
+ * viscalyx/skyttel#178, #180, #182, #179 and #188 decided, with invented household data and
+ * scripted replies. A frame shows the page in the size of a phone or an iPad, with an invented
+ * on-screen keyboard. On a real touch device the page fills the visible part of the screen.
  *
- * Answer: the page opens with the chosen design, variant V. It takes the waveform, the notice and
- * the close button from A, and the mark and the voice button symbol from B. The variants A, B and
- * C remain for comparison.
- *
- * Start: npm run prototype:rostlage, then open http://localhost:4178/?prototype=rostlage
+ * Start: npm run prototype:mobil, then open http://localhost:4179/?prototype=mobil
  */
 import {
   type CSSProperties,
@@ -35,8 +33,10 @@ import {
   type Axis,
   axisNames,
   ConversationNotice,
+  chosen,
   closeMicrophone,
   Icon,
+  type MobileParts,
   microphoneLevel,
   type NoticeId,
   notices,
@@ -45,6 +45,8 @@ import {
   type Parts,
   PrototypeSwitcher,
   readParts,
+  type ScreenKey,
+  screens,
   variants,
   Wave,
   type WaveState,
@@ -807,6 +809,12 @@ function FakeMap({ c }: { c: Conversation }) {
           </div>
         );
       })}
+      {/* The real map has this row along its bottom edge. It does nothing here. */}
+      <div className="mp-map-bar" aria-hidden="true">
+        <span>Återställ vy</span>
+        <span>☐ Alla etiketter</span>
+        <span>☐ Visa höjdhjälp</span>
+      </div>
     </div>
   );
 }
@@ -818,7 +826,8 @@ function FakeMap({ c }: { c: Conversation }) {
 function VoiceBox({ c, parts, reduced }: { c: Conversation; parts: Parts; reduced: boolean }) {
   if (!c.voiceVisible) return null;
   return (
-    <div className="tp-voicebox tp-surface">
+    // biome-ignore lint/a11y/useSemanticElements: a named group, as viscalyx/skyttel#188 decided
+    <div className="tp-voicebox tp-surface" role="group" aria-label="Röstruta">
       <Wave kind={parts.vag} state={c.waveState} reduced={reduced} saved={c.status === 'saved'} />
       {c.status === 'saved' && (
         <span className="vp-check">
@@ -843,7 +852,7 @@ function VoiceBox({ c, parts, reduced }: { c: Conversation; parts: Parts; reduce
               strokeDasharray={`${(c.memory / 100) * 56.5} 56.5`}
             />
           </svg>
-          {c.memory} %
+          <span className="mp-percent">{c.memory} %</span>
         </span>
       )}
       {c.busy && (
@@ -864,10 +873,23 @@ function VoiceBox({ c, parts, reduced }: { c: Conversation; parts: Parts; reduce
 }
 
 /**
- * The place of the voice box, top right. The conversation notice stands here too, also when the
- * box is away. While the text view is open the notice stands in the text view and not here.
+ * The place of the voice box. The conversation notice stands here too, also when the box is away.
+ * While the text view is open the notice stands in the text view and not here. The place is a
+ * part of the tool rail in the code, straight after the two conversation tools, so that the
+ * reading order is the one that viscalyx/skyttel#188 decided. The styles put it on the screen.
  */
-function VoiceCorner({ c, parts, reduced }: { c: Conversation; parts: Parts; reduced: boolean }) {
+function VoiceCorner({
+  c,
+  parts,
+  reduced,
+  boxElsewhere,
+}: {
+  c: Conversation;
+  parts: Parts;
+  reduced: boolean;
+  /** The voice box stands in the text view, above the message field. */
+  boxElsewhere: boolean;
+}) {
   const corner = useRef<HTMLDivElement>(null);
   const notice = c.textOpen ? null : c.notice;
   const { fromTap, closeNotice } = c;
@@ -900,7 +922,7 @@ function VoiceCorner({ c, parts, reduced }: { c: Conversation; parts: Parts; red
       ref={corner}
       className={`vp-corner notis-${parts.notis}${c.voiceVisible ? ' has-box' : ''}`}
     >
-      <VoiceBox c={c} parts={parts} reduced={reduced} />
+      {!boxElsewhere && <VoiceBox c={c} parts={parts} reduced={reduced} />}
       {notice && (
         <ConversationNotice
           id={notice}
@@ -915,13 +937,16 @@ function VoiceCorner({ c, parts, reduced }: { c: Conversation; parts: Parts; red
   );
 }
 
-function Transcript({ c, touch }: { c: Conversation; touch: boolean }) {
+function Transcript({ c, touch, height }: { c: Conversation; touch: boolean; height: number }) {
   const log = useRef<HTMLOListElement>(null);
   const size = c.rows.length + (c.working ? 1 : 0);
   // biome-ignore lint/correctness/useExhaustiveDependencies: follow new rows
   useLayoutEffect(() => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
-  }, [size]);
+    // In a short window the whole text view can be the part that scrolls.
+    const side = log.current?.closest('.tp-side');
+    if (side) side.scrollTop = side.scrollHeight;
+  }, [size, height]);
   return (
     <ol ref={log} role="log" aria-label="Samtalstext" className="tp-log">
       {!c.rows.length && (
@@ -995,7 +1020,22 @@ function DraftChanges({ c, layout }: { c: Conversation; layout: DraftLayout }) {
 }
 
 /** The row that folds the draft pane out beside the conversation text. */
-function DraftToggle({ c }: { c: Conversation }) {
+function DraftToggle({ c, compact = false }: { c: Conversation; compact?: boolean }) {
+  if (compact)
+    return (
+      <button
+        type="button"
+        className="mp-draft-chip"
+        aria-expanded={c.draftOpen}
+        aria-controls="tp-draft-pane"
+        aria-label={`${c.draftOpen ? 'Dölj utkastet' : 'Visa utkastet'}, ${count(c.draft)}`}
+        onClick={() => c.setDraftOpen(!c.draftOpen)}
+      >
+        <WorkspaceIcon name="draft" />
+        <span>Utkast</span>
+        <span className="tp-draft-count">{c.draft.length}</span>
+      </button>
+    );
   return (
     <div className="tp-draft-toggle">
       <button
@@ -1024,14 +1064,19 @@ function DraftPane({ c, layout }: { c: Conversation; layout: DraftLayout }) {
   ) : null;
 }
 
-function MessageField({ c, touch }: { c: Conversation; touch: boolean }) {
+function MessageField({ c, touch, view }: { c: Conversation; touch: boolean; view: MobileView }) {
   const field = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => field.current?.focus(), []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only when the text view opens
+  useEffect(() => {
+    if (view.focusAtOpen) field.current?.focus();
+  }, []);
   return (
     <textarea
       ref={field}
       id="tp-message"
-      rows={2}
+      rows={view.short && view.mobile.kort !== 'rullar' ? 1 : 2}
+      onFocus={() => view.setTyping(true)}
+      onBlur={() => view.setTyping(false)}
       maxLength={4000}
       placeholder="Berätta vad du vill göra…"
       value={c.unsent}
@@ -1172,9 +1217,23 @@ type Widths = {
   set: (widths: { text: number; draft: number }) => void;
 };
 
+/** What the text view must know about the screen it stands on. */
+type MobileView = {
+  mobile: MobileParts;
+  /** The rail lies along the top of a narrow screen. */
+  narrow: boolean;
+  /** The visible height of the screen, without the on-screen keyboard. */
+  height: number;
+  /** The visible height is under the limit: the keyboard is up, or the window is short. */
+  short: boolean;
+  typing: boolean;
+  setTyping: (typing: boolean) => void;
+  focusAtOpen: boolean;
+};
+
 /**
- * The text view: a docked side panel that pushes the map aside. The voice box is the same box in
- * the same place whether the panel is open or not; the panel comes below it.
+ * The text view: a docked side panel that pushes the map aside. On a touch layout it fills the
+ * screen below the voice box, and its width cannot be changed.
  */
 function TextView({
   c,
@@ -1183,6 +1242,7 @@ function TextView({
   widths,
   parts,
   reduced,
+  view,
 }: {
   c: Conversation;
   layout: DraftLayout;
@@ -1190,36 +1250,48 @@ function TextView({
   widths: Widths;
   parts: Parts;
   reduced: boolean;
+  view: MobileView;
 }) {
   // Leave room for the tool rail and a strip of the map.
   const room = (typeof window === 'undefined' ? 1280 : window.innerWidth) - 220;
+  if (!c.textOpen) return null;
+  const compact = touch && view.short && view.mobile.kort === 'kompakt';
   return (
-    <>
-      <VoiceCorner c={c} parts={parts} reduced={reduced} />
-      {c.textOpen && (
-        <section
-          className={`tp-side tp-columns tp-surface${c.draftOpen ? ' with-draft' : ''}`}
-          aria-label="Skriv till Skyttel"
-          onKeyDown={escapeCancels(c)}
-        >
-          {c.draftOpen && (
-            <Resizer
-              label="Ändra utkastlistans bredd"
-              value={widths.draft}
-              min={260}
-              max={Math.max(260, room - widths.text)}
-              onChange={(draft) => widths.set({ text: widths.text, draft })}
-            />
-          )}
-          <DraftPane c={c} layout={layout} />
-          <Resizer
-            label="Ändra samtalstextens bredd"
-            value={widths.text}
-            min={300}
-            max={Math.max(300, room - (c.draftOpen ? widths.draft : 0))}
-            onChange={(text) => widths.set({ text, draft: widths.draft })}
-          />
-          <div className="tp-conversation">
+    <section
+      className={`tp-side tp-columns tp-surface${c.draftOpen ? ' with-draft' : ''}`}
+      aria-label="Skriv till Skyttel"
+      onKeyDown={escapeCancels(c)}
+    >
+      {c.draftOpen && !touch && (
+        <Resizer
+          label="Ändra utkastlistans bredd"
+          value={widths.draft}
+          min={260}
+          max={Math.max(260, room - widths.text)}
+          onChange={(draft) => widths.set({ text: widths.text, draft })}
+        />
+      )}
+      <DraftPane c={c} layout={layout} />
+      {!touch && (
+        <Resizer
+          label="Ändra samtalstextens bredd"
+          value={widths.text}
+          min={300}
+          max={Math.max(300, room - (c.draftOpen ? widths.draft : 0))}
+          onChange={(text) => widths.set({ text, draft: widths.draft })}
+        />
+      )}
+      <div className="tp-conversation">
+        {compact ? (
+          <header className="tp-head mp-compact">
+            <h2 className="tp-sr">Skriv till Skyttel</h2>
+            <MemoryMeter c={c} />
+            <DraftToggle c={c} compact />
+            <NewConversationButton c={c} />
+            <CloseButton c={c} />
+          </header>
+        ) : (
+          <>
             <header className="tp-head">
               <div className="tp-title">
                 <h2>Skriv till Skyttel</h2>
@@ -1229,39 +1301,44 @@ function TextView({
               <CloseButton c={c} />
             </header>
             <DraftToggle c={c} />
-            <Transcript c={c} touch={touch} />
-            {c.notice && (
-              <ConversationNotice
-                id={c.notice}
-                look="textvy"
-                symbols={parts.symbol}
-                closable={notices[c.notice].kind === 'handelse'}
-                onClose={c.closeNotice}
-                onAction={c.noticeAction}
-              />
-            )}
-            {c.note && (
-              <p className="tp-note" role="status">
-                {c.note}
-              </p>
-            )}
-            <form
-              className="tp-composer"
-              onSubmit={(event) => {
-                event.preventDefault();
-                c.send(touch);
-                // The message field keeps the focus, so that Escape can cancel at once.
-                event.currentTarget.querySelector('textarea')?.focus();
-              }}
-            >
-              <label htmlFor="tp-message">Meddelande till Skyttel</label>
-              <MessageField c={c} touch={touch} />
-              <SendButton c={c} touch={touch} />
-            </form>
+          </>
+        )}
+        <Transcript c={c} touch={touch} height={view.height} />
+        {c.notice && (
+          <ConversationNotice
+            id={c.notice}
+            look="textvy"
+            symbols={parts.symbol}
+            closable={notices[c.notice].kind === 'handelse'}
+            onClose={c.closeNotice}
+            onAction={c.noticeAction}
+          />
+        )}
+        {c.note && (
+          <p className="tp-note" role="status">
+            {c.note}
+          </p>
+        )}
+        {view.narrow && view.mobile.plats === 'nere' && (
+          <div className="mp-voice-row">
+            <VoiceBox c={c} parts={parts} reduced={reduced} />
           </div>
-        </section>
-      )}
-    </>
+        )}
+        <form
+          className="tp-composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            c.send(touch);
+            // The message field keeps the focus, so that Escape can cancel at once.
+            event.currentTarget.querySelector('textarea')?.focus();
+          }}
+        >
+          <label htmlFor="tp-message">Meddelande till Skyttel</label>
+          <MessageField c={c} touch={touch} view={view} />
+          <SendButton c={c} touch={touch} />
+        </form>
+      </div>
+    </section>
   );
 }
 
@@ -1306,7 +1383,19 @@ function ConsentDialog({ c, anchored }: { c: Conversation; anchored: boolean }) 
   );
 }
 
-function ToolRail({ c, parts, combo }: { c: Conversation; parts: Parts; combo: string }) {
+function ToolRail({
+  c,
+  parts,
+  combo,
+  reduced,
+  boxElsewhere,
+}: {
+  c: Conversation;
+  parts: Parts;
+  combo: string;
+  reduced: boolean;
+  boxElsewhere: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   // With the text view closed, the tool shows that Skyttel works on a written message.
   const writing = c.working === 'text' && !c.textOpen;
@@ -1350,11 +1439,10 @@ function ToolRail({ c, parts, combo }: { c: Conversation; parts: Parts; combo: s
         title={
           c.mic === 'starting'
             ? 'Avbryt starten av rösten'
-            : `Prata med Skyttel (${combo}). Håll in för att tala tills du släpper.`
+            : `Prata med Skyttel (${combo}). Håll in för att tala tills du släpper.${c.idleOff ? ' Inte tillgängligt just nu.' : ''}`
         }
         aria-label="Prata med Skyttel"
         aria-pressed={c.mic === 'on'}
-        aria-disabled={c.idleOff || undefined}
         disabled={c.micDisabled}
         onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
           skipClick.current = false;
@@ -1381,10 +1469,9 @@ function ToolRail({ c, parts, combo }: { c: Conversation; parts: Parts; combo: s
         ref={textButton}
         type="button"
         className={`tp-rail-text${c.idleOff ? ' vp-off' : ''}${unread && parts.markering === 'ram' ? ' vp-ram' : ''}`}
-        title={textName}
+        title={c.idleOff ? `${textName}. Inte tillgängligt just nu.` : textName}
         aria-label={textName}
         aria-expanded={c.textOpen}
-        aria-disabled={c.idleOff || undefined}
         onClick={(event) => c.pressText(event.currentTarget)}
       >
         <WorkspaceIcon name="text" />
@@ -1396,6 +1483,7 @@ function ToolRail({ c, parts, combo }: { c: Conversation; parts: Parts; combo: s
           </i>
         )}
       </button>
+      <VoiceCorner c={c} parts={parts} reduced={reduced} boxElsewhere={boxElsewhere} />
       {idle('search', 'Sök i kartan')}
       {idle('list', 'Lista')}
       {idle('draft', 'Utkast och historik')}
@@ -1417,9 +1505,32 @@ function ToolRail({ c, parts, combo }: { c: Conversation; parts: Parts; combo: s
   );
 }
 
-/** Renders its children inside an iframe so that the app's own narrow-screen rules apply. */
-function PhoneFrame({ children }: { children: ReactNode }) {
+/**
+ * Renders its children inside an iframe so that the app's own narrow-screen rules apply. The frame
+ * has the size of the chosen screen and is made smaller when the window has no room for it. The
+ * invented on-screen keyboard is a part of the device, not of the app.
+ */
+function PhoneFrame({
+  screen,
+  keyboard,
+  children,
+}: {
+  screen: ScreenKey;
+  /** The height of the invented keyboard, or 0 when it is down. */
+  keyboard: number;
+  children: ReactNode;
+}) {
+  const { width, height } = screens[screen];
   const [body, setBody] = useState<HTMLElement | null>(null);
+  const [scale, setScale] = useState(1);
+  useLayoutEffect(() => {
+    // Room for the prototype controls to the left and for the variant switcher below.
+    const resize = () =>
+      setScale(Math.min(1, (window.innerHeight - 96) / height, (window.innerWidth - 400) / width));
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, [width, height]);
   const mount = useCallback((frame: HTMLIFrameElement | null) => {
     const target = frame?.contentDocument;
     if (!target) return;
@@ -1434,8 +1545,57 @@ function PhoneFrame({ children }: { children: ReactNode }) {
   }, []);
   return (
     <div className="tp-stage">
-      <iframe ref={mount} title="Prototypen i mobilstorlek" className="tp-phone" />
-      {body && createPortal(children, body)}
+      <div className="mp-device" style={{ width: width * scale, height: height * scale }}>
+        <iframe
+          ref={mount}
+          title="Prototypen i mobilstorlek"
+          className="tp-phone"
+          style={{ width, height, transform: `scale(${scale})` }}
+        />
+      </div>
+      {body &&
+        createPortal(
+          <>
+            {children}
+            {keyboard > 0 && <FakeKeyboard height={keyboard} />}
+          </>,
+          body,
+        )}
+    </div>
+  );
+}
+
+/** An invented on-screen keyboard. It takes room and types nothing. */
+function FakeKeyboard({ height }: { height: number }) {
+  const rows = ['qwertyuiopå', 'asdfghjklöä', 'zxcvbnm'];
+  return (
+    // A press on the keyboard must not take the focus from the message field.
+    <div
+      className="mp-keyboard"
+      style={{ height }}
+      aria-hidden="true"
+      onMouseDown={(event) => event.preventDefault()}
+    >
+      <small>Påhittat skärmtangentbord · {height} px</small>
+      {rows.map((row) => (
+        <div key={row}>
+          {[...row].map((key) => (
+            <i key={key}>{key}</i>
+          ))}
+        </div>
+      ))}
+      <div>
+        <i className="wide">mellanslag</i>
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={(event) =>
+            (event.currentTarget.ownerDocument.activeElement as HTMLElement | null)?.blur()
+          }
+        >
+          Dölj tangentbordet
+        </button>
+      </div>
     </div>
   );
 }
@@ -1457,10 +1617,20 @@ const startFailures: NoticeId[] = [
   'admin',
 ];
 
+/** A visible height under this limit is a short window: the keyboard is up, or the phone lies. */
+const shortLimit = 520;
+
+const keyboardModes = {
+  auto: 'Kommer upp när meddelandefältet har fokus',
+  uppe: 'Alltid uppe',
+  nere: 'Aldrig',
+} as const;
+
 export function VoiceModePrototype() {
   const [params, setParams] = useSearchParams();
-  const { variant, parts } = readParts(params);
-  const mobile = params.get('mobile') === '1';
+  const { variant, mobile } = readParts(params);
+  // The design of the voice mode is decided. Only the mobile parts are under review here.
+  const parts = chosen;
   const dark = params.get('theme') === 'dark';
   const layout: DraftLayout = params.get('draft') === 'list' ? 'list' : 'table';
   const anchored = params.get('consent') !== 'center';
@@ -1470,29 +1640,93 @@ export function VoiceModePrototype() {
   const [aloud, setAloud] = useState(false);
   const [holdMs, setHoldMs] = useState(450);
   const [lastKey, setLastKey] = useState('ingen');
+  // A real touch device shows the page without the frame, in the visible part of the screen.
+  const [realTouch] = useState(
+    () => window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 900,
+  );
+  const askedScreen = params.get('skarm');
+  const screen: ScreenKey | null =
+    askedScreen === 'av'
+      ? null
+      : askedScreen && askedScreen in screens
+        ? (askedScreen as ScreenKey)
+        : realTouch
+          ? null
+          : 'telefon';
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const bare = !screen && realTouch;
   // A touch layout has no Escape key: a narrow screen, a coarse pointer, or the prototype switch.
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const [coarse, setCoarse] = useState(false);
+  const [narrow, setNarrow] = useState(false);
   const [calm, setCalm] = useState(false);
+  const [height, setHeight] = useState(0);
   useLayoutEffect(() => {
     const view = root?.ownerDocument.defaultView;
-    if (!view) return;
+    if (!root || !view) return;
     const pointer = view.matchMedia('(max-width: 700px), (pointer: coarse)');
+    const width = view.matchMedia('(max-width: 700px)');
     const motion = view.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => {
       setCoarse(pointer.matches);
+      setNarrow(width.matches);
       setCalm(motion.matches);
     };
     update();
     pointer.addEventListener('change', update);
+    width.addEventListener('change', update);
     motion.addEventListener('change', update);
+    // The visible height: the screen without the on-screen keyboard.
+    const size = new view.ResizeObserver(() => setHeight(root.clientHeight));
+    size.observe(root);
+    setHeight(root.clientHeight);
     return () => {
       pointer.removeEventListener('change', update);
+      width.removeEventListener('change', update);
       motion.removeEventListener('change', update);
+      size.disconnect();
     };
   }, [root]);
-  const touch = coarse || params.get('touch') === '1';
+  // Without the frame the page follows the visible part of the screen, which a real on-screen
+  // keyboard makes smaller.
+  const [visible, setVisible] = useState<{ top: number; height: number } | null>(null);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (screen || !viewport) {
+      setVisible(null);
+      return;
+    }
+    const measure = () => setVisible({ top: viewport.offsetTop, height: viewport.height });
+    measure();
+    viewport.addEventListener('resize', measure);
+    viewport.addEventListener('scroll', measure);
+    return () => {
+      viewport.removeEventListener('resize', measure);
+      viewport.removeEventListener('scroll', measure);
+    };
+  }, [screen]);
+  // The frame is a mobile device, whatever pointer the computer has.
+  const touch = Boolean(screen) || coarse || params.get('touch') === '1';
   const reduced = calm || params.get('rorelse') === 'minskad';
+  const wide = params.get('bred') === 'sidofalt' ? 'sidofalt' : 'fyller';
+  const short = touch && height > 0 && height < shortLimit;
+  // The user writes: the message field has the focus. A press on Skicka must not end that.
+  const [typing, setTypingNow] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const setTyping = useCallback((value: boolean) => {
+    clearTimeout(typingTimer.current);
+    if (value) setTypingNow(true);
+    else typingTimer.current = setTimeout(() => setTypingNow(false), 200);
+  }, []);
+  const askedKeyboard = params.get('tangentbord');
+  const keyboardMode =
+    askedKeyboard && askedKeyboard in keyboardModes
+      ? (askedKeyboard as keyof typeof keyboardModes)
+      : 'auto';
+  const keyboard =
+    screen && (keyboardMode === 'uppe' || (keyboardMode === 'auto' && typing))
+      ? screens[screen].keyboard
+      : 0;
   // The starting values of the decision: Ctrl+Shift+Space on macOS, Ctrl+Space elsewhere.
   const asked = params.get('tangent');
   const comboKey: ComboKey =
@@ -1504,6 +1738,9 @@ export function VoiceModePrototype() {
   const c = useConversation(draftOpenAtStart, { realMic, aloud, holdMs });
   const latest = useRef(c);
   latest.current = c;
+  useEffect(() => {
+    if (!c.textOpen) setTyping(false);
+  }, [c.textOpen, setTyping]);
   // The key combination follows the rule of the button: a short press toggles, a long press
   // listens until the keys are released.
   useEffect(() => {
@@ -1590,20 +1827,37 @@ export function VoiceModePrototype() {
       {label}
     </label>
   );
+  const view: MobileView = {
+    mobile,
+    narrow,
+    height,
+    short,
+    typing,
+    setTyping,
+    focusAtOpen: !touch || params.get('fokus') === '1',
+  };
   const app = (
     <div
       ref={setRoot}
-      className={`household-map workspace-shell tp-root tp-variant-c${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}${reduced ? ' vp-reduced' : ''}`}
+      className={`household-map workspace-shell tp-root tp-variant-c mp-fit mp-plats-${mobile.plats} mp-kort-${mobile.kort} mp-bred-${wide}${touch ? ' mp-touch' : ''}${short ? ' mp-short' : ''}${typing ? ' mp-typing' : ''}${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}${reduced ? ' vp-reduced' : ''}`}
       data-theme={dark ? 'dark' : 'light'}
       style={
         {
           '--tp-text-width': `${widths.text}px`,
           '--tp-draft-width': `${widths.draft}px`,
+          top: visible?.top ?? 0,
+          height: screen ? `calc(100% - ${keyboard}px)` : (visible?.height ?? '100%'),
         } as CSSProperties
       }
     >
       <FakeMap c={c} />
-      <ToolRail c={c} parts={parts} combo={combos[comboKey].label} />
+      <ToolRail
+        c={c}
+        parts={parts}
+        combo={combos[comboKey].label}
+        reduced={reduced}
+        boxElsewhere={narrow && mobile.plats === 'nere' && c.textOpen}
+      />
       <div className="workspace-context">
         Familjen Berg<span>Gemensam karta</span>
       </div>
@@ -1614,199 +1868,249 @@ export function VoiceModePrototype() {
         widths={{ ...widths, set: setWidths }}
         parts={parts}
         reduced={reduced}
+        view={view}
       />
       <ConsentDialog c={c} anchored={anchored} />
     </div>
   );
+  const select = <T extends string>(
+    label: string,
+    value: T,
+    choices: Record<T, string>,
+    onChange: (value: T) => void,
+  ) => (
+    <label>
+      {label}
+      <select value={value} onChange={(event) => onChange(event.target.value as T)}>
+        {(Object.entries(choices) as [T, string][]).map(([key, text]) => (
+          <option key={key} value={key}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  const screenChoices = {
+    ...Object.fromEntries(Object.entries(screens).map(([key, each]) => [key, each.label])),
+    av: 'Ingen ram (hela fönstret)',
+  } as Record<ScreenKey | 'av', string>;
   return (
     <>
-      {mobile ? <PhoneFrame>{app}</PhoneFrame> : app}
-      <PrototypeSwitcher current={variant} onChange={setVariant} />
-      <aside className={`tp-dock${mobile ? ' aside' : ''}`} aria-label="Prototypens reglage">
-        <strong>Prototyp: röstläget · variant {variant}</strong>
-        <details>
-          <summary>Prototyplägen</summary>
-          <dl>
-            <dt>Samtal</dt>
-            <dd>{c.ongoing ? 'pågår' : 'pågår inte'}</dd>
-            <dt>Medgivande</dt>
-            <dd>{c.consentSaved ? 'sparat' : c.started ? 'givet för samtalet' : 'saknas'}</dd>
-            <dt>Mikrofon</dt>
-            <dd>
-              {c.mic === 'on' ? 'på' : c.mic === 'starting' ? 'startar' : 'av'}
-              {c.held && ', hålls inne'}
-            </dd>
-            <dt>Skyttel</dt>
-            <dd>
-              {c.working
-                ? `arbetar (${c.working === 'voice' ? 'talat' : 'skrivet'} uppdrag)`
-                : c.speaking
-                  ? 'talar'
-                  : c.question
-                    ? 'har frågat och väntar'
-                    : 'väntar'}
-            </dd>
-            <dt>Röstrutan</dt>
-            <dd>{c.voiceVisible ? statusWords[c.status] : 'syns inte'}</dd>
-            <dt>Samtalsnotis</dt>
-            <dd>
-              {c.notice
-                ? `${notices[c.notice].label} (${notices[c.notice].kind === 'hinder' ? 'hinder' : 'händelse'}${c.fromTap ? ', efter tryck' : ''})`
-                : 'ingen'}
-            </dd>
-            <dt>Textvy</dt>
-            <dd>{c.textOpen ? 'öppen' : 'stängd'}</dd>
-            <dt>Markering</dt>
-            <dd>
-              {c.unread === 'asked'
-                ? 'Skyttel väntar på ditt svar'
-                : c.unread === 'answered'
-                  ? 'Skyttel har svarat'
+      {screen ? (
+        <PhoneFrame screen={screen} keyboard={keyboard}>
+          {app}
+        </PhoneFrame>
+      ) : (
+        app
+      )}
+      {bare && (
+        <button
+          type="button"
+          className="mp-controls-toggle"
+          aria-expanded={controlsOpen}
+          onClick={() => setControlsOpen(!controlsOpen)}
+        >
+          {controlsOpen ? 'Dölj reglagen' : `Prototyp ${variant}`}
+        </button>
+      )}
+      {(!bare || controlsOpen) && <PrototypeSwitcher current={variant} onChange={setVariant} />}
+      {(!bare || controlsOpen) && (
+        <aside
+          className={`tp-dock${screen || bare ? ' aside' : ''}${bare ? ' bare' : ''}`}
+          aria-label="Prototypens reglage"
+        >
+          <strong>Prototyp: mobil enhet · variant {variant}</strong>
+          <details>
+            <summary>Prototyplägen</summary>
+            <dl>
+              <dt>Samtal</dt>
+              <dd>{c.ongoing ? 'pågår' : 'pågår inte'}</dd>
+              <dt>Medgivande</dt>
+              <dd>{c.consentSaved ? 'sparat' : c.started ? 'givet för samtalet' : 'saknas'}</dd>
+              <dt>Mikrofon</dt>
+              <dd>
+                {c.mic === 'on' ? 'på' : c.mic === 'starting' ? 'startar' : 'av'}
+                {c.held && ', hålls inne'}
+              </dd>
+              <dt>Skyttel</dt>
+              <dd>
+                {c.working
+                  ? `arbetar (${c.working === 'voice' ? 'talat' : 'skrivet'} uppdrag)`
+                  : c.speaking
+                    ? 'talar'
+                    : c.question
+                      ? 'har frågat och väntar'
+                      : 'väntar'}
+              </dd>
+              <dt>Röstrutan</dt>
+              <dd>{c.voiceVisible ? statusWords[c.status] : 'syns inte'}</dd>
+              <dt>Samtalsnotis</dt>
+              <dd>
+                {c.notice
+                  ? `${notices[c.notice].label} (${notices[c.notice].kind === 'hinder' ? 'hinder' : 'händelse'}${c.fromTap ? ', efter tryck' : ''})`
                   : 'ingen'}
-            </dd>
-            <dt>Utkast</dt>
-            <dd>{count(c.draft)}</dd>
-            <dt>Väntar</dt>
-            <dd>{c.waiting === 1 ? '1 meddelande' : `${c.waiting} meddelanden`}</dd>
-            <dt>Tangenter</dt>
-            <dd>{lastKey}</dd>
-          </dl>
-          <div className="tp-dock-actions">
-            <button
-              type="button"
-              disabled={c.blocked || c.busy || c.talking}
-              onClick={c.speak}
-              title="Slår på mikrofonen om den är av"
-            >
-              Säg nästa replik
-            </button>
-            <button
-              type="button"
-              disabled={!c.nextLine}
-              onClick={() => c.setUnsent(c.nextLine ?? '')}
-            >
-              Fyll i nästa replik som text
-            </button>
-            <button type="button" disabled={c.mic === 'off'} onClick={c.dropVoice}>
-              Rösten bryts
-            </button>
-            <button type="button" onClick={c.forgetConsent}>
-              Glöm medgivandet
-            </button>
-            <button type="button" onClick={c.reset}>
-              Börja om
-            </button>
-          </div>
-          {check('Riktig mikrofon styr vågformen', realMic, setRealMic)}
-          {check('Läs upp Skyttels svar med webbläsarens röst', aloud, setAloud)}
-          <label>
-            Nästa start av rösten
-            <select
-              value={c.nextStart}
-              onChange={(event) => c.setNextStart(event.target.value as 'ok' | NoticeId)}
-            >
-              <option value="ok">Lyckas</option>
-              {startFailures.map((id) => (
-                <option key={id} value={id}>
-                  {notices[id].label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {check('Webbläsaren stoppar ljudet vid nästa start', c.audioWillStop, c.setAudioWillStop)}
-          {check('Nästa uppdrag misslyckas', c.taskWillFail, c.setTaskWillFail)}
-          {check('Bruten kontakt', !c.online, (on) => c.setOnline(!on))}
-          {check('Samtalet är inte tillgängligt', !c.available, (on) => c.setAvailable(!on))}
-          <label>
-            Oklart sparande
-            <select
-              value={c.unclear}
-              onChange={(event) => c.setUnclear(event.target.value as Unclear)}
-            >
-              <option value="no">Nej</option>
-              <option value="checking">Skyttel kontrollerar själv</option>
-              <option value="failed">Egen kontroll misslyckades</option>
-            </select>
-          </label>
-          {check('Sammanfatta automatiskt vid full kontext', c.autoCompact, c.setAutoCompact)}
-          <label>
-            Kontext
-            <select
-              value={c.memoryForced ?? ''}
-              onChange={(event) =>
-                c.setMemoryForced(event.target.value ? Number(event.target.value) : null)
-              }
-            >
-              <option value="">Följer samtalet</option>
-              <option value="70">70 %</option>
-              <option value="90">90 %</option>
-              <option value="100">100 % (fullt)</option>
-            </select>
-          </label>
-          <label>
-            Gräns för långt tryck
-            <select value={holdMs} onChange={(event) => setHoldMs(Number(event.target.value))}>
-              <option value="300">0,3 sekunder</option>
-              <option value="450">0,45 sekunder</option>
-              <option value="600">0,6 sekunder</option>
-            </select>
-          </label>
-          <label>
-            Tangentkombination
-            <select value={comboKey} onChange={(event) => set('tangent', event.target.value)}>
-              {Object.entries(combos).map(([key, combo]) => (
-                <option key={key} value={key}>
-                  {combo.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </details>
-        <details>
-          <summary>Blanda delar från varianterna</summary>
-          {(Object.keys(options) as Axis[]).map((axis) => (
-            <label key={axis}>
-              {axisNames[axis]}
-              <select
-                value={parts[axis]}
-                onChange={(event) =>
-                  set(
-                    axis,
-                    event.target.value === variants[variant][axis] ? null : event.target.value,
-                  )
-                }
+              </dd>
+              <dt>Textvy</dt>
+              <dd>{c.textOpen ? 'öppen' : 'stängd'}</dd>
+              <dt>Synlig höjd</dt>
+              <dd>
+                {height} px{short ? ', kort fönster' : ''}
+              </dd>
+              <dt>Skriver</dt>
+              <dd>{typing ? 'ja, fältet har fokus' : 'nej'}</dd>
+              <dt>Markering</dt>
+              <dd>
+                {c.unread === 'asked'
+                  ? 'Skyttel väntar på ditt svar'
+                  : c.unread === 'answered'
+                    ? 'Skyttel har svarat'
+                    : 'ingen'}
+              </dd>
+              <dt>Utkast</dt>
+              <dd>{count(c.draft)}</dd>
+              <dt>Tangenter</dt>
+              <dd>{lastKey}</dd>
+            </dl>
+            <div className="tp-dock-actions">
+              <button
+                type="button"
+                disabled={c.blocked || c.busy || c.talking}
+                onClick={c.speak}
+                title="Slår på mikrofonen om den är av"
               >
-                {Object.entries(options[axis]).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
+                Säg nästa replik
+              </button>
+              <button
+                type="button"
+                disabled={!c.nextLine}
+                onClick={() => c.setUnsent(c.nextLine ?? '')}
+              >
+                Fyll i nästa replik som text
+              </button>
+              <button type="button" disabled={c.mic === 'off'} onClick={c.dropVoice}>
+                Rösten bryts
+              </button>
+              <button type="button" onClick={c.forgetConsent}>
+                Glöm medgivandet
+              </button>
+              <button type="button" onClick={c.reset}>
+                Börja om
+              </button>
+            </div>
+            {check('Riktig mikrofon styr vågformen', realMic, setRealMic)}
+            {check('Läs upp Skyttels svar med webbläsarens röst', aloud, setAloud)}
+            <label>
+              Nästa start av rösten
+              <select
+                value={c.nextStart}
+                onChange={(event) => c.setNextStart(event.target.value as 'ok' | NoticeId)}
+              >
+                <option value="ok">Lyckas</option>
+                {startFailures.map((id) => (
+                  <option key={id} value={id}>
+                    {notices[id].label}
                   </option>
                 ))}
               </select>
             </label>
-          ))}
-        </details>
-        <details>
-          <summary>Skärm och textvy</summary>
-          {check('Minskad rörelse', params.get('rorelse') === 'minskad', (on) =>
-            set('rorelse', on ? 'minskad' : null),
-          )}
-          {check('Mörkt tema', dark, (on) => set('theme', on ? 'dark' : null))}
-          {check('Visa som mobil (390 × 780)', mobile, (on) => set('mobile', on ? '1' : null))}
-          {check('Pekskärm utan Escape (som iPad)', params.get('touch') === '1', (on) =>
-            set('touch', on ? '1' : null),
-          )}
-          {check('Utkastlistan som lista', layout === 'list', (on) =>
-            set('draft', on ? 'list' : null),
-          )}
-          {check('Inställning: utkastlistan utfälld vid nytt samtal', draftOpenAtStart, (on) => {
-            setDraftOpenAtStart(on);
-            c.setDraftOpen(on);
-          })}
-          {check('Medgivanderutan mitt på skärmen', !anchored, (on) =>
-            set('consent', on ? 'center' : null),
-          )}
-        </details>
-      </aside>
+            {check(
+              'Webbläsaren stoppar ljudet vid nästa start',
+              c.audioWillStop,
+              c.setAudioWillStop,
+            )}
+            {check('Nästa uppdrag misslyckas', c.taskWillFail, c.setTaskWillFail)}
+            {check('Bruten kontakt', !c.online, (on) => c.setOnline(!on))}
+            {check('Samtalet är inte tillgängligt', !c.available, (on) => c.setAvailable(!on))}
+            <label>
+              Oklart sparande
+              <select
+                value={c.unclear}
+                onChange={(event) => c.setUnclear(event.target.value as Unclear)}
+              >
+                <option value="no">Nej</option>
+                <option value="checking">Skyttel kontrollerar själv</option>
+                <option value="failed">Egen kontroll misslyckades</option>
+              </select>
+            </label>
+            {check('Sammanfatta automatiskt vid full kontext', c.autoCompact, c.setAutoCompact)}
+            <label>
+              Kontext
+              <select
+                value={c.memoryForced ?? ''}
+                onChange={(event) =>
+                  c.setMemoryForced(event.target.value ? Number(event.target.value) : null)
+                }
+              >
+                <option value="">Följer samtalet</option>
+                <option value="70">70 %</option>
+                <option value="90">90 %</option>
+                <option value="100">100 % (fullt)</option>
+              </select>
+            </label>
+            <label>
+              Gräns för långt tryck
+              <select value={holdMs} onChange={(event) => setHoldMs(Number(event.target.value))}>
+                <option value="300">0,3 sekunder</option>
+                <option value="450">0,45 sekunder</option>
+                <option value="600">0,6 sekunder</option>
+              </select>
+            </label>
+          </details>
+          <details open>
+            <summary>Skärm och tangentbord</summary>
+            {select('Skärm', screen ?? 'av', screenChoices, (value) => set('skarm', value))}
+            {select('Skärmtangentbord', keyboardMode, keyboardModes, (value) =>
+              set('tangentbord', value === 'auto' ? null : value),
+            )}
+            {check(
+              'Meddelandefältet får fokus när textvyn öppnas',
+              params.get('fokus') === '1',
+              (on) => set('fokus', on ? '1' : null),
+            )}
+            {select(
+              'Textvyn på bred pekskärm',
+              wide,
+              { fyller: 'Fyller skärmen', sidofalt: 'Sidofält med fast bredd' },
+              (value) => set('bred', value === 'fyller' ? null : value),
+            )}
+            {check('Minskad rörelse', params.get('rorelse') === 'minskad', (on) =>
+              set('rorelse', on ? 'minskad' : null),
+            )}
+            {check('Mörkt tema', dark, (on) => set('theme', on ? 'dark' : null))}
+            {!screen &&
+              check('Pekskärm utan Escape (som iPad)', params.get('touch') === '1', (on) =>
+                set('touch', on ? '1' : null),
+              )}
+            {check('Inställning: utkastlistan utfälld vid nytt samtal', draftOpenAtStart, (on) => {
+              setDraftOpenAtStart(on);
+              c.setDraftOpen(on);
+            })}
+          </details>
+          <details>
+            <summary>Blanda delar från varianterna</summary>
+            {(Object.keys(options) as Axis[]).map((axis) => (
+              <label key={axis}>
+                {axisNames[axis]}
+                <select
+                  value={mobile[axis]}
+                  onChange={(event) =>
+                    set(
+                      axis,
+                      event.target.value === variants[variant][axis] ? null : event.target.value,
+                    )
+                  }
+                >
+                  {Object.entries(options[axis]).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </details>
+        </aside>
+      )}
     </>
   );
 }

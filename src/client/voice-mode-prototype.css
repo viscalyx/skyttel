@@ -1,6 +1,7 @@
 /*
- * PROTOTYPE - throwaway styles for VoiceModePrototype.tsx (viscalyx/skyttel#179). The tp- classes
- * come from the text mode study (viscalyx/skyttel#180); the vp- classes belong to the voice mode.
+ * PROTOTYPE - throwaway styles for VoiceModePrototype.tsx (viscalyx/skyttel#191). The tp- classes
+ * come from the text mode study (viscalyx/skyttel#180), the vp- classes from the voice mode study
+ * (viscalyx/skyttel#179), and the mp- classes belong to the mobile study.
  */
 
 .tp-sr {
@@ -813,62 +814,375 @@
   margin-top: 12px;
 }
 
+/*
+ * The mobile study. The page fills the visible part of the screen, so that an on-screen keyboard
+ * makes it shorter. Every fixed part inside it then follows the visible part too.
+ */
+.household-map.workspace-shell.tp-root.mp-fit {
+  bottom: auto;
+  transform: translateZ(0);
+}
+.mp-fit .workspace-tools {
+  max-height: calc(100% - 48px);
+}
+.vp-reduced .tp-map {
+  transition: none;
+}
+/* The row that the real map has along its bottom edge. */
+.mp-map-bar {
+  position: absolute;
+  left: 112px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-sizing: border-box;
+  height: 52px;
+  padding: 4px 12px;
+  border: 1px solid var(--space-line);
+  border-radius: 12px;
+  background: var(--space-surface);
+  color: var(--space-muted);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/*
+ * The voice box and the notice are a part of the tool rail in the code, for the reading order.
+ * The rules of the rail for its own tools must not reach the buttons inside them.
+ */
+.household-map.workspace-shell .workspace-tools .vp-corner button {
+  position: relative;
+  width: auto;
+  min-width: 0;
+  text-align: center;
+}
+.household-map.workspace-shell .workspace-tools .vp-corner .tp-stop {
+  width: 26px;
+  border-color: var(--space-control);
+  border-radius: 50%;
+}
+.household-map.workspace-shell .workspace-tools .vp-corner .vp-notice-action {
+  border-color: var(--space-accent);
+}
+.household-map.workspace-shell .workspace-tools .vp-corner .vp-notice-close {
+  width: 28px;
+  border-radius: 50%;
+}
+/* On a touch layout the small icons keep their look and get a larger area to press. */
+.mp-touch :is(.tp-stop, .vp-notice-close) {
+  position: relative;
+}
+.mp-touch :is(.tp-stop, .vp-notice-close)::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+}
+
+/* A touch layout: the text view is one column, and its width cannot be changed. */
+.mp-touch .tp-columns {
+  flex-direction: column;
+}
+.mp-touch .tp-conversation {
+  display: contents;
+}
+.tp-root.mp-touch .tp-draft-pane {
+  order: 1;
+  flex: 0 1 auto;
+  max-height: 34%;
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: var(--space-line);
+}
+.mp-touch .tp-draft-pane h3 {
+  display: none;
+}
+.mp-touch .tp-columns :is(.tp-log, .vp-notice, .tp-note, .mp-voice-row, .tp-composer) {
+  order: 2;
+}
+/* The voice box above the message field, for the variant that keeps it at the bottom edge. */
+.mp-voice-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 12px;
+}
+.mp-voice-row:empty {
+  display: none;
+}
+
+/* A wide touch screen, such as an iPad: the rail stands to the left as on a computer. */
+@media (min-width: 701px) {
+  .mp-touch.mp-bred-fyller .tp-side {
+    left: 100px;
+    max-width: none;
+  }
+  .mp-touch.mp-bred-sidofalt .tp-side {
+    width: 400px;
+  }
+  .tp-root.mp-touch.mp-bred-fyller.tp-text-open .tp-map {
+    right: 0;
+  }
+  .tp-root.mp-touch.mp-bred-sidofalt.tp-text-open .tp-map {
+    right: 410px;
+  }
+  .mp-touch.mp-short .workspace-tools {
+    top: 12px;
+    max-height: calc(100% - 24px);
+  }
+  .mp-touch.mp-short .vp-corner {
+    top: 12px;
+    right: 12px;
+  }
+  .mp-touch.mp-short .tp-side {
+    top: 56px;
+  }
+}
+
+/* A narrow screen: the rail lies along the top. */
 @media (max-width: 700px) {
   .tp-node {
     width: 96px;
     font-size: 10.5px;
   }
-  /* The mobile layout is not decided: every notice is a card below the voice box here. */
-  .vp-corner,
-  .vp-corner.notis-rad {
-    top: 68px;
-    right: 12px;
+  .mp-map-bar {
     left: 12px;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
   }
-  .vp-notice:is(.kort, .fast, .rad) {
+  .vp-notice.kort {
     width: 100%;
     max-width: none;
-  }
-  .tp-columns {
-    flex-direction: column;
-  }
-  .tp-conversation {
-    display: contents;
-  }
-  .tp-root .tp-draft-pane {
-    order: 1;
-    flex: 0 1 auto;
-    max-height: 34dvh;
-    border-width: 0 0 1px;
-    border-style: solid;
-    border-color: var(--space-line);
-  }
-  .tp-draft-pane h3 {
-    display: none;
-  }
-  .tp-columns :is(.tp-log, .vp-notice, .tp-note, .tp-composer) {
-    order: 2;
-  }
-  .tp-resizer {
-    display: none;
   }
   .tp-composer {
     padding-bottom: 20px;
   }
   .tp-side {
-    top: 112px;
     left: 0;
     max-width: none;
     border-width: 1px 0 0;
     border-radius: 16px 16px 0 0;
   }
-  .tp-variant-c.tp-text-open .tp-map,
-  .tp-variant-c.tp-text-open.tp-draft-open .tp-map {
+  .tp-root.tp-text-open .tp-map {
     right: 0;
   }
+
+  /* Under: the voice box below the rail, to the right, and the notice as a card below the box. */
+  .mp-plats-under .vp-corner {
+    top: 68px;
+    right: 12px;
+    left: 12px;
+    gap: 8px;
+  }
+  .mp-plats-under .tp-side {
+    top: 112px;
+  }
+
+  /* Rad: the voice box inside the rail, and the notice as a band that hangs from the rail. */
+  .mp-plats-rad .workspace-tools:not(.expanded) {
+    right: 12px;
+  }
+  .mp-plats-rad .vp-corner {
+    position: static;
+    flex: 1 1 0;
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+  }
+  .mp-plats-rad .workspace-tools.expanded .vp-corner {
+    flex-basis: 100%;
+  }
+  .mp-plats-rad .workspace-tools .tp-voicebox {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    gap: 8px;
+    padding: 0 0 0 8px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 12.5px;
+    line-height: 1.15;
+    white-space: normal;
+  }
+  .mp-plats-rad .workspace-tools .tp-voicebox .tp-stop {
+    margin-left: auto;
+  }
+  /* The number does not fit in the rail. The ring shows the share, and the name says the number. */
+  .mp-plats-rad .workspace-tools .mp-percent {
+    display: none;
+  }
+  .mp-plats-rad .workspace-tools:not(.expanded):has(.vp-notice) {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  .mp-plats-rad .workspace-tools .vp-notice.kort {
+    position: fixed;
+    top: 67px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    border-radius: 0 0 14px 14px;
+  }
+  .mp-plats-rad .tp-side {
+    top: 76px;
+  }
+
+  /* Nere: the voice box at the bottom edge, above the row of the map, and the notice above it. */
+  .mp-plats-nere .vp-corner {
+    top: auto;
+    right: 12px;
+    bottom: 76px;
+    left: 12px;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .mp-plats-nere .tp-side {
+    top: 76px;
+  }
+}
+
+/* A short window: the on-screen keyboard is up, or the phone lies on its side. */
+/* The hidden names in the rows must scroll with the conversation text and not with the view. */
+.tp-log {
+  position: relative;
+}
+.mp-touch.mp-short .tp-log {
+  min-height: 0;
+}
+.mp-touch.mp-short .tp-composer {
+  flex: none;
+  padding: 6px 10px 8px;
+}
+.mp-touch.mp-short .tp-composer textarea {
+  min-height: 44px;
+  padding: 9px 10px;
+}
+/* Rullar: every part stays, and the whole text view scrolls above the message field. */
+.mp-touch.mp-short.mp-kort-rullar .tp-side {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.mp-touch.mp-short.mp-kort-rullar .tp-conversation > * {
+  flex-shrink: 0;
+}
+.mp-touch.mp-short.mp-kort-rullar .tp-log {
+  flex: 1 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+.mp-touch.mp-short.mp-kort-rullar .tp-composer {
+  position: sticky;
+  bottom: 0;
+  background: var(--space-surface);
+}
+/* Kompakt: the heading row and the draft button are one row, and the field has no visible label. */
+.tp-head.mp-compact {
+  gap: 6px;
+  padding: 2px 4px 2px 12px;
+}
+.tp-head.mp-compact .tp-meter {
+  flex: 1;
+  min-width: 0;
+}
+.tp-head.mp-compact .tp-meter meter {
+  width: 48px;
+}
+.tp-root .mp-draft-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--space-control);
+  border-radius: 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.tp-root .mp-draft-chip[aria-expanded="true"] {
+  border-color: var(--space-accent);
+  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 88%);
+}
+.mp-draft-chip svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.mp-draft-chip .tp-draft-count {
+  margin-left: 0;
+  font-weight: 700;
+}
+:is(.mp-kort-kompakt, .mp-kort-fokus.mp-typing).mp-touch.mp-short #tp-meter-label,
+:is(.mp-kort-kompakt, .mp-kort-fokus.mp-typing).mp-touch.mp-short .tp-composer label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Fokus: while the user writes, only the conversation text and the message field stay. */
+.mp-touch.mp-short.mp-typing.mp-kort-fokus :is(.tp-head, .tp-draft-toggle, .tp-draft-pane) {
+  display: none;
+}
+
+/* The invented on-screen keyboard is a part of the device and not of the design. */
+.mp-keyboard {
+  position: fixed;
+  z-index: 2000;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 4px 8px;
+  background: #ced2d9;
+  color: #15171c;
+  font:
+    14px / 1 system-ui,
+    sans-serif;
+  user-select: none;
+}
+.mp-keyboard small {
+  color: #4b4f59;
+  font-size: 11px;
+  text-align: center;
+}
+.mp-keyboard > div {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  gap: 5px;
+  min-height: 0;
+  max-height: 46px;
+}
+.mp-keyboard i {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  max-width: 64px;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 1px 0 #898d96;
+  font-style: normal;
+}
+.mp-keyboard i.wide {
+  flex: 3;
+  max-width: none;
+}
+.mp-keyboard button {
+  flex: 2;
+  min-height: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: #aab0bb;
+  color: inherit;
+  box-shadow: 0 1px 0 #898d96;
+  font: inherit;
 }
 
 /* Prototype controls: deliberately unlike the app so that nobody judges them as design. */
@@ -998,14 +1312,48 @@
 .tp-stage {
   position: fixed;
   inset: 0;
+  box-sizing: border-box;
   display: grid;
   place-items: center;
+  padding: 12px 12px 60px 372px;
   background: #26262e;
 }
-.tp-phone {
-  width: 390px;
-  height: min(780px, calc(100dvh - 32px));
+.mp-device {
+  flex: none;
+  box-sizing: content-box;
   border: 8px solid #0b0b10;
-  border-radius: 36px;
+  border-radius: 28px;
+  overflow: hidden;
   background: #fff;
+}
+.tp-phone {
+  display: block;
+  border: 0;
+  background: #fff;
+  transform-origin: 0 0;
+}
+/* On a real touch device the prototype controls stay away until the user asks for them. */
+.mp-controls-toggle {
+  position: fixed;
+  z-index: 1001;
+  top: 42%;
+  right: 0;
+  min-height: 0;
+  padding: 10px 3px;
+  border: 2px dashed #ffcf33;
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: #1b1035;
+  color: #fff;
+  font:
+    11px / 1.2 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  letter-spacing: 0;
+  writing-mode: vertical-rl;
+}
+.tp-dock.bare {
+  bottom: 64px;
+  max-height: calc(100dvh - 84px);
 }

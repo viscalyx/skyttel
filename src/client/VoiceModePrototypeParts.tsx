@@ -1,92 +1,86 @@
 /*
  * PROTOTYPE - throwaway code, not production code. No tests, no server, no persistence.
  *
- * Parts for VoiceModePrototype.tsx (viscalyx/skyttel#179): the variants, the waveforms, the
+ * Parts for VoiceModePrototype.tsx (viscalyx/skyttel#191): the mobile variants, the waveforms, the
  * microphone level, the conversation notices and the variant switcher.
  */
 import { useEffect, useRef } from 'react';
 
-/** The parts that the variants disagree about. Each one can also be set alone in the URL. */
+/** The parts of the voice mode. The decision of viscalyx/skyttel#179 chose one value for each. */
+export type Parts = {
+  vag: 'staplar' | 'linje' | 'puls';
+  notis: 'kort' | 'fast' | 'rad';
+  symbol: 'situation' | 'slag';
+  markering: 'prick' | 'tecken' | 'ram';
+  stang: 'knapp' | 'utanfor' | 'tid';
+  knapp: 'stopp' | 'mikrofon';
+};
+export const chosen: Parts = {
+  vag: 'staplar',
+  notis: 'kort',
+  symbol: 'situation',
+  markering: 'tecken',
+  stang: 'knapp',
+  knapp: 'mikrofon',
+};
+
+/** The parts that the mobile variants disagree about. Each one can also be set alone in the URL. */
 export const options = {
-  vag: { staplar: 'Staplar', linje: 'Linje', puls: 'Puls' },
-  notis: {
-    kort: 'Kort under röstrutan',
-    fast: 'Sitter ihop med röstrutan',
-    rad: 'Rad bredvid röstrutan',
+  plats: {
+    under: 'Under verktygsraden',
+    rad: 'I verktygsraden',
+    nere: 'Vid nederkanten',
   },
-  symbol: { situation: 'En symbol per situation', slag: 'En symbol per slag' },
-  markering: { prick: 'Prick', tecken: 'Tecken', ram: 'Ram runt knappen' },
-  stang: {
-    knapp: 'Stängknapp',
-    utanfor: 'Tryck utanför eller Escape',
-    tid: 'Av sig själv efter 6 sekunder',
+  kort: {
+    rullar: 'Allt står kvar och rullar',
+    kompakt: 'Rubrik och utkastknapp på en rad',
+    fokus: 'Bara samtalstext och fält medan man skriver',
   },
-  knapp: { stopp: 'Stoppsymbol när mikrofonen är på', mikrofon: 'Mikrofon i båda lägena' },
 } as const;
 export type Axis = keyof typeof options;
-export type Parts = { [K in Axis]: keyof (typeof options)[K] };
+export type MobileParts = { [K in Axis]: keyof (typeof options)[K] };
 export const axisNames: Record<Axis, string> = {
-  vag: 'Vågform',
-  notis: 'Samtalsnotisens plats',
-  symbol: 'Samtalsnotisens symbol',
-  markering: 'Markering på Skriv till Skyttel',
-  stang: 'Notis efter tryck utan samtal stängs med',
-  knapp: 'Röstknappens symbol',
+  plats: 'Röstrutans och notisens plats på smal skärm',
+  kort: 'Textvyn i ett kort fönster',
 };
 
 export const variants = {
-  // The design that the decision of viscalyx/skyttel#179 chose, with parts from A and B.
-  V: {
-    name: 'Vald utformning',
-    vag: 'staplar',
-    notis: 'kort',
-    symbol: 'situation',
-    markering: 'tecken',
-    stang: 'knapp',
-    knapp: 'mikrofon',
-  },
-  A: {
-    name: 'Staplar och kort',
-    vag: 'staplar',
-    notis: 'kort',
-    symbol: 'situation',
-    markering: 'prick',
-    stang: 'knapp',
-    knapp: 'stopp',
-  },
-  B: {
-    name: 'Linje och hopsatt notis',
-    vag: 'linje',
-    notis: 'fast',
-    symbol: 'slag',
-    markering: 'tecken',
-    stang: 'utanfor',
-    knapp: 'mikrofon',
-  },
-  C: {
-    name: 'Puls och rad',
-    vag: 'puls',
-    notis: 'rad',
-    symbol: 'situation',
-    markering: 'ram',
-    stang: 'tid',
-    knapp: 'mikrofon',
-  },
-} as const satisfies Record<string, { name: string } & Parts>;
+  A: { name: 'Under verktygsraden', plats: 'under', kort: 'rullar' },
+  B: { name: 'I verktygsraden', plats: 'rad', kort: 'kompakt' },
+  C: { name: 'Vid nederkanten', plats: 'nere', kort: 'fokus' },
+} as const satisfies Record<string, { name: string } & MobileParts>;
 export type VariantKey = keyof typeof variants;
 export const variantKeys = Object.keys(variants) as VariantKey[];
 
 /** The variant gives every part its value; a part named in the URL replaces that value. */
-export function readParts(params: URLSearchParams): { variant: VariantKey; parts: Parts } {
-  const asked = params.get('variant')?.toUpperCase() ?? 'V';
-  const variant = variantKeys.includes(asked as VariantKey) ? (asked as VariantKey) : 'V';
-  const parts: Record<string, string> = { ...variants[variant] };
+export function readParts(params: URLSearchParams): { variant: VariantKey; mobile: MobileParts } {
+  const asked = params.get('variant')?.toUpperCase() ?? 'A';
+  const variant = variantKeys.includes(asked as VariantKey) ? (asked as VariantKey) : 'A';
+  const mobile: Record<string, string> = { ...variants[variant] };
   for (const axis of Object.keys(options) as Axis[]) {
     const value = params.get(axis);
-    if (value && value in options[axis]) parts[axis] = value;
+    if (value && value in options[axis]) mobile[axis] = value;
   }
-  return { variant, parts: parts as Parts };
+  return { variant, mobile: mobile as MobileParts };
 }
+
+/**
+ * The screens of the phone frame, in CSS pixels, with the height that an on-screen keyboard takes.
+ * The keyboard heights are rough values for an iPhone and an iPad, not measured ones.
+ */
+export const screens = {
+  telefon: { label: 'Telefon, stående (390 × 844)', width: 390, height: 844, keyboard: 336 },
+  liten: { label: 'Liten telefon, stående (375 × 667)', width: 375, height: 667, keyboard: 260 },
+  liggande: { label: 'Telefon, liggande (844 × 390)', width: 844, height: 390, keyboard: 200 },
+  ipad: { label: 'iPad, stående (820 × 1180)', width: 820, height: 1180, keyboard: 330 },
+  'ipad-liggande': {
+    label: 'iPad, liggande (1180 × 820)',
+    width: 1180,
+    height: 820,
+    keyboard: 400,
+  },
+} as const;
+export type ScreenKey = keyof typeof screens;
 
 /* The microphone level ------------------------------------------------------------------------- */
 
@@ -449,8 +443,8 @@ export function ConversationNotice({
         <button
           type="button"
           className="vp-notice-close"
-          aria-label="Stäng meddelandet"
-          title="Stäng meddelandet"
+          aria-label="Stäng notisen"
+          title="Stäng notisen"
           onClick={onClose}
         >
           <Icon name="close" />

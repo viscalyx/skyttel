@@ -5,11 +5,11 @@ import { App } from './App.js';
 import { BuildNotice } from './build-guard.js';
 import './styles.css';
 
-// PROTOTYPE: the voice mode study only loads in the development server, never in a build. It
-// contains the text view of the earlier text mode study, so the earlier address opens it too.
+// PROTOTYPE: the mobile study only loads in the development server, never in a build. It contains
+// the earlier text mode and voice mode studies, so the earlier addresses open it too.
 const prototype = new URLSearchParams(window.location.search).get('prototype');
 const Prototype =
-  import.meta.env.DEV && (prototype === 'rostlage' || prototype === 'textlage')
+  import.meta.env.DEV && ['mobil', 'rostlage', 'textlage'].includes(prototype ?? '')
     ? (await import('./VoiceModePrototype.js')).VoiceModePrototype
     : null;
 

@@ -18,6 +18,7 @@
   "scripts": {
     "prototype:textlage": "vite --host 0.0.0.0 --port 4177 --strictPort",
     "prototype:rostlage": "vite --host 0.0.0.0 --port 4178 --strictPort",
+    "prototype:mobil": "vite --host 0.0.0.0 --port 4179 --strictPort",
     "dev": "tsx watch src/server/index.ts",
     "dev:client": "vite --host 127.0.0.1",
     "dev:all": "node scripts/develop.mjs",
