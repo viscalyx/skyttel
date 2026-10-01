@@ -160,6 +160,11 @@ function useConversation(draftOpenAtStart: boolean) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const micTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const nextId = useRef(1);
+  // Messages wait in a queue while Skyttel handles an earlier one.
+  const queue = useRef<{ text: string; spoken: boolean }[]>([]);
+  const active = useRef(false);
+  const sentAt = useRef(0);
+  const [waiting, setWaiting] = useState(0);
   const live = useRef({ mic, step, draft });
   live.current = { mic, step, draft };
   useEffect(
@@ -203,17 +208,41 @@ function useConversation(draftOpenAtStart: boolean) {
     setWorking(null);
     if (mic === 'on') {
       setSpeaking(true);
-      timer.current = setTimeout(() => setSpeaking(false), 2600);
-    }
+      timer.current = setTimeout(() => {
+        setSpeaking(false);
+        next();
+      }, 2600);
+    } else next();
+  }
+  function begin(item: { text: string; spoken: boolean }) {
+    active.current = true;
+    setNote('');
+    setOrigin(item.spoken ? 'voice' : 'text');
+    setWorking(item.spoken ? 'voice' : 'text');
+    timer.current = setTimeout(() => respond(item.text), 2400);
+  }
+  function next() {
+    const item = queue.current.shift();
+    setWaiting(queue.current.length);
+    if (item) begin(item);
+    else active.current = false;
   }
   function ask(text: string, spoken: boolean) {
-    clearTimeout(timer.current);
-    setSpeaking(false);
-    setNote('');
     addRow('user', text, spoken);
-    setOrigin(spoken ? 'voice' : 'text');
-    setWorking(spoken ? 'voice' : 'text');
-    timer.current = setTimeout(() => respond(text), 2400);
+    if (active.current) {
+      queue.current.push({ text, spoken });
+      setWaiting(queue.current.length);
+    } else begin({ text, spoken });
+  }
+  /** Stops the work in progress and drops every message that waits. */
+  function halt() {
+    clearTimeout(timer.current);
+    queue.current = [];
+    active.current = false;
+    setWaiting(0);
+    setWorking(null);
+    setSpeaking(false);
+    setTalking(false);
   }
   function toggleMic() {
     clearTimeout(micTimer.current);
@@ -254,6 +283,7 @@ function useConversation(draftOpenAtStart: boolean) {
     draftOpen,
     blocked,
     busy,
+    waiting,
     micDisabled,
     nextLine: script[step]?.say,
     statusWord: working
@@ -290,12 +320,19 @@ function useConversation(draftOpenAtStart: boolean) {
       setAsking(null);
     },
     decline: () => setAsking(null),
-    send() {
+    /** On a touch layout there is one message at a time; elsewhere new messages wait in line. */
+    send(oneAtATime: boolean) {
       const text = unsent.trim();
-      // As in the application today, a new message replaces the work that is in progress.
-      if (!text || blocked) return;
+      if (!text || blocked || (oneAtATime && working)) return;
       setUnsent('');
+      sentAt.current = Date.now();
       ask(text, false);
+    },
+    stopFromSend() {
+      // A double tap on Skicka must not stop the message that the first tap sent.
+      if (Date.now() - sentAt.current < 500) return;
+      halt();
+      setNote('Avbrutet. Utkastet är oförändrat.');
     },
     speak() {
       const line = script[step]?.say ?? 'Finns det något mer att göra?';
@@ -311,17 +348,11 @@ function useConversation(draftOpenAtStart: boolean) {
       }, 1500);
     },
     cancel() {
-      clearTimeout(timer.current);
-      setWorking(null);
-      setSpeaking(false);
-      setTalking(false);
+      halt();
       setNote('Avbrutet. Utkastet är oförändrat.');
     },
     newConversation() {
-      clearTimeout(timer.current);
-      setWorking(null);
-      setSpeaking(false);
-      setTalking(false);
+      halt();
       setNote('');
       setDraftOpen(draftOpenAtStart);
       setRows([
@@ -356,7 +387,7 @@ function useConversation(draftOpenAtStart: boolean) {
       setStarted(false);
     },
     reset() {
-      clearTimeout(timer.current);
+      halt();
       clearTimeout(micTimer.current);
       setConsentSaved(false);
       setStarted(false);
@@ -516,7 +547,7 @@ function Notices({ c }: { c: Conversation }) {
   );
 }
 
-function Transcript({ c, stopInLog }: { c: Conversation; stopInLog: boolean }) {
+function Transcript({ c, touch }: { c: Conversation; touch: boolean }) {
   const log = useRef<HTMLOListElement>(null);
   const size = c.rows.length + (c.working ? 1 : 0);
   // biome-ignore lint/correctness/useExhaustiveDependencies: follow new rows
@@ -536,20 +567,10 @@ function Transcript({ c, stopInLog }: { c: Conversation; stopInLog: boolean }) {
       ))}
       {c.working && (
         <li className="tp-row working">
-          <span>Skyttel arbetar… Tryck på Escape för att avbryta.</span>
-          {stopInLog && (
-            <button
-              type="button"
-              className="tp-stop"
-              aria-label="Avbryt"
-              title="Avbryt"
-              onClick={c.cancel}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
-              </svg>
-            </button>
-          )}
+          Skyttel arbetar…
+          {c.waiting > 0 &&
+            ` ${c.waiting === 1 ? '1 meddelande väntar' : `${c.waiting} meddelanden väntar`}.`}
+          {!touch && ' Tryck på Escape för att avbryta.'}
         </li>
       )}
     </ol>
@@ -604,23 +625,21 @@ function DraftChanges({ c, layout }: { c: Conversation; layout: DraftLayout }) {
 }
 
 /** The row that folds the draft pane out beside the conversation text. */
-function DraftToggle({ c, side }: { c: Conversation; side: 'left' | 'right' }) {
-  const outward = side === 'right' ? '▸' : '◂';
-  const inward = side === 'right' ? '◂' : '▸';
+function DraftToggle({ c }: { c: Conversation }) {
   return (
-    <div className="tp-draft tp-draft-toggle">
+    <div className="tp-draft-toggle">
       <button
         type="button"
         aria-expanded={c.draftOpen}
         aria-controls="tp-draft-pane"
         onClick={() => c.setDraftOpen(!c.draftOpen)}
       >
-        <span>Utkast</span>
-        <span>
-          {side === 'left' && `${c.draftOpen ? inward : outward} `}
-          {count(c.draft)}
-          {side === 'right' && ` ${c.draftOpen ? inward : outward}`}
+        <span className="tp-chevron" aria-hidden="true">
+          {c.draftOpen ? '▸' : '◂'}
         </span>
+        <WorkspaceIcon name="draft" />
+        <span>{c.draftOpen ? 'Dölj utkastet' : 'Visa utkastet'}</span>
+        <span className="tp-draft-count">{count(c.draft)}</span>
       </button>
     </div>
   );
@@ -635,7 +654,7 @@ function DraftPane({ c, layout }: { c: Conversation; layout: DraftLayout }) {
   ) : null;
 }
 
-function MessageField({ c }: { c: Conversation }) {
+function MessageField({ c, touch }: { c: Conversation; touch: boolean }) {
   const field = useRef<HTMLTextAreaElement>(null);
   useEffect(() => field.current?.focus(), []);
   return (
@@ -650,25 +669,43 @@ function MessageField({ c }: { c: Conversation }) {
       onKeyDown={(event) => {
         if (event.key === 'Enter' && !event.shiftKey) {
           event.preventDefault();
-          c.send();
+          c.send(touch);
         }
       }}
     />
   );
 }
 
-function SendButton({ c }: { c: Conversation }) {
-  return (
-    <button type="submit" className="primary" disabled={c.blocked || !c.unsent.trim()}>
+/** On a touch layout Skicka turns into the stop icon while Skyttel works. */
+function SendButton({ c, touch }: { c: Conversation; touch: boolean }) {
+  return touch && c.working ? (
+    <button
+      key="stop"
+      type="button"
+      className="tp-send-stop"
+      aria-label="Avbryt"
+      title="Avbryt"
+      onClick={(event) => {
+        // The same place holds Skicka afterwards; this click must not also submit the form.
+        event.preventDefault();
+        c.stopFromSend();
+      }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+      </svg>
+    </button>
+  ) : (
+    <button key="send" type="submit" className="primary" disabled={c.blocked || !c.unsent.trim()}>
       Skicka
     </button>
   );
 }
 
-/** Escape cancels Skyttel's work while the focus is in the text view. */
+/** Escape cancels only while Skyttel works, and only while the focus is in the text view. */
 function escapeCancels(c: Conversation) {
   return (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Escape' || !c.busy) return;
+    if (event.key !== 'Escape' || !c.working) return;
     event.preventDefault();
     c.cancel();
   };
@@ -750,12 +787,12 @@ type Widths = {
 function TextView({
   c,
   layout,
-  stopInLog,
+  touch,
   widths,
 }: {
   c: Conversation;
   layout: DraftLayout;
-  stopInLog: boolean;
+  touch: boolean;
   widths: Widths;
 }) {
   // Leave room for the tool rail and a strip of the map.
@@ -792,21 +829,21 @@ function TextView({
               <NewConversationButton c={c} />
               <CloseButton c={c} />
             </header>
-            <DraftToggle c={c} side="left" />
-            <Transcript c={c} stopInLog={stopInLog} />
+            <DraftToggle c={c} />
+            <Transcript c={c} touch={touch} />
             <Notices c={c} />
             <form
               className="tp-composer"
               onSubmit={(event) => {
                 event.preventDefault();
-                c.send();
+                c.send(touch);
                 // The message field keeps the focus, so that Escape can cancel at once.
                 event.currentTarget.querySelector('textarea')?.focus();
               }}
             >
               <label htmlFor="tp-message">Meddelande till Skyttel</label>
-              <MessageField c={c} />
-              <SendButton c={c} />
+              <MessageField c={c} touch={touch} />
+              <SendButton c={c} touch={touch} />
             </form>
           </div>
         </section>
@@ -858,6 +895,8 @@ function ConsentDialog({ c, anchored }: { c: Conversation; anchored: boolean }) 
 
 function ToolRail({ c }: { c: Conversation }) {
   const [expanded, setExpanded] = useState(false);
+  // With the text view closed, the tool shows that Skyttel works on a written message.
+  const writing = c.working === 'text' && !c.textOpen;
   const textButton = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
   useEffect(() => {
@@ -898,13 +937,15 @@ function ToolRail({ c }: { c: Conversation }) {
       <button
         ref={textButton}
         type="button"
-        title="Skriv till Skyttel"
-        aria-label="Skriv till Skyttel"
+        className="tp-rail-text"
+        title={writing ? 'Skriv till Skyttel. Skyttel arbetar.' : 'Skriv till Skyttel'}
+        aria-label={writing ? 'Skriv till Skyttel. Skyttel arbetar.' : 'Skriv till Skyttel'}
         aria-expanded={c.textOpen}
         onClick={(event) => c.pressText(event.currentTarget)}
       >
         <WorkspaceIcon name="text" />
         <span>Skriv till Skyttel</span>
+        {writing && <i className="tp-rail-mark" aria-hidden="true" />}
       </button>
       {idle('search', 'Sök i kartan')}
       {idle('list', 'Lista')}
@@ -957,8 +998,20 @@ export function TextModePrototype() {
   const layout: DraftLayout = params.get('draft') === 'list' ? 'list' : 'table';
   const anchored = params.get('consent') !== 'center';
   const [draftOpenAtStart, setDraftOpenAtStart] = useState(false);
-  const [stopInLog, setStopInLog] = useState(false);
   const [widths, setWidths] = useState({ text: 400, draft: 340 });
+  // A touch layout has no Escape key: a narrow screen, a coarse pointer, or the prototype switch.
+  const [root, setRoot] = useState<HTMLDivElement | null>(null);
+  const [coarse, setCoarse] = useState(false);
+  useLayoutEffect(() => {
+    const view = root?.ownerDocument.defaultView;
+    if (!view) return;
+    const query = view.matchMedia('(max-width: 700px), (pointer: coarse)');
+    const update = () => setCoarse(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, [root]);
+  const touch = coarse || params.get('touch') === '1';
   const c = useConversation(draftOpenAtStart);
   const set = useCallback(
     (key: string, value: string | null) =>
@@ -975,6 +1028,7 @@ export function TextModePrototype() {
   );
   const app = (
     <div
+      ref={setRoot}
       className={`household-map workspace-shell tp-root tp-variant-c${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}`}
       data-theme={dark ? 'dark' : 'light'}
       style={
@@ -994,12 +1048,7 @@ export function TextModePrototype() {
           <Notices c={c} />
         </div>
       )}
-      <TextView
-        c={c}
-        layout={layout}
-        stopInLog={stopInLog}
-        widths={{ ...widths, set: setWidths }}
-      />
+      <TextView c={c} layout={layout} touch={touch} widths={{ ...widths, set: setWidths }} />
       <ConsentDialog c={c} anchored={anchored} />
     </div>
   );
@@ -1027,6 +1076,8 @@ export function TextModePrototype() {
             </dd>
             <dt>Utkast</dt>
             <dd>{count(c.draft)}</dd>
+            <dt>Väntar</dt>
+            <dd>{c.waiting === 1 ? '1 meddelande' : `${c.waiting} meddelanden`}</dd>
             <dt>Oskickad text</dt>
             <dd>{c.unsent ? 'finns' : 'ingen'}</dd>
           </dl>
@@ -1075,10 +1126,10 @@ export function TextModePrototype() {
           <label>
             <input
               type="checkbox"
-              checked={stopInLog}
-              onChange={(event) => setStopInLog(event.target.checked)}
+              checked={params.get('touch') === '1'}
+              onChange={(event) => set('touch', event.target.checked ? '1' : null)}
             />
-            Stoppikon på raden Skyttel arbetar
+            Pekskärm utan Escape (som iPad)
           </label>
           <label>
             <input

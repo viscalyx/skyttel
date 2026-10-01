@@ -270,13 +270,7 @@
   background: color-mix(in srgb, var(--space-accent), var(--space-surface) 86%);
 }
 .tp-row.working {
-  align-self: stretch;
   max-width: none;
-  min-height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   color: var(--space-muted);
 }
 .tp-notice {
@@ -336,6 +330,41 @@
 .tp-composer button {
   min-width: 88px;
 }
+.tp-root .tp-send-stop {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 0;
+}
+.tp-send-stop svg {
+  width: 20px;
+  height: 20px;
+}
+/* The working mark sits on top of the tool; it takes no room, so the tool rail keeps its size. */
+.tp-root .workspace-tools .tp-rail-text {
+  position: relative;
+}
+.tp-rail-mark {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--space-accent);
+  box-shadow: 0 0 0 2px var(--space-surface);
+  animation: tp-mark 1.2s ease-in-out infinite;
+}
+@keyframes tp-mark {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tp-rail-mark {
+    animation: none;
+  }
+}
 .tp-composer label {
   grid-column: 1 / -1;
   color: var(--space-muted);
@@ -352,22 +381,6 @@
   border: 1px solid var(--space-control);
   border-radius: 10px;
   resize: vertical;
-}
-.tp-draft > button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 44px;
-  padding: 6px 16px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  font-size: 13px;
-}
-.tp-draft > button span:last-child {
-  color: var(--space-muted);
-  font-weight: 500;
 }
 .tp-draft ul {
   margin: 0;
@@ -404,11 +417,36 @@
   color: var(--space-muted);
   font-size: 11px;
 }
+/* The draft row is a plain button that says what it does and which way it opens. */
 .tp-draft-toggle {
+  padding: 8px 12px;
   border-bottom: 1px solid var(--space-line);
 }
-.tp-draft-toggle > button[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 90%);
+.tp-root .tp-draft-toggle > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 1px solid var(--space-control);
+  border-radius: 10px;
+  font-size: 13px;
+  text-align: left;
+}
+.tp-root .tp-draft-toggle > button[aria-expanded="true"] {
+  border-color: var(--space-accent);
+  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 88%);
+}
+.tp-draft-toggle svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.tp-draft-count {
+  margin-left: auto;
+  color: var(--space-muted);
+  font-weight: 500;
 }
 .tp-draft-pane {
   flex: 0 0 var(--tp-draft-width, 340px);

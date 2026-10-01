@@ -41,10 +41,12 @@ nederkant) utgick och finns kvar i grenens tidigare incheckningar.
 | Bredd | Ett handtag på samtalstextens vänsterkant ändrar samtalstextens bredd. Ett handtag på utkastlistans vänsterkant ändrar utkastlistans bredd. Handtagen går att dra och att flytta med vänster- och högerpil. |
 | Röstrutan | Visas bara när röstläget är startat. Samma ruta på samma plats uppe till höger, oavsett om textvyn är öppen eller stängd. Höjden är alltid densamma, och bredden följer innehållet. |
 | Avbryt med röst | En liten stoppikon i röstrutan medan Skyttel arbetar eller talar. |
-| Avbryt med text | Escape, när fokus är i textvyn. Meddelandefältet behåller fokus efter **Skicka**. |
+| Avbryt med text | Escape, när fokus är i textvyn och Skyttel arbetar. Annars gör Escape ingenting. Meddelandefältet behåller fokus efter **Skicka**. |
+| Avbryt på pekskärm | Där finns ingen Escape. **Skicka** blir en stoppikon medan Skyttel arbetar, och det går att skicka ett meddelande åt gången. |
 | Samtalstexten | Liten text utan synliga namn. Användarens text står i en tonad ruta till höger, och Skyttels text står utan ruta. Medan Skyttel arbetar står raden "Skyttel arbetar… Tryck på Escape för att avbryta." sist, både för talade och skrivna uppdrag. |
-| Flera meddelanden | **Skicka** är alltid **Skicka**. Ett nytt meddelande kan skickas medan Skyttel arbetar. Det ersätter då det pågående arbetet, som i dagens Skyttel. |
-| Utkastlistan | En tabell som fälls ut till vänster om samtalstexten från raden **Utkast**. På mobil öppnas den mellan raden **Utkast** och samtalstexten. |
+| Flera meddelanden | På dator kan ett nytt meddelande skickas medan Skyttel arbetar. Det ställs i kö och avbryter inte det pågående arbetet. Raden "Skyttel arbetar…" visar hur många meddelanden som väntar. |
+| Stängd textvy | Om textvyn stängs medan Skyttel arbetar med ett skrivet meddelande får knappen **Skriv till Skyttel** en liten arbetsmarkering. Markeringen ligger ovanpå knappen och ändrar inte verktygsradens plats eller bredd. |
+| Utkastlistan | En tabell som fälls ut till vänster om samtalstexten från knappen **Visa utkastet**, som har en pil åt det håll utkastet öppnas och visar antalet osparade ändringar. Knappen heter **Dölj utkastet** när utkastet är utfällt. På mobil öppnas utkastet mellan knappen och samtalstexten. |
 | Medgivanderutan | Öppnas intill den knapp i verktygsraden som valdes. |
 
 ## Det här går att prova
@@ -57,7 +59,10 @@ nederkant) utgick och finns kvar i grenens tidigare incheckningar.
   Skyttel svarar med nästa replik i manuset och lägger ändringar i
   utkastet. Ändringarna syns i kartan med plus, penna och kryss. Skriv
   något med ordet "spara" för att spara utkastet.
-- **Avbryta.** Tryck Escape medan Skyttel arbetar.
+- **Avbryta.** Tryck Escape medan Skyttel arbetar. I mobilstorlek och med
+  reglaget **Pekskärm utan Escape** blir **Skicka** en stoppikon i stället.
+- **Kö.** Skicka flera meddelanden direkt efter varandra. Skyttel svarar
+  på dem i tur och ordning.
 - **Röst och text samtidigt.** Välj **Säg nästa replik** under
   **Prototyplägen**. Det sagda och Skyttels svar hamnar i samtalstexten.
 - **Ändra bredd.** Dra i handtagen till vänster om samtalstexten och
@@ -81,7 +86,7 @@ annars är svåra att nå.
 | Börja om | Prototypens utgångsläge. Manuset börjar om från första repliken. |
 | Bruten kontakt | Meddelandet med symbol och text. Mikrofonen stängs av och **Skicka** är avstängd. |
 | Oklart sparande | Skyttels egen kontroll, eller knappen **Kontrollera om utkastet sparades** när den egna kontrollen misslyckas. |
-| Stoppikon på raden Skyttel arbetar | En stoppikon i samtalstexten, som ett sätt att avbryta utan tangentbord. Den är avslagen från början och är inte beslutad. |
+| Pekskärm utan Escape (som iPad) | Pekskärmens beteende på en bred skärm: **Skicka** blir en stoppikon medan Skyttel arbetar, och ett meddelande åt gången. |
 | Utkastlistan som lista | Utkastlistan som lista i stället för tabell. |
 | Inställning: utkastlistan utfälld vid nytt samtal | Inställningen som ska finnas i Inställningar. |
 | Medgivanderutan mitt på skärmen | Medgivanderutan mitt på skärmen i stället för intill verktygsradens knapp. |
@@ -104,13 +109,14 @@ annars är svåra att nå.
 | --- | --- |
 | `medgivande-vid-knappen.png` | Medgivanderutan intill verktygsradens knapp. |
 | `mobil-medgivande.png` | Medgivanderutan i mobilstorlek. |
-| `dator-skrivet-arbetar.png` | Skyttel arbetar med ett skrivet meddelande. Ingen röstruta visas. |
-| `dator-rost.png` | Bara röstrutan, med textvyn stängd. |
+| `dator-ko.png` | Tre skrivna meddelanden i rad. Två väntar i kö och ingen röstruta visas. |
+| `dator-stangd-textvy-arbetar.png` | Textvyn stängd medan Skyttel arbetar med ett skrivet meddelande. Knappen i verktygsraden har en arbetsmarkering. |
+| `dator-samtal.png` | Textvyn med samtalstext och knappen **Visa utkastet**. |
 | `dator-utkast-talat-arbetar.png` | Utkastlistan utfälld medan Skyttel arbetar med ett talat uppdrag. |
 | `dator-utkast.png` | Utkastlistan utfälld medan Skyttel talar. |
 | `dator-bredare.png` | Samtalstexten och utkastlistan gjorda bredare. |
 | `dator-morkt-bruten-kontakt.png` | Mörkt tema med bruten kontakt. |
-| `mobil-text.png` | Mobilstorlek med bara text. |
+| `mobil-arbetar.png` | Mobilstorlek medan Skyttel arbetar. **Skicka** är en stoppikon. |
 | `mobil-rost-utkast.png` | Mobilstorlek med mikrofonen på och utkastlistan utfälld. |
 
 ## Beslut
@@ -122,12 +128,20 @@ Beställarens genomgångar den 1 oktober 2026 gav följande.
   texten ligger under den. Röstrutan visas bara när röstläget är startat.
 - **Avbryt** i röstrutan är en liten stoppikon utan text. Röstrutan har
   samma höjd hela tiden och är bara så bred som innehållet kräver.
-- **Skicka** är alltid **Skicka**, och flera meddelanden kan skickas efter
-  varandra. Escape avbryter när fokus är i textvyn, och meddelandefältet
+- På dator kan flera meddelanden skickas efter varandra. De köas och
+  avbryter inte det pågående arbetet. Escape avbryter när fokus är i
+  textvyn och Skyttel arbetar, och gör annars ingenting. Meddelandefältet
   behåller fokus efter att ett meddelande har skickats.
+- På mobil enhet skickas ett meddelande åt gången, och **Skicka** blir en
+  stoppikon medan Skyttel arbetar.
+- Om textvyn är stängd medan Skyttel arbetar med ett skrivet meddelande
+  visar knappen **Skriv till Skyttel** en arbetsmarkering som inte ändrar
+  verktygsradens plats eller bredd.
+- Det ska synas tydligt att utkastet går att fälla ut och åt vilket håll.
 - Raden "Skyttel arbetar…" står i samtalstexten även för talade uppdrag.
 - Samtalstexten är tät, har liten text och inga synliga namn.
-- Samtalstextens och utkastlistans bredd går att ändra.
+- Samtalstextens och utkastlistans bredd går att ändra. Bredderna sparas
+  per användare. Prototypen sparar dem inte.
 - Utkastlistan är en tabell som fälls ut till vänster om samtalstexten.
 - Medgivanderutan öppnas intill verktygsradens knapp.
 - När mikrofonen är på och användaren skriver svarar Skyttel även med
