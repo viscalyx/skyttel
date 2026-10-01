@@ -44,9 +44,13 @@ bara i utvecklingsservern, aldrig i ett bygge.
 
 ## Varianterna
 
+Sidan öppnas med den valda utformningen, variant V. Den står under
+[Beslut](#beslut). Varianterna A, B och C är de som beställaren valde
+mellan, och de finns kvar för jämförelse.
+
 Raden längst ner på sidan byter variant. Vänsterpil och högerpil gör
-samma sak. Adressen får `variant=A`, `variant=B` eller `variant=C`, så att
-en variant går att länka till.
+samma sak. Adressen får `variant=V`, `variant=A`, `variant=B` eller
+`variant=C`, så att en variant går att länka till.
 
 | Del | A: Staplar och kort | B: Linje och hopsatt notis | C: Puls och rad |
 | --- | --- | --- | --- |
@@ -164,10 +168,15 @@ reglaget.
 
 ## Skärmbilder
 
-Filer som börjar med `a-`, `b-` och `c-` finns för varje variant.
+Filer som börjar med `a-`, `b-` och `c-` finns för varje variant. De togs
+före beslutet. Filer som börjar med `vald-` visar den valda utformningen.
 
 | Fil | Visar |
 | --- | --- |
+| `vald-statusord.png` | Den valda röstrutan i varje statusord. |
+| `vald-notis-hinder-med-knapp.png`, `vald-notis-handelse.png` | De valda samtalsnotiserna: ett hinder med knapp och en händelse med stängknapp. |
+| `vald-utan-samtal-avstangda-knappar.png`, `vald-utan-samtal-notis-efter-tryck.png` | Bruten kontakt utan pågående samtal, före och efter ett tryck, med den kortare texten. |
+| `vald-textknapp-har-svarat.png` | Den valda markeringen när Skyttel har svarat. |
 | `a-statusord.png`, `b-statusord.png`, `c-statusord.png` | Röstrutan i varje statusord, uppifrån: **Rösten startar**, **Lyssnar**, **Du talar**, **Skyttel arbetar**, **Skyttel talar**, **Väntar på ditt svar** med mikrofonen på och av, **Sparat**. |
 | `*-notis-hinder-med-knapp.png` | Ett hinder med knapp: oklart sparande där den egna kontrollen misslyckades. |
 | `*-notis-handelse.png` | En händelse med stängknapp: webbläsaren nekar mikrofonen. Röstrutan syns inte. |
@@ -185,19 +194,12 @@ Filer som börjar med `a-`, `b-` och `c-` finns för varje variant.
 
 ## Iakttagelser från bygget
 
-Det här syntes när prototypen byggdes och provades. Det är underlag för
-beställarens val, inte beslut.
+Det här syntes när prototypen byggdes och provades. De två iakttagelser
+som ledde till ändringar står under [Beslut](#beslut).
 
 - **Lyssnar**, **Skyttel arbetar** och **Väntar på ditt svar** har samma
   stilla vågform, enligt beslutet om röstrutan. Bara statusordet och
   stoppikonen skiljer dem åt.
-- **Sparat** hinner bara visas en kort stund efter ett talat sparande.
-  **Skyttel talar** går före **Sparat**, och de 4 sekunderna räknas från
-  sparandet. När Skyttel har sagt att utkastet är sparat återstår drygt en
-  sekund i prototypen.
-- Notisen om bruten kontakt säger "Mikrofonen är av. Slå på den igen när
-  kontakten är tillbaka." Utan pågående samtal har mikrofonen aldrig varit
-  på.
 - I variant C blir notisen två rader hög när texten är lång.
 - En knapp som ser avstängd ut men går att trycka på är märkt som
   avstängd för hjälpmedel. Hur den ska beskrivas hör till ärendet om
@@ -210,5 +212,21 @@ beställarens val, inte beslut.
 
 ## Beslut
 
-Ärendet är inte löst. Beställaren väljer variant, eller delar från flera
-varianter, och beslutet skrivs i ärendet.
+Ärendet är löst. Det fastställda beslutet står i ärendets
+beslutskommentar, och den gäller framför listan här. Beställaren valde
+den 1 oktober 2026 delar från variant A och B.
+
+| Del | Val |
+| --- | --- |
+| Vågform | Staplar, från A. |
+| Samtalsnotisens plats | Ett eget kort under röstrutan, från A. |
+| Samtalsnotisens symbol | En symbol per situation, från A. |
+| Markering på **Skriv till Skyttel** | Tecken i en bricka, från B: tre punkter när Skyttel har svarat och frågetecken när Skyttel väntar på svar. |
+| Notis efter tryck utan pågående samtal | Stängs med en stängknapp, från A. Den försvinner också när hindret är borta. |
+| Röstknappens symbol | Mikrofon i båda lägena, från B. Av är en vanlig knapp, och på har accentfärg. |
+| Långt tryck | Gränsen är 0,45 sekunder. Knappens beskrivning säger "Håll in för att tala tills du släpper." |
+| Tangentkombination | Utgångsvärdena behålls: Ctrl+Mellanslag på Windows och Linux, Ctrl+Skift+Mellanslag på macOS. En krock på en riktig enhet blir ett eget ärende. |
+| **Sparat** | De 4 sekunderna räknas från att Skyttel har talat klart. Före beslutet räknades de från sparandet, och då syntes ordet bara drygt en sekund. |
+| Notisens text utan pågående samtal | "Ingen kontakt med Skyttel. Försök igen när kontakten är tillbaka." Texten om mikrofonen gäller bara när ett samtal pågår. |
+
+Kommande prototyper i kartan utgår från den här grenen.

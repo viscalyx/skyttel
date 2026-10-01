@@ -35,6 +35,16 @@ export const axisNames: Record<Axis, string> = {
 };
 
 export const variants = {
+  // The design that the decision of viscalyx/skyttel#179 chose, with parts from A and B.
+  V: {
+    name: 'Vald utformning',
+    vag: 'staplar',
+    notis: 'kort',
+    symbol: 'situation',
+    markering: 'tecken',
+    stang: 'knapp',
+    knapp: 'mikrofon',
+  },
   A: {
     name: 'Staplar och kort',
     vag: 'staplar',
@@ -68,8 +78,8 @@ export const variantKeys = Object.keys(variants) as VariantKey[];
 
 /** The variant gives every part its value; a part named in the URL replaces that value. */
 export function readParts(params: URLSearchParams): { variant: VariantKey; parts: Parts } {
-  const asked = params.get('variant')?.toUpperCase() ?? 'A';
-  const variant = variantKeys.includes(asked as VariantKey) ? (asked as VariantKey) : 'A';
+  const asked = params.get('variant')?.toUpperCase() ?? 'V';
+  const variant = variantKeys.includes(asked as VariantKey) ? (asked as VariantKey) : 'V';
   const parts: Record<string, string> = { ...variants[variant] };
   for (const axis of Object.keys(options) as Axis[]) {
     const value = params.get(axis);
@@ -84,6 +94,7 @@ export type NoticeId =
   | 'unclear-checking'
   | 'unclear-failed'
   | 'offline'
+  | 'offline-idle'
   | 'unavailable'
   | 'context-full'
   | 'mic-denied'
@@ -321,6 +332,13 @@ export const notices: Record<NoticeId, NoticeDefinition> = {
   offline: {
     label: 'Kontakten är bruten',
     text: 'Ingen kontakt med Skyttel. Mikrofonen är av. Slå på den igen när kontakten är tillbaka.',
+    kind: 'hinder',
+    symbol: 'offline',
+  },
+  // With no conversation in progress the microphone was never on, so the text does not name it.
+  'offline-idle': {
+    label: 'Kontakten är bruten, utan pågående samtal',
+    text: 'Ingen kontakt med Skyttel. Försök igen när kontakten är tillbaka.',
     kind: 'hinder',
     symbol: 'offline',
   },

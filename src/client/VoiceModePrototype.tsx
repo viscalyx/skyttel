@@ -11,6 +11,10 @@
  * mixed with one URL parameter each. The page keeps the text view that viscalyx/skyttel#180
  * decided, with invented household data and scripted replies.
  *
+ * Answer: the page opens with the chosen design, variant V. It takes the waveform, the notice and
+ * the close button from A, and the mark and the voice button symbol from B. The variants A, B and
+ * C remain for comparison.
+ *
  * Start: npm run prototype:rostlage, then open http://localhost:4178/?prototype=rostlage
  */
 import {
@@ -215,6 +219,8 @@ function useConversation(draftOpenAtStart: boolean, prefs: Prefs) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const micTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // The draft is saved, and "Sparat" waits for Skyttel to finish talking.
+  const savedPending = useRef(false);
   const holdTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const nextId = useRef(1);
   // Messages wait in a queue while Skyttel handles an earlier one.
@@ -297,7 +303,9 @@ function useConversation(draftOpenAtStart: boolean, prefs: Prefs) {
       : unclear === 'failed'
         ? 'unclear-failed'
         : !online
-          ? 'offline'
+          ? ongoing
+            ? 'offline'
+            : 'offline-idle'
           : !available
             ? 'unavailable'
             : memoryFull && !autoCompact
@@ -331,6 +339,14 @@ function useConversation(draftOpenAtStart: boolean, prefs: Prefs) {
     mic !== 'off' || (busy && origin === 'voice') || question === 'voice' || justSaved;
   const nextLine = () => script[live.current.step]?.say ?? 'Finns det något mer att göra?';
 
+  /** "Sparat" shows for 4 seconds, counted from the moment Skyttel has finished talking. */
+  function showSaved() {
+    if (!savedPending.current) return;
+    savedPending.current = false;
+    setJustSaved(true);
+    clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setJustSaved(false), 4000);
+  }
   /** Skyttel says the reply: with the browser's voice if the prototype control asks for it. */
   function say(reply: string) {
     const turn = turns.current;
@@ -340,6 +356,7 @@ function useConversation(draftOpenAtStart: boolean, prefs: Prefs) {
       over = true;
       clearTimeout(timer.current);
       setSpeaking(false);
+      showSaved();
       next();
     };
     setSpeaking(true);
@@ -372,11 +389,7 @@ function useConversation(draftOpenAtStart: boolean, prefs: Prefs) {
       setSaved((current) => [...current, ...draft]);
       setDraft([]);
       if (entry?.save) setStep(step + 1);
-      if (draft.length && voice) {
-        setJustSaved(true);
-        clearTimeout(savedTimer.current);
-        savedTimer.current = setTimeout(() => setJustSaved(false), 4000);
-      }
+      if (draft.length && voice) savedPending.current = true;
     } else if (!entry || entry.save) {
       reply =
         'Manuset i den här prototypen är slut. Välj Börja om under Prototyplägen för att spela upp det igen.';
@@ -425,6 +438,8 @@ function useConversation(draftOpenAtStart: boolean, prefs: Prefs) {
     turns.current += 1;
     clearTimeout(timer.current);
     window.speechSynthesis?.cancel();
+    // The stop icon silences Skyttel; a saving that is done still shows.
+    showSaved();
     queue.current = [];
     active.current = false;
     setWaiting(0);
