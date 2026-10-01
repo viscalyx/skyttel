@@ -1063,7 +1063,8 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.mp-touch.mp-short.mp-kort-rullar .tp-conversation > * {
+.mp-touch.mp-short.mp-kort-rullar .tp-conversation > *,
+.mp-touch.mp-short.mp-kort-rullar .tp-draft-pane {
   flex-shrink: 0;
 }
 .mp-touch.mp-short.mp-kort-rullar .tp-log {

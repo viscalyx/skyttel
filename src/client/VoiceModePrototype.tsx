@@ -1708,7 +1708,7 @@ export function VoiceModePrototype() {
   // The frame is a mobile device, whatever pointer the computer has.
   const touch = Boolean(screen) || coarse || params.get('touch') === '1';
   const reduced = calm || params.get('rorelse') === 'minskad';
-  const wide = params.get('bred') === 'sidofalt' ? 'sidofalt' : 'fyller';
+  const wide = params.get('bred') === 'fyller' ? 'fyller' : 'sidofalt';
   const short = touch && height > 0 && height < shortLimit;
   // The user writes: the message field has the focus. A press on Skicka must not end that.
   const [typing, setTypingNow] = useState(false);
@@ -2070,8 +2070,8 @@ export function VoiceModePrototype() {
             {select(
               'Textvyn på bred pekskärm',
               wide,
-              { fyller: 'Fyller skärmen', sidofalt: 'Sidofält med fast bredd' },
-              (value) => set('bred', value === 'fyller' ? null : value),
+              { sidofalt: 'Sidofält med fast bredd', fyller: 'Fyller skärmen' },
+              (value) => set('bred', value === 'sidofalt' ? null : value),
             )}
             {check('Minskad rörelse', params.get('rorelse') === 'minskad', (on) =>
               set('rorelse', on ? 'minskad' : null),

@@ -109,10 +109,11 @@ Ett byte av variant nollställer de egna valen.
   höger med samtalsnotisen som ett kort under, enligt beslutet om
   röstläget. Varianternas platser gäller bara smal skärm. I ett kort
   fönster står röstrutan 12 px från kanten och textvyn börjar vid 56 px.
-- **Textvyn på bred pekskärm.** Den fyller skärmen till höger om
-  verktygsraden, enligt beslutet om textläget. Reglaget **Textvyn på bred
-  pekskärm** visar alternativet: ett sidofält med fast bredd, 400 px, där
-  kartan syns bredvid. Adressen får `bred=sidofalt`.
+- **Textvyn på bred pekskärm.** Den är ett sidofält vid högerkanten med
+  fast bredd, 400 px, och kartan syns bredvid. Utkastet öppnas mellan
+  knappen och samtalstexten. Reglaget **Textvyn på bred pekskärm** visar
+  det som beslutet om textläget säger: textvyn fyller skärmen till höger
+  om verktygsraden. Adressen får `bred=fyller`.
 - **Läsordning.** Röstrutan och samtalsnotisen ligger i koden direkt
   efter **Skriv till Skyttel**, före verktygsradens övriga knappar.
   Ordningen är den som beslutet om hjälpmedel anger, i alla varianter.
@@ -147,8 +148,9 @@ Ett byte av variant nollställer de egna valen.
 - **Liten telefon.** Välj **Liten telefon** och variant B, sätt
   **Kontext** till 90 % och säg en replik. Statusordet **Skyttel
   arbetar** står på två rader.
-- **iPad.** Välj **iPad, stående** eller **iPad, liggande**, och prova
-  båda värdena i **Textvyn på bred pekskärm**.
+- **iPad.** Välj **iPad, stående** eller **iPad, liggande** och öppna
+  textvyn. Kartan syns bredvid sidofältet. Prova också **Fyller skärmen**
+  i **Textvyn på bred pekskärm**.
 - **Långt tryck.** Håll in röstknappen när mikrofonen är av. Knappen får
   en ring, röstrutan visar **Du talar**, och Skyttel arbetar med det som
   sades när knappen släpps. Lyssnandet fortsätter om fingret glider av
@@ -167,7 +169,7 @@ De streckade rutorna hör inte till utformningen. Reglagen under
 | Skärm | Ramens storlek, eller sidan utan ram. |
 | Skärmtangentbord | Om det påhittade tangentbordet kommer upp när meddelandefältet har fokus, alltid är uppe eller aldrig kommer upp. |
 | Meddelandefältet får fokus när textvyn öppnas | Tangentbordet kommer upp direkt när textvyn öppnas. |
-| Textvyn på bred pekskärm | Textvyn fyller skärmen, eller är ett sidofält med fast bredd. |
+| Textvyn på bred pekskärm | Textvyn är ett sidofält med fast bredd, eller fyller skärmen. |
 | Röstrutans och notisens plats på smal skärm | Delen `plats` för sig. |
 | Textvyn i ett kort fönster | Delen `kort` för sig. |
 
@@ -206,7 +208,10 @@ skärmen **Telefon, stående** om inget annat sägs.
 | `b-liggande-textvy.png` | Liggande telefon utan tangentbord i variant B, med den kompakta raden. |
 | `b-liten-telefon.png` | Liten telefon i variant B med kontextsymbolen. Statusordet står på två rader. |
 | `b-langt-tryck.png` | Röstknappen hålls inne med ett finger, i variant B. |
-| `ipad-textvy-tangentbord.png` | Stående iPad med textvyn öppen och tangentbordet uppe. |
+| `ipad-sidofalt.png` | Stående iPad med textvyn som sidofält. Kartan syns bredvid. |
+| `ipad-liggande-sidofalt-tangentbord.png` | Liggande iPad med sidofältet, utkastet utfällt och tangentbordet uppe. |
+| `liggande-sidofalt.png` | Liggande telefon med textvyn som sidofält. |
+| `ipad-fyller.png` | Stående iPad där textvyn fyller skärmen och tangentbordet är uppe. Kartan syns inte. |
 | `utan-ram.png` | Sidan utan ram i en telefons storlek, med fliken till reglagen. |
 
 ## Iakttagelser från bygget
@@ -237,9 +242,11 @@ Det här syntes när prototypen byggdes och provades.
 - **Ingen beskrivning på pekskärm.** Röstknappens beskrivning "Håll in
   för att tala tills du släpper" visas när pekaren vilar på knappen. På
   en pekskärm visas den aldrig.
-- **Fylld skärm på iPad.** När textvyn fyller skärmen på en iPad syns
-  ingenting av kartan, och ändringar som Skyttel föreslår syns bara i
-  samtalstexten och utkastet.
+- **Sidofält på bred pekskärm.** Med ett sidofält på 400 px har kartan
+  320 px bredvid sig på en stående iPad, 680 px på en liggande iPad och
+  344 px på en liggande telefon, räknat från verktygsradens högerkant.
+  När textvyn fyller skärmen syns ingenting av kartan, och ändringar som
+  Skyttel föreslår syns bara i samtalstexten och utkastet.
 - **Stående iPad.** Med tangentbordet uppe är den synliga höjden 850 px.
   Textvyn behöver inte ändras där.
 
@@ -260,3 +267,10 @@ Det här syntes när prototypen byggdes och provades.
 ## Beslut
 
 Ärendet är öppet. Beställaren har inte valt variant.
+
+Beställaren sa den 1 oktober 2026 att textvyn inte ska ta så mycket
+plats på en iPad, stående eller liggande. Den ska vara mer som på dator,
+så att kartan får plats bredvid eller syns bakom samtalstexten.
+Prototypen visar därför sidofältet som utgångsläge på bred pekskärm.
+Det ändrar beslutet om textläget, som säger att textvyn fyller skärmen
+på mobil enhet.
