@@ -1,4 +1,7 @@
-/* PROTOTYPE - throwaway styles for TextModePrototype.tsx (viscalyx/skyttel#180). */
+/*
+ * PROTOTYPE - throwaway styles for VoiceModePrototype.tsx (viscalyx/skyttel#179). The tp- classes
+ * come from the text mode study (viscalyx/skyttel#180); the vp- classes belong to the voice mode.
+ */
 
 .tp-sr {
   position: absolute;
@@ -164,74 +167,317 @@
   width: 64px;
   height: 8px;
 }
-.tp-wave {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  height: 24px;
-  flex: none;
-}
-.tp-wave i {
-  width: 3px;
-  height: 6px;
-  border-radius: 2px;
-  background: var(--space-accent);
-}
-.tp-wave.muted i {
-  background: var(--space-line);
-}
-.tp-wave.has-sound i {
-  animation: tp-wave 0.9s ease-in-out infinite;
-}
-.tp-wave.has-sound i:nth-child(2n) {
-  animation-delay: 0.15s;
-}
-.tp-wave.has-sound i:nth-child(3n) {
-  animation-delay: 0.3s;
-}
-.tp-wave.has-sound i:nth-child(5n) {
-  animation-delay: 0.45s;
-}
-@keyframes tp-wave {
-  0%,
-  100% {
-    height: 6px;
-  }
-  50% {
-    height: 22px;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .tp-wave.has-sound i {
-    animation: none;
-    height: 16px;
-  }
-  .tp-wave.has-sound i:nth-child(2n) {
-    height: 9px;
-  }
   .tp-map {
     transition: none;
   }
 }
+
+/*
+ * The waveform. The colour says who is heard: the accent colour for the user, the text colour for
+ * Skyttel, and the line colour while the voice is not ready. The script sets the moving sizes.
+ */
+.vp-wave {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  flex: none;
+  color: var(--space-accent);
+}
+.vp-wave.skyttel {
+  color: var(--space-text);
+}
+.vp-wave.dimmed {
+  color: var(--space-line);
+}
+.vp-wave.staplar {
+  gap: 3px;
+}
+.vp-wave.staplar i {
+  width: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.vp-line {
+  width: 44px;
+  height: 24px;
+}
+.vp-line path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.vp-wave.dimmed .vp-line path {
+  stroke-dasharray: 3 4;
+}
+.vp-wave.puls {
+  position: relative;
+  width: 24px;
+}
+.vp-wave.puls i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: scale(var(--vp-dot, 1));
+}
+.vp-wave.puls b {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.45;
+  transform: scale(var(--vp-ring, 1));
+}
+.vp-wave.puls.dimmed i {
+  background: none;
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+}
+.vp-wave.puls:is(.still, .dimmed) b {
+  display: none;
+}
+.vp-check {
+  display: grid;
+  flex: none;
+  margin-right: -4px;
+  color: var(--proposal-added);
+}
+.vp-check svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.6;
+}
+
+/* The place of the voice box and of the conversation notice, top right. */
+.vp-corner {
+  position: fixed;
+  z-index: 25;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.vp-corner > * {
+  pointer-events: auto;
+}
+.vp-corner.notis-kort {
+  gap: 12px;
+}
+.vp-corner.notis-rad {
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 8px;
+}
+/* One height at all times; only as wide as the content needs. */
 .tp-voicebox {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-/* One height at all times; only as wide as the content needs. */
-.tp-voicebox.floating {
-  position: fixed;
-  z-index: 25;
+  flex: none;
   box-sizing: border-box;
   height: 36px;
   padding: 0 12px;
   border-radius: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.tp-voicebox.floating:has(.tp-stop) {
+.tp-voicebox:has(.tp-stop) {
   padding-right: 5px;
+}
+
+/* The conversation notice: a symbol, one or two sentences and at most one button. */
+.vp-notice {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 6px 10px;
+  box-sizing: border-box;
+  border: 1px solid var(--space-control);
+  background: var(--space-surface);
+  color: var(--space-text);
+  box-shadow: var(--space-shadow);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.vp-notice p {
+  margin: 0;
+  grid-column: 2;
+  align-self: center;
+}
+.vp-notice-symbol {
+  display: grid;
+  place-items: center;
+  grid-column: 1;
+  color: var(--proposal-changed);
+}
+.vp-notice.hinder .vp-notice-symbol {
+  color: var(--proposal-removed);
+}
+.vp-notice-symbol svg {
+  width: 20px;
+  height: 20px;
+}
+.tp-root .vp-notice-action {
+  grid-column: 2;
+  justify-self: start;
+  min-height: 36px;
+  padding: 4px 12px;
+  border-color: var(--space-accent);
+  font-size: 13px;
+}
+.tp-root .vp-notice-close {
+  grid-column: 3;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-color: transparent;
+  border-radius: 50%;
+}
+.vp-notice-close svg {
+  width: 16px;
+  height: 16px;
+}
+/* Kort: a card of its own below the voice box. */
+.vp-notice.kort {
+  width: min(340px, calc(100vw - 136px));
+  padding: 12px 12px 12px 14px;
+  border-radius: 14px;
+}
+.vp-notice.kort .vp-notice-symbol {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor, var(--space-surface) 86%);
+}
+/* Fast: one piece with the voice box, which then stands on it like a tab. */
+.vp-notice.fast {
+  width: min(300px, calc(100vw - 136px));
+  padding: 10px 10px 10px 12px;
+  border-left: 5px solid var(--proposal-changed);
+  border-radius: 12px;
+}
+.vp-notice.fast.hinder {
+  border-left-color: var(--proposal-removed);
+}
+.vp-corner.notis-fast.has-box:has(.vp-notice) .tp-voicebox {
+  border-bottom-color: transparent;
+  border-radius: 12px 12px 0 0;
+  box-shadow: none;
+}
+.vp-corner.notis-fast.has-box .vp-notice {
+  margin-top: -1px;
+  border-top-right-radius: 0;
+}
+/* Rad: one row at the height of the voice box, to the left of it. */
+.vp-notice.rad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  max-width: min(560px, calc(100vw - 470px));
+  padding: 4px 6px 4px 12px;
+  border-radius: 18px;
+}
+.vp-notice.rad p {
+  flex: 1;
+}
+.vp-notice.rad p:last-child {
+  margin-right: 8px;
+}
+.tp-root .vp-notice.rad .vp-notice-action {
+  flex: none;
+  min-height: 28px;
+  padding: 2px 10px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+.vp-notice.rad .vp-notice-close {
+  flex: none;
+}
+/* Textvy: the same notice inside the text view. */
+.vp-notice.textvy {
+  padding: 10px 14px;
+  border-width: 1px 0 0;
+  border-color: var(--space-line);
+  background: color-mix(in srgb, var(--proposal-changed), var(--space-surface) 88%);
+  box-shadow: none;
+}
+
+/* The conversation tools look switched off when no conversation can start. A press still works. */
+.household-map.workspace-shell .workspace-tools .vp-off {
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: default;
+}
+/* The voice button: no selection or menu on a long press, and a ring while it is held. */
+.tp-root .workspace-talk {
+  user-select: none;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+.tp-root .workspace-talk.vp-held {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--space-accent), transparent 55%);
+}
+/* Mikrofon: the microphone symbol in both states. Off is a plain tool; on has the accent colour. */
+.household-map.workspace-shell
+  .workspace-tools
+  .workspace-talk.vp-knapp-mikrofon[aria-pressed="false"] {
+  border-color: var(--space-control);
+  background: var(--space-surface);
+  color: var(--space-text);
+}
+/* The mark on the text tool when Skyttel has answered or asked. It takes no room. */
+.vp-mark {
+  position: absolute;
+  pointer-events: none;
+  font-style: normal;
+}
+.vp-mark.prick {
+  top: 5px;
+  right: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--proposal-changed);
+  box-shadow: 0 0 0 2px var(--space-surface);
+}
+.vp-mark.tecken {
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--space-accent);
+  color: var(--space-surface);
+  box-shadow: 0 0 0 2px var(--space-surface);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+.household-map.workspace-shell .workspace-tools .tp-rail-text.vp-ram {
+  border: 2px solid var(--space-accent);
+  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 80%);
 }
 .tp-root .tp-stop {
   flex: none;
@@ -269,10 +515,6 @@
 .tp-stop svg {
   width: 14px;
   height: 14px;
-}
-.tp-variant-c .tp-voicebox.floating {
-  right: 24px;
-  top: 24px;
 }
 .tp-log {
   flex: 1;
@@ -313,50 +555,11 @@
   font-size: 12px;
   text-align: center;
 }
-.tp-notice {
-  display: flex;
-  gap: 10px;
-  margin: 0;
-  padding: 10px 14px;
-  border-top: 1px solid var(--space-line);
-  background: color-mix(in srgb, var(--proposal-changed), var(--space-surface) 86%);
-  font-size: 13px;
-}
-.tp-notice button {
-  display: block;
-  margin-top: 8px;
-}
-.tp-notice-symbol {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  font-weight: 900;
-  line-height: 1;
-}
 .tp-note {
   margin: 0;
   padding: 6px 14px;
   color: var(--space-muted);
   font-size: 13px;
-}
-.tp-floating-notices {
-  position: fixed;
-  z-index: 24;
-  top: 64px;
-  left: 112px;
-  width: min(360px, calc(100vw - 136px));
-}
-.tp-floating-notices > * {
-  border: 1px solid var(--space-control);
-  border-radius: 12px;
-  box-shadow: var(--space-shadow);
-}
-.tp-floating-notices .tp-note {
-  background: var(--space-surface);
 }
 .tp-composer {
   margin: 0;
@@ -399,6 +602,9 @@
   50% {
     opacity: 0.35;
   }
+}
+.vp-reduced .tp-rail-mark {
+  animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .tp-rail-mark {
@@ -612,10 +818,19 @@
     width: 96px;
     font-size: 10.5px;
   }
-  .tp-floating-notices {
-    top: 108px;
+  /* The mobile layout is not decided: every notice is a card below the voice box here. */
+  .vp-corner,
+  .vp-corner.notis-rad {
+    top: 68px;
+    right: 12px;
     left: 12px;
-    width: calc(100vw - 24px);
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .vp-notice:is(.kort, .fast, .rad) {
+    width: 100%;
+    max-width: none;
   }
   .tp-columns {
     flex-direction: column;
@@ -634,7 +849,7 @@
   .tp-draft-pane h3 {
     display: none;
   }
-  .tp-columns :is(.tp-log, .tp-notice, .tp-note, .tp-composer) {
+  .tp-columns :is(.tp-log, .vp-notice, .tp-note, .tp-composer) {
     order: 2;
   }
   .tp-resizer {
@@ -642,10 +857,6 @@
   }
   .tp-composer {
     padding-bottom: 20px;
-  }
-  .tp-variant-c .tp-voicebox.floating {
-    top: 68px;
-    right: 12px;
   }
   .tp-side {
     top: 112px;
@@ -664,8 +875,8 @@
 .tp-dock {
   position: fixed;
   z-index: 1000;
-  top: 8px;
-  left: 290px;
+  bottom: 12px;
+  left: 104px;
   width: max-content;
   max-width: min(340px, calc(100vw - 24px));
   max-height: calc(100dvh - 20px);
@@ -726,9 +937,56 @@
 }
 .tp-dock label {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 2px 8px;
   min-height: 28px;
+  margin-bottom: 2px;
+}
+.tp-dock select {
+  max-width: 100%;
+}
+/* The variant switcher: also unlike the app, and not a part of the design under review. */
+.vp-switcher {
+  position: fixed;
+  z-index: 1000;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border: 2px dashed #ffcf33;
+  border-radius: 999px;
+  background: #1b1035;
+  color: #fff;
+  box-shadow: 0 6px 24px #0006;
+  font:
+    12px / 1.4 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.vp-switcher button {
+  width: 32px;
+  min-height: 30px;
+  padding: 0;
+  border: 1px solid #ffcf33;
+  border-radius: 50%;
+  background: #2d1d57;
+  color: #fff;
+  font: inherit;
+}
+.vp-switcher button:hover {
+  background: #45308a;
+  border-color: #fff;
+}
+.vp-switcher :focus-visible {
+  outline: 3px solid #ffcf33;
+  outline-offset: 2px;
 }
 .tp-dock input {
   width: 16px;

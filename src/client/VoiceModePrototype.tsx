@@ -1,15 +1,17 @@
 /*
  * PROTOTYPE - throwaway code, not production code. No tests, no server, no persistence.
  *
- * Question (viscalyx/skyttel#180): what does the text mode look like when the user selects the
- * text button in the tool rail and writes to Skyttel?
+ * Question (viscalyx/skyttel#179): what does the voice mode look like when the user starts the
+ * conversation with the voice button in the tool rail and only a small waveform shows that the
+ * speech is heard?
  *
- * Plan: one text view on a standalone prototype page with invented household data and scripted
- * replies. It is the variant that was called C (a docked side panel). Variant A (a free window)
- * and variant B (a writing row at the bottom of the map) were rejected and removed; both remain in
- * the history of the prototype branch.
+ * Plan: three variants of the voice mode on the standalone prototype page, switchable with
+ * ?variant= and a floating bar at the bottom. Each variant has its own waveform, its own place and
+ * shape for the conversation notice, and its own mark on the text button. The parts can also be
+ * mixed with one URL parameter each. The page keeps the text view that viscalyx/skyttel#180
+ * decided, with invented household data and scripted replies.
  *
- * Start: npm run prototype:textlage, then open http://localhost:4177/?prototype=textlage
+ * Start: npm run prototype:rostlage, then open http://localhost:4178/?prototype=rostlage
  */
 import {
   type CSSProperties,
@@ -25,9 +27,27 @@ import {
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router';
 import logo from '../../docs/images/shuttle-logo-transparent-small.png';
+import {
+  type Axis,
+  axisNames,
+  ConversationNotice,
+  closeMicrophone,
+  Icon,
+  microphoneLevel,
+  type NoticeId,
+  notices,
+  openMicrophone,
+  options,
+  type Parts,
+  PrototypeSwitcher,
+  readParts,
+  variants,
+  Wave,
+  type WaveState,
+} from './VoiceModePrototypeParts.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './workspace.css';
-import './text-mode-prototype.css';
+import './voice-mode-prototype.css';
 
 type Kind = 'added' | 'changed' | 'removed';
 type Change = { id: string; kind: Kind; name: string; type: string; what: string };
@@ -35,8 +55,28 @@ type Row = { id: number; role: 'user' | 'skyttel' | 'info'; text: string; spoken
 type Mic = 'off' | 'starting' | 'on';
 type Unclear = 'no' | 'checking' | 'failed';
 type DraftLayout = 'list' | 'table';
+type Status = 'working' | 'speaking' | 'saved' | 'starting' | 'talking' | 'waiting' | 'listening';
+/** What the prototype controls have set up: the real microphone, a read-out voice, the hold limit. */
+type Prefs = { realMic: boolean; aloud: boolean; holdMs: number };
 
-const script: { say: string; reply?: string; changes?: Change[]; save?: boolean }[] = [
+/** The seven status words of the voice box, from the decision of viscalyx/skyttel#182. */
+const statusWords: Record<Status, string> = {
+  working: 'Skyttel arbetar',
+  speaking: 'Skyttel talar',
+  saved: 'Sparat',
+  starting: 'Rösten startar',
+  talking: 'Du talar',
+  waiting: 'Väntar på ditt svar',
+  listening: 'Lyssnar',
+};
+
+const script: {
+  say: string;
+  reply?: string;
+  changes?: Change[];
+  save?: boolean;
+  question?: boolean;
+}[] = [
   {
     say: 'Lägg till elavtalet hos Vattenfall för lägenheten på Storgatan.',
     reply:
@@ -90,6 +130,7 @@ const script: { say: string; reply?: string; changes?: Change[]; save?: boolean 
     say: 'Vem betalar hemförsäkringen?',
     reply: 'Det finns ingen uppgift om vem som betalar Hemförsäkring. Är det Alex, Lo eller båda?',
     changes: [],
+    question: true,
   },
   {
     say: 'Det är Lo som betalar den.',
@@ -137,7 +178,7 @@ function count(draft: Change[]) {
   return draft.length === 1 ? '1 osparad ändring' : `${draft.length} osparade ändringar`;
 }
 
-function useConversation(draftOpenAtStart: boolean) {
+function useConversation(draftOpenAtStart: boolean, prefs: Prefs) {
   const [consentSaved, setConsentSaved] = useState(false);
   const [started, setStarted] = useState(false);
   const [asking, setAsking] = useState<'voice' | 'text' | null>(null);
@@ -154,23 +195,58 @@ function useConversation(draftOpenAtStart: boolean) {
   const [saved, setSaved] = useState<Change[]>([]);
   const [step, setStep] = useState(0);
   const [online, setOnlineState] = useState(true);
+  const [available, setAvailableState] = useState(true);
   const [unclear, setUnclear] = useState<Unclear>('no');
   const [note, setNote] = useState('');
   const [draftOpen, setDraftOpen] = useState(draftOpenAtStart);
+  // A necessary question from Skyttel that waits for an answer, and the mode it was asked in.
+  const [question, setQuestion] = useState<'voice' | 'text' | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
+  // An event notice: an error that the user closes, or that goes away at the next attempt.
+  const [event, setEvent] = useState<NoticeId | null>(null);
+  const [audioStopped, setAudioStopped] = useState(false);
+  const [audioWillStop, setAudioWillStop] = useState(false);
+  const [nextStart, setNextStart] = useState<'ok' | NoticeId>('ok');
+  const [taskWillFail, setTaskWillFail] = useState(false);
+  // The user pressed a conversation tool that looks switched off, with no conversation in progress.
+  const [tapped, setTapped] = useState(false);
+  const [held, setHeld] = useState(false);
+  const [unread, setUnread] = useState<'answered' | 'asked' | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const micTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const holdTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const nextId = useRef(1);
   // Messages wait in a queue while Skyttel handles an earlier one.
   const queue = useRef<{ text: string; spoken: boolean }[]>([]);
   const active = useRef(false);
   const sentAt = useRef(0);
+  // Counters that make a late callback from a cancelled start or a cancelled reply do nothing.
+  const starts = useRef(0);
+  const turns = useRef(0);
+  // A long press holds the microphone open; "heard" says that the real microphone caught speech.
+  const holding = useRef(false);
+  const heard = useRef(false);
   const [waiting, setWaiting] = useState(0);
-  const live = useRef({ mic, step, draft });
-  live.current = { mic, step, draft };
+  const live = useRef({
+    mic,
+    step,
+    draft,
+    textOpen,
+    prefs,
+    nextStart,
+    audioWillStop,
+    taskWillFail,
+  });
+  live.current = { mic, step, draft, textOpen, prefs, nextStart, audioWillStop, taskWillFail };
   useEffect(
     () => () => {
       clearTimeout(timer.current);
       clearTimeout(micTimer.current);
+      clearTimeout(savedTimer.current);
+      clearTimeout(holdTimer.current);
+      closeMicrophone();
+      window.speechSynthesis?.cancel();
     },
     [],
   );
@@ -192,7 +268,6 @@ function useConversation(draftOpenAtStart: boolean) {
         draft.length * 3,
     );
   const memoryFull = memory >= 100;
-  const blocked = !online || unclear !== 'no' || (memoryFull && !autoCompact);
   // biome-ignore lint/correctness/useExhaustiveDependencies: summarise once when the context fills
   useEffect(() => {
     if (!memoryFull || !autoCompact) return;
@@ -210,11 +285,86 @@ function useConversation(draftOpenAtStart: boolean) {
   }, [memoryFull, autoCompact]);
   const busy = Boolean(working) || speaking;
   const consented = started || consentSaved;
+  // With no conversation in progress the notice about a blocked conversation waits for a press.
+  const ongoing = rows.length > 0 || mic !== 'off' || busy || textOpen;
+  const idleOff = !ongoing && (!online || !available);
+  const blocked = !online || !available || unclear !== 'no' || (memoryFull && !autoCompact);
+  const micDisabled = !idleOff && (blocked || (working === 'text' && mic === 'off'));
+  // One notice at a time: unclear saving, lost contact, full context, errors, stopped audio.
+  const hinder: NoticeId | null =
+    unclear === 'checking'
+      ? 'unclear-checking'
+      : unclear === 'failed'
+        ? 'unclear-failed'
+        : !online
+          ? 'offline'
+          : !available
+            ? 'unavailable'
+            : memoryFull && !autoCompact
+              ? 'context-full'
+              : null;
+  const fromTap = idleOff && tapped && unclear === 'no';
+  const notice: NoticeId | null = hinder
+    ? idleOff && unclear === 'no' && !tapped
+      ? null
+      : hinder
+    : (event ?? (audioStopped ? 'audio-stopped' : null));
+  useEffect(() => {
+    if (!idleOff) setTapped(false);
+  }, [idleOff]);
+  // The order of precedence of the status words, from the decision of viscalyx/skyttel#182.
+  const status: Status = working
+    ? 'working'
+    : speaking
+      ? 'speaking'
+      : justSaved
+        ? 'saved'
+        : mic === 'starting'
+          ? 'starting'
+          : talking
+            ? 'talking'
+            : question
+              ? 'waiting'
+              : 'listening';
+  // The voice box belongs to the voice mode: it never shows for a conversation in text only.
+  const voiceVisible =
+    mic !== 'off' || (busy && origin === 'voice') || question === 'voice' || justSaved;
+  const nextLine = () => script[live.current.step]?.say ?? 'Finns det något mer att göra?';
 
-  function respond(text: string) {
-    const { mic, step, draft } = live.current;
+  /** Skyttel says the reply: with the browser's voice if the prototype control asks for it. */
+  function say(reply: string) {
+    const turn = turns.current;
+    let over = false;
+    const end = () => {
+      if (over || turn !== turns.current) return;
+      over = true;
+      clearTimeout(timer.current);
+      setSpeaking(false);
+      next();
+    };
+    setSpeaking(true);
+    if (live.current.prefs.aloud && 'speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(reply);
+      utterance.lang = 'sv-SE';
+      utterance.onend = end;
+      utterance.onerror = end;
+      window.speechSynthesis.speak(utterance);
+      timer.current = setTimeout(end, 20000);
+    } else timer.current = setTimeout(end, 2600);
+  }
+  function respond(text: string, spoken: boolean) {
+    const { mic, step, draft, textOpen, taskWillFail } = live.current;
+    if (taskWillFail) {
+      setTaskWillFail(false);
+      halt();
+      setEvent('task-failed');
+      return;
+    }
     const entry = script[step];
+    // A spoken assignment gets a spoken reply, and so does a written one while the microphone is on.
+    const voice = spoken || mic === 'on';
     let reply: string;
+    let asks = false;
     if (/spara/i.test(text)) {
       reply = draft.length
         ? `Sparat. ${draft.length === 1 ? '1 ändring' : `${draft.length} ändringar`} finns nu i hushållets karta.`
@@ -222,11 +372,17 @@ function useConversation(draftOpenAtStart: boolean) {
       setSaved((current) => [...current, ...draft]);
       setDraft([]);
       if (entry?.save) setStep(step + 1);
+      if (draft.length && voice) {
+        setJustSaved(true);
+        clearTimeout(savedTimer.current);
+        savedTimer.current = setTimeout(() => setJustSaved(false), 4000);
+      }
     } else if (!entry || entry.save) {
       reply =
         'Manuset i den här prototypen är slut. Välj Börja om under Prototyplägen för att spela upp det igen.';
     } else {
       reply = entry.reply ?? '';
+      asks = Boolean(entry.question);
       const changes = entry.changes ?? [];
       setDraft((current) => [
         ...current.filter((item) => !changes.some((change) => change.id === item.id)),
@@ -234,22 +390,19 @@ function useConversation(draftOpenAtStart: boolean) {
       ]);
       setStep(step + 1);
     }
-    addRow('skyttel', reply, mic === 'on');
+    addRow('skyttel', reply, voice);
+    if (asks) setQuestion(voice ? 'voice' : 'text');
+    if (!textOpen) setUnread(asks ? 'asked' : 'answered');
     setWorking(null);
-    if (mic === 'on') {
-      setSpeaking(true);
-      timer.current = setTimeout(() => {
-        setSpeaking(false);
-        next();
-      }, 2600);
-    } else next();
+    if (voice) say(reply);
+    else next();
   }
   function begin(item: { text: string; spoken: boolean }) {
     active.current = true;
     setNote('');
     setOrigin(item.spoken ? 'voice' : 'text');
     setWorking(item.spoken ? 'voice' : 'text');
-    timer.current = setTimeout(() => respond(item.text), 2400);
+    timer.current = setTimeout(() => respond(item.text, item.spoken), 2400);
   }
   function next() {
     const item = queue.current.shift();
@@ -259,6 +412,9 @@ function useConversation(draftOpenAtStart: boolean) {
   }
   function ask(text: string, spoken: boolean) {
     addRow('user', text, spoken);
+    // A new attempt answers the question that waited and takes an event notice away.
+    setQuestion(null);
+    setEvent(null);
     if (active.current) {
       queue.current.push({ text, spoken });
       setWaiting(queue.current.length);
@@ -266,7 +422,9 @@ function useConversation(draftOpenAtStart: boolean) {
   }
   /** Stops the work in progress and drops every message that waits. */
   function halt() {
+    turns.current += 1;
     clearTimeout(timer.current);
+    window.speechSynthesis?.cancel();
     queue.current = [];
     active.current = false;
     setWaiting(0);
@@ -274,17 +432,81 @@ function useConversation(draftOpenAtStart: boolean) {
     setSpeaking(false);
     setTalking(false);
   }
-  function toggleMic() {
+  function stopMic() {
+    starts.current += 1;
     clearTimeout(micTimer.current);
-    if (mic === 'off') {
-      setMic('starting');
-      micTimer.current = setTimeout(() => setMic('on'), 900);
-    } else {
-      setMic('off');
-      setTalking(false);
-    }
+    clearTimeout(holdTimer.current);
+    closeMicrophone();
+    holding.current = false;
+    heard.current = false;
+    setHeld(false);
+    setMic('off');
+    setTalking(false);
+    setAudioStopped(false);
   }
-  const micDisabled = blocked || (working === 'text' && mic === 'off');
+  /** The status is "Rösten startar" also while the browser asks about the microphone. */
+  async function startMic(quick: boolean) {
+    const start = ++starts.current;
+    const { nextStart, audioWillStop, prefs } = live.current;
+    clearTimeout(micTimer.current);
+    setEvent(null);
+    setMic('starting');
+    let failure = nextStart === 'ok' ? null : nextStart;
+    if (!failure && prefs.realMic) failure = await openMicrophone();
+    if (start !== starts.current) {
+      // The user cancelled the start while the browser asked about the microphone.
+      if (live.current.mic === 'off') closeMicrophone();
+      return;
+    }
+    micTimer.current = setTimeout(
+      () => {
+        if (failure) {
+          setNextStart('ok');
+          stopMic();
+          setEvent(failure);
+        } else if (audioWillStop) {
+          // The microphone does not listen until the audio plays.
+          setAudioWillStop(false);
+          setAudioStopped(true);
+        } else {
+          setMic('on');
+          if (holding.current && !prefs.realMic) setTalking(true);
+        }
+      },
+      quick ? 350 : 900,
+    );
+  }
+  // With the real microphone, the level decides when the user talks and when the turn is over.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the loop reads the latest values from refs
+  useEffect(() => {
+    if (mic !== 'on' || !prefs.realMic) return;
+    let loudSince = 0;
+    let quietSince = 0;
+    let spoke = false;
+    const poll = setInterval(() => {
+      const now = Date.now();
+      if (active.current) spoke = false;
+      if ((microphoneLevel() ?? 0) > 0.12) {
+        quietSince = 0;
+        loudSince ||= now;
+        if (now - loudSince > 150 && !active.current) {
+          spoke = true;
+          heard.current = true;
+          setTalking(true);
+        }
+        return;
+      }
+      loudSince = 0;
+      quietSince ||= now;
+      if (now - quietSince > 400) setTalking(false);
+      if (spoke && now - quietSince > 1300 && !holding.current) {
+        spoke = false;
+        heard.current = false;
+        ask(nextLine(), true);
+      }
+    }, 60);
+    return () => clearInterval(poll);
+  }, [mic, prefs.realMic]);
   // The consent box opens beside the pressed tool, so that the pointer has a short way to go.
   const askBeside = (kind: 'voice' | 'text', button: HTMLElement) => {
     const box = button.getBoundingClientRect();
@@ -292,6 +514,34 @@ function useConversation(draftOpenAtStart: boolean) {
     setAnchor(narrow ? { top: box.bottom + 12, left: 12 } : { top: 24, left: box.right + 18 });
     setAsking(kind);
   };
+  function newConversation() {
+    halt();
+    setMemoryForced(null);
+    setSummarisedRows(null);
+    setNote('');
+    setQuestion(null);
+    setEvent(null);
+    setUnread(null);
+    setDraftOpen(draftOpenAtStart);
+    setRows([
+      {
+        id: nextId.current++,
+        role: 'skyttel',
+        spoken: mic === 'on',
+        text: draft.length
+          ? `Nytt samtal. ${count(draft)} ligger kvar i ditt utkast.`
+          : 'Nytt samtal. Utkastet är tomt.',
+      },
+    ]);
+  }
+  function checkSave() {
+    setUnclear('no');
+    addRow(
+      'skyttel',
+      `Kontrollen är klar. Utkastet sparades inte. ${count(draft)} ligger kvar i ditt utkast.`,
+      false,
+    );
+  }
   return {
     anchor,
     consentSaved,
@@ -308,6 +558,7 @@ function useConversation(draftOpenAtStart: boolean) {
     saved,
     step,
     online,
+    available,
     unclear,
     note,
     draftOpen,
@@ -321,38 +572,77 @@ function useConversation(draftOpenAtStart: boolean) {
     autoCompact,
     setAutoCompact,
     micDisabled,
+    ongoing,
+    idleOff,
+    notice,
+    fromTap,
+    held,
+    question,
+    status,
+    voiceVisible,
+    nextStart,
+    setNextStart,
+    audioWillStop,
+    setAudioWillStop,
+    taskWillFail,
+    setTaskWillFail,
     nextLine: script[step]?.say,
-    statusWord: working
-      ? 'Skyttel arbetar'
-      : speaking
-        ? 'Skyttel talar'
-        : mic === 'starting'
-          ? 'Rösten startar'
-          : mic === 'on'
-            ? talking
-              ? 'Du talar'
-              : 'Lyssnar'
-            : 'Mikrofonen är av',
-    // The voice box belongs to the voice mode: it never shows for a conversation in text only.
-    voiceVisible: mic !== 'off' || speaking || (busy && origin === 'voice'),
+    // The mark on the text tool shows only while the voice box is away and the text view is closed.
+    unread: !textOpen && !voiceVisible ? unread : null,
+    waveState: (status === 'talking'
+      ? 'user'
+      : status === 'speaking'
+        ? 'skyttel'
+        : status === 'starting' || (status === 'waiting' && mic !== 'on')
+          ? 'dimmed'
+          : 'still') as WaveState,
     setUnsent,
     setDraftOpen,
     setUnclear,
+    /** A short press: the consent box at the first start, then the microphone on or off. */
     pressVoice(button: HTMLElement) {
-      if (micDisabled) return;
-      if (consented) toggleMic();
-      else askBeside('voice', button);
+      if (idleOff) setTapped(true);
+      else if (micDisabled) return;
+      else if (!consented) askBeside('voice', button);
+      else if (mic === 'off') void startMic(false);
+      else stopMic();
+    },
+    /** The press begins. If it lasts longer than the limit, the microphone listens until release. */
+    pressStart() {
+      clearTimeout(holdTimer.current);
+      if (!consented || mic !== 'off' || micDisabled || idleOff) return;
+      holdTimer.current = setTimeout(() => {
+        holding.current = true;
+        setHeld(true);
+        void startMic(true);
+      }, prefs.holdMs);
+    },
+    /** The press ends. The result is true if it was a long press, which then is over. */
+    pressEnd() {
+      clearTimeout(holdTimer.current);
+      if (!holding.current) return false;
+      const said = live.current.mic === 'on' && (!prefs.realMic || heard.current);
+      stopMic();
+      if (said) ask(nextLine(), true);
+      return true;
     },
     pressText(button: HTMLElement) {
-      if (consented) setTextOpen((open) => !open);
-      else askBeside('text', button);
+      if (idleOff) setTapped(true);
+      else if (!consented) askBeside('text', button);
+      else {
+        setTextOpen((open) => !open);
+        setUnread(null);
+      }
     },
     closeText: () => setTextOpen(false),
     approve(remember: boolean) {
       setStarted(true);
       if (remember) setConsentSaved(true);
-      if (asking === 'voice') toggleMic();
-      else setTextOpen(true);
+      if (asking === 'voice') void startMic(false);
+      else {
+        setTextOpen(true);
+        setUnread(null);
+      }
       setAsking(null);
     },
     decline: () => setAsking(null),
@@ -371,11 +661,14 @@ function useConversation(draftOpenAtStart: boolean) {
       setNote('Avbrutet. Utkastet är oförändrat.');
     },
     speak() {
-      const line = script[step]?.say ?? 'Finns det något mer att göra?';
+      const line = nextLine();
       if (blocked || busy || talking) return;
       // A prototype shortcut: the control also turns the microphone on, without the consent box.
+      starts.current += 1;
       clearTimeout(micTimer.current);
       setStarted(true);
+      setEvent(null);
+      setAudioStopped(false);
       setMic('on');
       setTalking(true);
       timer.current = setTimeout(() => {
@@ -387,38 +680,34 @@ function useConversation(draftOpenAtStart: boolean) {
       halt();
       setNote('Avbrutet. Utkastet är oförändrat.');
     },
-    newConversation() {
-      halt();
-      setMemoryForced(null);
-      setSummarisedRows(null);
-      setNote('');
-      setDraftOpen(draftOpenAtStart);
-      setRows([
-        {
-          id: nextId.current++,
-          role: 'skyttel',
-          spoken: mic === 'on',
-          text: draft.length
-            ? `Nytt samtal. ${count(draft)} ligger kvar i ditt utkast.`
-            : 'Nytt samtal. Utkastet är tomt.',
-        },
-      ]);
+    newConversation,
+    /** The close button of an event notice, or of a notice that came from a press. */
+    closeNotice() {
+      if (fromTap) setTapped(false);
+      else setEvent(null);
+    },
+    /** The one button of a notice. */
+    noticeAction() {
+      if (notice === 'audio-stopped') {
+        setAudioStopped(false);
+        setMic('on');
+        if (holding.current && !prefs.realMic) setTalking(true);
+      } else if (notice === 'unclear-failed') checkSave();
+      else if (notice === 'context-full') newConversation();
+    },
+    /** The voice connection breaks in the middle of the conversation. */
+    dropVoice() {
+      if (mic === 'off') return;
+      stopMic();
+      setEvent('voice-dropped');
     },
     setOnline(value: boolean) {
       setOnlineState(value);
-      if (!value) {
-        clearTimeout(micTimer.current);
-        setMic('off');
-        setTalking(false);
-      }
+      if (!value) stopMic();
     },
-    checkSave() {
-      setUnclear('no');
-      addRow(
-        'skyttel',
-        `Kontrollen är klar. Utkastet sparades inte. ${count(draft)} ligger kvar i ditt utkast.`,
-        false,
-      );
+    setAvailable(value: boolean) {
+      setAvailableState(value);
+      if (!value) stopMic();
     },
     forgetConsent() {
       setConsentSaved(false);
@@ -426,26 +715,32 @@ function useConversation(draftOpenAtStart: boolean) {
     },
     reset() {
       halt();
+      stopMic();
+      clearTimeout(savedTimer.current);
       setMemoryForced(null);
       setSummarisedRows(null);
-      clearTimeout(micTimer.current);
       setConsentSaved(false);
       setStarted(false);
       setAsking(null);
       setTextOpen(false);
-      setMic('off');
-      setTalking(false);
-      setWorking(null);
-      setSpeaking(false);
       setRows([]);
       setUnsent('');
       setDraft([]);
       setSaved([]);
       setStep(0);
       setOnlineState(true);
+      setAvailableState(true);
       setUnclear('no');
       setNote('');
       setDraftOpen(draftOpenAtStart);
+      setQuestion(null);
+      setJustSaved(false);
+      setEvent(null);
+      setAudioWillStop(false);
+      setNextStart('ok');
+      setTaskWillFail(false);
+      setTapped(false);
+      setUnread(null);
     },
   };
 }
@@ -501,33 +796,21 @@ function FakeMap({ c }: { c: Conversation }) {
   );
 }
 
-function Wave({ active, muted }: { active: boolean; muted?: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`tp-wave${active ? ' has-sound' : ''}${muted ? ' muted' : ''}`}
-    >
-      <i />
-      <i />
-      <i />
-      <i />
-      <i />
-      <i />
-      <i />
-    </span>
-  );
-}
-
 /**
- * The small voice box: waveform, one status word and a small stop icon. The box keeps one height
- * and is only as wide as its content. Its full behaviour belongs to issue 182.
+ * The small voice box: waveform, one of seven status words, the context mark and a small stop
+ * icon. The box keeps one height and is only as wide as its content. It is not a control itself.
  */
-function VoiceBox({ c }: { c: Conversation }) {
+function VoiceBox({ c, parts, reduced }: { c: Conversation; parts: Parts; reduced: boolean }) {
   if (!c.voiceVisible) return null;
   return (
-    <div className="tp-voicebox floating tp-surface">
-      <Wave active={c.talking || c.speaking} muted={c.mic !== 'on' && !c.speaking} />
-      <span role="status">{c.statusWord}</span>
+    <div className="tp-voicebox tp-surface">
+      <Wave kind={parts.vag} state={c.waveState} reduced={reduced} saved={c.status === 'saved'} />
+      {c.status === 'saved' && (
+        <span className="vp-check">
+          <Icon name="check" />
+        </span>
+      )}
+      <span role="status">{statusWords[c.status]}</span>
       {c.memory >= 85 && (
         <span
           className="tp-context-mark"
@@ -565,53 +848,55 @@ function VoiceBox({ c }: { c: Conversation }) {
   );
 }
 
-function Notices({ c }: { c: Conversation }) {
+/**
+ * The place of the voice box, top right. The conversation notice stands here too, also when the
+ * box is away. While the text view is open the notice stands in the text view and not here.
+ */
+function VoiceCorner({ c, parts, reduced }: { c: Conversation; parts: Parts; reduced: boolean }) {
+  const corner = useRef<HTMLDivElement>(null);
+  const notice = c.textOpen ? null : c.notice;
+  const { fromTap, closeNotice } = c;
+  const close = useRef(closeNotice);
+  close.current = closeNotice;
+  // How a notice goes away when it came from a press with no conversation in progress.
+  useEffect(() => {
+    const page = corner.current?.ownerDocument;
+    if (!fromTap || !page || parts.stang === 'knapp') return;
+    if (parts.stang === 'tid') {
+      const wait = setTimeout(() => close.current(), 6000);
+      return () => clearTimeout(wait);
+    }
+    const onPointer = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('.vp-notice, .workspace-talk, .tp-rail-text')) close.current();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close.current();
+    };
+    page.addEventListener('pointerdown', onPointer);
+    page.addEventListener('keydown', onKey);
+    return () => {
+      page.removeEventListener('pointerdown', onPointer);
+      page.removeEventListener('keydown', onKey);
+    };
+  }, [fromTap, parts.stang]);
   return (
-    <>
-      {!c.online && (
-        <p className="tp-notice" role="alert">
-          <span className="tp-notice-symbol" aria-hidden="true">
-            !
-          </span>
-          Ingen kontakt med Skyttel. Du kan läsa samtalstexten. Det går inte att skicka eller tala
-          förrän kontakten är tillbaka.
-        </p>
+    <div
+      ref={corner}
+      className={`vp-corner notis-${parts.notis}${c.voiceVisible ? ' has-box' : ''}`}
+    >
+      <VoiceBox c={c} parts={parts} reduced={reduced} />
+      {notice && (
+        <ConversationNotice
+          id={notice}
+          look={parts.notis}
+          symbols={parts.symbol}
+          closable={notices[notice].kind === 'handelse' || (fromTap && parts.stang === 'knapp')}
+          onClose={c.closeNotice}
+          onAction={c.noticeAction}
+        />
       )}
-      {c.unclear === 'checking' && (
-        <p className="tp-notice" role="alert">
-          <span className="tp-notice-symbol" aria-hidden="true">
-            ?
-          </span>
-          Det är oklart om utkastet sparades. Skyttel kontrollerar det och berättar vad som hände.
-        </p>
-      )}
-      {c.unclear === 'failed' && (
-        <div className="tp-notice" role="alert">
-          <span className="tp-notice-symbol" aria-hidden="true">
-            ?
-          </span>
-          <span>
-            Skyttel kunde inte kontrollera om utkastet sparades.
-            <button type="button" onClick={c.checkSave}>
-              Kontrollera om utkastet sparades
-            </button>
-          </span>
-        </div>
-      )}
-      {c.memoryFull && !c.autoCompact && (
-        <p className="tp-notice" role="alert">
-          <span className="tp-notice-symbol" aria-hidden="true">
-            !
-          </span>
-          Kontexten är full. Välj Nytt samtal för att fortsätta. Utkastet ligger kvar.
-        </p>
-      )}
-      {c.note && (
-        <p className="tp-note" role="status">
-          {c.note}
-        </p>
-      )}
-    </>
+    </div>
   );
 }
 
@@ -881,17 +1166,21 @@ function TextView({
   layout,
   touch,
   widths,
+  parts,
+  reduced,
 }: {
   c: Conversation;
   layout: DraftLayout;
   touch: boolean;
   widths: Widths;
+  parts: Parts;
+  reduced: boolean;
 }) {
   // Leave room for the tool rail and a strip of the map.
   const room = (typeof window === 'undefined' ? 1280 : window.innerWidth) - 220;
   return (
     <>
-      <VoiceBox c={c} />
+      <VoiceCorner c={c} parts={parts} reduced={reduced} />
       {c.textOpen && (
         <section
           className={`tp-side tp-columns tp-surface${c.draftOpen ? ' with-draft' : ''}`}
@@ -926,7 +1215,21 @@ function TextView({
             </header>
             <DraftToggle c={c} />
             <Transcript c={c} touch={touch} />
-            <Notices c={c} />
+            {c.notice && (
+              <ConversationNotice
+                id={c.notice}
+                look="textvy"
+                symbols={parts.symbol}
+                closable={notices[c.notice].kind === 'handelse'}
+                onClose={c.closeNotice}
+                onAction={c.noticeAction}
+              />
+            )}
+            {c.note && (
+              <p className="tp-note" role="status">
+                {c.note}
+              </p>
+            )}
             <form
               className="tp-composer"
               onSubmit={(event) => {
@@ -988,12 +1291,23 @@ function ConsentDialog({ c, anchored }: { c: Conversation; anchored: boolean }) 
   );
 }
 
-function ToolRail({ c }: { c: Conversation }) {
+function ToolRail({ c, parts, combo }: { c: Conversation; parts: Parts; combo: string }) {
   const [expanded, setExpanded] = useState(false);
   // With the text view closed, the tool shows that Skyttel works on a written message.
   const writing = c.working === 'text' && !c.textOpen;
+  // It also shows that Skyttel has answered or asked, when the voice box is away.
+  const unread = writing ? null : c.unread;
+  const textName = writing
+    ? 'Skriv till Skyttel. Skyttel arbetar.'
+    : unread === 'answered'
+      ? 'Skriv till Skyttel. Skyttel har svarat.'
+      : unread === 'asked'
+        ? 'Skriv till Skyttel. Skyttel väntar på ditt svar.'
+        : 'Skriv till Skyttel';
   const textButton = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
+  // A long press ends with a click that must not also count as a short press.
+  const skipClick = useRef(false);
   useEffect(() => {
     if (wasOpen.current && !c.textOpen) textButton.current?.focus();
     wasOpen.current = c.textOpen;
@@ -1017,30 +1331,55 @@ function ToolRail({ c }: { c: Conversation }) {
       </span>
       <button
         type="button"
-        className="workspace-talk"
+        className={`workspace-talk vp-knapp-${parts.knapp}${c.idleOff ? ' vp-off' : ''}${c.held ? ' vp-held' : ''}`}
         title={
-          c.mic === 'starting' ? 'Avbryt starten av rösten' : 'Prata med Skyttel (Ctrl+Mellanslag)'
+          c.mic === 'starting'
+            ? 'Avbryt starten av rösten'
+            : `Prata med Skyttel (${combo}). Håll in för att tala tills du släpper.`
         }
         aria-label="Prata med Skyttel"
         aria-pressed={c.mic === 'on'}
+        aria-disabled={c.idleOff || undefined}
         disabled={c.micDisabled}
-        onClick={(event) => c.pressVoice(event.currentTarget)}
+        onPointerDown={(event: PointerEvent<HTMLButtonElement>) => {
+          skipClick.current = false;
+          if (event.button !== 0) return;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          c.pressStart();
+        }}
+        onPointerUp={() => {
+          skipClick.current = c.pressEnd();
+        }}
+        onPointerCancel={() => {
+          c.pressEnd();
+        }}
+        onContextMenu={(event) => event.preventDefault()}
+        onClick={(event) => {
+          if (skipClick.current) skipClick.current = false;
+          else c.pressVoice(event.currentTarget);
+        }}
       >
-        <WorkspaceIcon name={c.mic === 'on' ? 'stop' : 'mic'} />
+        <WorkspaceIcon name={parts.knapp === 'stopp' && c.mic === 'on' ? 'stop' : 'mic'} />
         <span>Prata med Skyttel</span>
       </button>
       <button
         ref={textButton}
         type="button"
-        className="tp-rail-text"
-        title={writing ? 'Skriv till Skyttel. Skyttel arbetar.' : 'Skriv till Skyttel'}
-        aria-label={writing ? 'Skriv till Skyttel. Skyttel arbetar.' : 'Skriv till Skyttel'}
+        className={`tp-rail-text${c.idleOff ? ' vp-off' : ''}${unread && parts.markering === 'ram' ? ' vp-ram' : ''}`}
+        title={textName}
+        aria-label={textName}
         aria-expanded={c.textOpen}
+        aria-disabled={c.idleOff || undefined}
         onClick={(event) => c.pressText(event.currentTarget)}
       >
         <WorkspaceIcon name="text" />
         <span>Skriv till Skyttel</span>
         {writing && <i className="tp-rail-mark" aria-hidden="true" />}
+        {unread && parts.markering !== 'ram' && (
+          <i className={`vp-mark ${parts.markering}`} aria-hidden="true">
+            {parts.markering === 'tecken' && (unread === 'asked' ? '?' : '…')}
+          </i>
+        )}
       </button>
       {idle('search', 'Sök i kartan')}
       {idle('list', 'Lista')}
@@ -1086,28 +1425,119 @@ function PhoneFrame({ children }: { children: ReactNode }) {
   );
 }
 
-export function TextModePrototype() {
+/** The key combinations that do the same as the voice button. Both hold Ctrl and Space. */
+const combos = {
+  ctrl: { label: 'Ctrl+Mellanslag', shift: false },
+  'ctrl-skift': { label: 'Ctrl+Skift+Mellanslag', shift: true },
+} as const;
+type ComboKey = keyof typeof combos;
+
+/** The start outcomes that the prototype controls can set up, each with its notice. */
+const startFailures: NoticeId[] = [
+  'mic-denied',
+  'mic-missing',
+  'mic-busy',
+  'no-support',
+  'start-failed',
+  'admin',
+];
+
+export function VoiceModePrototype() {
   const [params, setParams] = useSearchParams();
+  const { variant, parts } = readParts(params);
   const mobile = params.get('mobile') === '1';
   const dark = params.get('theme') === 'dark';
   const layout: DraftLayout = params.get('draft') === 'list' ? 'list' : 'table';
   const anchored = params.get('consent') !== 'center';
   const [draftOpenAtStart, setDraftOpenAtStart] = useState(false);
   const [widths, setWidths] = useState({ text: 400, draft: 340 });
+  const [realMic, setRealMic] = useState(false);
+  const [aloud, setAloud] = useState(false);
+  const [holdMs, setHoldMs] = useState(450);
+  const [lastKey, setLastKey] = useState('ingen');
   // A touch layout has no Escape key: a narrow screen, a coarse pointer, or the prototype switch.
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const [coarse, setCoarse] = useState(false);
+  const [calm, setCalm] = useState(false);
   useLayoutEffect(() => {
     const view = root?.ownerDocument.defaultView;
     if (!view) return;
-    const query = view.matchMedia('(max-width: 700px), (pointer: coarse)');
-    const update = () => setCoarse(query.matches);
+    const pointer = view.matchMedia('(max-width: 700px), (pointer: coarse)');
+    const motion = view.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => {
+      setCoarse(pointer.matches);
+      setCalm(motion.matches);
+    };
     update();
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
+    pointer.addEventListener('change', update);
+    motion.addEventListener('change', update);
+    return () => {
+      pointer.removeEventListener('change', update);
+      motion.removeEventListener('change', update);
+    };
   }, [root]);
   const touch = coarse || params.get('touch') === '1';
-  const c = useConversation(draftOpenAtStart);
+  const reduced = calm || params.get('rorelse') === 'minskad';
+  // The starting values of the decision: Ctrl+Shift+Space on macOS, Ctrl+Space elsewhere.
+  const asked = params.get('tangent');
+  const comboKey: ComboKey =
+    asked && asked in combos
+      ? (asked as ComboKey)
+      : /Mac|iPhone|iPad/.test(navigator.platform)
+        ? 'ctrl-skift'
+        : 'ctrl';
+  const c = useConversation(draftOpenAtStart, { realMic, aloud, holdMs });
+  const latest = useRef(c);
+  latest.current = c;
+  // The key combination follows the rule of the button: a short press toggles, a long press
+  // listens until the keys are released.
+  useEffect(() => {
+    const page = root?.ownerDocument;
+    if (!page) return;
+    const pages = page === document ? [page] : [page, document];
+    let down = false;
+    let swallowSpace = false;
+    const onDown = (event: KeyboardEvent) => {
+      const match =
+        event.code === 'Space' &&
+        event.ctrlKey &&
+        event.shiftKey === combos[comboKey].shift &&
+        !event.altKey &&
+        !event.metaKey;
+      if (!match) return;
+      event.preventDefault();
+      if (event.repeat || down) return;
+      down = true;
+      latest.current.pressStart();
+    };
+    const onUp = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && swallowSpace) {
+        // Ctrl was released first; this Space must not also press a focused button.
+        swallowSpace = false;
+        event.preventDefault();
+        return;
+      }
+      if (!down || (event.code !== 'Space' && event.key !== 'Control' && event.key !== 'Shift'))
+        return;
+      down = false;
+      swallowSpace = event.code !== 'Space';
+      event.preventDefault();
+      const long = latest.current.pressEnd();
+      setLastKey(`${combos[comboKey].label}, ${long ? 'långt' : 'kort'} tryck`);
+      const button = page.querySelector<HTMLElement>('.workspace-talk');
+      if (!long && button) latest.current.pressVoice(button);
+    };
+    for (const each of pages) {
+      each.addEventListener('keydown', onDown);
+      each.addEventListener('keyup', onUp);
+    }
+    return () => {
+      for (const each of pages) {
+        each.removeEventListener('keydown', onDown);
+        each.removeEventListener('keyup', onUp);
+      }
+    };
+  }, [root, comboKey]);
   const set = useCallback(
     (key: string, value: string | null) =>
       setParams(
@@ -1121,10 +1551,34 @@ export function TextModePrototype() {
       ),
     [setParams],
   );
+  // A new variant gives every part its own value again.
+  const setVariant = useCallback(
+    (key: string) =>
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          next.set('variant', key);
+          for (const axis of Object.keys(options)) next.delete(axis);
+          return next;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
+  const check = (label: string, checked: boolean, onChange: (checked: boolean) => void) => (
+    <label>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      {label}
+    </label>
+  );
   const app = (
     <div
       ref={setRoot}
-      className={`household-map workspace-shell tp-root tp-variant-c${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}`}
+      className={`household-map workspace-shell tp-root tp-variant-c${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}${reduced ? ' vp-reduced' : ''}`}
       data-theme={dark ? 'dark' : 'light'}
       style={
         {
@@ -1134,47 +1588,73 @@ export function TextModePrototype() {
       }
     >
       <FakeMap c={c} />
-      <ToolRail c={c} />
+      <ToolRail c={c} parts={parts} combo={combos[comboKey].label} />
       <div className="workspace-context">
         Familjen Berg<span>Gemensam karta</span>
       </div>
-      {!c.textOpen && (
-        <div className="tp-floating-notices">
-          <Notices c={c} />
-        </div>
-      )}
-      <TextView c={c} layout={layout} touch={touch} widths={{ ...widths, set: setWidths }} />
+      <TextView
+        c={c}
+        layout={layout}
+        touch={touch}
+        widths={{ ...widths, set: setWidths }}
+        parts={parts}
+        reduced={reduced}
+      />
       <ConsentDialog c={c} anchored={anchored} />
     </div>
   );
   return (
     <>
       {mobile ? <PhoneFrame>{app}</PhoneFrame> : app}
+      <PrototypeSwitcher current={variant} onChange={setVariant} />
       <aside className={`tp-dock${mobile ? ' aside' : ''}`} aria-label="Prototypens reglage">
-        <strong>Prototyp: textläget</strong>
+        <strong>Prototyp: röstläget · variant {variant}</strong>
         <details>
           <summary>Prototyplägen</summary>
           <dl>
+            <dt>Samtal</dt>
+            <dd>{c.ongoing ? 'pågår' : 'pågår inte'}</dd>
             <dt>Medgivande</dt>
             <dd>{c.consentSaved ? 'sparat' : c.started ? 'givet för samtalet' : 'saknas'}</dd>
-            <dt>Textvy</dt>
-            <dd>{c.textOpen ? 'öppen' : 'stängd'}</dd>
             <dt>Mikrofon</dt>
-            <dd>{c.mic === 'on' ? 'på' : c.mic === 'starting' ? 'startar' : 'av'}</dd>
+            <dd>
+              {c.mic === 'on' ? 'på' : c.mic === 'starting' ? 'startar' : 'av'}
+              {c.held && ', hålls inne'}
+            </dd>
             <dt>Skyttel</dt>
             <dd>
               {c.working
                 ? `arbetar (${c.working === 'voice' ? 'talat' : 'skrivet'} uppdrag)`
                 : c.speaking
                   ? 'talar'
-                  : 'väntar'}
+                  : c.question
+                    ? 'har frågat och väntar'
+                    : 'väntar'}
+            </dd>
+            <dt>Röstrutan</dt>
+            <dd>{c.voiceVisible ? statusWords[c.status] : 'syns inte'}</dd>
+            <dt>Samtalsnotis</dt>
+            <dd>
+              {c.notice
+                ? `${notices[c.notice].label} (${notices[c.notice].kind === 'hinder' ? 'hinder' : 'händelse'}${c.fromTap ? ', efter tryck' : ''})`
+                : 'ingen'}
+            </dd>
+            <dt>Textvy</dt>
+            <dd>{c.textOpen ? 'öppen' : 'stängd'}</dd>
+            <dt>Markering</dt>
+            <dd>
+              {c.unread === 'asked'
+                ? 'Skyttel väntar på ditt svar'
+                : c.unread === 'answered'
+                  ? 'Skyttel har svarat'
+                  : 'ingen'}
             </dd>
             <dt>Utkast</dt>
             <dd>{count(c.draft)}</dd>
             <dt>Väntar</dt>
             <dd>{c.waiting === 1 ? '1 meddelande' : `${c.waiting} meddelanden`}</dd>
-            <dt>Oskickad text</dt>
-            <dd>{c.unsent ? 'finns' : 'ingen'}</dd>
+            <dt>Tangenter</dt>
+            <dd>{lastKey}</dd>
           </dl>
           <div className="tp-dock-actions">
             <button
@@ -1192,6 +1672,9 @@ export function TextModePrototype() {
             >
               Fyll i nästa replik som text
             </button>
+            <button type="button" disabled={c.mic === 'off'} onClick={c.dropVoice}>
+              Rösten bryts
+            </button>
             <button type="button" onClick={c.forgetConsent}>
               Glöm medgivandet
             </button>
@@ -1199,22 +1682,38 @@ export function TextModePrototype() {
               Börja om
             </button>
           </div>
+          {check('Riktig mikrofon styr vågformen', realMic, setRealMic)}
+          {check('Läs upp Skyttels svar med webbläsarens röst', aloud, setAloud)}
           <label>
-            <input
-              type="checkbox"
-              checked={!c.online}
-              onChange={(event) => c.setOnline(!event.target.checked)}
-            />
-            Bruten kontakt
+            Nästa start av rösten
+            <select
+              value={c.nextStart}
+              onChange={(event) => c.setNextStart(event.target.value as 'ok' | NoticeId)}
+            >
+              <option value="ok">Lyckas</option>
+              {startFailures.map((id) => (
+                <option key={id} value={id}>
+                  {notices[id].label}
+                </option>
+              ))}
+            </select>
           </label>
+          {check('Webbläsaren stoppar ljudet vid nästa start', c.audioWillStop, c.setAudioWillStop)}
+          {check('Nästa uppdrag misslyckas', c.taskWillFail, c.setTaskWillFail)}
+          {check('Bruten kontakt', !c.online, (on) => c.setOnline(!on))}
+          {check('Samtalet är inte tillgängligt', !c.available, (on) => c.setAvailable(!on))}
           <label>
-            <input
-              type="checkbox"
-              checked={c.autoCompact}
-              onChange={(event) => c.setAutoCompact(event.target.checked)}
-            />
-            Sammanfatta automatiskt vid full kontext
+            Oklart sparande
+            <select
+              value={c.unclear}
+              onChange={(event) => c.setUnclear(event.target.value as Unclear)}
+            >
+              <option value="no">Nej</option>
+              <option value="checking">Skyttel kontrollerar själv</option>
+              <option value="failed">Egen kontroll misslyckades</option>
+            </select>
           </label>
+          {check('Sammanfatta automatiskt vid full kontext', c.autoCompact, c.setAutoCompact)}
           <label>
             Kontext
             <select
@@ -1230,67 +1729,67 @@ export function TextModePrototype() {
             </select>
           </label>
           <label>
-            Oklart sparande
-            <select
-              value={c.unclear}
-              onChange={(event) => c.setUnclear(event.target.value as Unclear)}
-            >
-              <option value="no">Nej</option>
-              <option value="checking">Skyttel kontrollerar själv</option>
-              <option value="failed">Egen kontroll misslyckades</option>
+            Gräns för långt tryck
+            <select value={holdMs} onChange={(event) => setHoldMs(Number(event.target.value))}>
+              <option value="300">0,3 sekunder</option>
+              <option value="450">0,45 sekunder</option>
+              <option value="600">0,6 sekunder</option>
             </select>
           </label>
           <label>
-            <input
-              type="checkbox"
-              checked={params.get('touch') === '1'}
-              onChange={(event) => set('touch', event.target.checked ? '1' : null)}
-            />
-            Pekskärm utan Escape (som iPad)
+            Tangentkombination
+            <select value={comboKey} onChange={(event) => set('tangent', event.target.value)}>
+              {Object.entries(combos).map(([key, combo]) => (
+                <option key={key} value={key}>
+                  {combo.label}
+                </option>
+              ))}
+            </select>
           </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={layout === 'list'}
-              onChange={(event) => set('draft', event.target.checked ? 'list' : null)}
-            />
-            Utkastlistan som lista
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={draftOpenAtStart}
-              onChange={(event) => {
-                setDraftOpenAtStart(event.target.checked);
-                c.setDraftOpen(event.target.checked);
-              }}
-            />
-            Inställning: utkastlistan utfälld vid nytt samtal
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={!anchored}
-              onChange={(event) => set('consent', event.target.checked ? 'center' : null)}
-            />
-            Medgivanderutan mitt på skärmen
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={dark}
-              onChange={(event) => set('theme', event.target.checked ? 'dark' : null)}
-            />
-            Mörkt tema
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={mobile}
-              onChange={(event) => set('mobile', event.target.checked ? '1' : null)}
-            />
-            Visa som mobil (390 × 780)
-          </label>
+        </details>
+        <details>
+          <summary>Blanda delar från varianterna</summary>
+          {(Object.keys(options) as Axis[]).map((axis) => (
+            <label key={axis}>
+              {axisNames[axis]}
+              <select
+                value={parts[axis]}
+                onChange={(event) =>
+                  set(
+                    axis,
+                    event.target.value === variants[variant][axis] ? null : event.target.value,
+                  )
+                }
+              >
+                {Object.entries(options[axis]).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </details>
+        <details>
+          <summary>Skärm och textvy</summary>
+          {check('Minskad rörelse', params.get('rorelse') === 'minskad', (on) =>
+            set('rorelse', on ? 'minskad' : null),
+          )}
+          {check('Mörkt tema', dark, (on) => set('theme', on ? 'dark' : null))}
+          {check('Visa som mobil (390 × 780)', mobile, (on) => set('mobile', on ? '1' : null))}
+          {check('Pekskärm utan Escape (som iPad)', params.get('touch') === '1', (on) =>
+            set('touch', on ? '1' : null),
+          )}
+          {check('Utkastlistan som lista', layout === 'list', (on) =>
+            set('draft', on ? 'list' : null),
+          )}
+          {check('Inställning: utkastlistan utfälld vid nytt samtal', draftOpenAtStart, (on) => {
+            setDraftOpenAtStart(on);
+            c.setDraftOpen(on);
+          })}
+          {check('Medgivanderutan mitt på skärmen', !anchored, (on) =>
+            set('consent', on ? 'center' : null),
+          )}
         </details>
       </aside>
     </>

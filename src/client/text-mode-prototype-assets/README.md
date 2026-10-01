@@ -29,6 +29,12 @@ npm run prototype:textlage
 Öppna sedan <http://localhost:4177/?prototype=textlage>. Prototypen laddas
 bara i utvecklingsservern, aldrig i ett bygge.
 
+På grenen `prototype/skyttel-rostlage` öppnar adressen röstlägets
+prototyp, som har samma textvy och bygger vidare på röstrutan. Se
+[röstlägets README](../voice-mode-prototype-assets/README.md). Textlägets
+prototyp som den såg ut vid beslutet finns på grenen
+`prototype/skyttel-textlage`.
+
 ## Det prototypen visar
 
 Prototypen visar den valda utformningen, som under arbetet hette variant
