@@ -45,6 +45,8 @@ export const axisNames: Record<Axis, string> = {
 };
 
 export const variants = {
+  // The design that the decision of viscalyx/skyttel#191 chose: the place of C, the text view of B.
+  V: { name: 'Vald utformning', plats: 'nere', kort: 'kompakt' },
   A: { name: 'Under verktygsraden', plats: 'under', kort: 'rullar' },
   B: { name: 'I verktygsraden', plats: 'rad', kort: 'kompakt' },
   C: { name: 'Vid nederkanten', plats: 'nere', kort: 'fokus' },
@@ -54,8 +56,8 @@ export const variantKeys = Object.keys(variants) as VariantKey[];
 
 /** The variant gives every part its value; a part named in the URL replaces that value. */
 export function readParts(params: URLSearchParams): { variant: VariantKey; mobile: MobileParts } {
-  const asked = params.get('variant')?.toUpperCase() ?? 'A';
-  const variant = variantKeys.includes(asked as VariantKey) ? (asked as VariantKey) : 'A';
+  const asked = params.get('variant')?.toUpperCase() ?? 'V';
+  const variant = variantKeys.includes(asked as VariantKey) ? (asked as VariantKey) : 'V';
   const mobile: Record<string, string> = { ...variants[variant] };
   for (const axis of Object.keys(options) as Axis[]) {
     const value = params.get(axis);

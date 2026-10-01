@@ -77,8 +77,13 @@ uppe är det inte.
 
 ## Varianterna
 
+Sidan öppnas med den valda utformningen, variant V. Den står under
+[Beslut](#beslut). Varianterna A, B och C är de som beställaren valde
+mellan, och de finns kvar för jämförelse.
+
 Raden längst ner på sidan byter variant. Vänsterpil och högerpil gör
-samma sak. Adressen får `variant=A`, `variant=B` eller `variant=C`.
+samma sak. Adressen får `variant=V`, `variant=A`, `variant=B` eller
+`variant=C`.
 
 | Del | A: Under verktygsraden | B: I verktygsraden | C: Vid nederkanten |
 | --- | --- | --- | --- |
@@ -195,10 +200,14 @@ kort.
 ## Skärmbilder
 
 Filer som börjar med `a-`, `b-` och `c-` finns för varje variant, i
-skärmen **Telefon, stående** om inget annat sägs.
+skärmen **Telefon, stående** om inget annat sägs. Filer som börjar med
+`vald-` visar den valda utformningen.
 
 | Fil | Visar |
 | --- | --- |
+| `vald-rost.png` | Den valda platsen: röstrutan vid nederkanten, ovanför kartans rad. |
+| `vald-notis-hinder.png`, `vald-notis-handelse.png` | De valda samtalsnotiserna: ett hinder med knapp ovanför röstrutan, och en händelse utan röstruta. |
+| `vald-textvy-tangentbord.png` | Den valda textvyn med tangentbordet uppe: den kompakta raden, röstrutan ovanför fältet och en enda stoppikon. |
 | `*-rost.png` | Röstrutan med **Skyttel arbetar** och stoppikonen. Textvyn är stängd. |
 | `*-notis-hinder.png` | Ett hinder med knapp, och röstrutan med kontextsymbolen vid 90 procent. |
 | `*-notis-handelse.png` | En händelse med stängknapp. Röstrutan syns inte. |
@@ -266,11 +275,25 @@ Det här syntes när prototypen byggdes och provades.
 
 ## Beslut
 
-Ärendet är öppet. Beställaren har inte valt variant.
+Ärendet är löst. Det fastställda beslutet står i ärendets
+beslutskommentar, och den gäller framför listan här. Beställaren valde
+den 1 oktober 2026 platsen från variant C och textvyn från variant B.
 
-Beställaren sa den 1 oktober 2026 att textvyn inte ska ta så mycket
-plats på en iPad, stående eller liggande. Den ska vara mer som på dator,
-så att kartan får plats bredvid eller syns bakom samtalstexten.
-Prototypen visar därför sidofältet som utgångsläge på bred pekskärm.
-Det ändrar beslutet om textläget, som säger att textvyn fyller skärmen
-på mobil enhet.
+| Del | Val |
+| --- | --- |
+| Röstrutan på smal skärm | Vid nederkanten, till höger, ovanför kartans rad. Från C. |
+| Samtalsnotisen på smal skärm | Ett kort ovanför röstrutan. Från C. |
+| Röstrutan när textvyn är öppen på smal skärm | Ovanför meddelandefältet, i textvyn. Från C. |
+| Regeln för platsen | Skärmens bredd avgör, inte statusordets längd. På smal skärm får röstrutan inte plats uppe till höger: där finns 161 till 176 px, och rutan är 117 till 241 px bred. |
+| Röstrutan på bred pekskärm | Uppe till höger, som på dator. |
+| Textvyn på bred pekskärm | Ett sidofält med fast bredd, även på liggande telefon. Kartan syns bredvid. |
+| Textvyn i ett kort fönster | Kompakt, från B. |
+| Kort fönster | En synlig höjd under 520 px, med samma regel för tangentbord och liggande telefon. |
+| Fokus | Meddelandefältet får inte fokus av sig självt när textvyn öppnas på mobil enhet. |
+| Stoppikoner | På smal skärm med textvyn öppen visas en åt gången. När stoppikonen står på platsen för **Skicka** har röstrutan ingen. |
+| Kartans nederkant | Röstrutan och notisen står ovanför kartans rad och kartans gemensamma återkoppling och täcker dem aldrig. |
+| Långt tryck | Lyssnandet fortsätter när fingret glider av knappen. Ett avbrutet tryck räknas som att knappen släpps. Långt tryck förklaras i **Information och hjälp**. |
+| Tryckytor | 44 px för stoppikonen och notisens stängknapp, med oförändrat utseende. |
+
+Läsordningen för VoiceOver är den som beslutet om hjälpmedel anger, fast
+röstrutan står vid nederkanten på smal skärm.

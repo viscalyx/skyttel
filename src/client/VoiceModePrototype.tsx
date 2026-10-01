@@ -13,6 +13,12 @@
  * scripted replies. A frame shows the page in the size of a phone or an iPad, with an invented
  * on-screen keyboard. On a real touch device the page fills the visible part of the screen.
  *
+ * Answer: the page opens with the chosen design, variant V. On a narrow screen the voice box and
+ * the notice stand at the bottom edge, as in C, and the text view is compact in a short window, as
+ * in B. On a wide touch screen the text view is a side panel of a fixed width. With the text view
+ * open on a narrow screen there is one stop icon at a time. The variants A, B and C remain for
+ * comparison.
+ *
  * Start: npm run prototype:mobil, then open http://localhost:4179/?prototype=mobil
  */
 import {
@@ -823,7 +829,18 @@ function FakeMap({ c }: { c: Conversation }) {
  * The small voice box: waveform, one of seven status words, the context mark and a small stop
  * icon. The box keeps one height and is only as wide as its content. It is not a control itself.
  */
-function VoiceBox({ c, parts, reduced }: { c: Conversation; parts: Parts; reduced: boolean }) {
+function VoiceBox({
+  c,
+  parts,
+  reduced,
+  noStop = false,
+}: {
+  c: Conversation;
+  parts: Parts;
+  reduced: boolean;
+  /** The stop icon stands in the place of Skicka, so the box does not show one too. */
+  noStop?: boolean;
+}) {
   if (!c.voiceVisible) return null;
   return (
     // biome-ignore lint/a11y/useSemanticElements: a named group, as viscalyx/skyttel#188 decided
@@ -855,7 +872,7 @@ function VoiceBox({ c, parts, reduced }: { c: Conversation; parts: Parts; reduce
           <span className="mp-percent">{c.memory} %</span>
         </span>
       )}
-      {c.busy && (
+      {c.busy && !noStop && (
         <button
           type="button"
           className="tp-stop"
@@ -1229,6 +1246,8 @@ type MobileView = {
   typing: boolean;
   setTyping: (typing: boolean) => void;
   focusAtOpen: boolean;
+  /** The chosen design: one stop icon at a time while the text view is open on a narrow screen. */
+  oneStop: boolean;
 };
 
 /**
@@ -1321,7 +1340,12 @@ function TextView({
         )}
         {view.narrow && view.mobile.plats === 'nere' && (
           <div className="mp-voice-row">
-            <VoiceBox c={c} parts={parts} reduced={reduced} />
+            <VoiceBox
+              c={c}
+              parts={parts}
+              reduced={reduced}
+              noStop={view.oneStop && touch && Boolean(c.working)}
+            />
           </div>
         )}
         <form
@@ -1835,6 +1859,7 @@ export function VoiceModePrototype() {
     typing,
     setTyping,
     focusAtOpen: !touch || params.get('fokus') === '1',
+    oneStop: variant === 'V',
   };
   const app = (
     <div
