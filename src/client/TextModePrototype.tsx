@@ -4,13 +4,15 @@
  * Question (viscalyx/skyttel#180): what does the text mode look like when the user selects the
  * text button in the tool rail and writes to Skyttel?
  *
- * Plan: variants of the text view, switchable with ?variant=A|C, on a standalone prototype page
- * with invented household data and scripted replies. Variant B (a writing row at the bottom of
- * the map) was rejected and removed; the letters A and C are kept so that earlier notes still match.
+ * Plan: one text view on a standalone prototype page with invented household data and scripted
+ * replies. It is the variant that was called C (a docked side panel). Variant A (a free window)
+ * and variant B (a writing row at the bottom of the map) were rejected and removed; both remain in
+ * the history of the prototype branch.
  *
  * Start: npm run prototype:textlage, then open http://localhost:4177/?prototype=textlage
  */
 import {
+  type CSSProperties,
   type PointerEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
@@ -33,12 +35,6 @@ type Row = { id: number; role: 'user' | 'skyttel'; text: string; spoken: boolean
 type Mic = 'off' | 'starting' | 'on';
 type Unclear = 'no' | 'checking' | 'failed';
 type DraftLayout = 'list' | 'table';
-
-const variants = [
-  ['A', 'Fritt fönster'],
-  ['C', 'Fast sidofält'],
-] as const;
-type Variant = (typeof variants)[number][0];
 
 const script: { say: string; reply?: string; changes?: Change[]; save?: boolean }[] = [
   {
@@ -147,7 +143,6 @@ function useConversation(draftOpenAtStart: boolean) {
   const [asking, setAsking] = useState<'voice' | 'text' | null>(null);
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
   const [origin, setOrigin] = useState<'voice' | 'text' | null>(null);
-  const sentAt = useRef(0);
   const [textOpen, setTextOpen] = useState(false);
   const [mic, setMic] = useState<Mic>('off');
   const [talking, setTalking] = useState(false);
@@ -231,7 +226,6 @@ function useConversation(draftOpenAtStart: boolean) {
     }
   }
   const micDisabled = blocked || (working === 'text' && mic === 'off');
-  const writtenBusy = busy && origin === 'text';
   // The consent box opens beside the pressed tool, so that the pointer has a short way to go.
   const askBeside = (kind: 'voice' | 'text', button: HTMLElement) => {
     const box = button.getBoundingClientRect();
@@ -241,8 +235,6 @@ function useConversation(draftOpenAtStart: boolean) {
   };
   return {
     anchor,
-    writtenBusy,
-    voiceInUse: mic !== 'off' || speaking || (busy && origin === 'voice'),
     consentSaved,
     started,
     asking,
@@ -275,7 +267,8 @@ function useConversation(draftOpenAtStart: boolean) {
               ? 'Du talar'
               : 'Lyssnar'
             : 'Mikrofonen är av',
-    voiceVisible: mic !== 'off' || busy,
+    // The voice box belongs to the voice mode: it never shows for a conversation in text only.
+    voiceVisible: mic !== 'off' || speaking || (busy && origin === 'voice'),
     setUnsent,
     setDraftOpen,
     setUnclear,
@@ -299,19 +292,10 @@ function useConversation(draftOpenAtStart: boolean) {
     decline: () => setAsking(null),
     send() {
       const text = unsent.trim();
-      // While Skyttel handles a written message the button is Avbryt, so nothing new is sent.
-      if (!text || blocked || writtenBusy) return;
+      // As in the application today, a new message replaces the work that is in progress.
+      if (!text || blocked) return;
       setUnsent('');
-      sentAt.current = Date.now();
       ask(text, false);
-    },
-    cancelWritten() {
-      // A double click on Skicka must not cancel the message that the first click sent.
-      if (Date.now() - sentAt.current < 500) return;
-      clearTimeout(timer.current);
-      setWorking(null);
-      setSpeaking(false);
-      setNote('Avbrutet. Utkastet är oförändrat.');
     },
     speak() {
       const line = script[step]?.say ?? 'Finns det något mer att göra?';
@@ -463,33 +447,17 @@ function Wave({ active, muted }: { active: boolean; muted?: boolean }) {
   );
 }
 
-function CancelButton({ c }: { c: Conversation }) {
-  return c.busy ? (
-    <button type="button" className="tp-cancel" onClick={c.cancel}>
-      Avbryt
-    </button>
-  ) : null;
-}
-
 /**
  * The small voice box: waveform, one status word and a small stop icon. The box keeps one height
  * and is only as wide as its content. Its full behaviour belongs to issue 182.
  */
-function VoiceBox({
-  c,
-  cancel,
-  floating,
-}: {
-  c: Conversation;
-  cancel?: boolean;
-  floating?: boolean;
-}) {
+function VoiceBox({ c }: { c: Conversation }) {
   if (!c.voiceVisible) return null;
   return (
-    <div className={`tp-voicebox${floating ? ' floating tp-surface' : ''}`}>
+    <div className="tp-voicebox floating tp-surface">
       <Wave active={c.talking || c.speaking} muted={c.mic !== 'on' && !c.speaking} />
       <span role="status">{c.statusWord}</span>
-      {cancel && c.busy && (
+      {c.busy && (
         <button
           type="button"
           className="tp-stop"
@@ -548,9 +516,9 @@ function Notices({ c }: { c: Conversation }) {
   );
 }
 
-function Transcript({ c, cancelInLog }: { c: Conversation; cancelInLog?: boolean }) {
+function Transcript({ c, stopInLog }: { c: Conversation; stopInLog: boolean }) {
   const log = useRef<HTMLOListElement>(null);
-  const size = c.rows.length + (c.busy ? 1 : 0);
+  const size = c.rows.length + (c.working ? 1 : 0);
   // biome-ignore lint/correctness/useExhaustiveDependencies: follow new rows
   useLayoutEffect(() => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
@@ -566,10 +534,22 @@ function Transcript({ c, cancelInLog }: { c: Conversation; cancelInLog?: boolean
           {row.text}
         </li>
       ))}
-      {c.busy && (cancelInLog || c.writtenBusy) && (
+      {c.working && (
         <li className="tp-row working">
-          <span>{c.working ? 'Skyttel arbetar…' : 'Skyttel talar…'}</span>
-          {!c.writtenBusy && <CancelButton c={c} />}
+          <span>Skyttel arbetar… Tryck på Escape för att avbryta.</span>
+          {stopInLog && (
+            <button
+              type="button"
+              className="tp-stop"
+              aria-label="Avbryt"
+              title="Avbryt"
+              onClick={c.cancel}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+              </svg>
+            </button>
+          )}
         </li>
       )}
     </ol>
@@ -677,26 +657,68 @@ function MessageField({ c }: { c: Conversation }) {
   );
 }
 
-/** Skicka turns into Avbryt while Skyttel handles a written message. */
 function SendButton({ c }: { c: Conversation }) {
-  return c.writtenBusy ? (
-    <button type="button" className="tp-cancel" title="Avbryt (Esc)" onClick={c.cancelWritten}>
-      Avbryt
-    </button>
-  ) : (
+  return (
     <button type="submit" className="primary" disabled={c.blocked || !c.unsent.trim()}>
       Skicka
     </button>
   );
 }
 
-/** Escape in the text view cancels a written message, like the Avbryt button. */
+/** Escape cancels Skyttel's work while the focus is in the text view. */
 function escapeCancels(c: Conversation) {
   return (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Escape' || !c.writtenBusy) return;
+    if (event.key !== 'Escape' || !c.busy) return;
     event.preventDefault();
-    c.cancelWritten();
+    c.cancel();
   };
+}
+
+/** A drag handle on the left edge of a column. Dragging to the left makes the column wider. */
+function Resizer({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
+  const start = useRef<{ x: number; value: number } | null>(null);
+  const change = (next: number) => onChange(Math.round(Math.max(min, Math.min(max, next))));
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: a focusable separator is the resize pattern
+    <div
+      className="tp-resizer"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={label}
+      aria-valuenow={value}
+      aria-valuemin={min}
+      aria-valuemax={max}
+      tabIndex={0}
+      title={`${label} (dra, eller använd vänster- och högerpil)`}
+      onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
+        start.current = { x: event.clientX, value };
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }}
+      onPointerMove={(event) => {
+        if (start.current) change(start.current.value + start.current.x - event.clientX);
+      }}
+      onPointerUp={() => {
+        start.current = null;
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        change(value + (event.key === 'ArrowLeft' ? 24 : -24));
+      }}
+    />
+  );
 }
 
 function CloseButton({ c }: { c: Conversation }) {
@@ -715,99 +737,55 @@ function NewConversationButton({ c }: { c: Conversation }) {
   );
 }
 
-/** A: a free, movable window like the other tools. The voice box stays a separate small box. */
-function VariantA({ c, layout }: { c: Conversation; layout: DraftLayout }) {
-  const [position, setPosition] = useState({ x: 112, y: 84 });
-  const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
-  const move = (event: PointerEvent<HTMLElement>) => {
-    if (!drag.current) return;
-    const view = event.currentTarget.ownerDocument.defaultView ?? window;
-    setPosition({
-      x: Math.max(
-        0,
-        Math.min(view.innerWidth - 120, drag.current.left + event.clientX - drag.current.x),
-      ),
-      y: Math.max(
-        0,
-        Math.min(view.innerHeight - 120, drag.current.top + event.clientY - drag.current.y),
-      ),
-    });
-  };
-  return (
-    <>
-      <VoiceBox c={c} floating cancel={!c.textOpen} />
-      {c.textOpen && (
-        <section
-          className={`tp-window tp-surface${c.draftOpen ? ' with-draft' : ''}`}
-          aria-label="Skriv till Skyttel"
-          onKeyDown={escapeCancels(c)}
-          style={{
-            left: position.x,
-            top: position.y,
-            maxHeight: `calc(100dvh - ${position.y + 24}px)`,
-          }}
-        >
-          <header
-            className="tp-head tp-drag"
-            onPointerDown={(event) => {
-              if ((event.target as HTMLElement).closest('button')) return;
-              drag.current = {
-                x: event.clientX,
-                y: event.clientY,
-                left: position.x,
-                top: position.y,
-              };
-              event.currentTarget.setPointerCapture(event.pointerId);
-            }}
-            onPointerMove={move}
-            onPointerUp={() => {
-              drag.current = null;
-            }}
-          >
-            <h2>Skriv till Skyttel</h2>
-            <NewConversationButton c={c} />
-            <CloseButton c={c} />
-          </header>
-          <div className="tp-columns">
-            <div className="tp-conversation">
-              <DraftToggle c={c} side="right" />
-              <Transcript c={c} cancelInLog />
-              <Notices c={c} />
-              <form
-                className="tp-composer"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  c.send();
-                }}
-              >
-                <label htmlFor="tp-message">Meddelande till Skyttel</label>
-                <MessageField c={c} />
-                <SendButton c={c} />
-              </form>
-            </div>
-            <DraftPane c={c} layout={layout} />
-          </div>
-        </section>
-      )}
-    </>
-  );
-}
+type Widths = {
+  text: number;
+  draft: number;
+  set: (widths: { text: number; draft: number }) => void;
+};
 
 /**
- * C: a docked side panel that pushes the map aside. The voice box is the same box in the same
- * place whether the panel is open or not; the panel comes below it.
+ * The text view: a docked side panel that pushes the map aside. The voice box is the same box in
+ * the same place whether the panel is open or not; the panel comes below it.
  */
-function VariantC({ c, layout }: { c: Conversation; layout: DraftLayout }) {
+function TextView({
+  c,
+  layout,
+  stopInLog,
+  widths,
+}: {
+  c: Conversation;
+  layout: DraftLayout;
+  stopInLog: boolean;
+  widths: Widths;
+}) {
+  // Leave room for the tool rail and a strip of the map.
+  const room = (typeof window === 'undefined' ? 1280 : window.innerWidth) - 220;
   return (
     <>
-      {(c.voiceInUse || !c.textOpen) && <VoiceBox c={c} floating cancel />}
+      <VoiceBox c={c} />
       {c.textOpen && (
         <section
           className={`tp-side tp-columns tp-surface${c.draftOpen ? ' with-draft' : ''}`}
           aria-label="Skriv till Skyttel"
           onKeyDown={escapeCancels(c)}
         >
+          {c.draftOpen && (
+            <Resizer
+              label="Ändra utkastlistans bredd"
+              value={widths.draft}
+              min={260}
+              max={Math.max(260, room - widths.text)}
+              onChange={(draft) => widths.set({ text: widths.text, draft })}
+            />
+          )}
           <DraftPane c={c} layout={layout} />
+          <Resizer
+            label="Ändra samtalstextens bredd"
+            value={widths.text}
+            min={300}
+            max={Math.max(300, room - (c.draftOpen ? widths.draft : 0))}
+            onChange={(text) => widths.set({ text, draft: widths.draft })}
+          />
           <div className="tp-conversation">
             <header className="tp-head">
               <h2>Skriv till Skyttel</h2>
@@ -815,13 +793,15 @@ function VariantC({ c, layout }: { c: Conversation; layout: DraftLayout }) {
               <CloseButton c={c} />
             </header>
             <DraftToggle c={c} side="left" />
-            <Transcript c={c} />
+            <Transcript c={c} stopInLog={stopInLog} />
             <Notices c={c} />
             <form
               className="tp-composer"
               onSubmit={(event) => {
                 event.preventDefault();
                 c.send();
+                // The message field keeps the focus, so that Escape can cancel at once.
+                event.currentTarget.querySelector('textarea')?.focus();
               }}
             >
               <label htmlFor="tp-message">Meddelande till Skyttel</label>
@@ -972,12 +952,13 @@ function PhoneFrame({ children }: { children: ReactNode }) {
 
 export function TextModePrototype() {
   const [params, setParams] = useSearchParams();
-  const variant: Variant = variants.find(([key]) => key === params.get('variant'))?.[0] ?? 'A';
   const mobile = params.get('mobile') === '1';
   const dark = params.get('theme') === 'dark';
   const layout: DraftLayout = params.get('draft') === 'list' ? 'list' : 'table';
   const anchored = params.get('consent') !== 'center';
   const [draftOpenAtStart, setDraftOpenAtStart] = useState(false);
+  const [stopInLog, setStopInLog] = useState(false);
+  const [widths, setWidths] = useState({ text: 400, draft: 340 });
   const c = useConversation(draftOpenAtStart);
   const set = useCallback(
     (key: string, value: string | null) =>
@@ -992,28 +973,16 @@ export function TextModePrototype() {
       ),
     [setParams],
   );
-  const cycle = useCallback(
-    (offset: number) => {
-      const index = variants.findIndex(([key]) => key === variant);
-      set('variant', variants[(index + offset + variants.length) % variants.length][0]);
-    },
-    [variant, set],
-  );
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest('input, textarea, select, [contenteditable]')) return;
-      if (event.key === 'ArrowLeft') cycle(-1);
-      if (event.key === 'ArrowRight') cycle(1);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [cycle]);
-
   const app = (
     <div
-      className={`household-map workspace-shell tp-root tp-variant-${variant.toLowerCase()}${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}`}
+      className={`household-map workspace-shell tp-root tp-variant-c${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}`}
       data-theme={dark ? 'dark' : 'light'}
+      style={
+        {
+          '--tp-text-width': `${widths.text}px`,
+          '--tp-draft-width': `${widths.draft}px`,
+        } as CSSProperties
+      }
     >
       <FakeMap c={c} />
       <ToolRail c={c} />
@@ -1025,27 +994,20 @@ export function TextModePrototype() {
           <Notices c={c} />
         </div>
       )}
-      {variant === 'A' && <VariantA c={c} layout={layout} />}
-      {variant === 'C' && <VariantC c={c} layout={layout} />}
+      <TextView
+        c={c}
+        layout={layout}
+        stopInLog={stopInLog}
+        widths={{ ...widths, set: setWidths }}
+      />
       <ConsentDialog c={c} anchored={anchored} />
     </div>
   );
-  const label = variants.find(([key]) => key === variant)?.[1];
   return (
     <>
       {mobile ? <PhoneFrame>{app}</PhoneFrame> : app}
       <aside className={`tp-dock${mobile ? ' aside' : ''}`} aria-label="Prototypens reglage">
-        <div className="tp-switcher">
-          <button type="button" aria-label="Föregående variant" onClick={() => cycle(-1)}>
-            ←
-          </button>
-          <strong>
-            {variant} ({label})
-          </strong>
-          <button type="button" aria-label="Nästa variant" onClick={() => cycle(1)}>
-            →
-          </button>
-        </div>
+        <strong>Prototyp: textläget</strong>
         <details>
           <summary>Prototyplägen</summary>
           <dl>
@@ -1109,6 +1071,14 @@ export function TextModePrototype() {
               <option value="checking">Skyttel kontrollerar själv</option>
               <option value="failed">Egen kontroll misslyckades</option>
             </select>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={stopInLog}
+              onChange={(event) => setStopInLog(event.target.checked)}
+            />
+            Stoppikon på raden Skyttel arbetar
           </label>
           <label>
             <input
