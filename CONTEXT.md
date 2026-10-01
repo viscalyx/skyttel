@@ -274,6 +274,13 @@ Textvyn kan stängas utan att samtalet avslutas.
 Den lilla ruta med vågform och statusord som visar att Skyttel lyssnar,
 arbetar eller talar.
 
+**Kontext**:
+Det av det pågående samtalet som Skyttel har med sig när den svarar.
+Kontextens utrymme är begränsat och beror på vilken AI-modell Skyttel
+använder.
+
+_Undvik_: Minne och samtalsminne för samma begrepp.
+
 **Samtalsmedgivande**:
 En Skyttel-användares medgivande, för ett visst hushåll, till att OpenAI
 behandlar samtalets uppgifter och att Skyttel föreslår och sparar ändringar
