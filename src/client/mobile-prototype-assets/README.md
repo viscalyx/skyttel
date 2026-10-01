@@ -275,8 +275,9 @@ Det här syntes när prototypen byggdes och provades.
 
 ## Beslut
 
-Ärendet är löst. Det fastställda beslutet står i ärendets
-beslutskommentar, och den gäller framför listan här. Beställaren valde
+Ärendet är löst. Det fastställda beslutet står i
+[ärendets beslutskommentar](https://github.com/viscalyx/skyttel/issues/191#issuecomment-5938358521),
+och den gäller framför listan här. Beställaren valde
 den 1 oktober 2026 platsen från variant C och textvyn från variant B.
 
 | Del | Val |
