@@ -49,7 +49,7 @@ nederkant) utgick och finns kvar i grenens tidigare incheckningar.
 | Utkastlistan | En tabell som fälls ut till vänster om samtalstexten från knappen **Visa utkastet**, som har en pil åt det håll utkastet öppnas och visar antalet osparade ändringar. Knappen heter **Dölj utkastet** när utkastet är utfällt. På mobil öppnas utkastet mellan knappen och samtalstexten. |
 | Medgivanderutan | Öppnas intill den knapp i verktygsraden som valdes. |
 | Kontext | En mätare under textvyns rubrik, **Kontext**, visar hur många procent av samtalets kontext som är fylld. Från 85 procent visar även röstrutan en symbol med procenttalet, och rutan blir då bredare. Värdena i prototypen är påhittade. |
-| Full kontext | Ett förslag som inte är beslutat: Skyttel sammanfattar samtalet automatiskt, skriver en rad om det i samtalstexten, och mätaren går ner. Alternativet är att **Skicka** stängs av och ett meddelande pekar på **Nytt samtal**. |
+| Full kontext | Skyttel sammanfattar samtalet automatiskt, skriver en rad om det i samtalstexten, och mätaren går ner. Om sammanfattningen inte går att göra stängs **Skicka** av och ett meddelande pekar på **Nytt samtal**. Sammanfattningen är simulerad. |
 
 ## Det här går att prova
 
@@ -87,7 +87,7 @@ annars är svåra att nå.
 | Glöm medgivandet | Första starten igen. |
 | Börja om | Prototypens utgångsläge. Manuset börjar om från första repliken. |
 | Bruten kontakt | Meddelandet med symbol och text. Mikrofonen stängs av och **Skicka** är avstängd. |
-| Sammanfatta automatiskt vid full kontext | Påslaget: Skyttel sammanfattar samtalet vid 100 procent. Avslaget: **Skicka** stängs av och ett meddelande pekar på **Nytt samtal**. |
+| Sammanfatta automatiskt vid full kontext | Påslaget: Skyttel sammanfattar samtalet vid 100 procent. Avslaget: läget där sammanfattningen inte går att göra, så att **Skicka** stängs av och ett meddelande pekar på **Nytt samtal**. |
 | Kontext | Mätaren vid 70, 90 eller 100 procent. Annars följer den samtalet. |
 | Oklart sparande | Skyttels egen kontroll, eller knappen **Kontrollera om utkastet sparades** när den egna kontrollen misslyckas. |
 | Pekskärm utan Escape (som iPad) | Pekskärmens beteende på en bred skärm: **Skicka** blir en stoppikon medan Skyttel arbetar, och ett meddelande åt gången. |
@@ -127,7 +127,10 @@ annars är svåra att nå.
 
 ## Beslut
 
-Beställarens genomgångar den 1 oktober 2026 gav följande.
+Ärendet är löst. Det fastställda beslutet står i
+[ärendets beslutskommentar](https://github.com/viscalyx/skyttel/issues/180#issuecomment-5930465393),
+och den gäller framför listan här. Beställarens genomgångar den
+1 oktober 2026 gav följande.
 
 - Variant C är vald. A och B utgår.
 - Röstrutan är samma ruta på samma plats hela tiden, och sidofältet med
@@ -145,7 +148,9 @@ Beställarens genomgångar den 1 oktober 2026 gav följande.
 - Skyttel minns hela samtalet tills användaren väljer **Nytt samtal**.
 - En mätare, **Kontext**, visar hur många procent av samtalets kontext
   som är fylld. När användaren pratar visar röstrutan en symbol när
-  kontexten börjar bli full.
+  kontexten börjar bli full, från 85 procent.
+- Vid full kontext sammanfattar Skyttel samtalet automatiskt. Om det inte
+  går stängs **Skicka** av och Skyttel pekar på **Nytt samtal**.
 - Om textvyn är stängd medan Skyttel arbetar med ett skrivet meddelande
   visar knappen **Skriv till Skyttel** en arbetsmarkering som inte ändrar
   verktygsradens plats eller bredd.
@@ -166,4 +171,4 @@ Beställarens genomgångar den 1 oktober 2026 gav följande.
 - Vid bruten kontakt går meddelandefältet att skriva i. Bara **Skicka** är
   avstängd.
 
-Ärendet är inte stängt ännu. Beslutet skrivs i ärendet.
+Kommande prototyper i kartan utgår från den här grenen.
