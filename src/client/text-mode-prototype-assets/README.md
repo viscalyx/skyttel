@@ -36,12 +36,19 @@ piltangenterna. Adressen ändras, så en variant går att länka till.
 
 | Variant | Adress | Textvyn | Röstrutan | **Avbryt** | Utkastlistan |
 | --- | --- | --- | --- | --- | --- |
-| A, Fritt fönster | `&variant=A` | Flyttbart fönster som kartans övriga verktyg. På mobil ett blad nedifrån. | Egen liten ruta vid kartans nederkant. | Sist i samtalstexten, på raden **Skyttel arbetar…**. | Överst i fönstret. |
-| B, Skrivrad vid kartan | `&variant=B` | En enda rad vid kartans nederkant. Bara Skyttels senaste svar visas tills användaren väljer **Visa samtalstexten**. | Till vänster i skrivraden. | I skrivraden bredvid **Skicka**. | Öppnas från knappen **Utkast** ovanför raden. |
-| C, Fast sidofält | `&variant=C` | Kolumn vid högerkanten som knuffar undan kartan. På mobil hela skärmen under verktygsraden. | En rad under kolumnens rubrik. | Bredvid röstrutan under rubriken. | Underst i kolumnen. |
+| A, Fritt fönster | `&variant=A` | Flyttbart fönster som kartans övriga verktyg. På mobil ett blad nedifrån. | Egen liten ruta vid kartans nederkant. | Sist i samtalstexten, på raden **Skyttel arbetar…**. | Fälls ut till höger om samtalstexten. Fönstret blir bredare. |
+| C, Fast sidofält | `&variant=C` | Kolumn vid högerkanten som knuffar undan kartan. På mobil hela skärmen under verktygsraden. | En rad under kolumnens rubrik. | Bredvid röstrutan under rubriken. | Fälls ut till vänster om samtalstexten. Kolumnen blir bredare. |
 
-När textvyn är stängd visar alla varianter röstrutan för sig, med
+Raden **Utkast** ovanför samtalstexten fäller ut och fäller ihop
+utkastlistan. På mobil finns ingen plats bredvid samtalstexten, så där
+öppnas utkastlistan mellan raden **Utkast** och samtalstexten.
+
+När textvyn är stängd visar båda varianterna röstrutan för sig, med
 **Avbryt** medan Skyttel arbetar eller talar.
+
+Variant B, en skrivrad vid kartans nederkant, utgick vid första
+genomgången och är borttagen. Bokstäverna A och C är kvar så att tidigare
+anteckningar stämmer.
 
 ## Det här går att prova
 
@@ -53,9 +60,9 @@ När textvyn är stängd visar alla varianter röstrutan för sig, med
   Skyttel svarar med nästa replik i manuset och lägger ändringar i
   utkastet. Ändringarna syns i kartan med plus, penna och kryss. Skriv
   något med ordet "spara" för att spara utkastet.
-- **Röst och text samtidigt.** Slå på mikrofonen med **Prata med Skyttel**
-  och välj **Säg nästa replik** under **Prototyplägen**. Det sagda och
-  Skyttels svar hamnar i samtalstexten med en mikrofonsymbol.
+- **Röst och text samtidigt.** Välj **Säg nästa replik** under
+  **Prototyplägen**. Det sagda och Skyttels svar hamnar i samtalstexten
+  med en mikrofonsymbol.
 - **Avbryt.** Välj **Avbryt** medan Skyttel arbetar eller talar.
 - **Nytt samtal.** Tömmer samtalstexten. Skyttel säger hur många osparade
   ändringar som ligger kvar i utkastet.
@@ -70,10 +77,10 @@ annars är svåra att nå.
 
 | Reglage | Visar |
 | --- | --- |
-| Säg nästa replik | En talad replik när mikrofonen är på. |
+| Säg nästa replik | En talad replik. Reglaget slår på mikrofonen om den är av, utan medgivanderuta. |
 | Fyll i nästa replik som text | Manusets nästa replik i meddelandefältet. |
 | Glöm medgivandet | Första starten igen. |
-| Börja om | Prototypens utgångsläge. |
+| Börja om | Prototypens utgångsläge. Manuset börjar om från första repliken. |
 | Bruten kontakt | Meddelandet med symbol och text. Mikrofonen stängs av och **Skicka** är avstängd. |
 | Oklart sparande | Skyttels egen kontroll, eller knappen **Kontrollera om utkastet sparades** när den egna kontrollen misslyckas. |
 | Utkastlistan som tabell | Utkastlistan som tabell i stället för lista. |
@@ -99,13 +106,22 @@ annars är svåra att nå.
 | --- | --- |
 | `medgivande-dator.png` | Medgivanderutan mitt på skärmen. |
 | `medgivande-vid-knappen.png` | Medgivanderutan intill verktygsraden. |
-| `A-dator-arbetar.png`, `B-dator-arbetar.png`, `C-dator-arbetar.png` | Skyttel arbetar med ett talat uppdrag medan textvyn är öppen. |
-| `A-dator-utkast.png`, `B-dator-utkast.png`, `C-dator-utkast.png` | Utkastlistan utfälld medan Skyttel talar. |
-| `B-dator-samtalstext.png` | Variant B med hela samtalstexten utfälld. |
-| `A-dator-stangd-textvy.png`, `B-dator-stangd-textvy.png`, `C-dator-stangd-textvy.png` | Textvyn stängd medan mikrofonen är på. |
-| `A-mobil.png`, `B-mobil.png`, `C-mobil.png` | Varianterna i mobilstorlek. |
-| `C-dator-tabell-morkt-bruten-kontakt.png` | Utkastlistan som tabell, mörkt tema och bruten kontakt. |
+| `A-dator-samtal.png`, `C-dator-samtal.png` | Textvyn med samtalstext och utkastlistan hopfälld. |
+| `A-dator-utkast-arbetar.png`, `C-dator-utkast-arbetar.png` | Utkastlistan utfälld medan Skyttel arbetar med ett talat uppdrag. |
+| `A-dator-utkast.png`, `C-dator-utkast.png` | Utkastlistan utfälld medan Skyttel talar. |
+| `A-dator-tabell.png` | Variant A med utkastlistan som tabell. |
+| `C-dator-tabell-morkt-bruten-kontakt.png` | Variant C med utkastlistan som tabell, mörkt tema och bruten kontakt. |
+| `A-dator-stangd-textvy.png`, `C-dator-stangd-textvy.png` | Textvyn stängd medan mikrofonen är på. |
+| `A-mobil.png`, `C-mobil.png` | Varianterna i mobilstorlek. |
+| `A-mobil-utkast.png`, `C-mobil-utkast.png` | Mobilstorlek med utkastlistan utfälld. |
 
 ## Beslut
 
-Inget beslut är fattat ännu. Beställaren väljer variant i ärendet.
+Beställarens första genomgång den 1 oktober 2026:
+
+- Variant B utgår.
+- Utkastlistan fälls ut bredvid samtalstexten: till höger i A och till
+  vänster i C.
+- **Skicka** ligger i höjd med meddelandefältets mitt.
+
+Valet mellan A och C är inte gjort ännu. Beställaren väljer i ärendet.

@@ -4,8 +4,9 @@
  * Question (viscalyx/skyttel#180): what does the text mode look like when the user selects the
  * text button in the tool rail and writes to Skyttel?
  *
- * Plan: three structurally different variants of the text view, switchable with ?variant=A|B|C,
- * on a standalone prototype page with invented household data and scripted replies.
+ * Plan: variants of the text view, switchable with ?variant=A|C, on a standalone prototype page
+ * with invented household data and scripted replies. Variant B (a writing row at the bottom of
+ * the map) was rejected and removed; the letters A and C are kept so that earlier notes still match.
  *
  * Start: npm run prototype:textlage, then open http://localhost:4177/?prototype=textlage
  */
@@ -34,7 +35,6 @@ type DraftLayout = 'list' | 'table';
 
 const variants = [
   ['A', 'Fritt fönster'],
-  ['B', 'Skrivrad vid kartan'],
   ['C', 'Fast sidofält'],
 ] as const;
 type Variant = (typeof variants)[number][0];
@@ -289,7 +289,11 @@ function useConversation(draftOpenAtStart: boolean) {
     },
     speak() {
       const line = script[step]?.say ?? 'Finns det något mer att göra?';
-      if (mic !== 'on' || busy || talking) return;
+      if (blocked || busy || talking) return;
+      // A prototype shortcut: the control also turns the microphone on, without the consent box.
+      clearTimeout(micTimer.current);
+      setStarted(true);
+      setMic('on');
       setTalking(true);
       timer.current = setTimeout(() => {
         setTalking(false);
@@ -586,32 +590,46 @@ function DraftChanges({ c, layout }: { c: Conversation; layout: DraftLayout }) {
   );
 }
 
-function DraftSection({ c, layout }: { c: Conversation; layout: DraftLayout }) {
+/** The row that folds the draft pane out beside the conversation text. */
+function DraftToggle({ c, side }: { c: Conversation; side: 'left' | 'right' }) {
+  const outward = side === 'right' ? '▸' : '◂';
+  const inward = side === 'right' ? '◂' : '▸';
   return (
-    <section className="tp-draft" aria-label="Utkast">
+    <div className="tp-draft tp-draft-toggle">
       <button
         type="button"
         aria-expanded={c.draftOpen}
+        aria-controls="tp-draft-pane"
         onClick={() => c.setDraftOpen(!c.draftOpen)}
       >
         <span>Utkast</span>
         <span>
-          {count(c.draft)} {c.draftOpen ? '▴' : '▾'}
+          {side === 'left' && `${c.draftOpen ? inward : outward} `}
+          {count(c.draft)}
+          {side === 'right' && ` ${c.draftOpen ? inward : outward}`}
         </span>
       </button>
-      {c.draftOpen && <DraftChanges c={c} layout={layout} />}
-    </section>
+    </div>
   );
 }
 
-function MessageField({ c, rows = 2 }: { c: Conversation; rows?: number }) {
+function DraftPane({ c, layout }: { c: Conversation; layout: DraftLayout }) {
+  return c.draftOpen ? (
+    <section id="tp-draft-pane" className="tp-draft tp-draft-pane" aria-label="Utkast">
+      <h3>Utkast</h3>
+      <DraftChanges c={c} layout={layout} />
+    </section>
+  ) : null;
+}
+
+function MessageField({ c }: { c: Conversation }) {
   const field = useRef<HTMLTextAreaElement>(null);
   useEffect(() => field.current?.focus(), []);
   return (
     <textarea
       ref={field}
       id="tp-message"
-      rows={rows}
+      rows={2}
       maxLength={4000}
       placeholder="Berätta vad du vill göra…"
       value={c.unsent}
@@ -660,7 +678,7 @@ function VariantA({ c, layout }: { c: Conversation; layout: DraftLayout }) {
     setPosition({
       x: Math.max(
         0,
-        Math.min(view.innerWidth - 380, drag.current.left + event.clientX - drag.current.x),
+        Math.min(view.innerWidth - 120, drag.current.left + event.clientX - drag.current.x),
       ),
       y: Math.max(
         0,
@@ -673,7 +691,7 @@ function VariantA({ c, layout }: { c: Conversation; layout: DraftLayout }) {
       <VoiceBox c={c} floating cancel={!c.textOpen} />
       {c.textOpen && (
         <section
-          className="tp-window tp-surface"
+          className={`tp-window tp-surface${c.draftOpen ? ' with-draft' : ''}`}
           aria-label="Skriv till Skyttel"
           style={{
             left: position.x,
@@ -702,87 +720,28 @@ function VariantA({ c, layout }: { c: Conversation; layout: DraftLayout }) {
             <NewConversationButton c={c} />
             <CloseButton c={c} />
           </header>
-          <DraftSection c={c} layout={layout} />
-          <Transcript c={c} cancelInLog />
-          <Notices c={c} />
-          <form
-            className="tp-composer"
-            onSubmit={(event) => {
-              event.preventDefault();
-              c.send();
-            }}
-          >
-            <label htmlFor="tp-message">Meddelande till Skyttel</label>
-            <MessageField c={c} />
-            <SendButton c={c} />
-          </form>
+          <div className="tp-columns">
+            <div className="tp-conversation">
+              <DraftToggle c={c} side="right" />
+              <Transcript c={c} cancelInLog />
+              <Notices c={c} />
+              <form
+                className="tp-composer"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  c.send();
+                }}
+              >
+                <label htmlFor="tp-message">Meddelande till Skyttel</label>
+                <MessageField c={c} />
+                <SendButton c={c} />
+              </form>
+            </div>
+            <DraftPane c={c} layout={layout} />
+          </div>
         </section>
       )}
     </>
-  );
-}
-
-/** B: one writing row at the bottom of the map. Only the latest reply shows until asked for more. */
-function VariantB({ c, layout }: { c: Conversation; layout: DraftLayout }) {
-  const [history, setHistory] = useState(false);
-  const latest = c.rows.findLast((row) => row.role === 'skyttel');
-  if (!c.textOpen) return <VoiceBox c={c} floating cancel />;
-  return (
-    <section className="tp-bar-wrap" aria-label="Skriv till Skyttel">
-      {history ? (
-        <div className="tp-surface tp-bar-history">
-          <Transcript c={c} />
-        </div>
-      ) : (
-        latest && (
-          <div className="tp-surface tp-latest" role="log" aria-label="Senaste svar från Skyttel">
-            <strong>Skyttel</strong>
-            <p>{latest.text}</p>
-          </div>
-        )
-      )}
-      {c.draftOpen && (
-        <div className="tp-surface tp-draft tp-draft-popover">
-          <DraftChanges c={c} layout={layout} />
-        </div>
-      )}
-      <div className="tp-strip">
-        <button
-          type="button"
-          className="tp-small"
-          aria-expanded={history}
-          onClick={() => setHistory(!history)}
-        >
-          {history ? 'Dölj samtalstexten' : `Visa samtalstexten (${c.rows.length})`}
-        </button>
-        <button
-          type="button"
-          className="tp-small"
-          aria-expanded={c.draftOpen}
-          onClick={() => c.setDraftOpen(!c.draftOpen)}
-        >
-          Utkast · {count(c.draft)}
-        </button>
-        <NewConversationButton c={c} />
-      </div>
-      <Notices c={c} />
-      <form
-        className="tp-bar tp-surface"
-        onSubmit={(event) => {
-          event.preventDefault();
-          c.send();
-        }}
-      >
-        <VoiceBox c={c} />
-        <label htmlFor="tp-message" className="tp-sr">
-          Meddelande till Skyttel
-        </label>
-        <MessageField c={c} rows={1} />
-        <CancelButton c={c} />
-        <SendButton c={c} />
-        <CloseButton c={c} />
-      </form>
-    </section>
   );
 }
 
@@ -790,31 +749,37 @@ function VariantB({ c, layout }: { c: Conversation; layout: DraftLayout }) {
 function VariantC({ c, layout }: { c: Conversation; layout: DraftLayout }) {
   if (!c.textOpen) return <VoiceBox c={c} floating cancel />;
   return (
-    <section className="tp-side tp-surface" aria-label="Skriv till Skyttel">
-      <header className="tp-head">
-        <h2>Skriv till Skyttel</h2>
-        <NewConversationButton c={c} />
-        <CloseButton c={c} />
-      </header>
-      {c.voiceVisible && (
-        <div className="tp-side-voice">
-          <VoiceBox c={c} cancel />
-        </div>
-      )}
-      <Transcript c={c} />
-      <Notices c={c} />
-      <form
-        className="tp-composer"
-        onSubmit={(event) => {
-          event.preventDefault();
-          c.send();
-        }}
-      >
-        <label htmlFor="tp-message">Meddelande till Skyttel</label>
-        <MessageField c={c} />
-        <SendButton c={c} />
-      </form>
-      <DraftSection c={c} layout={layout} />
+    <section
+      className={`tp-side tp-columns tp-surface${c.draftOpen ? ' with-draft' : ''}`}
+      aria-label="Skriv till Skyttel"
+    >
+      <DraftPane c={c} layout={layout} />
+      <div className="tp-conversation">
+        <header className="tp-head">
+          <h2>Skriv till Skyttel</h2>
+          <NewConversationButton c={c} />
+          <CloseButton c={c} />
+        </header>
+        {c.voiceVisible && (
+          <div className="tp-side-voice">
+            <VoiceBox c={c} cancel />
+          </div>
+        )}
+        <DraftToggle c={c} side="left" />
+        <Transcript c={c} />
+        <Notices c={c} />
+        <form
+          className="tp-composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            c.send();
+          }}
+        >
+          <label htmlFor="tp-message">Meddelande till Skyttel</label>
+          <MessageField c={c} />
+          <SendButton c={c} />
+        </form>
+      </div>
     </section>
   );
 }
@@ -995,7 +960,7 @@ export function TextModePrototype() {
 
   const app = (
     <div
-      className={`household-map workspace-shell tp-root tp-variant-${variant.toLowerCase()}${c.textOpen ? ' tp-text-open' : ''}`}
+      className={`household-map workspace-shell tp-root tp-variant-${variant.toLowerCase()}${c.textOpen ? ' tp-text-open' : ''}${c.draftOpen ? ' tp-draft-open' : ''}`}
       data-theme={dark ? 'dark' : 'light'}
     >
       <FakeMap c={c} />
@@ -1009,7 +974,6 @@ export function TextModePrototype() {
         </div>
       )}
       {variant === 'A' && <VariantA c={c} layout={layout} />}
-      {variant === 'B' && <VariantB c={c} layout={layout} />}
       {variant === 'C' && <VariantC c={c} layout={layout} />}
       <ConsentDialog c={c} anchored={anchored} />
     </div>
@@ -1055,9 +1019,9 @@ export function TextModePrototype() {
           <div className="tp-dock-actions">
             <button
               type="button"
-              disabled={c.mic !== 'on' || c.busy || c.talking}
+              disabled={c.blocked || c.busy || c.talking}
               onClick={c.speak}
-              title="Kräver att mikrofonen är på"
+              title="Slår på mikrofonen om den är av"
             >
               Säg nästa replik
             </button>
