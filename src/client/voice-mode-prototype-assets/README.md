@@ -212,8 +212,9 @@ som ledde till ändringar står under [Beslut](#beslut).
 
 ## Beslut
 
-Ärendet är löst. Det fastställda beslutet står i ärendets
-beslutskommentar, och den gäller framför listan här. Beställaren valde
+Ärendet är löst. Det fastställda beslutet står i
+[ärendets beslutskommentar](https://github.com/viscalyx/skyttel/issues/179#issuecomment-5936567127),
+och den gäller framför listan här. Beställaren valde
 den 1 oktober 2026 delar från variant A och B.
 
 | Del | Val |
