@@ -1,41 +1,38 @@
 import { access } from 'node:fs/promises';
 import { expect, type Page, test } from '@playwright/test';
+import { createHousehold, openProfile, openSettings, signIn } from '../support/client.js';
 import {
-  createHousehold,
-  openConversation,
-  openProfile,
-  openSettings,
-  signIn,
-} from '../support/client.js';
+  openConversationText,
+  startConversationWithText,
+  turnMicrophoneOff,
+  turnMicrophoneOn,
+  voiceBox,
+} from '../support/conversation-page.js';
 import { launchManualCosts } from '../support/manual-costs.js';
 
-const assistant = (page: Page) =>
-  page.getByRole('region', { name: 'Skyttels textassistent', exact: true });
+const assistant = (page: Page) => page.getByRole('region', { name: 'Arbetsyta', exact: true });
 const category = (page: Page, name: string) => page.getByRole('region', { name, exact: true });
 async function startAssistant(page: Page, origin: string) {
   await signIn(page.request, origin);
   const { household } = await (await createHousehold(page.request, origin, 'Kostnadsprov')).json();
   await page.goto(origin);
-  await openConversation(page);
-  const panel = assistant(page);
-  await panel.getByLabel(/Jag tillåter att OpenAI/).check();
-  await panel.getByLabel(/Jag tillåter förslag och sparande/).check();
-  await panel.getByRole('button', { name: 'Starta textassistenten' }).click();
+  await startConversationWithText(page);
+  // Finish the initial session creation before asking to open text or voice
+  // again; a second start would supersede the request still in flight.
+  await expect(page.getByRole('region', { name: 'Skriv till Skyttel', exact: true })).toBeVisible();
   return household.id as string;
 }
 async function sendText(page: Page) {
-  await openConversation(page);
+  await openConversationText(page);
   const panel = assistant(page);
-  await panel.getByLabel('Meddelande till textassistenten').fill('Prova kostnadsunderlaget.');
+  await panel.getByLabel('Meddelande till Skyttel').fill('Prova kostnadsunderlaget.');
   await panel.getByRole('button', { name: 'Skicka', exact: true }).click();
   await expect(panel).toContainText('Det kontrollerade kostnadsprovet är klart.');
 }
 async function startVoice(page: Page) {
-  await openConversation(page);
-  await assistant(page).getByRole('button', { name: 'Starta röst', exact: true }).click();
-  await expect(assistant(page)).toContainText(
-    'Lyssnar. Du kan tala, rätta eller be att spara hela utkastet.',
-  );
+  await openConversationText(page);
+  await turnMicrophoneOn(page);
+  await expect(voiceBox(page)).toHaveText('Lyssnar');
 }
 async function openCosts(page: Page) {
   const link = page.getByRole('link', { name: 'Månadskostnad', exact: true });
@@ -56,8 +53,7 @@ test('KOST-01: separata kostnader och månadens antaganden återläses efter oms
     await app.command('delegate');
     await expect(assistant(page)).toContainText('Det kontrollerade kostnadsprovet är klart.');
     await app.command('usage 90');
-    await assistant(page).getByRole('button', { name: 'Stäng av rösten' }).click();
-    await expect(assistant(page)).toContainText('Rösten är avstängd.');
+    await turnMicrophoneOff(page);
     await openCosts(page);
     const overview = category(page, 'Månadens kostnadsöversikt');
     await expect(overview).toContainText('75,54 SEK');
@@ -152,8 +148,7 @@ test('KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan
     await app.command('usage 15');
     await app.command('usage 15');
     await app.command('finalize off');
-    await assistant(page).getByRole('button', { name: 'Stäng av rösten' }).click();
-    await expect(assistant(page)).toContainText('Rösten är avstängd.');
+    await turnMicrophoneOff(page);
     await openCosts(page);
     const live = category(page, 'Live – uppmätt hittills');
     const terra = category(page, 'Terra – uppmätt hittills');

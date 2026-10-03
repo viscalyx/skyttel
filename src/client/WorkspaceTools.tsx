@@ -1,6 +1,9 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react';
 import logo from '../../docs/images/shuttle-logo-transparent-small.png';
-import type { VoiceControl } from './VoiceAssistant.js';
+import { ConversationHelp } from './ConversationHelp.js';
+import { microphoneShortcut, useMicrophonePress } from './use-microphone-press.js';
+import { type TextButtonStatus, textButtonStatusWords } from './use-text-button-status.js';
+import type { Voice } from './use-voice.js';
 
 const paths = {
   navigate: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M16 8l-2 6-6 2 2-6 6-2',
@@ -19,7 +22,6 @@ const paths = {
   depthForward: 'M5 17h10v4H5zM10 16V3m-4 4 4-4 4 4M18 9l3 3-3 3',
   depthBackward: 'M5 3h10v4H5zM10 8v13m-4-4 4 4 4-4M18 9l3 3-3 3',
   mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8',
-  stop: '',
   activity: 'M3 12h4l3-8 4 16 3-8h4',
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   text: 'M4 5h16M12 5v15M8 20h8',
@@ -47,19 +49,15 @@ export function WorkspaceIcon({ name }: { name: keyof typeof paths }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {name === 'stop' ? (
-        <>
-          <circle cx="12" cy="12" r="10" />
-          <rect x="8" y="8" width="8" height="8" rx="1" fill="currentColor" stroke="none" />
-        </>
-      ) : (
-        <path d={paths[name]} />
-      )}
+      <path d={paths[name]} />
     </svg>
   );
 }
 
 export type WorkspaceTarget = 'list' | 'conversation' | 'voice' | 'search' | 'draft';
+
+/** The name of the toolbar button that opens and closes the text view. */
+export const textViewButtonName = 'Skriv till Skyttel';
 
 export function WorkspaceTools({
   onOpen,
@@ -72,15 +70,20 @@ export function WorkspaceTools({
   detailsAvailable = false,
   detailsVisible = false,
   voiceControl,
+  voiceBox,
+  holdVoice,
+  textViewOpen = false,
+  textButton,
   cameraMount,
   expanded,
   onExpandedChange,
-  statusOpen = false,
-  onStatus,
+  conversationUnavailable = false,
+  conversationOngoing = false,
 }: {
-  statusOpen?: boolean;
-  onStatus?: () => void;
-  onOpen: (target: WorkspaceTarget) => void;
+  conversationUnavailable?: boolean;
+  conversationOngoing?: boolean;
+  /** Opens a tool. The chosen button is where a conversation's consent box opens. */
+  onOpen: (target: WorkspaceTarget, chosen: HTMLElement) => void;
   account?: ReactNode;
   onSettings?: () => void;
   profileRequested?: boolean;
@@ -89,7 +92,13 @@ export function WorkspaceTools({
   onDetails?: () => void;
   detailsAvailable?: boolean;
   detailsVisible?: boolean;
-  voiceControl?: VoiceControl | null;
+  /** The microphone of the conversation that is going on. Null when none is. */
+  voiceControl?: Pick<Voice, 'microphone' | 'starting' | 'disabled' | 'activate'> | null;
+  holdVoice?: { canHold: boolean; prepare: () => void; start: () => void; release: () => void };
+  /** The voice box. It follows the conversation buttons in the reading order. */
+  voiceBox?: ReactNode;
+  textViewOpen?: boolean;
+  textButton?: { status: TextButtonStatus | null };
   cameraMount?: (element: HTMLDivElement | null) => void;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
@@ -100,6 +109,39 @@ export function WorkspaceTools({
   const returnFocus = useRef<HTMLButtonElement | null>(null);
   const expansionControl = useRef<HTMLButtonElement>(null);
   const tools = useRef<HTMLElement>(null);
+  const microphoneButton = useRef<HTMLButtonElement>(null);
+  const microphonePress = useMicrophonePress({
+    button: microphoneButton,
+    canHold: () =>
+      Boolean(
+        holdVoice?.canHold &&
+          !conversationUnavailable &&
+          !voiceControl?.disabled &&
+          !voiceControl?.starting &&
+          voiceControl?.microphone !== 'on' &&
+          navigator.onLine !== false,
+      ),
+    prepare: () => holdVoice?.prepare(),
+    startHeld: () => holdVoice?.start(),
+    releaseHeld: () => holdVoice?.release(),
+    short: () => {
+      onExpandedChange(false);
+      setUtility(null);
+      if (voiceControl && !conversationUnavailable) voiceControl.activate();
+      else if (microphoneButton.current) onOpen('voice', microphoneButton.current);
+    },
+  });
+  const [touch, setTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(pointer: coarse)');
+    const change = () => setTouch(query.matches);
+    query.addEventListener('change', change);
+    return () => query.removeEventListener('change', change);
+  }, []);
+  const microphoneDescription = voiceControl?.starting
+    ? 'Avbryt starten av rösten'
+    : `Prata med Skyttel (${microphoneShortcut()}). Håll in för att tala tills du släpper.`;
+  const voiceDescription = `${microphoneDescription}${conversationUnavailable ? ' Inte tillgängligt just nu.' : ''}`;
   const utilityPanel = useRef<HTMLElement>(null);
   useEffect(() => {
     if (utility) utilityPanel.current?.querySelector<HTMLElement>('h2')?.focus();
@@ -145,38 +187,100 @@ export function WorkspaceTools({
         </a>
         {(
           [
-            [
-              voiceControl?.microphone === 'on' ? 'stop' : 'mic',
-              voiceControl?.label ?? 'Prata med Skyttel',
-              'voice',
-            ],
-            ['text', 'Samtal och text', 'conversation'],
+            ['mic', 'Prata med Skyttel', 'voice'],
+            ['text', textViewButtonName, 'conversation'],
             ['search', 'Sök i kartan', 'search'],
             ['list', 'Lista', 'list'],
             ['draft', 'Utkast och historik', 'draft'],
           ] as const
         ).map(([icon, label, target]) => (
-          <button
-            key={target}
-            type="button"
-            title={label}
-            aria-label={label}
-            data-secondary={target === 'draft' || target === 'search' || undefined}
-            className={target === 'voice' ? 'workspace-talk' : undefined}
-            disabled={target === 'voice' ? voiceControl?.disabled : undefined}
-            aria-pressed={
-              target === 'voice' && voiceControl ? voiceControl.microphone === 'on' : undefined
-            }
-            onClick={() => {
-              onExpandedChange(false);
-              setUtility(null);
-              if (target === 'voice' && voiceControl) voiceControl.activate();
-              else onOpen(target);
-            }}
-          >
-            <WorkspaceIcon name={icon} />
-            <span>{label}</span>
-          </button>
+          <Fragment key={target}>
+            <button
+              ref={target === 'voice' ? microphoneButton : undefined}
+              type="button"
+              // The name stays. The description says what a press does while the voice starts.
+              title={
+                target === 'voice'
+                  ? touch
+                    ? undefined
+                    : voiceDescription
+                  : target === 'conversation' && conversationUnavailable && !conversationOngoing
+                    ? `${label}. Inte tillgängligt just nu.`
+                    : label
+              }
+              aria-label={
+                target === 'conversation' && textButton?.status
+                  ? `${label}. ${textButtonStatusWords[textButton.status]}.`
+                  : label
+              }
+              aria-description={
+                target === 'voice' && !touch
+                  ? voiceDescription
+                  : conversationUnavailable &&
+                      (target === 'voice' || (target === 'conversation' && !conversationOngoing))
+                    ? `${label}. Inte tillgängligt just nu.`
+                    : undefined
+              }
+              data-held={(target === 'voice' && microphonePress.held) || undefined}
+              data-secondary={target === 'draft' || target === 'search' || undefined}
+              className={
+                target === 'voice'
+                  ? 'workspace-talk'
+                  : target === 'conversation'
+                    ? 'workspace-text'
+                    : undefined
+              }
+              data-unavailable={
+                (conversationUnavailable &&
+                  (target === 'voice' || (target === 'conversation' && !conversationOngoing))) ||
+                undefined
+              }
+              disabled={
+                target === 'voice' && conversationOngoing
+                  ? !conversationUnavailable && voiceControl?.disabled
+                  : undefined
+              }
+              aria-pressed={target === 'voice' ? voiceControl?.microphone === 'on' : undefined}
+              aria-expanded={target === 'conversation' ? textViewOpen : undefined}
+              onClick={(event) => {
+                if (target === 'voice') {
+                  microphonePress.onClick(event);
+                  return;
+                }
+                onExpandedChange(false);
+                setUtility(null);
+                onOpen(target, event.currentTarget);
+              }}
+              onPointerDown={target === 'voice' ? microphonePress.onPointerDown : undefined}
+              onPointerUp={target === 'voice' ? microphonePress.onPointerUp : undefined}
+              onPointerCancel={target === 'voice' ? microphonePress.onPointerCancel : undefined}
+              onLostPointerCapture={
+                target === 'voice' ? microphonePress.onLostPointerCapture : undefined
+              }
+              onContextMenu={target === 'voice' ? microphonePress.onContextMenu : undefined}
+            >
+              <WorkspaceIcon name={icon} />
+              <span>{label}</span>
+              {target === 'conversation' && textButton?.status && (
+                <i
+                  className="text-button-marker"
+                  data-status={textButton.status}
+                  aria-hidden="true"
+                >
+                  {textButton.status === 'working' ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3a9 9 0 1 1-9 9" />
+                    </svg>
+                  ) : textButton.status === 'waiting' ? (
+                    '?'
+                  ) : (
+                    '•••'
+                  )}
+                </i>
+              )}
+            </button>
+            {target === 'conversation' && voiceBox}
+          </Fragment>
         ))}
         {onDetails && (
           <button
@@ -197,23 +301,6 @@ export function WorkspaceTools({
         )}
         <div className="workspace-camera-tools" ref={cameraMount} />
         <div className="workspace-tools-footer">
-          {onStatus && (
-            <button
-              type="button"
-              title="Aktuell status"
-              aria-label="Aktuell status"
-              aria-expanded={statusOpen}
-              data-secondary
-              onClick={() => {
-                setUtility(null);
-                onExpandedChange(false);
-                onStatus();
-              }}
-            >
-              <WorkspaceIcon name="activity" />
-              <span>Aktuell status</span>
-            </button>
-          )}
           {(
             [
               ['settings', 'Inställningar', 'settings'],
@@ -256,7 +343,7 @@ export function WorkspaceTools({
       {utility && (
         <section
           ref={utilityPanel}
-          className="workspace-utility"
+          className={`workspace-utility${utility === 'help' ? ' workspace-help' : ''}`}
           aria-label={utility === 'help' ? 'Information och hjälp' : 'Din profil'}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
@@ -276,18 +363,7 @@ export function WorkspaceTools({
           {utility === 'help' ? (
             <>
               <h2 tabIndex={-1}>Information och hjälp</h2>
-              <p>
-                Välj Lista för att läsa och ändra objekt och samband. Samtal och text fungerar utan
-                mikrofon.
-              </p>
-              <p>
-                Alla förslag samlas i ditt privata utkast. Spara hela utkastet när du vill dela
-                ändringarna med hushållet.
-              </p>
-              <p>
-                Kartan kan också styras med tangentbord genom Navigera. Stäng arbetsytan för att
-                återgå till kartan; din oskickade text finns kvar.
-              </p>
+              <ConversationHelp />
             </>
           ) : (
             <>

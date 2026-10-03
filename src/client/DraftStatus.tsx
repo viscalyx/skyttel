@@ -11,6 +11,7 @@ export function DraftStatus({
   dirty,
   unresolved,
   conflicts,
+  conflictLinks,
   expanded,
   error,
   imageError,
@@ -33,6 +34,8 @@ export function DraftStatus({
   dirty: boolean;
   unresolved: boolean;
   conflicts: { id: string; label: string }[];
+  /** Keeps the list of conflicts open when the status is shown in another place. */
+  conflictLinks?: { open: boolean; onOpenChange: (open: boolean) => void };
   expanded: boolean;
   error: string;
   imageError?: { name: string; onReturn: () => void };
@@ -76,25 +79,27 @@ export function DraftStatus({
         </p>
       )}
       {!compact && dirty && <p>Oskickad formulärtext finns kvar. Den ingår inte i utkastet.</p>}
-      {unresolved && <p>Vilka objekt avses? Red ut obesvarade identiteter före sparande.</p>}
       {conflicts.length > 0 && (
-        <>
-          <p>Utkastet har konflikter. Välj hur de ska lösas före ett nytt sparbesked.</p>
-          <details className="draft-conflict-links">
-            <summary>
-              Visa {conflicts.length} {conflicts.length === 1 ? 'konflikt' : 'konflikter'}
-            </summary>
-            <ul>
-              {conflicts.map((conflict) => (
-                <li key={conflict.id}>
-                  <button type="button" onClick={() => onConflict(conflict.id)}>
-                    {conflict.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </details>
-        </>
+        <details
+          className="draft-conflict-links"
+          open={conflictLinks?.open}
+          onToggle={
+            conflictLinks && ((event) => conflictLinks.onOpenChange(event.currentTarget.open))
+          }
+        >
+          <summary>
+            Visa {conflicts.length} {conflicts.length === 1 ? 'konflikt' : 'konflikter'}
+          </summary>
+          <ul>
+            {conflicts.map((conflict) => (
+              <li key={conflict.id}>
+                <button type="button" onClick={() => onConflict(conflict.id)}>
+                  {conflict.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
       {unknown && <p>Kontrollera samma sparförsök innan du ändrar eller sparar mer.</p>}
       <div className="draft-status-actions">

@@ -6,12 +6,19 @@ import type { MapState } from '../../src/shared/map.js';
 import {
   activatePanel,
   createHousehold,
-  openConversation,
   openProfile,
   openSettings,
   openWorkspace,
   signIn,
 } from '../support/client.js';
+import {
+  consentBox,
+  consentBoxFor,
+  openConversationText,
+  startConversationWithText,
+  turnMicrophoneOn,
+  voiceBox,
+} from '../support/conversation-page.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -20,12 +27,9 @@ import { modelMessage, textModel } from '../support/text-model.js';
 async function startConversation(page: Page, origin: string) {
   await page.addInitScript({ content: liveBrowserFixtureSource });
   await page.goto(origin);
-  await openConversation(page);
-  await page.getByLabel(/Jag tillåter att OpenAI/).check();
-  await page.getByLabel(/Jag tillåter förslag och sparande/).check();
-  await page.getByRole('button', { name: 'Starta textassistenten', exact: true }).click();
-  await page.getByRole('button', { name: 'Starta röst', exact: true }).click();
-  await expect(page.getByText('Mikrofonen är på', { exact: true })).toBeVisible();
+  await startConversationWithText(page);
+  await turnMicrophoneOn(page);
+  await expect(voiceBox(page)).toHaveText('Lyssnar');
 }
 
 function conversationInstallation() {
@@ -103,12 +107,12 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     const before = await read();
     const viewBefore = await (await page.request.get(`${path}/map/view`)).json();
     await startConversation(page, installation.origin);
-    await page.getByLabel('Meddelande till textassistenten').fill('Berätta om lampan');
+    await page.getByLabel('Meddelande till Skyttel').fill('Berätta om lampan');
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
-    await expect(page.getByRole('log', { name: 'Samtalets dialog' })).toContainText(
+    await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Vem använder cykeln?',
     );
-    await page.getByLabel('Meddelande till textassistenten').fill('Gammalt oskickat svar');
+    await page.getByLabel('Meddelande till Skyttel').fill('Gammalt oskickat svar');
     await openWorkspace(page);
     await otherPage.goto(installation.origin);
     await openWorkspace(otherPage);
@@ -157,6 +161,20 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     const oldSave = await pendingRequest;
     await saveWaiting;
     expect(saveId).not.toBe('');
+    // The conversation must observe this registered operation while the
+    // same browser still owns its original, unfinished manual save request.
+    await page.waitForResponse(async (response) => {
+      if (
+        !/\/text-assistant\/[^/]+(?:\/voice\/[^/]+\/poll)?$/.test(response.url()) ||
+        response.status() !== 200
+      )
+        return false;
+      const body = await response.json();
+      return (body.assistant ?? body).operations?.some(
+        (operation: { operationId: string; status: string }) =>
+          operation.operationId === saveId && operation.status === 'pending',
+      );
+    });
     expect(await (await page.request.get(`${path}/map/operations/${saveId}`)).json()).toMatchObject(
       {
         operation: {
@@ -172,10 +190,8 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
       .getByRole('link', { name: 'Permanent radering', exact: true })
       .click();
     await expect(otherPage.getByLabel('Objektets namn')).toHaveValue('Gammal oskickad cykel');
-    await expect(page.getByLabel('Meddelande till textassistenten')).toHaveValue(
-      'Gammalt oskickat svar',
-    );
-    await expect(page.getByText('Mikrofonen är på', { exact: true })).toBeVisible();
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
+    await expect(page.getByLabel('Meddelande till Skyttel')).toHaveValue('Gammalt oskickat svar');
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
       { enabled: true, state: 'live' },
     ]);
@@ -206,8 +222,8 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
       })
       .toEqual([{ enabled: false, state: 'ended' }]);
     await expect(otherPage.getByLabel('Objektets namn')).toHaveCount(0, { timeout: 10000 });
-    await expect(page.getByLabel('Meddelande till textassistenten')).toHaveCount(0);
-    await expect(page.getByText('Mikrofonen är på', { exact: true })).toHaveCount(0);
+    await expect(voiceBox(page)).toHaveCount(0);
+    await expect(page.getByLabel('Meddelande till Skyttel')).toHaveCount(0);
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual({
       error: 'content_maintenance',
     });
@@ -255,11 +271,11 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
       page.waitForEvent('load'),
       section.getByRole('button', { name: 'Läs in kartan på nytt', exact: true }).click(),
     ]);
-    await openConversation(page);
-    await expect(
-      page.getByRole('button', { name: 'Starta textassistenten', exact: true }),
-    ).toBeVisible();
-    await expect(page.getByRole('log', { name: 'Samtalets dialog' })).toHaveCount(0);
+    // The page is loaded anew: the conversation is gone, and so is the consent for the visit.
+    await openConversationText(page);
+    await expect(consentBox(page)).toBeVisible();
+    await consentBoxFor(page).decline.click();
+    await expect(page.getByRole('log', { name: 'Samtalstext' })).toHaveCount(0);
     await expect(page.getByLabel('Objektets namn')).toHaveCount(0);
     await expect(otherPage.getByLabel('Objektets namn')).toHaveCount(0);
     await expect(
@@ -352,33 +368,25 @@ test('ARBETE-02: conversation and microphone survive navigation and end on logou
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await startConversation(page, installation.origin);
-    await page.getByLabel('Meddelande till textassistenten').fill('Berätta om cykeln');
+    await page.getByLabel('Meddelande till Skyttel').fill('Berätta om cykeln');
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
-    await expect(page.getByRole('log', { name: 'Samtalets dialog' })).toContainText(
+    await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Vem använder cykeln?',
     );
-    await page.getByLabel('Meddelande till textassistenten').fill('Oskickat svar');
+    await page.getByLabel('Meddelande till Skyttel').fill('Oskickat svar');
     await openProfile(page);
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
-    await expect(page.getByText('Mikrofonen är på', { exact: true })).toBeVisible();
-    await page
-      .getByRole('region', { name: 'Skyttels röst', exact: true })
-      .getByRole('button', { name: 'Pausa mikrofon', exact: true })
-      .click();
-    await expect(page.getByText('Mikrofonen är pausad', { exact: true })).toBeVisible();
+    // Outside the map the voice box still says that the microphone is on.
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
-      { enabled: false, state: 'live' },
+      { enabled: true, state: 'live' },
     ]);
     await page.getByRole('link', { name: 'Till startsidan', exact: true }).click();
-    await expect(page.getByLabel('Meddelande till textassistenten')).toHaveValue('Oskickat svar');
-    await expect(page.getByRole('log', { name: 'Samtalets dialog' })).toContainText(
+    await expect(page.getByLabel('Meddelande till Skyttel')).toHaveValue('Oskickat svar');
+    await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Vem använder cykeln?',
     );
-    await expect(page.getByText('Mikrofonen är pausad', { exact: true })).toBeVisible();
-    await page
-      .getByRole('region', { name: 'Skyttels röst', exact: true })
-      .getByRole('button', { name: 'Återuppta mikrofon', exact: true })
-      .click();
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
     await openProfile(page);
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
     await page.getByRole('button', { name: 'Logga ut', exact: true }).click();
@@ -386,7 +394,7 @@ test('ARBETE-02: conversation and microphone survive navigation and end on logou
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
       { enabled: false, state: 'ended' },
     ]);
-    await expect(page.getByLabel('Meddelande till textassistenten')).toHaveCount(0);
+    await expect(page.getByLabel('Meddelande till Skyttel')).toHaveCount(0);
   } finally {
     await installation.close();
   }
@@ -433,9 +441,7 @@ test('ARBETE-03: revoked household access retires hidden forms and microphone', 
       .filter({ has: page.getByRole('heading', { name: 'Robin Exempel' }) });
     await membership.getByRole('button', { name: 'Återkalla tillgång', exact: true }).click();
     await membership.getByRole('button', { name: 'Bekräfta återkallelse' }).click();
-    await expect(memberPage.getByText('Mikrofonen är på', { exact: true })).toHaveCount(0, {
-      timeout: 10000,
-    });
+    await expect(voiceBox(memberPage)).toHaveCount(0, { timeout: 10000 });
     await expect
       .poll(() => memberPage.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks))
       .toEqual([{ enabled: false, state: 'ended' }]);
@@ -497,10 +503,10 @@ test('ARBETE-04: replaced household content retires hidden work and microphone',
       page.getByRole('button', { name: 'Läs in det återställda hushållet' }).click(),
     ]);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await openConversation(page);
-    await expect(
-      page.getByRole('button', { name: 'Starta textassistenten', exact: true }),
-    ).toBeVisible();
+    // The page is loaded anew: the conversation is gone, and so is the consent for the visit.
+    await openConversationText(page);
+    await expect(consentBox(page)).toBeVisible();
+    await consentBoxFor(page).decline.click();
     await openWorkspace(page);
     await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
       'Inga förslag',

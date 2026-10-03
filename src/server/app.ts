@@ -6,12 +6,15 @@ import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import { buildIdentity } from '../shared/build-identity.js';
 import { normalizeHouseholdName } from '../shared/household-name.js';
+import type { TextAssistantView } from '../shared/text-assistant.js';
 import { AdministrationError } from './administration.js';
 import { administrationRoutes } from './administration-routes.js';
 import { assistantRoutes } from './assistant-routes.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
 import { contentOwnerRoutes } from './content-owner-routes.js';
+import { conversationConsents } from './conversation-consent.js';
+import { conversationConsentRoutes } from './conversation-consent-routes.js';
 import { costRoutes } from './cost-routes.js';
 import { installationCosts } from './costs.js';
 import { householdErasureRoutes } from './household-erasure-routes.js';
@@ -34,6 +37,7 @@ export function createApp({
   database,
   auth,
   identity = buildIdentity,
+  consentTextVersion,
   modelFetch,
   modelUsage,
   liveFetch,
@@ -45,6 +49,8 @@ export function createApp({
   database: Database.Database;
   auth: Auth;
   identity?: typeof buildIdentity;
+  /** The version of the conversation consent text, when it is not the release's own. */
+  consentTextVersion?: number;
   modelFetch?: typeof fetch;
   modelUsage?: TextModelUsage;
   liveFetch?: typeof fetch;
@@ -55,6 +61,7 @@ export function createApp({
   const app = new Hono();
   const costs = installationCosts(database);
   const linking = createLoginMethods(database, auth, config.origin);
+  const consents = conversationConsents(database, consentTextVersion);
   app.use(
     '*',
     secureHeaders({
@@ -211,10 +218,15 @@ export function createApp({
   app.route('/api', profileImageRoutes(database, auth, config.origin));
   app.route('/', assistantRoutes(database, auth, config.origin));
   let stopVoice: ((sessionId: string) => void) | undefined;
+  let summarizeVoice: ((sessionId: string, signal: AbortSignal) => Promise<void>) | undefined;
+  let newVoiceConversation:
+    | ((view: TextAssistantView, deferVoiceClose?: boolean) => void)
+    | undefined;
   const textAssistant = textAssistantRoutes({
     database,
     auth,
     config,
+    consents,
     dispatch: (request) =>
       assistantDispatch
         ? assistantDispatch(request, (next) => app.fetch(next))
@@ -225,8 +237,20 @@ export function createApp({
       modelUsage?.(attempt);
     },
     onStop: (sessionId) => stopVoice?.(sessionId),
+    onSummary: (sessionId, signal) => summarizeVoice?.(sessionId, signal),
+    onNewConversation: (view, deferVoiceClose) => newVoiceConversation?.(view, deferVoiceClose),
   });
   app.route('/api', textAssistant.routes);
+  app.route(
+    '/api',
+    conversationConsentRoutes(
+      database,
+      auth,
+      config.origin,
+      consents,
+      textAssistant.endConversations,
+    ),
+  );
   const voiceAssistant = voiceAssistantRoutes({
     config,
     dispatch: (request) => app.fetch(request),
@@ -235,8 +259,14 @@ export function createApp({
     liveUsage,
     recordUsage: costs.live,
     interrupt: textAssistant.interrupt,
+    conversation: textAssistant.conversation,
+    transcript: textAssistant.transcript,
+    contextUsage: textAssistant.contextUsage,
+    prepareVoiceContext: textAssistant.prepareVoiceContext,
   });
   stopVoice = voiceAssistant.stopSession;
+  summarizeVoice = voiceAssistant.summarizeSession;
+  newVoiceConversation = voiceAssistant.newConversation;
   app.route('/api', voiceAssistant.routes);
   app.all('/api/*', (context) => context.json({ error: 'not_found' }, 404));
   app.use('/assets/*', serveStatic({ root: './dist/client' }));

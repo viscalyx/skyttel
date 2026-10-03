@@ -1,9 +1,10 @@
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { App } from '../../../src/client/App.js';
 import type { Administration, HouseholdInvitation } from '../../../src/shared/administration.js';
+import { defaultConversationPreferences } from '../../../src/shared/conversation-preferences.js';
 import { defaultViewSettings } from '../../../src/shared/personal-view.js';
 
 const household = { id: 'linden', name: 'Hushållet Linden', role: 'administrator' };
@@ -39,7 +40,13 @@ type Reply = { data?: unknown; status?: number; error?: Error; response?: Promis
 const unexpectedRequests: string[] = [];
 
 function serve(routes: Record<string, Reply[]>) {
-  routes['/api/households/linden/text-assistant'] ??= [{ data: { available: false } }];
+  routes['/api/households/linden/text-assistant'] ??= Array.from({ length: 8 }, () => ({
+    data: { available: false },
+  }));
+  routes['/api/households/linden/map/conversation-preferences'] ??= [
+    { data: defaultConversationPreferences },
+  ];
+  routes['/api/households/linden/conversation-consent'] ??= [{ data: { saved: null } }];
   routes['/api/households/linden/erasure'] ??= Array.from({ length: 3 }, () => ({
     data: { objects: [], relationships: [], objectTypes: [], relationshipTypes: [], status: null },
   }));
@@ -56,7 +63,11 @@ function serve(routes: Record<string, Reply[]>) {
       },
     },
   ];
-  routes['/api/households/linden/map/operations'] ??= [{ data: { operations: [] } }];
+  // The draft view and automatic conversation recovery each read pending saves.
+  routes['/api/households/linden/map/operations'] ??= [
+    { data: { operations: [] } },
+    { data: { operations: [] } },
+  ];
   const fetch = vi.fn(async (input: string | URL | Request, _init?: RequestInit) => {
     const path =
       typeof input === 'string'
@@ -551,28 +562,19 @@ describe('invitation acceptance interface', () => {
 });
 
 describe('current household access', () => {
-  test('opens retained work details deliberately in Settings and returns keyboard focus', async () => {
+  test('retains draft feedback in Settings and opens receipts after returning to the map', async () => {
     serve({
       '/api/bootstrap': [{ data: ready }],
       '/api/households/linden': [{ data: { household } }],
     });
     mount('/');
     await userEvent.click(await screen.findByRole('button', { name: 'Inställningar' }));
-    const status = within(screen.getByRole('region', { name: 'Aktuell status' }));
-    expect(status.getByText('Inga osparade förslag')).toBeDefined();
-    expect(status.queryByRole('heading', { name: 'Aktuell status' })).toBeNull();
-    await userEvent.click(status.getByRole('button', { name: 'Visa samtals- och utkastdetaljer' }));
-    expect(document.activeElement).toBe(status.getByRole('heading', { name: 'Aktuell status' }));
-    expect(status.getByRole('button', { name: 'Sparförsök och kvitton' })).toBeDefined();
-    await userEvent.click(status.getByRole('button', { name: 'Stäng aktuell status' }));
-    await waitFor(() =>
-      expect(document.activeElement).toBe(
-        status.getByRole('button', { name: 'Visa samtals- och utkastdetaljer' }),
-      ),
-    );
+    const feedback = within(screen.getByRole('region', { name: 'Utkastets återkoppling' }));
+    expect(feedback.getByText('Inga osparade förslag')).toBeDefined();
+    expect(screen.queryByRole('region', { name: 'Aktuell status' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Inställningar', level: 1 })).toBeDefined();
-    await userEvent.click(status.getByRole('button', { name: 'Visa samtals- och utkastdetaljer' }));
-    await userEvent.click(status.getByRole('button', { name: 'Sparförsök och kvitton' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Tillbaka till kartan' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Utkast och historik' }));
     expect(await screen.findByRole('heading', { name: 'Mina sparförsök' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Inställningar', level: 1 })).toBeNull();
   });
@@ -632,6 +634,11 @@ describe('current household access', () => {
     serve({
       '/api/bootstrap': [{ data: ready }, { data: forbidden }],
       '/api/households/linden': [{ data: { household } }, { status: 403 }],
+      // Personal choices refresh when the window regains focus.
+      '/api/households/linden/map/conversation-preferences': [
+        { data: defaultConversationPreferences },
+        { data: defaultConversationPreferences },
+      ],
     });
     mount('/');
     await userEvent.click(await screen.findByRole('button', { name: 'Inställningar' }));

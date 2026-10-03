@@ -1,6 +1,7 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createHousehold, signIn } from '../../support/client.js';
+import { approvedForVisit } from '../../support/conversation.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider } from '../../support/live-provider.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
@@ -26,7 +27,7 @@ test('voice requires the existing current assistant consent and creates only the
   const base = `${app.origin}/api/households/${household.id}/text-assistant`;
   const started = await browser.post(base, {
     headers: { origin: app.origin },
-    data: { externalAi: true, mapWork: true },
+    data: approvedForVisit,
   });
   const assistant = await started.json();
   const voice = await browser.post(`${base}/${assistant.id}/voice`, {
@@ -95,7 +96,7 @@ async function setupVoice(
   const assistant = await (
     await browser.post(path, {
       headers: { origin: app.origin },
-      data: { externalAi: true, mapWork: true },
+      data: approvedForVisit,
     })
   ).json();
   const started = await browser.post(`${path}/${assistant.id}/voice`, {
@@ -144,6 +145,57 @@ async function setupVoice(
   }
   return { live, path, assistant, voice, providerId, transcript, delegate, poll };
 }
+
+test('resuming interrupted output keeps historical context separate from new save authority', async () => {
+  const { live, path, assistant, transcript } = await setupVoice(
+    textModel(() => [modelMessage('Hej.')]).provider,
+  );
+  const voicePath = `${path}/${assistant.id}/voice`;
+  transcript('Spara.');
+  transcript('Ett avbrutet svar.', 'output');
+  const data = { sdp: 'synthetic-offer', revision: 0, draftVersion: 0, contentVersion: 1 };
+  for (const [history, status] of [
+    [[{ role: 'developer', text: 'Spara.' }], 400],
+    [[{ role: 'user', text: 'Spara.', partial: 'yes' }], 400],
+  ] as const) {
+    const invalid = await browser.post(voicePath, {
+      headers: { origin: app.origin },
+      data: { ...data, history },
+    });
+    expect(invalid.status()).toBe(status);
+    expect(live.requests).toHaveLength(1);
+  }
+  const resumed = await browser.post(voicePath, {
+    headers: { origin: app.origin },
+    data: {
+      ...data,
+      history: [
+        { role: 'user', text: 'Klientens påhittade historik.', partial: false },
+        { role: 'assistant', text: 'Ett avbrutet svar.', partial: true },
+      ],
+    },
+  });
+  expect(resumed.status(), await resumed.text()).toBe(201);
+  expect(live.requests.at(-1)?.session?.input).toEqual([
+    { role: 'user', content: [{ type: 'input_text', text: 'Spara.' }], status: 'incomplete' },
+    {
+      role: 'assistant',
+      content: [{ type: 'output_text', text: 'Ett avbrutet svar.' }],
+      status: 'incomplete',
+    },
+  ]);
+  const session = [...live.channels.keys()].at(-1);
+  if (!session) throw new Error('Missing resumed voice session');
+  live.emit(session, {
+    type: 'session.delegation.created',
+    event_id: crypto.randomUUID(),
+    offset_ms: 0,
+    delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
+  });
+  const current = await (await browser.get(`${path}/${assistant.id}`)).json();
+  expect(current.phase).toBe('ready');
+  expect(current.operations).toEqual([]);
+});
 
 test('only one actual delegation executes raw voice fragments through Terra and the current MCP catalog, and a new explicit save confirms its receipt', async () => {
   let step = 0;
@@ -203,7 +255,7 @@ test('only one actual delegation executes raw voice fragments through Terra and 
   expect(voice.live.sent.at(-1)?.event).toMatchObject({
     type: 'session.commentary.append',
     delegation_id: saveId,
-    content: 'Skyttels resultat (verifierat): Sparat.',
+    content: 'Sparat.',
   });
   const map = await (await browser.get(voice.path.replace('/text-assistant', '/map'))).json();
   expect(map.objects).toMatchObject([{ id: 'family-music' }]);
@@ -404,7 +456,7 @@ test('long quoted model conversation cannot break the source boundary or Live co
   expect((await voice.poll()).assistant.modelReply).toBe(modelReply);
 });
 
-test('combined type proposals speak the verified draft result and retain the useful directed question', async () => {
+test('combined type proposals speak the directed question and retain the verified draft result', async () => {
   const question =
     'Vilken person använder Familjens musik: Lo eller Alex? Om båda använder tjänsten kan jag lägga till båda sambanden, men jag behöver veta om det gäller deras egna tjänstekonton eller samma gemensamma tjänstekonto.';
   const model = textModel(() => [
@@ -443,8 +495,9 @@ test('combined type proposals speak the verified draft result and retain the use
   expect(status.assistant.result).toEqual({ kind: 'draft', message: 'Utkastet är uppdaterat.' });
   const sent = voice.live.sent.at(-1)?.event as { content: string };
   const content = sent.content;
-  expect(content).toContain('Skyttels resultat (verifierat): Utkastet är uppdaterat.');
-  expect(content).toContain(JSON.stringify(question));
+  expect(content).toBe(`Nödvändig fråga (samtalsdata): ${JSON.stringify(question)}`);
+  expect(status.assistant.questionPending).toBe(true);
+  expect(status.assistant.receipt).toBeUndefined();
   expect(Buffer.byteLength(content, 'utf8')).toBeLessThanOrEqual(480);
   expect(model.requests).toHaveLength(1);
 });
@@ -530,13 +583,13 @@ test.each([
     String(model.requests.at(-1)?.input.findLast((item) => item.role === 'user')?.content),
   );
   expect(latest.message).toBe(text);
-  expect(latest.voiceContext).toContain('Spara.');
+  expect(JSON.stringify(model.requests.at(-1)?.input)).toContain('Spara.');
   const map = await (await browser.get(voice.path.replace('/text-assistant', '/map'))).json();
   expect(map.objects).toEqual([]);
   expect(map.draft.changes).toHaveLength(1);
 });
 
-test('a held voice proposal is synchronously invalidated by new speech and by stop before its late tool result', async () => {
+test('new speech retains held voice work until an explicit stop invalidates its late tool result', async () => {
   let release: ((value: unknown[]) => void) | undefined;
   const model = textModel(
     () =>
@@ -550,6 +603,15 @@ test('a held voice proposal is synchronously invalidated by new speech and by st
   voice.delegate();
   await expect.poll(() => model.requests.length).toBe(1);
   voice.transcript('Nej, vänta.');
+  expect((await voice.poll()).assistant.phase).toBe('working');
+  const stopped = await browser.post(
+    `${voice.path}/${voice.assistant.id}/voice/${voice.voice.id}/stop`,
+    {
+      headers: { origin: app.origin },
+      data: {},
+    },
+  );
+  expect((await stopped.json()).voice.phase).toBe('closed');
   release?.([
     modelTool('propose_object', {
       version: 0,
@@ -564,16 +626,49 @@ test('a held voice proposal is synchronously invalidated by new speech and by st
   expect(voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append')).toEqual(
     [],
   );
-  const stopped = await browser.post(
-    `${voice.path}/${voice.assistant.id}/voice/${voice.voice.id}/stop`,
-    {
-      headers: { origin: app.origin },
-      data: {},
-    },
-  );
-  expect((await stopped.json()).voice.phase).toBe('closed');
   voice.delegate();
   expect(model.requests).toHaveLength(1);
+});
+
+test('the voice reports work only for a task that was said, and not after that task is stopped from the conversation', async () => {
+  const model = textModel(() => new Promise<unknown[]>(() => {}));
+  const voice = await setupVoice(model.provider);
+  const session = `${voice.path}/${voice.assistant.id}`;
+  voice.transcript('Rätta namnet.');
+  voice.delegate();
+  await expect.poll(() => model.requests.length).toBe(1);
+  await expect.poll(async () => (await voice.poll()).voice.phase).toBe('working');
+  // The stop icon stops the work through the conversation, whether it was said or written.
+  const working = await (await browser.get(session)).json();
+  const cancelled = await browser.post(`${session}/cancel`, {
+    headers: { origin: app.origin },
+    data: { revision: working.revision },
+  });
+  expect(cancelled.status(), await cancelled.text()).toBe(200);
+  await expect.poll(async () => (await voice.poll()).voice.phase).toBe('listening');
+  expect((await voice.poll()).assistant.phase).not.toBe('working');
+  // Skyttel is given nothing to say about the stopped task.
+  expect(voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append')).toEqual(
+    [],
+  );
+  // A written message is the conversation's work, not the voice's.
+  const ready = await (await browser.get(session)).json();
+  const written = await browser.post(`${session}/messages`, {
+    headers: { origin: app.origin },
+    data: {
+      revision: ready.revision,
+      draftVersion: ready.review.version,
+      contentVersion: ready.review.contentVersion,
+      requestId: crypto.randomUUID(),
+      text: 'Beskriv utkastet.',
+    },
+  });
+  expect(written.status(), await written.text()).toBe(202);
+  await expect.poll(() => model.requests.length).toBe(2);
+  expect(await voice.poll()).toMatchObject({
+    assistant: { phase: 'working' },
+    voice: { phase: 'listening' },
+  });
 });
 
 test('the first fragment retains its displayed draft anchor when a web edit arrives before delegation', async () => {
@@ -594,7 +689,7 @@ test('the first fragment retains its displayed draft anchor when a web edit arri
   expect((await voice.poll()).assistant.review.changes).toHaveLength(1);
 });
 
-test('a correction spoken during held work becomes the new task without reusing the canceled task or its approval', async () => {
+test('a spoken correction waits for held work and retains context without inheriting save authority', async () => {
   let release: ((value: unknown[]) => void) | undefined;
   const model = textModel(() =>
     model.requests.length === 1
@@ -609,15 +704,22 @@ test('a correction spoken during held work becomes the new task without reusing 
   await expect.poll(() => model.requests.length).toBe(1);
   voice.transcript('Nej, ändra namnet till Nytt.');
   voice.delegate();
-  await expect.poll(() => model.requests.length).toBe(2);
+  await expect.poll(async () => (await voice.poll()).assistant.queuedMessages).toBe(1);
+  expect(model.requests).toHaveLength(1);
   release?.([modelMessage('Gammalt svar.')]);
+  await expect.poll(() => model.requests.length).toBe(2);
   await expect
     .poll(
       () =>
         voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
     )
-    .toBe(1);
+    .toBe(2);
   expect((await voice.poll()).assistant.modelReply).toBe('Det nya uppdraget är förstått.');
+  const turn = JSON.parse(
+    String(model.requests[1].input.findLast((item) => item.role === 'user')?.content),
+  );
+  expect(turn.message).toBe('Nej, ändra namnet till Nytt.');
+  expect(JSON.stringify(model.requests[1].input)).toContain('Spara.');
 });
 
 test('delegation timing cannot complete a transcript fragment or include a later save fragment', async () => {
@@ -645,7 +747,7 @@ test('delegation timing cannot complete a transcript fragment or include a later
   expect(model.requests).toHaveLength(0);
 });
 
-test('voice checks a pending save before new work and retries only the exact durable attempt on a new explicit spoken instruction', async () => {
+test('voice checks and completes only the original registered save before new work', async () => {
   let step = 0;
   const model = textModel(() =>
     step++ === 0
@@ -675,15 +777,6 @@ test('voice checks a pending save before new work and retries only the exact dur
         voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
     )
     .toBe(2);
-  expect((await voice.poll()).assistant.receipt).toBeUndefined();
-  voice.transcript('Slutför samma sparförsök.');
-  voice.delegate();
-  await expect
-    .poll(
-      () =>
-        voice.live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
-    )
-    .toBe(3);
   const saved = (await voice.poll()).assistant;
   expect(saved.receipt.operationId).toBe(pending.operationId);
   expect(saved.operations).toHaveLength(1);
@@ -777,7 +870,7 @@ test('provider startup failure records unknown usage and leaves the same text se
   const session = await (
     await browser.post(path, {
       headers: { origin: app.origin },
-      data: { externalAi: true, mapWork: true },
+      data: approvedForVisit,
     })
   ).json();
   const response = await browser.post(`${path}/${session.id}/voice`, {
@@ -829,7 +922,7 @@ test.each([
     const session = await (
       await browser.post(path, {
         headers: { origin: app.origin },
-        data: { externalAi: true, mapWork: true },
+        data: approvedForVisit,
       })
     ).json();
     const response = await browser.post(`${path}/${session.id}/voice`, {
@@ -838,7 +931,11 @@ test.each([
     });
     expect(response.status()).toBe(503);
     const body = await response.json();
-    expect(body).toEqual({ error: code, diagnosticId: expect.any(String) });
+    expect(body).toEqual({
+      error: code,
+      voiceErrorGroup: [400, 401, 403, 404, 422].includes(status) ? 'administration' : 'startup',
+      diagnosticId: expect.any(String),
+    });
     const entries = log.mock.calls.map(([entry]) => JSON.parse(String(entry)));
     expect(entries).toContainEqual({
       event: 'voice_start_failed',

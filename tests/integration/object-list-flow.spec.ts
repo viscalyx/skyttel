@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test';
 import {
   activatePanel,
   createHousehold,
-  openConversation,
   openSettings,
   openWorkspace,
   signIn,
@@ -12,6 +11,7 @@ import { createInstallation } from '../support/installation.js';
 test('LISTA-05: short-screen list returns preserve the visible result and keyboard focus', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
@@ -51,7 +51,12 @@ test('LISTA-05: short-screen list returns preserve the visible result and keyboa
     ).toBe(true);
     await openSettings(page);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    expect(await flow.evaluate((element) => element.scrollTop)).toBe(remembered);
+    // The return is a router transition, and the list restores its place and
+    // focus in an effect after it. The click does not wait for either, and
+    // the large map can take longer than the default wait on a busy machine.
+    await expect
+      .poll(() => flow.evaluate((element) => element.scrollTop), { timeout: 30_000 })
+      .toBe(remembered);
     expect(
       await page.evaluate(() => {
         const element = document.activeElement;
@@ -101,7 +106,8 @@ test('LISTA-06: an inactive visible list opens details on the first pointer clic
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
     const body = work.locator('.workspace-panel-body');
-    await openConversation(page);
+    // Another panel takes the turn, and the list stays visible beside it.
+    await work.getByRole('button', { name: 'Uppgifter för Provobjekt 000', exact: true }).click();
     await expect(work).toBeVisible();
     await expect(work).toHaveAttribute('data-active', 'false');
     const result = work.getByRole('button', {

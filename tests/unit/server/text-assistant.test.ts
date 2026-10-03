@@ -3,7 +3,8 @@ import { afterEach, expect, test, vi } from 'vitest';
 import type { TextModelAttempt, TextModelUsage } from '../../../src/server/text-assistant-model.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
-import { createInstallation } from '../../support/installation.js';
+import { approvedForVisit } from '../../support/conversation.js';
+import { createInstallation, robin } from '../../support/installation.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 
 let app: Awaited<ReturnType<typeof createInstallation>>;
@@ -25,19 +26,17 @@ afterEach(async () => {
   await app?.close();
 });
 
-test('the own assistant needs a separate AI and map-work choice, keeps its normal MCP grant private, and revokes it on stop', async () => {
+test('the own assistant needs the conversation consent, keeps its normal MCP grant private, and revokes it on stop', async () => {
   await setup(async () => {
     throw new Error('No provider call should be needed for consent');
   });
   expect((await (await browser.get(path)).json()).available).toBe(true);
-  for (const data of [{}, { externalAi: true }, { mapWork: true }]) {
-    expect((await browser.post(path, { headers: { origin: app.origin }, data })).status()).toBe(
-      403,
-    );
-  }
+  expect((await browser.post(path, { headers: { origin: app.origin }, data: {} })).status()).toBe(
+    403,
+  );
   const started = await browser.post(path, {
     headers: { origin: app.origin },
-    data: { externalAi: true, mapWork: true },
+    data: approvedForVisit,
   });
   expect(started.status(), await started.text()).toBe(201);
   const session = await started.json();
@@ -49,7 +48,7 @@ test('the own assistant needs a separate AI and map-work choice, keeps its norma
   expect(JSON.stringify(session)).not.toMatch(/access_token|Bearer|synthetic-model-key/);
   const connections = await (await browser.get(`${app.origin}/api/assistants/context`)).json();
   expect(connections.connections).toHaveLength(1);
-  expect(connections.connections[0].clientName).toBe('Skyttels textassistent');
+  expect(connections.connections[0].clientName).toBe('Samtal med Skyttel');
   const stopped = await browser.post(`${path}/${session.id}/stop`, {
     headers: { origin: app.origin },
     data: {},
@@ -68,7 +67,7 @@ test('missing model configuration leaves ordinary map work available', async () 
     (
       await browser.post(path, {
         headers: { origin: app.origin },
-        data: { externalAi: true, mapWork: true },
+        data: approvedForVisit,
       })
     ).status(),
   ).toBe(503);
@@ -88,7 +87,7 @@ test('browser fetch metadata does not change the internal OAuth authorization re
       'content-type': 'application/json',
       'sec-fetch-mode': 'cors',
     },
-    body: JSON.stringify({ externalAi: true, mapWork: true }),
+    body: JSON.stringify(approvedForVisit),
   });
   expect(response.status, await response.clone().text()).toBe(201);
   expect(await response.json()).toMatchObject({ phase: 'ready', review: { version: 0 } });
@@ -97,7 +96,7 @@ test('browser fetch metadata does not change the internal OAuth authorization re
 async function start() {
   const response = await browser.post(path, {
     headers: { origin: app.origin },
-    data: { externalAi: true, mapWork: true },
+    data: approvedForVisit,
   });
   expect(response.status(), await response.text()).toBe(201);
   return response.json();
@@ -964,7 +963,7 @@ test.each([
   expect((await (await browser.get(`${mapPath}/history`)).json()).history).toEqual([]);
 });
 
-test.each(['discard', 'cancel', 'supersede', 'logout'] as const)(
+test.each(['discard', 'cancel', 'new conversation', 'logout'] as const)(
   'late provider work cannot undo %s',
   async (action) => {
     let release!: (output: unknown[]) => void;
@@ -1008,7 +1007,15 @@ test.each(['discard', 'cancel', 'supersede', 'logout'] as const)(
           })
         ).status(),
       ).toBe(200);
-    if (action === 'supersede') await message({ ...session, revision: 1 }, 'Läs mitt nya uppdrag.');
+    if (action === 'new conversation')
+      expect(
+        (
+          await browser.post(`${path}/${session.id}/new`, {
+            headers: { origin: app.origin },
+            data: {},
+          })
+        ).status(),
+      ).toBe(200);
     if (action === 'logout')
       expect(
         (
@@ -1063,6 +1070,72 @@ async function replaceHousehold() {
   });
   expect((await confirmed.json()).status).toBe('completed');
 }
+
+test('queued save cannot acquire authority over an external draft edit observed by polling', async () => {
+  let release!: (output: unknown[]) => void;
+  const model = textModel(
+    () =>
+      new Promise<unknown[]>((resolve) => {
+        release = resolve;
+      }),
+  );
+  await setup(model.provider);
+  const value = await webProposal();
+  const session = await start();
+  const post = (body: unknown) =>
+    browser.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: body,
+    });
+  expect(
+    (
+      await post({
+        revision: 0,
+        ...displayedVersion(session),
+        requestId: 'first',
+        text: 'Förklara.',
+      })
+    ).status(),
+  ).toBe(202);
+  await expect.poll(() => model.requests.length).toBe(1);
+  const body = {
+    revision: 1,
+    ...displayedVersion(session),
+    requestId: 'queued-save',
+    text: 'Spara hela utkastet nu.',
+  };
+  expect((await post(body)).status()).toBe(202);
+  expect((await post(body)).status()).toBe(202);
+  expect((await post({ ...body, text: 'Annat.' })).status()).toBe(409);
+  expect((await post({ ...body, requestId: 'mobile', queue: false })).status()).toBe(409);
+  expect((await (await browser.get(`${path}/${session.id}`)).json()).queuedMessages).toBe(1);
+  const changed = await browser.post(`${path.replace('/text-assistant', '/map')}/draft`, {
+    headers: { origin: app.origin },
+    data: {
+      version: 1,
+      contentVersion: 1,
+      id: 'web-object',
+      baseRevision: null,
+      value: { ...value, name: 'Extern rättelse' },
+    },
+  });
+  expect(changed.status(), await changed.text()).toBe(200);
+  // A public view read observes the external draft; it must not authorize the queued save.
+  expect((await (await browser.get(`${path}/${session.id}`)).json()).review.version).toBe(2);
+  release([modelMessage('Förklarat.')]);
+  await expect
+    .poll(
+      async () =>
+        (await (await browser.get(`${path}/${session.id}/messages/queued-save`)).json()).taskStatus,
+    )
+    .toBe('completed');
+  const finished = await (await browser.get(`${path}/${session.id}/messages/queued-save`)).json();
+  expect(finished.error).toBe('assistant_draft_changed');
+  expect(model.requests).toHaveLength(1);
+  const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
+  expect(map.objects).toEqual([]);
+  expect(map.draft.changes[0].after.name).toBe('Extern rättelse');
+});
 
 test('content replacement invalidates cached conversation and held provider work before new-owner context can be returned', async () => {
   let release!: (output: unknown[]) => void;
@@ -1602,7 +1675,7 @@ test('HTTP authorization and exact turn retries prevent duplicate provider work 
 });
 
 test.each(['retry', 'completed elsewhere'] as const)(
-  'a prepared save recovers via %s with one durable receipt',
+  'an automatically completed prepared save returns one durable receipt via %s',
   async (mode) => {
     let step = 0;
     const model = textModel(() =>
@@ -1628,9 +1701,10 @@ test.each(['retry', 'completed elsewhere'] as const)(
         data,
       });
     const recovered = await (await post('recover', {})).json();
-    expect(recovered.phase).toBe('recovery');
+    expect(recovered.phase).toBe('ready');
+    expect(recovered.saveCheck.reply).toContain('hela utkastet sparades');
     const operation = recovered.operations[0];
-    expect(operation.status).toBe('pending');
+    expect(operation.status).toBe('succeeded');
     expect(operation.operationId).not.toBe('provider-chosen');
     if (mode === 'completed elsewhere') {
       const save = await browser.post(`${path.replace('/text-assistant', '/map')}/save`, {
@@ -1697,7 +1771,12 @@ test('an unresolved identity rejects the whole save and recovery requires a fres
     headers: { origin: app.origin },
     data: {},
   });
-  expect(await recovery.json()).toMatchObject({ phase: 'ready', error: 'unresolved_identity' });
+  expect(await recovery.json()).toMatchObject({
+    phase: 'ready',
+    saveCheck: {
+      reply: 'Kontrollen visar att utkastet inte sparades. Dina osparade ändringar ligger kvar.',
+    },
+  });
   expect(
     (
       await browser.post(`${path}/${session.id}/retry`, {
@@ -1915,4 +1994,68 @@ test('a delayed poll cannot authorize saving a draft newer than the browser revi
   const map = await (await browser.get(path.replace('/text-assistant', '/map'))).json();
   expect(map.objects).toEqual([]);
   expect(map.draft.changes).toHaveLength(2);
+});
+
+test('household recovery ignores a working session whose other actor lost membership', async () => {
+  let release!: (reply: ReturnType<typeof modelMessage>[]) => void;
+  let held = false;
+  const model = textModel(() => {
+    held = true;
+    return new Promise<ReturnType<typeof modelMessage>[]>((resolve) => {
+      release = resolve;
+    });
+  });
+  await setup(model.provider);
+  const other = await request.newContext();
+  try {
+    app.setIdentity(robin);
+    await signIn(other, app.origin, 'microsoft');
+    const { user } = await (await other.get(`${app.origin}/api/bootstrap`)).json();
+    const householdPath = path.replace('/text-assistant', '');
+    const invitation = await browser.post(`${householdPath}/invitations`, {
+      headers: { origin: app.origin },
+      data: { userId: user.id },
+    });
+    expect(invitation.status()).toBe(201);
+    const accepted = await other.post(`${app.origin}/api/invitations/accept`, {
+      headers: { origin: app.origin },
+      data: { code: (await invitation.json()).code },
+    });
+    expect(accepted.status()).toBe(200);
+    const started = await other.post(path, {
+      headers: { origin: app.origin },
+      data: approvedForVisit,
+    });
+    expect(started.status()).toBe(201);
+    const session = await started.json();
+    const sent = await other.post(`${path}/${session.id}/messages`, {
+      headers: { origin: app.origin },
+      data: {
+        revision: session.revision,
+        ...displayedVersion(session),
+        requestId: 'stale-task',
+        text: 'Beskriv mitt utkast.',
+      },
+    });
+    expect(sent.status()).toBe(202);
+    await expect.poll(() => held).toBe(true);
+    const removed = await browser.post(`${householdPath}/members/${user.id}/revoke`, {
+      headers: { origin: app.origin },
+      data: {},
+    });
+    expect(removed.status()).toBe(200);
+    const checked = await browser.post(`${path}/recover`, {
+      headers: { origin: app.origin },
+      data: {},
+    });
+    expect(checked.status(), await checked.text()).toBe(200);
+    expect(await checked.json()).toMatchObject({
+      reply: 'Kontrollen visar att utkastet inte sparades. Dina osparade ändringar ligger kvar.',
+      operations: [],
+    });
+    expect((await browser.get(path.replace('/text-assistant', '/map'))).status()).toBe(200);
+  } finally {
+    release?.([modelMessage('Det sena svaret ska inte visas.')]);
+    await other.dispose();
+  }
 });

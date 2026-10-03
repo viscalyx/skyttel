@@ -2,13 +2,17 @@ import { randomUUID } from 'node:crypto';
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState, ObjectType, RelationshipType, SaveReceipt } from '../../src/shared/map.js';
 import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
+import { activatePanel, openSettings, openWorkspace, signIn } from '../support/client.js';
 import {
-  activatePanel,
-  openConversation,
-  openSettings,
-  openWorkspace,
-  signIn,
-} from '../support/client.js';
+  chooseConversationVoice,
+  microphoneButton,
+  openConversationDraft,
+  openConversationReceipts,
+  openConversationText,
+  startConversationWithText,
+  turnMicrophoneOn,
+  voiceBox,
+} from '../support/conversation-page.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -217,22 +221,18 @@ for (const mode of ['voice', 'text'] as const) {
       expect((await read()).draft.changes).toEqual([]);
 
       // 3. Real text task reads the catalog, then proposes the private subscription.
-      await openConversation(page);
-      const assistant = page.getByRole('region', { name: 'Skyttels textassistent', exact: true });
-      const start = assistant.getByRole('button', { name: 'Starta textassistenten', exact: true });
-      await expect(start).toBeDisabled();
-      await assistant.getByLabel(/Jag tillåter att OpenAI/).check();
-      await expect(start).toBeDisabled();
-      await assistant.getByLabel(/Jag tillåter förslag och sparande/).check();
-      await start.click();
-      const message = assistant.getByLabel('Meddelande till textassistenten');
+      await startConversationWithText(page);
+      const assistant = page.getByRole('region', { name: 'Arbetsyta', exact: true });
+      const message = assistant.getByLabel('Meddelande till Skyttel');
       await message.fill(
         'Föreslå Familjens Molnmusik, ett familjeabonnemang för 179 SEK per månad.',
       );
       await assistant.getByRole('button', { name: 'Skicka', exact: true }).click();
-      const proposals = assistant.getByRole('list', { name: 'Alla föreslagna ändringar' });
+      const proposals = (await openConversationDraft(page)).getByRole('table', {
+        name: 'Osparade ändringar',
+      });
       await expect(proposals).toContainText('Familjens Molnmusik');
-      await expect(assistant.getByRole('log', { name: 'Samtalets dialog' })).toContainText(
+      await expect(assistant.getByRole('log', { name: 'Samtalstext' })).toContainText(
         'Familjeabonnemanget är föreslaget',
       );
       const initial = await read();
@@ -246,12 +246,8 @@ for (const mode of ['voice', 'text'] as const) {
 
       // 4. Controlled transcript crosses the real voice delegation and sequential tools.
       if (mode === 'voice') {
-        await assistant.getByRole('button', { name: 'Starta röst', exact: true }).click();
-        await expect(
-          assistant.getByText('Lyssnar. Du kan tala, rätta eller be att spara hela utkastet.', {
-            exact: true,
-          }),
-        ).toBeVisible();
+        await turnMicrophoneOn(page);
+        await expect(voiceBox(page)).toHaveText('Lyssnar');
         expect(await page.evaluate(() => window.skyttelVoiceFixture.stats())).toMatchObject({
           peers: 1,
           openPeers: 1,
@@ -275,9 +271,9 @@ for (const mode of ['voice', 'text'] as const) {
         await message.fill('Kim Exempel betalar familjens Molnmusik.');
         await assistant.getByRole('button', { name: 'Skicka', exact: true }).click();
       }
-      await expect(proposals.getByRole('listitem')).toHaveCount(3);
+      await expect(proposals.getByRole('row')).toHaveCount(4);
       await expect(proposals).toContainText('Kim Exempel → Betalar → Familjens Molnmusik');
-      await expect(assistant.getByRole('log', { name: 'Samtalets dialog' })).toContainText(
+      await expect(assistant.getByRole('log', { name: 'Samtalstext' })).toContainText(
         'Förslagen är fortfarande privata.',
       );
       const proposed = await read();
@@ -371,47 +367,31 @@ for (const mode of ['voice', 'text'] as const) {
         '',
       );
 
-      // 6. Settings hides work, retains its exact values and resumes the same microphone.
-      await openConversation(page);
-      const dialogue = assistant.getByRole('log', { name: 'Samtalets dialog' });
+      // 6. Settings hides work, retains its exact values and keeps the same microphone.
+      await openConversationText(page);
+      const dialogue = assistant.getByRole('log', { name: 'Samtalstext' });
       const dialogueBeforeSettings = await dialogue.innerText();
       await message.fill('Oskickat i samtalet');
-      if (mode === 'voice') {
-        await page
-          .getByRole('navigation', { name: 'Kartans verktyg' })
-          .getByRole('button', { name: 'Pausa mikrofon', exact: true })
-          .click();
-      }
       await openSettings(page);
       await expect(
         page.getByRole('heading', { level: 1, name: 'Inställningar', exact: true }),
       ).toBeFocused();
       const settingsPosition = await page.locator('.settings-screen').boundingBox();
       const retainedStatusPosition = await page
-        .getByRole('region', { name: 'Aktuell status', exact: true })
+        .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
         .boundingBox();
       expect(required(settingsPosition?.y)).toBeLessThan(required(retainedStatusPosition?.y));
       await expect(person).not.toBeVisible();
       await expect(subscription).not.toBeVisible();
       await expect(message).not.toBeVisible();
-      const statusDetails = page.getByRole('button', {
-        name: 'Visa samtals- och utkastdetaljer',
-        exact: true,
-      });
       await expect(page.locator('.household-work-background')).toBeInViewport({ ratio: 1 });
-      await expect(statusDetails).toBeVisible();
-      await expect(page.getByRole('region', { name: 'Aktuell status', exact: true })).toContainText(
-        '3 förslag · privat utkast',
-      );
-      await statusDetails.click();
       await expect(
-        page.getByRole('heading', { name: 'Aktuell status', exact: true }),
-      ).toBeFocused();
-      await expect(
-        page.getByText('Oskickat samtalsmeddelande finns kvar.', { exact: false }),
-      ).toBeVisible();
+        page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
+      ).toContainText('3 förslag · privat utkast');
+      // The unsent message stays in the closed text view, without a button of its own here.
+      await expect(page.getByRole('button', { name: 'Fortsätt skriva' })).toHaveCount(0);
       const retainedText = await page
-        .getByRole('region', { name: 'Aktuell status', exact: true })
+        .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
         .evaluate((status) => {
           const luminance = (color: string) => {
             if (!/^rgb\(\d+, \d+, \d+\)$/.test(color))
@@ -445,16 +425,8 @@ for (const mode of ['voice', 'text'] as const) {
       expect(retainedText.length).toBeGreaterThan(0);
       for (const text of retainedText)
         expect(text.contrast, text.text ?? '').toBeGreaterThanOrEqual(4.5);
-      await page.getByRole('button', { name: 'Stäng aktuell status', exact: true }).click();
-      await expect(statusDetails).toBeFocused();
-      const voice = assistant.getByRole('region', { name: 'Skyttels röst', exact: true });
       if (mode === 'voice') {
-        expect(await page.evaluate(() => window.skyttelVoiceFixture.stats())).toMatchObject({
-          peers: 1,
-          openPeers: 1,
-          microphoneTracks: [{ enabled: false, state: 'live' }],
-        });
-        await voice.getByRole('button', { name: 'Återuppta mikrofon', exact: true }).click();
+        await expect(voiceBox(page)).toHaveText('Lyssnar');
         expect(await page.evaluate(() => window.skyttelVoiceFixture.stats())).toMatchObject({
           peers: 1,
           openPeers: 1,
@@ -472,10 +444,8 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         'Oskickat om Kim',
       );
-      await openConversation(page);
-      await expect(
-        page.getByRole('heading', { name: 'Samtal och text', exact: true }),
-      ).toBeFocused();
+      await openConversationText(page);
+      await expect(message).toBeVisible();
       await expect(message).toHaveValue('Oskickat i samtalet');
       await expect(dialogue).toHaveText(dialogueBeforeSettings, { useInnerText: true });
       expect(await read()).toEqual(corrected);
@@ -483,32 +453,29 @@ for (const mode of ['voice', 'text'] as const) {
       expect(await history()).toEqual([]);
 
       // 7. Explicit whole save; compare all real receipt values, excluding local text.
-      await expect(proposals.getByRole('listitem')).toHaveCount(3);
-      await assistant.getByText('Visa hela utkastets detaljer', { exact: true }).click();
-      const wholeDraft = assistant.getByRole('region', {
-        name: 'Assistentens hela utkast',
-        exact: true,
-      });
-      for (const value of ['Rättad för hand', '189', 'SEK', 'månad'])
-        await expect(wholeDraft.getByText(value, { exact: false }).first()).toBeVisible();
+      await expect(proposals.getByRole('row')).toHaveCount(4);
+      await expect(proposals).toContainText('Familjens Molnmusik');
+      await expect(proposals).toContainText('Kim Exempel');
       await message.fill('Spara hela utkastet nu.');
       await assistant.getByRole('button', { name: 'Skicka', exact: true }).click();
-      await expect(assistant.getByRole('status')).toHaveText(
-        'Sparat. Hela utkastet finns i hushållets karta.',
+      await expect.poll(async () => (await history()).length).toBe(1);
+      await expect(page.getByRole('region', { name: 'Utkastets återkoppling' })).toContainText(
+        'Sparat · kvitto bekräftat',
       );
-      await assistant.getByText('Visa kvittot', { exact: true }).click();
-      await expect(assistant).toContainText('Familjens Molnmusik');
+      const savedReceipts = await openConversationReceipts(page);
+      await savedReceipts.getByText('Visa kvittot', { exact: true }).first().click();
+      await expect(savedReceipts).toContainText('Familjens Molnmusik');
       await activatePanel(page, 'Kim Exempel');
       await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         'Oskickat om Kim',
       );
-      await openConversation(page);
+      await openConversationText(page);
       const receipts = await history();
       expect(receipts).toHaveLength(1);
       const receipt = receipts[0];
       // The server owns the durable operation identity; model-supplied IDs are not authority.
       const operationId = receipt.operationId;
-      await expect(assistant).toContainText(operationId);
+      await expect(savedReceipts).toContainText(operationId);
       expect(receipt).toMatchObject({
         operationId,
         userId: identity.user.id,
@@ -547,23 +514,34 @@ for (const mode of ['voice', 'text'] as const) {
 
       // 8. Stop media, restart the same database, inspect full history and two-way privacy.
       if (mode === 'voice') {
-        await voice.getByRole('button', { name: 'Stäng av rösten', exact: true }).click();
+        // Capture stops immediately; quiet gaps do not prove that an answer is finished.
+        await chooseConversationVoice(page);
+        await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
         await expect
-          .poll(() => page.evaluate(() => window.skyttelVoiceFixture.stats()))
+          .poll(() => page.evaluate(() => window.skyttelVoiceFixture.stats()), { timeout: 15_000 })
           .toMatchObject({
-            openPeers: 0,
-            microphoneTracks: [{ enabled: false, state: 'ended' }],
-            remoteTracks: [{ enabled: true, state: 'ended' }],
+            openPeers: 1,
+            microphoneTracks: [{ enabled: false, state: 'live' }],
+            remoteTracks: [{ enabled: true, state: 'live' }],
           });
       } else {
         expect(live.requests).toEqual([]);
-        await expect(voice.getByRole('button', { name: 'Starta röst', exact: true })).toBeVisible();
+        await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+        await expect(voiceBox(page)).toHaveCount(0);
         expect(await page.evaluate(() => window.familyMediaRequests)).toEqual({
           microphone: 0,
           playback: 0,
         });
       }
       await app.restart();
+      if (mode === 'voice')
+        await expect
+          .poll(() => page.evaluate(() => window.skyttelVoiceFixture.stats()), { timeout: 15_000 })
+          .toMatchObject({
+            openPeers: 0,
+            microphoneTracks: [{ enabled: false, state: 'ended' }],
+            remoteTracks: [{ enabled: true, state: 'ended' }],
+          });
       await page.reload();
       if (mode === 'text') await loseGraphics(page);
       expect((await (await page.request.get(`${app.origin}/api/bootstrap`)).json()).user.id).toBe(

@@ -3,6 +3,7 @@ import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { App } from '../../../src/client/App.js';
+import { defaultConversationPreferences } from '../../../src/shared/conversation-preferences.js';
 import { defaultViewSettings } from '../../../src/shared/personal-view.js';
 
 const anonymous = { status: 'anonymous', providers: ['google', 'microsoft'] };
@@ -13,11 +14,17 @@ const setup = {
 };
 const household = { id: 'linden', name: 'Hushållet Linden', role: 'administrator' };
 const ready = { ...setup, status: 'ready', household };
-type Reply = { data?: unknown; status?: number; error?: Error };
+type Reply = { data?: unknown; status?: number; error?: Error; response?: Promise<Response> };
 const unexpectedRequests: string[] = [];
 
 function serve(routes: Record<string, Reply[]>) {
-  routes['/api/households/linden/text-assistant'] ??= [{ data: { available: false } }];
+  routes['/api/households/linden/text-assistant'] ??= Array.from({ length: 8 }, () => ({
+    data: { available: false },
+  }));
+  routes['/api/households/linden/map/conversation-preferences'] ??= [
+    { data: defaultConversationPreferences },
+  ];
+  routes['/api/households/linden/conversation-consent'] ??= [{ data: { saved: null } }];
   routes['/api/households/linden/map?reload=0'] ??= [
     {
       data: {
@@ -31,7 +38,11 @@ function serve(routes: Record<string, Reply[]>) {
       },
     },
   ];
-  routes['/api/households/linden/map/operations'] ??= [{ data: { operations: [] } }];
+  // The draft view and automatic conversation recovery each read pending saves.
+  routes['/api/households/linden/map/operations'] ??= [
+    { data: { operations: [] } },
+    { data: { operations: [] } },
+  ];
   const fetch = vi.fn(async (input: string | URL | Request, _init?: RequestInit) => {
     const path =
       typeof input === 'string'
@@ -54,6 +65,7 @@ function serve(routes: Record<string, Reply[]>) {
       unexpectedRequests.push(path);
       throw new Error(`Unexpected synthetic HTTP request: ${path}`);
     }
+    if (reply.response) return reply.response;
     if (reply.error) throw reply.error;
     return new Response(JSON.stringify(reply.data ?? {}), {
       status: reply.status ?? 200,
@@ -69,6 +81,15 @@ function mount(path = '/') {
       <App />
     </MemoryRouter>,
   );
+}
+function heldResponse() {
+  let resolve!: (response: Response) => void;
+  let reject!: (reason: Error) => void;
+  const response = new Promise<Response>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { response, resolve, reject };
 }
 beforeEach(() => {
   window.history.replaceState(null, '', '/');
@@ -176,6 +197,95 @@ describe('Skyttel application interface', () => {
     ).toBeDefined();
     expect(screen.queryByRole('textbox', { name: 'Hushållets namn' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Logga ut' })).toBeDefined();
+  });
+
+  test('canceling a pending sign-in restores its provider button and ignores the late redirect while another provider is selected', async () => {
+    const delayed = heldResponse();
+    const fetch = serve({
+      '/api/bootstrap': [{ data: anonymous }],
+      '/api/auth/sign-in/social': [{ response: delayed.response }],
+    });
+    mount();
+    await userEvent.click(await screen.findByRole('button', { name: 'Fortsätt med Google' }));
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Fortsätt till Google' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Fortsätt till Google' }));
+    const [, init] = fetch.mock.calls.find(([url]) => url === '/api/auth/sign-in/social') ?? [];
+    expect(init?.signal?.aborted).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Avbryt' }));
+    expect(init?.signal?.aborted).toBe(true);
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: 'Fortsätt med Google' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Fortsätt med Microsoft' }));
+    const chosen = screen.getByRole('button', { name: 'Fortsätt till Microsoft' });
+    expect(document.activeElement).toBe(chosen);
+    await act(async () => delayed.resolve(Response.json({ url: '#obsolete-google-navigation' })));
+    expect(window.location.hash).toBe('');
+    expect(document.activeElement).toBe(chosen);
+    expect((chosen as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  test('returning with browser Back cancels pending provider navigation and a late failure cannot replace the cancellation status or steal focus', async () => {
+    const delayed = heldResponse();
+    const fetch = serve({
+      '/api/bootstrap': [{ data: anonymous }],
+      '/api/auth/sign-in/social': [{ response: delayed.response }],
+    });
+    mount();
+    await userEvent.click(await screen.findByRole('button', { name: 'Fortsätt med Microsoft' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Fortsätt till Microsoft' }));
+    const [, init] = fetch.mock.calls.find(([url]) => url === '/api/auth/sign-in/social') ?? [];
+    await act(async () =>
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false })),
+    );
+    expect(init?.signal?.aborted).toBe(false);
+    expect(
+      (screen.getByRole('button', { name: 'Öppnar Microsoft…' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    await act(async () =>
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })),
+    );
+    expect(init?.signal?.aborted).toBe(true);
+    const chosen = screen.getByRole('button', { name: 'Fortsätt med Microsoft' });
+    expect(document.activeElement).toBe(chosen);
+    const status = screen.getByRole('status').textContent;
+    expect(status).toContain('avbröts');
+    await act(async () => delayed.reject(Error('An obsolete provider failure')));
+    expect(window.location.hash).toBe('');
+    expect(document.activeElement).toBe(chosen);
+    expect(screen.getByRole('status').textContent).toBe(status);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  test('leaving the application aborts pending provider navigation and its late redirect cannot move focus outside the retired page', async () => {
+    const delayed = heldResponse();
+    const fetch = serve({
+      '/api/bootstrap': [{ data: anonymous }],
+      '/api/auth/sign-in/social': [{ response: delayed.response }],
+    });
+    const page = mount();
+    await userEvent.click(await screen.findByRole('button', { name: 'Fortsätt med Google' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Fortsätt till Google' }));
+    const [, init] = fetch.mock.calls.find(([url]) => url === '/api/auth/sign-in/social') ?? [];
+    page.unmount();
+    const outside = document.createElement('button');
+    outside.textContent = 'Nästa sida';
+    document.body.append(outside);
+    outside.focus();
+    try {
+      expect(init?.signal?.aborted).toBe(true);
+      await act(async () =>
+        delayed.resolve(Response.json({ url: '#retired-provider-navigation' })),
+      );
+      expect(window.location.hash).toBe('');
+      expect(document.activeElement).toBe(outside);
+      expect(screen.queryByRole('heading', { name: 'Välkommen till Skyttel' })).toBeNull();
+    } finally {
+      outside.remove();
+    }
   });
 
   test('focuses an invalid household name and permits correction', async () => {
@@ -292,6 +402,79 @@ describe('Skyttel application interface', () => {
     expect(await screen.findByRole('heading', { name: 'Välkommen till Skyttel' })).toBeDefined();
   });
 
+  test('an expired personal-view request retires a still-loading household and its late private result cannot reopen the map or disturb sign-in focus', async () => {
+    const delayed = heldResponse();
+    const fetch = serve({
+      '/api/bootstrap': [{ data: ready }, { data: anonymous }],
+      '/api/households/linden': [{ response: delayed.response }],
+      '/api/households/linden/map/view': [{ status: 401 }],
+    });
+    mount('/households/linden');
+    await userEvent.click(await screen.findByRole('button', { name: 'Fortsätt med Google' }));
+    const chosen = screen.getByRole('button', { name: 'Fortsätt till Google' });
+    const [, init] = fetch.mock.calls.find(([url]) => url === '/api/households/linden') ?? [];
+    expect(init?.signal?.aborted).toBe(true);
+    await act(async () =>
+      delayed.resolve(
+        Response.json({ household: { ...household, name: 'Det tidigare privata hushållet' } }),
+      ),
+    );
+    expect(screen.queryByRole('heading', { name: 'Det tidigare privata hushållet' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Arbetsyta' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Prata med Skyttel' })).toBeNull();
+    expect(document.activeElement).toBe(chosen);
+    expect(screen.getByRole('heading', { name: 'Välkommen till Skyttel' })).toBeDefined();
+  });
+
+  test('a late personal-view failure cannot replace the sign-in page after the household request has discovered session expiry', async () => {
+    const delayed = heldResponse();
+    const fetch = serve({
+      '/api/bootstrap': [{ data: ready }, { data: anonymous }],
+      '/api/households/linden': [{ status: 401 }],
+      '/api/households/linden/map/view': [{ response: delayed.response }],
+    });
+    mount('/households/linden');
+    await userEvent.click(await screen.findByRole('button', { name: 'Fortsätt med Microsoft' }));
+    const chosen = screen.getByRole('button', { name: 'Fortsätt till Microsoft' });
+    const [, init] =
+      fetch.mock.calls.find(([url]) => url === '/api/households/linden/map/view') ?? [];
+    expect(init?.signal?.aborted).toBe(true);
+    await act(async () => delayed.reject(Error('An obsolete private-view network failure')));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Försök igen' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Arbetsyta' })).toBeNull();
+    expect(document.activeElement).toBe(chosen);
+    expect(window.location.hash).toBe('');
+  });
+
+  test('a late personal-view result cannot restore map controls or steal recovery-link focus after membership is refused', async () => {
+    const delayed = heldResponse();
+    serve({
+      '/api/bootstrap': [{ data: ready }],
+      '/api/households/linden': [{ status: 403 }],
+      '/api/households/linden/map/view': [{ response: delayed.response }],
+    });
+    mount('/households/linden');
+    await screen.findByRole('heading', { name: 'Du har inte tillgång till hushållet' });
+    const recovery = screen.getByRole('link', { name: 'Till startsidan' });
+    recovery.focus();
+    await act(async () =>
+      delayed.resolve(
+        Response.json({
+          contentVersion: 1,
+          positions: [{ id: 'private-object', version: 1, x: 1, y: 2, z: 3 }],
+          settings: { ...defaultViewSettings, version: 0 },
+        }),
+      ),
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Du har inte tillgång till hushållet' }),
+    ).toBeDefined();
+    expect(screen.queryByRole('region', { name: 'Arbetsyta' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Prata med Skyttel' })).toBeNull();
+    expect(document.activeElement).toBe(recovery);
+  });
+
   test('explains membership revocation discovered while opening a household', async () => {
     serve({ '/api/bootstrap': [{ data: ready }], '/api/households/linden': [{ status: 403 }] });
     mount('/households/linden');
@@ -331,5 +514,57 @@ describe('Skyttel application interface', () => {
     expect((await screen.findByRole('alert')).textContent).toContain('Du kunde inte loggas ut');
     await userEvent.click(screen.getByRole('button', { name: 'Logga ut' }));
     expect(await screen.findByRole('heading', { name: 'Välkommen till Skyttel' })).toBeDefined();
+  });
+
+  test.each([401, 403, 409])(
+    'retires map controls when the personal-view request reports %s',
+    async (status) => {
+      serve({
+        '/api/bootstrap': [{ data: ready }, ...(status === 401 ? [{ data: anonymous }] : [])],
+        '/api/households/linden': [{ data: { household } }],
+        '/api/households/linden/map/view': [{ status }],
+      });
+      mount('/households/linden');
+      if (status === 401) await screen.findByRole('heading', { name: 'Välkommen till Skyttel' });
+      else if (status === 403)
+        await screen.findByRole('heading', { name: 'Du har inte tillgång till hushållet' });
+      else
+        expect((await screen.findByRole('alert')).textContent).toContain(
+          'Kartarbetet och mikrofonen är stoppade',
+        );
+      expect(screen.queryByRole('region', { name: 'Arbetsyta' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Prata med Skyttel' })).toBeNull();
+    },
+  );
+
+  test('an interrupted access refresh preserves the mounted map when the browser regains focus', async () => {
+    const view = {
+      contentVersion: 1,
+      positions: [],
+      settings: { ...defaultViewSettings, version: 0 },
+    };
+    const fetch = serve({
+      '/api/bootstrap': [{ data: ready }, { data: ready }],
+      '/api/households/linden': [{ data: { household } }, { status: 503 }],
+      '/api/households/linden/map/conversation-preferences': [
+        { data: defaultConversationPreferences },
+        { data: defaultConversationPreferences },
+      ],
+      '/api/households/linden/map/view': [
+        { data: view },
+        { data: view },
+        { error: new Error('Synthetic interrupted access refresh') },
+      ],
+    });
+    mount('/households/linden');
+    const workspace = await screen.findByRole('region', { name: 'Arbetsyta' });
+    await act(async () => window.dispatchEvent(new Event('focus')));
+    expect(fetch.mock.calls.filter(([path]) => path === '/api/households/linden')).toHaveLength(2);
+    expect(
+      fetch.mock.calls.filter(([path]) => path === '/api/households/linden/map/view'),
+    ).toHaveLength(3);
+    expect(screen.getByRole('region', { name: 'Arbetsyta' })).toBe(workspace);
+    expect(screen.queryByRole('button', { name: 'Försök igen' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Hushållet Linden' })).toBeDefined();
   });
 });

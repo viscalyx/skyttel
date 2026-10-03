@@ -367,6 +367,9 @@ export const importManifestSchema = z
       z.literal(19),
       z.literal(20),
       z.literal(21),
+      z.literal(22),
+      z.literal(23),
+      z.literal(24),
     ]),
     parts: z
       .array(

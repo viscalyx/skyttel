@@ -91,6 +91,15 @@ copies when that history is required; this upgrade adds no automatic backup.
 
 ### Built-in text and voice assistants
 
+Personal conversation choices remain in the installation database and apply
+to the user's households. Household export and import do not transfer or
+restore these choices. Include them in installation backups if they must
+survive disk replacement. Follow the matching database backup and image
+procedure above for rollback.
+
+New household archives need an upgraded reader. The upgraded application
+continues to read supported older archives.
+
 To enable the optional assistants, configure the AI provider key in the server's
 private environment and restart. Keep the key out of browser settings, public
 build variables and logs. Without it, ordinary map editing remains available.
@@ -102,6 +111,44 @@ A broken voice connection stops associated work but does not undo a completed
 save. Use the [assistant recovery guidance](installation.md#recover-assistant-access)
 before retrying uncertain work. Final voice usage can be unavailable after a
 connection loss; retain that uncertainty in cost records.
+
+### Interrupted save recovery
+
+After contact returns, the application checks an uncertain save before it
+accepts new conversation work. An already registered save can finish with its
+original operation and content, even after conversation consent is revoked.
+Do not create a new save attempt to replace a missing reply. If the automatic
+check fails, restore household access and storage availability, then use the
+check action. Retain the original operation and its durable result.
+
+### Conversation consent
+
+This release stores a saved conversation consent for each Skyttel user and
+household, with its date and the version of the consent text. Use the database
+backup and matching image procedure above for rollback; changing the image
+alone does not remove this storage. Backups and recovery copies retain these
+consent records. Apply household access and retention restrictions to them.
+
+A saved consent is not household content. A full household archive does not
+contain it, and import does not transfer or change it. After a move to
+another installation, each user gives consent again. When a user loses access
+to a household, that user's saved consent is removed.
+
+New household archives require an upgraded reader; supported older archives
+remain readable. After rollout, each user must give consent before the first
+text or voice conversation, and can save it for the household.
+
+This release changes the consent text. A saved consent for the previous text
+does not apply. Verify that users must approve the new text before text or
+voice work can start. Speech recorded during a long press can wait in the
+browser and go to the voice service after the user releases the button.
+Release stops new recording immediately.
+
+A user can revoke the consent in Settings. The revocation removes the saved
+consent and ends that user's conversations in the household. A restored
+database backup contains the consents that were saved when the backup was
+made. After a restoration, tell users that a consent which they revoked
+after the backup applies again until they revoke it again.
 
 ### Household export, replacement and recovery
 

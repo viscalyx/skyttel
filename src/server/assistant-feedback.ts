@@ -1,3 +1,5 @@
+import { draftChangeCount, type MapDraft } from '../shared/map.js';
+
 /** Only server-owned wording may describe failures to the model or the person. */
 export function assistantFailureMessage(code: string): string {
   switch (code) {
@@ -35,11 +37,18 @@ export function assistantFailureMessage(code: string): string {
     case 'merge_choices_required':
       return 'Sammanslagningen kräver ett val för de uppgifter och samband som skiljer sig åt.';
     case 'invalid_request':
-      return 'Assistentens begäran innehöll ogiltiga uppgifter och kunde inte genomföras.';
+      return 'Begäran innehöll ogiltiga uppgifter och kunde inte genomföras.';
     case 'forbidden':
     case 'unauthenticated':
       return 'Åtkomsten till hushållets karta är inte längre tillgänglig. Anslut på nytt för att fortsätta.';
     default:
       return 'Uppdraget kunde inte slutföras. Kontrollera det aktuella utkastet och eventuella sparförsök innan arbetet fortsätter.';
   }
+}
+
+/** What Skyttel says when a conversation starts over: how many unsaved changes the draft keeps. */
+export function newConversationMessage(draft: MapDraft): string {
+  const count = draftChangeCount(draft);
+  if (!count) return 'Nytt samtal. Utkastet är tomt.';
+  return `Nytt samtal. ${count === 1 ? '1 osparad ändring' : `${count} osparade ändringar`} ligger kvar i ditt utkast.`;
 }
