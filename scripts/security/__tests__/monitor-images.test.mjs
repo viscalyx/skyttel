@@ -201,7 +201,19 @@ test('accepts Grype database schema versions with the published v prefix', async
 });
 
 test('malformed database schema versions keep image security unknown', async () => {
-  for (const schemaVersion of ['', 'v', 'v6.invalid', 'v6.1.10-extra', null]) {
+  for (const schemaVersion of [
+    '',
+    'v',
+    '6',
+    '6.1',
+    'v6',
+    'v6.1',
+    '6.1.10.1',
+    'v6.1.10.1',
+    'v6.invalid',
+    'v6.1.10-extra',
+    null,
+  ]) {
     const { state, run } = fixture();
     const result = await run({
       scan: async (reference) => {
