@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { MapState, SaveOperation, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import { openConversationReceipts } from '../support/conversation-page.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('SPAR-01: find a committed save after losing its response and reopening on another client', async ({
@@ -37,7 +38,7 @@ test('SPAR-01: find a committed save after losing its response and reopening on 
     const reopened = await recovered.newPage();
     await reopened.goto(installation.origin);
     await openWorkspace(reopened);
-    const operations = reopened.getByRole('region', { name: 'Mina sparförsök' });
+    const operations = await openConversationReceipts(reopened);
     await expect(operations).toContainText('Genomfört');
     await expect(operations).toContainText('Lo Exempel');
     if (!committedReceipt) throw new Error('The save must commit before its response is lost');
@@ -68,12 +69,13 @@ test('SPAR-01: find a committed save after losing its response and reopening on 
   }
 });
 
-test('SPAR-02: retry a pending save on another client after interruption before commit', async ({
+test('SPAR-02: automatically recover the same pending save on another client after interruption before commit', async ({
   page,
   browser,
 }) => {
   const installation = await createInstallation();
   const recovered = await browser.newContext();
+  let releaseCheck = () => {};
   try {
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
@@ -92,9 +94,24 @@ test('SPAR-02: retry a pending save on another client after interruption before 
 
     await signIn(recovered.request, installation.origin);
     const reopened = await recovered.newPage();
+    const heldCheck = new Promise<void>((resolve) => {
+      releaseCheck = resolve;
+    });
+    let checking = () => {};
+    const checkStarted = new Promise<void>((resolve) => {
+      checking = resolve;
+    });
+    let checks = 0;
+    await reopened.route('**/text-assistant/recover', async (route) => {
+      checks++;
+      checking();
+      await heldCheck;
+      await route.continue();
+    });
     await reopened.goto(installation.origin);
+    await checkStarted;
     await openWorkspace(reopened);
-    const operations = reopened.getByRole('region', { name: 'Mina sparförsök' });
+    const operations = await openConversationReceipts(reopened);
     await expect(operations).toContainText('Väntande');
     await expect(reopened.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
       'Lo Exempel',
@@ -107,8 +124,12 @@ test('SPAR-02: retry a pending save on another client after interruption before 
     expect(pending.draft.changes).toHaveLength(1);
     expect((await (await recovered.request.get(`${path}/history`)).json()).history).toEqual([]);
 
-    await operations.getByRole('button', { name: 'Återförsök sparandet' }).click();
-    await expect(reopened.getByRole('status')).toContainText('Sparat: Lo Exempel');
+    const originalOperations: { operations: SaveOperation[] } = await (
+      await recovered.request.get(`${path}/operations`)
+    ).json();
+    expect(originalOperations.operations).toHaveLength(1);
+    expect(originalOperations.operations[0].status).toBe('pending');
+    releaseCheck();
     await expect(operations).toContainText('Genomfört');
     await expect(operations).not.toContainText('Väntande');
     const discovered: { operations: SaveOperation[] } = await (
@@ -116,6 +137,8 @@ test('SPAR-02: retry a pending save on another client after interruption before 
     ).json();
     expect(discovered.operations).toHaveLength(1);
     const attempt = discovered.operations[0];
+    expect(attempt.operationId).toBe(originalOperations.operations[0].operationId);
+    expect(checks).toBe(1);
     if (attempt.status !== 'succeeded') throw new Error('Retry must have a durable receipt');
     const receipt = attempt.receipt;
     const saved: MapState = await (await recovered.request.get(path)).json();
@@ -144,6 +167,7 @@ test('SPAR-02: retry a pending save on another client after interruption before 
       receipt,
     ]);
   } finally {
+    releaseCheck();
     await recovered.close();
     await installation.close();
   }
@@ -178,15 +202,15 @@ test('SPAR-03: a rejected stale save survives restart without consuming newer pr
     await expect(page.getByRole('alert')).toContainText('Avvisat');
     await expect(page.getByRole('alert')).toContainText('Inget sparades');
     await openMap(page);
-    await expect(page.getByRole('region', { name: 'Aktuell status', exact: true })).toContainText(
-      'Sparandet avvisades · inget sparat av försöket',
-    );
+    await expect(
+      page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
+    ).toContainText('Sparandet avvisades · inget sparat av försöket');
     await expect(page.getByRole('region', { name: 'Förslag i kartan', exact: true })).toBeVisible();
     await page.close();
     await installation.restart();
     await newer.reload();
     await openWorkspace(newer);
-    const operations = newer.getByRole('region', { name: 'Mina sparförsök' });
+    const operations = await openConversationReceipts(newer);
     await expect(operations).toContainText('Avvisat');
     await expect(operations).toContainText('Förslaget eller kartan har ändrats');
     await expect(operations).not.toContainText('Genomfört');

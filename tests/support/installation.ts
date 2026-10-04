@@ -42,6 +42,7 @@ export async function createInstallation(
     liveSideband?: LiveSidebandFactory;
     liveUsage?: LiveUsage;
     browserProviderScript?: string;
+    consentTextVersion?: number;
     assistantDispatch?: Parameters<typeof createApp>[0]['assistantDispatch'];
   } = {},
 ) {
@@ -131,6 +132,7 @@ export async function createInstallation(
       liveSideband: databaseOptions.liveSideband,
       liveUsage: databaseOptions.liveUsage,
       assistantDispatch: databaseOptions.assistantDispatch,
+      consentTextVersion: databaseOptions.consentTextVersion,
     });
     closeApp = app.close;
     handle = async (request) => {
@@ -208,6 +210,9 @@ export async function createInstallation(
     },
     denyConsent(value: boolean) {
       consentDenied = value;
+    },
+    setConversationAvailable(value: boolean) {
+      config.openaiApiKey = value ? 'synthetic-model-key' : undefined;
     },
     // Arrange another household on the same installation for boundary checks.
     seedMembership(userId: string, householdId: string, name: string, role = 'member') {

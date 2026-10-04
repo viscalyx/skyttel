@@ -18,6 +18,12 @@ Separata automatiska [modellprov](real-model-tests.md) och
 [talprov](real-voice-tests.md) använder verkliga leverantörer.
 De körs uttryckligen med privat konfiguration och redovisas separat från CI.
 
+För det förenklade samtalet finns en separat kvarstående
+[mänsklig verifiering #220](https://github.com/viscalyx/skyttel/issues/220).
+Den omfattar verklig mikrofon, skärmtangentbord och skärmläsare på
+Chrome för Windows, macOS, iPhone och iPad. Automatiska DOM-, medie- och
+fönsterprov ska redovisas separat från de resultaten.
+
 ## Köra och förbereda prov
 
 [Testguiden](../development/testing.md) beskriver kommandon för automatiska
@@ -37,9 +43,10 @@ familjeflöden, verklig webbläsarzoom, granskade bilder och miljöbegränsninga
 ## Öppna arbetsytor
 
 Hushållet öppnar rymdkartan. Välj **Lista** i **Kartans verktyg** före
-fallens formulär, listor, typer, historik och utkast. Välj **Samtal och text**
-före samtalsfallen. På telefon öppnar **Visa verktygens namn** även de
-kompletterande verktygen.
+fallens formulär, listor, typer, historik och utkast. Välj **Skriv till Skyttel**
+före samtalsfallen. Utan giltigt medgivande visas medgivanderutan först;
+välj **Godkänn och starta**. På telefon öppnar **Visa verktygens namn**
+även de kompletterande verktygen.
 
 Välj **Uppgifter** vid objektet i Lista för att öppna dess panel. Namnet
 visar i stället objektet i kartan. När ett fall återvänder
@@ -57,6 +64,20 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 
 ## Områden
 
+- [Samtalets samlade hjälpmedelsflöde](conversation-accessibility.md):
+  naturlig läs- och tabbordning över verktyg, röstruta och flyttad notis,
+  en enda statusförekomst, återkomst och fokus, minskad rörelse samt
+  samlad WCAG-bedömning med kvarstående mänskliga prov.
+
+- [Automatisk kontroll av sparande](save-check.md): återkomst efter nätfel,
+  ursprungligt försöks-ID efter omstart utan nytt medgivande, ett enda
+  utfallsbesked med röstval och kvitto, återkallat medgivande med tappat
+  svar samt återförsök bara vid kontrollfel.
+
+- [Röstfel och ljudåterhämtning](voice-errors.md): fyra mikrofonhinder, tre
+  servergrupper, felreferenser, stängning, återförsök och **Starta ljudet**
+  med avstängd mikrofon fram till fungerande uppspelning.
+
 - [Objektlistor](object-lists.md): typgrupper, flera typfilter, markeringar,
   separat sortering, sidval, bevarat rulläge, första klicket i en inaktiv
   lista och uttryckligt kartfokus.
@@ -73,9 +94,12 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   mobil panelväljare med synligt återgångsfokus, återöppning av nya objekt,
   bevarade samband och typer samt fortsatt sökning medan ett förslag skickas.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
-  teman, läsbara hopplänkar och fokus, stängbar vägledning, hjälp, formulär på
-  telefon samt laddning och återhämtning efter nätfel. På en tom mobilkarta
-  förblir visningsval, vägledning och deras tangentbordsfokus nåbara.
+  teman, läsbara hopplänkar och fokus, stängbar vägledning, samtalshjälp med
+  tangentkombination, medgivande och leverantörens datavillkor, formulär på
+  telefon samt laddning och återhämtning efter nätfel. Hjälpens långa text
+  går att rulla på telefon. På en tom mobilkarta förblir visningsval,
+  vägledning och deras tangentbordsfokus nåbara, även med röstruta eller
+  samtalsnotis.
 
 - [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
@@ -84,7 +108,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   dolt formulär och registrerat sparförsök före omladdning; oberoende privat
   arbete finns kvar efter uttryckligt slutförande. Ett sammanhängande
   familjeärende går från synlig inloggning, text och tal till rättelse,
-  Inställningar med kompakt status och valda detaljer, samlat kvitto, omstart
+  Inställningar med röstruta och utkastets återkoppling, samlat kvitto, omstart
   och två medlemmars skilda utkast;
   samma fullständiga arbete provas med text och listor utan grafik eller ljud.
 
@@ -105,13 +129,82 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
   definitioner, granskad sammanslagning med bilder samt ångring efter import.
 
-- [Skyttels röst](voice-assistant.md): svenska röstuppdrag, kompakt status,
-  gemensam start, mikrofonpaus, ljudaktivitet, avbrott,
+- [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
+  verktygsraden, vägledningen och snabblänken, avbruten start med bevarat
+  fokus, start med röst eller text efter vald knapp, medgivande för besöket
+  eller sparat per användare och hushåll på flera enheter samt tangentbord,
+  pekskärm och placering vid verktygsraden. Sidan **Samtal med Skyttel** i
+  Inställningar: plats i menyn för alla medlemmar, sparat och återkallat
+  medgivande, medgivande för besöket, återkallande från en annan enhet,
+  bekräftelse under samtal, kvarvarande utkast och oskickad text,
+  slutfört registrerat sparande med kvitto, tangentbord och pekskärm,
+  otillgängligt samtal, misslyckat sparande och ny fråga efter en ny
+  inbjudan. Ändrad medgivandetext kräver ett nytt sparat medgivande;
+  en separat tillfällig installation förbereder det syntetiska tillståndet.
+- [Samtalsnotiser](conversation-notices.md): bruten kontakt, otillgängligt
+  samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
+  automatisk återkomst, bevarad text med stoppad sändning och mikrofon,
+  hjälpmedel utan dubbel uppläsning, fokus och placering vid röstrutan
+  eller meddelandefältet på bred och smal skärm, verkligt registrerat
+  kontrollfel samt mätt text- och symbolkontrast i båda teman. NOT-11 har
+  en separat körbar mänsklig granskning av alla symbolformer och typfärger.
+- [Frågor och talade sparbesked](conversation-questions.md): identiteter,
+  konflikter, väntan med mikrofonen av, beständigt kvitto och fyra
+  sekunders sparbesked efter ljud eller stopp.
+- [Skyttels röst](voice-assistant.md): svenska röstuppdrag,
+  start efter medgivande, mikrofonen på och av med **Prata med Skyttel**,
+  röstrutans statusord, vågform, stoppikon, plats och uppläsning,
+  ljudaktivitet, fördröjda svar med mikrofonen av och fokus efter avbrott
+  även i Inställningar samt avbrutet ljud som förblir stoppat över pauser,
+  avbrott i långa samtal med bevarad kontext och mikrofonval,
   faktisk markering, exakt sparåterhämtning och tydlig skillnad mellan
   samtalstext och verifierade resultat, löpande dialog och
-  synlig arbetstid. Kontrollerat familjeunderlag och
+  raden Skyttel arbetar. Kontrollerat familjeunderlag och
   verkligt tal redovisas separat.
-- [Skyttels textassistent](text-assistant.md): separat AI-val, hela utkast,
+- [Utkastet i samtalet](conversation-draft.md): tabellen och dess symboler,
+  personligt val mellan hushåll och enheter, första förslaget, tomt utkast,
+  sparåterkoppling och kvittots plats i Utkast och historik.
+
+- [Mikrofontryck](microphone-press.md): kort och långt tryck, släpp och
+  systemavbrott, medgivande, pekfångst och tangentkombinationer på riktiga
+  Windows- och macOS-enheter; väntande tal under starten, avbrott och
+  spärrad ljuduppspelning och mikrofonens läge vid nytt samtal.
+
+- [Textvyn](text-view.md): **Skriv till Skyttel** öppnar och stänger
+  textvyn utan att samtalet avslutas, samtalstexten visar vem som skriver
+  och raden Skyttel arbetar sist, **Nytt samtal** behåller utkast, mikrofon
+  och oskickad text även vid dubbelklick under fördröjd omstart, och textvyn
+  går att använda på pekskärm och smal skärm. Textknappens överlagrade
+  markeringar visar skrivet arbete, olästa svar och väntande frågor med
+  en enda artig uppläsning, fasta mått och minskad rörelse. Kommentarspaket
+  och faktiskt hört tal provas separat. Mobilfallen provar iPhone och
+  iPad, fast sidofält på bred pekskärm, kompakt rad vid kort synlig höjd,
+  bibehållet fokus, 190 px synlig höjd med rösten på, fria kartkontroller
+  och långa rullbara notiser. Datorfallen provar oberoende breddhandtag
+  med mus och piltangenter, personliga bredder mellan hushåll och enheter,
+  visningsbegränsning utan ändrat sparat val samt återställning även utan
+  tillgängligt samtal. Mobil enhet och smal skärm behåller sina bredder.
+  Aktuella och kompatibla äldre hushållsarkiv bevarar personliga samtalsval
+  och håller dem och medgivandet utanför hushållsfilen.
+- [Samtalets kö och avbrott](conversation-queue.md): serverns kö på dator,
+  fokusstyrd Escape, stopp på mobil och smal skärm, talade och skrivna
+  uppdrag samt kvarvarande utkast, oskickad text och återkoppling.
+- [Röst och text i samma samtal](conversation-voice-text.md): skrivna svar
+  med röst när mikrofonen är på, text när den är av, ordnad överlämning av
+  långa svar, kvarvarande samtalstext och artig uppläsning bara av nya
+  textlevererade Skyttel-rader. Obekräftad text ger inget sparkvitto.
+- [Samtalets kontext](conversation-context.md): samma tillfälliga samtal
+  genom utkast, sparande, avbrott, fel, mikrofon av och på samt byte mellan
+  röst och text. Äldre sparbesked ger inget nytt sparande. Skrivna och
+  talade kommandon börjar om samtalet och kastar hela utkastet.
+  Kontextmätaren följer serverns procenttal, röstrutan visar procent från
+  85 och ger en enda artig uppläsning, även på smal pekskärm. Nytt samtal
+  återställer mätaren och gamla mätningar ignoreras.
+  Full kontext sammanfattas automatiskt med kvarvarande samtalstext,
+  aktuellt utkast, mikrofonläge och tidigare inspelat tal. Misslyckad
+  sammanfattning blockerar nya uppdrag tills Nytt samtal. Pågående
+  sparande och dess hörda kvitto avslutas före röstbytet.
+- [Samtal med Skyttel](text-assistant.md): hela utkast,
   rättelse och samlat sparande, sena svar, avbrott, återfunna kvitton och
   samtidigt synliga objekt och samband i karta och detaljpanel även på
   telefon, med skyddad formulärtext samt obekräftad samtalstext
@@ -213,7 +306,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   Misslyckad urklippsknapp följs av manuell kopiering och faktisk acceptans.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt, bevara ofullständiga uppgifter och rätta obesvarad
-  identitet från aktuell status med bevarad oskickad text. Påbörjade objekt
+  identitet från utkastets återkoppling med bevarad oskickad text. Påbörjade objekt
   kan få en ny typ från Inställningar och sparas med nya samband i ett kvitto.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon och placering nära objektet.
@@ -250,7 +343,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   paneler, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
   ett samlat utkast från formulär, text och tal efter omstart. Besvara
   nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
-  och aktuell status tillsammans utan att tappa åtkomst till kontrollerna.
+  och utkastets återkoppling tillsammans utan att tappa åtkomst till kontrollerna.
   Öppna en namngiven konflikt från status med tangentbord och återgå till
   ett annat oskickat objektformulär med texten kvar. Följ alla fyra
   konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella

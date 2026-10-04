@@ -1,4 +1,4 @@
-.workspace-status-card {
+.workspace-draft-feedback {
   padding: 14px;
   border: 1px solid var(--space-line);
   border-radius: 16px;
@@ -6,7 +6,6 @@
   color: var(--space-text);
   overflow-wrap: anywhere;
 }
-.workspace-status-heading,
 .draft-status-actions {
   display: flex;
   align-items: center;
@@ -14,25 +13,12 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.workspace-status-heading h2 {
-  margin: 0;
-  font-size: 1.125rem;
-}
-.workspace-status-card .assistant-bar {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.household-map.workspace-shell .workspace-status-card button:not(.primary):hover:enabled {
+.household-map.workspace-shell
+  :is(.workspace-draft-feedback, .conversation-notice)
+  button:hover:enabled {
   background: var(--space-surface);
   border-color: var(--space-accent);
   color: var(--space-text);
-}
-.household-map.workspace-shell .workspace-status-card .primary:hover:enabled {
-  background: var(--space-accent);
-  border-color: var(--space-accent);
 }
 .draft-status-summary {
   display: grid;
@@ -107,10 +93,13 @@
   }
 }
 
+/* The selected mobile layout stacks conversation controls above the lower
+   map row and feedback. The feedback card sits 24px from the edge; leave
+   another 8px between it and the display row. Short windows use flow layout. */
 @media (max-width: 700px) and (min-height: 451px) {
   .household-map.workspace-shell .spatial-display-tools .spatial-bottom-bar {
-    top: 142px;
-    bottom: auto;
+    top: auto;
+    bottom: calc(32px + var(--feedback-height, 0px) + var(--voice-height, 0px));
   }
 }
 

@@ -28,7 +28,8 @@ Namnet ska ha 1–100 tecken. Vid ett oklart resultat väljer du
 
 Kartans vägledning erbjuder **Tala**, **Skriv** och **Öppna listan**.
 Du kan välja **Stäng vägledningen** och använda kartans verktyg direkt.
-Tal börjar först när du själv startar rösten och ger nödvändiga medgivanden.
+Tal börjar först när du själv startar rösten och har lämnat ditt
+[medgivande](text-assistant.md#medgivande).
 
 I **Din profil** finns **Logga ut** och **Inloggningssätt**. Vill du använda
 både Google och Microsoft för samma Skyttel-användare behöver du
@@ -67,7 +68,7 @@ innehåller även privata utkast och personliga vyer; läs
 
 Fortsätt med [objekt och samband](map.md) eller följ hela exemplet för
 ett [familjeabonnemang](family-subscription.md). Du kan också öppna
-[Skyttels textassistent](text-assistant.md) och beskriva vad du vill göra.
+[Samtal med Skyttel](text-assistant.md) och beskriva vad du vill göra.
 
 ## Välj arbetssätt
 
@@ -86,7 +87,7 @@ Placeringar och oskickad text bevaras vid skärmbyte under samma session.
 Läs om [navigering och personlig vy](spatial-map.md) för att söka,
 fokusera på ett objekt och ordna placeringarna så att de passar dig.
 
-Formulär, textassistent och röst använder samma privata utkast. Ett
+Formulär, text och röst till Skyttel använder samma privata utkast. Ett
 sparande omfattar hela utkastet, även förslag från en annan enhet eller
 assistent. Text som bara finns i ett öppet formulär ingår först när du
 lägger den i utkastet och kan försvinna om du stänger sidan.

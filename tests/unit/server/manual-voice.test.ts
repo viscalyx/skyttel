@@ -4,6 +4,7 @@ import { createInterface } from 'node:readline';
 import { request } from '@playwright/test';
 import { expect, test } from 'vitest';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
+import { approvedForVisit } from '../../support/conversation.js';
 
 function launch() {
   const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/manual-voice.ts']);
@@ -61,7 +62,7 @@ test('manual voice controls drive real delegation and MCP, preserve provisional 
     const base = `${origin}/api/households/${household.id}`;
     const created = await browser.post(`${base}/text-assistant`, {
       headers: { origin },
-      data: { externalAi: true, mapWork: true },
+      data: approvedForVisit,
     });
     expect(created.status()).toBe(201);
     const assistant = await created.json();
@@ -84,6 +85,7 @@ test('manual voice controls drive real delegation and MCP, preserve provisional 
         },
       });
     }
+    await command('text-context 84');
     await command('user Lägg till ett påhittat abonnemang.');
     await command('delegate');
     const held = await next('held');
@@ -110,12 +112,28 @@ test('manual voice controls drive real delegation and MCP, preserve provisional 
     expect((await (await browser.get(`${base}/map`)).json()).draft.changes).toMatchObject([
       { id: 'spoken-subscription' },
     ]);
+    const beforeContext = await (await browser.get(assistantPath)).json();
+    expect(beforeContext.contextPercentage).toBe(84);
+    await command('context 85');
+    await command('context-invalid');
+    expect(await (await browser.get(assistantPath)).json()).toMatchObject({
+      contextPercentage: 85,
+      revision: beforeContext.revision,
+    });
+    await command('capture-context-source');
     await command('usage 12');
     await command('usage 15');
     await command('finalize off');
     await expect.poll(async () => (await (await poll()).json()).voice.seconds).toBe(15);
     const stopped = await browser.post(`${voicePath}/stop`, { headers: { origin }, data: {} });
     expect(await stopped.json()).toMatchObject({ voice: { seconds: 15, usageFinal: false } });
+    const renewed = await browser.post(`${assistantPath}/new`, {
+      headers: { origin },
+      data: {},
+    });
+    expect((await renewed.json()).contextPercentage).toBe(0);
+    await command('context-old 99');
+    expect((await (await browser.get(assistantPath)).json()).contextPercentage).toBe(0);
     browser = await restartWithSession(browser, () => command('restart', 'restarted'));
     expect(
       (await browser.post(`${voicePath}/poll`, { headers: { origin }, data: {} })).status(),
@@ -150,7 +168,7 @@ test('manual voice family setup refuses reuse and resolves the seeded conflict a
     const assistant = await (
       await browser.post(`${base}/text-assistant`, {
         headers: { origin },
-        data: { externalAi: true, mapWork: true },
+        data: approvedForVisit,
       })
     ).json();
     const path = `${base}/text-assistant/${assistant.id}`;

@@ -3,12 +3,20 @@ import { readFile } from 'node:fs/promises';
 import { isAbsolute } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { signIn } from '../support/client.js';
+import { openProfile, signIn } from '../support/client.js';
+import {
+  chooseConversationVoice,
+  microphoneButton,
+  startConversationWithText,
+  voiceBox,
+} from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 
 declare global {
   interface Window {
     skyttelRealPeers: RTCPeerConnection[];
+    skyttelRealMicrophones: MediaStreamTrack[];
+    skyttelRealSavedReplyDrained: boolean;
   }
 }
 
@@ -40,9 +48,16 @@ test('TAL-01: recorded Swedish speech changes the family map through real Live a
     });
     const context = await browser.newContext({ permissions: ['microphone'] });
     const page = await context.newPage();
-    // Observe actual peer connections without replacing media, SDP, events or providers.
+    // Observe actual media and peers without substituting audio, SDP, events or providers.
     await page.addInitScript(() => {
       window.skyttelRealPeers = [];
+      window.skyttelRealMicrophones = [];
+      const capture = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async (constraints) => {
+        const stream = await capture(constraints);
+        window.skyttelRealMicrophones.push(...stream.getAudioTracks());
+        return stream;
+      };
       window.RTCPeerConnection = new Proxy(window.RTCPeerConnection, {
         construct(Target, args: ConstructorParameters<typeof RTCPeerConnection>) {
           const peer = new Target(...args);
@@ -62,19 +77,33 @@ test('TAL-01: recorded Swedish speech changes the family map through real Live a
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text från talprovet');
-    const panel = page.getByRole('region', { name: 'Skyttels textassistent', exact: true });
-    await panel.getByLabel(/Jag tillåter att OpenAI/).check();
-    await panel.getByLabel(/Jag tillåter förslag och sparande/).check();
-    await panel.getByRole('button', { name: 'Starta textassistenten' }).click();
-    await panel.getByRole('button', { name: 'Starta röst' }).click();
-    await expect(
-      panel.getByText('Lyssnar. Du kan tala, rätta eller be att spara hela utkastet.'),
-    ).toBeVisible({ timeout: 30_000 });
+    const panel = page.getByRole('region', { name: 'Arbetsyta', exact: true });
+    // Observe the four-second status before speech can trigger the save. Later
+    // receipt and media checks may take longer than its visible lifetime.
+    await page.evaluate(() => {
+      window.skyttelRealSavedReplyDrained = false;
+      const observer = new MutationObserver(() => {
+        const box = document.querySelector('[role="group"][aria-label="Röstruta"]');
+        if (
+          box &&
+          [...box.querySelectorAll('span')].some((span) => span.textContent?.trim() === 'Sparat')
+        ) {
+          window.skyttelRealSavedReplyDrained = true;
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { subtree: true, childList: true, characterData: true });
+    });
+    await startConversationWithText(page);
+    await chooseConversationVoice(page);
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true', {
+      timeout: 30_000,
+    });
     await expect(panel.getByRole('status')).toHaveText(
       'Sparat. Hela utkastet finns i hushållets karta.',
       { timeout: 180_000 },
     );
-    await expect(panel.getByRole('log', { name: 'Samtalets dialog' })).toContainText(/Molnmusik/i);
+    await expect(panel.getByRole('log', { name: 'Samtalstext' })).toContainText(/Molnmusik/i);
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Osänd text från talprovet',
     );
@@ -121,26 +150,71 @@ test('TAL-01: recorded Swedish speech changes the family map through real Live a
         { timeout: 30_000 },
       )
       .toBe(true);
-    await panel.getByRole('button', { name: 'Stäng av rösten' }).click();
-    await expect(panel.getByText('Rösten är avstängd.')).toBeVisible();
+    // OFF stops capture and sending while keeping the peer available for the answer.
+    await chooseConversationVoice(page);
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     await expect
       .poll(() =>
         page.evaluate(() => {
+          const tracks = window.skyttelRealMicrophones;
           const peers = window.skyttelRealPeers;
           return (
-            peers.length > 0 &&
-            peers.every(
-              (peer) =>
-                peer.connectionState === 'closed' &&
-                peer
-                  .getSenders()
-                  .every((sender) => !sender.track || sender.track.readyState === 'ended'),
+            tracks.length > 0 &&
+            tracks.every((track) => !track.enabled || track.readyState === 'ended') &&
+            peers.some((peer) => peer.connectionState === 'connected') &&
+            peers.every((peer) =>
+              peer
+                .getSenders()
+                .every((sender) => !sender.track?.enabled || sender.track.readyState === 'ended'),
             )
           );
         }),
       )
       .toBe(true);
-    await panel.getByRole('button', { name: 'Avsluta samtalet' }).click();
+    // Sparat requires the canonical reply's words, observed output audio and its drain.
+    // It does not establish acoustic intelligibility or rule out later unsolicited output.
+    await expect
+      .poll(() => page.evaluate(() => window.skyttelRealSavedReplyDrained), { timeout: 60_000 })
+      .toBe(true);
+    await expect(voiceBox(page)).toHaveCount(0, { timeout: 30_000 });
+    const peersBeforeReset = await page.evaluate(() => window.skyttelRealPeers.length);
+    await panel.getByRole('button', { name: 'Nytt samtal' }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (count) =>
+            window.skyttelRealPeers.length > count &&
+            window.skyttelRealPeers
+              .slice(0, count)
+              .every((peer) => peer.connectionState === 'closed'),
+          peersBeforeReset,
+        ),
+      )
+      .toBe(true);
+    await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
+    // Reset replaces the peer with a muted one; leaving releases the retained microphone too.
+    await openProfile(page);
+    await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const peers = window.skyttelRealPeers;
+            return (
+              peers.length > 0 &&
+              window.skyttelRealMicrophones.every((track) => track.readyState === 'ended') &&
+              peers.every(
+                (peer) =>
+                  peer.connectionState === 'closed' &&
+                  peer
+                    .getSenders()
+                    .every((sender) => !sender.track || sender.track.readyState === 'ended'),
+              )
+            );
+          }),
+        { timeout: 60_000 },
+      )
+      .toBe(true);
     await app.restart();
     const recovered = (await (await page.request.get(`${mapUrl}/history`)).json())
       .history as SaveReceipt[];
@@ -156,6 +230,9 @@ test('TAL-01: recorded Swedish speech changes the family map through real Live a
         models: ['gpt-live-1', 'gpt-5.6-terra'],
         receipt: added[0],
         receivedAudio: true,
+        microphoneOff: true,
+        savedReplyDrained: true,
+        resetClosedPreviousPeers: true,
         mediaClosed: true,
         receiptSurvivesRestart: true,
       }),

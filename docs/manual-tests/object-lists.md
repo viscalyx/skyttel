@@ -103,7 +103,7 @@ map-result navigation”.
 **Förutsättningar:** Ett testhushåll har Lo Exempel, Kim Exempel och
 Långt borta. Lo har ett samband till Kim och Kim har ett till Långt borta.
 Placera det sista objektet tydligt längre bort i den personliga vyn.
-Textassistenten är tillgänglig med testmiljöns ersättare för modelltjänsten.
+Samtal med Skyttel är tillgängligt med testmiljöns ersättare för modelltjänsten.
 
 **Integrationstest:**
 [object-list.spec.ts](../../tests/integration/object-list.spec.ts), testfallet
@@ -111,8 +111,8 @@ Textassistenten är tillgänglig med testmiljöns ersättare för modelltjänste
 
 **Steg:**
 
-1. Öppna Samtal och text, godkänn testmiljöns medgivanden och starta
-   textassistenten. Skriv **Oskickat medan jag söker** utan att skicka.
+1. Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan.
+   Skriv **Oskickat medan jag söker** utan att skicka.
 2. Öppna Lista och markera både Lo och Kim. Sök efter **Lo Exempel**.
    Kontrollera att kameran behåller sitt läge medan du skriver.
 3. Välj träffens namn för att visa Lo i kartan. Kontrollera att Lo och
@@ -201,7 +201,7 @@ med 320 × 250 CSS-pixlar och verklig webbläsarzoom på 400 procent.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Testhushållet med 500 objekt på en datorskärm där
-Lista och Samtal och text kan visas samtidigt.
+Lista och en objektpanel kan visas samtidigt.
 
 **Integrationstest:**
 [object-list-flow.spec.ts](../../tests/integration/object-list-flow.spec.ts),
@@ -210,7 +210,8 @@ without moving the result”.
 
 **Steg:**
 
-1. Öppna Lista och därefter Samtal och text. Låt samtalsfönstret vara aktivt.
+1. Öppna Lista och välj **Uppgifter** vid **Provobjekt 000**. Låt
+   objektpanelen vara aktiv medan listan syns bredvid.
 2. Rulla listan till **Provobjekt 045** utan att först klicka i listan.
 3. Tryck ned musknappen på träffens **Uppgifter**. Kontrollera att träffen
    stannar under pekaren när listan blir aktiv. Släpp musknappen.

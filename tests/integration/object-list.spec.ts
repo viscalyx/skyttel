@@ -3,12 +3,12 @@ import type { MapState } from '../../src/shared/map.js';
 import {
   activatePanel,
   createHousehold,
-  openConversation,
   openMap,
   openSettings,
   openWorkspace,
   signIn,
 } from '../support/client.js';
+import { startConversationWithText } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 
 test('LISTA-01: multiple type filters combine with search and marks across 500 objects', async ({
@@ -147,13 +147,10 @@ test('LISTA-03: a map result focuses only its direct neighbors and closes only t
     const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     const lo = map.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
     await lo.click({ trial: true });
-    await openConversation(page);
-    const conversation = page.getByRole('region', { name: 'Samtal och text', exact: true });
-    await conversation.getByLabel(/Jag tillåter att OpenAI/).check();
-    await conversation.getByLabel(/Jag tillåter förslag och sparande/).check();
-    await conversation.getByRole('button', { name: 'Starta textassistenten', exact: true }).click();
+    await startConversationWithText(page);
+    const conversation = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
     await conversation
-      .getByLabel('Meddelande till textassistenten', { exact: true })
+      .getByLabel('Meddelande till Skyttel', { exact: true })
       .fill('Oskickat medan jag söker');
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
@@ -168,9 +165,9 @@ test('LISTA-03: a map result focuses only its direct neighbors and closes only t
     await work.getByRole('button', { name: 'Visa Lo Exempel i kartan', exact: true }).click();
     await expect(work).not.toBeVisible();
     await expect(conversation).toBeVisible();
-    await expect(
-      conversation.getByLabel('Meddelande till textassistenten', { exact: true }),
-    ).toHaveValue('Oskickat medan jag söker');
+    await expect(conversation.getByLabel('Meddelande till Skyttel', { exact: true })).toHaveValue(
+      'Oskickat medan jag söker',
+    );
     await expect(page.getByRole('region', { name: 'Lo Exempel', exact: true })).toHaveCount(0);
     await expect(lo).toHaveAttribute('aria-pressed', 'true');
     const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });

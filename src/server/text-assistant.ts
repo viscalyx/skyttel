@@ -4,23 +4,42 @@ import { Hono } from 'hono';
 import { toResponseInputItems } from 'openai/lib/responses/ResponseInputItems';
 import type { ResponseInputItem } from 'openai/resources/responses/responses';
 import { z } from 'zod';
+import { conversationCommand } from '../shared/conversation-command.js';
+import {
+  conversationConsentRequired,
+  conversationConsentRevoked,
+} from '../shared/conversation-consent.js';
 import type {
   MapSelection,
   TextAssistantReview,
   TextAssistantView,
 } from '../shared/text-assistant.js';
-import { assistantFailureMessage } from './assistant-feedback.js';
+import { assistantFailureMessage, newConversationMessage } from './assistant-feedback.js';
 import { textAssistantInstructions } from './assistant-instructions.js';
 import type { Auth } from './auth.js';
 import type { Config } from './config.js';
 import { contentOwner } from './content-identities.js';
+import { ConversationCapacity, voiceConversationModel } from './conversation-capacity.js';
+import type { ConversationConsents } from './conversation-consent.js';
+import {
+  contextSummaryMessage,
+  historicalSummary,
+  summarizeConversation,
+} from './conversation-summary.js';
 import { householdAccess } from './households.js';
-import { MapError } from './map.js';
+import { householdMap, MapError } from './map.js';
+import { checkSaves } from './save-check.js';
 import { connectTextAssistant, type LocalDispatch } from './text-assistant-mcp.js';
 import { type TextModelUsage, textModel } from './text-assistant-model.js';
 import { draftResult, historyResult } from './text-assistant-results.js';
 
 type Mcp = Awaited<ReturnType<typeof connectTextAssistant>>;
+type Message = { id: string; text: string; voice: boolean; contentVersion: number };
+type AcceptedMessage = {
+  hash: string;
+  status: NonNullable<TextAssistantView['taskStatus']>;
+  result?: TextAssistantView;
+};
 type Session = TextAssistantView & {
   id: string;
   actorId: string;
@@ -30,8 +49,19 @@ type Session = TextAssistantView & {
   timer: NodeJS.Timeout;
   task?: AbortController;
   input: ResponseInputItem[];
-  requestId?: string;
-  requestHash?: string;
+  conversation: { role: 'user' | 'assistant'; text: string; partial?: boolean }[];
+  /** Dialogue already included in Responses input; add new fragments once. */
+  contextOffset: number;
+  queue: Message[];
+  /** Revisions before an explicit stop/reset cannot introduce new queued work. */
+  boundaryRevision: number;
+  /** Version reached by this FIFO, unaffected by view reads of external edits. */
+  workVersion?: number;
+  accepted: Map<string, AcceptedMessage>;
+  capacity: ConversationCapacity;
+  summary?: string;
+  summaryOffset?: number;
+  summaryTask?: AbortController;
   previousFailure?: string;
   pendingSave?: { operationId: string; version: number; contentVersion: number };
   displayed?: (value: boolean) => void;
@@ -41,21 +71,37 @@ export function textAssistantRoutes({
   database,
   auth,
   config,
+  consents,
   dispatch,
   modelFetch,
   modelUsage,
   onStop,
+  onNewConversation,
+  onSummary,
 }: {
   database: Database.Database;
   auth: Auth;
   config: Config;
+  consents: ConversationConsents;
   dispatch: LocalDispatch;
   modelFetch?: typeof fetch;
   modelUsage?: TextModelUsage;
   onStop?: (sessionId: string) => void;
+  onSummary?: (sessionId: string, signal: AbortSignal) => Promise<void> | undefined;
+  /** A conversation has started over, so its voice can do the same and say the statement. */
+  onNewConversation?: (view: TextAssistantView, deferVoiceClose?: boolean) => void;
 }) {
   const routes = new Hono<{ Variables: { actorId: string; browserSessionId: string } }>();
   const sessions = new Map<string, Session>();
+  // The conversations that a revoked consent has ended, until the time they
+  // would have expired by themselves. Work with them is refused with the reason.
+  const revoked = new Map<string, { actorId: string; householdId: string }>();
+  // How many times each user has revoked the consent for each household, so
+  // that a start can tell whether a revocation came while it connected. It
+  // holds one number for each user and household that has revoked.
+  const revocations = new Map<string, number>();
+  const consentKey = (actorId: string, householdId: string) =>
+    JSON.stringify([householdId, actorId]);
   const respond = config.openaiApiKey
     ? textModel(config.openaiApiKey, modelFetch, modelUsage)
     : null;
@@ -72,15 +118,23 @@ export function textAssistantRoutes({
   async function stop(session: Session) {
     sessions.delete(session.id);
     session.task?.abort();
+    session.summaryTask?.abort();
+    session.queue = [];
+    session.accepted.clear();
     onStop?.(session.id);
     session.displayed?.(false);
     session.input = [];
+    session.conversation = [];
+    session.contextOffset = 0;
     session.reply = undefined;
     session.modelReply = undefined;
     session.questions = undefined;
     session.previousFailure = undefined;
     session.receipt = undefined;
+    session.saveCheck = undefined;
     session.operations = [];
+    session.completedReplies = [];
+    session.result = undefined;
     clearTimeout(session.timer);
     await session.mcp.close();
   }
@@ -110,6 +164,13 @@ export function textAssistantRoutes({
     const {
       id,
       revision,
+      contextRevision,
+      resetSource,
+      discarded,
+      canceled,
+      completedReplies,
+      taskId,
+      taskSource,
       phase,
       review,
       reply,
@@ -118,6 +179,7 @@ export function textAssistantRoutes({
       result,
       error,
       receipt,
+      saveCheck,
       operations,
       selection,
       displayedSelection,
@@ -126,19 +188,157 @@ export function textAssistantRoutes({
     return {
       id,
       revision,
+      contextRevision,
+      contextGeneration: session.contextGeneration,
+      contextSummaryState: session.contextSummaryState,
+      contextSummaries: session.contextSummaries,
+      contextPercentage: session.capacity.percent(
+        contextBytes(session),
+        Buffer.byteLength(JSON.stringify(providerConversation(session))),
+      ),
+      resetSource,
+      discarded,
+      canceled,
+      completedReplies,
+      taskId,
+      taskSource,
+      queuedMessages: session.queue.length,
+      saving: Boolean(
+        session.pendingSave &&
+          householdMap(database, session.actorId, session.householdId).operation(
+            session.pendingSave.operationId,
+          ).operation?.status === 'pending',
+      ),
       phase,
       review,
       reply,
       modelReply,
       questions,
+      questionPending: Boolean(questions?.length),
       result,
       error,
       receipt,
+      saveCheck,
       operations,
       selection,
       displayedSelection,
       displayedItem,
     };
+  }
+  function contextBytes(session: Session) {
+    if (!session.input.length && !session.conversation.length) return 0;
+    return Buffer.byteLength(
+      JSON.stringify({
+        instructions: `${session.mcp.instructions}\n\n${textAssistantInstructions}`,
+        tools: session.mcp.tools,
+        input: session.input,
+        dialogue: session.conversation.slice(session.contextOffset),
+      }),
+    );
+  }
+  function providerConversation(session: Session) {
+    if (!session.summary) return session.conversation;
+    return [
+      {
+        role: 'assistant' as const,
+        text: JSON.stringify({ historical: true, untrusted: true, summary: session.summary }),
+      },
+      ...session.conversation.slice(session.summaryOffset),
+      // Current draft is independently read by the server; a summary is never
+      // the authority for its state or for any new action.
+      {
+        role: 'assistant' as const,
+        text: JSON.stringify({ currentDraft: session.review, historical: true }),
+      },
+    ];
+  }
+  function needsSummary(session: Session) {
+    return session.capacity.needsSummary(
+      contextBytes(session),
+      Buffer.byteLength(JSON.stringify(providerConversation(session))),
+    );
+  }
+  async function summarize(
+    session: Session,
+    parentGuard?: () => void,
+    continuation: ResponseInputItem[] = [],
+    handoff = false,
+  ) {
+    if (session.summaryTask || session.contextSummaryState === 'failed') return;
+    const task = new AbortController();
+    session.summaryTask = task;
+    const revision = session.revision;
+    const guard = () => {
+      if (
+        task.signal.aborted ||
+        sessions.get(session.id) !== session ||
+        session.revision !== revision
+      )
+        throw new MapError('assistant_canceled', 409);
+      if (revoked.has(session.id)) throw new MapError('forbidden', 403);
+      authorize(session.actorId, session.browserSessionId, session.householdId);
+      parentGuard?.();
+    };
+    session.contextSummaryState = 'summarizing';
+    try {
+      guard();
+      if (!respond) throw new Error('assistant_unavailable');
+      if (handoff) await onSummary?.(session.id, task.signal);
+      guard();
+      const snapshot = session.conversation.length;
+      const summary = await summarizeConversation(
+        respond,
+        JSON.stringify({
+          previousSummary: session.summary,
+          conversation: session.conversation.slice(session.summaryOffset ?? 0),
+          providerResults: session.input,
+        }),
+        task.signal,
+        guard,
+      );
+      const review = (await call(session, 'read_my_draft', {}, guard)) as TextAssistantReview;
+      guard();
+      // Atomic installation: failure keeps the whole old ledger and provider
+      // input. The visible transcript is never truncated by this operation.
+      session.review = review;
+      session.summary = summary;
+      session.summaryOffset = Math.max(0, snapshot - 8);
+      while (
+        session.summaryOffset < snapshot &&
+        JSON.stringify(session.conversation.slice(session.summaryOffset, snapshot)).length > 16_000
+      )
+        session.summaryOffset++;
+      session.contextOffset = snapshot;
+      session.input = [
+        historicalSummary(summary),
+        {
+          role: 'assistant',
+          content: JSON.stringify({
+            historical: true,
+            recentConversation: session.conversation.slice(session.summaryOffset, snapshot),
+          }),
+        },
+        ...continuation,
+      ];
+      session.contextGeneration = (session.contextGeneration ?? 0) + 1;
+      session.contextSummaries ??= [];
+      session.contextSummaries.push({ id: randomUUID(), text: contextSummaryMessage });
+      session.contextSummaryState = undefined;
+      session.capacity.reset();
+    } catch (error) {
+      if (task.signal.aborted || session.revision !== revision || !sessions.has(session.id)) return;
+      if (authorityLost(error)) {
+        await stop(session);
+        return;
+      }
+      session.contextSummaryState = 'failed';
+      // A distinct DTO state, not a generic task/provider failure.
+    } finally {
+      if (session.summaryTask === task) {
+        session.summaryTask = undefined;
+        if (session.contextSummaryState === 'summarizing') session.contextSummaryState = 'needed';
+      }
+    }
   }
   async function call(
     session: Session,
@@ -304,13 +504,14 @@ export function textAssistantRoutes({
   }
   function saved(session: Session, receipt: TextAssistantView['receipt']) {
     session.receipt = receipt;
+    session.workVersion = receipt ? receipt.draftVersion + 1 : session.workVersion;
     session.pendingSave = undefined;
     session.reply = 'Sparat. Hela utkastet finns i hushållets karta.';
+    session.conversation.push({ role: 'assistant', text: session.reply });
     session.modelReply = undefined;
     session.questions = undefined;
     session.error = undefined;
     session.phase = 'ready';
-    session.input = [];
     session.result = undefined;
     // The atomic receipt confirms that this exact whole draft was consumed.
     // A later view read is useful, but is not evidence required for saving.
@@ -366,13 +567,83 @@ export function textAssistantRoutes({
       guard?.();
     }
   }
+  function finishInterruptedInput(session: Session) {
+    const answered = new Set(
+      session.input
+        .filter((item) => item.type === 'function_call_output')
+        .map((item) => item.call_id),
+    );
+    for (const item of [...session.input]) {
+      if (item.type !== 'function_call' || answered.has(item.call_id)) continue;
+      session.input.push({
+        type: 'function_call_output',
+        call_id: item.call_id,
+        output: JSON.stringify({
+          interrupted: true,
+          message:
+            'Resultatet är inte bekräftat. Läs aktuellt utkast och sparförsök före nytt arbete.',
+        }),
+      });
+      answered.add(item.call_id);
+    }
+  }
+  async function startOver(session: Session, discard = false, deferVoiceClose = false) {
+    session.task?.abort();
+    session.summaryTask?.abort();
+    session.summaryTask = undefined;
+    session.summary = undefined;
+    session.summaryOffset = undefined;
+    session.contextSummaryState = undefined;
+    session.contextSummaries = [];
+    session.contextGeneration = 0;
+    session.queue = [];
+    session.accepted.clear();
+    session.taskId = undefined;
+    session.taskSource = undefined;
+    session.canceled = undefined;
+    session.completedReplies = [];
+    session.revision++;
+    session.boundaryRevision = session.revision;
+    await refresh(session);
+    session.phase = session.pendingSave ? 'recovery' : 'ready';
+    if (discard) {
+      session.review = await call(session, 'discard_draft', {
+        version: session.review.version,
+        contentVersion: session.review.contentVersion,
+      });
+    }
+    session.workVersion = session.review.version;
+    session.input = [];
+    session.conversation = [];
+    session.contextOffset = 0;
+    session.contextRevision = (session.contextRevision ?? 0) + 1;
+    session.capacity.reset();
+    session.resetSource = deferVoiceClose ? 'voice' : 'text';
+    session.previousFailure = undefined;
+    session.selection = undefined;
+    session.displayedSelection = undefined;
+    session.displayedItem = undefined;
+    session.modelReply = undefined;
+    session.reply = undefined;
+    session.questions = undefined;
+    session.result = undefined;
+    session.error = undefined;
+    session.receipt = undefined;
+    session.saveCheck = undefined;
+    session.discarded = undefined;
+    session.phase =
+      session.pendingSave || session.operations.some((item) => item.status === 'pending')
+        ? 'recovery'
+        : 'ready';
+    session.reply = newConversationMessage(session.review);
+    onNewConversation?.(view(session), deferVoiceClose);
+  }
   async function run(
     session: Session,
     text: string,
     revision: number,
     task: AbortController,
     expected: { version: number; contentVersion: number },
-    voiceContext?: string,
   ) {
     const guard = () => {
       if (task.signal.aborted || session.revision !== revision || !sessions.has(session.id))
@@ -394,15 +665,25 @@ export function textAssistantRoutes({
       session.operations = (await call(session, 'read_my_save_operations', {}, guard)).operations;
       if (session.operations.some((operation) => operation.status === 'pending'))
         throw new MapError('operation_pending', 409);
+      if (needsSummary(session)) await summarize(session, guard);
+      guard();
+      if (session.contextSummaryState === 'failed') {
+        session.phase = 'ready';
+        return;
+      }
       let version = review.version;
       const mutations = new Set<string>();
       const contentVersion = review.contentVersion;
+      finishInterruptedInput(session);
+      const dialogue = session.conversation.slice(session.contextOffset);
+      session.contextOffset = session.conversation.length;
+      let turnStart = session.input.length;
       session.input.push({
         role: 'user',
         content: JSON.stringify({
           message: text,
           draft: review,
-          voiceContext,
+          voiceContext: dialogue.length ? JSON.stringify(dialogue) : undefined,
           previousFailure: session.previousFailure
             ? { message: session.previousFailure, historical: true }
             : undefined,
@@ -411,8 +692,17 @@ export function textAssistantRoutes({
       for (let step = 0; step < 48; step++) {
         guard();
         if (!respond) throw new Error('assistant_unavailable');
-        if (JSON.stringify(session.input).length > 500_000)
-          throw new MapError('assistant_context_limit', 409);
+        if (needsSummary(session)) {
+          const continuation = session.input.slice(turnStart);
+          await summarize(session, guard, continuation);
+          guard();
+          turnStart = session.input.length - continuation.length;
+          if (view(session).contextSummaryState === 'failed' || needsSummary(session)) {
+            session.contextSummaryState = 'failed';
+            session.phase = 'ready';
+            return;
+          }
+        }
         const tools = session.mcp.tools.map((tool) => ({
           type: 'function' as const,
           name: tool.name,
@@ -500,6 +790,26 @@ export function textAssistantRoutes({
         });
         tools.push({
           type: 'function',
+          name: 'ask_questions',
+          description:
+            'Ställ nödvändiga riktade frågor i samtalet och invänta svar. Använd även utan ändringsoperationer, till exempel för obesvarade identiteter eller konflikter. Beskriv de berörda namnen och konkreta valen från aktuellt underlag; gissa inga svar. Detta ändrar eller sparar ingenting.',
+          parameters: {
+            type: 'object',
+            properties: {
+              questions: {
+                type: 'array',
+                minItems: 1,
+                maxItems: 3,
+                items: { type: 'string', maxLength: 240 },
+              },
+            },
+            required: ['questions'],
+            additionalProperties: false,
+          },
+          strict: false,
+        });
+        tools.push({
+          type: 'function',
           name: 'report_result',
           description:
             'Ge detaljer från aktuellt utkast eller ett verkligt sparande utan ytterligare modellomgång. latest_save hämtar senaste kvittot; save kräver operationId och userId från historiken. last_failure återger det senaste registrerade felet i samtalet utan att upprepa uppdraget. Texten skapas av servern från faktiska poster och fel, inte av modellen.',
@@ -534,8 +844,11 @@ export function textAssistantRoutes({
           throw new MapError('assistant_draft_changed', 409);
         if (response.status !== 'completed') throw new Error('assistant_incomplete');
         session.input.push(...toResponseInputItems(response.output));
+        session.capacity.text(response.usage, contextBytes(session));
         let calls = response.output.filter((item) => item.type === 'function_call');
-        let combined: { completion: 'draft' | 'save'; questions: string[] } | undefined;
+        let combined:
+          | { completion: 'draft' | 'save'; questions: string[]; callId: string }
+          | undefined;
         if (calls.some((action) => action.name === 'submit_changes')) {
           if (calls.length !== 1) throw new MapError('invalid_request', 400);
           const parsed = z
@@ -577,8 +890,8 @@ export function textAssistantRoutes({
             )
               throw new MapError('invalid_request', 400);
           }
-          combined = batch;
           const original = calls[0];
+          combined = { ...batch, callId: original.call_id };
           calls = batch.operations.map((operation) => ({
             ...original,
             name: operation.name,
@@ -589,6 +902,8 @@ export function textAssistantRoutes({
         }
         if (!calls.length) {
           session.modelReply = response.output_text;
+          if (response.output_text)
+            session.conversation.push({ role: 'assistant', text: response.output_text });
           session.reply =
             session.result?.message ??
             (session.displayedSelection ? 'Markerat i kartan.' : undefined);
@@ -599,6 +914,26 @@ export function textAssistantRoutes({
           guard();
           const args = JSON.parse(action.arguments) as Record<string, unknown>;
           if (combined) Object.assign(args, { version, contentVersion });
+          if (action.name === 'ask_questions') {
+            if (calls.length !== 1) throw new MapError('invalid_request', 400);
+            const value = z
+              .object({
+                questions: z.array(z.string().trim().min(1).max(240)).min(1).max(3),
+              })
+              .strict()
+              .parse(args);
+            session.questions = value.questions;
+            session.modelReply = value.questions.join(' ');
+            session.reply = session.result?.message;
+            session.phase = 'ready';
+            session.input.push({
+              type: 'function_call_output',
+              call_id: action.call_id,
+              output: JSON.stringify({ questionPending: true }),
+            });
+            session.conversation.push({ role: 'assistant', text: session.modelReply });
+            return;
+          }
           if (action.name === 'report_result') {
             const parsed = z
               .discriminatedUnion('source', [
@@ -647,7 +982,12 @@ export function textAssistantRoutes({
             session.modelReply = undefined;
             session.questions = undefined;
             session.phase = 'ready';
-            session.input = [];
+            session.conversation.push({ role: 'assistant', text: session.reply });
+            session.input.push({
+              type: 'function_call_output',
+              call_id: action.call_id,
+              output: JSON.stringify(session.result),
+            });
             return;
           }
           if (action.name === 'show_map_object' || action.name === 'show_map_item') {
@@ -743,14 +1083,21 @@ export function textAssistantRoutes({
             verifyReceipt(session, value.receipt, session.pendingSave);
             saved(session, value.receipt);
             await refreshConfirmed(session, guard);
+            session.input.push({
+              type: 'function_call_output',
+              call_id: action.call_id,
+              output: JSON.stringify(value),
+            });
             return;
           }
-          session.input.push({
-            type: 'function_call_output',
-            call_id: action.call_id,
-            output: JSON.stringify(value),
-          });
+          if (!combined)
+            session.input.push({
+              type: 'function_call_output',
+              call_id: action.call_id,
+              output: JSON.stringify(value),
+            });
           if (tool.annotations?.readOnlyHint !== true) {
+            if (Number.isSafeInteger(value.version)) session.workVersion = value.version;
             const before = previousReview ?? session.review;
             session.review = await call(session, 'read_my_draft', {}, guard);
             version = session.review.version;
@@ -793,7 +1140,18 @@ export function textAssistantRoutes({
           session.modelReply = combined.questions.join(' ') || undefined;
           session.questions = combined.questions.length ? combined.questions : undefined;
           session.phase = 'ready';
-          session.input = [];
+          session.input.push({
+            type: 'function_call_output',
+            call_id: combined.callId,
+            output: JSON.stringify({
+              result: session.result,
+              review: session.review,
+              questions: combined.questions,
+            }),
+          });
+          if (session.reply) session.conversation.push({ role: 'assistant', text: session.reply });
+          if (session.modelReply)
+            session.conversation.push({ role: 'assistant', text: session.modelReply });
           return;
         }
       }
@@ -810,10 +1168,10 @@ export function textAssistantRoutes({
           : 'error';
       session.error = error instanceof MapError ? error.code : 'assistant_provider_failed';
       session.previousFailure = assistantFailureMessage(session.error);
+      session.conversation.push({ role: 'assistant', text: session.previousFailure });
       session.reply = undefined;
       session.modelReply = undefined;
       session.questions = undefined;
-      session.input = [];
       try {
         await refresh(session, guard);
       } catch {
@@ -821,16 +1179,160 @@ export function textAssistantRoutes({
       }
     }
   }
+  function nextMessage(session: Session) {
+    if (
+      session.phase === 'working' ||
+      session.phase === 'recovery' ||
+      session.contextSummaryState === 'failed' ||
+      session.contextSummaryState === 'summarizing'
+    )
+      return;
+    const next = session.queue.shift();
+    if (next) beginMessage(session, next);
+  }
+  function beginMessage(session: Session, message: Message) {
+    const accepted = session.accepted.get(message.id);
+    if (!accepted) return;
+    accepted.status = 'working';
+    const task = new AbortController();
+    session.task = task;
+    session.taskId = message.id;
+    session.taskSource = message.voice ? 'voice' : 'text';
+    session.revision++;
+    session.phase = 'working';
+    session.resetSource = undefined;
+    session.canceled = undefined;
+    session.error = undefined;
+    session.reply = undefined;
+    session.modelReply = undefined;
+    session.questions = undefined;
+    session.receipt = undefined;
+    session.saveCheck = undefined;
+    session.discarded = undefined;
+    session.result = undefined;
+    session.selection = undefined;
+    session.displayedSelection = undefined;
+    session.displayedItem = undefined;
+    if (!message.voice) session.conversation.push({ role: 'user', text: message.text });
+    const revision = session.revision;
+    const expected = {
+      version: session.workVersion ?? session.review.version,
+      contentVersion: message.contentVersion,
+    };
+    const execute = async () => {
+      if (conversationCommand(message.text)?.discard) {
+        session.review = await call(session, 'discard_draft', expected, () => {
+          if (task.signal.aborted || session.revision !== revision)
+            throw new MapError('assistant_canceled', 409);
+        });
+        session.workVersion = session.review.version;
+        session.phase = 'ready';
+        session.result = { kind: 'draft', message: 'Utkastet är kastat.' };
+        session.reply = session.result.message;
+        session.discarded = true;
+        session.conversation.push({ role: 'assistant', text: session.reply });
+        finishInterruptedInput(session);
+        session.input.push(
+          { role: 'user', content: JSON.stringify({ message: message.text }) },
+          { role: 'assistant', content: session.reply },
+        );
+      } else {
+        await run(session, message.text, revision, task, expected);
+        if (
+          !task.signal.aborted &&
+          session.revision === revision &&
+          session.phase === 'ready' &&
+          needsSummary(session)
+        )
+          if (message.voice) session.contextSummaryState = 'needed';
+          else
+            await summarize(session, () => {
+              if (task.signal.aborted || session.revision !== revision)
+                throw new MapError('assistant_canceled', 409);
+            });
+      }
+    };
+    void execute()
+      .catch(() => {
+        if (task.signal.aborted || session.revision !== revision) return;
+        session.phase = 'error';
+        session.error = 'assistant_draft_changed';
+      })
+      .finally(() => {
+        if (task.signal.aborted || session.task !== task || !sessions.has(session.id)) return;
+        accepted.status = 'completed';
+        if (session.modelReply || session.reply)
+          session.completedReplies?.push({
+            id: message.id,
+            text: session.modelReply ?? '',
+            revision,
+            source: message.voice ? 'voice' : 'text',
+            reply: session.reply,
+            questionPending: view(session).questionPending,
+            receipt: session.receipt,
+            result: session.result,
+          });
+        session.task = undefined;
+        session.taskId = undefined;
+        session.taskSource = undefined;
+        accepted.result = {
+          ...view(session),
+          completedReplies: [...(session.completedReplies ?? [])],
+        };
+        nextMessage(session);
+      });
+  }
   const base = '/households/:id/text-assistant';
   routes.get(base, (context) => context.json({ available: Boolean(config.openaiApiKey) }));
+  routes.post(`${base}/recover`, async (context) => {
+    const body = await context.req.json().catch(() => null);
+    if (
+      !body ||
+      (body.operationIds !== undefined &&
+        (!Array.isArray(body.operationIds) ||
+          body.operationIds.length > 20 ||
+          body.operationIds.some(
+            (id: unknown) => typeof id !== 'string' || !/^[\w-]{1,128}$/.test(id),
+          )))
+    )
+      return context.json({ error: 'invalid_request' }, 400);
+    if (
+      body.checkId !== undefined &&
+      (typeof body.checkId !== 'string' || !/^[a-f0-9-]{36}$/.test(body.checkId))
+    )
+      return context.json({ error: 'invalid_request' }, 400);
+    const owner = contentOwner(database, context.req.param('id'), context.get('actorId'));
+    const activeAttempt = [...sessions.values()].some(
+      (session) =>
+        session.householdId === context.req.param('id') &&
+        session.phase === 'working' &&
+        householdAccess(database, session.actorId, session.householdId) &&
+        contentOwner(database, session.householdId, session.actorId) === owner &&
+        (!body.operationIds ||
+          (session.pendingSave && body.operationIds.includes(session.pendingSave.operationId))),
+    );
+    if (activeAttempt) return context.json({ checking: true });
+    return context.json(
+      checkSaves(
+        database,
+        context.get('actorId'),
+        context.req.param('id'),
+        body.operationIds,
+        body.checkId,
+      ),
+    );
+  });
   routes.post(base, async (context) => {
     if (!config.openaiApiKey) return context.json({ error: 'assistant_unavailable' }, 503);
     const body = await context.req.json().catch(() => null);
-    if (body?.externalAi !== true || body?.mapWork !== true)
-      return context.json({ error: 'forbidden' }, 403);
     const actorId = context.get('actorId');
     const browserSessionId = context.get('browserSessionId');
     const householdId = context.req.param('id');
+    // A conversation is the only way to conversation work, spoken or written.
+    // Without a valid consent none starts, and the client is told why.
+    if (!consents.valid(actorId, householdId, body?.consent))
+      return context.json({ error: conversationConsentRequired }, 403);
+    const revocationsAtStart = revocations.get(consentKey(actorId, householdId));
     for (const previous of sessions.values())
       if (previous.browserSessionId === browserSessionId && previous.householdId === householdId)
         await stop(previous);
@@ -867,6 +1369,14 @@ export function textAssistantRoutes({
         review,
         operations: [],
         input: [],
+        conversation: [],
+        contextOffset: 0,
+        capacity: new ConversationCapacity(),
+        contextRevision: 0,
+        queue: [],
+        boundaryRevision: 0,
+        accepted: new Map(),
+        completedReplies: [],
         timer: setTimeout(
           () => {
             void stop(session);
@@ -882,6 +1392,11 @@ export function textAssistantRoutes({
       }
       if (session.operations.some((operation) => operation.status === 'pending'))
         session.phase = 'recovery';
+      // A consent that was revoked while the conversation connected starts none.
+      if (revocations.get(consentKey(actorId, householdId)) !== revocationsAtStart) {
+        await stop(session);
+        return context.json({ error: conversationConsentRequired }, 403);
+      }
       sessions.set(session.id, session);
       return context.json(view(session), 201);
     } catch {
@@ -889,15 +1404,25 @@ export function textAssistantRoutes({
       return context.json({ error: 'assistant_connection_failed' }, 503);
     }
   });
+  /** Why the user cannot work with a conversation that is not going on. */
+  function ended(sessionId: string, actorId: string, householdId: string) {
+    const ending = revoked.get(sessionId);
+    return ending?.actorId === actorId && ending.householdId === householdId
+      ? ({ error: conversationConsentRevoked, status: 403 } as const)
+      : ({ error: 'assistant_session_expired', status: 404 } as const);
+  }
   routes.use(`${base}/:sessionId/*`, async (context, next) => {
-    const session = sessions.get(context.req.param('sessionId') ?? '');
+    const sessionId = context.req.param('sessionId') ?? '';
+    const session = sessions.get(sessionId);
     if (
       !session ||
       session.actorId !== context.get('actorId') ||
       session.browserSessionId !== context.get('browserSessionId') ||
       session.householdId !== context.req.param('id')
-    )
-      return context.json({ error: 'assistant_session_expired' }, 404);
+    ) {
+      const { error, status } = ended(sessionId, context.get('actorId'), context.req.param('id'));
+      return context.json({ error }, status);
+    }
     try {
       if (context.req.method === 'GET') await refreshConfirmed(session);
       else await call(session, 'read_my_draft', {});
@@ -908,14 +1433,17 @@ export function textAssistantRoutes({
     await next();
   });
   routes.get(`${base}/:sessionId`, async (context) => {
-    const session = sessions.get(context.req.param('sessionId'));
+    const sessionId = context.req.param('sessionId');
+    const session = sessions.get(sessionId);
     if (
       !session ||
       session.actorId !== context.get('actorId') ||
       session.browserSessionId !== context.get('browserSessionId') ||
       session.householdId !== context.req.param('id')
-    )
-      return context.json({ error: 'assistant_session_expired' }, 404);
+    ) {
+      const { error, status } = ended(sessionId, context.get('actorId'), context.req.param('id'));
+      return context.json({ error }, status);
+    }
     try {
       await refreshConfirmed(session);
     } catch {
@@ -932,12 +1460,17 @@ export function textAssistantRoutes({
   routes.post(`${base}/:sessionId/messages`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    if (session.contextSummaryState === 'failed')
+      return context.json({ error: 'assistant_context_summary_failed' }, 409);
+    if (session.contextSummaryState === 'summarizing')
+      return context.json({ error: 'assistant_busy' }, 409);
     const body = await context.req.json().catch(() => null);
     if (
       !body ||
       typeof body.text !== 'string' ||
       !body.text.trim() ||
       body.text.length > 4000 ||
+      (body.queue !== undefined && typeof body.queue !== 'boolean') ||
       (body.voiceContext !== undefined &&
         (typeof body.voiceContext !== 'string' || body.voiceContext.length > 8000)) ||
       !Number.isSafeInteger(body.draftVersion) ||
@@ -959,99 +1492,171 @@ export function textAssistantRoutes({
         }),
       )
       .digest('hex');
-    if (session.requestId === body.requestId)
-      return session.requestHash === requestHash
+    const accepted = session.accepted.get(body.requestId);
+    if (accepted)
+      return accepted.hash === requestHash
         ? context.json(view(session), 202)
         : context.json({ error: 'assistant_turn_changed' }, 409);
-    if (body.revision !== session.revision)
-      return context.json({ error: 'assistant_turn_changed' }, 409);
-    if (session.pendingSave || session.phase === 'recovery')
+    const currentTurn = () =>
+      body.revision === session.revision ||
+      (session.phase === 'working' &&
+        Number.isSafeInteger(body.revision) &&
+        body.revision >= session.boundaryRevision &&
+        body.revision < session.revision);
+    if (!currentTurn()) return context.json({ error: 'assistant_turn_changed' }, 409);
+    if ((session.pendingSave || session.phase === 'recovery') && session.phase !== 'working')
       return context.json({ error: 'operation_pending' }, 409);
     const current = await call(session, 'read_my_draft', {});
-    if (body.revision !== session.revision)
-      return context.json({ error: 'assistant_turn_changed' }, 409);
-    if (body.draftVersion !== current.version || body.contentVersion !== current.contentVersion)
+    if (!currentTurn()) return context.json({ error: 'assistant_turn_changed' }, 409);
+    if (
+      body.contentVersion !== current.contentVersion ||
+      (session.phase !== 'working' && body.draftVersion !== current.version)
+    )
       return context.json({ error: 'assistant_draft_changed' }, 409);
     if (context.req.raw.signal.aborted) return context.json({ error: 'assistant_canceled' }, 409);
-    if (session.phase === 'working') session.input = [];
-    session.task?.abort();
-    session.task = new AbortController();
-    const task = session.task;
-    const aborted = () => task.abort();
-    if (body.voiceContext !== undefined)
-      context.req.raw.signal.addEventListener('abort', aborted, { once: true });
-    session.revision++;
-    session.requestId = body.requestId;
-    session.requestHash = requestHash;
-    session.phase = 'working';
-    session.error = undefined;
-    session.reply = undefined;
-    session.modelReply = undefined;
-    session.questions = undefined;
-    session.receipt = undefined;
-    session.result = undefined;
-    session.selection = undefined;
-    session.displayedSelection = undefined;
-    session.displayedItem = undefined;
-    void run(
-      session,
-      body.text,
-      session.revision,
-      session.task,
-      {
-        version: body.draftVersion,
-        contentVersion: body.contentVersion,
-      },
-      body.voiceContext,
-    ).finally(() => context.req.raw.signal.removeEventListener('abort', aborted));
-    return context.json(view(session), 202);
+    const control = conversationCommand(body.text);
+    if (control?.reset) {
+      await startOver(session, control.discard, body.voiceContext !== undefined);
+      return context.json(view(session));
+    }
+    if (session.task && !session.task.signal.aborted && body.queue === false)
+      return context.json({ error: 'assistant_busy' }, 409);
+    // Keep delivery records for same-session retries, but only pending work
+    // consumes queue capacity. Completed or canceled turns do not end a conversation.
+    if (session.queue.length + Number(Boolean(session.task && !session.task.signal.aborted)) >= 200)
+      return context.json({ error: 'assistant_busy' }, 409);
+    const message: Message = {
+      id: body.requestId,
+      text: body.text,
+      voice: body.voiceContext !== undefined,
+      contentVersion: current.contentVersion,
+    };
+    session.accepted.set(message.id, { hash: requestHash, status: 'queued' });
+    if (session.task && !session.task.signal.aborted) session.queue.push(message);
+    else {
+      session.review = current;
+      session.workVersion = current.version;
+      beginMessage(session, message);
+    }
+    return context.json(
+      { ...view(session), taskStatus: session.accepted.get(message.id)?.status },
+      202,
+    );
+  });
+  routes.post(`${base}/:sessionId/summarize`, async (context) => {
+    const session = sessions.get(context.req.param('sessionId'));
+    if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    if (session.phase === 'working' || session.phase === 'recovery' || session.pendingSave)
+      return context.json(view(session));
+    if (session.contextSummaryState === 'needed' || needsSummary(session)) {
+      // The browser has paused local capture and retired the peer before this
+      // handoff. Close its server sideband before taking the ledger snapshot.
+      await summarize(session, undefined, [], true);
+    }
+    return context.json(view(session));
+  });
+  // Poll a particular accepted message: a subsequent FIFO task may already be
+  // running when a voice executor observes its own verified completion.
+  routes.get(`${base}/:sessionId/messages/:requestId`, (context) => {
+    const session = sessions.get(context.req.param('sessionId'));
+    if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    const accepted = session.accepted.get(context.req.param('requestId'));
+    if (!accepted) return context.json({ error: 'assistant_turn_changed' }, 409);
+    return context.json({ ...(accepted.result ?? view(session)), taskStatus: accepted.status });
   });
   routes.post(`${base}/:sessionId/cancel`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
     const body = await context.req.json().catch(() => null);
-    if (body?.revision !== session.revision)
+    if (session.canceled && session.phase !== 'working') return context.json(view(session));
+    if (body?.all !== true && body?.revision !== session.revision)
       return context.json({ error: 'assistant_turn_changed' }, 409);
     session.task?.abort();
+    session.summaryTask?.abort();
+    session.queue = [];
+    session.taskId = undefined;
+    session.taskSource = undefined;
     session.revision++;
-    session.input = [];
+    session.boundaryRevision = session.revision;
+    session.canceled = true;
     session.selection = undefined;
-    session.reply = 'Uppdraget är avbrutet. Ett redan genomfört sparande är inte ångrat.';
+    session.error = undefined;
+    session.reply = 'Avbrutet. Föreslagna ändringar ligger kvar i utkastet.';
+    session.conversation.push({ role: 'assistant', text: session.reply });
     session.modelReply = undefined;
     session.questions = undefined;
     session.phase = session.pendingSave ? 'recovery' : 'ready';
     await refresh(session);
+    for (const accepted of session.accepted.values()) {
+      if (accepted.status === 'queued' || accepted.status === 'working') {
+        accepted.status = 'canceled';
+        accepted.result = view(session);
+      }
+    }
+    return context.json(view(session));
+  });
+  // Nytt samtal: the conversation text and the context are emptied, and
+  // ongoing work stops. The session, its consent and the draft stay. A save
+  // that has begun is still checked before new work.
+  routes.post(`${base}/:sessionId/new`, async (context) => {
+    const session = sessions.get(context.req.param('sessionId'));
+    if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    const body = await context.req.json().catch(() => ({}));
+    if (body.discard !== undefined && typeof body.discard !== 'boolean')
+      return context.json({ error: 'invalid_request' }, 400);
+    await startOver(session, body.discard === true);
     return context.json(view(session));
   });
   routes.post(`${base}/:sessionId/recover`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
     if (session.phase === 'working') return context.json(view(session));
-    session.modelReply = undefined;
-    session.questions = undefined;
+    const body = await context.req.json().catch(() => ({}));
+    if (
+      body.checkId !== undefined &&
+      (typeof body.checkId !== 'string' || !/^[a-f0-9-]{36}$/.test(body.checkId))
+    )
+      return context.json({ error: 'invalid_request' }, 400);
+    if (body.checkId && session.saveCheck?.id === body.checkId) return context.json(view(session));
+    const ids = session.pendingSave
+      ? [session.pendingSave.operationId]
+      : session.receipt
+        ? [session.receipt.operationId]
+        : undefined;
+    const checked = checkSaves(database, session.actorId, session.householdId, ids, body.checkId);
     await refresh(session);
-    const operation = session.pendingSave
-      ? session.operations.find((item) => item.operationId === session.pendingSave?.operationId)
-      : undefined;
-    if (operation?.status === 'succeeded') {
-      verifyReceipt(session, operation.receipt, {
+    if (checked.receipt) {
+      const operation = checked.operations.find((item) => item.status === 'succeeded');
+      if (!operation) throw new Error('invalid_receipt');
+      verifyReceipt(session, checked.receipt, {
         operationId: operation.operationId,
         version: operation.draftVersion,
         contentVersion: operation.contentVersion,
       });
-      saved(session, operation.receipt);
-    } else if (session.operations.some((item) => item.status === 'pending'))
-      session.phase = 'recovery';
-    else {
-      session.pendingSave = undefined;
-      session.phase = 'ready';
-      session.error = operation?.status === 'rejected' ? operation.error : undefined;
-      if (session.error) session.previousFailure = assistantFailureMessage(session.error);
-      session.reply =
-        operation?.status === 'rejected'
-          ? 'Sparförsöket avvisades. Granska hela utkastet och ge ett nytt sparbesked.'
-          : 'Tidigare sparförsök är kontrollerade. Inget okänt försök återstår.';
+      saved(session, checked.receipt);
     }
+    if (session.saveCheck?.id !== checked.id) {
+      session.revision++;
+      session.conversation.push({ role: 'assistant', text: checked.reply });
+      session.completedReplies?.push({
+        id: `check-${checked.id}`,
+        source: 'text',
+        revision: session.revision,
+        text: '',
+        reply: checked.reply,
+        receipt: checked.receipt,
+        saveCheck: checked,
+      });
+    }
+    session.saveCheck = checked;
+    session.reply = checked.reply;
+    session.modelReply = undefined;
+    session.questions = undefined;
+    session.error = undefined;
+    session.result = undefined;
+    session.pendingSave = undefined;
+    session.phase = 'ready';
+    nextMessage(session);
     return context.json(view(session));
   });
   routes.post(`${base}/:sessionId/retry`, async (context) => {
@@ -1113,9 +1718,12 @@ export function textAssistantRoutes({
       if (!sessions.has(session.id))
         return context.json({ error: 'assistant_session_expired' }, 404);
       authorize(session.actorId, session.browserSessionId, session.householdId);
+      if (session.task === task) session.task = undefined;
+      if (session.revision === revision && !task.signal.aborted) nextMessage(session);
       return context.json(view(session));
     } finally {
       context.req.raw.signal.removeEventListener('abort', abort);
+      if (session.task === task) session.task = undefined;
     }
   });
   routes.post(`${base}/:sessionId/selection`, async (context) => {
@@ -1148,11 +1756,94 @@ export function textAssistantRoutes({
   });
   return {
     routes,
-    // Only interrupt the voice-owned in-memory task. Its normal HTTP cancel
-    // route refreshes status; durable operations remain available for recovery.
-    interrupt: (sessionId: string, revision: number) => {
+    /** Private ephemeral context shared by text and every voice connection.
+     * Never expose it in status responses or write it to the household. */
+    conversation: (sessionId: string) => {
       const session = sessions.get(sessionId);
-      if (session?.revision === revision && session.phase === 'working') session.task?.abort();
+      return session ? providerConversation(session) : [];
+    },
+    prepareVoiceContext: async (sessionId: string) => {
+      const session = sessions.get(sessionId);
+      if (!session) return;
+      const bytes = Buffer.byteLength(JSON.stringify(providerConversation(session)));
+      if (!session.contextSummaryState && bytes / 3 >= voiceConversationModel.tokens * 0.89)
+        await summarize(session);
+      if (sessions.get(sessionId) !== session) return;
+      if (
+        Buffer.byteLength(JSON.stringify(providerConversation(session))) / 3 >=
+        voiceConversationModel.tokens * 0.89
+      )
+        session.contextSummaryState = 'failed';
+      return view(session);
+    },
+    contextUsage: (sessionId: string, revision: number, source: string, ratio?: unknown) => {
+      const session = sessions.get(sessionId);
+      if (session && (session.contextRevision ?? 0) === revision) {
+        if (ratio === undefined) session.capacity.beginVoice(source);
+        else session.capacity.voice(source, ratio);
+        if (!session.contextSummaryState && needsSummary(session))
+          session.contextSummaryState = 'needed';
+      }
+    },
+    transcript: (sessionId: string, role: 'user' | 'assistant', text: string) => {
+      const session = sessions.get(sessionId);
+      if (session) session.conversation.push({ role, text, partial: true });
+    },
+    // Interrupt current in-memory work synchronously. The normal HTTP cancel
+    // route refreshes status; durable operations remain available for recovery.
+    interrupt: (sessionId: string, revision?: number) => {
+      const session = sessions.get(sessionId);
+      if (
+        session &&
+        (revision === undefined || session.revision === revision) &&
+        session.phase === 'working'
+      )
+        session.task?.abort();
+    },
+    /**
+     * Ends every conversation that the user has in the household, on all
+     * devices, because the consent is revoked. Further work with them is
+     * refused with that reason. The draft is not touched. Only already
+     * registered saves may finish under their original authority; a failed
+     * check remains a durable attempt for recovery without conversation consent.
+     */
+    endConversations: async (actorId: string, householdId: string) => {
+      const key = consentKey(actorId, householdId);
+      revocations.set(key, (revocations.get(key) ?? 0) + 1);
+      const ending = [...sessions.values()].filter(
+        (session) => session.actorId === actorId && session.householdId === householdId,
+      );
+      for (const session of ending) {
+        revoked.set(session.id, { actorId, householdId });
+        session.summaryTask?.abort();
+        setTimeout(
+          () => revoked.delete(session.id),
+          Math.max(1, session.mcp.expiresAt - Date.now()),
+        ).unref();
+      }
+      // Revocation never authorizes a fresh save. Complete only an immutable
+      // operation that was registered under the earlier explicit save command.
+      // SQLite serializes this with an already executing save using the same ID.
+      const receipts: NonNullable<TextAssistantView['receipt']>[] = [];
+      for (const session of ending) {
+        if (session.pendingSave) {
+          try {
+            const checked = checkSaves(database, actorId, householdId, [
+              session.pendingSave.operationId,
+            ]);
+            if (
+              checked.receipt &&
+              !receipts.some((item) => item.operationId === checked.receipt?.operationId)
+            )
+              receipts.push(checked.receipt);
+          } catch {
+            // A failed check remains a durable attempt for consent-independent
+            // recovery; it cannot prevent revocation or retain the conversation.
+          }
+        }
+      }
+      await Promise.all(ending.map(stop));
+      return receipts;
     },
     close: async () => {
       await Promise.all([...sessions.values()].map(stop));

@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect, type Page, request } from '@playwright/test';
+import { textViewButtonAccessibleName } from './conversation.js';
 
 // These HTTP-only clients use default context options. Keep their authenticated
 // session across a deliberate server restart, but retire the old socket pool.
@@ -19,10 +20,6 @@ export async function openWorkspace(page: Page) {
     .click();
 }
 
-export async function openConversation(page: Page) {
-  await (await utilityButton(page, 'Samtal och text')).click();
-}
-
 export async function activatePanel(page: Page, title: string) {
   await page.getByLabel(/^Öppna paneler/).selectOption({ label: title });
   await expect(page.getByRole('region', { name: title, exact: true })).toBeVisible();
@@ -31,6 +28,10 @@ export async function activatePanel(page: Page, title: string) {
 export async function openMap(page: Page) {
   const close = page.getByRole('button', { name: 'Stäng arbetsytan', exact: true });
   if (await close.isVisible()) await close.click();
+  // On a narrow screen the text view fills the screen. Closing it ends no conversation.
+  const textView = page.getByRole('button', { name: 'Stäng textvyn', exact: true });
+  if ((page.viewportSize()?.width ?? 1280) <= 700 && (await textView.isVisible()))
+    await textView.click();
   await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
   const guidance = page.getByRole('button', { name: 'Stäng vägledningen', exact: true });
   if (await guidance.isVisible()) await guidance.click();
@@ -46,10 +47,13 @@ export async function openSettings(page: Page) {
   if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
 }
 
-async function utilityButton(page: Page, name: string) {
+export async function utilityButton(page: Page, name: string) {
   const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
   await expect(tools).toBeVisible();
-  const button = tools.getByRole('button', { name, exact: true });
+  const button = tools.getByRole('button', {
+    name: name === 'Skriv till Skyttel' ? textViewButtonAccessibleName : name,
+    exact: true,
+  });
   if (!(await button.isVisible()))
     await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
   return button;

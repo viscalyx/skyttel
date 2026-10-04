@@ -1,27 +1,76 @@
 import { type ExchangeSdp, OpenAILiveWebRTC } from 'openai/live/webrtc';
 import type { TranscriptRow } from './ConversationTranscript.js';
+import type { HeldInput } from './voice-held-input.js';
+import silentPlaybackUrl from './voice-silence.wav?no-inline';
 
-export function createVoiceTransport(callbacks: {
-  onReady: () => void;
-  onMicrophoneReady?: () => void;
-  onClosed: () => void;
-  onFailure: (reason: 'network' | 'audio' | 'microphone' | 'provider') => void;
-  onPlaybackBlocked: (blocked: boolean) => void;
-  onDisconnected: (disconnected: boolean) => void;
-  onTranscript?: (row: TranscriptRow) => void;
-  onAudioActivity?: (activity: { microphone: boolean; speaker: boolean }) => void;
-}) {
+/** Unlock the eventual output element and audio meter during the user's start gesture. */
+export function prepareVoicePlayback(audio = new Audio(), audioContext = new AudioContext()) {
+  // A bundled silent PCM source keeps playback alive until the remote stream arrives.
+  // It follows the existing same-origin content policy and requests no microphone.
+  audio.src = silentPlaybackUrl;
+  audio.loop = true;
+  const ready = Promise.all([
+    (() => {
+      try {
+        return Promise.resolve(audioContext.resume()).then(() => audioContext.state === 'running');
+      } catch {
+        return Promise.resolve(false);
+      }
+    })(),
+    (() => {
+      try {
+        return Promise.resolve(audio.play()).then(() => true);
+      } catch {
+        return Promise.resolve(false);
+      }
+    })(),
+  ])
+    .then((values) => values[0] && values[1])
+    .catch(() => false);
+  return {
+    audio,
+    audioContext,
+    ready,
+    close() {
+      audio.pause();
+      audio.removeAttribute('src');
+      if (audioContext.state !== 'closed') void audioContext.close().catch(() => {});
+    },
+  };
+}
+export type VoicePlayback = ReturnType<typeof prepareVoicePlayback>;
+
+export function createVoiceTransport(
+  callbacks: {
+    onReady: () => void;
+    onMicrophoneReady?: () => void;
+    onClosed: () => void;
+    onFailure: (reason: 'network' | 'audio' | 'microphone' | 'provider') => void;
+    onPlaybackBlocked: (blocked: boolean) => void;
+    onDisconnected: (disconnected: boolean) => void;
+    onTranscript?: (row: TranscriptRow) => void;
+    onAudioActivity?: (activity: { microphone: boolean; speaker: boolean }) => void;
+    /** Text aligned with provider output audio; it does not define a complete turn. */
+    onOutputTranscript?: (text: string) => void;
+    /** Skyttel has taken on a task from what the user said. */
+    onDelegation?: () => void;
+    inputAllowed?: () => boolean;
+  },
+  playback?: VoicePlayback,
+  buffered?: HeldInput,
+) {
+  const audio = playback?.audio ?? new Audio();
+  const audioContext = playback?.audioContext ?? new AudioContext();
   const live = new OpenAILiveWebRTC();
-  const audio = new Audio();
   audio.autoplay = true;
   const remoteTracks = new Set<MediaStreamTrack>();
   let microphone: MediaStream | undefined;
   let connected = false;
   let started = false;
   let stopped = false;
+  let playbackTransferred = false;
   let closed = false;
   let paused = false;
-  const audioContext = new AudioContext();
   const meters: { source: MediaStreamAudioSourceNode; analyser: AnalyserNode; input: boolean }[] =
     [];
   const samples = new Uint8Array(256);
@@ -34,24 +83,30 @@ export function createVoiceTransport(callbacks: {
     source.connect(analyser);
     meters.push({ source, analyser, input });
   }
+  const measuring = () =>
+    !closed &&
+    !stopped &&
+    connected &&
+    started &&
+    live.peerConnection.connectionState === 'connected' &&
+    audioContext.state === 'running';
+  // The largest deviation from silence in a stream, from 0 to 1.
+  function peak(analyser: AnalyserNode) {
+    analyser.getByteTimeDomainData(samples);
+    let largest = 0;
+    for (const value of samples) largest = Math.max(largest, Math.abs(value - 128));
+    return Math.min(1, largest / 128);
+  }
+  const audible = (analyser: AnalyserNode) => peak(analyser) > 3 / 128;
   // Observe only the already-authorized streams. Incoming audio remains
-  // independent of microphone pause, and transcripts never imply playback.
+  // independent of the microphone being off, and transcripts never imply playback.
   const activityTimer = setInterval(() => {
     const next = { microphone: false, speaker: false };
-    if (
-      !closed &&
-      !stopped &&
-      connected &&
-      started &&
-      live.peerConnection.connectionState === 'connected' &&
-      audioContext.state === 'running'
-    ) {
+    if (measuring()) {
       for (const { analyser, input } of meters) {
         if (input ? paused : !playing) continue;
-        analyser.getByteTimeDomainData(samples);
-        const audible = samples.some((value) => Math.abs(value - 128) > 3);
-        if (input) next.microphone ||= audible;
-        else next.speaker ||= audible;
+        if (input) next.microphone ||= audible(analyser);
+        else next.speaker ||= audible(analyser);
       }
     }
     if (next.microphone !== activity.microphone || next.speaker !== activity.speaker) {
@@ -106,7 +161,7 @@ export function createVoiceTransport(callbacks: {
       finish(userRow);
       if (!assistantRow || (assistantBoundary && now - assistantAt >= turnGap)) {
         finish(assistantRow);
-        assistantRow = { id: crypto.randomUUID(), role, text: '' };
+        assistantRow = { id: crypto.randomUUID(), role, text: '', voiced: true };
       }
       assistantRow.text += event.delta;
       assistantRow.partial = true;
@@ -121,12 +176,16 @@ export function createVoiceTransport(callbacks: {
       await audio.play();
       if (!closed && !stopped) {
         playing = true;
+        buffered?.playbackReady();
         void audioContext.resume().catch(() => {});
         callbacks.onPlaybackBlocked(false);
+        ready();
       }
     } catch {
       if (!closed && !stopped) {
         playing = false;
+        for (const track of microphone?.getTracks() ?? []) track.enabled = false;
+        buffered?.capture(false);
         callbacks.onPlaybackBlocked(true);
       }
     }
@@ -138,6 +197,7 @@ export function createVoiceTransport(callbacks: {
     }
     remoteTracks.add(event.track);
     meter(new MediaStream([event.track]), false);
+    audio.loop = false;
     audio.srcObject = new MediaStream([...remoteTracks]);
     void playAudio();
   };
@@ -159,13 +219,32 @@ export function createVoiceTransport(callbacks: {
     )
       return;
     clearTimeout(startupTimer);
+    if (!playing) return;
+    if (callbacks.inputAllowed?.() === false) {
+      paused = true;
+      buffered?.capture(false);
+      buffered?.transmit(false);
+      for (const track of buffered?.outgoing.getTracks() ?? []) track.enabled = false;
+      for (const track of microphone?.getTracks() ?? []) track.enabled = false;
+      callbacks.onReady();
+      return;
+    }
     for (const track of microphone?.getTracks() ?? []) track.enabled = !paused;
+    if (buffered) {
+      buffered.capture(!paused);
+      for (const track of buffered.outgoing.getTracks()) track.enabled = true;
+      buffered.transmit(true);
+    }
     callbacks.onReady();
   }
   const connectionChanged = () => {
     if (closed || stopped) return;
     if (live.peerConnection.connectionState === 'disconnected') {
+      paused = true;
       for (const track of microphone?.getTracks() ?? []) track.enabled = false;
+      buffered?.capture(false);
+      buffered?.transmit(false);
+      for (const track of buffered?.outgoing.getTracks() ?? []) track.enabled = false;
       callbacks.onDisconnected(true);
       disconnectTimer ??= setTimeout(() => {
         if (!closed && !stopped) callbacks.onFailure('network');
@@ -180,10 +259,14 @@ export function createVoiceTransport(callbacks: {
   live.peerConnection.addEventListener('connectionstatechange', connectionChanged);
   const subscriptions = [
     live.on('session.input_transcript.delta', (event) => transcript('user', event)),
-    live.on('session.output_transcript.delta', (event) => transcript('assistant', event)),
+    live.on('session.output_transcript.delta', (event) => {
+      transcript('assistant', event);
+      if (!closed && !stopped && event.delta) callbacks.onOutputTranscript?.(event.delta);
+    }),
     live.on('session.delegation.created', () => {
       assistantBoundary = true;
       finish(assistantRow);
+      if (!closed && !stopped) callbacks.onDelegation?.();
     }),
     live.on('session.started', (event) => {
       if (typeof event.session?.id !== 'string' || !event.session.id) return;
@@ -206,6 +289,7 @@ export function createVoiceTransport(callbacks: {
     }),
   ];
   function stopCapture() {
+    buffered?.close();
     finish(userRow);
     finish(assistantRow);
     stopped = true;
@@ -217,7 +301,8 @@ export function createVoiceTransport(callbacks: {
       analyser.disconnect();
     }
     meters.length = 0;
-    if (audioContext.state !== 'closed') void audioContext.close().catch(() => {});
+    if (!playbackTransferred && audioContext.state !== 'closed')
+      void audioContext.close().catch(() => {});
     clearTimeout(startupTimer);
     clearTimeout(disconnectTimer);
     for (const track of microphone?.getTracks() ?? []) {
@@ -226,7 +311,7 @@ export function createVoiceTransport(callbacks: {
       track.stop();
     }
     for (const track of remoteTracks) track.stop();
-    audio.pause();
+    if (!playbackTransferred) audio.pause();
   }
   function close() {
     if (closed) return;
@@ -236,22 +321,63 @@ export function createVoiceTransport(callbacks: {
     live.peerConnection.removeEventListener('track', receiveTrack);
     live.peerConnection.removeEventListener('connectionstatechange', connectionChanged);
     audio.removeEventListener('error', audioFailed);
-    audio.srcObject = null;
+    if (!playbackTransferred) {
+      audio.srcObject = null;
+      audio.removeAttribute('src');
+    }
     remoteTracks.clear();
     live.close();
   }
   return {
-    async connect(exchangeSdp: ExchangeSdp, signal: AbortSignal) {
+    suspendInput() {
+      paused = true;
+      buffered?.capture(false);
+      buffered?.transmit(false);
+      for (const track of [
+        ...(microphone?.getTracks() ?? []),
+        ...(buffered?.outgoing.getTracks() ?? []),
+      ])
+        track.enabled = false;
+    },
+    /** Preserve already-captured held speech across a context summary handoff. */
+    releaseBufferedInput() {
+      const input = buffered;
+      input?.capture(false);
+      input?.transmit(false);
+      for (const track of input?.outgoing.getTracks() ?? []) track.enabled = false;
+      buffered = undefined;
+      return input;
+    },
+    async connect(
+      exchangeSdp: ExchangeSdp,
+      signal: AbortSignal,
+      retained?: { stream?: MediaStream; paused: boolean },
+    ) {
       try {
-        microphone = await navigator.mediaDevices.getUserMedia({ audio: true });
+        paused = retained?.paused ?? false;
+        microphone =
+          buffered?.stream ??
+          retained?.stream ??
+          (await navigator.mediaDevices.getUserMedia({ audio: true }));
         if (closed || stopped || signal.aborted) {
           stopCapture();
           throw new DOMException('Voice setup cancelled', 'AbortError');
         }
         for (const track of microphone.getTracks()) {
-          track.enabled = false;
+          if (!buffered) track.enabled = false;
           track.addEventListener('ended', microphoneEnded);
-          live.peerConnection.addTrack(track, microphone);
+          if (!buffered) live.peerConnection.addTrack(track, microphone);
+        }
+        if (buffered) {
+          buffered.onFailure(() => callbacks.onFailure('microphone'));
+          for (const track of buffered.outgoing.getTracks()) {
+            track.enabled = false;
+            live.peerConnection.addTrack(track, buffered.outgoing);
+          }
+          buffered.onDrained(() => {
+            if (paused)
+              for (const track of buffered?.outgoing.getTracks() ?? []) track.enabled = false;
+          });
         }
         meter(microphone, true);
         void audioContext.resume().catch(() => {});
@@ -267,13 +393,54 @@ export function createVoiceTransport(callbacks: {
         throw error;
       }
     },
+    /** Carry the already-unlocked output and running context into a replacement connection. */
+    releasePlayback() {
+      playbackTransferred = true;
+      audio.srcObject = null;
+      return prepareVoicePlayback(audio, audioContext);
+    },
+    // Transfer ownership before closing the old peer. The same authorized
+    // stream is attached to a fresh provider session without another permission request.
+    releaseMicrophone() {
+      const stream = microphone;
+      microphone = undefined;
+      for (const track of stream?.getTracks() ?? []) {
+        track.removeEventListener('ended', microphoneEnded);
+        track.enabled = false;
+      }
+      return stream;
+    },
     stopCapture,
+    discardPendingInput() {
+      paused = true;
+      buffered?.discard();
+      for (const track of microphone?.getTracks() ?? []) track.enabled = false;
+    },
     setMicrophonePaused(value: boolean) {
-      paused = value;
+      paused = value || callbacks.inputAllowed?.() === false;
       if (closed || stopped) return;
+      if (buffered) {
+        buffered.capture(!paused);
+        if (!paused && connected && started && playing) {
+          for (const track of buffered.outgoing.getTracks()) track.enabled = true;
+          buffered.transmit(true);
+        }
+        return;
+      }
       for (const track of microphone?.getTracks() ?? [])
         track.enabled =
-          !paused && connected && started && live.peerConnection.connectionState === 'connected';
+          !paused &&
+          playing &&
+          connected &&
+          started &&
+          live.peerConnection.connectionState === 'connected';
+    },
+    /** The microphone's sound level right now, from 0 to 1. It is 0 while the microphone is off. */
+    microphoneLevel() {
+      if (paused || !measuring()) return 0;
+      let level = 0;
+      for (const { analyser, input } of meters) if (input) level = Math.max(level, peak(analyser));
+      return level;
     },
     close,
     playAudio,

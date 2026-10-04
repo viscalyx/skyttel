@@ -5,8 +5,8 @@
 Objekt och samband bildar hushållets gemensamma karta. Du föreslår
 ändringar i ditt privata utkast och sparar dem tillsammans när du är klar.
 Öppna **Lista** i kartans verktyg för att göra hela arbetet med formulär.
-**Samtal och text** öppnar assistenten. På telefon visar
-**Visa verktygens namn** även de kompletterande verktygen.
+**Skriv till Skyttel** öppnar textvyn, där du skriver till Skyttel.
+På telefon visar **Visa verktygens namn** även de kompletterande verktygen.
 
 **Tema** ger valen **Ljust**, **Mörkt** och **System**. System följer
 inställningen på din enhet. **Information och hjälp** förklarar verktygen.
@@ -22,6 +22,8 @@ egen ikon och **Tillbaka till arbetet** återgår till ditt aktiva formulär.
 **Inställningar** öppnar en egen sida med **Typer och egna fält** och,
 för administratören, **Administrera tillgång**. Driftansvariga når även
 **Månadskostnad**. På mobil fäller **Välj inställning** ut sidnavigeringen.
+På sidan **Samtal med Skyttel** ser, sparar och återkallar du ditt
+[medgivande](text-assistant.md#medgivande) till samtal.
 Kartan är dold medan du besöker sidan. **Tillbaka till kartan** återger
 ditt pågående arbete och fokus. Typförslag hör till samma privata utkast
 som objekt och samband; granska och spara hela utkastet i kartan.
@@ -32,14 +34,16 @@ samtalstext, sökning, urval eller personlig kartvy. Samma sak gäller
 **Månadskostnad** om du har tillgång till den. Ett pågående sparförsök
 fortsätter; följ dess status och kontrollera samma kvitto vid okänt utfall.
 
-Ett pågående samtal behåller mikrofonens läge. Mikrofonkontrollen finns
-kvar i den andra vyn så att du kan pausa eller stänga av rösten.
+Ett pågående samtal behåller mikrofonens läge. Röstrutan visar i den andra
+vyn vad rösten gör, och stoppikonen **Avbryt** fungerar där. Mikrofonen slår
+du på och av med **Prata med Skyttel** i kartans verktyg.
 Oskickad formulärtext hör fortfarande inte till utkastet; välj
 **Lägg i mitt utkast** för att ta med den i det samlade sparandet.
 
 **Stäng arbetsytan** återgår till kartan och behåller oskickad text.
-Öppna **Lista** eller **Samtal och text** och välj din panel i
-**Öppna paneler** för att fortsätta. Ett kryss stänger bara den panelen;
+Öppna **Lista** och välj din panel i **Öppna paneler** för att
+fortsätta. **Skriv till Skyttel** öppnar textvyn med samtalet. Ett kryss
+stänger bara den panelen;
 objektets oskickade text finns kvar när du öppnar samma objekt igen.
 Ett nytt objekt som ännu inte finns i utkastet öppnar du med **Fortsätt**
 under **Påbörjade objekt** i Lista. Du kan ha flera sådana formulär samtidigt.
@@ -94,7 +98,7 @@ En **Obesvarad identitetsfråga** kan finnas i utkastet men måste lösas
 innan det kan sparas. Den betyder inte samma sak som ett avsiktligt
 ospecificerat objekt eller en osäker uppgift.
 
-Välj **Red ut identiteter i utkastet** i **Aktuell status** även om
+Välj **Red ut identiteter i utkastet** i kartans återkoppling även om
 objektets panel är stängd. Vid objektets förslag väljer du **Red ut
 identiteten för** följt av objektets namn. Formuläret behåller eventuell
 oskickad text. Besvara identitetsfrågan och lägg rättelsen i utkastet.

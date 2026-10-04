@@ -71,10 +71,11 @@ authentication secret. Text and voice use the same key. Never put it in a
 
 Voice needs the production HTTPS origin for microphone access. Permit
 outbound HTTPS and WebSocket connections to OpenAI from the server, and
-WebRTC media connectivity from the user's browser. Each user must approve
-the separate AI and map-work choices and explicitly start text or voice.
+WebRTC media connectivity from the user's browser. Each user must give the
+conversation consent for the household before text or voice starts, and
+can save it so that later conversations start directly.
 Starting voice requests microphone access; browser autoplay restrictions
-may require **Spela upp ljud**.
+may require **Starta ljudet**.
 
 Before opening access, check the real providers with invented household
 information using the [text](../manual-tests/text-assistant.md) and
@@ -96,16 +97,37 @@ session creation (`create`) from the server control connection (`sideband`).
 Use these fields to investigate credentials, model access, quota or network
 failures without collecting microphone audio or household content.
 
+The public error group is `startup`, `interrupted` or `administration`; the
+browser maps it to a short conversation notice. Existing detailed error
+codes remain in startup responses and logs. A runtime failure records
+`voice_interrupted` with `diagnosticId`, `stage: session`, `code` and `group`.
+Its diagnostic ID is the voice attempt ID also used by usage records and
+is returned with the failed session in polling responses. Match the shown
+reference to that log entry to distinguish connection loss, provider
+failure and expiration. These records contain no provider error body,
+audio or household content.
+
 A denied microphone, blocked audio or broken voice connection leaves text
 and forms usable. Check browser permissions, secure origin and network
 access, then start a fresh voice connection. Voice does not reconnect
-automatically. After an application restart, start a new assistant session
-and complete fresh consent.
+automatically. After an application restart, start a new assistant session.
+A saved conversation consent remains. A consent given only for the visit
+lasts until the page is reloaded.
 
 Stopping a session or losing a connection does not undo a completed save.
-Check the durable save result before trying again. For an unresolved save,
-use **Slutför samma sparförsök** to retry the pending operation. Keep the
-existing database; do not reset it to clear an uncertain result.
+Skyttel automatically checks uncertain saves when contact returns. It
+reads the terminal receipt or completes only the original durably
+registered operation, keeping its owner, household, content version, draft
+version and operation ID. Recovery requires household authorization but
+no conversation consent or provider connection. An active conversation
+save settles before recovery completes it.
+
+Only a failed check exposes **Kontrollera om utkastet sparades**. If that
+check continues failing, investigate normal household access and database
+availability. Conflicting or rejected attempts remain unsaved, with their
+draft preserved; recovery never creates a replacement save. Keep the
+existing database and receipts; do not reset them to clear an uncertain
+result. No schema migration or new runtime configuration is required.
 
 ## Register identity providers
 

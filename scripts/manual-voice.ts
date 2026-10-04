@@ -25,15 +25,24 @@ async function main() {
     throw new Error('Run without arguments in the development environment.');
   process.umask(0o077);
   const pending = new Map<string, Pending>();
+  let holdSave = false;
+  let releaseSave: (() => void) | undefined;
   let sequence = 0;
   let offset = 0;
+  let textContextPercent: number | undefined;
   const live = liveProvider();
+  let retiredContextSource:
+    | (typeof live.channels extends Map<string, infer Channel> ? Channel : never)
+    | undefined;
+  let voiceFailureStatus: 401 | 503 | undefined;
   function describe(id: string, item: Pending) {
     const user = item.request.input.findLast((part) => part.role === 'user');
     const current = user && typeof user.content === 'string' ? JSON.parse(user.content) : {};
     return {
       id,
+      kind: item.request.tools.length ? 'work' : 'context-summary',
       message: current.message,
+      input: item.request.input,
       draft: current.draft,
       lastToolResult: lastToolResult(item.request),
       tools: item.request.tools.map((tool) => tool.name),
@@ -51,16 +60,53 @@ async function main() {
       }),
   );
   const app = await createInstallation(undefined, {
-    modelFetch: model.provider,
-    liveFetch: live.provider,
+    modelFetch: async (input, init) => {
+      const response = await model.provider(input, init);
+      if (textContextPercent === undefined) return response;
+      const body = await response.json();
+      body.usage.output_tokens = textContextPercent === 0 ? 0 : 30;
+      body.usage.input_tokens = 10_500 * textContextPercent - body.usage.output_tokens;
+      body.usage.total_tokens = body.usage.input_tokens + body.usage.output_tokens;
+      body.usage.input_tokens_details.cached_tokens = Math.min(20, body.usage.input_tokens);
+      body.usage.output_tokens_details.reasoning_tokens = Math.min(10, body.usage.output_tokens);
+      return Response.json(body, { headers: response.headers });
+    },
+    liveFetch: (url, init) =>
+      voiceFailureStatus
+        ? Promise.resolve(
+            Response.json(
+              { error: { message: 'controlled_voice_failure' } },
+              { status: voiceFailureStatus },
+            ),
+          )
+        : live.provider(url, init),
     liveSideband: live.attach,
     browserProviderScript: liveBrowserFixtureSource,
+    assistantDispatch: async (request, dispatch) => {
+      const body =
+        request.method === 'POST'
+          ? await request
+              .clone()
+              .json()
+              .catch(() => null)
+          : null;
+      const response = await dispatch(request);
+      if (holdSave && body?.method === 'tools/call' && body.params?.name === 'prepare_save') {
+        emit('save-registered', { operationId: body.params.arguments.operationId });
+        await new Promise<void>((resolve) => {
+          releaseSave = resolve;
+        });
+        releaseSave = undefined;
+      }
+      return response;
+    },
   });
   const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   const stop = () => input.close();
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
   const releaseAll = () => {
+    releaseSave?.();
     for (const item of pending.values()) item.reject(new Error('controlled_provider_shutdown'));
     pending.clear();
   };
@@ -76,7 +122,7 @@ async function main() {
       origin: app.origin,
       directory: app.directory,
       message:
-        'Disposable controlled voice: no hardware microphone, speech recognition, real provider or API key. Forward this port privately, sign in with Google as Alex, start the text assistant and voice. Type help.',
+        'Disposable controlled voice: no hardware microphone, speech recognition, real provider or API key. Forward this port privately, sign in with Google as Alex and choose Prata med Skyttel. Type help.',
     });
     for await (const raw of input) {
       const line = raw.trim();
@@ -89,21 +135,49 @@ async function main() {
               'seed-family',
               'identity alex|robin',
               'sessions',
+              'voice-failure startup|administration|off',
               'user TEXT',
               'assistant TEXT',
               'delegate',
               'usage SECONDS',
+              'context PERCENT',
+              'text-context PERCENT',
+              'capture-context-source',
+              'context-old PERCENT',
+              'context-invalid',
               'final SECONDS',
               'finalize on|off',
               'drop',
+              'hold-save on|off',
+              'release-save',
               'pending',
               'tool REQUEST TOOL JSON',
               'reply REQUEST TEXT',
               'fail REQUEST',
+              'available on|off',
               'restart',
               'quit',
             ],
           });
+          continue;
+        }
+        if (command === 'hold-save') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use hold-save on or off.');
+          holdSave = id === 'on';
+          emit('hold-save', { enabled: holdSave });
+          continue;
+        }
+        if (command === 'release-save') {
+          if (!releaseSave) throw new Error('Wait for save-registered before releasing.');
+          releaseSave();
+          emit('save-released');
+          continue;
+        }
+        if (command === 'voice-failure') {
+          if (!['startup', 'administration', 'off'].includes(id))
+            throw new Error('Use voice-failure startup, administration or off.');
+          voiceFailureStatus = id === 'startup' ? 503 : id === 'administration' ? 401 : undefined;
+          emit('voice-failure', { group: id });
           continue;
         }
         if (command === 'sessions') {
@@ -157,6 +231,37 @@ async function main() {
             offset_ms: offset,
             delegation: { id: `delegation_${randomUUID()}`, type: 'delegation', target: 'client' },
           });
+        } else if (command === 'capture-context-source') {
+          if (live.channels.size !== 1) throw new Error('Start exactly one voice session.');
+          retiredContextSource = [...live.channels.values()][0];
+        } else if (command === 'context-invalid') {
+          voiceEvent('session.usage.updated', {
+            usage: { seconds: 0 },
+            context_window: { usage_ratio: '0.99' },
+          });
+        } else if (
+          command === 'context' ||
+          command === 'text-context' ||
+          command === 'context-old'
+        ) {
+          const percent = Number(id);
+          if (!id || !Number.isInteger(percent) || percent < 0 || percent > 100)
+            throw new Error('Supply a whole percentage from 0 to 100.');
+          if (command === 'context')
+            voiceEvent('session.usage.updated', {
+              usage: { seconds: 0 },
+              context_window: { usage_ratio: percent / 100 },
+            });
+          else if (command === 'context-old') {
+            if (!retiredContextSource)
+              throw new Error('Use capture-context-source before Nytt samtal.');
+            retiredContextSource.emit('session.usage.updated', {
+              type: 'session.usage.updated',
+              event_id: randomUUID(),
+              usage: { seconds: 0 },
+              context_window: { usage_ratio: percent / 100 },
+            });
+          } else textContextPercent = percent;
         } else if (command === 'usage' || command === 'final') {
           const seconds = Number(id);
           if (!id || !Number.isFinite(seconds) || seconds < 0)
@@ -176,6 +281,9 @@ async function main() {
               reason: 'close_requested',
             });
           }
+        } else if (command === 'available') {
+          if (id !== 'on' && id !== 'off') throw new Error('Use available on or available off.');
+          app.setConversationAvailable(id === 'on');
         } else if (command === 'finalize') {
           if (id !== 'on' && id !== 'off') throw new Error('Use finalize on or finalize off.');
           live.configure({ finalize: id === 'on' });

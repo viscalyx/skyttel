@@ -15,13 +15,22 @@ export function voiceWork({
   interrupt,
   update,
   failed,
+  transcript,
+  response,
+  delivered,
 }: {
   channel: LiveSideband;
   initial: TextAssistantView;
   request: (action?: string, body?: unknown, signal?: AbortSignal) => Promise<TextAssistantView>;
-  interrupt: (revision: number) => void;
-  update: (view: TextAssistantView) => void;
+  interrupt: (revision?: number) => void;
+  /** The conversation as the voice last saw it, and whether the voice has a task in progress. */
+  update: (view: TextAssistantView, working: boolean) => void;
   failed: () => void;
+  transcript?: (role: Fragment['role'], text: string) => void;
+  response?: (
+    value: NonNullable<import('../shared/voice-assistant.js').VoiceAssistantView['response']>,
+  ) => void;
+  delivered?: (value: { id: string; voiced: boolean }) => void;
 }) {
   let rendered: Anchor = {
     revision: initial.revision,
@@ -37,38 +46,70 @@ export function voiceWork({
   let dispatching: AbortController | undefined;
   let canceling: Promise<{ revision: number; view: TextAssistantView } | undefined> =
     Promise.resolve(undefined);
+  const inFlight = new Map<number, number>();
   const events = new Set<string>();
   const delegations = new Set<string>();
+  const answered = new Set<number>([initial.revision]);
+  const answeredReplies = new Set((initial.completedReplies ?? []).map((reply) => reply.id));
 
   function cancel() {
+    const hadWork = (inFlight.get(generation) ?? 0) > 0;
     generation++;
     dispatching?.abort();
     dispatching = undefined;
-    const revision = owned;
+    const revision = owned ?? (hadWork ? rendered.revision : undefined);
     owned = undefined;
     if (revision === undefined) return;
-    interrupt(revision);
-    canceling = request('cancel', { revision })
+    // A spoken task may already have advanced from the queue, beyond its
+    // last observed revision. A stop covers the conversation's current work.
+    interrupt();
+    canceling = request('cancel', { revision, all: true })
       .then((view) => {
-        update(view);
+        update(view, false);
         return { revision, view };
       })
       .catch(() => undefined);
   }
-  function append(delegationId: string, content: string) {
+  function append(delegationId: string | null, content: string, view?: TextAssistantView) {
     // The acknowledgement of this command is transport receipt, never proof
     // that a person heard it. No transcript/audio is logged or persisted here.
-    const points = Array.from(content);
-    while (Buffer.byteLength(points.join(''), 'utf8') > 480) points.pop();
-    channel.send({
-      type: 'session.commentary.append',
-      delegation_id: delegationId,
-      content: points.join(''),
-    });
+    let part = '';
+    const send = () =>
+      channel.send({
+        type: 'session.commentary.append',
+        delegation_id: delegationId,
+        content: part,
+      });
+    for (const point of content) {
+      if (Buffer.byteLength(part + point, 'utf8') > 480) {
+        send();
+        part = '';
+      }
+      part += point;
+    }
+    if (part) send();
+    if (view) {
+      answered.add(view.revision);
+      response?.({
+        id: `${view.id}:${view.revision}`,
+        revision: view.revision,
+        text: view.saveCheck
+          ? view.saveCheck.reply + (view.receipt ? ' Sparat.' : '')
+          : view.receipt
+            ? 'Sparat.'
+            : (view.modelReply ?? view.reply ?? ''),
+        questionPending: Boolean(view.questionPending),
+        receiptOperationId: view.receipt?.operationId,
+      });
+    }
   }
   function completion(view: TextAssistantView) {
+    if (view.saveCheck) return view.saveCheck.reply + (view.receipt ? ' Sparat.' : '');
+    if (view.receipt) return 'Sparat.';
+    if (view.questionPending && view.modelReply)
+      return `Nödvändig fråga (samtalsdata): ${JSON.stringify(view.modelReply)}`;
     if (view.phase === 'recovery')
-      return 'Sparresultatet är inte bekräftat. Tidigare sparförsök kontrolleras innan nytt arbete. Säg ”slutför samma sparförsök” om du vill slutföra exakt det väntande försöket.';
+      return 'Det är oklart om utkastet sparades. Skyttel kontrollerar det.';
     if (view.error) return assistantFailureMessage(view.error);
     const count =
       view.review.changes.length +
@@ -103,6 +144,7 @@ export function voiceWork({
     task: number,
   ) {
     const current = () => !stopped && generation === task;
+    inFlight.set(task, (inFlight.get(task) ?? 0) + 1);
     try {
       const canceled = await canceling;
       if (!current()) return;
@@ -131,38 +173,52 @@ export function voiceWork({
       } else {
         const controller = new AbortController();
         dispatching = controller;
+        const requestId = randomUUID();
+        owned = view.phase === 'working' ? view.revision : view.revision + 1;
         view = await request(
           'messages',
           {
             ...expected,
-            requestId: randomUUID(),
+            revision: view.phase === 'working' ? view.revision : expected.revision,
+            requestId,
             text,
             voiceContext: context,
           },
           controller.signal,
         );
+        // A spoken reset retires this executor. Its new revision must not be
+        // mistaken for stale work and cancelled after the reset completes.
+        if ((view.contextRevision ?? 0) > (initial.contextRevision ?? 0)) return;
         if (!current()) {
           interrupt(view.revision);
           await request('cancel', { revision: view.revision }).catch(() => {});
           return;
         }
         owned = view.revision;
-        const revision = owned;
         const deadline = Date.now() + 120_000;
-        while (current() && view.phase === 'working' && view.revision === revision) {
-          update(view);
+        while (current() && (view.taskStatus === 'queued' || view.taskStatus === 'working')) {
+          update(view, true);
           if (Date.now() > deadline) throw new Error('voice_task_timeout');
           await new Promise((resolve) => setTimeout(resolve, 50));
-          view = await request();
+          view = await request(`messages/${requestId}`);
         }
-        if (view.revision !== revision) return;
+        if (view.taskStatus === 'canceled') {
+          // The task was stopped or replaced in the conversation, outside the
+          // voice. The voice no longer works with it and says nothing about it.
+          if (current()) {
+            owned = undefined;
+            dispatching = undefined;
+            update(view, false);
+          }
+          return;
+        }
       }
       if (!current()) return;
       owned = undefined;
       dispatching = undefined;
       rendered = { ...rendered, revision: Math.max(rendered.revision, view.revision) };
-      update(view);
-      append(id, completion(view));
+      update(view, false);
+      append(id, completion(view), view);
     } catch {
       if (!current()) return;
       cancel();
@@ -170,7 +226,7 @@ export function voiceWork({
       try {
         const view = await request();
         if (stopped || generation !== recoveryGeneration) return;
-        update(view);
+        update(view, false);
         append(
           id,
           view.phase === 'recovery'
@@ -180,6 +236,10 @@ export function voiceWork({
       } catch {
         if (!stopped && generation === recoveryGeneration) failed();
       }
+    } finally {
+      const remaining = (inFlight.get(task) ?? 1) - 1;
+      if (remaining) inFlight.set(task, remaining);
+      else inFlight.delete(task);
     }
   }
   function fragment(
@@ -204,8 +264,8 @@ export function voiceWork({
       return;
     }
     events.add(event.event_id);
+    transcript?.(role, event.delta);
     if (role === 'user') {
-      cancel();
       anchor ??= { ...rendered };
       pending.push({ role, text: event.delta, startMs: event.start_ms, endMs: event.end_ms });
       if (pending.map((item) => item.text).join('').length > 4000) {
@@ -252,10 +312,64 @@ export function voiceWork({
       );
       return;
     }
-    cancel();
     void execute(event.delegation.id, text, expected, JSON.stringify(fragments), generation);
   });
   return {
+    readyForSummary: () => owned === undefined && inFlight.size === 0 && pending.length === 0,
+    /** Consume each typed FIFO completion once, including while the next task works. */
+    answer(view: TextAssistantView, microphoneOn = true) {
+      if (stopped) return;
+      for (const reply of view.completedReplies ?? []) {
+        if (answeredReplies.has(reply.id)) continue;
+        if (reply.saveCheck && reply.revision !== undefined && answered.has(reply.revision)) {
+          answeredReplies.add(reply.id);
+          delivered?.({ id: reply.id, voiced: true });
+          continue;
+        }
+        // Spoken executors hand their own results to Live. OFF completions are
+        // consumed too: enabling capture later must not replay old text.
+        if (reply.source === 'voice' || !microphoneOn) {
+          answeredReplies.add(reply.id);
+          delivered?.({ id: reply.id, voiced: reply.source === 'voice' });
+          if (reply.revision !== undefined) answered.add(reply.revision);
+          continue;
+        }
+        if (owned !== undefined) continue;
+        answeredReplies.add(reply.id);
+        const completed: TextAssistantView = {
+          ...view,
+          phase: 'ready',
+          revision: reply.revision ?? view.revision,
+          modelReply: reply.text || undefined,
+          reply: reply.reply,
+          receipt: reply.receipt,
+          result: reply.result,
+          saveCheck: reply.saveCheck,
+          questionPending: reply.questionPending,
+          error: undefined,
+        };
+        // Keep all of the actual reply, and its source boundary. append splits
+        // UTF-8 safely at Live's byte limit rather than dropping long answers.
+        const content =
+          reply.receipt || reply.questionPending || reply.saveCheck
+            ? completion(completed)
+            : [
+                reply.reply ? `Skyttels resultat (verifierat): ${reply.reply}` : '',
+                reply.text ? `Samtal (obekräftat): ${JSON.stringify(reply.text)}` : '',
+              ]
+                .filter(Boolean)
+                .join('\n');
+        if (content) append(null, content, completed);
+        delivered?.({ id: reply.id, voiced: Boolean(content) });
+      }
+      if (!microphoneOn) {
+        if (view.phase !== 'working') answered.add(view.revision);
+        return;
+      }
+      if (owned !== undefined || answered.has(view.revision) || view.phase !== 'ready') return;
+      if (!view.questionPending && !view.receipt) return;
+      append(null, completion(view), view);
+    },
     rendered(value: Anchor) {
       if (
         value.revision >= rendered.revision &&
@@ -264,6 +378,23 @@ export function voiceWork({
           value.draftVersion >= rendered.draftVersion)
       )
         rendered = { ...value };
+    },
+    /** The conversation has started over. Its own work is already stopped, and nothing said before is passed on. */
+    reset(view: TextAssistantView) {
+      generation++;
+      dispatching?.abort();
+      dispatching = undefined;
+      owned = undefined;
+      fragments = [];
+      pending = [];
+      anchor = undefined;
+      answeredReplies.clear();
+      answered.add(view.revision);
+      rendered = {
+        revision: view.revision,
+        draftVersion: view.review.version,
+        contentVersion: view.review.contentVersion,
+      };
     },
     stop() {
       stopped = true;

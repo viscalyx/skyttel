@@ -1,11 +1,16 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
 import '../../src/client/styles.css';
+import { defaultConversationPreferences } from '../../src/shared/conversation-preferences.js';
 import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings } from '../../src/shared/personal-view.js';
 import type { MapSelection, TextAssistantView } from '../../src/shared/text-assistant.js';
+import {
+  openConversationText,
+  startConversationWithText,
+} from '../support/conversation-browser.js';
 
 const state: MapState = {
   userId: 'alex',
@@ -59,6 +64,8 @@ async function open(width = 1280, height = 900, mapState = state) {
   let target: MapSelection = { kind: 'object', id: 'lo' };
   const acknowledgements: { displayed: boolean; kind: string; id: string }[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/conversation-preferences'))
+      return Response.json(defaultConversationPreferences);
     if (url.endsWith('/operations')) return Response.json({ operations: [] });
     if (url.endsWith('/view'))
       return Response.json({
@@ -95,6 +102,7 @@ async function open(width = 1280, height = 900, mapState = state) {
         revision: current.revision + 1,
         phase: 'ready',
         selection: undefined,
+        canceled: true,
       };
     return Response.json(current);
   });
@@ -107,25 +115,25 @@ async function open(width = 1280, height = 900, mapState = state) {
   await expect
     .element(page.getByRole('button', { name: 'Nytt objekt', exact: true }))
     .toBeEnabled();
-  async function openText() {
+  async function showToolNames() {
     if (width <= 700 && height <= 450)
       await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-    await page
-      .getByRole('navigation', { name: 'Kartans verktyg' })
-      .getByRole('button', { name: 'Samtal och text', exact: true })
-      .click();
   }
-  await openText();
-  await page.getByLabelText(/Jag tillåter att OpenAI/).click();
-  await page.getByLabelText(/Jag tillåter förslag och sparande/).click();
-  await page.getByRole('button', { name: 'Starta textassistenten', exact: true }).click();
-  await expect.element(page.getByLabelText('Meddelande till textassistenten')).toBeVisible();
+  async function openText() {
+    // The expanded names would lie over a text view that is already open.
+    if (page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }).query()) return;
+    await showToolNames();
+    await openConversationText();
+  }
+  await showToolNames();
+  await startConversationWithText();
+  await expect.element(page.getByLabelText('Meddelande till Skyttel')).toBeVisible();
   return {
     acknowledgements,
     async show(item: MapSelection) {
       target = item;
       await openText();
-      await page.getByLabelText('Meddelande till textassistenten').fill('Visa urvalet.');
+      await page.getByLabelText('Meddelande till Skyttel').fill('Visa urvalet.');
       await page.getByRole('button', { name: 'Skicka', exact: true }).click();
     },
   };
@@ -174,15 +182,14 @@ test('a lost graphics context cannot be acknowledged, and canceling its pending 
   extension?.loseContext();
   await expect.element(page.getByText(/Grafiken är tillfälligt avbruten/)).toBeVisible();
   await app.show({ kind: 'object', id: 'lo' });
-  await page
-    .getByRole('navigation', { name: 'Kartans verktyg' })
-    .getByRole('button', { name: 'Samtal och text', exact: true })
-    .click();
-  await expect
-    .element(page.getByRole('button', { name: 'Avbryt uppdrag', exact: true }))
-    .toBeVisible();
+  await openConversationText();
+  await expect.element(page.getByRole('log').getByText(/Skyttel arbetar…/)).toBeVisible();
   expect(app.acknowledgements).toEqual([]);
-  await page.getByRole('button', { name: 'Avbryt uppdrag', exact: true }).click();
+  await page.getByLabelText('Meddelande till Skyttel').click();
+  await userEvent.keyboard('{Escape}');
+  await expect
+    .element(page.getByText('Avbrutet. Föreslagna ändringar ligger kvar i utkastet.'))
+    .toBeVisible();
   extension?.restoreContext();
   await expect.element(page.getByText(/Grafiken är tillfälligt avbruten/)).not.toBeInTheDocument();
   expect(app.acknowledgements).toEqual([]);

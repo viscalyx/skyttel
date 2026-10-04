@@ -28,6 +28,13 @@ import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { DraftStatus } from './DraftStatus.js';
 import './draft-status.css';
+import { ConversationConsent } from './ConversationConsent.js';
+import {
+  ConversationNoticeAnnouncements,
+  ConversationNoticeCard,
+  useConversationNotice,
+} from './ConversationNotice.js';
+import { ConversationSettings } from './ConversationSettings.js';
 import { LifecycleDetails, LifecycleStatus } from './Lifecycle.js';
 import { MapHistory } from './MapHistory.js';
 import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
@@ -51,14 +58,24 @@ import {
   SaveOperations,
 } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
-import { TextAssistant } from './TextAssistant.js';
-import type { VoiceControl } from './VoiceAssistant.js';
+import { ConversationWorkspace } from './TextAssistant.js';
+import { VoiceBox, VoiceStatusAnnouncements } from './VoiceBox.js';
 import { WelcomeGuidance } from './WelcomeGuidance.js';
 import { type PanelAnchor, type PanelFocusRequest, WorkspacePanels } from './WorkspacePanels.js';
-import { WorkspaceIcon, type WorkspaceTarget, WorkspaceTools } from './WorkspaceTools.js';
+import {
+  textViewButtonName,
+  WorkspaceIcon,
+  type WorkspaceTarget,
+  WorkspaceTools,
+} from './WorkspaceTools.js';
 import './workspace.css';
 import './workspace-panels.css';
+import './text-view.css';
+import { type ConversationMode, conversationOngoing, useConversation } from './use-conversation.js';
+import { useConversationPreferences } from './use-conversation-preferences.js';
+import { useConversationViewport } from './use-conversation-viewport.js';
 import { usePersonalView } from './use-personal-view.js';
+import { useTextButtonStatus } from './use-text-button-status.js';
 import { useWorkspaceTheme, WorkspaceTheme } from './WorkspaceTheme.js';
 
 function draftEntryId(kind: DraftConflict['kind'], id: string) {
@@ -94,6 +111,7 @@ export function HouseholdMap({
   onReturnToMap,
   typeSettingsTarget,
   mapSettingsTarget,
+  conversationSettingsTarget,
 }: {
   householdId: string;
   active?: boolean;
@@ -106,6 +124,7 @@ export function HouseholdMap({
   onReturnToMap?: () => void;
   typeSettingsTarget?: HTMLElement | null;
   mapSettingsTarget?: HTMLElement | null;
+  conversationSettingsTarget?: HTMLElement | null;
 }) {
   const theme = useWorkspaceTheme();
   const [typeHost] = useState(() => document.createElement('div'));
@@ -152,6 +171,8 @@ export function HouseholdMap({
     setPanelFocusRequest({ id, element });
     setPresentation('combined');
     setRevealRequest(undefined);
+    // On a narrow screen the text view would cover the panel.
+    if (narrow) setTextViewOpen(false);
   }
   function focusTools() {
     workspace.current
@@ -198,7 +219,11 @@ export function HouseholdMap({
         ? [
             ...(workspace.current?.querySelectorAll<HTMLButtonElement>('.workspace-tools button') ??
               []),
-          ].find((button) => button.getAttribute('aria-label') === target)
+          ].find((button) =>
+            target === textViewButtonName
+              ? button.classList.contains('workspace-text')
+              : button.getAttribute('aria-label') === target,
+          )
         : target;
     if (!element?.isConnected || !element.offsetHeight || element.closest('[hidden], [inert]'))
       return false;
@@ -229,33 +254,75 @@ export function HouseholdMap({
   const listModeButton = useRef<HTMLButtonElement>(null);
   const workTrigger = useRef<HTMLElement | null>(null);
   const [guidance, setGuidance] = useState(true);
-  const [voiceControl, setVoiceControl] = useState<VoiceControl | null>(null);
+  const [textViewOpen, setTextViewOpen] = useState(false);
   const workOpen = openPanels.length > 0 && (presentation !== 'map' || detailsOpen || editorOpen);
-  const [narrow, setNarrow] = useState(() => window.innerWidth <= 700);
-  useEffect(() => {
-    const resize = () => setNarrow(window.innerWidth <= 700);
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
-  const mapCovered = narrow && workOpen && !revealRequest && !navigationOpen;
+  const viewport = useConversationViewport();
+  const { narrow } = viewport;
+  // On a narrow screen the text view fills the screen under the toolbar. The
+  // panels wait behind it, unchanged.
+  const panelsCovered = narrow && textViewOpen;
+  const mapCovered = narrow && (workOpen || textViewOpen) && !revealRequest && !navigationOpen;
   useLayoutEffect(() => {
     // Panel focus can scroll the ordinary work flow before navigation closes.
     // Reset only when the requested reveal layout has actually been committed.
     if (revealRequest && !navigationOpen && workspace.current) workspace.current.scrollTop = 0;
   }, [revealRequest, navigationOpen]);
-  function openWork(target: WorkspaceTarget) {
+  // The button that the user chose to start a conversation with. The consent
+  // box opens next to it and gives the focus back to it.
+  const conversationChoice = useRef<HTMLElement | null>(null);
+  /** How a target starts a conversation that is not yet going on. Null when it starts none. */
+  function conversationStart(target: WorkspaceTarget): ConversationMode | null {
+    if (conversation.session) return null;
+    return target === 'voice' ? 'voice' : target === 'conversation' ? 'text' : null;
+  }
+  function openWork(target: WorkspaceTarget, chosen?: HTMLElement) {
     workTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (
+      (target === 'voice' || target === 'conversation') &&
+      conversation.inputBlocked &&
+      (target === 'voice' || !ongoing)
+    ) {
+      conversation.showNotice?.();
+      return;
+    }
+    const start = conversationStart(target);
+    if (start) {
+      // The conversation starts first, after the consent box when no consent
+      // is valid. The text view opens when the conversation has started.
+      conversationChoice.current = chosen ?? workTrigger.current;
+      conversation.begin(start);
+      return;
+    }
+    if (target === 'voice' && conversation.session) {
+      // The microphone opens no panel. The voice box shows what it does.
+      conversation.voice.activate();
+      return;
+    }
+    if (target === 'conversation') {
+      // The text button opens and closes the text view.
+      if (textViewOpen) closeTextView();
+      else showConversation();
+      return;
+    }
     openPanel(
-      target === 'conversation' || target === 'voice' ? 'conversation' : 'work',
+      'work',
       target === 'search'
         ? workspace.current?.querySelector<HTMLInputElement>('.object-browser input[type="search"]')
         : undefined,
     );
   }
-  function openGuidedWork(target: WorkspaceTarget) {
-    setGuidance(false);
-    openWork(target);
+  // Closing the text view ends nothing: the conversation, the microphone and
+  // the unsent text stay.
+  function closeTextView() {
+    setTextViewOpen(false);
+    if (!restoreOutsideFocus(textViewButtonName)) focusTools();
+  }
+  function openGuidedWork(target: WorkspaceTarget, chosen: HTMLElement) {
+    // The guidance stays while a conversation waits for its start, so that
+    // the consent box can give the focus back to the chosen button.
+    if (!conversationStart(target)) setGuidance(false);
+    openWork(target, chosen);
   }
   function dismissGuidance() {
     setGuidance(false);
@@ -300,9 +367,8 @@ export function HouseholdMap({
     setErrorDetails({ message, imageObjectId });
   }, []);
   const [status, setStatus] = useState('');
-  const [statusOpen, setStatusOpen] = useState(false);
+  const [conflictLinksOpen, setConflictLinksOpen] = useState(false);
   function returnFromStatus() {
-    setStatusOpen(false);
     routeOutsideFocus.current = null;
     if (!active) onReturnToMap?.();
   }
@@ -334,6 +400,8 @@ export function HouseholdMap({
   const hasMap = state !== null;
   useLayoutEffect(() => {
     const measure = () => {
+      workspace.current?.style.setProperty('--work-height', `${viewport.height}px`);
+      workspace.current?.style.setProperty('--work-offset', `${viewport.offset}px`);
       for (const [selector, property] of [
         ['.workspace-feedback', '--feedback-height'],
         ['.spatial-bottom-bar', '--display-height'],
@@ -341,14 +409,89 @@ export function HouseholdMap({
         const element = workspace.current?.querySelector<HTMLElement>(selector);
         workspace.current?.style.setProperty(property, `${element?.offsetHeight ?? 0}px`);
       }
+      // On a narrow screen the text view starts under the toolbar, whose
+      // buttons can stand in two rows. Its expanded names lie over the view.
+      const toolbar = workspace.current?.querySelector<HTMLElement>('.workspace-tools');
+      if (toolbar) {
+        const bounds = toolbar.getBoundingClientRect();
+        workspace.current?.style.setProperty('--tools-right', `${bounds.right}px`);
+        workspace.current?.style.setProperty(
+          '--tools-bottom',
+          `${bounds.bottom - viewport.offset}px`,
+        );
+      }
+      const tools = workspace.current?.querySelector<HTMLElement>(
+        '.workspace-tools:not(.expanded)',
+      );
+      if (tools) workspace.current?.style.setProperty('--tools-height', `${tools.offsetHeight}px`);
+      const composer = workspace.current?.querySelector('.text-view-message');
+      const inlineNotice = workspace.current?.querySelector<HTMLElement>('.text-view-notice-slot');
+      const card = workspace.current?.querySelector<HTMLElement>('.conversation-notice');
+      if (inlineNotice && card) {
+        const slot = inlineNotice.getBoundingClientRect();
+        card.style.setProperty('--notice-left', `${slot.left}px`);
+        card.style.setProperty('--notice-top', `${slot.top}px`);
+        card.style.setProperty('--notice-width', `${slot.width}px`);
+        workspace.current?.style.setProperty('--notice-height', `${card.offsetHeight}px`);
+      }
+      if (composer)
+        workspace.current?.style.setProperty(
+          '--composer-top',
+          `${(inlineNotice ?? composer).getBoundingClientRect().top - 4}px`,
+        );
+      const corner = workspace.current?.querySelector<HTMLElement>('.conversation-corner');
+      const visibleTools = workspace.current?.querySelector<HTMLElement>('.workspace-tools');
+      const cornerHeight = corner?.offsetHeight ?? 0;
+      const minimumFloor = (visibleTools?.getBoundingClientRect().bottom ?? 0) + cornerHeight + 12;
+      workspace.current?.style.setProperty(
+        '--conversation-controls-bottom',
+        `${minimumFloor + 8}px`,
+      );
+      const floor = Math.min(
+        viewport.height + viewport.offset - 12,
+        ...['.spatial-bottom-bar', '.workspace-feedback', '.workspace-voice-controls']
+          .map((selector) => workspace.current?.querySelector<HTMLElement>(selector))
+          .filter((element): element is HTMLElement => Boolean(element?.offsetHeight))
+          .map((element) => element.getBoundingClientRect().top),
+      );
+      // An empty map can place its display row just below the toolbar. A tall
+      // corner must not cover those conversation buttons when text closes.
+      workspace.current?.style.setProperty('--conversation-floor', `${floor - 8}px`);
     };
     measure();
     const observer = new ResizeObserver(measure);
-    const measured = hasMap ? '.workspace-feedback, .spatial-bottom-bar' : '.workspace-feedback';
+    // The toolbar is shown only while the map is the active view.
+    const measured = [
+      '.workspace-feedback',
+      hasMap && '.spatial-bottom-bar',
+      active && '.workspace-tools',
+      hasMap && '.workspace-voice-controls',
+      textViewOpen && '.text-view-message',
+      textViewOpen && '.text-view',
+      textViewOpen && '.text-view-body',
+      textViewOpen && '.text-view-notice-slot',
+      '.conversation-notice',
+      '.conversation-corner',
+    ]
+      .filter(Boolean)
+      .join(', ');
     for (const element of workspace.current?.querySelectorAll(measured) ?? [])
       observer.observe(element);
-    return () => observer.disconnect();
-  }, [hasMap]);
+    // Insertion/removal or a flow-class change can move a footer without
+    // changing its size (for example after the first object is saved).
+    const layout = new MutationObserver(measure);
+    if (workspace.current)
+      layout.observe(workspace.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'hidden'],
+      });
+    return () => {
+      observer.disconnect();
+      layout.disconnect();
+    };
+  }, [hasMap, active, textViewOpen, viewport.height, viewport.offset]);
   useEffect(() => {
     if (!state && error) workspace.current?.focus();
   }, [state, error]);
@@ -360,38 +503,22 @@ export function HouseholdMap({
     }
   }, [active, editorOpen, hasMap]);
   useEffect(() => {
-    if (!active || !workOpen) return;
-    const viewport = window.visualViewport;
-    let frame = 0;
-    const measure = () => {
-      workspace.current?.style.setProperty(
-        '--work-height',
-        `${viewport?.height ?? window.innerHeight}px`,
-      );
-      workspace.current?.style.setProperty('--work-offset', `${viewport?.offsetTop ?? 0}px`);
-    };
-    const resize = () => {
-      measure();
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const field = document.activeElement;
-        const workSurface = workspace.current?.querySelector('.assistant-workspace');
-        if (field instanceof HTMLElement && workSurface?.contains(field)) {
+    if (!active || !(workOpen || textViewOpen)) return;
+    workspace.current?.style.setProperty('--work-height', `${viewport.height}px`);
+    workspace.current?.style.setProperty('--work-offset', `${viewport.offset}px`);
+    const frame = requestAnimationFrame(() => {
+      const field = document.activeElement;
+      const workSurface = workspace.current?.querySelector('.assistant-workspace');
+      if (field instanceof HTMLElement && workSurface?.contains(field)) {
+        const bounds = field.getBoundingClientRect();
+        // Route return can already have restored a visible list result and
+        // its exact scroll. Only reveal a target clipped by the viewport.
+        if (bounds.top < viewport.offset || bounds.bottom > viewport.offset + viewport.height)
           field.scrollIntoView({ block: 'center', behavior: 'instant' });
-        }
-      });
-    };
-    measure();
-    window.addEventListener('resize', resize);
-    viewport?.addEventListener('resize', resize);
-    viewport?.addEventListener('scroll', resize);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('resize', resize);
-      viewport?.removeEventListener('resize', resize);
-      viewport?.removeEventListener('scroll', resize);
-    };
-  }, [active, workOpen]);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [active, workOpen, textViewOpen, viewport.height, viewport.offset]);
   const newButton = useRef<HTMLButtonElement>(null);
   const mergeButton = useRef<HTMLButtonElement>(null);
   useLayoutEffect(() => {
@@ -426,6 +553,7 @@ export function HouseholdMap({
     setError('Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.');
   }, [setError]);
   const personal = usePersonalView(path, loseAccess);
+  const conversationPreferences = useConversationPreferences(path);
 
   useEffect(() => {
     let active = true;
@@ -816,6 +944,10 @@ export function HouseholdMap({
     ? { ...state, types: effectiveTypes, relationshipTypes: effectiveEdgeTypes }
     : null;
   const conflicts = state ? draftConflicts(state) : [];
+  const hasConflicts = conflicts.length > 0;
+  useEffect(() => {
+    if (!hasConflicts) setConflictLinksOpen(false);
+  }, [hasConflicts]);
   function conflictReview(conflict: DraftConflict) {
     if (conflict.kind === 'objectType' || conflict.kind === 'relationshipType') return null;
     const proposal = (
@@ -1330,6 +1462,110 @@ export function HouseholdMap({
       signal.removeEventListener('abort', cancel);
     }
   }
+  // The conversation belongs to the map, not to a panel. The toolbar, the
+  // voice box, notice and text view all read it and call its commands.
+  function showConversation() {
+    setGuidance(false);
+    setTextViewOpen(true);
+  }
+  const conversation = useConversation({
+    householdId,
+    enabled: Boolean(state),
+    manualSaveOperationId: pending ? saveAttempt.current?.operationId : undefined,
+    onMapChange: () => {
+      // The local save owns completion and the following map refresh.
+      // A session poll must not replace its pending state with recovery.
+      if (!pending || !saveAttempt.current) setLoad((value) => value + 1);
+    },
+    // The microphone opens no panel: the voice box follows the voice.
+    onStarted: (mode) => (mode === 'voice' ? setGuidance(false) : showConversation()),
+    onAccessLost: loseAccess,
+    onEnded: () => {
+      if (document.activeElement?.closest('.text-view')) closeTextView();
+      else setTextViewOpen(false);
+    },
+    onSelectItem: revealAssistantItem,
+  });
+  useEffect(() => {
+    if (conversation.revocationReceipt) setStatus(receiptMessage(conversation.revocationReceipt));
+  }, [conversation.revocationReceipt]);
+  const textButton = useTextButtonStatus(conversation, textViewOpen && active, active);
+  const liveOngoing = conversationOngoing(conversation, textViewOpen);
+  const beforeConnection = useRef({ blocked: false, ongoing: false });
+  const interruptedConversation = useRef(false);
+  if (conversation.inputBlocked && !beforeConnection.current.blocked)
+    interruptedConversation.current = liveOngoing || beforeConnection.current.ongoing;
+  if (!conversation.inputBlocked) interruptedConversation.current = false;
+  if (conversation.revokedHere) interruptedConversation.current = false;
+  const ongoing =
+    liveOngoing ||
+    interruptedConversation.current ||
+    Boolean(conversation.saveChecking || conversation.saveCheckFailed);
+  beforeConnection.current = { blocked: Boolean(conversation.inputBlocked), ongoing };
+  const noticeState = useConversationNotice({
+    conditions: {
+      saveChecking: Boolean(conversation.saveChecking),
+      saveCheckFailed: Boolean(conversation.saveCheckFailed),
+      disconnectedActive: Boolean(
+        !conversation.revokedHere && conversation.disconnected && ongoing,
+      ),
+      disconnectedIdle: Boolean(!conversation.revokedHere && conversation.disconnected && !ongoing),
+      unavailable: !conversation.revokedHere && conversation.available === false,
+      taskFailed: Boolean(conversation.taskFailed),
+      consentRevoked: Boolean(conversation.consentRevoked),
+      contextFull: conversation.session?.contextSummaryState === 'failed',
+      ...(conversation.voice.failure ? { [conversation.voice.failure.noticeId]: true } : {}),
+      playbackStopped: conversation.voice.playbackBlocked,
+    },
+    ongoing,
+    requested: conversation.noticeRequested ?? 0,
+    eventKey: `${conversation.session?.id}:${conversation.session?.revision}:${conversation.voice.failure?.occurrence ?? 0}`,
+    diagnostic: conversation.voice.failure
+      ? {
+          noticeId: conversation.voice.failure.noticeId,
+          reference: conversation.voice.failure.diagnosticId,
+        }
+      : undefined,
+  });
+  const notice = noticeState.notice && (
+    <ConversationNoticeCard
+      key={noticeState.notice.id}
+      notice={noticeState.notice}
+      closable={noticeState.closable}
+      onDismiss={noticeState.dismiss}
+      onAction={
+        noticeState.notice.id === 'playbackStopped'
+          ? conversation.voice.playAudio
+          : noticeState.notice.id === 'saveCheckFailed'
+            ? () => void conversation.recover()
+            : noticeState.notice.id === 'contextFull'
+              ? () => void conversation.newConversation()
+              : undefined
+      }
+      focusAfterRemoval={() =>
+        active
+          ? (workspace.current?.querySelector<HTMLElement>('.workspace-talk') ?? null)
+          : document.querySelector<HTMLElement>('.settings-return')
+      }
+      inline={textViewOpen && active}
+    />
+  );
+  const voiceBox = (
+    <VoiceBox
+      conversation={conversation}
+      announce={false}
+      notice={notice}
+      hideStop={textViewOpen && !viewport.computer && conversation.working}
+      microphoneButton={() =>
+        workspace.current?.querySelector<HTMLElement>('.workspace-talk') ?? null
+      }
+      focusAfterStop={() =>
+        active
+          ? (workspace.current?.querySelector<HTMLElement>('.workspace-talk') ?? null)
+          : document.querySelector<HTMLElement>('.settings-return')
+      }
+    />
+  );
   function remove(kind: 'draft' | 'relationship', item: MapObject | MapRelationship) {
     if (!state) return;
     const changes = kind === 'draft' ? state.draft.changes : state.draft.relationships;
@@ -1378,7 +1614,7 @@ export function HouseholdMap({
     <section
       ref={workspace}
       tabIndex={-1}
-      className={`household-map${active ? ' workspace-shell' : ''}${workOpen ? ' workspace-open' : ''}${revealRequest && !navigationOpen ? ' workspace-revealing' : ''} presentation-${active ? presentation : 'list'}${detailsOpen ? ' map-details-open' : ''}${editorOpen ? ' map-editor-open' : ''}`}
+      className={`household-map${active ? ' workspace-shell' : ''}${workOpen ? ' workspace-open' : ''}${textViewOpen ? ' text-view-open' : ''}${revealRequest && !navigationOpen ? ' workspace-revealing' : ''} presentation-${active ? presentation : 'list'}${detailsOpen ? ' map-details-open' : ''}${editorOpen ? ' map-editor-open' : ''}`}
       onFocusCapture={(event) => {
         if (
           !active ||
@@ -1393,12 +1629,19 @@ export function HouseholdMap({
           lastOutsideFocus.current = null;
         } else {
           lastOutsideFocus.current = event.target.closest('.workspace-tools')
-            ? event.target.getAttribute('aria-label')
+            ? event.target.classList.contains('workspace-text')
+              ? textViewButtonName
+              : event.target.getAttribute('aria-label')
             : event.target;
         }
       }}
       aria-label="Hushållskarta"
       data-navigation-open={navigationOpen}
+      data-conversation-ongoing={conversationOngoing(conversation, textViewOpen)}
+      data-mobile={viewport.mobile}
+      data-narrow={narrow}
+      data-short={viewport.short}
+      data-wide-touch={viewport.wideTouch}
       data-theme={theme.theme}
       onKeyDown={(event) => {
         if (
@@ -1413,6 +1656,17 @@ export function HouseholdMap({
           showAll();
       }}
     >
+      {conversationSettingsTarget &&
+        // The page in Settings shows and changes the consent of the map's own conversation.
+        createPortal(
+          <ConversationSettings
+            conversation={conversation}
+            householdName={householdName}
+            personal={conversationPreferences}
+            ongoing={ongoing}
+          />,
+          conversationSettingsTarget,
+        )}
       {active && (
         <>
           <a className="skip-link" href="#workspace-tools">
@@ -1421,13 +1675,39 @@ export function HouseholdMap({
           <button type="button" className="skip-link" onClick={() => openWork('list')}>
             Till lista och formulär
           </button>
-          <button type="button" className="skip-link" onClick={() => openWork('conversation')}>
-            Till samtal och text
+          <button
+            type="button"
+            className="skip-link"
+            onClick={(event) => openWork('conversation', event.currentTarget)}
+          >
+            Till samtalet med Skyttel
           </button>
           <WorkspaceTools
-            statusOpen={statusOpen}
-            onStatus={() => setStatusOpen((value) => !value)}
-            voiceControl={voiceControl}
+            conversationUnavailable={Boolean(conversation.inputBlocked)}
+            conversationOngoing={ongoing}
+            voiceControl={
+              conversation.session ||
+              conversation.voice.microphone === 'on' ||
+              conversation.voice.starting
+                ? conversation.voice
+                : null
+            }
+            holdVoice={{
+              canHold:
+                conversation.consent.valid &&
+                conversation.available === true &&
+                !conversation.pending &&
+                !conversation.unknown,
+              prepare: () => conversation.voice.prepareAudio?.(),
+              start: () => {
+                conversation.voice.startHeld?.();
+                if (!conversation.session) conversation.begin('voice');
+              },
+              release: () => conversation.voice.releaseHeld?.(),
+            }}
+            voiceBox={voiceBox}
+            textViewOpen={textViewOpen}
+            textButton={textButton}
             cameraMount={setCameraMount}
             expanded={toolsExpanded}
             onExpandedChange={setToolsExpanded}
@@ -1460,6 +1740,7 @@ export function HouseholdMap({
                 (!(narrow || revealRequest) || activePanel === selectedObject.id),
             )}
           />
+          <ConversationConsent conversation={conversation} chosen={conversationChoice} />
           <div className="workspace-context">
             {householdName}
             <span>Gemensam karta</span>
@@ -1490,6 +1771,20 @@ export function HouseholdMap({
           )}
         </>
       )}
+      {/* Outside the map, where its tools are not shown, the voice box still says what the voice does. */}
+      {!active && voiceBox}
+      <VoiceStatusAnnouncements
+        conversation={conversation}
+        textViewOpen={textViewOpen && active}
+        microphoneOffExplained={noticeState.notice?.id === 'disconnectedActive'}
+        microphoneButton={() =>
+          workspace.current?.querySelector<HTMLElement>('.workspace-talk') ?? null
+        }
+      />
+      <ConversationNoticeAnnouncements announcement={noticeState.announcement} />
+      <p className="visually-hidden text-button-announcement" aria-live="polite" aria-atomic="true">
+        <span key={textButton.announcement.count}>{textButton.announcement.text}</span>
+      </p>
       <div className="workspace-feedback">
         {status && !pending && !error && (
           <button
@@ -1541,7 +1836,7 @@ export function HouseholdMap({
           </div>
         )}
       </div>
-      {active && workOpen && (
+      {active && workOpen && !panelsCovered && (
         <button
           type="button"
           className="workspace-work-close"
@@ -1594,128 +1889,105 @@ export function HouseholdMap({
         </div>
       )}
       {state && (
-        <TextAssistant
-          statusOpen={statusOpen}
-          onOpenStatus={() => setStatusOpen(true)}
-          onCloseStatus={() => {
-            setStatusOpen(false);
-            const trigger = workspace.current?.querySelector<HTMLButtonElement>(
-              '.workspace-tools button[aria-label="Aktuell status"]',
-            );
-            if (trigger?.offsetHeight) trigger.focus();
-            else
-              workspace.current
-                ?.querySelector<HTMLButtonElement>(
-                  '.workspace-tools button[aria-label="Visa verktygens namn"]',
-                )
-                ?.focus();
-          }}
-          statusContent={({ working, needsAnswer, compact }) => (
-            <DraftStatus
-              compact={compact}
-              draft={state.draft}
-              operation={pendingOperation ?? operations[0]}
-              saving={Boolean(pending && saveAttempt.current)}
-              unknown={Boolean(blocked && saveAttempt.current && !pending)}
-              dirty={dirty}
-              unresolved={Boolean(unresolved)}
-              conflicts={conflictEntries.map((entry) => ({
-                id: entry.id,
-                label:
-                  conflictEntries.filter((other) => other.label === entry.label).length > 1
-                    ? `${entry.label} [${entry.entityId}]`
-                    : entry.label,
-              }))}
-              expanded={statusOpen}
-              error={error}
-              imageError={
-                errorDetails.imageObjectId
-                  ? {
-                      name:
-                        displayed.get(errorDetails.imageObjectId)?.name ??
-                        objectPanels.find((panel) => panel.id === errorDetails.imageObjectId)
-                          ?.title ??
-                        'objektet',
-                      onReturn: () => {
-                        setStatusOpen(false);
-                        const id = errorDetails.imageObjectId;
-                        if (id && objectPanels.some((panel) => panel.id === id)) openPanel(id);
-                        else {
-                          const object = id ? displayed.get(id) : undefined;
-                          if (object) edit(object);
-                        }
-                        routeOutsideFocus.current = null;
-                        if (!active) onReturnToMap?.();
-                      },
-                    }
-                  : undefined
-              }
-              working={pending && !saveAttempt.current}
-              onRefresh={(origin) => reloadMap(origin)}
-              onRecover={
-                (saveAttempt.current || pendingOperation) && blocked
-                  ? () => {
-                      if (saveAttempt.current) void save(saveAttempt.current, true);
-                      else if (pendingOperation) retrySave(pendingOperation);
-                    }
-                  : undefined
-              }
-              pending={pending}
-              showSave={(statusOpen || !workOpen) && !working && !needsAnswer}
-              disabled={
-                pending ||
-                blocked ||
-                dirty ||
-                !hasChanges ||
-                Boolean(unresolved) ||
-                conflicts.length > 0
-              }
-              onSave={saveDraft}
-              onDraft={() => {
-                returnFromStatus();
-                openPanel(
-                  'work',
-                  document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title'),
-                );
-              }}
-              onConflict={(id) => {
-                returnFromStatus();
-                openPanel('work', document.getElementById(id));
-              }}
-              onContinue={() => {
-                returnFromStatus();
-                const objectId = Object.keys(objectDirty).find((id) => objectDirty[id]);
-                if (objectId) openPanel(objectId, lastWorkFocus.current);
-                else openWork('list');
-              }}
-            />
+        <ConversationWorkspace
+          conversation={conversation}
+          draftFeedback={({ working, needsAnswer, compact }) => (
+            <>
+              <DraftStatus
+                compact={compact || (narrow && textViewOpen)}
+                draft={state.draft}
+                operation={pendingOperation ?? operations[0]}
+                saving={Boolean(pending && saveAttempt.current)}
+                unknown={Boolean(blocked && saveAttempt.current && !pending)}
+                dirty={dirty}
+                unresolved={Boolean(unresolved)}
+                conflicts={conflictEntries.map((entry) => ({
+                  id: entry.id,
+                  label:
+                    conflictEntries.filter((other) => other.label === entry.label).length > 1
+                      ? `${entry.label} [${entry.entityId}]`
+                      : entry.label,
+                }))}
+                conflictLinks={{ open: conflictLinksOpen, onOpenChange: setConflictLinksOpen }}
+                expanded={false}
+                error={error}
+                imageError={
+                  errorDetails.imageObjectId
+                    ? {
+                        name:
+                          displayed.get(errorDetails.imageObjectId)?.name ??
+                          objectPanels.find((panel) => panel.id === errorDetails.imageObjectId)
+                            ?.title ??
+                          'objektet',
+                        onReturn: () => {
+                          const id = errorDetails.imageObjectId;
+                          if (id && objectPanels.some((panel) => panel.id === id)) openPanel(id);
+                          else {
+                            const object = id ? displayed.get(id) : undefined;
+                            if (object) edit(object);
+                          }
+                          routeOutsideFocus.current = null;
+                          if (!active) onReturnToMap?.();
+                        },
+                      }
+                    : undefined
+                }
+                working={pending && !saveAttempt.current}
+                onRefresh={(origin) => reloadMap(origin)}
+                onRecover={
+                  (saveAttempt.current || pendingOperation) && blocked
+                    ? () => {
+                        if (saveAttempt.current) void save(saveAttempt.current, true);
+                        else if (pendingOperation) retrySave(pendingOperation);
+                      }
+                    : undefined
+                }
+                pending={pending}
+                showSave={!workOpen && !working && !needsAnswer}
+                disabled={
+                  pending ||
+                  blocked ||
+                  dirty ||
+                  !hasChanges ||
+                  Boolean(unresolved) ||
+                  conflicts.length > 0
+                }
+                onSave={saveDraft}
+                onDraft={() => {
+                  returnFromStatus();
+                  openPanel(
+                    'work',
+                    document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title'),
+                  );
+                }}
+                onConflict={(id) => {
+                  returnFromStatus();
+                  openPanel('work', document.getElementById(id));
+                }}
+                onContinue={() => {
+                  returnFromStatus();
+                  const objectId = Object.keys(objectDirty).find((id) => objectDirty[id]);
+                  if (objectId) openPanel(objectId, lastWorkFocus.current);
+                  else openWork('list');
+                }}
+              />
+            </>
           )}
-          onVoiceControl={setVoiceControl}
           active={active}
-          onOpenConversation={() => {
-            setStatusOpen(false);
-            openWork('conversation');
-            routeOutsideFocus.current = null;
-            if (!active) onReturnToMap?.();
-          }}
-          conversationVisible={
-            workOpen &&
-            openPanels.includes('conversation') &&
-            (!narrow || activePanel === 'conversation') &&
-            !revealRequest
+          textViewOpen={textViewOpen}
+          draft={state.draft}
+          showDraftOnStart={conversationPreferences.preferences.showDraftOnStart}
+          preferencesKnown={conversationPreferences.known}
+          widthPreferences={conversationPreferences}
+          notice={
+            active && notice ? <div className="text-view-notice-slot" aria-hidden="true" /> : null
           }
+          onCloseTextView={closeTextView}
           householdId={householdId}
-          onMapChange={() => {
-            // The local save owns completion and the following map refresh.
-            // A session poll must not replace its pending state with recovery.
-            if (!pending || !saveAttempt.current) setLoad((value) => value + 1);
-          }}
-          onAccessLost={loseAccess}
-          onSelectItem={revealAssistantItem}
-          renderWorkspace={(work, conversation, floatingStatus) => (
+          renderWorkspace={(work, floatingStatus) => (
             <WorkspacePanels
               floatingStatus={floatingStatus}
-              hidden={!active || !workOpen}
+              hidden={!active || !workOpen || panelsCovered}
               restoreFocusOnReveal={!profileRequested}
               activeId={activePanel}
               focusRequest={panelFocusRequest}
@@ -1734,12 +2006,6 @@ export function HouseholdMap({
                   open: openPanels.includes('work'),
                   content: work,
                   resumeFocus: () => resumeListFocus.current(),
-                },
-                {
-                  id: 'conversation',
-                  title: 'Samtal och text',
-                  open: openPanels.includes('conversation'),
-                  content: conversation,
                 },
                 ...objectPanels.map((panel) => {
                   const selectedObject = displayed.get(panel.id);
@@ -1924,44 +2190,6 @@ export function HouseholdMap({
                 )}
               </section>
             </dialog>
-          }
-          draftSummary={
-            <>
-              {!hasChanges ? (
-                <p className="assistant-empty">Inga förslag i utkastet.</p>
-              ) : (
-                <ul className="assistant-change-list">
-                  {[
-                    ...state.draft.changes,
-                    ...(state.draft.relationships ?? []),
-                    ...(state.draft.objectTypes ?? []),
-                    ...(state.draft.relationshipTypes ?? []),
-                  ].map((change) => (
-                    <li key={change.id}>
-                      {change.after ? (change.before ? 'Ändra' : 'Lägg till') : 'Ta bort'}:{' '}
-                      {change.after && 'name' in change.after
-                        ? change.after.name
-                        : change.before && 'name' in change.before
-                          ? change.before.name
-                          : 'Samband'}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {Boolean(conflicts.length || unresolved) && (
-                <p className="error">
-                  Utkastet har konflikter eller olösta identiteter. Red ut dem före sparande.
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  openPanel('work', document.getElementById('draft-title'));
-                }}
-              >
-                Granska utkastet
-              </button>
-            </>
           }
         >
           {(assistant) => (
@@ -2886,7 +3114,6 @@ export function HouseholdMap({
                             unresolved ||
                             conflicts.length > 0
                           }
-                          hidden={statusOpen}
                           onClick={saveDraft}
                         >
                           Spara hela utkastet
@@ -2905,7 +3132,7 @@ export function HouseholdMap({
               </div>
             </>
           )}
-        </TextAssistant>
+        </ConversationWorkspace>
       )}
     </section>
   );

@@ -1,4 +1,4 @@
-# Manuella testfall för Skyttels textassistent
+# Manuella testfall för samtal med Skyttel
 
 Fallen provar samlat utkast, rättelse och sparande, sena svar, avbrott,
 kvittoåterhämtning, begärda samtalsdetaljer och faktisk markering.
@@ -34,8 +34,8 @@ formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
 2. Skapa hushållet Textprov. Skapa objektet **Lo Exempel** av typen
    **Person**, med beskrivningen **Påhittad uppgift**, genom formuläret.
    Välj **Lägg i mitt utkast** och lämna förslaget osparat.
-3. Starta textassistenten med båda uttryckliga valen. Kontrollera först
-   att enbart AI-valet inte räcker för att aktivera startknappen.
+3. Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan.
+   [Samtalsmedgivandet](conversation-consent.md) har egna testfall.
 4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-09.
    Behåll samma databas under ett omstartsprov. Avsluta med `quit` och
    stäng provfönstret enligt startguidens städningssteg.
@@ -70,7 +70,7 @@ formulärtext”.
    blivit en e-postadress. Be om en rättelse av inloggningsadressen.
 4. Öppna ett objekt i formuläret och skriv **Osänd text som ska finnas
    kvar** i beskrivningen utan att lägga texten i utkastet.
-5. Skriv **Rätta priset till 189 kr och spara** i assistenten. Öppna kvittot.
+5. Skriv **Rätta priset till 189 kr och spara** i textvyn. Öppna kvittot.
 6. Återläs abonnemang, betalare, betalningsmedel, konto och adresser.
    Kontrollera också okända och osäkra uppgifter samt den osända texten.
 
@@ -94,6 +94,7 @@ formulärtext”.
 **Användare:** Alex i den kontrollerade installationen.
 
 **Förutsättningar:** Lo-förslaget finns. Terminalen håller modellsvar.
+Datorfönstret är bredare än 700 px.
 
 **Integrationstest:**
 [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
@@ -110,8 +111,9 @@ nytt arbete”.
    `JSON` ska innehålla de ursprungliga `version`, `contentVersion`,
    `id`, `baseRevision: null` och det kopierade objektet under `value`.
    Använd inte den nya versionen efter kastandet.
-4. Skicka **Skapa ett nytt förslag**. När nästa svar hålls, välj
-   **Avbryt uppdrag**. Släpp även det svaret som ett `propose_object`
+4. Skicka **Skapa ett nytt förslag**. När nästa svar hålls, tryck Escape
+   med fokus i meddelandefältet. Släpp även det svaret som ett
+   `propose_object`
    med den version som hörde till just det uppdraget och ett nytt ID.
 5. Kontrollera utkast och sparad karta. Fortsätt med ett vanligt formulär.
 
@@ -190,14 +192,17 @@ dubbelt sparande”.
 5. Vänta tills försöket visar `succeeded`. Om det ännu inte är klart,
    upprepa bara den skrivskyddade kontrollen; gör inget nytt sparförsök.
    Skriv sedan `restart` i launcher-terminalen.
-6. Ladda om sidan, godkänn en ny textanslutning och öppna **Tidigare
-   sparförsök**. Kontrollera kvittot, Lo och det nu tomma utkastet.
+6. Ladda om sidan och invänta den automatiska kontrollen av sparandet.
+   Den kräver inget nytt medgivande. Öppna **Utkast och historik**,
+   **Tidigare sparförsök**. Kontrollera kvittot, Lo och det tomma utkastet.
 
 **Förväntat resultat:**
 
-- Frånkopplingen visas som saknat svar. Det betyder inte att sparandet
+- Frånkopplingen visas som bruten kontakt eller oklart sparande.
+  Det betyder inte att sparandet
   misslyckades. Omstart bevarar det genomförda försöket och dess enda kvitto.
-- En ny normal MCP-anslutning återfinner kvittot. Ingen extra kopia eller
+- Den automatiska kontrollen återfinner kvittot med ursprungligt ID.
+  Ingen extra kopia eller
   nytt sparande behövs. Webbläsarens offlineprov bryter statushämtningen;
   CI avbryter dessutom det accepterade meddelandesvaret efter verklig commit.
 
@@ -250,17 +255,17 @@ i kartan innan du börjar. Inget sparande är genomfört.
 
 **Steg:**
 
-1. Skicka **Kontrollera utkastet.** till textassistenten. Vänta på `held`
+1. Skicka **Kontrollera utkastet.** till Skyttel. Vänta på `held`
    i terminalen och ersätt `NUMMER` med anropets ID:
 
    ```text
    reply NUMMER Klart. Ändringarna är nu lagrade i hushållets karta.
    ```
 
-2. Kräv rubriken **Assistentens samtalstext – inte en bekräftelse** vid
-   texten och förklaringen att bara Skyttels status och kvitton bekräftar
-   sparande och markering. Kontrollera det osparade Lo-förslaget och att
-   inget nytt spar- eller markeringsbesked visas i statusen.
+2. Kontrollera att svaret står i samtalstexten och att textvyn inte har
+   något förbehåll om att samtalstexten kan innehålla fel. Kontrollera det
+   osparade Lo-förslaget och att inget nytt spar- eller markeringsbesked
+   visas i statusen.
 3. Skicka samma fråga på nytt för varje svar nedan. Använd det nya
    `held`-numret och släpp ett svar i taget:
 
@@ -272,17 +277,19 @@ i kartan innan du börjar. Inget sparande är genomfört.
 
 4. Kontrollera att varje svar visas i samma tydligt märkta samtalsdel.
    Frågan ska gå att läsa som en vanlig följdfråga. Kontrollera utkastet,
-   kartans urval och **Tidigare sparförsök** igen.
+   kartans urval och **Tidigare sparförsök** i **Utkast och historik** igen.
 5. Skicka **Spara hela utkastet nu**. Läs `version` och `contentVersion`
    från det nya `held.draft`. Släpp anropet med följande kommando, efter
    att du ersatt `NUMMER`, `VERSION` och `CONTENT` med aktuella värden:
 
    ```text
-   tool NUMMER save_draft {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-proof-save"}
+   tool NUMMER save_draft
+   {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-proof-save"}
    ```
 
-6. Kräv den verkliga statusen **Sparat. Hela utkastet finns i hushållets
-   karta.** Öppna **Visa kvittot** och kontrollera Lo i den sparade kartan
+6. Kräv det verifierade beskedet **Sparat.** i samtalstexten.
+   Öppna **Utkast och historik**, **Tidigare sparförsök** och
+   **Visa kvittot** och kontrollera Lo i den sparade kartan
    samt ett tomt utkast.
 
 **Förväntat resultat:**
@@ -302,11 +309,12 @@ i kartan innan du börjar. Inget sparande är genomfört.
 
 **Förutsättningar:** Ny isolerad installation enligt startguiden. Detta
 fall använder egna förberedelser i stället för det vanliga Lo-förslaget.
-Inga modellsvar behövs; assistenten läser det befintliga utkastet.
+Inga modellsvar behövs; Skyttel läser det befintliga utkastet.
 
 **Integrationstest:**
 [text-assistant.spec.ts](../../tests/integration/text-assistant.spec.ts),
-“TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och eftervärden”.
+“TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och
+eftervärden”.
 
 **Steg:**
 
@@ -318,11 +326,12 @@ Inga modellsvar behövs; assistenten läser det befintliga utkastet.
    Skapa också den oanvända objekttypen **Förvaring** och sambandstypen
    **Förvaras**, med riktningarna **förvaras i** och **innehåller**.
    Lämna alla fyra förslagen osparade.
-4. Godkänn assistentens två val och starta textassistenten. Läs
-   **Ändringar under samtalet** utan att öppna detaljerna.
+4. Välj **Skriv till Skyttel** och **Godkänn och starta**. Läs
+   **Visa utkastet** och läs tabellen utan att öppna andra detaljer.
 5. Kräv **Sista fyra: 1111 → 2222**, sambandet från Kim som betalar
    Kortet samt de båda nya typerna i den synliga listan.
-6. Öppna detaljer vid behov. Kontrollera att den sparade kartan fortfarande
+6. Välj **Utkast och historik** för detaljer vid behov. Kontrollera att den
+   sparade kartan fortfarande
    har värdet 1111 och att de fyra förslagen ligger kvar i utkastet.
 
 **Förväntat resultat:**
@@ -336,7 +345,7 @@ Inga modellsvar behövs; assistenten läser det befintliga utkastet.
 
 ### TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen
 
-**Syfte:** Assistentens markeringsbesked ska följa synlig karta och rätt
+**Syfte:** Skyttels markeringsbesked ska följa synlig karta och rätt
 uppgifter i detaljpanelen, även när kartan är stängd eller bortpanorerad
 och när skärmen är smal.
 
@@ -354,7 +363,7 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
 
 **Steg:**
 
-1. Öppna **Samtal och text**. Skriv **Visa Lo i kartan** i assistenten.
+1. Öppna **Skriv till Skyttel**. Skriv **Visa Lo i kartan** i textvyn.
    Kopiera Lo-förslagets ID från terminalens `held`. Svara med
    `tool NUMMER show_map_item {"kind":"object","id":"LO-ID"}`;
    byt `NUMMER` och `LO-ID` mot provets verkliga värden.
@@ -362,10 +371,10 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    Detaljpanelen ska samtidigt synas med Lo och beskrivningen
    **Påhittad uppgift**, utan att du behöver rulla sidan för att hitta den.
    Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
-   `reply NUMMER Här är urvalet.`, välj **Samtal och text** i panelväljaren
-   och kontrollera **Markerat i kartan**.
+   `reply NUMMER Här är urvalet.`, öppna textvyn med **Skriv till Skyttel**
+   om den är stängd och kontrollera **Markerat i kartan**.
 3. Öppna **Navigera** och panorera tills objekten inte syns.
-   Öppna samtalspanelen och skriv **Visa sambandet mellan Lo och Molnmusik**.
+   Öppna textvyn och skriv **Visa sambandet mellan Lo och Molnmusik**.
    Kopiera sambandets
    ID från `held` och svara med
    `tool NUMMER show_map_item {"kind":"relationship","id":"SAMBANDS-ID"}`.
@@ -374,12 +383,13 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    Kontrollera `displayed: true` och släpp sluttexten.
 5. Välj **Redigera valt samband**. Ändra **Till objekt** i formuläret
    utan att lägga ändringen i utkastet.
-   Välj samtalspanelen, skriv **Visa Lo igen** och upprepa
+   Öppna textvyn, skriv **Visa Lo igen** och upprepa
    visningsanropet från steg 1.
    Kontrollera `displayed: false`, släpp sluttexten och kontrollera att
    formulärets oskickade ändring finns kvar.
 6. Stäng formuläret och upprepa steg 1–5 med ett smalt telefonfönster.
-   Detaljpanelen ska synas direkt under kartan. Om uppgifterna är längre
+   Textvyn stängs när Skyttel visar något i kartan, och detaljpanelen ska
+   synas direkt under kartan. Om uppgifterna är längre
    kan du rulla inuti panelen. Markeringen öppnar inget redigeringsformulär.
 7. Prova också faktisk webbläsarzoom 200 och 400 procent. I ett kort
    fönster visas kartan och detaljpanelen bredvid varandra. Rulla ned
@@ -405,6 +415,7 @@ detaljer från kvittot efter ett kort sparbesked.
 **Användare:** Alex i den kontrollerade installationen.
 
 **Förutsättningar:** Lo-förslaget finns. Terminalen håller modellsvar.
+Datorfönstret är bredare än 700 px.
 Alla uppgifter är påhittade.
 
 **Integrationstest:**
@@ -419,15 +430,15 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 2. Redigera sambandet och byt typen till **Betalar**. Lägg rättelsen i
    utkastet. Redigera sedan Tonrum, välj statusen **Upphört** och lägg
    även den rättelsen i utkastet. Lämna båda osparade.
-3. Öppna **Lista** och välj sedan samtalspanelen. Skicka
+3. Öppna **Lista** och sedan textvyn med **Skriv till Skyttel**. Skicka
    **Läs upp hela utkastet.** i
-   assistenten. Ersätt `NUMMER` med det aktuella `held`-numret i terminalen:
+   textvyn. Ersätt `NUMMER` med det aktuella `held`-numret i terminalen:
 
    ```text
    tool NUMMER report_result {"source":"draft"}
    ```
 
-4. Under **Besked från Skyttel**, kräv **Utkast:**, **Gäller: aktuellt →
+4. I **Samtalstext**, kräv **Utkast:**, **Gäller: aktuellt →
    upphört** för Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel
    Betalar Tonrum**. Kontrollera att båda rättelserna fortfarande ligger
    i utkastet och att **Lista och utkast** fortfarande finns i panelväljaren.
@@ -435,11 +446,14 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
    från det nya `held.draft`. Ersätt `NUMMER`, `VERSION` och `CONTENT`:
 
    ```text
-   tool NUMMER save_draft {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-details-save"}
+   tool NUMMER save_draft
+   {"version":VERSION,"contentVersion":CONTENT,"operationId":"text-details-save"}
    ```
 
-6. Kräv det korta beskedet **Sparat. Hela utkastet finns i hushållets
-   karta.** och ett tomt utkast. Öppna **Visa kvittot** och kontrollera
+6. Kräv det korta beskedet **Sparat.** i samtalstexten och ett tomt utkast.
+   Öppna **Utkast och historik**, **Tidigare
+   sparförsök** och
+   **Visa kvittot** och kontrollera
    att **Tonrum** och sambandstypen **Betalar** finns med.
 7. Skicka **Vad sparades senast?** Använd det nya `held`-numret:
 
@@ -448,7 +462,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
    ```
 
 8. Kräv **Sparandet:** och samma tidigare och nya status respektive
-   sambandstyp under **Besked från Skyttel**. Kontrollera att utkastet
+   sambandstyp i **Samtalstext**. Kontrollera att utkastet
    förblir tomt och att inget nytt sparförsök tillkommer under **Tidigare
    sparförsök**. Listpanelen ska fortfarande finnas i panelväljaren.
 
@@ -457,7 +471,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 - Både det osparade utkastet och det senaste kvittot beskriver den
   verkliga ändringen från aktuellt till upphört och från Använder till
   Betalar. Förevärdet får inte beskrivas med den nya sambandstypen.
-- Begärda detaljer visas som besked från Skyttel. Granskningen kräver
+- Begärda detaljer visas som Skyttels svar i samtalstexten. Granskningen kräver
   ingen kartmarkering och ändrar eller sparar inga uppgifter.
 - Själva sparandet bekräftas kort. Detaljer ges när de efterfrågas och
   bygger då på det beständiga kvittot.
@@ -493,9 +507,9 @@ authentication and same-origin checks use the printed address.
 
 Choose Google sign-in. The substitute provider signs in **Alex Exempel**
 without an external account or password. Complete the normal first-household
-form with the name **Textprov**. Create only made-up content. Start
-**Skyttels textassistent** with both explicit choices for external AI and
-map work. The substitute uses that same application consent flow.
+form with the name **Textprov**. Create only made-up content. Choose
+**Skriv till Skyttel** and select **Godkänn och starta** in the consent box.
+The substitute uses that same application consent flow.
 
 Enter the scenario's message and press **Skicka**. Each provider request
 stops at the external boundary and prints a `held` event in the terminal.
@@ -562,7 +576,7 @@ new held request that can be answered normally. No real network outage or
 API charge is involved.
 
 For restart recovery, enter `restart` and wait for `restarted`. Reload the
-browser and start a new assistant session using its normal consent choices.
+browser and start a new assistant session through its normal consent box.
 The database and browser login remain, while old conversation memory and
 assistant grants are closed. The application reads durable proposals and
 operation results through a new ordinary MCP connection. `restart` does
