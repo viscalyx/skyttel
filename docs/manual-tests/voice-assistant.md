@@ -638,7 +638,7 @@ se att bara röstrutan visas.
 
 **Användare:** Alex i den kontrollerade installationen.
 
-**Förutsättningar:** Kartan visar vägledningen. Inget medgivande är
+**Förutsättningar:** Kartan är öppen. Inget medgivande är
 godkänt under besöket.
 
 **Integrationstest:**
@@ -650,8 +650,8 @@ någon panel öppnas”.
 
 1. Kontrollera att **Prata med Skyttel** i **Kartans verktyg** visar en
    mikrofon och inte är intryckt.
-2. Kör `window.skyttelVoiceFixture.setMicrophone('hold')`. Välj **Tala** i
-   vägledningen och **Godkänn och starta** i medgivanderutan.
+2. Kör `window.skyttelVoiceFixture.setMicrophone('hold')`. Välj
+   **Prata med Skyttel** i kartans verktyg och **Godkänn och starta** i medgivanderutan.
 3. Läs röstrutan och för muspekaren över **Prata med Skyttel**.
 4. Välj **Prata med Skyttel**. Kör `releaseMicrophone()` och sedan
    `setMicrophone('allow')` på samma testobjekt.

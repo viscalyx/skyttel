@@ -1,6 +1,6 @@
 # Manuella testfall för kartans arbetsyta
 
-Fallen omfattar kartans verktyg, teman, vägledning, samtalshjälp och
+Fallen omfattar kartans verktyg, teman, frivillig hjälp, samtalshjälp och
 återhämtning.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
@@ -44,7 +44,7 @@ closed”.
 
 **Steg:**
 
-1. Öppna hushållet. Kontrollera kartan och beskedet **Din karta börjar här**.
+1. Öppna hushållet. Kontrollera att den tomma kartan öppnas utan startdialoger.
 2. Välj **Visa verktygens namn**, sedan **Lista** och **Nytt objekt**.
    Ange namnet **Cykeln**.
 3. Stäng panelerna med kryssen. Öppna **Lista** igen, välj **Fortsätt: Cykeln**
@@ -57,7 +57,7 @@ closed”.
 - Verktygen har begripliga namn. Stängning återför fokus till **Lista**.
 - Oskickad text finns kvar efter stängning utan att sparas automatiskt.
 - Det verifierade sparbeskedet anger Cykeln, som finns i kartan efter
-  omladdning.
+  omladdning. Ingen startdialog visas på kartan med det sparade objektet.
 
 ### YTA-02: temaval och enhetens inställning
 
@@ -106,7 +106,7 @@ without graphics”.
 
 **Steg:**
 
-1. Välj **Stäng vägledningen**. Expandera verktygen och öppna
+1. Öppna direkt från de hopfällda verktygen
    **Information och hjälp**. Läs instruktionerna och tryck Escape.
 2. Välj **Lista**, **Nytt objekt** och skriv **Min cykel**. Kontrollera att
    fält och knappen för att lägga i utkastet går att nå.
@@ -122,9 +122,8 @@ without graphics”.
 
 **Förväntat resultat:**
 
-- Vägledningen försvinner. Hjälpens rubrik får fokus; Escape återför
-  fokus till hjälpknappen eller den synliga knappen för att expandera
-  verktygen om hjälpknappen har dolts.
+- Hjälpens rubrik får fokus; Escape återför fokus till hjälpknappen,
+  även efter att verktygen har fällts ihop.
 - Formulär och samtal går att nå utan att välja något grafiskt objekt.
 - Innehållet är läsbart och kontrollerna nåbara även med förstoring.
 - Fokus återgår till en synlig verktygsknapp. Täckta kartkontroller går
@@ -212,13 +211,14 @@ Att fälla ihop verktygen medan hjälpen är öppen täcks även av YTA-03.
 
 **Steg:**
 
-1. Expandera verktygen och öppna **Information och hjälp** med tangentbord.
-   Kontrollera fokus på rubriken. Rulla till slutet, med End på dator
+1. Öppna **Information och hjälp** direkt från de hopfällda verktygen med
+   tangentbord. Kontrollera fokus på rubriken. Rulla till slutet, med End på dator
    eller genom hjälpens text på pekskärm. Läs formuläralternativet.
 2. Nå länken till datavillkoren och stängknappen med Tab. Kontrollera
    att det fokuserade innehållet syns och att hjälpen ryms i sidled.
-3. Välj **Dölj verktygens namn** medan hjälpen är öppen. Kräv att knappen
-   går att aktivera och att hjälpen fortfarande går att läsa.
+3. Välj **Visa verktygens namn** och sedan **Dölj verktygens namn** medan
+   hjälpen är öppen. Kräv att knapparna går att aktivera och att hjälpen
+   fortfarande går att läsa.
 4. Stäng med Escape. Öppna igen, rulla och använd **Stäng verktyget**.
 
 **Förväntat resultat:**
@@ -227,8 +227,8 @@ Att fälla ihop verktygen medan hjälpen är öppen täcks även av YTA-03.
   hjälpen och täcker inte knappen som fäller ihop verktygen.
 - Rubriker, stycken, datavillkorslänk och stängknapp går att nå med
   tangentbord. Ingen rullning i sidled behövs. Mikrofonen startar inte.
-- Stängning återför fokus till hjälpknappen eller den synliga knappen
-  för att expandera verktygen när hjälpknappen har dolts.
+- Hjälpknappen syns även när verktygen är hopfällda. Stängning återför
+  fokus till hjälpknappen.
 
 **Tillgänglighetsbedömning för samtalshjälpen:**
 
@@ -269,7 +269,7 @@ action”.
 
 - Verktygen och laddningsbeskedet finns medan kartan hämtas.
 - Felet erbjuder en nästa handling. Efter nytt försök visas den tomma
-  kartans vägledning.
+  kartan utan startdialoger.
 
 Förlorad tillgång och avslutad mikrofon verifieras i
 [bevarat hushållsarbete](household-work.md#arbete-03-återkallad-tillgång-avvecklar-dolt-arbete).
@@ -302,7 +302,7 @@ testfallet “YTA-05: save results remain readable beside tablet work”.
 ### YTA-06: synliga visningsval på en tom mobilkarta
 
 **Syfte:** Kontrollera att tangentbordsfokus, fullständiga etiketter och
-kortets ingångar är nåbara även när en tom karta visar vägledning och status.
+verktygen är nåbara även på en tom karta.
 
 **Användare:** Alex.
 
@@ -321,31 +321,27 @@ choices readable and operable in dark”.
 
 **Steg:**
 
-1. Behåll vägledningen på den tomma kartan. Använd tangentbordet för att
-   fokusera **Återställ vy**, sedan Tab till **Alla etiketter** och
-   **Visa höjdhjälp**. Fokus och hela namnet ska synas för varje kontroll.
+1. Använd tangentbordet på den tomma kartan för att fokusera **Återställ vy**,
+   sedan Tab till **Alla etiketter** och **Visa höjdhjälp**. Fokus och hela
+   namnet ska synas för varje kontroll.
 2. Tryck mellanslag på **Visa höjdhjälp**, kontrollera att valet aktiveras
-   och tryck igen för att återställa det. Nå vägledningens **Öppna listan**
-   med tangentbordet; sidan får rulla för att visa hela knappen.
-3. Välj **Stäng vägledningen** och upprepa kontrollerna. Det kvarvarande
-   kortet **Din karta börjar här** och statusytan får inte täcka fokus.
-   Kontrollera att kortets **Öppna Lista** går att nå.
-4. Öppna Lista, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
-   Stäng panelerna med kryssen. Kortet för en tom karta ska försvinna;
-   höjdhjälpen ska fortfarande vara avstängd. Spara inte utkastet.
+   och tryck igen för att återställa det. Nå **Lista** i verktygsfältet
+   med tangentbordet och kontrollera att knappen syns.
+3. Öppna Lista, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
+   Stäng panelerna med kryssen. Höjdhjälpen ska fortfarande vara avstängd.
+   Spara inte utkastet.
 
 **Förväntat resultat:**
 
-- Vägledning, visningsval och status delar en rullbar yta när utrymmet är
-  trångt; fullständiga etiketter och fokuserade kontroller förblir synliga.
-- Vägledningens och det tomma kortets listknappar förblir användbara.
-- Ett verkligt objektförslag lämnar tomläget utan att ändra höjdhjälpsvalet.
+- Fullständiga etiketter och fokuserade visningsval förblir synliga.
+- Verktygsfältets listknapp förblir användbar.
+- Ett objektförslag ändrar inte höjdhjälpsvalet.
 - Den separata **Visningsval**-menyn i vyer som är högst 450 pixlar höga
   behåller sitt befintliga beteende, vilket provas i KAMERA-04.
 
 ### YTA-09: den tomma kartan förblir användbar med röst och samtalsnotis
 
-**Syfte:** Nå den tomma kartans listknapp när röstrutan eller en samtalsnotis
+**Syfte:** Nå verktygsfältets listknapp när röstrutan eller en samtalsnotis
 visas ovanför kartans visningsval och utkastets återkoppling.
 
 **Användare:** Alex.
@@ -362,19 +358,19 @@ controls reachable”.
 **Steg:**
 
 1. Välj **Prata med Skyttel** och godkänn samtalsmedgivandet. Läs **Lyssnar**
-   i röstrutan. Kortet **Din karta börjar här** ska finnas kvar. Välj
+   i röstrutan. Välj
    **Återställ vy** och läs **Översikt återställd.** i kartans statusyta.
-2. Nå kortets **Öppna Lista** med tangentbordet. Fokus och knappen ska synas
+2. Nå verktygsfältets **Lista** med tangentbordet. Fokus och knappen ska synas
    och vara fria från röstrutan. Kontrollera båda fönsterhöjderna.
 3. Slå på **Offline** i webbläsarens nätverkspanel. Läs samtalsnotisen
    **Ingen kontakt med Skyttel. Mikrofonen är av.** och kontrollera samma
    listknapp vid båda höjderna.
-4. Slå av **Offline**, välj **Öppna Lista** och sedan **Nytt objekt**.
+4. Slå av **Offline**, välj **Lista** och sedan **Nytt objekt**.
    Formuläret med **Objektets namn** ska gå att använda. Skapa inget objekt.
 
 **Förväntat resultat:**
 
-- Röstrutan och samtalsnotisen täcker inte den tomma kartans listknapp.
+- Röstrutan och samtalsnotisen täcker inte verktygsfältets listknapp.
 - Röstrutan eller notisen ligger ovanför visningsvalen, som ligger ovanför
   kartans statusyta och utkastets återkoppling. Vid platsbrist är
   återkopplingen nåbar med rullning.

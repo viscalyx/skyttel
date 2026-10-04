@@ -173,7 +173,13 @@ test('YTA-08: hjälpens långa text går att läsa och stänga på smal skärm',
   await page.setViewportSize({ width: 320, height: 568 });
   const { app } = await arrange(page);
   try {
+    await expect(
+      page.getByRole('button', { name: 'Information och hjälp', exact: true }),
+    ).toBeVisible();
     const button = await openHelp(page);
+    await expect(
+      page.getByRole('button', { name: 'Visa verktygens namn', exact: true }),
+    ).toBeVisible();
     await expect(
       help(page).getByRole('heading', { name: 'Håll in för att tala', exact: true }),
     ).toHaveCount(1);

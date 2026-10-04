@@ -10,7 +10,7 @@ På telefon visar **Visa verktygens namn** även de kompletterande verktygen.
 
 **Tema** ger valen **Ljust**, **Mörkt** och **System**. System följer
 inställningen på din enhet. **Information och hjälp** förklarar verktygen.
-Den korta första vägledningen kan stängas. Hopplänkarna når verktyg,
+Hjälpknappen syns även när telefonens verktyg är hopfällda. Hopplänkarna når verktyg,
 formulär och text med tangentbord före kartgrafiken.
 
 ## Besök andra vyer och fortsätt arbetet

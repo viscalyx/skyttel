@@ -709,9 +709,9 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
    2026-09-02 samt en annan anteckning. Ändra båda typbeskrivningarna
    men behåll Sparad ekonomi och Sparad skuld. Dölj anteckningsfältet
    med värdet kvar och föreslå att sambandets mål är okänt. Spara allt.
-5. Alex laddar om kartan utan att kasta sitt utkast. Stäng arbetspaneler
-   och vägledning. Öppna **Visa 4 konflikter** i kartans utkaståterkoppling med
-   tangentbord och pekare.
+5. Alex laddar om kartan utan att kasta sitt utkast. Stäng arbetspanelerna
+   med kryssen. Öppna **Visa 4 konflikter** i kartans utkaståterkoppling
+   med tangentbord och pekare.
 6. Använd tangentbordet för att besöka objekttyp, sambandstyp, samband
    och objekt från listan. Återgå till kartan mellan destinationerna.
 7. Läs objektets tre underlag. Upprepa på telefon och i ett kort fönster.
@@ -970,7 +970,7 @@ ytorna är synliga, även när förstoring kräver rullning.
 **Användare:** Administratören.
 
 **Förutsättningar:** Lo Exempel är sparad i kartan. Blå cykeln finns som
-nytt privat förslag. Börja med stängd arbetsyta och stängd vägledning.
+nytt privat förslag. Börja med stängd arbetsyta.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),

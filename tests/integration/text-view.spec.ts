@@ -141,10 +141,9 @@ test('TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar s
       }),
   );
   try {
-    // The welcome guide's start with text does what the button does.
     await page
-      .getByRole('complementary', { name: 'Kom igång med kartan' })
-      .getByRole('button', { name: 'Skriv', exact: true })
+      .getByRole('navigation', { name: 'Kartans verktyg' })
+      .getByRole('button', { name: 'Skriv till Skyttel', exact: true })
       .click();
     await giveConversationConsent(page);
     await expect(conversationText(page)).toHaveText(

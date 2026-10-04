@@ -60,7 +60,6 @@ import {
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
 import { ConversationWorkspace } from './TextAssistant.js';
 import { VoiceBox, VoiceStatusAnnouncements } from './VoiceBox.js';
-import { WelcomeGuidance } from './WelcomeGuidance.js';
 import { type PanelAnchor, type PanelFocusRequest, WorkspacePanels } from './WorkspacePanels.js';
 import {
   textViewButtonName,
@@ -259,7 +258,6 @@ export function HouseholdMap({
   useEffect(() => () => revealAbort.current?.abort(), []);
   const listModeButton = useRef<HTMLButtonElement>(null);
   const workTrigger = useRef<HTMLElement | null>(null);
-  const [guidance, setGuidance] = useState(true);
   const [textViewOpen, setTextViewOpen] = useState(false);
   const workOpen = openPanels.length > 0 && (presentation !== 'map' || detailsOpen || editorOpen);
   const viewport = useConversationViewport();
@@ -323,17 +321,6 @@ export function HouseholdMap({
   function closeTextView() {
     setTextViewOpen(false);
     if (!restoreOutsideFocus(textViewButtonName)) focusTools();
-  }
-  function openGuidedWork(target: WorkspaceTarget, chosen: HTMLElement) {
-    // The guidance stays while a conversation waits for its start, so that
-    // the consent box can give the focus back to the chosen button.
-    if (!conversationStart(target)) setGuidance(false);
-    openWork(target, chosen);
-  }
-  function dismissGuidance() {
-    setGuidance(false);
-    workspace.current?.querySelector<HTMLButtonElement>('.workspace-tools button')?.focus();
-    if (workspace.current) workspace.current.scrollTop = 0;
   }
   const [legacyDirty, setDirty] = useState(false);
   const dirty = legacyDirty || Object.values(objectDirty).some(Boolean);
@@ -1459,7 +1446,6 @@ export function HouseholdMap({
   // The conversation belongs to the map, not to a panel. The toolbar, the
   // voice box, notice and text view all read it and call its commands.
   function showConversation() {
-    setGuidance(false);
     setTextViewOpen(true);
   }
   const conversation = useConversation({
@@ -1472,7 +1458,9 @@ export function HouseholdMap({
       if (!pending || !saveAttempt.current) setLoad((value) => value + 1);
     },
     // The microphone opens no panel: the voice box follows the voice.
-    onStarted: (mode) => (mode === 'voice' ? setGuidance(false) : showConversation()),
+    onStarted: (mode) => {
+      if (mode === 'text') showConversation();
+    },
     onAccessLost: loseAccess,
     onEnded: () => {
       if (document.activeElement?.closest('.text-view')) closeTextView();
@@ -1630,6 +1618,9 @@ export function HouseholdMap({
         }
       }}
       aria-label="Hushållskarta"
+      data-empty-map={
+        (Boolean(state) && !visibleObjects.size && !query && !typeFilter.length) || undefined
+      }
       data-navigation-open={navigationOpen}
       data-conversation-ongoing={conversationOngoing(conversation, textViewOpen)}
       data-mobile={viewport.mobile}
@@ -1747,22 +1738,6 @@ export function HouseholdMap({
               {selectedIds.length} markerade
             </span>
           </div>
-          {guidance && !workOpen && Boolean(visibleObjects.size) && (
-            <WelcomeGuidance onOpen={openGuidedWork} onDismiss={dismissGuidance} />
-          )}
-          {state && !visibleObjects.size && !query && !typeFilter.length && !workOpen && (
-            <div className="workspace-empty">
-              <h2>Din karta börjar här</h2>
-              <p>Lägg till ditt första objekt genom Lista eller berätta för Skyttel.</p>
-              {guidance ? (
-                <WelcomeGuidance empty onOpen={openGuidedWork} onDismiss={dismissGuidance} />
-              ) : (
-                <button type="button" onClick={() => openWork('list')}>
-                  Öppna Lista
-                </button>
-              )}
-            </div>
-          )}
         </>
       )}
       {/* Outside the map, where its tools are not shown, the voice box still says what the voice does. */}

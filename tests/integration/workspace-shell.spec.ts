@@ -52,7 +52,7 @@ test('YTA-01: map tools open real household work and preserve it when closed', a
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
     await expect(tools).toBeVisible();
     await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
-    await expect(page.getByText('Din karta börjar här', { exact: true })).toBeVisible();
+    await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('list', { name: 'Objekt', exact: true })).not.toBeVisible();
     await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
     await expect(tools.getByText('Lista', { exact: true })).toBeVisible();
@@ -71,6 +71,8 @@ test('YTA-01: map tools open real household work and preserve it when closed', a
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Cykeln', exact: true }),
     ).toBeVisible();
+    await expect(page.getByRole('complementary', { name: 'Kom igång med kartan' })).toHaveCount(0);
+    await expect(page.getByText('Vad vill du börja med?', { exact: true })).toHaveCount(0);
   } finally {
     await installation.close();
   }
@@ -103,17 +105,16 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
           );
         }),
       ).toBe(true);
-      await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
       await expect(page.getByRole('complementary', { name: 'Kom igång med kartan' })).toHaveCount(
         0,
       );
-      await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
       await tools.getByRole('button', { name: 'Information och hjälp', exact: true }).click();
       await expect(page.getByRole('heading', { name: 'Information och hjälp' })).toBeFocused();
       await page.keyboard.press('Escape');
       await expect(
         tools.getByRole('button', { name: 'Information och hjälp', exact: true }),
       ).toBeFocused();
+      await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
       await tools.getByRole('button', { name: 'Information och hjälp', exact: true }).click();
       await tools.getByRole('button', { name: 'Dölj verktygens namn', exact: true }).click();
       await page.keyboard.press('Tab');
@@ -122,7 +123,7 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
       ).toBeFocused();
       await page.keyboard.press('Escape');
       await expect(
-        tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }),
+        tools.getByRole('button', { name: 'Information och hjälp', exact: true }),
       ).toBeFocused();
       await tools.getByRole('button', { name: 'Lista', exact: true }).click();
       await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toHaveCount(0);
@@ -142,7 +143,7 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
         await closePanels(page);
         await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
       }
-      await page.getByRole('button', { name: 'Öppna Lista', exact: true }).click();
+      await page.getByRole('button', { name: 'Lista', exact: true }).click();
       await closePanels(page);
       await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
       await startConversationWithText(page);
@@ -177,7 +178,8 @@ test('YTA-04: loading and a failed map read offer a working next action', async 
     await expect(page.getByRole('alert')).toContainText('kunde inte');
     await page.unroute('**/map?*');
     await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
-    await expect(page.getByText('Din karta börjar här', { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
+    await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
   } finally {
     release();
     await installation.close();
@@ -280,63 +282,59 @@ for (const theme of ['light', 'dark'] as const) {
       await createHousehold(page.request, installation.origin);
       await page.setViewportSize({ width: 320, height: 900 });
       await page.goto(installation.origin);
-      for (const guidance of [true, false]) {
-        if (!guidance)
-          await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
-        for (const height of [900, 568, 451]) {
-          await page.setViewportSize({ width: 320, height });
-          const reset = page.getByRole('button', { name: 'Återställ vy', exact: true });
-          const labels = page.getByRole('checkbox', { name: 'Alla etiketter', exact: true });
-          const heightHelp = page.getByRole('checkbox', { name: 'Visa höjdhjälp', exact: true });
-          for (const target of [reset, labels, heightHelp]) {
-            if (target === reset) await reset.focus();
-            else await page.keyboard.press('Tab');
-            await expect(target).toBeFocused();
-            const visible = await target.evaluate((element) => {
-              const box = element.getBoundingClientRect();
-              const label = element.closest('label') ?? element;
-              const bounds = label.getBoundingClientRect();
-              return {
-                centerHit: element.contains(
-                  document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
-                ),
-                labelHit: label.contains(
-                  document.elementFromPoint(bounds.right - 2, bounds.y + bounds.height / 2),
-                ),
-                within:
-                  bounds.left >= 0 &&
-                  bounds.right <= innerWidth &&
-                  bounds.top >= 0 &&
-                  bounds.bottom <= innerHeight,
-              };
-            });
-            expect(visible).toEqual({ centerHit: true, labelHit: true, within: true });
-          }
-          await page.keyboard.press('Space');
-          await expect(heightHelp).toBeChecked();
-          await page.keyboard.press('Space');
-          await expect(heightHelp).not.toBeChecked();
-          const action = page.getByRole('button', {
-            name: guidance ? 'Öppna listan' : 'Öppna Lista',
-            exact: true,
+      for (const height of [900, 568, 451]) {
+        await page.setViewportSize({ width: 320, height });
+        const reset = page.getByRole('button', { name: 'Återställ vy', exact: true });
+        const labels = page.getByRole('checkbox', { name: 'Alla etiketter', exact: true });
+        const heightHelp = page.getByRole('checkbox', { name: 'Visa höjdhjälp', exact: true });
+        for (const target of [reset, labels, heightHelp]) {
+          if (target === reset) await reset.focus();
+          else await page.keyboard.press('Tab');
+          await expect(target).toBeFocused();
+          const visible = await target.evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            const label = element.closest('label') ?? element;
+            const bounds = label.getBoundingClientRect();
+            return {
+              centerHit: element.contains(
+                document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+              ),
+              labelHit: label.contains(
+                document.elementFromPoint(bounds.right - 2, bounds.y + bounds.height / 2),
+              ),
+              within:
+                bounds.left >= 0 &&
+                bounds.right <= innerWidth &&
+                bounds.top >= 0 &&
+                bounds.bottom <= innerHeight,
+            };
           });
-          await action.focus();
-          await expect(action).toBeFocused();
-          expect(
-            await action.evaluate((element) => {
-              const box = element.getBoundingClientRect();
-              return (
-                box.top >= 0 &&
-                box.bottom <= innerHeight &&
-                element.contains(
-                  document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
-                )
-              );
-            }),
-          ).toBe(true);
+          expect(visible).toEqual({ centerHit: true, labelHit: true, within: true });
         }
+        await page.keyboard.press('Space');
+        await expect(heightHelp).toBeChecked();
+        await page.keyboard.press('Space');
+        await expect(heightHelp).not.toBeChecked();
+        const action = page.getByRole('button', {
+          name: 'Lista',
+          exact: true,
+        });
+        await action.focus();
+        await expect(action).toBeFocused();
+        expect(
+          await action.evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            return (
+              box.top >= 0 &&
+              box.bottom <= innerHeight &&
+              element.contains(
+                document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+              )
+            );
+          }),
+        ).toBe(true);
       }
-      await page.getByRole('button', { name: 'Öppna Lista', exact: true }).click();
+      await page.getByRole('button', { name: 'Lista', exact: true }).click();
       await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
       await page.getByLabel('Objektets namn').fill('Cykeln');
       await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
@@ -388,7 +386,7 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
                 if (!element) throw new Error(`Missing visible surface: ${selector}`);
                 return element.getBoundingClientRect();
               };
-              const entry = bounds('.workspace-empty');
+              const entry = bounds('.workspace-tools');
               const corner = bounds('.conversation-corner');
               const row = bounds('.spatial-bottom-bar');
               const status = bounds('.workspace-feedback');
@@ -409,7 +407,7 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
             feedbackClear: true,
             cornerVisible: true,
           });
-        const entry = page.getByRole('button', { name: 'Öppna Lista', exact: true });
+        const entry = page.getByRole('button', { name: 'Lista', exact: true });
         await entry.focus();
         await expect(entry).toBeFocused();
         expect(
@@ -423,7 +421,7 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
       }
     }
     await context.setOffline(false);
-    await page.getByRole('button', { name: 'Öppna Lista', exact: true }).click();
+    await page.getByRole('button', { name: 'Lista', exact: true }).click();
     await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets namn')).toBeVisible();
   } finally {

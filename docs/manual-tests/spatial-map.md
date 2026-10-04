@@ -378,7 +378,7 @@ its saved and private list”.
 
 **Steg:**
 
-1. Öppna kartan, stäng eventuell vägledning och ladda om sidan. Öppna
+1. Öppna kartan och ladda om sidan. Öppna
    Lista och välj **Uppgifter för Familjens Molnmusik**. Läs beskrivningen.
 2. Öppna **Lista** från verktygen igen. Kontrollera Robins notering.
 3. Stäng panelerna med kryssen och välj Kim Exempel i kartan. Kontrollera att

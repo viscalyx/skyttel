@@ -484,11 +484,11 @@
   }
 }
 
-/* On an empty narrow map, guidance, the lower display row and retained
-   status share one scroll flow. Spare height stays above the display row;
+/* On an empty narrow map, the lower display row and retained status
+   share one scroll flow. Spare height stays above the display row;
    smaller windows scroll the same order without overlapping focused controls. */
 @media (max-width: 700px) and (min-height: 451px) {
-  .household-map.workspace-shell:not(.workspace-open):has(.workspace-empty)
+  .household-map.workspace-shell:not(.workspace-open)[data-empty-map="true"]
     .spatial-display-tools
     .spatial-bottom-bar {
     position: relative;
@@ -496,32 +496,32 @@
     flex-wrap: wrap;
     max-height: none;
   }
-  .household-map.workspace-shell:not(.workspace-open):has(.workspace-empty) {
+  .household-map.workspace-shell:not(.workspace-open)[data-empty-map="true"] {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     padding-top: 142px;
     scroll-padding-block: 142px 12px;
   }
-  .household-map.workspace-shell:not(.workspace-open):has(.workspace-empty) .map-space {
+  .household-map.workspace-shell:not(.workspace-open)[data-empty-map="true"] .map-space {
     position: static;
     flex-shrink: 0;
     margin: auto 12px 12px;
     padding-top: var(--conversation-corner-height, 0px);
   }
-  .household-map.workspace-shell:not(.workspace-open):has(.workspace-empty) .spatial-map {
+  .household-map.workspace-shell:not(.workspace-open)[data-empty-map="true"] .spatial-map {
     position: static;
     height: auto;
   }
-  .household-map.workspace-shell:not(.workspace-open):has(.workspace-empty) .workspace-feedback {
+  .household-map.workspace-shell:not(.workspace-open)[data-empty-map="true"] .workspace-feedback {
     order: 1;
   }
-  .household-map.workspace-shell:not(.workspace-open):has(.workspace-empty)
+  .household-map.workspace-shell:not(.workspace-open)[data-empty-map="true"]
     .workspace-voice-controls {
     order: 2;
   }
-  .household-map.workspace-shell:not(.workspace-open):has(.workspace-empty)
-    :is(.workspace-empty, .workspace-feedback, .workspace-voice-controls) {
+  .household-map.workspace-shell:not(.workspace-open)[data-empty-map="true"]
+    :is(.workspace-feedback, .workspace-voice-controls) {
     position: relative;
     inset: auto;
     width: auto;

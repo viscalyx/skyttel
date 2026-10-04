@@ -81,7 +81,6 @@ async function open(withDraft = true) {
     </main>,
   );
   await expect.element(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
   return {
     writes,
     failProposal: () => {

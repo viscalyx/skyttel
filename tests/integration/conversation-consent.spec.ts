@@ -79,12 +79,9 @@ test('MEDGIVANDE-01: samtalsknapparna visar medgivanderutan och Avbryt startar i
     const starts = await openHousehold(page, app.origin);
     const box = consentBox(page);
     const { remember, approve, decline } = consentBoxFor(page);
-    const guidance = page.getByRole('complementary', { name: 'Kom igång med kartan' });
     const chosen: [string, () => Promise<Locator>][] = [
       ['verktygsradens röstknapp', () => utilityButton(page, 'Prata med Skyttel')],
       ['verktygsradens textknapp', () => utilityButton(page, 'Skriv till Skyttel')],
-      ['välkomstguidens Tala', async () => guidance.getByRole('button', { name: 'Tala' })],
-      ['välkomstguidens Skriv', async () => guidance.getByRole('button', { name: 'Skriv' })],
       [
         'snabblänken till samtalet',
         async () => page.getByRole('button', { name: 'Till samtalet med Skyttel', exact: true }),
@@ -306,19 +303,6 @@ test('MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och pekskärm', as
       await page.keyboard.press('Escape');
       await expect(button).toBeFocused();
     }
-
-    // A welcome guide button far from the toolbar gets the box next to itself, kept on the screen.
-    const guide = page
-      .getByRole('complementary', { name: 'Kom igång med kartan' })
-      .getByRole('button', { name: 'Skriv' });
-    const guideButton = await bounds(guide);
-    await guide.click();
-    await expect(box).toBeVisible();
-    const besideGuide = await bounds(box);
-    expect(besideGuide.x - guideButton.right).toBeLessThanOrEqual(32);
-    expect(besideGuide.x).toBeGreaterThanOrEqual(guideButton.right);
-    expect(besideGuide.bottom).toBeLessThanOrEqual(page.viewportSize()?.height ?? 0);
-    await page.keyboard.press('Escape');
 
     // A window that is too low still reaches every control, by scrolling inside the box.
     await page.setViewportSize({ width: 1024, height: 320 });

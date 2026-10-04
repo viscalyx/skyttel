@@ -195,7 +195,7 @@ redigerings- och utkastlänkar återvänder till rätt synliga kartpanel;
 färger och höjd fungerar med den egna rullningsytan, och dess stängknapp
 täcker inte statusmeddelandets text. Samma monterade samtal,
 anslutning, utkast, dialog och oskickade formulär bevaras. Tomma smala
-kartor håller visningsreglagen ovanför startkortet i ett gemensamt
+kartor håller visningsreglagen och statusytorna i ett gemensamt
 rullningsflöde. En stabil plats för etikettinformation bryter den uppmätta
 växlingen mellan dold och synlig information som annars kan tömma sidan
 vid övergång till Lista; det synliga antalet dolda etiketter förblir aktuellt.

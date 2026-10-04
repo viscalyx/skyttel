@@ -156,7 +156,7 @@ async function household({
   async function open() {
     render(<Workspace />);
     await screen.findByRole('navigation', { name: 'Kartans verktyg' });
-    await screen.findByRole('button', { name: 'Stäng vägledningen' });
+    await waitFor(() => expect(screen.queryByText('Hushållets karta hämtas…')).toBeNull());
   }
   const tools = () => within(screen.getByRole('navigation', { name: 'Kartans verktyg' }));
   const microphone = () => tools().getByRole('button', { name: 'Prata med Skyttel' });
@@ -231,17 +231,15 @@ test('unavailable conversation remains operable on demand while an unsent map fo
   expect((await home.read()).draft.changes).toEqual([]);
 });
 
-test('canceling a guided conversation returns to its chosen entry and leaves guidance and data available', async () => {
+test('canceling a toolbar conversation returns to its chosen entry and preserves data', async () => {
   const home = await household();
   await home.open();
-  const guide = within(screen.getByRole('complementary', { name: 'Kom igång med kartan' }));
-  const chosen = guide.getByRole('button', { name: 'Skriv' });
+  const chosen = home.tools().getByRole('button', { name: 'Skriv till Skyttel' });
   await userEvent.click(chosen);
   const consent = await screen.findByRole('dialog', { name: 'Samtal med Skyttel' });
   expect(home.starts).toEqual([]);
   await userEvent.click(within(consent).getByRole('button', { name: 'Avbryt' }));
   expect(document.activeElement).toBe(chosen);
-  expect(screen.getByRole('complementary', { name: 'Kom igång med kartan' })).toBeTruthy();
   expect(home.media.getUserMedia).not.toHaveBeenCalled();
   await userEvent.click(chosen);
   await giveConversationConsent();

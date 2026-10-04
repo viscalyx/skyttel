@@ -96,19 +96,6 @@ test('the consent box opens next to the chosen button, on the side that has room
     await expect.element(tool(name)).toHaveFocus();
   }
 
-  // The welcome guide stands at the right edge: its buttons get the box on their left side.
-  const guide = page
-    .getByRole('complementary', { name: 'Kom igång med kartan' })
-    .getByRole('button', { name: 'Skriv' });
-  await guide.click();
-  await expect.element(box()).toBeVisible();
-  expect(rect(box()).right).toBeLessThanOrEqual(rect(guide).left);
-  expect(rect(guide).left - rect(box()).right).toBeLessThanOrEqual(32);
-  expect(rect(box()).bottom).toBeLessThanOrEqual(800);
-  expect(rect(box()).top).toBeGreaterThanOrEqual(0);
-  await box().getByRole('button', { name: 'Avbryt', exact: true }).click();
-  await expect.element(guide).toHaveFocus();
-
   expect(starts).toEqual([]);
 
   // The voice button from the map starts the conversation with the voice. No panel opens.
@@ -144,12 +131,6 @@ test('the consent box follows the toolbar when the window becomes narrow', async
   await expect.element(box()).toBeVisible();
   expect(rect(box()).left).toBeGreaterThanOrEqual(rect(tools()).right);
   // A narrower window with the toolbar still to the left keeps the box on the screen.
-  await box().getByRole('button', { name: 'Avbryt', exact: true }).click();
-  const guide = page
-    .getByRole('complementary', { name: 'Kom igång med kartan' })
-    .getByRole('button', { name: 'Skriv' });
-  await guide.click();
-  await expect.element(box()).toBeVisible();
   await page.viewport(800, 600);
   await expect.poll(() => rect(box()).right).toBeLessThanOrEqual(800);
   expect(rect(box()).left).toBeGreaterThanOrEqual(0);

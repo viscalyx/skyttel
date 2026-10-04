@@ -26,8 +26,9 @@ Om du är utsedd till installationens första administratör och ser
 Namnet ska ha 1–100 tecken. Vid ett oklart resultat väljer du
 **Kontrollera status**. Därefter kan du bjuda in de andra medlemmarna.
 
-Kartans vägledning erbjuder **Tala**, **Skriv** och **Öppna listan**.
-Du kan välja **Stäng vägledningen** och använda kartans verktyg direkt.
+Kartans verktyg erbjuder **Prata med Skyttel**, **Skriv till Skyttel** och
+**Lista**. **Information och hjälp** förklarar hur du börjar och finns
+även i det kompakta verktygsfältet på telefon.
 Tal börjar först när du själv startar rösten och har lämnat ditt
 [medgivande](text-assistant.md#medgivande).
 

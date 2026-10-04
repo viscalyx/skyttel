@@ -198,20 +198,8 @@
   }
 }
 
-.household-map.workspace-shell .workspace-guidance {
-  bottom: calc(var(--voice-height, 0px) + var(--feedback-height, 0px) + 36px);
-  max-height: calc(100dvh - var(--voice-height, 0px) - var(--feedback-height, 0px) - 140px);
-  overflow-y: auto;
-}
-
 @media (max-width: 700px) and (max-height: 450px) {
   .household-map.workspace-shell {
     --status-flow-top: 80px;
-  }
-  .household-map.workspace-shell .workspace-guidance {
-    position: absolute;
-    top: calc(100dvh + var(--voice-height, 0px) + 24px);
-    bottom: auto;
-    max-height: none;
   }
 }

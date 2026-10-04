@@ -129,11 +129,7 @@ test('TAL-10: Prata med Skyttel slår på och av mikrofonen utan att någon pane
     await expect(voiceBox(page)).toHaveCount(0);
     const off = await microphone.evaluate((button) => getComputedStyle(button).backgroundColor);
 
-    // The welcome guide's start with voice does what the button does.
-    await page
-      .getByRole('complementary', { name: 'Kom igång med kartan' })
-      .getByRole('button', { name: 'Tala', exact: true })
-      .click();
+    await microphone.click();
     await expect(consentBox(page)).toBeVisible();
     await page.evaluate(() => window.skyttelVoiceFixture.setMicrophone('hold'));
     await giveConversationConsent(page);

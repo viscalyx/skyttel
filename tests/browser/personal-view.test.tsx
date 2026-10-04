@@ -119,7 +119,6 @@ async function open() {
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page.getByRole('button', { name: 'Uppgifter för Lampan', exact: true }).click();
   await closePanels();
-  await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   await page.getByText('Ordna min vy', { exact: true }).click();
 }

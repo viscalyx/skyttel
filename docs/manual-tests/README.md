@@ -96,11 +96,12 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   mobilnavigering genom Lista med synligt återgångsfokus, återöppning av nya objekt,
   bevarade samband och typer samt fortsatt sökning medan ett förslag skickas.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
-  teman, läsbara hopplänkar och fokus, stängbar vägledning, samtalshjälp med
+  teman, läsbara hopplänkar och fokus, hjälp i det kompakta verktygsfältet,
+  samtalshjälp med
   tangentkombination, medgivande och leverantörens datavillkor, formulär på
   telefon samt laddning och återhämtning efter nätfel. Hjälpens långa text
   går att rulla på telefon. På en tom mobilkarta förblir visningsval,
-  vägledning och deras tangentbordsfokus nåbara, även med röstruta eller
+  verktyg och deras tangentbordsfokus nåbara, även med röstruta eller
   samtalsnotis.
 
 - [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
@@ -132,7 +133,7 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   definitioner, granskad sammanslagning med bilder samt ångring efter import.
 
 - [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
-  verktygsraden, vägledningen och snabblänken, avbruten start med bevarat
+  verktygsraden och snabblänken, avbruten start med bevarat
   fokus, start med röst eller text efter vald knapp, medgivande för besöket
   eller sparat per användare och hushåll på flera enheter samt tangentbord,
   pekskärm och placering vid verktygsraden. Sidan **Samtal med Skyttel** i
@@ -294,7 +295,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
 
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, avbryta extern inloggning, återhämta utgångna försök, börja
-  med kartans vägledning, hantera förlorad tillgång och länka inloggningssätt.
+  med kartans verktyg utan startdialoger, hantera förlorad tillgång och länka
+  inloggningssätt.
   Länkningens två steg visar aktuell verifiering, båda tjänsternas status
   och övergången till respektive tjänst.
   Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.

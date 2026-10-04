@@ -94,7 +94,7 @@ Skyttel arbetar sist”.
 
 **Steg:**
 
-1. Välj **Skriv** i kartans vägledning och **Godkänn och starta**.
+1. Välj **Skriv till Skyttel** i kartans verktyg och **Godkänn och starta**.
 2. Läs den tomma samtalstexten. Skriv **Vem betalar musiken?** och klicka
    på **Skicka**.
 3. Medan terminalen håller svaret: läs samtalstextens sista rad. Släpp

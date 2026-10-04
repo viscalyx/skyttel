@@ -124,7 +124,6 @@ test('camera focus includes previous direct neighbors and preserves work through
     { id: 'music', x: -4, y: -6, z: 3, version: 1 },
     { id: 'far', x: -60, y: 20, z: -40, version: 1 },
   ]);
-  await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
   const alex = page.getByRole('button', { name: 'Välj objekt: Alex', exact: true });
   const music = page.getByRole('button', { name: 'Välj objekt: Tonmoln', exact: true });
   const focus = page.getByRole('button', { name: 'Fokusera markering', exact: true });
@@ -523,7 +522,6 @@ test('panel placement has reversible keyboard and click controls with a reset an
 
 test('desktop panels reserve draft feedback and retain chosen positions across screen sizes', async () => {
   await open(1440);
-  await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
   const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
@@ -563,7 +561,6 @@ test.each([390, 250])(
   'wide short work at %i pixels keeps panel actions and draft feedback reachable',
   async (height) => {
     await open(1440);
-    await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
     await page.getByRole('button', { name: 'Lista', exact: true }).click();
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
     work.getByRole('button', { name: 'Flytta Lista och utkast', exact: true }).element().focus();

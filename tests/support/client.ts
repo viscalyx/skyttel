@@ -42,8 +42,6 @@ export async function closePanels(page: Page) {
 export async function openMap(page: Page) {
   await closePanels(page);
   await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
-  const guidance = page.getByRole('button', { name: 'Stäng vägledningen', exact: true });
-  if (await guidance.isVisible()) await guidance.click();
 }
 
 export async function openProfile(page: Page) {

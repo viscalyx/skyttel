@@ -15,8 +15,8 @@ förklarar att tal från långt tryck kan skickas efter släpp, medan ny
 inspelning stängs av direkt. Ett sparat medgivande för version 1 behöver
 godkännas på nytt. Samma medgivande
 gäller röst och text. Medgivanderutan **Samtal med Skyttel** visas när du
-väljer en samtalsknapp i verktygsraden, **Tala** eller **Skriv** i kartans
-vägledning eller snabblänken **Till samtalet med Skyttel**.
+väljer en samtalsknapp i verktygsraden eller snabblänken
+**Till samtalet med Skyttel**.
 **Information och hjälp** i verktygsraden förklarar röst, text, långt tryck,
 tangentkombinationen och hur uppgifterna behandlas.
 

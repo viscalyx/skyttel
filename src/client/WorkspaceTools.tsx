@@ -313,7 +313,7 @@ export function WorkspaceTools({
               type="button"
               title={label}
               aria-label={label}
-              data-secondary
+              data-secondary={target !== 'help' || undefined}
               aria-expanded={target === 'settings' ? undefined : utility === target}
               onClick={(event) => {
                 returnFocus.current = event.currentTarget;

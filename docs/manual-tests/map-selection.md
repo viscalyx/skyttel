@@ -17,7 +17,7 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
 2. Skapa personerna Lo Exempel, Kim Exempel och Alex Exempel i Lista.
    Lägg till Lo Exempel → Använder → Kim Exempel och Kim Exempel →
    Använder → Alex Exempel. Uppgifterna är syntetiska provdata.
-3. Välj Stäng panelerna med kryssen och stäng vägledningen om den täcker kartan.
+3. Stäng panelerna med kryssen.
    Följ [arbetsytornas ingångar](README.md#öppna-arbetsytor) för Lista.
 
 ## Markering och kartgester
