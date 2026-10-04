@@ -430,27 +430,6 @@ export function spatialScene(
       onMotion();
       return true;
     },
-    reveal(ids: string[]) {
-      const values = ids.flatMap((id) =>
-        nodes.has(id) && locations.has(id) ? [locations.get(id) as Vector3] : [],
-      );
-      if (!values.length) return false;
-      if (!canvas.clientWidth || !canvas.clientHeight) return false;
-      needsFrame = false;
-      camera.aspect = canvas.clientWidth / canvas.clientHeight;
-      camera.updateProjectionMatrix();
-      const center = new Box3().setFromPoints(values).getCenter(new Vector3());
-      const extent = Math.max(5, ...values.map((point) => point.distanceTo(center) + 2));
-      const direction = camera.position.clone().sub(controls.target).normalize();
-      controls.target.copy(center);
-      camera.position
-        .copy(center)
-        .add(direction.multiplyScalar((extent * 2.6) / Math.min(camera.aspect, 1)));
-      controls.update();
-      draw();
-      onMotion();
-      return true;
-    },
     configure(value: ViewSettings, theme: 'light' | 'dark' = 'dark') {
       settings = value;
       stars.visible = value.stars;

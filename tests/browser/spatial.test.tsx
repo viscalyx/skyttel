@@ -407,12 +407,13 @@ test('personal placement buttons move the selected object in three dimensions wi
   expect(second[0].z).toBe(first[0].z);
 });
 
+// CDP dispatches native touch events directly. Touch device emulation would also
+// change pointer media queries in the shared runner page after this file finishes.
 test('native touch height gestures retain either release order and wait for all fingers before another move', async () => {
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await expect.element(lo).toBeVisible();
   const session = cdp();
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const location = () => {
     const rect = lo.element().getBoundingClientRect();
     const offset = window.frameElement?.getBoundingClientRect();
@@ -476,7 +477,6 @@ test('native touch height gestures retain either release order and wait for all 
   await send('touchMove', [{ id: 1, x: start.x + 30, y: start.y }]);
   await send('touchCancel', []);
   expect(positions()).toEqual(saved);
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
 });
 
 test('a moving height anchor restores the object and hands the stable pair to pan and pinch', async () => {
@@ -495,7 +495,6 @@ test('a moving height anchor restores the object and hands the stable pair to pa
   };
   const anchor = { id: 2, x: driver.x + 100, y: driver.y };
   const session = cdp();
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const touch = (
     type: 'touchStart' | 'touchMove' | 'touchEnd',
     touchPoints: { id: number; x: number; y: number }[],
@@ -533,7 +532,6 @@ test('a moving height anchor restores the object and hands the stable pair to pa
   expect(lo.element().getBoundingClientRect().y).toBeCloseTo(stopped.y);
   await touch('touchEnd', []);
   expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
 });
 
 test('personal display controls retain corner choices, independent pan inversions and all movement alternatives', async () => {
@@ -685,7 +683,6 @@ test('native empty-space mouse, wheel and touch navigation changes the camera wi
       modifiers,
     });
   }
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const touch = (
     type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel',
     touchPoints: { id: number; x: number; y: number }[],
@@ -711,7 +708,6 @@ test('native empty-space mouse, wheel and touch navigation changes the camera wi
     { id: 3, x: start.x + 170, y: start.y + 20 },
   ]);
   await touch('touchCancel', []);
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
   expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
   window.dispatchEvent(new Event('blur'));
 });

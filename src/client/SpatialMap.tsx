@@ -14,6 +14,7 @@ import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { MapNavigation } from './MapNavigation.js';
+import type { MapRevealRequest } from './map-display.js';
 import { mapConnections, proposalKind } from './map-presentation.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
 import { relationshipLabel } from './RelationshipEditor.js';
@@ -106,7 +107,7 @@ export function SpatialMap({
   onReset: () => void;
   onRemove: (object: MapObject) => void;
   personal?: ReturnType<typeof usePersonalView>;
-  revealRequest?: { id: string; objectIds: string[]; relationshipId?: string };
+  revealRequest?: MapRevealRequest;
   focusRequest?: { id: string; objectIds: string[] };
   onFocusSelection?: () => void;
   onShowOverview?: () => void;
@@ -176,7 +177,7 @@ export function SpatialMap({
     if (!bounds || !root) return;
     const boxes = [
       ...root.querySelectorAll(
-        '.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions',
+        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .workspace-window[data-active="true"]' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -194,7 +195,7 @@ export function SpatialMap({
     setReservedBoxes((previous) =>
       JSON.stringify(previous) === JSON.stringify(boxes) ? previous : boxes,
     );
-  }, []);
+  }, [revealRequest]);
   useLayoutEffect(measureReservedBoxes);
   const [labelSizes, setLabelSizes] = useState(
     new Map<string, { width: number; height: number }>(),
@@ -391,38 +392,7 @@ export function SpatialMap({
     }
     previousLabels.current = preferences.allLabels;
   }, [preferences, activated, active, reducedMotion, theme]);
-  useEffect(() => {
-    if (
-      revealRequest &&
-      revealRequest.id !== completedRevealId &&
-      active &&
-      activated &&
-      personalReady &&
-      !contextLost &&
-      revealRequest.objectIds.every((id) => objects.has(id)) &&
-      (!revealRequest.relationshipId || relationships.has(revealRequest.relationshipId))
-    ) {
-      if (navigationOpen) {
-        // Framing uses the committed canvas dimensions after navigation closes.
-        setNavigationOpen(false);
-        onNavigationChange?.(false);
-        return;
-      }
-      if (scene.current?.reveal(revealRequest.objectIds)) setCompletedRevealId(revealRequest.id);
-    }
-  }, [
-    revealRequest,
-    completedRevealId,
-    navigationOpen,
-    active,
-    activated,
-    personalReady,
-    contextLost,
-    objects,
-    relationships,
-    onNavigationChange,
-  ]);
-  const focusObjects = useCallback((ids: string[]) => {
+  const focusObjects = useCallback((ids: string[], reveal?: MapRevealRequest) => {
     const element = canvas.current;
     if (!element) return false;
     const bounds = element.getBoundingClientRect();
@@ -432,7 +402,7 @@ export function SpatialMap({
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        '.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions',
+        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .workspace-window[data-active="true"]' : ''}`,
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
@@ -490,15 +460,57 @@ export function SpatialMap({
     // Keep a positive fitting area while protecting their full pointer box.
     const marginX = Math.min(64, Math.max(24, width / 4), (width - 1) / 2);
     const marginY = Math.min(64, Math.max(24, height / 4), (height - 1) / 2);
+    // Leave a row above the endpoints for the selected relationship's label.
+    const labelRow = reveal?.relationshipId
+      ? Math.min(35, Math.max(0, height - 2 * marginY - 1))
+      : 0;
     return (
       scene.current?.focus(ids, {
         left: area.left + marginX,
         right: area.right - marginX,
-        top: area.top + marginY,
+        top: area.top + marginY + labelRow,
         bottom: area.bottom - marginY,
       }) ?? false
     );
   }, []);
+  useEffect(() => {
+    if (
+      revealRequest &&
+      revealRequest.id !== completedRevealId &&
+      active &&
+      activated &&
+      personalReady &&
+      !contextLost &&
+      revealRequest.objectIds.every((id) => objects.has(id)) &&
+      (!revealRequest.relationshipId || relationships.has(revealRequest.relationshipId))
+    ) {
+      if (navigationOpen) {
+        // Framing uses the committed canvas dimensions after navigation closes.
+        setNavigationOpen(false);
+        onNavigationChange?.(false);
+        return;
+      }
+      // Panel placement commits in layout effects. Measure its final rectangle
+      // on the next frame before reserving clearance for the assistant's target.
+      const frame = requestAnimationFrame(() => {
+        if (focusObjects(revealRequest.objectIds, revealRequest))
+          setCompletedRevealId(revealRequest.id);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [
+    revealRequest,
+    completedRevealId,
+    navigationOpen,
+    active,
+    activated,
+    personalReady,
+    contextLost,
+    objects,
+    relationships,
+    onNavigationChange,
+    focusObjects,
+  ]);
   useEffect(() => {
     if (
       focusRequest &&

@@ -871,6 +871,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
         () => live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
       )
       .toBe(1);
+    expect(lastToolResult(model.requests[1])).toMatchObject({ displayed: true });
     // Lose the automatic check before it reaches the server, preserving the
     // registered original attempt across restart.
     await page.route('**/text-assistant/*/recover', (route) => route.abort());
