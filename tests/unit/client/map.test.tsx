@@ -664,9 +664,18 @@ test('a stale draft is blocked until refreshed, and a lost proposal is recovered
   await open();
   await add();
   await client.json(`${path}/discard`, { version: 1 });
+  let finishOperationsRead!: () => void;
+  const operationsRead = new Promise<void>((resolve) => {
+    finishOperationsRead = resolve;
+  });
+  beforeOperationsRead = () => operationsRead;
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('Inget sparades');
-  await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
+  const refresh = screen.getByRole('button', { name: 'Hämta aktuellt underlag' });
+  expect((refresh as HTMLButtonElement).disabled).toBe(true);
+  finishOperationsRead();
+  await waitFor(() => expect((refresh as HTMLButtonElement).disabled).toBe(false));
+  await userEvent.click(refresh);
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Robin Exempel');
