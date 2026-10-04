@@ -16,6 +16,7 @@ let client: ReturnType<typeof fixture.client>;
 let householdId: string;
 let path: string;
 let failRead = false;
+let failMapRead = false;
 let loseResponse = '';
 let deny = false;
 let preventSave = false;
@@ -43,6 +44,7 @@ beforeEach(async () => {
     .id;
   path = `/api/households/${householdId}/map`;
   failRead = false;
+  failMapRead = false;
   loseResponse = '';
   deny = false;
   preventSave = false;
@@ -53,6 +55,8 @@ beforeEach(async () => {
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     if (deny) return Response.json({ error: 'forbidden' }, { status: 403 });
     if (failRead && init?.method === 'GET') throw new Error('Synthetic disconnection');
+    if (failMapRead && init?.method === 'GET' && (url === path || url.startsWith(`${path}?`)))
+      throw new Error('Synthetic map refresh failure');
     if (preventSave && url.endsWith('/save')) throw new Error('Synthetic unsent save');
     if (beforeOperationsRead && init?.method === 'GET' && url.endsWith('/operations')) {
       const callback = beforeOperationsRead;
@@ -84,11 +88,12 @@ afterEach(() => {
 });
 
 async function open() {
-  render(<HouseholdMap householdId={householdId} />);
+  const view = render(<HouseholdMap householdId={householdId} />);
   const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
   await userEvent.click(tools.getByLabelText('Lista', { selector: 'button' }));
   const list = within(await screen.findByRole('region', { name: 'Lista och utkast' }));
   await list.findByText('Nytt objekt', { selector: 'button' });
+  return view;
 }
 async function add(name = 'Lo Exempel') {
   await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
@@ -179,10 +184,13 @@ test('current status distinguishes a previous verified receipt from newly staged
   await add('Lo Exempel');
   await save();
   await add('Blå cykeln');
-  const status = screen.getByRole('region', { name: 'Utkastets återkoppling' });
-  expect(status.textContent).toContain('1 förslag · privat utkast');
-  expect(status.textContent).toContain('Tidigare sparande · kvitto bekräftat');
-  expect(screen.getByRole('region', { name: 'Förslag i kartan' })).toBeTruthy();
+  const status = screen.getByRole('region', { name: 'Kartans status' });
+  expect(status.textContent).not.toContain('förslag · privat utkast');
+  expect(status.textContent).not.toContain('Tidigare sparande');
+  expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
+    'Blå cykeln',
+  );
+  expect(screen.getByRole('region', { name: 'Teckenförklaring i kartan' })).toBeTruthy();
   const state: MapState = await (await client.request(path)).json();
   expect(state.objects.map((object) => object.name)).toEqual(['Lo Exempel']);
   expect(state.draft.changes.map((change) => change.after?.name)).toEqual(['Blå cykeln']);
@@ -637,10 +645,10 @@ test.each([
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('Utfallet är okänt');
   expect(screen.getByRole('status').textContent).not.toContain('Sparat:');
-  expect(screen.getByRole('region', { name: 'Utkastets återkoppling' }).textContent).toContain(
+  expect(screen.getByRole('region', { name: 'Kartans status' }).textContent).toContain(
     'Sparutfall okänt',
   );
-  expect(screen.getByRole('region', { name: 'Förslag i kartan' })).toBeTruthy();
+  expect(screen.getByRole('region', { name: 'Teckenförklaring i kartan' })).toBeTruthy();
   expect((screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled).toBe(
     true,
   );
@@ -656,9 +664,18 @@ test('a stale draft is blocked until refreshed, and a lost proposal is recovered
   await open();
   await add();
   await client.json(`${path}/discard`, { version: 1 });
+  let finishOperationsRead!: () => void;
+  const operationsRead = new Promise<void>((resolve) => {
+    finishOperationsRead = resolve;
+  });
+  beforeOperationsRead = () => operationsRead;
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('Inget sparades');
-  await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
+  const refresh = screen.getByRole('button', { name: 'Hämta aktuellt underlag' });
+  expect((refresh as HTMLButtonElement).disabled).toBe(true);
+  finishOperationsRead();
+  await waitFor(() => expect((refresh as HTMLButtonElement).disabled).toBe(false));
+  await userEvent.click(refresh);
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Robin Exempel');
@@ -690,6 +707,53 @@ test('revoked access removes map contents on a refused operation', async () => {
   expect(screen.queryByRole('list', { name: 'Objekt' })).toBeNull();
 });
 
+test('refresh recovery confirms an unknown save before a failed map read and retains its receipt', async () => {
+  await open();
+  await add();
+  loseResponse = '/save';
+  await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
+  const status = screen.getByRole('region', { name: 'Kartans status' });
+  await waitFor(() => expect(status.textContent).toContain('Sparutfall okänt'));
+  loseResponse = '';
+  failMapRead = true;
+  await userEvent.click(within(status).getByRole('button', { name: 'Hämta aktuellt underlag' }));
+  await waitFor(() => expect(status.textContent).toContain('Utkastet är sparat'));
+  await waitFor(() =>
+    expect(within(status).getByRole('alert').textContent).toContain('sparade enligt kvittot'),
+  );
+  expect(status.textContent).not.toContain('Sparutfall okänt');
+  expect(within(status).queryByRole('button', { name: 'Hämta samma kvitto igen' })).toBeNull();
+  failMapRead = false;
+  await userEvent.click(within(status).getByRole('button', { name: 'Hämta aktuellt underlag' }));
+  await waitFor(() => expect(within(status).queryByRole('alert')).toBeNull());
+  expect(screen.getByRole('region', { name: 'Mina sparförsök' }).textContent).toContain(
+    'Genomfört',
+  );
+});
+
+test('Settings retains same-operation recovery and persistent refresh errors for a map save', async () => {
+  const view = await open();
+  await add();
+  loseResponse = '/save';
+  await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
+  await screen.findByText(/Sparutfall okänt/);
+  view.rerender(<HouseholdMap householdId={householdId} active={false} />);
+  const feedback = screen.getByRole('region', { name: 'Utkastets återkoppling' });
+  expect(feedback.textContent).toContain('Sparutfall okänt');
+  loseResponse = '';
+  failMapRead = true;
+  await userEvent.click(within(feedback).getByRole('button', { name: 'Hämta samma kvitto igen' }));
+  await waitFor(() => expect(feedback.textContent).toContain('Sparat · kvitto bekräftat'));
+  await waitFor(() =>
+    expect(within(feedback).getByRole('alert').textContent).toContain('sparade enligt kvittot'),
+  );
+  expect(feedback.textContent).not.toContain('Sparutfall okänt');
+  failMapRead = false;
+  await userEvent.click(within(feedback).getByRole('button', { name: 'Hämta aktuellt underlag' }));
+  await waitFor(() => expect(within(feedback).queryByRole('alert')).toBeNull());
+  expect(feedback.textContent).toContain('Inga osparade förslag');
+});
+
 test('a confirmed receipt remains successful when refreshing the map fails', async () => {
   await open();
   await add();
@@ -697,10 +761,10 @@ test('a confirmed receipt remains successful when refreshing the map fails', asy
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   expect((await screen.findByRole('alert')).textContent).toContain('sparade enligt kvittot');
   expect(screen.getByRole('status').textContent).toContain('Sparat: Lo Exempel');
-  expect(screen.getByRole('region', { name: 'Utkastets återkoppling' }).textContent).toContain(
-    'Sparat · kvitto bekräftat',
+  expect(screen.getByRole('region', { name: 'Kartans status' }).textContent).toContain(
+    'Utkastet är sparat',
   );
-  expect(screen.getByRole('region', { name: 'Utkastets återkoppling' }).textContent).not.toContain(
+  expect(screen.getByRole('region', { name: 'Kartans status' }).textContent).not.toContain(
     'Sparutfall okänt',
   );
   expect(screen.queryByRole('button', { name: 'Hämta samma kvitto igen' })).toBeNull();
@@ -1195,17 +1259,17 @@ test('view changes retain unsent object text and filters can clear without chang
   await userEvent.clear(screen.getByLabelText('Beskrivning'));
   await userEvent.type(screen.getByLabelText('Beskrivning'), 'Oskickad vytext');
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng arbetsytan' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lo Rymdprov' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lista och utkast' }));
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Uppgifter för Lo Rymdprov' }));
   expect((screen.getByLabelText('Beskrivning') as HTMLTextAreaElement).value).toBe(
     'Oskickad vytext',
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng arbetsytan' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lo Rymdprov' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lista och utkast' }));
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
-  await userEvent.selectOptions(
-    screen.getByLabelText(/^Öppna paneler/),
-    screen.getByRole('option', { name: 'Lo Rymdprov' }),
-  );
+  await userEvent.click(screen.getByRole('button', { name: 'Uppgifter för Lo Rymdprov' }));
   await userEvent.click(screen.getByRole('button', { name: 'Stäng utan att skicka texten' }));
   await userEvent.click(screen.getByRole('button', { name: 'Redigera Lo Rymdprov' }));
   await userEvent.click(screen.getByRole('button', { name: 'Visa objektets kopplingar' }));

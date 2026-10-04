@@ -99,7 +99,9 @@ export function SaveOperations({
 }) {
   return (
     <section aria-labelledby="save-operations-title" className="draft-review">
-      <h2 id="save-operations-title">Mina sparförsök</h2>
+      <h2 id="save-operations-title" tabIndex={-1}>
+        Mina sparförsök
+      </h2>
       <p>Dina väntande och senaste sparförsök i hushållet, även från andra enheter.</p>
       <details>
         <summary>Tidigare sparförsök</summary>

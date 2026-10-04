@@ -98,11 +98,13 @@ export function VoiceStatusAnnouncements({
   microphoneButton,
   textViewOpen = false,
   microphoneOffExplained = false,
+  announceSaved = true,
 }: {
   conversation: Pick<Conversation, 'voice' | 'working'> & Partial<Pick<Conversation, 'session'>>;
   microphoneButton?: () => HTMLElement | null;
   textViewOpen?: boolean;
   microphoneOffExplained?: boolean;
+  announceSaved?: boolean;
 }) {
   const { voice } = conversation;
   const status = voiceBoxStatus(voice, conversation.working);
@@ -132,13 +134,13 @@ export function VoiceStatusAnnouncements({
       text = 'Skyttel arbetar';
     } else if (shown === 'saved' && announcedSave.current !== voice.savedId) {
       announcedSave.current = voice.savedId ?? '';
-      text = 'Sparat';
+      text = announceSaved ? 'Sparat' : '';
     } else if (!on && !shown && owesOff.current) {
       owesOff.current = false;
       text = saysState || microphoneOffExplained ? '' : 'Mikrofonen är av';
     }
     if (text) setAnnouncement(({ count }) => ({ count: count + 1, text }));
-  }, [on, shown, voice.savedId, working, textViewOpen, microphoneOffExplained]);
+  }, [on, shown, voice.savedId, working, textViewOpen, microphoneOffExplained, announceSaved]);
   return (
     <>
       <p className="voice-announcement" aria-live="polite" aria-atomic="true">
@@ -209,10 +211,10 @@ export function VoiceBox({
           {status.id === 'saved' && (
             <svg className="voice-saved" viewBox="0 0 24 24" aria-hidden="true">
               <path
-                d="m5 12 4 4L19 6"
+                d="m5 12 5 5 9-10"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="3"
+                strokeWidth="2.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />

@@ -2,12 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState, ObjectType, RelationshipType, SaveReceipt } from '../../src/shared/map.js';
 import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
-import { activatePanel, openSettings, openWorkspace, signIn } from '../support/client.js';
+import { signIn, utilityButton } from '../support/client.js';
 import {
   chooseConversationVoice,
   microphoneButton,
   openConversationDraft,
-  openConversationReceipts,
   openConversationText,
   startConversationWithText,
   turnMicrophoneOn,
@@ -28,6 +27,18 @@ function required<T>(value: T | undefined): T {
   if (value === undefined)
     throw new Error('The actual response must contain the requested family value');
   return value;
+}
+
+// Retained free panels can cover the toolbar when the conversation grows.
+// Navigate with the real toolbar buttons' keyboard actions without closing work.
+async function openWorkspace(page: Page) {
+  await (await utilityButton(page, 'Lista')).press('Enter');
+}
+
+async function activatePanel(page: Page, title: string) {
+  await openWorkspace(page);
+  await page.getByRole('button', { name: `Uppgifter för ${title}`, exact: true }).click();
+  await expect(page.getByRole('region', { name: title, exact: true })).toBeVisible();
 }
 
 async function loseGraphics(page: Page) {
@@ -331,9 +342,9 @@ for (const mode of ['voice', 'text'] as const) {
       const refreshedMap = await correctedMap;
       expect(refreshedMap.status()).toBe(200);
       await refreshedMap.finished();
-      await expect(page.locator('.workspace-feedback').getByRole('status')).toHaveText(
-        'Förslaget finns i ditt privata utkast. Kartan är inte ändrad.',
-      );
+      await expect(
+        page.getByRole('region', { name: 'Lista och utkast' }).getByRole('status'),
+      ).toHaveText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
       await expect(subscription).not.toBeVisible();
       await openWorkspace(page);
       await objects
@@ -372,7 +383,8 @@ for (const mode of ['voice', 'text'] as const) {
       const dialogue = assistant.getByRole('log', { name: 'Samtalstext' });
       const dialogueBeforeSettings = await dialogue.innerText();
       await message.fill('Oskickat i samtalet');
-      await openSettings(page);
+      const settings = await utilityButton(page, 'Inställningar');
+      await settings.press('Enter');
       await expect(
         page.getByRole('heading', { level: 1, name: 'Inställningar', exact: true }),
       ).toBeFocused();
@@ -459,10 +471,16 @@ for (const mode of ['voice', 'text'] as const) {
       await message.fill('Spara hela utkastet nu.');
       await assistant.getByRole('button', { name: 'Skicka', exact: true }).click();
       await expect.poll(async () => (await history()).length).toBe(1);
-      await expect(page.getByRole('region', { name: 'Utkastets återkoppling' })).toContainText(
-        'Sparat · kvitto bekräftat',
+      await expect(assistant.getByRole('region', { name: 'Utkastets återkoppling' })).toHaveCount(
+        0,
       );
-      const savedReceipts = await openConversationReceipts(page);
+      await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
+        'Utkastet är sparat',
+      );
+      await (await utilityButton(page, 'Utkast och historik')).press('Enter');
+      const savedReceipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
+      await savedReceipts.getByText('Tidigare sparförsök', { exact: true }).click();
+      await expect(savedReceipts).toBeVisible();
       await savedReceipts.getByText('Visa kvittot', { exact: true }).first().click();
       await expect(savedReceipts).toContainText('Familjens Molnmusik');
       await activatePanel(page, 'Kim Exempel');

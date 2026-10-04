@@ -275,7 +275,9 @@ medgivande utan nytt sparande” och samma titel med tillägget
    **Återkalla och avsluta samtalet**.
 3. Med ett normalt svar: kräv avstängd röst, återkallat medgivande och
    ett verkligt kvitto. Gå tillbaka till kartan. Ingen gammal kontrollnotis
-   eller felnotis ska ligga kvar.
+   eller felnotis ska ligga kvar. Öppna **Utkast och historik** och välj
+   **Tidigare sparförsök** i **Mina sparförsök**. Kontrollera att samma ID
+   har status **Genomfört**.
 4. Upprepa från ett nytt väntande försök. Bryt nu kontakten efter att
    bekräftelsens `/conversation-consent/revoke` skickats men innan dess
    svar når sidan. Ta bort nätblockeringen och återställ kontakten.
@@ -289,7 +291,7 @@ medgivande utan nytt sparande” och samma titel med tillägget
 7. Öppna textsamtalet och ge medgivandet för det nya samtalet. Den
    oskickade texten finns kvar. Efter ett tappat återkallandesvar står
    kontrollens förklaring en gång i samtalstexten. Efter ett normalt svar
-   är det gamla samtalet tomt och kvittot finns i utkastets återkoppling.
+   är det gamla samtalet tomt och kvittot finns i **Mina sparförsök**.
 
 **Förväntat resultat:**
 

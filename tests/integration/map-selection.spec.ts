@@ -1,6 +1,12 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import {
+  activatePanel,
+  createHousehold,
+  openMap,
+  openWorkspace,
+  signIn,
+} from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 async function arrange(page: Page, origin: string) {
@@ -181,7 +187,7 @@ test('MARKERING-03: text selection and detail controls retain work across deskto
         `Oskickat ${width}`,
       );
       await expect(page.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(2);
-      await page.getByLabel(/^Öppna paneler/).selectOption({ label: 'Lista och utkast' });
+      await activatePanel(page, 'Lista och utkast');
       await expect(details).toHaveAttribute('aria-pressed', width > 700 ? 'true' : 'false');
       await details.click();
       await panel.getByRole('button', { name: 'Stäng Kim Exempel', exact: true }).click();
@@ -264,10 +270,10 @@ test('MARKERING-04: new detail panels open beside their object and retain manual
     ).toBeLessThanOrEqual(40);
     expect(object.y + object.height / 2).toBeGreaterThanOrEqual(box.y - 32);
     expect(object.y + object.height / 2).toBeLessThanOrEqual(box.y + box.height + 32);
-    expect(box.x).toBeGreaterThanOrEqual(112);
-    expect(box.y).toBeGreaterThanOrEqual(110);
-    expect(box.x + box.width).toBeLessThanOrEqual(1416);
-    expect(box.y + box.height).toBeLessThanOrEqual(900);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(1440);
+    expect(box.y + box.height).toBeLessThanOrEqual(1000);
     const handle = panel.getByRole('button', { name: 'Flytta Lo Exempel', exact: true });
     await handle.focus();
     await page.keyboard.press('ArrowUp');
@@ -283,13 +289,13 @@ test('MARKERING-04: new detail panels open beside their object and retain manual
         const fitted = await panel.boundingBox();
         return (fitted?.x ?? 0) + (fitted?.width ?? 0);
       })
-      .toBeLessThanOrEqual(876);
+      .toBeLessThanOrEqual(900);
     await expect
       .poll(async () => {
         const fitted = await panel.boundingBox();
         return (fitted?.y ?? 0) + (fitted?.height ?? 0);
       })
-      .toBeLessThanOrEqual(600);
+      .toBeLessThanOrEqual(700);
     await page.setViewportSize({ width: 1440, height: 1000 });
     await expect.poll(() => panel.boundingBox()).toEqual(moved);
   } finally {

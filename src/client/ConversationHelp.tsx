@@ -1,9 +1,11 @@
+import { FullMapLegend } from './MapLegend.js';
 import { microphoneShortcut } from './use-microphone-press.js';
 
 /** Help for the same conversation's voice and text controls. */
 export function ConversationHelp() {
   return (
     <>
+      <FullMapLegend />
       <h3>Röst och text i samma samtal</h3>
       <p>
         Prata med Skyttel slår på och av mikrofonen. Skriv till Skyttel öppnar och stänger textvyn
@@ -65,8 +67,8 @@ export function ConversationHelp() {
         hushållet.
       </p>
       <p>
-        Kartan kan också styras med tangentbord genom Navigera. Stäng arbetsytan för att återgå till
-        kartan; din oskickade text finns kvar.
+        Kartan kan också styras med tangentbord genom Navigera. Stäng panelerna med krysset för att
+        återgå till kartan; din oskickade text finns kvar.
       </p>
     </>
   );

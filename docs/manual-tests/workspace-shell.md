@@ -1,6 +1,6 @@
 # Manuella testfall för kartans arbetsyta
 
-Fallen omfattar kartans verktyg, teman, vägledning, samtalshjälp och
+Fallen omfattar kartans verktyg, teman, frivillig hjälp, samtalshjälp och
 återhämtning.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
@@ -44,11 +44,11 @@ closed”.
 
 **Steg:**
 
-1. Öppna hushållet. Kontrollera kartan och beskedet **Din karta börjar här**.
+1. Öppna hushållet. Kontrollera att den tomma kartan öppnas utan startdialoger.
 2. Välj **Visa verktygens namn**, sedan **Lista** och **Nytt objekt**.
    Ange namnet **Cykeln**.
-3. Välj **Stäng arbetsytan**. Öppna **Lista** igen, välj
-   **Nytt objekt** i panelväljaren och kontrollera namnet.
+3. Stäng panelerna med kryssen. Öppna **Lista** igen, välj **Fortsätt: Cykeln**
+   under **Påbörjade objekt** och kontrollera namnet.
 4. Välj **Lägg i mitt utkast**, sedan **Spara hela utkastet**.
 5. Läs sparbeskedet och ladda om sidan.
 
@@ -57,7 +57,7 @@ closed”.
 - Verktygen har begripliga namn. Stängning återför fokus till **Lista**.
 - Oskickad text finns kvar efter stängning utan att sparas automatiskt.
 - Det verifierade sparbeskedet anger Cykeln, som finns i kartan efter
-  omladdning.
+  omladdning. Ingen startdialog visas på kartan med det sparade objektet.
 
 ### YTA-02: temaval och enhetens inställning
 
@@ -106,25 +106,24 @@ without graphics”.
 
 **Steg:**
 
-1. Välj **Stäng vägledningen**. Expandera verktygen och öppna
+1. Öppna direkt från de hopfällda verktygen
    **Information och hjälp**. Läs instruktionerna och tryck Escape.
 2. Välj **Lista**, **Nytt objekt** och skriv **Min cykel**. Kontrollera att
    fält och knappen för att lägga i utkastet går att nå.
-3. Stäng arbetsytan och välj **Skriv till Skyttel**. Ge medgivande med
-   **Godkänn och starta** om rutan visas. Kontrollera att samtalsytan går
+3. Stäng panelerna med kryssen och välj **Skriv till Skyttel**. Ge medgivande
+   med **Godkänn och starta** om rutan visas. Kontrollera att samtalsytan går
    att nå utan mikrofon.
 4. Upprepa med förstoring och tangentbord; använd hopplänkarna till
    formulär och samtal före kartgrafiken.
 5. Öppna **Sök i kartan** och **Utkast och historik** från de expanderade
-   verktygen. Stäng arbetsytan efter varje val och kontrollera fokus.
+   verktygen. Stäng panelerna med kryssen efter varje val och kontrollera fokus.
 6. Öppna hjälpen igen och fäll ihop verktygen. Flytta fokus till hjälpen
    och tryck Escape. Kontrollera att fokus är kvar på en synlig knapp.
 
 **Förväntat resultat:**
 
-- Vägledningen försvinner. Hjälpens rubrik får fokus; Escape återför
-  fokus till hjälpknappen eller den synliga knappen för att expandera
-  verktygen om hjälpknappen har dolts.
+- Hjälpens rubrik får fokus; Escape återför fokus till hjälpknappen,
+  även efter att verktygen har fällts ihop.
 - Formulär och samtal går att nå utan att välja något grafiskt objekt.
 - Innehållet är läsbart och kontrollerna nåbara även med förstoring.
 - Fokus återgår till en synlig verktygsknapp. Täckta kartkontroller går
@@ -154,6 +153,10 @@ Tal som väntar under starten provas i
 
 1. Nå **Information och hjälp** med Tab och öppna med Enter. Läs rubriken
    och delarna om samma samtal, långt tryck, medgivande, OpenAI och formulär.
+   Läs också Kartans teckenförklaring: förslagens färger, heldragna nya
+   samband, streckade gamla samband, markeringsringen och punktade
+   etikettkopplingar. Skilj höjdhjälpens streck från gamla samband.
+   Kontrollera förklaringen av tre sekunders sparbesked och kvitton.
    Kontrollera att läsning inte startar mikrofonen eller frågar om medgivande.
 2. Läs att släpp stoppar ny inspelning direkt och att redan inspelat tal
    från starten kan skickas efter släpp. Läs tangentkombinationen för din
@@ -163,9 +166,9 @@ Tal som väntar under starten provas i
    inte garanterar behandling enbart i EU eller omedelbar radering av alla
    kopior.
    Nå **Läs OpenAI:s datavillkor** med Tab och kontrollera länkens namn.
-4. Stäng med Escape. Välj **Lista**, **Nytt objekt**, ange **Lo Exempel**
-   och välj **Lägg i mitt utkast** utan att starta något samtal.
-   Välj **Stäng arbetsytan**.
+4. Stäng med Escape. Välj **Lista**, **Nytt objekt**, ange **Lo Exempel** och
+   välj **Lägg i mitt utkast** utan att starta något samtal. Stäng panelerna med
+   kryssen.
 5. Tryck tangentkombinationen kort. I medgivanderutan, markera
    **Fråga inte igen för det här hushållet** och välj **Godkänn och starta**.
    Tryck kombinationen kort igen för att stänga av mikrofonen.
@@ -212,13 +215,14 @@ Att fälla ihop verktygen medan hjälpen är öppen täcks även av YTA-03.
 
 **Steg:**
 
-1. Expandera verktygen och öppna **Information och hjälp** med tangentbord.
-   Kontrollera fokus på rubriken. Rulla till slutet, med End på dator
+1. Öppna **Information och hjälp** direkt från de hopfällda verktygen med
+   tangentbord. Kontrollera fokus på rubriken. Rulla till slutet, med End på dator
    eller genom hjälpens text på pekskärm. Läs formuläralternativet.
 2. Nå länken till datavillkoren och stängknappen med Tab. Kontrollera
    att det fokuserade innehållet syns och att hjälpen ryms i sidled.
-3. Välj **Dölj verktygens namn** medan hjälpen är öppen. Kräv att knappen
-   går att aktivera och att hjälpen fortfarande går att läsa.
+3. Välj **Visa verktygens namn** och sedan **Dölj verktygens namn** medan
+   hjälpen är öppen. Kräv att knapparna går att aktivera och att hjälpen
+   fortfarande går att läsa.
 4. Stäng med Escape. Öppna igen, rulla och använd **Stäng verktyget**.
 
 **Förväntat resultat:**
@@ -227,8 +231,8 @@ Att fälla ihop verktygen medan hjälpen är öppen täcks även av YTA-03.
   hjälpen och täcker inte knappen som fäller ihop verktygen.
 - Rubriker, stycken, datavillkorslänk och stängknapp går att nå med
   tangentbord. Ingen rullning i sidled behövs. Mikrofonen startar inte.
-- Stängning återför fokus till hjälpknappen eller den synliga knappen
-  för att expandera verktygen när hjälpknappen har dolts.
+- Hjälpknappen syns även när verktygen är hopfällda. Stängning återför
+  fokus till hjälpknappen.
 
 **Tillgänglighetsbedömning för samtalshjälpen:**
 
@@ -269,7 +273,7 @@ action”.
 
 - Verktygen och laddningsbeskedet finns medan kartan hämtas.
 - Felet erbjuder en nästa handling. Efter nytt försök visas den tomma
-  kartans vägledning.
+  kartan utan startdialoger.
 
 Förlorad tillgång och avslutad mikrofon verifieras i
 [bevarat hushållsarbete](household-work.md#arbete-03-återkallad-tillgång-avvecklar-dolt-arbete).
@@ -290,19 +294,21 @@ testfallet “YTA-05: save results remain readable beside tablet work”.
 
 1. Öppna **Lista** och **Nytt objekt**. Skriv
    **Familjens gemensamma cykel** och välj **Lägg i mitt utkast**.
-2. Välj **Spara hela utkastet** och läs hela sparbeskedet.
-3. Välj **Stäng status** och därefter **Stäng arbetsytan**.
+2. Välj **Spara hela utkastet** och läs **Utkastet är sparat** under
+   hushållsnamnet.
+3. Vänta tre sekunder tills sparbeskedet försvinner och stäng därefter
+   panelerna med kryssen.
 
 **Förväntat resultat:**
 
 - Sparbeskedet är läsbart medan arbetsytan är öppen.
-- Att stänga beskedet ändrar inte det sparade innehållet. Cykeln finns
+- Att beskedet försvinner ändrar inte det sparade innehållet. Cykeln finns
   kvar i kartan när arbetsytan stängs.
 
 ### YTA-06: synliga visningsval på en tom mobilkarta
 
 **Syfte:** Kontrollera att tangentbordsfokus, fullständiga etiketter och
-kortets ingångar är nåbara även när en tom karta visar vägledning och status.
+verktygen är nåbara även på en tom karta.
 
 **Användare:** Alex.
 
@@ -321,32 +327,33 @@ choices readable and operable in dark”.
 
 **Steg:**
 
-1. Behåll vägledningen på den tomma kartan. Använd tangentbordet för att
-   fokusera **Återställ vy**, sedan Tab till **Alla etiketter** och
-   **Visa höjdhjälp**. Fokus och hela namnet ska synas för varje kontroll.
-2. Tryck mellanslag på **Visa höjdhjälp**, kontrollera att valet aktiveras
-   och tryck igen för att återställa det. Nå vägledningens **Öppna listan**
-   med tangentbordet; sidan får rulla för att visa hela knappen.
-3. Välj **Stäng vägledningen** och upprepa kontrollerna. Det kvarvarande
-   kortet **Din karta börjar här** och statusytan får inte täcka fokus.
-   Kontrollera att kortets **Öppna Lista** går att nå.
-4. Öppna Lista, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
-   Stäng arbetsytan. Kortet för en tom karta ska försvinna; höjdhjälpen ska
-   fortfarande vara avstängd. Spara inte utkastet.
+1. Använd tangentbordet på den tomma kartan för att fokusera **Återställ vy**,
+   sedan Tab till **Alla etiketter**. Fokus och hela
+   namnet ska synas för varje kontroll.
+2. Öppna **Navigera** med tangentbordet. Rulla vid behov till
+   **Visa höjdhjälp** under kameraknapparna. Hela etiketten ska synas.
+   Reglaget ska vara av och inaktivt med texten
+   **Välj ett objekt för att visa höjdhjälp**. Stäng navigeringen.
+   Nå **Lista** i verktygsfältet
+   med tangentbordet och kontrollera att knappen syns.
+3. Öppna Lista, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
+   Stäng panelerna med kryssen och öppna Navigera. Höjdhjälpen ska
+   fortfarande vara avstängd.
+   Spara inte utkastet.
 
 **Förväntat resultat:**
 
-- Vägledning, visningsval och status delar en rullbar yta när utrymmet är
-  trångt; fullständiga etiketter och fokuserade kontroller förblir synliga.
-- Vägledningens och det tomma kortets listknappar förblir användbara.
-- Ett verkligt objektförslag lämnar tomläget utan att ändra höjdhjälpsvalet.
+- Fullständiga etiketter och fokuserade visningsval förblir synliga.
+- Verktygsfältets listknapp förblir användbar.
+- Ett objektförslag ändrar inte höjdhjälpsvalet.
+- Höjdhjälpens reglage finns i navigeringen och kräver ett objektval.
 - Den separata **Visningsval**-menyn i vyer som är högst 450 pixlar höga
   behåller sitt befintliga beteende, vilket provas i KAMERA-04.
 
 ### YTA-09: den tomma kartan förblir användbar med röst och samtalsnotis
 
-**Syfte:** Nå den tomma kartans listknapp när röstrutan eller en samtalsnotis
-visas ovanför kartans visningsval och utkastets återkoppling.
+**Syfte:** Nå verktygsfältets listknapp när röstrutan eller en samtalsnotis
+visas ovanför kartans visningsval, med hushållets status synlig.
 
 **Användare:** Alex.
 
@@ -362,21 +369,20 @@ controls reachable”.
 **Steg:**
 
 1. Välj **Prata med Skyttel** och godkänn samtalsmedgivandet. Läs **Lyssnar**
-   i röstrutan. Kortet **Din karta börjar här** ska finnas kvar. Välj
-   **Återställ vy** och läs **Översikt återställd.** i kartans statusyta.
-2. Nå kortets **Öppna Lista** med tangentbordet. Fokus och knappen ska synas
+   i röstrutan. Välj
+   **Återställ vy**. Ingen beständig rutinbekräftelse ska visas i kartan.
+2. Nå verktygsfältets **Lista** med tangentbordet. Fokus och knappen ska synas
    och vara fria från röstrutan. Kontrollera båda fönsterhöjderna.
 3. Slå på **Offline** i webbläsarens nätverkspanel. Läs samtalsnotisen
    **Ingen kontakt med Skyttel. Mikrofonen är av.** och kontrollera samma
    listknapp vid båda höjderna.
-4. Slå av **Offline**, välj **Öppna Lista** och sedan **Nytt objekt**.
+4. Slå av **Offline**, välj **Lista** och sedan **Nytt objekt**.
    Formuläret med **Objektets namn** ska gå att använda. Skapa inget objekt.
 
 **Förväntat resultat:**
 
-- Röstrutan och samtalsnotisen täcker inte den tomma kartans listknapp.
-- Röstrutan eller notisen ligger ovanför visningsvalen, som ligger ovanför
-  kartans statusyta och utkastets återkoppling. Vid platsbrist är
-  återkopplingen nåbar med rullning.
+- Röstrutan och samtalsnotisen täcker inte verktygsfältets listknapp.
+- Röstrutan eller notisen ligger ovanför visningsvalen och täcker inte
+  hushållets statusyta under hushållsnamnet.
 - Samtalet öppnar ingen arbetsyta automatiskt; listknappen öppnar formuläret
   när Alex väljer den. Installationen provar placering, inte hört tal.

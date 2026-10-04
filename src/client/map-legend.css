@@ -1,0 +1,193 @@
+.household-map.workspace-shell .workspace-context {
+  max-width: min(340px, calc(100vw - 136px));
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
+  color: var(--space-text);
+  background: var(--space-surface);
+  border-radius: 8px;
+  padding: 6px;
+  overflow-wrap: anywhere;
+}
+.workspace-context :is(.map-status, .map-legend) {
+  display: grid;
+  gap: 4px;
+}
+.workspace-context :is(.map-status, .map-legend) p {
+  margin: 0;
+}
+.workspace-context .map-status > :empty {
+  display: none;
+}
+.workspace-context .map-legend span {
+  display: inline-block;
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.household-map.workspace-shell .workspace-context .map-status span {
+  display: inline-block;
+  margin: 0;
+  font-size: inherit;
+  color: inherit;
+}
+.workspace-context :is(.map-status, .map-legend):not(:empty) {
+  margin-top: 6px;
+}
+.household-map.workspace-shell .map-legend-symbol {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  width: 42px;
+  margin: 0 6px 0 0;
+  font-size: 16px;
+  vertical-align: middle;
+}
+.household-map.workspace-shell .map-legend-symbol.added {
+  color: var(--proposal-added);
+}
+.household-map.workspace-shell .map-legend-symbol.changed {
+  color: var(--proposal-changed);
+}
+.household-map.workspace-shell .map-legend-symbol.removed,
+.household-map.workspace-shell .workspace-context .map-conflict {
+  color: var(--proposal-removed);
+}
+.household-map.workspace-shell .map-legend-symbol.selection {
+  color: var(--space-accent);
+}
+.household-map.workspace-shell .map-legend-symbol.connector {
+  color: #8dbba5;
+}
+.household-map.workspace-shell .map-legend-symbol .map-legend-line {
+  width: 20px;
+  border-top: 2px solid currentColor;
+}
+.household-map.workspace-shell .map-legend-symbol.removed .map-legend-line {
+  border-top-style: dashed;
+}
+.household-map.workspace-shell .workspace-context .map-legend-symbol {
+  display: inline-flex;
+  font-size: 16px;
+  margin-right: 6px;
+  color: var(--proposal-color, var(--space-accent));
+}
+.household-map.workspace-shell .workspace-context .map-legend-symbol.connector {
+  color: #8dbba5;
+}
+.workspace-context button {
+  min-height: 44px;
+  white-space: normal;
+  text-align: start;
+}
+.household-map.workspace-shell .workspace-context button:hover:enabled {
+  background: var(--space-surface);
+  border-color: var(--space-accent);
+  color: var(--space-text);
+}
+.household-map.workspace-shell .workspace-windows {
+  top: max(200px, var(--context-bottom, 200px));
+  height: calc(100dvh - max(200px, var(--context-bottom, 200px)) - 100px);
+}
+.household-map.workspace-shell .map-navigation {
+  top: var(--context-bottom, 110px);
+}
+
+/* Floating windows can cross the legend and all map controls. The ordinary
+   narrow and short-screen layouts keep their existing scroll flow. */
+@media (min-width: 701px) and (min-height: 601px) {
+  .household-map.workspace-shell .workspace-windows {
+    inset: var(--work-offset, 0px) 0 auto;
+    width: 100%;
+    height: var(--work-height, 100dvh);
+    z-index: 31;
+  }
+  .household-map.workspace-shell.workspace-revealing .workspace-window[data-active="true"] {
+    left: var(--workspace-window-x, 0px);
+    top: var(--workspace-window-y, 0px);
+    right: auto;
+  }
+  .household-map.workspace-shell .workspace-panel.workspace-window {
+    /* Keep the initial scrollable body above status actions. This limits
+       height only; the complete window can still be moved over those actions. */
+    max-height: min(
+      var(--workspace-window-height, 100%),
+      max(
+        124px,
+        calc(
+          var(--work-height, 100dvh) -
+          max(200px, var(--context-bottom, 200px)) -
+          100px -
+          var(--feedback-height, 0px)
+        )
+      )
+    );
+  }
+  .household-map.workspace-shell .map-navigation {
+    max-height: calc(var(--work-height, 100dvh) - 200px);
+    z-index: 31;
+  }
+  .household-map.workspace-shell[data-workspace-view="navigation"] .map-navigation {
+    z-index: 32;
+  }
+}
+
+@media (max-width: 700px) {
+  .household-map.workspace-shell .workspace-context {
+    max-width: calc(100vw - 24px);
+  }
+}
+@media (max-width: 700px), (max-height: 600px) {
+  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) .workspace-context {
+    position: relative;
+    inset: auto;
+    max-width: none;
+    max-height: none;
+    margin-bottom: 12px;
+  }
+  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) {
+    padding-top: var(--work-flow-top, 80px);
+    scroll-padding-block-start: var(--work-flow-top, 80px);
+  }
+  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) .workspace-windows {
+    top: auto;
+    height: auto;
+  }
+  .household-map.workspace-shell[data-navigation-open="true"]:not(.workspace-open)
+    .workspace-navigation-mount {
+    margin-top: var(--context-bottom, 142px);
+  }
+}
+
+@media (max-width: 700px) {
+  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) {
+    padding-top: calc(var(--tools-bottom, 80px) + 12px);
+    scroll-padding-block-start: calc(var(--tools-bottom, 80px) + 12px);
+  }
+}
+
+@media (max-height: 450px) {
+  .household-map.workspace-shell .workspace-context {
+    max-height: max(44px, calc(100dvh - 210px));
+    max-width: min(340px, calc(50vw - 24px));
+  }
+}
+
+@media (max-width: 700px) and (max-height: 450px) {
+  .household-map.workspace-shell:has(.spatial-display-tools[open]) .workspace-context {
+    z-index: 0;
+  }
+}
+
+@media (max-width: 1000px) and (max-height: 800px) {
+  .household-map.workspace-shell[data-navigation-open="true"].workspace-open:not(
+      .workspace-revealing
+    )
+    .workspace-context {
+    position: relative;
+    inset: auto;
+    max-width: none;
+    max-height: none;
+    margin-bottom: 12px;
+  }
+}

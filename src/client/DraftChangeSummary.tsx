@@ -8,7 +8,7 @@ import type {
 } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { builtinPresentationChanges } from '../shared/object-properties.js';
-import { relationshipDetails } from './relationship-description.js';
+import { relationshipDetails, relationshipTarget } from './relationship-description.js';
 
 function valueText(value: string | number | boolean | undefined) {
   return value === undefined || value === ''
@@ -128,10 +128,17 @@ function action(before: unknown, after: unknown) {
 
 export function relationshipDifferences(change: DraftRelationshipChange) {
   if (!change.before || !change.after) return [];
-  const describe = (value: NonNullable<typeof change.after>) =>
-    relationshipDetails(value, change.type.forwardLabel ?? change.type.name, change.objectNames);
+  const names = change.objectNames ?? {};
+  const target = (value: NonNullable<typeof change.after>) =>
+    `${relationshipTarget(value, names)}${value.knowledge === 'uncertain' ? ' (osäkert uppgivet)' : ''}`;
   return [
-    ...difference('Samband', describe(change.before), describe(change.after)),
+    ...difference(
+      'Från',
+      names[change.before.sourceId] ?? change.before.sourceId,
+      names[change.after.sourceId] ?? change.after.sourceId,
+    ),
+    ...difference('Sambandstyp', (change.beforeType ?? change.type).name, change.type.name),
+    ...difference('Till', target(change.before), target(change.after)),
     ...[
       ...new Map(
         [...(change.beforeType?.fields ?? []), ...(change.type.fields ?? [])].map((field) => [

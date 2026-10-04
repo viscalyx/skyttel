@@ -4,8 +4,8 @@
 
 Rymdkartan, listan och detaljerna visar samma hushållskarta och ditt
 privata utkast. Hushållet öppnar rymdkartan som huvudyta på alla enheter.
-Välj **Lista** i verktygen för listor, formulär och utkast. Välj
-**Stäng arbetsytan** för att återgå till hela kartan. På telefon visar
+Välj **Lista** i verktygen för listor, formulär och utkast. Stäng
+panelerna med kryssen för att återgå till hela kartan. På telefon visar
 **Visa verktygens namn** även de kompletterande verktygen, däribland Tema.
 
 När Skyttel visar ett objekt eller samband öppnas dess detaljpanel.
@@ -39,8 +39,10 @@ Ett redan markerat objekt behåller de andra markeringarna. Ctrl-klick
 eller Cmd-klick lägger till eller tar bort objekt. Samtliga markerades
 direkta samband framhävs och antalet visas vid flerval. Symbolen visar
 objektets profilbild eller en ikon för dess typ.
-Namnet visas bredvid symbolen. När du väljer ett objekt visas etiketterna
-för dess samband. **Alla etiketter** visar även de andra sambandsnamnen.
+Namnet visas bredvid symbolen. Förslag på samband visar etiketter direkt. När du
+väljer ett objekt visas
+även etiketterna för dess sparade samband. **Alla etiketter** visar även de
+andra sambandsnamnen.
 Klicka på ett sambands etikett för att läsa dess uppgifter. Välj sedan
 **Redigera valt samband** för att ändra riktning, säkerhet och status.
 Pilen går från det första objektet till det andra. Okänt och uttryckligen
@@ -72,8 +74,9 @@ Listans **Uppgifter** fungerar även utan kartgrafik och med tangentbord.
 När grafiken inte kan visas består listan och namnets kartknapp är inaktiv.
 
 En ny panel öppnas nära objektet inom arbetsytan. Paneler som du flyttar
-behåller sin placering när du öppnar dem igen. På telefon väljer
-**Öppna paneler** vilken panel som visas. Detaljverktygets markering visar
+behåller sin placering när du öppnar dem igen. Öppna **Lista** och välj
+objektets **Uppgifter** för att återvända till dess panel. Detaljverktygets
+markering visar
 om det senast markerade objektets panel faktiskt visas. Oskickad text
 finns kvar när panelen stängs eller ett annat verktyg öppnas.
 
@@ -114,8 +117,9 @@ föregående vy**. Den tidigare vyn finns kvar även om du panorerar, roterar,
 zoomar eller fokuserar markeringen innan du återgår. Urval och oskickad
 paneltext behålls.
 
-I en mycket kort och smal vy samlas återställning, etiketter och
-höjdhjälp under **Visningsval**. **Navigera** finns i verktygsfältet.
+I en mycket kort och smal vy samlas återställning och etiketter under
+**Visningsval**. **Navigera** finns i verktygsfältet och innehåller
+**Visa höjdhjälp**.
 **Visa verktygens namn** öppnar hela
 verktygsfältet med samtal och detaljer.
 Kamerans fokus, översikt och återgång fäller ihop verktygsnamnen så kartan
@@ -141,8 +145,11 @@ Detaljpanelernas egna placeringar behålls.
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
 hushållsuppgifter.
-Översikten visar de etiketter som får plats utan överlappning. Valda objekt
-och samband, deras kopplingar och utkast prioriteras. Ett besked anger hur
+Översikten visar de etiketter som får plats utan överlappning. Ett valt
+sambands etikett får plats först, sedan objektnamn och därefter automatiska
+sambandsetiketter. Etiketter för nya, borttagna och ändrade samband i
+utkastet visas nära sina samband när de ryms. De döljs när utrymmet inte
+räcker och visas igen när det finns plats. Ett besked anger hur
 många etiketter som döljs; innehållet och dina personliga placeringar ändras
 inte. Sök, välj i listan och använd fokus för att följa ett tätt sammanhang.
 Bakgrundens samband tonas ned mer i täta vyer; valda samband framhävs.
@@ -175,18 +182,22 @@ Formulärtext skickas först när du lägger den i utkastet. Val och
 oskickad text för samma objekt eller samband finns kvar vid vybyte,
 storleksändring och vändning av enheten. Ett vanligt val i helskärmskartan
 behåller kartan. Öppna **Lista** och välj **Redigera valt objekt** eller
-**Redigera valt samband** för att ändra uppgifter. **Stäng arbetsytan**
+**Redigera valt samband** för att ändra uppgifter. Panelernas kryss
 behåller texten. **Utkast och historik** ger tillgång till ändringslistan.
 
 Markeringarna visar skillnaden mot sparad karta:
 
-- **+** med guldgul markering: nytt förslag.
-- **~** med gul markering: ändrat förslag.
-- **×** med korallfärgad markering: föreslagen borttagning.
+- **+** med grön markering: nytt förslag.
+- **✎** med gul markering: ändrat förslag.
+- **×** med röd markering: föreslagen borttagning eller tidigare koppling.
 
-Samband som föreslås tas bort visas som böjda, streckade linjer. När ett
-förslag byter ett sambands typ eller anslutna objekt kan den tidigare
-kopplingen visas på samma sätt bredvid den föreslagna kopplingen.
+Borttagna samband visas som böjda, streckade linjer. När riktade ändpunkter
+ändras visas den tidigare kopplingen med rött × och streckad linje och den
+nya med grönt + och heldragen linje. Typ- och uppgiftsändringar med samma
+ändpunkter visas med gul penna och heldragen linje.
+Etiketternas kopplingar är punktade för att skilja dem från samband.
+Teckenförklaringen följer kartans filter och använder samma färger;
+**Information och hjälp** förklarar alla symbolerna.
 
 **Upphört** har en egen färg och visas vid objektets namn eller i
 sambandets etikett. Statusen följer samma slutdatum och manuella val som
@@ -209,8 +220,8 @@ respekteras. Om grafiken avbryts finns utkast och oskickad text kvar.
 Du kan fortsätta i listan medan grafiken återställs. Om WebGL 2 saknas
 visas ett besked och listan kan fortfarande användas.
 
-På en liten skärm väljer **Öppna paneler** mellan lista, samtal och
-objektpaneler. En panel visas åt gången.
+På en liten skärm visas en objektpanel åt gången. Öppna **Lista** för
+att välja ett annat objekt. **Skriv till Skyttel** öppnar textvyn.
 Textredigering på liggande iPhone kan kräva att du vänder till stående läge.
 
 ## Ordna din personliga vy
@@ -220,9 +231,17 @@ drar med mus för att flytta längs rummets höjdaxel. Med pekskärm flyttar
 första fingret objektet. Lägg ett andra finger stilla på kartan och dra
 det första uppåt eller nedåt för höjdled. Höjdhjälpen visar start och
 riktning och är märkt som personlig vy. Håll Shift med ett valt objekt
-för att förhandsvisa hjälpen. **Visa höjdhjälp** under kartan håller den
-synlig och låter dig granska senaste höjdflyttningens start efter draget.
-Uppåt- och nedåtknapparna visar också hjälpen. Valet gäller den öppna sidan.
+för att förhandsvisa hjälpen från objektets aktuella placering. Hjälpplanet
+ligger stilla under höjddraget. Släpp musknappen med Shift nedtryckt för
+att förhandsvisa nästa drag från den nya placeringen.
+**Visa höjdhjälp** finns under objektets flyttknappar i **Navigera**, även
+i det lilla navigeringsfönstret. Välj exakt ett objekt för att använda
+valet. Det håller hjälpen synlig när Shift släpps och låter dig granska
+senaste höjdflyttningens start och höjdskillnad. Uppåt- och nedåtknapparna
+följer valet utan att slå på det. Flera höjdklick räknas tillsammans;
+första klicket efter ett drag börjar om från objektets aktuella placering.
+Valet består när navigeringen stängs eller urvalet ändras, men återställs
+vid omladdning. Shift och pekgester visar höjdhjälpen även när valet är av.
 Höjdflytten avslutas och sparas när något av de två fingrarna lyfts.
 Lyft alla fingrar innan nästa objektflytt; ett kvarvarande finger flyttar
 varken objektet eller kameran. Ett tredje finger ändrar inte det aktiva

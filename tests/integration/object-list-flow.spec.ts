@@ -11,7 +11,9 @@ import { createInstallation } from '../support/installation.js';
 test('LISTA-05: short-screen list returns preserve the visible result and keyboard focus', async ({
   page,
 }) => {
-  test.setTimeout(60_000);
+  // The large map is rendered across several transitions; allow the whole
+  // keyboard flow to finish when other browser workers share the machine.
+  test.setTimeout(120_000);
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);

@@ -213,7 +213,7 @@ test('the approved spatial presentation uses compact pictogram nodes, separate n
       nameBounds.left >= bounds.right ||
       nameBounds.right <= bounds.left,
   ).toBe(true);
-  expect(document.querySelectorAll('.spatial-edge')).toHaveLength(0);
+  expect(document.querySelectorAll('.spatial-edge')).toHaveLength(2);
   const hit = document.querySelector('.connection-hit');
   expect(hit).not.toBeNull();
   expect(Number.parseFloat(getComputedStyle(hit as Element).strokeWidth)).toBeGreaterThanOrEqual(
@@ -273,7 +273,15 @@ test('changing a relationship retains its prior route while the current route re
       relationships={[after]}
     />,
   );
-  await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
+  await expect
+    .element(
+      page.getByRole('button', {
+        name: 'Välj samband: Kim Exempel → använder → Musikspelaren',
+        exact: true,
+      }),
+    )
+    .toHaveTextContent('+ → använder');
+  expect(document.querySelector('.connection.added')).not.toBeNull();
   const previous = document.querySelector('[data-previous-relationship="edge"]');
   expect(previous).not.toBeNull();
   expect(previous?.textContent).toContain('Lo Exempel → använder → Musikspelaren');
@@ -297,6 +305,183 @@ test('changing a relationship retains its prior route while the current route re
   await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
 });
 
+test.each([
+  { name: 'type', update: { typeId: 'other' } },
+  { name: 'knowledge', update: { knowledge: 'uncertain' as const } },
+])(
+  'a same-endpoint $name edit uses one amber solid connection and a default pen label',
+  async ({ update }) => {
+    const before = state.relationships[0];
+    const after = { ...before, ...update };
+    render(
+      <MapView
+        mapState={{
+          ...state,
+          relationshipTypes: [
+            ...state.relationshipTypes,
+            { ...state.relationshipTypes[0], id: 'other', forwardLabel: 'lånar' },
+          ],
+          relationships: [before],
+          draft: {
+            version: 1,
+            changes: [],
+            relationships: [
+              { id: before.id, before, after, type: state.relationshipTypes[0], objectNames: {} },
+            ],
+          },
+        }}
+        relationships={[after]}
+      />,
+    );
+    const connection = document.querySelector('.connection.changed');
+    expect(connection).not.toBeNull();
+    expect(document.querySelector('[data-previous-relationship]')).toBeNull();
+    expect(getComputedStyle(connection as Element).strokeDasharray).toBe('none');
+    await expect
+      .poll(() => document.querySelector('.spatial-edge.changed')?.textContent)
+      .toContain('✎');
+    for (const connector of document.querySelectorAll('.label-leader'))
+      expect(connector.getAttribute('stroke-dasharray')).toBe('1 4');
+  },
+);
+
+test('reversing directed endpoints shows a red old connection and green new connection without changing identity', async () => {
+  const before = state.relationships[0];
+  const after = { ...before, sourceId: 'music', targetId: 'lo' };
+  render(
+    <MapView
+      mapState={{
+        ...state,
+        relationships: [before],
+        draft: {
+          version: 1,
+          changes: [],
+          relationships: [
+            { id: before.id, before, after, type: state.relationshipTypes[0], objectNames: {} },
+          ],
+        },
+      }}
+      relationships={[after]}
+    />,
+  );
+  const old = page.getByRole('button', {
+    name: 'Välj tidigare samband: Lo Exempel → använder → Musikspelaren',
+    exact: true,
+  });
+  const current = page.getByRole('button', {
+    name: 'Välj samband: Musikspelaren → använder → Lo Exempel',
+    exact: true,
+  });
+  await expect.element(old).toHaveTextContent('× → använder');
+  await expect.element(current).toHaveTextContent('+ → använder');
+  expect(document.querySelectorAll('.connection.added')).toHaveLength(1);
+  expect(document.querySelectorAll('.connection.removed')).toHaveLength(1);
+  await old.click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Tidigare: lo');
+  await current.click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+});
+
+test('navigation keeps height help beside movement controls and respects the manual choice', async () => {
+  render(<MapView />);
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
+  const help = navigation.getByLabelText('Visa höjdhjälp', { exact: true });
+  await expect.element(help).toBeDisabled();
+  await expect
+    .element(navigation.getByText('Välj ett objekt för att visa höjdhjälp', { exact: true }))
+    .toBeVisible();
+  await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await expect.element(help).toBeEnabled();
+  const up = navigation.getByRole('button', { name: /^Flytta .+: uppåt$/ });
+  await up.click();
+  await expect.element(help).not.toBeChecked();
+  await expect.element(page.getByText('Höjdflyttning · personlig vy')).not.toBeInTheDocument();
+  await help.click();
+  await up.click();
+  await up.click();
+  await expect.element(page.getByText('↑ 3 steg högre än start', { exact: true })).toBeVisible();
+  await help.click();
+  await up.click();
+  await expect.element(help).not.toBeChecked();
+  await help.click();
+  await navigation.getByRole('button', { name: 'Visa mininavigering', exact: true }).click();
+  await expect.element(help).toBeVisible();
+  await expect.element(navigation.getByText('Visa höjdhjälp', { exact: true })).toBeVisible();
+  await expect.element(help).toBeChecked();
+  await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await expect.element(help).toBeChecked();
+  await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await expect.element(help).toBeChecked();
+  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+  await expect.element(help).toBeDisabled();
+  await expect.element(help).toBeChecked();
+});
+
+test('height movement keeps the preview plane fixed during a drag and prepares the next reference', async () => {
+  render(<MapView />);
+  const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  await lo.click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
+  await page.getByRole('button', { name: /^Flytta .+: uppåt$/ }).click();
+  await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await userEvent.keyboard('{Shift>}');
+  await expect.element(page.getByText('Startläge', { exact: true })).toBeVisible();
+  const session = cdp();
+  const plane = () => document.querySelector('.spatial-height-guide > path')?.getAttribute('d');
+  for (let drag = 0; drag < 2; drag++) {
+    const preview = plane();
+    expect(preview).toBeTruthy();
+    const rect = lo.element().getBoundingClientRect();
+    const offset = window.frameElement?.getBoundingClientRect();
+    const start = {
+      x: rect.x + rect.width / 2 + (offset?.x ?? 0),
+      y: rect.y + rect.height / 2 + (offset?.y ?? 0),
+    };
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      ...start,
+      button: 'left',
+      buttons: 1,
+      modifiers: 8,
+      clickCount: 1,
+    });
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      x: start.x,
+      y: start.y - 24,
+      button: 'left',
+      buttons: 1,
+      modifiers: 8,
+    });
+    await expect.element(page.getByText(/^↑ .* steg högre än start$/)).toBeVisible();
+    expect(plane()).toBe(preview);
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: start.x,
+      y: start.y - 24,
+      button: 'left',
+      buttons: 0,
+      modifiers: 8,
+      clickCount: 1,
+    });
+    await expect.element(page.getByText('Startläge', { exact: true })).toBeVisible();
+  }
+  await userEvent.keyboard('{/Shift}');
+  await expect.element(page.getByText(/^↑ .* steg högre än start$/)).toBeVisible();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByRole('button', { name: /^Flytta .+: nedåt$/ }).click();
+  await expect.element(page.getByText('↓ 1 steg lägre än start', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /^Flytta .+: nedåt$/ }).click();
+  await expect.element(page.getByText('↓ 2 steg lägre än start', { exact: true })).toBeVisible();
+});
+
 test('personal placement buttons move the selected object in three dimensions without editing household facts', async () => {
   render(<MapView />);
   await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
@@ -305,13 +490,14 @@ test('personal placement buttons move the selected object in three dimensions wi
   await userEvent.keyboard('{/Shift}');
   await expect.element(page.getByText('Startläge', { exact: true })).not.toBeInTheDocument();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await page.getByRole('button', { name: /^Flytta .+: uppåt$/ }).click();
   await expect.element(page.getByLabelText('Visa höjdhjälp', { exact: true })).toBeChecked();
   await expect.element(page.getByText('↑ 1 steg högre än start', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
-  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await expect.element(page.getByText('↑ 1 steg högre än start', { exact: true })).toBeVisible();
   const first = JSON.parse(document.querySelector('[data-placement]')?.textContent ?? '[]');
   expect(first).toHaveLength(1);
@@ -322,12 +508,13 @@ test('personal placement buttons move the selected object in three dimensions wi
   expect(second[0].z).toBe(first[0].z);
 });
 
+// CDP dispatches native touch events directly. Touch device emulation would also
+// change pointer media queries in the shared runner page after this file finishes.
 test('native touch height gestures retain either release order and wait for all fingers before another move', async () => {
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await expect.element(lo).toBeVisible();
   const session = cdp();
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const location = () => {
     const rect = lo.element().getBoundingClientRect();
     const offset = window.frameElement?.getBoundingClientRect();
@@ -391,7 +578,6 @@ test('native touch height gestures retain either release order and wait for all 
   await send('touchMove', [{ id: 1, x: start.x + 30, y: start.y }]);
   await send('touchCancel', []);
   expect(positions()).toEqual(saved);
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
 });
 
 test('a moving height anchor restores the object and hands the stable pair to pan and pinch', async () => {
@@ -410,7 +596,6 @@ test('a moving height anchor restores the object and hands the stable pair to pa
   };
   const anchor = { id: 2, x: driver.x + 100, y: driver.y };
   const session = cdp();
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const touch = (
     type: 'touchStart' | 'touchMove' | 'touchEnd',
     touchPoints: { id: number; x: number; y: number }[],
@@ -448,7 +633,6 @@ test('a moving height anchor restores the object and hands the stable pair to pa
   expect(lo.element().getBoundingClientRect().y).toBeCloseTo(stopped.y);
   await touch('touchEnd', []);
   expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
 });
 
 test('personal display controls retain corner choices, independent pan inversions and all movement alternatives', async () => {
@@ -600,7 +784,6 @@ test('native empty-space mouse, wheel and touch navigation changes the camera wi
       modifiers,
     });
   }
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const touch = (
     type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel',
     touchPoints: { id: number; x: number; y: number }[],
@@ -626,7 +809,6 @@ test('native empty-space mouse, wheel and touch navigation changes the camera wi
     { id: 3, x: start.x + 170, y: start.y + 20 },
   ]);
   await touch('touchCancel', []);
-  await session.send('Emulation.setTouchEmulationEnabled', { enabled: false });
   expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
   window.dispatchEvent(new Event('blur'));
 });
@@ -690,7 +872,6 @@ test('painted stars respond to panning, rotation and zoom while object movement 
   expect(common(original, panned)).toBeLessThan(0.3);
   await page.getByRole('button', { name: /^Flytta .+: uppåt$/ }).click();
   await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   expect(common(panned, await starPixels())).toBeGreaterThan(0.85);
   await page.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
@@ -913,6 +1094,156 @@ test('dense labels remain readable and explicit all-label mode retains access to
     .toBeVisible();
   await page.getByLabelText('Alla etiketter', { exact: true }).click();
   await expect.poll(() => document.querySelectorAll('.spatial-name').length).toBe(100);
+});
+
+test.each(['added', 'removed', 'changed'] as const)(
+  'automatic $0 draft connection labels keep object names readable in a dense map',
+  async (kind) => {
+    const objects = Array.from({ length: 100 }, (_, index) => ({
+      ...state.objects[0],
+      id: `dense-${index}`,
+      name: `Tätt objekt ${index}`,
+    }));
+    const edges = Array.from({ length: 30 }, (_, index) => ({
+      ...state.relationships[0],
+      id: `dense-edge-${index}`,
+      sourceId: 'dense-5',
+      targetId: `dense-${index + 20}`,
+    }));
+    const mapState = {
+      ...state,
+      objects,
+      relationships: edges,
+      draft: { version: 0, changes: [] },
+    };
+    const { rerender } = render(<MapView mapState={mapState} />);
+    const names = () =>
+      [...document.querySelectorAll('[data-object-label]')]
+        .map((label) => label.getAttribute('data-object-label'))
+        .sort();
+    await expect.poll(() => names().length).toBeGreaterThan(0);
+    const visibleNames = names();
+    rerender(
+      <MapView
+        mapState={{
+          ...mapState,
+          draft: {
+            version: 1,
+            changes: [],
+            relationships: edges.map((edge) => ({
+              id: edge.id,
+              before: kind === 'added' ? null : edge,
+              after: kind === 'removed' ? null : { ...edge, knowledge: 'uncertain' as const },
+              type: state.relationshipTypes[0],
+              objectNames: {},
+            })),
+          },
+        }}
+      />,
+    );
+    await expect.poll(names).toEqual(visibleNames);
+    expect(document.querySelectorAll(`.connection.${kind}`)).toHaveLength(edges.length);
+    expect(document.querySelectorAll(`.spatial-edge.${kind}`).length).toBeLessThan(edges.length);
+    await expect
+      .poll(() => {
+        const boxes = [...document.querySelectorAll('.spatial-name, .spatial-edge')].map((label) =>
+          label.getBoundingClientRect(),
+        );
+        return boxes.every((a, index) =>
+          boxes
+            .slice(index + 1)
+            .every(
+              (b) =>
+                a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom,
+            ),
+        );
+      })
+      .toBe(true);
+    await page.getByLabelText('Alla etiketter', { exact: true }).click();
+    await expect
+      .poll(() => document.querySelectorAll(`.spatial-edge.${kind}`).length)
+      .toBe(edges.length);
+  },
+);
+
+test('automatic draft labels hide near a crowded connector and return when nearby space is available', async ({
+  onTestFinished,
+}) => {
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  onTestFinished(() => page.viewport(viewport.width, viewport.height));
+  await page.viewport(1280, 1000);
+  const objects = state.objects.slice(0, 2);
+  const relationshipTypes = Array.from({ length: 30 }, (_, index) => ({
+    ...state.relationshipTypes[0],
+    id: `draft-type-${index}`,
+    name: `Samband ${index}`,
+  }));
+  const edges = relationshipTypes.map((type, index) => ({
+    ...state.relationships[0],
+    id: `draft-edge-${index}`,
+    typeId: type.id,
+  }));
+  const mapState = {
+    ...state,
+    objects,
+    relationships: edges,
+    relationshipTypes,
+    draft: {
+      version: 1,
+      changes: [],
+      relationships: edges.map((edge, index) => ({
+        id: edge.id,
+        before: null,
+        after: edge,
+        type: relationshipTypes[index],
+        objectNames: {},
+      })),
+    },
+  };
+  const { rerender } = render(<MapView mapState={mapState} />);
+  const labels = () => [...document.querySelectorAll('.spatial-edge.added')];
+  await expect.poll(() => labels().length).toBeGreaterThan(0);
+  expect(labels().length).toBeLessThan(edges.length);
+  const hidden = edges.find(
+    (edge) => !document.querySelector(`[data-layout-id="relationship-${edge.id}"]`),
+  );
+  expect(hidden).toBeDefined();
+  if (!hidden) throw new Error('A crowded connector must have a hidden label');
+  const layoutId = `relationship-${hidden.id}`;
+  const connection = document.querySelector('.connection.added');
+  expect(connection).not.toBeNull();
+  expect(document.querySelectorAll('.connection.added')).toHaveLength(edges.length);
+  // Selecting the connector gives its label first use of space, even when
+  // the automatic label was hidden.
+  const geometry = [...document.querySelectorAll('.spatial-lines g[role="button"]')][
+    edges.indexOf(hidden)
+  ];
+  fireEvent.click(geometry);
+  await expect
+    .poll(() =>
+      document.querySelector(`[data-layout-id="${layoutId}"]`)?.classList.contains('selected'),
+    )
+    .toBe(true);
+  await page
+    .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.' })
+    .click({ position: { x: 5, y: 5 } });
+  await expect.poll(() => document.querySelector(`[data-layout-id="${layoutId}"]`)).toBeNull();
+  // Remove other proposals without moving the endpoints or camera.
+  rerender(
+    <MapView
+      mapState={{
+        ...mapState,
+        relationships: [hidden],
+        draft: {
+          ...mapState.draft,
+          relationships: mapState.draft.relationships.filter((change) => change.id === hidden.id),
+        },
+      }}
+    />,
+  );
+  await expect.poll(() => document.querySelector(`[data-layout-id="${layoutId}"]`)).not.toBeNull();
+  await expect.element(page.getByText('Lo Exempel', { exact: true })).toBeVisible();
+  await expect.element(page.getByText('Musikspelaren', { exact: true })).toBeVisible();
 });
 
 test('hidden labels do not change the emphasis of unselected relationship lines', async () => {

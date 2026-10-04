@@ -49,11 +49,15 @@ och eftervärden”.
 
 **Steg:**
 
-1. Lägg till personen **Kim** och spara hela utkastet genom
-   **Utkast och historik**.
+1. Lägg till personen **Kim**, ett **Tjänstekonto** med namnet
+   **Familjens gemensamma musikkonto hos Molnmusik** och två
+   **E-postadress**: `familjen@example.test` och `musik@example.test`.
+   Lägg ett samband **Inloggningsadress** från kontot till den första
+   adressen. Spara hela utkastet genom **Utkast och historik**.
 2. Rätta Lo till **Lo Rättad**, lägg rättelsen i utkastet och föreslå att
    Kim tas bort. Skapa objekttypen **Provtyp** i Inställningar och ett
-   **Nytt objekt** av denna typ. Lämna de fyra ändringarna osparade.
+   **Nytt objekt** av denna typ. Byt sambandets mål till
+   `musik@example.test`. Lämna de fem ändringarna osparade.
 3. Välj **Skriv till Skyttel** och godkänn medgivandet. Läs antalet på
    **Visa utkastet**. Öppna utkastet och läs varje rad.
 4. Välj **Dölj utkastet**, stäng och öppna textvyn och kontrollera att
@@ -61,14 +65,18 @@ och eftervärden”.
 
 **Förväntat resultat:**
 
-- Knappen står ovanför samtalstexten, anger fyra osparade ändringar och
+- Knappen står ovanför samtalstexten, anger fem osparade ändringar och
   visar en pil åt öppningsriktningen. Den heter **Dölj utkastet** när
   tabellen visas. Tangentbord och skärmläsare når knappen och dess läge.
 - Tabellen har kolumnerna Symbol, Namn, Typ och Vad som ändras, en rad
   per ändring. Penna, kryss och plus motsvarar kartans symboler och har
   textalternativen Ändra, Ta bort och Lägg till. Rättelsen visar
-  **Namn: Lo Exempel → Lo Rättad**.
-- På dator står utkastet till vänster om samtalstexten. Utkastet har ingen
+  **Namn: Lo Exempel → Lo Rättad**. Sambandets ändring visar den gamla
+  och nya e-postadressen utan att upprepa hela sambandets namn.
+- På dator börjar utkastet vid panelens överkant med rubriken **Utkast**,
+  till vänster om samtalsrubriken och samtalstexten. Namn och typer går
+  att läsa utan att enskilda ord bryts till bokstavskolumner.
+  Utkastet har ingen
   länk till **Utkast och historik**. Panelen **Ändringar under samtalet**
   finns inte. Inget sparas genom att läsa tabellen.
 - Efter **Nytt samtal** är utkastet hopfällt enligt grundvalet; samma

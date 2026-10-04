@@ -84,7 +84,7 @@ for (const size of [
         else await expect(field(page)).toBeFocused();
         const draft = view(page).getByRole('button', { name: 'Visa utkastet (1)', exact: true });
         if (short) {
-          await expect(draft).toHaveText('Utkast (1)', { useInnerText: true });
+          await expect(draft).toHaveText(/Utkast\s+1/, { useInnerText: true });
           const controls = [
             view(page).getByRole('meter', { name: 'Kontext' }),
             draft,
@@ -214,12 +214,20 @@ test.describe('smal mobil med återkoppling', () => {
       const voice = await bounds(voiceBox(page));
       for (const selector of [
         '.spatial-bottom-bar',
-        '.workspace-feedback',
+        '.workspace-context',
         '.workspace-voice-controls',
       ]) {
         const feedback = page.locator(selector);
-        if ((await feedback.isVisible()) && (await bounds(feedback)).height > 0)
-          expect(voice.bottom).toBeLessThanOrEqual((await bounds(feedback)).y);
+        if (await feedback.isVisible()) {
+          const box = await bounds(feedback);
+          if (box.height > 0)
+            expect(
+              voice.bottom <= box.y ||
+                box.bottom <= voice.y ||
+                voice.right <= box.x ||
+                box.right <= voice.x,
+            ).toBe(true);
+        }
       }
       await page
         .getByRole('navigation', { name: 'Kartans verktyg' })
@@ -232,9 +240,18 @@ test.describe('smal mobil med återkoppling', () => {
         .getByRole('button', { name: 'Stäng notisen', exact: true });
       await expect(close).toBeVisible();
       const closeBox = await bounds(close);
-      expect(closeBox.width).toBe(44);
-      expect(closeBox.height).toBe(44);
-      await close.click();
+      expect(closeBox.width).toBe(28);
+      expect(closeBox.height).toBe(28);
+      const hit = await close.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const area = getComputedStyle(element, '::after');
+        return {
+          width: box.width - Number.parseFloat(area.left) - Number.parseFloat(area.right),
+          height: box.height - Number.parseFloat(area.top) - Number.parseFloat(area.bottom),
+        };
+      });
+      expect(hit).toEqual({ width: 44, height: 44 });
+      await page.mouse.click(closeBox.x + closeBox.width / 2, closeBox.y - 6);
       await expect(close).toHaveCount(0);
     } finally {
       await app.close();
@@ -256,8 +273,8 @@ test.describe('kort mobil med lång notis', () => {
       await expect(notice).toContainText('Skyttel kunde inte slutföra uppdraget. Försök igen.');
       const close = notice.getByRole('button', { name: 'Stäng notisen', exact: true });
       const closeBox = await bounds(close);
-      expect(closeBox.height).toBe(44);
-      expect(closeBox.width).toBe(44);
+      expect(closeBox.height).toBe(28);
+      expect(closeBox.width).toBe(28);
       expect(closeBox.bottom).toBeLessThanOrEqual(190);
       expect(await notice.evaluate((node) => node.scrollHeight > node.clientHeight)).toBe(true);
       await notice.evaluate((node) => {

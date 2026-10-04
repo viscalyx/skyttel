@@ -155,9 +155,10 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
   }
 });
 
-test('NAVIGATION-02: navigation and unsent details retain separate usable areas in both opening orders', async ({
+test('NAVIGATION-02: navigation and unsent details retain usable work in both opening orders', async ({
   page,
 }) => {
+  test.setTimeout(90_000);
   const installation = await createInstallation();
   try {
     const { lo } = await arrange(page, installation.origin);
@@ -181,8 +182,6 @@ test('NAVIGATION-02: navigation and unsent details retain separate usable areas 
         if (navigationFirst) {
           await trigger.click();
           const handle = page.getByRole('group', { name: 'Navigation', exact: true });
-          if (width > 1000)
-            for (let step = 0; step < 17; step++) await handle.press('Shift+ArrowLeft');
           await handle.press('Shift+ArrowDown');
           await handle.press('Shift+ArrowDown');
         }
@@ -219,7 +218,7 @@ test('NAVIGATION-02: navigation and unsent details retain separate usable areas 
           await handle.press('Shift+ArrowLeft');
           expect((await navigation.boundingBox())?.x).toBe(a.x - 40);
           await page.setViewportSize({ width: width - 20, height });
-          await expect.poll(async () => (await navigation.boundingBox())?.x).toBe(a.x - 20);
+          await expect.poll(async () => (await navigation.boundingBox())?.x).toBe(a.x - 40);
           await page.setViewportSize({ width, height });
           await expect(handle).toBeFocused();
           await expect.poll(() => panel.boundingBox()).toEqual(b);

@@ -43,15 +43,17 @@ familjeflöden, verklig webbläsarzoom, granskade bilder och miljöbegränsninga
 ## Öppna arbetsytor
 
 Hushållet öppnar rymdkartan. Välj **Lista** i **Kartans verktyg** före
-fallens formulär, listor, typer, historik och utkast. Välj **Skriv till Skyttel**
+fallens formulär, listor, typer, historik och utkast. Välj **Skriv till
+Skyttel**
 före samtalsfallen. Utan giltigt medgivande visas medgivanderutan först;
 välj **Godkänn och starta**. På telefon öppnar **Visa verktygens namn**
 även de kompletterande verktygen.
 
 Välj **Uppgifter** vid objektet i Lista för att öppna dess panel. Namnet
 visar i stället objektet i kartan. När ett fall återvänder
-till ett redan öppet objekt, välj objektet i **Öppna paneler**. Stäng
-arbetsytan inför kartgester om panelerna täcker kartan eller dess reglage;
+till ett redan öppet objekt, öppna Lista och välj dess **Uppgifter** igen.
+Stäng panelerna med kryssen inför kartgester om panelerna täcker kartan eller
+dess reglage;
 öppna Lista igen för sökning, filter, samband och utkast.
 
 **Din profil** innehåller användar-ID, inbjudningar, **Inloggningssätt**,
@@ -60,7 +62,8 @@ sida med **Typer och egna fält**, **Administrera tillgång** för
 administratören och **Månadskostnad** för driftansvarig. Mobilnavigationen
 öppnas med **Välj inställning**. Följ dessa ingångar när ett fall anger en
 sådan funktion. **Tillbaka till kartan** återger arbetet.
-**Stäng arbetsytan** återgår till kartan och behåller oskickad text.
+Panelernas kryss behåller oskickad text. Stäng alla paneler för att
+återgå till kartan; stäng även textvyn på telefon.
 
 ## Områden
 
@@ -90,20 +93,26 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   återgång med fokus, synligt tangentbordsfokus i båda riktningar, läsbara
   teman och typdefinitioner i kartans samlade utkast.
 
-- [Fria paneler](workspace-panels.md): flera objekt och samtal, placering,
-  mobil panelväljare med synligt återgångsfokus, återöppning av nya objekt,
+- [Fria paneler](workspace-panels.md): flera objekt och samtal, fri placering
+  över legenden inom skärmens kanter, skydd för synliga samtalsytor och
+  växling mellan hela vyer vid platsbrist,
+  mobilnavigering genom Lista med synligt återgångsfokus, återöppning av nya
+  objekt,
   bevarade samband och typer samt fortsatt sökning medan ett förslag skickas.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
-  teman, läsbara hopplänkar och fokus, stängbar vägledning, samtalshjälp med
+  teman, läsbara hopplänkar och fokus, hjälp i det kompakta verktygsfältet,
+  samtalshjälp med
   tangentkombination, medgivande och leverantörens datavillkor, formulär på
   telefon samt laddning och återhämtning efter nätfel. Hjälpens långa text
   går att rulla på telefon. På en tom mobilkarta förblir visningsval,
-  vägledning och deras tangentbordsfokus nåbara, även med röstruta eller
-  samtalsnotis.
+  verktyg och deras tangentbordsfokus nåbara, även med röstruta eller
+  samtalsnotis. Höjdhjälpen finns i navigeringen och är inaktiv utan
+  ett objektval.
 
 - [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
-  sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad tillgång
+  sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad
+  tillgång
   och ersatt hushållsinnehåll. Väntande permanent radering stoppar mikrofon,
   dolt formulär och registrerat sparförsök före omladdning; oberoende privat
   arbete finns kvar efter uttryckligt slutförande. Ett sammanhängande
@@ -130,7 +139,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   definitioner, granskad sammanslagning med bilder samt ångring efter import.
 
 - [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
-  verktygsraden, vägledningen och snabblänken, avbruten start med bevarat
+  verktygsraden och snabblänken, avbruten start med bevarat
   fokus, start med röst eller text efter vald knapp, medgivande för besöket
   eller sparat per användare och hushåll på flera enheter samt tangentbord,
   pekskärm och placering vid verktygsraden. Sidan **Samtal med Skyttel** i
@@ -145,7 +154,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
   automatisk återkomst, bevarad text med stoppad sändning och mikrofon,
   hjälpmedel utan dubbel uppläsning, fokus och placering vid röstrutan
-  eller meddelandefältet på bred och smal skärm, verkligt registrerat
+  eller meddelandefältet med hela beskedet läsbart på bred och smal skärm,
+  verkligt registrerat
   kontrollfel samt mätt text- och symbolkontrast i båda teman. NOT-11 har
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,
@@ -292,21 +302,25 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
 
 - [Inloggning och hushållets start](access.md): skapa hushåll, använda
   tangentbord, avbryta extern inloggning, återhämta utgångna försök, börja
-  med kartans vägledning, hantera förlorad tillgång och länka inloggningssätt.
+  med kartans verktyg utan startdialoger, hantera förlorad tillgång och länka
+  inloggningssätt.
   Länkningens två steg visar aktuell verifiering, båda tjänsternas status
   och övergången till respektive tjänst.
   Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.
-  Utgången länkning förklarar ny verifiering och bevarar eget utkast och identitet.
-  Även en redan öppen sida hanterar avvisad utgången verifiering utan ny koppling.
+  Utgången länkning förklarar ny verifiering och bevarar eget utkast och
+  identitet.
+  Även en redan öppen sida hanterar avvisad utgången verifiering utan ny
+  koppling.
 - [Tillgång och medlemskap](membership.md): inbjudningar, utgångna och
   ersatta koder, delad administration samt återkallad och återställd
-  tillgång med bevarat innehåll i kartan. Stegvis inbjudan och verklig kopiering,
+  tillgång med bevarat innehåll i kartan. Stegvis inbjudan och verklig
+  kopiering,
   separata medlems- och inbjudningsvyer samt avvecklat oskickat arbete när en
   redan öppen mottagarklient förlorar tillgång.
   Misslyckad urklippsknapp följs av manuell kopiering och faktisk acceptans.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt, bevara ofullständiga uppgifter och rätta obesvarad
-  identitet från utkastets återkoppling med bevarad oskickad text. Påbörjade objekt
+  identitet via Utkast och historik med bevarad oskickad text. Påbörjade objekt
   kan få en ny typ från Inställningar och sparas med nya samband i ett kvitto.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon och placering nära objektet.
@@ -319,7 +333,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   fokus på tidigare och föreslagna samband med läsbara tidigare värden,
   fokus, filter, namn vid runda symboler, sambandsetiketter vid val,
   bevarat etikettläge vid återställning, pekmenyer, uttrycklig redigering
-  med bevarat listfokus, sambandens antal vid direkt borttagning, upphörd status,
+  med bevarat listfokus, sambandens antal vid direkt borttagning, upphörd
+  status,
   ändringssymboler och bevarad oskickad text vid vybyte, orientering och
   grafikavbrott samt fungerande navigation när tillgången återkallas i helskärm.
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
@@ -331,11 +346,15 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   beständighet och avskildhet mellan användare samt inramning vid sen
   första inläsning med bevarad kamera vid senare uppdateringar. Separata
   provhushåll på samma installation förbereds med ett lokalt kommando.
+  Höjdhjälpen har stabil förhandsvisning och ett bevarat val i båda
+  navigeringsstorlekarna.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
   kommando förbereder äldre provdata för uppgraderingen.
-- [Privata utkast](drafts.md): återuppta utkast, hantera gamla kastförsök
+- [Privata utkast](drafts.md): filtrerad teckenförklaring med kartans färger,
+  tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
+  utkast, hantera gamla kastförsök
   och konfliktval samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner
@@ -343,7 +362,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   paneler, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
   ett samlat utkast från formulär, text och tal efter omstart. Besvara
   nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
-  och utkastets återkoppling tillsammans utan att tappa åtkomst till kontrollerna.
+  och kartans status och teckenförklaring tillsammans utan att tappa åtkomst
+  till kontrollerna.
   Öppna en namngiven konflikt från status med tangentbord och återgå till
   ett annat oskickat objektformulär med texten kvar. Följ alla fyra
   konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella
@@ -361,7 +381,8 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
   gemensamma egenskaper med bevarad säkerhet och datum, tangentbord
-  och bevarat arbete på mobil, dator och korta fönster med synlig status. Samtidiga
+  och bevarat arbete på mobil, dator och korta fönster med synlig status.
+  Samtidiga
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
   som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
   kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
@@ -389,5 +410,6 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.
   Kartans samband visar samma status med text och tillgänglig beskrivning
   vid tangentbordsarbete och efter omstart. Objekt och samband behåller
-  sina egna namn, typer och statusuppgifter även när identifierare liknar varandra.
+  sina egna namn, typer och statusuppgifter även när identifierare liknar
+  varandra.
   Det gäller även tidigare samband som visas tillsammans med aktuella förslag.

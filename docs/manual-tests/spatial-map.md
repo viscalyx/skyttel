@@ -46,8 +46,8 @@ durable save”.
 1. Öppna rymdkartan och välj Molnmusik. Kontrollera att kartan ligger
    kvar. Öppna Lista, välj **Uppgifter för Molnmusik** och sedan
    **Redigera valt objekt**. Skriv **Molnmusik familj** som namn.
-2. Välj **Stäng arbetsytan** och öppna Lista igen. Välj **Molnmusik**
-   genom **Öppna paneler**. Kontrollera texten och lägg den i utkastet.
+2. Stäng panelerna med kryssen och öppna Lista igen. Välj **Uppgifter för
+   Molnmusik**. Kontrollera texten och lägg den i utkastet.
 3. Granska och spara hela utkastet. Starta om appen och öppna kartan igen.
 
 **Förväntat resultat:**
@@ -91,8 +91,9 @@ selection”.
 **Förväntat resultat:**
 
 - Pilspetsen syns utanför målets runda symbol, även efter kamerarörelse.
-  Riktning och rätt ändobjekt syns. Sambandets etikett visas när ett
-  anslutet objekt väljs eller Alla etiketter är på. Fokus visar direkta
+  Riktning och rätt ändobjekt syns. Sparade samband får etiketter när ett
+  anslutet objekt väljs eller Alla etiketter är på. Förslagens etiketter
+  visas direkt, med prioritet så långt de ryms utan krockar. Fokus visar direkta
   samband.
 - Visa hela rymden rensar filter och fokus med bibehållen kamera.
 - Escape från en kameraknapp bevarar sökningen. Escape på kartytan
@@ -115,7 +116,8 @@ from saved content”.
 
 **Steg:**
 
-1. Öppna kartan, välj Alla etiketter och kontrollera plusmarkeringarna.
+1. Öppna kartan och kontrollera plusmarkeringar och förslagens
+   sambandsetiketter utan att välja Alla etiketter.
    Visa utkastet och spara.
 2. Högerklicka Molnmusik och välj Redigera objekt. Lägg en ändrad
    beskrivning i utkastet. Gå tillbaka till kartan.
@@ -312,6 +314,9 @@ and opens the saved route read-only”.
 **Förväntat resultat:**
 
 - Molnmusiks fokus visar både sparad och föreslagen betalare.
+- Den tidigare kopplingen har rött kryss och streckad linje; den nya har
+  grönt plus och heldragen linje. Punktade etikettkopplingar
+  går att skilja från riktade samband.
 - Den böjda tidigare linjen och etiketten leder till läsbara tidigare
   värden utan redigeringsfält. Fokus på Molnmusik behålls vid valet.
 - Det föreslagna sambandet visar Kim som betalare. Redigera valt samband
@@ -378,13 +383,12 @@ its saved and private list”.
 
 **Steg:**
 
-1. Öppna kartan, stäng eventuell vägledning och ladda om sidan. Öppna
+1. Öppna kartan och ladda om sidan. Öppna
    Lista och välj **Uppgifter för Familjens Molnmusik**. Läs beskrivningen.
-2. Öppna Lista igen och välj **Lista och utkast** i **Öppna paneler** om
-   detaljpanelen fortfarande är aktiv. Kontrollera Robins notering.
-3. Stäng arbetsytan och välj Kim Exempel i kartan. Kontrollera att namnet
-   går att läsa och välja. Om information om dolda etiketter visas får den
-   inte täcka namnens träffytor.
+2. Öppna **Lista** från verktygen igen. Kontrollera Robins notering.
+3. Stäng panelerna med kryssen och välj Kim Exempel i kartan. Kontrollera att
+   namnet går att läsa och välja. Om information om dolda etiketter visas får
+   den inte täcka namnens träffytor.
 4. Minska vyn till ungefär 320 × 250 CSS-pixlar. Öppna **Visningsval**,
    slå på **Alla etiketter** och kontrollera att samtliga tre namn finns.
    Slå av valet och stäng Visningsval. Återställ den större vyn och öppna

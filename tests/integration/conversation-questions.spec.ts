@@ -277,6 +277,11 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     speak(live, 'Spara hela utkastet.');
     await waitForResponse(live);
     await expect.poll(() => responses.at(-1)?.response?.receiptOperationId).toBeTruthy();
+    const toast = page
+      .getByRole('region', { name: 'Kartans status' })
+      .getByText('Utkastet är sparat');
+    await expect(toast).toBeVisible();
+    await expect(toast.locator('..')).toHaveAttribute('aria-live', 'polite');
     expect(commentary(live).at(-1)?.event).toMatchObject({ content: 'Sparat.' });
     const operations = await (await page.request.get(`${path}/operations`)).json();
     expect(operations.operations[0]).toMatchObject({
@@ -299,7 +304,7 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     await expect(voiceBox(page)).toContainText('Skyttel talar');
     await sound(page, false);
     await expect(voiceBox(page)).toHaveText('Sparat');
-    await expect(voiceAnnouncement(page)).toHaveText('Sparat');
+    await expect(voiceAnnouncement(page)).not.toHaveText('Sparat');
     await expect(voiceBox(page).locator('.voice-saved')).toHaveAttribute('aria-hidden', 'true');
     await expect(textView(page)).toHaveCount(0);
     await page.waitForTimeout(3000);
@@ -327,13 +332,16 @@ test('FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunde
     speak(live, 'Spara hela utkastet.');
     await waitForResponse(live);
     await expect.poll(() => responses.at(-1)?.response?.receiptOperationId).toBeTruthy();
+    await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
+      'Utkastet är sparat',
+    );
     await sound(page, true);
     await expect(voiceBox(page)).toContainText('Skyttel talar');
     await output(page, 'Spar');
     await page.waitForTimeout(700);
     await voiceBox(page).getByRole('button', { name: 'Avbryt', exact: true }).click();
     await expect(voiceBox(page)).toHaveText('Sparat');
-    await expect(voiceAnnouncement(page)).toHaveText('Sparat');
+    await expect(voiceAnnouncement(page)).not.toHaveText('Sparat');
     await expect(textView(page)).toHaveCount(0);
     await page.waitForTimeout(3000);
     await expect(voiceBox(page)).toHaveText('Sparat');

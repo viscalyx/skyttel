@@ -128,9 +128,13 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+.household-map.workspace-shell .workspace-tools .workspace-talk[aria-pressed="false"] {
+  border-color: var(--space-control);
+  background: var(--space-surface);
+  color: var(--space-text);
+}
 .workspace-talk[data-held="true"] {
-  outline: 3px solid var(--space-accent);
-  outline-offset: 3px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--space-accent), transparent 55%);
 }
 .household-map.workspace-shell .workspace-tools .workspace-talk[aria-pressed="true"] {
   background: var(--space-accent);
@@ -142,8 +146,7 @@
   color: #092b2b;
 }
 .workspace-tools svg,
-.workspace-close svg,
-.workspace-work-close svg {
+.workspace-close svg {
   width: 24px;
   height: 24px;
   flex: none;
@@ -209,9 +212,7 @@
   font-size: 12px;
 }
 
-.workspace-guidance,
-.workspace-utility,
-.workspace-empty {
+.workspace-utility {
   position: fixed;
   z-index: 20;
   max-width: calc(100vw - 112px);
@@ -221,13 +222,6 @@
   background: var(--space-surface);
   box-shadow: var(--space-shadow);
 }
-.workspace-guidance {
-  right: 24px;
-  bottom: 24px;
-  width: 330px;
-}
-.workspace-guidance h2,
-.workspace-empty h2,
 .workspace-utility h2 {
   padding-right: 44px;
 }
@@ -248,12 +242,6 @@
   min-height: 44px;
   align-items: center;
   margin-block: 8px;
-}
-.workspace-empty {
-  left: 50%;
-  top: 32%;
-  transform: translateX(-50%);
-  width: 350px;
 }
 .workspace-close {
   position: absolute;
@@ -417,19 +405,6 @@
   background: var(--space-surface);
   color: var(--space-text);
 }
-.household-map.workspace-shell:has(.assistant-workspace[data-session-active="true"])
-  .workspace-guidance {
-  display: none;
-}
-.household-map.workspace-shell .workspace-work-close {
-  position: fixed;
-  z-index: 40;
-  top: calc(var(--work-offset, 0px) + var(--work-top) + 8px);
-  right: 34px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .household-map.workspace-shell.workspace-open .workspace-feedback {
   top: 60px;
   bottom: auto;
@@ -561,21 +536,6 @@
   .workspace-context .workspace-selection-count {
     display: inline;
   }
-  .workspace-guidance {
-    right: 12px;
-    bottom: 108px;
-    max-width: calc(100vw - 24px);
-    padding: 16px;
-  }
-  .workspace-empty {
-    left: 12px;
-    right: 12px;
-    top: 120px;
-    transform: none;
-    width: auto;
-    max-width: none;
-    padding: 16px;
-  }
   .household-map.workspace-shell.workspace-open .assistant-workspace {
     --work-top: min(108px, max(12px, calc(var(--work-height, 100dvh) - 300px)));
     top: calc(var(--work-offset, 0px) + var(--work-top));
@@ -587,14 +547,6 @@
   }
   .household-map.workspace-shell.workspace-open .map-space {
     right: 0;
-  }
-  .household-map.workspace-shell .workspace-work-close {
-    top: calc(
-      var(--work-offset, 0px) +
-      min(108px, max(12px, calc(var(--work-height, 100dvh) - 300px))) +
-      8px
-    );
-    right: 20px;
   }
   .workspace-utility {
     top: 108px;
@@ -690,9 +642,6 @@ footer[hidden] {
     top: 50dvh;
     height: calc(50dvh - 12px);
   }
-  .household-map.workspace-shell.workspace-revealing.workspace-open .workspace-work-close {
-    top: calc(50dvh + 8px);
-  }
   .household-map.workspace-shell.workspace-revealing .spatial-tools,
   .household-map.workspace-shell.workspace-revealing .spatial-bottom-bar {
     display: none;
@@ -760,50 +709,41 @@ footer[hidden] {
 }
 .text-button-marker {
   position: absolute;
-  right: -3px;
-  top: -3px;
+  right: -4px;
+  top: -4px;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--space-surface);
-  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  padding: 0 4px;
+  border-radius: 9px;
   background: var(--space-accent);
-  color: var(--space-bg);
-  font-size: 16px;
+  color: var(--space-surface);
+  box-shadow: 0 0 0 2px var(--space-surface);
+  font-size: 12px;
   font-weight: 800;
   font-style: normal;
-  line-height: 1;
-  letter-spacing: -1px;
+  line-height: 18px;
   pointer-events: none;
 }
 .text-button-marker[data-status="working"] {
-  left: 7px;
-  top: 7px;
-  right: auto;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--space-surface);
-  color: var(--space-accent);
-}
-.workspace-tools .text-button-marker svg {
-  width: 28px;
-  height: 28px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3;
-  stroke-linecap: round;
-  animation: text-button-work 1s linear infinite;
+  right: 5px;
+  top: 5px;
+  min-width: 0;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 50%;
+  animation: text-button-work 1.2s ease-in-out infinite;
 }
 @keyframes text-button-work {
-  to {
-    transform: rotate(360deg);
+  50% {
+    opacity: 0.35;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .workspace-tools .text-button-marker svg {
+  .text-button-marker[data-status="working"] {
     animation: none;
   }
 }

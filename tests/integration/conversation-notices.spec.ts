@@ -72,6 +72,76 @@ const overlaps = (
   first.y < second.bottom &&
   second.y < first.bottom;
 
+async function noticeContentFits(page: Page, scroll = false) {
+  const card = notice(page);
+  for (const child of await card.locator('p, button').all()) {
+    if (scroll) await child.scrollIntoViewIfNeeded();
+    await expect
+      .poll(async () => {
+        const outer = await bounds(card);
+        const inner = await bounds(child);
+        return (
+          inner.y >= outer.y &&
+          inner.bottom <= outer.bottom &&
+          inner.x >= outer.x &&
+          inner.right <= outer.right
+        );
+      })
+      .toBe(true);
+  }
+  if (await textView(page).isVisible()) {
+    const cardBox = await bounds(card);
+    const composer = await bounds(page.locator('.text-view-message'));
+    expect(cardBox.bottom).toBeLessThanOrEqual(composer.y + 1);
+  }
+}
+
+for (const configuration of [
+  { name: 'dator', viewport: { width: 1280, height: 800 }, touch: false },
+  { name: 'telefon', viewport: { width: 390, height: 780 }, touch: true },
+  { name: 'bred pekskärm', viewport: { width: 1024, height: 1366 }, touch: true },
+  { name: 'kort fönster', viewport: { width: 844, height: 390 }, touch: true },
+]) {
+  test.describe(`notisens innehåll på ${configuration.name}`, () => {
+    test.use({
+      viewport: configuration.viewport,
+      isMobile: configuration.touch,
+      hasTouch: configuration.touch,
+    });
+    test('text och kontroller ryms i en händelse och ett hinder, även i textvyn', async ({
+      page,
+    }) => {
+      const { app } = await configured();
+      try {
+        await openMap(page, app.origin);
+        await startConversationWithText(page);
+        await textView(page).getByRole('button', { name: 'Stäng textvyn' }).click();
+        await page.evaluate(() => window.skyttelVoiceFixture.setMicrophone('deny'));
+        await microphoneButton(page).click();
+        await expect(notice(page)).toContainText('Webbläsaren tillåter inte mikrofonen.');
+        await noticeContentFits(page);
+        await textButton(page).click();
+        await noticeContentFits(page, configuration.viewport.height < 520);
+        await expect(
+          textView(page).getByRole('region', { name: 'Utkastets återkoppling' }),
+        ).toHaveCount(0);
+        await page.evaluate(() => {
+          window.skyttelVoiceFixture.setMicrophone('allow');
+          window.skyttelVoiceFixture.setPlayback('blocked');
+        });
+        await microphoneButton(page).click();
+        await expect(notice(page)).toContainText('Webbläsaren stoppade ljudet.');
+        await expect(notice(page).getByRole('button', { name: 'Starta ljudet' })).toBeVisible();
+        await noticeContentFits(page, configuration.viewport.height < 520);
+        await textView(page).getByRole('button', { name: 'Stäng textvyn' }).click();
+        await noticeContentFits(page);
+      } finally {
+        await app.close();
+      }
+    });
+  });
+}
+
 test('NOT-01: utan samtal visar avstängda samtalsknappar en stängbar notis utan att öppna textvyn', async ({
   page,
 }) => {
@@ -83,13 +153,16 @@ test('NOT-01: utan samtal visar avstängda samtalsknappar en stängbar notis uta
       await expect(button).toBeEnabled();
       await expect(button).not.toHaveAttribute('aria-disabled');
       await expect(button).toHaveAccessibleDescription(/Inte tillgängligt just nu\./);
-      await expect(button).toHaveCSS('opacity', '0.6');
+      await expect(button).toHaveCSS('opacity', '0.45');
       await button.click();
       await expect(notice(page)).toContainText(unavailable);
       await expect(button).toBeFocused();
       await expect(textView(page)).toHaveCount(0);
       await expect(assertive(page)).toHaveText(unavailable);
-      await expect(notice(page).locator('svg')).toHaveAttribute('aria-hidden', 'true');
+      await expect(notice(page).locator('.conversation-notice-symbol svg')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
       await notice(page).getByRole('button', { name: 'Stäng notisen' }).click();
       await expect(notice(page)).toHaveCount(0);
       await expect(microphoneButton(page)).toBeFocused();
@@ -100,7 +173,10 @@ test('NOT-01: utan samtal visar avstängda samtalsknappar en stängbar notis uta
     await expect(
       page.getByRole('button', { name: 'Visa samtals- och utkastdetaljer' }),
     ).toHaveCount(0);
-    await expect(page.getByText('1 förslag · privat utkast', { exact: true })).toBeVisible();
+    await expect(page.getByText('1 förslag · privat utkast', { exact: true })).not.toBeVisible();
+    await expect(page.getByRole('region', { name: 'Teckenförklaring i kartan' })).toContainText(
+      'Grönt +: föreslås läggas till',
+    );
   } finally {
     await app.close();
   }
@@ -189,6 +265,10 @@ test('NOT-03: en notis flyttas till textvyn utan ny uppläsning och försvinner 
     const card = await bounds(notice(page));
     const composer = await bounds(page.locator('.text-view-message'));
     expect(card.bottom).toBeLessThanOrEqual(composer.y + 1);
+    const content = await bounds(notice(page).locator('p'));
+    expect(content.y).toBeGreaterThanOrEqual(card.y);
+    expect(content.bottom).toBeLessThanOrEqual(card.bottom);
+    expect(content.right).toBeLessThanOrEqual(card.right);
     await page.getByRole('button', { name: 'Stäng textvyn' }).click();
     await expect(
       page.locator('.conversation-corner').getByRole('region', { name: 'Samtalsnotis' }),

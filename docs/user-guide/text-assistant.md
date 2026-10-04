@@ -15,8 +15,8 @@ förklarar att tal från långt tryck kan skickas efter släpp, medan ny
 inspelning stängs av direkt. Ett sparat medgivande för version 1 behöver
 godkännas på nytt. Samma medgivande
 gäller röst och text. Medgivanderutan **Samtal med Skyttel** visas när du
-väljer en samtalsknapp i verktygsraden, **Tala** eller **Skriv** i kartans
-vägledning eller snabblänken **Till samtalet med Skyttel**.
+väljer en samtalsknapp i verktygsraden eller snabblänken
+**Till samtalet med Skyttel**.
 **Information och hjälp** i verktygsraden förklarar röst, text, långt tryck,
 tangentkombinationen och hur uppgifterna behandlas.
 
@@ -105,7 +105,9 @@ samtalstexten och meddelandefältet **Meddelande till Skyttel**.
 
 - På en dator ligger textvyn vid högerkanten och knuffar undan kartan, så
   att du ser ändringarna i kartan medan du skriver. Meddelandefältet får
-  fokus när textvyn öppnas.
+  fokus när textvyn öppnas. Om formulären och textvyn inte får plats
+  samtidigt växlar du mellan dem med verktygsradens knappar. Vyerna
+  behåller sina bredder, oskickad text och det pågående röstsamtalet.
 - På en mobil enhet och en smal skärm får fältet inte fokus av sig självt.
   Tryck i fältet när du vill skriva. På en smal skärm fyller textvyn
   skärmen under verktygsraden, och **Lista** och kartans paneler tar dess

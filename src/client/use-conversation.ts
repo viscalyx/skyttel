@@ -119,6 +119,7 @@ export function useConversation({
   enabled = true,
   manualSaveOperationId,
   onMapChange,
+  onSaveConfirmed,
   onStarted,
   onEnded,
   onUnavailable,
@@ -131,6 +132,7 @@ export function useConversation({
   /** A local save request still owns this operation's completion. */
   manualSaveOperationId?: string;
   onMapChange: () => void;
+  onSaveConfirmed?: (operationId: string) => void;
   /** A conversation has started, so the caller can show it as the chosen button asks. */
   onStarted?: (mode: ConversationMode) => void;
   /** Explicit revocation ends its presentations without disturbing Settings focus. */
@@ -195,6 +197,7 @@ export function useConversation({
   }, []);
   const callbacks = useRef({
     onMapChange,
+    onSaveConfirmed,
     onStarted,
     onEnded,
     onUnavailable,
@@ -203,6 +206,7 @@ export function useConversation({
   });
   callbacks.current = {
     onMapChange,
+    onSaveConfirmed,
     onStarted,
     onEnded,
     onUnavailable,
@@ -229,6 +233,22 @@ export function useConversation({
             next.review.version < previous.review.version))
       )
         return;
+      if (previous) {
+        const knownReceipts = new Set([
+          previous.receipt?.operationId,
+          ...(previous.completedReplies ?? []).map((reply) => reply.receipt?.operationId),
+        ]);
+        const receipts = [
+          next.receipt,
+          ...(next.completedReplies ?? []).map((reply) => reply.receipt),
+        ];
+        for (const receipt of receipts) {
+          if (receipt && !knownReceipts.has(receipt.operationId)) {
+            knownReceipts.add(receipt.operationId);
+            callbacks.current.onSaveConfirmed?.(receipt.operationId);
+          }
+        }
+      }
       active.current = next;
       setSession(next);
       if ((next.contextRevision ?? 0) > (previous?.contextRevision ?? 0)) {

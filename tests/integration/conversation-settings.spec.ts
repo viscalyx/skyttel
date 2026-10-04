@@ -10,7 +10,7 @@ import {
 } from '@playwright/test';
 import { conversationConsentTextVersion } from '../../src/shared/conversation-consent.js';
 import { bounds, contrast } from '../support/accessibility.js';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
 import { specifiedConsentText } from '../support/conversation.js';
 import {
   chooseConversationText,
@@ -811,11 +811,13 @@ test('MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet', async (
     expect(state.objects).toEqual([expect.objectContaining({ name: 'Lo Exempel' })]);
     release();
     await returnToMap(page);
-    await expect(
-      page.getByRole('status').filter({ hasText: `Kvitto: ${before.operationId}` }),
-    ).toBeVisible();
     await expect(page.getByRole('region', { name: 'Samtalsnotis' })).toHaveCount(0);
     await expect(textView(page)).toHaveCount(0);
+    await (await utilityButton(page, 'Utkast och historik')).click();
+    const receipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
+    await receipts.getByText('Tidigare sparförsök', { exact: true }).click();
+    await expect(receipts).toContainText(before.operationId);
+    await expect(receipts).toContainText('Genomfört');
   } finally {
     release?.();
     await app.close();

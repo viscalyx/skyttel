@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
 import {
+  closePanels,
   createHousehold,
   openProfile,
   openSettings,
   openWorkspace,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -80,7 +82,7 @@ for (const width of [1280, 390, 320]) {
       expect(fragments.length).toBeGreaterThan(0);
       expect(fragments.every(Boolean)).toBe(true);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await page.getByRole('button', { name: 'Visa hela utkastet', exact: true }).click();
+      await (await utilityButton(page, 'Utkast och historik')).click();
       await expect(page).toHaveURL(/\/households\/[^/]+$/);
       await expect(
         page.getByRole('heading', { name: 'Hela mitt utkast', exact: true }),
@@ -191,7 +193,7 @@ test('INST-03: the separate profile returns to the active field and groups perso
     await expect(profile.getByRole('heading', { name: 'Din profil', exact: true })).toBeFocused();
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await expect(page.getByLabel('Beskrivning', { exact: true })).toBeFocused();
-    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await closePanels(page);
     await openProfile(page);
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
@@ -213,7 +215,7 @@ test('INST-04: settings and profile restore map and toolbar focus without openin
     await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await closePanels(page);
     const object = page.getByRole('button', { name: 'Välj objekt: Cykeln', exact: true });
     const microphone = page.getByRole('button', { name: 'Prata med Skyttel', exact: true });
     for (const target of [object, microphone]) {

@@ -28,7 +28,7 @@ användarens alla enheter och att medgivandet följer medlemskapet.
    identiteter, automatiska textsvar och tyst taltransport. Miljön provar
    inte fysiskt ljud och lyssnar inte på din mikrofon.
 2. Logga in som Alex med Google och skapa hushållet Medgivandeprov. Lämna
-   kartan tom, så att kartans vägledning visas.
+   kartan tom.
 3. Starta en ny installation för varje fall, så att inget medgivande är
    sparat när fallet börjar. Avsluta med `quit`.
 4. Kör även med tangentbord, skärmläsare och pekskärm på fysisk telefon
@@ -88,9 +88,7 @@ Avbryt startar inget”.
    **Prata med Skyttel** och att varken samtal eller mikrofon har startat.
 3. Välj **Skriv till Skyttel**. Kontrollera att kryssrutan är omarkerad igen.
    Stäng rutan med Escape.
-4. Upprepa med **Tala** och **Skriv** i kartans vägledning. Vägledningen
-   ska ligga kvar när rutan stängs.
-5. Gå med Tab från sidans början till snabblänken **Till samtalet med Skyttel**
+4. Gå med Tab från sidans början till snabblänken **Till samtalet med Skyttel**
    och välj den med Enter. Stäng rutan.
 
 **Förväntat resultat:**
@@ -101,7 +99,7 @@ Avbryt startar inget”.
 - Rutan är en dialog med namnet **Samtal med Skyttel**. Resten av sidan
   går inte att använda medan den visas.
 - **Avbryt** och Escape startar ingenting och sparar inget medgivande.
-  Fokus återgår till den knapp som valdes. Vägledningen ligger kvar.
+  Fokus återgår till den knapp som valdes.
 
 ### MEDGIVANDE-02: vald knapp avgör röst eller text och medgivandet gäller besöket
 
@@ -674,8 +672,8 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
 3. Vänta på terminalens `save-registered`. Notera dess `operationId`.
    Öppna **Samtal med Skyttel** i Inställningar och välj
    **Återkalla medgivandet**. Läs rutan och bekräfta.
-4. Skriv `release-save`. Gå tillbaka till kartan och läs sparresultatet.
-   Öppna **Utkast och historik** och kontrollera kvittot.
+4. Skriv `release-save`. Gå tillbaka till kartan. Öppna **Utkast och
+   historik**, **Tidigare sparförsök** och kontrollera kvittot.
 
 **Förväntat resultat:**
 
@@ -683,7 +681,7 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
   stället för att ange antal osparade ändringar.
 - Medgivandet återkallas medan det registrerade sparandet slutförs.
   Kartan innehåller Lo Exempel och utkastet är tomt.
-- Sparresultatet visar kvittot med det noterade ID:t. Historiken har ett
+- Mina sparförsök visar kvittot med det noterade ID:t. Historiken har ett
   sparande för samma ID, även efter att det fördröjda svaret släpps.
 - Textvyn och röstrutan är stängda och ingen samtalsnotis visas.
   Sparresultatet går att kontrollera utan ett nytt samtalsmedgivande.

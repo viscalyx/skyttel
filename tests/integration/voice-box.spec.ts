@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
 import {
   chooseConversationVoice,
   consentBox,
@@ -129,11 +129,7 @@ test('TAL-10: Prata med Skyttel slår på och av mikrofonen utan att någon pane
     await expect(voiceBox(page)).toHaveCount(0);
     const off = await microphone.evaluate((button) => getComputedStyle(button).backgroundColor);
 
-    // The welcome guide's start with voice does what the button does.
-    await page
-      .getByRole('complementary', { name: 'Kom igång med kartan' })
-      .getByRole('button', { name: 'Tala', exact: true })
-      .click();
+    await microphone.click();
     await expect(consentBox(page)).toBeVisible();
     await page.evaluate(() => window.skyttelVoiceFixture.setMicrophone('hold'));
     await giveConversationConsent(page);
@@ -604,10 +600,9 @@ for (const [name, width, height, place] of [
       await openMapWithDraft(page, app.origin);
       await startConversationWithVoice(page);
       await listening(page);
-      // The map says what it did in its common feedback.
       await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
-      const feedback = page.locator('.workspace-feedback');
-      await expect(feedback).toContainText('Översikt återställd');
+      const feedback = page.locator('.workspace-context');
+      await expect(feedback).toContainText('Grönt +');
       const row = page.locator('.spatial-bottom-bar');
       const check = async () => {
         const box = await bounds(voiceBox(page));
@@ -618,7 +613,7 @@ for (const [name, width, height, place] of [
           // The box stays above the actual protected map row and feedback.
           // Their visible placement can follow the viewport's scrolling flow.
           const card = await bounds(page.locator('.workspace-voice-controls'));
-          const floor = Math.min(card.y, (await bounds(row)).y, (await bounds(feedback)).y);
+          const floor = Math.min(card.y, (await bounds(row)).y);
           expect(box.bottom).toBeLessThanOrEqual(floor);
           expect(overlaps(box, card)).toBe(false);
           expect(box.y).toBeGreaterThanOrEqual(0);
@@ -626,11 +621,26 @@ for (const [name, width, height, place] of [
         }
         expect(overlaps(box, await bounds(feedback))).toBe(false);
         expect(overlaps(box, await bounds(row))).toBe(false);
-        // The box stands above the feedback, wherever on the screen the two are.
-        expect(box.bottom).toBeLessThanOrEqual((await bounds(feedback)).y);
         return box;
       };
       const first = await check();
+      if (name === 'dator') {
+        for (const control of ['Lista', 'Utkast och historik']) {
+          await (await utilityButton(page, control)).click();
+          await check();
+          await openConversationText(page);
+          await check();
+          const draftToggle = panel(page).getByRole('button', {
+            name: /^(Visa|Dölj) utkastet/,
+          });
+          if ((await draftToggle.getAttribute('aria-expanded')) === 'false')
+            await draftToggle.click();
+          await check();
+          await panel(page).getByRole('button', { name: 'Stäng textvyn' }).click();
+          await page.getByRole('button', { name: 'Stäng Lista och utkast', exact: true }).click();
+          await check();
+        }
+      }
 
       // A longer status word and the stop icon make the box wider. It stays in its place.
       speak(live, 'Beskriv utkastet.');

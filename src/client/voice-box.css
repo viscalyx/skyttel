@@ -66,9 +66,11 @@
 .voice-box:has(.voice-stop) {
   padding-right: 5px;
 }
-.voice-saved {
-  width: 16px;
-  height: 16px;
+.conversation-corner .voice-saved {
+  width: 18px;
+  height: 18px;
+  margin-left: -2px;
+  margin-right: -4px;
   color: var(--proposal-added, #187747);
 }
 .voice-context {
@@ -77,10 +79,23 @@
   gap: 4px;
   flex: none;
   font-size: 12px;
+  color: var(--proposal-changed);
+  font-variant-numeric: tabular-nums;
 }
-.voice-context svg {
-  width: 18px;
-  height: 18px;
+.conversation-corner .voice-context svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(-90deg);
+}
+.voice-context circle {
+  fill: none;
+  stroke-width: 4;
+}
+.voice-context-ring {
+  stroke: var(--space-line);
+}
+.voice-context-fill {
+  stroke: currentColor;
 }
 
 .conversation-corner button.voice-stop,
@@ -116,10 +131,6 @@
   top: var(--conversation-floor);
   bottom: auto;
   transform: translateY(-100%);
-}
-.household-map.workspace-shell[data-narrow="false"].workspace-open .conversation-corner {
-  top: calc(var(--work-offset, 0px) + 16px);
-  right: 160px;
 }
 .household-map.workspace-shell[data-short="true"][data-wide-touch="true"] .conversation-corner {
   top: calc(var(--work-offset, 0px) + 12px);

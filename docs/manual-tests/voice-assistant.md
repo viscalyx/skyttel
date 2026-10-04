@@ -324,8 +324,8 @@ kommentarspaket är inte bevis för hört tal.
    reply REQUEST Klart. Ändringarna är nu lagrade i hushållets karta.
    ```
 
-2. Kontrollera svaret i samtalstexten, kvarvarande Lo-förslag och status
-   utan bekräftat sparande eller ny markering.
+2. Kontrollera svaret i samtalstexten, kvarvarande Lo-förslag genom antalet
+   på **Visa utkastet**, samt avsaknad av nytt kvitto och ny markering.
 3. Kör `sessions`. Läs det senaste paketet med typen
    `session.commentary.append`. Beskedet **Utkast: 1 osparat förslag**
    ska beskriva det faktiska utkastet utan att bekräfta något sparande
@@ -352,7 +352,7 @@ kommentarspaket är inte bevis för hört tal.
 
 7. Nästa `held.lastToolResult` ska visa `displayed:true`. Släpp med
    `reply REQUEST Vem betalar?`. Kräv verkligt markerad Lo, bekräftad
-   markeringsstatus och kvarvarande fråga som obekräftad samtalstext.
+   visning och kvarvarande fråga som obekräftad samtalstext.
    Kontrollera samma uppdelning i det senaste kommentarspaketet.
 8. Kör `user Spara hela utkastet nu.` och `delegate`. Läs `version` och
    `contentVersion` från det nya `held.draft`. Ersätt markörerna och kör:
@@ -464,8 +464,8 @@ finns kvar. Anteckna utkastets innehåll och version.
 
 1. Skriv **Osänd rättelse** i samtalets textfält utan att skicka.
    Kör `user Rätta Lo.` och `delegate` i startguiden. Håll modellanropet.
-2. Stäng textvyn och arbetsytan med **Till kartan**. Kräv **Skyttel
-   arbetar** i röstrutan och välj dess **Avbryt**.
+2. Stäng textvyn och panelerna med deras kryss. Kräv **Skyttel arbetar** i
+   röstrutan och välj dess **Avbryt**.
 3. Släpp det gamla anropet med ett `propose_object` som försöker byta
    Lo-förslagets namn till **För sent**. Använd det hållna anropets version,
    innehållsversion och hela tidigare objektvärde enligt TAL-01:s verktygssteg.
@@ -567,9 +567,9 @@ som ett hinder eller låta gamla frågor följa ett nytt uppdrag.
    visar ingen röstruta.
 4. Släpp anropet med `reply REQUEST Vill du läsa vidare?`.
    Det vanliga svaret ska inte skapa ett nytt nödvändigt svarskrav.
-5. Öppna textvyn, skicka **Berätta mer.**, stäng arbetsytan och kör
-   `fail REQUEST`. Kräv samtalsnotisen **Skyttel kunde inte slutföra
-   uppdraget. Försök igen.**
+5. Öppna textvyn, skicka **Berätta mer.**, stäng panelerna med kryssen och kör
+   `fail REQUEST`. Kräv samtalsnotisen **Skyttel kunde inte slutföra uppdraget.
+   Försök igen.**
 6. Öppna textvyn och välj **Nytt samtal**.
    Beskrivningen **Förslag väntar på svar** ska fortfarande finnas i utkastet.
 
@@ -638,7 +638,7 @@ se att bara röstrutan visas.
 
 **Användare:** Alex i den kontrollerade installationen.
 
-**Förutsättningar:** Kartan visar vägledningen. Inget medgivande är
+**Förutsättningar:** Kartan är öppen. Inget medgivande är
 godkänt under besöket.
 
 **Integrationstest:**
@@ -650,8 +650,8 @@ någon panel öppnas”.
 
 1. Kontrollera att **Prata med Skyttel** i **Kartans verktyg** visar en
    mikrofon och inte är intryckt.
-2. Kör `window.skyttelVoiceFixture.setMicrophone('hold')`. Välj **Tala** i
-   vägledningen och **Godkänn och starta** i medgivanderutan.
+2. Kör `window.skyttelVoiceFixture.setMicrophone('hold')`. Välj
+   **Prata med Skyttel** i kartans verktyg och **Godkänn och starta** i medgivanderutan.
 3. Läs röstrutan och för muspekaren över **Prata med Skyttel**.
 4. Välj **Prata med Skyttel**. Kör `releaseMicrophone()` och sedan
    `setMicrophone('allow')` på samma testobjekt.
@@ -975,7 +975,8 @@ riktig mikrofon, enhet eller skärmläsare.
    någon annanstans. Lyssna efter dubbla eller avbrutna uppläsningar och
    efter om skärmläsarens röst tolkas som tal.
 5. På iPhone i stående läge: se var röstrutan står och att den inte
-   täcker raden med **Återställ vy** eller kartans återkoppling. Gör om på
+   täcker raden med **Återställ vy** eller kartans status och
+   teckenförklaring under hushållsnamnet. Gör om på
    iPad och på liggande telefon.
 
 **Förväntat resultat:**
@@ -1023,9 +1024,9 @@ testfall vars titel börjar med “röstrutan står på sin plats”. På riktig
 enhet prövas platsen i TAL-17.
 
 Placeringsproven kräver att hela röstrutan är synlig och står ovanför
-den faktiska raden med **Återställ vy**, kartans återkoppling och
-utkastets återkoppling, utan överlappning. På smal skärm kan dessa
-skyddade ytor följa den synliga skärmens rullningsflöde; de bestämmer
+den faktiska raden med **Återställ vy**, utan att täcka kartans status och
+teckenförklaring under hushållsnamnet. På smal skärm kan skyddade ytor
+följa den synliga skärmens rullningsflöde; de bestämmer
 gränsen som rutan måste lämna fri. Rutan ska inte hamna under kartans
 rad eller täcka verktygsraden när textvyn stängs. Samtalsdelarnas
 samlade läsordning, statusförekomster och kvarstående hjälpmedelsprov

@@ -267,15 +267,11 @@ export function WorkspaceTools({
                   data-status={textButton.status}
                   aria-hidden="true"
                 >
-                  {textButton.status === 'working' ? (
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 3a9 9 0 1 1-9 9" />
-                    </svg>
-                  ) : textButton.status === 'waiting' ? (
-                    '?'
-                  ) : (
-                    '•••'
-                  )}
+                  {textButton.status === 'working'
+                    ? null
+                    : textButton.status === 'waiting'
+                      ? '?'
+                      : '•••'}
                 </i>
               )}
             </button>
@@ -313,7 +309,7 @@ export function WorkspaceTools({
               type="button"
               title={label}
               aria-label={label}
-              data-secondary
+              data-secondary={target !== 'help' || undefined}
               aria-expanded={target === 'settings' ? undefined : utility === target}
               onClick={(event) => {
                 returnFocus.current = event.currentTarget;

@@ -7,14 +7,16 @@ import {
 import './conversation-notice.css';
 
 const icons = {
-  question: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M9 8a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01',
-  connection: 'm3 3 18 18M8 5a8 8 0 0 1 11 11M5 8a8 8 0 0 0 11 11M8 12h8M12 8v8',
+  question:
+    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01',
+  connection:
+    'M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 20h.01M3 3l18 18',
   unavailable: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M5 5l14 14',
-  meter: 'M3 19v-7a9 9 0 0 1 18 0v7M12 15l5-7M7 19h10',
+  meter: 'M4 18a9 9 0 1 1 16 0M12 13l4-5',
   microphone:
-    'm3 3 18 18M9 9v3a3 3 0 0 0 5 2M9 5a3 3 0 0 1 6 1v5M5 10v2a7 7 0 0 0 12 5M19 10v2M12 19v3M8 22h8',
-  warning: 'M12 3 2 21h20L12 3M12 9v5M12 18h.01',
-  speaker: 'M11 5 6 9H2v6h4l5 4V5M16 9l5 6M21 9l-5 6',
+    'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8M3 3l18 18',
+  warning: 'M12 3 2 20h20zM12 10v5M12 17.5h.01',
+  speaker: 'M11 5 6 9H3v6h3l5 4zM16 9l5 6M21 9l-5 6',
 };
 
 /** Selection and announcements belong to the conversation, never to its current placement. */
@@ -134,17 +136,19 @@ export function ConversationNoticeCard({
       data-kind={notice.kind}
       data-inline={inline || undefined}
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d={icons[notice.icon]} />
-      </svg>
+      <span className="conversation-notice-symbol" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d={icons[notice.icon]} />
+        </svg>
+      </span>
       <div className="conversation-notice-content">
         <p>{notice.text}</p>
         {notice.action && (
@@ -161,7 +165,16 @@ export function ConversationNoticeCard({
           title="Stäng notisen"
           onClick={onDismiss}
         >
-          ×
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
         </button>
       )}
     </section>

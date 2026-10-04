@@ -58,8 +58,8 @@ relationship reachable”.
    att det valda objektet återfinns. Välj **Visa objektets kopplingar**
    och läs dess direkta samband.
 4. Skriv **Oskickad text i den täta kartan** i **Beskrivning**. Välj
-   **Visa hela rymden**, öppna Lista och välj objektets panel igen med
-   **Öppna paneler**. Kontrollera att texten finns kvar. Lägg den i utkastet
+   **Visa hela rymden**, öppna Lista och sök Provobjekt 499. Välj objektets
+   **Uppgifter** igen. Kontrollera att texten finns kvar. Lägg den i utkastet
    och granska hela förslaget.
 5. Spara hela utkastet. Invänta kvittot, ladda om och sök objektet igen.
    Kontrollera den sparade beskrivningen och historiken. Kontrollera också

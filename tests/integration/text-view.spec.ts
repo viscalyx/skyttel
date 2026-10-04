@@ -76,7 +76,13 @@ test('TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avslut
     await expect(textView(page)).toHaveCount(0);
     await giveConversationConsent(page);
     await expect(textView(page)).toBeVisible();
+    await expect(
+      textView(page).getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
+    ).toHaveCount(0);
     await expect(tool).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
+      'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.',
+    );
 
     // On a computer: a side field of 400 px at the right edge, under the voice box's corner.
     // It pushes the map aside, and the message field has the focus.
@@ -141,10 +147,9 @@ test('TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar s
       }),
   );
   try {
-    // The welcome guide's start with text does what the button does.
     await page
-      .getByRole('complementary', { name: 'Kom igång med kartan' })
-      .getByRole('button', { name: 'Skriv', exact: true })
+      .getByRole('navigation', { name: 'Kartans verktyg' })
+      .getByRole('button', { name: 'Skriv till Skyttel', exact: true })
       .click();
     await giveConversationConsent(page);
     await expect(conversationText(page)).toHaveText(

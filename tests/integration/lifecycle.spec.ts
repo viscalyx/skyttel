@@ -522,7 +522,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
           version: saved.draft.version,
           id: 'incoming',
           baseRevision: ended?.revision,
-          value: { ...ended, typeId: pays?.id, lifecycle: 'active' },
+          value: { ...ended, sourceId: 'service', typeId: pays?.id, lifecycle: 'active' },
         })
       ).ok(),
     ).toBe(true);
@@ -542,7 +542,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
       exact: true,
     });
     const proposed = labels.getByRole('button', {
-      name: 'Välj samband: Lo Exempel → Betalar → Familjemusik',
+      name: 'Välj samband: Molnmusik → Betalar → Familjemusik',
       exact: true,
     });
     await expect(previous.getByText('Upphört', { exact: true })).toBeVisible();

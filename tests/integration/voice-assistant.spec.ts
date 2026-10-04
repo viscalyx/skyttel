@@ -487,7 +487,9 @@ test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async (
       speak(live, 'Beskriv mitt utkast.');
       const conversation = assistant(page).getByRole('log', { name: 'Samtalstext', exact: true });
       await expect(conversation).toContainText(reply);
-      await expect(assistant(page).getByRole('status')).toContainText('Nya förslag är osparade');
+      await expect(
+        assistant(page).getByRole('button', { name: 'Visa utkastet (1)', exact: true }),
+      ).toBeVisible();
       await expect(object).toHaveAttribute('aria-pressed', selected ?? 'false');
       await expect
         .poll(
@@ -504,11 +506,11 @@ test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async (
       expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
     }
     speak(live, 'Markera Lo Exempel.');
-    await expect(assistant(page).getByRole('status', { includeHidden: true })).toHaveText(
-      'Markerat i kartan.',
-    );
+    await expect(object).toHaveAttribute('aria-pressed', 'true');
     await openConversationText(page);
-    await expect(assistant(page).getByRole('status')).toHaveText('Markerat i kartan.');
+    await expect(
+      assistant(page).getByRole('region', { name: 'Utkastets återkoppling' }),
+    ).toHaveCount(0);
     await expect(object).toHaveAttribute('aria-pressed', 'true');
     await expect(
       assistant(page).getByRole('log', { name: 'Samtalstext', exact: true }),
@@ -830,9 +832,6 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
   try {
     const { path } = await simpleMap(page, app);
     speak(live, 'Markera Lo Exempel.');
-    await expect(assistant(page).getByRole('status', { includeHidden: true })).toHaveText(
-      'Markerat i kartan.',
-    );
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
@@ -864,12 +863,15 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await openConversationText(page);
-    await expect(assistant(page).getByRole('status')).toHaveText('Markerat i kartan.');
+    await expect(
+      assistant(page).getByRole('region', { name: 'Utkastets återkoppling' }),
+    ).toHaveCount(0);
     await expect
       .poll(
         () => live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,
       )
       .toBe(1);
+    expect(lastToolResult(model.requests[1])).toMatchObject({ displayed: true });
     // Lose the automatic check before it reaches the server, preserving the
     // registered original attempt across restart.
     await page.route('**/text-assistant/*/recover', (route) => route.abort());

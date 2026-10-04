@@ -3,7 +3,6 @@ import {
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
-  type RefObject,
   useCallback,
   useEffect,
   useId,
@@ -11,6 +10,12 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  type FloatingArea,
+  fitWindow,
+  measureFloatingArea,
+  moveWindow,
+} from './floating-windows.js';
 
 export type WorkspacePanel = {
   id: string;
@@ -23,9 +28,7 @@ export type WorkspacePanel = {
 export type PanelFocusRequest = { id: string; element?: HTMLElement | null };
 export type PanelAnchor = { x: number; y: number };
 
-type TransitionFocus =
-  | { kind: 'panel' | 'selector'; id: string }
-  | { kind: 'empty'; focus: () => void };
+type TransitionFocus = { kind: 'panel'; id: string } | { kind: 'empty'; focus: () => void };
 
 type Position = { x: number; y: number };
 type Drag = {
@@ -40,11 +43,20 @@ type Drag = {
 const panelWidth = 380;
 const panelGap = 18;
 
-function startingPosition(index: number, width: number): Position {
+function startingPosition(index: number, region: HTMLElement): Position {
+  const floating = getComputedStyle(region).position === 'fixed';
+  const context = region.closest('.household-map')?.querySelector('.workspace-context');
+  const top = floating
+    ? Math.max(
+        200,
+        (context?.getBoundingClientRect().bottom ?? 188) + 12 - region.getBoundingClientRect().top,
+      )
+    : 0;
+  const width = region.clientWidth - (floating ? 136 : 0);
   const columns = Math.max(1, Math.floor((width + panelGap) / (panelWidth + panelGap)));
   return {
-    x: (index % columns) * (panelWidth + panelGap),
-    y: Math.floor(index / columns) * 52,
+    x: (floating ? 112 : 0) + (index % columns) * (panelWidth + panelGap),
+    y: top + Math.floor(index / columns) * 52,
   };
 }
 
@@ -61,23 +73,33 @@ function clampPosition(
   position: Position,
   region: HTMLElement,
   panel?: HTMLElement,
-  floatingStatus?: HTMLElement | null,
+  area?: FloatingArea,
+  origin?: Position,
 ) {
   const width = panel?.offsetWidth ?? panelWidth;
   const x = Math.round(Math.max(0, Math.min(position.x, region.clientWidth - width)));
-  let maxHeight = region.clientHeight;
-  if (floatingStatus?.offsetHeight && getComputedStyle(region).position === 'fixed') {
-    const bounds = region.getBoundingClientRect();
-    const status = floatingStatus.getBoundingClientRect();
-    if (bounds.left + x < status.right + 12 && bounds.left + x + width > status.left - 12) {
-      maxHeight = Math.max(0, Math.min(maxHeight, status.top - bounds.top - 12));
-    }
-  }
-  return {
+  const maxHeight =
+    getComputedStyle(region).position === 'fixed'
+      ? Math.max(124, region.clientHeight - 200)
+      : region.clientHeight;
+  const fitted = {
     x,
-    y: Math.round(Math.max(0, Math.min(position.y, maxHeight - (panel?.offsetHeight ?? 0)))),
+    y: Math.round(
+      Math.max(
+        0,
+        Math.min(position.y, region.clientHeight - Math.min(maxHeight, panel?.offsetHeight ?? 0)),
+      ),
+    ),
     maxHeight,
   };
+  if (!area || getComputedStyle(region).position !== 'fixed') return fitted;
+  const bounds = region.getBoundingClientRect();
+  const absolute = (point: Position) => ({ x: point.x + bounds.left, y: point.y + bounds.top });
+  const size = { width, height: Math.min(maxHeight, panel?.offsetHeight ?? 0) };
+  const next = origin
+    ? moveWindow(absolute(origin), absolute(position), size, area)
+    : fitWindow(absolute(position), size, area);
+  return { x: next.x - bounds.left, y: next.y - bounds.top, maxHeight };
 }
 
 export function WorkspacePanels({
@@ -90,7 +112,7 @@ export function WorkspacePanels({
   onEmpty,
   focused = false,
   restoreFocusOnReveal = true,
-  floatingStatus,
+  area,
 }: {
   windows: WorkspacePanel[];
   activeId: string | null;
@@ -101,11 +123,10 @@ export function WorkspacePanels({
   onEmpty: () => void;
   focused?: boolean;
   restoreFocusOnReveal?: boolean;
-  floatingStatus?: RefObject<HTMLElement | null>;
+  area?: FloatingArea;
 }) {
   const prefix = useId();
   const regionRef = useRef<HTMLDivElement>(null);
-  const selectorRef = useRef<HTMLSelectElement>(null);
   const panelRefs = useRef(new Map<string, HTMLElement>());
   const lastFocus = useRef(new Map<string, HTMLElement>());
   const handleRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -115,6 +136,8 @@ export function WorkspacePanels({
   const explicitFocusCommitted = useRef(false);
   const appliedTransition = useRef<TransitionFocus | null>(null);
   const rememberedPositions = useRef<Record<string, Position>>({});
+  const defaultContextTops = useRef<Record<string, number>>({});
+  const placedReveal = useRef<PanelFocusRequest | null>(null);
   const [positions, setPositions] = useState<Record<string, ReturnType<typeof clampPosition>>>({});
   const [stack, setStack] = useState<string[]>([]);
   const [moveMenuId, setMoveMenuId] = useState<string | null>(null);
@@ -148,25 +171,59 @@ export function WorkspacePanels({
   useLayoutEffect(() => {
     const region = regionRef.current;
     if (!region || compact || hidden) return;
+    if (
+      focused &&
+      focusRequest &&
+      placedReveal.current !== focusRequest &&
+      getComputedStyle(region).position === 'fixed'
+    ) {
+      placedReveal.current = focusRequest;
+      const text = region.closest('.household-map')?.querySelector<HTMLElement>('.text-view');
+      const bounds = region.getBoundingClientRect();
+      const right = text?.offsetWidth ? text.getBoundingClientRect().left : bounds.right;
+      // A requested map display starts beside its framed selection. Once
+      // visible, the window can still be moved across the whole screen.
+      rememberedPositions.current[focusRequest.id] = {
+        x: right - bounds.left - panelWidth - 24,
+        y: 200,
+      };
+      delete defaultContextTops.current[focusRequest.id];
+    }
     const fitPanels = () => {
       if (!region.clientWidth || !region.clientHeight) return;
+      const currentArea = area && measureFloatingArea(region);
       setPositions((previous) => {
         let changed = false;
         const next = { ...previous };
         windows.forEach((entry, index) => {
           const panel = panelRefs.current.get(entry.id);
-          const proposed =
+          let proposed =
             rememberedPositions.current[entry.id] ||
             (entry.anchor
               ? anchoredPosition(entry.anchor, region)
-              : startingPosition(index, region.clientWidth));
+              : startingPosition(index, region));
+          const contextTop = startingPosition(0, region).y;
+          if (!rememberedPositions.current[entry.id] && !entry.anchor) {
+            defaultContextTops.current[entry.id] = contextTop;
+          }
+          // Untouched defaults follow growing map status vertically. Their
+          // preferred horizontal placement survives viewport changes.
+          const previousContextTop = defaultContextTops.current[entry.id];
+          if (previousContextTop !== undefined) {
+            proposed = { ...proposed, y: proposed.y + contextTop - previousContextTop };
+            defaultContextTops.current[entry.id] = contextTop;
+          }
           rememberedPositions.current[entry.id] = proposed;
-          const position = clampPosition(
-            proposed,
-            region,
-            panel,
-            focused ? null : floatingStatus?.current,
-          );
+          const position = clampPosition(proposed, region, panel, currentArea);
+          // Viewport clamps retain the preferred desktop position. A move
+          // caused by conversation geometry becomes the new preferred position.
+          const viewportOnly =
+            currentArea &&
+            clampPosition(proposed, region, panel, { ...currentArea, obstacles: [] });
+          if (viewportOnly && (position.x !== viewportOnly.x || position.y !== viewportOnly.y)) {
+            rememberedPositions.current[entry.id] = position;
+            delete defaultContextTops.current[entry.id];
+          }
           next[entry.id] = position;
           if (
             position.x !== previous[entry.id]?.x ||
@@ -182,10 +239,11 @@ export function WorkspacePanels({
     fitPanels();
     const observer = new ResizeObserver(() => fitPanels());
     observer.observe(region);
-    if (floatingStatus?.current) observer.observe(floatingStatus.current);
+    const context = region.closest('.household-map')?.querySelector('.workspace-context');
+    if (context) observer.observe(context);
     for (const panel of panelRefs.current.values()) observer.observe(panel);
     return () => observer.disconnect();
-  }, [windows, compact, hidden, focused, floatingStatus]);
+  }, [windows, compact, hidden, area, focused, focusRequest]);
 
   useLayoutEffect(() => {
     if (hidden || !focusRequest || appliedFocusRequest.current === focusRequest) return;
@@ -205,7 +263,6 @@ export function WorkspacePanels({
     if (transitionFocus.kind !== 'empty' && (hidden || transitionFocus.id !== visibleId)) return;
     explicitFocusCommitted.current = true;
     if (transitionFocus.kind === 'empty') transitionFocus.focus();
-    else if (transitionFocus.kind === 'selector') selectorRef.current?.focus();
     else if (!resumeFocus(transitionFocus.id))
       panelRefs.current.get(transitionFocus.id)?.querySelector('h2')?.focus();
   }, [transitionFocus, hidden, visibleId, resumeFocus]);
@@ -240,9 +297,11 @@ export function WorkspacePanels({
       position,
       region,
       panelRefs.current.get(id),
-      focused ? null : floatingStatus?.current,
+      area && measureFloatingArea(region),
+      positions[id],
     );
     rememberedPositions.current[id] = next;
+    delete defaultContextTops.current[id];
     setPositions((previous) => ({ ...previous, [id]: next }));
     return next;
   };
@@ -316,11 +375,7 @@ export function WorkspacePanels({
     setMoveMenuId(null);
     onClose(id);
     if (next) onActivate(next.id);
-    setTransitionFocus(
-      next
-        ? { kind: compact ? 'selector' : 'panel', id: next.id }
-        : { kind: 'empty', focus: onEmpty },
-    );
+    setTransitionFocus(next ? { kind: 'panel', id: next.id } : { kind: 'empty', focus: onEmpty });
   };
 
   return (
@@ -334,24 +389,6 @@ export function WorkspacePanels({
           {movementStatus}
         </span>
       )}
-      <label className="workspace-window-selector">
-        Öppna paneler ({opened.length})
-        <select
-          ref={selectorRef}
-          value={visibleId ?? ''}
-          onChange={(event) => {
-            const id = event.target.value;
-            activate(id);
-            setTransitionFocus({ kind: 'panel', id });
-          }}
-        >
-          {opened.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.title}
-            </option>
-          ))}
-        </select>
-      </label>
       {windows.map((entry, index) => {
         const titleId = `${prefix}-title-${entry.id}`;
         const menuId = `${prefix}-move-${entry.id}`;
@@ -473,7 +510,7 @@ export function WorkspacePanels({
                       entry.id,
                       entry.anchor
                         ? anchoredPosition(entry.anchor, region)
-                        : startingPosition(index, region.clientWidth),
+                        : startingPosition(index, region),
                     );
                   setMovementStatus('Panelens position återställd.');
                 }}

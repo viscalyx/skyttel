@@ -24,6 +24,106 @@ testidentitet och påhittade uppgifter.
 
 ## Objekt och samtal
 
+### PANEL-06: dra formulär över legenden och till skärmens kanter
+
+**Syfte:** Flytta formulär fritt och behåll åtkomst till hela formuläret.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Använd ett datorfönster med plats för dragbara formulär.
+
+**Integrationstest:**
+[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
+testfallet “PANEL-06: draggable forms can cover the legend and reach the
+screen edges”.
+
+**Steg:**
+
+1. Öppna Lista och välj **Nytt objekt**. Skicka ett påhittat objekt till ditt
+   utkast så att legenden visas. Öppna sedan ett nytt formulär och skriv ett
+   namn utan att skicka det.
+2. Dra formulärets rubrik till skärmens övre vänstra hörn och över legenden.
+3. Flytta formuläret med piltangenter och flyttknappar till skärmens övriga
+   kanter. Försök fortsätta utanför skärmen.
+
+**Förväntat resultat:**
+
+- Formuläret kan täcka legenden och kartans övriga kontroller.
+- Hela formuläret stannar inom skärmen. Namnet finns kvar.
+- Dragning, piltangenter och flyttknappar har samma gränser.
+
+### PANEL-07: synliga samtalsytor stoppar dragning
+
+**Syfte:** Skydda textvyn och röstrutan utan att begränsa övrig dragning.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett datorfönster rymmer både formulär och textvy.
+Samtalet är tillgängligt med mikrofonmedgivande.
+
+**Integrationstest:**
+[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
+testfallet “PANEL-07: windows stop at visible conversation areas and retain
+relocated positions”.
+
+**Steg:**
+
+1. Öppna ett nytt objektformulär och skriv ett namn utan att skicka det.
+2. Starta samtalet, slå på mikrofonen och stäng textvyn. Dra formuläret mot
+   röstrutan, längs dess kant och sedan runt den till skärmens högra kant.
+3. Öppna textvyn när formuläret står på dess plats. Dra därefter formuläret
+   mot textvyn och längs dess kant. Gör textvyn bredare med dess handtag.
+4. Stäng textvyn och kontrollera formulärets placering.
+5. Öppna Navigation och upprepa förflyttningen mot röstrutan och textvyn.
+   Använd även piltangenter och fönstrets flyttknappar.
+
+**Förväntat resultat:**
+
+- Synliga samtalsytor kan inte täckas av formulär eller Navigation.
+- Fönstret stannar vid kanten och kan glida längs den. Röstrutan skyddar
+  bara sin egen yta; det går att dra runt den.
+- När en samtalsyta öppnas eller växer flyttas ett överlappande fönster
+  kortast möjliga sträcka till en fri plats. Det hoppar inte tillbaka vid
+  stängning. Oskickad text finns kvar.
+
+### PANEL-08: växla mellan hela vyer när utrymmet inte räcker
+
+**Syfte:** Behålla fönstrens bredd, text och röstsamtal vid platsbrist.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Använd dator, ett nytt objektformulär och Navigation.
+Samtalet är tillgängligt med mikrofonmedgivande.
+
+**Integrationstest:**
+[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
+testfallet “PANEL-08: limited space switches between full-width work and
+text while voice continues”.
+
+**Steg:**
+
+1. Skriv ett objektnamn utan att skicka formuläret. Öppna Navigation.
+2. Starta samtalet i text, slå på mikrofonen och skriv ett meddelande utan
+   att skicka det.
+3. Minska datorfönstret tills formulären och textvyn inte får plats bredvid
+   varandra. Kontrollera att textvyn visas med meddelandet kvar.
+4. Välj **Lista** och återöppna objektformuläret med **Fortsätt**. Öppna
+   **Skriv till Skyttel** igen och växla sedan till **Navigera**.
+5. Öppna textvyn och förstora fönstret tills båda vyerna får plats.
+   Kontrollera att textvyn behåller fokus.
+6. Stäng Navigation, välj objektets namnfält och minska fönstret igen.
+   Kontrollera att formuläret är kvar. Öppna textvyn och läs meddelandet.
+
+**Förväntat resultat:**
+
+- Vyerna växlar i stället för att göra formulären eller textvyn smalare.
+- Verktygsradens befintliga knappar visar den valda vyn. Navigation kan
+  återöppnas direkt när den väntar bakom textvyn.
+- Vid skärmbyte behålls den senast använda vyn och dess fokus. När utrymmet
+  räcker visas båda igen utan att den andra vyn tar fokus.
+- Oskickad text och formulärets placering finns kvar. Mikrofonen förblir
+  påslagen, och den synliga röstrutan skyddas även när textvyn väntar.
+
 ### PANEL-01: flera objekt i ett gemensamt utkast
 
 **Syfte:** Jämföra och redigera flera objekt utan att kasta oskickad text.
@@ -47,9 +147,9 @@ reuse each object”.
    **Redigera valt objekt** och skriv en beskrivning utan att skicka den.
 4. Öppna Lista igen och upprepa för Bilen och Garaget. Öppna även
    **Skriv till Skyttel** och **Godkänn och starta** om medgivande behövs.
-5. Välj Cykeln i **Öppna paneler** och stäng den med **Stäng Cykeln**.
-   Öppna Cykeln från listan två gånger och kontrollera rubrikfokus även
-   när panelen redan är öppen.
+5. Öppna Lista och välj **Uppgifter för Cykeln** och stäng den med **Stäng
+   Cykeln**. Öppna Cykeln från listan två gånger och kontrollera rubrikfokus
+   även när panelen redan är öppen.
 6. Välj varje objektpanel och lägg dess text i utkastet. Välj
    **Spara hela utkastet** från **Lista och utkast**.
 7. Läs sparbeskedet, ladda om och öppna de tre objekten igen.
@@ -75,7 +175,7 @@ reuse each object”.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-02: mobile panel choice retains conversation, object text
+testfallet “PANEL-02: mobile panel navigation retains conversation, object text
 and desktop positions”.
 
 **Steg:**
@@ -88,14 +188,14 @@ and desktop positions”.
    att panelen återfår placeringen.
 3. Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan.
    Skriv ett meddelande utan att skicka det.
-4. Minska fönstret till telefonbredd. Textvyn fyller skärmen, och
-   panelerna väntar bakom den. Stäng textvyn med **Skriv till Skyttel**.
-   Välj varje panel med **Öppna paneler**. Kontrollera att fokuserad rubrik
-   eller kontroll syns utan att döljas av statusen. Vid återgång till listan
-   ska **Uppgifter för Cykeln** ha fokus. Öppna Lista och välj Cykeln igen;
-   kontrollera rubrikfokus. Öppna textvyn, kontrollera meddelandet och
-   stäng den med **Stäng textvyn**. Cykeln ska få fokus igen. Öppna textvyn
-   på nytt från verktygsraden.
+4. Minska fönstret till telefonbredd. Textvyn fyller skärmen, och panelerna
+   väntar bakom den. Stäng textvyn med **Skriv till Skyttel**. Öppna Lista och
+   välj **Uppgifter för Cykeln**, och återgå sedan till Lista. Kontrollera att
+   fokuserad rubrik eller kontroll syns utan att döljas av statusen. Vid
+   återgång till listan ska **Uppgifter för Cykeln** ha fokus. Öppna Lista och
+   välj Cykeln igen; kontrollera rubrikfokus. Öppna textvyn, kontrollera
+   meddelandet och stäng den med **Stäng textvyn**. Cykeln ska få fokus igen.
+   Öppna textvyn på nytt från verktygsraden.
 5. Återgå till den ursprungliga datorbredden och välj Cykeln.
 
 **Förväntat resultat:**
@@ -103,11 +203,11 @@ and desktop positions”.
 - Dragning, piltangenter och flyttknappar fungerar. Escape återför fokus
   från flyttknapparna till flyttkontrollen.
 - Aktiv panel kommer framför övriga vid pekning eller fokus.
-- Mobil visar en panel i taget och väljaren kommer före panelen i
-  läsordningen. Väljaren innehåller alla öppna paneler. Textvyn är ingen
-  panel i väljaren.
-- Nya paneler får rubrikfokus; stängning går till nästa panel eller
-  väljaren. När sista panelen stängs går fokus till Lista i verktygsfältet.
+- Mobil visar en panel i taget. Lista och objektets Uppgifter återöppnar
+  panelerna. Varken Öppna paneler eller Till kartan visas på mobil eller dator.
+- Nya paneler får rubrikfokus; stängning ger fokus till nästa panels rubrik
+  eller den använda listträffen. När sista panelen stängs går fokus till Lista i
+  verktygsfältet.
 - Återgång till listan återför fokus till den tidigare objektkontrollen.
   Fokus är synligt och åtkomligt även när samtalets status flyttas.
 - Oskickad objekttext och samtalstext finns kvar. Datorplaceringen återkommer.
@@ -135,7 +235,8 @@ text and blocks stale staging”.
 2. Välj **Skriv till Skyttel** och **Godkänn och starta**. Be om ett förslag
    till en annan beskrivning för samma cykel. Vänta på det bekräftade
    förslaget i ditt utkast.
-3. Välj Cykeln i panelväljaren. Läs varningen och kontrollera din text.
+3. Öppna Lista och välj **Uppgifter för Cykeln**. Läs varningen och kontrollera
+   din text.
 4. Kopiera eventuell text som ska behållas. Välj
    **Stäng utan att skicka texten**, öppna Cykeln igen och börja redigera.
 
@@ -162,11 +263,11 @@ testfallet “PANEL-04: map selection preserves unsent relationship and type for
 
 1. Slå på **Alla etiketter** i kartan. Öppna Lista och välj **Nytt samband**.
    Välj Cykeln som **Från objekt**.
-2. Välj **Stäng arbetsytan** och markera det sparade sambandet i kartan.
-   Öppna Lista igen och kontrollera ditt oskickade val. Välj
-   **Stäng sambandet utan att skicka**.
-3. Upprepa med **Ny objekttyp**: skriv **Oskickad typ** i **Typens namn**,
-   stäng arbetsytan, markera sambandet och öppna Lista. Kontrollera texten
+2. Stäng panelerna med kryssen och markera det sparade sambandet i kartan. Öppna
+   Lista igen och kontrollera ditt oskickade val. Välj **Stäng sambandet utan
+   att skicka**.
+3. Upprepa med **Ny objekttyp**: skriv **Oskickad typ** i **Typens namn**, stäng
+   panelerna med kryssen, markera sambandet och öppna Lista. Kontrollera texten
    och välj **Stäng typformuläret utan att skicka**.
 4. Upprepa med **Ny sambandstyp** och **Oskickad riktning** i
    **Sambandstypens namn**. Avsluta med **Stäng sambandstypen utan att skicka**.

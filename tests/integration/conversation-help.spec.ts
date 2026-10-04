@@ -1,5 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
-import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
+import {
+  closePanels,
+  createHousehold,
+  openSettings,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
 import {
   chooseConversationText,
   consentBox,
@@ -64,6 +70,13 @@ for (const platform of [
         const button = await openHelp(page);
         const text = await help(page).innerText();
         expect(text).toContain('Röst och text är samma samtal');
+        expect(text).toContain('Kartans teckenförklaring');
+        expect(text).toContain('rött × och streckad linje');
+        expect(text).toContain('samma riktade ändpunkter');
+        expect(text).toContain('Punktade kopplingar');
+        expect(text).toContain('Höjdhjälpens streckade markeringar');
+        expect(text).toContain('separat ring');
+        expect(text).toContain('tre sekunder');
         expect(text).toContain('Släpp stänger av ny inspelning direkt');
         expect(text).toContain('även efter släpp');
         expect(text).toContain(platform.mac ? 'Ctrl+Skift+Mellanslag' : 'Ctrl+Mellanslag');
@@ -93,7 +106,7 @@ for (const platform of [
         await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
         await page.getByLabel('Objektets namn').fill('Lo Exempel');
         await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-        await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+        await closePanels(page);
         await shortcut(page, platform.mac);
         await expect(consentBox(page)).toContainText('Släpp stänger av ny inspelning direkt.');
         await giveConversationConsent(page, { remember: true });
@@ -167,13 +180,19 @@ test('YTA-08: hjälpens långa text går att läsa och stänga på smal skärm',
   await page.setViewportSize({ width: 320, height: 568 });
   const { app } = await arrange(page);
   try {
+    await expect(
+      page.getByRole('button', { name: 'Information och hjälp', exact: true }),
+    ).toBeVisible();
     const button = await openHelp(page);
+    await expect(
+      page.getByRole('button', { name: 'Visa verktygens namn', exact: true }),
+    ).toBeVisible();
     await expect(
       help(page).getByRole('heading', { name: 'Håll in för att tala', exact: true }),
     ).toHaveCount(1);
     await page.keyboard.press('End');
     await expect(
-      help(page).getByText(/Stäng arbetsytan för att återgå till kartan/),
+      help(page).getByText(/Stäng panelerna med krysset för att återgå till kartan/),
     ).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       320,

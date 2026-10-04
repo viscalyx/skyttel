@@ -66,6 +66,11 @@ avsluta samtalet”.
 **Förväntat resultat:**
 
 - Textvyn står vid högerkanten, och kartan syns bredvid.
+- Kontextmätaren står under samtalsrubriken. Ingen separat utkaststatus,
+  kvittoruta eller lista över senaste ändringar ligger i samtalskolumnen.
+  Kvittot nås genom **Utkast och historik**.
+- **Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.**
+  står under hushållets namn, utanför textvyn.
 - **Skicka** står i höjd med fältets mitt. Efter skickandet, också med
   ett klick på **Skicka**, har meddelandefältet kvar fokus.
 - Meddelandefältet **Meddelande till Skyttel** har fokus när textvyn
@@ -94,7 +99,7 @@ Skyttel arbetar sist”.
 
 **Steg:**
 
-1. Välj **Skriv** i kartans vägledning och **Godkänn och starta**.
+1. Välj **Skriv till Skyttel** i kartans verktyg och **Godkänn och starta**.
 2. Läs den tomma samtalstexten. Skriv **Vem betalar musiken?** och klicka
    på **Skicka**.
 3. Medan terminalen håller svaret: läs samtalstextens sista rad. Släpp

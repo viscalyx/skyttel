@@ -3,11 +3,13 @@ import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import {
   activatePanel,
+  closePanels,
   createHousehold,
   openMap,
   openSettings,
   openWorkspace,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -202,7 +204,7 @@ for (const [width, height] of [
         await expect(garage.getByLabel('Beskrivning', { exact: true })).toHaveValue(
           'Oskickat om Garaget',
         );
-        await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+        await closePanels(page);
         await expect(garage).not.toBeVisible();
         await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
         expect(await read()).toEqual(before);
@@ -278,6 +280,7 @@ for (const width of [1440, 390, 320]) {
       await expect(file).toBeDisabled();
       await panel.getByRole('button', { name: 'Stäng Bildarbete', exact: true }).click();
       await openMap(page);
+      await (await utilityButton(page, 'Utkast och historik')).click();
       await expect(
         page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
       ).toBeDisabled();

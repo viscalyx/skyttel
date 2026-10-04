@@ -26,8 +26,9 @@ Om du är utsedd till installationens första administratör och ser
 Namnet ska ha 1–100 tecken. Vid ett oklart resultat väljer du
 **Kontrollera status**. Därefter kan du bjuda in de andra medlemmarna.
 
-Kartans vägledning erbjuder **Tala**, **Skriv** och **Öppna listan**.
-Du kan välja **Stäng vägledningen** och använda kartans verktyg direkt.
+Kartans verktyg erbjuder **Prata med Skyttel**, **Skriv till Skyttel** och
+**Lista**. **Information och hjälp** förklarar hur du börjar och finns
+även i det kompakta verktygsfältet på telefon.
 Tal börjar först när du själv startar rösten och har lämnat ditt
 [medgivande](text-assistant.md#medgivande).
 
@@ -74,16 +75,25 @@ ett [familjeabonnemang](family-subscription.md). Du kan också öppna
 
 **Lista** ger tillgång till kartans uppgifter och formulär.
 På dator öppnas objekt och samtal i egna paneler över kartan. Välj samma
-objekt igen för att återvända till dess panel. **Öppna paneler** väljer en
-panel och lyfter den framför andra; på telefon visas bara den valda panelen.
+objekt igen från Lista för att återvända till dess panel och lyfta den
+framför andra. På telefon visas bara den valda panelen.
 
 Flytta datorpanelen genom att dra rubriken, använda piltangenter på
 flyttkontrollen eller öppna dess flyttknappar. Panelernas kryss stänger dem
-utan att kasta oskickad text. **Stäng arbetsytan** döljer panelerna för att
-visa hela kartan. Öppna ett verktyg och välj din panel för att fortsätta.
+utan att kasta oskickad text. Stäng panelerna för att visa hela kartan.
+Öppna Lista och välj objektets **Uppgifter** för att fortsätta.
 Nya objekt som ännu inte skickats till utkastet kan öppnas igen med
 **Fortsätt** under **Påbörjade objekt** i Lista.
 Placeringar och oskickad text bevaras vid skärmbyte under samma session.
+Dragbara fönster kan täcka legenden och kartans kontroller, men hela
+fönstret stannar inom skärmen. Synlig textvy och röstruta går inte att
+täcka. Ett fönster som står i vägen flyttas när samtalsytan öppnas eller
+växer och behåller sedan sin nya plats.
+
+När formulären och textvyn inte får plats samtidigt kan du växla med
+**Lista**, **Visa detaljer**, **Navigera** och **Skriv till Skyttel**.
+Vyerna behåller sina bredder och oskickad text. Ett pågående röstsamtal
+fortsätter även när du visar formulären.
 Läs om [navigering och personlig vy](spatial-map.md) för att söka,
 fokusera på ett objekt och ordna placeringarna så att de passar dig.
 

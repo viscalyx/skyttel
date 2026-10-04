@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
 import {
   microphoneButton,
   startConversationWithText,
@@ -540,9 +540,11 @@ for (const lostRevocationReply of [false, true])
         ).toHaveCount(0);
       } else {
         await expect(notice(page)).toHaveCount(0);
-        await expect(
-          page.getByRole('status').filter({ hasText: `Kvitto: ${original.operationId}` }),
-        ).toBeVisible();
+        await (await utilityButton(page, 'Utkast och historik')).click();
+        const receipt = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
+        await receipt.getByText('Tidigare sparförsök', { exact: true }).click();
+        await expect(receipt).toContainText(original.operationId);
+        await expect(receipt).toContainText('Genomfört');
       }
       const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
       expect(operations).toHaveLength(1);

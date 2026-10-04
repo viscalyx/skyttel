@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
 import { openConversationText, startConversationWithText } from '../support/conversation-page.js';
 import { createInstallation, robin } from '../support/installation.js';
@@ -49,7 +50,7 @@ async function installation(page: Page, proposals = true) {
     await createHousehold(page.request, app.origin, 'Utkastprov')
   ).json();
   const path = `${app.origin}/api/households/${household.id}/map`;
-  const read = async () => (await page.request.get(path)).json();
+  const read = async (): Promise<MapState> => (await page.request.get(path)).json();
   const post = async (route: string, data: object) => {
     const state = await read();
     const response = await page.request.post(`${path}/${route}`, {
@@ -81,6 +82,30 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
       baseRevision: null,
       value: { typeId: (await read()).types[0].id, name: 'Kim', description: '' },
     });
+    const initial = await read();
+    const accountName = 'Familjens gemensamma musikkonto hos Molnmusik';
+    for (const [id, type, name] of [
+      ['account', 'Tjänstekonto', accountName],
+      ['email', 'E-postadress', 'familjen@example.test'],
+      ['new-email', 'E-postadress', 'musik@example.test'],
+    ]) {
+      await post('draft', {
+        id,
+        baseRevision: null,
+        value: {
+          typeId: initial.types.find((entry) => entry.name === type)?.id,
+          name,
+          description: '',
+        },
+      });
+    }
+    const login = {
+      typeId: initial.relationshipTypes.find((entry) => entry.name === 'Inloggningsadress')?.id,
+      sourceId: 'account',
+      targetId: 'email',
+      knowledge: 'known',
+    };
+    await post('relationship', { id: 'login', baseRevision: null, value: login });
     await post('save', { operationId: 'draft-initial' });
     const state = await read();
     await post('draft', {
@@ -89,6 +114,11 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
       value: { typeId: state.types[0].id, name: 'Lo Rättad', description: '' },
     });
     await post('draft', { id: 'kim', baseRevision: 1, value: null });
+    await post('relationship', {
+      id: 'login',
+      baseRevision: 1,
+      value: { ...login, targetId: 'new-email' },
+    });
     await post('object-type', {
       id: 'custom',
       baseRevision: null,
@@ -101,7 +131,7 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     });
     await page.reload();
     await startConversationWithText(page);
-    await expect(toggle(page)).toHaveAccessibleName('Visa utkastet (4)');
+    await expect(toggle(page)).toHaveAccessibleName('Visa utkastet (5)');
     await expect(draft(page)).toHaveCount(0);
     await toggle(page).click();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true');
@@ -112,18 +142,32 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
       'Typ',
       'Vad som ändras',
     ]);
-    await expect(table.locator('tbody tr')).toHaveCount(4);
+    await expect(table.locator('tbody tr')).toHaveCount(5);
     await expect(table.getByRole('row', { name: /Ändra Lo Rättad/ })).toContainText(
       'Namn: Lo Exempel → Lo Rättad',
     );
     await expect(table.getByRole('row', { name: /Ta bort Kim/ })).toContainText('Tas bort');
     expect(
       await table.locator('tbody td:first-child > span[aria-hidden]').allTextContents(),
-    ).toEqual(['✎', '×', '+', '+']);
+    ).toEqual(['✎', '×', '+', '✎', '+']);
+    const relationship = table.getByRole('row', { name: /Ändra Familjens gemensamma musikkonto/ });
+    await expect(relationship).toContainText('familjen@example.test');
+    await expect(relationship).toContainText('musik@example.test');
+    const typeCell = relationship.getByRole('cell').filter({ hasText: /^Inloggningsadress$/ });
+    const lineCount = await typeCell.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return range.getClientRects().length;
+    });
+    expect(lineCount).toBe(1);
     const draftBox = await draft(page).boundingBox();
     const textBox = await view(page).locator('.text-view-conversation').boundingBox();
     expect(draftBox?.width).toBe(340);
     expect((draftBox?.x ?? 0) + (draftBox?.width ?? 0)).toBe(textBox?.x);
+    const panel = await view(page).boundingBox();
+    expect(draftBox?.y).toBe((panel?.y ?? 0) + 1);
+    for (const handle of await view(page).getByRole('separator').all())
+      expect((await handle.boundingBox())?.y).toBe((panel?.y ?? 0) + 1);
     await expect(draft(page).getByRole('link')).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Ändringar under samtalet' })).toHaveCount(0);
     await toggle(page).click();
@@ -168,7 +212,8 @@ test('SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter', 
     await view(page).getByRole('button', { name: 'Nytt samtal' }).click();
     await expect(toggle(page)).toHaveAttribute('aria-expanded', 'false');
     await toggle(page).click();
-    await expect(draft(page)).toHaveText('Utkastet är tomt.');
+    await expect(draft(page).getByRole('heading', { name: 'Utkast', exact: true })).toBeVisible();
+    await expect(draft(page).getByText('Utkastet är tomt.', { exact: true })).toBeVisible();
     const { user: alex } = await (await page.request.get(`${app.origin}/api/bootstrap`)).json();
     const other = { id: 'draft-other-household' };
     app.seedMembership(alex.id, other.id, 'Andra hushållet', 'administrator');

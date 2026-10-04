@@ -59,7 +59,10 @@ for (const [failure, expected] of browserFailures)
       await expect(page.locator('.notice-announcement[aria-live="assertive"]')).toHaveText(
         expected,
       );
-      await expect(notice(page).locator('svg')).toHaveAttribute('aria-hidden', 'true');
+      await expect(notice(page).locator('.conversation-notice-symbol svg')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
       await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
       const close = notice(page).getByRole('button', { name: 'Stäng notisen', exact: true });
       await close.focus();

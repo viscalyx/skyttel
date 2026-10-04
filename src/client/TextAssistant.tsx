@@ -14,15 +14,28 @@ import './voice.css';
 import { TextView } from './TextView.js';
 import type { Conversation } from './use-conversation.js';
 import type { useConversationPreferences } from './use-conversation-preferences.js';
-import { useConversationViewport } from './use-conversation-viewport.js';
 
 type AssistantActivity = { working: boolean; needsAnswer: boolean };
+
+export function conversationFeedback({
+  session,
+  working,
+  needsAnswer,
+}: Pick<Conversation, 'session' | 'working' | 'needsAnswer'>) {
+  if (!session || working || needsAnswer || session.receipt) return null;
+  return session.displayedSelection || session.displayedItem
+    ? 'Markerat i kartan.'
+    : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.';
+}
 
 export type ConversationPresentation = {
   draftFeedback?: (assistant: AssistantActivity & { compact: boolean }) => ReactNode;
   active?: boolean;
   /** The text view is open. It shows the conversation text and the message field. */
   textViewOpen?: boolean;
+  textViewHidden?: boolean;
+  textFocusRequest?: number;
+  onDraftOpenChange?: (open: boolean) => void;
   onCloseTextView?: () => void;
   householdId: string;
   notice?: ReactNode;
@@ -53,13 +66,14 @@ export function ConversationWorkspace({
   inspector,
   renderWorkspace,
   textViewOpen = false,
+  textViewHidden = false,
+  textFocusRequest,
+  onDraftOpenChange,
   onCloseTextView,
   draftFeedback,
   notice,
 }: ConversationPresentation & { conversation: Conversation }) {
   const { session, needsAnswer } = conversation;
-  const { narrow } = useConversationViewport();
-  const feedbackInText = narrow && textViewOpen;
   const [floatingSlot, setFloatingSlot] = useState<HTMLDivElement | null>(null);
   const floatingVoice = useRef<HTMLDivElement | null>(null);
   const attachFloatingSlot = useCallback((element: HTMLDivElement | null) => {
@@ -82,6 +96,7 @@ export function ConversationWorkspace({
   const visibleDraft = draft && (!review || draft.version >= review.version) ? draft : review;
   const count = draftCount(visibleDraft);
   const [draftOpen, setDraftOpen] = useState(false);
+  useLayoutEffect(() => onDraftOpenChange?.(draftOpen), [draftOpen, onDraftOpenChange]);
   const manuallyToggled = useRef(false);
   const resetRow = conversation.transcript[0]?.id.startsWith('new-')
     ? conversation.transcript[0].id
@@ -102,15 +117,10 @@ export function ConversationWorkspace({
   }, [session, conversationKey, preferencesKnown, showDraftOnStart, count]);
   const activity = { working: conversation.working, needsAnswer };
   const work = typeof children === 'function' ? children(activity) : children;
+  const resultFeedback = conversationFeedback(conversation);
   const feedback = (
     <section className="workspace-draft-feedback" aria-label="Utkastets återkoppling">
-      {session && !conversation.working && !needsAnswer && !session.receipt && (
-        <p role="status">
-          {session.displayedSelection || session.displayedItem
-            ? 'Markerat i kartan.'
-            : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.'}
-        </p>
-      )}
+      {resultFeedback && <p role="status">{resultFeedback}</p>}
       {draftFeedback?.({ ...activity, compact: !workVisible })}
     </section>
   );
@@ -123,7 +133,7 @@ export function ConversationWorkspace({
       id="workspace-work"
       tabIndex={-1}
     >
-      {floatingSlot && !feedbackInText && createPortal(feedback, floatingSlot)}
+      {floatingSlot && !workVisible && createPortal(feedback, floatingSlot)}
       {renderWorkspace ? (
         renderWorkspace(
           <>
@@ -149,7 +159,8 @@ export function ConversationWorkspace({
         <TextView
           conversation={conversation}
           widthPreferences={widthPreferences}
-          hidden={!workVisible}
+          hidden={!workVisible || textViewHidden}
+          focusRequest={textFocusRequest}
           onClose={() => onCloseTextView?.()}
           draftOpen={draftOpen}
           draftCount={count}
@@ -160,11 +171,10 @@ export function ConversationWorkspace({
           draftContent={<ConversationDraft draft={visibleDraft} />}
           notice={notice}
         >
-          {feedbackInText && feedback}
           {!notice && conversation.error && <p role="alert">{conversation.error}</p>}
         </TextView>
       )}
-      {/* Shared draft feedback stays outside the text view and the conversation notice. */}
+      {/* Settings keeps its shared feedback outside the text view. */}
       {renderWorkspace && <div ref={attachFloatingSlot} className="workspace-voice-controls" />}
     </section>
   );

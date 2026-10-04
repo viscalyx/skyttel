@@ -1,6 +1,4 @@
 import type { MapDraft, SaveOperation } from '../shared/map.js';
-import { receiptMessage, rejectionMessage } from './SaveOperations.js';
-import { ProposalSymbol } from './SpatialMap.js';
 
 export function DraftStatus({
   compact = false,
@@ -12,7 +10,6 @@ export function DraftStatus({
   unresolved,
   conflicts,
   conflictLinks,
-  expanded,
   error,
   imageError,
   working,
@@ -36,7 +33,6 @@ export function DraftStatus({
   conflicts: { id: string; label: string }[];
   /** Keeps the list of conflicts open when the status is shown in another place. */
   conflictLinks?: { open: boolean; onOpenChange: (open: boolean) => void };
-  expanded: boolean;
   error: string;
   imageError?: { name: string; onReturn: () => void };
   working: boolean;
@@ -70,8 +66,8 @@ export function DraftStatus({
     <div className="draft-status">
       <p className="draft-status-summary" aria-live="polite" aria-atomic="true">
         <strong>{count ? `${count} förslag · privat utkast` : 'Inga osparade förslag'}</strong>
-        {result && <span>{result}</span>}
       </p>
+      {result && <p>{result}</p>}
       {working && <p>Hämtar aktuellt underlag…</p>}
       {error && (
         <p role="alert" className="error">
@@ -148,31 +144,6 @@ export function DraftStatus({
           </button>
         )}
       </div>
-      {expanded && operation && (
-        <p className="draft-status-receipt">
-          {operation.status === 'succeeded'
-            ? receiptMessage(operation.receipt)
-            : operation.status === 'rejected'
-              ? rejectionMessage(operation.error)
-              : `Sparförsök: ${operation.operationId}. Slutresultatet är inte bekräftat.`}
-        </p>
-      )}
-      {!compact && count > 0 && (
-        <section aria-label="Förslag i kartan" className="proposal-legend">
-          <p>Privata förslag</p>
-          <span>
-            <ProposalSymbol change={{ before: null, after: true }} /> Föreslås läggas till
-          </span>
-          <span>
-            <ProposalSymbol change={{ before: true, after: true }} /> Föreslås ändras
-          </span>
-          <span>
-            <ProposalSymbol change={{ before: true, after: null }} /> Föreslås tas bort
-          </span>
-          <span className="proposal-previous">Tidigare samband är streckade</span>
-          <span className="proposal-selection">Ring visar markering</span>
-        </section>
-      )}
     </div>
   );
 }

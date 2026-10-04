@@ -116,16 +116,25 @@ test('PLACERING-01: mouse, height and keyboard movement persist across reload, c
     await page.keyboard.down('Shift');
     await expect(space(page).getByText('Höjdflyttning · personlig vy')).toBeVisible();
     await page.keyboard.up('Shift');
-    await space(page).getByLabel('Visa höjdhjälp', { exact: true }).check();
+    const heightHelp = page
+      .getByRole('region', { name: 'Navigation', exact: true })
+      .getByLabel('Visa höjdhjälp', { exact: true });
+    await heightHelp.check();
     await expect(space(page).getByText(/^↑ .* steg högre än start$/)).toBeVisible();
     const down = page.getByRole('button', { name: /^Flytta .+: nedåt$/ });
     await down.focus();
     await page.keyboard.press('Enter');
     await expect.poll(async () => (await read()).positions[0].version).toBe(3);
     expect((await read()).positions[0].y).toBeCloseTo(raised.y - 1);
-    await expect(space(page).getByLabel('Visa höjdhjälp', { exact: true })).toBeChecked();
-    await space(page).getByLabel('Visa höjdhjälp', { exact: true }).uncheck();
-    await space(page).getByLabel('Visa höjdhjälp', { exact: true }).check();
+    await expect(space(page).getByText('↓ 1 steg lägre än start', { exact: true })).toBeVisible();
+    await expect(heightHelp).toBeChecked();
+    await heightHelp.uncheck();
+    await down.click();
+    await expect.poll(async () => (await read()).positions[0].version).toBe(4);
+    await expect(heightHelp).not.toBeChecked();
+    await expect(space(page).getByText('Höjdflyttning · personlig vy')).toHaveCount(0);
+    await heightHelp.check();
+    await expect(space(page).getByText('↓ 2 steg lägre än start', { exact: true })).toBeVisible();
     await expect(space(page).getByText('Höjdflyttning · personlig vy')).toBeVisible();
     await openMapSettings(page);
     await page.getByLabel('Visa stjärnhimmel', { exact: true }).check();
@@ -135,6 +144,8 @@ test('PLACERING-01: mouse, height and keyboard movement persist across reload, c
     expect(await (await page.request.get(path)).json()).toEqual(mapBefore);
     await installation.restart();
     await page.reload();
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await expect(heightHelp).not.toBeChecked();
     expect(await read()).toEqual(expected);
     await signIn(other.request, installation.origin);
     expect(await (await other.request.get(`${path}/view`)).json()).toEqual(expected);
@@ -145,6 +156,55 @@ test('PLACERING-01: mouse, height and keyboard movement persist across reload, c
     await expect(secondPage.getByLabel('Visa stjärnhimmel', { exact: true })).toBeChecked();
   } finally {
     await other.close();
+    await installation.close();
+  }
+});
+
+test('PLACERING-08: height help keeps its preview stable and manual choice across navigation modes and selection', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await arrange(page, installation.origin);
+    await selectAndArrange(page);
+    const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
+    const heightHelp = navigation.getByLabel('Visa höjdhjälp', { exact: true });
+    await heightHelp.focus();
+    await page.keyboard.press('Space');
+    await expect(heightHelp).toBeChecked();
+    await navigation.getByRole('button', { name: 'Visa mininavigering', exact: true }).click();
+    await expect(heightHelp).toBeVisible();
+    await expect(navigation.getByText('Visa höjdhjälp', { exact: true })).toBeVisible();
+    await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    await page.keyboard.down('Shift');
+    for (let move = 0; move < 2; move++) {
+      await expect(space(page).getByText('Startläge', { exact: true })).toBeVisible();
+      const plane = () =>
+        space(page).locator('.spatial-height-guide > path').first().getAttribute('d');
+      const preview = await plane();
+      const start = await center(page);
+      await page.mouse.move(start.x, start.y);
+      await page.mouse.down();
+      await page.mouse.move(start.x, start.y - 24, { steps: 3 });
+      await expect(space(page).getByText(/^↑ .* steg högre än start$/)).toBeVisible();
+      expect(await plane()).toBe(preview);
+      await page.mouse.up();
+      await expect(space(page).getByText('Startläge', { exact: true })).toBeVisible();
+      await expect(space(page).getByText('Din personliga vy är sparad.')).toBeVisible();
+    }
+    await page.keyboard.up('Shift');
+    await expect(space(page).getByText(/^↑ .* steg högre än start$/)).toBeVisible();
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await expect(heightHelp).toBeChecked();
+    await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    await selectAndArrange(page, 'Cykeln');
+    await expect(heightHelp).toBeChecked();
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Markera Lampan', exact: true }).click();
+    await expect(heightHelp).toBeDisabled();
+    await expect(heightHelp).toBeChecked();
+    await expect(navigation.getByText('Välj ett objekt för att visa höjdhjälp')).toBeVisible();
+  } finally {
     await installation.close();
   }
 });
@@ -216,6 +276,9 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
     await touch('touchMove', [{ id: 1, x: start.x + 40, y: start.y + 20 }]);
     await touch('touchEnd', []);
     await expect.poll(async () => (await read()).positions[0]?.version).toBe(1);
+    // The server can commit before the browser has finished its save response.
+    // Wait for the visible completion before starting another object gesture.
+    await expect(space(page).getByText('Din personliga vy är sparad.')).toBeVisible();
     const before = (await read()).positions[0];
     start = await center(page);
     const anchor = { id: 2, x: anchorX(start.x, 110), y: start.y };

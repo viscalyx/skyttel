@@ -14,6 +14,8 @@ import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { MapNavigation } from './MapNavigation.js';
+import type { MapRevealRequest } from './map-display.js';
+import { mapConnections, proposalKind } from './map-presentation.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
 import { relationshipLabel } from './RelationshipEditor.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
@@ -47,9 +49,6 @@ export function ProposalSymbol({ change }: { change?: { before: unknown; after: 
 }
 
 const connectionKinds = ['existing', 'added', 'changed', 'removed'] as const;
-function proposalKind(change?: { before: unknown; after: unknown }) {
-  return change ? (!change.after ? 'removed' : !change.before ? 'added' : 'changed') : 'existing';
-}
 function arrowTip(source: { x: number; y: number }, target: { x: number; y: number }, radius = 28) {
   const dx = source.x - target.x;
   const dy = source.y - target.y;
@@ -84,6 +83,9 @@ export function SpatialMap({
   onCameraAction,
   navigationMount,
   onNavigationChange,
+  floatingArea,
+  navigationHidden = false,
+  navigationFocus = true,
   onAvailabilityChange,
   openWork,
 }: {
@@ -105,7 +107,7 @@ export function SpatialMap({
   onReset: () => void;
   onRemove: (object: MapObject) => void;
   personal?: ReturnType<typeof usePersonalView>;
-  revealRequest?: { id: string; objectIds: string[]; relationshipId?: string };
+  revealRequest?: MapRevealRequest;
   focusRequest?: { id: string; objectIds: string[] };
   onFocusSelection?: () => void;
   onShowOverview?: () => void;
@@ -114,6 +116,9 @@ export function SpatialMap({
   onCameraAction?: () => void;
   navigationMount?: HTMLElement | null;
   onNavigationChange?: (open: boolean) => void;
+  floatingArea?: import('./floating-windows.js').FloatingArea;
+  navigationHidden?: boolean;
+  navigationFocus?: boolean;
   openWork?: readonly string[];
 }) {
   const labelPrefix = useId();
@@ -172,7 +177,7 @@ export function SpatialMap({
     if (!bounds || !root) return;
     const boxes = [
       ...root.querySelectorAll(
-        '.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions',
+        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .workspace-window[data-active="true"]' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -190,7 +195,7 @@ export function SpatialMap({
     setReservedBoxes((previous) =>
       JSON.stringify(previous) === JSON.stringify(boxes) ? previous : boxes,
     );
-  }, []);
+  }, [revealRequest]);
   useLayoutEffect(measureReservedBoxes);
   const [labelSizes, setLabelSizes] = useState(
     new Map<string, { width: number; height: number }>(),
@@ -387,6 +392,87 @@ export function SpatialMap({
     }
     previousLabels.current = preferences.allLabels;
   }, [preferences, activated, active, reducedMotion, theme]);
+  const focusObjects = useCallback((ids: string[], reveal?: MapRevealRequest) => {
+    const element = canvas.current;
+    if (!element) return false;
+    const bounds = element.getBoundingClientRect();
+    // Reserve actual fixed tools, including expanded controls and live status.
+    // Free detail panels retain their position and are never closed by focus.
+    let areas = [{ left: 0, top: 0, right: bounds.width, bottom: bounds.height }];
+    const overlays = element
+      .closest('.household-map')
+      ?.querySelectorAll(
+        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .workspace-window[data-active="true"]' : ''}`,
+      );
+    for (const overlay of overlays ?? []) {
+      const closedTools = overlay.closest('details:not([open])');
+      if (closedTools && closedTools !== overlay) continue;
+      const box = overlay.getBoundingClientRect();
+      if (!box.width || !box.height) continue;
+      const obstacle = {
+        left: box.left - bounds.left,
+        right: box.right - bounds.left,
+        top: box.top - bounds.top,
+        bottom: box.bottom - bounds.top,
+      };
+      const candidates = areas.flatMap((area) => {
+        if (
+          obstacle.left >= area.right ||
+          obstacle.right <= area.left ||
+          obstacle.top >= area.bottom ||
+          obstacle.bottom <= area.top
+        )
+          return [area];
+        return [
+          { ...area, left: Math.max(area.left, obstacle.right + 12) },
+          { ...area, right: Math.min(area.right, obstacle.left - 12) },
+          { ...area, top: Math.max(area.top, obstacle.bottom + 12) },
+          { ...area, bottom: Math.min(area.bottom, obstacle.top - 12) },
+        ].filter((value) => value.right - value.left >= 44 && value.bottom - value.top >= 44);
+      });
+      // Keep alternative free rectangles until every overlay is considered.
+      // Choosing greedily can leave an unusably thin strip below the legend.
+      areas = candidates.filter(
+        (area, index) =>
+          !candidates.some(
+            (other, otherIndex) =>
+              otherIndex !== index &&
+              other.left <= area.left &&
+              other.right >= area.right &&
+              other.top <= area.top &&
+              other.bottom >= area.bottom &&
+              (otherIndex < index ||
+                other.left < area.left ||
+                other.right > area.right ||
+                other.top < area.top ||
+                other.bottom > area.bottom),
+          ),
+      );
+    }
+    const size = (value: (typeof areas)[number]) =>
+      (value.right - value.left) * (value.bottom - value.top);
+    const area = areas.sort((a, b) => size(b) - size(a))[0];
+    if (!area) return false;
+    const width = area.right - area.left;
+    const height = area.bottom - area.top;
+    if (width < 44 || height < 44) return false;
+    // A short viewport can leave just enough space for the 44px targets.
+    // Keep a positive fitting area while protecting their full pointer box.
+    const marginX = Math.min(64, Math.max(24, width / 4), (width - 1) / 2);
+    const marginY = Math.min(64, Math.max(24, height / 4), (height - 1) / 2);
+    // Leave a row above the endpoints for the selected relationship's label.
+    const labelRow = reveal?.relationshipId
+      ? Math.min(35, Math.max(0, height - 2 * marginY - 1))
+      : 0;
+    return (
+      scene.current?.focus(ids, {
+        left: area.left + marginX,
+        right: area.right - marginX,
+        top: area.top + marginY + labelRow,
+        bottom: area.bottom - marginY,
+      }) ?? false
+    );
+  }, []);
   useEffect(() => {
     if (
       revealRequest &&
@@ -404,7 +490,13 @@ export function SpatialMap({
         onNavigationChange?.(false);
         return;
       }
-      if (scene.current?.reveal(revealRequest.objectIds)) setCompletedRevealId(revealRequest.id);
+      // Panel placement commits in layout effects. Measure its final rectangle
+      // on the next frame before reserving clearance for the assistant's target.
+      const frame = requestAnimationFrame(() => {
+        if (focusObjects(revealRequest.objectIds, revealRequest))
+          setCompletedRevealId(revealRequest.id);
+      });
+      return () => cancelAnimationFrame(frame);
     }
   }, [
     revealRequest,
@@ -417,61 +509,8 @@ export function SpatialMap({
     objects,
     relationships,
     onNavigationChange,
+    focusObjects,
   ]);
-  const focusObjects = useCallback((ids: string[]) => {
-    const element = canvas.current;
-    if (!element) return false;
-    const bounds = element.getBoundingClientRect();
-    // Reserve actual fixed tools, including expanded controls and live status.
-    // Free detail panels retain their position and are never closed by focus.
-    let area = { left: 0, top: 0, right: bounds.width, bottom: bounds.height };
-    const overlays = element
-      .closest('.household-map')
-      ?.querySelectorAll(
-        '.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions',
-      );
-    for (const overlay of overlays ?? []) {
-      const closedTools = overlay.closest('details:not([open])');
-      if (closedTools && closedTools !== overlay) continue;
-      const box = overlay.getBoundingClientRect();
-      if (!box.width || !box.height) continue;
-      const obstacle = {
-        left: box.left - bounds.left,
-        right: box.right - bounds.left,
-        top: box.top - bounds.top,
-        bottom: box.bottom - bounds.top,
-      };
-      if (
-        obstacle.left >= area.right ||
-        obstacle.right <= area.left ||
-        obstacle.top >= area.bottom ||
-        obstacle.bottom <= area.top
-      )
-        continue;
-      const candidates = [
-        { ...area, left: Math.max(area.left, obstacle.right + 12) },
-        { ...area, right: Math.min(area.right, obstacle.left - 12) },
-        { ...area, top: Math.max(area.top, obstacle.bottom + 12) },
-        { ...area, bottom: Math.min(area.bottom, obstacle.top - 12) },
-      ];
-      const size = (value: typeof area) =>
-        Math.max(0, value.right - value.left) * Math.max(0, value.bottom - value.top);
-      area = candidates.reduce((largest, candidate) =>
-        size(candidate) > size(largest) ? candidate : largest,
-      );
-    }
-    if (area.right - area.left <= 48 || area.bottom - area.top <= 48) return false;
-    const marginX = Math.min(64, Math.max(24, (area.right - area.left) / 4));
-    const marginY = Math.min(64, Math.max(24, (area.bottom - area.top) / 4));
-    return (
-      scene.current?.focus(ids, {
-        left: area.left + marginX,
-        right: area.right - marginX,
-        top: area.top + marginY,
-        bottom: area.bottom - marginY,
-      }) ?? false
-    );
-  }, []);
   useEffect(() => {
     if (
       focusRequest &&
@@ -604,22 +643,8 @@ export function SpatialMap({
     const diameter = Math.max(44, 34 * point.scale);
     reserve({ ...point, width: diameter, height: diameter });
   }
-  const previousEdges = (state.draft.relationships ?? []).flatMap(({ before, after }) => {
-    if (
-      !before ||
-      !after ||
-      (before.sourceId === after.sourceId &&
-        before.targetId === after.targetId &&
-        before.typeId === after.typeId &&
-        before.knowledge === after.knowledge)
-    )
-      return [];
-    return [{ edge: before, previous: true }];
-  });
-  const edges = [...relationships.values()]
-    .map((edge) => ({ edge, previous: false }))
-    .concat(previousEdges)
-    .flatMap(({ edge, previous }) => {
+  const edges = mapConnections(state.draft, objects, relationships).flatMap(
+    ({ edge, previous, kind }) => {
       const source = locations.get(edge.sourceId);
       const target = edge.targetId ? locations.get(edge.targetId) : undefined;
       if (!source || (edge.targetId && !target)) return [];
@@ -634,9 +659,6 @@ export function SpatialMap({
           ? selection.id === edge.id && Boolean(selection.previous) === previous
           : selectedIds.includes(edge.sourceId) ||
             Boolean(edge.targetId && selectedIds.includes(edge.targetId));
-      const kind = previous
-        ? 'removed'
-        : proposalKind(state.draft.relationships?.find((change) => change.id === edge.id));
       const length = Math.hypot(tip.x - start.x, tip.y - start.y) || 1;
       reserve({
         x: tip.x - ((tip.x - start.x) / length) * 7,
@@ -657,7 +679,8 @@ export function SpatialMap({
           key: `${previous ? 'previous-' : ''}${edge.id}`,
         },
       ];
-    });
+    },
+  );
   function place(candidates: LabelBox[], selected = false): LabelBox | null {
     let fallback: LabelBox | undefined;
     let leastOverlap = Number.POSITIVE_INFINITY;
@@ -706,9 +729,16 @@ export function SpatialMap({
       // name target without moving the marker, camera or fixed controls.
       const origin = candidates[0];
       const available: LabelBox[] = [];
-      for (let y = origin.height / 2 + 8; y <= surfaceHeight - origin.height / 2 - 8; y += 24)
-        for (let x = origin.width / 2 + 8; x <= surfaceWidth - origin.width / 2 - 8; x += 24)
-          available.push({ ...origin, x, y });
+      const centers = (size: number, limit: number) => {
+        const end = limit - size / 2 - 8;
+        const values = [end];
+        for (let center = size / 2 + 8; center <= end; center += 24) values.push(center);
+        return values;
+      };
+      // The last free slot on a small surface can lie beyond the grid's
+      // final step. Include the boundary centers in the collision search.
+      for (const y of centers(origin.height, surfaceHeight))
+        for (const x of centers(origin.width, surfaceWidth)) available.push({ ...origin, x, y });
       available.sort(
         (a, b) =>
           Math.hypot(a.x - origin.x, a.y - origin.y) - Math.hypot(b.x - origin.x, b.y - origin.y),
@@ -717,7 +747,9 @@ export function SpatialMap({
     }
     return null;
   }
-  const labelEdges = edges.filter(({ selected }) => allLabels || selected);
+  const labelEdges = edges.filter(
+    ({ selected, kind }) => allLabels || selected || kind !== 'existing',
+  );
   function placeEdges(candidates: typeof labelEdges) {
     return candidates.flatMap((edge) => {
       const type = state.relationshipTypes.find((type) => type.id === edge.edge.typeId);
@@ -737,8 +769,9 @@ export function SpatialMap({
       return label ? [{ ...edge, ...label }] : [];
     });
   }
-  const primaryEdges =
-    selection?.kind === 'relationship' ? labelEdges.filter(({ selected }) => selected) : [];
+  const primaryEdges = labelEdges
+    .filter(({ selected }) => selection?.kind === 'relationship' && selected)
+    .sort((a, b) => Number(b.selected) - Number(a.selected));
   // A selected relationship gets space before unrelated object names.
   const labeledEdges = placeEdges(primaryEdges);
   const labels = new Map<string, LabelBox>();
@@ -786,15 +819,17 @@ export function SpatialMap({
   const adjacent = new Set<string>();
   const guideId = movement.heightActive
     ? movement.guide?.id
-    : selection?.kind === 'object'
-      ? selection.id
+    : selectedIds.length === 1
+      ? selectedIds[0]
       : undefined;
   const guidePosition = guideId && locations.has(guideId) ? scene.current?.position(guideId) : null;
   const heightGuide =
     guidePosition && (heightHelp || shiftHeld || movement.heightActive)
       ? {
           start:
-            movement.guide && movement.guide.id === guideId ? movement.guide.start : guidePosition,
+            (movement.heightActive || !shiftHeld) && movement.guide && movement.guide.id === guideId
+              ? movement.guide.start
+              : guidePosition,
           end: guidePosition,
         }
       : null;
@@ -813,10 +848,10 @@ export function SpatialMap({
         ref={navigationTrigger}
         title="Navigera"
         aria-label="Navigera"
-        aria-expanded={navigationOpen}
+        aria-expanded={navigationOpen && !navigationHidden}
         onClick={() => {
           onCameraAction?.();
-          changeNavigation(!navigationOpen);
+          changeNavigation(navigationHidden || !navigationOpen);
         }}
       >
         <WorkspaceIcon name="navigate" />
@@ -866,7 +901,9 @@ export function SpatialMap({
   );
   const navigation = (
     <MapNavigation
-      open={navigationOpen}
+      open={navigationOpen && !navigationHidden}
+      area={floatingArea}
+      focusOnOpen={navigationFocus}
       openWork={openWork}
       onClose={() => changeNavigation(false)}
       onNavigate={(command) => scene.current?.navigate(command)}
@@ -881,10 +918,24 @@ export function SpatialMap({
         const next = { ...position, [axis]: position[axis] + step };
         const end = scene.current?.place(id, next) ?? next;
         movement.recordMove(id, position, end, axis === 'y');
-        if (axis === 'y') setHeightHelp(true);
         void personal?.move(id, end);
       }}
     >
+      <div className="navigation-height-help">
+        <label>
+          <input
+            type="checkbox"
+            checked={heightHelp}
+            disabled={selectedIds.length !== 1}
+            aria-describedby={selectedIds.length !== 1 ? `${labelPrefix}-height-help` : undefined}
+            onChange={(event) => setHeightHelp(event.target.checked)}
+          />
+          Visa höjdhjälp
+        </label>
+        {selectedIds.length !== 1 && (
+          <p id={`${labelPrefix}-height-help`}>Välj ett objekt för att visa höjdhjälp</p>
+        )}
+      </div>
       <details className="navigation-settings">
         <summary>Ordna min vy</summary>
         <fieldset disabled={personal && (!personal.view || personal.pending)}>
@@ -1128,9 +1179,7 @@ export function SpatialMap({
                   y1={point.y}
                   x2={label.x}
                   y2={label.y}
-                  strokeDasharray={
-                    Math.hypot(point.x - label.x, point.y - label.y) > 80 ? '5 5' : undefined
-                  }
+                  strokeDasharray="1 4"
                 />
               )
             );
@@ -1143,11 +1192,7 @@ export function SpatialMap({
               y1={(source.y + end.y) / 2}
               x2={x}
               y2={y}
-              strokeDasharray={
-                Math.hypot((source.x + end.x) / 2 - x, (source.y + end.y) / 2 - y) > 80
-                  ? '5 5'
-                  : undefined
-              }
+              strokeDasharray="1 4"
             />
           ))}
           {edges.map(({ edge, start, tip, selected, kind, previous, key }) => {
@@ -1220,9 +1265,12 @@ export function SpatialMap({
                 <span className="spatial-caption">
                   <ProposalSymbol
                     change={
-                      previous
-                        ? { before: edge, after: null }
-                        : state.draft.relationships?.find((change) => change.id === edge.id)
+                      kind === 'existing'
+                        ? undefined
+                        : {
+                            before: kind === 'added' ? null : edge,
+                            after: kind === 'removed' ? null : edge,
+                          }
                     }
                   />{' '}
                   →{' '}
@@ -1348,14 +1396,6 @@ export function SpatialMap({
               }}
             />{' '}
             Alla etiketter
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={heightHelp}
-              onChange={(event) => setHeightHelp(event.target.checked)}
-            />
-            Visa höjdhjälp
           </label>
         </div>
         {!allLabels && objects.size > 0 && (

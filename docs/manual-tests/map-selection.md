@@ -17,7 +17,7 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
 2. Skapa personerna Lo Exempel, Kim Exempel och Alex Exempel i Lista.
    Lägg till Lo Exempel → Använder → Kim Exempel och Kim Exempel →
    Använder → Alex Exempel. Uppgifterna är syntetiska provdata.
-3. Välj Stäng arbetsytan och stäng vägledningen om den täcker kartan.
+3. Stäng panelerna med kryssen.
    Följ [arbetsytornas ingångar](README.md#öppna-arbetsytor) för Lista.
 
 ## Markering och kartgester
@@ -107,8 +107,8 @@ across desktop and compact panels”.
    verktygen. Kontrollera rubrikfokus och aktiv detaljikon för Kim.
 3. Välj Redigera valt objekt och skriv en oskickad beskrivning.
    Återgå till Lista och välj **Uppgifter för Kim Exempel**.
-4. Växla mellan Lista och Kim i Öppna paneler. Stäng Kims panel och
-   öppna den igen. Kontrollera text och detaljikon vid varje steg.
+4. Öppna Lista och välj Kims Uppgifter igen. Stäng Kims panel och öppna den
+   igen. Kontrollera text och detaljikon vid varje steg.
 5. Avmarkera alla. Upprepa med tangentbord på varje skärmbredd.
 6. På den smala skärmen väljer du Visa verktygens namn och Tema. Välj
    Mörkt och kontrollera tema och fokus tillbaka till temaknappen.
@@ -139,13 +139,13 @@ retain manual positions”.
 **Steg:**
 
 1. Dubbelklicka Lo och kontrollera att den nya panelen ligger nära Lo
-   inom arbetsytan med åtkomliga kontroller.
+   inom den synliga skärmen med åtkomliga kontroller.
 2. Fokusera panelens flytthandtag och flytta med piltangenterna.
 3. Stäng panelen och öppna den med Visa detaljer i verktygen.
 4. Gör fönstret mindre och större igen.
 
 **Förväntat resultat:**
 
-- Panelen öppnas nära objektet och ryms inom arbetsytan.
+- Panelen öppnas nära objektet och ryms inom den synliga skärmen.
 - Den manuella placeringen består efter återöppning och storleksbyte.
 - Mindre fönster begränsar panelen utan att radera dess önskade placering.

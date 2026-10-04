@@ -347,12 +347,13 @@ test.describe('bred pekskärm med minskad rörelse', () => {
         touchPoints: [{ x: box.x + box.width / 2, y: box.y + box.height / 2, id: 7 }],
       });
       const style = await microphone(page).evaluate((element) => ({
-        ring: getComputedStyle(element).outlineWidth,
+        ring: getComputedStyle(element).boxShadow,
         select: getComputedStyle(element).userSelect,
         touch: getComputedStyle(element).touchAction,
         animation: getComputedStyle(element).animationName,
       }));
-      expect(style).toEqual({ ring: '3px', select: 'none', touch: 'none', animation: 'none' });
+      expect(style.ring).toContain('0px 0px 0px 4px');
+      expect(style).toMatchObject({ select: 'none', touch: 'none', animation: 'none' });
       await expect.poll(async () => (await tracks(page))[0].enabled).toBe(true);
       expect(
         await microphone(page).evaluate(

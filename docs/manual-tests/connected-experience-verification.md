@@ -93,12 +93,12 @@ underlaget. Piktogram och fristående namn följer det senare kartunderlaget
 familjebilderna visar verkliga namn, rättade ekonomiska uppgifter, bevarade
 separata objektpaneler och samtalets beständiga kvitto.
 Överlappande fria skrivbordspaneler är avsiktliga; den aktiva panelen och
-panelen som väljs genom **Öppna paneler** ska vara nåbara.
+panelen som öppnas genom **Uppgifter** i Lista ska vara nåbara.
 
 Samtalsreferensens privata förslag, mikrofontillstånd och uttryckliga
 helhetssparande jämförs med samma faktiska två objekt och ett samband.
 Produktens kompletta dialog, frågor, fel och kvitto ger mer innehåll än
-prototypens exempel. Mobilens panelväljare visar en aktiv arbetspanel i taget
+prototypens exempel. Mobilen visar en aktiv arbetspanel i taget
 utan att kasta de övrigas text. Textfallet behåller motsvarande arbete när
 grafiken faktiskt förloras; listor och formulär är det synliga alternativet.
 
@@ -130,7 +130,7 @@ Ljust, mörkt och System väljs genom den riktiga temakontrollen. Systemproven
 Tangentbordsproven bevarar den ursprungliga inloggningsföljden och provar
 synliga fokusmål efter panel- och sidbyten. Rubriker som bara är semantiska
 meddelanden redovisas separat från synliga tangentbordskontroller. DOM-ordning,
-etiketter och panelväljare registreras, men är inte ett skärmläsarprov.
+etiketter och panelrubriker registreras, men är inte ett skärmläsarprov.
 Proven för Inställningar kontrollerar fokuserade reglage mot samtliga verkliga
 klippande föräldrar och håller innehåll och statusyta åtskilda i höjdled.
 De extra namngivna fokuskontrollerna är inte en fullständig sekventiell Tab-ordning.
@@ -195,7 +195,7 @@ redigerings- och utkastlänkar återvänder till rätt synliga kartpanel;
 färger och höjd fungerar med den egna rullningsytan, och dess stängknapp
 täcker inte statusmeddelandets text. Samma monterade samtal,
 anslutning, utkast, dialog och oskickade formulär bevaras. Tomma smala
-kartor håller visningsreglagen ovanför startkortet i ett gemensamt
+kartor håller visningsreglagen och statusytorna i ett gemensamt
 rullningsflöde. En stabil plats för etikettinformation bryter den uppmätta
 växlingen mellan dold och synlig information som annars kan tömma sidan
 vid övergång till Lista; det synliga antalet dolda etiketter förblir aktuellt.

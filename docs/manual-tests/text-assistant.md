@@ -226,18 +226,21 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 2. Kontrollera att Lo blir valt och synligt i kartan och att detaljpanelen
    visar **Lo Exempel** samt **Påhittad uppgift**.
    Nästa `held` ska innehålla `displayed: true`. Svara
-   `reply NUMMER Markerat!` och kontrollera markeringsstatusen.
+   `reply NUMMER Markerat!` och kontrollera det faktiska urvalet samt
+   **Markerat i kartan.** under hushållets namn.
 3. Öppna Lo och skriv **Osänd uppgift** i beskrivningen. Skicka
    **Markera Lo igen** och upprepa visningsanropet.
 4. Kontrollera `displayed: false`, släpp sluttexten **Markerat!** igen
-   och kontrollera både statusen och den oskickade texten.
+   och kontrollera både urvalet och den oskickade texten. Inget nytt
+   **Markerat i kartan.** ska bekräfta det avvisade försöket.
 
 **Förväntat resultat:**
 
-- Första markeringsstatusen kommer efter faktisk webbläsarvisning.
+- Första markeringen motsvarar faktisk webbläsarvisning och
+  `displayed: true`.
 - Det andra försöket ger ingen ny bekräftad markering. Oskickad text
   finns kvar. **Markerat!** visas som obekräftad samtalstext, skild från
-  Skyttels status. Modellens text ensam ändrar inte den betrodda statusen.
+  det faktiska urvalet. Modellens text ensam ändrar inte kartans urval.
 
 ### TEXT-06: obekräftad samtalstext skiljs från sparande och markering
 
@@ -264,8 +267,8 @@ i kartan innan du börjar. Inget sparande är genomfört.
 
 2. Kontrollera att svaret står i samtalstexten och att textvyn inte har
    något förbehåll om att samtalstexten kan innehålla fel. Kontrollera det
-   osparade Lo-förslaget och att inget nytt spar- eller markeringsbesked
-   visas i statusen.
+   osparade Lo-förslaget genom antalet på **Visa utkastet** och att inget
+   nytt kvitto eller urval har skapats.
 3. Skicka samma fråga på nytt för varje svar nedan. Använd det nya
    `held`-numret och släpp ett svar i taget:
 
@@ -372,7 +375,8 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    **Påhittad uppgift**, utan att du behöver rulla sidan för att hitta den.
    Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
    `reply NUMMER Här är urvalet.`, öppna textvyn med **Skriv till Skyttel**
-   om den är stängd och kontrollera **Markerat i kartan**.
+   om den är stängd och kontrollera att Lo fortfarande är markerad i kartan.
+   **Markerat i kartan.** står under hushållets namn, utanför textvyn.
 3. Öppna **Navigera** och panorera tills objekten inte syns.
    Öppna textvyn och skriv **Visa sambandet mellan Lo och Molnmusik**.
    Kopiera sambandets
@@ -393,7 +397,7 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    kan du rulla inuti panelen. Markeringen öppnar inget redigeringsformulär.
 7. Prova också faktisk webbläsarzoom 200 och 400 procent. I ett kort
    fönster visas kartan och detaljpanelen bredvid varandra. Rulla ned
-   för panelväljare, samtalsstatus och mikrofonkontroller. De ska gå att
+   för samtalsstatus och mikrofonkontroller. De ska gå att
    nå med tangentbord utan horisontell sidrullning. **Visa verktygens namn**
    visar textingången när verktygsraden är hopfälld.
 
@@ -438,10 +442,10 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
    tool NUMMER report_result {"source":"draft"}
    ```
 
-4. I **Samtalstext**, kräv **Utkast:**, **Gäller: aktuellt →
-   upphört** för Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel
-   Betalar Tonrum**. Kontrollera att båda rättelserna fortfarande ligger
-   i utkastet och att **Lista och utkast** fortfarande finns i panelväljaren.
+4. I **Samtalstext**, kräv **Utkast:**, **Gäller: aktuellt → upphört** för
+   Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel Betalar Tonrum**.
+   Kontrollera att båda rättelserna fortfarande ligger i utkastet och att
+   **Lista** fortfarande visar utkastet.
 5. Skicka **Spara hela utkastet nu.** Läs `version` och `contentVersion`
    från det nya `held.draft`. Ersätt `NUMMER`, `VERSION` och `CONTENT`:
 
@@ -461,10 +465,10 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
    tool NUMMER report_result {"source":"latest_save"}
    ```
 
-8. Kräv **Sparandet:** och samma tidigare och nya status respektive
-   sambandstyp i **Samtalstext**. Kontrollera att utkastet
-   förblir tomt och att inget nytt sparförsök tillkommer under **Tidigare
-   sparförsök**. Listpanelen ska fortfarande finnas i panelväljaren.
+8. Kräv **Sparandet:** och samma tidigare och nya status respektive sambandstyp
+   i **Samtalstext**. Kontrollera att utkastet förblir tomt och att inget nytt
+   sparförsök tillkommer under **Tidigare sparförsök**. Listpanelen ska
+   fortfarande gå att öppna med **Lista**.
 
 **Förväntat resultat:**
 

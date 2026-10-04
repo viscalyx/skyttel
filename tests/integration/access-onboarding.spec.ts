@@ -104,12 +104,13 @@ test('ACCESS-17: revoked access retires protected work while the operator can op
   }
 });
 
-test('ACCESS-15: first-use guidance opens voice, text and list without a mandatory tour', async ({
+test('ACCESS-15: first visits use toolbar entries and optional help without start prompts', async ({
   page,
 }) => {
   const live = liveProvider();
+  const model = textModel(() => [modelMessage('Hej.')]);
   const installation = await createInstallation(undefined, {
-    modelFetch: textModel(() => [modelMessage('Hej.')]).provider,
+    modelFetch: model.provider,
     liveFetch: live.provider,
     liveSideband: live.attach,
   });
@@ -117,17 +118,51 @@ test('ACCESS-15: first-use guidance opens voice, text and list without a mandato
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.addInitScript({ content: liveBrowserFixtureSource });
-    for (const action of ['Tala', 'Skriv', 'Öppna listan']) {
+    for (const [width, action] of [
+      [1280, 'Prata med Skyttel'],
+      [390, 'Skriv till Skyttel'],
+      [320, 'Lista'],
+    ] as const) {
+      await page.setViewportSize({ width, height: 568 });
       await page.goto(installation.origin);
-      const guidance = page.getByRole('complementary', { name: 'Kom igång med kartan' });
-      await guidance.getByRole('button', { name: action, exact: true }).click();
-      if (action === 'Öppna listan')
+      const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
+      await expect(page.getByText('Hushållets karta hämtas…', { exact: true })).toHaveCount(0);
+      await expect(page.getByRole('complementary', { name: 'Kom igång med kartan' })).toHaveCount(
+        0,
+      );
+      await expect(
+        page.getByText(/Vad vill du börja med|Vad hör ihop hemma hos er|Din karta börjar här/),
+      ).toHaveCount(0);
+      const help = tools.getByRole('button', { name: 'Information och hjälp', exact: true });
+      await expect(help).toBeVisible();
+      await expect(tools.getByRole('button', { name: 'Visa verktygens namn' })).toBeVisible();
+      const requestsBeforeHelp = [
+        model.requests.length,
+        live.requests.length,
+        await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
+      ];
+      await help.click();
+      await expect(
+        page.getByRole('heading', { name: 'Information och hjälp', exact: true }),
+      ).toBeFocused();
+      await expect(
+        page.getByRole('region', { name: 'Information och hjälp', exact: true }),
+      ).toContainText('Kartans formulär finns kvar som alternativ till samtalet');
+      await expect(consentBox(page)).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(help).toBeFocused();
+      expect([
+        model.requests.length,
+        live.requests.length,
+        await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
+      ]).toEqual(requestsBeforeHelp);
+      await tools.getByRole('button', { name: action, exact: true }).click();
+      if (action === 'Lista')
         await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeVisible();
       else {
         await expect(consentBox(page)).toBeVisible();
-        await expect(guidance).toBeVisible();
         await giveConversationConsent(page);
-        if (action === 'Tala') {
+        if (action === 'Prata med Skyttel') {
           await expect(voiceBox(page)).toHaveText('Lyssnar');
           await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
           await expect(
@@ -141,14 +176,7 @@ test('ACCESS-15: first-use guidance opens voice, text and list without a mandato
           await expect(voiceBox(page)).toHaveCount(0);
         }
       }
-      await expect(guidance).toHaveCount(0);
     }
-    await page.goto(installation.origin);
-    await page.getByRole('button', { name: 'Stäng vägledningen', exact: true }).click();
-    await expect(page.getByRole('complementary', { name: 'Kom igång med kartan' })).toHaveCount(0);
-    await expect(
-      page.getByRole('navigation', { name: 'Kartans verktyg' }).getByRole('button').first(),
-    ).toBeFocused();
   } finally {
     await installation.close();
   }

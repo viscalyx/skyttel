@@ -173,6 +173,7 @@ ljudet innan fyra sekunder börjar”.
 
 1. Kör `user Spara hela utkastet.` och `delegate`. Släpp `save_draft`
    enligt förberedelsen. Kommentarspaketet ska innehålla **Sparat.**
+   Läs **Utkastet är sparat** under hushållsnamnet i tre sekunder.
 2. Starta signalen, skicka fragmentet **Spar** och avsluta signalen.
    Kontrollera att det gröna sparbeskedet inte visas.
 3. Skicka fragmentet **at.** medan signalen är av. Vänta minst fyra
@@ -188,8 +189,9 @@ ljudet innan fyra sekunder börjar”.
   transporttext före det kontrollerade ljudet. **Skyttel talar** består
   medan ljudet är aktivt.
 - Efter ljudet visas **Sparat** i fyra sekunder, med en grön bock mellan
-  vågformen och ordet. Bocken är dold för hjälpmedel. En skärmläsare
-  läser **Sparat** en gång. Textvyn öppnas inte av sig själv.
+  vågformen och ordet. Bocken är dold för hjälpmedel. Sparbeskedet under
+  hushållsnamnet annonseras artigt en gång vid kvittot; röstrutan upprepar
+  ingen sparannons. Textvyn öppnas inte av sig själv.
 - **Sparat.** finns i samtalstexten. Lo finns en gång i den sparade kartan
   och kvittot finns under **Utkast och historik**.
 
@@ -209,14 +211,16 @@ fyra sekunderna från avbrottet”.
 
 **Steg:**
 
-1. Starta signalen och skicka fragmentet **Spar** enligt förberedelsen.
+1. Läs **Utkastet är sparat** under hushållsnamnet när kvittot bekräftas.
+   Starta signalen och skicka fragmentet **Spar** enligt förberedelsen.
 2. Välj röstrutans stoppikon **Avbryt** och starta tidtagningen.
 3. Läs rutan efter tre sekunder och efter drygt fyra sekunder.
 
 **Förväntat resultat:**
 
 - Ljudet stoppas och **Sparat** visas i fyra sekunder från avbrottet.
-  Ordet läses upp en gång och inget öppnas automatiskt.
+  Röstrutan upprepar inte sparannonsen från kartans tre sekunders
+  sparbesked. Inget öppnas automatiskt.
 - Lo och det bekräftade kvittot består. Ett genomfört sparande ångras inte.
 
 ### FRAGA-06: fria ord ersätter inte kvittot
@@ -253,7 +257,7 @@ kvitto ger inget grönt sparbesked”.
 | 1.4.3, 1.4.11 | Läsbara statusord och grön bock i båda teman; färg är inte enda beskedet. | Bocken använder kartans temafärg. | Visuell kontrastgranskning i ljus och mörk miljö. |
 | 1.4.10, 2.4.7, 2.4.11 | Statusbyten ändrar inte fokus eller öppnar en vy; reglage förblir nåbara. | Publika vyöppningar och frånvaro av automatisk textvy provas. | Verklig förstoring, smal skärm och synligt fokus. |
 | 2.1.1, 2.5.8 | Mikrofon, textvy och stopp fungerar med tangentbord och pekare. | Publika kontroller används i Chromium. | Fysiska pekmål och tangentbord i övriga webbläsare. |
-| 4.1.2, 4.1.3 | Väntan läses inte upp igen; Sparat meddelas artigt en gång. | Live-regionens text och statusord kontrolleras. | Skärmläsarens kö och faktisk uppläsning under tal. |
+| 4.1.2, 4.1.3 | Väntan läses inte upp igen; Utkastet är sparat meddelas artigt en gång. | Live-regionens text och statusord kontrolleras. | Skärmläsarens kö och faktisk uppläsning under tal. |
 <!-- markdownlint-enable MD013 -->
 
 Bedömningen är ett designmål med begränsat verifieringsunderlag, inte

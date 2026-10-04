@@ -51,7 +51,7 @@ notis utan att öppna textvyn”.
 1. Läs kartan utan att trycka på samtalsknapparna.
 2. Fokusera **Prata med Skyttel** och tryck Retur. Läs notisen.
 3. Välj **Stäng notisen**. Fokusera **Skriv till Skyttel** och tryck Retur.
-4. Stäng notisen igen. Läs utkastets återkoppling och övriga verktyg.
+4. Stäng notisen igen. Läs teckenförklaringen och övriga verktyg.
 
 **Förväntat resultat:**
 
@@ -64,7 +64,8 @@ notis utan att öppna textvyn”.
 - Fokus stannar på den valda knappen när notisen visas. Stängning återför
   fokus till **Prata med Skyttel** och läser inte upp ett återkomstbesked.
 - **Aktuell status** och **Visa samtals- och utkastdetaljer** finns inte.
-  **1 förslag · privat utkast** finns kvar i kartans återkoppling.
+  Teckenförklaringens gröna plus finns kvar. Kartan visar inget privat
+  förslagsantal.
 
 ### NOT-02: kontaktavbrott stoppar inmatning men behåller skrivande
 
@@ -131,6 +132,9 @@ försvinner när kontakten återkommer”.
 - Med textvyn öppen finns notisen bara som en rad ovanför meddelandefältet.
   Med textvyn stängd finns den bara vid röstrutans plats. Vybytet läser
   inte upp samma besked igen.
+- Hela beskedet och dess kontroller ryms ovanför meddelandefältet.
+  Samtalstexten har fortfarande användbart läsutrymme på dator, telefon,
+  bred pekskärm och i korta fönster.
 - Återkomstbeskedet läses i tur. Ingen notis finns kvar efter återkomsten.
 
 ## Ordning, stängning och fokus
@@ -321,10 +325,12 @@ light tema” och samma titel med “dark tema”.
 **Förväntat resultat:**
 
 - Hindret har en överstruken cirkel; mikrofonhändelsen har en överstruken
-  mikrofon. Symbolerna står till vänster om texten och har olika färg.
+  mikrofon. Symbolerna står i tonade cirklar till vänster om texten.
+  Hinder är röda och händelser gulbruna.
 - Symbolerna har minst 3:1 kontrast, och texten minst 4,5:1, i båda teman.
   Automationen mäter de faktiskt beräknade färgerna på de ogenomskinliga
-  korten. Den bedömer inte färgseende eller fysisk bildskärm.
+  korten och symbolernas egna tonade bakgrunder. Den bedömer inte
+  färgseende eller fysisk bildskärm.
 - Symbolen är dold för hjälpmedel; text och namngivna kontroller bär
   beskedet. Båda fallen är stängbara när inget samtal pågår.
 
@@ -347,7 +353,7 @@ kontrollknapp under texten”.
 **Steg:**
 
 1. Ladda om och vänta på **Skyttel kunde inte kontrollera om utkastet
-   sparades.** Om vägledningen visas, stäng den med tangentbordet.
+   sparades.**
    Läs symbolen, texten och kontrollknappen.
 2. Kontrollera mikrofonens läge, det privata förslaget och sparförsöket.
 3. Ta bort nätverksblockeringen. Välj **Kontrollera om utkastet sparades**.

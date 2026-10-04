@@ -21,20 +21,27 @@ export async function openWorkspace(page: Page) {
 }
 
 export async function activatePanel(page: Page, title: string) {
-  await page.getByLabel(/^Öppna paneler/).selectOption({ label: title });
+  await openWorkspace(page);
+  if (title === 'Nytt objekt') await page.getByRole('button', { name: /^Fortsätt:/ }).click();
+  else if (title !== 'Lista och utkast')
+    await page.getByRole('button', { name: `Uppgifter för ${title}`, exact: true }).click();
   await expect(page.getByRole('region', { name: title, exact: true })).toBeVisible();
 }
 
-export async function openMap(page: Page) {
-  const close = page.getByRole('button', { name: 'Stäng arbetsytan', exact: true });
-  if (await close.isVisible()) await close.click();
+export async function closePanels(page: Page) {
   // On a narrow screen the text view fills the screen. Closing it ends no conversation.
   const textView = page.getByRole('button', { name: 'Stäng textvyn', exact: true });
   if ((page.viewportSize()?.width ?? 1280) <= 700 && (await textView.isVisible()))
     await textView.click();
+  const close = page.locator(
+    '.workspace-window[data-active="true"]:visible .workspace-window-close',
+  );
+  while ((await close.count()) > 0) await close.first().click();
+}
+
+export async function openMap(page: Page) {
+  await closePanels(page);
   await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
-  const guidance = page.getByRole('button', { name: 'Stäng vägledningen', exact: true });
-  if (await guidance.isVisible()) await guidance.click();
 }
 
 export async function openProfile(page: Page) {

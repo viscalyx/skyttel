@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 import type { MapState, ObjectValue } from '../../src/shared/map.js';
-import { activatePanel, createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  activatePanel,
+  closePanels,
+  createHousehold,
+  openWorkspace,
+  signIn,
+} from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 test('SAMMANSLAGNING-05: participant text survives merge and blocks discard until explicitly abandoned', async ({
@@ -75,7 +81,7 @@ test('SAMMANSLAGNING-05: participant text survives merge and blocks discard unti
     await expect(
       page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
     ).toBeDisabled();
-    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await closePanels(page);
     await openWorkspace(page);
     await activatePanel(page, 'Första Lo');
     await expect(first.getByLabel('Beskrivning', { exact: true })).toHaveValue(

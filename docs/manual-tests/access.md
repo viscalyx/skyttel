@@ -1,7 +1,7 @@
 # Manuella testfall för inloggning och hushållets start
 
 Testfallen omfattar första hushållet, återhämtning vid anslutningsfel,
-utloggning, kartans stängbara vägledning och länkning av Google och Microsoft.
+utloggning, kartans verktyg och frivilliga hjälp och länkning av Google och Microsoft.
 Övergången till vald leverantör visar vad som händer och kan avbrytas.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
@@ -538,9 +538,9 @@ cancelled before leaving”.
 - Robin ser beskedet om saknad tillgång, sitt användar-ID och inbjudningskod.
   Skapande av hushåll erbjuds inte. Innehållet ryms på den smala skärmen.
 
-### ACCESS-15: Kartans vägledning ger tre frivilliga ingångar
+### ACCESS-15: Kartans verktyg och frivilliga hjälp ersätter startdialogerna
 
-**Syfte:** Börja med tal, text eller lista utan obligatorisk rundtur.
+**Syfte:** Börja med tal, text eller lista och läsa hjälp när den behövs.
 
 **Användare:** Alex.
 
@@ -553,26 +553,31 @@ verklig mikrofon och enhetsbeteende hör till #220.
 
 **Integrationstest:**
 [access-onboarding.spec.ts](../../tests/integration/access-onboarding.spec.ts),
-testfallet “ACCESS-15: first-use guidance opens voice, text and list without
-a mandatory tour”.
+testfallet “ACCESS-15: first visits use toolbar entries and optional help
+without start prompts”.
 
 **Steg:**
 
-1. Öppna kartan och välj **Tala** i vägledningen. Kontrollera medgivanderutan
-   och att ingen mikrofon lyssnar före **Godkänn och starta**. Godkänn och
+1. Öppna kartan på dator. Kontrollera att ingen startdialog eller kortet
+   **Din karta börjar här** visas. Öppna **Information och hjälp** direkt
+   från verktygsfältet. Läs om samtalet och formulären. Tryck Escape.
+2. Välj **Prata med Skyttel** i verktygen. Kontrollera medgivanderutan och
+   att ingen mikrofon lyssnar före **Godkänn och starta**. Godkänn och
    kontrollera röstrutans **Lyssnar**, utan att textvyn öppnas.
-2. Ladda om kartan och välj **Skriv** i vägledningen. Godkänn och kontrollera
-   textvyn, utan röstruta eller påslagen mikrofon.
-3. Ladda om och välj **Öppna listan**. Kontrollera **Nytt objekt**.
-4. Ladda om och välj **Stäng vägledningen**.
+3. Ladda om på telefon med hopfällda verktyg. Upprepa hjälpkontrollen.
+   Välj **Skriv till Skyttel**. Godkänn och kontrollera textvyn, utan
+   röstruta eller påslagen mikrofon.
+4. Ladda om på en smal telefon. Upprepa hjälpkontrollen. Välj **Lista**
+   direkt i verktygen. Kontrollera **Nytt objekt**.
 
 **Förväntat resultat:**
 
-- Tala startar rösten och Skriv öppnar textvyn. Samma medgivande täcker
-  båda. Lista öppnar kartarbetet utan att kräva medgivande till samtal.
-- Vägledningen står kvar medan medgivandet väntar och försvinner när
-  användaren har godkänt eller valt listan.
-- Stängning ger fokus till kartans verktyg. Alla verktyg kan användas direkt.
+- Kartan öppnas utan startdialoger eller ett separat kort för en tom karta.
+- Hjälpen syns som en knapp även i telefonens hopfällda verktygsfält.
+  Hjälpens rubrik får fokus; Escape återför fokus till hjälpknappen.
+  Att läsa hjälpen startar inget samtal och kräver inget medgivande.
+- Röst och text startar efter medgivandet från den valda verktygsknappen.
+  Lista öppnar kartarbetet utan att kräva medgivande till samtal.
 
 ### ACCESS-16: Utgånget inloggningsförsök kan ersättas
 

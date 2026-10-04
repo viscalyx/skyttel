@@ -9,39 +9,55 @@ administratörens [fullständiga export](household-export.md).
 
 ## Följ utkastet i kartan
 
-Kartans återkoppling visar antalet privata förslag, nödvändiga frågor och
-sparresultat även när arbetspanelerna är stängda. **Utkast och historik**
-i verktygen visar hela utkastet och tidigare sparförsök. **Visa verktygens
-namn** gör knappen synlig i en hopfälld verktygslåda. Uppdateringar flyttar
-inte ditt fokus. Mikrofonläge och samtalsproblem visas i röstrutan och
+Under hushållets namn visas sparande, fel och en länk med antal konflikter.
+Konfliktantalet gäller hela ditt privata utkast, även typer och innehåll
+som kartans filter döljer. **Utkast och historik** öppnar hela utkastet,
+konflikterna och **Mina sparförsök**. Expandera verktygens namn vid behov.
+Återkoppling med antal förslag finns i textvyn och Inställningar.
+
+Teckenförklaringen under namnet visar bara kategorier i den filtrerade
+kartan. Sökning, typfilter, markering och fokus påverkar den. Kamerans
+rörelser gör det inte. Symbolerna har samma färger som kartan:
+
+- Grönt plus visar ett nytt förslag. Nya samband har heldragna linjer.
+- Gul penna visar en ändring. Typ och uppgifter kan ändras utan att
+  sambandets riktade ändpunkter ändras; linjen är då heldragen.
+- Rött kryss visar en borttagning med streckad sambandslinje. När
+  ändpunkter eller riktning ändras visas den gamla kopplingen med rött
+  kryss och streckad linje och den nya med grönt plus och heldragen linje.
+- En separat ring visar ett markerat objekt, skild från ett nytt objekts
+  gröna förslagskontur. Ringen kan finnas kvar efter sparandet.
+- Punktade kopplingar binder etiketter till objekt eller samband.
+  Höjdhjälpens streckade markeringar handlar om höjd.
+
+**Information och hjälp** förklarar alla symbolerna. Förslag på samband
+har etiketter utan att du behöver markera dem eller välja **Alla etiketter**,
+så långt de ryms utan krockar.
+
+**Utkastet är sparat** visas i tre sekunder när ett nytt sparförsök
+bekräftas. Ett gammalt kvitto spelas inte upp vid omladdning. Att inga
+förslagsmarkeringar syns bevisar inte att utkastet är sparat: filter kan
+dölja dem och typförslag saknar markeringar i kartan. Läs kvittot i
+**Mina sparförsök** för detaljer utan tidsgräns.
+
+Oskickad formulärtext finns kvar när du stänger panelerna. Öppna **Lista**
+och objektets **Uppgifter**, eller **Fortsätt:** för ett nytt objekt.
+Lägg texten i utkastet eller stäng formuläret utan att skicka innan du
+sparar. Oskickade samtalsmeddelanden finns kvar i textvyn.
+Besvara nödvändiga frågor i samtalet före ett nytt uttryckligt sparbesked.
+Mikrofonläge och samtalsproblem visas i röstrutan och
 [samtalsnotiserna](text-assistant.md#följ-samtalet).
-
-Grönt plus betyder **Föreslås läggas till**, amberfärgad penna betyder
-**Föreslås ändras** och rött kryss betyder **Föreslås tas bort**.
-Tidigare samband är streckade och en separat ring visar ditt urval.
-Legenden finns medan utkastet innehåller ändringar, även under sparande
-och vid ett okänt resultat. När kvittot bekräftar sparandet och det tomma
-utkastet hämtas försvinner förslagsmarkeringarna och legenden.
-
-**Oskickad formulärtext** är skild från utkastet. **Fortsätt redigera**
-öppnar det behållna arbetet. Lägg texten i utkastet eller stäng formuläret
-utan att skicka innan du sparar med kartans knapp. Oskickade
-samtalsmeddelanden finns kvar i samtalet och ingår inte i sparandet.
-
-Besvara nödvändiga frågor i samtalet innan du sparar. Varken kartans
-återkoppling eller utkastets sparknapp kringgår frågan. Ett svar sparar inte i sig
-förslagen; ge ett nytt uttryckligt sparbesked när uppgifterna stämmer.
 
 ## Granska, spara eller kasta förslag
 
 1. Lägg formulärets ändringar i utkastet med **Lägg i mitt utkast** eller
    motsvarande knapp för typen av förslag. Text som fortfarande bara
    finns i formuläret ingår inte i sparandet.
-2. Öppna vid behov **Visa hela utkastet** för tidigare och föreslagna
+2. Öppna **Utkast och historik** för tidigare och föreslagna
    värden, inklusive samband, typer, bilder och borttagningar.
 3. Rätta vid behov ett förslag genom att välja innehållet, öppna dess
    redigering och lägga rättelsen i utkastet.
-4. Välj **Spara hela utkastet** i kartans återkoppling eller utkastet när
+4. Välj **Spara hela utkastet** i **Hela mitt utkast** när
    förslagen stämmer. Ingen extra granskning krävs för att använda knappen.
    Sparandet gäller
    allt i utkastet tillsammans. Ett fel eller en konflikt stoppar hela
@@ -72,10 +88,10 @@ Nyare förslag finns kvar. Kopiera eventuell formulärtext du vill behålla,
 stäng formuläret och öppna det aktuella förslaget innan du fortsätter.
 
 Vid konflikt sparas inget från försöket, inte heller de konfliktfria
-delarna. Hämta aktuellt underlag. Öppna konfliktlistan i kartans
-återkoppling, exempelvis **Visa 1 konflikt**, och välj det berörda objektet, sambandet
-eller typen. Valet öppnar rätt ändring i **Hela mitt utkast**, även
-när arbetspanelerna är stängda eller objektet är borttaget ur kartan.
+delarna. Hämta aktuellt underlag. Välj exempelvis **1 konflikt i ditt utkast**
+under hushållets namn. **Konflikter i mitt utkast** öppnas med fokus.
+Välj det berörda objektet, sambandet eller typen för att läsa rätt ändring,
+även när arbetspanelerna är stängda eller objektet är borttaget ur kartan.
 Navigeringen ändrar inga uppgifter och andra oskickade formulär finns kvar.
 
 Utkastet visar ditt tidigare underlag, ditt förslag och det som är sparat

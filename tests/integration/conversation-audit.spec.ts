@@ -43,8 +43,6 @@ async function setup(page: Page, respond: Parameters<typeof textModel>[0] = () =
   expect(proposed.ok()).toBe(true);
   await page.addInitScript({ content: liveBrowserFixtureSource });
   await page.goto(app.origin);
-  const guide = page.getByRole('button', { name: 'Stäng vägledningen', exact: true });
-  if (await guide.isVisible()) await guide.click();
   return { app, live, path };
 }
 
@@ -62,7 +60,7 @@ async function appearance(card: Locator) {
       if (!values || values.length < 3 || (values.length === 4 && values[3] !== 1))
         throw new Error(`Expected opaque color: ${color}`);
       const [r, g, b] = values.slice(0, 3).map((channel) => {
-        const value = channel / 255;
+        const value = color.startsWith('color(srgb ') ? channel : channel / 255;
         return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
       });
       return r * 0.2126 + g * 0.7152 + b * 0.0722;
@@ -77,16 +75,38 @@ async function appearance(card: Locator) {
     if (!icon || !text) throw new Error('Missing visible notice content');
     const surface = getComputedStyle(element).backgroundColor;
     const iconColor = getComputedStyle(icon).color;
+    const iconSurface = getComputedStyle(icon.parentElement ?? element).backgroundColor;
     const textColor = getComputedStyle(text).color;
     const iconBox = icon.getBoundingClientRect();
     const textBox = text.getBoundingClientRect();
     return {
       iconColor,
-      iconContrast: ratio(iconColor, surface),
+      iconContrast: ratio(iconColor, iconSurface),
       textContrast: ratio(textColor, surface),
       iconLeftOfText: iconBox.right <= textBox.left,
     };
   });
+}
+
+async function contentFits(card: Locator) {
+  await expect
+    .poll(() =>
+      card.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return (
+          [...element.querySelectorAll('p, button')].every((child) => {
+            const content = child.getBoundingClientRect();
+            return (
+              content.top >= box.top &&
+              content.bottom <= box.bottom &&
+              content.left >= box.left &&
+              content.right <= box.right
+            );
+          }) && element.scrollHeight <= element.clientHeight
+        );
+      }),
+    )
+    .toBe(true);
 }
 
 for (const theme of ['light', 'dark'] as const)
@@ -106,12 +126,16 @@ for (const theme of ['light', 'dark'] as const)
       await microphoneButton(page).click();
       await expect(notice(page)).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
       await expect(notice(page).getByRole('button', { name: 'Stäng notisen' })).toBeVisible();
-      await expect(notice(page).locator('svg')).toHaveAttribute('aria-hidden', 'true');
+      await expect(notice(page).locator('.conversation-notice-symbol svg')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
       const blocker = await appearance(notice(page));
       expect(blocker.iconContrast).toBeGreaterThanOrEqual(3);
       expect(blocker.textContrast).toBeGreaterThanOrEqual(4.5);
       expect(blocker.iconLeftOfText).toBe(true);
       await capture(page, `notice-unavailable-${theme}`);
+      await contentFits(notice(page));
 
       app.setConversationAvailable(true);
       // Availability is checked every five seconds; allow the next probe to
@@ -127,6 +151,10 @@ for (const theme of ['light', 'dark'] as const)
       expect(event.textContrast).toBeGreaterThanOrEqual(4.5);
       expect(event.iconLeftOfText).toBe(true);
       await capture(page, `notice-microphone-${theme}`);
+      await contentFits(notice(page));
+      await openConversationText(page);
+      await contentFits(notice(page));
+      await capture(page, `notice-microphone-inline-${theme}`);
     } finally {
       await app.close();
     }
@@ -158,11 +186,6 @@ test('NOT-10: ett verkligt väntande sparförsök visar frågesymbol och kontrol
     await expect(notice(page)).toContainText(
       'Skyttel kunde inte kontrollera om utkastet sparades.',
     );
-    const guide = page.getByRole('button', { name: 'Stäng vägledningen', exact: true });
-    // The pending-save notice can cover the guidance close button at this
-    // viewport. Dismiss guidance through its keyboard action before measuring.
-    if (await guide.isVisible()) await guide.press('Enter');
-    await expect(guide).toHaveCount(0);
     const action = notice(page).getByRole('button', {
       name: 'Kontrollera om utkastet sparades',
       exact: true,
@@ -172,7 +195,16 @@ test('NOT-10: ett verkligt väntande sparförsök visar frågesymbol och kontrol
     expect(paragraph).not.toBeNull();
     expect(button).not.toBeNull();
     expect(button?.y).toBeGreaterThanOrEqual((paragraph?.y ?? 0) + (paragraph?.height ?? 0));
-    expect(button?.height).toBeGreaterThanOrEqual(44);
+    expect(button?.height).toBeGreaterThanOrEqual(36);
+    const hitHeight = await action.evaluate((element) => {
+      const hit = getComputedStyle(element, '::after');
+      return (
+        element.getBoundingClientRect().height -
+        Number.parseFloat(hit.top) -
+        Number.parseFloat(hit.bottom)
+      );
+    });
+    expect(hitHeight).toBeGreaterThanOrEqual(44);
     await expect(notice(page).getByRole('button', { name: 'Stäng notisen' })).toHaveCount(0);
     expect((await appearance(notice(page))).iconLeftOfText).toBe(true);
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');

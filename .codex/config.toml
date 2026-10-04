@@ -11,7 +11,7 @@ default_permissions = "skyttel-development"
 personality = "pragmatic"
 
 [permissions.skyttel-development]
-description = "Workspace access including Git metadata."
+description = "Workspace access including Git metadata and project skills."
 extends = ":workspace"
 
 [permissions.skyttel-development.filesystem]
@@ -20,6 +20,7 @@ extends = ":workspace"
 [permissions.skyttel-development.filesystem.":workspace_roots"]
 ".git" = "write"
 ".codex" = "write"
+".agents/skills" = "write"
 
 [mcp_servers.playwright]
 args = ["@playwright/mcp@latest"]
