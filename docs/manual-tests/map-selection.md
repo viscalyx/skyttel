@@ -139,13 +139,13 @@ retain manual positions”.
 **Steg:**
 
 1. Dubbelklicka Lo och kontrollera att den nya panelen ligger nära Lo
-   inom arbetsytan med åtkomliga kontroller.
+   inom den synliga skärmen med åtkomliga kontroller.
 2. Fokusera panelens flytthandtag och flytta med piltangenterna.
 3. Stäng panelen och öppna den med Visa detaljer i verktygen.
 4. Gör fönstret mindre och större igen.
 
 **Förväntat resultat:**
 
-- Panelen öppnas nära objektet och ryms inom arbetsytan.
+- Panelen öppnas nära objektet och ryms inom den synliga skärmen.
 - Den manuella placeringen består efter återöppning och storleksbyte.
 - Mindre fönster begränsar panelen utan att radera dess önskade placering.

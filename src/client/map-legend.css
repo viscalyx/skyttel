@@ -107,6 +107,22 @@
     top: var(--workspace-window-y, 0px);
     right: auto;
   }
+  .household-map.workspace-shell .workspace-panel.workspace-window {
+    /* Keep the initial scrollable body above status actions. This limits
+       height only; the complete window can still be moved over those actions. */
+    max-height: min(
+      var(--workspace-window-height, 100%),
+      max(
+        124px,
+        calc(
+          var(--work-height, 100dvh) -
+          max(200px, var(--context-bottom, 200px)) -
+          100px -
+          var(--feedback-height, 0px)
+        )
+      )
+    );
+  }
   .household-map.workspace-shell .map-navigation {
     max-height: calc(var(--work-height, 100dvh) - 200px);
     z-index: 31;

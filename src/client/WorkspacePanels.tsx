@@ -45,11 +45,18 @@ const panelGap = 18;
 
 function startingPosition(index: number, region: HTMLElement): Position {
   const floating = getComputedStyle(region).position === 'fixed';
+  const context = region.closest('.household-map')?.querySelector('.workspace-context');
+  const top = floating
+    ? Math.max(
+        200,
+        (context?.getBoundingClientRect().bottom ?? 188) + 12 - region.getBoundingClientRect().top,
+      )
+    : 0;
   const width = region.clientWidth - (floating ? 136 : 0);
   const columns = Math.max(1, Math.floor((width + panelGap) / (panelWidth + panelGap)));
   return {
     x: (floating ? 112 : 0) + (index % columns) * (panelWidth + panelGap),
-    y: (floating ? 200 : 0) + Math.floor(index / columns) * 52,
+    y: top + Math.floor(index / columns) * 52,
   };
 }
 
@@ -129,6 +136,7 @@ export function WorkspacePanels({
   const explicitFocusCommitted = useRef(false);
   const appliedTransition = useRef<TransitionFocus | null>(null);
   const rememberedPositions = useRef<Record<string, Position>>({});
+  const defaultContextTops = useRef<Record<string, number>>({});
   const placedReveal = useRef<PanelFocusRequest | null>(null);
   const [positions, setPositions] = useState<Record<string, ReturnType<typeof clampPosition>>>({});
   const [stack, setStack] = useState<string[]>([]);
@@ -179,6 +187,7 @@ export function WorkspacePanels({
         x: right - bounds.left - panelWidth - 24,
         y: 200,
       };
+      delete defaultContextTops.current[focusRequest.id];
     }
     const fitPanels = () => {
       if (!region.clientWidth || !region.clientHeight) return;
@@ -188,11 +197,22 @@ export function WorkspacePanels({
         const next = { ...previous };
         windows.forEach((entry, index) => {
           const panel = panelRefs.current.get(entry.id);
-          const proposed =
+          let proposed =
             rememberedPositions.current[entry.id] ||
             (entry.anchor
               ? anchoredPosition(entry.anchor, region)
               : startingPosition(index, region));
+          const contextTop = startingPosition(0, region).y;
+          if (!rememberedPositions.current[entry.id] && !entry.anchor) {
+            defaultContextTops.current[entry.id] = contextTop;
+          }
+          // Untouched defaults follow growing map status vertically. Their
+          // preferred horizontal placement survives viewport changes.
+          const previousContextTop = defaultContextTops.current[entry.id];
+          if (previousContextTop !== undefined) {
+            proposed = { ...proposed, y: proposed.y + contextTop - previousContextTop };
+            defaultContextTops.current[entry.id] = contextTop;
+          }
           rememberedPositions.current[entry.id] = proposed;
           const position = clampPosition(proposed, region, panel, currentArea);
           // Viewport clamps retain the preferred desktop position. A move
@@ -202,6 +222,7 @@ export function WorkspacePanels({
             clampPosition(proposed, region, panel, { ...currentArea, obstacles: [] });
           if (viewportOnly && (position.x !== viewportOnly.x || position.y !== viewportOnly.y)) {
             rememberedPositions.current[entry.id] = position;
+            delete defaultContextTops.current[entry.id];
           }
           next[entry.id] = position;
           if (
@@ -218,6 +239,8 @@ export function WorkspacePanels({
     fitPanels();
     const observer = new ResizeObserver(() => fitPanels());
     observer.observe(region);
+    const context = region.closest('.household-map')?.querySelector('.workspace-context');
+    if (context) observer.observe(context);
     for (const panel of panelRefs.current.values()) observer.observe(panel);
     return () => observer.disconnect();
   }, [windows, compact, hidden, area, focused, focusRequest]);
@@ -278,6 +301,7 @@ export function WorkspacePanels({
       positions[id],
     );
     rememberedPositions.current[id] = next;
+    delete defaultContextTops.current[id];
     setPositions((previous) => ({ ...previous, [id]: next }));
     return next;
   };

@@ -543,6 +543,54 @@ test('desktop panels retain chosen positions within the whole screen across scre
   expect(box().top).toBeGreaterThan(legend.element().getBoundingClientRect().bottom);
 });
 
+test('complete view switching retains default form placement, unsent text and resize focus', async () => {
+  await open(1440);
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+  const form = page.getByRole('region', { name: 'Nytt objekt', exact: true, includeHidden: true });
+  await form.getByLabelText('Objektets namn').fill('Behåll placering');
+  const initial = form.element().getBoundingClientRect();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  const navigation = page.getByRole('region', {
+    name: 'Navigation',
+    exact: true,
+    includeHidden: true,
+  });
+  await openConversationText();
+  const conversation = page.getByRole('region', {
+    name: 'Skriv till Skyttel',
+    exact: true,
+    includeHidden: true,
+  });
+  const message = conversation.getByLabelText('Meddelande till Skyttel');
+  await message.fill('Behåll meddelande');
+  await page.viewport(760, 960);
+  await expect.element(conversation).toBeVisible();
+  await expect.element(form).not.toBeVisible();
+  await expect.element(navigation).not.toBeVisible();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await page.getByRole('button', { name: 'Fortsätt: Behåll placering', exact: true }).click();
+  await expect.element(form).toBeVisible();
+  await expect.element(conversation).not.toBeVisible();
+  await expect.poll(() => form.element().getBoundingClientRect().x).toBe(380);
+  expect(form.element().getBoundingClientRect().width).toBe(380);
+  await openConversationText();
+  await expect.element(message).toHaveValue('Behåll meddelande');
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await expect.element(navigation).toBeVisible();
+  await expect.element(conversation).not.toBeVisible();
+  await expect
+    .element(navigation.getByRole('group', { name: 'Navigation', exact: true }))
+    .toHaveFocus();
+  await openConversationText();
+  await page.viewport(1440, 960);
+  await expect.element(form).toBeVisible();
+  await expect.element(navigation).toBeVisible();
+  await expect.element(message).toHaveFocus();
+  await expect.poll(() => form.element().getBoundingClientRect().x).toBe(initial.x);
+  await expect.element(form.getByLabelText('Objektets namn')).toHaveValue('Behåll placering');
+});
+
 test('conversation edges stop fast panel drags, allow sliding and retain resized placements', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
