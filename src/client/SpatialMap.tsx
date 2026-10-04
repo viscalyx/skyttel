@@ -819,15 +819,17 @@ export function SpatialMap({
   const adjacent = new Set<string>();
   const guideId = movement.heightActive
     ? movement.guide?.id
-    : selection?.kind === 'object'
-      ? selection.id
+    : selectedIds.length === 1
+      ? selectedIds[0]
       : undefined;
   const guidePosition = guideId && locations.has(guideId) ? scene.current?.position(guideId) : null;
   const heightGuide =
     guidePosition && (heightHelp || shiftHeld || movement.heightActive)
       ? {
           start:
-            movement.guide && movement.guide.id === guideId ? movement.guide.start : guidePosition,
+            (movement.heightActive || !shiftHeld) && movement.guide && movement.guide.id === guideId
+              ? movement.guide.start
+              : guidePosition,
           end: guidePosition,
         }
       : null;
@@ -916,10 +918,24 @@ export function SpatialMap({
         const next = { ...position, [axis]: position[axis] + step };
         const end = scene.current?.place(id, next) ?? next;
         movement.recordMove(id, position, end, axis === 'y');
-        if (axis === 'y') setHeightHelp(true);
         void personal?.move(id, end);
       }}
     >
+      <div className="navigation-height-help">
+        <label>
+          <input
+            type="checkbox"
+            checked={heightHelp}
+            disabled={selectedIds.length !== 1}
+            aria-describedby={selectedIds.length !== 1 ? `${labelPrefix}-height-help` : undefined}
+            onChange={(event) => setHeightHelp(event.target.checked)}
+          />
+          Visa höjdhjälp
+        </label>
+        {selectedIds.length !== 1 && (
+          <p id={`${labelPrefix}-height-help`}>Välj ett objekt för att visa höjdhjälp</p>
+        )}
+      </div>
       <details className="navigation-settings">
         <summary>Ordna min vy</summary>
         <fieldset disabled={personal && (!personal.view || personal.pending)}>
@@ -1380,14 +1396,6 @@ export function SpatialMap({
               }}
             />{' '}
             Alla etiketter
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={heightHelp}
-              onChange={(event) => setHeightHelp(event.target.checked)}
-            />
-            Visa höjdhjälp
           </label>
         </div>
         {!allLabels && objects.size > 0 && (

@@ -593,7 +593,10 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     await page.getByRole('button', { name: /^Flytta .+: höger$/ }).click();
     await expect(space.getByText('Din personliga vy är sparad.', { exact: true })).toBeVisible();
-    await space.getByLabel('Visa höjdhjälp', { exact: true }).check();
+    const heightHelp = page
+      .getByRole('region', { name: 'Navigation', exact: true })
+      .getByLabel('Visa höjdhjälp', { exact: true });
+    await heightHelp.check();
     const view = await (await page.request.get(path)).json();
     await openProfile(page);
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
@@ -608,7 +611,7 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
-    await expect(space.getByLabel('Visa höjdhjälp', { exact: true })).toBeChecked();
+    await expect(heightHelp).toBeChecked();
     expect(await (await page.request.get(path)).json()).toEqual(view);
   } finally {
     await installation.close();

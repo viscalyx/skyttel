@@ -286,8 +286,7 @@ for (const theme of ['light', 'dark'] as const) {
         await page.setViewportSize({ width: 320, height });
         const reset = page.getByRole('button', { name: 'Återställ vy', exact: true });
         const labels = page.getByRole('checkbox', { name: 'Alla etiketter', exact: true });
-        const heightHelp = page.getByRole('checkbox', { name: 'Visa höjdhjälp', exact: true });
-        for (const target of [reset, labels, heightHelp]) {
+        for (const target of [reset, labels]) {
           if (target === reset) await reset.focus();
           else await page.keyboard.press('Tab');
           await expect(target).toBeFocused();
@@ -311,10 +310,30 @@ for (const theme of ['light', 'dark'] as const) {
           });
           expect(visible).toEqual({ centerHit: true, labelHit: true, within: true });
         }
-        await page.keyboard.press('Space');
-        await expect(heightHelp).toBeChecked();
-        await page.keyboard.press('Space');
+        const navigate = page.getByRole('button', { name: 'Navigera', exact: true });
+        await navigate.focus();
+        await page.keyboard.press('Enter');
+        const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
+        const heightHelp = navigation.getByRole('checkbox', {
+          name: 'Visa höjdhjälp',
+          exact: true,
+        });
+        await expect(heightHelp).toBeDisabled();
         await expect(heightHelp).not.toBeChecked();
+        await expect(
+          navigation.getByText('Välj ett objekt för att visa höjdhjälp', { exact: true }),
+        ).toBeVisible();
+        const heightLabel = navigation.getByText('Visa höjdhjälp', { exact: true });
+        await heightLabel.scrollIntoViewIfNeeded();
+        expect(
+          await heightLabel.evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            return (
+              box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight
+            );
+          }),
+        ).toBe(true);
+        await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
         const action = page.getByRole('button', {
           name: 'Lista',
           exact: true,
@@ -340,6 +359,7 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
       await closePanels(page);
       await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
+      await page.getByRole('button', { name: 'Navigera', exact: true }).click();
       await expect(
         page.getByRole('checkbox', { name: 'Visa höjdhjälp', exact: true }),
       ).not.toBeChecked();

@@ -41,7 +41,12 @@ export function useObjectMovement(
   const touches = useRef(new Map<number, { x: number; y: number }>());
   const waiting = useRef(false);
   const suppressed = useRef(false);
-  const [guide, setGuide] = useState<{ id: string; start: Position; end: Position } | null>(null);
+  const [guide, setGuide] = useState<{
+    id: string;
+    start: Position;
+    end: Position;
+    source: 'drag' | 'buttons';
+  } | null>(null);
   const [heightActive, setHeightActive] = useState(false);
   const cancel = useCallback(() => {
     const current = gesture.current;
@@ -80,7 +85,14 @@ export function useObjectMovement(
     cancel,
     recordMove(id: string, start: Position, end: Position, height: boolean) {
       setGuide((previous) =>
-        height ? { id, start: previous?.id === id ? previous.start : start, end } : null,
+        height
+          ? {
+              id,
+              start: previous?.id === id && previous.source === 'buttons' ? previous.start : start,
+              end,
+              source: 'buttons',
+            }
+          : null,
       );
     },
     suppressClick() {
@@ -171,7 +183,7 @@ export function useObjectMovement(
       );
       if (position) {
         const end = scene.current?.place(current.id, position) ?? position;
-        setGuide(height ? { id: current.id, start: current.segment, end } : null);
+        setGuide(height ? { id: current.id, start: current.segment, end, source: 'drag' } : null);
         setHeightActive(height);
       }
       event.preventDefault();

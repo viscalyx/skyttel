@@ -117,8 +117,9 @@ föregående vy**. Den tidigare vyn finns kvar även om du panorerar, roterar,
 zoomar eller fokuserar markeringen innan du återgår. Urval och oskickad
 paneltext behålls.
 
-I en mycket kort och smal vy samlas återställning, etiketter och
-höjdhjälp under **Visningsval**. **Navigera** finns i verktygsfältet.
+I en mycket kort och smal vy samlas återställning och etiketter under
+**Visningsval**. **Navigera** finns i verktygsfältet och innehåller
+**Visa höjdhjälp**.
 **Visa verktygens namn** öppnar hela
 verktygsfältet med samtal och detaljer.
 Kamerans fokus, översikt och återgång fäller ihop verktygsnamnen så kartan
@@ -230,9 +231,17 @@ drar med mus för att flytta längs rummets höjdaxel. Med pekskärm flyttar
 första fingret objektet. Lägg ett andra finger stilla på kartan och dra
 det första uppåt eller nedåt för höjdled. Höjdhjälpen visar start och
 riktning och är märkt som personlig vy. Håll Shift med ett valt objekt
-för att förhandsvisa hjälpen. **Visa höjdhjälp** under kartan håller den
-synlig och låter dig granska senaste höjdflyttningens start efter draget.
-Uppåt- och nedåtknapparna visar också hjälpen. Valet gäller den öppna sidan.
+för att förhandsvisa hjälpen från objektets aktuella placering. Hjälpplanet
+ligger stilla under höjddraget. Släpp musknappen med Shift nedtryckt för
+att förhandsvisa nästa drag från den nya placeringen.
+**Visa höjdhjälp** finns under objektets flyttknappar i **Navigera**, även
+i det lilla navigeringsfönstret. Välj exakt ett objekt för att använda
+valet. Det håller hjälpen synlig när Shift släpps och låter dig granska
+senaste höjdflyttningens start och höjdskillnad. Uppåt- och nedåtknapparna
+följer valet utan att slå på det. Flera höjdklick räknas tillsammans;
+första klicket efter ett drag börjar om från objektets aktuella placering.
+Valet består när navigeringen stängs eller urvalet ändras, men återställs
+vid omladdning. Shift och pekgester visar höjdhjälpen även när valet är av.
 Höjdflytten avslutas och sparas när något av de två fingrarna lyfts.
 Lyft alla fingrar innan nästa objektflytt; ett kvarvarande finger flyttar
 varken objektet eller kameran. Ett tredje finger ändrar inte det aktiva

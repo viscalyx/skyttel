@@ -47,9 +47,11 @@ reload, clients and server restart”.
    höjdhjälpens start och riktning under draget.
 2. Välj Lampan i listan och öppna kartan. Öppna Navigera, fokusera
    Flytta [objektets namn]: nedåt och håll Shift utan att dra. Släpp Shift och
-   välj Visa höjdhjälp för att granska flyttningens start. Tryck Enter på
-   Flytta [objektets namn]: nedåt. Slå av och på höjdhjälpen och kontrollera att
-   starten behålls. Öppna Inställningar → Rymdkartan och aktivera Visa
+   välj Visa höjdhjälp i Navigera för att granska flyttningens start.
+   Tryck Enter på Flytta [objektets namn]: nedåt och kontrollera ett steg
+   nedåt från den nya starten. Slå av höjdhjälpen och flytta nedåt igen.
+   Valet ska förbli av. Slå på det och kontrollera två steg från samma start.
+   Öppna Inställningar → Rymdkartan och aktivera Visa
    stjärnhimmel.
    Återgå med Tillbaka till kartan.
 3. Ladda om, starta om servern och öppna samma hushåll i en annan klient
@@ -59,10 +61,49 @@ reload, clients and server restart”.
 
 - Vanligt drag flyttar i bildplanet. Shift-drag ändrar bara rummets höjd.
   Shift visar höjdhjälp före drag. Senaste start och höjdskillnad går att
-  granska efteråt. Höjdknapparna aktiverar också hjälpen.
+  granska efteråt. Höjdknapparna följer höjdhjälpsvalet.
 - Knappar fungerar med tangentbord. Flyttar och stjärnval återkommer
   efter omstart och i den andra klienten.
 - Hushållets sparade uppgifter och utkast ändras inte av flyttningen.
+- Höjdhjälpsvalet är av efter omladdning.
+
+### PLACERING-08: stabil höjdhjälp och bevarat val i navigeringen
+
+**Syfte:** Kontrollera förhandsvisning, dragets start och höjdhjälpsvalet.
+
+**Användare:** Alex Exempel med mus och tangentbord.
+
+**Förutsättningar:** Lampan och Cykeln är sparade.
+
+**Integrationstest:**
+[personal-view.spec.ts](../../tests/integration/personal-view.spec.ts),
+testfallet “PLACERING-08: height help keeps its preview stable and manual
+choice across navigation modes and selection”.
+
+**Steg:**
+
+1. Välj Lampan. Öppna Navigera och nå Visa höjdhjälp med tangentbordet.
+   Tryck mellanslag för att aktivera valet. Byt till mininavigering och
+   kontrollera att hela etiketten syns under flyttknapparna.
+2. Stäng navigeringen. Håll Shift och kontrollera Startläge. Dra Lampan
+   uppåt och kontrollera att hjälpplanet ligger kvar där förhandsvisningen
+   visar det. Släpp musknappen utan att släppa Shift. Kontrollera Startläge
+   vid den nya placeringen. Dra uppåt igen och kontrollera samma beteende.
+3. Släpp Shift. Granska den senaste flyttningens höjdskillnad. Öppna
+   navigeringen och kontrollera att Visa höjdhjälp fortfarande är på.
+4. Välj Cykeln i listan. Kontrollera att valet består. Markera även Lampan
+   och kontrollera att reglaget blir inaktivt med texten
+   Välj ett objekt för att visa höjdhjälp.
+
+**Förväntat resultat:**
+
+- Förhandsvisning och drag använder samma start; hjälpplanet hoppar inte
+  när dragningen börjar. Nästa drag får en ny start vid aktuell placering.
+- Shift visar nästa förhandsvisning mellan drag. När Shift släpps visas
+  senaste dragets resultat eftersom valet är på.
+- Reglaget och hela etiketten syns i båda navigeringsstorlekarna. Valet
+  består när fönstret stängs och urvalet ändras.
+- Flera markerade objekt gör reglaget inaktivt utan att ändra dess värde.
 
 ### PLACERING-02: samtidiga flyttar och visningsval
 

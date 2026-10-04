@@ -124,7 +124,17 @@
   min-width: 0;
   margin: 0 0 12px;
 }
-.navigation-settings label {
+.navigation-height-help {
+  display: grid;
+  gap: 8px;
+}
+.navigation-height-help p {
+  margin: 0;
+  color: var(--space-muted, #395561);
+  font-size: 12px;
+}
+.navigation-settings label,
+.navigation-height-help label {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -134,7 +144,8 @@
   min-width: 0;
   max-width: 100%;
 }
-.navigation-settings input[type="checkbox"] {
+.navigation-settings input[type="checkbox"],
+.navigation-height-help input[type="checkbox"] {
   flex: 0 0 18px;
   width: 18px;
   height: 18px;

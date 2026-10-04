@@ -106,7 +106,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   telefon samt laddning och återhämtning efter nätfel. Hjälpens långa text
   går att rulla på telefon. På en tom mobilkarta förblir visningsval,
   verktyg och deras tangentbordsfokus nåbara, även med röstruta eller
-  samtalsnotis.
+  samtalsnotis. Höjdhjälpen finns i navigeringen och är inaktiv utan
+  ett objektval.
 
 - [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
@@ -345,6 +346,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   beständighet och avskildhet mellan användare samt inramning vid sen
   första inläsning med bevarad kamera vid senare uppdateringar. Separata
   provhushåll på samma installation förbereds med ett lokalt kommando.
+  Höjdhjälpen har stabil förhandsvisning och ett bevarat val i båda
+  navigeringsstorlekarna.
 - [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt

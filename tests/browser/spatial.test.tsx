@@ -382,6 +382,106 @@ test('reversing directed endpoints shows a red old connection and green new conn
   await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
 });
 
+test('navigation keeps height help beside movement controls and respects the manual choice', async () => {
+  render(<MapView />);
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
+  const help = navigation.getByLabelText('Visa höjdhjälp', { exact: true });
+  await expect.element(help).toBeDisabled();
+  await expect
+    .element(navigation.getByText('Välj ett objekt för att visa höjdhjälp', { exact: true }))
+    .toBeVisible();
+  await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await expect.element(help).toBeEnabled();
+  const up = navigation.getByRole('button', { name: /^Flytta .+: uppåt$/ });
+  await up.click();
+  await expect.element(help).not.toBeChecked();
+  await expect.element(page.getByText('Höjdflyttning · personlig vy')).not.toBeInTheDocument();
+  await help.click();
+  await up.click();
+  await up.click();
+  await expect.element(page.getByText('↑ 3 steg högre än start', { exact: true })).toBeVisible();
+  await help.click();
+  await up.click();
+  await expect.element(help).not.toBeChecked();
+  await help.click();
+  await navigation.getByRole('button', { name: 'Visa mininavigering', exact: true }).click();
+  await expect.element(help).toBeVisible();
+  await expect.element(navigation.getByText('Visa höjdhjälp', { exact: true })).toBeVisible();
+  await expect.element(help).toBeChecked();
+  await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await expect.element(help).toBeChecked();
+  await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await expect.element(help).toBeChecked();
+  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+  await expect.element(help).toBeDisabled();
+  await expect.element(help).toBeChecked();
+});
+
+test('height movement keeps the preview plane fixed during a drag and prepares the next reference', async () => {
+  render(<MapView />);
+  const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  await lo.click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
+  await page.getByRole('button', { name: /^Flytta .+: uppåt$/ }).click();
+  await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await userEvent.keyboard('{Shift>}');
+  await expect.element(page.getByText('Startläge', { exact: true })).toBeVisible();
+  const session = cdp();
+  const plane = () => document.querySelector('.spatial-height-guide > path')?.getAttribute('d');
+  for (let drag = 0; drag < 2; drag++) {
+    const preview = plane();
+    expect(preview).toBeTruthy();
+    const rect = lo.element().getBoundingClientRect();
+    const offset = window.frameElement?.getBoundingClientRect();
+    const start = {
+      x: rect.x + rect.width / 2 + (offset?.x ?? 0),
+      y: rect.y + rect.height / 2 + (offset?.y ?? 0),
+    };
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      ...start,
+      button: 'left',
+      buttons: 1,
+      modifiers: 8,
+      clickCount: 1,
+    });
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      x: start.x,
+      y: start.y - 24,
+      button: 'left',
+      buttons: 1,
+      modifiers: 8,
+    });
+    await expect.element(page.getByText(/^↑ .* steg högre än start$/)).toBeVisible();
+    expect(plane()).toBe(preview);
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: start.x,
+      y: start.y - 24,
+      button: 'left',
+      buttons: 0,
+      modifiers: 8,
+      clickCount: 1,
+    });
+    await expect.element(page.getByText('Startläge', { exact: true })).toBeVisible();
+  }
+  await userEvent.keyboard('{/Shift}');
+  await expect.element(page.getByText(/^↑ .* steg högre än start$/)).toBeVisible();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByRole('button', { name: /^Flytta .+: nedåt$/ }).click();
+  await expect.element(page.getByText('↓ 1 steg lägre än start', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /^Flytta .+: nedåt$/ }).click();
+  await expect.element(page.getByText('↓ 2 steg lägre än start', { exact: true })).toBeVisible();
+});
+
 test('personal placement buttons move the selected object in three dimensions without editing household facts', async () => {
   render(<MapView />);
   await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
@@ -390,13 +490,14 @@ test('personal placement buttons move the selected object in three dimensions wi
   await userEvent.keyboard('{/Shift}');
   await expect.element(page.getByText('Startläge', { exact: true })).not.toBeInTheDocument();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await page.getByRole('button', { name: /^Flytta .+: uppåt$/ }).click();
   await expect.element(page.getByLabelText('Visa höjdhjälp', { exact: true })).toBeChecked();
   await expect.element(page.getByText('↑ 1 steg högre än start', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
-  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
+  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await expect.element(page.getByText('↑ 1 steg högre än start', { exact: true })).toBeVisible();
   const first = JSON.parse(document.querySelector('[data-placement]')?.textContent ?? '[]');
   expect(first).toHaveLength(1);
@@ -771,7 +872,6 @@ test('painted stars respond to panning, rotation and zoom while object movement 
   expect(common(original, panned)).toBeLessThan(0.3);
   await page.getByRole('button', { name: /^Flytta .+: uppåt$/ }).click();
   await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-  await page.getByLabelText('Visa höjdhjälp', { exact: true }).click();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   expect(common(panned, await starPixels())).toBeGreaterThan(0.85);
   await page.getByRole('button', { name: 'Rotera vänster', exact: true }).click();

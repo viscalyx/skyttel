@@ -328,13 +328,17 @@ choices readable and operable in dark”.
 **Steg:**
 
 1. Använd tangentbordet på den tomma kartan för att fokusera **Återställ vy**,
-   sedan Tab till **Alla etiketter** och **Visa höjdhjälp**. Fokus och hela
+   sedan Tab till **Alla etiketter**. Fokus och hela
    namnet ska synas för varje kontroll.
-2. Tryck mellanslag på **Visa höjdhjälp**, kontrollera att valet aktiveras
-   och tryck igen för att återställa det. Nå **Lista** i verktygsfältet
+2. Öppna **Navigera** med tangentbordet. Rulla vid behov till
+   **Visa höjdhjälp** under kameraknapparna. Hela etiketten ska synas.
+   Reglaget ska vara av och inaktivt med texten
+   **Välj ett objekt för att visa höjdhjälp**. Stäng navigeringen.
+   Nå **Lista** i verktygsfältet
    med tangentbordet och kontrollera att knappen syns.
 3. Öppna Lista, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
-   Stäng panelerna med kryssen. Höjdhjälpen ska fortfarande vara avstängd.
+   Stäng panelerna med kryssen och öppna Navigera. Höjdhjälpen ska
+   fortfarande vara avstängd.
    Spara inte utkastet.
 
 **Förväntat resultat:**
@@ -342,6 +346,7 @@ choices readable and operable in dark”.
 - Fullständiga etiketter och fokuserade visningsval förblir synliga.
 - Verktygsfältets listknapp förblir användbar.
 - Ett objektförslag ändrar inte höjdhjälpsvalet.
+- Höjdhjälpens reglage finns i navigeringen och kräver ett objektval.
 - Den separata **Visningsval**-menyn i vyer som är högst 450 pixlar höga
   behåller sitt befintliga beteende, vilket provas i KAMERA-04.
 

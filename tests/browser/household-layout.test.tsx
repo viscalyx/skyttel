@@ -1021,10 +1021,13 @@ test('landscape display options preserve canvas height and reachable controls', 
   await expect.poll(() => toolbar.scrollWidth <= toolbar.clientWidth).toBe(true);
   const height = () => document.querySelector('canvas')?.getBoundingClientRect().height;
   await expect.poll(height).toBeGreaterThan(200);
+  await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   const heightHelp = page.getByLabelText('Visa höjdhjälp', { exact: true });
   await heightHelp.click();
   await expect.element(heightHelp).toBeChecked();
   await expect.element(heightHelp).toBeInViewport();
+  await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
   await expect.poll(height).toBeGreaterThan(200);
 });
 
