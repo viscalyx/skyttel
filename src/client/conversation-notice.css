@@ -41,7 +41,7 @@
 .conversation-notice-content > button {
   margin-top: 8px;
 }
-.household-map.workspace-shell .conversation-notice-content > button {
+.household-map.workspace-shell .conversation-notice .conversation-notice-content > button {
   width: auto;
   max-width: 100%;
   min-height: 36px;
