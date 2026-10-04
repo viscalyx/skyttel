@@ -35,9 +35,9 @@ test('UTKAST-17: closed-panel status leads to a concurrent object conflict witho
     await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Oskickad cykel');
     await openMap(page);
-    const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-    await status.getByText('Visa 1 konflikt', { exact: true }).click();
-    const destination = status.getByRole('button', { name: 'Objekt: Lo Lind', exact: true });
+    const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+    await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const destination = page.getByRole('button', { name: 'Objekt: Lo Lind', exact: true });
     await destination.focus();
     await page.keyboard.press('Enter');
     const heading = page.getByRole('heading', { name: 'Ändring: Lo Lind', exact: true });
@@ -50,7 +50,8 @@ test('UTKAST-17: closed-panel status leads to a concurrent object conflict witho
     await expect(
       review.getByRole('button', { name: 'Behåll mitt förslag', exact: true }),
     ).toBeDisabled();
-    await status.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await openWorkspace(page);
+    await page.getByRole('button', { name: /^Fortsätt:/ }).click();
     await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickad cykel');
     expect((await app.read()).objects.find((object) => object.id === 'lo')?.name).toBe('Lo Berg');
     expect((await app.read()).draft.changes.map((change) => change.after?.name)).toEqual([
@@ -194,8 +195,15 @@ for (const { width, height } of [
       const unchanged = await app.read();
       await page.goto(app.installation.origin);
       await openMap(page);
-      const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
+      const status = page.getByRole('region', { name: 'Kartans status', exact: true });
       const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+      await openWorkspace(page);
+      await page.getByLabel('Sök objekt', { exact: true }).fill('Finns inte i kartan');
+      await openMap(page);
+      await expect(
+        page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
+      ).toHaveCount(0);
+      await expect(status).toContainText('4 konflikter i ditt utkast');
       for (const [label, title] of [
         ['Objekttyp: Min objekttyp', 'Ändrad objekttyp: Min objekttyp'],
         ['Sambandstyp: Min sambandstyp', 'Ändrad sambandstyp: Min sambandstyp'],
@@ -203,14 +211,18 @@ for (const { width, height } of [
         ['Objekt: Lo Lind', 'Ändring: Lo Lind'],
       ]) {
         await openMap(page);
-        const disclosure = status.getByText('Visa 4 konflikter', { exact: true });
-        if (!(await status.getByRole('button', { name: label, exact: true }).isVisible())) {
-          await disclosure.focus();
-          await expectFocusedTargetUncovered(page);
-          expect((await disclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44);
-          await disclosure.click();
-        }
-        await status.getByRole('button', { name: label, exact: true }).focus();
+        const disclosure = status.getByRole('button', {
+          name: '4 konflikter i ditt utkast',
+          exact: true,
+        });
+        await disclosure.focus();
+        await expectFocusedTargetUncovered(page);
+        expect((await disclosure.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+        await disclosure.click();
+        await expect(
+          page.getByRole('heading', { name: 'Konflikter i mitt utkast', exact: true }),
+        ).toBeFocused();
+        await page.getByRole('button', { name: label, exact: true }).focus();
         await page.keyboard.press('Enter');
         await expect(review.getByRole('heading', { name: title, exact: true })).toBeFocused();
         await expectFocusedTargetUncovered(page);
@@ -251,7 +263,9 @@ for (const { width, height } of [
         review.getByRole('heading', { name: 'Hela mitt utkast', exact: true }),
       ).toBeFocused();
       await expectFocusedTargetUncovered(page);
-      await expect(status.getByText('Visa 3 konflikter', { exact: true })).toBeVisible();
+      await expect(
+        status.getByRole('button', { name: '3 konflikter i ditt utkast', exact: true }),
+      ).toBeVisible();
       await expect(
         review.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
       ).toBeDisabled();
@@ -295,9 +309,9 @@ test('UTKAST-19: an own object correction preserves unsent work and independent 
     await unsent.getByLabel('Objektets namn').fill('Oskickad cykel');
     await unsent.getByLabel('Beskrivning', { exact: true }).fill('Behåll den här texten');
     await openMap(page);
-    const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-    await status.getByText('Visa 1 konflikt', { exact: true }).click();
-    await status.getByRole('button', { name: 'Objekt: Lo Lind', exact: true }).click();
+    const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+    await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Objekt: Lo Lind', exact: true }).click();
     const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
     await review.getByRole('button', { name: 'Rätta objektet', exact: true }).focus();
     await page.keyboard.press('Enter');
@@ -311,7 +325,8 @@ test('UTKAST-19: an own object correction preserves unsent work and independent 
       review.getByRole('heading', { name: 'Ändring: Lo Alm', exact: true }),
     ).toBeVisible();
     await expect(review.getByRole('button', { name: 'Behåll mitt förslag' })).toBeDisabled();
-    await status.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await openWorkspace(page);
+    await page.getByRole('button', { name: /^Fortsätt:/ }).click();
     await expect(unsent.getByLabel('Objektets namn')).toHaveValue('Oskickad cykel');
     await expect(unsent.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Behåll den här texten',
@@ -375,9 +390,9 @@ for (const width of [1440, 390]) {
       const saved = await app.read();
       await page.goto(app.installation.origin);
       await openMap(page);
-      const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-      await status.getByText('Visa 1 konflikt', { exact: true }).click();
-      await status
+      const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+      await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+      await page
         .getByRole('button', {
           name: 'Samband: Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)',
           exact: true,
@@ -484,9 +499,9 @@ for (const kind of ['object-type', 'relationship-type'] as const) {
         await page.goto(app.installation.origin);
         await openWorkspace(page);
         await openMap(page);
-        const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-        await status.getByText('Visa 1 konflikt', { exact: true }).click();
-        await status
+        const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+        await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+        await page
           .getByRole('button', {
             name: `${isObjectType ? 'Objekttyp' : 'Sambandstyp'}: Min typ`,
             exact: true,
@@ -597,9 +612,9 @@ for (const choice of ['saved', 'proposed'] as const) {
       await page.goto(app.installation.origin);
       await openWorkspace(page);
       await openMap(page);
-      const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-      await status.getByText('Visa 1 konflikt', { exact: true }).click();
-      await status.getByRole('button', { name: 'Objekt: Lo Lind', exact: true }).click();
+      const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+      await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+      await page.getByRole('button', { name: 'Objekt: Lo Lind', exact: true }).click();
       const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
       const decision = review.getByRole('button', {
         name: choice === 'saved' ? 'Använd sparat värde' : 'Behåll mitt förslag',
@@ -752,8 +767,10 @@ for (const width of [1440, 390]) {
       expect((await app.read()).draft).toEqual(privateResult);
       expect((await app.read(other.request)).objects).toEqual(saved.objects);
       await openMap(page);
-      const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-      await expect(status).toContainText('2 förslag · privat utkast');
+      const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+      await expect(
+        page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
+      ).toContainText('föreslås');
       let receipt: SaveReceipt | undefined;
       let saveRequests = 0;
       await page.route('**/map/save', async (route) => {
@@ -763,15 +780,18 @@ for (const width of [1440, 390]) {
         receipt = (await response.json()).receipt;
         await route.abort('failed');
       });
-      await status.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await openWorkspace(page);
+      await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
       await expect(status).toContainText('Sparutfall okänt');
       await expect(
-        status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+        page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
       ).toBeDisabled();
       expect(receipt).toBeDefined();
       await status.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }).click();
-      await expect(status).toContainText('Sparat · kvitto bekräftat');
-      await expect(status).toContainText('Inga osparade förslag');
+      await expect(status).toContainText('Utkastet är sparat');
+      await expect(
+        page.getByRole('region', { name: 'Hela mitt utkast', exact: true }),
+      ).toContainText('Inga förslag');
       const shared = await app.read(other.request);
       expect(shared.objects.find(({ id }) => id === 'lo')).toMatchObject({
         name: 'Lo Lind',

@@ -185,7 +185,9 @@ test('PANEL-02: mobile panel navigation retains conversation, object text and de
     await page.getByLabel('Objektets namn').fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await page.getByRole('button', { name: 'Stäng status', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
+      'Utkastet är sparat',
+    );
     await page
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Uppgifter för Cykeln', exact: true })

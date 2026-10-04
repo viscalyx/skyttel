@@ -89,11 +89,11 @@ async function open(withDraft = true) {
   };
 }
 
-const feedback = () => page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
+const feedback = () => page.getByRole('region', { name: 'Kartans status', exact: true });
 
-test('closed draft feedback opens its review and reopens the retained object work without changing saved or private data', async () => {
+test('draft navigation opens its review and reopens the retained object work without changing saved or private data', async () => {
   const home = await open();
-  await feedback().getByRole('button', { name: 'Visa hela utkastet', exact: true }).click();
+  await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
   await expect
     .element(page.getByRole('region', { name: 'Hela mitt utkast', exact: true }))
     .toBeVisible();
@@ -107,7 +107,8 @@ test('closed draft feedback opens its review and reopens the retained object wor
   await field.fill('Fortfarande oskickat');
   await closePanels();
   await expect.element(object).not.toBeInTheDocument();
-  await feedback().getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
   await expect.element(object).toBeVisible();
   await expect.element(field).toHaveValue('Fortfarande oskickat');
   await expect
@@ -124,9 +125,9 @@ test('closed draft feedback opens its review and reopens the retained object wor
     .toBeVisible();
 });
 
-test('closed unsent new-object form resumes from feedback and an uncertain icon prerequisite refresh restores its focus without retrying', async () => {
+test('closed unsent new-object form resumes from the list and an uncertain icon prerequisite refresh restores its focus without retrying', async () => {
   const home = await open(false);
-  await feedback().getByRole('button', { name: 'Sparförsök och kvitton', exact: true }).click();
+  await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
   await expect
     .element(page.getByRole('heading', { name: 'Mina sparförsök', exact: true }))
     .toBeVisible();
@@ -135,7 +136,8 @@ test('closed unsent new-object form resumes from feedback and an uncertain icon 
   await name.fill('Privat oskickat objekt');
   await closePanels();
   await expect.element(name).not.toBeVisible();
-  await feedback().getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await page.getByRole('button', { name: /^Fortsätt:/ }).click();
   await expect.element(name).toHaveValue('Privat oskickat objekt');
   await expect
     .element(page.getByRole('heading', { name: 'Nytt objekt', exact: true }))
@@ -159,9 +161,7 @@ test('closed unsent new-object form resumes from feedback and an uncertain icon 
     contentVersion: 1,
     value: { name: 'Privat oskickat objekt' },
   });
-  await expect
-    .element(feedback().getByText('Inga osparade förslag', { exact: true }))
-    .toBeVisible();
+  await expect.element(feedback()).not.toHaveTextContent('Inga osparade förslag');
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await expect
     .element(page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }))

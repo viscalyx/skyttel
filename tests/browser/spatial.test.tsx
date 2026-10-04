@@ -213,7 +213,7 @@ test('the approved spatial presentation uses compact pictogram nodes, separate n
       nameBounds.left >= bounds.right ||
       nameBounds.right <= bounds.left,
   ).toBe(true);
-  expect(document.querySelectorAll('.spatial-edge')).toHaveLength(0);
+  expect(document.querySelectorAll('.spatial-edge')).toHaveLength(2);
   const hit = document.querySelector('.connection-hit');
   expect(hit).not.toBeNull();
   expect(Number.parseFloat(getComputedStyle(hit as Element).strokeWidth)).toBeGreaterThanOrEqual(
@@ -273,7 +273,15 @@ test('changing a relationship retains its prior route while the current route re
       relationships={[after]}
     />,
   );
-  await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
+  await expect
+    .element(
+      page.getByRole('button', {
+        name: 'Välj samband: Kim Exempel → använder → Musikspelaren',
+        exact: true,
+      }),
+    )
+    .toHaveTextContent('+ → använder');
+  expect(document.querySelector('.connection.added')).not.toBeNull();
   const previous = document.querySelector('[data-previous-relationship="edge"]');
   expect(previous).not.toBeNull();
   expect(previous?.textContent).toContain('Lo Exempel → använder → Musikspelaren');
@@ -294,6 +302,83 @@ test('changing a relationship retains its prior route while the current route re
       exact: true,
     })
     .click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
+});
+
+test.each([
+  { name: 'type', update: { typeId: 'other' } },
+  { name: 'knowledge', update: { knowledge: 'uncertain' as const } },
+])(
+  'a same-endpoint $name edit uses one amber solid connection and a default pen label',
+  async ({ update }) => {
+    const before = state.relationships[0];
+    const after = { ...before, ...update };
+    render(
+      <MapView
+        mapState={{
+          ...state,
+          relationshipTypes: [
+            ...state.relationshipTypes,
+            { ...state.relationshipTypes[0], id: 'other', forwardLabel: 'lånar' },
+          ],
+          relationships: [before],
+          draft: {
+            version: 1,
+            changes: [],
+            relationships: [
+              { id: before.id, before, after, type: state.relationshipTypes[0], objectNames: {} },
+            ],
+          },
+        }}
+        relationships={[after]}
+      />,
+    );
+    const connection = document.querySelector('.connection.changed');
+    expect(connection).not.toBeNull();
+    expect(document.querySelector('[data-previous-relationship]')).toBeNull();
+    expect(getComputedStyle(connection as Element).strokeDasharray).toBe('none');
+    await expect
+      .poll(() => document.querySelector('.spatial-edge.changed')?.textContent)
+      .toContain('✎');
+    for (const connector of document.querySelectorAll('.label-leader'))
+      expect(connector.getAttribute('stroke-dasharray')).toBe('1 4');
+  },
+);
+
+test('reversing directed endpoints shows a red old connection and green new connection without changing identity', async () => {
+  const before = state.relationships[0];
+  const after = { ...before, sourceId: 'music', targetId: 'lo' };
+  render(
+    <MapView
+      mapState={{
+        ...state,
+        relationships: [before],
+        draft: {
+          version: 1,
+          changes: [],
+          relationships: [
+            { id: before.id, before, after, type: state.relationshipTypes[0], objectNames: {} },
+          ],
+        },
+      }}
+      relationships={[after]}
+    />,
+  );
+  const old = page.getByRole('button', {
+    name: 'Välj tidigare samband: Lo Exempel → använder → Musikspelaren',
+    exact: true,
+  });
+  const current = page.getByRole('button', {
+    name: 'Välj samband: Musikspelaren → använder → Lo Exempel',
+    exact: true,
+  });
+  await expect.element(old).toHaveTextContent('× → använder');
+  await expect.element(current).toHaveTextContent('+ → använder');
+  expect(document.querySelectorAll('.connection.added')).toHaveLength(1);
+  expect(document.querySelectorAll('.connection.removed')).toHaveLength(1);
+  await old.click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Tidigare: lo');
+  await current.click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Samband: known');
 });
 

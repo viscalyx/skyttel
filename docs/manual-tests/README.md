@@ -43,7 +43,8 @@ familjeflöden, verklig webbläsarzoom, granskade bilder och miljöbegränsninga
 ## Öppna arbetsytor
 
 Hushållet öppnar rymdkartan. Välj **Lista** i **Kartans verktyg** före
-fallens formulär, listor, typer, historik och utkast. Välj **Skriv till Skyttel**
+fallens formulär, listor, typer, historik och utkast. Välj **Skriv till
+Skyttel**
 före samtalsfallen. Utan giltigt medgivande visas medgivanderutan först;
 välj **Godkänn och starta**. På telefon öppnar **Visa verktygens namn**
 även de kompletterande verktygen.
@@ -93,7 +94,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   teman och typdefinitioner i kartans samlade utkast.
 
 - [Fria paneler](workspace-panels.md): flera objekt och samtal, placering,
-  mobilnavigering genom Lista med synligt återgångsfokus, återöppning av nya objekt,
+  mobilnavigering genom Lista med synligt återgångsfokus, återöppning av nya
+  objekt,
   bevarade samband och typer samt fortsatt sökning medan ett förslag skickas.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman, läsbara hopplänkar och fokus, hjälp i det kompakta verktygsfältet,
@@ -106,7 +108,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
 
 - [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
-  sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad tillgång
+  sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad
+  tillgång
   och ersatt hushållsinnehåll. Väntande permanent radering stoppar mikrofon,
   dolt formulär och registrerat sparförsök före omladdning; oberoende privat
   arbete finns kvar efter uttryckligt slutförande. Ett sammanhängande
@@ -300,17 +303,20 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   Länkningens två steg visar aktuell verifiering, båda tjänsternas status
   och övergången till respektive tjänst.
   Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.
-  Utgången länkning förklarar ny verifiering och bevarar eget utkast och identitet.
-  Även en redan öppen sida hanterar avvisad utgången verifiering utan ny koppling.
+  Utgången länkning förklarar ny verifiering och bevarar eget utkast och
+  identitet.
+  Även en redan öppen sida hanterar avvisad utgången verifiering utan ny
+  koppling.
 - [Tillgång och medlemskap](membership.md): inbjudningar, utgångna och
   ersatta koder, delad administration samt återkallad och återställd
-  tillgång med bevarat innehåll i kartan. Stegvis inbjudan och verklig kopiering,
+  tillgång med bevarat innehåll i kartan. Stegvis inbjudan och verklig
+  kopiering,
   separata medlems- och inbjudningsvyer samt avvecklat oskickat arbete när en
   redan öppen mottagarklient förlorar tillgång.
   Misslyckad urklippsknapp följs av manuell kopiering och faktisk acceptans.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
   skilja lika namn åt, bevara ofullständiga uppgifter och rätta obesvarad
-  identitet från utkastets återkoppling med bevarad oskickad text. Påbörjade objekt
+  identitet via Utkast och historik med bevarad oskickad text. Påbörjade objekt
   kan få en ny typ från Inställningar och sparas med nya samband i ett kvitto.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon och placering nära objektet.
@@ -323,7 +329,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   fokus på tidigare och föreslagna samband med läsbara tidigare värden,
   fokus, filter, namn vid runda symboler, sambandsetiketter vid val,
   bevarat etikettläge vid återställning, pekmenyer, uttrycklig redigering
-  med bevarat listfokus, sambandens antal vid direkt borttagning, upphörd status,
+  med bevarat listfokus, sambandens antal vid direkt borttagning, upphörd
+  status,
   ändringssymboler och bevarad oskickad text vid vybyte, orientering och
   grafikavbrott samt fungerande navigation när tillgången återkallas i helskärm.
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
@@ -339,7 +346,9 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
   kommando förbereder äldre provdata för uppgraderingen.
-- [Privata utkast](drafts.md): återuppta utkast, hantera gamla kastförsök
+- [Privata utkast](drafts.md): filtrerad teckenförklaring med kartans färger,
+  tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
+  utkast, hantera gamla kastförsök
   och konfliktval samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner
@@ -347,7 +356,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   paneler, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
   ett samlat utkast från formulär, text och tal efter omstart. Besvara
   nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
-  och utkastets återkoppling tillsammans utan att tappa åtkomst till kontrollerna.
+  och kartans status och teckenförklaring tillsammans utan att tappa åtkomst
+  till kontrollerna.
   Öppna en namngiven konflikt från status med tangentbord och återgå till
   ett annat oskickat objektformulär med texten kvar. Följ alla fyra
   konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella
@@ -365,7 +375,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
   gemensamma egenskaper med bevarad säkerhet och datum, tangentbord
-  och bevarat arbete på mobil, dator och korta fönster med synlig status. Samtidiga
+  och bevarat arbete på mobil, dator och korta fönster med synlig status.
+  Samtidiga
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
   som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
   kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
@@ -393,5 +404,6 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.
   Kartans samband visar samma status med text och tillgänglig beskrivning
   vid tangentbordsarbete och efter omstart. Objekt och samband behåller
-  sina egna namn, typer och statusuppgifter även när identifierare liknar varandra.
+  sina egna namn, typer och statusuppgifter även när identifierare liknar
+  varandra.
   Det gäller även tidigare samband som visas tillsammans med aktuella förslag.

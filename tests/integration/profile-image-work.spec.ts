@@ -9,6 +9,7 @@ import {
   openSettings,
   openWorkspace,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -279,6 +280,7 @@ for (const width of [1440, 390, 320]) {
       await expect(file).toBeDisabled();
       await panel.getByRole('button', { name: 'Stäng Bildarbete', exact: true }).click();
       await openMap(page);
+      await (await utilityButton(page, 'Utkast och historik')).click();
       await expect(
         page.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
       ).toBeDisabled();

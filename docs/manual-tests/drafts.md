@@ -464,6 +464,84 @@ recovery choice”.
 
 ## Status, fokus och samlat sparande
 
+### UTKAST-25: filtrerad teckenförklaring följer kartans färger
+
+**Syfte:** Matcha symboler och linjer med kartan och visa kategorier från
+den filtrerade kartan, oberoende av kameran.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Spara Lo Exempel, Molnmusik och Kim Exempel samt ett
+riktat samband från Lo till Molnmusik. Föreslå en ändrad beskrivning för Lo
+och vänd sambandets riktning utan att spara. Upprepa i ljust och mörkt tema.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+testfallen “UTKAST-25: filtered legend matches map colours and retains only
+displayed categories in light”, samma titel med “dark”.
+
+**Steg:**
+
+1. Stäng panelerna. Läs grönt plus, gul penna och rött kryss under
+   hushållets namn. Jämför färgerna med förslagen i kartan. Läs gammalt
+   samband med rött kryss och streckad linje och nytt med grönt plus och
+   heldragen linje utan att markera dem eller välja Alla etiketter.
+2. Öppna Navigera och panorera. Teckenförklaringens rader ska bestå.
+3. Stäng Navigation och välj det nya sambandet. Ingen rad för markerat
+   objekt ska tillkomma.
+4. Öppna Lista, sök Kim Exempel och stäng panelerna. Förslagsraderna ska
+   försvinna. Raden för punktade etikettkopplingar ska finnas kvar.
+5. Markera Kim. Kontrollera markeringsraden. Sök sedan Inga träffar via
+   Lista och stäng panelerna. Hela teckenförklaringen ska försvinna.
+
+**Förväntat resultat:**
+
+- Symboler och linjeprov matchar kartans färger i båda teman. Text och
+  symbol gör innebörden begriplig även utan färg.
+- Sökningen styr kategorierna, medan kameran och en vald relation inte
+  skapar en objektmarkering. Inga uppgifter sparas eller byter identitet.
+
+### UTKAST-26: sparbesked försvinner medan uppdateringsfel kan återhämtas
+
+**Syfte:** Skilja bekräftat sparande från misslyckad hämtning utan samtal.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Tomt hushåll utan pågående samtal. Använd nätverkets
+blockering i webbläsaren för kartans GET-anrop efter sparandet. Blockera
+inte sparadressen; om ordningen inte kan styras, anteckna begränsningen.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+testfallet “UTKAST-26: confirmed save toast expires while failed refresh
+remains recoverable without a conversation” samt samma titel med
+“after an unknown result”.
+
+**Steg:**
+
+1. Lägg Lo Exempel i utkastet. Blockera hämtning av kartan och välj Spara
+   hela utkastet från Lista. Stäng panelerna.
+2. Läs Utkastet är sparat tillsammans med felet att kartan inte kunde
+   hämtas. Vänta tre sekunder. Sparbeskedet försvinner; felet består.
+3. Ta bort blockeringen och välj Hämta aktuellt underlag. Felet ska
+   försvinna och det tidigare sparbeskedet ska inte spelas upp igen.
+4. Öppna Utkast och historik. Kontrollera fokus på Mina sparförsök och
+   läs Genomfört under Tidigare sparförsök.
+5. Upprepa med ett nytt förslag och bryt sparsvaret efter genomförandet.
+   Läs Sparutfall okänt utan sparbesked. Blockera sedan kartans hämtning,
+   men tillåt hämtning av sparförsök. Välj Hämta aktuellt underlag.
+   Läs Utkastet är sparat och kartans hämtningsfel; Sparutfall okänt ska
+   försvinna. Upprepa steg 2–4.
+
+**Förväntat resultat:**
+
+- Sparbeskedet och felet gäller olika resultat och kan visas samtidigt.
+  Återhämtning finns utan samtal och kvittot förblir tillgängligt.
+- Samma resultat gäller när återhämtning bekräftar ett tidigare okänt
+  sparförsök innan kartans hämtning misslyckas.
+- Integrationen styr den verkliga spartransaktionen och avbryter bara
+  hämtningen efter kvittot; den kräver ingen verklig leverantör.
+
 ### UTKAST-12: behåll legend och förslag tills samma sparförsök bekräftas
 
 **Syfte:** Följa ett privat förslag med stängda paneler och skilja väntan,
@@ -486,11 +564,12 @@ unknown save at 1440px/390px/320px and verify the same receipt”.
 
 1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng panelerna med
    kryssen.
-2. Kontrollera kartåterkopplingens **1 förslag · privat utkast** och
-   legenden för grönt plus, amberfärgad penna och rött kryss.
+2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
+   Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
 3. Kontrollera att **Aktuell status** inte längre finns i verktygen.
-   Utkastets återkoppling är redan synlig när arbetsytan är stängd.
-4. Blockera sparadressen och välj **Spara hela utkastet** i återkopplingen.
+   Kartans status och teckenförklaring finns under hushållets namn.
+4. Blockera sparadressen. Öppna Lista och välj **Spara hela utkastet**.
+   Stäng panelerna.
    Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
 5. Ta bort blockeringen och välj **Hämta samma kvitto igen**. Läs resultatet.
    Öppna **Utkast och historik** och läs **Tidigare sparförsök**.
@@ -502,8 +581,10 @@ unknown save at 1440px/390px/320px and verify the same receipt”.
 - Återkopplingens knappar kan användas utan att verktygen täcker dem.
   Ingen separat statuspanel behöver öppnas eller stängas.
 - Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns
-  en gång i kartan. Legenden försvinner när det bekräftat tomma utkastet
-  hämtas. Sparförsöken innehåller ett enda försök.
+  en gång i kartan. Förslagsraden försvinner efter uppdateringen, men
+  markeringsringen och etikettkopplingarnas rad kan finnas kvar.
+  Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning.
+  Sparförsöken innehåller ett enda försök.
 - Det automatiserade provet håller dessutom det riktiga serversvaret
   efter genomfört sparande. Det kontrollerar **Väntar på sparkvitto** och
   kvarvarande legend, bryter svaret och jämför samma operations-ID och
@@ -522,7 +603,8 @@ nätverksläge så att det går att välja ett annat fält under sparandet.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-13: a verified save keeps a newer field focused without the removed
+testfallet “UTKAST-13: a verified save keeps a newer field focused without the
+removed
 status controls”.
 
 **Steg:**
@@ -531,14 +613,14 @@ status controls”.
 2. Medan svaret väntar, välj **Sök objekt** och skriv **Lo**.
 3. Invänta sparkvittot och fortsätt skriva ett blanksteg och **Exempel**
    utan att klicka igen.
-4. Läs det bekräftade kvittot i kartans återkoppling. Kontrollera att
+4. Läs Utkastet är sparat under hushållets namn. Kontrollera att
    **Aktuell status** inte längre finns i verktygen.
 5. Fortsätt skriva i sökfältet utan att klicka på det igen.
 
 **Förväntat resultat:**
 
 - Sökfältet behåller fokus och innehåller **Lo Exempel** efter sparandet.
-- Det bekräftade kvittot är synligt utan någon statusöppning.
+- Sparbeskedet visas i tre sekunder. Kvittot finns kvar i Mina sparförsök.
   Sökfältet behåller fokus även när återkopplingen uppdateras.
 - Det automatiserade provet håller ett verkligt lyckat serversvar för
   att säkerställa ordningen och kontrollerar att utkastet är tomt innan
@@ -571,12 +653,13 @@ private draft and an atomic household save”.
    Kontrollera att sambandet ingår och att statusen visar tre privata
    förslag.
 4. Skriv ett oskickat samtalsmeddelande. Besök Inställningar och återgå till
-   kartan. Stäng panelerna med kryssen. Läs beskedet om separat oskickad
-   formulärtext. Kontrollera som medlem att den sparade kartan är tom och att
+   kartan. Stäng panelerna med kryssen. Kartan ska inte visa påminnelse om
+   oskickad formulärtext. Kontrollera som medlem att den sparade kartan är tom
+   och att
    administratörens förslag inte visas i medlemmens utkast.
-5. Välj **Fortsätt redigera** i kortet. Kontrollera cykelns namn och beskrivning
-   och lägg dem i utkastet. Stäng panelerna med kryssen och kontrollera fyra
-   förslag. Välj **Spara hela utkastet** direkt i kortet.
+5. Öppna Lista och välj **Fortsätt: Oskickad cykel**. Kontrollera namn och
+   beskrivning och lägg dem i utkastet. Granska fyra förslag i hela utkastet.
+   Välj **Spara hela utkastet** där och stäng panelerna.
 6. Invänta bekräftat kvitto. Stäng klienterna, starta om servern med samma
    databas och öppna kartan som medlem.
 
@@ -584,7 +667,8 @@ private draft and an atomic household save”.
 
 - Samma privata utkast innehåller tre objekt och ett samband från alla
   tre arbetssätten. Oskickad text räknas först när den läggs i utkastet.
-- Kvittot beskriver alla fyra ändringarna. Förslagslegenden försvinner.
+- Kvittot beskriver alla fyra ändringarna. Förslagsraderna i teckenförklaringen
+  försvinner.
   Medlemmen ser alla tre objekten och **Lo Exempel → Använder → Molnmusik**
   efter omstart, men inga privata förslag från administratören.
 - Det automatiserade provet håller den riktiga sparbegäran före
@@ -597,7 +681,7 @@ private draft and an atomic household save”.
 
 ### UTKAST-15: besvara nödvändig fråga före ett nytt sparbesked
 
-**Syfte:** Samma nödvändiga fråga ska hindra sparande från både kartåterkopplingen
+**Syfte:** Samma nödvändiga fråga ska hindra sparande från både textvyn
 och utkastets arbetsyta. Ett svar ska inte i sig spara utkastet.
 
 **Användare:** Administratören.
@@ -617,18 +701,18 @@ fresh explicit save”.
    och **Godkänn och starta**. Be Skyttel förbereda uppgiften och fråga
    vilket kort som avses.
 2. Läs frågan i samtalstexten och stäng panelerna med kryssen. Kontrollera att
-   kartåterkopplingen inte erbjuder sparande. Ingen separat **Nödvändigt
+   kartan inte erbjuder sparande. Ingen separat **Nödvändigt
    svar**-ruta eller **Svara i samtalet**-knapp ska finnas.
 3. Öppna Lista och **Hela mitt utkast**. Kontrollera att **Spara hela
    utkastet** är inaktiverad även där. Kartan har ännu inga sparade objekt.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
    Vänta tills frågan är besvarad. Stäng panelerna med kryssen igen.
-5. Kontrollera att sparande nu erbjuds men inte har genomförts. Välj
+5. Öppna Lista. Kontrollera att sparande erbjuds men inte har genomförts. Välj
    **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
 
 **Förväntat resultat:**
 
-- Varken kartåterkopplingen eller arbetsytan kringgår den nödvändiga frågan.
+- Varken textvyn eller arbetsytan kringgår den nödvändiga frågan.
   Det privata förslaget finns kvar medan frågan besvaras.
 - Att svara skapar inget sparförsök. Först det nya uttryckliga sparbeskedet
   ger ett kvitto och gör uppgifterna till sparat kartinnehåll.
@@ -661,10 +745,11 @@ conflict without losing unsent work”.
    försöket avvisas och välj **Hämta aktuellt underlag**.
 3. Hos Alex: öppna **Nytt objekt**, skriv Oskickad cykel och stäng
    arbetsytan utan att lägga texten i utkastet.
-4. I kartans återkoppling, öppna **Visa 1 konflikt**. Använd tangentbordet
-   för att välja **Objekt: Lo Lind**.
+4. I kartans återkoppling, välj **1 konflikt i ditt utkast**. Använd
+tangentbordet
+   för att välja **Objekt: Lo Lind** i hela utkastets konfliktlista.
 5. Läs det tidigare namnet, förslaget och det aktuella sparade namnet.
-   Välj **Fortsätt redigera** i kartåterkopplingen.
+   Öppna Lista och välj **Fortsätt: Oskickad cykel**.
 
 **Förväntat resultat:**
 
@@ -709,14 +794,16 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
    2026-09-02 samt en annan anteckning. Ändra båda typbeskrivningarna
    men behåll Sparad ekonomi och Sparad skuld. Dölj anteckningsfältet
    med värdet kvar och föreslå att sambandets mål är okänt. Spara allt.
-5. Alex laddar om kartan utan att kasta sitt utkast. Stäng arbetspanelerna
-   med kryssen. Öppna **Visa 4 konflikter** i kartans utkaståterkoppling
-   med tangentbord och pekare.
+5. Alex laddar om kartan utan att kasta sitt utkast. Sök efter ett namn som
+   inte finns och kontrollera att fyra konflikter ändå räknas, även typerna.
+   Stäng arbetspanelerna
+   med kryssen. Välj **4 konflikter i ditt utkast** under hushållets namn
+   med tangentbord och pekare. Kontrollera fokus på Konflikter i mitt utkast.
 6. Använd tangentbordet för att besöka objekttyp, sambandstyp, samband
    och objekt från listan. Återgå till kartan mellan destinationerna.
 7. Läs objektets tre underlag. Upprepa på telefon och i ett kort fönster.
 8. Behåll den föreslagna objekttypen med tangentbordet medan konfliktlistan
-   i status är öppen. Fortsätt granska de återstående konflikterna.
+   i hela utkastet är öppen. Fortsätt granska de återstående konflikterna.
 
 **Förväntat resultat:**
 
@@ -758,11 +845,12 @@ independent saved facts until a fresh save”.
 
 1. Alex öppnar Nytt objekt, skriver Oskickad cykel och beskrivningen Behåll den
    här texten. Stäng panelerna med kryssen utan att skicka texten.
-2. Öppna kartåterkopplingens konfliktlista och välj Objekt: Lo Lind.
+2. Välj konfliktlänken under hushållets namn och välj Objekt: Lo Lind
+   i hela utkastets konfliktlista.
    Använd tangentbordet till **Rätta objektet** och tryck Enter.
 3. Kontrollera rätt objektpanel och rubrikfokus. Ändra namnet till
    Lo Alm och välj Lägg i mitt utkast.
-4. Välj Fortsätt redigera i kartåterkopplingen. Kontrollera den oskickade
+4. Öppna Lista och välj Fortsätt: Oskickad cykel. Kontrollera den oskickade
    cykelns namn och beskrivning, och stäng sedan utan att skicka texten.
 5. Välj Behåll mitt förslag för Lo Alm. Kontrollera kartan hos Robin
    innan Alex väljer Spara hela utkastet.
@@ -799,7 +887,8 @@ and still requires a fresh save at 1440px”, samma titel med “390px”.
 
 1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
    hämta aktuellt underlag, eller ladda om sidan.
-2. Stäng panelerna med kryssen, öppna kartåterkopplingens konfliktlista och välj
+2. Stäng panelerna med kryssen, välj kartans konfliktlänk och öppna hela
+utkastets konfliktlista och välj
    sambandet. Läs informationen om borttaget objekt. Behåll mitt förslag ska
    saknas.
 3. Använd tangentbordet till **Rätta sambandet** och tryck Enter.
@@ -843,7 +932,8 @@ samma titel med “390px”.
 
 1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
    hämta aktuellt underlag, eller ladda om sidan.
-2. Öppna kartåterkopplingens konfliktlista och välj Min typ för rätt slags typ.
+2. Välj kartans konfliktvarning och välj Min typ för rätt slags typ i
+   utkastets konfliktlista.
    Läs det egna förslaget och Robins aktuella namn och beskrivning.
 3. Använd tangentbordet till **Rätta objekttypen** eller
    **Rätta sambandstypen** och tryck Enter. Kontrollera sidan
@@ -881,7 +971,8 @@ to the draft without saving”.
 
 **Steg:**
 
-1. Alex öppnar kartåterkopplingens konfliktlista och väljer Objekt: Lo Lind.
+1. Alex väljer kartans konfliktvarning och sedan Objekt: Lo Lind i
+   utkastets konfliktlista.
 2. Använd tangentbordet till Använd sparat värde eller Behåll mitt förslag,
    och tryck Enter. Ge inget sparbesked.
 3. Kontrollera fokus, privat utkast, Robins sparade karta och historiken.
@@ -946,7 +1037,7 @@ choice and one fresh receipt at 1440px”, samma titel med “390px”.
    som Alex. Granska Lo Lind, Spelar piano och Privat stol i utkastet.
 3. Ladda om Alex sida, öppna Lista och kontrollera att samma privata
    resultat finns kvar. Ge fortfarande inget sparbesked.
-4. Stäng panelerna. Välj Spara hela utkastet i kartåterkopplingen och avbryt
+4. Välj Spara hela utkastet i Lista. Stäng panelerna och avbryt
    svaret efter att servern genomför sparandet.
 5. Läs Sparutfall okänt. Välj Hämta samma kvitto igen. Kontrollera Robins
    karta, det tomma privata utkastet och den nya historikgruppen.
@@ -980,20 +1071,20 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 **Steg:**
 
 1. Markera Lo Exempel i kartan. Öppna **Navigera** från verktygen.
-   Expandera verktygens namn om det behövs. Utkastets återkoppling
-   är redan synlig och **Aktuell status** finns inte i verktygen.
+   Expandera verktygens namn om det behövs. Teckenförklaringen är synlig
+   under hushållets namn och **Aktuell status** finns inte i verktygen.
 2. Använd tangentbord och pekare för att flytta Lo i alla sex riktningar
    i Navigation.
    Rulla vid behov till de nedre kontrollerna.
-3. Flytta fokus till **Spara hela utkastet** i kartåterkopplingen och kontrollera
+3. Öppna Lista. Flytta fokus till **Spara hela utkastet** och kontrollera
    att knappen går att nå utan att spara. Det privata förslaget ska bestå.
 4. Välj **Stäng navigering**. Kontrollera fokus på **Navigera**.
-   Upprepa efter att först ha fokuserat återkopplingens sparknapp.
+   Upprepa efter att först ha fokuserat hela utkastets sparknapp.
 5. Upprepa på smal skärm och vid hög förstoring.
 
 **Förväntat resultat:**
 
-- Alla personliga flyttriktningar och återkopplingens sparknapp är
+- Alla personliga flyttriktningar och hela utkastets sparknapp är
   åtkomliga i båda ordningarna, även när ytorna behöver rullas.
 - Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma
   innehåll och Blå cykelns privata förslag består utan sparförsök.

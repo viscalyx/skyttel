@@ -91,8 +91,9 @@ selection”.
 **Förväntat resultat:**
 
 - Pilspetsen syns utanför målets runda symbol, även efter kamerarörelse.
-  Riktning och rätt ändobjekt syns. Sambandets etikett visas när ett
-  anslutet objekt väljs eller Alla etiketter är på. Fokus visar direkta
+  Riktning och rätt ändobjekt syns. Sparade samband får etiketter när ett
+  anslutet objekt väljs eller Alla etiketter är på. Förslagens etiketter
+  visas direkt, med prioritet så långt de ryms utan krockar. Fokus visar direkta
   samband.
 - Visa hela rymden rensar filter och fokus med bibehållen kamera.
 - Escape från en kameraknapp bevarar sökningen. Escape på kartytan
@@ -115,7 +116,8 @@ from saved content”.
 
 **Steg:**
 
-1. Öppna kartan, välj Alla etiketter och kontrollera plusmarkeringarna.
+1. Öppna kartan och kontrollera plusmarkeringar och förslagens
+   sambandsetiketter utan att välja Alla etiketter.
    Visa utkastet och spara.
 2. Högerklicka Molnmusik och välj Redigera objekt. Lägg en ändrad
    beskrivning i utkastet. Gå tillbaka till kartan.
@@ -312,6 +314,9 @@ and opens the saved route read-only”.
 **Förväntat resultat:**
 
 - Molnmusiks fokus visar både sparad och föreslagen betalare.
+- Den tidigare kopplingen har rött kryss och streckad linje; den nya har
+  grönt plus och heldragen linje. Punktade etikettkopplingar
+  går att skilja från riktade samband.
 - Den böjda tidigare linjen och etiketten leder till läsbara tidigare
   värden utan redigeringsfält. Fokus på Molnmusik behålls vid valet.
 - Det föreslagna sambandet visar Kim som betalare. Redigera valt samband

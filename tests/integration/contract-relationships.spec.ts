@@ -139,7 +139,10 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
 
     await openWorkspace(page);
     await page
-      .getByRole('button', { name: 'Bostadshyra → Betalas med → Obesvarad identitetsfråga' })
+      .getByRole('button', {
+        name: 'Bostadshyra → Betalas med → Obesvarad identitetsfråga',
+        exact: true,
+      })
       .click();
     await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('known');

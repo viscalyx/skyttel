@@ -672,8 +672,8 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
 3. Vänta på terminalens `save-registered`. Notera dess `operationId`.
    Öppna **Samtal med Skyttel** i Inställningar och välj
    **Återkalla medgivandet**. Läs rutan och bekräfta.
-4. Skriv `release-save`. Gå tillbaka till kartan och läs sparresultatet.
-   Öppna **Utkast och historik** och kontrollera kvittot.
+4. Skriv `release-save`. Gå tillbaka till kartan. Öppna **Utkast och
+   historik**, **Tidigare sparförsök** och kontrollera kvittot.
 
 **Förväntat resultat:**
 
@@ -681,7 +681,7 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
   stället för att ange antal osparade ändringar.
 - Medgivandet återkallas medan det registrerade sparandet slutförs.
   Kartan innehåller Lo Exempel och utkastet är tomt.
-- Sparresultatet visar kvittot med det noterade ID:t. Historiken har ett
+- Mina sparförsök visar kvittot med det noterade ID:t. Historiken har ett
   sparande för samma ID, även efter att det fördröjda svaret släpps.
 - Textvyn och röstrutan är stängda och ingen samtalsnotis visas.
   Sparresultatet går att kontrollera utan ett nytt samtalsmedgivande.

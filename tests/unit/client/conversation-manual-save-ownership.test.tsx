@@ -53,6 +53,7 @@ test('uncertain conversation delivery waits for a known manual save request and 
   vi.useFakeTimers();
   const checks: Record<string, unknown>[] = [];
   const changed = vi.fn();
+  const confirmed = vi.fn();
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     if (init?.method !== 'POST') {
       if (url === path) return Response.json({ available: true });
@@ -86,6 +87,7 @@ test('uncertain conversation delivery waits for a known manual save request and 
         manualSaveOperationId,
         onStarted: () => {},
         onMapChange: changed,
+        onSaveConfirmed: confirmed,
         onAccessLost: () => {},
         onSelectItem: async () => false,
       }),
@@ -125,4 +127,5 @@ test('uncertain conversation delivery waits for a known manual save request and 
   expect(result.current.inputBlocked).toBe(false);
   expect(result.current.text).toBe('Oskickat under kontrollen.');
   expect(changed).toHaveBeenCalledTimes(2);
+  expect(confirmed).toHaveBeenCalledExactlyOnceWith(operation.operationId);
 });

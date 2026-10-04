@@ -26,14 +26,14 @@ test('YTA-05: save results remain readable beside tablet work', async ({ page })
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     const status = page
-      .getByRole('status')
-      .filter({ hasText: 'Sparat: Familjens gemensamma cykel' });
+      .getByRole('region', { name: 'Kartans status' })
+      .getByText('Utkastet är sparat', { exact: true });
     await expect(status).toBeVisible();
     const size = await status.boundingBox();
-    expect(size?.width).toBeGreaterThan(200);
+    expect(size?.x).toBeGreaterThanOrEqual(0);
+    expect((size?.x ?? 0) + (size?.width ?? 0)).toBeLessThanOrEqual(768);
     expect(size?.height).toBeLessThan(160);
-    await page.getByRole('button', { name: 'Stäng status', exact: true }).click();
-    await expect(status).toHaveCount(0);
+    await expect(status).toHaveCount(0, { timeout: 4500 });
     await closePanels(page);
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Familjens gemensamma cykel', exact: true }),
@@ -368,7 +368,7 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
     await startConversationWithVoice(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
-    await expect(page.locator('.workspace-feedback')).toContainText('Översikt återställd.');
+    await expect(page.locator('.workspace-feedback')).toHaveCount(0);
     for (const disconnected of [false, true]) {
       if (disconnected) {
         await context.setOffline(true);
@@ -389,13 +389,12 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
               const entry = bounds('.workspace-tools');
               const corner = bounds('.conversation-corner');
               const row = bounds('.spatial-bottom-bar');
-              const status = bounds('.workspace-feedback');
-              const feedback = bounds('.workspace-voice-controls');
+              const status = bounds('.workspace-context');
               return {
                 entryClear: entry.bottom <= corner.top,
                 cornerClear: corner.bottom <= row.top,
-                statusClear: row.bottom <= status.top && status.bottom <= feedback.top,
-                feedbackClear: row.bottom <= feedback.top,
+                statusClear: status.bottom <= row.top || status.right <= row.left,
+                cornerStatusClear: status.bottom <= corner.top || status.right <= corner.left,
                 cornerVisible: corner.top >= 0 && corner.bottom <= innerHeight,
               };
             }),
@@ -404,7 +403,7 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
             entryClear: true,
             cornerClear: true,
             statusClear: true,
-            feedbackClear: true,
+            cornerStatusClear: true,
             cornerVisible: true,
           });
         const entry = page.getByRole('button', { name: 'Lista', exact: true });

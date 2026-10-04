@@ -206,7 +206,8 @@ own accessible status”.
 
 **Steg:**
 
-1. Redigera sambandet från Lo till Familjemusik. Välj typen **Betalar** och
+1. Redigera sambandet från Lo till Familjemusik. Ändra Från objekt till
+   Molnmusik, välj typen **Betalar** och
    status **Gäller fortfarande**. Lägg sambandet i ditt utkast utan att spara.
 2. Öppna kartan och välj **Alla etiketter**. Granska det tidigare sambandet
    från Lo, det föreslagna sambandet och det sparade sambandet från Molnmusik.

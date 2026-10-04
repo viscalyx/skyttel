@@ -975,7 +975,8 @@ riktig mikrofon, enhet eller skärmläsare.
    någon annanstans. Lyssna efter dubbla eller avbrutna uppläsningar och
    efter om skärmläsarens röst tolkas som tal.
 5. På iPhone i stående läge: se var röstrutan står och att den inte
-   täcker raden med **Återställ vy** eller kartans återkoppling. Gör om på
+   täcker raden med **Återställ vy** eller kartans status och
+   teckenförklaring under hushållsnamnet. Gör om på
    iPad och på liggande telefon.
 
 **Förväntat resultat:**
@@ -1023,9 +1024,9 @@ testfall vars titel börjar med “röstrutan står på sin plats”. På riktig
 enhet prövas platsen i TAL-17.
 
 Placeringsproven kräver att hela röstrutan är synlig och står ovanför
-den faktiska raden med **Återställ vy**, kartans återkoppling och
-utkastets återkoppling, utan överlappning. På smal skärm kan dessa
-skyddade ytor följa den synliga skärmens rullningsflöde; de bestämmer
+den faktiska raden med **Återställ vy**, utan att täcka kartans status och
+teckenförklaring under hushållsnamnet. På smal skärm kan skyddade ytor
+följa den synliga skärmens rullningsflöde; de bestämmer
 gränsen som rutan måste lämna fri. Rutan ska inte hamna under kartans
 rad eller täcka verktygsraden när textvyn stängs. Samtalsdelarnas
 samlade läsordning, statusförekomster och kvarstående hjälpmedelsprov

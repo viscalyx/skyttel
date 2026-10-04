@@ -5,6 +5,7 @@ import {
   createHousehold,
   openWorkspace,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -215,13 +216,10 @@ for (const width of [1280, 390, 320]) {
           await panel.getByRole('button', { name: `Stäng ${name}`, exact: true }).click();
         }
         await closeWorkspace(page);
-        const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-        await expect(status).toContainText('Red ut identiteter i utkastet');
-        await expect(status).toContainText('Oskickad formulärtext finns kvar');
-        const resolve = status.getByRole('button', {
-          name: 'Red ut identiteter i utkastet',
-          exact: true,
-        });
+        const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+        await expect(status).toContainText('Sparandet är blockerat');
+        await expect(status).not.toContainText('Oskickad formulärtext');
+        const resolve = await utilityButton(page, 'Utkast och historik');
         await expect(resolve).toBeVisible();
         await resolve.focus();
         await expectUncoveredFocus(page);

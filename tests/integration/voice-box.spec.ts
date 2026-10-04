@@ -600,10 +600,9 @@ for (const [name, width, height, place] of [
       await openMapWithDraft(page, app.origin);
       await startConversationWithVoice(page);
       await listening(page);
-      // The map says what it did in its common feedback.
       await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
-      const feedback = page.locator('.workspace-feedback');
-      await expect(feedback).toContainText('Översikt återställd');
+      const feedback = page.locator('.workspace-context');
+      await expect(feedback).toContainText('Grönt +');
       const row = page.locator('.spatial-bottom-bar');
       const check = async () => {
         const box = await bounds(voiceBox(page));
@@ -614,7 +613,7 @@ for (const [name, width, height, place] of [
           // The box stays above the actual protected map row and feedback.
           // Their visible placement can follow the viewport's scrolling flow.
           const card = await bounds(page.locator('.workspace-voice-controls'));
-          const floor = Math.min(card.y, (await bounds(row)).y, (await bounds(feedback)).y);
+          const floor = Math.min(card.y, (await bounds(row)).y);
           expect(box.bottom).toBeLessThanOrEqual(floor);
           expect(overlaps(box, card)).toBe(false);
           expect(box.y).toBeGreaterThanOrEqual(0);
@@ -622,8 +621,6 @@ for (const [name, width, height, place] of [
         }
         expect(overlaps(box, await bounds(feedback))).toBe(false);
         expect(overlaps(box, await bounds(row))).toBe(false);
-        // The box stands above the feedback, wherever on the screen the two are.
-        expect(box.bottom).toBeLessThanOrEqual((await bounds(feedback)).y);
         return box;
       };
       const first = await check();

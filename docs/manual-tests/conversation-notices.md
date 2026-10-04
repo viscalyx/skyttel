@@ -51,7 +51,7 @@ notis utan att öppna textvyn”.
 1. Läs kartan utan att trycka på samtalsknapparna.
 2. Fokusera **Prata med Skyttel** och tryck Retur. Läs notisen.
 3. Välj **Stäng notisen**. Fokusera **Skriv till Skyttel** och tryck Retur.
-4. Stäng notisen igen. Läs utkastets återkoppling och övriga verktyg.
+4. Stäng notisen igen. Läs teckenförklaringen och övriga verktyg.
 
 **Förväntat resultat:**
 
@@ -64,7 +64,8 @@ notis utan att öppna textvyn”.
 - Fokus stannar på den valda knappen när notisen visas. Stängning återför
   fokus till **Prata med Skyttel** och läser inte upp ett återkomstbesked.
 - **Aktuell status** och **Visa samtals- och utkastdetaljer** finns inte.
-  **1 förslag · privat utkast** finns kvar i kartans återkoppling.
+  Teckenförklaringens gröna plus finns kvar. Kartan visar inget privat
+  förslagsantal.
 
 ### NOT-02: kontaktavbrott stoppar inmatning men behåller skrivande
 

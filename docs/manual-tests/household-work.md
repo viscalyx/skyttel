@@ -461,6 +461,7 @@ till gemensamt kvitto och privat fortsatt arbete”.
    innehållsversion och `operationId: "family-save"`. Servern tilldelar
    sparandets beständiga identifierare; anteckna den från
    **Utkast och historik → Tidigare sparförsök → Visa kvittot**.
+   Läs **Utkastet är sparat** under hushållsnamnet i tre sekunder.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
    och öppna **Lista → Uppgifter för Kim Exempel**. Kontrollera att
    **Oskickat om Kim** fortfarande finns i formuläret men inte i sparad

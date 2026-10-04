@@ -153,6 +153,10 @@ Tal som väntar under starten provas i
 
 1. Nå **Information och hjälp** med Tab och öppna med Enter. Läs rubriken
    och delarna om samma samtal, långt tryck, medgivande, OpenAI och formulär.
+   Läs också Kartans teckenförklaring: förslagens färger, heldragna nya
+   samband, streckade gamla samband, markeringsringen och punktade
+   etikettkopplingar. Skilj höjdhjälpens streck från gamla samband.
+   Kontrollera förklaringen av tre sekunders sparbesked och kvitton.
    Kontrollera att läsning inte startar mikrofonen eller frågar om medgivande.
 2. Läs att släpp stoppar ny inspelning direkt och att redan inspelat tal
    från starten kan skickas efter släpp. Läs tangentkombinationen för din
@@ -290,13 +294,15 @@ testfallet “YTA-05: save results remain readable beside tablet work”.
 
 1. Öppna **Lista** och **Nytt objekt**. Skriv
    **Familjens gemensamma cykel** och välj **Lägg i mitt utkast**.
-2. Välj **Spara hela utkastet** och läs hela sparbeskedet.
-3. Välj **Stäng status** och stäng därefter panelerna med kryssen.
+2. Välj **Spara hela utkastet** och läs **Utkastet är sparat** under
+   hushållsnamnet.
+3. Vänta tre sekunder tills sparbeskedet försvinner och stäng därefter
+   panelerna med kryssen.
 
 **Förväntat resultat:**
 
 - Sparbeskedet är läsbart medan arbetsytan är öppen.
-- Att stänga beskedet ändrar inte det sparade innehållet. Cykeln finns
+- Att beskedet försvinner ändrar inte det sparade innehållet. Cykeln finns
   kvar i kartan när arbetsytan stängs.
 
 ### YTA-06: synliga visningsval på en tom mobilkarta
@@ -342,7 +348,7 @@ choices readable and operable in dark”.
 ### YTA-09: den tomma kartan förblir användbar med röst och samtalsnotis
 
 **Syfte:** Nå verktygsfältets listknapp när röstrutan eller en samtalsnotis
-visas ovanför kartans visningsval och utkastets återkoppling.
+visas ovanför kartans visningsval, med hushållets status synlig.
 
 **Användare:** Alex.
 
@@ -359,7 +365,7 @@ controls reachable”.
 
 1. Välj **Prata med Skyttel** och godkänn samtalsmedgivandet. Läs **Lyssnar**
    i röstrutan. Välj
-   **Återställ vy** och läs **Översikt återställd.** i kartans statusyta.
+   **Återställ vy**. Ingen beständig rutinbekräftelse ska visas i kartan.
 2. Nå verktygsfältets **Lista** med tangentbordet. Fokus och knappen ska synas
    och vara fria från röstrutan. Kontrollera båda fönsterhöjderna.
 3. Slå på **Offline** i webbläsarens nätverkspanel. Läs samtalsnotisen
@@ -371,8 +377,7 @@ controls reachable”.
 **Förväntat resultat:**
 
 - Röstrutan och samtalsnotisen täcker inte verktygsfältets listknapp.
-- Röstrutan eller notisen ligger ovanför visningsvalen, som ligger ovanför
-  kartans statusyta och utkastets återkoppling. Vid platsbrist är
-  återkopplingen nåbar med rullning.
+- Röstrutan eller notisen ligger ovanför visningsvalen och täcker inte
+  hushållets statusyta under hushållsnamnet.
 - Samtalet öppnar ingen arbetsyta automatiskt; listknappen öppnar formuläret
   när Alex väljer den. Installationen provar placering, inte hört tal.

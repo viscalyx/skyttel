@@ -70,6 +70,13 @@ for (const platform of [
         const button = await openHelp(page);
         const text = await help(page).innerText();
         expect(text).toContain('Röst och text är samma samtal');
+        expect(text).toContain('Kartans teckenförklaring');
+        expect(text).toContain('rött × och streckad linje');
+        expect(text).toContain('samma riktade ändpunkter');
+        expect(text).toContain('Punktade kopplingar');
+        expect(text).toContain('Höjdhjälpens streckade markeringar');
+        expect(text).toContain('separat ring');
+        expect(text).toContain('tre sekunder');
         expect(text).toContain('Släpp stänger av ny inspelning direkt');
         expect(text).toContain('även efter släpp');
         expect(text).toContain(platform.mac ? 'Ctrl+Skift+Mellanslag' : 'Ctrl+Mellanslag');

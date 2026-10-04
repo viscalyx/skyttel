@@ -37,6 +37,7 @@ import {
 import { ConversationSettings } from './ConversationSettings.js';
 import { LifecycleDetails, LifecycleStatus } from './Lifecycle.js';
 import { MapHistory } from './MapHistory.js';
+import { MapLegend } from './MapLegend.js';
 import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
 import { MapRequestError, request } from './map-request.js';
 import { initialObjectBrowsing, ObjectList, objectListResults } from './ObjectList.js';
@@ -59,6 +60,7 @@ import {
 } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
 import { ConversationWorkspace } from './TextAssistant.js';
+import { useSaveToast } from './use-save-toast.js';
 import { VoiceBox, VoiceStatusAnnouncements } from './VoiceBox.js';
 import { type PanelAnchor, type PanelFocusRequest, WorkspacePanels } from './WorkspacePanels.js';
 import {
@@ -69,6 +71,7 @@ import {
 } from './WorkspaceTools.js';
 import './workspace.css';
 import './workspace-panels.css';
+import './map-legend.css';
 import './text-view.css';
 import { type ConversationMode, conversationOngoing, useConversation } from './use-conversation.js';
 import { useConversationPreferences } from './use-conversation-preferences.js';
@@ -313,7 +316,9 @@ export function HouseholdMap({
       'work',
       target === 'search'
         ? workspace.current?.querySelector<HTMLInputElement>('.object-browser input[type="search"]')
-        : undefined,
+        : target === 'draft'
+          ? document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title')
+          : undefined,
     );
   }
   // Closing the text view ends nothing: the conversation, the microphone and
@@ -348,10 +353,19 @@ export function HouseholdMap({
     setErrorDetails({ message, imageObjectId });
   }, []);
   const [status, setStatus] = useState('');
+  const saveToast = useSaveToast();
   const [conflictLinksOpen, setConflictLinksOpen] = useState(false);
   function returnFromStatus() {
     routeOutsideFocus.current = null;
     if (!active) onReturnToMap?.();
+  }
+  function returnToImage(id?: string) {
+    if (id && objectPanels.some((panel) => panel.id === id)) openPanel(id);
+    else {
+      const object = id ? displayed.get(id) : undefined;
+      if (object) edit(object);
+    }
+    returnFromStatus();
   }
   const failedProposalOrigin = useRef<HTMLElement | null>(null);
   const [proposalRecoveryFocus, setProposalRecoveryFocus] = useState<{
@@ -405,6 +419,13 @@ export function HouseholdMap({
         '.workspace-tools:not(.expanded)',
       );
       if (tools) workspace.current?.style.setProperty('--tools-height', `${tools.offsetHeight}px`);
+      const context = workspace.current?.querySelector<HTMLElement>('.workspace-context');
+      if (context) {
+        workspace.current?.style.setProperty(
+          '--context-bottom',
+          `${context.getBoundingClientRect().bottom - viewport.offset + 12}px`,
+        );
+      }
       const composer = workspace.current?.querySelector('.text-view-message');
       const inlineNotice = workspace.current?.querySelector<HTMLElement>('.text-view-notice-slot');
       const card = workspace.current?.querySelector<HTMLElement>('.conversation-notice');
@@ -446,6 +467,7 @@ export function HouseholdMap({
       '.workspace-feedback',
       hasMap && '.spatial-bottom-bar',
       active && '.workspace-tools',
+      active && '.workspace-context',
       hasMap && '.workspace-voice-controls',
       textViewOpen && '.text-view-message',
       textViewOpen && '.text-view',
@@ -538,6 +560,7 @@ export function HouseholdMap({
 
   useEffect(() => {
     let active = true;
+    let confirmed = false;
     setPending(true);
     void (async () => {
       const result = await request<{ operations: SaveOperation[] }>(`${path}/operations`);
@@ -549,12 +572,27 @@ export function HouseholdMap({
             )
           ).operation
         : null;
+      if (!active) return;
+      let recent = result.operations;
+      if (attempt && operation) {
+        checkOperation(operation, attempt);
+        recent = [
+          operation,
+          ...recent.filter((item) => item.operationId !== operation.operationId),
+        ];
+        if (operation.status === 'succeeded') {
+          setStatus(receiptMessage(operation.receipt));
+          saveToast.confirm(operation.operationId);
+          setOperations(recent);
+          saveAttempt.current = null;
+          confirmed = true;
+        }
+      }
       // Read the map after the results: another client may have completed a
       // pending save while this client was discovering its durable receipt.
       const value = await request<MapState>(`${path}?reload=${load}`);
       if (!active) return;
       checkOperations(result.operations, householdId, value);
-      let recent = result.operations;
       let message = '';
       if (attempt) {
         if (
@@ -566,15 +604,7 @@ export function HouseholdMap({
           setStatus('');
           message = rejectionMessage('content_conflict');
         } else if (operation) {
-          checkOperation(operation, attempt);
-          recent = [
-            operation,
-            ...recent.filter((item) => item.operationId !== operation.operationId),
-          ];
-          if (operation.status === 'succeeded') {
-            setStatus(receiptMessage(operation.receipt));
-            saveAttempt.current = null;
-          } else if (operation.status === 'rejected') {
+          if (operation.status === 'rejected') {
             message = rejectionMessage(operation.error);
             saveAttempt.current = null;
           }
@@ -593,7 +623,12 @@ export function HouseholdMap({
         if (!active) return;
         setBlocked(true);
         if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) loseAccess();
-        else setError('Kartan och sparförsöken kunde inte hämtas. Försök igen.');
+        else
+          setError(
+            confirmed
+              ? 'Ändringarna är sparade enligt kvittot, men kartan kunde inte hämtas. Hämta aktuellt underlag.'
+              : 'Kartan och sparförsöken kunde inte hämtas. Försök igen.',
+          );
       })
       .finally(() => {
         if (active) setPending(false);
@@ -601,7 +636,7 @@ export function HouseholdMap({
     return () => {
       active = false;
     };
-  }, [path, load, householdId, loseAccess, setError]);
+  }, [path, load, householdId, loseAccess, setError, saveToast.confirm]);
 
   useEffect(() => {
     if (!active) return;
@@ -610,10 +645,19 @@ export function HouseholdMap({
   }, [edgeEditor?.id, active]);
 
   function reloadMap(origin: HTMLElement) {
-    if (failedProposalOrigin.current) {
-      setProposalRecoveryFocus({ origin, target: failedProposalOrigin.current });
-      setPending(true);
-    }
+    setProposalRecoveryFocus({
+      origin,
+      target:
+        failedProposalOrigin.current ??
+        (workOpen
+          ? (workspace.current?.querySelector<HTMLElement>(
+              '.workspace-window[data-active="true"] h2',
+            ) ?? null)
+          : (workspace.current?.querySelector<HTMLElement>(
+              '.workspace-tools button[aria-label="Utkast och historik"]',
+            ) ?? null)),
+    });
+    setPending(true);
     setLoad((value) => value + 1);
   }
 
@@ -678,6 +722,7 @@ export function HouseholdMap({
           : (await request<{ receipt: SaveReceipt }>(`${path}/save`, body)).receipt;
       checkSaveIdentity(receipt, attempt);
       setStatus(receiptMessage(receipt));
+      saveToast.confirm(receipt.operationId);
       setOperations((previous) =>
         previous.map((item) =>
           item.operationId === attempt.operationId
@@ -1452,6 +1497,7 @@ export function HouseholdMap({
     householdId,
     enabled: Boolean(state),
     manualSaveOperationId: pending ? saveAttempt.current?.operationId : undefined,
+    onSaveConfirmed: saveToast.confirm,
     onMapChange: () => {
       // The local save owns completion and the following map refresh.
       // A session poll must not replace its pending state with recovery.
@@ -1469,8 +1515,11 @@ export function HouseholdMap({
     onSelectItem: revealAssistantItem,
   });
   useEffect(() => {
-    if (conversation.revocationReceipt) setStatus(receiptMessage(conversation.revocationReceipt));
-  }, [conversation.revocationReceipt]);
+    if (conversation.revocationReceipt) {
+      setStatus(receiptMessage(conversation.revocationReceipt));
+      saveToast.confirm(conversation.revocationReceipt.operationId);
+    }
+  }, [conversation.revocationReceipt, saveToast.confirm]);
   const textButton = useTextButtonStatus(conversation, textViewOpen && active, active);
   const liveOngoing = conversationOngoing(conversation, textViewOpen);
   const beforeConnection = useRef({ blocked: false, ongoing: false });
@@ -1737,6 +1786,84 @@ export function HouseholdMap({
             >
               {selectedIds.length} markerade
             </span>
+            <section aria-label="Kartans status" className="map-status">
+              <p aria-live="polite" aria-atomic="true">
+                {!state && !error
+                  ? 'Hushållets karta hämtas…'
+                  : pending
+                    ? saveAttempt.current
+                      ? 'Väntar på sparkvitto'
+                      : 'Hämtar aktuellt underlag…'
+                    : ''}
+              </p>
+              <p aria-live="polite" aria-atomic="true">
+                {saveToast.operationId && (
+                  <span key={saveToast.operationId}>Utkastet är sparat</span>
+                )}
+              </p>
+              {error && (
+                <p role="alert" className="error">
+                  {error}
+                </p>
+              )}
+              {(saveAttempt.current || pendingOperation) && blocked && !pending && (
+                <p>Sparutfall okänt. Kontrollera samma sparförsök innan du sparar mer.</p>
+              )}
+              <p aria-live="polite" aria-atomic="true">
+                {unresolved &&
+                  'Sparandet är blockerat: red ut identiteter och okända samband i Utkast och historik.'}
+              </p>
+              {(saveAttempt.current || pendingOperation) && blocked && (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => {
+                    if (saveAttempt.current) void save(saveAttempt.current, true);
+                    else if (pendingOperation) retrySave(pendingOperation);
+                  }}
+                >
+                  Hämta samma kvitto igen
+                </button>
+              )}
+              {(error || blocked) && (
+                <button
+                  type="button"
+                  disabled={pending}
+                  data-refresh-map
+                  onClick={(event) => reloadMap(event.currentTarget)}
+                >
+                  Hämta aktuellt underlag
+                </button>
+              )}
+              {errorDetails.imageObjectId && (
+                <button type="button" onClick={() => returnToImage(errorDetails.imageObjectId)}>
+                  Återgå till bilden för{' '}
+                  {displayed.get(errorDetails.imageObjectId)?.name ??
+                    objectPanels.find((panel) => panel.id === errorDetails.imageObjectId)?.title ??
+                    'objektet'}
+                </button>
+              )}
+              {conflicts.length > 0 && (
+                <button
+                  type="button"
+                  className="map-conflict"
+                  onClick={() => {
+                    openPanel('work', document.getElementById('draft-conflicts-title'));
+                  }}
+                >
+                  <span aria-hidden="true">⚠</span> {conflicts.length}{' '}
+                  {conflicts.length === 1 ? 'konflikt' : 'konflikter'} i ditt utkast
+                </button>
+              )}
+            </section>
+            {state && (
+              <MapLegend
+                draft={state.draft}
+                objects={visibleObjects}
+                relationships={visibleEdges}
+                selectedIds={selectedIds}
+              />
+            )}
           </div>
         </>
       )}
@@ -1744,6 +1871,7 @@ export function HouseholdMap({
       {!active && voiceBox}
       <VoiceStatusAnnouncements
         conversation={conversation}
+        announceSaved={!active}
         textViewOpen={textViewOpen && active}
         microphoneOffExplained={noticeState.notice?.id === 'disconnectedActive'}
         microphoneButton={() =>
@@ -1754,57 +1882,59 @@ export function HouseholdMap({
       <p className="visually-hidden text-button-announcement" aria-live="polite" aria-atomic="true">
         <span key={textButton.announcement.count}>{textButton.announcement.text}</span>
       </p>
-      <div className="workspace-feedback">
-        {status && !pending && !error && (
-          <button
-            type="button"
-            className="workspace-close"
-            aria-label="Stäng status"
-            onClick={() => setStatus('')}
-          >
-            <WorkspaceIcon name="close" />
-          </button>
-        )}
-        <p role="status">
-          {pending
-            ? saveAttempt.current
-              ? 'Väntande: kontrollerar sparandet…'
-              : 'Arbetar…'
-            : status}
-        </p>
-        {!state && error && (
-          <p role="alert" className="error">
-            {error}
+      {!active && (
+        <div className="workspace-feedback">
+          {status && !pending && !error && (
+            <button
+              type="button"
+              className="workspace-close"
+              aria-label="Stäng status"
+              onClick={() => setStatus('')}
+            >
+              <WorkspaceIcon name="close" />
+            </button>
+          )}
+          <p role="status">
+            {pending
+              ? saveAttempt.current
+                ? 'Väntande: kontrollerar sparandet…'
+                : 'Arbetar…'
+              : status}
           </p>
-        )}
-        {!state && (error || blocked) && (
-          <button
-            type="button"
-            disabled={pending}
-            data-refresh-map
-            onClick={(event) => reloadMap(event.currentTarget)}
-          >
-            Hämta aktuellt underlag
-          </button>
-        )}
-        {!state && saveAttempt.current && blocked && (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              if (saveAttempt.current) void save(saveAttempt.current, true);
-            }}
-          >
-            Hämta samma kvitto igen
-          </button>
-        )}
-        {!state && !error && (
-          <div className="map-loading" role="status" aria-busy="true">
-            <span className="assistant-spinner" aria-hidden="true" />
-            Hushållets karta hämtas…
-          </div>
-        )}
-      </div>
+          {!state && error && (
+            <p role="alert" className="error">
+              {error}
+            </p>
+          )}
+          {!state && (error || blocked) && (
+            <button
+              type="button"
+              disabled={pending}
+              data-refresh-map
+              onClick={(event) => reloadMap(event.currentTarget)}
+            >
+              Hämta aktuellt underlag
+            </button>
+          )}
+          {!state && saveAttempt.current && blocked && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                if (saveAttempt.current) void save(saveAttempt.current, true);
+              }}
+            >
+              Hämta samma kvitto igen
+            </button>
+          )}
+          {!state && !error && (
+            <div className="map-loading" role="status" aria-busy="true">
+              <span className="assistant-spinner" aria-hidden="true" />
+              Hushållets karta hämtas…
+            </div>
+          )}
+        </div>
+      )}
       <div className="workspace-navigation-mount" ref={setNavigationMount} hidden={!active} />
       {state && (
         <div className="map-space" hidden={!active} inert={mapCovered} aria-hidden={mapCovered}>
@@ -1867,7 +1997,6 @@ export function HouseholdMap({
                       : entry.label,
                 }))}
                 conflictLinks={{ open: conflictLinksOpen, onOpenChange: setConflictLinksOpen }}
-                expanded={false}
                 error={error}
                 imageError={
                   errorDetails.imageObjectId
@@ -1877,16 +2006,7 @@ export function HouseholdMap({
                           objectPanels.find((panel) => panel.id === errorDetails.imageObjectId)
                             ?.title ??
                           'objektet',
-                        onReturn: () => {
-                          const id = errorDetails.imageObjectId;
-                          if (id && objectPanels.some((panel) => panel.id === id)) openPanel(id);
-                          else {
-                            const object = id ? displayed.get(id) : undefined;
-                            if (object) edit(object);
-                          }
-                          routeOutsideFocus.current = null;
-                          if (!active) onReturnToMap?.();
-                        },
+                        onReturn: () => returnToImage(errorDetails.imageObjectId),
                       }
                     : undefined
                 }
@@ -1962,7 +2082,20 @@ export function HouseholdMap({
                   id: 'work',
                   title: 'Lista och utkast',
                   open: openPanels.includes('work'),
-                  content: work,
+                  content: (
+                    <>
+                      {active && (
+                        <p role="status" aria-live="off">
+                          {pending
+                            ? saveAttempt.current
+                              ? 'Väntande: kontrollerar sparandet…'
+                              : 'Arbetar…'
+                            : status}
+                        </p>
+                      )}
+                      {work}
+                    </>
+                  ),
                   resumeFocus: () => resumeListFocus.current(),
                 },
                 ...objectPanels.map((panel) => {
@@ -2669,6 +2802,27 @@ export function HouseholdMap({
                         radering.
                       </p>
                       {!hasChanges && <p>Inga förslag i utkastet.</p>}
+                      {conflictEntries.length > 0 && (
+                        <section aria-labelledby="draft-conflicts-title">
+                          <h3 id="draft-conflicts-title" tabIndex={-1}>
+                            Konflikter i mitt utkast
+                          </h3>
+                          <ul>
+                            {conflictEntries.map((entry) => (
+                              <li key={entry.id}>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openPanel('work', document.getElementById(entry.id))
+                                  }
+                                >
+                                  {entry.label}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
                       {state.draft.relationshipTypes?.map((change) => (
                         <article key={change.id}>
                           <h3 id={draftEntryId('relationshipType', change.id)} tabIndex={-1}>

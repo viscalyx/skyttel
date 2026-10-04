@@ -176,7 +176,7 @@ test('an image error returns to the retained object and expires before an unrela
   await screen.findByText(/Bilden kunde inte behandlas/, { selector: '[role="alert"]' });
   const panel = within(screen.getByLabelText('Lo Exempel', { selector: 'section:not([hidden])' }));
   const status = within(
-    screen.getByLabelText('Utkastets återkoppling', { selector: 'section:not([hidden])' }),
+    screen.getByLabelText('Kartans status', { selector: 'section:not([hidden])' }),
   );
   await userEvent.click(panel.getByLabelText('Stäng Lo Exempel', { selector: 'button' }));
   expect(screen.queryByRole('group', { name: 'Objektets detaljer' })).toBeNull();
@@ -422,13 +422,13 @@ test('the whole image and description proposal saves once with an exact expanded
       changes: [{ before: null, after: proposed.draft.changes[0].after }],
     });
     expect(receipt.changes).toHaveLength(1);
-    const status = within(screen.getByRole('region', { name: 'Utkastets återkoppling' }));
+    const status = within(screen.getByRole('region', { name: 'Kartans status' }));
     expect(await status.findByText('Väntar på sparkvitto')).toBeTruthy();
     expect(screen.queryByText(`Sparat: Lo Exempel. Kvitto: ${receipt.operationId}.`)).toBeNull();
     expect(status.queryByText(/^Sparat:/)).toBeNull();
     expect(status.queryByText('Sparat · kvitto bekräftat')).toBeNull();
     release();
-    await screen.findByText('Sparat · kvitto bekräftat');
+    await screen.findByText('Utkastet är sparat');
     await user.click(screen.getByText('Tidigare sparförsök', { selector: 'summary' }));
     await user.click(screen.getByText('Visa kvittot', { selector: 'summary' }));
     expect(

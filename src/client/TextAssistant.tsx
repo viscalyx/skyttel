@@ -14,7 +14,6 @@ import './voice.css';
 import { TextView } from './TextView.js';
 import type { Conversation } from './use-conversation.js';
 import type { useConversationPreferences } from './use-conversation-preferences.js';
-import { useConversationViewport } from './use-conversation-viewport.js';
 
 type AssistantActivity = { working: boolean; needsAnswer: boolean };
 
@@ -58,8 +57,7 @@ export function ConversationWorkspace({
   notice,
 }: ConversationPresentation & { conversation: Conversation }) {
   const { session, needsAnswer } = conversation;
-  const { narrow } = useConversationViewport();
-  const feedbackInText = narrow && textViewOpen;
+  const feedbackInText = workVisible && textViewOpen;
   const [floatingSlot, setFloatingSlot] = useState<HTMLDivElement | null>(null);
   const floatingVoice = useRef<HTMLDivElement | null>(null);
   const attachFloatingSlot = useCallback((element: HTMLDivElement | null) => {
@@ -123,7 +121,7 @@ export function ConversationWorkspace({
       id="workspace-work"
       tabIndex={-1}
     >
-      {floatingSlot && !feedbackInText && createPortal(feedback, floatingSlot)}
+      {floatingSlot && !workVisible && createPortal(feedback, floatingSlot)}
       {renderWorkspace ? (
         renderWorkspace(
           <>
@@ -134,7 +132,7 @@ export function ConversationWorkspace({
         )
       ) : (
         <>
-          {feedback}
+          {!feedbackInText && feedback}
           <div className="assistant-layout" hidden={!workVisible}>
             {work && <div className="assistant-map-panel">{work}</div>}
             {inspector && (
@@ -164,7 +162,7 @@ export function ConversationWorkspace({
           {!notice && conversation.error && <p role="alert">{conversation.error}</p>}
         </TextView>
       )}
-      {/* Shared draft feedback stays outside the text view and the conversation notice. */}
+      {/* Settings keeps its shared feedback outside the text view. */}
       {renderWorkspace && <div ref={attachFloatingSlot} className="workspace-voice-controls" />}
     </section>
   );

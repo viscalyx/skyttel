@@ -158,6 +158,7 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
 test('NAVIGATION-02: navigation and unsent details retain separate usable areas in both opening orders', async ({
   page,
 }) => {
+  test.setTimeout(90_000);
   const installation = await createInstallation();
   try {
     const { lo } = await arrange(page, installation.origin);

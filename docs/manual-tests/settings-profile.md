@@ -50,7 +50,7 @@ editor and focus at 320px”.
 7. Lägg cykeln i ditt utkast. Besök Inställningar och läs hela beskedet
    om att förslaget finns i ditt privata utkast. Återkopplingens stängknapp
    får inte täcka texten. Välj **Tillbaka till kartan** och sedan
-   **Visa hela utkastet**.
+   **Utkast och historik**.
    Kontrollera utkastets rubrikfokus och
    cykeln; spara inte.
 

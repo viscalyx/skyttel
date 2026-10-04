@@ -335,7 +335,8 @@ destination at 1440px”, samma titel med “390px” respektive “320px”.
    innan **Lägg i mitt utkast**. Lägg uppgifterna i utkastet och redigera
    objektet igen. Öppna filväljaren och avbryt utan fil.
 2. Håll det verkliga bildsvaret enligt BILD-04. Välj `fel.png`, stäng
-   objektpanelen och arbetsytan. Kontrollera **Spara hela utkastet**.
+   objektpanelen och arbetsytan. Öppna **Utkast och historik** och
+   kontrollera **Spara hela utkastet**.
 3. Öppna Inställningar. Kartans utkaståterkoppling finns kvar. Kontrollera
    sparknappen igen och sätt tangentbordsfokus på **Tillbaka till kartan**.
    Släpp bildsvaret enligt BILD-04.

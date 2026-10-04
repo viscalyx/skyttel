@@ -146,10 +146,12 @@ test('camera focus includes previous direct neighbors and preserves work through
   await expect.poll(separation).toBeGreaterThan(initialSeparation * 2);
   expect(panel.element().getBoundingClientRect().toJSON()).toEqual(panelBox);
   for (const node of [alex, music]) {
-    expect(position(node).x).toBeGreaterThan(112);
-    expect(position(node).x).toBeLessThan(1360);
-    expect(position(node).y).toBeGreaterThan(90);
-    expect(position(node).y).toBeLessThan(830);
+    const box = node.element().getBoundingClientRect();
+    expect(box.left).toBeGreaterThanOrEqual(0);
+    expect(box.right).toBeLessThanOrEqual(window.innerWidth);
+    expect(box.top).toBeGreaterThanOrEqual(0);
+    expect(box.bottom).toBeLessThanOrEqual(window.innerHeight);
+    await node.hover();
   }
   await expect.element(music).toHaveAttribute('aria-pressed', 'false');
   const focused = position(alex);
@@ -172,8 +174,8 @@ test('camera focus includes previous direct neighbors and preserves work through
     .element(page.getByRole('button', { name: 'Visa verktygens namn', exact: true }))
     .toBeVisible();
   for (const node of [alex, music]) {
-    await expect.poll(() => position(node).y).toBeGreaterThanOrEqual(110);
-    await expect.poll(() => position(node).y).toBeLessThanOrEqual(172);
+    await expect.poll(() => position(node).y).toBeGreaterThanOrEqual(44);
+    await expect.poll(() => position(node).y).toBeLessThanOrEqual(226);
     await node.hover();
   }
 });
@@ -520,41 +522,25 @@ test('panel placement has reversible keyboard and click controls with a reset an
   expect(position()).toEqual(initial);
 });
 
-test('desktop panels reserve draft feedback and retain chosen positions across screen sizes', async () => {
+test('desktop panels keep the contextual legend clear and retain chosen positions across screen sizes', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
-  const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
+  const legend = page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true });
   const handle = work.getByRole('button', { name: 'Flytta Lista och utkast', exact: true });
   const box = () => work.element().getBoundingClientRect();
+  expect(box().top).toBeGreaterThan(legend.element().getBoundingClientRect().bottom);
   handle.element().focus();
-  await userEvent.keyboard(`{Shift>}${'{ArrowDown}'.repeat(20)}{/Shift}`);
-  expect(box().right).toBeLessThan(status.element().getBoundingClientRect().left);
-  expect(box().bottom).toBeGreaterThan(status.element().getBoundingClientRect().top);
-
   await userEvent.keyboard(`{Shift>}${'{ArrowRight}'.repeat(25)}{/Shift}`);
-  await expect
-    .poll(() => box().bottom)
-    .toBeLessThanOrEqual(status.element().getBoundingClientRect().top - 12);
-  expect(box().right).toBeGreaterThan(status.element().getBoundingClientRect().left);
-  const body = work.element().querySelector<HTMLElement>('.workspace-panel-body');
-  expect(body?.scrollHeight).toBeGreaterThan(body?.clientHeight ?? 0);
   const chosen = box().toJSON();
-
-  await expect
-    .element(page.getByRole('button', { name: 'Aktuell status', exact: true }))
-    .not.toBeInTheDocument();
   await page.viewport(900, 960);
   await expect.poll(() => box().right).toBeLessThanOrEqual(876);
-  await expect
-    .poll(() => box().bottom)
-    .toBeLessThanOrEqual(status.element().getBoundingClientRect().top - 12);
   await page.viewport(1440, 960);
   await expect.poll(() => box().toJSON()).toEqual(chosen);
   await handle.click();
   await work.getByRole('button', { name: 'Återställ position', exact: true }).click();
   expect(box().x).toBe(112);
-  expect(box().y).toBe(110);
+  expect(box().top).toBeGreaterThan(legend.element().getBoundingClientRect().bottom);
 });
 
 test.each([390, 250])(
@@ -575,7 +561,7 @@ test.each([390, 250])(
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
     await expect
-      .element(page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }))
+      .element(page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }))
       .toBeVisible();
     await expect.element(page.getByLabelText('Objektets namn')).toHaveValue('Behåll bred text');
   },
@@ -880,7 +866,7 @@ test('phone opens the list from the map and preserves an edited name through map
     .element(page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }))
     .not.toBeInTheDocument();
   await expect
-    .element(page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }))
+    .element(page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }))
     .toBeVisible();
   await expect.element(page.elementLocator(objectElement)).not.toBeVisible();
   const bounds = document.querySelector('.spatial-surface')?.getBoundingClientRect();

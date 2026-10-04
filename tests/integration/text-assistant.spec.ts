@@ -427,11 +427,17 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
     await arrange(page, app);
     await consent(page);
     await send(page, 'Markera Lo i kartan.');
-    await expect(assistant(page).getByRole('status', { includeHidden: true })).toHaveText(
-      'Markerat i kartan.',
-    );
+    await expect(
+      assistant(page)
+        .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
+        .getByRole('status', { includeHidden: true }),
+    ).toHaveText('Markerat i kartan.');
     await openConversationText(page);
-    await expect(assistant(page).getByRole('status')).toHaveText('Markerat i kartan.');
+    await expect(
+      assistant(page)
+        .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
+        .getByRole('status'),
+    ).toHaveText('Markerat i kartan.');
     await openWorkspace(page);
     await expect(
       page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }),
@@ -443,7 +449,11 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd uppgift');
     await send(page, 'Markera Lo igen.');
-    await expect(assistant(page).getByRole('status')).not.toContainText('Markerat');
+    await expect(
+      assistant(page)
+        .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
+        .getByRole('status'),
+    ).not.toContainText('Markerat');
     await expect(
       assistant(page).getByRole('log', { name: 'Samtalstext', exact: true }),
     ).toContainText('Markerat!');
@@ -485,7 +495,11 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
       await expect(conversation).toContainText(reply);
       // The reservation about errors stands in the consent text, not in the text view.
       await expect(assistant(page)).not.toContainText('Samtalstexten kan innehålla fel');
-      await expect(assistant(page).getByRole('status')).toContainText('Nya förslag är osparade');
+      await expect(
+        assistant(page)
+          .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
+          .getByRole('status'),
+      ).toContainText('Nya förslag är osparade');
       await expect(object).toHaveAttribute('aria-pressed', selected ?? 'false');
       const current = await (await page.request.get(path)).json();
       expect(current.objects).toEqual(before.objects);

@@ -331,9 +331,9 @@ for (const mode of ['voice', 'text'] as const) {
       const refreshedMap = await correctedMap;
       expect(refreshedMap.status()).toBe(200);
       await refreshedMap.finished();
-      await expect(page.locator('.workspace-feedback').getByRole('status')).toHaveText(
-        'Förslaget finns i ditt privata utkast. Kartan är inte ändrad.',
-      );
+      await expect(
+        page.getByRole('region', { name: 'Lista och utkast' }).getByRole('status'),
+      ).toHaveText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
       await expect(subscription).not.toBeVisible();
       await openWorkspace(page);
       await objects
@@ -461,6 +461,9 @@ for (const mode of ['voice', 'text'] as const) {
       await expect.poll(async () => (await history()).length).toBe(1);
       await expect(page.getByRole('region', { name: 'Utkastets återkoppling' })).toContainText(
         'Sparat · kvitto bekräftat',
+      );
+      await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
+        'Utkastet är sparat',
       );
       const savedReceipts = await openConversationReceipts(page);
       await savedReceipts.getByText('Visa kvittot', { exact: true }).first().click();

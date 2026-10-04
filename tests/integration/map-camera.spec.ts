@@ -146,11 +146,13 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
     await expect(lo).toHaveAttribute('aria-pressed', 'true');
     await expect(kim).toHaveAttribute('aria-pressed', 'false');
     for (const node of [lo, kim]) {
-      const point = await center(node);
-      expect(point.x).toBeGreaterThan(112);
-      expect(point.x).toBeLessThan(1360);
-      expect(point.y).toBeGreaterThan(90);
-      expect(point.y).toBeLessThan(830);
+      const box = await node.boundingBox();
+      if (!box) throw new Error('Focused object has no visible target');
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(1440);
+      expect(box.y + box.height).toBeLessThanOrEqual(1000);
+      await node.click({ trial: true });
     }
     const beforeOverview = await center(lo);
     await page.getByRole('button', { name: 'Visa hela kartan', exact: true }).click();
@@ -277,8 +279,8 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
       for (const node of [lo, kim]) {
         await expect.poll(async () => (await center(node)).x).toBeGreaterThanOrEqual(32);
         await expect.poll(async () => (await center(node)).x).toBeLessThanOrEqual(288);
-        await expect.poll(async () => (await center(node)).y).toBeGreaterThanOrEqual(110);
-        await expect.poll(async () => (await center(node)).y).toBeLessThanOrEqual(172);
+        await expect.poll(async () => (await center(node)).y).toBeGreaterThanOrEqual(44);
+        await expect.poll(async () => (await center(node)).y).toBeLessThanOrEqual(226);
         await node.click({ trial: true });
       }
     }

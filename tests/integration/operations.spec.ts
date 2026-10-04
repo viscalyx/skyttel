@@ -202,10 +202,12 @@ test('SPAR-03: a rejected stale save survives restart without consuming newer pr
     await expect(page.getByRole('alert')).toContainText('Avvisat');
     await expect(page.getByRole('alert')).toContainText('Inget sparades');
     await openMap(page);
+    await expect(page.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
+      'Avvisat',
+    );
     await expect(
-      page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
-    ).toContainText('Sparandet avvisades · inget sparat av försöket');
-    await expect(page.getByRole('region', { name: 'Förslag i kartan', exact: true })).toBeVisible();
+      page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
+    ).toBeVisible();
     await page.close();
     await installation.restart();
     await newer.reload();

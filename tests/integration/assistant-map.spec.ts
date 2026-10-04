@@ -78,6 +78,9 @@ for (const viewport of [
         await page.goto(installation.origin);
         await startConversationWithText(page);
         const panel = page.getByRole('region', { name: 'Arbetsyta', exact: true });
+        const selectionStatus = page
+          .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
+          .getByRole('status');
         const acknowledgements: {
           displayed: boolean;
           kind: string;
@@ -215,7 +218,7 @@ for (const viewport of [
           'Påhittad uppgift',
         );
         await openConversationText(page);
-        await expect(panel.getByRole('status')).toHaveText('Markerat i kartan.');
+        await expect(selectionStatus).toHaveText('Markerat i kartan.');
         await openMap(page);
         await page.getByRole('button', { name: 'Navigera', exact: true }).click();
         for (let index = 0; index < 16; index++)
@@ -237,12 +240,12 @@ for (const viewport of [
         await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('music');
         await page.getByLabel('Till objekt', { exact: true }).selectOption('lo');
         await openConversationText(page);
-        await expect(panel.getByRole('status')).toHaveText('Markerat i kartan.');
+        await expect(selectionStatus).toHaveText('Markerat i kartan.');
         await send('Visa Lo igen.');
         await expect.poll(() => acknowledgements.length).toBe(3);
         expect(acknowledgements[2].displayed).toBe(false);
         await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('lo');
-        await expect(panel.getByRole('status')).not.toContainText('Markerat');
+        await expect(selectionStatus).not.toContainText('Markerat');
       } finally {
         await installation.close();
       }

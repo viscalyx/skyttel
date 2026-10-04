@@ -39,8 +39,10 @@ Ett redan markerat objekt behåller de andra markeringarna. Ctrl-klick
 eller Cmd-klick lägger till eller tar bort objekt. Samtliga markerades
 direkta samband framhävs och antalet visas vid flerval. Symbolen visar
 objektets profilbild eller en ikon för dess typ.
-Namnet visas bredvid symbolen. När du väljer ett objekt visas etiketterna
-för dess samband. **Alla etiketter** visar även de andra sambandsnamnen.
+Namnet visas bredvid symbolen. Förslag på samband visar etiketter direkt. När du
+väljer ett objekt visas
+även etiketterna för dess sparade samband. **Alla etiketter** visar även de
+andra sambandsnamnen.
 Klicka på ett sambands etikett för att läsa dess uppgifter. Välj sedan
 **Redigera valt samband** för att ändra riktning, säkerhet och status.
 Pilen går från det första objektet till det andra. Okänt och uttryckligen
@@ -181,13 +183,17 @@ behåller texten. **Utkast och historik** ger tillgång till ändringslistan.
 
 Markeringarna visar skillnaden mot sparad karta:
 
-- **+** med guldgul markering: nytt förslag.
-- **~** med gul markering: ändrat förslag.
-- **×** med korallfärgad markering: föreslagen borttagning.
+- **+** med grön markering: nytt förslag.
+- **✎** med gul markering: ändrat förslag.
+- **×** med röd markering: föreslagen borttagning eller tidigare koppling.
 
-Samband som föreslås tas bort visas som böjda, streckade linjer. När ett
-förslag byter ett sambands typ eller anslutna objekt kan den tidigare
-kopplingen visas på samma sätt bredvid den föreslagna kopplingen.
+Borttagna samband visas som böjda, streckade linjer. När riktade ändpunkter
+ändras visas den tidigare kopplingen med rött × och streckad linje och den
+nya med grönt + och heldragen linje. Typ- och uppgiftsändringar med samma
+ändpunkter visas med gul penna och heldragen linje.
+Etiketternas kopplingar är punktade för att skilja dem från samband.
+Teckenförklaringen följer kartans filter och använder samma färger;
+**Information och hjälp** förklarar alla symbolerna.
 
 **Upphört** har en egen färg och visas vid objektets namn eller i
 sambandets etikett. Statusen följer samma slutdatum och manuella val som

@@ -214,12 +214,20 @@ test.describe('smal mobil med återkoppling', () => {
       const voice = await bounds(voiceBox(page));
       for (const selector of [
         '.spatial-bottom-bar',
-        '.workspace-feedback',
+        '.workspace-context',
         '.workspace-voice-controls',
       ]) {
         const feedback = page.locator(selector);
-        if ((await feedback.isVisible()) && (await bounds(feedback)).height > 0)
-          expect(voice.bottom).toBeLessThanOrEqual((await bounds(feedback)).y);
+        if (await feedback.isVisible()) {
+          const box = await bounds(feedback);
+          if (box.height > 0)
+            expect(
+              voice.bottom <= box.y ||
+                box.bottom <= voice.y ||
+                voice.right <= box.x ||
+                box.right <= voice.x,
+            ).toBe(true);
+        }
       }
       await page
         .getByRole('navigation', { name: 'Kartans verktyg' })

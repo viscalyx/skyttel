@@ -6,6 +6,7 @@ import {
   openSettings,
   openWorkspace,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -81,7 +82,7 @@ for (const width of [1280, 390, 320]) {
       expect(fragments.length).toBeGreaterThan(0);
       expect(fragments.every(Boolean)).toBe(true);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await page.getByRole('button', { name: 'Visa hela utkastet', exact: true }).click();
+      await (await utilityButton(page, 'Utkast och historik')).click();
       await expect(page).toHaveURL(/\/households\/[^/]+$/);
       await expect(
         page.getByRole('heading', { name: 'Hela mitt utkast', exact: true }),

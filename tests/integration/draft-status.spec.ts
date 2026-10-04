@@ -20,6 +20,165 @@ import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 
+for (const theme of ['light', 'dark'])
+  test(`UTKAST-25: filtered legend matches map colours and retains only displayed categories in ${theme}`, async ({
+    page,
+  }) => {
+    const app = await createInstallation();
+    try {
+      await signIn(page.request, app.origin);
+      const { household } = await (await createHousehold(page.request, app.origin)).json();
+      const path = `${app.origin}/api/households/${household.id}/map`;
+      const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+      const post = async (route: string, data: unknown) => {
+        const response = await page.request.post(`${path}/${route}`, {
+          headers: { origin: app.origin },
+          data,
+        });
+        expect(response.status(), await response.text()).toBe(200);
+      };
+      const initial = await read();
+      for (const [id, name] of [
+        ['lo', 'Lo Exempel'],
+        ['music', 'Molnmusik'],
+        ['kim', 'Kim Exempel'],
+      ])
+        await post('draft', {
+          version: (await read()).draft.version,
+          id,
+          baseRevision: null,
+          value: { typeId: initial.types[0].id, name, description: '' },
+        });
+      await post('relationship', {
+        version: (await read()).draft.version,
+        id: 'uses',
+        baseRevision: null,
+        value: {
+          typeId: initial.relationshipTypes[0].id,
+          sourceId: 'lo',
+          targetId: 'music',
+          knowledge: 'known',
+        },
+      });
+      await post('save', { version: (await read()).draft.version, operationId: 'legend-baseline' });
+      const saved = await read();
+      const lo = saved.objects.find(({ id }) => id === 'lo');
+      const edge = saved.relationships[0];
+      await post('draft', {
+        version: saved.draft.version,
+        id: 'lo',
+        baseRevision: lo?.revision,
+        value: { ...lo, description: 'Privat rättelse' },
+      });
+      await post('relationship', {
+        version: (await read()).draft.version,
+        id: edge.id,
+        baseRevision: edge.revision,
+        value: { ...edge, sourceId: 'music', targetId: 'lo' },
+      });
+      await page.addInitScript((value) => localStorage.setItem('skyttel-theme', value), theme);
+      await page.goto(app.origin);
+      const legend = page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true });
+      await expect(legend).toContainText('Grönt +');
+      await expect(legend).toContainText('Gul penna');
+      await expect(legend).toContainText('Rött ×');
+      await expect(legend).not.toContainText('markerat objekt');
+      for (const kind of ['added', 'changed', 'removed']) {
+        const colour = await legend
+          .locator(`.map-legend-symbol.${kind}`)
+          .evaluate((element) => getComputedStyle(element).color);
+        const representation = page
+          .locator(
+            kind === 'changed' ? '.spatial-node.changed .proposal-symbol' : `.spatial-edge.${kind}`,
+          )
+          .first();
+        await expect(representation).toBeVisible();
+        expect(colour).toBe(
+          await representation.evaluate((element) => getComputedStyle(element).color),
+        );
+        await expect(legend.locator(`.map-legend-symbol.${kind} .map-legend-line`)).toHaveCSS(
+          'border-top-style',
+          kind === 'removed' ? 'dashed' : 'solid',
+        );
+      }
+      const beforeCamera = await legend.innerText();
+      await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+      await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
+      await expect(legend).toHaveText(beforeCamera, { useInnerText: true });
+      await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+      await page.getByRole('button', { name: /^Välj samband: Molnmusik/ }).click();
+      await expect(legend).not.toContainText('markerat objekt');
+      await openWorkspace(page);
+      await page.getByLabel('Sök objekt', { exact: true }).fill('Kim Exempel');
+      await openMap(page);
+      await expect(legend).not.toContainText('föreslås');
+      await expect(legend).not.toContainText('tidigare samband');
+      await expect(legend).toContainText('Punkter');
+      await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
+      await expect(legend).toContainText('Ring: markerat objekt');
+      await openWorkspace(page);
+      await page.getByLabel('Sök objekt', { exact: true }).fill('Inga träffar');
+      await openMap(page);
+      await expect(legend).toHaveCount(0);
+      expect((await read()).draft.relationships?.[0].id).toBe(edge.id);
+      expect((await read()).draft.relationships?.[0].before?.sourceId).toBe('lo');
+    } finally {
+      await app.close();
+    }
+  });
+
+for (const recoverUnknown of [false, true])
+  test(`UTKAST-26: confirmed save toast expires while failed refresh remains recoverable without a conversation${recoverUnknown ? ' after an unknown result' : ''}`, async ({
+    page,
+  }) => {
+    const app = await createInstallation();
+    try {
+      await signIn(page.request, app.origin);
+      await createHousehold(page.request, app.origin);
+      await page.goto(app.origin);
+      await openWorkspace(page);
+      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page.getByLabel('Objektets namn').fill('Lo Exempel');
+      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      const mapReads = /\/map(?:\?.*)?$/;
+      await page.route(mapReads, (route) =>
+        route.request().method() === 'GET' ? route.abort() : route.continue(),
+      );
+      if (recoverUnknown)
+        await page.route('**/map/save', async (route) => {
+          await route.fetch();
+          await route.abort();
+        });
+      await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await openMap(page);
+      const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+      if (recoverUnknown) {
+        await expect(status).toContainText('Sparutfall okänt');
+        await expect(status).not.toContainText('Utkastet är sparat');
+        await status.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+      }
+      await expect(status).toContainText('Utkastet är sparat');
+      await expect(status).toContainText('kartan kunde inte hämtas');
+      await expect(status).not.toContainText('Sparutfall okänt');
+      await expect(status).not.toContainText('Utkastet är sparat', { timeout: 4500 });
+      await expect(status.getByRole('alert')).toContainText('kartan kunde inte hämtas');
+      await page.unroute(mapReads);
+      const refresh = status.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true });
+      await refresh.click();
+      await expect(status.getByRole('alert')).toHaveCount(0);
+      await expect(status).not.toContainText('Utkastet är sparat');
+      await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
+      const receipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
+      await expect(
+        page.getByRole('heading', { name: 'Mina sparförsök', exact: true }),
+      ).toBeFocused();
+      await receipts.getByText('Tidigare sparförsök', { exact: true }).click();
+      await expect(receipts).toContainText('Genomfört');
+    } finally {
+      await app.close();
+    }
+  });
+
 for (const width of [1440, 390, 320])
   test(`UTKAST-12: closed panels retain private proposals through an unknown save at ${width}px and verify the same receipt`, async ({
     page,
@@ -37,10 +196,13 @@ for (const width of [1440, 390, 320])
       await page.getByLabel('Objektets namn').fill('Familjeabonnemanget');
       await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
       await openMap(page);
-      const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-      const legend = page.getByRole('region', { name: 'Förslag i kartan', exact: true });
-      await expect(status).toContainText('1 förslag · privat utkast');
-      await expect(legend).toContainText('Föreslås läggas till');
+      const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+      const legend = page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true });
+      await expect(status).not.toContainText('privat utkast');
+      await expect(
+        page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
+      ).toHaveCount(0);
+      await expect(legend).toContainText('föreslås läggas till');
       const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
       await expect(tools.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(
         0,
@@ -56,7 +218,9 @@ for (const width of [1440, 390, 320])
         await held;
         await route.abort();
       });
-      await status.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await openWorkspace(page);
+      await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await openMap(page);
       await expect(status).toContainText('Väntar på sparkvitto');
       await expect(legend).toBeVisible();
       await expect(
@@ -65,13 +229,14 @@ for (const width of [1440, 390, 320])
       await expect.poll(() => receipt).toBeTruthy();
       release?.();
       await expect(status).toContainText('Sparutfall okänt');
+      await expect(status).not.toContainText('Utkastet är sparat');
       await expect(legend).toBeVisible();
       await expect(
         status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
-      ).toBeDisabled();
+      ).toHaveCount(0);
       await page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }).click();
-      await expect(status).toContainText('Sparat · kvitto bekräftat');
-      await expect(legend).toHaveCount(0);
+      await expect(status).toContainText('Utkastet är sparat');
+      await expect(legend).not.toContainText('föreslås');
       const saved: MapState = await (await page.request.get(path)).json();
       expect(saved.objects.map((object) => object.name)).toEqual(['Familjeabonnemanget']);
       expect(saved.draft.changes).toEqual([]);
@@ -80,7 +245,9 @@ for (const width of [1440, 390, 320])
       expect(operations).toHaveLength(1);
       expect(operations[0].operationId).toBe(receipt?.operationId);
       expect(operations[0].receipt).toEqual(receipt);
-      await expect(status).toContainText('Sparat · kvitto bekräftat');
+      await expect(status).not.toContainText('Utkastet är sparat', { timeout: 4500 });
+      await page.reload();
+      await expect(status).not.toContainText('Utkastet är sparat');
     } finally {
       release?.();
       await installation.close();
@@ -184,8 +351,9 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await startConversationWithText(page);
     await page.getByLabel('Meddelande till Skyttel').fill('Lägg Molnmusik i utkastet.');
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
-    const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-    await expect(status).toContainText('2 förslag · privat utkast');
+    const status = page.getByRole('region', { name: 'Kartans status', exact: true });
+    const textFeedback = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
+    await expect(textFeedback).toContainText('2 förslag · privat utkast');
     await turnMicrophoneOn(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     const voiceId = [...live.channels.keys()].at(-1);
@@ -203,15 +371,13 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
       offset_ms: 100,
       delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
     });
-    await expect(status).toContainText('3 förslag · privat utkast');
+    await expect(textFeedback).toContainText('3 förslag · privat utkast');
     await page.getByLabel('Meddelande till Skyttel').fill('Oskickat samtalsmeddelande');
     await openSettings(page);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await openMap(page);
-    await expect(status).toContainText('3 förslag · privat utkast');
-    await expect(status).toContainText(
-      'Oskickad formulärtext finns kvar. Den ingår inte i utkastet.',
-    );
+    await expect(status).not.toContainText('privat utkast');
+    await expect(status).not.toContainText('Oskickad formulärtext');
     const memberPage = await member.newPage();
     await memberPage.goto(installation.origin);
     await openWorkspace(memberPage);
@@ -222,7 +388,8 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     expect(beforeMember.objects).toEqual([]);
     expect(beforeMember.relationships).toEqual([]);
     expect(beforeMember.draft.changes).toEqual([]);
-    await status.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await openWorkspace(page);
+    await page.getByRole('button', { name: /^Fortsätt:/ }).click();
     await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickad cykel');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Texten ska finnas kvar',
@@ -238,7 +405,9 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     });
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await openMap(page);
-    await expect(status).toContainText('4 förslag · privat utkast');
+    await expect(
+      page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
+    ).toContainText('föreslås läggas till');
     const draft = (await read()).draft;
     const held = new Promise<void>((resolve) => {
       release = resolve;
@@ -250,7 +419,9 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
       await held;
       await route.continue();
     });
-    await status.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await openMap(page);
     await expect.poll(() => waiting).toBe(true);
     await openConversationText(page);
     await expect(await openConversationDraft(page)).toContainText('Oskickad cykel', {
@@ -263,10 +434,10 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     expect(before.relationships).toEqual([]);
     expect(before.draft).toEqual(draft);
     release?.();
-    await expect(status).toContainText('Sparat · kvitto bekräftat');
-    await expect(page.getByRole('region', { name: 'Förslag i kartan', exact: true })).toHaveCount(
-      0,
-    );
+    await expect(status).toContainText('Utkastet är sparat');
+    await expect(
+      page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
+    ).not.toContainText('föreslås');
     const saved = await read();
     expect(saved.objects.map((object) => object.name).sort()).toEqual([
       'Lo Exempel',
@@ -337,17 +508,17 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
     await search.fill('Lo');
     release?.();
     await expect(page.getByRole('status')).toContainText('Sparat: Lo Exempel');
-    await expect(page.getByRole('region', { name: 'Förslag i kartan', exact: true })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
+    ).not.toContainText('föreslås');
     await expect(search).toBeFocused();
     await page.keyboard.type(' Exempel');
     await expect(search).toHaveValue('Lo Exempel');
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
     await expect(tools.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(0);
-    await expect(
-      page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
-    ).toContainText('Sparat · kvitto bekräftat');
+    await expect(page.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
+      'Utkastet är sparat',
+    );
     await expect(search).toBeFocused();
   } finally {
     release?.();
@@ -401,7 +572,7 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
       .fill('Förbered uppgiften och fråga vilket kort som avses.');
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
     await openMap(page);
-    const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
+    const status = page.getByRole('region', { name: 'Kartans status', exact: true });
     await openConversationText(page);
     await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Vilket kort avses?',
@@ -423,13 +594,16 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
     await expect.poll(() => calls).toBe(2);
     await openMap(page);
-    const save = status.getByRole('button', { name: 'Spara hela utkastet', exact: true });
+    await openWorkspace(page);
+    const save = page
+      .getByRole('region', { name: 'Hela mitt utkast', exact: true })
+      .getByRole('button', { name: 'Spara hela utkastet', exact: true });
     await expect(save).toBeEnabled();
     expect(calls).toBe(2);
     expect((await read()).objects).toEqual([]);
     expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
     await save.click();
-    await expect(status).toContainText('Sparat · kvitto bekräftat');
+    await expect(status).toContainText('Utkastet är sparat');
     const saved = await read();
     expect(saved.objects.map(({ name, description }) => ({ name, description }))).toEqual([
       { name: 'Lo Exempel', description: 'Förslag väntar på svar' },
@@ -493,7 +667,7 @@ for (const viewport of [
       const shared = await read();
       const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
       const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
-      const status = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
+      const status = page.locator('.workspace-context');
       const view = async (): Promise<PersonalView> =>
         (await page.request.get(`${path}/view`)).json();
       let version = 0;
@@ -522,7 +696,10 @@ for (const viewport of [
           await expect.poll(async () => (await view()).positions[0]?.version).toBe(++version);
         }
         expect(await read()).toEqual(shared);
-        const save = status.getByRole('button', { name: 'Spara hela utkastet', exact: true });
+        await openWorkspace(page);
+        const save = page
+          .getByRole('region', { name: 'Hela mitt utkast', exact: true })
+          .getByRole('button', { name: 'Spara hela utkastet', exact: true });
         await save.focus();
         await save.click({ trial: true });
         await expect(save).toBeFocused();

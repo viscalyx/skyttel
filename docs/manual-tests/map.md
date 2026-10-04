@@ -146,7 +146,8 @@ med “390px” eller “320px” och “dark”. Kör varje bredd i båda teman
    beskrivning och stäng panelen med **Stäng Familjemusik**. Stäng panelerna med
    kryssen.
 4. Använd tangentbordet för att aktivera **Red ut identiteter i utkastet**
-   i kartans **Utkastets återkoppling**. Aktivera **Red ut identiteten för Betalkonto**
+   under hushållets namn. Öppna **Utkast och historik**. Aktivera **Red ut
+   identiteten för Betalkonto**
    vid objektets förslag. Kontrollera fokus och beskrivning.
 5. Välj **Ospecificerat objekt** och **Lägg i mitt utkast**.
    Öppna Familjemusik igen och kontrollera dess oskickade text.

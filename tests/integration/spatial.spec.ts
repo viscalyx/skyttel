@@ -196,7 +196,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await expect(
       fullMap.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true }),
     ).toBeVisible();
-    await expect(fullMap.locator('.spatial-edge')).toHaveCount(0);
+    await expect(fullMap.locator('.spatial-edge')).toHaveCount(1);
     await expectVisibleDirection(fullMap);
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     await page.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
@@ -568,8 +568,7 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     }
     for (const label of overview) {
       expect(label.stroke).not.toBe('none');
-      if (label.distance > 100) expect(label.dash).not.toBe('none');
-      if (label.distance < 20) expect(label.dash).toBe('none');
+      expect(label.dash).toBe('1px, 4px');
     }
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     await expect
