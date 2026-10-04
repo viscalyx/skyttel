@@ -124,7 +124,9 @@ test('the text view shows empty conversation text, the message field and a colla
   const draftButton = textView.getByRole('button', { name: /^Visa utkastet/ });
   expect(draftButton.getAttribute('aria-expanded')).toBe('false');
   await userEvent.click(draftButton);
-  expect(textView.getByRole('region', { name: 'Utkastet' }).textContent).toBe('Utkastet är tomt.');
+  const draft = within(textView.getByRole('region', { name: 'Utkastet' }));
+  expect(draft.getByRole('heading', { name: 'Utkast' })).toBeDefined();
+  expect(draft.getByText('Utkastet är tomt.')).toBeDefined();
   for (const removed of [
     'Samtalskontroller',
     'Öppna samtalet',

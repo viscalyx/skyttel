@@ -57,7 +57,6 @@ export function ConversationWorkspace({
   notice,
 }: ConversationPresentation & { conversation: Conversation }) {
   const { session, needsAnswer } = conversation;
-  const feedbackInText = workVisible && textViewOpen;
   const [floatingSlot, setFloatingSlot] = useState<HTMLDivElement | null>(null);
   const floatingVoice = useRef<HTMLDivElement | null>(null);
   const attachFloatingSlot = useCallback((element: HTMLDivElement | null) => {
@@ -132,7 +131,7 @@ export function ConversationWorkspace({
         )
       ) : (
         <>
-          {!feedbackInText && feedback}
+          {feedback}
           <div className="assistant-layout" hidden={!workVisible}>
             {work && <div className="assistant-map-panel">{work}</div>}
             {inspector && (
@@ -158,7 +157,6 @@ export function ConversationWorkspace({
           draftContent={<ConversationDraft draft={visibleDraft} />}
           notice={notice}
         >
-          {feedbackInText && feedback}
           {!notice && conversation.error && <p role="alert">{conversation.error}</p>}
         </TextView>
       )}

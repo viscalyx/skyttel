@@ -434,6 +434,16 @@ export function HouseholdMap({
         card.style.setProperty('--notice-left', `${slot.left}px`);
         card.style.setProperty('--notice-top', `${slot.top}px`);
         card.style.setProperty('--notice-width', `${slot.width}px`);
+        // Use the actual conversation column, not the toolbar's height: the
+        // toolbar is vertical on a computer and can be taller than this view.
+        const column = workspace.current?.querySelector('.text-view-conversation');
+        const header = workspace.current?.querySelector('.text-view-header');
+        if (column && composer && header) {
+          const available =
+            composer.getBoundingClientRect().top -
+            Math.max(column.getBoundingClientRect().top, header.getBoundingClientRect().bottom);
+          card.style.setProperty('--notice-available-height', `${Math.max(46, available - 28)}px`);
+        }
         workspace.current?.style.setProperty('--notice-height', `${card.offsetHeight}px`);
       }
       if (composer)

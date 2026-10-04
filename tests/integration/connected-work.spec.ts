@@ -459,8 +459,8 @@ for (const mode of ['voice', 'text'] as const) {
       await message.fill('Spara hela utkastet nu.');
       await assistant.getByRole('button', { name: 'Skicka', exact: true }).click();
       await expect.poll(async () => (await history()).length).toBe(1);
-      await expect(page.getByRole('region', { name: 'Utkastets återkoppling' })).toContainText(
-        'Sparat · kvitto bekräftat',
+      await expect(assistant.getByRole('region', { name: 'Utkastets återkoppling' })).toHaveCount(
+        0,
       );
       await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
         'Utkastet är sparat',

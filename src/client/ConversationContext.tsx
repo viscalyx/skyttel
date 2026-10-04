@@ -9,7 +9,9 @@ export function ContextMeter({ percentage = 0 }: { percentage?: number }) {
         id={`${id}-meter`}
         min={0}
         max={100}
+        low={60}
         high={85}
+        optimum={0}
         value={percentage}
         aria-valuetext={`${percentage} procent`}
         aria-describedby={`${id}-description`}
@@ -31,12 +33,14 @@ export function ContextSymbol({ percentage }: { percentage: number }) {
       aria-label={`Kontexten är ${percentage} procent full`}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M3 17a9 9 0 0 1 18 0M12 17l5-7"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
+        <circle className="voice-context-ring" cx="12" cy="12" r="9" />
+        <circle
+          className="voice-context-fill"
+          cx="12"
+          cy="12"
+          r="9"
+          pathLength="100"
+          strokeDasharray={`${percentage} 100`}
         />
       </svg>
       <span aria-hidden="true">{percentage}%</span>

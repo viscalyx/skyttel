@@ -197,7 +197,7 @@ for (const width of [1280, 390])
       await page.getByRole('button', { name: 'Skicka', exact: true }).click();
       await expect.poll(() => Boolean(release)).toBe(true);
       await view(page).getByRole('button', { name: 'Stäng textvyn' }).click();
-      const marker = page.locator('.text-button-marker[data-status="working"] svg');
+      const marker = page.locator('.text-button-marker[data-status="working"]');
       await expect(marker).toHaveCSS('animation-name', 'none');
       const still = await marker.evaluate((element) => getComputedStyle(element).transform);
       await page.waitForTimeout(120);

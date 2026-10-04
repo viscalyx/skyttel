@@ -151,7 +151,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
   automatisk återkomst, bevarad text med stoppad sändning och mikrofon,
   hjälpmedel utan dubbel uppläsning, fokus och placering vid röstrutan
-  eller meddelandefältet på bred och smal skärm, verkligt registrerat
+  eller meddelandefältet med hela beskedet läsbart på bred och smal skärm,
+  verkligt registrerat
   kontrollfel samt mätt text- och symbolkontrast i båda teman. NOT-11 har
   en separat körbar mänsklig granskning av alla symbolformer och typfärger.
 - [Frågor och talade sparbesked](conversation-questions.md): identiteter,

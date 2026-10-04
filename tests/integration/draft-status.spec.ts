@@ -352,8 +352,8 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await page.getByLabel('Meddelande till Skyttel').fill('Lägg Molnmusik i utkastet.');
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
     const status = page.getByRole('region', { name: 'Kartans status', exact: true });
-    const textFeedback = page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
-    await expect(textFeedback).toContainText('2 förslag · privat utkast');
+    const draftToggle = page.getByRole('button', { name: /^Visa utkastet/ });
+    await expect(draftToggle).toHaveAccessibleName('Visa utkastet (2)');
     await turnMicrophoneOn(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     const voiceId = [...live.channels.keys()].at(-1);
@@ -371,7 +371,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
       offset_ms: 100,
       delegation: { id: crypto.randomUUID(), type: 'delegation', target: 'client' },
     });
-    await expect(textFeedback).toContainText('3 förslag · privat utkast');
+    await expect(draftToggle).toHaveAccessibleName('Visa utkastet (3)');
     await page.getByLabel('Meddelande till Skyttel').fill('Oskickat samtalsmeddelande');
     await openSettings(page);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();

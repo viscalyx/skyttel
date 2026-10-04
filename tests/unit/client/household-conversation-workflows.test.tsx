@@ -790,6 +790,7 @@ test('a known live manual save is not replayed by the conversation poll and keep
     }
     return response;
   };
+  await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   await waitFor(() => expect(operationId).not.toBe(''));
   await waitFor(() => expect(seenLiveOperation).toBe(true));

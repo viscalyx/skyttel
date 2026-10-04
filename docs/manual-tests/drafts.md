@@ -648,9 +648,10 @@ private draft and an atomic household save”.
    **Oskickad cykel**, skriv **Texten ska finnas kvar** i beskrivningen och
    lämna texten i formuläret.
 2. Välj **Skriv till Skyttel** och **Godkänn och starta**. Skriv
-   **Lägg Molnmusik i utkastet**. Kontrollera två privata förslag i statusen.
+   **Lägg Molnmusik i utkastet**. Kontrollera två privata förslag på
+   **Visa utkastet**.
 3. Välj **Prata med Skyttel** och säg **Lo använder Molnmusik**.
-   Kontrollera att sambandet ingår och att statusen visar tre privata
+   Kontrollera att sambandet ingår och att **Visa utkastet** visar tre privata
    förslag.
 4. Skriv ett oskickat samtalsmeddelande. Besök Inställningar och återgå till
    kartan. Stäng panelerna med kryssen. Kartan ska inte visa påminnelse om

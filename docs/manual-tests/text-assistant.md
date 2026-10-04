@@ -226,18 +226,19 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 2. Kontrollera att Lo blir valt och synligt i kartan och att detaljpanelen
    visar **Lo Exempel** samt **Påhittad uppgift**.
    Nästa `held` ska innehålla `displayed: true`. Svara
-   `reply NUMMER Markerat!` och kontrollera markeringsstatusen.
+   `reply NUMMER Markerat!` och kontrollera det faktiska urvalet i kartan.
 3. Öppna Lo och skriv **Osänd uppgift** i beskrivningen. Skicka
    **Markera Lo igen** och upprepa visningsanropet.
 4. Kontrollera `displayed: false`, släpp sluttexten **Markerat!** igen
-   och kontrollera både statusen och den oskickade texten.
+   och kontrollera både urvalet och den oskickade texten.
 
 **Förväntat resultat:**
 
-- Första markeringsstatusen kommer efter faktisk webbläsarvisning.
+- Första markeringen motsvarar faktisk webbläsarvisning och
+  `displayed: true`.
 - Det andra försöket ger ingen ny bekräftad markering. Oskickad text
   finns kvar. **Markerat!** visas som obekräftad samtalstext, skild från
-  Skyttels status. Modellens text ensam ändrar inte den betrodda statusen.
+  det faktiska urvalet. Modellens text ensam ändrar inte kartans urval.
 
 ### TEXT-06: obekräftad samtalstext skiljs från sparande och markering
 
@@ -264,8 +265,8 @@ i kartan innan du börjar. Inget sparande är genomfört.
 
 2. Kontrollera att svaret står i samtalstexten och att textvyn inte har
    något förbehåll om att samtalstexten kan innehålla fel. Kontrollera det
-   osparade Lo-förslaget och att inget nytt spar- eller markeringsbesked
-   visas i statusen.
+   osparade Lo-förslaget genom antalet på **Visa utkastet** och att inget
+   nytt kvitto eller urval har skapats.
 3. Skicka samma fråga på nytt för varje svar nedan. Använd det nya
    `held`-numret och släpp ett svar i taget:
 
@@ -372,7 +373,7 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    **Påhittad uppgift**, utan att du behöver rulla sidan för att hitta den.
    Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
    `reply NUMMER Här är urvalet.`, öppna textvyn med **Skriv till Skyttel**
-   om den är stängd och kontrollera **Markerat i kartan**.
+   om den är stängd och kontrollera att Lo fortfarande är markerad i kartan.
 3. Öppna **Navigera** och panorera tills objekten inte syns.
    Öppna textvyn och skriv **Visa sambandet mellan Lo och Molnmusik**.
    Kopiera sambandets

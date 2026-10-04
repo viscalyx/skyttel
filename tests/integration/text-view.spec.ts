@@ -76,6 +76,9 @@ test('TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avslut
     await expect(textView(page)).toHaveCount(0);
     await giveConversationConsent(page);
     await expect(textView(page)).toBeVisible();
+    await expect(
+      textView(page).getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
+    ).toHaveCount(0);
     await expect(tool).toHaveAttribute('aria-expanded', 'true');
 
     // On a computer: a side field of 400 px at the right edge, under the voice box's corner.

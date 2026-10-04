@@ -66,6 +66,9 @@ avsluta samtalet”.
 **Förväntat resultat:**
 
 - Textvyn står vid högerkanten, och kartan syns bredvid.
+- Kontextmätaren står under samtalsrubriken. Ingen separat utkaststatus,
+  kvittoruta eller lista över senaste ändringar ligger i samtalskolumnen.
+  Kvittot nås genom **Utkast och historik**.
 - **Skicka** står i höjd med fältets mitt. Efter skickandet, också med
   ett klick på **Skicka**, har meddelandefältet kvar fokus.
 - Meddelandefältet **Meddelande till Skyttel** har fokus när textvyn

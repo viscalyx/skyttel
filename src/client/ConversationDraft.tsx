@@ -13,7 +13,13 @@ function symbol(before: unknown, after: unknown) {
   const action = after ? (before ? 'Ändra' : 'Lägg till') : 'Ta bort';
   return (
     <>
-      <span aria-hidden="true">{after ? (before ? '✎' : '+') : '×'}</span>
+      <span
+        className="conversation-draft-symbol"
+        data-action={after ? (before ? 'changed' : 'added') : 'removed'}
+        aria-hidden="true"
+      >
+        {after ? (before ? '✎' : '+') : '×'}
+      </span>
       <span className="visually-hidden">{action}</span>
     </>
   );

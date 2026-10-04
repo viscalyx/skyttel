@@ -1,12 +1,12 @@
 .conversation-notice {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 24px 1fr auto;
+  grid-template-columns: 32px 1fr auto;
   align-items: start;
   gap: 10px;
-  width: 350px;
-  max-width: calc(100vw - 112px);
-  padding: 12px;
+  width: 340px;
+  max-width: calc(100vw - 136px);
+  padding: 12px 12px 12px 14px;
   border: 1px solid var(--space-control);
   border-radius: 14px;
   background: var(--space-surface);
@@ -15,13 +15,21 @@
   font-size: 13px;
   line-height: 1.4;
 }
-.conversation-notice > svg {
-  width: 24px;
-  height: 24px;
-  color: var(--space-accent);
+.conversation-notice-symbol {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--proposal-removed);
+  background: color-mix(in srgb, currentColor, var(--space-surface) 86%);
 }
-.conversation-notice[data-kind="event"] > svg {
-  color: var(--space-text);
+.conversation-notice .conversation-notice-symbol svg {
+  width: 20px;
+  height: 20px;
+}
+.conversation-notice[data-kind="event"] .conversation-notice-symbol {
+  color: var(--proposal-changed);
 }
 .conversation-notice p {
   margin: 0;
@@ -36,19 +44,45 @@
 .household-map.workspace-shell .conversation-notice-content > button {
   width: auto;
   max-width: 100%;
-  min-height: 44px;
+  min-height: 36px;
+  padding: 4px 12px;
+  border-color: var(--space-accent);
+  font-size: 13px;
 }
 .household-map.workspace-shell .conversation-notice-close {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 44px;
-  min-height: 44px;
+  width: 28px;
+  min-width: 0;
+  height: 28px;
+  min-height: 0;
   padding: 0;
-  margin: -10px -10px 0 0;
-  border: 0;
-  background: transparent;
+  border-color: transparent;
+  border-radius: 50%;
+  background: var(--space-surface);
   color: var(--space-text);
-  font-size: 24px;
+}
+.conversation-notice .conversation-notice-close svg {
+  width: 16px;
+  height: 16px;
+}
+[data-mobile="true"] .conversation-notice-close::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+.household-map.workspace-shell:is([data-mobile="true"], [data-narrow="true"])
+  .conversation-notice-content
+  > button {
+  position: relative;
+}
+.household-map.workspace-shell:is([data-mobile="true"], [data-narrow="true"])
+  .conversation-notice-content
+  > button::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
 }
 .notice-announcement {
   position: absolute;
@@ -60,19 +94,21 @@
   white-space: nowrap;
 }
 .conversation-corner {
-  gap: 8px;
+  gap: 12px;
 }
 .conversation-notice[data-inline="true"] {
   position: fixed;
   left: var(--notice-left);
   top: var(--notice-top);
   width: var(--notice-width);
-  max-height: calc(var(--work-height, 100dvh) - var(--tools-height, 100px) - 100px);
+  max-height: var(--notice-available-height);
   overflow-y: auto;
   flex: none;
   max-width: none;
   border-width: 1px 0 0;
   border-radius: 0;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--proposal-changed), var(--space-surface) 88%);
   box-shadow: none;
 }
 .text-view-notice-slot {
@@ -92,7 +128,9 @@
   transform: translateY(-100%);
 }
 .household-map.workspace-shell .workspace-tools button[data-unavailable="true"] {
-  opacity: 0.6;
+  opacity: 0.45;
+  filter: grayscale(1);
+  cursor: default;
 }
 @media (min-width: 701px) {
   .household-map.workspace-shell:not(.workspace-open):has(.conversation-notice)

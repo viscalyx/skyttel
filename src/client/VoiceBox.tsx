@@ -211,10 +211,10 @@ export function VoiceBox({
           {status.id === 'saved' && (
             <svg className="voice-saved" viewBox="0 0 24 24" aria-hidden="true">
               <path
-                d="m5 12 4 4L19 6"
+                d="m5 12 5 5 9-10"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="3"
+                strokeWidth="2.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />

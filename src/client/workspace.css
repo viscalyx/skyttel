@@ -128,9 +128,13 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+.household-map.workspace-shell .workspace-tools .workspace-talk[aria-pressed="false"] {
+  border-color: var(--space-control);
+  background: var(--space-surface);
+  color: var(--space-text);
+}
 .workspace-talk[data-held="true"] {
-  outline: 3px solid var(--space-accent);
-  outline-offset: 3px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--space-accent), transparent 55%);
 }
 .household-map.workspace-shell .workspace-tools .workspace-talk[aria-pressed="true"] {
   background: var(--space-accent);
@@ -705,50 +709,41 @@ footer[hidden] {
 }
 .text-button-marker {
   position: absolute;
-  right: -3px;
-  top: -3px;
+  right: -4px;
+  top: -4px;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--space-surface);
-  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  padding: 0 4px;
+  border-radius: 9px;
   background: var(--space-accent);
-  color: var(--space-bg);
-  font-size: 16px;
+  color: var(--space-surface);
+  box-shadow: 0 0 0 2px var(--space-surface);
+  font-size: 12px;
   font-weight: 800;
   font-style: normal;
-  line-height: 1;
-  letter-spacing: -1px;
+  line-height: 18px;
   pointer-events: none;
 }
 .text-button-marker[data-status="working"] {
-  left: 7px;
-  top: 7px;
-  right: auto;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--space-surface);
-  color: var(--space-accent);
-}
-.workspace-tools .text-button-marker svg {
-  width: 28px;
-  height: 28px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3;
-  stroke-linecap: round;
-  animation: text-button-work 1s linear infinite;
+  right: 5px;
+  top: 5px;
+  min-width: 0;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 50%;
+  animation: text-button-work 1.2s ease-in-out infinite;
 }
 @keyframes text-button-work {
-  to {
-    transform: rotate(360deg);
+  50% {
+    opacity: 0.35;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .workspace-tools .text-button-marker svg {
+  .text-button-marker[data-status="working"] {
     animation: none;
   }
 }

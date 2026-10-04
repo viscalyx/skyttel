@@ -113,52 +113,59 @@ export function TextView({
         }
       }}
     >
-      <div className="text-view-header">
-        <header className="text-view-heading">
-          <h2 id={`${id}-title`} ref={heading} tabIndex={-1}>
-            Skriv till Skyttel
-          </h2>
-          <button
-            type="button"
-            className="text-view-new"
-            disabled={!session}
-            onClick={() => void conversation.newConversation()}
-          >
-            Nytt samtal
-          </button>
-          <button
-            type="button"
-            className="text-view-close"
-            aria-label="Stäng textvyn"
-            title="Stäng textvyn"
-            onClick={onClose}
-          >
-            <WorkspaceIcon name="close" />
-          </button>
-        </header>
-        <ContextMeter percentage={session?.contextPercentage} />
-        {widthPreferences?.widthFeedback &&
-          !widthPreferences.widthFeedback.includes('återställda') && (
-            <p role="status">{widthPreferences.widthFeedback}</p>
-          )}
-        {onToggleDraft && (
-          <button
-            type="button"
-            className="text-view-draft-toggle"
-            aria-expanded={draftOpen}
-            aria-label={`${draftOpen ? 'Dölj utkastet' : 'Visa utkastet'} (${draftCount})`}
-            aria-controls={`${id}-draft`}
-            onClick={onToggleDraft}
-          >
-            <span aria-hidden="true" className="draft-direction">
-              {draftOpen ? '›' : '‹'}
-            </span>
-            {short ? 'Utkast' : draftOpen ? 'Dölj utkastet' : 'Visa utkastet'}{' '}
-            <span>({draftCount})</span>
-          </button>
-        )}
-      </div>
       <div className="text-view-columns">
+        <div className="text-view-header">
+          <header className="text-view-heading">
+            <div className="text-view-title">
+              <h2 id={`${id}-title`} ref={heading} tabIndex={-1}>
+                Skriv till Skyttel
+              </h2>
+              <ContextMeter percentage={session?.contextPercentage} />
+            </div>
+            <button
+              type="button"
+              className="text-view-new"
+              disabled={!session}
+              onClick={() => void conversation.newConversation()}
+            >
+              Nytt samtal
+            </button>
+            <button
+              type="button"
+              className="text-view-close"
+              aria-label="Stäng textvyn"
+              title="Stäng textvyn"
+              onClick={onClose}
+            >
+              <WorkspaceIcon name="close" />
+            </button>
+          </header>
+          {widthPreferences?.widthFeedback &&
+            !widthPreferences.widthFeedback.includes('återställda') && (
+              <p role="status">{widthPreferences.widthFeedback}</p>
+            )}
+          {onToggleDraft && (
+            <button
+              type="button"
+              className="text-view-draft-toggle"
+              aria-expanded={draftOpen}
+              aria-label={`${draftOpen ? 'Dölj utkastet' : 'Visa utkastet'} (${draftCount})`}
+              aria-controls={`${id}-draft`}
+              onClick={onToggleDraft}
+            >
+              <span aria-hidden="true" className="draft-direction">
+                {draftOpen ? '▸' : '◂'}
+              </span>
+              <WorkspaceIcon name="draft" />
+              <span>{short ? 'Utkast' : draftOpen ? 'Dölj utkastet' : 'Visa utkastet'}</span>
+              <span className="text-view-draft-count">
+                {short
+                  ? draftCount
+                  : `${draftCount} ${draftCount === 1 ? 'osparad ändring' : 'osparade ändringar'}`}
+              </span>
+            </button>
+          )}
+        </div>
         {computer && widthPreferences?.known && draftOpen && (
           <ConversationWidthHandle
             name="Ändra utkastlistans bredd"
@@ -179,10 +186,11 @@ export function TextView({
           aria-label="Utkastet"
           hidden={!draftOpen}
         >
+          <h3>Utkast</h3>
           {draftContent}
         </section>
-        <div id={`${id}-conversation`} className="text-view-conversation">
-          {computer && widthPreferences?.known && (
+        {computer && widthPreferences?.known && (
+          <div className="text-view-text-handle">
             <ConversationWidthHandle
               name="Ändra samtalstextens bredd"
               value={widths.textWidth}
@@ -195,7 +203,9 @@ export function TextView({
               }}
               onCancel={widthPreferences.cancelPreview}
             />
-          )}
+          </div>
+        )}
+        <div id={`${id}-conversation`} className="text-view-conversation">
           <div
             ref={body}
             className="text-view-body"

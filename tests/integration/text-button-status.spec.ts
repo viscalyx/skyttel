@@ -40,11 +40,18 @@ test('TEXTBRICKA-01: stängd textvy visar arbete och ett oläst svar utan att fl
     const before = await bounds(tools);
     await expect(button).toHaveAccessibleName('Skriv till Skyttel. Skyttel arbetar.');
     await expect(button.locator('.text-button-marker')).toHaveAttribute('data-status', 'working');
+    const dot = await bounds(button.locator('.text-button-marker'));
+    const icon = await bounds(button.locator('svg'));
+    expect(dot.width).toBe(10);
+    expect(dot.height).toBe(10);
+    expect(dot.y).toBeLessThan(icon.y);
     await expect(page.locator('.text-button-announcement')).toHaveText('');
     await expect(button).toBeFocused();
     release();
     await expect(button).toHaveAccessibleName('Skriv till Skyttel. Skyttel har svarat.');
     await expect(button.locator('.text-button-marker')).toHaveAttribute('data-status', 'answered');
+    expect((await bounds(button.locator('.text-button-marker'))).height).toBe(18);
+    await expect(button.locator('.text-button-marker')).toHaveCSS('font-size', '12px');
     await expect(page.locator('.text-button-announcement')).toHaveText('Skyttel har svarat');
     await expect(page.locator('.text-button-announcement')).toHaveAttribute('aria-live', 'polite');
     expect(await bounds(tools)).toEqual(before);
@@ -240,7 +247,7 @@ for (const width of [390, 1280])
         const target = await bounds(button);
         expect(target.width).toBeGreaterThanOrEqual(44);
         expect(target.height).toBeGreaterThanOrEqual(44);
-        const spinner = button.locator('.text-button-marker svg');
+        const spinner = button.locator('.text-button-marker');
         expect(await spinner.evaluate((element) => getComputedStyle(element).animationName)).toBe(
           'none',
         );

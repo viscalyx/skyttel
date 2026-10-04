@@ -324,8 +324,8 @@ kommentarspaket är inte bevis för hört tal.
    reply REQUEST Klart. Ändringarna är nu lagrade i hushållets karta.
    ```
 
-2. Kontrollera svaret i samtalstexten, kvarvarande Lo-förslag och status
-   utan bekräftat sparande eller ny markering.
+2. Kontrollera svaret i samtalstexten, kvarvarande Lo-förslag genom antalet
+   på **Visa utkastet**, samt avsaknad av nytt kvitto och ny markering.
 3. Kör `sessions`. Läs det senaste paketet med typen
    `session.commentary.append`. Beskedet **Utkast: 1 osparat förslag**
    ska beskriva det faktiska utkastet utan att bekräfta något sparande
@@ -352,7 +352,7 @@ kommentarspaket är inte bevis för hört tal.
 
 7. Nästa `held.lastToolResult` ska visa `displayed:true`. Släpp med
    `reply REQUEST Vem betalar?`. Kräv verkligt markerad Lo, bekräftad
-   markeringsstatus och kvarvarande fråga som obekräftad samtalstext.
+   visning och kvarvarande fråga som obekräftad samtalstext.
    Kontrollera samma uppdelning i det senaste kommentarspaketet.
 8. Kör `user Spara hela utkastet nu.` och `delegate`. Läs `version` och
    `contentVersion` från det nya `held.draft`. Ersätt markörerna och kör:

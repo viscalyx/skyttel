@@ -78,9 +78,9 @@ for (const viewport of [
         await page.goto(installation.origin);
         await startConversationWithText(page);
         const panel = page.getByRole('region', { name: 'Arbetsyta', exact: true });
-        const selectionStatus = page
-          .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
-          .getByRole('status');
+        const textFeedback = page
+          .getByRole('region', { name: 'Skriv till Skyttel', exact: true })
+          .getByRole('region', { name: 'Utkastets återkoppling', exact: true });
         const acknowledgements: {
           displayed: boolean;
           kind: string;
@@ -218,7 +218,11 @@ for (const viewport of [
           'Påhittad uppgift',
         );
         await openConversationText(page);
-        await expect(selectionStatus).toHaveText('Markerat i kartan.');
+        await expect(textFeedback).toHaveCount(0);
+        await expect(page.locator('.spatial-node[data-object-id="lo"]')).toHaveAttribute(
+          'aria-pressed',
+          'true',
+        );
         await openMap(page);
         await page.getByRole('button', { name: 'Navigera', exact: true }).click();
         for (let index = 0; index < 16; index++)
@@ -240,12 +244,15 @@ for (const viewport of [
         await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('music');
         await page.getByLabel('Till objekt', { exact: true }).selectOption('lo');
         await openConversationText(page);
-        await expect(selectionStatus).toHaveText('Markerat i kartan.');
+        await expect(textFeedback).toHaveCount(0);
+        await expect(
+          page.locator('.spatial-edge.selected[data-layout-id="relationship-uses"]'),
+        ).toHaveCount(1);
         await send('Visa Lo igen.');
         await expect.poll(() => acknowledgements.length).toBe(3);
         expect(acknowledgements[2].displayed).toBe(false);
         await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('lo');
-        await expect(selectionStatus).not.toContainText('Markerat');
+        await expect(textFeedback).toHaveCount(0);
       } finally {
         await installation.close();
       }

@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, openSettings, signIn } from '../support/client.js';
+import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
 import {
   chooseConversationVoice,
   consentBox,
@@ -624,6 +624,23 @@ for (const [name, width, height, place] of [
         return box;
       };
       const first = await check();
+      if (name === 'dator') {
+        for (const control of ['Lista', 'Utkast och historik']) {
+          await (await utilityButton(page, control)).click();
+          await check();
+          await openConversationText(page);
+          await check();
+          const draftToggle = panel(page).getByRole('button', {
+            name: /^(Visa|Dölj) utkastet/,
+          });
+          if ((await draftToggle.getAttribute('aria-expanded')) === 'false')
+            await draftToggle.click();
+          await check();
+          await panel(page).getByRole('button', { name: 'Stäng textvyn' }).click();
+          await page.getByRole('button', { name: 'Stäng Lista och utkast', exact: true }).click();
+          await check();
+        }
+      }
 
       // A longer status word and the stop icon make the box wider. It stays in its place.
       speak(live, 'Beskriv utkastet.');

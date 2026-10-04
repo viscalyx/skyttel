@@ -95,7 +95,19 @@ test('TEXTBREDD-01: handtagen ändrar bredderna var för sig utan att avbryta sa
   const { app, path, read } = await arrange(page);
   try {
     await startConversationWithText(page);
+    const gripOffset = async (control: Locator) =>
+      control.evaluate((element) => {
+        const panel = element.closest('.text-view');
+        if (!panel) throw new Error('Missing text view');
+        return (
+          element.getBoundingClientRect().left +
+          Number.parseFloat(getComputedStyle(element, '::after').left) -
+          panel.getBoundingClientRect().left
+        );
+      });
+    expect(await gripOffset(handle(page, 'text'))).toBeLessThanOrEqual(4);
     await openDraft(page);
+    expect(await gripOffset(handle(page, 'draft'))).toBeLessThanOrEqual(4);
     await value(handle(page, 'text'), 400);
     await value(handle(page, 'draft'), 340);
     await renderedWidths(page, 400, 340);

@@ -74,10 +74,22 @@ test('KONTEXT-04: textmätaren följer modellens mätning och nytt samtal tömme
     await expect(meter(page)).toHaveAccessibleDescription(description);
     const placement = await meter(page).evaluate((element) => ({
       y: element.getBoundingClientRect().y,
+      width: element.getBoundingClientRect().width,
+      bottom: element.getBoundingClientRect().bottom,
+      titleBottom:
+        document.querySelector('.text-view-heading h2')?.getBoundingClientRect().bottom ?? 0,
       headingBottom:
         document.querySelector('.text-view-heading')?.getBoundingClientRect().bottom ?? 0,
     }));
-    expect(placement.y).toBeGreaterThanOrEqual(placement.headingBottom);
+    expect(placement.y).toBeGreaterThanOrEqual(placement.titleBottom);
+    expect(placement.bottom).toBeLessThanOrEqual(placement.headingBottom);
+    expect(placement.width).toBe(64);
+    for (const percentage of [70, 90]) {
+      setTextPercent(percentage);
+      await send(page, `Beskriv kontexten vid ${percentage} procent.`);
+      await expect(meter(page)).toHaveAttribute('value', String(percentage));
+      await expect(meter(page)).toHaveAttribute('aria-valuetext', `${percentage} procent`);
+    }
     setTextPercent(84);
     await send(page, 'Beskriv vad du kan göra.');
     await expect(meter(page)).toHaveAttribute('value', '84');

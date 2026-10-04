@@ -132,6 +132,9 @@ försvinner när kontakten återkommer”.
 - Med textvyn öppen finns notisen bara som en rad ovanför meddelandefältet.
   Med textvyn stängd finns den bara vid röstrutans plats. Vybytet läser
   inte upp samma besked igen.
+- Hela beskedet och dess kontroller ryms ovanför meddelandefältet.
+  Samtalstexten har fortfarande användbart läsutrymme på dator, telefon,
+  bred pekskärm och i korta fönster.
 - Återkomstbeskedet läses i tur. Ingen notis finns kvar efter återkomsten.
 
 ## Ordning, stängning och fokus
@@ -322,10 +325,12 @@ light tema” och samma titel med “dark tema”.
 **Förväntat resultat:**
 
 - Hindret har en överstruken cirkel; mikrofonhändelsen har en överstruken
-  mikrofon. Symbolerna står till vänster om texten och har olika färg.
+  mikrofon. Symbolerna står i tonade cirklar till vänster om texten.
+  Hinder är röda och händelser gulbruna.
 - Symbolerna har minst 3:1 kontrast, och texten minst 4,5:1, i båda teman.
   Automationen mäter de faktiskt beräknade färgerna på de ogenomskinliga
-  korten. Den bedömer inte färgseende eller fysisk bildskärm.
+  korten och symbolernas egna tonade bakgrunder. Den bedömer inte
+  färgseende eller fysisk bildskärm.
 - Symbolen är dold för hjälpmedel; text och namngivna kontroller bär
   beskedet. Båda fallen är stängbara när inget samtal pågår.
 
