@@ -33,6 +33,9 @@ export type ConversationPresentation = {
   active?: boolean;
   /** The text view is open. It shows the conversation text and the message field. */
   textViewOpen?: boolean;
+  textViewHidden?: boolean;
+  textFocusRequest?: number;
+  onDraftOpenChange?: (open: boolean) => void;
   onCloseTextView?: () => void;
   householdId: string;
   notice?: ReactNode;
@@ -63,6 +66,9 @@ export function ConversationWorkspace({
   inspector,
   renderWorkspace,
   textViewOpen = false,
+  textViewHidden = false,
+  textFocusRequest,
+  onDraftOpenChange,
   onCloseTextView,
   draftFeedback,
   notice,
@@ -90,6 +96,7 @@ export function ConversationWorkspace({
   const visibleDraft = draft && (!review || draft.version >= review.version) ? draft : review;
   const count = draftCount(visibleDraft);
   const [draftOpen, setDraftOpen] = useState(false);
+  useLayoutEffect(() => onDraftOpenChange?.(draftOpen), [draftOpen, onDraftOpenChange]);
   const manuallyToggled = useRef(false);
   const resetRow = conversation.transcript[0]?.id.startsWith('new-')
     ? conversation.transcript[0].id
@@ -152,7 +159,8 @@ export function ConversationWorkspace({
         <TextView
           conversation={conversation}
           widthPreferences={widthPreferences}
-          hidden={!workVisible}
+          hidden={!workVisible || textViewHidden}
+          focusRequest={textFocusRequest}
           onClose={() => onCloseTextView?.()}
           draftOpen={draftOpen}
           draftCount={count}

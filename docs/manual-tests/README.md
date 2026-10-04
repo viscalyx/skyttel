@@ -93,7 +93,9 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   återgång med fokus, synligt tangentbordsfokus i båda riktningar, läsbara
   teman och typdefinitioner i kartans samlade utkast.
 
-- [Fria paneler](workspace-panels.md): flera objekt och samtal, placering,
+- [Fria paneler](workspace-panels.md): flera objekt och samtal, fri placering
+  över legenden inom skärmens kanter, skydd för synliga samtalsytor och
+  växling mellan hela vyer vid platsbrist,
   mobilnavigering genom Lista med synligt återgångsfokus, återöppning av nya
   objekt,
   bevarade samband och typer samt fortsatt sökning medan ett förslag skickas.

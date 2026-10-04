@@ -85,6 +85,15 @@ utan att kasta oskickad text. Stäng panelerna för att visa hela kartan.
 Nya objekt som ännu inte skickats till utkastet kan öppnas igen med
 **Fortsätt** under **Påbörjade objekt** i Lista.
 Placeringar och oskickad text bevaras vid skärmbyte under samma session.
+Dragbara fönster kan täcka legenden och kartans kontroller, men hela
+fönstret stannar inom skärmen. Synlig textvy och röstruta går inte att
+täcka. Ett fönster som står i vägen flyttas när samtalsytan öppnas eller
+växer och behåller sedan sin nya plats.
+
+När formulären och textvyn inte får plats samtidigt kan du växla med
+**Lista**, **Visa detaljer**, **Navigera** och **Skriv till Skyttel**.
+Vyerna behåller sina bredder och oskickad text. Ett pågående röstsamtal
+fortsätter även när du visar formulären.
 Läs om [navigering och personlig vy](spatial-map.md) för att söka,
 fokusera på ett objekt och ordna placeringarna så att de passar dig.
 

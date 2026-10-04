@@ -11,6 +11,13 @@ import {
   useState,
 } from 'react';
 import type { Position } from '../shared/personal-view.js';
+import {
+  clampWindow,
+  type FloatingArea,
+  fitWindow,
+  measureFloatingArea,
+  moveWindow,
+} from './floating-windows.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './map-navigation.css';
 
@@ -45,6 +52,8 @@ type Drag = {
 
 export function MapNavigation({
   open,
+  area,
+  focusOnOpen = true,
   openWork,
   onClose,
   onNavigate,
@@ -55,6 +64,8 @@ export function MapNavigation({
   children,
 }: {
   open: boolean;
+  area?: FloatingArea;
+  focusOnOpen?: boolean;
   openWork?: readonly string[];
   onClose: () => void;
   onNavigate: (action: (typeof cameraButtons)[number][0]) => void;
@@ -70,20 +81,28 @@ export function MapNavigation({
   const drag = useRef<Drag | null>(null);
   const [mini, setMini] = useState(false);
   const [position, setPosition] = useState<WindowPosition | null>(null);
+  const preferredPosition = useRef<WindowPosition | null>(null);
   const [size, setSize] = useState({
     width: 350,
+    height: 124,
     viewportWidth: window.innerWidth,
     viewportHeight: window.innerHeight,
   });
   const [dragging, setDragging] = useState(false);
   const [status, setStatus] = useState('');
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reveal requests focus Navigation; a resize or focus within an already open window must not move focus.
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open || !focusOnOpen) return;
     handle.current?.focus({ preventScroll: true });
   }, [open]);
   useLayoutEffect(() => {
-    if (open && openWork?.length) setPosition(null);
+    if (
+      open &&
+      openWork?.length &&
+      window.matchMedia('(max-width: 700px), (max-height: 600px)').matches
+    )
+      setPosition(null);
   }, [open, openWork]);
   useLayoutEffect(() => {
     const element = panel.current;
@@ -92,33 +111,69 @@ export function MapNavigation({
       setSize((previous) => {
         const next = {
           width: element.offsetWidth,
+          height: element.offsetHeight,
           viewportWidth: window.innerWidth,
           viewportHeight: window.innerHeight,
         };
         return previous.width === next.width &&
+          previous.height === next.height &&
           previous.viewportWidth === next.viewportWidth &&
           previous.viewportHeight === next.viewportHeight
           ? previous
           : next;
       });
-    measure();
-    const resize = () => {
+    const fitPanel = () => {
       measure();
-      if (openWork?.length) setPosition(null);
+      if (
+        !area ||
+        !element.offsetWidth ||
+        !element.offsetHeight ||
+        getComputedStyle(element).position !== 'fixed'
+      )
+        return;
+      const box = element.getBoundingClientRect();
+      const proposed = preferredPosition.current ?? { x: box.x, y: box.y };
+      const dimensions = { width: element.offsetWidth, height: element.offsetHeight };
+      // Layout effects run before observer notifications. Read this commit's
+      // surfaces so switching views cannot relocate against a hidden text view.
+      const currentArea = measureFloatingArea(element);
+      const next = fitWindow(proposed, dimensions, currentArea);
+      const viewportOnly = clampWindow(proposed, dimensions, currentArea.viewport);
+      if (next.x !== viewportOnly.x || next.y !== viewportOnly.y) preferredPosition.current = next;
+      if (preferredPosition.current || next.x !== box.x || next.y !== box.y) {
+        setPosition((previous) =>
+          previous?.x === next.x && previous.y === next.y ? previous : next,
+        );
+      }
     };
-    const observer = new ResizeObserver(measure);
+    fitPanel();
+    const resize = () => {
+      // The parent first decides whether a resized screen switches views.
+      // Refitting belongs to the committed layout/observer, not this event's
+      // previous visibility state.
+      measure();
+      if (
+        openWork?.length &&
+        window.matchMedia('(max-width: 700px), (max-height: 600px)').matches
+      ) {
+        preferredPosition.current = null;
+        setPosition(null);
+      }
+    };
+    const observer = new ResizeObserver(fitPanel);
     observer.observe(element);
     window.addEventListener('resize', resize);
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', resize);
     };
-  }, [open, openWork]);
+  }, [open, openWork, area]);
   const cancelDrag = useCallback(() => {
     const current = drag.current;
     if (!current) return;
     drag.current = null;
     setPosition(current.preferred);
+    preferredPosition.current = current.preferred;
     setDragging(false);
     setStatus('Flyttningen av navigeringsfönstret avbröts.');
     if (handle.current?.hasPointerCapture(current.pointer))
@@ -129,13 +184,26 @@ export function MapNavigation({
     return () => window.removeEventListener('blur', cancelDrag);
   }, [cancelDrag]);
   function clamp(value: WindowPosition) {
+    if (area && panel.current && getComputedStyle(panel.current).position === 'fixed') {
+      return clampWindow(value, size, measureFloatingArea(panel.current).viewport);
+    }
     return {
       x: Math.round(Math.max(12, Math.min(value.x, size.viewportWidth - size.width - 12))),
       y: Math.round(Math.max(12, Math.min(value.y, size.viewportHeight - 124))),
     };
   }
   function move(value: WindowPosition) {
-    const next = clamp(value);
+    const box = panel.current?.getBoundingClientRect();
+    const next =
+      area && box && getComputedStyle(panel.current as HTMLElement).position === 'fixed'
+        ? moveWindow(
+            { x: box.x, y: box.y },
+            value,
+            size,
+            measureFloatingArea(panel.current as HTMLElement),
+          )
+        : clamp(value);
+    preferredPosition.current = next;
     setPosition(next);
     setStatus(`Navigeringsfönstret: ${next.x} från vänster, ${next.y} uppifrån.`);
   }
@@ -165,7 +233,9 @@ export function MapNavigation({
     const x = event.clientX - current.start.x;
     const y = event.clientY - current.start.y;
     current.moved ||= Math.hypot(x, y) > 3;
-    if (current.moved) move({ x: current.origin.x + x, y: current.origin.y + y });
+    if (current.moved) {
+      move({ x: current.origin.x + x, y: current.origin.y + y });
+    }
   }
   function finish(event: PointerEvent<HTMLElement>) {
     if (drag.current?.pointer !== event.pointerId) return;
@@ -237,7 +307,10 @@ export function MapNavigation({
           aria-label={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
           title={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
           onClick={() => {
-            if (openWork?.length) setPosition(null);
+            if (openWork?.length) {
+              preferredPosition.current = null;
+              setPosition(null);
+            }
             setMini(!mini);
           }}
         >
@@ -317,6 +390,7 @@ export function MapNavigation({
             type="button"
             onClick={() => {
               setPosition(null);
+              preferredPosition.current = null;
               setStatus('Navigeringsfönstrets placering återställdes.');
             }}
           >

@@ -374,7 +374,7 @@
   right: calc(430px + var(--text-view-space));
 }
 .household-map.workspace-shell[data-narrow="false"].text-view-open
-  :is(.workspace-feedback, .workspace-windows, .workspace-voice-controls, .map-navigation) {
+  :is(.workspace-feedback, .workspace-voice-controls) {
   right: calc(24px + var(--text-view-space));
 }
 .household-map.workspace-shell[data-narrow="false"].text-view-open:not(.workspace-open)

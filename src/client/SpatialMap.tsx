@@ -82,6 +82,9 @@ export function SpatialMap({
   onCameraAction,
   navigationMount,
   onNavigationChange,
+  floatingArea,
+  navigationHidden = false,
+  navigationFocus = true,
   onAvailabilityChange,
   openWork,
 }: {
@@ -112,6 +115,9 @@ export function SpatialMap({
   onCameraAction?: () => void;
   navigationMount?: HTMLElement | null;
   onNavigationChange?: (open: boolean) => void;
+  floatingArea?: import('./floating-windows.js').FloatingArea;
+  navigationHidden?: boolean;
+  navigationFocus?: boolean;
   openWork?: readonly string[];
 }) {
   const labelPrefix = useId();
@@ -828,10 +834,10 @@ export function SpatialMap({
         ref={navigationTrigger}
         title="Navigera"
         aria-label="Navigera"
-        aria-expanded={navigationOpen}
+        aria-expanded={navigationOpen && !navigationHidden}
         onClick={() => {
           onCameraAction?.();
-          changeNavigation(!navigationOpen);
+          changeNavigation(navigationHidden || !navigationOpen);
         }}
       >
         <WorkspaceIcon name="navigate" />
@@ -881,7 +887,9 @@ export function SpatialMap({
   );
   const navigation = (
     <MapNavigation
-      open={navigationOpen}
+      open={navigationOpen && !navigationHidden}
+      area={floatingArea}
+      focusOnOpen={navigationFocus}
       openWork={openWork}
       onClose={() => changeNavigation(false)}
       onNavigate={(command) => scene.current?.navigate(command)}

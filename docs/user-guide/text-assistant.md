@@ -105,7 +105,9 @@ samtalstexten och meddelandefältet **Meddelande till Skyttel**.
 
 - På en dator ligger textvyn vid högerkanten och knuffar undan kartan, så
   att du ser ändringarna i kartan medan du skriver. Meddelandefältet får
-  fokus när textvyn öppnas.
+  fokus när textvyn öppnas. Om formulären och textvyn inte får plats
+  samtidigt växlar du mellan dem med verktygsradens knappar. Vyerna
+  behåller sina bredder, oskickad text och det pågående röstsamtalet.
 - På en mobil enhet och en smal skärm får fältet inte fokus av sig självt.
   Tryck i fältet när du vill skriva. På en smal skärm fyller textvyn
   skärmen under verktygsraden, och **Lista** och kartans paneler tar dess

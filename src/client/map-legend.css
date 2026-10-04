@@ -93,6 +93,29 @@
   top: var(--context-bottom, 110px);
 }
 
+/* Floating windows can cross the legend and all map controls. The ordinary
+   narrow and short-screen layouts keep their existing scroll flow. */
+@media (min-width: 701px) and (min-height: 601px) {
+  .household-map.workspace-shell .workspace-windows {
+    inset: var(--work-offset, 0px) 0 auto;
+    width: 100%;
+    height: var(--work-height, 100dvh);
+    z-index: 31;
+  }
+  .household-map.workspace-shell.workspace-revealing .workspace-window[data-active="true"] {
+    left: var(--workspace-window-x, 0px);
+    top: var(--workspace-window-y, 0px);
+    right: auto;
+  }
+  .household-map.workspace-shell .map-navigation {
+    max-height: calc(var(--work-height, 100dvh) - 200px);
+    z-index: 31;
+  }
+  .household-map.workspace-shell[data-workspace-view="navigation"] .map-navigation {
+    z-index: 32;
+  }
+}
+
 @media (max-width: 700px) {
   .household-map.workspace-shell .workspace-context {
     max-width: calc(100vw - 24px);

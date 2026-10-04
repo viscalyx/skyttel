@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { conversationWidths } from '../shared/conversation-preferences.js';
 import {
   type DraftConflict,
   draftConflicts,
@@ -27,6 +28,7 @@ import { mergeFor } from '../shared/object-merge.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { DraftStatus } from './DraftStatus.js';
+import { useFloatingArea } from './floating-windows.js';
 import './draft-status.css';
 import { ConversationConsent } from './ConversationConsent.js';
 import {
@@ -173,8 +175,7 @@ export function HouseholdMap({
     setPanelFocusRequest({ id, element });
     setPresentation('combined');
     setRevealRequest(undefined);
-    // On a narrow screen the text view would cover the panel.
-    if (narrow) setTextViewOpen(false);
+    setWorkspaceView('forms');
   }
   function focusTools() {
     workspace.current
@@ -216,6 +217,7 @@ export function HouseholdMap({
   const editorDialog = useRef<HTMLDialogElement>(null);
   const editMapButton = useRef<HTMLButtonElement>(null);
   const workspace = useRef<HTMLElement>(null);
+  const floatingArea = useFloatingArea(workspace);
   const resumeListFocus = useRef<() => boolean>(() => false);
   const lastWorkFocus = useRef<HTMLElement | null>(null);
   const lastOutsideFocus = useRef<HTMLElement | string | null>(null);
@@ -262,13 +264,32 @@ export function HouseholdMap({
   const listModeButton = useRef<HTMLButtonElement>(null);
   const workTrigger = useRef<HTMLElement | null>(null);
   const [textViewOpen, setTextViewOpen] = useState(false);
+  const [workspaceView, setWorkspaceView] = useState<'forms' | 'navigation' | 'text'>('forms');
+  const [textFocusRequest, setTextFocusRequest] = useState(0);
+  const [draftViewOpen, setDraftViewOpen] = useState(false);
+  const conversationPreferences = useConversationPreferences(path);
   const workOpen = openPanels.length > 0 && (presentation !== 'map' || detailsOpen || editorOpen);
   const viewport = useConversationViewport();
   const { narrow } = viewport;
-  // On a narrow screen the text view fills the screen under the toolbar. The
-  // panels wait behind it, unchanged.
-  const panelsCovered = narrow && textViewOpen;
-  const mapCovered = narrow && (workOpen || textViewOpen) && !revealRequest && !navigationOpen;
+  const widths = conversationWidths(
+    conversationPreferences.preferences,
+    viewport.width,
+    draftViewOpen,
+  );
+  const textViewWidth = narrow
+    ? viewport.width
+    : viewport.mobile
+      ? 400
+      : widths.textWidth + (draftViewOpen ? widths.draftWidth : 0);
+  const exclusiveViews = narrow || viewport.width - textViewWidth < (workOpen ? 380 : 350);
+  const textViewVisible = textViewOpen && (!exclusiveViews || workspaceView === 'text');
+  // Limited space switches complete views; it never narrows a work window.
+  const panelsCovered = exclusiveViews && textViewVisible;
+  const mapCovered =
+    narrow &&
+    (workOpen || textViewVisible) &&
+    !revealRequest &&
+    !(navigationOpen && !panelsCovered);
   useLayoutEffect(() => {
     // Panel focus can scroll the ordinary work flow before navigation closes.
     // Reset only when the requested reveal layout has actually been committed.
@@ -308,7 +329,7 @@ export function HouseholdMap({
     }
     if (target === 'conversation') {
       // The text button opens and closes the text view.
-      if (textViewOpen) closeTextView();
+      if (textViewVisible) closeTextView();
       else showConversation();
       return;
     }
@@ -325,6 +346,7 @@ export function HouseholdMap({
   // the unsent text stay.
   function closeTextView() {
     setTextViewOpen(false);
+    setWorkspaceView('forms');
     if (!restoreOutsideFocus(textViewButtonName)) focusTools();
   }
   const [legacyDirty, setDirty] = useState(false);
@@ -566,7 +588,6 @@ export function HouseholdMap({
     setError('Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.');
   }, [setError]);
   const personal = usePersonalView(path, loseAccess);
-  const conversationPreferences = useConversationPreferences(path);
 
   useEffect(() => {
     let active = true;
@@ -1502,6 +1523,8 @@ export function HouseholdMap({
   // voice box, notice and text view all read it and call its commands.
   function showConversation() {
     setTextViewOpen(true);
+    setWorkspaceView('text');
+    setTextFocusRequest((previous) => previous + 1);
   }
   const conversation = useConversation({
     householdId,
@@ -1530,7 +1553,7 @@ export function HouseholdMap({
       saveToast.confirm(conversation.revocationReceipt.operationId);
     }
   }, [conversation.revocationReceipt, saveToast.confirm]);
-  const textButton = useTextButtonStatus(conversation, textViewOpen && active, active);
+  const textButton = useTextButtonStatus(conversation, textViewVisible && active, active);
   const liveOngoing = conversationOngoing(conversation, textViewOpen);
   const beforeConnection = useRef({ blocked: false, ongoing: false });
   const interruptedConversation = useRef(false);
@@ -1588,7 +1611,7 @@ export function HouseholdMap({
           ? (workspace.current?.querySelector<HTMLElement>('.workspace-talk') ?? null)
           : document.querySelector<HTMLElement>('.settings-return')
       }
-      inline={textViewOpen && active}
+      inline={textViewVisible && active}
     />
   );
   const voiceBox = (
@@ -1596,7 +1619,7 @@ export function HouseholdMap({
       conversation={conversation}
       announce={false}
       notice={notice}
-      hideStop={textViewOpen && !viewport.computer && conversation.working}
+      hideStop={textViewVisible && !viewport.computer && conversation.working}
       microphoneButton={() =>
         workspace.current?.querySelector<HTMLElement>('.workspace-talk') ?? null
       }
@@ -1655,7 +1678,7 @@ export function HouseholdMap({
     <section
       ref={workspace}
       tabIndex={-1}
-      className={`household-map${active ? ' workspace-shell' : ''}${workOpen ? ' workspace-open' : ''}${textViewOpen ? ' text-view-open' : ''}${revealRequest && !navigationOpen ? ' workspace-revealing' : ''} presentation-${active ? presentation : 'list'}${detailsOpen ? ' map-details-open' : ''}${editorOpen ? ' map-editor-open' : ''}`}
+      className={`household-map${active ? ' workspace-shell' : ''}${workOpen ? ' workspace-open' : ''}${textViewVisible ? ' text-view-open' : ''}${revealRequest && !navigationOpen ? ' workspace-revealing' : ''} presentation-${active ? presentation : 'list'}${detailsOpen ? ' map-details-open' : ''}${editorOpen ? ' map-editor-open' : ''}`}
       onFocusCapture={(event) => {
         if (
           !active ||
@@ -1665,10 +1688,13 @@ export function HouseholdMap({
         )
           return;
         if (event.target.closest('.workspace-window')) {
+          setWorkspaceView('forms');
           setToolsExpanded(false);
           lastWorkFocus.current = event.target;
           lastOutsideFocus.current = null;
         } else {
+          if (event.target.closest('.map-navigation')) setWorkspaceView('navigation');
+          if (event.target.closest('.text-view')) setWorkspaceView('text');
           lastOutsideFocus.current = event.target.closest('.workspace-tools')
             ? event.target.classList.contains('workspace-text')
               ? textViewButtonName
@@ -1681,6 +1707,7 @@ export function HouseholdMap({
         (Boolean(state) && !visibleObjects.size && !query && !typeFilter.length) || undefined
       }
       data-navigation-open={navigationOpen}
+      data-workspace-view={workspaceView}
       data-conversation-ongoing={conversationOngoing(conversation, textViewOpen)}
       data-mobile={viewport.mobile}
       data-narrow={narrow}
@@ -1750,7 +1777,7 @@ export function HouseholdMap({
               release: () => conversation.voice.releaseHeld?.(),
             }}
             voiceBox={voiceBox}
-            textViewOpen={textViewOpen}
+            textViewOpen={textViewVisible}
             textButton={textButton}
             cameraMount={setCameraMount}
             expanded={toolsExpanded}
@@ -1885,7 +1912,7 @@ export function HouseholdMap({
       <VoiceStatusAnnouncements
         conversation={conversation}
         announceSaved={!active}
-        textViewOpen={textViewOpen && active}
+        textViewOpen={textViewVisible && active}
         microphoneOffExplained={noticeState.notice?.id === 'disconnectedActive'}
         microphoneButton={() =>
           workspace.current?.querySelector<HTMLElement>('.workspace-talk') ?? null
@@ -1954,7 +1981,13 @@ export function HouseholdMap({
           <SpatialMap
             cameraMount={cameraMount}
             navigationMount={navigationMount}
-            onNavigationChange={setNavigationOpen}
+            onNavigationChange={(open) => {
+              setNavigationOpen(open);
+              if (open) setWorkspaceView('navigation');
+            }}
+            navigationHidden={panelsCovered}
+            navigationFocus={workspaceView === 'navigation'}
+            floatingArea={floatingArea}
             openWork={workOpen ? openPanels : undefined}
             onCameraAction={() => setToolsExpanded(false)}
             theme={theme.theme}
@@ -2066,6 +2099,9 @@ export function HouseholdMap({
           )}
           active={active}
           textViewOpen={textViewOpen}
+          textViewHidden={!textViewVisible}
+          textFocusRequest={textFocusRequest}
+          onDraftOpenChange={setDraftViewOpen}
           draft={state.draft}
           showDraftOnStart={conversationPreferences.preferences.showDraftOnStart}
           preferencesKnown={conversationPreferences.known}
@@ -2075,14 +2111,17 @@ export function HouseholdMap({
           }
           onCloseTextView={closeTextView}
           householdId={householdId}
-          renderWorkspace={(work, floatingStatus) => (
+          renderWorkspace={(work) => (
             <WorkspacePanels
-              floatingStatus={floatingStatus}
+              area={floatingArea}
               hidden={!active || !workOpen || panelsCovered}
-              restoreFocusOnReveal={!profileRequested}
+              restoreFocusOnReveal={
+                !profileRequested && !textViewVisible && workspaceView !== 'navigation'
+              }
               activeId={activePanel}
               focusRequest={panelFocusRequest}
               onActivate={(id) => {
+                setWorkspaceView('forms');
                 setPanelFocusRequest(null);
                 setActivePanel(id);
                 if (id !== activePanel) setRevealRequest(undefined);

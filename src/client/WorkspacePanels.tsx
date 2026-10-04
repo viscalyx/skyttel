@@ -3,7 +3,6 @@ import {
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
-  type RefObject,
   useCallback,
   useEffect,
   useId,
@@ -11,6 +10,12 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  type FloatingArea,
+  fitWindow,
+  measureFloatingArea,
+  moveWindow,
+} from './floating-windows.js';
 
 export type WorkspacePanel = {
   id: string;
@@ -38,11 +43,13 @@ type Drag = {
 const panelWidth = 380;
 const panelGap = 18;
 
-function startingPosition(index: number, width: number): Position {
+function startingPosition(index: number, region: HTMLElement): Position {
+  const floating = getComputedStyle(region).position === 'fixed';
+  const width = region.clientWidth - (floating ? 136 : 0);
   const columns = Math.max(1, Math.floor((width + panelGap) / (panelWidth + panelGap)));
   return {
-    x: (index % columns) * (panelWidth + panelGap),
-    y: Math.floor(index / columns) * 52,
+    x: (floating ? 112 : 0) + (index % columns) * (panelWidth + panelGap),
+    y: (floating ? 200 : 0) + Math.floor(index / columns) * 52,
   };
 }
 
@@ -59,23 +66,33 @@ function clampPosition(
   position: Position,
   region: HTMLElement,
   panel?: HTMLElement,
-  floatingStatus?: HTMLElement | null,
+  area?: FloatingArea,
+  origin?: Position,
 ) {
   const width = panel?.offsetWidth ?? panelWidth;
   const x = Math.round(Math.max(0, Math.min(position.x, region.clientWidth - width)));
-  let maxHeight = region.clientHeight;
-  if (floatingStatus?.offsetHeight && getComputedStyle(region).position === 'fixed') {
-    const bounds = region.getBoundingClientRect();
-    const status = floatingStatus.getBoundingClientRect();
-    if (bounds.left + x < status.right + 12 && bounds.left + x + width > status.left - 12) {
-      maxHeight = Math.max(0, Math.min(maxHeight, status.top - bounds.top - 12));
-    }
-  }
-  return {
+  const maxHeight =
+    getComputedStyle(region).position === 'fixed'
+      ? Math.max(124, region.clientHeight - 200)
+      : region.clientHeight;
+  const fitted = {
     x,
-    y: Math.round(Math.max(0, Math.min(position.y, maxHeight - (panel?.offsetHeight ?? 0)))),
+    y: Math.round(
+      Math.max(
+        0,
+        Math.min(position.y, region.clientHeight - Math.min(maxHeight, panel?.offsetHeight ?? 0)),
+      ),
+    ),
     maxHeight,
   };
+  if (!area || getComputedStyle(region).position !== 'fixed') return fitted;
+  const bounds = region.getBoundingClientRect();
+  const absolute = (point: Position) => ({ x: point.x + bounds.left, y: point.y + bounds.top });
+  const size = { width, height: Math.min(maxHeight, panel?.offsetHeight ?? 0) };
+  const next = origin
+    ? moveWindow(absolute(origin), absolute(position), size, area)
+    : fitWindow(absolute(position), size, area);
+  return { x: next.x - bounds.left, y: next.y - bounds.top, maxHeight };
 }
 
 export function WorkspacePanels({
@@ -88,7 +105,7 @@ export function WorkspacePanels({
   onEmpty,
   focused = false,
   restoreFocusOnReveal = true,
-  floatingStatus,
+  area,
 }: {
   windows: WorkspacePanel[];
   activeId: string | null;
@@ -99,7 +116,7 @@ export function WorkspacePanels({
   onEmpty: () => void;
   focused?: boolean;
   restoreFocusOnReveal?: boolean;
-  floatingStatus?: RefObject<HTMLElement | null>;
+  area?: FloatingArea;
 }) {
   const prefix = useId();
   const regionRef = useRef<HTMLDivElement>(null);
@@ -112,6 +129,7 @@ export function WorkspacePanels({
   const explicitFocusCommitted = useRef(false);
   const appliedTransition = useRef<TransitionFocus | null>(null);
   const rememberedPositions = useRef<Record<string, Position>>({});
+  const placedReveal = useRef<PanelFocusRequest | null>(null);
   const [positions, setPositions] = useState<Record<string, ReturnType<typeof clampPosition>>>({});
   const [stack, setStack] = useState<string[]>([]);
   const [moveMenuId, setMoveMenuId] = useState<string | null>(null);
@@ -145,8 +163,26 @@ export function WorkspacePanels({
   useLayoutEffect(() => {
     const region = regionRef.current;
     if (!region || compact || hidden) return;
+    if (
+      focused &&
+      focusRequest &&
+      placedReveal.current !== focusRequest &&
+      getComputedStyle(region).position === 'fixed'
+    ) {
+      placedReveal.current = focusRequest;
+      const text = region.closest('.household-map')?.querySelector<HTMLElement>('.text-view');
+      const bounds = region.getBoundingClientRect();
+      const right = text?.offsetWidth ? text.getBoundingClientRect().left : bounds.right;
+      // A requested map display starts beside its framed selection. Once
+      // visible, the window can still be moved across the whole screen.
+      rememberedPositions.current[focusRequest.id] = {
+        x: right - bounds.left - panelWidth - 24,
+        y: 200,
+      };
+    }
     const fitPanels = () => {
       if (!region.clientWidth || !region.clientHeight) return;
+      const currentArea = area && measureFloatingArea(region);
       setPositions((previous) => {
         let changed = false;
         const next = { ...previous };
@@ -156,14 +192,17 @@ export function WorkspacePanels({
             rememberedPositions.current[entry.id] ||
             (entry.anchor
               ? anchoredPosition(entry.anchor, region)
-              : startingPosition(index, region.clientWidth));
+              : startingPosition(index, region));
           rememberedPositions.current[entry.id] = proposed;
-          const position = clampPosition(
-            proposed,
-            region,
-            panel,
-            focused ? null : floatingStatus?.current,
-          );
+          const position = clampPosition(proposed, region, panel, currentArea);
+          // Viewport clamps retain the preferred desktop position. A move
+          // caused by conversation geometry becomes the new preferred position.
+          const viewportOnly =
+            currentArea &&
+            clampPosition(proposed, region, panel, { ...currentArea, obstacles: [] });
+          if (viewportOnly && (position.x !== viewportOnly.x || position.y !== viewportOnly.y)) {
+            rememberedPositions.current[entry.id] = position;
+          }
           next[entry.id] = position;
           if (
             position.x !== previous[entry.id]?.x ||
@@ -179,10 +218,9 @@ export function WorkspacePanels({
     fitPanels();
     const observer = new ResizeObserver(() => fitPanels());
     observer.observe(region);
-    if (floatingStatus?.current) observer.observe(floatingStatus.current);
     for (const panel of panelRefs.current.values()) observer.observe(panel);
     return () => observer.disconnect();
-  }, [windows, compact, hidden, focused, floatingStatus]);
+  }, [windows, compact, hidden, area, focused, focusRequest]);
 
   useLayoutEffect(() => {
     if (hidden || !focusRequest || appliedFocusRequest.current === focusRequest) return;
@@ -236,7 +274,8 @@ export function WorkspacePanels({
       position,
       region,
       panelRefs.current.get(id),
-      focused ? null : floatingStatus?.current,
+      area && measureFloatingArea(region),
+      positions[id],
     );
     rememberedPositions.current[id] = next;
     setPositions((previous) => ({ ...previous, [id]: next }));
@@ -447,7 +486,7 @@ export function WorkspacePanels({
                       entry.id,
                       entry.anchor
                         ? anchoredPosition(entry.anchor, region)
-                        : startingPosition(index, region.clientWidth),
+                        : startingPosition(index, region),
                     );
                   setMovementStatus('Panelens position återställd.');
                 }}

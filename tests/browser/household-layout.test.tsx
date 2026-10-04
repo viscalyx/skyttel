@@ -522,7 +522,7 @@ test('panel placement has reversible keyboard and click controls with a reset an
   expect(position()).toEqual(initial);
 });
 
-test('desktop panels keep the contextual legend clear and retain chosen positions across screen sizes', async () => {
+test('desktop panels retain chosen positions within the whole screen across screen sizes', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
@@ -534,7 +534,7 @@ test('desktop panels keep the contextual legend clear and retain chosen position
   await userEvent.keyboard(`{Shift>}${'{ArrowRight}'.repeat(25)}{/Shift}`);
   const chosen = box().toJSON();
   await page.viewport(900, 960);
-  await expect.poll(() => box().right).toBeLessThanOrEqual(876);
+  await expect.poll(() => box().right).toBeLessThanOrEqual(900);
   await page.viewport(1440, 960);
   await expect.poll(() => box().toJSON()).toEqual(chosen);
   await handle.click();

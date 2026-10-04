@@ -71,7 +71,7 @@
   }
 }
 
-@media (max-width: 1000px) and (min-height: 801px) {
+@media (max-width: 700px) and (min-height: 801px) {
   .household-map.workspace-shell[data-navigation-open="true"].workspace-open:not(
     .workspace-revealing
   ) {

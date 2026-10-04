@@ -19,6 +19,7 @@ import { WorkspaceIcon } from './WorkspaceTools.js';
 export function TextView({
   conversation,
   hidden = false,
+  focusRequest,
   onClose,
   children,
   notice,
@@ -30,6 +31,7 @@ export function TextView({
 }: {
   conversation: Conversation;
   hidden?: boolean;
+  focusRequest?: number;
   onClose: () => void;
   /** What is shown above the conversation text. */
   children?: ReactNode;
@@ -63,15 +65,17 @@ export function TextView({
   const field = useRef<HTMLTextAreaElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Only an explicit text-view request moves focus; resizing must preserve the current control.
   useLayoutEffect(() => {
     // On a computer the message field gets the focus when the text view opens.
     // On a mobile device and a narrow screen it does not, so that the on-screen
     // keyboard stays down. The focus then stays in the toolbar or goes to the heading.
+    if (hidden) return;
     if (initialComputer.current) field.current?.focus();
     else if (!document.activeElement?.closest('.workspace-tools')) heading.current?.focus();
     // Opening is the only focus trigger; resizing or revealing a keyboard must
     // preserve the user's current focus.
-  }, []);
+  }, [focusRequest]);
   // The newest row stays in view, unless the user has scrolled up to read.
   // biome-ignore lint/correctness/useExhaustiveDependencies: follow new rows
   useLayoutEffect(() => {

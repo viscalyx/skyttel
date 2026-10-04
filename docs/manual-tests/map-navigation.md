@@ -57,7 +57,7 @@ with keyboard and cancelled dragging”.
 
 ### NAVIGATION-02: Navigation och oskickade detaljer samtidigt
 
-**Syfte:** Verktygen har skilda, användbara ytor i båda öppningsordningar.
+**Syfte:** Navigera och behåll oskickade detaljer i båda öppningsordningar.
 
 **Användare:** Alex Exempel.
 
@@ -67,13 +67,13 @@ webbläsarzoom separat från ändrad fönsterstorlek.
 
 **Integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
-testfallet “NAVIGATION-02: navigation and unsent details retain separate
-usable areas in both opening orders”.
+testfallet “NAVIGATION-02: navigation and unsent details retain usable work
+in both opening orders”.
 
 **Steg:**
 
-1. Markera Lo. Öppna **Navigera**, flytta fönstret in över den blivande
-   arbetsytan och öppna sedan **Visa detaljer**.
+1. Markera Lo. Öppna **Navigera**, flytta fönstret nedåt från dess
+   standardplacering och öppna sedan **Visa detaljer**.
 2. Välj **Redigera valt objekt** och skriv en oskickad beskrivning.
 3. Rulla inuti navigationen till **Flytta Lo Exempel: bakåt** och flytta.
    Vänta på beskedet att den personliga vyn är sparad.
@@ -83,11 +83,13 @@ usable areas in both opening orders”.
 
 **Förväntat resultat:**
 
-- Navigation och detaljer öppnas i skilda ytor. Deras innehåll går att
+- Navigation och detaljer får användbara standardplaceringar. Innehållet går att
   rulla när utrymmet är litet, med åtkomliga kontroller och synligt fokus.
-- En tidigare flyttad navigation återgår till sin reserverade yta när
-  detaljer öppnas. Med öppet arbete sker samma sak vid storleksändring
-  eller byte mellan normal- och miniläge. Detaljpanelens placering består.
+- På dator behåller en flyttad navigation sin plats när detaljer öppnas
+  och vid storleksändring så länge hela fönstret ryms. Fönstren får dras
+  över varandra. Smala och korta skärmar behåller sina separata arbetsytor.
+- Byte mellan normal- och miniläge med öppet arbete återför Navigation
+  till dess standardplacering. Detaljpanelens placering består.
 - Oskickad text och detaljer består under navigering och objektflytt.
 - Detaljerna visar ingen separat undertitel **Flytta** eller upprepad
   lista över direkta samband. Sambanden nås genom listalternativet.
