@@ -5,6 +5,7 @@ import type { ErasureStatus } from '../../src/shared/household-erasure.js';
 import type { MapState } from '../../src/shared/map.js';
 import {
   activatePanel,
+  closePanels,
   createHousehold,
   openProfile,
   openSettings,
@@ -603,7 +604,7 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     await expect(page.getByRole('region', { name: 'Min cykel', exact: true })).toContainText(
       'Min cykel',
     );
-    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await closePanels(page);
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');

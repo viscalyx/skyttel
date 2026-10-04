@@ -157,9 +157,9 @@ Settings with independent unsent work”.
    Kontrollera synligt fokus på sammanslagningens rubrik.
 2. Välj båda Lo, den andra beskrivningen och bekräfta samma företeelse.
 3. Öppna uppgifterna för Oberoende objekt och läs beskrivningen.
-4. Växla till **Lista och utkast**. Besök Inställningar och välj
-   **Tillbaka till kartan**. Stäng arbetsytan och öppna Lista igen.
-   Kontrollera att sammanslagningens val finns kvar efter varje återgång.
+4. Växla till **Lista och utkast**. Besök Inställningar och välj **Tillbaka till
+   kartan**. Stäng panelerna med kryssen och öppna Lista igen. Kontrollera att
+   sammanslagningens val finns kvar efter varje återgång.
 5. Använd tangentbordet för **Stäng sammanslagningen utan att skicka**.
    Kontrollera fokus på **Slå samman objekt** och att kartan är oförändrad.
    Återgå till Oberoende objekt och börja redigera beskrivningen. Skriv
@@ -266,8 +266,8 @@ discard until explicitly abandoned”.
 2. Öppna **Slå samman objekt**. Behåll första identiteten och namnet,
    välj andra beskrivningen och bekräfta samma företeelse. Lägg förslaget
    i utkastet. Kontrollera att sparande och kastning är spärrade.
-3. Stäng arbetsytan och öppna Lista igen. Återgå till Första Lo: texten
-   finns kvar men formuläret visar äldre underlag och kan inte skickas.
+3. Stäng panelerna med kryssen och öppna Lista igen. Återgå till Första Lo:
+   texten finns kvar men formuläret visar äldre underlag och kan inte skickas.
    Stäng objektpanelen, öppna uppgifterna igen och kontrollera texten.
 4. Återgå till Andra Lo. Även det formuläret ska visa äldre underlag,
    behålla texten och spärra **Lägg i mitt utkast**.

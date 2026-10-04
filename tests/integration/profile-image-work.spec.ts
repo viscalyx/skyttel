@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import {
   activatePanel,
+  closePanels,
   createHousehold,
   openMap,
   openSettings,
@@ -202,7 +203,7 @@ for (const [width, height] of [
         await expect(garage.getByLabel('Beskrivning', { exact: true })).toHaveValue(
           'Oskickat om Garaget',
         );
-        await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+        await closePanels(page);
         await expect(garage).not.toBeVisible();
         await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
         expect(await read()).toEqual(before);

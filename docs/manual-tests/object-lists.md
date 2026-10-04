@@ -76,8 +76,8 @@ map-result navigation”.
    200 objekt. Lämna **Typ, sedan namn** och sida fyra valda.
 3. Rulla till Provobjekt 496 och välj **Uppgifter**. Välj **Redigera valt
    objekt** och skriv **Oskickat under listbesöket** i Beskrivning.
-4. Återgå till Lista med **Öppna paneler**. Kontrollera rulläget. Stäng
-   listpanelen, öppna Lista igen och kontrollera samma sida och rulläge.
+4. Öppna **Lista** från verktygen. Kontrollera rulläget. Stäng listpanelen,
+   öppna Lista igen och kontrollera samma sida och rulläge.
 5. Besök Inställningar och välj **Tillbaka till kartan**. Kontrollera
    sökning, typval, sortering, sida och rulläge.
 6. Välj Provobjekt 496:s namn för att visa det i kartan. Kontrollera att
@@ -150,8 +150,8 @@ after graphics loss at 320px”.
 3. Öppna Lista igen och framkalla grafikavbrottet. Kontrollera att listan
    och sökningen består och att knappen för kartvisning blir inaktiv.
    Läs beskedet om att fortsätta genom **Uppgifter**.
-4. Välj **Uppgifter**, kontrollera rubrikfokus och redigera Beskrivning
-   till **Utan grafik**. Återgå till Lista genom panelväljaren.
+4. Välj **Uppgifter**, kontrollera rubrikfokus och redigera Beskrivning till
+   **Utan grafik**. Öppna **Lista** från verktygen.
 
 **Förväntat resultat:**
 
@@ -177,7 +177,7 @@ med 320 × 250 CSS-pixlar och verklig webbläsarzoom på 400 procent.
 
 1. Öppna Lista och rulla till **Provobjekt 045**. Fokusera **Uppgifter**
    och anteckna rulläget.
-2. Öppna uppgifterna. Välj **Lista och utkast** i panelväljaren.
+2. Öppna uppgifterna. Öppna **Lista** från verktygen.
 3. Kontrollera samma rulläge och synligt fokus på träffens **Uppgifter**.
 4. Besök Inställningar och välj **Tillbaka till kartan**. Kontrollera
    samma rulläge och att den fokuserade kontrollen är synlig och går att peka på.
@@ -216,7 +216,7 @@ without moving the result”.
 3. Tryck ned musknappen på träffens **Uppgifter**. Kontrollera att träffen
    stannar under pekaren när listan blir aktiv. Släpp musknappen.
 4. Kontrollera rätt objektpanel och rubrikfokus utan ett extra klick.
-5. Välj Lista och utkast i panelväljaren och kontrollera samma rulläge.
+5. Öppna **Lista** från verktygen och kontrollera samma rulläge.
 
 **Förväntat resultat:**
 

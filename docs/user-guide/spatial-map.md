@@ -4,8 +4,8 @@
 
 Rymdkartan, listan och detaljerna visar samma hushållskarta och ditt
 privata utkast. Hushållet öppnar rymdkartan som huvudyta på alla enheter.
-Välj **Lista** i verktygen för listor, formulär och utkast. Välj
-**Stäng arbetsytan** för att återgå till hela kartan. På telefon visar
+Välj **Lista** i verktygen för listor, formulär och utkast. Stäng
+panelerna med kryssen för att återgå till hela kartan. På telefon visar
 **Visa verktygens namn** även de kompletterande verktygen, däribland Tema.
 
 När Skyttel visar ett objekt eller samband öppnas dess detaljpanel.
@@ -72,8 +72,9 @@ Listans **Uppgifter** fungerar även utan kartgrafik och med tangentbord.
 När grafiken inte kan visas består listan och namnets kartknapp är inaktiv.
 
 En ny panel öppnas nära objektet inom arbetsytan. Paneler som du flyttar
-behåller sin placering när du öppnar dem igen. På telefon väljer
-**Öppna paneler** vilken panel som visas. Detaljverktygets markering visar
+behåller sin placering när du öppnar dem igen. Öppna **Lista** och välj
+objektets **Uppgifter** för att återvända till dess panel. Detaljverktygets
+markering visar
 om det senast markerade objektets panel faktiskt visas. Oskickad text
 finns kvar när panelen stängs eller ett annat verktyg öppnas.
 
@@ -175,7 +176,7 @@ Formulärtext skickas först när du lägger den i utkastet. Val och
 oskickad text för samma objekt eller samband finns kvar vid vybyte,
 storleksändring och vändning av enheten. Ett vanligt val i helskärmskartan
 behåller kartan. Öppna **Lista** och välj **Redigera valt objekt** eller
-**Redigera valt samband** för att ändra uppgifter. **Stäng arbetsytan**
+**Redigera valt samband** för att ändra uppgifter. Panelernas kryss
 behåller texten. **Utkast och historik** ger tillgång till ändringslistan.
 
 Markeringarna visar skillnaden mot sparad karta:
@@ -209,8 +210,8 @@ respekteras. Om grafiken avbryts finns utkast och oskickad text kvar.
 Du kan fortsätta i listan medan grafiken återställs. Om WebGL 2 saknas
 visas ett besked och listan kan fortfarande användas.
 
-På en liten skärm väljer **Öppna paneler** mellan lista, samtal och
-objektpaneler. En panel visas åt gången.
+På en liten skärm visas en objektpanel åt gången. Öppna **Lista** för
+att välja ett annat objekt. **Skriv till Skyttel** öppnar textvyn.
 Textredigering på liggande iPhone kan kräva att du vänder till stående läge.
 
 ## Ordna din personliga vy

@@ -393,7 +393,7 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    kan du rulla inuti panelen. Markeringen öppnar inget redigeringsformulär.
 7. Prova också faktisk webbläsarzoom 200 och 400 procent. I ett kort
    fönster visas kartan och detaljpanelen bredvid varandra. Rulla ned
-   för panelväljare, samtalsstatus och mikrofonkontroller. De ska gå att
+   för samtalsstatus och mikrofonkontroller. De ska gå att
    nå med tangentbord utan horisontell sidrullning. **Visa verktygens namn**
    visar textingången när verktygsraden är hopfälld.
 
@@ -438,10 +438,10 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
    tool NUMMER report_result {"source":"draft"}
    ```
 
-4. I **Samtalstext**, kräv **Utkast:**, **Gäller: aktuellt →
-   upphört** för Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel
-   Betalar Tonrum**. Kontrollera att båda rättelserna fortfarande ligger
-   i utkastet och att **Lista och utkast** fortfarande finns i panelväljaren.
+4. I **Samtalstext**, kräv **Utkast:**, **Gäller: aktuellt → upphört** för
+   Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel Betalar Tonrum**.
+   Kontrollera att båda rättelserna fortfarande ligger i utkastet och att
+   **Lista** fortfarande visar utkastet.
 5. Skicka **Spara hela utkastet nu.** Läs `version` och `contentVersion`
    från det nya `held.draft`. Ersätt `NUMMER`, `VERSION` och `CONTENT`:
 
@@ -461,10 +461,10 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
    tool NUMMER report_result {"source":"latest_save"}
    ```
 
-8. Kräv **Sparandet:** och samma tidigare och nya status respektive
-   sambandstyp i **Samtalstext**. Kontrollera att utkastet
-   förblir tomt och att inget nytt sparförsök tillkommer under **Tidigare
-   sparförsök**. Listpanelen ska fortfarande finnas i panelväljaren.
+8. Kräv **Sparandet:** och samma tidigare och nya status respektive sambandstyp
+   i **Samtalstext**. Kontrollera att utkastet förblir tomt och att inget nytt
+   sparförsök tillkommer under **Tidigare sparförsök**. Listpanelen ska
+   fortfarande gå att öppna med **Lista**.
 
 **Förväntat resultat:**
 

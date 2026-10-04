@@ -65,8 +65,8 @@ export function ConversationHelp() {
         hushållet.
       </p>
       <p>
-        Kartan kan också styras med tangentbord genom Navigera. Stäng arbetsytan för att återgå till
-        kartan; din oskickade text finns kvar.
+        Kartan kan också styras med tangentbord genom Navigera. Stäng panelerna med krysset för att
+        återgå till kartan; din oskickade text finns kvar.
       </p>
     </>
   );

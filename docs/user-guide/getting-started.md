@@ -74,13 +74,13 @@ ett [familjeabonnemang](family-subscription.md). Du kan också öppna
 
 **Lista** ger tillgång till kartans uppgifter och formulär.
 På dator öppnas objekt och samtal i egna paneler över kartan. Välj samma
-objekt igen för att återvända till dess panel. **Öppna paneler** väljer en
-panel och lyfter den framför andra; på telefon visas bara den valda panelen.
+objekt igen från Lista för att återvända till dess panel och lyfta den
+framför andra. På telefon visas bara den valda panelen.
 
 Flytta datorpanelen genom att dra rubriken, använda piltangenter på
 flyttkontrollen eller öppna dess flyttknappar. Panelernas kryss stänger dem
-utan att kasta oskickad text. **Stäng arbetsytan** döljer panelerna för att
-visa hela kartan. Öppna ett verktyg och välj din panel för att fortsätta.
+utan att kasta oskickad text. Stäng panelerna för att visa hela kartan.
+Öppna Lista och välj objektets **Uppgifter** för att fortsätta.
 Nya objekt som ännu inte skickats till utkastet kan öppnas igen med
 **Fortsätt** under **Påbörjade objekt** i Lista.
 Placeringar och oskickad text bevaras vid skärmbyte under samma session.

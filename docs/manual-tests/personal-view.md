@@ -166,9 +166,9 @@ viewport changes preserve existing placement and unsent text”.
    minskad rörelse igen och välj Tillbaka till kartan.
 3. Skapa Ny sak i listan och lägg i utkastet. Öppna kartan igen.
 4. Välj Lampan och **Redigera valt objekt**. Skriv Oskickad text som nytt namn
-   utan att skicka texten.
-   Öppna kartan och växla mellan stående och liggande smal visningsyta.
-   Öppna Lista och välj Lampan i **Öppna paneler** för att återgå till texten.
+   utan att skicka texten. Öppna kartan och växla mellan stående och liggande
+   smal visningsyta. Öppna Lista och välj **Uppgifter för Lampan** för att
+   återgå till texten.
 
 **Förväntat resultat:**
 
@@ -263,10 +263,10 @@ later refreshes preserve the camera”.
 
 **Steg:**
 
-1. Välj Lampan via Lista och stäng arbetsytan. Öppna Navigera. Använd
-   Flytta [objektets namn]: höger upprepade gånger tills Lampan
-   ligger helt utanför den ursprungliga vyn. Vänta på beskedet att din
-   personliga vy är sparad. Gör samma sak med Cykeln, utan att ändra kameran.
+1. Välj Lampan via Lista och stäng panelerna med kryssen. Öppna Navigera. Använd
+   Flytta [objektets namn]: höger upprepade gånger tills Lampan ligger helt
+   utanför den ursprungliga vyn. Vänta på beskedet att din personliga vy är
+   sparad. Gör samma sak med Cykeln, utan att ändra kameran.
 2. Aktivera långsam anslutning i webbläsarens nätverksinställningar och
    ladda om sidan. Kontrollera att lista och rymdkarta visas. Kontrollera
    Visa stjärnhimmel under Inställningar → Rymdkartan medan valet är

@@ -46,8 +46,8 @@ durable save”.
 1. Öppna rymdkartan och välj Molnmusik. Kontrollera att kartan ligger
    kvar. Öppna Lista, välj **Uppgifter för Molnmusik** och sedan
    **Redigera valt objekt**. Skriv **Molnmusik familj** som namn.
-2. Välj **Stäng arbetsytan** och öppna Lista igen. Välj **Molnmusik**
-   genom **Öppna paneler**. Kontrollera texten och lägg den i utkastet.
+2. Stäng panelerna med kryssen och öppna Lista igen. Välj **Uppgifter för
+   Molnmusik**. Kontrollera texten och lägg den i utkastet.
 3. Granska och spara hela utkastet. Starta om appen och öppna kartan igen.
 
 **Förväntat resultat:**
@@ -380,11 +380,10 @@ its saved and private list”.
 
 1. Öppna kartan, stäng eventuell vägledning och ladda om sidan. Öppna
    Lista och välj **Uppgifter för Familjens Molnmusik**. Läs beskrivningen.
-2. Öppna Lista igen och välj **Lista och utkast** i **Öppna paneler** om
-   detaljpanelen fortfarande är aktiv. Kontrollera Robins notering.
-3. Stäng arbetsytan och välj Kim Exempel i kartan. Kontrollera att namnet
-   går att läsa och välja. Om information om dolda etiketter visas får den
-   inte täcka namnens träffytor.
+2. Öppna **Lista** från verktygen igen. Kontrollera Robins notering.
+3. Stäng panelerna med kryssen och välj Kim Exempel i kartan. Kontrollera att
+   namnet går att läsa och välja. Om information om dolda etiketter visas får
+   den inte täcka namnens träffytor.
 4. Minska vyn till ungefär 320 × 250 CSS-pixlar. Öppna **Visningsval**,
    slå på **Alla etiketter** och kontrollera att samtliga tre namn finns.
    Slå av valet och stäng Visningsval. Återställ den större vyn och öppna

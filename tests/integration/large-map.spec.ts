@@ -99,6 +99,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
       'Oskickad text i den täta kartan',
     );
     await openWorkspace(page);
+    await page.getByLabel('Sök objekt', { exact: true }).fill('Provobjekt 499');
     await activatePanel(page, 'Provobjekt 499');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Oskickad text i den täta kartan',

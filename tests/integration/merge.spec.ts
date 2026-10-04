@@ -2,6 +2,7 @@ import { type APIRequestContext, expect, type Locator, test } from '@playwright/
 import type { MapState, ObjectValue, SaveReceipt } from '../../src/shared/map.js';
 import {
   activatePanel,
+  closePanels,
   createHousehold,
   openSettings,
   openWorkspace,
@@ -264,7 +265,7 @@ test('SAMMANSLAGNING-03: keyboard merge review survives panels and Settings with
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
     await expect(form.getByLabel('Jag bekräftar att objekten är samma företeelse')).toBeChecked();
-    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await closePanels(page);
     await openWorkspace(page);
     await expect(form.getByLabel('Välj Beskrivning')).toHaveValue('absorbed');
     const cancel = form.getByRole('button', { name: 'Stäng sammanslagningen utan att skicka' });

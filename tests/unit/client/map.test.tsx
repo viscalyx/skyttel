@@ -1195,17 +1195,17 @@ test('view changes retain unsent object text and filters can clear without chang
   await userEvent.clear(screen.getByLabelText('Beskrivning'));
   await userEvent.type(screen.getByLabelText('Beskrivning'), 'Oskickad vytext');
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng arbetsytan' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lo Rymdprov' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lista och utkast' }));
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Uppgifter för Lo Rymdprov' }));
   expect((screen.getByLabelText('Beskrivning') as HTMLTextAreaElement).value).toBe(
     'Oskickad vytext',
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng arbetsytan' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lo Rymdprov' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng Lista och utkast' }));
   await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
-  await userEvent.selectOptions(
-    screen.getByLabelText(/^Öppna paneler/),
-    screen.getByRole('option', { name: 'Lo Rymdprov' }),
-  );
+  await userEvent.click(screen.getByRole('button', { name: 'Uppgifter för Lo Rymdprov' }));
   await userEvent.click(screen.getByRole('button', { name: 'Stäng utan att skicka texten' }));
   await userEvent.click(screen.getByRole('button', { name: 'Redigera Lo Rymdprov' }));
   await userEvent.click(screen.getByRole('button', { name: 'Visa objektets kopplingar' }));

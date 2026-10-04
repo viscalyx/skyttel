@@ -55,9 +55,10 @@ at 320px”.
 
 **Steg:**
 
-1. Välj **Nytt objekt**. Skriv **Oskickad cykel** och beskrivningen
-   **Behåll denna text**. Öppna Lista igen och skriv **cykel** i
-   **Sök objekt**. Välj **Nytt objekt** i panelväljaren och fokusera namnfältet.
+1. Välj **Nytt objekt**. Skriv **Oskickad cykel** och beskrivningen **Behåll
+   denna text**. Öppna Lista igen och skriv **cykel** i **Sök objekt**. Välj
+   **Fortsätt: Oskickad cykel** under **Påbörjade objekt** och fokusera
+   namnfältet.
 2. Använd Tab och Enter för att besöka **Inloggningssätt**. Kontrollera
    rubrikfokus och att kartan och dess formulär inte går att nå.
 3. Välj **Till startsidan** med tangentbordet. Kontrollera namn,
@@ -346,9 +347,9 @@ and resizing”.
    personlig vy och markera **Visa höjdhjälp**.
 3. Besök **Inloggningssätt**, minska fönstret till mobilstorlek och
    återgå med **Till startsidan**.
-4. Välj **Min cykel** i panelväljaren och kontrollera uppgifterna. Välj
-   **Stäng arbetsytan** för att kontrollera kartans urval, höjdhjälp och
-   personliga placering.
+4. Öppna Lista och välj **Uppgifter för Min cykel** och kontrollera uppgifterna.
+   Välj **Stäng panelerna med kryssen** för att kontrollera kartans urval,
+   höjdhjälp och personliga placering.
 
 **Förväntat resultat:**
 
@@ -447,7 +448,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    kontrollera att röstrutan visar **Lyssnar**. Ingen knapp **Aktuell
    status** eller **Visa samtals- och utkastdetaljer** finns.
    Välj **Tillbaka till kartan** och välj
-   abonnemanget, Kim och samtalet genom **Öppna paneler**. Kontrollera
+   abonnemanget och Kim genom **Uppgifter** i Lista. Öppna även
+   **Skriv till Skyttel**. Kontrollera
    rubrikfokus, samma beskrivningar, samma dialog och båda oskickade texter.
    Robins notering ska fortfarande vara privat. Automationen kontrollerar
    att samma levande mediespår och anslutning används efter Inställningar.
@@ -460,7 +462,7 @@ till gemensamt kvitto och privat fortsatt arbete”.
    sparandets beständiga identifierare; anteckna den från
    **Utkast och historik → Tidigare sparförsök → Visa kvittot**.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
-   och öppna **Öppna paneler → Kim Exempel**. Kontrollera att
+   och öppna **Lista → Uppgifter för Kim Exempel**. Kontrollera att
    **Oskickat om Kim** fortfarande finns i formuläret men inte i sparad
    beskrivning. Kvittot finns kvar i **Utkast och historik**, och
    mikrofonknappen finns kvar i verktygsraden. Robins privata notering

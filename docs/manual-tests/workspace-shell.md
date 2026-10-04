@@ -47,8 +47,8 @@ closed”.
 1. Öppna hushållet. Kontrollera kartan och beskedet **Din karta börjar här**.
 2. Välj **Visa verktygens namn**, sedan **Lista** och **Nytt objekt**.
    Ange namnet **Cykeln**.
-3. Välj **Stäng arbetsytan**. Öppna **Lista** igen, välj
-   **Nytt objekt** i panelväljaren och kontrollera namnet.
+3. Stäng panelerna med kryssen. Öppna **Lista** igen, välj **Fortsätt: Cykeln**
+   under **Påbörjade objekt** och kontrollera namnet.
 4. Välj **Lägg i mitt utkast**, sedan **Spara hela utkastet**.
 5. Läs sparbeskedet och ladda om sidan.
 
@@ -110,13 +110,13 @@ without graphics”.
    **Information och hjälp**. Läs instruktionerna och tryck Escape.
 2. Välj **Lista**, **Nytt objekt** och skriv **Min cykel**. Kontrollera att
    fält och knappen för att lägga i utkastet går att nå.
-3. Stäng arbetsytan och välj **Skriv till Skyttel**. Ge medgivande med
-   **Godkänn och starta** om rutan visas. Kontrollera att samtalsytan går
+3. Stäng panelerna med kryssen och välj **Skriv till Skyttel**. Ge medgivande
+   med **Godkänn och starta** om rutan visas. Kontrollera att samtalsytan går
    att nå utan mikrofon.
 4. Upprepa med förstoring och tangentbord; använd hopplänkarna till
    formulär och samtal före kartgrafiken.
 5. Öppna **Sök i kartan** och **Utkast och historik** från de expanderade
-   verktygen. Stäng arbetsytan efter varje val och kontrollera fokus.
+   verktygen. Stäng panelerna med kryssen efter varje val och kontrollera fokus.
 6. Öppna hjälpen igen och fäll ihop verktygen. Flytta fokus till hjälpen
    och tryck Escape. Kontrollera att fokus är kvar på en synlig knapp.
 
@@ -163,9 +163,9 @@ Tal som väntar under starten provas i
    inte garanterar behandling enbart i EU eller omedelbar radering av alla
    kopior.
    Nå **Läs OpenAI:s datavillkor** med Tab och kontrollera länkens namn.
-4. Stäng med Escape. Välj **Lista**, **Nytt objekt**, ange **Lo Exempel**
-   och välj **Lägg i mitt utkast** utan att starta något samtal.
-   Välj **Stäng arbetsytan**.
+4. Stäng med Escape. Välj **Lista**, **Nytt objekt**, ange **Lo Exempel** och
+   välj **Lägg i mitt utkast** utan att starta något samtal. Stäng panelerna med
+   kryssen.
 5. Tryck tangentkombinationen kort. I medgivanderutan, markera
    **Fråga inte igen för det här hushållet** och välj **Godkänn och starta**.
    Tryck kombinationen kort igen för att stänga av mikrofonen.
@@ -291,7 +291,7 @@ testfallet “YTA-05: save results remain readable beside tablet work”.
 1. Öppna **Lista** och **Nytt objekt**. Skriv
    **Familjens gemensamma cykel** och välj **Lägg i mitt utkast**.
 2. Välj **Spara hela utkastet** och läs hela sparbeskedet.
-3. Välj **Stäng status** och därefter **Stäng arbetsytan**.
+3. Välj **Stäng status** och stäng därefter panelerna med kryssen.
 
 **Förväntat resultat:**
 
@@ -331,8 +331,8 @@ choices readable and operable in dark”.
    kortet **Din karta börjar här** och statusytan får inte täcka fokus.
    Kontrollera att kortets **Öppna Lista** går att nå.
 4. Öppna Lista, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
-   Stäng arbetsytan. Kortet för en tom karta ska försvinna; höjdhjälpen ska
-   fortfarande vara avstängd. Spara inte utkastet.
+   Stäng panelerna med kryssen. Kortet för en tom karta ska försvinna;
+   höjdhjälpen ska fortfarande vara avstängd. Spara inte utkastet.
 
 **Förväntat resultat:**
 

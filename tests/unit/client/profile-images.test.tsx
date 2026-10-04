@@ -350,11 +350,7 @@ test('a real image rejection preserves Settings focus until explicit return to t
       `/profile-images/${before.draft.changes.find((change) => change.id === 'person')?.after?.profileImageId}`,
     );
     expect(await read()).toEqual(before);
-    const panels = screen.getByLabelText(/^Öppna paneler/, { selector: 'select' });
-    await user.selectOptions(
-      panels,
-      within(panels).getByRole('option', { name: 'Lista och utkast' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Lista' }));
     await user.click(
       within(
         screen.getByLabelText('Lista och utkast', { selector: 'section:not([hidden])' }),

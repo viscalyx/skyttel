@@ -1,5 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
-import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
+import {
+  closePanels,
+  createHousehold,
+  openSettings,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
 import {
   chooseConversationText,
   consentBox,
@@ -93,7 +99,7 @@ for (const platform of [
         await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
         await page.getByLabel('Objektets namn').fill('Lo Exempel');
         await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-        await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+        await closePanels(page);
         await shortcut(page, platform.mac);
         await expect(consentBox(page)).toContainText('Släpp stänger av ny inspelning direkt.');
         await giveConversationConsent(page, { remember: true });
@@ -173,7 +179,7 @@ test('YTA-08: hjälpens långa text går att läsa och stänga på smal skärm',
     ).toHaveCount(1);
     await page.keyboard.press('End');
     await expect(
-      help(page).getByText(/Stäng arbetsytan för att återgå till kartan/),
+      help(page).getByText(/Stäng panelerna med krysset för att återgå till kartan/),
     ).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       320,

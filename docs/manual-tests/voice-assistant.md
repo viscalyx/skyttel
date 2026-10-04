@@ -464,8 +464,8 @@ finns kvar. Anteckna utkastets innehåll och version.
 
 1. Skriv **Osänd rättelse** i samtalets textfält utan att skicka.
    Kör `user Rätta Lo.` och `delegate` i startguiden. Håll modellanropet.
-2. Stäng textvyn och arbetsytan med **Till kartan**. Kräv **Skyttel
-   arbetar** i röstrutan och välj dess **Avbryt**.
+2. Stäng textvyn och panelerna med deras kryss. Kräv **Skyttel arbetar** i
+   röstrutan och välj dess **Avbryt**.
 3. Släpp det gamla anropet med ett `propose_object` som försöker byta
    Lo-förslagets namn till **För sent**. Använd det hållna anropets version,
    innehållsversion och hela tidigare objektvärde enligt TAL-01:s verktygssteg.
@@ -567,9 +567,9 @@ som ett hinder eller låta gamla frågor följa ett nytt uppdrag.
    visar ingen röstruta.
 4. Släpp anropet med `reply REQUEST Vill du läsa vidare?`.
    Det vanliga svaret ska inte skapa ett nytt nödvändigt svarskrav.
-5. Öppna textvyn, skicka **Berätta mer.**, stäng arbetsytan och kör
-   `fail REQUEST`. Kräv samtalsnotisen **Skyttel kunde inte slutföra
-   uppdraget. Försök igen.**
+5. Öppna textvyn, skicka **Berätta mer.**, stäng panelerna med kryssen och kör
+   `fail REQUEST`. Kräv samtalsnotisen **Skyttel kunde inte slutföra uppdraget.
+   Försök igen.**
 6. Öppna textvyn och välj **Nytt samtal**.
    Beskrivningen **Förslag väntar på svar** ska fortfarande finnas i utkastet.
 

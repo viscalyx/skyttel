@@ -259,7 +259,7 @@ losing newer work at {width}x{height}px {colorScheme}”, med storlekarna
 
 1. Redigera Garaget och skriv en ny beskrivning utan att lägga den i utkastet.
    Stäng panelen med **Stäng Garaget** och öppna **Lista** från verktygen.
-   Kontrollera att **Till kartan** inte täcker listknappen i det korta fönstret.
+   Kontrollera att listknappen går att använda i det korta fönstret.
 2. Redigera Cykeln. Välj först den blå PNG-bilden och sedan den gröna
    WebP-bilden. Vänta på det privata bildförslaget efter varje val.
 3. Fördröj svaret från bildanropet med webbläsarens utvecklarverktyg enligt
@@ -277,7 +277,7 @@ losing newer work at {width}x{height}px {colorScheme}”, med storlekarna
    Kontrollera Cykelns ursprungliga
    utkastbeskrivning, gröna bild och ikon. Kontrollera också att Garagets
    oskickade beskrivning finns kvar när du öppnar Garaget.
-8. Välj **Till kartan** för att stänga arbetsytan. Öppna **Lista** och
+8. Stäng panelerna med kryssen för att återgå till kartan. Öppna **Lista** och
    Garaget igen. Kontrollera att den oskickade beskrivningen finns kvar.
 
 För en kontrollerad fördröjning, kör detta i webbläsarens konsol innan steg 3.
@@ -310,8 +310,8 @@ window.fetch = async (...args) => {
 - Återgångens text och fokus är läsbara också när pekaren ligger över den
   fokuserade knappen, i båda teman och på det smala fönstret. Automationen
   mäter textkontrast på minst 4,5:1.
-- Både **Lista** och **Till kartan** går att trycka på i korta fönster.
-  Återgången till kartan ändrar inga privata förslag eller oskickade texter.
+- **Lista** och panelernas kryss går att trycka på i korta fönster. Återgången
+  till kartan ändrar inga privata förslag eller oskickade texter.
 
 ### BILD-05: Behåll bildarbete genom Inställningar och avsluta felåtergången
 

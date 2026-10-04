@@ -484,7 +484,8 @@ unknown save at 1440px/390px/320px and verify the same receipt”.
 
 **Steg:**
 
-1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng arbetsytan.
+1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng panelerna med
+   kryssen.
 2. Kontrollera kartåterkopplingens **1 förslag · privat utkast** och
    legenden för grönt plus, amberfärgad penna och rött kryss.
 3. Kontrollera att **Aktuell status** inte längre finns i verktygen.
@@ -569,13 +570,13 @@ private draft and an atomic household save”.
 3. Välj **Prata med Skyttel** och säg **Lo använder Molnmusik**.
    Kontrollera att sambandet ingår och att statusen visar tre privata
    förslag.
-4. Skriv ett oskickat samtalsmeddelande. Besök Inställningar och återgå
-   till kartan. Stäng arbetsytan. Läs beskedet om separat oskickad
-   formulärtext. Kontrollera som medlem att den sparade kartan är tom
-   och att administratörens förslag inte visas i medlemmens utkast.
-5. Välj **Fortsätt redigera** i kortet. Kontrollera cykelns namn och
-   beskrivning och lägg dem i utkastet. Stäng arbetsytan och kontrollera
-   fyra förslag. Välj **Spara hela utkastet** direkt i kortet.
+4. Skriv ett oskickat samtalsmeddelande. Besök Inställningar och återgå till
+   kartan. Stäng panelerna med kryssen. Läs beskedet om separat oskickad
+   formulärtext. Kontrollera som medlem att den sparade kartan är tom och att
+   administratörens förslag inte visas i medlemmens utkast.
+5. Välj **Fortsätt redigera** i kortet. Kontrollera cykelns namn och beskrivning
+   och lägg dem i utkastet. Stäng panelerna med kryssen och kontrollera fyra
+   förslag. Välj **Spara hela utkastet** direkt i kortet.
 6. Invänta bekräftat kvitto. Stäng klienterna, starta om servern med samma
    databas och öppna kartan som medlem.
 
@@ -615,13 +616,13 @@ fresh explicit save”.
 1. Lägg **Lo Exempel** i utkastet via formuläret. Välj **Skriv till Skyttel**
    och **Godkänn och starta**. Be Skyttel förbereda uppgiften och fråga
    vilket kort som avses.
-2. Läs frågan i samtalstexten och stäng arbetsytan. Kontrollera
-   att kartåterkopplingen inte erbjuder sparande. Ingen separat
-   **Nödvändigt svar**-ruta eller **Svara i samtalet**-knapp ska finnas.
+2. Läs frågan i samtalstexten och stäng panelerna med kryssen. Kontrollera att
+   kartåterkopplingen inte erbjuder sparande. Ingen separat **Nödvändigt
+   svar**-ruta eller **Svara i samtalet**-knapp ska finnas.
 3. Öppna Lista och **Hela mitt utkast**. Kontrollera att **Spara hela
    utkastet** är inaktiverad även där. Kartan har ännu inga sparade objekt.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
-   Vänta tills frågan är besvarad. Stäng arbetsytan igen.
+   Vänta tills frågan är besvarad. Stäng panelerna med kryssen igen.
 5. Kontrollera att sparande nu erbjuds men inte har genomförts. Välj
    **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
 
@@ -755,8 +756,8 @@ independent saved facts until a fresh save”.
 
 **Steg:**
 
-1. Alex öppnar Nytt objekt, skriver Oskickad cykel och beskrivningen
-   Behåll den här texten. Stäng arbetsytan utan att skicka texten.
+1. Alex öppnar Nytt objekt, skriver Oskickad cykel och beskrivningen Behåll den
+   här texten. Stäng panelerna med kryssen utan att skicka texten.
 2. Öppna kartåterkopplingens konfliktlista och välj Objekt: Lo Lind.
    Använd tangentbordet till **Rätta objektet** och tryck Enter.
 3. Kontrollera rätt objektpanel och rubrikfokus. Ändra namnet till
@@ -798,8 +799,9 @@ and still requires a fresh save at 1440px”, samma titel med “390px”.
 
 1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
    hämta aktuellt underlag, eller ladda om sidan.
-2. Stäng arbetsytan, öppna kartåterkopplingens konfliktlista och välj sambandet.
-   Läs informationen om borttaget objekt. Behåll mitt förslag ska saknas.
+2. Stäng panelerna med kryssen, öppna kartåterkopplingens konfliktlista och välj
+   sambandet. Läs informationen om borttaget objekt. Behåll mitt förslag ska
+   saknas.
 3. Använd tangentbordet till **Rätta sambandet** och tryck Enter.
    Kontrollera fokus på Från objekt och förslagets riktning och säkerhet.
 4. Välj Garaget som Till objekt. Molnmusik ska inte kunna väljas.

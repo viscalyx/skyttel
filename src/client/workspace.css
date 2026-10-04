@@ -142,8 +142,7 @@
   color: #092b2b;
 }
 .workspace-tools svg,
-.workspace-close svg,
-.workspace-work-close svg {
+.workspace-close svg {
   width: 24px;
   height: 24px;
   flex: none;
@@ -421,15 +420,6 @@
   .workspace-guidance {
   display: none;
 }
-.household-map.workspace-shell .workspace-work-close {
-  position: fixed;
-  z-index: 40;
-  top: calc(var(--work-offset, 0px) + var(--work-top) + 8px);
-  right: 34px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .household-map.workspace-shell.workspace-open .workspace-feedback {
   top: 60px;
   bottom: auto;
@@ -588,14 +578,6 @@
   .household-map.workspace-shell.workspace-open .map-space {
     right: 0;
   }
-  .household-map.workspace-shell .workspace-work-close {
-    top: calc(
-      var(--work-offset, 0px) +
-      min(108px, max(12px, calc(var(--work-height, 100dvh) - 300px))) +
-      8px
-    );
-    right: 20px;
-  }
   .workspace-utility {
     top: 108px;
     left: 12px;
@@ -689,9 +671,6 @@ footer[hidden] {
   .household-map.workspace-shell.workspace-revealing.workspace-open .assistant-workspace {
     top: 50dvh;
     height: calc(50dvh - 12px);
-  }
-  .household-map.workspace-shell.workspace-revealing.workspace-open .workspace-work-close {
-    top: calc(50dvh + 8px);
   }
   .household-map.workspace-shell.workspace-revealing .spatial-tools,
   .household-map.workspace-shell.workspace-revealing .spatial-bottom-bar {

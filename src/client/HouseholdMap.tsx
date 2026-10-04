@@ -181,6 +181,12 @@ export function HouseholdMap({
   }
   function closePanel(id: string) {
     setOpenPanels((previous) => previous.filter((entry) => entry !== id));
+    if (openPanels.length === 1 && openPanels[0] === id) {
+      setPresentation('map');
+      setRevealRequest(undefined);
+      setDetailsOpen(false);
+      setEditorOpen(false);
+    }
   }
 
   const [edgeEditor, setEdgeEditor] = useState<{
@@ -328,18 +334,6 @@ export function HouseholdMap({
     setGuidance(false);
     workspace.current?.querySelector<HTMLButtonElement>('.workspace-tools button')?.focus();
     if (workspace.current) workspace.current.scrollTop = 0;
-  }
-  function closeWork() {
-    setPresentation('map');
-    setRevealRequest(undefined);
-    setDetailsOpen(false);
-    setEditorOpen(false);
-    const trigger = workTrigger.current;
-    if (trigger?.isConnected && trigger.offsetWidth && trigger.offsetHeight) trigger.focus();
-    else
-      workspace.current
-        ?.querySelector<HTMLButtonElement>('.workspace-tools button[aria-label="Lista"]')
-        ?.focus();
   }
   const [legacyDirty, setDirty] = useState(false);
   const dirty = legacyDirty || Object.values(objectDirty).some(Boolean);
@@ -1836,17 +1830,6 @@ export function HouseholdMap({
           </div>
         )}
       </div>
-      {active && workOpen && !panelsCovered && (
-        <button
-          type="button"
-          className="workspace-work-close"
-          onClick={closeWork}
-          aria-label="Stäng arbetsytan"
-        >
-          <WorkspaceIcon name="close" />
-          Till kartan
-        </button>
-      )}
       <div className="workspace-navigation-mount" ref={setNavigationMount} hidden={!active} />
       {state && (
         <div className="map-space" hidden={!active} inert={mapCovered} aria-hidden={mapCovered}>

@@ -39,10 +39,10 @@ formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
    **Välj profilbild**. Stäng detaljerna utan att ändra texten och välj
    **Spara hela utkastet**. Öppna lampan igen. Högerklicka på bilden,
    välj att kopiera bildens adress och spara adressen för senare kontroll.
-4. Välj lampan i listan, välj **Stäng arbetsytan** och öppna **Navigera**.
+4. Välj lampan i listan, stäng panelerna med kryssen och öppna **Navigera**.
    Välj **Flytta [objektets namn]: höger** en gång. Välj stolen och flytta den
-   åt vänster
-   med **Flytta [objektets namn]: vänster**. Ladda om och kontrollera placeringarna.
+   åt vänster med **Flytta [objektets namn]: vänster**. Ladda om och kontrollera
+   placeringarna.
 5. Öppna stolen från **Lista**, välj **Redigera valt objekt** och skriv
    **Oberoende privat förslag** i **Beskrivning**. Välj **Lägg i mitt utkast**.
    Kontrollera förslaget

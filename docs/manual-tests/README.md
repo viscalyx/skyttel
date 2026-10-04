@@ -50,8 +50,9 @@ välj **Godkänn och starta**. På telefon öppnar **Visa verktygens namn**
 
 Välj **Uppgifter** vid objektet i Lista för att öppna dess panel. Namnet
 visar i stället objektet i kartan. När ett fall återvänder
-till ett redan öppet objekt, välj objektet i **Öppna paneler**. Stäng
-arbetsytan inför kartgester om panelerna täcker kartan eller dess reglage;
+till ett redan öppet objekt, öppna Lista och välj dess **Uppgifter** igen.
+Stäng panelerna med kryssen inför kartgester om panelerna täcker kartan eller
+dess reglage;
 öppna Lista igen för sökning, filter, samband och utkast.
 
 **Din profil** innehåller användar-ID, inbjudningar, **Inloggningssätt**,
@@ -60,7 +61,8 @@ sida med **Typer och egna fält**, **Administrera tillgång** för
 administratören och **Månadskostnad** för driftansvarig. Mobilnavigationen
 öppnas med **Välj inställning**. Följ dessa ingångar när ett fall anger en
 sådan funktion. **Tillbaka till kartan** återger arbetet.
-**Stäng arbetsytan** återgår till kartan och behåller oskickad text.
+Panelernas kryss behåller oskickad text. Stäng alla paneler för att
+återgå till kartan; stäng även textvyn på telefon.
 
 ## Områden
 
@@ -91,7 +93,7 @@ sådan funktion. **Tillbaka till kartan** återger arbetet.
   teman och typdefinitioner i kartans samlade utkast.
 
 - [Fria paneler](workspace-panels.md): flera objekt och samtal, placering,
-  mobil panelväljare med synligt återgångsfokus, återöppning av nya objekt,
+  mobilnavigering genom Lista med synligt återgångsfokus, återöppning av nya objekt,
   bevarade samband och typer samt fortsatt sökning medan ett förslag skickas.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman, läsbara hopplänkar och fokus, stängbar vägledning, samtalshjälp med

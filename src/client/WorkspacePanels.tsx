@@ -23,9 +23,7 @@ export type WorkspacePanel = {
 export type PanelFocusRequest = { id: string; element?: HTMLElement | null };
 export type PanelAnchor = { x: number; y: number };
 
-type TransitionFocus =
-  | { kind: 'panel' | 'selector'; id: string }
-  | { kind: 'empty'; focus: () => void };
+type TransitionFocus = { kind: 'panel'; id: string } | { kind: 'empty'; focus: () => void };
 
 type Position = { x: number; y: number };
 type Drag = {
@@ -105,7 +103,6 @@ export function WorkspacePanels({
 }) {
   const prefix = useId();
   const regionRef = useRef<HTMLDivElement>(null);
-  const selectorRef = useRef<HTMLSelectElement>(null);
   const panelRefs = useRef(new Map<string, HTMLElement>());
   const lastFocus = useRef(new Map<string, HTMLElement>());
   const handleRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -205,7 +202,6 @@ export function WorkspacePanels({
     if (transitionFocus.kind !== 'empty' && (hidden || transitionFocus.id !== visibleId)) return;
     explicitFocusCommitted.current = true;
     if (transitionFocus.kind === 'empty') transitionFocus.focus();
-    else if (transitionFocus.kind === 'selector') selectorRef.current?.focus();
     else if (!resumeFocus(transitionFocus.id))
       panelRefs.current.get(transitionFocus.id)?.querySelector('h2')?.focus();
   }, [transitionFocus, hidden, visibleId, resumeFocus]);
@@ -316,11 +312,7 @@ export function WorkspacePanels({
     setMoveMenuId(null);
     onClose(id);
     if (next) onActivate(next.id);
-    setTransitionFocus(
-      next
-        ? { kind: compact ? 'selector' : 'panel', id: next.id }
-        : { kind: 'empty', focus: onEmpty },
-    );
+    setTransitionFocus(next ? { kind: 'panel', id: next.id } : { kind: 'empty', focus: onEmpty });
   };
 
   return (
@@ -334,24 +326,6 @@ export function WorkspacePanels({
           {movementStatus}
         </span>
       )}
-      <label className="workspace-window-selector">
-        Öppna paneler ({opened.length})
-        <select
-          ref={selectorRef}
-          value={visibleId ?? ''}
-          onChange={(event) => {
-            const id = event.target.value;
-            activate(id);
-            setTransitionFocus({ kind: 'panel', id });
-          }}
-        >
-          {opened.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.title}
-            </option>
-          ))}
-        </select>
-      </label>
       {windows.map((entry, index) => {
         const titleId = `${prefix}-title-${entry.id}`;
         const menuId = `${prefix}-move-${entry.id}`;

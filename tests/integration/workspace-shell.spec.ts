@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { activatePanel, createHousehold, signIn } from '../support/client.js';
+import { activatePanel, closePanels, createHousehold, signIn } from '../support/client.js';
 import {
   startConversationWithText,
   startConversationWithVoice,
@@ -34,7 +34,7 @@ test('YTA-05: save results remain readable beside tablet work', async ({ page })
     expect(size?.height).toBeLessThan(160);
     await page.getByRole('button', { name: 'Stäng status', exact: true }).click();
     await expect(status).toHaveCount(0);
-    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await closePanels(page);
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Familjens gemensamma cykel', exact: true }),
     ).toBeVisible();
@@ -59,7 +59,7 @@ test('YTA-01: map tools open real household work and preserve it when closed', a
     await tools.getByRole('button', { name: 'Lista', exact: true }).click();
     await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Cykeln');
-    await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+    await closePanels(page);
     await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
     await tools.getByRole('button', { name: 'Lista', exact: true }).click();
     await activatePanel(page, 'Nytt objekt');
@@ -134,16 +134,16 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
-      await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+      await closePanels(page);
       await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
       for (const entry of ['Sök i kartan', 'Utkast och historik']) {
         await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
         await tools.getByRole('button', { name: entry, exact: true }).click();
-        await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+        await closePanels(page);
         await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
       }
       await page.getByRole('button', { name: 'Öppna Lista', exact: true }).click();
-      await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+      await closePanels(page);
       await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
       await startConversationWithText(page);
       await expect(
@@ -340,7 +340,7 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
       await page.getByLabel('Objektets namn').fill('Cykeln');
       await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-      await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+      await closePanels(page);
       await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
       await expect(
         page.getByRole('checkbox', { name: 'Visa höjdhjälp', exact: true }),

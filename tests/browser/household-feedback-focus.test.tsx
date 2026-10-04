@@ -2,6 +2,7 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
+import { closePanels } from '../support/workspace-browser.js';
 import '../../src/client/styles.css';
 import { defaultConversationPreferences } from '../../src/shared/conversation-preferences.js';
 import type { MapState } from '../../src/shared/map.js';
@@ -91,7 +92,7 @@ async function open(withDraft = true) {
 
 const feedback = () => page.getByRole('region', { name: 'Utkastets återkoppling', exact: true });
 
-test('closed draft feedback opens its review and resumes the retained object field without changing saved or private data', async () => {
+test('closed draft feedback opens its review and reopens the retained object work without changing saved or private data', async () => {
   const home = await open();
   await feedback().getByRole('button', { name: 'Visa hela utkastet', exact: true }).click();
   await expect
@@ -105,13 +106,16 @@ test('closed draft feedback opens its review and resumes the retained object fie
   await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
   const field = object.getByLabelText('Beskrivning', { exact: true });
   await field.fill('Fortfarande oskickat');
-  await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+  await closePanels();
   await expect.element(object).not.toBeInTheDocument();
   await feedback().getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
   await expect.element(object).toBeVisible();
   await expect.element(field).toHaveValue('Fortfarande oskickat');
-  await expect.element(field).toHaveFocus();
+  await expect
+    .element(object.getByRole('heading', { name: 'Lo Exempel', exact: true }))
+    .toHaveFocus();
   expect(home.writes).toEqual([]);
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
   const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
   await expect
     .element(review.getByText('Beskrivning: Privat förslag', { exact: true }))
@@ -130,11 +134,13 @@ test('closed unsent new-object form resumes from feedback and an uncertain icon 
   await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
   const name = page.getByLabelText('Objektets namn', { exact: true });
   await name.fill('Privat oskickat objekt');
-  await page.getByRole('button', { name: 'Stäng arbetsytan', exact: true }).click();
+  await closePanels();
   await expect.element(name).not.toBeVisible();
   await feedback().getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
   await expect.element(name).toHaveValue('Privat oskickat objekt');
-  await expect.element(name).toHaveFocus();
+  await expect
+    .element(page.getByRole('heading', { name: 'Nytt objekt', exact: true }))
+    .toHaveFocus();
   expect(home.writes).toEqual([]);
   home.failProposal();
   const submit = page.getByRole('button', {
@@ -157,6 +163,7 @@ test('closed unsent new-object form resumes from feedback and an uncertain icon 
   await expect
     .element(feedback().getByText('Inga osparade förslag', { exact: true }))
     .toBeVisible();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await expect
     .element(page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }))
     .toBeVisible();

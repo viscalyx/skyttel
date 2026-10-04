@@ -199,10 +199,6 @@
     inset: calc(154px + var(--navigation-space)) 12px 12px;
     height: calc(100dvh - 166px - var(--navigation-space));
   }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open
-    .workspace-window-selector {
-    position: static;
-  }
 }
 @media (max-width: 700px) and (max-height: 450px) {
   .workspace-tools:has(.workspace-camera-tools):not(.expanded) .workspace-brand {
@@ -217,12 +213,6 @@
     .workspace-navigation-mount {
     position: relative;
     margin-bottom: 12px;
-  }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open:not(
-      .workspace-revealing
-    )
-    .workspace-work-close {
-    z-index: 10;
   }
   .household-map.workspace-shell[data-navigation-open="true"].workspace-open .map-navigation {
     position: relative;

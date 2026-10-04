@@ -117,8 +117,8 @@ groups personal entries”.
 4. Öppna profilen igen och välj **Inloggningssätt**. Gå tillbaka via
    **Din profil** i kontosidornas navigation, på mobil via **Välj inställning**.
 5. Välj **Tillbaka till arbetet** och fortsätt beskrivningen.
-6. Stäng arbetsytan, öppna profilen och välj **Tillbaka till arbetet**.
-   Kontrollera att Lista får fokus och att formuläret förblir dolt.
+6. Stäng panelerna med kryssen, öppna profilen och välj **Tillbaka till
+   arbetet**. Kontrollera att Lista får fokus och att formuläret förblir dolt.
 
 **Förväntat resultat:**
 
@@ -146,7 +146,8 @@ without opening panels”.
 
 **Steg:**
 
-1. Öppna Lista och ett nytt objekt. Lägg Cykeln i utkastet och stäng arbetsytan.
+1. Öppna Lista och ett nytt objekt. Lägg Cykeln i utkastet och stäng panelerna
+   med kryssen.
 2. Fokusera Cykeln med tangentbord. Besök Inställningar och återgå till kartan.
 3. Öppna profilen och välj **Tillbaka till arbetet**.
 4. Upprepa båda besöken med fokus på verktyget **Prata med Skyttel**.

@@ -167,8 +167,7 @@
       .map-navigation,
       .workspace-windows,
       .workspace-feedback,
-      .workspace-voice-controls,
-      .workspace-work-close
+      .workspace-voice-controls
     ) {
     position: relative;
     inset: auto;

@@ -47,9 +47,9 @@ reuse each object”.
    **Redigera valt objekt** och skriv en beskrivning utan att skicka den.
 4. Öppna Lista igen och upprepa för Bilen och Garaget. Öppna även
    **Skriv till Skyttel** och **Godkänn och starta** om medgivande behövs.
-5. Välj Cykeln i **Öppna paneler** och stäng den med **Stäng Cykeln**.
-   Öppna Cykeln från listan två gånger och kontrollera rubrikfokus även
-   när panelen redan är öppen.
+5. Öppna Lista och välj **Uppgifter för Cykeln** och stäng den med **Stäng
+   Cykeln**. Öppna Cykeln från listan två gånger och kontrollera rubrikfokus
+   även när panelen redan är öppen.
 6. Välj varje objektpanel och lägg dess text i utkastet. Välj
    **Spara hela utkastet** från **Lista och utkast**.
 7. Läs sparbeskedet, ladda om och öppna de tre objekten igen.
@@ -75,7 +75,7 @@ reuse each object”.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-02: mobile panel choice retains conversation, object text
+testfallet “PANEL-02: mobile panel navigation retains conversation, object text
 and desktop positions”.
 
 **Steg:**
@@ -88,14 +88,14 @@ and desktop positions”.
    att panelen återfår placeringen.
 3. Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan.
    Skriv ett meddelande utan att skicka det.
-4. Minska fönstret till telefonbredd. Textvyn fyller skärmen, och
-   panelerna väntar bakom den. Stäng textvyn med **Skriv till Skyttel**.
-   Välj varje panel med **Öppna paneler**. Kontrollera att fokuserad rubrik
-   eller kontroll syns utan att döljas av statusen. Vid återgång till listan
-   ska **Uppgifter för Cykeln** ha fokus. Öppna Lista och välj Cykeln igen;
-   kontrollera rubrikfokus. Öppna textvyn, kontrollera meddelandet och
-   stäng den med **Stäng textvyn**. Cykeln ska få fokus igen. Öppna textvyn
-   på nytt från verktygsraden.
+4. Minska fönstret till telefonbredd. Textvyn fyller skärmen, och panelerna
+   väntar bakom den. Stäng textvyn med **Skriv till Skyttel**. Öppna Lista och
+   välj **Uppgifter för Cykeln**, och återgå sedan till Lista. Kontrollera att
+   fokuserad rubrik eller kontroll syns utan att döljas av statusen. Vid
+   återgång till listan ska **Uppgifter för Cykeln** ha fokus. Öppna Lista och
+   välj Cykeln igen; kontrollera rubrikfokus. Öppna textvyn, kontrollera
+   meddelandet och stäng den med **Stäng textvyn**. Cykeln ska få fokus igen.
+   Öppna textvyn på nytt från verktygsraden.
 5. Återgå till den ursprungliga datorbredden och välj Cykeln.
 
 **Förväntat resultat:**
@@ -103,11 +103,11 @@ and desktop positions”.
 - Dragning, piltangenter och flyttknappar fungerar. Escape återför fokus
   från flyttknapparna till flyttkontrollen.
 - Aktiv panel kommer framför övriga vid pekning eller fokus.
-- Mobil visar en panel i taget och väljaren kommer före panelen i
-  läsordningen. Väljaren innehåller alla öppna paneler. Textvyn är ingen
-  panel i väljaren.
-- Nya paneler får rubrikfokus; stängning går till nästa panel eller
-  väljaren. När sista panelen stängs går fokus till Lista i verktygsfältet.
+- Mobil visar en panel i taget. Lista och objektets Uppgifter återöppnar
+  panelerna. Varken Öppna paneler eller Till kartan visas på mobil eller dator.
+- Nya paneler får rubrikfokus; stängning ger fokus till nästa panels rubrik
+  eller den använda listträffen. När sista panelen stängs går fokus till Lista i
+  verktygsfältet.
 - Återgång till listan återför fokus till den tidigare objektkontrollen.
   Fokus är synligt och åtkomligt även när samtalets status flyttas.
 - Oskickad objekttext och samtalstext finns kvar. Datorplaceringen återkommer.
@@ -135,7 +135,8 @@ text and blocks stale staging”.
 2. Välj **Skriv till Skyttel** och **Godkänn och starta**. Be om ett förslag
    till en annan beskrivning för samma cykel. Vänta på det bekräftade
    förslaget i ditt utkast.
-3. Välj Cykeln i panelväljaren. Läs varningen och kontrollera din text.
+3. Öppna Lista och välj **Uppgifter för Cykeln**. Läs varningen och kontrollera
+   din text.
 4. Kopiera eventuell text som ska behållas. Välj
    **Stäng utan att skicka texten**, öppna Cykeln igen och börja redigera.
 
@@ -162,11 +163,11 @@ testfallet “PANEL-04: map selection preserves unsent relationship and type for
 
 1. Slå på **Alla etiketter** i kartan. Öppna Lista och välj **Nytt samband**.
    Välj Cykeln som **Från objekt**.
-2. Välj **Stäng arbetsytan** och markera det sparade sambandet i kartan.
-   Öppna Lista igen och kontrollera ditt oskickade val. Välj
-   **Stäng sambandet utan att skicka**.
-3. Upprepa med **Ny objekttyp**: skriv **Oskickad typ** i **Typens namn**,
-   stäng arbetsytan, markera sambandet och öppna Lista. Kontrollera texten
+2. Stäng panelerna med kryssen och markera det sparade sambandet i kartan. Öppna
+   Lista igen och kontrollera ditt oskickade val. Välj **Stäng sambandet utan
+   att skicka**.
+3. Upprepa med **Ny objekttyp**: skriv **Oskickad typ** i **Typens namn**, stäng
+   panelerna med kryssen, markera sambandet och öppna Lista. Kontrollera texten
    och välj **Stäng typformuläret utan att skicka**.
 4. Upprepa med **Ny sambandstyp** och **Oskickad riktning** i
    **Sambandstypens namn**. Avsluta med **Stäng sambandstypen utan att skicka**.

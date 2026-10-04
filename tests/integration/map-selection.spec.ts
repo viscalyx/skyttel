@@ -1,6 +1,12 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import {
+  activatePanel,
+  createHousehold,
+  openMap,
+  openWorkspace,
+  signIn,
+} from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 async function arrange(page: Page, origin: string) {
@@ -181,7 +187,7 @@ test('MARKERING-03: text selection and detail controls retain work across deskto
         `Oskickat ${width}`,
       );
       await expect(page.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(2);
-      await page.getByLabel(/^Öppna paneler/).selectOption({ label: 'Lista och utkast' });
+      await activatePanel(page, 'Lista och utkast');
       await expect(details).toHaveAttribute('aria-pressed', width > 700 ? 'true' : 'false');
       await details.click();
       await panel.getByRole('button', { name: 'Stäng Kim Exempel', exact: true }).click();
