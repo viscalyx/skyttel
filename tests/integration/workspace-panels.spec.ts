@@ -159,6 +159,11 @@ test('PANEL-07: windows stop at visible conversation areas and retain relocated 
       .getByRole('separator', { name: 'Ändra samtalstextens bredd', exact: true })
       .press('ArrowLeft');
     await expect.poll(async () => (await bounds(panel)).x).toBe(relocated.x - 24);
+    await handle.click();
+    const buttonPosition = await bounds(panel);
+    await panel.getByRole('button', { name: 'Höger', exact: true }).click();
+    expect((await bounds(panel)).x).toBe(buttonPosition.x);
+    await page.keyboard.press('Escape');
     const fitted = await bounds(panel);
     await closeConversationText(page);
     await expect.poll(() => bounds(panel)).toEqual(fitted);
@@ -179,6 +184,11 @@ test('PANEL-07: windows stop at visible conversation areas and retain relocated 
       })
       .toBeLessThanOrEqual(chat.x);
     await title.press('Shift+ArrowRight');
+    expect((await bounds(navigation)).x + navigationStop.width).toBeLessThanOrEqual(chat.x);
+    await navigation.getByText('Fönstrets placering', { exact: true }).click();
+    const navigationButtonPosition = await bounds(navigation);
+    await navigation.getByRole('button', { name: 'Flytta fönstret åt höger', exact: true }).click();
+    expect((await bounds(navigation)).x).toBe(navigationButtonPosition.x);
     expect((await bounds(navigation)).x + navigationStop.width).toBeLessThanOrEqual(chat.x);
     const kept = await bounds(navigation);
     await closeConversationText(page);
@@ -241,6 +251,12 @@ test('PANEL-06: draggable forms can cover the legend and reach the screen edges'
     const corner = await bounds(panel);
     expect(corner.x + corner.width).toBe(1440);
     expect(corner.y + corner.height).toBe(1000);
+    await handle.click();
+    await panel.getByRole('button', { name: 'Höger', exact: true }).click();
+    await panel.getByRole('button', { name: 'Nedåt', exact: true }).click();
+    const buttonCorner = await bounds(panel);
+    expect(buttonCorner.x + buttonCorner.width).toBe(1440);
+    expect(buttonCorner.y + buttonCorner.height).toBe(1000);
     await expect(panel.getByLabel('Objektets namn')).toHaveValue('Oskickat över legenden');
   } finally {
     await installation.close();

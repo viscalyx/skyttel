@@ -8,7 +8,7 @@ import { conversationConsentTextVersion } from '../../src/shared/conversation-co
 import { defaultConversationPreferences } from '../../src/shared/conversation-preferences.js';
 import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings, type PersonalView } from '../../src/shared/personal-view.js';
-import { openConversationText } from '../support/conversation-browser.js';
+import { closeConversationText, openConversationText } from '../support/conversation-browser.js';
 
 const state: MapState = {
   userId: 'alex',
@@ -541,6 +541,70 @@ test('desktop panels retain chosen positions within the whole screen across scre
   await work.getByRole('button', { name: 'Återställ position', exact: true }).click();
   expect(box().x).toBe(112);
   expect(box().top).toBeGreaterThan(legend.element().getBoundingClientRect().bottom);
+});
+
+test('conversation edges stop fast panel drags, allow sliding and retain resized placements', async () => {
+  await open(1440);
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+  const handle = work.getByRole('button', { name: 'Flytta Lista och utkast', exact: true });
+  const box = () => work.element().getBoundingClientRect();
+  handle.element().focus();
+  await userEvent.keyboard(`{Shift>}${'{ArrowRight}'.repeat(30)}{/Shift}`);
+  expect(box().right).toBe(1440);
+  await openConversationText();
+  const conversation = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
+  await expect.element(conversation).toBeVisible();
+  const chat = () => conversation.element().getBoundingClientRect();
+  await expect.poll(() => box().right).toBe(chat().left);
+  const relocated = box().toJSON();
+  const drag = async (dx: number, dy: number) => {
+    const grip = handle.element().getBoundingClientRect();
+    const frame = window.frameElement?.getBoundingClientRect();
+    const start = { x: grip.x + 35 + (frame?.x ?? 0), y: grip.y + 20 + (frame?.y ?? 0) };
+    const session = cdp();
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      ...start,
+      button: 'left',
+      buttons: 1,
+      clickCount: 1,
+    });
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      x: start.x + dx,
+      y: start.y + dy,
+      button: 'left',
+      buttons: 1,
+    });
+    await session.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: start.x + dx,
+      y: start.y + dy,
+      button: 'left',
+      buttons: 0,
+    });
+  };
+  await drag(200, 0);
+  expect(box().toJSON()).toEqual(relocated);
+  await drag(200, -40);
+  await expect.poll(() => box().y).toBe(relocated.y - 40);
+  expect(box().right).toBe(chat().left);
+  await drag(-60, 40);
+  await expect.poll(() => box().x).toBe(relocated.x - 60);
+  expect(box().y).toBe(relocated.y);
+  await drag(260, 0);
+  await expect.poll(() => box().right).toBe(chat().left);
+  const separator = conversation.getByRole('separator', {
+    name: 'Ändra samtalstextens bredd',
+    exact: true,
+  });
+  separator.element().focus();
+  await userEvent.keyboard('{ArrowLeft}');
+  await expect.poll(() => box().x).toBe(relocated.x - 24);
+  const fitted = box().toJSON();
+  await closeConversationText();
+  await expect.poll(() => box().toJSON()).toEqual(fitted);
 });
 
 test.each([390, 250])(
