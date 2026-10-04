@@ -747,15 +747,12 @@ export function SpatialMap({
             y: edge.source.y + (edge.end.y - edge.source.y) * fraction + offset,
           })),
       );
-      const label = place(positions, edge.selected || edge.kind !== 'existing');
+      const label = place(positions, edge.selected);
       return label ? [{ ...edge, ...label }] : [];
     });
   }
   const primaryEdges = labelEdges
-    .filter(
-      ({ selected, kind }) =>
-        (selection?.kind === 'relationship' && selected) || kind !== 'existing',
-    )
+    .filter(({ selected }) => selection?.kind === 'relationship' && selected)
     .sort((a, b) => Number(b.selected) - Number(a.selected));
   // A selected relationship gets space before unrelated object names.
   const labeledEdges = placeEdges(primaryEdges);

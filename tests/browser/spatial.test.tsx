@@ -1000,6 +1000,156 @@ test('dense labels remain readable and explicit all-label mode retains access to
   await expect.poll(() => document.querySelectorAll('.spatial-name').length).toBe(100);
 });
 
+test.each(['added', 'removed', 'changed'] as const)(
+  'automatic $0 draft connection labels keep object names readable in a dense map',
+  async (kind) => {
+    const objects = Array.from({ length: 100 }, (_, index) => ({
+      ...state.objects[0],
+      id: `dense-${index}`,
+      name: `Tätt objekt ${index}`,
+    }));
+    const edges = Array.from({ length: 30 }, (_, index) => ({
+      ...state.relationships[0],
+      id: `dense-edge-${index}`,
+      sourceId: 'dense-5',
+      targetId: `dense-${index + 20}`,
+    }));
+    const mapState = {
+      ...state,
+      objects,
+      relationships: edges,
+      draft: { version: 0, changes: [] },
+    };
+    const { rerender } = render(<MapView mapState={mapState} />);
+    const names = () =>
+      [...document.querySelectorAll('[data-object-label]')]
+        .map((label) => label.getAttribute('data-object-label'))
+        .sort();
+    await expect.poll(() => names().length).toBeGreaterThan(0);
+    const visibleNames = names();
+    rerender(
+      <MapView
+        mapState={{
+          ...mapState,
+          draft: {
+            version: 1,
+            changes: [],
+            relationships: edges.map((edge) => ({
+              id: edge.id,
+              before: kind === 'added' ? null : edge,
+              after: kind === 'removed' ? null : { ...edge, knowledge: 'uncertain' as const },
+              type: state.relationshipTypes[0],
+              objectNames: {},
+            })),
+          },
+        }}
+      />,
+    );
+    await expect.poll(names).toEqual(visibleNames);
+    expect(document.querySelectorAll(`.connection.${kind}`)).toHaveLength(edges.length);
+    expect(document.querySelectorAll(`.spatial-edge.${kind}`).length).toBeLessThan(edges.length);
+    await expect
+      .poll(() => {
+        const boxes = [...document.querySelectorAll('.spatial-name, .spatial-edge')].map((label) =>
+          label.getBoundingClientRect(),
+        );
+        return boxes.every((a, index) =>
+          boxes
+            .slice(index + 1)
+            .every(
+              (b) =>
+                a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom,
+            ),
+        );
+      })
+      .toBe(true);
+    await page.getByLabelText('Alla etiketter', { exact: true }).click();
+    await expect
+      .poll(() => document.querySelectorAll(`.spatial-edge.${kind}`).length)
+      .toBe(edges.length);
+  },
+);
+
+test('automatic draft labels hide near a crowded connector and return when nearby space is available', async ({
+  onTestFinished,
+}) => {
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  onTestFinished(() => page.viewport(viewport.width, viewport.height));
+  await page.viewport(1280, 1000);
+  const objects = state.objects.slice(0, 2);
+  const relationshipTypes = Array.from({ length: 30 }, (_, index) => ({
+    ...state.relationshipTypes[0],
+    id: `draft-type-${index}`,
+    name: `Samband ${index}`,
+  }));
+  const edges = relationshipTypes.map((type, index) => ({
+    ...state.relationships[0],
+    id: `draft-edge-${index}`,
+    typeId: type.id,
+  }));
+  const mapState = {
+    ...state,
+    objects,
+    relationships: edges,
+    relationshipTypes,
+    draft: {
+      version: 1,
+      changes: [],
+      relationships: edges.map((edge, index) => ({
+        id: edge.id,
+        before: null,
+        after: edge,
+        type: relationshipTypes[index],
+        objectNames: {},
+      })),
+    },
+  };
+  const { rerender } = render(<MapView mapState={mapState} />);
+  const labels = () => [...document.querySelectorAll('.spatial-edge.added')];
+  await expect.poll(() => labels().length).toBeGreaterThan(0);
+  expect(labels().length).toBeLessThan(edges.length);
+  const hidden = edges.find(
+    (edge) => !document.querySelector(`[data-layout-id="relationship-${edge.id}"]`),
+  );
+  expect(hidden).toBeDefined();
+  if (!hidden) throw new Error('A crowded connector must have a hidden label');
+  const layoutId = `relationship-${hidden.id}`;
+  const connection = document.querySelector('.connection.added');
+  expect(connection).not.toBeNull();
+  expect(document.querySelectorAll('.connection.added')).toHaveLength(edges.length);
+  // Selecting the connector gives its label first use of space, even when
+  // the automatic label was hidden.
+  const geometry = [...document.querySelectorAll('.spatial-lines g[role="button"]')][
+    edges.indexOf(hidden)
+  ];
+  fireEvent.click(geometry);
+  await expect
+    .poll(() =>
+      document.querySelector(`[data-layout-id="${layoutId}"]`)?.classList.contains('selected'),
+    )
+    .toBe(true);
+  await page
+    .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.' })
+    .click({ position: { x: 5, y: 5 } });
+  await expect.poll(() => document.querySelector(`[data-layout-id="${layoutId}"]`)).toBeNull();
+  // Remove other proposals without moving the endpoints or camera.
+  rerender(
+    <MapView
+      mapState={{
+        ...mapState,
+        relationships: [hidden],
+        draft: {
+          ...mapState.draft,
+          relationships: mapState.draft.relationships.filter((change) => change.id === hidden.id),
+        },
+      }}
+    />,
+  );
+  await expect.poll(() => document.querySelector(`[data-layout-id="${layoutId}"]`)).not.toBeNull();
+  await expect.element(page.getByText('Lo Exempel', { exact: true })).toBeVisible();
+  await expect.element(page.getByText('Musikspelaren', { exact: true })).toBeVisible();
+});
+
 test('hidden labels do not change the emphasis of unselected relationship lines', async () => {
   const objects = Array.from({ length: 100 }, (_, index) => ({
     ...state.objects[0],

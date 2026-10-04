@@ -144,8 +144,11 @@ Detaljpanelernas egna placeringar behålls.
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
 hushållsuppgifter.
-Översikten visar de etiketter som får plats utan överlappning. Valda objekt
-och samband, deras kopplingar och utkast prioriteras. Ett besked anger hur
+Översikten visar de etiketter som får plats utan överlappning. Ett valt
+sambands etikett får plats först, sedan objektnamn och därefter automatiska
+sambandsetiketter. Etiketter för nya, borttagna och ändrade samband i
+utkastet visas nära sina samband när de ryms. De döljs när utrymmet inte
+räcker och visas igen när det finns plats. Ett besked anger hur
 många etiketter som döljs; innehållet och dina personliga placeringar ändras
 inte. Sök, välj i listan och använd fokus för att följa ett tätt sammanhang.
 Bakgrundens samband tonas ned mer i täta vyer; valda samband framhävs.
