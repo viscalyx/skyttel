@@ -226,11 +226,13 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 2. Kontrollera att Lo blir valt och synligt i kartan och att detaljpanelen
    visar **Lo Exempel** samt **Påhittad uppgift**.
    Nästa `held` ska innehålla `displayed: true`. Svara
-   `reply NUMMER Markerat!` och kontrollera det faktiska urvalet i kartan.
+   `reply NUMMER Markerat!` och kontrollera det faktiska urvalet samt
+   **Markerat i kartan.** under hushållets namn.
 3. Öppna Lo och skriv **Osänd uppgift** i beskrivningen. Skicka
    **Markera Lo igen** och upprepa visningsanropet.
 4. Kontrollera `displayed: false`, släpp sluttexten **Markerat!** igen
-   och kontrollera både urvalet och den oskickade texten.
+   och kontrollera både urvalet och den oskickade texten. Inget nytt
+   **Markerat i kartan.** ska bekräfta det avvisade försöket.
 
 **Förväntat resultat:**
 
@@ -374,6 +376,7 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
    `reply NUMMER Här är urvalet.`, öppna textvyn med **Skriv till Skyttel**
    om den är stängd och kontrollera att Lo fortfarande är markerad i kartan.
+   **Markerat i kartan.** står under hushållets namn, utanför textvyn.
 3. Öppna **Navigera** och panorera tills objekten inte syns.
    Öppna textvyn och skriv **Visa sambandet mellan Lo och Molnmusik**.
    Kopiera sambandets

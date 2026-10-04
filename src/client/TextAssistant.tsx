@@ -17,6 +17,17 @@ import type { useConversationPreferences } from './use-conversation-preferences.
 
 type AssistantActivity = { working: boolean; needsAnswer: boolean };
 
+export function conversationFeedback({
+  session,
+  working,
+  needsAnswer,
+}: Pick<Conversation, 'session' | 'working' | 'needsAnswer'>) {
+  if (!session || working || needsAnswer || session.receipt) return null;
+  return session.displayedSelection || session.displayedItem
+    ? 'Markerat i kartan.'
+    : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.';
+}
+
 export type ConversationPresentation = {
   draftFeedback?: (assistant: AssistantActivity & { compact: boolean }) => ReactNode;
   active?: boolean;
@@ -99,15 +110,10 @@ export function ConversationWorkspace({
   }, [session, conversationKey, preferencesKnown, showDraftOnStart, count]);
   const activity = { working: conversation.working, needsAnswer };
   const work = typeof children === 'function' ? children(activity) : children;
+  const resultFeedback = conversationFeedback(conversation);
   const feedback = (
     <section className="workspace-draft-feedback" aria-label="Utkastets återkoppling">
-      {session && !conversation.working && !needsAnswer && !session.receipt && (
-        <p role="status">
-          {session.displayedSelection || session.displayedItem
-            ? 'Markerat i kartan.'
-            : 'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.'}
-        </p>
-      )}
+      {resultFeedback && <p role="status">{resultFeedback}</p>}
       {draftFeedback?.({ ...activity, compact: !workVisible })}
     </section>
   );

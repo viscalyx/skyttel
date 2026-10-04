@@ -219,6 +219,8 @@ for (const viewport of [
         );
         await openConversationText(page);
         await expect(textFeedback).toHaveCount(0);
+        const mapStatus = page.getByRole('region', { name: 'Kartans status', exact: true });
+        await expect(mapStatus).toContainText('Markerat i kartan.');
         await expect(page.locator('.spatial-node[data-object-id="lo"]')).toHaveAttribute(
           'aria-pressed',
           'true',
@@ -245,6 +247,7 @@ for (const viewport of [
         await page.getByLabel('Till objekt', { exact: true }).selectOption('lo');
         await openConversationText(page);
         await expect(textFeedback).toHaveCount(0);
+        await expect(mapStatus).toContainText('Markerat i kartan.');
         await expect(
           page.locator('.spatial-edge.selected[data-layout-id="relationship-uses"]'),
         ).toHaveCount(1);
@@ -253,6 +256,7 @@ for (const viewport of [
         expect(acknowledgements[2].displayed).toBe(false);
         await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('lo');
         await expect(textFeedback).toHaveCount(0);
+        await expect(mapStatus).not.toContainText('Markerat i kartan.');
       } finally {
         await installation.close();
       }

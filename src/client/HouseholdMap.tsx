@@ -59,7 +59,7 @@ import {
   SaveOperations,
 } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
-import { ConversationWorkspace } from './TextAssistant.js';
+import { ConversationWorkspace, conversationFeedback } from './TextAssistant.js';
 import { useSaveToast } from './use-save-toast.js';
 import { VoiceBox, VoiceStatusAnnouncements } from './VoiceBox.js';
 import { type PanelAnchor, type PanelFocusRequest, WorkspacePanels } from './WorkspacePanels.js';
@@ -1797,6 +1797,9 @@ export function HouseholdMap({
               {selectedIds.length} markerade
             </span>
             <section aria-label="Kartans status" className="map-status">
+              <p aria-live="polite" aria-atomic="true">
+                {conversationFeedback(conversation)}
+              </p>
               <p aria-live="polite" aria-atomic="true">
                 {!state && !error
                   ? 'Hushållets karta hämtas…'

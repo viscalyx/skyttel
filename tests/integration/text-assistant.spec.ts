@@ -429,6 +429,8 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
     await send(page, 'Markera Lo i kartan.');
     const selected = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
     await expect(selected).toHaveAttribute('aria-pressed', 'true');
+    const mapStatus = page.getByRole('region', { name: 'Kartans status', exact: true });
+    await expect(mapStatus).toContainText('Markerat i kartan.');
     await openConversationText(page);
     await expect(selected).toHaveAttribute('aria-pressed', 'true');
     await expect(
@@ -451,6 +453,7 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
       assistant(page).getByRole('log', { name: 'Samtalstext', exact: true }),
     ).toContainText('Markerat!');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Osänd uppgift');
+    await expect(mapStatus).not.toContainText('Markerat i kartan.');
   } finally {
     await app.close();
   }
