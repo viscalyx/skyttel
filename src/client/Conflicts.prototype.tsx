@@ -238,6 +238,17 @@ export function ConflictsPrototype() {
   const [stale, setStale] = useState(false);
   const [revision, setRevision] = useState(1);
   const [status, setStatus] = useState('');
+  const [responseMode, setResponseMode] = useState('success');
+  const [requestState, setRequestState] = useState<
+    'idle' | 'pending' | 'rejected' | 'unknown' | 'checking'
+  >('idle');
+  const requestLock = useRef(false);
+  const attempt = useRef<{
+    id: string;
+    values: Record<string, string>;
+    message: string;
+    applied: boolean;
+  } | null>(null);
   const [editing, setEditing] = useState(false);
   const [edit, setEdit] = useState('');
   const [discard, setDiscard] = useState(false);
@@ -246,6 +257,8 @@ export function ConflictsPrototype() {
   const opener = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const base = cases[index];
+  const locked =
+    requestState === 'pending' || requestState === 'unknown' || requestState === 'checking';
   const item =
     revision > 1 && base.id === 'object'
       ? {
@@ -278,13 +291,16 @@ export function ConflictsPrototype() {
     }
   }, [open]);
   function selectCase(n: number) {
+    if (requestLock.current) return;
     setIndex(n);
     setStale(false);
     setEditing(false);
     setStatus('');
+    setRequestState('idle');
     requestAnimationFrame(() => heading.current?.focus());
   }
   function close() {
+    if (requestState === 'pending' || requestState === 'checking') return;
     if (editing && edit) {
       setCloseAfterDiscard(true);
       setDiscard(true);
@@ -294,26 +310,63 @@ export function ConflictsPrototype() {
     }
   }
   function selectField(f: Field, side: Side) {
+    if (requestLock.current) return;
     setSelections((previous) => ({
       ...previous,
       [item.id]: { ...previous[item.id], [f.name]: side },
     }));
   }
-  function apply() {
-    if (unselected || stale || invalid || item.outsideCorrection) return;
-    setResolutions((previous) => ({
-      ...previous,
-      [item.id]: removeDraftEntry
+  function completeAttempt() {
+    const current = attempt.current;
+    if (!current) return;
+    setResolutions((previous) => ({ ...previous, [current.id]: current.values }));
+    setStatus(current.message);
+    requestLock.current = false;
+    setRequestState('idle');
+  }
+  async function apply() {
+    if (unselected || stale || invalid || item.outsideCorrection || requestLock.current) return;
+    requestLock.current = true;
+    setRequestState('pending');
+    setStatus('Lägger valet i ditt utkast…');
+    attempt.current = {
+      id: item.id,
+      values: removeDraftEntry
         ? { [draftThing]: 'Borttaget ur ditt utkast' }
         : Object.fromEntries(item.fields.map((f) => [f.name, value(f)])),
-    }));
-    setStatus(
-      removeDraftEntry
+      message: removeDraftEntry
         ? `${draftThing} har tagits bort ur ditt utkast. ${item.afterRemoval} Övriga förslag i utkastet finns kvar.`
         : item.acceptDeletion
           ? `Ditt ändringsförslag har kastats. ${deletedThing} förblir borttaget. Övriga förslag i utkastet finns kvar.`
           : 'Valen finns i ditt utkast. Den gemensamma kartan är inte sparad.',
-    );
+      applied: responseMode === 'success' || responseMode === 'unknown-applied',
+    };
+    // Simulated request only; the production flow checks the actual draft.
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    if (responseMode === 'rejected') {
+      setRequestState('rejected');
+      requestLock.current = false;
+      setStatus('Valet kunde inte läggas i utkastet. Dina val finns kvar. Försök igen.');
+    } else if (responseMode.startsWith('unknown')) {
+      setRequestState('unknown');
+      setStatus(
+        'Det är oklart om valet lades i utkastet. Kontrollera utfallet innan du försöker igen.',
+      );
+    } else completeAttempt();
+  }
+  async function checkAttempt() {
+    if (requestState !== 'unknown') return;
+    setRequestState('checking');
+    setStatus('Kontrollerar utkastet…');
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    if (attempt.current?.applied) completeAttempt();
+    else {
+      requestLock.current = false;
+      setRequestState('rejected');
+      setStatus(
+        'Kontrollen visar att valet inte lades i utkastet. Dina val finns kvar. Du kan försöka igen.',
+      );
+    }
   }
   function resultFields(values?: Record<string, string>) {
     if (removeDraftEntry)
@@ -387,7 +440,12 @@ export function ConflictsPrototype() {
               <p id="cp-subtitle">Valen ändrar ditt utkast. Kartan sparas separat.</p>
             </div>
           </div>
-          <button type="button" onClick={close} aria-label="Stäng konfliktdialogen">
+          <button
+            type="button"
+            disabled={requestState === 'pending' || requestState === 'checking'}
+            onClick={close}
+            aria-label="Stäng konfliktdialogen"
+          >
             ✕
           </button>
         </div>
@@ -397,7 +455,7 @@ export function ConflictsPrototype() {
               <button
                 key={c.id}
                 type="button"
-                disabled={editing}
+                disabled={editing || locked}
                 aria-current={index === n ? 'true' : undefined}
                 onClick={() => selectCase(n)}
               >
@@ -455,11 +513,13 @@ export function ConflictsPrototype() {
                 {stale && (
                   <div className="cp-warning" role="alert">
                     <strong>Underlaget har ändrats.</strong>
-                    <p>Dina val har nollställts. Läs den nya jämförelsen innan du väljer igen.</p>
+                    <p>
+                      Det sparade värdet har ändrats. Valet för den berörda egenskapen behöver göras
+                      om. Dina andra val finns kvar.
+                    </p>
                     <button
                       type="button"
                       onClick={() => {
-                        setRevision((r) => r + 1);
                         setStale(false);
                       }}
                     >
@@ -549,7 +609,9 @@ export function ConflictsPrototype() {
                                   type="button"
                                   aria-label={`${f.name}: ${sideNames[side]} – ${f[side]}`}
                                   aria-pressed={same ? undefined : picked}
-                                  disabled={same || stale || (side === 'mine' && !!item.blocked)}
+                                  disabled={
+                                    same || stale || locked || (side === 'mine' && !!item.blocked)
+                                  }
                                   onClick={() => selectField(f, side)}
                                 >
                                   <span className="cp-field-name">
@@ -613,7 +675,7 @@ export function ConflictsPrototype() {
                           <button
                             className="cp-primary"
                             type="button"
-                            disabled={!!unselected || stale || !!invalid}
+                            disabled={!!unselected || stale || !!invalid || locked}
                             onClick={apply}
                           >
                             {removeDraftEntry
@@ -648,6 +710,11 @@ export function ConflictsPrototype() {
                 </button>
               </section>
             )}
+            {requestState === 'unknown' && (
+              <button type="button" onClick={checkAttempt}>
+                Kontrollera om valet lades i utkastet
+              </button>
+            )}
             <p className="cp-status" role="status">
               {status}
             </p>
@@ -655,12 +722,30 @@ export function ConflictsPrototype() {
         </div>
         <section className="cp-lab" aria-label="Prototypkontroller">
           <strong>Kastbar prototyp · A, val per egenskap</strong>
+          <label>
+            Simulerat svar{' '}
+            <select
+              value={responseMode}
+              disabled={locked}
+              onChange={(e) => setResponseMode(e.target.value)}
+            >
+              <option value="success">Genomfört</option>
+              <option value="rejected">Avvisat</option>
+              <option value="unknown-applied">Oklart – genomfört</option>
+              <option value="unknown-rejected">Oklart – inte genomfört</option>
+            </select>
+          </label>
           <button
             type="button"
-            disabled={editing}
+            disabled={editing || locked}
             onClick={() => {
               selectCase(0);
-              setSelections((p) => ({ ...p, object: {} }));
+              setRevision((r) => r + 1);
+              setSelections((p) => {
+                const changed = { ...p.object };
+                delete changed.Namn;
+                return { ...p, object: changed };
+              });
               setResolutions((p) => {
                 const next = { ...p };
                 delete next.object;
@@ -673,7 +758,7 @@ export function ConflictsPrototype() {
           </button>
           <button
             type="button"
-            disabled={editing}
+            disabled={editing || locked}
             onClick={() => {
               setSelections({});
               setResolutions({});
@@ -691,6 +776,7 @@ export function ConflictsPrototype() {
                   konflikt: item.id,
                   val: selections,
                   inaktuellt: stale,
+                  begäran: requestState,
                   lösningar: resolutions,
                   oskickadText: edit,
                 },
