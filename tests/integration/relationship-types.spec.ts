@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { activatePanel, createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { createInstallation } from '../support/installation.js';
 
 test('STY-01: a directed definition and arbitrary endpoints share a durable draft, save and history', async ({
@@ -338,13 +339,13 @@ test('STY-04: stale definitions stop the whole save and explicit resolution pres
     await page.goto(installation.origin);
     await openWorkspace(page);
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Konflikt: sparad sambandstyp');
-    await expect(review).toContainText('Los nya förklaring');
-    await page.getByRole('button', { name: 'Behåll min sambandstyp' }).click();
+    await applyProposedConflictChanges(page, 'Los nya förklaring');
     await expect(review).toContainText('Los nya förklaring');
     expect((await read()).objects).toEqual([]);
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await installation.restart();
     const current = await read();
     expect(
@@ -357,12 +358,12 @@ test('STY-04: stale definitions stop the whole save and explicit resolution pres
     });
     expect(current.relationships).toHaveLength(1);
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(history[2].relationshipTypes[0].before).toMatchObject({
+    expect(history[0].relationshipTypes[0].before).toMatchObject({
       description: 'Los nya förklaring',
       reverseLabel: 'rymmer',
       revision: 2,
     });
-    expect(history[2].relationships[0].type).toMatchObject({
+    expect(history[0].relationships[0].type).toMatchObject({
       name: 'Plats',
       description: 'Los nya förklaring',
       reverseLabel: 'har',
@@ -424,11 +425,13 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     await page.getByLabel('Till objekt').selectOption('garage');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Förvaring' });
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
       'Sambandet finns redan: Alex blå cykel → förvaras i → Garaget',
     );
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Förvaring (sambandstyp)');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Förvaring (sambandstyp)',
+    );
     const originalRelationship = (await (await page.request.get(path)).json()).relationships[0];
     await page.reload();
     await openWorkspace(page);
@@ -461,7 +464,9 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     await expect(review).toContainText('Var hushållets saker finns');
     await expect(review).toContainText('Hushållets förvaringsplatser');
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await page.reload();
     await openWorkspace(page);
     await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
@@ -613,7 +618,9 @@ test('STY-05: duplicate adds, edits and concurrent saves preserve identity and r
     await expect(review).toContainText('Samma samband finns redan');
     await page.getByRole('button', { name: 'Använd sparat värde', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     const current = await read();
     expect(current.relationships).toHaveLength(3);
     expect(

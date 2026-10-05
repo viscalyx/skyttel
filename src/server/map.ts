@@ -6,6 +6,7 @@ import {
   conflictBasis,
   conflictCombinationError,
   conflictProperties,
+  conflictPropertyValue,
   sameConflictValue,
 } from '../shared/conflict-properties.js';
 import {
@@ -192,6 +193,13 @@ export function householdMap(database: Database.Database, actorId: string, house
     const conflicts = draftConflicts(state);
     if (conflicts.length) {
       const actors: NonNullable<MapState['conflictActors']> = {};
+      const propertyActors: NonNullable<MapState['conflictPropertyActors']> = {};
+      const remainingProperties = new Map(
+        conflicts.map((conflict) => [
+          `${conflict.kind}:${conflict.id}`,
+          new Set(conflictProperties(state, conflict).map((field) => field.key)),
+        ]),
+      );
       const receipts = database
         .prepare(
           `SELECT s.receipt FROM map_history h JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId WHERE h.householdId = ? ORDER BY h.id DESC`,
@@ -209,23 +217,38 @@ export function householdMap(database: Database.Database, actorId: string, house
                 : conflict.kind === 'objectType'
                   ? receipt.objectTypes
                   : receipt.relationshipTypes;
+          const change = changes?.find(
+            (change) =>
+              ('id' in change ? change.id : (change.after?.id ?? change.before?.id)) ===
+              conflict.id,
+          );
+          if (!change) continue;
+          const name = receipt.actorName?.trim().split(/\s+/)[0];
+          const actor = name ? { name, savedAt: receipt.savedAt } : undefined;
           if (
             !actors[key] &&
-            receipt.actorName &&
-            changes?.some(
-              (change) =>
-                ('id' in change ? change.id : (change.after?.id ?? change.before?.id)) ===
-                  conflict.id &&
-                (change.after?.revision ?? null) === (conflict.current?.revision ?? null),
-            )
+            actor &&
+            (change.after?.revision ?? null) === (conflict.current?.revision ?? null)
           )
-            actors[key] = {
-              name: receipt.actorName.trim().split(/\s+/)[0],
-              savedAt: receipt.savedAt,
-            };
+            actors[key] = actor;
+          for (const property of remainingProperties.get(key) ?? []) {
+            const before = conflictPropertyValue(change.before, property);
+            const after = conflictPropertyValue(change.after, property);
+            if (sameConflictValue(before, after)) continue;
+            // Stop at the latest actual write, including a receipt without known authorship.
+            remainingProperties.get(key)?.delete(property);
+            if (
+              actor &&
+              sameConflictValue(after, conflictPropertyValue(conflict.current, property))
+            ) {
+              propertyActors[key] ??= {};
+              propertyActors[key][property] = actor;
+            }
+          }
         }
       }
       if (Object.keys(actors).length) state.conflictActors = actors;
+      if (Object.keys(propertyActors).length) state.conflictPropertyActors = propertyActors;
     }
     return state;
   }

@@ -122,8 +122,13 @@ export function draftChangeCount(draft?: MapDraft) {
         (draft.relationshipTypes?.length ?? 0)
     : 0;
 }
+export interface ConflictActor {
+  name: string;
+  savedAt: string;
+}
 export interface MapState {
-  conflictActors?: Record<string, { name: string; savedAt: string }>;
+  conflictActors?: Record<string, ConflictActor>;
+  conflictPropertyActors?: Record<string, Record<string, ConflictActor>>;
   userId: string;
   contentVersion: number;
   types: ObjectType[];

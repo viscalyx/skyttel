@@ -35,7 +35,7 @@ export function conflictChange(state: MapState, conflict: DraftConflict) {
           : state.draft.relationshipTypes;
   return changes?.find((change) => change.id === conflict.id);
 }
-function valueAt(value: unknown, key: string): unknown {
+export function conflictPropertyValue(value: unknown, key: ConflictProperty['key']): unknown {
   return key
     .split('.')
     .reduce<unknown>(
@@ -79,8 +79,22 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
             ['builtins', 'Övriga uppgifter'],
             ['propertyOrder', 'Uppgifternas ordning'],
           ];
-  if (conflict.kind === 'object')
-    for (const field of financialFields) entries.push([`financialFacts.${field.key}`, field.label]);
+  if (conflict.kind === 'object') {
+    const type =
+      proposedObjectTypes(state.types, state.draft.objectTypes).find(
+        (type) =>
+          type.id ===
+          (conflict.current && 'typeId' in conflict.current ? conflict.current.typeId : undefined),
+      ) ?? ('type' in change ? change.type : undefined);
+    const label = (key: string, fallback: string) =>
+      (type && 'builtins' in type
+        ? type.builtins?.find((field) => field.key === key)?.name
+        : undefined) ?? fallback;
+    const description = entries.find(([key]) => key === 'description');
+    if (description) description[1] = label('description', description[1]);
+    for (const field of financialFields)
+      entries.push([`financialFacts.${field.key}`, label(field.key, field.label)]);
+  }
   if (conflict.kind === 'object' || conflict.kind === 'relationship') {
     const types =
       conflict.kind === 'object'
@@ -102,9 +116,9 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
     .map(([key, label]) => ({
       key,
       label,
-      saved: valueAt(conflict.current, key),
-      proposed: valueAt(change.after, key),
-      before: valueAt(change.before, key),
+      saved: conflictPropertyValue(conflict.current, key),
+      proposed: conflictPropertyValue(change.after, key),
+      before: conflictPropertyValue(change.before, key),
     }))
     .filter(
       (field) =>

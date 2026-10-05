@@ -1,7 +1,7 @@
-import { type APIRequestContext, expect } from '@playwright/test';
+import { type APIRequestContext, expect, type Page } from '@playwright/test';
 import type { MapState, ObjectValue, RelationshipValue } from '../../src/shared/map.js';
 import { createHousehold, signIn } from './client.js';
-import { createInstallation, robin } from './installation.js';
+import { createInstallation, type Identity, robin } from './installation.js';
 export async function conflictCollaborators(
   first: APIRequestContext,
   second: APIRequestContext,
@@ -9,6 +9,7 @@ export async function conflictCollaborators(
     ['lo', 'Lo Exempel'],
     ['service', 'Molnmusik'],
   ],
+  memberIdentity: Identity = robin,
 ) {
   const installation = await createInstallation();
   await signIn(first, installation.origin);
@@ -40,7 +41,7 @@ export async function conflictCollaborators(
   }
   const save = async (client: APIRequestContext, operationId: string) =>
     post(client, 'save', { version: (await read(client)).draft.version, operationId });
-  installation.setIdentity(robin);
+  installation.setIdentity(memberIdentity);
   await signIn(second, installation.origin);
   const { user } = await (await second.get(`${installation.origin}/api/bootstrap`)).json();
   const { code } = await (
@@ -63,4 +64,32 @@ export async function conflictCollaborators(
   }
   expect((await save(first, 'initial')).status()).toBe(200);
   return { installation, path, post, read, propose, save, userId: user.id };
+}
+
+/** Choose proposed changes and retain independently saved properties through the public dialog. */
+export async function applyProposedConflictChanges(page: Page, savedText?: string) {
+  await page.getByRole('button', { name: /^\d+ konflikt(?:er)? i ditt utkast$/ }).click();
+  const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+  if (savedText)
+    await expect(dialog.getByRole('region', { name: 'Sparat i kartan nu' })).toContainText(
+      savedText,
+    );
+  const refresh = dialog.getByRole('button', { name: 'Visa aktuell jämförelse' });
+  if (await refresh.isVisible()) await refresh.click();
+  const proposed = dialog
+    .getByRole('region', { name: 'Ditt förslag', exact: true })
+    .getByRole('button');
+  const saved = dialog
+    .getByRole('region', { name: 'Sparat i kartan nu', exact: true })
+    .getByRole('button');
+  for (let index = 0; index < (await proposed.count()); index++) {
+    const field = proposed.nth(index);
+    if (await field.isDisabled()) continue;
+    if (await field.getByText('Ditt föreslagna värde', { exact: true }).count())
+      await field.click();
+    else await saved.nth(index).click();
+  }
+  await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('Valen finns i ditt utkast');
+  await page.keyboard.press('Escape');
 }

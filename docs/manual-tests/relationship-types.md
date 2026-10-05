@@ -163,8 +163,10 @@ resolution preserves independent edits”.
    till rymmer. Lo sparar före Alex.
 3. Alex försöker spara. Hämta aktuellt underlag och läs konflikten.
    Kontrollera att inga av Alex objekt sparas och att utkastet finns kvar.
-4. Välj Behåll min sambandstyp. Kontrollera den bevarade beskrivningen
-   och att objekten fortfarande är privata. Ge ett nytt sparbesked.
+4. Öppna **Granska konflikter**. Välj eget typnamn Plats och egen
+   målbenämning har, men den sparade beskrivningen Los nya förklaring.
+   Välj **Lägg valen i utkastet** och stäng med Escape. Kontrollera att
+   objekten fortfarande är privata och spara sedan hela utkastet.
 5. Starta om och läs kartan samt historiken via HTTP.
 
 **Förväntat resultat:**

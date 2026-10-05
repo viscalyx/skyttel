@@ -1818,7 +1818,7 @@ export function HouseholdMap({
           state={state}
           open={conflictDialogOpen}
           initialKey={conflictDialogKey}
-          disabled={pending || blocked}
+          disabled={pending || blocked || dirty}
           onClose={() => setConflictDialogOpen(false)}
           onRefresh={async () => {
             const latest = await request<MapState>(path);

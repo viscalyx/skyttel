@@ -317,11 +317,6 @@
   }
 }
 
-.household-map .cp-dialog.cp-product {
-  --cp-ink: #1d3543;
-  --cp-accent: #1d706b;
-  font:
-    15px / 1.5 Inter,
-    system-ui,
-    sans-serif;
+.household-map .cp-product :is(.cp-detail h2, .cp-case-text) {
+  overflow-wrap: anywhere;
 }

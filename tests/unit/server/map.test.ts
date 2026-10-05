@@ -430,3 +430,34 @@ test('shared history does not expose abandoned private relationship endpoint nam
     kim: 'Kim',
   });
 });
+
+test('unknown authorship of the latest property write never credits an older matching value', async () => {
+  const { actor } = await member();
+  await propose();
+  await client.json(`${path}/save`, { version: 1, operationId: 'initial-property' });
+  await propose('Lo Lind', 'synthetic-person', actor);
+  for (const [index, name] of ['Lo Berg', 'Lo Alm', 'Lo Berg'].entries()) {
+    await propose(name);
+    const state = await read();
+    expect(
+      (
+        await client.json(`${path}/save`, {
+          version: state.draft.version,
+          operationId: `property-${index}`,
+        })
+      ).status,
+    ).toBe(200);
+  }
+  const row = fixture.database
+    .prepare('SELECT receipt FROM map_save WHERE operationId = ?')
+    .get('property-2') as { receipt: string };
+  const receipt = JSON.parse(row.receipt);
+  delete receipt.actorName;
+  fixture.database
+    .prepare('UPDATE map_save SET receipt = ? WHERE operationId = ?')
+    .run(JSON.stringify(receipt), 'property-2');
+  const current = await read(actor);
+  expect(current.objects[0].name).toBe('Lo Berg');
+  expect(current.conflictPropertyActors?.['object:synthetic-person']?.name).toBeUndefined();
+  expect(current.draft.changes[0].after.name).toBe('Lo Lind');
+});

@@ -223,7 +223,9 @@ until an explicit current choice”.
    lägger till textfältet Smeknamn. Lo sparar hela sitt utkast.
 3. Alex försöker spara, hämtar aktuellt underlag och granskar konflikten.
    Kontrollera att inga objekt sparas och att det egna utkastet finns kvar.
-4. Välj **Behåll min typdefinition**. Kontrollera att inget sparas förrän
+4. Öppna **Granska konflikter**. Välj eget namn och egen beskrivning,
+   men sparade Egna fält med Smeknamn. Välj **Lägg valen i utkastet**
+   och stäng med Escape. Kontrollera att inget sparas förrän
    Alex uttryckligen väljer **Spara hela utkastet** igen.
 5. Starta om och läs historiken via den publika HTTP-adressen.
 

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { createInstallation } from '../support/installation.js';
 
 test('KARTA-07: family objects and directed relationships save together and keep their identities', async ({
@@ -119,7 +120,9 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     await page.getByLabel('Till objekt').selectOption({ label: 'Betalkonto (Bankkonto)' });
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await page.reload();
     await openWorkspace(page);
     await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
@@ -138,7 +141,9 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
       await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
       await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
       await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-      await expect(page.getByRole('status')).toContainText('Sparat');
+      await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+        'Sparat',
+      );
       await page.reload();
       await openWorkspace(page);
       await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
@@ -168,14 +173,25 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
     await expect(review).toContainText('Lo Exempel');
     await expect(review).toContainText('Lo Lind');
-    await expect(review).toContainText('Lo Berg');
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    await expect(
+      page
+        .getByRole('dialog', { name: 'Granska konflikter' })
+        .getByRole('region', { name: 'Sparat i kartan nu' }),
+    ).toContainText('Lo Berg');
+    await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
-    await expect(review).toContainText('Lo Berg');
-    await review.getByRole('button', { name: 'Behåll mitt förslag' }).click();
-    await expect(page.getByRole('status')).toContainText('Granska hela utkastet');
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    await expect(
+      page
+        .getByRole('dialog', { name: 'Granska konflikter' })
+        .getByRole('region', { name: 'Sparat i kartan nu' }),
+    ).toContainText('Lo Berg');
+    await page.keyboard.press('Escape');
+    await applyProposedConflictChanges(page);
     await expect(review).toContainText('Spelar piano i musikföreningen.');
     await expect(review).toContainText('familjen@example.test');
     await expect(review).toContainText('musik@example.test');
@@ -196,7 +212,9 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
     );
 
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await page.reload();
     await openWorkspace(page);
     await expect(review).toContainText('Inga förslag');
@@ -272,7 +290,7 @@ test('a concurrent duplicate refreshes the existing relationship instead of fail
       data: { version: draft.version, operationId: 'concurrent-save' },
     });
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
       'Sambandet finns redan: Kim Exempel → Använder → Molnmusik',
     );
     await expect(

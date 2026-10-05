@@ -8,6 +8,7 @@ import {
   conflictChange,
   conflictCombinationError,
   conflictProperties,
+  conflictPropertyValue,
   conflictValueText,
   sameConflictValue,
 } from '../shared/conflict-properties.js';
@@ -272,18 +273,7 @@ export function ConflictDialog({
                 {fields.map((field) => (
                   <div key={field.key}>
                     <dt>{field.label}</dt>
-                    <dd>
-                      {propertyValue(
-                        field,
-                        field.key.includes('.')
-                          ? (
-                              resolved[key][field.key.split('.')[0]] as
-                                | Record<string, unknown>
-                                | undefined
-                            )?.[field.key.split('.')[1]]
-                          : resolved[key][field.key],
-                      )}
-                    </dd>
+                    <dd>{propertyValue(field, conflictPropertyValue(resolved[key], field.key))}</dd>
                   </div>
                 ))}
               </dl>
@@ -318,6 +308,7 @@ export function ConflictDialog({
                           !sameConflictValue(field.proposed, field.before) &&
                           !same;
                         const picked = selected[field.key] === side;
+                        const propertyActor = comparison.conflictPropertyActors?.[key]?.[field.key];
                         return (
                           <button
                             key={field.key}
@@ -334,9 +325,9 @@ export function ConflictDialog({
                             </span>
                             {side === 'saved' &&
                               !sameConflictValue(field.saved, field.before) &&
-                              actor && (
+                              propertyActor && (
                                 <span className="cp-tag">
-                                  {person} sparade ett nytt värde
+                                  {propertyActor.name} sparade ett nytt värde
                                   {overlap ? ' efter att du började ändra den här uppgiften.' : '.'}
                                 </span>
                               )}

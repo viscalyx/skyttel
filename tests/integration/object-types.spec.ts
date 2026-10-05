@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { createInstallation } from '../support/installation.js';
 
 test('TYP-01: custom definitions and four optional fields share one durable save and history', async ({
@@ -110,7 +111,9 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await expect(page.getByLabel('Installationsdatum', { exact: true })).toHaveValue('');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await page.reload();
     await openWorkspace(page);
     await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
@@ -124,7 +127,9 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await expect(review).toContainText('Batteri: Nej');
     await expect(review).toContainText('Effekt: 12.5');
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await page.reload();
     await openWorkspace(page);
     await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
@@ -138,7 +143,9 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await expect(review).toContainText('Batteri: Ja');
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await page.reload();
     await openWorkspace(page);
     await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
@@ -272,7 +279,9 @@ test('TYP-03: members share editable definitions while private proposals and use
       'Kommentar: Privat värde',
     );
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     const saved = await read();
     expect(saved.objects[0].customValues).toEqual({ note: 'Privat värde' });
     expect(saved.types.find((type: { id: string }) => type.id === 'solar')).toMatchObject(renamed);
@@ -288,7 +297,9 @@ test('TYP-03: members share editable definitions while private proposals and use
     await memberPage.getByLabel('Kommentar', { exact: true }).fill('Eget objekt');
     await memberPage.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(memberPage.getByRole('status')).toContainText('Sparat');
+    await expect(memberPage.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await memberPage
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
@@ -297,14 +308,18 @@ test('TYP-03: members share editable definitions while private proposals and use
     await memberPage.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
     await memberPage.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(memberPage.getByRole('status')).toContainText('Sparat');
+    await expect(memberPage.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await memberPage.getByText('Objekttyper och egna fält', { exact: true }).click();
     await memberPage.getByRole('button', { name: 'Ändra typ: Person', exact: true }).click();
     await memberPage.getByLabel('Typens namn').fill('Människa');
     await memberPage.getByLabel('Typens beskrivning').fill('En person i kartan');
     await memberPage.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
     await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(memberPage.getByRole('status')).toContainText('Sparat');
+    await expect(memberPage.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await memberPage.reload();
     await openWorkspace(memberPage);
     await memberPage
@@ -399,12 +414,12 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
     await page.goto(installation.origin);
     await openWorkspace(page);
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Konflikt: sparad typdefinition');
-    await expect(review).toContainText('Annans rättelse');
-    await page.getByRole('button', { name: 'Behåll min typdefinition' }).click();
+    await applyProposedConflictChanges(page, 'Annans rättelse');
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await installation.restart();
     const after = await read();
     expect(after.types.find((item: { id: string }) => item.id === type.id)).toMatchObject({
@@ -421,13 +436,13 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
     await expect(page.getByLabel('Smeknamn', { exact: true })).toHaveValue('');
     const { history } = await (await page.request.get(`${path}/history`)).json();
     expect(history).toHaveLength(2);
-    expect(history[1].objectTypes[0].before).toMatchObject({
+    expect(history[0].objectTypes[0].before).toMatchObject({
       name: 'Personer',
       description: 'Annans rättelse',
       fields: [independentField],
       revision: 2,
     });
-    expect(history[1].changes[0].type).toMatchObject({
+    expect(history[0].changes[0].type).toMatchObject({
       name: 'Människor',
       revision: 3,
       fields: [independentField],

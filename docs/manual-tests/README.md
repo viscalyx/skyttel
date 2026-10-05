@@ -354,7 +354,9 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
   utkast, hantera gamla kastförsök
   och konfliktval, kombinera egenskaper i Granska konflikter från karta
-  och tabell, förklara ogiltiga kombinationer och avvisa inaktuell jämförelse
+  och tabell, läsa långa namn, bevara konfigurerade egenskapsnamn och
+  ange varje egenskaps verkliga sparare, förklara ogiltiga kombinationer
+  och avvisa inaktuell jämförelse
   samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner

@@ -357,6 +357,100 @@ distinguish effective changes and explicit modes”.
   De fyra kolumnerna är kvar. Läsningen ändrar inga förslag eller sparade
   uppgifter och Escape återför fokus till den använda läsknappen.
 
+### UTKAST-33: läs långa objektnamn i objekt- och sambandkonflikter
+
+**Syfte:** Läsa hela namnet i konfliktens rubrik och lista på smal skärm.
+
+**Användare:** Alex och Lo i skilda webbläsarprofiler med tillgång till hushållet.
+
+**Förutsättningar:** Ett nytt hushåll med ett objekt vars namn består av
+Föremålsnamn upprepat fjorton gånger utan mellanslag, och objektet Molnmusik.
+Spara båda. Gör varje delprov i ett nytt hushåll enligt allmän förberedelse.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+testfallen “UTKAST-33: long unbroken object names wrap in the conflict heading
+and list at 320 CSS pixels” och “UTKAST-33: long unbroken relationship names
+wrap in the conflict heading and list at 320 CSS pixels”.
+
+**Steg:**
+
+1. I objektprovet föreslår Alex en ny beskrivning av objektet med det långa
+   namnet. Lo sparar en annan beskrivning av samma objekt.
+2. I sambandprovet skapar och sparar Alex ett samband från objektet med
+   det långa namnet till Molnmusik. Alex föreslår sedan Osäkert uppgivet,
+   medan Lo ändrar sambandets status till Avslutat och sparar.
+3. Använd en smal webbläsarvy och öppna **1 konflikt i ditt utkast**.
+   Läs hela namnet i rubriken och konfliktlistan utan sidledes rullning.
+4. Stäng med Escape och kontrollera att konfliktknappen får fokus.
+
+**Förväntat resultat:**
+
+- Namnet bryts och kan läsas i båda delproven. Innehållet kräver ingen
+  sidledes rullning i dialogen.
+- Escape återför fokus. Läsningen ändrar varken kartan eller utkastet.
+
+### UTKAST-34: bevara typens egna benämningar i konflikt och resultat
+
+**Syfte:** Skilja konfigurerade gemensamma egenskaper från deras standardnamn.
+
+**Användare:** Alex och Lo med tillgång till samma hushåll.
+
+**Förutsättningar:** Ett nytt hushåll med Lo Exempel. Redigera dess objekttyp
+via **Objekttyper och egna fält**. Skapa avsnittet Uppgifter och lägg till
+Beskrivning och Pris med **Lägg till gemensam egenskap**. Ändra **Fältets namn**
+till Anteckningar respektive Avtalat pris och välj avsnittet Uppgifter.
+Lägg definitionen i utkastet och spara.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+testfallet “UTKAST-34: configured builtin labels remain unchanged on both
+conflict sides and the result”.
+
+**Steg:**
+
+1. Alex föreslår Egen anteckning i Anteckningar och priset 120.
+2. Lo sparar Sparad anteckning och priset 240 på samma objekt.
+3. Alex öppnar **Granska konflikter**. Läs båda sidornas benämningar.
+4. Välj Alex anteckning och det sparade priset. Läs **Resultat av valen**,
+   välj **Lägg valen i utkastet** och läs resultatet igen.
+
+**Förväntat resultat:**
+
+- Båda sidor och resultatet visar Anteckningar och Avtalat pris, utan att
+  ersätta dem med Beskrivning eller Pris.
+- Utkastet innehåller Egen anteckning och 240 efter valet.
+
+### UTKAST-35: ange den verkliga spararen för varje ändrad egenskap
+
+**Syfte:** Bevara korrekt författare när senare sparanden ändrar andra egenskaper.
+
+**Användare:** Alex, Lo och Robin i tre skilda webbläsarprofiler med egna
+konfigurerade inloggningar och tillgång till samma hushåll.
+
+**Förutsättningar:** Ett nytt hushåll med Lo Exempel utan beskrivning.
+De tre användarna är aktuella medlemmar; demodatans historiska Robin är
+inte en inloggning. Använd faktiska förnamn om profilerna har andra namn.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+testfallet “UTKAST-35: saved property attribution identifies each actual saver
+after independent later changes”.
+
+**Steg:**
+
+1. Robin lägger namnet Eget namn och beskrivningen Egen text i sitt utkast.
+2. Lo ändrar enbart objektets namn till Lo Berg och sparar.
+3. Alex ändrar enbart beskrivningen till Alex text och sparar senare.
+4. Robin öppnar **Granska konflikter** och läser den sparade sidans
+   namnrad och beskrivningsrad.
+
+**Förväntat resultat:**
+
+- Namnraden anger Lo som sparare, även efter Alex senare sparande.
+- Beskrivningsraden anger Alex. Författarnamn hör till den ändrade
+  egenskapen och ersätts inte av hela objektets senaste sparare.
+
 ### UTKAST-01: återuppta en konflikt och spara oberoende förslag tillsammans
 
 **Syfte:** Kontrollera att ett privat utkast kan återupptas, att ett aktivt
@@ -382,8 +476,9 @@ kommandon som kör integrationstesterna.
    av inloggningsadress. Kontrollera knappen **Spara hela utkastet**.
 2. Ladda om sidan. Stoppa och starta sedan applikationen igen med samma
    databas. Öppna sidan och granska utkastet på nytt.
-3. Välj **Behåll mitt förslag** för namnkonflikten. Kontrollera statusen,
-   namnet, beskrivningen och förslaget om inloggningsadress.
+3. Öppna **Granska konflikter** via konfliktknappen. Välj det egna namnet
+   Lo Lind och den sparade beskrivningen. Välj **Lägg valen i utkastet**
+   och stäng med Escape. Granska även förslaget om inloggningsadress.
 4. Öppna **Familjens musikkonto**, ändra namnet till
    **Familjens rättade konto** och välj **Lägg i mitt utkast**. Granska
    sambandets **Sparat underlag** och **Förslag**.
@@ -396,8 +491,8 @@ kommandon som kör integrationstesterna.
   och det aktuella sparade namnet Lo Berg. **Spara hela utkastet** är
   inaktiverad. Konflikten och adressförslaget finns kvar efter omladdning
   och omstart.
-- Konfliktvalet ger inget sparkvitto. Statusen uppmanar till granskning
-  av hela utkastet. Förslaget innehåller Lo Lind och den oberoende sparade
+- Konfliktvalet ger inget sparkvitto. Dialogens status visar att valen finns
+  i utkastet. Förslaget innehåller Lo Lind och den oberoende sparade
   beskrivningen “Spelar piano i musikföreningen.” Adressförslaget finns kvar.
 - Sambandets tidigare underlag visar Familjens musikkonto och
   `familjen@example.test`. Förslaget visar Familjens rättade konto och
@@ -1039,16 +1134,15 @@ conflict without losing unsent work”.
    försöket avvisas och välj **Hämta aktuellt underlag**.
 3. Hos Alex: öppna **Nytt objekt**, skriv Oskickad cykel och stäng
    arbetsytan utan att lägga texten i utkastet.
-4. I kartans återkoppling, välj **1 konflikt i ditt utkast**. Använd
-tangentbordet
-   för att välja **Objekt: Lo Lind** i hela utkastets konfliktlista.
-5. Läs det tidigare namnet, förslaget och det aktuella sparade namnet.
-   Öppna Lista och välj **Fortsätt: Oskickad cykel**.
+4. I kartans återkoppling, välj **1 konflikt i ditt utkast**. Läs
+   **Granska konflikter**, **Sparat i kartan nu** och **Ditt förslag**.
+5. Kontrollera att namnvalet är spärrat. Stäng med Escape, öppna Lista
+   och välj **Fortsätt: Oskickad cykel**.
 
 **Förväntat resultat:**
 
-- Fokus hamnar på den berörda ändringens synliga rubrik i utkastet.
-  Underlag, förslag och aktuellt sparat värde går att skilja åt.
+- Fokus hamnar på dialogens synliga rubrik Granska konflikter.
+  Sparat i kartan nu visar Lo Berg och Ditt förslag visar Lo Lind.
 - Konfliktvalen är spärrade medan oskickad formulärtext återstår.
   Objektformuläret återkommer med Oskickad cykel kvar.
 - Statusnavigeringen varken sparar, ändrar utkastet eller skapar ett
@@ -1139,20 +1233,23 @@ independent saved facts until a fresh save”.
 
 1. Alex öppnar Nytt objekt, skriver Oskickad cykel och beskrivningen Behåll den
    här texten. Stäng panelerna med kryssen utan att skicka texten.
-2. Välj konfliktlänken under hushållets namn och välj Objekt: Lo Lind
-   i hela utkastets konfliktlista.
-   Använd tangentbordet till **Rätta objektet** och tryck Enter.
-3. Kontrollera rätt objektpanel och rubrikfokus. Ändra namnet till
+2. Välj konfliktlänken under hushållets namn och stäng dialogen med
+   Escape. Öppna Lista, **Uppgifter för Lo Lind** och
+   **Redigera valt objekt**.
+3. Kontrollera rätt objektpanel och fokus i Objektets namn. Ändra namnet till
    Lo Alm och välj Lägg i mitt utkast.
-4. Öppna Lista och välj Fortsätt: Oskickad cykel. Kontrollera den oskickade
-   cykelns namn och beskrivning, och stäng sedan utan att skicka texten.
-5. Välj Behåll mitt förslag för Lo Alm. Kontrollera kartan hos Robin
-   innan Alex väljer Spara hela utkastet.
+4. Öppna konfliktknappen, välj Visa aktuell jämförelse och kontrollera
+   att valet av Lo Alm är spärrat.
+   Stäng med Escape, öppna Lista och välj Fortsätt: Oskickad cykel.
+   Kontrollera namnet och beskrivningen, och stäng utan att skicka texten.
+5. Öppna Granska konflikter. Välj det egna namnet Lo Alm och den sparade
+   beskrivningen Spelar piano, och välj **Lägg valen i utkastet**. Stäng
+   med Escape och kontrollera kartan hos Robin före sparandet.
 6. Spara Alex utkast och ladda om Robins karta.
 
 **Förväntat resultat:**
 
-- Rätta objektet öppnar det befintliga förslaget med synligt fokus.
+- Redigera valt objekt öppnar det befintliga förslaget med fokus i namnfältet.
   Annan oskickad formulärtext finns kvar och spärrar konfliktvalen.
 - Rättelsen och konfliktvalet ändrar bara Alex utkast. Inget kvitto
   skapas, och Robin ser fortfarande Lo Berg före det nya sparandet.
