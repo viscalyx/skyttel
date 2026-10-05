@@ -17,6 +17,7 @@ import { WorkspaceIcon } from './WorkspaceTools.js';
  * conversation, the microphone and the unsent text are kept by the caller.
  */
 export function TextView({
+  prototypeVariant,
   conversation,
   hidden = false,
   focusRequest,
@@ -29,6 +30,7 @@ export function TextView({
   draftContent,
   widthPreferences,
 }: {
+  prototypeVariant?: string;
   conversation: Conversation;
   hidden?: boolean;
   focusRequest?: number;
@@ -105,6 +107,7 @@ export function TextView({
     <section
       ref={root}
       className={`text-view${draftOpen ? ' draft-open' : ''}`}
+      data-draft-prototype={prototypeVariant}
       data-short={short}
       data-mobile={mobile}
       aria-labelledby={`${id}-title`}
@@ -190,7 +193,7 @@ export function TextView({
           aria-label="Utkastet"
           hidden={!draftOpen}
         >
-          <h3>Utkast</h3>
+          {!prototypeVariant && <h3>Utkast</h3>}
           {draftContent}
         </section>
         {computer && widthPreferences?.known && (

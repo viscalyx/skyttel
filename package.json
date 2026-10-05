@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "prototype:draft-review": "vite --host 0.0.0.0 --port 5176 --strictPort",
+    "prototype:draft-review": "node scripts/prototype-draft-review.mjs",
     "dev": "tsx watch src/server/index.ts",
     "dev:client": "vite --host 127.0.0.1",
     "dev:all": "node scripts/develop.mjs",

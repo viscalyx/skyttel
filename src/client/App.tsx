@@ -1385,7 +1385,10 @@ export function App() {
                 data.status === 'setup' ? (
                   <Setup onCreated={created} onReload={reload} />
                 ) : (
-                  <Navigate to={`/households/${encodeURIComponent(data.household.id)}`} replace />
+                  <Navigate
+                    to={`/households/${encodeURIComponent(data.household.id)}${location.search}`}
+                    replace
+                  />
                 )
               }
             />

@@ -60,6 +60,7 @@ export type WorkspaceTarget = 'list' | 'conversation' | 'voice' | 'search' | 'dr
 export const textViewButtonName = 'Skriv till Skyttel';
 
 export function WorkspaceTools({
+  prototypeDraftCount,
   onOpen,
   account,
   onSettings,
@@ -80,6 +81,7 @@ export function WorkspaceTools({
   conversationUnavailable = false,
   conversationOngoing = false,
 }: {
+  prototypeDraftCount?: number;
   conversationUnavailable?: boolean;
   conversationOngoing?: boolean;
   /** Opens a tool. The chosen button is where a conversation's consent box opens. */
@@ -193,91 +195,102 @@ export function WorkspaceTools({
             ['list', 'Lista', 'list'],
             ['draft', 'Utkast och historik', 'draft'],
           ] as const
-        ).map(([icon, label, target]) => (
-          <Fragment key={target}>
-            <button
-              ref={target === 'voice' ? microphoneButton : undefined}
-              type="button"
-              // The name stays. The description says what a press does while the voice starts.
-              title={
-                target === 'voice'
-                  ? touch
-                    ? undefined
-                    : voiceDescription
-                  : target === 'conversation' && conversationUnavailable && !conversationOngoing
-                    ? `${label}. Inte tillgängligt just nu.`
-                    : label
-              }
-              aria-label={
-                target === 'conversation' && textButton?.status
-                  ? `${label}. ${textButtonStatusWords[textButton.status]}.`
-                  : label
-              }
-              aria-description={
-                target === 'voice' && !touch
-                  ? voiceDescription
-                  : conversationUnavailable &&
-                      (target === 'voice' || (target === 'conversation' && !conversationOngoing))
-                    ? `${label}. Inte tillgängligt just nu.`
-                    : undefined
-              }
-              data-held={(target === 'voice' && microphonePress.held) || undefined}
-              data-secondary={target === 'draft' || target === 'search' || undefined}
-              className={
-                target === 'voice'
-                  ? 'workspace-talk'
-                  : target === 'conversation'
-                    ? 'workspace-text'
-                    : undefined
-              }
-              data-unavailable={
-                (conversationUnavailable &&
-                  (target === 'voice' || (target === 'conversation' && !conversationOngoing))) ||
-                undefined
-              }
-              disabled={
-                target === 'voice' && conversationOngoing
-                  ? !conversationUnavailable && voiceControl?.disabled
-                  : undefined
-              }
-              aria-pressed={target === 'voice' ? voiceControl?.microphone === 'on' : undefined}
-              aria-expanded={target === 'conversation' ? textViewOpen : undefined}
-              onClick={(event) => {
-                if (target === 'voice') {
-                  microphonePress.onClick(event);
-                  return;
-                }
-                onExpandedChange(false);
-                setUtility(null);
-                onOpen(target, event.currentTarget);
-              }}
-              onPointerDown={target === 'voice' ? microphonePress.onPointerDown : undefined}
-              onPointerUp={target === 'voice' ? microphonePress.onPointerUp : undefined}
-              onPointerCancel={target === 'voice' ? microphonePress.onPointerCancel : undefined}
-              onLostPointerCapture={
-                target === 'voice' ? microphonePress.onLostPointerCapture : undefined
-              }
-              onContextMenu={target === 'voice' ? microphonePress.onContextMenu : undefined}
-            >
-              <WorkspaceIcon name={icon} />
-              <span>{label}</span>
-              {target === 'conversation' && textButton?.status && (
-                <i
-                  className="text-button-marker"
-                  data-status={textButton.status}
-                  aria-hidden="true"
+        )
+          .filter(([, , target]) => target !== 'draft' || prototypeDraftCount !== 0)
+          .map(([icon, originalLabel, target]) => {
+            const label =
+              target === 'draft' && prototypeDraftCount !== undefined ? 'Utkast' : originalLabel;
+            return (
+              <Fragment key={target}>
+                {target === 'draft' && prototypeDraftCount !== undefined && (
+                  <hr className="dr-tool-separator" />
+                )}
+                <button
+                  ref={target === 'voice' ? microphoneButton : undefined}
+                  type="button"
+                  // The name stays. The description says what a press does while the voice starts.
+                  title={
+                    target === 'voice'
+                      ? touch
+                        ? undefined
+                        : voiceDescription
+                      : target === 'conversation' && conversationUnavailable && !conversationOngoing
+                        ? `${label}. Inte tillgängligt just nu.`
+                        : label
+                  }
+                  aria-label={
+                    target === 'conversation' && textButton?.status
+                      ? `${label}. ${textButtonStatusWords[textButton.status]}.`
+                      : label
+                  }
+                  aria-description={
+                    target === 'voice' && !touch
+                      ? voiceDescription
+                      : conversationUnavailable &&
+                          (target === 'voice' ||
+                            (target === 'conversation' && !conversationOngoing))
+                        ? `${label}. Inte tillgängligt just nu.`
+                        : undefined
+                  }
+                  data-held={(target === 'voice' && microphonePress.held) || undefined}
+                  data-secondary={target === 'draft' || target === 'search' || undefined}
+                  className={
+                    target === 'voice'
+                      ? 'workspace-talk'
+                      : target === 'conversation'
+                        ? 'workspace-text'
+                        : undefined
+                  }
+                  data-unavailable={
+                    (conversationUnavailable &&
+                      (target === 'voice' ||
+                        (target === 'conversation' && !conversationOngoing))) ||
+                    undefined
+                  }
+                  disabled={
+                    target === 'voice' && conversationOngoing
+                      ? !conversationUnavailable && voiceControl?.disabled
+                      : undefined
+                  }
+                  aria-pressed={target === 'voice' ? voiceControl?.microphone === 'on' : undefined}
+                  aria-expanded={target === 'conversation' ? textViewOpen : undefined}
+                  onClick={(event) => {
+                    if (target === 'voice') {
+                      microphonePress.onClick(event);
+                      return;
+                    }
+                    onExpandedChange(false);
+                    setUtility(null);
+                    onOpen(target, event.currentTarget);
+                  }}
+                  onPointerDown={target === 'voice' ? microphonePress.onPointerDown : undefined}
+                  onPointerUp={target === 'voice' ? microphonePress.onPointerUp : undefined}
+                  onPointerCancel={target === 'voice' ? microphonePress.onPointerCancel : undefined}
+                  onLostPointerCapture={
+                    target === 'voice' ? microphonePress.onLostPointerCapture : undefined
+                  }
+                  onContextMenu={target === 'voice' ? microphonePress.onContextMenu : undefined}
                 >
-                  {textButton.status === 'working'
-                    ? null
-                    : textButton.status === 'waiting'
-                      ? '?'
-                      : '•••'}
-                </i>
-              )}
-            </button>
-            {target === 'conversation' && voiceBox}
-          </Fragment>
-        ))}
+                  <WorkspaceIcon name={icon} />
+                  <span>{label}</span>
+                  {target === 'conversation' && textButton?.status && (
+                    <i
+                      className="text-button-marker"
+                      data-status={textButton.status}
+                      aria-hidden="true"
+                    >
+                      {textButton.status === 'working'
+                        ? null
+                        : textButton.status === 'waiting'
+                          ? '?'
+                          : '•••'}
+                    </i>
+                  )}
+                </button>
+                {target === 'conversation' && voiceBox}
+              </Fragment>
+            );
+          })}
         {onDetails && (
           <button
             type="button"

@@ -1,6 +1,16 @@
 // Throwaway: three arrangements of Visa utkastet inside the text view on
-// /?prototype=draft-review&variant=A. Fictional data, in-memory actions, no API.
+// /households/:id?prototype=draft-review&variant=A. Real app host; fictional draft actions.
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { draftConflicts } from '../shared/draft-conflicts.js';
+import { type FinancialFact, financialFields } from '../shared/financial-facts.js';
+import type {
+  MapState,
+  ObjectType,
+  ObjectValue,
+  RelationshipType,
+  RelationshipValue,
+} from '../shared/map.js';
 import { ConflictsPrototype } from './Conflicts.prototype.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './draft-review.prototype.css';
@@ -13,6 +23,7 @@ type Proposal = {
   action: string;
   source: string;
   saved: Record<string, string>;
+  base?: Record<string, string>;
   mine: Record<string, string>;
   hidden?: boolean;
   question?: string;
@@ -160,6 +171,128 @@ function fixtures(many = false) {
       : []),
   ];
 }
+function environmentDraft(state: MapState): Proposal[] {
+  const conflicts = draftConflicts(state);
+  const fact = (f: FinancialFact) =>
+    `${f.knowledge === 'unknown' ? 'Okänt' : f.knowledge === 'none' ? 'Uttryckligen inget' : `${f.knowledge === 'uncertain' ? 'Osäkert uppgivet: ' : ''}${f.value}`}${f.reportedOn ? ` · uppgivet ${f.reportedOn}` : ''}`;
+  const action = (before: unknown, after: unknown) =>
+    after ? (before ? 'Ändra' : 'Lägg till') : 'Ta bort';
+  const names = Object.fromEntries(
+    [
+      ...state.objects,
+      ...state.draft.changes.flatMap((c) => (c.after ? [{ ...c.after, id: c.id }] : [])),
+    ].map((o) => [o.id, o.name]),
+  );
+  const object = (v: ObjectValue | null, type: ObjectType): Record<string, string> =>
+    v
+      ? {
+          Namn: v.name,
+          Objekttyp: type.name,
+          Beskrivning: v.description || 'Ej uppgivet',
+          ...(v.identity
+            ? {
+                Identitet:
+                  v.identity === 'unspecified'
+                    ? 'Ospecificerat objekt'
+                    : 'Obesvarad identitetsfråga',
+              }
+            : {}),
+          Status: v.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
+          ...Object.fromEntries(
+            financialFields.flatMap((f) =>
+              v.financialFacts?.[f.key]
+                ? [[f.label, fact(v.financialFacts[f.key] as FinancialFact)]]
+                : [],
+            ),
+          ),
+          ...Object.fromEntries(
+            Object.entries(v.customValues ?? {}).map(([id, value]) => [
+              type.fields?.find((f) => f.id === id)?.name ?? 'Eget fält',
+              String(value),
+            ]),
+          ),
+        }
+      : {};
+  const link = (v: RelationshipValue | null, type: RelationshipType): Record<string, string> =>
+    v
+      ? {
+          Från: names[v.sourceId] ?? 'Ospecificerat objekt',
+          Sambandstyp: type.forwardLabel ?? type.name,
+          Till: v.targetId
+            ? (names[v.targetId] ?? 'Ospecificerat objekt')
+            : v.knowledge === 'none'
+              ? 'Uttryckligen inget'
+              : 'Okänt',
+          'Uppgiftens säkerhet':
+            v.knowledge === 'uncertain'
+              ? 'Osäkert uppgivet'
+              : v.knowledge === 'unresolved'
+                ? 'Obesvarad fråga'
+                : 'Bekräftat',
+          Status: v.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
+          ...(v.endDate ? { Slutdatum: fact(v.endDate) } : {}),
+          ...Object.fromEntries(
+            Object.entries(v.customValues ?? {}).map(([id, value]) => [
+              type.fields?.find((f) => f.id === id)?.name ?? 'Eget fält',
+              String(value),
+            ]),
+          ),
+        }
+      : {};
+  return [
+    ...state.draft.changes.map((c) => ({
+      id: c.id,
+      name: c.after?.name ?? c.before?.name ?? 'Objekt',
+      kind: 'Objekt',
+      action: action(c.before, c.after),
+      source: 'Miljöns utkast · simulerad arbetskopia',
+      saved: object(state.objects.find((o) => o.id === c.id) ?? c.before, c.beforeType ?? c.type),
+      base: object(c.before, c.beforeType ?? c.type),
+      mine: object(c.after, c.type),
+      conflict: conflicts.some((x) => x.kind === 'object' && x.id === c.id),
+    })),
+    ...(state.draft.relationships ?? []).map((c) => {
+      const saved = link(state.relationships.find((r) => r.id === c.id) ?? c.before, c.type);
+      const mine = link(c.after, c.type);
+      const displayed = c.after ? mine : saved;
+      return {
+        id: c.id,
+        name: `${displayed.Från} ${displayed.Sambandstyp} ${displayed.Till}`,
+        kind: 'Samband',
+        action: action(c.before, c.after),
+        source: 'Miljöns utkast · simulerad arbetskopia',
+        saved,
+        mine,
+        conflict: conflicts.some((x) => x.kind === 'relationship' && x.id === c.id),
+      };
+    }),
+    ...(['objectTypes', 'relationshipTypes'] as const).flatMap((key) =>
+      (state.draft[key] ?? []).map(
+        (c): Proposal => ({
+          id: c.id,
+          name: c.after?.name ?? c.before?.name ?? 'Typ',
+          kind: key === 'objectTypes' ? 'Objekttyp' : 'Sambandstyp',
+          action: action(c.before, c.after),
+          source: 'Miljöns utkast · simulerad arbetskopia',
+          saved: c.before
+            ? {
+                Namn: c.before.name,
+                Beskrivning: c.before.description,
+                'Egna fält': c.before.fields?.map((f) => f.name).join(', ') ?? 'Inga',
+              }
+            : {},
+          mine: c.after
+            ? {
+                Namn: c.after.name,
+                Beskrivning: c.after.description,
+                'Egna fält': c.after.fields?.map((f) => f.name).join(', ') ?? 'Inga',
+              }
+            : {},
+        }),
+      ),
+    ),
+  ];
+}
 function Modal({
   title,
   children,
@@ -201,21 +334,28 @@ function Modal({
     </dialog>
   );
 }
-export function DraftReviewPrototype() {
+export function DraftReviewPrototype({
+  source,
+  host,
+  onCountChange,
+  onVariantChange,
+  onOpen,
+  onClose,
+}: {
+  source: MapState;
+  host: HTMLElement | null;
+  onCountChange: (count: number) => void;
+  onVariantChange: (variant: string) => void;
+  onOpen: () => void;
+  onClose: () => void;
+}) {
   const initial = new URLSearchParams(location.search).get('variant');
   const [variant, setVariant] = useState<Variant>(
     initial === 'B' || initial === 'C' ? initial : 'A',
   );
-  const [items, setItems] = useState<Proposal[]>(fixtures);
+  const [items, setItems] = useState<Proposal[]>(() => environmentDraft(source));
   const [selected, setSelected] = useState('car');
-  const [surface, setSurface] = useState<'map' | 'table'>('map');
-  const [textOpen, setTextOpen] = useState(true);
-  const [pane, setPane] = useState<'conversation' | 'draft'>('draft');
   const [query, setQuery] = useState('');
-  const [message, setMessage] = useState('Påminn mig att kontrollera bilförsäkringen');
-  const [conversation, setConversation] = useState(false);
-  const [ai, setAi] = useState(false);
-  const [consent, setConsent] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [response, setResponse] = useState('success');
   const [notice, setNotice] = useState('');
@@ -224,10 +364,11 @@ export function DraftReviewPrototype() {
   const [discardForm, setDiscardForm] = useState(false);
   const [discard, setDiscard] = useState<string[] | null>(null);
   const [conflictOpen, setConflictOpen] = useState(false);
+  const [conflictItem, setConflictItem] = useState<Proposal | null>(null);
   const [report, setReport] = useState(false);
   const [savedItems, setSavedItems] = useState<Proposal[]>([]);
   const [attempt, setAttempt] = useState(0);
-  const [demo, setDemo] = useState('mixed');
+  const [demo, setDemo] = useState('environment');
   const lock = useRef(false);
   const returnButton = useRef<HTMLElement | null>(null);
   const frozen = ['pending', 'unknown', 'checking'].includes(saveState);
@@ -266,8 +407,7 @@ export function DraftReviewPrototype() {
     return () => window.removeEventListener('keydown', keys);
   }, [variant]);
   function openDraft() {
-    setTextOpen(true);
-    setPane('draft');
+    onOpen();
   }
   function correct(i: Proposal) {
     returnButton.current = document.activeElement as HTMLElement;
@@ -342,6 +482,7 @@ export function DraftReviewPrototype() {
     setAttempt(0);
     lock.current = false;
     setItems(next === 'empty' || next === 'no-icon' ? [] : fixtures(next === 'many'));
+    if (next === 'environment') setItems(environmentDraft(source));
     if (next === 'clean')
       setItems(
         fixtures().map((i) => ({
@@ -425,12 +566,17 @@ export function DraftReviewPrototype() {
         {i.conflict && (
           <div className="dr-warning">
             <strong>Konflikt före sparande</strong>
-            <p>Lo sparade nya uppgifter medan du redigerade.</p>
+            <p>
+              {demo === 'environment'
+                ? 'Sparade uppgifter har ändrats medan förslaget ligger i ditt utkast.'
+                : 'Lo sparade nya uppgifter medan du redigerade.'}
+            </p>
             <button
               type="button"
               disabled={frozen}
               onClick={() => {
                 returnButton.current = document.activeElement as HTMLElement;
+                setConflictItem(i);
                 setConflictOpen(true);
               }}
             >
@@ -468,56 +614,6 @@ export function DraftReviewPrototype() {
       </article>
     );
   }
-  const conversationView = (
-    <section className="dr-conversation" aria-label="Samtal">
-      <h2>Skriv till Skyttel</h2>
-      <p className="dr-muted">
-        {conversation ? 'Samtalet pågår · textläge' : 'Inget samtal pågår'}
-      </p>
-      {conversation ? (
-        <div className="dr-transcript">
-          <p>
-            <strong>Du</strong>
-            <br />
-            Hyran betalas från ett bankkonto, men jag är osäker på vilket.
-          </p>
-          <p>
-            <strong>Skyttel</strong>
-            <br />
-            Jag har lagt uppgiften som ett förslag i ditt utkast. Inget är sparat i kartan.
-          </p>
-        </div>
-      ) : (
-        <div className="dr-transcript dr-empty-chat">
-          <WorkspaceIcon name="text" />
-          <p>
-            Du kan skriva här när du vill.
-            <br />
-            Manuellt arbete med ditt utkast är tillgängligt utan samtal.
-          </p>
-        </div>
-      )}
-      <div className="dr-composer">
-        <label>
-          Med­delande till Skyttel
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Skriv ett meddelande"
-            rows={3}
-          />
-        </label>
-        <p className="dr-muted">
-          {ai
-            ? 'Demosamtalet kräver ett medgivande när du skickar.'
-            : 'Samtalet är inte tillgängligt just nu. Ditt utkast kan hanteras manuellt.'}
-        </p>
-        <button type="button" disabled={!ai || !message.trim()} onClick={() => setConsent(true)}>
-          Skicka och starta demosamtal
-        </button>
-      </div>
-    </section>
-  );
   const draftHeader = (
     <header className="dr-draft-header">
       <div>
@@ -598,8 +694,8 @@ export function DraftReviewPrototype() {
       <WorkspaceIcon name="draft" />
       <h3>Ditt utkast är tomt</h3>
       <p>Förslag från objekt, samband och typinställningar samlas här.</p>
-      <button type="button" onClick={() => setTextOpen(false)}>
-        Tillbaka till {surface === 'map' ? 'kartan' : 'tabellen'}
+      <button type="button" onClick={onClose}>
+        Tillbaka till kartan
       </button>
     </div>
   );
@@ -635,256 +731,132 @@ export function DraftReviewPrototype() {
     </p>
   );
 
+  useEffect(() => onCountChange(items.length), [items.length, onCountChange]);
+  useEffect(() => onVariantChange(variant), [variant, onVariantChange]);
   return (
-    <div className={`dr-root dr-variant-${variant}`}>
-      <header className="dr-host-header">
-        <div>
-          <strong>Skyttel</strong>
-          <span>Alex och Los hushåll</span>
-        </div>
-        <small>Påhittade uppgifter</small>
-      </header>
-      <nav className="dr-toolbar" aria-label="Hushållets verktyg">
-        <button
-          type="button"
-          onClick={() => {
-            setSurface(surface === 'map' ? 'table' : 'map');
-            setTextOpen(false);
-          }}
-        >
-          <WorkspaceIcon name="list" />
-          {surface === 'map' ? 'Tabell' : 'Karta'}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setTextOpen(true);
-            setPane('conversation');
-          }}
-        >
-          <WorkspaceIcon name="text" />
-          Skriv till Skyttel
-        </button>
-        <button type="button" onClick={() => setReport(true)}>
-          <WorkspaceIcon name="detail" />
-          Rapporter
-        </button>
-        {items.length > 0 && (
-          <>
-            <hr className="dr-separator" />
-            <button type="button" onClick={openDraft}>
-              <WorkspaceIcon name="draft" />
-              Utkast <span>{items.length}</span>
-            </button>
-          </>
-        )}
-      </nav>
-      <main className="dr-workspace">
-        <header>
-          <h1>{surface === 'map' ? 'Hushållets karta' : 'Hushållets tabell'}</h1>
-          <p>Filter: Fordon · sökning: cykel · Alex blå cykel markerad</p>
-        </header>
-        <div className="dr-map" aria-hidden="true">
-          <div>Alex</div>
-          <div>Alex blå cykel</div>
-          <div>Familjens bil</div>
-        </div>
-        {surface === 'table' && (
-          <table className="dr-host-table">
-            <thead>
-              <tr>
-                <th>Objekt</th>
-                <th>Typ</th>
-                <th>Utkast</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Alex blå cykel</td>
-                <td>Fordon</td>
-                <td>Inget förslag</td>
-              </tr>
-              <tr>
-                <td>Blå bilen</td>
-                <td>Fordon</td>
-                <td>Ändrat</td>
-              </tr>
-            </tbody>
-          </table>
-        )}
-        {['unknown', 'pending', 'checking', 'rejected', 'saved'].includes(saveState) && (
-          <div
-            className={`dr-global-status ${saveState === 'saved' ? 'dr-success' : ''}`}
-            role="status"
-          >
-            <strong>
-              {saveState === 'saved'
-                ? '✓ Sparat'
-                : saveState === 'checking'
-                  ? 'Kontrollerar sparandet…'
-                  : notice}
-            </strong>
-            {saveState === 'unknown' && (
-              <button
-                type="button"
-                onClick={() => {
-                  openDraft();
-                }}
-              >
-                Öppna sparstatus
-              </button>
-            )}
-            {saveState === 'saved' && (
-              <button type="button" onClick={() => setReport(true)}>
-                Visa ändringarna
-              </button>
-            )}
-          </div>
-        )}
-        {!textOpen && (
-          <div className="dr-return-note">
-            <p>
-              Textvyn är stängd. Kartans filter, ditt utkast och ditt oskickade meddelande finns
-              kvar.
-            </p>
-            <button type="button" onClick={openDraft}>
-              Öppna textvyn och Visa utkastet
-            </button>
-          </div>
-        )}
-        {textOpen && (
-          <section className="dr-text-view" aria-label="Textvy">
-            <header className="dr-text-top">
-              <strong>Textvy</strong>
-              <button type="button" aria-label="Stäng textvyn" onClick={() => setTextOpen(false)}>
-                ✕
-              </button>
-            </header>
-            <nav className="dr-tabs" aria-label="Textvyns delar">
-              <button
-                type="button"
-                aria-pressed={pane === 'conversation'}
-                onClick={() => setPane('conversation')}
-              >
-                Samtal
-              </button>
-              <button
-                type="button"
-                aria-pressed={pane === 'draft'}
-                onClick={() => setPane('draft')}
-              >
-                Visa utkastet ({items.length})
-              </button>
-            </nav>
-            <div className="dr-view-body">
-              {(variant === 'A' || pane === 'conversation') && (
-                <div className={`dr-chat-wrap ${pane !== 'conversation' ? 'dr-mobile-hide' : ''}`}>
-                  {conversationView}
-                </div>
-              )}
-              {(variant === 'A' || pane === 'draft') && (
-                <section
-                  className={`dr-draft ${pane !== 'draft' ? 'dr-mobile-hide' : ''}`}
-                  aria-label="Visa utkastet"
-                >
-                  {draftHeader}
-                  {overview}
-                  {search}
-                  <div className="dr-review">
-                    {!items.length ? (
-                      empty
-                    ) : !filtered.length ? (
-                      noMatches
-                    ) : variant === 'A' ? (
-                      <div className="dr-split">
-                        {list}
-                        {item && detail(item)}
-                      </div>
-                    ) : variant === 'B' ? (
-                      <div className="dr-groups">
-                        {['Objekt', 'Samband', 'Objekttyp', 'Sambandstyp'].map((kind) => {
-                          const group = filtered.filter((i) => i.kind === kind);
-                          return (
-                            group.length > 0 && (
-                              <section key={kind}>
-                                <h3>
-                                  {kind} <small>({group.length})</small>
-                                </h3>
-                                {group.map((i) => (
-                                  <details
-                                    key={i.id}
-                                    open={selected === i.id}
-                                    onToggle={(e) => {
-                                      if (e.currentTarget.open && selected !== i.id) choose(i.id);
-                                    }}
-                                  >
-                                    <summary>
-                                      <span className="dr-badge">{i.action}</span>
-                                      <strong>{i.name}</strong>
-                                      {(i.question || i.conflict) && (
-                                        <span>⚠ {i.question ? 'Fråga' : 'Konflikt'}</span>
-                                      )}
-                                    </summary>
-                                    {detail(i)}
-                                  </details>
-                                ))}
-                              </section>
-                            )
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="dr-guided">
-                        <div className="dr-step">
-                          <button
-                            type="button"
-                            disabled={activeIndex <= 0}
-                            onClick={() => choose(filtered[activeIndex - 1].id)}
-                          >
-                            ← Föregående
-                          </button>
-                          <span>
-                            {activeIndex + 1} av {filtered.length}
-                          </span>
-                          <button
-                            type="button"
-                            disabled={activeIndex >= filtered.length - 1}
-                            onClick={() => choose(filtered[activeIndex + 1].id)}
-                          >
-                            Nästa →
-                          </button>
-                        </div>
-                        <label>
-                          Gå till förslag
-                          <select value={item?.id ?? ''} onChange={(e) => choose(e.target.value)}>
-                            {filtered.map((i, n) => (
-                              <option key={i.id} value={i.id}>
-                                {n + 1}. {i.name}
-                                {i.question || i.conflict ? ' · ⚠ hinder' : ''}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        {item && detail(item)}
-                        <p className="dr-muted">
-                          Granskningen ändrar inga förslag. Spara gäller fortfarande hela utkastet.
-                        </p>
-                      </div>
-                    )}
+    <div className={`dr-root dr-controller dr-variant-${variant}`}>
+      {host &&
+        createPortal(
+          <div className={`dr-root dr-panel dr-variant-${variant}`}>
+            <section className="dr-draft" aria-label="Visa utkastet">
+              {draftHeader}
+              {overview}
+              {search}
+              <div className="dr-review">
+                {!items.length ? (
+                  empty
+                ) : !filtered.length ? (
+                  noMatches
+                ) : variant === 'A' ? (
+                  <div className="dr-split">
+                    {list}
+                    {item && detail(item)}
                   </div>
-                  {saving}
-                </section>
-              )}
-            </div>
-          </section>
+                ) : variant === 'B' ? (
+                  <div className="dr-groups">
+                    {['Objekt', 'Samband', 'Objekttyp', 'Sambandstyp'].map((kind) => {
+                      const group = filtered.filter((i) => i.kind === kind);
+                      return (
+                        group.length > 0 && (
+                          <section key={kind}>
+                            <h3>
+                              {kind} <small>({group.length})</small>
+                            </h3>
+                            {group.map((i) => (
+                              <details
+                                key={i.id}
+                                open={selected === i.id}
+                                onToggle={(e) => {
+                                  if (e.currentTarget.open && selected !== i.id) choose(i.id);
+                                }}
+                              >
+                                <summary>
+                                  <span className="dr-badge">{i.action}</span>
+                                  <strong>{i.name}</strong>
+                                  {(i.question || i.conflict) && (
+                                    <span>⚠ {i.question ? 'Fråga' : 'Konflikt'}</span>
+                                  )}
+                                </summary>
+                                {detail(i)}
+                              </details>
+                            ))}
+                          </section>
+                        )
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="dr-guided">
+                    <div className="dr-step">
+                      <button
+                        type="button"
+                        disabled={activeIndex <= 0}
+                        onClick={() => choose(filtered[activeIndex - 1].id)}
+                      >
+                        ← Föregående
+                      </button>
+                      <span>
+                        {activeIndex + 1} av {filtered.length}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={activeIndex >= filtered.length - 1}
+                        onClick={() => choose(filtered[activeIndex + 1].id)}
+                      >
+                        Nästa →
+                      </button>
+                    </div>
+                    <label>
+                      Gå till förslag
+                      <select value={item?.id ?? ''} onChange={(e) => choose(e.target.value)}>
+                        {filtered.map((i, n) => (
+                          <option key={i.id} value={i.id}>
+                            {n + 1}. {i.name}
+                            {i.question || i.conflict ? ' · ⚠ hinder' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {item && detail(item)}
+                    <p className="dr-muted">
+                      Granskningen ändrar inga förslag. Spara gäller fortfarande hela utkastet.
+                    </p>
+                  </div>
+                )}
+              </div>
+              {saving}
+            </section>
+          </div>,
+          host,
         )}
-      </main>
+      {['unknown', 'pending', 'checking', 'rejected', 'saved'].includes(saveState) && (
+        <div className="dr-global-status" role="status">
+          <strong>
+            {saveState === 'saved'
+              ? '✓ Sparat'
+              : saveState === 'checking'
+                ? 'Kontrollerar sparandet…'
+                : notice}
+          </strong>
+          {saveState === 'unknown' && (
+            <button type="button" onClick={openDraft}>
+              Öppna sparstatus
+            </button>
+          )}
+          {saveState === 'saved' && (
+            <button type="button" onClick={() => setReport(true)}>
+              Visa ändringarna
+            </button>
+          )}
+        </div>
+      )}
       {notice && !['unknown', 'pending', 'checking', 'rejected', 'saved'].includes(saveState) && (
         <p className="dr-notice" role="status">
           {notice}
         </p>
       )}
-      <aside className="dr-lab" aria-label="Prototypkontroller">
+      <details className="dr-lab">
+        <summary>Prototypkontroller</summary>
         <strong>Kastbar prototyp · inga riktiga sparanden</strong>
         <div>
           <label>
@@ -901,6 +873,7 @@ export function DraftReviewPrototype() {
               onChange={(e) => scenario(e.target.value)}
             >
               <option value="mixed">Blandat · fråga och konflikt</option>
+              <option value="environment">Miljöns utkast · simulerad arbetskopia</option>
               <option value="clean">Redo att spara</option>
               <option value="many">Många · 45 förslag</option>
               <option value="empty">Tomt utkast</option>
@@ -920,18 +893,6 @@ export function DraftReviewPrototype() {
               <option value="unknown-rejected">Oklart · inte genomfört</option>
             </select>
           </label>
-          <label className="dr-check">
-            <input type="checkbox" checked={ai} onChange={(e) => setAi(e.target.checked)} />
-            Samtal tillgängligt
-          </label>
-          <label className="dr-check">
-            <input
-              type="checkbox"
-              checked={conversation}
-              onChange={(e) => setConversation(e.target.checked)}
-            />
-            Pågående demosamtal
-          </label>
         </div>
         <details>
           <summary>Visa prototypens tillstånd</summary>
@@ -939,15 +900,9 @@ export function DraftReviewPrototype() {
             {JSON.stringify(
               {
                 variant,
-                vy: surface,
-                textvy: textOpen,
-                del: pane,
                 valtFörslag: selected,
                 utkast: items,
                 formulär: form,
-                oskickatMeddelande: message,
-                samtal: conversation,
-                ai,
                 sparstatus: saveState,
                 sparförsök: attempt,
                 sparadeFörslag: savedItems.length,
@@ -957,7 +912,7 @@ export function DraftReviewPrototype() {
             )}
           </pre>
         </details>
-      </aside>
+      </details>
       <nav className="dr-switcher" aria-label="Välj prototypvariant">
         <button
           type="button"
@@ -1100,6 +1055,27 @@ export function DraftReviewPrototype() {
       <div className="dr-conflict-host">
         <ConflictsPrototype
           key={demo}
+          example={
+            conflictItem
+              ? {
+                  name: conflictItem.name,
+                  kind: conflictItem.kind,
+                  savedBy: demo === 'environment' ? undefined : 'Lo',
+                  fields: [
+                    ...new Set([
+                      ...Object.keys(conflictItem.saved),
+                      ...Object.keys(conflictItem.mine),
+                    ]),
+                  ].map((name) => ({
+                    name,
+                    before: conflictItem.base?.[name] ?? conflictItem.saved[name] ?? 'Ej uppgivet',
+                    saved: conflictItem.saved[name] ?? 'Ej uppgivet',
+                    mine: conflictItem.mine[name] ?? 'Ej uppgivet',
+                    result: conflictItem.mine[name] ?? 'Ej uppgivet',
+                  })),
+                }
+              : undefined
+          }
           visible={conflictOpen}
           onReturn={() => {
             setConflictOpen(false);
@@ -1108,40 +1084,15 @@ export function DraftReviewPrototype() {
           onResolved={(values) => {
             setItems((p) =>
               p.map((i) =>
-                i.id === 'car' ? { ...i, conflict: false, mine: values, name: values.Namn } : i,
+                i.id === conflictItem?.id
+                  ? { ...i, conflict: false, mine: values, name: values.Namn ?? i.name }
+                  : i,
               ),
             );
             setNotice('Konfliktvalen ligger i ditt utkast. Kartan sparas separat.');
           }}
         />
       </div>
-      {consent && (
-        <Modal title="Starta ett demosamtal?" onClose={() => setConsent(false)}>
-          <div className="dr-form-scroll">
-            <p>
-              Den riktiga samtalsfunktionen kräver samtalsmedgivande. Här simuleras steget och inget
-              skickas till OpenAI.
-            </p>
-            <p>Ditt utkast kan granskas, rättas och sparas manuellt utan medgivande.</p>
-          </div>
-          <footer>
-            <button type="button" data-default onClick={() => setConsent(false)}>
-              Avbryt
-            </button>
-            <button
-              type="button"
-              className="dr-primary"
-              onClick={() => {
-                setConsent(false);
-                setConversation(true);
-                setNotice('Demosamtalet pågår. Ditt utkast och ditt meddelande finns kvar.');
-              }}
-            >
-              Starta demosamtalet
-            </button>
-          </footer>
-        </Modal>
-      )}
       {report && (
         <Modal title="Rapporter → Ändringshistorik" onClose={() => setReport(false)}>
           <div className="dr-form-scroll">

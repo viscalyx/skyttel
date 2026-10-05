@@ -29,6 +29,13 @@ export function conversationFeedback({
 }
 
 export type ConversationPresentation = {
+  prototype?: {
+    count: number;
+    variant: string;
+    open: boolean;
+    onToggle: () => void;
+    host: ReactNode;
+  };
   draftFeedback?: (assistant: AssistantActivity & { compact: boolean }) => ReactNode;
   active?: boolean;
   /** The text view is open. It shows the conversation text and the message field. */
@@ -56,6 +63,7 @@ export type ConversationPresentation = {
  * commands. The conversation itself is kept by the caller.
  */
 export function ConversationWorkspace({
+  prototype,
   conversation,
   active: workVisible = true,
   children,
@@ -162,13 +170,17 @@ export function ConversationWorkspace({
           hidden={!workVisible || textViewHidden}
           focusRequest={textFocusRequest}
           onClose={() => onCloseTextView?.()}
-          draftOpen={draftOpen}
-          draftCount={count}
-          onToggleDraft={() => {
-            manuallyToggled.current = true;
-            setDraftOpen(!draftOpen);
-          }}
-          draftContent={<ConversationDraft draft={visibleDraft} />}
+          prototypeVariant={prototype?.variant}
+          draftOpen={prototype?.open ?? draftOpen}
+          draftCount={prototype?.count ?? count}
+          onToggleDraft={
+            prototype?.onToggle ??
+            (() => {
+              manuallyToggled.current = true;
+              setDraftOpen(!draftOpen);
+            })
+          }
+          draftContent={prototype?.host ?? <ConversationDraft draft={visibleDraft} />}
           notice={notice}
         >
           {!notice && conversation.error && <p role="alert">{conversation.error}</p>}

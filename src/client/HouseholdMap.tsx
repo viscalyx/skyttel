@@ -27,6 +27,7 @@ import {
 import { mergeFor } from '../shared/object-merge.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
+import { DraftReviewPrototype } from './DraftReview.prototype.js';
 import { DraftStatus } from './DraftStatus.js';
 import { useFloatingArea } from './floating-windows.js';
 import './draft-status.css';
@@ -130,6 +131,15 @@ export function HouseholdMap({
   mapSettingsTarget?: HTMLElement | null;
   conversationSettingsTarget?: HTMLElement | null;
 }) {
+  const [draftPrototype] = useState(
+    () =>
+      import.meta.env.DEV &&
+      new URLSearchParams(location.search).get('prototype') === 'draft-review',
+  );
+  const [prototypeHost, setPrototypeHost] = useState<HTMLDivElement | null>(null);
+  const [prototypeCount, setPrototypeCount] = useState(9);
+  const [prototypeVariant, setPrototypeVariant] = useState('A');
+  const [prototypeDraftOpen, setPrototypeDraftOpen] = useState(true);
   const theme = useWorkspaceTheme();
   const [typeHost] = useState(() => document.createElement('div'));
   const typeSlot = useRef<HTMLDivElement>(null);
@@ -264,6 +274,12 @@ export function HouseholdMap({
   const listModeButton = useRef<HTMLButtonElement>(null);
   const workTrigger = useRef<HTMLElement | null>(null);
   const [textViewOpen, setTextViewOpen] = useState(false);
+  useEffect(() => {
+    if (draftPrototype) {
+      setTextViewOpen(true);
+      setWorkspaceView('text');
+    }
+  }, [draftPrototype]);
   const [workspaceView, setWorkspaceView] = useState<'forms' | 'navigation' | 'text'>('forms');
   const [textFocusRequest, setTextFocusRequest] = useState(0);
   const [draftViewOpen, setDraftViewOpen] = useState(false);
@@ -304,6 +320,14 @@ export function HouseholdMap({
     return target === 'voice' ? 'voice' : target === 'conversation' ? 'text' : null;
   }
   function openWork(target: WorkspaceTarget, chosen?: HTMLElement) {
+    if (draftPrototype && (target === 'draft' || target === 'conversation')) {
+      setPrototypeDraftOpen(target === 'draft');
+      setTextViewOpen(true);
+      setWorkspaceView('text');
+      setToolsExpanded(false);
+      setTextFocusRequest((n) => n + 1);
+      return;
+    }
     workTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (
@@ -1754,6 +1778,7 @@ export function HouseholdMap({
             Till samtalet med Skyttel
           </button>
           <WorkspaceTools
+            prototypeDraftCount={draftPrototype ? prototypeCount : undefined}
             conversationUnavailable={Boolean(conversation.inputBlocked)}
             conversationOngoing={ongoing}
             voiceControl={
@@ -2024,79 +2049,100 @@ export function HouseholdMap({
       )}
       {state && (
         <ConversationWorkspace
+          prototype={
+            draftPrototype
+              ? {
+                  count: prototypeCount,
+                  variant: prototypeVariant,
+                  open: prototypeDraftOpen,
+                  onToggle: () => setPrototypeDraftOpen((value) => !value),
+                  host: <div ref={setPrototypeHost} className="dr-mount" />,
+                }
+              : undefined
+          }
           conversation={conversation}
-          draftFeedback={({ working, needsAnswer, compact }) => (
-            <>
-              <DraftStatus
-                compact={compact || (narrow && textViewOpen)}
-                draft={state.draft}
-                operation={pendingOperation ?? operations[0]}
-                saving={Boolean(pending && saveAttempt.current)}
-                unknown={Boolean(blocked && saveAttempt.current && !pending)}
-                dirty={dirty}
-                unresolved={Boolean(unresolved)}
-                conflicts={conflictEntries.map((entry) => ({
-                  id: entry.id,
-                  label:
-                    conflictEntries.filter((other) => other.label === entry.label).length > 1
-                      ? `${entry.label} [${entry.entityId}]`
-                      : entry.label,
-                }))}
-                conflictLinks={{ open: conflictLinksOpen, onOpenChange: setConflictLinksOpen }}
-                error={error}
-                imageError={
-                  errorDetails.imageObjectId
-                    ? {
-                        name:
-                          displayed.get(errorDetails.imageObjectId)?.name ??
-                          objectPanels.find((panel) => panel.id === errorDetails.imageObjectId)
-                            ?.title ??
-                          'objektet',
-                        onReturn: () => returnToImage(errorDetails.imageObjectId),
+          draftFeedback={
+            draftPrototype
+              ? undefined
+              : ({ working, needsAnswer, compact }) => (
+                  <>
+                    <DraftStatus
+                      compact={compact || (narrow && textViewOpen)}
+                      draft={state.draft}
+                      operation={pendingOperation ?? operations[0]}
+                      saving={Boolean(pending && saveAttempt.current)}
+                      unknown={Boolean(blocked && saveAttempt.current && !pending)}
+                      dirty={dirty}
+                      unresolved={Boolean(unresolved)}
+                      conflicts={conflictEntries.map((entry) => ({
+                        id: entry.id,
+                        label:
+                          conflictEntries.filter((other) => other.label === entry.label).length > 1
+                            ? `${entry.label} [${entry.entityId}]`
+                            : entry.label,
+                      }))}
+                      conflictLinks={{
+                        open: conflictLinksOpen,
+                        onOpenChange: setConflictLinksOpen,
+                      }}
+                      error={error}
+                      imageError={
+                        errorDetails.imageObjectId
+                          ? {
+                              name:
+                                displayed.get(errorDetails.imageObjectId)?.name ??
+                                objectPanels.find(
+                                  (panel) => panel.id === errorDetails.imageObjectId,
+                                )?.title ??
+                                'objektet',
+                              onReturn: () => returnToImage(errorDetails.imageObjectId),
+                            }
+                          : undefined
                       }
-                    : undefined
-                }
-                working={pending && !saveAttempt.current}
-                onRefresh={(origin) => reloadMap(origin)}
-                onRecover={
-                  (saveAttempt.current || pendingOperation) && blocked
-                    ? () => {
-                        if (saveAttempt.current) void save(saveAttempt.current, true);
-                        else if (pendingOperation) retrySave(pendingOperation);
+                      working={pending && !saveAttempt.current}
+                      onRefresh={(origin) => reloadMap(origin)}
+                      onRecover={
+                        (saveAttempt.current || pendingOperation) && blocked
+                          ? () => {
+                              if (saveAttempt.current) void save(saveAttempt.current, true);
+                              else if (pendingOperation) retrySave(pendingOperation);
+                            }
+                          : undefined
                       }
-                    : undefined
-                }
-                pending={pending}
-                showSave={!workOpen && !working && !needsAnswer}
-                disabled={
-                  pending ||
-                  blocked ||
-                  dirty ||
-                  !hasChanges ||
-                  Boolean(unresolved) ||
-                  conflicts.length > 0
-                }
-                onSave={saveDraft}
-                onDraft={() => {
-                  returnFromStatus();
-                  openPanel(
-                    'work',
-                    document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title'),
-                  );
-                }}
-                onConflict={(id) => {
-                  returnFromStatus();
-                  openPanel('work', document.getElementById(id));
-                }}
-                onContinue={() => {
-                  returnFromStatus();
-                  const objectId = Object.keys(objectDirty).find((id) => objectDirty[id]);
-                  if (objectId) openPanel(objectId, lastWorkFocus.current);
-                  else openWork('list');
-                }}
-              />
-            </>
-          )}
+                      pending={pending}
+                      showSave={!workOpen && !working && !needsAnswer}
+                      disabled={
+                        pending ||
+                        blocked ||
+                        dirty ||
+                        !hasChanges ||
+                        Boolean(unresolved) ||
+                        conflicts.length > 0
+                      }
+                      onSave={saveDraft}
+                      onDraft={() => {
+                        returnFromStatus();
+                        openPanel(
+                          'work',
+                          document.getElementById(
+                            hasChanges ? 'draft-title' : 'save-operations-title',
+                          ),
+                        );
+                      }}
+                      onConflict={(id) => {
+                        returnFromStatus();
+                        openPanel('work', document.getElementById(id));
+                      }}
+                      onContinue={() => {
+                        returnFromStatus();
+                        const objectId = Object.keys(objectDirty).find((id) => objectDirty[id]);
+                        if (objectId) openPanel(objectId, lastWorkFocus.current);
+                        else openWork('list');
+                      }}
+                    />
+                  </>
+                )
+          }
           active={active}
           textViewOpen={textViewOpen}
           textViewHidden={!textViewVisible}
@@ -3297,6 +3343,20 @@ export function HouseholdMap({
             </>
           )}
         </ConversationWorkspace>
+      )}
+      {draftPrototype && state && (
+        <DraftReviewPrototype
+          source={state}
+          host={prototypeHost}
+          onCountChange={setPrototypeCount}
+          onVariantChange={setPrototypeVariant}
+          onOpen={() => {
+            setPrototypeDraftOpen(true);
+            setTextViewOpen(true);
+            setWorkspaceView('text');
+          }}
+          onClose={closeTextView}
+        />
       )}
     </section>
   );

@@ -229,18 +229,21 @@ const allCases: Case[] = [
 ];
 type Side = 'saved' | 'mine';
 // The draft review embeds the approved A form with its car fixture only.
-const cases = allCases.filter((item) => item.id === 'object');
+const defaultCases = allCases.filter((item) => item.id === 'object');
 const sideNames = { saved: 'Sparat i kartan nu', mine: 'Ditt förslag' };
 
 export function ConflictsPrototype({
+  example,
   visible = true,
   onReturn,
   onResolved,
 }: {
+  example?: Pick<Case, 'name' | 'kind' | 'fields' | 'savedBy'>;
   visible?: boolean;
   onReturn?: () => void;
   onResolved?: (values: Record<string, string>) => void;
 }) {
+  const cases = example ? [{ ...defaultCases[0], ...example }] : defaultCases;
   const [index, setIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, Record<string, Side>>>({});
   const [resolutions, setResolutions] = useState<Record<string, Record<string, string>>>({});
