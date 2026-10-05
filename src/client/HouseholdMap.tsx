@@ -1822,12 +1822,13 @@ export function HouseholdMap({
             hasProposals={hasChanges}
             count={listResults.items.length}
             reasons={listResults.items.flatMap((object) => {
+              const change = state.draft.changes.find((change) => change.id === object.id);
               const fields = objectSearchMatch(
                 object,
-                effectiveTypes.find((type) => type.id === object.typeId),
+                change?.type ?? effectiveTypes.find((type) => type.id === object.typeId),
                 query,
-                state?.draft.changes.find((change) => change.id === object.id)?.before,
-                state?.draft.changes.find((change) => change.id === object.id)?.beforeType,
+                change?.before,
+                change?.beforeType ?? change?.type,
               ).reasons;
               return fields.length ? [{ id: object.id, name: object.name, fields }] : [];
             })}

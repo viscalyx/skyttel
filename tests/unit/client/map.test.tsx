@@ -124,14 +124,14 @@ test('grouped browsing combines type identities, description search and marks wi
   seedLargeMap(fixture.database, user.id, householdId);
   const initial = await (await client.request(path)).json();
   await open();
-  await userEvent.click(screen.getByRole('button', { name: 'Sök i kartan', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Sök i kartan' }));
   await userEvent.click(
     within(screen.getByRole('region', { name: 'Kartans sökning och filter' })).getByLabelText(
       'Ta med upphörda',
     ),
   );
   await userEvent.keyboard('{Escape}');
-  await userEvent.click(screen.getByRole('button', { name: 'Lista', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
   const list = within(screen.getByRole('region', { name: 'Lista och utkast' }));
   expect(list.getByRole('button', { name: 'Uppgifter för Provobjekt 000' }).textContent).toBe(
     'Uppgifter',
@@ -166,14 +166,14 @@ test('object pages retain sorting and selected-item access through panel closure
   const { user } = await (await client.request('/api/bootstrap')).json();
   seedLargeMap(fixture.database, user.id, householdId);
   await open();
-  await userEvent.click(screen.getByRole('button', { name: 'Sök i kartan', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Sök i kartan' }));
   await userEvent.click(
     within(screen.getByRole('region', { name: 'Kartans sökning och filter' })).getByLabelText(
       'Ta med upphörda',
     ),
   );
   await userEvent.keyboard('{Escape}');
-  await userEvent.click(screen.getByRole('button', { name: 'Lista', exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
   const list = within(screen.getByRole('region', { name: 'Lista och utkast' }));
   const pages = () => within(list.getByRole('navigation', { name: 'Bläddra bland objekt' }));
   await userEvent.click(pages().getByRole('button', { name: 'Nästa sida' }));
