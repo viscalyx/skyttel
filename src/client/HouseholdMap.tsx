@@ -924,7 +924,7 @@ export function HouseholdMap({
     listObjects,
     listResults,
     listEdges,
-    spatialEdges,
+    contextSource,
     searchHitIds,
     hiddenEnded,
     previousEdges,
@@ -978,13 +978,16 @@ export function HouseholdMap({
           .filter((connection) => connection.previous)
           .map((connection) => connection.edge)
       : [];
+    const contextSource = {
+      objects: displayed,
+      relationships: spatialEdges,
+      previousRelationships: previousEdges,
+    };
     const context = mapSearchContext(
-      displayed,
-      spatialEdges,
+      contextSource,
       listIds,
       exploredIds,
       Boolean(browsing.includeEnded),
-      previousEdges,
     );
     return {
       displayed,
@@ -994,7 +997,7 @@ export function HouseholdMap({
       listObjects,
       listResults,
       listEdges,
-      spatialEdges,
+      contextSource,
       searchHitIds: listIds,
       hiddenEnded: context.hiddenEnded,
       previousEdges,
@@ -1060,14 +1063,7 @@ export function HouseholdMap({
     setFocusId(id);
     setExploredIds((previous) => [...new Set([...previous, id])]);
     setSelection({ kind: 'object', id });
-    const context = mapSearchContext(
-      displayed,
-      spatialEdges,
-      [id],
-      [],
-      Boolean(browsing.includeEnded),
-      previousEdges,
-    );
+    const context = mapSearchContext(contextSource, [id], [], Boolean(browsing.includeEnded));
     setCameraFocusRequest({ id: crypto.randomUUID(), objectIds: [...context.objects.keys()] });
     setStatus(
       `Visar direkta samband för ${displayed.get(id)?.name}. Sökningen och tidigare innehåll finns kvar.`,
@@ -1726,12 +1722,10 @@ export function HouseholdMap({
               setFocusId(null);
               setExploredIds([]);
               const context = mapSearchContext(
-                displayed,
-                spatialEdges,
+                contextSource,
                 searchHitIds,
                 [],
                 Boolean(browsing.includeEnded),
-                previousEdges,
               );
               setCameraFocusRequest({
                 id: crypto.randomUUID(),
@@ -1838,14 +1832,7 @@ export function HouseholdMap({
           }
           relationshipCounts={relationshipCounts}
           onReveal={(object) => {
-            const context = mapSearchContext(
-              displayed,
-              spatialEdges,
-              [object.id],
-              [],
-              true,
-              previousEdges,
-            );
+            const context = mapSearchContext(contextSource, [object.id], [], true);
             const includeEnded =
               [...context.objects.values()].some((value) => hasEnded(value)) ||
               [...context.relationships.values()].some((value) => hasEnded(value)) ||

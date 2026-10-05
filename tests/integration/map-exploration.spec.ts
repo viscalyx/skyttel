@@ -16,6 +16,8 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
   try {
     const data = await prepare(page, installation.origin);
     const before = await data.read();
+    const historyPath = `${installation.origin}/api/households/${data.household.id}/map/history`;
+    const historyBefore = await (await page.request.get(historyPath)).json();
     await (await utilityButton(page, 'Sök i kartan')).click();
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     await panel.getByRole('searchbox').fill('Alex');
@@ -70,6 +72,7 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
     await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
     await expect(panel.getByRole('searchbox')).toHaveValue('Alex');
     expect(await data.read()).toEqual(before);
+    expect(await (await page.request.get(historyPath)).json()).toEqual(historyBefore);
   } finally {
     await installation.close();
   }
@@ -250,6 +253,30 @@ test('SÖK-07: direct context ignores hit filters while ended objects and edges 
     await expect(node('Oberoende objekt')).toBeVisible();
     await expect(summary.getByText('1 sökträffar', { exact: true })).toBeVisible();
     expect(await data.read()).toEqual(before);
+    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
+    await panel.getByLabel('Bara markerade').uncheck();
+    await panel.getByLabel('Ta med upphörda', { exact: true }).uncheck();
+    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await node('Blå cykel').focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+    await expect(node('Garaget')).toBeVisible();
+    await (await utilityButton(page, 'Tabell')).click();
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await table.getByRole('button', { name: 'Redigera Blå cykel', exact: true }).click();
+    await page.getByLabel('Objektets status').selectOption('ended');
+    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await (await utilityButton(page, 'Karta')).click();
+    await expect(node('Blå cykel')).toHaveCount(0);
+    await expect(summary).toContainText('Upphörda objekt eller samband döljs');
+    await summary.getByRole('button', { name: 'Ta med upphörda', exact: true }).click();
+    await expect(node('Blå cykel')).toBeVisible();
+    await expect(node('Garaget')).toHaveCount(0);
+    await node('Blå cykel').focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+    await expect(node('Garaget')).toBeVisible();
+    expect((await data.read()).objects).toEqual(before.objects);
   } finally {
     await installation.close();
   }

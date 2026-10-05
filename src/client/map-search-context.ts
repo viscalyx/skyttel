@@ -1,20 +1,30 @@
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, MapRelationship } from '../shared/map.js';
 
+export type MapSearchSource = {
+  objects: Map<string, MapObject>;
+  relationships: Map<string, MapRelationship>;
+  previousRelationships?: MapRelationship[];
+};
+
 /** One hop from each search hit or explicitly explored object; never recursive. */
 export function mapSearchContext(
-  objects: Map<string, MapObject>,
-  relationships: Map<string, MapRelationship>,
+  { objects, relationships, previousRelationships = [] }: MapSearchSource,
   hits: Iterable<string>,
   explored: string[],
   includeEnded: boolean,
-  previousRelationships: MapRelationship[] = [],
 ) {
   const roots = new Set([...hits, ...explored]);
-  const visible = new Set([...roots].filter((id) => objects.has(id)));
+  const visible = new Set<string>();
   const edges = new Map<string, MapRelationship>();
   const previousIds = new Set<string>();
   let hiddenEnded = false;
+  for (const id of roots) {
+    const object = objects.get(id);
+    if (!object) continue;
+    if (!includeEnded && hasEnded(object)) hiddenEnded = true;
+    else visible.add(id);
+  }
   const connections = [
     ...[...relationships.values()].map((edge) => ({ edge, previous: false })),
     ...previousRelationships.map((edge) => ({ edge, previous: true })),

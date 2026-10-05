@@ -838,6 +838,14 @@ edges require inclusion”.
    om dolt upphört innehåll.
 3. Välj upplysningens **Ta med upphörda**. Kontrollera båda ytterligare
    grannarna och träffantalet.
+4. Öppna sökytan och avmarkera **Bara markerade** och **Ta med upphörda**.
+   Stäng sökytan, markera cykeln och välj **Visa samband i kartan**.
+5. Öppna **Tabell**, välj **Redigera Blå cykel**, ändra objektets status
+   till **Upphört** och lägg hela ändringen i utkastet.
+6. Återgå till **Karta**. Kontrollera att den utforskade cykeln döljs.
+   Välj **Ta med upphörda** från upplysningen och kontrollera cykeln.
+   Markera cykeln och välj **Visa samband i kartan** igen för att
+   kontrollera Garaget.
 
 **Förväntat resultat:**
 
@@ -845,7 +853,12 @@ edges require inclusion”.
   ändringsförslag, annan söktext och att den inte är markerad.
 - Upphörd granne och upphört samband döljs tills de uttryckligen tas med.
 - Inkludering visar båda grannarna utan att räkna dem som sökträffar.
-- Utkast och gemensam information är oförändrade.
+- Utforskningen ändrar inte utkastet eller den gemensamma informationen.
+  Redigeringen i steg 5 lägger enbart statusändringen i utkastet.
+- Ett tidigare utforskat objekt som föreslås upphöra döljs också när
+  upphörda inte tas med. Ändrat filter återgår till träffarnas direkta
+  grannar; fortsatt utforskning visar Garaget. Den gemensamma kartan
+  är fortsatt oförändrad.
 
 ### SÖK-08: tabellens kartknapp återställer kartfilter och bevarar tabelläget
 
