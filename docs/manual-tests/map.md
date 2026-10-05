@@ -182,7 +182,7 @@ unanswered identity question”.
    välj **Osäkert uppgivet** och välj Betalkonto som **Till objekt**.
    Lägg sambandet i utkastet, spara och ladda om sidan.
 3. Kontrollera sambandets säkerhet. Öppna Betalkonto, kontrollera
-   **Identitet** och stäng utan att skicka texten.
+   **Identitet** och stäng det oförändrade formuläret med **Avbryt**.
 4. Öppna sambandet och välj **Okänt**. Lägg i utkastet, spara och
    ladda om sidan. Kontrollera sambandets betydelse.
 5. Upprepa föregående steg med **Uttryckligen inget**.
@@ -357,8 +357,9 @@ shared map after review”.
 4. Spara hela utkastet och kontrollera kvittot. Sök efter **Lo**,
    öppna Lo Exempel, ändra namnet till **Lo Lind** och lägg i utkastet.
    Granska sparat underlag och förslag.
-5. Välj **Kasta hela utkastet**. Öppna Lo Exempel, välj
-   **Ta bort**, granska utkastet och spara det.
+5. Välj **Kasta hela utkastet**. Öppna Lo Exempel och redigera utan ändring.
+   Välj Avbryt och sedan **Ta bort Lo Exempel** i listan. Granska utkastet
+   och spara det.
 
 **Förväntat resultat:**
 

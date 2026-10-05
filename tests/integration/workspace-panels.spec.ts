@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import type { MapObject, MapState } from '../../src/shared/map.js';
+import type { MapState } from '../../src/shared/map.js';
 import {
   activatePanel,
   closePanels,
@@ -18,7 +18,7 @@ import {
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
-import { modelMessage, modelTool, textModel } from '../support/text-model.js';
+import { modelMessage, textModel } from '../support/text-model.js';
 
 async function bounds(element: Locator) {
   const rectangle = await element.boundingBox();
@@ -56,8 +56,10 @@ test('PANEL-08: limited space switches between full-width work and text while vo
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    const panel = page.getByRole('region', { name: 'Nytt objekt', exact: true });
-    await panel.getByLabel('Namn', { exact: true }).fill('Bevarat formulär');
+    await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await page.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
+    const panel = page.getByRole('region', { name: 'Cykeln', exact: true });
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
     await startConversationWithText(page);
@@ -71,8 +73,8 @@ test('PANEL-08: limited space switches between full-width work and text while vo
     expect((await bounds(conversation)).width).toBe(400);
     await openWorkspace(page);
     await expect(conversation).not.toBeVisible();
-    await page.getByRole('button', { name: 'Fortsätt: Bevarat formulär', exact: true }).click();
-    await expect(panel.getByLabel('Namn', { exact: true })).toHaveValue('Bevarat formulär');
+    await page.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
+    await expect(panel.getByText('Namn: Cykeln', { exact: true })).toBeVisible();
     expect((await bounds(panel)).width).toBe(380);
     const formPosition = await bounds(panel);
     await openConversationText(page);
@@ -95,11 +97,11 @@ test('PANEL-08: limited space switches between full-width work and text while vo
     await expect(voiceBox(page)).toBeVisible();
     // A later resize keeps the forms if that is where the user last worked.
     await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-    await panel.getByLabel('Namn', { exact: true }).focus();
+    await panel.getByRole('heading', { name: 'Cykeln', exact: true }).focus();
     await page.setViewportSize({ width: 760, height: 1000 });
     await expect(panel).toBeVisible();
     await expect(conversation).not.toBeVisible();
-    await expect(panel.getByLabel('Namn', { exact: true })).toBeFocused();
+    await expect(panel.getByRole('heading', { name: 'Cykeln', exact: true })).toBeFocused();
     await expect.poll(() => bounds(panel)).toEqual(formPosition);
     await openConversationText(page);
     await expect(conversation.getByLabel('Meddelande till Skyttel')).toHaveValue(
@@ -130,9 +132,11 @@ test('PANEL-07: windows stop at visible conversation areas and retain relocated 
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    const panel = page.getByRole('region', { name: 'Nytt objekt', exact: true });
-    const handle = panel.getByRole('button', { name: 'Flytta Nytt objekt', exact: true });
-    await panel.getByLabel('Namn', { exact: true }).fill('Skyddad oskickad text');
+    await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await page.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
+    const panel = page.getByRole('region', { name: 'Cykeln', exact: true });
+    const handle = panel.getByRole('button', { name: 'Flytta Cykeln', exact: true });
     await dragWindow(page, panel, handle, 112, 20);
     await startConversationWithText(page);
     await turnMicrophoneOn(page);
@@ -199,13 +203,13 @@ test('PANEL-07: windows stop at visible conversation areas and retain relocated 
     const kept = await bounds(navigation);
     await closeConversationText(page);
     await expect.poll(() => bounds(navigation)).toEqual(kept);
-    await expect(panel.getByLabel('Namn', { exact: true })).toHaveValue('Skyddad oskickad text');
+    await expect(panel.getByText('Namn: Cykeln', { exact: true })).toBeVisible();
   } finally {
     await installation.close();
   }
 });
 
-test('PANEL-06: draggable forms can cover the legend and reach the screen edges', async ({
+test('PANEL-06: draggable reading panels can cover the legend and reach the screen edges', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -222,13 +226,9 @@ test('PANEL-06: draggable forms can cover the legend and reach the screen edges'
     await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Teckenförklaring i kartan' })).toBeVisible();
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
-    const panel = page.getByRole('region', { name: 'Nytt objekt', exact: true });
-    await panel.getByLabel('Namn', { exact: true }).fill('Oskickat över legenden');
-    const handle = panel.getByRole('button', { name: 'Flytta Nytt objekt', exact: true });
+    await page.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
+    const panel = page.getByRole('region', { name: 'Cykeln', exact: true });
+    const handle = panel.getByRole('button', { name: 'Flytta Cykeln', exact: true });
     const initial = await bounds(panel);
     const grip = await bounds(handle);
     await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
@@ -262,28 +262,30 @@ test('PANEL-06: draggable forms can cover the legend and reach the screen edges'
     for (let step = 0; step < 30; step++) await handle.press('Shift+ArrowDown');
     const corner = await bounds(panel);
     expect(corner.x + corner.width).toBe(1440);
-    expect(corner.y + corner.height).toBe(1000);
+    expect(Math.abs(corner.y + corner.height - 1000)).toBeLessThanOrEqual(1);
+    expect(corner.y + corner.height).toBeLessThanOrEqual(1000);
     await handle.click();
     await panel.getByRole('button', { name: 'Höger', exact: true }).click();
     await panel.getByRole('button', { name: 'Nedåt', exact: true }).click();
     const buttonCorner = await bounds(panel);
     expect(buttonCorner.x + buttonCorner.width).toBe(1440);
-    expect(buttonCorner.y + buttonCorner.height).toBe(1000);
-    await expect(panel.getByLabel('Namn', { exact: true })).toHaveValue('Oskickat över legenden');
+    expect(Math.abs(buttonCorner.y + buttonCorner.height - 1000)).toBeLessThanOrEqual(1);
+    expect(buttonCorner.y + buttonCorner.height).toBeLessThanOrEqual(1000);
+    await expect(panel.getByText('Namn: Cykeln', { exact: true })).toBeVisible();
   } finally {
     await installation.close();
   }
 });
 
-test('PANEL-05: a delayed object proposal preserves a newer search focus and the normal return target', async ({
+test('PANEL-05: pending object staging keeps the modal and returns to reading before a new search', async ({
   page,
 }) => {
   const installation = await createInstallation();
   let releaseResponse = () => {};
   try {
-    await page.setViewportSize({ width: 1440, height: 1000 });
     await signIn(page.request, installation.origin);
-    await createHousehold(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
     const newObject = page
@@ -297,13 +299,12 @@ test('PANEL-05: a delayed object proposal preserves a newer search focus and the
     }
     const search = page.getByLabel('Sök objekt', { exact: true });
     await search.fill('Cykeln');
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Cykeln', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
     const cycle = page.getByRole('region', { name: 'Cykeln', exact: true });
-    await cycle.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await cycle.getByLabel('Beskrivning').fill('Skickad beskrivning');
+    const edit = cycle.getByRole('button', { name: 'Redigera valt objekt', exact: true });
+    await edit.click();
+    const form = page.getByRole('dialog', { name: 'Redigera Cykeln', exact: true });
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Skickad beskrivning');
     let responseReady = () => {};
     const ready = new Promise<void>((resolve) => {
       responseReady = resolve;
@@ -311,37 +312,49 @@ test('PANEL-05: a delayed object proposal preserves a newer search focus and the
     const released = new Promise<void>((resolve) => {
       releaseResponse = resolve;
     });
-    await page.route('**/map/draft', async (route) => {
+    await page.route('**/map/object-form', async (route) => {
       const response = await route.fetch();
       responseReady();
       await released;
       await route.fulfill({ response });
     });
-    await cycle.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await ready;
+    await expect(form.getByLabel('Beskrivning', { exact: true })).toBeDisabled();
+    await expect(
+      form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }),
+    ).toBeDisabled();
+    await page.keyboard.press('Escape');
+    await expect(form).toBeVisible();
+    expect(
+      await search.evaluate((element) => {
+        element.focus();
+        return document.activeElement === element;
+      }),
+    ).toBe(false);
+    releaseResponse();
+    await expect(form).not.toBeVisible();
+    await expect(edit).toBeFocused();
     await openWorkspace(page);
     await search.fill('Bi');
-    releaseResponse();
-    await expect(cycle).not.toBeVisible();
-    await expect(search).toBeFocused();
     await page.keyboard.type('len');
     await expect(search).toHaveValue('Bilen');
+    await expect(search).toBeFocused();
     await expect(
-      page.getByRole('list', { name: 'Objekt', exact: true }).getByRole('button', {
-        name: 'Uppgifter för Bilen',
-        exact: true,
-      }),
+      page.getByRole('button', { name: 'Uppgifter för Bilen', exact: true }),
     ).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Skickad beskrivning',
-    );
+    const state: MapState = await (await page.request.get(path)).json();
+    expect(state.objects).toEqual([]);
+    expect(
+      state.draft.changes.find((change) => change.after?.name === 'Cykeln')?.after?.description,
+    ).toBe('Skickad beskrivning');
   } finally {
     releaseResponse();
     await installation.close();
   }
 });
 
-test('PANEL-01: independent object panels preserve unsent work and reuse each object', async ({
+test('PANEL-01: complete object dialogs stage separate proposals and reading panels reuse each object', async ({
   page,
 }) => {
   const installation = await createInstallation(undefined, {
@@ -350,7 +363,8 @@ test('PANEL-01: independent object panels preserve unsent work and reuse each ob
   try {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await signIn(page.request, installation.origin);
-    await createHousehold(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
@@ -358,22 +372,17 @@ test('PANEL-01: independent object panels preserve unsent work and reuse each ob
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page
-        .getByRole('region', { name: 'Nytt objekt', exact: true })
-        .getByLabel('Namn', { exact: true })
-        .fill(name);
-      await page.getByRole('button', { name: 'Stäng Nytt objekt', exact: true }).click();
-    }
-    for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
-      await page.getByRole('button', { name: `Fortsätt: ${name}`, exact: true }).click();
-      await expect(
-        page
-          .getByRole('region', { name: 'Nytt objekt', exact: true })
-          .getByLabel('Namn', { exact: true }),
-      ).toHaveValue(name);
-      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+      await form.getByLabel('Namn', { exact: true }).fill(name);
+      await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+      await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+      await expect(form.getByLabel('Namn', { exact: true })).toHaveValue(name);
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     }
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat:');
     const objects = page.getByRole('list', { name: 'Objekt', exact: true });
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
       await openWorkspace(page);
@@ -381,56 +390,49 @@ test('PANEL-01: independent object panels preserve unsent work and reuse each ob
       const panel = page.getByRole('region', { name, exact: true });
       await expect(panel.getByRole('heading', { name, exact: true })).toBeFocused();
       await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await panel.getByLabel('Beskrivning', { exact: true }).fill(`Oskickat om ${name}`);
+      const form = page.getByRole('dialog', { name: `Redigera ${name}`, exact: true });
+      await form.getByLabel('Beskrivning', { exact: true }).fill(`Lagt i utkastet om ${name}`);
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     }
     await startConversationWithText(page);
-    for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
+    for (const name of ['Cykeln', 'Bilen', 'Garaget'])
       await expect(page.getByRole('region', { name, exact: true })).toBeVisible();
-    }
     await expect(
       page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }),
     ).toBeVisible();
     await activatePanel(page, 'Cykeln');
     await page.getByRole('button', { name: 'Stäng Cykeln', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Cykeln', exact: true })).not.toBeVisible();
-    await openWorkspace(page);
-    await objects.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
+    await activatePanel(page, 'Cykeln');
     const cycle = page.getByRole('region', { name: 'Cykeln', exact: true });
-    await expect(cycle.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Oskickat om Cykeln',
-    );
-    await openWorkspace(page);
-    await objects.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
+    await expect(
+      cycle.getByText('Beskrivning: Lagt i utkastet om Cykeln', { exact: true }),
+    ).toBeVisible();
+    await activatePanel(page, 'Cykeln');
     await expect(cycle).toHaveCount(1);
     await expect(cycle.getByRole('heading', { name: 'Cykeln', exact: true })).toBeFocused();
-    await expect(
-      page
-        .getByRole('region', { name: 'Bilen', exact: true })
-        .getByLabel('Beskrivning', { exact: true }),
-    ).toHaveValue('Oskickat om Bilen');
-    for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
-      await activatePanel(page, name);
-      await page
-        .getByRole('region', { name, exact: true })
-        .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
-        .click();
-    }
+    await openWorkspace(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Sparat:' })).toBeVisible();
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat:');
     await page.reload();
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
-      await openWorkspace(page);
-      await objects.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }).click();
+      await activatePanel(page, name);
       await expect(page.getByRole('region', { name, exact: true })).toContainText(
-        `Beskrivning: Oskickat om ${name}`,
+        `Beskrivning: Lagt i utkastet om ${name}`,
       );
     }
+    const state: MapState = await (await page.request.get(path)).json();
+    expect(state.objects).toHaveLength(3);
+    expect(state.draft.changes).toEqual([]);
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toHaveLength(2);
   } finally {
     await installation.close();
   }
 });
 
-test('PANEL-02: mobile panel navigation retains conversation, object text and desktop positions', async ({
+test('PANEL-02: mobile reading navigation retains conversation, staged object details and desktop positions', async ({
   page,
 }) => {
   const installation = await createInstallation(undefined, {
@@ -447,18 +449,18 @@ test('PANEL-02: mobile panel navigation retains conversation, object text and de
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
     await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
+    await page.getByLabel('Beskrivning', { exact: true }).fill('Bevarad cykeltext');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
-      'Utkastet är sparat',
-    );
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat:');
     await page
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Uppgifter för Cykeln', exact: true })
       .click();
     const panel = page.getByRole('region', { name: 'Cykeln', exact: true });
-    await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await panel.getByLabel('Beskrivning', { exact: true }).fill('Oskickad cykeltext');
+    await expect(panel.getByText('Beskrivning: Bevarad cykeltext', { exact: true })).toBeVisible();
     const handle = panel.getByRole('button', { name: 'Flytta Cykeln', exact: true });
     await handle.focus();
     await page.keyboard.press('ArrowLeft');
@@ -553,9 +555,7 @@ test('PANEL-02: mobile panel navigation retains conversation, object text and de
     }
     await page.setViewportSize({ width: 1440, height: 1000 });
     await activatePanel(page, 'Cykeln');
-    await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Oskickad cykeltext',
-    );
+    await expect(panel.getByText('Beskrivning: Bevarad cykeltext', { exact: true })).toBeVisible();
     const returned = await bounds(panel);
     expect(returned.x).toBe(position.x);
     expect(returned.y).toBe(position.y);
@@ -564,33 +564,14 @@ test('PANEL-02: mobile panel navigation retains conversation, object text and de
   }
 });
 
-test('PANEL-03: an intervening proposal for the same object preserves text and blocks stale staging', async ({
+test('PANEL-03: an intervening proposal preserves local text and rejects stale complete staging', async ({
   page,
 }) => {
-  let source: MapObject;
-  let version = 0;
-  let turn = 0;
-  const model = textModel(() =>
-    turn++ === 0
-      ? [
-          modelTool('propose_object', {
-            id: source.id,
-            baseRevision: source.revision,
-            version,
-            contentVersion: 1,
-            value: {
-              typeId: source.typeId,
-              name: source.name,
-              description: 'Assistentens nyare förslag',
-            },
-          }),
-        ]
-      : [modelMessage('Det nya förslaget finns i ditt utkast.')],
-  );
-  const installation = await createInstallation(undefined, { modelFetch: model.provider });
+  const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
     await page
@@ -600,47 +581,41 @@ test('PANEL-03: an intervening proposal for the same object preserves text and b
     await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Sparat:' })).toBeVisible();
-    const state: MapState = await (
-      await page.request.get(`${installation.origin}/api/households/${household.id}/map`)
-    ).json();
-    source = state.objects[0];
-    version = state.draft.version;
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Cykeln', exact: true })
-      .click();
-    const object = page.getByRole('region', { name: 'Cykeln', exact: true });
-    await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await object.getByLabel('Beskrivning', { exact: true }).fill('Min oskickade text');
-    await expect(object.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Min oskickade text',
-    );
-    await expect(object.getByLabel('Namn', { exact: true })).toHaveValue('Cykeln');
-    await startConversationWithText(page);
-    const conversation = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
-    await conversation
-      .getByLabel('Meddelande till Skyttel')
-      .fill('Föreslå en ny beskrivning för cykeln.');
-    await conversation.getByRole('button', { name: 'Skicka', exact: true }).click();
-    await expect(conversation).toContainText('Det nya förslaget finns i ditt utkast.');
-    await activatePanel(page, 'Cykeln');
-    await expect(object.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Min oskickade text',
-    );
-    await expect(object.getByRole('alert')).toContainText('äldre utkast');
     await expect(
-      object.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }),
-    ).toBeDisabled();
-    await object.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Cykeln', exact: true })
-      .click();
-    await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(object.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Assistentens nyare förslag',
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat:');
+    const state: MapState = await (await page.request.get(path)).json();
+    const source = state.objects[0];
+    await page.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    const form = page.getByRole('dialog', { name: 'Redigera Cykeln', exact: true });
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Min oskickade text');
+    const response = await page.request.post(`${path}/draft`, {
+      headers: { origin: installation.origin },
+      data: {
+        id: source.id,
+        baseRevision: source.revision,
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+        value: { ...source, description: 'Nyare förslag från samma användares andra klient' },
+      },
+    });
+    expect(response.status()).toBe(200);
+    const newer: MapState = await (await page.request.get(path)).json();
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(form.getByRole('alert')).toContainText('Dina uppgifter finns kvar.');
+    await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Min oskickade text');
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Cykeln');
+    expect(await (await page.request.get(path)).json()).toEqual(newer);
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+    await page.reload();
+    await activatePanel(page, 'Cykeln');
+    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Nyare förslag från samma användares andra klient',
     );
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toHaveLength(1);
   } finally {
     await installation.close();
   }

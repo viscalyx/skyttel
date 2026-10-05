@@ -55,47 +55,30 @@ for (const typeName of [
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
       const name = `Bild för ${typeName}`;
-      const panel = page.getByRole('region', { name, exact: true });
-      await details.getByLabel('Namn', { exact: true }).fill(name);
-      await details.getByLabel('Objekttyp', { exact: true }).selectOption({ label: typeName });
-      await details.getByLabel('Beskrivning', { exact: true }).fill('Text i samma förslag');
-      await expect(details.getByLabel('Välj profilbild')).toBeDisabled();
-      expect((await read()).draft.changes).toEqual([]);
-      await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-      const edit = async () => {
-        await openWorkspace(page);
-        await page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }).click();
-        await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      };
-      const save = async (): Promise<SaveReceipt> => {
-        await panel
-          .getByRole('button', { name: 'Stäng utan att skicka texten', exact: true })
-          .click();
-        const response = page.waitForResponse(
-          (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
-        );
-        await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-        const saved = await response;
-        expect(saved.status()).toBe(200);
-        await expect(page.getByRole('status')).toContainText('Sparat');
-        return (await saved.json()).receipt;
-      };
-      await edit();
-      const picker = details.getByRole('region', { name: 'Ikon', exact: true });
+      const newForm = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+      const form = page.locator('dialog.object-dialog');
+      const stage = () =>
+        form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      const appearance = () =>
+        form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+      await newForm.getByLabel('Namn', { exact: true }).fill(name);
+      await newForm.getByLabel('Objekttyp', { exact: true }).selectOption({ label: typeName });
+      await newForm.getByLabel('Beskrivning', { exact: true }).fill('Text i samma förslag');
+      await appearance();
+      const picker = form.getByRole('region', { name: 'Ikon', exact: true });
       await picker.getByRole('searchbox', { name: 'Sök ikon' }).fill('cykel');
       await picker.getByRole('button', { name: 'Välj Cykel', exact: true }).click();
-      await expect.poll(async () => (await read()).draft.changes[0].after?.iconId).toBe('bike');
-      const imageInput = details.getByLabel('Välj profilbild');
+      const imageInput = form.getByLabel('Profilbild', { exact: true });
       const source = await sharp({
         create: { width: 600, height: 400, channels: 3, background: '#0088ff' },
       })
         .png()
         .toBuffer();
       await imageInput.setInputFiles({ name: 'bild.png', mimeType: 'image/png', buffer: source });
-      await expect(details.getByAltText(`Profilbild för ${name}`)).toBeVisible();
-      await expect(imageInput).toBeEnabled();
+      await expect(form.getByAltText(`Profilbild för ${name}`)).toBeVisible();
+      expect((await read()).draft.changes).toEqual([]);
+      await stage();
       const proposed = await read();
       expect(proposed.objects).toEqual([]);
       expect(proposed.draft.changes).toHaveLength(1);
@@ -107,6 +90,27 @@ for (const typeName of [
         profileImageId: expect.any(String),
       });
       expect(first.type.name).toBe(typeName);
+      const edit = async () => {
+        await openWorkspace(page);
+        await page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }).click();
+        await page
+          .getByRole('region', { name, exact: true })
+          .getByRole('button', { name: 'Redigera valt objekt', exact: true })
+          .click();
+      };
+      const save = async (): Promise<SaveReceipt> => {
+        await openWorkspace(page);
+        const response = page.waitForResponse(
+          (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
+        );
+        await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+        const saved = await response;
+        expect(saved.status()).toBe(200);
+        await expect(
+          page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+        ).toContainText('Sparat:');
+        return (await saved.json()).receipt;
+      };
       const initialReceipt = await save();
       expect(initialReceipt.changes).toHaveLength(1);
       expect(initialReceipt.changes[0]).toMatchObject({ before: null, after: first.after });
@@ -114,18 +118,16 @@ for (const typeName of [
       expect(shared.objects).toHaveLength(1);
       expect(shared.objects[0]).toMatchObject({ ...first.after });
       expect(shared.draft.changes).toEqual([]);
-
       await edit();
-      await details.getByLabel('Beskrivning', { exact: true }).fill('Ny text före bildbytet');
-      await expect(imageInput).toBeDisabled();
-      await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-      await edit();
+      await form.getByLabel('Beskrivning', { exact: true }).fill('Ny text före bildbytet');
+      await appearance();
       await imageInput.setInputFiles({
         name: 'ny.webp',
         mimeType: 'image/webp',
         buffer: await sharp(source).negate().webp().toBuffer(),
       });
-      await expect(imageInput).toBeEnabled();
+      expect(await read()).toEqual(shared);
+      await stage();
       const replacement = await read();
       expect(replacement.draft.changes).toHaveLength(1);
       const latest = replacement.draft.changes[0].after?.profileImageId;
@@ -138,23 +140,31 @@ for (const typeName of [
         description: 'Ny text före bildbytet',
         iconId: 'bike',
       });
+      await edit();
+      await appearance();
       await imageInput.setInputFiles([]);
-      await expect(imageInput).toBeEnabled();
       expect(await read()).toEqual(replacement);
       await imageInput.setInputFiles({
         name: 'fel.png',
         mimeType: 'image/png',
         buffer: Buffer.from('synthetic invalid pixels'),
       });
-      await expect(page.getByRole('alert')).toContainText('Bilden kunde inte behandlas');
-      expect(await read()).toEqual(replacement);
-      await expect(details.getByAltText(`Profilbild för ${name}`)).toHaveAttribute(
-        'src',
-        new RegExp(`/profile-images/${latest}$`),
+      await stage();
+      await expect(form.getByRole('alert')).toContainText(
+        'Profilbilden kunde inte läggas i utkastet',
       );
-      await details.getByRole('button', { name: 'Ta bort profilbild', exact: true }).click();
-      await expect(details.getByText('Ingen profilbild', { exact: true })).toBeVisible();
-      await expect(details.getByText('Ikon: Cykel', { exact: true })).toBeVisible();
+      expect(await read()).toEqual(replacement);
+      await form
+        .getByRole('button', { name: 'Ta bort profilbilden ur formuläret', exact: true })
+        .click();
+      await expect(form.getByAltText(`Profilbild för ${name}`)).toHaveCount(0);
+      await picker.getByRole('searchbox', { name: 'Sök ikon' }).fill('cykel');
+      await expect(picker.getByRole('button', { name: 'Välj Cykel', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      expect(await read()).toEqual(replacement);
+      await stage();
       const removed = await read();
       expect(removed.objects).toEqual(shared.objects);
       expect(removed.draft.changes).toHaveLength(1);
@@ -187,8 +197,10 @@ for (const typeName of [
       expect(final.objects).toHaveLength(1);
       expect(final.objects[0]).toEqual(removedReceipt.changes[0].after);
       expect(final.objects[0]).not.toHaveProperty('profileImageId');
-      const history = (await (await page.request.get(`${path}/history`)).json()).history;
-      expect(history).toEqual([initialReceipt, removedReceipt]);
+      expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
+        initialReceipt,
+        removedReceipt,
+      ]);
     } finally {
       await installation.close();
     }

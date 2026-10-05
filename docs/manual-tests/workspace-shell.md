@@ -12,7 +12,8 @@ testidentitet och påhittade hushållsuppgifter.
 ## Allmän förberedelse
 
 1. Förbered en
-   [separat provdatabas](../development/devcontainer.md#disposable-local-database),
+   [separat provdatabas](../development/devcontainer.md#disposable-local-
+   database),
    logga in och skapa ett tomt hushåll.
 2. Börja varje fall med ett tomt hushåll och stängda arbetsytor. Behåll
    fliken mellan steg när inget annat anges.
@@ -20,7 +21,8 @@ testidentitet och påhittade hushållsuppgifter.
    skärmläsarens namn, läsordning och statusmeddelanden separat. Anteckna
    fysiska enheter och hjälpmedel; Chromium-emulering verifierar inte dem.
 4. För YTA-03, YTA-07, YTA-08 och YTA-09: använd i stället
-   [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-fixture).
+   [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-
+   fixture).
    Starta med `node --import tsx scripts/manual-voice.ts` efter bygget,
    följ den privata portvidarebefordran och logga in med Google som Alex.
    Skapa ett tomt hushåll Hjälpprov; kör inte `seed-family`.
@@ -31,7 +33,8 @@ testidentitet och påhittade hushållsuppgifter.
 
 ### YTA-01: öppna och bevara hushållsarbete
 
-**Syfte:** Nå verkliga formulär från kartan och behålla oskickad text.
+**Syfte:** Nå kompletta formulär från kartan och skydda oskickad text vid
+stängning.
 
 **Användare:** Alex.
 
@@ -39,7 +42,8 @@ testidentitet och påhittade hushållsuppgifter.
 
 **Integrationstest:**
 [workspace-shell.spec.ts](../../tests/integration/workspace-shell.spec.ts),
-testfallet “YTA-01: map tools open real household work and preserve it when
+testfallet “YTA-01: map tools protect unsent object loss and preserve staged
+work when
 closed”.
 
 **Steg:**
@@ -47,15 +51,19 @@ closed”.
 1. Öppna hushållet. Kontrollera att den tomma kartan öppnas utan startdialoger.
 2. Välj **Visa verktygens namn**, sedan **Lista** och **Nytt objekt**.
    Ange namnet **Cykeln**.
-3. Stäng panelerna med kryssen. Öppna **Lista** igen, välj **Fortsätt: Cykeln**
-   under **Påbörjade objekt** och kontrollera namnet.
-4. Välj **Lägg i mitt utkast**, sedan **Spara hela utkastet**.
+3. Välj **Avbryt** i objektdialogen. Kontrollera förvalt **Fortsätt redigera**
+   och tryck Escape. Namnet ska finnas kvar.
+4. Välj **Lägg i utkastet och stäng**. Stäng läspanelerna med kryssen och
+   öppna **Lista** igen. Kontrollera cykelns förslag och att ingen Fortsätt-
+   ingång
+   för stängda objektformulär finns. Välj **Spara hela utkastet**.
 5. Läs sparbeskedet och ladda om sidan.
 
 **Förväntat resultat:**
 
 - Verktygen har begripliga namn. Stängning återför fokus till **Lista**.
-- Oskickad text finns kvar efter stängning utan att sparas automatiskt.
+- Avbruten förlust behåller texten. Bekräftat tillägg bevarar hela
+  förslaget när läspanelerna stängs, utan automatiskt gemensamt sparande.
 - Det verifierade sparbeskedet anger Cykeln, som finns i kartan efter
   omladdning. Ingen startdialog visas på kartan med det sparade objektet.
 
@@ -78,7 +86,8 @@ device”.
 2. Ladda om och kontrollera att valet består. Välj sedan **Ljust**.
 3. Välj **System** och ändra enhetens tema till mörkt och sedan ljust.
 4. I varje temaläge, flytta tangentbordsfokus till **Hoppa till innehållet**,
-   **Till verktygen**, **Till lista och formulär** och **Till samtalet med Skyttel**.
+   **Till verktygen**, **Till lista och formulär** och **Till samtalet med
+   Skyttel**.
    Kontrollera att länkarna och knapparna går att läsa och har synligt fokus.
 5. Öppna temavalet med tangentbordet och tryck Escape.
 
@@ -110,7 +119,8 @@ without graphics”.
    **Information och hjälp**. Läs instruktionerna och tryck Escape.
 2. Välj **Lista**, **Nytt objekt** och skriv **Min cykel**. Kontrollera att
    fält och knappen för att lägga i utkastet går att nå.
-3. Stäng panelerna med kryssen och välj **Skriv till Skyttel**. Ge medgivande
+3. Välj Avbryt och Kasta ändringarna och fortsätt i objektformuläret.
+   Stäng läspanelerna med kryssen och välj **Skriv till Skyttel**. Ge medgivande
    med **Godkänn och starta** om rutan visas. Kontrollera att samtalsytan går
    att nå utan mikrofon.
 4. Upprepa med förstoring och tangentbord; använd hopplänkarna till
@@ -216,7 +226,8 @@ Att fälla ihop verktygen medan hjälpen är öppen täcks även av YTA-03.
 **Steg:**
 
 1. Öppna **Information och hjälp** direkt från de hopfällda verktygen med
-   tangentbord. Kontrollera fokus på rubriken. Rulla till slutet, med End på dator
+   tangentbord. Kontrollera fokus på rubriken. Rulla till slutet, med End på
+   dator
    eller genom hjälpens text på pekskärm. Läs formuläralternativet.
 2. Nå länken till datavillkoren och stängknappen med Tab. Kontrollera
    att det fokuserade innehållet syns och att hjälpen ryms i sidled.

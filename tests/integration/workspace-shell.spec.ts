@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { activatePanel, closePanels, createHousehold, signIn } from '../support/client.js';
+import { closePanels, createHousehold, signIn } from '../support/client.js';
 import {
   startConversationWithText,
   startConversationWithVoice,
@@ -46,7 +46,9 @@ test('YTA-05: save results remain readable beside tablet work', async ({ page })
   }
 });
 
-test('YTA-01: map tools open real household work and preserve it when closed', async ({ page }) => {
+test('YTA-01: map tools protect unsent object loss and preserve staged work when closed', async ({
+  page,
+}) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
@@ -65,14 +67,23 @@ test('YTA-01: map tools open real household work and preserve it when closed', a
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
     await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
+    const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Cykeln');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await closePanels(page);
     await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
     await tools.getByRole('button', { name: 'Lista', exact: true }).click();
-    await activatePanel(page, 'Nytt objekt');
-    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Cykeln');
-    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(page.getByRole('button', { name: /^Fortsätt:/ })).toHaveCount(0);
+    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText('Cykeln');
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Sparat: Cykeln' })).toBeVisible();
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat: Cykeln');
     await page.reload();
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Cykeln', exact: true }),
@@ -144,6 +155,13 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
+      await page
+        .getByRole('dialog', { name: 'Nytt objekt', exact: true })
+        .getByRole('button', { name: 'Avbryt', exact: true })
+        .click();
+      await page
+        .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+        .click();
       await closePanels(page);
       await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
       for (const entry of ['Sök i kartan', 'Utkast och historik']) {

@@ -146,14 +146,18 @@ test('RYMD-01: spatial and list editing share private proposals and one durable 
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Namn', { exact: true }).fill('Molnmusik familj');
-    await openMap(page);
-    await openWorkspace(page);
-    await activatePanel(page, 'Molnmusik');
+    await page
+      .locator('dialog.object-dialog')
+      .getByRole('button', { name: 'Avbryt', exact: true })
+      .click();
+    await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
     await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Molnmusik familj');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     expect((await read()).objects).toHaveLength(0);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await installation.restart();
     await page.reload();
     await openMap(page);
@@ -327,7 +331,9 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
     await expect(music).toContainText('+');
     await openWorkspace(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await openMap(page);
     await music.click({ button: 'right' });
     await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
@@ -387,7 +393,9 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
       'Borttagning av samband',
     );
     await page.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Kartan är inte ändrad');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Kartan är inte ändrad');
   } finally {
     await installation.close();
   }
@@ -428,39 +436,38 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
     await expect(page.getByRole('button', { name: 'Redigera objekt', exact: true })).toBeVisible();
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Oskickad mobiltext');
+    const form = page.locator('dialog.object-dialog');
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickad mobiltext');
     await page.setViewportSize({ width: 844, height: 390 });
-    await openMap(page);
-    await openWorkspace(page);
-    await activatePanel(page, 'Molnmusik');
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad mobiltext');
-    await openMap(page);
-    await expect
-      .poll(async () => (await space.locator('canvas').boundingBox())?.height)
-      .toBeGreaterThan(200);
-    const surface = await space.locator('canvas').boundingBox();
-    expect((surface?.y ?? 0) + (surface?.height ?? 0)).toBeLessThanOrEqual(390);
+    await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad mobiltext');
     await page.locator('canvas').evaluate((canvas: HTMLCanvasElement) => {
       const extension = canvas.getContext('webgl2')?.getExtension('WEBGL_lose_context');
       if (!extension) throw new Error('The test browser must support context loss');
       extension.loseContext();
       window.setTimeout(() => extension.restoreContext(), 400);
     });
-    await expect(
-      page.getByText('Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.', { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText('Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.', { exact: true }),
-    ).toHaveCount(0);
-    await openWorkspace(page);
-    await activatePanel(page, 'Molnmusik');
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad mobiltext');
+    const interrupted = page.getByText(
+      'Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.',
+      { exact: true },
+    );
+    await expect(interrupted).toBeVisible();
+    await expect(interrupted).toHaveCount(0);
+    await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad mobiltext');
     expect(
       (await read()).draft.changes.find((change) => change.id === 'music')?.after?.description,
     ).toBe('');
-    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await openMap(page);
+    await expect
+      .poll(async () => (await space.locator('canvas').boundingBox())?.height)
+      .toBeGreaterThan(200);
+    const surface = await space.locator('canvas').boundingBox();
+    expect((surface?.y ?? 0) + (surface?.height ?? 0)).toBeLessThanOrEqual(390);
+    await openWorkspace(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     expect((await read()).objects.find((object) => object.id === 'music')?.description).toBe(
       'Oskickad mobiltext',
     );
@@ -654,14 +661,10 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await objectPanel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).focus();
     await page.keyboard.press('Enter');
     await expect(page.getByLabel('Namn', { exact: true })).toBeFocused();
-    await expect(
-      page
-        .getByRole('group', { name: 'Objektets detaljer' })
-        .getByRole('button', { name: 'Ta bort', exact: true }),
-    ).toHaveAccessibleDescription(
-      /Objektet och dess 1 samband läggs som borttagningar i ditt utkast/,
-    );
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten', exact: true }).click();
+    await page
+      .locator('dialog.object-dialog')
+      .getByRole('button', { name: 'Avbryt', exact: true })
+      .click();
     await relationship.focus();
     await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
@@ -678,7 +681,9 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     );
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     expect((await read()).relationships[0].endDate?.value).toBe('2026-12-31');
   } finally {
     await installation.close();
@@ -791,7 +796,9 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await expect(musicNode).toHaveAccessibleDescription(/Upphört/);
     await openWorkspace(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await installation.restart();
     await page.reload();
     await openMap(page);

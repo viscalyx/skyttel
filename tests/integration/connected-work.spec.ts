@@ -305,12 +305,12 @@ for (const mode of ['voice', 'text'] as const) {
         .click();
       const subscription = page.getByRole('region', { name: 'Familjens Molnmusik', exact: true });
       await subscription.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await subscription
-        .getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true })
-        .click();
-      await subscription.getByLabel('Pris', { exact: true }).fill('189');
-      await subscription.getByLabel('Beskrivning', { exact: true }).fill('Rättad för hand');
-      const correction = page.waitForResponse(`${path}/draft`);
+      const form = page.locator('dialog.object-dialog');
+      await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+      await form.getByLabel('Pris', { exact: true }).fill('189');
+      await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+      await form.getByLabel('Beskrivning', { exact: true }).fill('Rättad för hand');
+      const correction = page.waitForResponse(`${path}/object-form`);
       const correctionDraft = correction.then(
         (response) => response.json() as Promise<MapState['draft']>,
       );
@@ -340,17 +340,15 @@ for (const mode of ['voice', 'text'] as const) {
         },
         { timeout: 5000 },
       );
-      await subscription
-        .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
-        .click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       expect((await correction).status()).toBe(200);
       const refreshedMap = await correctedMap;
       expect(refreshedMap.status()).toBe(200);
       await refreshedMap.finished();
       await expect(
         page.getByRole('region', { name: 'Lista och utkast' }).getByRole('status'),
-      ).toHaveText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
-      await expect(subscription).not.toBeVisible();
+      ).toHaveText('Ändringen finns i ditt utkast. Kartan sparas separat.');
+      await expect(form).not.toBeVisible();
       await openWorkspace(page);
       await objects
         .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
@@ -360,14 +358,23 @@ for (const mode of ['voice', 'text'] as const) {
       const person = page.getByRole('region', { name: 'Kim Exempel', exact: true });
       await expect(person.getByRole('heading', { name: 'Kim Exempel', exact: true })).toBeFocused();
       await person.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await person.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Kim');
-      await person.getByRole('button', { name: 'Stäng Kim Exempel', exact: true }).click();
+      await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Kim');
+      await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+      const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+      await expect(
+        loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickat om Kim');
+      await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+      await loss
+        .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+        .click();
+      await expect(form).not.toBeVisible();
       await openWorkspace(page);
       await objects.getByRole('button', { name: 'Uppgifter för Kim Exempel', exact: true }).click();
       await expect(person).toHaveCount(1);
-      await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Oskickat om Kim',
-      );
+      await expect(person).not.toContainText('Oskickat om Kim');
       const corrected = await read();
       const expectedFacts = {
         price: { knowledge: 'known', value: '189' },
@@ -458,9 +465,7 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(subscription).toContainText('Rättad för hand');
       await activatePanel(page, 'Kim Exempel');
       await expect(person.getByRole('heading', { name: 'Kim Exempel', exact: true })).toBeFocused();
-      await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Oskickat om Kim',
-      );
+      await expect(person).not.toContainText('Oskickat om Kim');
       await openConversationText(page);
       await expect(message).toBeVisible();
       await expect(message).toHaveValue('Oskickat i samtalet');
@@ -489,9 +494,7 @@ for (const mode of ['voice', 'text'] as const) {
       await savedReceipts.getByText('Visa kvittot', { exact: true }).first().click();
       await expect(savedReceipts).toContainText('Familjens Molnmusik');
       await activatePanel(page, 'Kim Exempel');
-      await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Oskickat om Kim',
-      );
+      await expect(person).not.toContainText('Oskickat om Kim');
       await openConversationText(page);
       const receipts = await history();
       expect(receipts).toHaveLength(1);
@@ -594,10 +597,8 @@ for (const mode of ['voice', 'text'] as const) {
         .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
         .click();
       await subscription.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await subscription.getByLabel('Beskrivning', { exact: true }).fill('Alex privat efteråt');
-      await subscription
-        .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
-        .click();
+      await form.getByLabel('Beskrivning', { exact: true }).fill('Alex privat efteråt');
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await member.reload();
       if (mode === 'text') await loseGraphics(member);
       await openWorkspace(member);

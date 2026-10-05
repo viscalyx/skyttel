@@ -209,6 +209,9 @@
 .household-map .object-dialog .object-wide :is(input, select, textarea) {
   width: 100%;
 }
+.household-map.workspace-shell :is(.object-dialog, .object-type-loss) .primary:hover:enabled {
+  background: var(--space-accent);
+}
 @media (max-width: 700px) {
   .object-dialog {
     width: 100vw;
@@ -263,5 +266,20 @@
   }
   .object-type-loss-body {
     padding: 16px;
+  }
+}
+@media (max-height: 480px) {
+  .object-dialog,
+  .object-type-loss {
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .object-dialog > form {
+    flex: none;
+  }
+  .object-dialog-body,
+  .object-type-loss-body {
+    overflow: visible;
+    flex: none;
   }
 }

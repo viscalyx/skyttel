@@ -46,13 +46,13 @@ durable save”.
 1. Öppna rymdkartan och välj Molnmusik. Kontrollera att kartan ligger
    kvar. Öppna Lista, välj **Uppgifter för Molnmusik** och sedan
    **Redigera valt objekt**. Skriv **Molnmusik familj** som namn.
-2. Stäng panelerna med kryssen och öppna Lista igen. Välj **Uppgifter för
-   Molnmusik**. Kontrollera texten och lägg den i utkastet.
+2. Välj Avbryt och Fortsätt redigera i förlustvarningen. Kontrollera
+   namnet och lägg hela formuläret i utkastet med Lägg i utkastet och stäng.
 3. Granska och spara hela utkastet. Starta om appen och öppna kartan igen.
 
 **Förväntat resultat:**
 
-- Namntexten finns kvar vid vybytet. Förslagen ändrar inte sparad karta.
+- Namntexten finns kvar vid avbruten förlust. Förslagen ändrar inte kartan.
 - Ett samlat sparande ger kvitto. Båda objekten och det rättade namnet
   finns kvar efter omstart, i både lista och karta.
 
@@ -155,12 +155,13 @@ unsent editing”.
 
 1. Kontrollera att rymdkartan är startläge. Håll
    på Molnmusik tills menyn visas. Släpp och välj Redigera objekt.
-2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten, välj Till
-   kartan och byt vy.
-3. Öppna kartan igen. Använd webbläsarens verktyg för att simulera förlust
+2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten och kontrollera
+   texten i det fortfarande öppna formuläret.
+3. Behåll formuläret öppet. Använd webbläsarens verktyg för att simulera förlust
    och återställning av WebGL-kontext, eller kör det länkade automatiska
    provet för detta avbrott. Anteckna separat vad som faktiskt provas.
-4. Öppna detaljerna, kontrollera texten, lägg den i utkastet och spara.
+4. Kontrollera texten i formuläret, lägg hela formuläret i utkastet och
+   öppna kartan. Kontrollera att kartan ryms i liggande vy. Spara utkastet.
 
 För ett avbrott i Chromes utvecklarkonsol, med kartan öppen:
 
@@ -201,9 +202,9 @@ changes”.
    Kontrollera rubrikfokus i objektpanelen. Återgå till Lista och prova
    tabbordningen markering, namn, Uppgifter, Redigera och Ta bort; gå även
    bakåt från Uppgifter till markeringen. Återgå till objektpanelen.
-   Välj **Redigera valt objekt**,
-   läs att objektet och ett samband läggs som borttagningar i utkastet.
-   Kontrollera rätt formulär och stäng utan ändring.
+   Läs vid listans Ta bort att objektet och ett samband läggs som
+   borttagningar i utkastet. Välj **Redigera valt objekt**, kontrollera
+   namnfokus i rätt formulär och välj Avbryt utan ändring.
 3. Välj sambandet i listan med tangentbord och välj Redigera. Ange känt slutdatum
    2026-12-31 utan att skicka formuläret.
 4. Öppna kartan, ändra fönsterstorlek och öppna detaljer och utkast.

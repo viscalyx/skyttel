@@ -691,7 +691,8 @@ and Escape restrictions”.
 5. Stäng med Escape. Fokusera kartan och bygg ett sammansatt å.
    Kontrollera att bara det färdiga tecknet öppnar sökningen.
 6. Prova ett kortkommando. Öppna Nytt objekt och skriv ett namn med
-   bokstäver och siffror. Stäng utan att skicka texten. Öppna Skriv till
+   bokstäver och siffror. Välj **Avbryt** och sedan **Kasta ändringarna och
+   fortsätt** i förlustvarningen. Öppna Skriv till
    Skyttel och skriv ett oskickat meddelande, utan att starta samtal.
    Kontrollera att sökytan förblir stängd och texten går att skriva.
 7. Stäng textvyn, öppna Sök i kartan och välj Rensa sökning. Kontrollera tom

@@ -291,7 +291,11 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await expect(objectName).toHaveValue('Ö Testnamn 123');
     await expect(objectName).toBeFocused();
     await expect(panel).not.toBeVisible();
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Nytt objekt', exact: true })
+      .getByRole('button', { name: 'Avbryt', exact: true })
+      .click();
+    await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
     await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).click();
     const message = page.getByRole('textbox', { name: 'Meddelande till Skyttel', exact: true });
     await message.pressSequentially('Å Oskickat meddelande 456');

@@ -15,7 +15,8 @@ Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
 1. Förbered en
-   [separat provdatabas](../development/devcontainer.md#disposable-local-database).
+   [separat
+   provdatabas](../development/devcontainer.md#disposable-local-database).
    Skapa hushållet och ge Robin tillgång enligt
    [inbjudningsguiden](../user-guide/access.md#bjud-in-en-skyttel-användare).
 2. För samtalsfallen används den kontrollerade
@@ -38,9 +39,9 @@ fallen anger formulär, samtal, profil eller administration.
 
 ## Tillfälliga vybyten
 
-### ARBETE-01: oskickad formulärtext och sökning finns kvar
+### ARBETE-01: avbruten formulärförlust och lagt utkast bevaras vid navigation
 
-**Syfte:** Återgå till oskickat arbete utan att göra det till ett utkast.
+**Syfte:** Behåll text vid avbruten förlust och redan lagda förslag vid vybyte.
 
 **Användare:** Alex.
 
@@ -48,29 +49,27 @@ fallen anger formulär, samtal, profil eller administration.
 
 **Integrationstest:**
 [household-work.spec.ts](../../tests/integration/household-work.spec.ts),
-testfallen “ARBETE-01: unsent household work survives ordinary navigation
-at 1280px”, “ARBETE-01: unsent household work survives ordinary navigation
-at 390px” och “ARBETE-01: unsent household work survives ordinary navigation
-at 320px”.
+testfallen “ARBETE-01: canceled form loss and staged household work survive
+ordinary navigation at 1280px”, samma titel med “at 390px” och “at 320px”.
 
 **Steg:**
 
-1. Välj **Nytt objekt**. Skriv **Oskickad cykel** och beskrivningen **Behåll
-   denna text**. Öppna Lista igen och skriv **cykel** i **Sök objekt**. Välj
-   **Fortsätt: Oskickad cykel** under **Påbörjade objekt** och fokusera
-   namnfältet.
-2. Använd Tab och Enter för att besöka **Inloggningssätt**. Kontrollera
-   rubrikfokus och att kartan och dess formulär inte går att nå.
-3. Välj **Till startsidan** med tangentbordet. Kontrollera namn,
-   beskrivning, sökning och fokus. Kontrollera att utkastet ännu är tomt.
-4. Välj **Lägg i mitt utkast** och kontrollera förslaget.
+1. Öppna Lista och skriv **cykel** i **Sök objekt**. Välj **Nytt objekt**,
+   skriv **Oskickad cykel** och beskrivningen **Behåll denna text**.
+2. Välj **Avbryt**. Kontrollera att **Fortsätt redigera** är förvalt.
+   Tryck Escape. Namn och beskrivning ska finnas kvar, fokus ska återgå
+   till Avbryt och utkastet ska fortfarande vara tomt.
+3. Välj **Lägg i utkastet och stäng**. Besök **Inloggningssätt** med
+   tangentbord. Kontrollera rubrikfokus och att kartans kontroller är dolda.
+4. Välj **Till startsidan** och öppna Lista. Kontrollera sökningen **cykel**,
+   öppna **Uppgifter för Oskickad cykel** och läs beskrivningen.
 
 **Förväntat resultat:**
 
-- Alla tre texter finns kvar efter återgång. Namnfältet får synligt fokus
-  och täcks inte av de utfällda verktygen.
-- Inget förslag skapas förrän formuläret uttryckligen skickas.
-- Dolda kontroller stör inte navigationen på den andra sidan.
+- Avbruten förlust ändrar varken formulärtext eller utkast.
+- Det kompletta förslaget och listans sökning finns kvar efter återgång.
+  Objektets lästa rubrik får fokus; dolda kontroller stör inte navigationen.
+- Inget sparas i den gemensamma kartan och ingen historikpost skapas.
 
 ### ARBETE-02: samtal och mikrofon består och avslutas vid utloggning
 
@@ -105,7 +104,7 @@ end on logout”.
   Den automatiserade mediegränsen verifierar stoppade ljudspår; ett
   fysiskt mikrofonprov redovisas separat.
 
-### ARBETE-03: återkallad tillgång avvecklar dolt arbete
+### ARBETE-03: återkallad tillgång avvecklar oskickat arbete
 
 **Syfte:** Bevarande ger inte fortsatt tillgång efter återkallelse.
 
@@ -121,15 +120,15 @@ microphone”.
 **Steg:**
 
 1. Som Robin, öppna **Nytt objekt**, skriv **Privat oskickad cykel** och
-   besök **Inloggningssätt** utan att skicka formuläret.
+   behåll objektdialogen öppen utan att skicka formuläret.
 2. Som Alex, öppna **Administrera tillgång**, återkalla Robins tillgång
    och bekräfta återkallelsen.
 3. Vänta på Robins åtkomstkontroll, högst tio sekunder. Kontrollera
-   mikrofonen och välj **Till startsidan**.
+   mikrofonen och öppna hushållets adress igen.
 
 **Förväntat resultat:**
 
-- Robins mikrofon stoppas även när kartan inte visas.
+- Robins mikrofon stoppas och objektdialogen avvecklas före omladdning.
 - Återgång visar saknad tillgång. Det gamla formuläret är borta och
   hushållsinnehållet är inte åtkomligt.
 
@@ -151,11 +150,14 @@ microphone”.
 
 1. Starta samtal och mikrofon. Öppna **Nytt objekt** och skriv
    **Gammal oskickad cykel** utan att skicka texten.
-2. Öppna **Inställningar** och välj **Återimportera hushållet** i
-   sidnavigationen. Välj exportfilen och **Kontrollera importfil**.
+2. Öppna samma hushåll i en andra flik med samma inloggning. Behåll
+   det första formuläret öppet. I den andra fliken, öppna **Inställningar**
+   och välj **Återimportera hushållet** i sidnavigationen. Välj exportfilen och
+   **Kontrollera importfil**.
    Granska ersättningen och bekräfta uttryckligen att innehållet ska ersättas.
-3. Invänta bekräftad ersättning och mikrofonstopp. Välj
-   **Läs in det återställda hushållet** och sedan **Tillbaka till kartan**.
+3. Invänta bekräftad ersättning i den andra fliken och mikrofonstopp
+   samt avvecklat formulär i den första. Ladda om den första fliken,
+   öppna textvyn och välj **Nytt samtal**. Avböj medgivandet.
 
 **Förväntat resultat:**
 
@@ -167,7 +169,8 @@ microphone”.
 
 ### ARBETE-07: väntande radering stoppar tidigare arbete före omladdning
 
-**Syfte:** Kontrollera att dolt formulär, samtal, mikrofon och ett registrerat
+**Syfte:** Kontrollera att oskickat formulär, samtal, mikrofon och ett
+registrerat
 sparförsök avvecklas när radering spärrar innehållet, utan att omladdning
 döljer ett fel i avvecklingen.
 
@@ -191,8 +194,8 @@ an admitted save before reloading”.
    kontrollerade svaret och skriv **Gammalt oskickat svar** utan att skicka
    det. Öppna **Lista**. Öppna samma installation i en andra vanlig flik B
    med samma inloggning. Där öppnar du **Nytt objekt** och skriver
-   **Gammal oskickad cykel** utan att lägga det i utkastet. Besök
-   **Inställningar** i flik B utan omladdning och behåll fliken öppen.
+   **Gammal oskickad cykel** utan att lägga det i utkastet. Behåll
+   objektdialogen öppen i flik B utan omladdning.
    Ett oskickat objekt spärrar sparandet i sin egen flik; därför används
    separata flikar för formuläret och det väntande sparandet.
 2. I flik A, installera följande utdrag genom **Sources → Snippets** i
@@ -263,7 +266,7 @@ an admitted save before reloading”.
 5. Bekräfta med exakt **RADERA PERMANENT**. Invänta HTTP 202 och besked om
    väntande städning. Anteckna raderingens fullständiga identifierare.
    **Ladda inte om någon flik.** Inom tio sekunder ska mikrofonen i flik A
-   stoppas och det dolda formuläret i flik B avvecklas. Öppna
+   stoppas och det oskickade formuläret i flik B avvecklas. Öppna
    **Tillbaka till kartan** i en ny flik:
    innehållet ska vara spärrat. En export i en separat flik ska också avvisas.
 6. I ursprungsfliken, tryck Alt+Skift+R för att släppa den gamla sparbegäran.
@@ -287,7 +290,7 @@ provmiljön avslutas enligt kostnadsfallets stoppanvisningar.
 - Vanlig navigation bevarar arbetet före raderingen. Innehållsspärren
   avvecklar däremot mikrofon, formulär och väntande sparande före omladdning.
 - Den automatiserade mediegränsen verifierar att ljudspåret är avslutat
-  och att dolda formulär tas bort. Den kontrollerade transporten provar
+  och att oskickade formulär tas bort. Den kontrollerade transporten provar
   inte fysisk mikrofon eller verkliga externa modellsvar.
 - En uttrycklig radering och ett uttryckligt slutförande använder samma
   identifierare. Automationen jämför hela det oberoende privata utkastet,
@@ -421,7 +424,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
 
    Släpp sedan ett vanligt `reply`. Kontrollera ett privat objekt,
    inget sparat objekt eller kvitto och Robins oförändrade privata notering.
-3. Välj **Prata med Skyttel**. Kör `user Kim Exempel betalar familjens Molnmusik.`
+3. Välj **Prata med Skyttel**. Kör `user Kim Exempel betalar familjens
+   Molnmusik.`
    och `delegate` i terminalen. Släpp `propose_object` för **Kim Exempel**,
    typen **Person**, tom beskrivning och `baseRevision: null`.
    Använd aktuell version och typrevision. Nästa verktygsresultat ger
@@ -432,15 +436,18 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Hela utkastet ska visa två objekt och exakt **Kim Exempel → Betalar →
    Familjens Molnmusik**. Inget ska vara gemensamt sparat.
 4. Öppna abonnemangets **Uppgifter** från Lista och **Redigera valt objekt**.
-   Öppna **Ekonomiska uppgifter och avtalsvillkor**, rätta **Pris** till
-   **189** och beskrivningen till **Rättad för hand**. Lägg i utkastet och
+   Öppna **Ekonomiska uppgifter** och rätta Pris till
+   **189**. Öppna sedan
+   **Grunduppgifter** och rätta beskrivningen till **Rättad för hand**. Lägg i
+   utkastet och
    invänta avslutat formulär och beskedet att förslaget finns i ditt
    privata utkast när kartans inläsning är klar. Öppna abonnemangets
    uppgifter igen och behåll panelen. Öppna Kims uppgifter och redigera
    beskrivningen till
-   **Oskickat om Kim**, utan att lägga i utkastet. Välj **Stäng Kim Exempel**,
-   öppna samma uppgifter från Lista och kontrollera texten samt en enda
-   panel för Kim. Använd inte åtgärden som kastar oskickad text.
+   **Oskickat om Kim**, utan att lägga i utkastet. Välj **Avbryt**, kontrollera
+   förvalt Fortsätt redigera och tryck Escape. Kontrollera kvarvarande text.
+   Välj Avbryt igen och **Kasta ändringarna och fortsätt**. Öppna Kims
+   uppgifter och kontrollera en enda läspanel utan den kastade texten.
 5. Skriv **Oskickat i samtalet** utan att skicka. Låt mikrofonen vara på
    och öppna **Inställningar**. Rubriken ska få fokus och kartarbetet döljas.
    Inställningarnas innehåll ska komma före kartans återkoppling om
@@ -450,7 +457,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Välj **Tillbaka till kartan** och välj
    abonnemanget och Kim genom **Uppgifter** i Lista. Öppna även
    **Skriv till Skyttel**. Kontrollera
-   rubrikfokus, samma beskrivningar, samma dialog och båda oskickade texter.
+   rubrikfokus, den rättade abonnemangsbeskrivningen, samma dialog och
+   samtalets oskickade text. Kims uttryckligen kastade text återkommer inte.
    Robins notering ska fortfarande vara privat. Automationen kontrollerar
    att samma levande mediespår och anslutning används efter Inställningar.
 6. Välj **Visa utkastet** i textvyn. Tabellen ska ha två objekt och ett
@@ -464,8 +472,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Läs **Utkastet är sparat** under hushållsnamnet i tre sekunder.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
    och öppna **Lista → Uppgifter för Kim Exempel**. Kontrollera att
-   **Oskickat om Kim** fortfarande finns i formuläret men inte i sparad
-   beskrivning. Kvittot finns kvar i **Utkast och historik**, och
+   **Oskickat om Kim** saknas både i läspanelen och sparad beskrivning. Kvittot
+   finns kvar i **Utkast och historik**, och
    mikrofonknappen finns kvar i verktygsraden. Robins privata notering
    ingår inte i kvittot.
 7. Stäng av mikrofonen med **Prata med Skyttel** och vänta tills
@@ -508,7 +516,8 @@ utan grafik eller ljud”.
 
 **Steg:**
 
-1. Följ ARBETE-08. Välj aldrig **Prata med Skyttel**. I steg 3 skriver och skickar
+1. Följ ARBETE-08. Välj aldrig **Prata med Skyttel**. I steg 3 skriver och
+   skickar
    du **Kim Exempel betalar familjens Molnmusik.** i textfältet i stället
    för terminalens `user` och `delegate`. Släpp samma två verktyg i ordning.
    Hoppa över mikrofonens påslag och avstängning.

@@ -103,9 +103,9 @@ paneler för att
 - [Fria paneler](workspace-panels.md): flera objekt och samtal, fri placering
   över legenden inom skärmens kanter, skydd för synliga samtalsytor och
   växling mellan hela vyer vid platsbrist,
-  mobilnavigering genom Lista med synligt återgångsfokus, återöppning av nya
-  objekt,
-  bevarade samband och typer samt fortsatt sökning medan ett förslag skickas.
+  mobilnavigering genom Lista med synligt återgångsfokus, kompletta
+  objektförslag, bevarade läsuppgifter och samtal, skyddad väntande
+  objektdialog samt bevarade samband och typer.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman, läsbara hopplänkar och fokus, hjälp i det kompakta verktygsfältet,
   samtalshjälp med
@@ -116,7 +116,8 @@ paneler för att
   samtalsnotis. Höjdhjälpen finns i navigeringen och är inaktiv utan
   ett objektval.
 
-- [Bevarat hushållsarbete](household-work.md): oskickad text, samtal,
+- [Bevarat hushållsarbete](household-work.md): avbruten formulärförlust,
+  lagda objektförslag, oskickad samtalstext, samtal,
   mikrofon, sökning, urval, synligt återställt fokus, personlig vy och samma
   sparförsök vid tillfälliga vybyten; avveckling vid utloggning, återkallad
   tillgång
@@ -274,158 +275,12 @@ paneler för att
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
   mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart
-  och återgång till standardikon samt fokus vid fördröjda svar och återförsök.
+  och återgång till standardikon, lokalt tangentbordsfokus samt kompletta
+  tillägg med bevarade värden vid avvisat eller okänt utfall.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
   rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, historikläsning,
-  kvitton, bildåtkomst och uttrycklig återgång efter bildfel i en stängd panel
-  eller i Inställningar samt avbrutet filval och avslutade felåtergångar.
-  Bildfelets återgång behåller läsbar text och tangentbordsfokus under
-  pekaren i båda teman på dator och smala fönster; listverktyget är nåbart
-  också i korta fönster efter att ett objekt stängts. Återgång till kartan
-  och öppning av arbetet igen bevarar oskickad text också på kort datorvy.
-  Alla objekttyper delar text, ikon och bild i samma förslag och kvitto;
-  bildborttagning återställer inte en äldre sparad bild.
-
-- [Externa assistenter](assistants.md): OAuth, separat AI-val, avböjd
-  anslutning, avgränsade läsningar, egna utkast, hushållsgränser och
-  återkallad åtkomst, särskilt kartmedgivande, hela utkast, rättelser,
-  konflikter och återfunna kvitton samt ett separat manuellt Codex CLI-prov
-  med verklig Google-inloggning i devcontainern, utan CI-hemligheter.
-  En kontrollerad lokal MCP-klient behåller gamla begäranden, tappar ett
-  lyckat sparbesked och provar exakta återförsök efter serveromstart.
-  Profilens anslutningar får tangentbordsfokus och återgången behåller
-  oskickad text och oberoende privata förslag.
-
-- [Inloggning och hushållets start](access.md): skapa hushåll, använda
-  tangentbord, avbryta extern inloggning, återhämta utgångna försök, börja
-  med kartans verktyg utan startdialoger, hantera förlorad tillgång och länka
-  inloggningssätt.
-  Länkningens två steg visar aktuell verifiering, båda tjänsternas status
-  och övergången till respektive tjänst.
-  Avbruten länkning bekräftas med bevarad tillgång och krav på ny verifiering.
-  Utgången länkning förklarar ny verifiering och bevarar eget utkast och
-  identitet.
-  Även en redan öppen sida hanterar avvisad utgången verifiering utan ny
-  koppling.
-- [Tillgång och medlemskap](membership.md): inbjudningar, utgångna och
-  ersatta koder, delad administration samt återkallad och återställd
-  tillgång med bevarat innehåll i kartan. Stegvis inbjudan och verklig
-  kopiering,
-  separata medlems- och inbjudningsvyer samt avvecklat oskickat arbete när en
-  redan öppen mottagarklient förlorar tillgång.
-  Misslyckad urklippsknapp följs av manuell kopiering och faktisk acceptans.
-- [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
-  skilja lika namn åt och bevara ofullständiga uppgifter; det gemensamma
-  objektformuläret med fullständiga värden, stängda avsnitts fel, typbyte,
-  bild och ikon, förlustvarning, återfokus samt väntande, avvisat och oklart
-  tillägg till utkastet på dator och mobil.
-- [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
-  textkontroller, aktiv detaljikon och placering nära objektet.
-- [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta
-  grannar, återgångsvy, mus, tangentbord och pekskärm i smala och korta vyer.
-- [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
-  stabil etikettinformation vid växling mellan kompakt karta och lista,
-  täta mobilutsnitt med prioriterade objekt- och sambandsetiketter samt
-  alternativ utan grafik,
-  fokus på tidigare och föreslagna samband med läsbara tidigare värden,
-  fokus, filter, namn vid runda symboler, sambandsetiketter vid val,
-  bevarat etikettläge vid återställning, pekmenyer, uttrycklig redigering
-  med bevarat listfokus, sambandens antal vid direkt borttagning, upphörd
-  status,
-  ändringssymboler och bevarad oskickad text vid vybyte, orientering och
-  grafikavbrott samt fungerande navigation när tillgången återkallas i helskärm.
-- [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
-  genom sidvisning, sökning och fokus, med bevarad text och placering.
-- [Personliga placeringar](personal-view.md): stjärnval i Rymdkartans
-  inställningar, minskad rörelse, flyttning med mus, pekgester
-  och tangentbord, stabila fingerpar och kameraväxling, systemets minskade
-  rörelse, visningsval, samtidighetskonflikter, bevarad text,
-  beständighet och avskildhet mellan användare samt inramning vid sen
-  första inläsning med bevarad kamera vid senare uppdateringar. Separata
-  provhushåll på samma installation förbereds med ett lokalt kommando.
-  Höjdhjälpen har stabil förhandsvisning och ett bevarat val i båda
-  navigeringsstorlekarna.
-- [Avtal och ekonomiska uppgifter](contracts.md): registrera, hitta och
-  rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
-  validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
-  kommando förbereder äldre provdata för uppgraderingen.
-- [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
-  utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
-  långa fältnamn och sammanfattningar som skiljer giltighet från statusläge,
-  direkt borttagning av oberoende förslag och bekräftad eller avbruten
-  borttagning av nya objekt med deras verkliga sambandsberoenden,
-  samt typförslag vars beroende förslag blir kvar med begriplig feltext,
-  bekräftelse och avbrott för hela utkastet med oskickat meddelande kvar,
-  uppdaterade beroenden efter inaktuell bekräftelse, typkonflikter med
-  bevarade egna värden, fokus efter sista raden och återhämtning av
-  borttagning efter tappat svar,
-  beständig borttagningskontroll utan avbrott i senare samtalstext,
-  tomt utkast och bevarat första meddelande;
-  filtrerad teckenförklaring med kartans färger,
-  tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
-  sparmodalens väntande, okända och avvisade försök från karta och tabell,
-  även utan utkastikon efter omladdning; återgå till synligt Utkast efter
-  bekräftad kontroll från Karta, behåll senare tangentbordsfokus
-  och skilj bekräftat kvitto från fel vid efterföljande hämtning; återuppta
-  utkast, hantera gamla kastförsök
-  och konfliktval, kombinera egenskaper i Granska konflikter från karta
-  och tabell, läsa långa namn, bevara konfigurerade egenskapsnamn och
-  ange varje egenskaps verkliga sparare, förklara ogiltiga kombinationer
-  och avvisa inaktuell jämförelse
-  samt granska samtidiga ändringar, dubbletter och
-  borttagningar före ett gemensamt sparande. Bevara oberoende status
-  och slutdatum i samband vid konfliktval samt rätt typdefinitioner
-  vid borttagning efter typbyten. Följ status och legend med stängda
-  paneler, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
-  ett samlat utkast från formulär, text och tal efter omstart. Besvara
-  nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
-  och kartans status och teckenförklaring tillsammans utan att tappa åtkomst
-  till kontrollerna.
-  Öppna en namngiven konflikt från status med tangentbord och återgå till
-  ett annat oskickat objektformulär med texten kvar. Följ alla fyra
-  konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella
-  avsnitt, dolda värden och hela ekonomiska uppgifter. Rätta ett
-  konfliktobjekt med annan oskickad text kvar och bevara oberoende
-  sparade uppgifter före ett nytt uttryckligt sparande. Rätta ett sambands
-  borttagna mål utan att återuppliva objektet eller spara i förtid.
-  Rätta objekt- och sambandstyper genom inställningarna med oberoende
-  sparade uppgifter kvar och ett nytt uttryckligt sparbesked.
-  Återgå till hela utkastet efter ett konfliktval och bevara senare
-  sökfokus när svaret fördröjs.
-  Återfinn privata konfliktval efter tappade svar och bekräfta samma
-  kvitto efter ett nytt uttryckligt sparande utan dubbletter.
-- [Objekttyper och egna fält](object-types.md): skapa och rätta gemensamma
-  definitioner, fyra frivilliga värdeslag, privata förslag, samtidiga
-  ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
-  gemensamma egenskaper med bevarad säkerhet och datum, tangentbord
-  och bevarat arbete på mobil, dator och korta fönster med synlig status.
-  Samtidiga
-  ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
-  som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
-  kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
-  bild, ikon och samband samt läser historiska värden.
-  Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
-- [Sambandstyper och riktning](relationship-types.md): benämningar från
-  båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
-  noll och Nej, uttrycklig hantering vid typbyte, privata förslag,
-  ordnade avsnitt och återvisade dolda svar efter omstart, dubbletter
-  och samtidiga sparanden utan delsparande.
-- [Borttagning av typer och fält](definition-removal.md): granskad
-  katalogborttagning, användningsspärrar för upphört innehåll och privata
-  utkast samt läsning av historiska definitioner som saknas i katalogen.
-- [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
-  försök efter omstart, återförsöka från en annan klient och kontrollera
-  privat tillgång.
-- [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
-  senaste först, fullständiga historiska värden, direktlänkar och återgång
-  till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök
-  och fokus under fördröjd hämtning, sparlänkar med bevarad oskickad text
-  och historiska ikonvärden bredvid profilbilder.
-- [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
-  kända slutdatum och granska, kasta eller spara vanlig borttagning med
-  bevarade anslutna objekt och historikunderlag, även efter privata typbyten.
-  Kartans samband visar samma status med text och tillgänglig beskrivning
-  vid tangentbordsarbete och efter omstart. Objekt och samband behåller
-  sina egna namn, typer och statusuppgifter även när identifierare liknar
-  varandra.
-  Det gäller även tidigare samband som visas tillsammans med aktuella förslag.
+  kvitton och bildåtkomst. Hela bildformulärets väntande tillägg spärrar
+  navigering; avvisning behåller lokala värden, tidigare bild och oberoende
+  förslag. Förlustvarningen har synligt tangentbordsfokus och läsbar text
+  under pekaren i båda teman, också på korta fönster. Avbrutet filval
+  ändrar inget och inaktuellt tillägg bevarar hela formuläret.

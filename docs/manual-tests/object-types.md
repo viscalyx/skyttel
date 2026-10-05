@@ -149,9 +149,11 @@ without confusing unanswered and no”.
 **Steg:**
 
 1. Skapa samma typ och fyra fält som i TYP-01. Skapa Paneler på taket men
-   lämna alla fälten obesvarade. Lägg båda förslagen i utkastet.
+   öppna Egna fält och lämna alla fälten obesvarade. Lägg båda förslagen
+   i utkastet.
 2. Ladda om och öppna objektet. Kontrollera tomma text-, tal- och datumfält
-   samt **Obesvarat** för Batteri. Stäng formuläret och spara hela utkastet.
+   samt **Obesvarat** för Batteri i Egna fält. Välj Avbryt i det
+   oförändrade formuläret och spara hela utkastet.
 3. Ladda om. Ange Exempelsol, `12.5`, `2026-09-01` och **Nej**.
    Lägg i utkastet och kontrollera **Batteri: Nej**. Spara och ladda om.
 4. Rätta till Ny leverantör, `-14.25`, `2026-09-02` och **Ja**. Granska, spara
@@ -364,7 +366,8 @@ losing values after restart”.
 2. Lägg till Leverantör som text, Effekt som tal, Datum som datum och
    Batteri samt Reserv som ja/nej. Välj Uppgifter för samtliga fält.
    Lägg typförslaget i utkastet.
-3. Återgå till kartan och skapa Paneler av den nya typen. Ange Exempelsol,
+3. Återgå till kartan och skapa Paneler av den nya typen. Öppna avsnittet
+   **Uppgifter**. Ange Exempelsol,
    `0`, `2026-09-01` och **Nej** för Batteri. Lämna Reserv obesvarat.
    Lägg objektet i samma utkast.
 4. Öppna typdefinitionen igen. Dölj Effekt och flytta Leverantör till
@@ -372,9 +375,11 @@ losing values after restart”.
    de finns ännu inte i den gemensamma kartan.
 5. Spara hela utkastet. Starta om testinstallationen och ladda om sidan.
    Öppna Paneler för redigering. Kontrollera att Effekt inte visas,
-   Batteri är Nej och Reserv är Obesvarat. Stäng utan att skicka.
+   öppna **Uppgifter** och kontrollera att Batteri är Nej och Reserv är
+   Obesvarat. Stäng det oförändrade formuläret med **Avbryt**.
 6. Återvisa Effekt i Service genom typdefinitionen och lägg förslaget
-   i utkastet. Öppna objektformuläret igen.
+   i utkastet. Öppna objektformuläret igen och växla mellan **Service**
+   och **Uppgifter** för att läsa alla svar.
 
 **Förväntat resultat:**
 

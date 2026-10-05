@@ -1,6 +1,10 @@
 import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { sameConflictValue } from '../shared/conflict-properties.js';
-import { financialFields } from '../shared/financial-facts.js';
+import {
+  type FinancialFact,
+  type FinancialField,
+  financialFields,
+} from '../shared/financial-facts.js';
 import {
   type MapDraft,
   type MapState,
@@ -155,6 +159,12 @@ export function ObjectDialog({
       </div>
     );
   }
+  function changeFinancialFact(key: FinancialField, fact: FinancialFact | undefined) {
+    const financialFacts = { ...editor.value.financialFacts };
+    if (fact) financialFacts[key] = fact;
+    else delete financialFacts[key];
+    change({ ...editor.value, financialFacts });
+  }
   function propertyEditor(property: ObjectProperty) {
     if (property.kind === 'custom')
       return (
@@ -177,12 +187,7 @@ export function ObjectDialog({
         field={field}
         label={property.name}
         fact={editor.value.financialFacts?.[field.key]}
-        onChange={(fact) => {
-          const financialFacts = { ...editor.value.financialFacts };
-          if (fact) financialFacts[field.key] = fact;
-          else delete financialFacts[field.key];
-          change({ ...editor.value, financialFacts });
-        }}
+        onChange={(fact) => changeFinancialFact(field.key, fact)}
       />
     ) : null;
   }
@@ -581,12 +586,7 @@ export function ObjectDialog({
                         properties.find((property) => property.ref === `builtin:${field.key}`)?.name
                       }
                       fact={editor.value.financialFacts?.[field.key]}
-                      onChange={(fact) => {
-                        const financialFacts = { ...editor.value.financialFacts };
-                        if (fact) financialFacts[field.key] = fact;
-                        else delete financialFacts[field.key];
-                        setEditor({ ...editor, value: { ...editor.value, financialFacts } });
-                      }}
+                      onChange={(fact) => changeFinancialFact(field.key, fact)}
                     />
                   ))}
               </div>
@@ -663,7 +663,7 @@ export function ObjectDialog({
                     local
                     value={editor.value.iconId}
                     name={editor.value.name}
-                    hasImage={Boolean(editor.value.profileImageId)}
+                    hasImage={Boolean(image || editor.value.profileImageId)}
                     disabled={busy}
                     needsText={false}
                     onStageText={async () => false}
