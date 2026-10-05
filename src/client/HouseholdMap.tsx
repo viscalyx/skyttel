@@ -137,6 +137,7 @@ export function HouseholdMap({
       new URLSearchParams(location.search).get('prototype') === 'draft-review',
   );
   const [prototypeHost, setPrototypeHost] = useState<HTMLDivElement | null>(null);
+  const [prototypeHeadingHost, setPrototypeHeadingHost] = useState<HTMLDivElement | null>(null);
   const [prototypeCount, setPrototypeCount] = useState(9);
   const [prototypeVariant, setPrototypeVariant] = useState('A');
   const [prototypeDraftOpen, setPrototypeDraftOpen] = useState(true);
@@ -2057,6 +2058,7 @@ export function HouseholdMap({
                   open: prototypeDraftOpen,
                   onToggle: () => setPrototypeDraftOpen((value) => !value),
                   host: <div ref={setPrototypeHost} className="dr-mount" />,
+                  headingActions: <div ref={setPrototypeHeadingHost} />,
                 }
               : undefined
           }
@@ -3348,6 +3350,7 @@ export function HouseholdMap({
         <DraftReviewPrototype
           source={state}
           host={prototypeHost}
+          headingHost={prototypeHeadingHost}
           onCountChange={setPrototypeCount}
           onVariantChange={setPrototypeVariant}
           onOpen={() => {

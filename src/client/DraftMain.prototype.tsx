@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { draftChangeCount, type MapDraft, type MapState } from '../shared/map.js';
 import { ConversationDraft } from './ConversationDraft.js';
+import { WorkspaceIcon } from './WorkspaceTools.js';
 
 function exampleDraft(): MapDraft {
   const type = {
@@ -76,10 +77,12 @@ function exampleDraft(): MapDraft {
 export function DraftMainPrototype({
   source,
   host,
+  headingHost,
   onCountChange,
 }: {
   source: MapState;
   host: HTMLElement | null;
+  headingHost: HTMLElement | null;
   onCountChange: (count: number) => void;
 }) {
   const [draft, setDraft] = useState<MapDraft>(() => structuredClone(source.draft));
@@ -125,32 +128,42 @@ export function DraftMainPrototype({
 
   return (
     <>
+      {headingHost &&
+        createPortal(
+          <div className="dr-main-heading-actions">
+            <button
+              type="button"
+              className="dr-main-icon"
+              aria-label="Spara hela utkastet"
+              title="Spara hela utkastet"
+              disabled={!count}
+              onClick={() => {
+                setDraft({ version: draft.version + 1, changes: [] });
+                setNotice(`${count} förslag sparade i prototypen.`);
+              }}
+            >
+              <WorkspaceIcon name="save" />
+            </button>
+            <button
+              type="button"
+              className="dr-main-icon dr-main-remove"
+              aria-label="Kasta hela utkastet"
+              title="Kasta hela utkastet"
+              disabled={!count}
+              onClick={() => {
+                setDraft({ version: draft.version + 1, changes: [] });
+                setNotice('Hela ditt utkast har tagits bort.');
+              }}
+            >
+              <WorkspaceIcon name="trash" />
+            </button>
+          </div>,
+          headingHost,
+        )}
       {host &&
         createPortal(
           <div className="dr-main">
             <ConversationDraft draft={draft} onRemove={remove} />
-            {count > 0 && (
-              <div className="dr-main-actions">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraft({ version: draft.version + 1, changes: [] });
-                    setNotice(`${count} förslag sparade i prototypen.`);
-                  }}
-                >
-                  Spara hela utkastet
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraft({ version: draft.version + 1, changes: [] });
-                    setNotice('Hela ditt utkast har tagits bort.');
-                  }}
-                >
-                  Kasta hela utkastet
-                </button>
-              </div>
-            )}
             {notice && <p role="status">{notice}</p>}
           </div>,
           host,

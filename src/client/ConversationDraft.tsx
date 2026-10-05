@@ -5,6 +5,7 @@ import {
   typeDifferences,
 } from './DraftChangeSummary.js';
 import { relationshipDetails } from './relationship-description.js';
+import { WorkspaceIcon } from './WorkspaceTools.js';
 
 export { draftChangeCount as draftCount } from '../shared/map.js';
 
@@ -97,23 +98,28 @@ export function ConversationDraft({
               <th scope="row">{row.name}</th>
               <td>{row.type}</td>
               <td>
-                {row.differences.length
-                  ? row.differences.map((line) => <div key={line}>{line}</div>)
-                  : row.after
-                    ? row.before
-                      ? 'Ändras'
-                      : 'Läggs till'
-                    : 'Tas bort'}
-                {onRemove && (
-                  <button
-                    type="button"
-                    className="dr-main-remove"
-                    onClick={() => onRemove(row.key)}
-                    aria-label={`Ta bort förslaget: ${row.name}`}
-                  >
-                    Ta bort
-                  </button>
-                )}
+                <div className={onRemove ? 'dr-main-change' : undefined}>
+                  <div>
+                    {row.differences.length
+                      ? row.differences.map((line) => <div key={line}>{line}</div>)
+                      : row.after
+                        ? row.before
+                          ? 'Ändras'
+                          : 'Läggs till'
+                        : 'Tas bort'}
+                  </div>
+                  {onRemove && (
+                    <button
+                      type="button"
+                      className="dr-main-icon dr-main-remove"
+                      onClick={() => onRemove(row.key)}
+                      aria-label={`Ta bort förslaget: ${row.name}`}
+                      title={`Ta bort förslaget: ${row.name}`}
+                    >
+                      <WorkspaceIcon name="trash" />
+                    </button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

@@ -340,6 +340,7 @@ function Modal({
 export function DraftReviewPrototype({
   source,
   host,
+  headingHost,
   onCountChange,
   onVariantChange,
   onOpen,
@@ -347,6 +348,7 @@ export function DraftReviewPrototype({
 }: {
   source: MapState;
   host: HTMLElement | null;
+  headingHost: HTMLElement | null;
   onCountChange: (count: number) => void;
   onVariantChange: (variant: string) => void;
   onOpen: () => void;
@@ -769,7 +771,12 @@ export function DraftReviewPrototype({
   if (variant === 'D')
     return (
       <>
-        <DraftMainPrototype source={source} host={host} onCountChange={onCountChange} />
+        <DraftMainPrototype
+          source={source}
+          host={host}
+          headingHost={headingHost}
+          onCountChange={onCountChange}
+        />
         {switcher}
       </>
     );

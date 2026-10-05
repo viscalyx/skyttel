@@ -31,6 +31,8 @@ const paths = {
   info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 11v6M12 7h.01',
   expand: 'm9 5 7 7-7 7',
   close: 'm6 6 12 12M18 6 6 18',
+  trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
+  save: 'M3 3h15l3 3v15H3zM7 3v6h10V3M7 21v-8h10v8M14 5v2',
   draft: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
   detail: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
   focus: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',

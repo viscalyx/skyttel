@@ -525,21 +525,72 @@
 }
 
 /* D uses main's table, spacing, scrolling, columns and resize handles. */
+.dr-variant-D .dr-lab {
+  z-index: 60;
+}
 .text-view[data-draft-prototype="D"] .dr-mount {
   height: auto;
 }
-.dr-main-actions {
+.dr-main-heading {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  margin-top: 12px;
+  margin-bottom: 8px;
+}
+.text-view-draft .dr-main-heading h3 {
+  margin: 0;
+}
+.dr-main-heading-actions {
+  display: flex;
+  gap: 6px;
 }
 .dr-main > p {
   font-size: 12.5px;
 }
-.dr-main-remove {
-  display: block;
-  margin-top: 6px;
-  white-space: nowrap;
-  min-height: 24px;
+.dr-main .conversation-draft-table table {
+  table-layout: fixed;
+}
+.dr-main .conversation-draft-table table :is(th, td) {
+  min-width: 0;
+}
+.dr-main .conversation-draft-table :is(th, td):nth-child(2) {
+  width: 22%;
+}
+.dr-main .conversation-draft-table :is(th, td):nth-child(3) {
+  width: 23%;
+}
+.dr-main-change {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dr-main-change > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.household-map.workspace-shell button.dr-main-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  min-height: 28px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--space-text);
+}
+.dr-main-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.household-map.workspace-shell button.dr-main-remove {
+  color: var(--proposal-removed);
+}
+.household-map.workspace-shell button.dr-main-icon:hover:enabled {
+  background: color-mix(in srgb, var(--space-accent), transparent 90%);
+}
+.household-map.workspace-shell button.dr-main-remove:hover:enabled {
+  background: color-mix(in srgb, var(--proposal-removed), transparent 90%);
 }

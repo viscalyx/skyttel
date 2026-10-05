@@ -35,6 +35,7 @@ export type ConversationPresentation = {
     open: boolean;
     onToggle: () => void;
     host: ReactNode;
+    headingActions: ReactNode;
   };
   draftFeedback?: (assistant: AssistantActivity & { compact: boolean }) => ReactNode;
   active?: boolean;
@@ -171,6 +172,7 @@ export function ConversationWorkspace({
           focusRequest={textFocusRequest}
           onClose={() => onCloseTextView?.()}
           prototypeVariant={prototype?.variant}
+          prototypeHeadingActions={prototype?.headingActions}
           draftOpen={prototype?.open ?? draftOpen}
           draftCount={prototype?.count ?? count}
           onToggleDraft={

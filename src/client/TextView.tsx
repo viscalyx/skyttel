@@ -18,6 +18,7 @@ import { WorkspaceIcon } from './WorkspaceTools.js';
  */
 export function TextView({
   prototypeVariant,
+  prototypeHeadingActions,
   conversation,
   hidden = false,
   focusRequest,
@@ -31,6 +32,7 @@ export function TextView({
   widthPreferences,
 }: {
   prototypeVariant?: string;
+  prototypeHeadingActions?: ReactNode;
   conversation: Conversation;
   hidden?: boolean;
   focusRequest?: number;
@@ -193,7 +195,14 @@ export function TextView({
           aria-label="Utkastet"
           hidden={!draftOpen}
         >
-          {(!prototypeVariant || prototypeVariant === 'D') && <h3>Utkast</h3>}
+          {prototypeVariant === 'D' ? (
+            <div className="dr-main-heading">
+              <h3>Utkast</h3>
+              {prototypeHeadingActions}
+            </div>
+          ) : !prototypeVariant ? (
+            <h3>Utkast</h3>
+          ) : null}
           {draftContent}
         </section>
         {computer && widthPreferences?.known && (
