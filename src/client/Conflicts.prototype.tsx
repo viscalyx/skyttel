@@ -1,6 +1,6 @@
-// Throwaway: three conflict-dialog layouts on /?prototype=conflicts&variant=A.
+// Throwaway: field-by-field conflict choices on /?prototype=conflicts&variant=A.
 // Static household fixtures and in-memory draft choices; no server mutations.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './conflicts.prototype.css';
 
@@ -90,7 +90,7 @@ const cases: Case[] = [
         'Samband',
         'Inga',
         'Hemförsäkringen försäkrar lägenheten',
-        'Inga',
+        'Föreslagen borttagning av sambandet',
         'Föreslagen borttagning av sambandet',
       ),
     ],
@@ -205,43 +205,13 @@ const cases: Case[] = [
     hidden: true,
   },
 ];
-const variants = ['A', 'B', 'C'] as const;
-type Variant = (typeof variants)[number];
-const names = { A: 'Fältjämförelse', B: 'Steg för steg', C: 'Välj resultat' };
-
-function changed(f: Field) {
-  return f.saved !== f.before && f.mine !== f.before && f.mine !== f.saved;
-}
-function Fields({ item, mode }: { item: Case; mode: 'saved' | 'mine' | 'result' | 'before' }) {
-  return (
-    <dl className="cp-fields">
-      {item.fields.map((f) => (
-        <div
-          key={f.name}
-          className={changed(f) ? 'cp-overlap' : f[mode] !== f.before ? 'cp-change' : ''}
-        >
-          <dt>
-            {f.name}
-            {changed(f) && <span className="cp-tag">Båda ändrar</span>}
-            {!changed(f) && f[mode] !== f.before && (
-              <span className="cp-tag">Ändrat sedan underlaget</span>
-            )}
-          </dt>
-          <dd>{f[mode]}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
+type Side = 'saved' | 'mine';
+const sideNames = { saved: 'Sparat i kartan nu', mine: 'Ditt förslag' };
 
 export function ConflictsPrototype() {
-  const [variant, setVariant] = useState<Variant>(() => {
-    const v = new URLSearchParams(location.search).get('variant');
-    return variants.includes(v as Variant) ? (v as Variant) : 'A';
-  });
   const [index, setIndex] = useState(0);
-  const [resolutions, setResolutions] = useState<Record<string, string>>({});
-  const [choice, setChoice] = useState<'mine' | 'saved' | null>(null);
+  const [selections, setSelections] = useState<Record<string, Record<string, Side>>>({});
+  const [resolutions, setResolutions] = useState<Record<string, Record<string, string>>>({});
   const [open, setOpen] = useState(true);
   const [stale, setStale] = useState(false);
   const [revision, setRevision] = useState(1);
@@ -261,13 +231,17 @@ export function ConflictsPrototype() {
           fields: base.fields.map((f, i) => (i === 0 ? { ...f, saved: 'Hushållets elbil' } : f)),
         }
       : base;
+  const selected = selections[item.id] ?? {};
+  const differing = item.fields.filter((f) => f.saved !== f.mine);
+  const unselected = differing.filter((f) => !selected[f.name]).length;
   const remaining = cases.filter((c) => !resolutions[c.id]).length;
-  const switchVariant = useCallback((next: Variant) => {
-    setVariant(next);
-    const url = new URL(location.href);
-    url.searchParams.set('variant', next);
-    history.replaceState(null, '', url);
-  }, []);
+  const value = (f: Field) =>
+    f.saved === f.mine ? f.saved : selected[f.name] ? f[selected[f.name]] : 'Välj ett värde';
+  // Demonstrate validation of a mixed result, rather than silently grouping choices.
+  const invalid =
+    item.id === 'connections' && selected.Objekt === 'mine' && selected.Samband === 'saved'
+      ? 'Lägenheten kan inte tas bort medan sambandet till den finns kvar. Välj att ta bort sambandet eller behåll lägenheten.'
+      : '';
   useEffect(() => {
     if (open && !dialog.current?.open) dialog.current?.showModal();
     if (!open && dialog.current?.open) {
@@ -275,23 +249,8 @@ export function ConflictsPrototype() {
       opener.current?.focus();
     }
   }, [open]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (
-        !(e.target instanceof HTMLElement) ||
-        e.target.closest('input, textarea, select, [contenteditable]') ||
-        !['ArrowLeft', 'ArrowRight'].includes(e.key)
-      )
-        return;
-      e.preventDefault();
-      switchVariant(variants[(variants.indexOf(variant) + (e.key === 'ArrowRight' ? 1 : 2)) % 3]);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [variant, switchVariant]);
   function selectCase(n: number) {
     setIndex(n);
-    setChoice(null);
     setStale(false);
     setEditing(false);
     setStatus('');
@@ -306,65 +265,30 @@ export function ConflictsPrototype() {
       setOpen(false);
     }
   }
+  function selectField(f: Field, side: Side) {
+    setSelections((previous) => ({
+      ...previous,
+      [item.id]: { ...previous[item.id], [f.name]: side },
+    }));
+  }
   function apply() {
-    if (!choice || stale) return;
-    const answer =
-      choice === 'mine'
-        ? item.effect
-        : 'Hela förslaget för denna post kastas. Övriga förslag i utkastet finns kvar.';
-    setResolutions((prev) => ({ ...prev, [item.id]: answer }));
-    setStatus('Valet finns i ditt utkast. Den gemensamma kartan är inte sparad.');
-    setChoice(null);
+    if (unselected || stale || invalid) return;
+    setResolutions((previous) => ({
+      ...previous,
+      [item.id]: Object.fromEntries(item.fields.map((f) => [f.name, value(f)])),
+    }));
+    setStatus('Valen finns i ditt utkast. Den gemensamma kartan är inte sparad.');
   }
-  function choices() {
+  function resultFields(values?: Record<string, string>) {
     return (
-      <fieldset className="cp-choices">
-        <legend>Välj vad som ska finnas i ditt utkast</legend>
-        <label>
-          <input
-            type="radio"
-            name="choice"
-            checked={choice === 'mine'}
-            disabled={!!item.blocked || !!resolutions[item.id] || stale}
-            onChange={() => setChoice('mine')}
-          />{' '}
-          Behåll mitt förslag
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="choice"
-            checked={choice === 'saved'}
-            disabled={!!resolutions[item.id] || stale}
-            onChange={() => setChoice('saved')}
-          />{' '}
-          Använd sparat värde
-        </label>
-        <p>
-          Med sparat värde kastas <strong>hela ditt förslag för denna post</strong>, även dina egna
-          ändringar i andra fält.
-        </p>
-      </fieldset>
-    );
-  }
-  function preview() {
-    return (
-      <section className="cp-preview" aria-label="Resultat av valet">
-        <h3>Efter ditt val</h3>
-        {choice === 'mine' ? (
-          <>
-            <p>{item.effect}</p>
-            <Fields item={item} mode="result" />
-          </>
-        ) : choice === 'saved' ? (
-          <>
-            <p>Hela ditt förslag för denna post kastas.</p>
-            <Fields item={item} mode="saved" />
-          </>
-        ) : (
-          <p>Välj ett alternativ för att se resultatet. Övriga förslag i utkastet finns kvar.</p>
-        )}
-      </section>
+      <dl className="cp-fields">
+        {item.fields.map((f) => (
+          <div key={f.name}>
+            <dt>{f.name}</dt>
+            <dd>{values?.[f.name] ?? value(f)}</dd>
+          </div>
+        ))}
+      </dl>
     );
   }
   return (
@@ -394,7 +318,7 @@ export function ConflictsPrototype() {
       </div>
       <dialog
         ref={dialog}
-        className={`cp-dialog cp-variant-${variant}`}
+        className="cp-dialog cp-variant-A"
         aria-labelledby="cp-title"
         onCancel={(e) => {
           e.preventDefault();
@@ -440,10 +364,7 @@ export function ConflictsPrototype() {
                   Ny uppgift
                   <input autoFocus value={edit} onChange={(e) => setEdit(e.target.value)} />
                 </label>
-                <p>
-                  Formulärets fullständiga fält ingår inte i denna prototyp. Tillbaka återgår till
-                  samma konflikt.
-                </p>
+                <p>Formulärets fullständiga fält ingår inte i denna prototyp.</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -467,7 +388,7 @@ export function ConflictsPrototype() {
                 {stale && (
                   <div className="cp-warning" role="alert">
                     <strong>Underlaget har ändrats.</strong>
-                    <p>Ditt val har nollställts. Läs den nya jämförelsen innan du väljer igen.</p>
+                    <p>Dina val har nollställts. Läs den nya jämförelsen innan du väljer igen.</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -498,8 +419,8 @@ export function ConflictsPrototype() {
                 )}
                 {resolutions[item.id] ? (
                   <section className="cp-preview">
-                    <h3>✓ Valet finns i ditt utkast</h3>
-                    <p>{resolutions[item.id]}</p>
+                    <h3>✓ Valen finns i ditt utkast</h3>
+                    {resultFields(resolutions[item.id])}
                     <p>Gemensamt sparande sker separat från utkastet.</p>
                     <button type="button" onClick={() => selectCase((index + 1) % cases.length)}>
                       Nästa konflikt
@@ -507,101 +428,79 @@ export function ConflictsPrototype() {
                   </section>
                 ) : (
                   <>
-                    {variant === 'A' && (
-                      <>
-                        <div className="cp-comparison">
-                          <section>
-                            <h3>Sparat i kartan nu</h3>
-                            <Fields item={item} mode="saved" />
-                          </section>
-                          <section>
-                            <h3>Ditt förslag</h3>
-                            <Fields item={item} mode="mine" />
-                          </section>
-                        </div>
-                        {choices()}
-                        {preview()}
-                      </>
-                    )}
-                    {variant === 'B' && (
-                      <>
-                        <section className="cp-story">
-                          <h3>1. Det här skiljer sig</h3>
-                          {item.fields.map((f) => (
-                            <div key={f.name}>
-                              <h4>
-                                {f.name}
-                                {changed(f) ? ' · Båda ändrar' : ''}
-                              </h4>
-                              <p>
-                                <strong>Sparat:</strong> {f.saved}
-                              </p>
-                              <p>
-                                <strong>Ditt förslag:</strong> {f.mine}
-                              </p>
-                            </div>
-                          ))}
-                        </section>
-                        <h3>2. Välj hur du vill fortsätta</h3>
-                        {choices()}
-                        <h3>3. Kontrollera resultatet</h3>
-                        {preview()}
-                      </>
-                    )}
-                    {variant === 'C' && (
-                      <>
-                        <div className="cp-outcomes">
-                          <section>
-                            <h3>Behåll mitt förslag</h3>
-                            <p>{item.blocked ?? item.effect}</p>
-                            <Fields item={item} mode="result" />
-                            <button
-                              type="button"
-                              disabled={!!item.blocked || stale}
-                              aria-pressed={choice === 'mine'}
-                              onClick={() => setChoice('mine')}
-                            >
-                              Välj mitt förslag
-                            </button>
-                          </section>
-                          <section>
-                            <h3>Använd sparat värde</h3>
-                            <p>
-                              Hela ditt förslag för denna post kastas, även dina ändringar i andra
-                              fält.
+                    <p>
+                      Klicka på det värde du vill använda för varje egenskap. Du kan blanda vänster
+                      och höger sida.
+                    </p>
+                    <div className="cp-column-headings" aria-hidden="true">
+                      <h3>Sparat i kartan nu</h3>
+                      <h3>Ditt förslag</h3>
+                    </div>
+                    <div className="cp-property-list">
+                      {item.fields.map((f, n) => (
+                        <section
+                          className="cp-property"
+                          key={f.name}
+                          aria-labelledby={`cp-field-${n}`}
+                        >
+                          <h3 id={`cp-field-${n}`}>{f.name}</h3>
+                          {f.saved === f.mine ? (
+                            <p className="cp-same">
+                              {f.saved} <small>· Samma värde på båda sidor</small>
                             </p>
-                            <Fields item={item} mode="saved" />
-                            <button
-                              type="button"
-                              disabled={stale}
-                              aria-pressed={choice === 'saved'}
-                              onClick={() => setChoice('saved')}
-                            >
-                              Välj sparat värde
-                            </button>
-                          </section>
-                        </div>
-                        <details>
-                          <summary>Jämför med ditt ursprungliga förslag</summary>
-                          <Fields item={item} mode="mine" />
-                        </details>
-                        {preview()}
-                      </>
+                          ) : (
+                            <div className="cp-value-pair">
+                              {(['saved', 'mine'] as const).map((side) => (
+                                <button
+                                  key={side}
+                                  className="cp-value"
+                                  type="button"
+                                  aria-label={`${f.name}: ${sideNames[side]} – ${f[side]}`}
+                                  aria-pressed={selected[f.name] === side}
+                                  disabled={stale || (side === 'mine' && !!item.blocked)}
+                                  onClick={() => selectField(f, side)}
+                                >
+                                  <span className="cp-value-side">{sideNames[side]}</span>
+                                  <span className="cp-value-text">{f[side]}</span>
+                                  <span className="cp-selected">
+                                    {selected[f.name] === side
+                                      ? '✓ Valt värde'
+                                      : side === 'mine' && item.blocked
+                                        ? 'Kan inte väljas'
+                                        : 'Välj detta värde'}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </section>
+                      ))}
+                    </div>
+                    <p role="status">
+                      {unselected
+                        ? `${unselected} av ${differing.length} egenskaper återstår att välja.`
+                        : 'Alla egenskaper har ett valt värde.'}
+                    </p>
+                    {invalid && (
+                      <div className="cp-warning" role="alert">
+                        <strong>Valen fungerar inte tillsammans</strong>
+                        <p>{invalid}</p>
+                      </div>
                     )}
-                    <details>
-                      <summary>Visa tidigare underlag</summary>
-                      <p>Uppgifterna som ditt förslag utgår från.</p>
-                      <Fields item={item} mode="before" />
-                    </details>
+                    <section className="cp-preview" aria-label="Resultat av valen">
+                      <h3>Efter dina val</h3>
+                      {resultFields()}
+                      <p>Övriga förslag i utkastet finns kvar.</p>
+                    </section>
                     <footer className="cp-actions">
-                      <p>Valet ändrar ditt utkast. Kartan sparas separat.</p>
+                      <p>Valen ändrar ditt utkast. Kartan sparas separat.</p>
                       <button
                         className="cp-primary"
                         type="button"
-                        disabled={!choice || stale}
+                        disabled={!!unselected || stale || !!invalid}
                         onClick={apply}
                       >
-                        Lägg valet i utkastet
+                        Lägg valen i utkastet
                       </button>
                     </footer>
                   </>
@@ -633,14 +532,18 @@ export function ConflictsPrototype() {
           </article>
         </div>
         <section className="cp-lab" aria-label="Prototypkontroller">
-          <strong>Kastbar prototyp</strong>
-          <span>Exempeldata · inga ändringar sparas</span>
+          <strong>Kastbar prototyp · A, val per egenskap</strong>
           <button
             type="button"
             disabled={editing}
             onClick={() => {
               selectCase(0);
-              setChoice(null);
+              setSelections((p) => ({ ...p, object: {} }));
+              setResolutions((p) => {
+                const next = { ...p };
+                delete next.object;
+                return next;
+              });
               setStale(true);
             }}
           >
@@ -650,6 +553,7 @@ export function ConflictsPrototype() {
             type="button"
             disabled={editing}
             onClick={() => {
+              setSelections({});
               setResolutions({});
               setRevision(1);
               selectCase(0);
@@ -662,11 +566,8 @@ export function ConflictsPrototype() {
             <pre>
               {JSON.stringify(
                 {
-                  variant,
                   konflikt: item.id,
-                  jämförelse: item.fields,
-                  val: choice,
-                  underlag: revision,
+                  val: selections,
                   inaktuellt: stale,
                   lösningar: resolutions,
                   oskickadText: edit,
@@ -677,29 +578,10 @@ export function ConflictsPrototype() {
             </pre>
           </details>
         </section>
-        <nav className="cp-switcher" aria-label="Prototypvariant">
-          <button
-            type="button"
-            aria-label="Föregående variant"
-            onClick={() => switchVariant(variants[(variants.indexOf(variant) + 2) % 3])}
-          >
-            ←
-          </button>
-          <strong>
-            {variant} · {names[variant]}
-          </strong>
-          <button
-            type="button"
-            aria-label="Nästa variant"
-            onClick={() => switchVariant(variants[(variants.indexOf(variant) + 1) % 3])}
-          >
-            →
-          </button>
-        </nav>
       </dialog>
       {!open && (
         <p className="cp-outside-note">
-          Kastbar prototyp · {variant} · {names[variant]}. Öppna konflikterna för att fortsätta.
+          Kastbar prototyp · A, val per egenskap. Öppna konflikterna för att fortsätta.
         </p>
       )}
     </div>
