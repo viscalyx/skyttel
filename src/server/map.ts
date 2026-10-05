@@ -14,6 +14,11 @@ import {
   resolvedObjectValue,
   resolvedRelationshipValue,
 } from '../shared/draft-conflicts.js';
+import {
+  type DraftProposalKind,
+  draftDiscardPlan,
+  draftProposalRefs,
+} from '../shared/draft-discard.js';
 import type {
   MapDraft,
   MapObject,
@@ -147,6 +152,26 @@ export function householdMap(database: Database.Database, actorId: string, house
         return action();
       })
       .immediate();
+  }
+  function removeProposal(current: MapDraft, body: Record<string, unknown>) {
+    if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
+    if (!['object', 'relationship', 'objectType', 'relationshipType'].includes(String(body.kind)))
+      throw new MapError('invalid_request', 400);
+    if (!draftProposalRefs(current).some(({ kind, id }) => kind === body.kind && id === body.id))
+      throw new MapError('draft_conflict');
+    if (body.kind === 'object') {
+      const change = current.changes.find((item) => item.id === body.id);
+      if (!change?.before) edges.removeObject(current, body.id);
+      current.changes = current.changes.filter((item) => item.id !== body.id);
+      edges.reconcileObjectRemovals(current);
+    } else if (body.kind === 'relationship') {
+      current.relationships = current.relationships?.filter((item) => item.id !== body.id);
+    } else if (body.kind === 'objectType') {
+      current.objectTypes = current.objectTypes?.filter((item) => item.id !== body.id);
+    } else if (body.kind === 'relationshipType') {
+      current.relationshipTypes = current.relationshipTypes?.filter((item) => item.id !== body.id);
+    } else throw new MapError('invalid_request', 400);
+    return current;
   }
   function readState(): MapState {
     const removed = database
@@ -601,23 +626,28 @@ export function householdMap(database: Database.Database, actorId: string, house
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
-        if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
-        if (body.kind === 'object') {
-          const change = current.changes.find((item) => item.id === body.id);
-          if (!change) throw new MapError('draft_conflict');
-          if (!change.before) edges.removeObject(current, change.id);
-          current.changes = current.changes.filter((item) => item.id !== body.id);
-          edges.reconcileObjectRemovals(current);
-        } else if (body.kind === 'relationship') {
-          current.relationships = current.relationships?.filter((item) => item.id !== body.id);
-        } else if (body.kind === 'objectType') {
-          current.objectTypes = current.objectTypes?.filter((item) => item.id !== body.id);
-        } else if (body.kind === 'relationshipType') {
-          current.relationshipTypes = current.relationshipTypes?.filter(
-            (item) => item.id !== body.id,
-          );
-        } else throw new MapError('invalid_request', 400);
+        removeProposal(current, body);
         return writeDraft({ ...current, version: current.version + 1 });
+      });
+    },
+    discardReview(body: Record<string, unknown>) {
+      return transaction(() => {
+        operations.assertEditable();
+        const current = checkedDraft(body.version, body.contentVersion);
+        const after =
+          body.kind === 'all'
+            ? { version: current.version, changes: [] }
+            : removeProposal(structuredClone(current), body);
+        const plan = draftDiscardPlan(
+          readState(),
+          after,
+          body.kind as DraftProposalKind | 'all',
+          body.id as string,
+        );
+        if (body.confirmation === undefined) return { plan };
+        if (!isDeepStrictEqual(body.confirmation, plan)) throw new MapError('draft_conflict');
+        writeDraft({ ...after, version: current.version + 1 });
+        return { plan, state: readState() };
       });
     },
     save(body: Record<string, unknown>) {

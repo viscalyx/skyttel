@@ -735,8 +735,9 @@ type-only proposals expose them”.
 
 1. Sök efter A 2 i kartan och välj Typ 2 och Ändrat. Stäng sökytan.
 2. Sök efter prov i Tabell och välj Typ 2 och Nytt. Stäng filterdialogen.
-3. Öppna Ditt utkast och kasta hela utkastet. Kontrollera att det är tomt.
-4. Återvänd till Tabell och sedan kartans sökyta. Kontrollera bevarad
+3. Öppna **Utkast**, välj **Kasta hela utkastet**, läs bekräftelsen och
+   välj **Ta bort hela utkastet**. Kontrollera att utkastet är tomt.
+4. Stäng textvyn. Återvänd till Tabell och sedan kartans sökyta. Kontrollera bevarad
    söktext och Typ 2, återställt utkastfilter och besked om återställningen.
 5. Skapa enbart ett typförslag under Inställningar. Återgå till kartan
    och sök efter finns inte. Kontrollera att utkastfiltret visas ändå.

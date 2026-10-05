@@ -350,6 +350,13 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
   långa fältnamn och sammanfattningar som skiljer giltighet från statusläge,
+  direkt borttagning av oberoende förslag och bekräftad eller avbruten
+  borttagning av nya objekt med deras verkliga sambandsberoenden,
+  samt typförslag vars beroende förslag blir kvar med begriplig feltext,
+  bekräftelse och avbrott för hela utkastet med oskickat meddelande kvar,
+  uppdaterade beroenden efter inaktuell bekräftelse, typkonflikter med
+  bevarade egna värden, fokus efter sista raden och återhämtning av
+  borttagning efter tappat svar,
   tomt utkast och bevarat första meddelande;
   filtrerad teckenförklaring med kartans färger,
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta

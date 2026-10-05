@@ -68,9 +68,14 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     await filters.getByLabel('Typ 2', { exact: true }).check();
     await filters.getByLabel('Nytt', { exact: true }).check();
     await page.keyboard.press('Escape');
-    await tools.getByRole('button', { name: /Ditt utkast|Utkast och historik/ }).click();
+    await tools.getByRole('button', { name: 'Utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
     await expect.poll(async () => (await read()).draft.changes.length).toBe(0);
+    await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     await expect(table.getByRole('searchbox')).toHaveValue('prov');
     await expect(

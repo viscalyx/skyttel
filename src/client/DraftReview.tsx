@@ -1,4 +1,6 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { draftConflicts } from '../shared/draft-conflicts.js';
+import { draftProposalKey } from '../shared/draft-discard.js';
 import {
   draftChangeCount,
   type MapState,
@@ -6,8 +8,11 @@ import {
   proposedRelationshipTypes,
 } from '../shared/map.js';
 import { ConversationDraft } from './ConversationDraft.js';
+import { DraftDiscardDialog } from './DraftDiscardDialog.js';
 import { DraftProposalDetails, draftProposals } from './DraftProposalDetails.js';
+import { draftProposalDescriptors } from './draft-proposal-descriptors.js';
 import { trapDialogTab } from './modal-focus.js';
+import { type DraftRemovalOwner, useDraftRemoval } from './use-draft-removal.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './draft-review.css';
 
@@ -32,6 +37,12 @@ export function draftWarnings(state: MapState) {
     if (change.after && !relationshipTypes.some((type) => type.id === change.after?.typeId))
       warnings[`relationship-${change.id}`] = 'Sambandstypen saknas. Rätta sambandet eller typen.';
   }
+  for (const conflict of draftConflicts(state)) {
+    if ((conflict.kind === 'object' || conflict.kind === 'relationship') && conflict.type) {
+      warnings[draftProposalKey(conflict.kind, conflict.id)] =
+        'Typens uppgifter skiljer sig från förslagets underlag. Rätta förslaget i det ordinarie flödet.';
+    }
+  }
   return warnings;
 }
 /** Read-only review; removal and saving are supplied by the household work owner. */
@@ -40,14 +51,20 @@ export function DraftReview({
   onRemove,
   onDiscard,
   onSave,
+  removalOwner,
+  feedback,
   blocked = false,
 }: {
   state: MapState;
   onRemove?: (key: string) => void;
   onDiscard?: () => void;
   onSave?: () => void;
+  removalOwner?: DraftRemovalOwner;
+  feedback?: string;
   blocked?: boolean;
 }) {
+  const removal = useDraftRemoval(state, blocked, removalOwner);
+  const actionsBlocked = blocked || removal.pending;
   const [readKey, setReadKey] = useState<string | null>(null);
   const proposals = draftProposals(state.draft);
   const read = proposals.find((proposal) => proposal.key === readKey);
@@ -100,7 +117,7 @@ export function DraftReview({
             className="draft-icon"
             aria-label="Spara hela utkastet"
             title="Spara hela utkastet"
-            disabled={blocked || !draftChangeCount(state.draft) || !onSave}
+            disabled={actionsBlocked || !draftChangeCount(state.draft) || !onSave}
             onClick={onSave}
           >
             <WorkspaceIcon name="save" />
@@ -110,8 +127,10 @@ export function DraftReview({
             className="draft-icon draft-remove"
             aria-label="Kasta hela utkastet"
             title="Kasta hela utkastet"
-            disabled={blocked || !draftChangeCount(state.draft) || !onDiscard}
-            onClick={onDiscard}
+            disabled={
+              actionsBlocked || !draftChangeCount(state.draft) || !(onDiscard ?? removal.discard)
+            }
+            onClick={onDiscard ?? removal.discard}
           >
             <WorkspaceIcon name="trash" />
           </button>
@@ -119,8 +138,8 @@ export function DraftReview({
       </header>
       <ConversationDraft
         draft={state.draft}
-        blocked={blocked}
-        onRemove={onRemove}
+        blocked={actionsBlocked}
+        onRemove={onRemove ?? removal.remove}
         warnings={warnings}
         onOpen={(key) => {
           opener.current = document.getElementById(`draft-read-${key}`);
@@ -129,6 +148,17 @@ export function DraftReview({
         }}
       />
       {!!Object.keys(warnings).length && <p>Rätta markerade förslag innan du sparar.</p>}
+      {feedback && <p>{feedback}</p>}
+      {removal.review && (
+        <DraftDiscardDialog
+          review={removal.review}
+          proposals={draftProposalDescriptors(state.draft)}
+          pending={removal.pending}
+          onConfirm={() => void removal.confirm()}
+          onCancel={removal.cancel}
+          onRefresh={() => void removal.refresh()}
+        />
+      )}
       {read && (
         <dialog
           ref={dialog}

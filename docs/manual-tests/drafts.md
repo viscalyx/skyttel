@@ -242,6 +242,287 @@ no saved history”.
   Alla aktuella privata förslag finns kvar och ingen historikpost skapas.
   Efter hämtning läses det nya namnet och sparikonen blir tillgänglig igen.
 
+### UTKAST-41: ta bort ett oberoende förslag och behåll resten
+
+**Syfte:** Ta bort ett förslag direkt med begripligt besked och användbart fokus.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Förbered den isolerade utkastinstallationen enligt
+UTKAST-25. Starta om provkommandot mellan fallen.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallet “UTKAST-41: independent removal preserves other proposals and
+history and focuses the next control”.
+
+**Steg:**
+
+1. Öppna **Utkast**. Läs objekten, sambanden och typförslagen.
+2. Fokusera papperskorgen **Ta bort förslaget: Olöst fordon** och tryck Enter.
+3. Kontrollera kvarvarande förslag, fokus och statusbesked. Öppna Rapporter
+   och kontrollera att det inte finns något nytt gemensamt sparande.
+
+**Förväntat resultat:**
+
+- Förslaget Olöst fordon försvinner direkt, utan läs- eller
+  bekräftelsedialog. Övriga förslag behåller sina fullständiga värden.
+- Fokus går till nästa rads motsvarande papperskorg.
+- Förslaget är borttaget anges utan fokusflytt från statusbeskedet.
+  Beskedet kan läsas även när textvyn täcker kartan.
+- Den gemensamma kartan och ändringshistoriken är oförändrade.
+
+### UTKAST-42: bekräfta eller avbryt borttagning med beroende samband
+
+**Syfte:** Förstå vilka nya samband som försvinner med ett nytt objekt.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Förbered installationen enligt UTKAST-25. Prova dator
+och smal skärm med tangentbord och pekning. Starta om mellan fallen.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallen “UTKAST-42: dependent object removal shows its actual edge
+proposals and cancellation changes nothing at 1280px” och
+“UTKAST-42: dependent object removal shows its actual edge proposals and
+cancellation changes nothing at 320px”.
+
+**Steg:**
+
+1. Öppna **Utkast** och välj papperskorgen för **Ospecificerat fordon**.
+2. Läs bekräftelsens lista. Den omfattar objektet och dess tre nya samband.
+   Kontrollera att Olöst fordon inte finns i listan.
+3. Avbryt med Escape. Kontrollera ursprungligt utkast och fokus.
+4. Öppna samma bekräftelse igen och välj **Ta bort**.
+5. Läs kvarvarande förslag, kontrollera fokus och status samt historiken.
+
+**Förväntat resultat:**
+
+- Dialogen börjar på Avbryt. Bakgrunden är inaktiv; dialogens lista
+  beskriver verkliga beroenden. Avbrott ändrar ingenting och återför
+  fokus till objektets papperskorg.
+- Bekräftelse tar bort det nya objektet och just de tre beroende
+  sambandsförslagen. Namnändringen på cykeln, Olöst fordon, det oberoende
+  sambandet med okänt mål och båda typförslagen bevaras.
+- Fokus går till papperskorgen för Olöst fordon. Förslagen är borttagna
+  anges utan att statusbeskedet flyttar fokus.
+- Den gemensamma kartan och ändringshistoriken är oförändrade.
+
+### UTKAST-43: ta bort typförslag och behåll berörda förslag med feltext
+
+**Syfte:** Skilja borttagna typförslag från beroende förslag som blir kvar.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Installation enligt UTKAST-25. Skapa under
+Inställningar en ny objekttyp **Tillfällig typ** och lägg ett nytt
+**Tillfälligt föremål** med den typen i utkastet. Upprepa i en ny
+installation med en ny sambandstyp **Tillfällig typ**, framåtnamnet
+**granskar** och ett nytt samband från cykeln med **Okänt** mål.
+Spara inte dessa nya uppgifter i den gemensamma kartan.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallen “UTKAST-43: removing a new objectType preserves dependent
+proposals with a truthful type warning” och “UTKAST-43: removing a new
+relationshipType preserves dependent proposals with a truthful type warning”.
+
+**Steg:**
+
+1. Öppna **Utkast** och välj typförslagets papperskorg.
+2. Läs det som tas bort och **Förslag som blir kvar men påverkas**.
+   Kontrollera att det beroende objektet eller sambandet står i den
+   senare gruppen med förklaring om den saknade typen.
+3. Välj **Avbryt** och kontrollera att alla förslag är oförändrade.
+4. Öppna bekräftelsen igen och välj **Ta bort**. Läs den kvarvarande
+   berörda radens varningssymbol och feltext. Kontrollera historiken.
+
+**Förväntat resultat:**
+
+- Fokus börjar på Avbryt. Typförslaget tas bort endast efter bekräftelse.
+- Det beroende förslaget blir kvar med sina värden och med saknad typ
+  tydligt angiven före och efter åtgärden. Sambandets Okänt är giltigt;
+  varningen gäller den saknade typen.
+- Avbrott ändrar ingenting. Den gemensamma kartan och historiken är
+  oförändrade även efter bekräftelse.
+
+### UTKAST-44: bekräfta eller avbryt att hela utkastet kastas
+
+**Syfte:** Kasta alla förslag utan att förlora samtalsmeddelande eller historik.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Installation enligt UTKAST-25. Prova dator och
+smal skärm med tangentbord och pekning. Starta om mellan fallen.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallen “UTKAST-44: whole draft discard requires confirmation and
+preserves unsent conversation and shared history at 1280px” och
+“UTKAST-44: whole draft discard requires confirmation and preserves unsent
+conversation and shared history at 320px”.
+
+**Steg:**
+
+1. Öppna **Utkast** och skriv ett meddelande till Skyttel utan att skicka.
+2. Välj rubrikens **Kasta hela utkastet**. Läs alla förslag som tas bort.
+3. Välj **Avbryt**. Kontrollera oförändrat utkast och återfokus.
+4. Öppna bekräftelsen igen och välj **Ta bort hela utkastet**.
+5. Läs tomt utkast och status, kontrollera fokus, oskickat meddelande
+   och historik. Prova även SÖK-04 för båda vyernas aktiva utkastfilter.
+
+**Förväntat resultat:**
+
+- Dialogen börjar på Avbryt och redovisar alla slags förslag.
+  Avbrott ändrar ingenting och återför fokus till öppningsknappen.
+- Bekräftelse tömmer hela utkastet och tar bort verktygsfältets Utkast-ikon.
+  Fokus går till den synliga rubriken Utkast. Textvyn och meddelandet behålls.
+- Den gemensamma kartan, typdefinitionerna och historiken är oförändrade.
+  Statusbeskedet flyttar inte fokus eller kastar samtalsuppgifter.
+
+### UTKAST-45: granska verkliga beroenden igen när utkastet har ändrats
+
+**Syfte:** Ett gammalt borttagningsförsök får inte kasta nyare förslag.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Kör `npm run build` och
+`npx tsx scripts/manual-draft-removal.ts`. Kommandot öppnar en separat
+webbläsare och en isolerad installation med syntetiska uppgifter.
+Terminalens `new-base` skapar ett nytt provhushåll; `quit` städar installationen.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallet “UTKAST-45: a stale discard confirmation preserves newer proposals
+and refreshes its actual plan”.
+
+**Steg:**
+
+1. Öppna **Utkast** och papperskorgen för **Ospecificerat fordon**.
+2. Skriv `newer-type` i provterminalen medan bekräftelsen är öppen.
+3. Välj **Ta bort** och läs felbeskedet. Kontrollera med terminalens
+   `result` att förslagen är kvar, inklusive **Nyare oberoende typ**.
+4. Välj **Hämta aktuellt utkast**. Läs de fyra förslag som nu omfattas
+   av borttagningen; det nya typförslaget ingår inte.
+5. Välj **Ta bort**. Kontrollera att typförslaget är kvar och den
+   gemensamma kartan inte har ändrats.
+
+**Förväntat resultat:**
+
+- Gammal bekräftelse avvisas utan att något förslag ändras.
+  Ett nytt försök spärras tills aktuellt utkast har hämtats och granskats.
+- Den nya planen redovisar verkliga beroenden. Bekräftelsen tar bort
+  endast det nya objektet och dess tre beroende samband.
+- Nyare oberoende typ och gemensamt sparade objekt finns kvar.
+
+### UTKAST-46: återfokus när sista raden eller utkastikonen försvinner
+
+**Syfte:** Behålla användbart fokus efter borttagning utan att stjäla senare fokus.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Provkommandot enligt UTKAST-45. Använd `new-focus`
+för två oberoende förslag och `new-base` för ett fullt utkast.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallen “UTKAST-46: removal of the final rows focuses the previous control
+and then the draft heading”, “UTKAST-46: delayed removal restores a disappearing
+draft tool and preserves later focus (draft tool)” och “UTKAST-46: delayed removal
+restores a disappearing draft tool and preserves later focus (later control)”.
+
+**Steg:**
+
+1. Välj `new-focus`, öppna **Utkast** och ta bort den sista raden.
+   Kontrollera fokus på cykelradens papperskorg. Ta bort även cykelns förslag.
+2. Kontrollera fokus på rubriken **Utkast**, tomt utkast och försvunnen utkastikon.
+3. Välj `new-base` och sedan `hold` i terminalen. Öppna Utkast och
+   bekräfta **Ta bort hela utkastet**. Invänta terminalens besked om hållet svar.
+4. Välj **Avbryt**, stäng textvyn och fokusera verktygsfältets **Utkast**
+   med tangentbord. Skriv `release` i terminalen.
+5. Upprepa från `new-base`, men flytta fokus vidare till **Tabell**
+   före `release`.
+
+**Förväntat resultat:**
+
+- Försvunnen sista rad ger föregående papperskorg, sedan Utkast-rubriken.
+- Försvunnen fokuserad utkastikon ger **Skriv till Skyttel**.
+  Fokus som redan flyttats till Tabell finns kvar där.
+- Begripliga statusbesked flyttar inte fokus. Sparade uppgifter påverkas inte.
+
+### UTKAST-47: behåll värden efter kastat typförslag och visa typkonflikten
+
+**Syfte:** En borttagen typändring får inte tyst ta bort beroende egna värden.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Provkommandot enligt UTKAST-45. Välj först
+`new-object-meaning`; upprepa sedan med `new-relationship-meaning`.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallen “UTKAST-47: discarding an edited objectType retains incompatible
+values and displays the remaining type conflict” och “UTKAST-47: discarding
+an edited relationshipType retains incompatible values and displays the
+remaining type conflict”.
+
+**Steg:**
+
+1. Öppna **Utkast** och papperskorgen för typförslaget **Utkastfordon**
+   respektive **Granskar**.
+2. Läs **Förslag som blir kvar men påverkas**. Läs förklaringen om
+   typens uppgifter och förslagets underlag.
+3. Välj **Ta bort** och läs cykelns respektive det oberoende sambandets rad.
+4. Läs hela förslaget och kontrollera **Ny uppgift** med värdet
+   **Behåll hela mitt värde**. Kontrollera `result` och historiken.
+
+**Förväntat resultat:**
+
+- Typförslaget tas bort; objektets eller sambandets hela förslag finns kvar.
+- Den beroende raden har varningssymbol och text om typkonflikten.
+  Okänt mål räknas inte i sig som ett fel.
+- Egna värden bevaras. Gemensamma objekt, samband, typer och historik är oförändrade.
+
+### UTKAST-48: kontrollera en genomförd borttagning efter tappat svar
+
+**Syfte:** Ett förlorat svar får inte beskrivas som säker avvisning
+eller ge dubbel borttagning.
+
+**Användare:** Alex Exempel; offentlig HTTP kontrolleras även utan inloggning.
+
+**Förutsättningar:** Provkommandot enligt UTKAST-45. Välj `new-base`
+och därefter `lost-response`. Automatiska prov kontrollerar dessutom
+obehöriga anrop, gammal version och en bekräftelselista som inte motsvarar
+serverns faktiska plan genom den offentliga HTTP-gränsen.
+
+**Integrationstest:**
+[draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
+testfallen “UTKAST-48: authoritative discard rejects forged or unauthorized
+requests and recovers an applied removal after a lost reply” och
+“UTKAST-48: lost independent removal checks actual draft before offering
+another removal”.
+
+**Steg:**
+
+1. Öppna **Utkast** och bekräfta **Ta bort hela utkastet**.
+2. Läs beskedet att borttagningen inte kunde bekräftas och kontrollera
+   att en ny bekräftelse är spärrad. `result` visar att själva borttagningen skett.
+3. Välj **Hämta aktuellt utkast**. Kontrollera tomt utkast och fokus på rubriken.
+4. Kontrollera att sparade objekt, samband och historik är oförändrade.
+5. Upprepa med `new-base` och `lost-response`, men välj i stället
+   papperskorgen för **Olöst fordon**. Hämta aktuellt utkast efter felbeskedet.
+
+**Förväntat resultat:**
+
+- Tappat svar anges som obekräftat. Kontroll av aktuellt utkast visar
+  det verkliga utfallet utan att skicka borttagningen igen.
+- Tomt utkast visas med användbart fokus. Inget nytt gemensamt sparande sker.
+- Det oberoende borttagna förslaget visas som borttaget efter kontroll;
+  övriga fullständiga förslag behålls. Samma borttagning skickas inte igen.
+- HTTP-proven avvisar obehöriga eller inaktuella anrop och en felaktig
+  bekräftelselista utan att förändra utkastet.
+
 ### UTKAST-25: läs hela utkastet utan AI eller medgivande
 
 **Syfte:** Granska alla förslag, även dolda fält, utan att starta samtal.

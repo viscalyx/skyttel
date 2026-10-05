@@ -118,6 +118,7 @@ export function ConversationDraft({
                   {onOpen && (
                     <button
                       type="button"
+                      id={`draft-remove-${row.key}`}
                       className="draft-icon draft-remove"
                       disabled={blocked || !onRemove}
                       title={`Ta bort förslaget: ${row.name}`}

@@ -1,3 +1,4 @@
+import { draftProposalKey } from '../shared/draft-discard.js';
 import type {
   DraftChange,
   DraftRelationshipChange,
@@ -18,7 +19,7 @@ export type DraftProposalDescriptor = { key: string; name: string } & (
 export function draftProposalDescriptors(draft: MapDraft): DraftProposalDescriptor[] {
   return [
     ...draft.changes.map((change) => ({
-      key: `object-${change.id}`,
+      key: draftProposalKey('object', change.id),
       name: change.after?.name ?? change.before?.name ?? 'Objekt',
       kind: 'Objekt' as const,
       change,
@@ -26,7 +27,7 @@ export function draftProposalDescriptors(draft: MapDraft): DraftProposalDescript
     ...(draft.relationships ?? []).map((change) => {
       const value = change.after ?? change.before;
       return {
-        key: `relationship-${change.id}`,
+        key: draftProposalKey('relationship', change.id),
         name: value
           ? relationshipDetails(
               value,
@@ -39,13 +40,13 @@ export function draftProposalDescriptors(draft: MapDraft): DraftProposalDescript
       };
     }),
     ...(draft.objectTypes ?? []).map((change) => ({
-      key: `Objekttyp-${change.id}`,
+      key: draftProposalKey('objectType', change.id),
       name: change.after?.name ?? change.before?.name ?? 'Objekttyp',
       kind: 'Objekttyp' as const,
       change,
     })),
     ...(draft.relationshipTypes ?? []).map((change) => ({
-      key: `Sambandstyp-${change.id}`,
+      key: draftProposalKey('relationshipType', change.id),
       name: change.after?.name ?? change.before?.name ?? 'Sambandstyp',
       kind: 'Sambandstyp' as const,
       change,

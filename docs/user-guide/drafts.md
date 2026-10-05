@@ -73,9 +73,18 @@ Mikrofonläge och samtalsproblem visas i röstrutan och
    blir tillgängligt för de andra medlemmarna och får en ändringsgrupp i
    [historiken](history.md).
 
-**Kasta förslaget** tar bort ett enskilt förslag. Om andra delar av
-utkastet behöver det behöver även dessa hanteras. **Kasta hela utkastet**
-tar bort alla dina osparade förslag. Ingen av knapparna ångrar ett redan
+Radens röda papperskorg tar bort ett oberoende förslag direkt. Ett nytt
+objekt med beroende nya samband kräver bekräftelse som visar vilka
+förslag som försvinner. Vid borttagning av ett typförslag visar samma
+dialog vilka förslag som blir kvar men påverkas. De behåller sina värden
+och visar eventuell typkonflikt med varningssymbol och text. Rätta dem
+i ordinarie formulär eller typinställningar.
+
+Rubrikens **Kasta hela utkastet** visar alla dina förslag och kräver
+bekräftelse. **Avbryt** ändrar ingenting. Om utkastet har ändrats eller
+svaret försvinner väljer du **Hämta aktuellt utkast** för att kontrollera
+utfallet och läsa aktuella beroenden innan ett nytt försök.
+Ingen av knapparna ångrar ett redan
 genomfört sparande. Läs då [ändringshistoriken](history.md) och lägg
 eventuella rättelser
 i ett nytt utkast.

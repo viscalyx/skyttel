@@ -202,6 +202,7 @@ export function HouseholdMap({
     }[]
   >([]);
   const [objectDirty, setObjectDirty] = useState<Record<string, boolean>>({});
+  const [draftRemovalStatus, setDraftRemovalStatus] = useState('');
   const [openPanels, setOpenPanels] = useState<string[]>([]);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [panelFocusRequest, setPanelFocusRequest] = useState<PanelFocusRequest | null>(null);
@@ -1643,6 +1644,15 @@ export function HouseholdMap({
         }
       />
       <ConversationNoticeAnnouncements announcement={noticeState.announcement} />
+      <p
+        className="visually-hidden"
+        role="status"
+        aria-label="Utkastets åtgärdsstatus"
+        aria-atomic="true"
+        hidden={!active}
+      >
+        {draftRemovalStatus}
+      </p>
       <p className="visually-hidden text-button-announcement" aria-live="polite" aria-atomic="true">
         <span key={textButton.announcement.count}>{textButton.announcement.text}</span>
       </p>
@@ -2035,6 +2045,17 @@ export function HouseholdMap({
               state={state}
               blocked={pending || blocked || dirty}
               onSave={conversation.working || conversation.needsAnswer ? undefined : saveDraft}
+              feedback={draftRemovalStatus}
+              removalOwner={{
+                path,
+                onChange: (result) => {
+                  if (isCurrent()) setState(result);
+                },
+                onStatus: (message) => {
+                  setStatus(message);
+                  setDraftRemovalStatus(message);
+                },
+              }}
             />
           }
           draft={state.draft}
