@@ -113,7 +113,11 @@ async function open(width = 1280, height = 900, mapState = state) {
   );
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await expect
-    .element(page.getByRole('button', { name: 'Nytt objekt', exact: true }))
+    .element(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    )
     .toBeEnabled();
   async function showToolNames() {
     if (width <= 700 && height <= 450)

@@ -1,7 +1,8 @@
 # Manuella testfall för objektlistor
 
-Testfallen gäller att hitta och återfinna objekt genom typgrupper,
-filtrering, sortering och sidval samt att visa en vald träff i kartan.
+Testfallen gäller att hitta och återfinna objekt genom listor och tabell,
+filtrering, sortering och sidval samt att läsa fullständiga uppgifter och
+visa en vald träff i kartan.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -17,6 +18,17 @@ inloggningen innehåller enbart påhittade uppgifter.
    pekning, ljust och mörkt tema samt webbläsarens förstoring.
 3. Starta om provkartan mellan fallen. För kartfokus använder du ett litet
    testhushåll enligt förutsättningarna i LISTA-03.
+
+### Förbered hushållets tabell
+
+1. Bygg applikationen med `npm run build`. Starta sedan
+   `node --import tsx scripts/manual-household-table.ts` från projektroten.
+2. Öppna den utskrivna adressen och logga in med Google. Välj **Tabell**.
+   Installationen har fler än 50 objekt, svenska namn med siffror,
+   långa värden, dolda egna fält, ekonomiska uppgifter och alla statusar.
+3. Prova dator och mobil, tangentbord, pekning och förstoring.
+   Skriv `quit` i terminalen och starta om kommandot mellan fallen.
+   Provdatabasen raderas när processen avslutas.
 
 ## Sökning och filtrering
 
@@ -224,3 +236,107 @@ without moving the result”.
   position ändras inte medan musknappen hålls nere. En uttrycklig återgång
   till listan behåller rulläget.
 - Hushållets objekt, samband och utkast ändras inte av att uppgifterna öppnas.
+
+## Läsa och återfinna objekt
+
+### TABELL-01: svensk sortering och återbesök med tabelläget kvar
+
+**Syfte:** Läsa fler än 50 objekt och fortsätta i samma tabell efter kartbesök.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Provinstallationen är öppen på dator.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+testfallet “TABELL-01: Swedish natural sorting, pagination and expanded rows
+survive map visits”.
+
+**Steg:**
+
+1. Välj **Tabell** med tangentbord. Kontrollera fokus på tabellrubriken
+   och 50 grundrader på första sidan. Öppna både **A 2** och **A 10**.
+2. Välj **Namn Ö–A**. Kontrollera ordningen Örn, Älg och Åke.
+   Välj **Typ A–Ö** och **Typ Ö–A**. Kontrollera Typ 2 före Typ 10
+   respektive Typ 10 före Typ 2 utan separata typgrupper.
+3. Välj **Namn A–Ö** och **Nästa**. Expandera en rad och rulla tabellen.
+   Fokusera radens öppningsknapp. Välj **Karta**, sedan **Tabell**.
+4. Kontrollera samma sida, rulläge, öppna rad och återfokus.
+   Välj **Föregående** och kontrollera att A 2 och A 10 fortfarande är öppna.
+
+**Förväntat resultat:**
+
+- Första besöket börjar på rubriken. Återbesök återger möjligt tidigare fokus.
+- Svensk bokstavsordning och naturlig sifferordning gäller i båda riktningarna.
+- Flera detaljer, sortering, sida och rullning består under vybytet.
+- Träffantal, aktuell sida och 50 objekt per sida går att läsa utan kartgrafik.
+- Läsning och vybyte ändrar inga hushållsuppgifter eller utkastförslag.
+
+### TABELL-02: sparade och föreslagna värden har tydliga skilda statusar
+
+**Syfte:** Läsa fullständiga uppgifter och skilja förslag från sparade värden.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation är öppen.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+testfallet “TABELL-02: full saved and proposed details distinguish every
+lifecycle and proposal status”.
+
+**Steg:**
+
+1. Expandera A 2. Läs hela beskrivningen och den långa egna anteckningen.
+   Kontrollera sparat pris 299 SEK och föreslaget pris 399 SEK intill varandra.
+2. Läs **Okänt**, **Uttryckligen inget**, **Osäkert uppgivet** och
+   datumet för kredituppgiften. Ett obesvarat fält visar **Ej uppgivet**.
+3. Öppna **Filter** och ta med upphörda och borttagna objekt.
+   Stäng med Escape och kontrollera återfokus på Filter.
+4. Läs **Borttaget prov**, **Upphört prov**, **Nytt prov** och **Tas bort
+prov**.
+   Använd nästa sida vid behov. Expandera också Borttaget prov.
+
+**Förväntat resultat:**
+
+- Nytt, Ändrat, Föreslagen borttagning, Upphört och Borttaget skiljs åt
+  med text. Förslag har dessutom symbolen ◇.
+- Föreslagen borttagning ersätter inte Upphört. Det sparade objektet
+  finns kvar att läsa tills borttagningsförslaget sparas.
+- Fullständiga detaljer omfattar även dolda egna fält och ekonomi.
+- Ett saknat värde blir inte Okänt eller Uttryckligen inget.
+- Ett redan borttaget objekt går att läsa och saknar redigeringsknapp.
+
+### TABELL-03: mobil läsning bevarar markering, utkast och oskickat meddelande
+
+**Syfte:** Använda samma hushållsarbete på en smal skärm.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation är öppen på mobil.
+Provleverantören ger kontrollerade svar utan externa modellkostnader.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+testfallet “TABELL-03: mobile horizontal reading preserves shared selection,
+draft and unsent conversation”.
+
+**Steg:**
+
+1. Öppna **Skriv till Skyttel**, ge medgivande och skriv ett meddelande
+   utan att skicka det. Stäng textvyn.
+2. Välj **Tabell**, expandera A 2 och läs dess fullständiga uppgifter.
+   Rulla tabellen i sidled, även med piltangenter från den rullbara ytan.
+3. Välj **Karta** och kontrollera att A 2 är markerat. Återvänd till
+   Tabell och kontrollera öppna detaljer och sidledsrullning.
+4. Öppna textvyn igen och kontrollera det oskickade meddelandet.
+
+**Förväntat resultat:**
+
+- Tabellen behåller sina kolumner och kan rullas i sidled.
+- Detaljtexter bryts inom skärmbredden och kräver inte sidledsrullning
+  för att läsa varje textstycke.
+- Markering delas mellan karta och tabell. Utkastet, pågående samtal
+  och oskickat meddelande består under vanliga vybyten.
+- Kvarstående mänskliga prov omfattar NVDA, VoiceOver, touch,
+  skärmtangentbord, 200/400 procents förstoring och kontrastbedömning.

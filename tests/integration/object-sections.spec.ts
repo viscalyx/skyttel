@@ -36,7 +36,10 @@ test('TYP-08: sections move and hide fields in the shared draft without losing v
     await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Paneler');
     await page
       .getByLabel('Objekttyp', { exact: true })

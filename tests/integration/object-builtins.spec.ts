@@ -105,7 +105,10 @@ for (const { width, height } of [
       }
       await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
       await returnToWork();
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       const form = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
       await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Husavtal' });
       await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();

@@ -137,7 +137,10 @@ for (const recoverUnknown of [false, true])
       await createHousehold(page.request, app.origin);
       await page.goto(app.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn').fill('Lo Exempel');
       await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
       const mapReads = /\/map(?:\?.*)?$/;
@@ -192,7 +195,10 @@ for (const width of [1440, 390, 320])
       const path = `${installation.origin}/api/households/${household.id}/map`;
       await page.goto(installation.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn').fill('Familjeabonnemanget');
       await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
       await openMap(page);
@@ -341,11 +347,17 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await page.addInitScript({ content: liveBrowserFixtureSource });
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     personId = (await read()).draft.changes[0].id;
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Oskickad cykel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Texten ska finnas kvar');
     await startConversationWithText(page);
@@ -488,7 +500,10 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     const held = new Promise<void>((resolve) => {
@@ -563,7 +578,10 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await startConversationWithText(page);

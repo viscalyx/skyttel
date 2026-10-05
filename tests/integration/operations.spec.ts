@@ -16,7 +16,10 @@ test('SPAR-01: find a committed save after losing its response and reopening on 
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     let committedReceipt: SaveReceipt | undefined;
@@ -28,7 +31,11 @@ test('SPAR-01: find a committed save after losing its response and reopening on 
     });
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
-    await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeDisabled();
+    await expect(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    ).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Kasta hela utkastet' })).toBeDisabled();
     // Retire the original client's request connections before restarting the fixture.
     await page.context().close();
@@ -82,13 +89,20 @@ test('SPAR-02: automatically recover the same pending save on another client aft
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     await page.route('**/map/save', (route) => route.abort());
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
-    await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeDisabled();
+    await expect(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    ).toBeDisabled();
     await page.close();
     await installation.restart();
 
@@ -185,7 +199,10 @@ test('SPAR-03: a rejected stale save survives restart without consuming newer pr
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     await signIn(second.request, installation.origin);
@@ -276,7 +293,10 @@ test('SPAR-04: private pending saves stay hidden from administrators and revoked
     const memberPage = await member.newPage();
     await memberPage.goto(installation.origin);
     await openWorkspace(memberPage);
-    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await memberPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await memberPage.getByLabel('Objektets namn').fill('Privat förslag');
     await memberPage.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     await memberPage.route('**/map/save', (route) => route.abort());

@@ -103,7 +103,10 @@ for (const platform of [
 
         // Follow the documented form alternative before granting conversation consent.
         await (await utilityButton(page, 'Lista')).click();
-        await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Lista och utkast', exact: true })
+          .getByRole('button', { name: 'Nytt objekt', exact: true })
+          .click();
         await page.getByLabel('Objektets namn').fill('Lo Exempel');
         await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
         await closePanels(page);

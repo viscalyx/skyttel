@@ -159,7 +159,10 @@ test('MEDLEM-06: revocation preserves shared objects and only a new invitation r
     const recipientPage = await recipient.newPage();
     await recipientPage.goto(installation.origin);
     await openWorkspace(recipientPage);
-    await recipientPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await recipientPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await recipientPage.getByLabel('Objektets namn').fill('Robin i kartan');
     await recipientPage.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     await recipientPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
@@ -499,7 +502,10 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
     });
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const unsent = page.getByLabel('Objektets namn');
     await unsent.fill('Alex oskickade arbete');
     await openSettings(page);
@@ -545,7 +551,10 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
     await expect(recipientPage.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
     await expect(recipientPage.getByText('Medlem', { exact: true })).toBeVisible();
     await openWorkspace(recipientPage);
-    await recipientPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await recipientPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const recipientUnsent = recipientPage.getByLabel('Objektets namn');
     await recipientUnsent.fill('Robins oskickade arbete');
     await expect(invitations).toContainText('Accepterad', { timeout: 10_000 });

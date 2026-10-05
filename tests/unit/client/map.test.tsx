@@ -96,7 +96,11 @@ async function open() {
   return view;
 }
 async function add(name = 'Lo Exempel') {
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), name);
   await userEvent.type(screen.getByLabelText('Beskrivning'), 'En påhittad person');
   await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
@@ -199,7 +203,11 @@ test('current status distinguishes a previous verified receipt from newly staged
 test('closed new objects can be reopened individually and staged together without losing text', async () => {
   await open();
   for (const name of ['Cykeln', 'Bilen']) {
-    await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+    await userEvent.click(
+      within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+        name: 'Nytt objekt',
+      }),
+    );
     const panel = within(screen.getByRole('region', { name: 'Nytt objekt' }));
     await userEvent.type(panel.getByLabelText('Objektets namn'), name);
     await userEvent.type(panel.getByLabelText('Beskrivning'), `Oskickat om ${name}`);
@@ -492,7 +500,11 @@ test('relationship type conflict review offers merged independent corrections an
 test('an update rejects an open form, preserves unsent text and explains how to recover', async () => {
   await open();
   render(<BuildNotice />);
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Osänt efter uppdatering');
   runningIdentity.commit = 'f'.repeat(40);
   runningIdentity.version = '0.1.0-preview.3';
@@ -556,7 +568,12 @@ test('lost responses remain uncertain and the same receipt can be recovered', as
   expect((await screen.findByRole('alert')).textContent).toContain('kunde inte hämtas');
   failRead = false;
   await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
-  await screen.findByRole('button', { name: 'Nytt objekt' });
+  await within(await screen.findByRole('region', { name: 'Lista och utkast' })).findByRole(
+    'button',
+    {
+      name: 'Nytt objekt',
+    },
+  );
   await add();
   loseResponse = '/save';
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
@@ -619,7 +636,13 @@ test('refreshing an unknown save keeps the draft locked until the registered att
   await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('väntande'));
   for (const name of ['Nytt objekt', 'Kasta hela utkastet', 'Spara hela utkastet'])
-    expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (
+        within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+          name,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
   expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
     'Lo Exempel',
   );
@@ -649,9 +672,13 @@ test.each([
     'Sparutfall okänt',
   );
   expect(screen.getByRole('region', { name: 'Teckenförklaring i kartan' })).toBeTruthy();
-  expect((screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled).toBe(
-    true,
-  );
+  expect(
+    (
+      within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+        name: 'Nytt objekt',
+      }) as HTMLButtonElement
+    ).disabled,
+  ).toBe(true);
   wrongReceipt = null;
   await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
   await waitFor(() =>
@@ -677,7 +704,11 @@ test('a stale draft is blocked until refreshed, and a lost proposal is recovered
   await waitFor(() => expect((refresh as HTMLButtonElement).disabled).toBe(false));
   await userEvent.click(refresh);
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Robin Exempel');
   loseResponse = '/draft';
   await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
@@ -886,7 +917,11 @@ test('a duplicate displays its existing relationship and stale relationship text
 
 test('object identity can be explicitly unspecified and later identified', async () => {
   await open();
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Betalkonto');
   await userEvent.selectOptions(screen.getByLabelText('Objektets identitet'), 'unresolved');
   await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
@@ -1137,7 +1172,11 @@ test('custom type forms use four optional field kinds and keep errors editable w
   }
   await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
   await waitFor(() => expect(screen.getByRole('status').textContent).toContain('privata utkast'));
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Paneler');
   const type = (await (await client.request(path)).json()).draft.objectTypes[0].after;
   await userEvent.selectOptions(screen.getByLabelText('Objekttyp'), type.id);
@@ -1279,7 +1318,11 @@ test('view changes retain unsent object text and filters can clear without chang
   ).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Visa hela rymden' }));
   await userEvent.type(screen.getByLabelText('Sök objekt'), 'Lo');
-  await userEvent.click(screen.getByText('Filter', { exact: true }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByText('Filter', {
+      exact: true,
+    }),
+  );
   await userEvent.click(screen.getByRole('checkbox', { name: 'Abonnemang' }));
   expect(within(screen.getByRole('list', { name: 'Objekt' })).queryByRole('listitem')).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Visa hela rymden' }));

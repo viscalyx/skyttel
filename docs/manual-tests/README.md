@@ -81,9 +81,9 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   servergrupper, felreferenser, stängning, återförsök och **Starta ljudet**
   med avstängd mikrofon fram till fungerande uppspelning.
 
-- [Objektlistor](object-lists.md): typgrupper, flera typfilter, markeringar,
-  separat sortering, sidval, bevarat rulläge, första klicket i en inaktiv
-  lista och uttryckligt kartfokus.
+- [Objektlistor](object-lists.md): tabell med fullständiga uppgifter, skilda
+  statusar, svenska sorteringsriktningar, 50 objekt per sida och bevarat
+  läge på dator och mobil; listans typfilter, markeringar och kartfokus.
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
   fönsterflytt, samtidiga detaljer, sex beständiga personliga riktningar och

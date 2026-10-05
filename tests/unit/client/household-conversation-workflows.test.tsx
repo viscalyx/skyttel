@@ -211,7 +211,11 @@ test('unavailable conversation remains operable on demand while an unsent map fo
   await home.open();
   expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull();
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Oskickad cykel');
   await userEvent.click(home.microphone());
   const notice = await screen.findByRole('region', { name: 'Samtalsnotis' });
@@ -625,7 +629,11 @@ test('a lost map proposal delivered after navigating to Settings preserves focus
   const home = await household();
   await home.open();
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Ett privat provobjekt');
   let finish!: () => void;
   let delivered = false;
@@ -673,7 +681,11 @@ test('an assistant map request cannot replace unsent object work or acknowledge 
   await home.addDraft();
   await home.open();
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Oskickad och privat');
   const original = await home.read();
   const acknowledgements: unknown[] = [];
@@ -814,7 +826,11 @@ test('typing starts without recording or consuming map editor text and keeps uns
   const home = await household();
   await home.open();
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   await userEvent.type(screen.getByLabelText('Objektets namn'), 'Privat oskickat namn');
   await startConversationWithText();
   expect(await screen.findByRole('region', { name: 'Skriv till Skyttel' })).toBeTruthy();

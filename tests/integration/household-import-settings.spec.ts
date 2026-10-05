@@ -34,7 +34,10 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const name = page.getByLabel('Objektets namn');
     await name.fill('Oskickat arbete före återimport');
     await name.focus();

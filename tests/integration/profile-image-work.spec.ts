@@ -237,7 +237,10 @@ for (const width of [1440, 390, 320]) {
       const read = async (): Promise<MapState> => (await page.request.get(path)).json();
       await page.goto(installation.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn', { exact: true }).fill('Bildarbete');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Behåll bildens text');
       await expect(page.getByLabel('Välj profilbild')).toBeDisabled();

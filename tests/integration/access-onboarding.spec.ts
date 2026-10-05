@@ -88,7 +88,10 @@ test('ACCESS-17: revoked access retires protected work while the operator can op
     const { user } = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Privat oskickat arbete');
     installation.revokeMembership(user.id);
     await expect(
@@ -158,7 +161,11 @@ test('ACCESS-15: first visits use toolbar entries and optional help without star
       ]).toEqual(requestsBeforeHelp);
       await tools.getByRole('button', { name: action, exact: true }).click();
       if (action === 'Lista')
-        await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeVisible();
+        await expect(
+          page
+            .getByRole('region', { name: 'Lista och utkast', exact: true })
+            .getByRole('button', { name: 'Nytt objekt', exact: true }),
+        ).toBeVisible();
       else {
         await expect(consentBox(page)).toBeVisible();
         await giveConversationConsent(page);

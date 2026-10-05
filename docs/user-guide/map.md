@@ -13,6 +13,24 @@ inställningen på din enhet. **Information och hjälp** förklarar verktygen.
 Hjälpknappen syns även när telefonens verktyg är hopfällda. Hopplänkarna når verktyg,
 formulär och text med tangentbord före kartgrafiken.
 
+## Läs hushållets objekt i tabellen
+
+Välj **Tabell** i verktygsfältet för att läsa underlaget utan kartgrafik.
+Tabellen visar Namn, Typ, Beskrivning och Status. Expandera objektets namn
+för hela beskrivningen, egna fält och ekonomi. Flera rader kan vara öppna
+samtidigt. Ändrade uppgifter visar **Sparat** och **Ditt förslag** intill
+varandra; symbolen ◇ märker Nytt, Ändrat och Föreslagen borttagning.
+
+Namn sorteras från A till Ö från början. **Sortering** ger både riktningarna
+för namn och typ med svensk bokstavsordning och naturlig sifferordning.
+Varje sida visar högst 50 objekt. **Filter** kan ta med upphörda och
+borttagna objekt; dessa statusar är skilda från en föreslagen borttagning.
+
+**Karta** och **Tabell** växlar arbetsyta med markeringen gemensam.
+Tabellens sortering, sida, öppna rader, rullning och möjligt fokus finns
+kvar när du återvänder under samma hushållsarbete. På mobil rullar
+tabellen i sidled; fullständiga detaljtexter bryts inom skärmbredden.
+
 ## Besök andra vyer och fortsätt arbetet
 
 Öppna **Din profil** för kontouppgifter, **Inloggningssätt**, användar-ID,

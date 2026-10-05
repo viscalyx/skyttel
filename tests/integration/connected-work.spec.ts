@@ -224,7 +224,10 @@ for (const mode of ['voice', 'text'] as const) {
       await member.goto(app.origin);
       if (mode === 'text') await loseGraphics(member);
       await openWorkspace(member);
-      await member.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await member
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await member.getByLabel('Objektets namn').fill('Robins notering');
       await member.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
       const robinPrivate = (await readMember()).draft;

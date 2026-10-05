@@ -138,6 +138,7 @@ export interface MapState {
   contentVersion: number;
   types: ObjectType[];
   objects: MapObject[];
+  removedObjects?: { object: MapObject; type?: ObjectType }[];
   relationshipTypes: RelationshipType[];
   relationships: MapRelationship[];
   draft: MapDraft;

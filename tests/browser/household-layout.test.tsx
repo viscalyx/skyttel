@@ -183,7 +183,10 @@ test('camera focus includes previous direct neighbors and preserves work through
 test('compact profile returns to visible work and dismisses before keyboard focus enters the map', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Lista och utkast', exact: true })
+    .getByRole('button', { name: 'Nytt objekt', exact: true })
+    .click();
   const name = page.getByLabelText('Objektets namn', { exact: true });
   await name.fill('Oskickad profiltext');
   const profileButton = page.getByRole('button', { name: 'Din profil', exact: true });
@@ -546,7 +549,10 @@ test('desktop panels retain chosen positions within the whole screen across scre
 test('complete view switching retains default form placement, unsent text and resize focus', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Lista och utkast', exact: true })
+    .getByRole('button', { name: 'Nytt objekt', exact: true })
+    .click();
   const form = page.getByRole('region', { name: 'Nytt objekt', exact: true, includeHidden: true });
   await form.getByLabelText('Objektets namn').fill('Behåll placering');
   const initial = form.element().getBoundingClientRect();
@@ -962,7 +968,11 @@ test('selecting a map relationship preserves unsent relationship and type forms'
 test('phone opens the list from the map and preserves an edited name through map navigation', async () => {
   await open(390);
   await expect
-    .element(page.getByRole('button', { name: 'Nytt objekt', exact: true }))
+    .element(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    )
     .not.toBeInTheDocument();
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();

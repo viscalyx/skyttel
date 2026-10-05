@@ -5,7 +5,14 @@ import {
   resolvedObjectValue,
   resolvedRelationshipValue,
 } from '../shared/draft-conflicts.js';
-import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
+import type {
+  MapDraft,
+  MapObject,
+  MapState,
+  ObjectType,
+  ObjectValue,
+  SaveReceipt,
+} from '../shared/map.js';
 import { compatibleCustomFields } from '../shared/map.js';
 import { isObjectIconId } from '../shared/object-icons.js';
 import { mergeFor, withoutMerge } from '../shared/object-merge.js';
@@ -138,6 +145,32 @@ export function householdMap(database: Database.Database, actorId: string, house
       .immediate();
   }
   function readState(): MapState {
+    const removed = database
+      .prepare(
+        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId FROM map_object WHERE householdId = ? AND deleted = 1 ORDER BY name, id',
+      )
+      .all(householdId)
+      .map(readObject);
+    const removedTypes = new Map<string, ObjectType>();
+    if (removed.length) {
+      // Deletion receipts retain the field meanings at removal, even if a type changes later.
+      const receipts = database
+        .prepare(`SELECT s.receipt FROM map_history h
+        JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId
+        WHERE h.householdId = ? ORDER BY h.id DESC`)
+        .all(householdId) as { receipt: string }[];
+      for (const row of receipts) {
+        const receipt = JSON.parse(row.receipt) as SaveReceipt;
+        for (const change of receipt.changes)
+          if (change.before && !change.after && !removedTypes.has(change.before.id))
+            removedTypes.set(change.before.id, change.beforeType ?? change.type);
+      }
+    }
+    const allTypes = removed.length ? types.read(true) : [];
+    const removedObjects = removed.map((object) => ({
+      object,
+      type: removedTypes.get(object.id) ?? allTypes.find((type) => type.id === object.typeId),
+    }));
     return {
       userId,
       contentVersion: operations.contentVersion(),
@@ -151,6 +184,7 @@ export function householdMap(database: Database.Database, actorId: string, house
         .all(householdId)
         .map(readObject),
       draft: draft(),
+      ...(removedObjects.length ? { removedObjects } : {}),
     };
   }
 

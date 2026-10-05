@@ -52,7 +52,10 @@ test('PANEL-08: limited space switches between full-width work and text while vo
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const panel = page.getByRole('region', { name: 'Nytt objekt', exact: true });
     await panel.getByLabel('Objektets namn').fill('Bevarat formulär');
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
@@ -123,7 +126,10 @@ test('PANEL-07: windows stop at visible conversation areas and retain relocated 
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const panel = page.getByRole('region', { name: 'Nytt objekt', exact: true });
     const handle = panel.getByRole('button', { name: 'Flytta Nytt objekt', exact: true });
     await panel.getByLabel('Objektets namn').fill('Skyddad oskickad text');
@@ -209,11 +215,17 @@ test('PANEL-06: draggable forms can cover the legend and reach the screen edges'
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Teckenförklaring i kartan' })).toBeVisible();
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const panel = page.getByRole('region', { name: 'Nytt objekt', exact: true });
     await panel.getByLabel('Objektets namn').fill('Oskickat över legenden');
     const handle = panel.getByRole('button', { name: 'Flytta Nytt objekt', exact: true });
@@ -274,7 +286,9 @@ test('PANEL-05: a delayed object proposal preserves a newer search focus and the
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    const newObject = page.getByRole('button', { name: 'Nytt objekt', exact: true });
+    const newObject = page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true });
     for (const name of ['Cykeln', 'Bilen']) {
       await newObject.click();
       await page.getByLabel('Objektets namn').fill(name);
@@ -340,7 +354,10 @@ test('PANEL-01: independent object panels preserve unsent work and reuse each ob
     await page.goto(installation.origin);
     await openWorkspace(page);
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page
         .getByRole('region', { name: 'Nytt objekt', exact: true })
         .getByLabel('Objektets namn')
@@ -423,7 +440,10 @@ test('PANEL-02: mobile panel navigation retains conversation, object text and de
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
@@ -571,7 +591,10 @@ test('PANEL-03: an intervening proposal for the same object preserves text and b
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();

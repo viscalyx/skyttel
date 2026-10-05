@@ -42,7 +42,11 @@ test('AI-03: medgivandet kräver val av hushåll och AI-behandling', async ({ pa
     expect((await callAssistant(app.origin, access_token, 'read_map')).status).toBe(401);
     await page.getByRole('link', { name: 'Till kartan', exact: true }).click();
     await openWorkspace(page);
-    await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    ).toBeVisible();
   } finally {
     await app.close();
   }
@@ -439,7 +443,11 @@ test('AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete', as
     await expect(page.getByText('Inga aktiva assistentanslutningar.')).toBeVisible();
     await page.getByRole('link', { name: 'Till kartan', exact: true }).click();
     await openWorkspace(page);
-    await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    ).toBeVisible();
   } finally {
     await app.close();
   }

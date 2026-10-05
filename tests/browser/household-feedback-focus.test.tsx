@@ -131,7 +131,10 @@ test('closed unsent new-object form resumes from the list and an uncertain icon 
   await expect
     .element(page.getByRole('heading', { name: 'Mina sparförsök', exact: true }))
     .toBeVisible();
-  await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Lista och utkast', exact: true })
+    .getByRole('button', { name: 'Nytt objekt', exact: true })
+    .click();
   const name = page.getByLabelText('Objektets namn', { exact: true });
   await name.fill('Privat oskickat objekt');
   await closePanels();

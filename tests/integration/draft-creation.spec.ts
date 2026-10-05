@@ -22,7 +22,10 @@ for (const width of [1280, 390, 320]) {
         await page.goto(installation.origin);
         await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
         await openWorkspace(page);
-        await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Lista och utkast', exact: true })
+          .getByRole('button', { name: 'Nytt objekt', exact: true })
+          .click();
         const form = page.getByRole('region', { name: 'Nytt objekt', exact: true });
         await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
         await expect(form.getByLabel('Objektets namn')).toBeFocused();
@@ -80,7 +83,10 @@ for (const width of [1280, 390, 320]) {
         await section.getByLabel('Placering', { exact: true }).fill('Södertak');
         await section.getByLabel('Reserv', { exact: true }).selectOption('false');
         await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-        await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Lista och utkast', exact: true })
+          .getByRole('button', { name: 'Nytt objekt', exact: true })
+          .click();
         await form.getByLabel('Objektets namn').fill('Batteriet');
         await form
           .getByLabel('Objekttyp', { exact: true })

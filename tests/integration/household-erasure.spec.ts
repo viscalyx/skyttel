@@ -221,7 +221,10 @@ for (const [width, height] of [
         });
         await page.goto(fixture.installation.origin);
         await openWorkspace(page);
-        await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Lista och utkast', exact: true })
+          .getByRole('button', { name: 'Nytt objekt', exact: true })
+          .click();
         const unsent = page.getByLabel('Objektets namn');
         await unsent.fill('Oskickat arbete före radering');
         await unsent.focus();

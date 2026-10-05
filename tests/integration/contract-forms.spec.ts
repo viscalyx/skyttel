@@ -13,7 +13,10 @@ test('AVTAL-01: optional rent facts can be reviewed, found and corrected after r
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
     await page.getByLabel('Objektets namn').fill('Hyra för lägenheten');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Hyresavtal' });
@@ -104,7 +107,10 @@ test('AVTAL-02: dated debt and credit keep distinct values and incomplete meanin
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Familjens kreditavtal');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Kreditavtal' });
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();

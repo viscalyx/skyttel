@@ -408,7 +408,11 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
     const { read } = await arrange(page, installation.origin);
     await page.goto(installation.origin);
     await expect(page.getByRole('navigation', { name: 'Kartans verktyg' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).not.toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    ).not.toBeVisible();
     await openMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     const music = space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true });

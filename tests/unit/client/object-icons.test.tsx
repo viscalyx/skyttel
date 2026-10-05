@@ -140,7 +140,11 @@ test.each([403, 503])(
 
 test('a new object must contain valid details before its icon controls can create a proposal', async () => {
   await open();
-  await userEvent.click(screen.getByRole('button', { name: 'Nytt objekt' }));
+  await userEvent.click(
+    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+      name: 'Nytt objekt',
+    }),
+  );
   const panel = within(screen.getByRole('region', { name: 'Nytt objekt' }));
   const stage = panel.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' });
   await userEvent.click(stage);

@@ -13,7 +13,10 @@ test('refreshing after a conflict preserves text without authorizing a stale for
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     await signIn(second.request, installation.origin);
@@ -57,7 +60,10 @@ test('an uncertain save recovers its receipt and stale tabs cannot save newer dr
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     await signIn(other.request, installation.origin);
@@ -102,7 +108,10 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Lo Exempel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('En påhittad person');
     await page.setViewportSize({ width: 320, height: 568 });

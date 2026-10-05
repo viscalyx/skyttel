@@ -21,7 +21,10 @@ for (const width of [1280, 390, 320]) {
       await createHousehold(page.request, installation.origin);
       await page.goto(installation.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       const name = page.getByLabel('Objektets namn');
       await name.fill('Oskickad cykel');
       await name.focus();
@@ -105,7 +108,10 @@ test('INST-02: type settings retain unsent definitions and save with the same ma
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Cykel i samma utkast');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await page
@@ -170,7 +176,10 @@ test('INST-03: the separate profile returns to the active field and groups perso
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Profilens cykel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Fortsätt här');
     await openProfile(page);
@@ -212,7 +221,10 @@ test('INST-04: settings and profile restore map and toolbar focus without openin
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await closePanels(page);
@@ -227,7 +239,9 @@ test('INST-04: settings and profile restore map and toolbar focus without openin
       await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
       await expect(target).toBeFocused();
       await expect(
-        page.getByRole('button', { name: 'Nytt objekt', exact: true }),
+        page
+          .getByRole('region', { name: 'Lista och utkast', exact: true })
+          .getByRole('button', { name: 'Nytt objekt', exact: true }),
       ).not.toBeVisible();
     }
   } finally {
@@ -245,7 +259,10 @@ test('INST-05: leaving the compact profile exposes keyboard focus in the retaine
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Kvar bakom profilen');
     await openProfile(page);
     const profile = page.getByRole('region', { name: 'Din profil', exact: true });
@@ -339,7 +356,10 @@ for (const width of [390, 320]) {
       await createHousehold(page.request, installation.origin);
       await page.goto(installation.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn').fill('Behåll mobiltexten');
       await openProfile(page);
       const profile = page.getByRole('region', { name: 'Din profil', exact: true });

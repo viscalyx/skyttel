@@ -21,7 +21,10 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
     const picker = details.getByRole('region', { name: 'Ikon', exact: true });
     await details.getByLabel('Objektets namn', { exact: true }).fill('Min cykel');
@@ -150,7 +153,10 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
     const picker = details.getByRole('region', { name: 'Ikon', exact: true });
     await details.getByLabel('Objektets namn', { exact: true }).fill('Lilla cykeln');
@@ -200,7 +206,10 @@ test('IKON-04: delayed keyboard icon choice and reset restore focus without repl
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
     const picker = page.getByRole('region', { name: 'Ikon', exact: true });
     await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
@@ -250,7 +259,10 @@ test('IKON-05: a failed icon request focuses recovery and a successful retry ret
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
     const picker = page.getByRole('region', { name: 'Ikon', exact: true });
     await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();

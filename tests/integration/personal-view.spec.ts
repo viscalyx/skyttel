@@ -512,7 +512,10 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
         });
     const pointBefore = await projection();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Ny sak');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await openMap(page);

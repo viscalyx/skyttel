@@ -90,7 +90,10 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
       ['Familjemusik', 'Abonnemang', 'identified'],
       ['Betalkonto', 'Bankkonto', 'unspecified'],
     ]) {
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn').fill(name);
       await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: type });
       await page.getByLabel('Objektets identitet').selectOption(identity);

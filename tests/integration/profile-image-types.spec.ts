@@ -51,7 +51,10 @@ for (const typeName of [
       }
       await page.goto(installation.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
       const name = `Bild för ${typeName}`;
       const panel = page.getByRole('region', { name, exact: true });

@@ -32,7 +32,10 @@ test('UTKAST-17: closed-panel status leads to a concurrent object conflict witho
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('Inget sparades');
     await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Oskickad cykel');
     await openMap(page);
     const status = page.getByRole('region', { name: 'Kartans status', exact: true });
@@ -304,7 +307,10 @@ test('UTKAST-19: an own object correction preserves unsent work and independent 
     const saved = await app.read();
     await page.goto(app.installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const unsent = page.getByRole('region', { name: 'Nytt objekt', exact: true });
     await unsent.getByLabel('Objektets namn').fill('Oskickad cykel');
     await unsent.getByLabel('Beskrivning', { exact: true }).fill('Behåll den här texten');

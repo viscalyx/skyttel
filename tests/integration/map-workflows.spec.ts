@@ -21,7 +21,10 @@ async function openMap(page: Page) {
 }
 
 async function addObject(page: Page, name: string, type: string, description = '') {
-  await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Lista och utkast', exact: true })
+    .getByRole('button', { name: 'Nytt objekt', exact: true })
+    .click();
   await page.getByLabel('Objektets namn').fill(name);
   await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: type });
   await page.getByLabel('Beskrivning', { exact: true }).fill(description);
@@ -90,7 +93,11 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeFocused();
+    await expect(
+      page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+    ).toBeFocused();
     await objects.getByRole('button', { name: 'Uppgifter för Åsas tjänst', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await expect(page.getByLabel('Objektets namn')).toHaveValue('Åsas tjänst');
@@ -100,7 +107,10 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     await expect(objects.getByRole('listitem')).toHaveCount(0);
     await search.fill('');
     await expect(objects.getByRole('listitem')).toHaveCount(3);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Avbrutet objekt');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.reload();
@@ -118,7 +128,10 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
 }) => {
   const { installation, read } = await openMap(page);
   try {
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Betalkonto');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Bankkonto' });
     await page.getByLabel('Objektets identitet').selectOption('unresolved');
@@ -192,7 +205,10 @@ for (const width of [1280, 390, 320]) {
         await addObject(page, 'Familjemusik', 'Abonnemang', 'Sparad beskrivning');
         await save(page);
         const before = await read();
-        await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Lista och utkast', exact: true })
+          .getByRole('button', { name: 'Nytt objekt', exact: true })
+          .click();
         await page.getByLabel('Objektets namn').fill('Betalkonto');
         await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Bankkonto' });
         await page.getByLabel('Objektets identitet').selectOption('unresolved');

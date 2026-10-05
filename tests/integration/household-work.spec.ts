@@ -117,7 +117,10 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     await openWorkspace(page);
     await otherPage.goto(installation.origin);
     await openWorkspace(otherPage);
-    await otherPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await otherPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await otherPage.getByLabel('Objektets namn').fill('Gammal oskickad cykel');
     await openSettings(otherPage);
     await expect(otherPage.getByLabel('Objektets namn')).toHaveValue('Gammal oskickad cykel');
@@ -315,7 +318,10 @@ for (const width of [1280, 390, 320]) {
       const { household } = await (await createHousehold(page.request, installation.origin)).json();
       await page.goto(`${installation.origin}/households/${household.id}/`);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn').fill('Oskickad cykel');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Behåll denna text');
       await openWorkspace(page);
@@ -431,7 +437,10 @@ test('ARBETE-03: revoked household access retires hidden forms and microphone', 
     const memberPage = await member.newPage();
     await startConversation(memberPage, installation.origin);
     await openWorkspace(memberPage);
-    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await memberPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await memberPage.getByLabel('Objektets namn').fill('Privat oskickad cykel');
     await openProfile(memberPage);
     await memberPage.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
@@ -473,7 +482,10 @@ test('ARBETE-04: replaced household content retires hidden work and microphone',
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
     await startConversation(page, installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Gammal oskickad cykel');
     await openSettings(page);
     await page
@@ -528,7 +540,10 @@ test('ARBETE-05: navigation preserves a save attempt after its response disappea
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Sparad cykel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     let saved = false;
@@ -577,7 +592,10 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     const path = `${installation.origin}/api/households/${household.id}/map/view`;
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Min cykel');
     await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();

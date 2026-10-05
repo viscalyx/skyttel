@@ -88,7 +88,10 @@ test('TYP-02: forms create, review and correct optional custom fields without co
       await last.getByLabel('Värdeslag').selectOption(kind);
     }
     await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await page.getByLabel('Objektets namn').fill('Paneler på taket');
     await page
       .getByLabel('Objekttyp', { exact: true })
@@ -276,14 +279,20 @@ test('TYP-03: members share editable definitions while private proposals and use
     const memberPage = await other.newPage();
     await memberPage.goto(installation.origin);
     await openWorkspace(memberPage);
-    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await memberPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await memberPage.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Solkraft' });
     await memberPage.getByLabel('Objektets namn').fill('Medlemmens paneler');
     await memberPage.getByLabel('Kommentar', { exact: true }).fill('Eget objekt');
     await memberPage.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
     await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(memberPage.getByRole('status')).toContainText('Sparat');
-    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await memberPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await memberPage.getByLabel('Objektets namn').fill('Lo');
     await memberPage.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
     await memberPage.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
@@ -298,7 +307,10 @@ test('TYP-03: members share editable definitions while private proposals and use
     await expect(memberPage.getByRole('status')).toContainText('Sparat');
     await memberPage.reload();
     await openWorkspace(memberPage);
-    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await memberPage
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     await expect(
       memberPage
         .getByLabel('Objekttyp', { exact: true })

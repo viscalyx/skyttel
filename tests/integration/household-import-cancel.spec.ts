@@ -94,7 +94,10 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
     expect(before.draft.changes).toHaveLength(1);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
     const unsent = page.getByLabel('Objektets namn');
     await unsent.fill('Oskickat arbete under avbrottet');
     await openSettings(page);

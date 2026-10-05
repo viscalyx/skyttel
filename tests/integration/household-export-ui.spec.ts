@@ -540,7 +540,10 @@ for (const { width, height } of [
       const before = await fixture.read();
       await page.goto(fixture.installation.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn').fill('Oskickad exportcykel');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Texten finns kvar');
       await openSettings(page);
@@ -901,7 +904,10 @@ for (const phase of ['ready', 'downloading'] as const) {
       page.on('download', (download) => downloads.push(download));
       await page.goto(fixture.installation.origin);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Lista och utkast', exact: true })
+        .getByRole('button', { name: 'Nytt objekt', exact: true })
+        .click();
       await page.getByLabel('Objektets namn').fill('Oskickat vid avbruten export');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Bevara min redigering');
       await openSettings(page);

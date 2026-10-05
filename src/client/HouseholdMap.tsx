@@ -28,6 +28,7 @@ import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { DraftStatus } from './DraftStatus.js';
 import { useFloatingArea } from './floating-windows.js';
+import { HouseholdTable, householdTableRows } from './HouseholdTable.js';
 import './draft-status.css';
 import { ConversationConsent } from './ConversationConsent.js';
 import {
@@ -240,6 +241,7 @@ export function HouseholdMap({
     contentVersion: number;
     baseRevision: number | null;
   } | null>(null);
+  const [workspaceSurface, setWorkspaceSurface] = useState<'map' | 'table'>('map');
   const [presentation, setPresentation] = useState<'list' | 'combined' | 'map'>('map');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -327,6 +329,14 @@ export function HouseholdMap({
     return target === 'voice' ? 'voice' : target === 'conversation' ? 'text' : null;
   }
   function openWork(target: WorkspaceTarget, chosen?: HTMLElement) {
+    if (target === 'map' || target === 'table') {
+      setWorkspaceSurface(target);
+      return;
+    }
+    if (target === 'new') {
+      edit();
+      return;
+    }
     workTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (
@@ -1480,6 +1490,7 @@ export function HouseholdMap({
         }
       }}
       aria-label="Hushållskarta"
+      data-workspace-surface={workspaceSurface}
       data-empty-map={
         (Boolean(state) && !visibleObjects.size && !query && !typeFilter.length) || undefined
       }
@@ -1560,6 +1571,8 @@ export function HouseholdMap({
             expanded={toolsExpanded}
             onExpandedChange={setToolsExpanded}
             onOpen={openWork}
+            surface={workspaceSurface}
+            workDisabled={!state || pending || blocked}
             account={account}
             profileRequested={profileRequested}
             onReturnWork={() => {
@@ -1752,9 +1765,18 @@ export function HouseholdMap({
           )}
         </div>
       )}
-      <div className="workspace-navigation-mount" ref={setNavigationMount} hidden={!active} />
+      <div
+        className="workspace-navigation-mount"
+        ref={setNavigationMount}
+        hidden={!active || workspaceSurface === 'table'}
+      />
       {state && (
-        <div className="map-space" hidden={!active} inert={mapCovered} aria-hidden={mapCovered}>
+        <div
+          className="map-space"
+          hidden={!active || workspaceSurface === 'table'}
+          inert={mapCovered}
+          aria-hidden={mapCovered}
+        >
           <SpatialMap
             cameraMount={cameraMount}
             navigationMount={navigationMount}
@@ -1778,7 +1800,7 @@ export function HouseholdMap({
             onAvailabilityChange={setMapAvailable}
             personal={personal}
             settingsMount={mapSettingsTarget}
-            active={active && !mapCovered}
+            active={active && workspaceSurface === 'map' && !mapCovered}
             state={effectiveState ?? state}
             objects={visibleObjects}
             relationships={visibleEdges}
@@ -1798,6 +1820,17 @@ export function HouseholdMap({
             onRemove={(object) => remove('draft', object)}
           />
         </div>
+      )}
+      {state && (
+        <HouseholdTable
+          active={active && workspaceSurface === 'table'}
+          rows={householdTableRows(state, effectiveTypes)}
+          selectedIds={selectedIds}
+          workDisabled={pending || blocked}
+          onSelect={(object) => selectObject(object, 'select')}
+          onNew={() => edit()}
+          onEdit={(object) => edit(object)}
+        />
       )}
       {state && (
         <ConversationWorkspace
