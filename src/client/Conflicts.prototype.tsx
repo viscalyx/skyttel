@@ -349,8 +349,10 @@ export function ConflictsPrototype() {
         <div className="cp-top">
           <div>
             <small>Ditt utkast · {remaining} olösta</small>
-            <h1 id="cp-title">Granska konflikter</h1>
-            <p id="cp-subtitle">Valen ändrar ditt utkast. Kartan sparas separat.</p>
+            <div className="cp-title-line">
+              <h1 id="cp-title">Granska konflikter</h1>
+              <p id="cp-subtitle">Valen ändrar ditt utkast. Kartan sparas separat.</p>
+            </div>
           </div>
           <button type="button" onClick={close} aria-label="Stäng konfliktdialogen">
             ✕

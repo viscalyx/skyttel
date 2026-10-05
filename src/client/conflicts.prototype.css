@@ -122,8 +122,14 @@
 .cp-top > button {
   flex-shrink: 0;
 }
+.cp-title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 16px;
+}
 .cp-top p {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 13px;
   color: #506777;
 }
