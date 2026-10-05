@@ -155,6 +155,11 @@
   min-width: 145px;
   max-width: 450px;
 }
+.household-table-selection {
+  display: block;
+  font-size: 12px;
+  color: var(--space-accent);
+}
 .household-table-badge {
   display: block;
   font-size: 12px;

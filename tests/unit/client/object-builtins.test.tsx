@@ -269,9 +269,12 @@ test('explicit custom-only order controls object editing and review without inve
   render(<HouseholdMap householdId={householdId} />);
   await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
   await userEvent.click(
-    await within(screen.getByRole('region', { name: 'Lista och utkast' })).findByRole('button', {
-      name: 'Nytt objekt',
-    }),
+    await within(await screen.findByRole('region', { name: 'Lista och utkast' })).findByRole(
+      'button',
+      {
+        name: 'Nytt objekt',
+      },
+    ),
   );
   const form = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
   await userEvent.selectOptions(form.getByLabelText('Objekttyp', { exact: true }), 'ordered');

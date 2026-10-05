@@ -41,6 +41,9 @@ test('TABELL-01: Swedish natural sorting, pagination and expanded rows survive m
     await expect(table.getByRole('row').nth(1).getByRole('cell').nth(0)).toHaveText('Typ 10');
     await table.getByLabel('Sortering', { exact: true }).selectOption('name-asc');
     await table.getByRole('button', { name: 'Nästa', exact: true }).click();
+    await expect(
+      table.getByRole('region', { name: 'Objekt i läsläge', exact: true }),
+    ).toBeFocused();
     await expect(table.getByText('Sida 2 av 2 · 50 objekt per sida')).toBeVisible();
     const focus = table.getByRole('rowheader').first().getByRole('button');
     await focus.click();
@@ -99,6 +102,16 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
       table.getByText('Lång egen uppgift '.repeat(30).trim(), { exact: true }),
     ).toBeVisible();
     await expect(table.getByText('◇ Ändrat', { exact: true })).toBeVisible();
+    await expect(table.getByText('Sparat: Cykel', { exact: true })).toBeVisible();
+    const images = table.getByRole('img', { name: 'Profilbild för A 2', exact: true });
+    await expect(images).toHaveCount(2);
+    expect(await images.nth(0).getAttribute('src')).not.toBe(
+      await images.nth(1).getAttribute('src'),
+    );
+    for (const image of await images.all())
+      await expect
+        .poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth))
+        .toBe(96);
     await table.getByRole('button', { name: 'Filter', exact: true }).click();
     const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
     await expect(filters.getByRole('heading', { name: 'Filter i tabellen' })).toBeFocused();
@@ -168,6 +181,7 @@ test('TABELL-03: mobile horizontal reading preserves shared selection, draft and
         .getByRole('row')
         .filter({ has: page.getByRole('button', { name: 'A 2', exact: true }) }),
     ).toHaveAttribute('data-selected', 'true');
+    await expect(table.getByText('✓ Markerad', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: /^Skriv till Skyttel/ }).click();
     await expect(message).toHaveValue('Oskickat meddelande vid tabellbesök');
     expect((await read()).draft).toEqual(before.draft);

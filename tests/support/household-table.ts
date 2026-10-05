@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect } from '@playwright/test';
+import sharp from 'sharp';
 import type { MapState, ObjectValue } from '../../src/shared/map.js';
 import { createHousehold, signIn } from './client.js';
 
@@ -17,6 +18,26 @@ export async function prepareHouseholdTable(client: APIRequestContext, origin: s
     expect(response.status(), await response.text()).toBe(200);
     return response.json();
   };
+  async function image(background: string) {
+    const current = await read();
+    const object = current.objects.find((object) => object.id === 'table-0');
+    const response = await client.post(
+      `${origin}/api/households/${household.id}/profile-images/table-0`,
+      {
+        headers: {
+          origin,
+          'X-Skyttel-Draft-Version': String(current.draft.version),
+          'X-Skyttel-Content-Version': String(current.contentVersion),
+          'X-Skyttel-Object-Revision': String(object?.revision ?? null),
+          'Content-Type': 'image/png',
+        },
+        data: await sharp({ create: { width: 96, height: 96, channels: 3, background } })
+          .png()
+          .toBuffer(),
+      },
+    );
+    expect(response.status(), await response.text()).toBe(200);
+  }
   await post('object-type', {
     id: 'table-type-2',
     baseRevision: null,
@@ -53,6 +74,7 @@ export async function prepareHouseholdTable(client: APIRequestContext, origin: s
         description: index === 0 ? longText : `Beskrivning ${name}`,
         ...(index === 0
           ? {
+              iconId: 'bike',
               customValues: { note: 'Lång egen uppgift '.repeat(30) },
               financialFacts: {
                 price: { knowledge: 'unknown' },
@@ -78,6 +100,7 @@ export async function prepareHouseholdTable(client: APIRequestContext, origin: s
       baseRevision: null,
       value: { name, typeId: 'table-type-2', description: '', ...(lifecycle ? { lifecycle } : {}) },
     });
+  await image('#3355aa');
   await post('save', { operationId: 'table-initial' });
   const saved = await read();
   const original = saved.objects.find((object) => object.id === 'table-0');
@@ -105,6 +128,7 @@ export async function prepareHouseholdTable(client: APIRequestContext, origin: s
       if (!next) throw new Error('Missing updated object');
       const value: ObjectValue = {
         ...next,
+        iconId: 'car',
         financialFacts: { ...next.financialFacts, price: { knowledge: 'known', value: '399 SEK' } },
         description: `${longText}Nytt föreslaget slut.`,
       };
@@ -116,5 +140,6 @@ export async function prepareHouseholdTable(client: APIRequestContext, origin: s
     baseRevision: null,
     value: { name: 'Nytt prov', typeId: 'table-type-2', description: '' },
   });
+  await image('#33aa55');
   return { path, read, post, longText };
 }

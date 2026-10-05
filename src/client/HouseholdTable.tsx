@@ -2,7 +2,9 @@ import { Fragment, type ReactNode, useId, useLayoutEffect, useRef, useState } fr
 import { type FinancialFact, financialFields } from '../shared/financial-facts.js';
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, MapState, ObjectType, ObjectValue } from '../shared/map.js';
+import { objectIconLabel } from '../shared/object-icons.js';
 import { objectProperties } from '../shared/object-properties.js';
+import { ProfileImage } from './ProfileImage.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './household-table.css';
 
@@ -75,6 +77,14 @@ function propertyValues(value: ObjectValue, type?: ObjectType) {
           ? 'Gäller fortfarande'
           : 'Följ slutdatum',
   });
+  fields.set('icon', {
+    label: 'Ikon',
+    value: value.iconId ? objectIconLabel(value.iconId, type?.name) : 'Typens ikon',
+  });
+  fields.set('profileImage', {
+    label: 'Profilbild',
+    value: value.profileImageId ? 'Profilbild finns' : 'Ej uppgivet',
+  });
   if (value.identity)
     fields.set('identity', {
       label: 'Identitet',
@@ -143,21 +153,38 @@ function TableDetails({ row }: { row: HouseholdTableRow }) {
             const before = saved.get(key);
             const changed =
               row.proposal === 'Ändrat' &&
-              (after?.value !== before?.value || after?.label !== before?.label);
+              (after?.value !== before?.value ||
+                after?.label !== before?.label ||
+                (key === 'profileImage' &&
+                  row.object.profileImageId !== row.before?.profileImageId));
             return (
               <div key={key}>
                 <dt>{after?.label ?? before?.label}</dt>
                 <dd>
                   {changed && (
-                    <span className="household-table-before">
+                    <div className="household-table-before">
                       Sparat{before?.label !== after?.label ? ` (${before?.label})` : ''}:{' '}
                       {before?.value ?? 'Ej uppgivet'}
-                    </span>
+                      {key === 'profileImage' && row.before?.profileImageId && (
+                        <ProfileImage
+                          householdId={row.object.householdId}
+                          value={row.before}
+                          typeName={row.beforeType?.name}
+                        />
+                      )}
+                    </div>
                   )}
                   {(changed || row.proposal === 'Nytt') && (
                     <span className="household-table-proposed">◇ Ditt förslag: </span>
                   )}
                   {after?.value ?? 'Ej uppgivet'}
+                  {key === 'profileImage' && row.object.profileImageId && (
+                    <ProfileImage
+                      householdId={row.object.householdId}
+                      value={row.object}
+                      typeName={row.type?.name}
+                    />
+                  )}
                 </dd>
               </div>
             );
@@ -201,6 +228,8 @@ export function HouseholdTable({
   const filterButton = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const tableRegion = useRef<HTMLElement>(null);
+  const resultRegion = useRef<HTMLElement>(null);
+  const pageFocusRequested = useRef(false);
   const root = useRef<HTMLElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
   const scroll = useRef({ top: 0, left: 0 });
@@ -228,6 +257,11 @@ export function HouseholdTable({
   const visible = found.slice(actualPage * 50, (actualPage + 1) * 50);
   useLayoutEffect(() => {
     if (page !== actualPage) setPage(actualPage);
+    if (active && pageFocusRequested.current) {
+      pageFocusRequested.current = false;
+      resultRegion.current?.focus({ preventScroll: true });
+      resultRegion.current?.scrollIntoView({ block: 'start' });
+    }
     function usable(element: HTMLElement | null) {
       return Boolean(
         element?.isConnected &&
@@ -289,6 +323,7 @@ export function HouseholdTable({
     } else if (!filtersOpen && dialog?.open) dialog.close();
   }, [filtersOpen]);
   function changePage(next: number) {
+    pageFocusRequested.current = true;
     setPage(next);
     scroll.current.top = 0;
     if (tableRegion.current) tableRegion.current.scrollTop = 0;
@@ -339,7 +374,12 @@ export function HouseholdTable({
           Filter{includeEnded || includeRemoved ? ' · aktiva' : ''}
         </button>
       </section>
-      <section className="household-table-results" aria-label="Objekt i läsläge">
+      <section
+        ref={resultRegion}
+        tabIndex={-1}
+        className="household-table-results"
+        aria-label="Objekt i läsläge"
+      >
         <div className="household-table-result-heading">
           <p role="status">{found.length} träffar · läsläge</p>
           <label>
@@ -422,6 +462,9 @@ export function HouseholdTable({
                           <span aria-hidden="true">{opened ? '▾' : '▸'}</span>
                           {object.name}
                         </button>
+                        {selectedIds.includes(object.id) && (
+                          <span className="household-table-selection">✓ Markerad</span>
+                        )}
                       </th>
                       <td>{row.type?.name ?? 'Borttagen typ'}</td>
                       <td>
@@ -511,7 +554,7 @@ export function HouseholdTable({
           >
             Föregående
           </button>
-          <span>
+          <span role="status">
             Sida {actualPage + 1} av {pages} · 50 objekt per sida
           </span>
           <button

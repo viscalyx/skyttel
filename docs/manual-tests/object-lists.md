@@ -270,6 +270,7 @@ survive map visits”.
 - Svensk bokstavsordning och naturlig sifferordning gäller i båda riktningarna.
 - Flera detaljer, sortering, sida och rullning består under vybytet.
 - Träffantal, aktuell sida och 50 objekt per sida går att läsa utan kartgrafik.
+  Sidbyte fokuserar resultatets början och meddelar den nya sidan.
 - Läsning och vybyte ändrar inga hushållsuppgifter eller utkastförslag.
 
 ### TABELL-02: sparade och föreslagna värden har tydliga skilda statusar
@@ -289,6 +290,8 @@ lifecycle and proposal status”.
 
 1. Expandera A 2. Läs hela beskrivningen och den långa egna anteckningen.
    Kontrollera sparat pris 299 SEK och föreslaget pris 399 SEK intill varandra.
+   Kontrollera också sparad ikon Cykel, föreslagen ikon Bil och två
+   skilda profilbilder märkta sparat och föreslaget.
 2. Läs **Okänt**, **Uttryckligen inget**, **Osäkert uppgivet** och
    datumet för kredituppgiften. Ett obesvarat fält visar **Ej uppgivet**.
 3. Öppna **Filter** och ta med upphörda och borttagna objekt.
@@ -336,7 +339,8 @@ draft and unsent conversation”.
 - Tabellen behåller sina kolumner och kan rullas i sidled.
 - Detaljtexter bryts inom skärmbredden och kräver inte sidledsrullning
   för att läsa varje textstycke.
-- Markering delas mellan karta och tabell. Utkastet, pågående samtal
+- Markering visas med ✓ Markerad och delas mellan karta och tabell.
+  Utkastet, pågående samtal
   och oskickat meddelande består under vanliga vybyten.
 - Kvarstående mänskliga prov omfattar NVDA, VoiceOver, touch,
   skärmtangentbord, 200/400 procents förstoring och kontrastbedömning.
