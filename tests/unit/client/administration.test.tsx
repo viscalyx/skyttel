@@ -574,7 +574,7 @@ describe('current household access', () => {
     expect(screen.queryByRole('region', { name: 'Aktuell status' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Inställningar', level: 1 })).toBeDefined();
     await userEvent.click(screen.getByRole('link', { name: 'Tillbaka till kartan' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Utkast och historik' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lista' }));
     expect(await screen.findByRole('heading', { name: 'Mina sparförsök' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Inställningar', level: 1 })).toBeNull();
   });

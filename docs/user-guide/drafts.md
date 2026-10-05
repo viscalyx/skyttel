@@ -10,9 +10,13 @@ administratörens [fullständiga export](household-export.md).
 ## Följ utkastet i kartan
 
 Under hushållets namn visas sparande, fel och en länk med antal konflikter.
-Konfliktantalet gäller hela ditt privata utkast, även typer och innehåll
-som kartans filter döljer. **Utkast och historik** öppnar hela utkastet,
-konflikterna och **Mina sparförsök**. Expandera verktygens namn vid behov.
+Konfliktantalet gäller hela ditt utkast, även typer och innehåll
+som kartans filter döljer. **Utkast** öppnar **Visa utkastet** i textvyn
+direkt. Ikonen är avskild från övriga verktyg och visas när förslag finns,
+även om förslagen bara gäller typer eller döljs av kartans filter.
+**Skriv till Skyttel → Visa utkastet** fungerar även när utkastet är tomt.
+Att öppna textvyn eller utkastet startar inget samtal och kräver varken
+AI eller samtalsmedgivande. Första **Skicka** kräver fortfarande medgivande.
 Återkoppling med antal förslag finns i textvyn och Inställningar.
 
 Teckenförklaringen under namnet visar bara kategorier i den filtrerade
@@ -53,10 +57,12 @@ Mikrofonläge och samtalsproblem visas i röstrutan och
 1. Lägg formulärets ändringar i utkastet med **Lägg i mitt utkast** eller
    motsvarande knapp för typen av förslag. Text som fortfarande bara
    finns i formuläret ingår inte i sparandet.
-2. Öppna **Utkast och historik** för tidigare och föreslagna
-   värden, inklusive samband, typer, bilder och borttagningar.
-3. Rätta vid behov ett förslag genom att välja innehållet, öppna dess
-   redigering och lägga rättelsen i utkastet.
+2. Öppna **Utkast** och välj förslagets rad för att läsa hela förslaget,
+   inklusive samband, typer, bilder, dolda egna fält och borttagningar.
+   Läsdialogen skiljer sparade värden från föreslagna värden.
+   Stäng med krysset eller Escape för att återgå till raden.
+3. Utkastets läsdialog erbjuder ingen redigering eller konfliktjämförelse.
+   Rättningar görs i vanliga formulär; ta bort förslaget och lägg det på nytt.
 4. Välj **Spara hela utkastet** i **Hela mitt utkast** när
    förslagen stämmer. Ingen extra granskning krävs för att använda knappen.
    Sparandet gäller

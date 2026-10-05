@@ -93,12 +93,12 @@ const feedback = () => page.getByRole('region', { name: 'Kartans status', exact:
 
 test('draft navigation opens its review and reopens the retained object work without changing saved or private data', async () => {
   const home = await open();
-  await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await expect
     .element(page.getByRole('region', { name: 'Hela mitt utkast', exact: true }))
     .toBeVisible();
   await expect
-    .element(page.getByRole('heading', { name: 'Hela mitt utkast', exact: true }))
+    .element(page.getByRole('heading', { name: 'Lista och utkast', exact: true }))
     .toHaveFocus();
   await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
   const object = page.getByRole('region', { name: 'Lo Exempel', exact: true });
@@ -127,7 +127,7 @@ test('draft navigation opens its review and reopens the retained object work wit
 
 test('closed unsent new-object form resumes from the list and an uncertain icon prerequisite refresh restores its focus without retrying', async () => {
   const home = await open(false);
-  await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await expect
     .element(page.getByRole('heading', { name: 'Mina sparförsök', exact: true }))
     .toBeVisible();

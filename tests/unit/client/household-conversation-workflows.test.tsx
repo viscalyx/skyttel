@@ -240,12 +240,15 @@ test('canceling a toolbar conversation returns to its chosen entry and preserves
   await home.open();
   const chosen = home.tools().getByRole('button', { name: 'Skriv till Skyttel' });
   await userEvent.click(chosen);
+  expect(screen.queryByRole('dialog', { name: 'Samtal med Skyttel' })).toBeNull();
+  const start = screen.getByRole('button', { name: 'Nytt samtal' });
+  await userEvent.click(start);
   const consent = await screen.findByRole('dialog', { name: 'Samtal med Skyttel' });
   expect(home.starts).toEqual([]);
   await userEvent.click(within(consent).getByRole('button', { name: 'Avbryt' }));
-  expect(document.activeElement).toBe(chosen);
+  expect(document.activeElement).toBe(start);
   expect(home.media.getUserMedia).not.toHaveBeenCalled();
-  await userEvent.click(chosen);
+  await userEvent.click(start);
   await giveConversationConsent();
   await screen.findByRole('region', { name: 'Skriv till Skyttel' });
   expect(screen.queryByRole('complementary', { name: 'Kom igång med kartan' })).toBeNull();

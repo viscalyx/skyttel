@@ -84,7 +84,7 @@ afterEach(() => {
 
 test('the consent box opens next to the chosen button, on the side that has room', async () => {
   const starts = await open(1280, 800);
-  for (const name of ['Prata med Skyttel', 'Skriv till Skyttel']) {
+  for (const name of ['Prata med Skyttel']) {
     await tool(name).click();
     await expect.element(box()).toBeVisible();
     const chosen = rect(tool(name));
@@ -114,7 +114,7 @@ test.each([390, 320])(
   'the consent box opens under the toolbar at the top of a %i px screen',
   async (width) => {
     await open(width, 844);
-    await tool('Skriv till Skyttel').click();
+    await tool('Prata med Skyttel').click();
     await expect.element(box()).toBeVisible();
     expect(rect(box()).top).toBeGreaterThanOrEqual(rect(tools()).bottom);
     expect(rect(box()).top - rect(tools()).bottom).toBeLessThanOrEqual(32);
@@ -127,7 +127,7 @@ test.each([390, 320])(
 
 test('the consent box follows the toolbar when the window becomes narrow', async () => {
   await open(1280, 800);
-  await tool('Skriv till Skyttel').click();
+  await tool('Prata med Skyttel').click();
   await expect.element(box()).toBeVisible();
   expect(rect(box()).left).toBeGreaterThanOrEqual(rect(tools()).right);
   // A narrower window with the toolbar still to the left keeps the box on the screen.

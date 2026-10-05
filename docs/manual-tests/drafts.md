@@ -1,7 +1,7 @@
-# Manuella testfall för privata utkast
+# Manuella testfall för ditt utkast
 
 Testfallen gäller återupptagning, granskning, sparande, kastande och
-konflikthantering av privata utkast. Förberedelser och testdata anges nedan.
+konflikthantering av ditt utkast. Förberedelser och testdata anges nedan.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -63,6 +63,80 @@ webbläsarprofil och konfigurerat tal och text enligt
 konfiguration och de medgivanden som anges där.
 
 ## Privata utkast
+
+### UTKAST-25: läs hela utkastet utan AI eller medgivande
+
+**Syfte:** Granska alla förslag, även dolda fält, utan att starta samtal.
+
+**Användare:** Alex Exempel i den separata provinstallationen nedan.
+
+**Förutsättningar:** Kör `npm run build` och sedan
+`node --import tsx scripts/manual-draft-review.ts` i en terminal.
+Öppna den utskrivna adressen och logga in med den syntetiska
+Google-identiteten Alex Exempel. Ingen extern leverantör används.
+Skriv `quit` i terminalen efter provningen för att ta bort installationen.
+
+**Integrationstest:**
+[draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
+testfallen “UTKAST-25: desktop complete draft review works without AI or
+consent” och “UTKAST-25: mobile complete draft review works without AI or
+consent”.
+
+**Steg:**
+
+1. Öppna **Utkast** i verktygsfältet på dator och mobil.
+2. Läs tabellens Symbol, Namn, Typ och Vad som ändras.
+3. Öppna **Alex blå cykel** med tangentbord. Läs sparade och föreslagna
+   värden, hela beskrivningen, Ramnummer och ekonomiska uppgifter.
+4. Prova Tab, Skift+Tab, krysset och Escape. Öppna därefter ett samband,
+   **Utkastfordon** och **Granskar**. Läs deras dolda egna fält och riktning.
+5. Kontrollera fel vid **Olöst fordon** och det olösta sambandet. Läs även
+   Okänt, Uttryckligen inget, Osäkert uppgivet och Ospecificerat objekt.
+
+**Förväntat resultat:**
+
+- Utkastet öppnas utan samtal eller medgivandedialog trots att AI saknas.
+- Alla fyra förslagsslag kan läsas fullständigt utan redigeringsfält eller
+  konfliktval. Förslagen och den sparade kartan ändras inte av läsning.
+- Läsdialogen börjar på rubriken. Tab stannar i dialogen; bakomliggande
+  innehåll är inaktivt. Krysset är dess enda synliga stängkontroll.
+  Escape och krysset återför fokus till radens öppningsknapp.
+- Verklig olöst identitet eller obesvarad fråga har feltext och symbol.
+  Giltiga okända, osäkra och ospecificerade uppgifter får ingen felvarning.
+
+### UTKAST-26: nå tomt utkast och bevara meddelandet före första skickandet
+
+**Syfte:** Skilja öppning och utkastgranskning från faktisk samtalsanvändning.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+
+**Förutsättningar:** Starta en ny provinstallation med tillägget
+`--with-model --empty`. Den använder en kontrollerad, syntetisk leverantör
+och börjar med ett tomt utkast.
+
+**Integrationstest:**
+[draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
+testfallet “UTKAST-26: empty and type-only drafts preserve unsent text and
+first send asks consent once”.
+
+**Steg:**
+
+1. Öppna **Skriv till Skyttel** och **Visa utkastet**. Läs tomt utkast.
+2. Skriv **Behåll å, ä och ö i mitt meddelande**, stäng textvyn,
+   besök Tabell och öppna textvyn igen.
+3. Välj **Skicka**, godkänn medgivandet och invänta **Ett provsvar.**
+4. Lägg en ny objekttyp i utkastet via Inställningar → Typer och egna
+   fält. Återgå till hushållsarbetet och öppna **Utkast**.
+
+**Förväntat resultat:**
+
+- Tomt utkast är åtkomligt även när verktygsfältets Utkast-ikon saknas.
+  Öppning startar inget samtal och begär inget medgivande.
+- Oskickad text finns kvar efter stängning och vybyte. Första Skicka
+  kräver medgivande, skickar exakt meddelandet en gång och tömmer fältet
+  efter bekräftat mottagande.
+- Ett förslag som endast gäller en typ visar den avskilda Utkast-ikonen.
+  Den öppnar hela utkastet direkt även utan synliga kartförslag.
 
 ### UTKAST-01: återuppta en konflikt och spara oberoende förslag tillsammans
 

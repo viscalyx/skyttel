@@ -21,11 +21,21 @@ const lookup = (page: Page) => ({
 const steps = (page: Page) =>
   conversationSteps<Locator>({
     ...lookup(page),
+    startText: () => viewStart(page),
+    started: () =>
+      expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
+        'data-session-active',
+        'true',
+      ),
     tool: (name) => utilityButton(page, name),
     expanded: async (control) => (await control.getAttribute('aria-expanded')) === 'true',
     tick: (control) => control.check(),
     press: (control) => control.click(),
   });
+const viewStart = (page: Page) =>
+  page
+    .getByRole('region', { name: 'Skriv till Skyttel', exact: true })
+    .getByRole('button', { name: 'Nytt samtal', exact: true });
 
 export const consentBoxFor = (page: Page) => consentBoxControls(lookup(page));
 export const giveConversationConsent = (page: Page, consent?: { remember?: boolean }) =>

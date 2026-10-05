@@ -11,8 +11,8 @@ import { conversationConsentTextVersion } from '../../src/shared/conversation-co
 export const approvedForVisit = { consent: { textVersion: conversationConsentTextVersion } };
 
 // The toolbar's two conversation buttons. The chosen one decides whether the
-// conversation starts with voice or with text. The text button then opens and
-// closes the text view.
+// conversation starts with voice. The text button opens and closes the text
+// view; actual text use starts with Skicka or its existing Nytt samtal control.
 export const conversationTools = {
   voice: 'Prata med Skyttel',
   text: 'Skriv till Skyttel',
@@ -42,6 +42,9 @@ export interface ConsentBoxLookup<Control> {
 }
 
 export interface ConversationControls<Control> extends ConsentBoxLookup<Control> {
+  /** Starts actual conversation use from the open text view. */
+  startText(): Control | Promise<Control>;
+  started?(): Promise<unknown>;
   /** A button in the toolbar. */
   tool(name: string): Control | Promise<Control>;
   /** Waits for the consent box, where a lookup does not wait by itself. */
@@ -77,16 +80,16 @@ export function conversationSteps<Control>(ui: ConversationControls<Control>) {
     // then the consent box.
     async startConversationWithText(consent?: { remember?: boolean }) {
       await choose('text');
+      await ui.press(await ui.startText());
       await giveConversationConsent(consent);
+      await ui.started?.();
     },
     async startConversationWithVoice(consent?: { remember?: boolean }) {
       await choose('voice');
       await giveConversationConsent(consent);
     },
-    // The toolbar's buttons alone. They show the consent box when no consent is
-    // valid. Otherwise the text button starts the conversation or shows the one
-    // that is going on, and the voice button starts the voice, cancels its start
-    // or turns the microphone on or off.
+    // The text entry opens the view independently of consent. The voice entry
+    // requests consent or starts voice, cancels its start, or toggles capture.
     chooseConversationText: () => choose('text'),
     chooseConversationVoice: () => choose('voice'),
     // The text view, open or closed whatever it was before.

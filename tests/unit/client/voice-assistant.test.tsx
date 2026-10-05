@@ -3,7 +3,6 @@ import { userEvent } from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import {
-  chooseConversationText,
   openConversationText,
   queryConsentBox,
   startConversationWithVoice,
@@ -730,9 +729,9 @@ test.each(['a new conversation', 'revoked access'])(
     const emptied = 'Här visas det du och Skyttel säger och skriver.';
     await waitFor(() => expect(log.textContent).toBe(emptied));
     if (ending === 'revoked access') {
-      expect(newConversation().disabled).toBe(true);
+      expect(newConversation().disabled).toBe(false);
       // The consent for the visit still applies, so the next conversation starts directly.
-      await chooseConversationText();
+      await userEvent.click(newConversation());
       await waitFor(() => expect(newConversation().disabled).toBe(false));
     }
     expect(queryConsentBox()).toBeNull();
@@ -778,7 +777,7 @@ test('a voice poll answered after access is revoked cannot reopen the conversati
   });
   expect(screen.getByRole('alert').textContent).toBe('Åtkomsten har upphört.');
   expect((screen.getByRole('button', { name: 'Nytt samtal' }) as HTMLButtonElement).disabled).toBe(
-    true,
+    false,
   );
   expect(screen.getByRole('region', { name: 'Arbetsyta' }).dataset.sessionActive).toBe('false');
 });

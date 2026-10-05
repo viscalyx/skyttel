@@ -1,0 +1,124 @@
+import { type APIRequestContext, expect } from '@playwright/test';
+import type { MapState } from '../../src/shared/map.js';
+import { createHousehold, signIn } from './client.js';
+
+/** Public HTTP preparation shared by automated and manual draft review. */
+export async function prepareDraftReview(client: APIRequestContext, origin: string) {
+  await signIn(client, origin);
+  const { household } = await (await createHousehold(client, origin, 'Utkastgranskning')).json();
+  const path = `${origin}/api/households/${household.id}/map`;
+  const read = async (): Promise<MapState> => (await client.get(path)).json();
+  const post = async (route: string, data: object) => {
+    const current = await read();
+    const response = await client.post(`${path}/${route}`, {
+      headers: { origin },
+      data: { version: current.draft.version, contentVersion: current.contentVersion, ...data },
+    });
+    expect(response.status(), await response.text()).toBe(200);
+    return response.json();
+  };
+  const field = {
+    id: 'serial',
+    name: 'Ramnummer',
+    description: 'Hela ramnumret.',
+    kind: 'text',
+    sectionId: '',
+  };
+  await post('object-type', {
+    id: 'draft-vehicle',
+    baseRevision: null,
+    value: { name: 'Utkastfordon', description: 'Fordon för granskning', fields: [field] },
+  });
+  await post('relationship-type', {
+    id: 'draft-uses',
+    baseRevision: null,
+    value: {
+      name: 'Granskar',
+      description: 'Samband för granskning',
+      forwardLabel: 'granskar',
+      reverseLabel: 'granskas av',
+      fields: [{ ...field, id: 'note', name: 'Dold anteckning' }],
+    },
+  });
+  await post('draft', {
+    id: 'draft-bike',
+    baseRevision: null,
+    value: {
+      typeId: 'draft-vehicle',
+      name: 'Blå cykel',
+      description: 'Hela den sparade beskrivningen',
+      customValues: { serial: 'SPARAT-17' },
+      financialFacts: { debt: { knowledge: 'none' } },
+    },
+  });
+  await post('save', { operationId: 'draft-review-setup' });
+  const saved = await read();
+  const bike = saved.objects.find((object) => object.id === 'draft-bike');
+  const type = saved.types.find((type) => type.id === 'draft-vehicle');
+  const relationshipType = saved.relationshipTypes.find((type) => type.id === 'draft-uses');
+  if (!bike || !type || !relationshipType) throw new Error('Missing saved draft-review data');
+  await post('draft', {
+    id: bike.id,
+    baseRevision: bike.revision,
+    value: {
+      ...bike,
+      name: 'Alex blå cykel',
+      description: 'Fullständig föreslagen beskrivning',
+      customValues: { serial: 'FÖRESLAGET-42' },
+      financialFacts: {
+        debt: { knowledge: 'unknown' },
+        creditLimit: { knowledge: 'uncertain', value: '500 SEK', reportedOn: '2026-01-01' },
+      },
+    },
+  });
+  await post('draft', {
+    id: 'draft-unspecified',
+    baseRevision: null,
+    value: {
+      typeId: type.id,
+      name: 'Ospecificerat fordon',
+      description: '',
+      identity: 'unspecified',
+    },
+  });
+  await post('draft', {
+    id: 'draft-unresolved',
+    baseRevision: null,
+    value: { typeId: type.id, name: 'Olöst fordon', description: '', identity: 'unresolved' },
+  });
+  for (const knowledge of ['known', 'unknown', 'none', 'uncertain', 'unresolved'])
+    await post('relationship', {
+      id: `draft-edge-${knowledge}`,
+      baseRevision: null,
+      value: {
+        typeId: relationshipType.id,
+        sourceId:
+          knowledge === 'unresolved' || knowledge === 'uncertain' ? 'draft-unspecified' : bike.id,
+        targetId:
+          knowledge === 'known' ? 'draft-unspecified' : knowledge === 'uncertain' ? bike.id : null,
+        knowledge,
+        customValues: { note: `Hela dolda uppgiften ${knowledge}` },
+      },
+    });
+  await post('object-type', {
+    id: type.id,
+    baseRevision: type.revision,
+    value: {
+      ...type,
+      description: 'Föreslagen typbeskrivning',
+      fields: [{ ...field, description: 'Föreslagen fältbeskrivning' }],
+    },
+  });
+  await post('relationship-type', {
+    id: relationshipType.id,
+    baseRevision: relationshipType.revision,
+    value: {
+      name: relationshipType.name,
+      description: relationshipType.description,
+      fields: relationshipType.fields,
+      forwardLabel: relationshipType.forwardLabel,
+      reverseLabel: 'kontrolleras av',
+    },
+  });
+  return { household, path, read, post };
+}

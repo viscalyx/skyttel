@@ -49,6 +49,14 @@ export const {
   chooseConversationVoice,
 } = conversationSteps<HTMLElement>({
   ...lookup,
+  startText: () => shown(() => screen.getByRole('button', { name: 'Nytt samtal' })),
+  started: () =>
+    shown(() => {
+      const workspace = screen.getByRole('region', { name: 'Arbetsyta' });
+      if (workspace.getAttribute('data-session-active') !== 'true')
+        throw new Error('Conversation has not started');
+      return workspace;
+    }),
   tool: (name) =>
     shown(() =>
       screen.getByRole('button', {

@@ -355,7 +355,9 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   rätta hyra, skuld och kredit, separata roller kring bostad och fordon,
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
   kommando förbereder äldre provdata för uppgraderingen.
-- [Privata utkast](drafts.md): filtrerad teckenförklaring med kartans färger,
+- [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
+  utan AI eller medgivande, tomt utkast och bevarat första meddelande;
+  filtrerad teckenförklaring med kartans färger,
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
   utkast, hantera gamla kastförsök
   och konfliktval samt granska samtidiga ändringar, dubbletter och

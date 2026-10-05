@@ -58,7 +58,8 @@ och eftervärden”.
    Kim tas bort. Skapa objekttypen **Provtyp** i Inställningar och ett
    **Nytt objekt** av denna typ. Byt sambandets mål till
    `musik@example.test`. Lämna de fem ändringarna osparade.
-3. Välj **Skriv till Skyttel** och godkänn medgivandet. Läs antalet på
+3. Välj **Skriv till Skyttel**, **Nytt samtal** och godkänn medgivandet.
+   Läs antalet på
    **Visa utkastet**. Öppna utkastet och läs varje rad.
 4. Välj **Dölj utkastet**, stäng och öppna textvyn och kontrollera att
    utkastet fortfarande är hopfällt. Öppna utkastet och välj **Nytt samtal**.

@@ -36,6 +36,9 @@ export type ConversationPresentation = {
   textViewHidden?: boolean;
   textFocusRequest?: number;
   onDraftOpenChange?: (open: boolean) => void;
+  draftOpenRequest?: number;
+  draftContent?: ReactNode;
+  onStartConversation?: (chosen: HTMLElement | null) => void;
   onCloseTextView?: () => void;
   householdId: string;
   notice?: ReactNode;
@@ -69,6 +72,9 @@ export function ConversationWorkspace({
   textViewHidden = false,
   textFocusRequest,
   onDraftOpenChange,
+  draftOpenRequest,
+  draftContent,
+  onStartConversation,
   onCloseTextView,
   draftFeedback,
   notice,
@@ -96,6 +102,12 @@ export function ConversationWorkspace({
   const visibleDraft = draft && (!review || draft.version >= review.version) ? draft : review;
   const count = draftCount(visibleDraft);
   const [draftOpen, setDraftOpen] = useState(false);
+  useLayoutEffect(() => {
+    if (draftOpenRequest) {
+      manuallyToggled.current = true;
+      setDraftOpen(true);
+    }
+  }, [draftOpenRequest]);
   useLayoutEffect(() => onDraftOpenChange?.(draftOpen), [draftOpen, onDraftOpenChange]);
   const manuallyToggled = useRef(false);
   const resetRow = conversation.transcript[0]?.id.startsWith('new-')
@@ -106,10 +118,12 @@ export function ConversationWorkspace({
   const previousConversation = useRef('');
   useEffect(() => {
     if (previousConversation.current !== conversationKey) {
+      const keepManualReview =
+        manuallyToggled.current && !previousConversation.current && Boolean(session);
       previousConversation.current = conversationKey;
-      manuallyToggled.current = false;
+      if (!keepManualReview) manuallyToggled.current = false;
       initialChoice.current = null;
-      setDraftOpen(false);
+      if (!keepManualReview) setDraftOpen(false);
     }
     if (!session || !preferencesKnown) return;
     initialChoice.current ??= showDraftOnStart;
@@ -158,6 +172,7 @@ export function ConversationWorkspace({
       {textViewOpen && (
         <TextView
           conversation={conversation}
+          onStartConversation={onStartConversation}
           widthPreferences={widthPreferences}
           hidden={!workVisible || textViewHidden}
           focusRequest={textFocusRequest}
@@ -168,7 +183,7 @@ export function ConversationWorkspace({
             manuallyToggled.current = true;
             setDraftOpen(!draftOpen);
           }}
-          draftContent={<ConversationDraft draft={visibleDraft} />}
+          draftContent={draftContent ?? <ConversationDraft draft={visibleDraft} />}
           notice={notice}
         >
           {!notice && conversation.error && <p role="alert">{conversation.error}</p>}

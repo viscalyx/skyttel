@@ -1,4 +1,4 @@
-import { type ReactNode, useId, useLayoutEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef } from 'react';
 import {
   conversationWidths,
   defaultConversationPreferences,
@@ -28,6 +28,7 @@ export function TextView({
   onToggleDraft,
   draftContent,
   widthPreferences,
+  onStartConversation,
 }: {
   conversation: Conversation;
   hidden?: boolean;
@@ -42,6 +43,7 @@ export function TextView({
   onToggleDraft?: () => void;
   draftContent?: ReactNode;
   widthPreferences?: ReturnType<typeof useConversationPreferences>;
+  onStartConversation?: (chosen: HTMLElement | null) => void;
 }) {
   const { session, transcript, text, pending, unknown, working } = conversation;
   const viewport = useConversationViewport();
@@ -65,6 +67,22 @@ export function TextView({
   const field = useRef<HTMLTextAreaElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
+  const firstMessage = useRef<{ text: string; asked: boolean } | null>(null);
+  useEffect(() => {
+    const first = firstMessage.current;
+    if (!first) return;
+    if (conversation.consent.asking) first.asked = true;
+    if (session) {
+      firstMessage.current = null;
+      if (conversation.text === first.text) void conversation.send(computer);
+    } else if (
+      (first.asked && !conversation.consent.asking && !conversation.consent.valid && !pending) ||
+      conversation.error ||
+      conversation.inputBlocked
+    ) {
+      firstMessage.current = null;
+    }
+  }, [conversation, session, pending, computer]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: Only an explicit text-view request moves focus; resizing must preserve the current control.
   useLayoutEffect(() => {
     // On a computer the message field gets the focus when the text view opens.
@@ -89,14 +107,25 @@ export function TextView({
   }, [stop]);
   const blocked =
     conversation.inputBlocked ||
-    !session ||
     pending ||
     unknown ||
-    session.phase === 'recovery' ||
-    session.contextSummaryState === 'summarizing' ||
+    session?.phase === 'recovery' ||
+    session?.contextSummaryState === 'summarizing' ||
     !text.trim();
+  function startConversation() {
+    if (onStartConversation)
+      onStartConversation(
+        document.activeElement instanceof HTMLElement ? document.activeElement : null,
+      );
+    else conversation.begin('text');
+  }
   function send() {
     if (blocked || stop) return;
+    if (!session) {
+      firstMessage.current = { text, asked: false };
+      startConversation();
+      return;
+    }
     void conversation.send(computer);
     // The message field keeps the focus, also after a click on Skicka.
     field.current?.focus();
@@ -129,8 +158,8 @@ export function TextView({
             <button
               type="button"
               className="text-view-new"
-              disabled={!session}
-              onClick={() => void conversation.newConversation()}
+              disabled={conversation.inputBlocked || pending}
+              onClick={() => (session ? void conversation.newConversation() : startConversation())}
             >
               Nytt samtal
             </button>

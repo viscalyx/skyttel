@@ -94,10 +94,12 @@ export type Conversation = {
 
 /**
  * A conversation is ongoing when the transcript has content, the microphone
- * is on or starting, Skyttel is working or speaking, or the text view is open.
+ * is on or starting, Skyttel is working or speaking, or an established
+ * conversation's text view is open. Opening the text view alone starts nothing.
  */
 export function conversationOngoing(
   conversation: Pick<Conversation, 'transcript' | 'working'> & {
+    session?: Conversation['session'];
     voice: Pick<Voice, 'microphone' | 'starting' | 'speaking' | 'phase'>;
   },
   textViewOpen: boolean,
@@ -110,7 +112,7 @@ export function conversationOngoing(
     conversation.working ||
     voice.phase === 'working' ||
     voice.speaking ||
-    textViewOpen
+    (textViewOpen && Boolean(conversation.session))
   );
 }
 

@@ -26,6 +26,7 @@ import {
 import { mergeFor } from '../shared/object-merge.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
+import { DraftReview } from './DraftReview.js';
 import { DraftStatus } from './DraftStatus.js';
 import { useFloatingArea } from './floating-windows.js';
 import {
@@ -313,6 +314,7 @@ export function HouseholdMap({
   const [workspaceView, setWorkspaceView] = useState<'forms' | 'navigation' | 'text'>('forms');
   const [textFocusRequest, setTextFocusRequest] = useState(0);
   const [draftViewOpen, setDraftViewOpen] = useState(false);
+  const [draftOpenRequest, setDraftOpenRequest] = useState(0);
   const workOpen = openPanels.length > 0 && (presentation !== 'map' || detailsOpen || editorOpen);
   const viewport = useConversationViewport();
   const { narrow } = viewport;
@@ -346,7 +348,7 @@ export function HouseholdMap({
   /** How a target starts a conversation that is not yet going on. Null when it starts none. */
   function conversationStart(target: WorkspaceTarget): ConversationMode | null {
     if (conversation.session) return null;
-    return target === 'voice' ? 'voice' : target === 'conversation' ? 'text' : null;
+    return target === 'voice' ? 'voice' : null;
   }
   function openWork(target: WorkspaceTarget, chosen?: HTMLElement) {
     if (target === 'map' || target === 'table') {
@@ -367,11 +369,7 @@ export function HouseholdMap({
     }
     workTrigger.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    if (
-      (target === 'voice' || target === 'conversation') &&
-      conversation.inputBlocked &&
-      (target === 'voice' || !ongoing)
-    ) {
+    if (target === 'voice' && conversation.inputBlocked && (target === 'voice' || !ongoing)) {
       conversation.showNotice?.();
       return;
     }
@@ -389,17 +387,18 @@ export function HouseholdMap({
       return;
     }
     if (target === 'conversation') {
+      if (conversation.inputBlocked) conversation.showNotice?.();
       // The text button opens and closes the text view.
       if (textViewVisible) closeTextView();
       else showConversation();
       return;
     }
-    openPanel(
-      'work',
-      target === 'draft'
-        ? document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title')
-        : undefined,
-    );
+    if (target === 'draft') {
+      showConversation();
+      setDraftOpenRequest((previous) => previous + 1);
+      return;
+    }
+    openPanel('work');
   }
   // Closing the text view ends nothing: the conversation, the microphone and
   // the unsent text stay.
@@ -1596,6 +1595,7 @@ export function HouseholdMap({
             }}
             voiceBox={voiceBox}
             textViewOpen={textViewVisible}
+            hasDraft={hasChanges}
             textButton={textButton}
             cameraMount={setCameraMount}
             expanded={toolsExpanded}
@@ -1999,6 +1999,12 @@ export function HouseholdMap({
           textViewHidden={!textViewVisible}
           textFocusRequest={textFocusRequest}
           onDraftOpenChange={setDraftViewOpen}
+          draftOpenRequest={draftOpenRequest}
+          onStartConversation={(chosen) => {
+            conversationChoice.current = chosen;
+            conversation.begin('text');
+          }}
+          draftContent={<DraftReview state={state} blocked={pending || blocked} />}
           draft={state.draft}
           showDraftOnStart={conversationPreferences.preferences.showDraftOnStart}
           preferencesKnown={conversationPreferences.known}

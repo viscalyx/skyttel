@@ -3,10 +3,11 @@
 [Till användarguidens innehåll](README.md)
 
 Välj **Prata med Skyttel** eller **Skriv till Skyttel** i hushållets karta.
-**Prata med Skyttel** startar samtalet med mikrofonen, och
-**Skriv till Skyttel** startar det med text. Utan giltigt medgivande visas
-först [medgivanderutan](#medgivande). Om samtalet inte är tillgängligt
-fungerar kartans formulär.
+**Prata med Skyttel** startar samtalet med mikrofonen.
+**Skriv till Skyttel** öppnar textvyn utan att starta samtal.
+Första **Skicka** eller **Nytt samtal** börjar samtalet med text; utan
+giltigt medgivande visas först [medgivanderutan](#medgivande).
+Utkastets granskning och kartans formulär fungerar även när samtal saknas.
 
 ## Medgivande
 
@@ -15,8 +16,8 @@ förklarar att tal från långt tryck kan skickas efter släpp, medan ny
 inspelning stängs av direkt. Ett sparat medgivande för version 1 behöver
 godkännas på nytt. Samma medgivande
 gäller röst och text. Medgivanderutan **Samtal med Skyttel** visas när du
-väljer en samtalsknapp i verktygsraden eller snabblänken
-**Till samtalet med Skyttel**.
+väljer **Prata med Skyttel** eller börjar använda samtalet i textvyn.
+Att bara öppna textvyn eller läsa utkastet kräver inget medgivande.
 **Information och hjälp** i verktygsraden förklarar röst, text, långt tryck,
 tangentkombinationen och hur uppgifterna behandlas.
 
@@ -127,7 +128,8 @@ samtalstexten och meddelandefältet **Meddelande till Skyttel**.
   också. Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
 - **Stäng textvyn** eller **Skriv till Skyttel** stänger textvyn. Samtalet,
   mikrofonen och din oskickade text finns kvar tills du öppnar den igen.
-- **Nytt samtal** tömmer samtalstexten och kontexten och stoppar pågående
+- **Nytt samtal** börjar ett samtal om inget finns. I ett pågående samtal
+  tömmer det samtalstexten och kontexten och stoppar pågående
   arbete. Mikrofonen behåller sitt läge, och ditt
   utkast och din oskickade text finns kvar. Skyttel säger hur många
   osparade ändringar som ligger kvar i utkastet.

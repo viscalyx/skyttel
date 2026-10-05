@@ -179,6 +179,7 @@ const quiet: Parameters<typeof conversationOngoing>[0] = {
 
 test('no conversation is ongoing while nothing is said, heard, in progress or shown', () => {
   expect(conversationOngoing(quiet, false)).toBe(false);
+  expect(conversationOngoing({ ...quiet, session: null }, true)).toBe(false);
   expect(
     conversationOngoing({ ...quiet, voice: { ...quiet.voice, phase: 'listening' } }, false),
   ).toBe(false);
@@ -199,7 +200,7 @@ test.each<[string, typeof quiet, boolean]>([
     false,
   ],
   ['Skyttel speaks', { ...quiet, voice: { ...quiet.voice, speaking: true } }, false],
-  ['the text view is open', quiet, true],
+  ['the text view of an active conversation is open', { ...quiet, session: session() }, true],
 ])('a conversation is ongoing when %s', (_reason, conversation, textViewOpen) => {
   expect(conversationOngoing(conversation, textViewOpen)).toBe(true);
 });

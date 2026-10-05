@@ -37,10 +37,14 @@ export function StandaloneConversation({
   const chosen = useRef<HTMLElement | null>(null);
   const microphone = useRef<HTMLButtonElement>(null);
   const [textViewOpen, setTextViewOpen] = useState(false);
+  const [focusRequest, setFocusRequest] = useState(0);
   const conversation = useConversation({
     householdId: presentation.householdId,
     onStarted: (mode) => {
-      if (mode === 'text') setTextViewOpen(true);
+      if (mode === 'text') {
+        setTextViewOpen(true);
+        setFocusRequest((value) => value + 1);
+      }
     },
     onMapChange,
     onAccessLost,
@@ -106,8 +110,10 @@ export function StandaloneConversation({
             // In a conversation that is going on, the voice button is the microphone.
             if (mode === 'voice' && conversation.session && !conversation.inputBlocked)
               voice.activate();
-            else if (conversation.session) setTextViewOpen(!textViewOpen);
-            else conversation.begin(mode);
+            else if (mode === 'text') {
+              if (conversation.inputBlocked) conversation.showNotice?.();
+              setTextViewOpen(!textViewOpen);
+            } else conversation.begin(mode);
           }}
         >
           {conversationTools[mode]}
@@ -124,6 +130,11 @@ export function StandaloneConversation({
         conversation={conversation}
         notice={notice}
         textViewOpen={textViewOpen}
+        textFocusRequest={focusRequest}
+        onStartConversation={(control) => {
+          chosen.current = control;
+          conversation.begin('text');
+        }}
         onCloseTextView={() => setTextViewOpen(false)}
         {...presentation}
       />

@@ -100,8 +100,10 @@ test('the shared workspace keeps the map available before consent', async () => 
     'Kartan är tillgänglig',
   );
   expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
-  // Nothing starts before the consent: a conversation button only asks for it.
+  // Opening the text view starts nothing; actual use asks for consent.
   await openConversationText();
+  expect(queryConsentBox()).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt samtal' }));
   expect(await findConsentBox()).toBeDefined();
   expect(requests.every((request) => request.startsWith('GET '))).toBe(true);
 });
@@ -386,9 +388,9 @@ test('a working task can be cancelled and an expired session clears private text
     await screen.findByText(/Samtalet har avslutats eller innehållet har ersatts/),
   ).toBeDefined();
   expect(screen.queryByDisplayValue('Privat nästa meddelande')).toBeNull();
-  // Without a conversation there is nothing to send to and nothing to start over.
+  // An expired conversation permits an explicit new start; empty text cannot send.
   expect((screen.getByRole('button', { name: 'Nytt samtal' }) as HTMLButtonElement).disabled).toBe(
-    true,
+    false,
   );
   expect((screen.getByRole('button', { name: 'Skicka' }) as HTMLButtonElement).disabled).toBe(true);
   expect(lost).not.toHaveBeenCalled();
@@ -411,7 +413,7 @@ test.each([false, 'unreachable'])(
         ? 'Ingen kontakt med Skyttel. Försök igen när kontakten är tillbaka.'
         : 'Samtal med Skyttel är inte tillgängligt just nu.',
     );
-    expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
+    expect(screen.getByRole('region', { name: 'Skriv till Skyttel' })).toBeDefined();
   },
 );
 
@@ -430,7 +432,11 @@ test('closing the panel during connection creation stops the late session', asyn
     return Response.json({ available: true });
   });
   const panel = showAssistant();
-  await startConversationWithText();
+  await openConversationText();
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt samtal' }));
+  await userEvent.click(
+    within(await findConsentBox()).getByRole('button', { name: 'Godkänn och starta' }),
+  );
   panel.unmount();
   await act(async () => release(Response.json(session())));
   expect(stopped).toHaveBeenCalledExactlyOnceWith(`${path}/session/stop`);
