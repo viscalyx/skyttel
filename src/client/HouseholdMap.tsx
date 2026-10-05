@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { conversationWidths } from '../shared/conversation-preferences.js';
 import {
@@ -17,7 +17,6 @@ import type {
   RelationshipType,
   RelationshipValue,
   SaveOperation,
-  SaveReceipt,
 } from '../shared/map.js';
 import {
   proposedObjectTypes,
@@ -52,17 +51,10 @@ import { PagedList } from './PagedList.js';
 import { ProfileImage } from './ProfileImage.js';
 import { RelationshipEditor, relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeDetails, RelationshipTypeEditor } from './RelationshipTypes.js';
-import {
-  checkOperation,
-  checkSaveIdentity,
-  receiptMessage,
-  rejectionMessage,
-  type SaveAttempt,
-  SaveOperations,
-} from './SaveOperations.js';
+import { rejectionMessage, SaveOperations } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
 import { ConversationWorkspace, conversationFeedback } from './TextAssistant.js';
-import { useSaveToast } from './use-save-toast.js';
+import { useHouseholdWork } from './use-household-work.js';
 import { VoiceBox, VoiceStatusAnnouncements } from './VoiceBox.js';
 import { type PanelAnchor, type PanelFocusRequest, WorkspacePanels } from './WorkspacePanels.js';
 import {
@@ -75,32 +67,13 @@ import './workspace.css';
 import './workspace-panels.css';
 import './map-legend.css';
 import './text-view.css';
-import { type ConversationMode, conversationOngoing, useConversation } from './use-conversation.js';
-import { useConversationPreferences } from './use-conversation-preferences.js';
+import { type ConversationMode, conversationOngoing } from './use-conversation.js';
 import { useConversationViewport } from './use-conversation-viewport.js';
-import { usePersonalView } from './use-personal-view.js';
 import { useTextButtonStatus } from './use-text-button-status.js';
 import { useWorkspaceTheme, WorkspaceTheme } from './WorkspaceTheme.js';
 
 function draftEntryId(kind: DraftConflict['kind'], id: string) {
   return `draft-entry-${kind}-${id}`;
-}
-
-function checkOperations(operations: SaveOperation[], householdId: string, current: MapState) {
-  for (const operation of operations)
-    checkOperation(operation, {
-      operationId: operation.operationId,
-      version: operation.draftVersion,
-      contentVersion: current.contentVersion,
-      householdId,
-      userId: current.userId,
-    });
-}
-
-async function readOperations(path: string, householdId: string, current: MapState) {
-  const result = await request<{ operations: SaveOperation[] }>(`${path}/operations`);
-  checkOperations(result.operations, householdId, current);
-  return result.operations;
 }
 
 export function HouseholdMap({
@@ -137,21 +110,77 @@ export function HouseholdMap({
     const target = typeSettingsTarget ?? typeSlot.current;
     if (target && typeHost.parentElement !== target) target.append(typeHost);
   });
-  const path = `/api/households/${encodeURIComponent(householdId)}/map`;
-  const [state, setState] = useState<MapState | null>(null);
-  const initialContentVersion = useRef<number | null>(null);
-  const loadedContentVersion = state?.contentVersion;
-  useEffect(() => {
-    if (loadedContentVersion === undefined) return;
-    initialContentVersion.current ??= loadedContentVersion;
-    // The shared map can open before personal positions arrive. Either read
-    // can discover a replacement, which ends this entire work lifetime.
-    if (
-      loadedContentVersion > initialContentVersion.current ||
-      (contentVersion ?? 0) > initialContentVersion.current
-    )
-      onContentReplaced?.();
-  }, [loadedContentVersion, contentVersion, onContentReplaced]);
+  const {
+    path,
+    state,
+    setState,
+    pending,
+    setPending,
+    blocked,
+    setBlocked,
+    error,
+    errorDetails,
+    setError,
+    status,
+    setStatus,
+    saveToast,
+    saveAttempt,
+    operations,
+    setLoad,
+    save,
+    loseAccess,
+    conversation,
+    conversationPreferences,
+    personal,
+    browsing,
+    setBrowsing,
+    selection,
+    setSelection,
+    selectedIds,
+    focusId,
+    setFocusId,
+    mapUnfiltered,
+    setMapUnfiltered,
+    cameraFocusRequest,
+    setCameraFocusRequest,
+    isCurrent,
+  } = useHouseholdWork({
+    householdId,
+    contentVersion,
+    onContentReplaced,
+    onAccessLost: () => {
+      revealAbort.current?.abort();
+      setPresentation('list');
+      setDetailsOpen(false);
+      setEditorOpen(false);
+      setObjectPanels([]);
+      setObjectDirty({});
+      setOpenPanels([]);
+      setMergeOpen(false);
+      setEdgeEditor(null);
+      setTypeEditor(null);
+      setEdgeTypeEditor(null);
+      setDirty(false);
+    },
+    onSaved: () => {
+      if (!dirty) {
+        setEdgeEditor(null);
+        setTypeEditor(null);
+        setEdgeTypeEditor(null);
+      }
+    },
+    onSaveRefreshed: () => {
+      if (!dirty) newButton.current?.focus();
+    },
+    onConversationStarted: (mode) => {
+      if (mode === 'text') showConversation();
+    },
+    onConversationEnded: () => {
+      if (document.activeElement?.closest('.text-view')) closeTextView();
+      else setTextViewOpen(false);
+    },
+    onSelectItem: (target, signal) => revealAssistantItem(target, signal),
+  });
   const [mergeOpen, setMergeOpen] = useState(false);
   const [mergeGeneration, setMergeGeneration] = useState(1);
   const [objectPanels, setObjectPanels] = useState<
@@ -250,11 +279,6 @@ export function HouseholdMap({
   });
   const [revealRequest, setRevealRequest] = useState<MapRevealRequest>();
   const [mapAvailable, setMapAvailable] = useState(true);
-  const [mapUnfiltered, setMapUnfiltered] = useState(false);
-  const [cameraFocusRequest, setCameraFocusRequest] = useState<{
-    id: string;
-    objectIds: string[];
-  }>();
   const [cameraMount, setCameraMount] = useState<HTMLDivElement | null>(null);
   const [toolsExpanded, setToolsExpanded] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
@@ -267,7 +291,6 @@ export function HouseholdMap({
   const [workspaceView, setWorkspaceView] = useState<'forms' | 'navigation' | 'text'>('forms');
   const [textFocusRequest, setTextFocusRequest] = useState(0);
   const [draftViewOpen, setDraftViewOpen] = useState(false);
-  const conversationPreferences = useConversationPreferences(path);
   const workOpen = openPanels.length > 0 && (presentation !== 'map' || detailsOpen || editorOpen);
   const viewport = useConversationViewport();
   const { narrow } = viewport;
@@ -351,31 +374,7 @@ export function HouseholdMap({
   }
   const [legacyDirty, setDirty] = useState(false);
   const dirty = legacyDirty || Object.values(objectDirty).some(Boolean);
-  const [browsing, setBrowsing] = useState(initialObjectBrowsing);
   const { query, types: typeFilter, onlySelected, sort } = browsing;
-  const [focusId, setFocusId] = useState<string | null>(null);
-  const [selection, setSelection] = useState<{
-    kind: 'object' | 'relationship';
-    id: string;
-    ids?: string[];
-    previous?: boolean;
-  } | null>(null);
-  const selectedIds = useMemo(
-    () => (selection?.kind === 'object' ? (selection.ids ?? [selection.id]) : []),
-    [selection],
-  );
-  const [pending, setPending] = useState(false);
-  const [blocked, setBlocked] = useState(false);
-  const [errorDetails, setErrorDetails] = useState<{
-    message: string;
-    imageObjectId?: string;
-  }>({ message: '' });
-  const error = errorDetails.message;
-  const setError = useCallback((message: string, imageObjectId?: string) => {
-    setErrorDetails({ message, imageObjectId });
-  }, []);
-  const [status, setStatus] = useState('');
-  const saveToast = useSaveToast();
   const [conflictLinksOpen, setConflictLinksOpen] = useState(false);
   function returnFromStatus() {
     routeOutsideFocus.current = null;
@@ -530,8 +529,6 @@ export function HouseholdMap({
   useEffect(() => {
     if (!state && error) workspace.current?.focus();
   }, [state, error]);
-  const saveAttempt = useRef<SaveAttempt | null>(null);
-  const [operations, setOperations] = useState<SaveOperation[]>([]);
   useLayoutEffect(() => {
     if (active && editorOpen && hasMap) {
       editorDialog.current?.querySelector<HTMLSelectElement>('#relationship-source')?.focus();
@@ -560,115 +557,6 @@ export function HouseholdMap({
     if (mergeOpen)
       setPanelFocusRequest({ id: 'work', element: document.getElementById('merge-title') });
   }, [mergeOpen]);
-  const [load, setLoad] = useState(0);
-
-  const loseAccess = useCallback(() => {
-    revealAbort.current?.abort();
-    setPresentation('list');
-    setDetailsOpen(false);
-    setEditorOpen(false);
-    setSelection(null);
-    setFocusId(null);
-    setCameraFocusRequest(undefined);
-    setBrowsing(initialObjectBrowsing);
-    setMapUnfiltered(false);
-    setState(null);
-    setObjectPanels([]);
-    setObjectDirty({});
-    setOpenPanels([]);
-    setMergeOpen(false);
-    setOperations([]);
-
-    setEdgeEditor(null);
-    setTypeEditor(null);
-    setEdgeTypeEditor(null);
-    setDirty(false);
-    saveAttempt.current = null;
-    setStatus('');
-    setError('Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.');
-  }, [setError]);
-  const personal = usePersonalView(path, loseAccess);
-
-  useEffect(() => {
-    let active = true;
-    let confirmed = false;
-    setPending(true);
-    void (async () => {
-      const result = await request<{ operations: SaveOperation[] }>(`${path}/operations`);
-      const attempt = saveAttempt.current;
-      const operation = attempt
-        ? (
-            await request<{ operation: SaveOperation | null }>(
-              `${path}/operations/${encodeURIComponent(attempt.operationId)}`,
-            )
-          ).operation
-        : null;
-      if (!active) return;
-      let recent = result.operations;
-      if (attempt && operation) {
-        checkOperation(operation, attempt);
-        recent = [
-          operation,
-          ...recent.filter((item) => item.operationId !== operation.operationId),
-        ];
-        if (operation.status === 'succeeded') {
-          setStatus(receiptMessage(operation.receipt));
-          saveToast.confirm(operation.operationId);
-          setOperations(recent);
-          saveAttempt.current = null;
-          confirmed = true;
-        }
-      }
-      // Read the map after the results: another client may have completed a
-      // pending save while this client was discovering its durable receipt.
-      const value = await request<MapState>(`${path}?reload=${load}`);
-      if (!active) return;
-      checkOperations(result.operations, householdId, value);
-      let message = '';
-      if (attempt) {
-        if (
-          attempt.contentVersion !== value.contentVersion ||
-          attempt.userId !== value.userId ||
-          attempt.householdId !== householdId
-        ) {
-          saveAttempt.current = null;
-          setStatus('');
-          message = rejectionMessage('content_conflict');
-        } else if (operation) {
-          if (operation.status === 'rejected') {
-            message = rejectionMessage(operation.error);
-            saveAttempt.current = null;
-          }
-        } else {
-          message =
-            'Utfallet är okänt. Inget registrerat resultat hittades. Återförsök samma sparande.';
-        }
-      }
-      const waiting = recent.some((item) => item.status === 'pending');
-      setState(value);
-      setOperations(recent);
-      setBlocked(waiting || Boolean(saveAttempt.current));
-      setError(message || (waiting ? rejectionMessage('operation_pending') : ''));
-    })()
-      .catch((failure) => {
-        if (!active) return;
-        setBlocked(true);
-        if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) loseAccess();
-        else
-          setError(
-            confirmed
-              ? 'Ändringarna är sparade enligt kvittot, men kartan kunde inte hämtas. Hämta aktuellt underlag.'
-              : 'Kartan och sparförsöken kunde inte hämtas. Försök igen.',
-          );
-      })
-      .finally(() => {
-        if (active) setPending(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [path, load, householdId, loseAccess, setError, saveToast.confirm]);
-
   useEffect(() => {
     if (!active) return;
     if (edgeEditor?.id)
@@ -716,99 +604,8 @@ export function HouseholdMap({
     });
   }
 
-  async function save(attempt: SaveAttempt, recover = false) {
-    if (!state || pending) return;
-    const saveOrigin = document.activeElement;
-    saveAttempt.current = attempt;
-    setPending(true);
-    setError('');
-    setStatus('');
-    let confirmed = false;
-    try {
-      const body = {
-        operationId: attempt.operationId,
-        version: attempt.version,
-        contentVersion: attempt.contentVersion,
-      };
-      let operation: SaveOperation | null = null;
-      if (recover) {
-        const result = await request<{ operation: SaveOperation | null }>(
-          `${path}/operations/${encodeURIComponent(attempt.operationId)}`,
-        );
-        operation = result.operation;
-      }
-      if (!operation) {
-        const result = await request<{ operation: SaveOperation }>(`${path}/operations`, body);
-        operation = result.operation;
-      }
-      checkOperation(operation, attempt);
-      setOperations((previous) => [
-        operation,
-        ...previous.filter((item) => item.operationId !== attempt.operationId),
-      ]);
-      if (operation.status === 'rejected') throw new MapRequestError(409, operation.error);
-      const receipt =
-        operation.status === 'succeeded'
-          ? operation.receipt
-          : (await request<{ receipt: SaveReceipt }>(`${path}/save`, body)).receipt;
-      checkSaveIdentity(receipt, attempt);
-      setStatus(receiptMessage(receipt));
-      saveToast.confirm(receipt.operationId);
-      setOperations((previous) =>
-        previous.map((item) =>
-          item.operationId === attempt.operationId
-            ? { ...item, status: 'succeeded', receipt }
-            : item,
-        ),
-      );
-      saveAttempt.current = null;
-      confirmed = true;
-      // Recovery can happen while an older form has unsent text. Keep that text
-      // and let its draft-version check prevent it from overwriting newer work.
-      if (!dirty) {
-        setEdgeEditor(null);
-        setTypeEditor(null);
-        setEdgeTypeEditor(null);
-      }
-      const { operations: recent } = await request<{ operations: SaveOperation[] }>(
-        `${path}/operations`,
-      );
-      const latest = await request<MapState>(path);
-      checkOperations(recent, householdId, latest);
-      setState(latest);
-      setOperations(recent);
-      setBlocked(recent.some((item) => item.status === 'pending'));
-      if (!dirty && document.activeElement === saveOrigin) newButton.current?.focus();
-    } catch (failure) {
-      setBlocked(true);
-      if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) {
-        loseAccess();
-      } else if (confirmed) {
-        setError(
-          'Ändringarna är sparade enligt kvittot, men kartan kunde inte hämtas. Hämta aktuellt underlag.',
-        );
-      } else if (failure instanceof MapRequestError && failure.status === 409) {
-        // An ID mismatch does not disprove an earlier successful save.
-        if (!['operation_conflict', 'client_outdated'].includes(failure.code))
-          saveAttempt.current = null;
-        setError(rejectionMessage(failure.code));
-        try {
-          setOperations(await readOperations(path, householdId, state));
-        } catch {
-          // Keep the received rejection visible when the follow-up read fails.
-        }
-      } else {
-        setError(
-          'Sparandet kunde inte bekräftas. Utfallet är okänt. Försök hämta samma kvitto igen.',
-        );
-      }
-    } finally {
-      setPending(false);
-    }
-  }
-
   async function changeImage(editor: ObjectEditor, file: File | null) {
-    if (!state || pending || blocked) return;
+    if (!isCurrent() || !state || pending || blocked) return;
     setPending(true);
     setStatus('');
     setError('');
@@ -830,6 +627,7 @@ export function HouseholdMap({
         },
       );
       const result = await response.json();
+      if (!isCurrent()) return;
       if (!response.ok) {
         notifyOutdatedClient(result.error);
         throw new MapRequestError(response.status, result.error);
@@ -842,6 +640,7 @@ export function HouseholdMap({
       setStatus('Bildförslaget finns i ditt privata utkast. Kartan är inte ändrad.');
       return { ...editor, value, version: draft.version };
     } catch (failure) {
+      if (!isCurrent()) return;
       if (failure instanceof MapRequestError && [401, 403].includes(failure.status)) loseAccess();
       else if (failure instanceof MapRequestError && failure.status === 413)
         setError(
@@ -864,7 +663,7 @@ export function HouseholdMap({
         );
       }
     } finally {
-      setPending(false);
+      if (isCurrent()) setPending(false);
     }
   }
 
@@ -882,7 +681,7 @@ export function HouseholdMap({
     body: unknown,
     retainObject?: (draft: MapDraft) => void,
   ) {
-    if (!state || pending || blocked) return false;
+    if (!isCurrent() || !state || pending || blocked) return false;
     const submittedFocus = document.activeElement;
     setPending(true);
     setError('');
@@ -892,8 +691,10 @@ export function HouseholdMap({
         contentVersion: state.contentVersion,
         ...(body as Record<string, unknown>),
       });
+      if (!isCurrent()) return false;
       if (draft.existingId) {
         const latest = await request<MapState>(path);
+        if (!isCurrent()) return false;
         setState(latest);
         const edge = proposedRelationships(latest.relationships, latest.draft.relationships).get(
           draft.existingId,
@@ -914,7 +715,9 @@ export function HouseholdMap({
             : 'Det befintliga sambandet har ändrats. Granska aktuellt underlag.',
         );
       } else {
-        setState(kind === 'undo' ? await request<MapState>(path) : { ...state, draft });
+        const latest = kind === 'undo' ? await request<MapState>(path) : { ...state, draft };
+        if (!isCurrent()) return false;
+        setState(latest);
         setStatus(
           kind === 'resolve'
             ? 'Konfliktvalet finns i ditt privata utkast. Granska hela utkastet och ge ett nytt sparbesked.'
@@ -941,6 +744,7 @@ export function HouseholdMap({
       }
       return true;
     } catch (failure) {
+      if (!isCurrent()) return false;
       if (retainObject && submittedFocus instanceof HTMLElement) {
         failedProposalOrigin.current = submittedFocus;
         setProposalRecoveryFocus({ origin: submittedFocus, target: null });
@@ -984,7 +788,7 @@ export function HouseholdMap({
         setError('Ändringen kunde inte bekräftas. Hämta aktuellt underlag innan du fortsätter.');
       }
     } finally {
-      setPending(false);
+      if (isCurrent()) setPending(false);
     }
     return false;
   }
@@ -1519,40 +1323,13 @@ export function HouseholdMap({
       signal.removeEventListener('abort', cancel);
     }
   }
-  // The conversation belongs to the map, not to a panel. The toolbar, the
-  // voice box, notice and text view all read it and call its commands.
+  // The household work owns the conversation. Views only choose where to
+  // show its text, voice, notice and controls.
   function showConversation() {
     setTextViewOpen(true);
     setWorkspaceView('text');
     setTextFocusRequest((previous) => previous + 1);
   }
-  const conversation = useConversation({
-    householdId,
-    enabled: Boolean(state),
-    manualSaveOperationId: pending ? saveAttempt.current?.operationId : undefined,
-    onSaveConfirmed: saveToast.confirm,
-    onMapChange: () => {
-      // The local save owns completion and the following map refresh.
-      // A session poll must not replace its pending state with recovery.
-      if (!pending || !saveAttempt.current) setLoad((value) => value + 1);
-    },
-    // The microphone opens no panel: the voice box follows the voice.
-    onStarted: (mode) => {
-      if (mode === 'text') showConversation();
-    },
-    onAccessLost: loseAccess,
-    onEnded: () => {
-      if (document.activeElement?.closest('.text-view')) closeTextView();
-      else setTextViewOpen(false);
-    },
-    onSelectItem: revealAssistantItem,
-  });
-  useEffect(() => {
-    if (conversation.revocationReceipt) {
-      setStatus(receiptMessage(conversation.revocationReceipt));
-      saveToast.confirm(conversation.revocationReceipt.operationId);
-    }
-  }, [conversation.revocationReceipt, saveToast.confirm]);
   const textButton = useTextButtonStatus(conversation, textViewVisible && active, active);
   const liveOngoing = conversationOngoing(conversation, textViewOpen);
   const beforeConnection = useRef({ blocked: false, ongoing: false });

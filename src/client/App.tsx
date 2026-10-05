@@ -1,4 +1,12 @@
-import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   Link,
   matchPath,
@@ -101,7 +109,7 @@ function Heading({
   focus?: boolean;
 }) {
   const ref = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (active && focus) ref.current?.focus();
   }, [active, focus]);
   return (
