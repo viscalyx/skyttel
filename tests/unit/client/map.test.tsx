@@ -119,6 +119,29 @@ async function save() {
   );
 }
 
+async function openConflict() {
+  await userEvent.click(
+    screen.getByRole('button', { name: /[0-9]+ konflikt(?:er)? i ditt utkast/ }),
+  );
+  return within(screen.getByRole('dialog', { name: 'Granska konflikter' }));
+}
+async function resolveProperties(values: [string, string, string][]) {
+  const dialog = await openConflict();
+  for (const [label, side, value] of values)
+    await userEvent.click(
+      dialog.getByRole('button', { name: `${label}: ${side} – ${value}`.trim() }),
+    );
+  const confirm = dialog.getByRole('button', {
+    name: 'Lägg valen i utkastet',
+  }) as HTMLButtonElement;
+  expect(confirm.disabled, confirm.closest('dialog')?.textContent ?? '').toBe(false);
+  await userEvent.click(confirm);
+  await waitFor(() =>
+    expect(dialog.getByRole('status').textContent).toContain('Valen finns i ditt utkast'),
+  );
+  await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
+}
+
 test('grouped browsing combines type identities, description search and marks without changing household data', async () => {
   const { user } = await (await client.request('/api/bootstrap')).json();
   seedLargeMap(fixture.database, user.id, householdId);
@@ -497,9 +520,11 @@ test('relationship type conflict review offers merged independent corrections an
   await other.json(`${path}/save`, { version: 1, operationId: 'other' });
   await open();
   const review = screen.getByRole('region', { name: 'Hela mitt utkast' });
-  expect(review.textContent).toContain('Mitt förslag med oberoende rättelser bevarade');
-  await userEvent.click(screen.getByRole('button', { name: 'Behåll min sambandstyp' }));
-  await waitFor(() => expect(review.textContent).not.toContain('Konflikt: sparad sambandstyp'));
+  await resolveProperties([
+    ['Namn', 'Ditt förslag', 'Plats'],
+    ['Beskrivning', 'Sparat i kartan nu', 'Ny förklaring'],
+    ['Omvänd benämning', 'Sparat i kartan nu', 'rymmer'],
+  ]);
   expect(review.textContent).toContain('Ny förklaring');
   await save();
   await client.json(`${path}/relationship-type`, {
@@ -517,8 +542,7 @@ test('relationship type conflict review offers merged independent corrections an
   await other.json(`${path}/save`, { version: 3, operationId: 'other-again' });
   cleanup();
   await open();
-  await screen.findByRole('button', { name: 'Använd sparad sambandstyp' });
-  await userEvent.click(screen.getByRole('button', { name: 'Använd sparad sambandstyp' }));
+  await resolveProperties([['Namn', 'Sparat i kartan nu', 'Annans rättelse']]);
   await waitFor(() =>
     expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
       'Inga förslag i utkastet',
@@ -1068,14 +1092,11 @@ test('conflict choices retain independent object fields and cannot reuse stale a
   await commit(other);
   const oldVersion = (await read()).draft.version;
   await open();
-  const review = screen.getByRole('region', { name: 'Hela mitt utkast' });
-  expect(review.textContent).toContain('Lo Berg');
-  await userEvent.click(screen.getByRole('button', { name: 'Behåll mitt förslag' }));
-  await waitFor(() =>
-    expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toContain(
-      'Granska hela utkastet',
-    ),
-  );
+  await resolveProperties([
+    ['Namn', 'Ditt förslag', 'Lo Lind'],
+    ['Beskrivning', 'Sparat i kartan nu', 'Spelar piano'],
+    ['Identifiering', 'Sparat i kartan nu', 'Ospecificerat objekt'],
+  ]);
   expect((await read()).draft.changes[0].after).toMatchObject({
     name: 'Lo Lind',
     description: 'Spelar piano',
@@ -1132,20 +1153,20 @@ test.each(['changed', 'duplicate', 'endpoint', 'deletion'] as const)(
     await open();
     const review = screen.getByRole('region', { name: 'Hela mitt utkast' });
     expect(review.textContent).toContain('Konflikt');
-    const keep = scenario === 'changed' || scenario === 'deletion';
-    await userEvent.click(
-      screen.getByRole('button', { name: keep ? 'Behåll mitt förslag' : 'Använd sparat värde' }),
-    );
-    await waitFor(() =>
-      expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toContain(
-        'Granska hela utkastet',
-      ),
-    );
-    if (keep) {
+    if (scenario === 'changed') {
+      await resolveProperties([
+        ['Till objekt', 'Ditt förslag', 'Kim'],
+        ['Vad är känt?', 'Ditt förslag', 'Osäkert uppgivet'],
+      ]);
       await save();
-      expect((await read()).relationships).toHaveLength(scenario === 'changed' ? 1 : 0);
+      expect((await read()).relationships).toHaveLength(1);
     } else {
-      expect((await read()).draft.relationships ?? []).toEqual([]);
+      const before = await read();
+      const dialog = await openConflict();
+      expect(dialog.getByText(/Den här konflikten behöver rättas/)).toBeTruthy();
+      expect(dialog.queryByRole('button', { name: 'Lägg valen i utkastet' })).toBeNull();
+      await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktfönstret' }));
+      expect((await read()).draft).toEqual(before.draft);
     }
   },
 );
@@ -1171,15 +1192,19 @@ test('accepting a saved object removes only that proposal after another user del
     ).status,
   ).toBe(409);
   await open();
-  expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
-    'borttaget',
-  );
-  await userEvent.click(screen.getByRole('button', { name: 'Använd sparat värde' }));
-  await waitFor(() =>
-    expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toContain(
-      'Granska hela utkastet',
-    ),
-  );
+  const dialog = await openConflict();
+  expect(dialog.getByText(/Den här konflikten behöver rättas/)).toBeTruthy();
+  await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktfönstret' }));
+  expect((await read()).draft).toEqual(current.draft);
+  expect(
+    (
+      await client.json(`${path}/resolve`, {
+        version: current.draft.version,
+        conflict,
+        choice: 'saved',
+      })
+    ).status,
+  ).toBe(200);
   expect((await read()).draft.changes).toEqual([]);
 });
 
@@ -1197,17 +1222,20 @@ test.each(['lo', 'new'])(
       .prepare('UPDATE object_type SET description = ?, revision = revision + 1 WHERE id = ?')
       .run('Ny typbeskrivning', state.types[0].id);
     await open();
-    expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
-      'Ny typbeskrivning',
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Behåll mitt förslag' }));
-    await waitFor(() =>
-      expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toContain(
-        'Granska hela utkastet',
-      ),
-    );
-    await save();
-    expect((await read()).objects.find((object) => object.id === id)?.name).toBe('Lo Lind');
+    const before = await read();
+    const dialog = await openConflict();
+    if (id === 'new') {
+      expect(dialog.getByText(/Den här konflikten behöver rättas/)).toBeTruthy();
+      await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktfönstret' }));
+      expect((await read()).draft).toEqual(before.draft);
+    } else {
+      await userEvent.click(dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind' }));
+      await userEvent.click(dialog.getByRole('button', { name: 'Lägg valen i utkastet' }));
+      await waitFor(() => expect(dialog.getByRole('status').textContent).toContain('Valen finns'));
+      await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
+      await save();
+      expect((await read()).objects.find((object) => object.id === id)?.name).toBe('Lo Lind');
+    }
   },
 );
 
@@ -1336,9 +1364,10 @@ test('a conflicting type offers both current choices and never grants an implici
   });
   await other.json(`${path}/save`, { version: 1, operationId: 'other-type' });
   await open();
-  await screen.findByText('Konflikt: sparad typdefinition');
-  await userEvent.click(screen.getByRole('button', { name: 'Behåll min typdefinition' }));
-  await waitFor(() => expect(screen.queryByText('Konflikt: sparad typdefinition')).toBeNull());
+  await resolveProperties([
+    ['Namn', 'Ditt förslag', 'Mitt namn'],
+    ['Beskrivning', 'Sparat i kartan nu', 'Rättad definition'],
+  ]);
   expect(
     (await (await client.request(path)).json()).types.find(
       (item: { id: string }) => item.id === type.id,
@@ -1363,12 +1392,55 @@ test('a conflicting type offers both current choices and never grants an implici
   await other.json(`${path}/save`, { version: 3, operationId: 'other-again' });
   cleanup();
   await open();
-  await screen.findByText('Konflikt: sparad typdefinition');
-  await userEvent.click(screen.getByRole('button', { name: 'Använd sparad typdefinition' }));
-  await waitFor(() => expect(screen.queryByText('Konflikt: sparad typdefinition')).toBeNull());
+  await resolveProperties([
+    ['Namn', 'Sparat i kartan nu', 'Gemensamt namn'],
+    ['Beskrivning', 'Sparat i kartan nu', ''],
+    ['Avsnitt', 'Sparat i kartan nu', 'Ej uppgivet'],
+  ]);
   expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
     'Inga förslag',
   );
+  const current = (await (await client.request(path)).json()) as MapState;
+  const basis = current.types.find((item) => item.id === type.id);
+  if (!basis) throw new Error('The shared object type is missing from the fixture');
+  await client.json(`${path}/object-type`, {
+    version: current.draft.version,
+    id: type.id,
+    baseRevision: basis.revision,
+    value: {
+      name: 'Eget namn med nya avsnitt',
+      description: '',
+      fields: [],
+      sections: [{ id: 'notes', name: 'Anteckningar' }],
+      builtins: [{ key: 'description', name: 'Beskrivning', sectionId: 'notes' }],
+      propertyOrder: ['builtin:description'],
+    },
+  });
+  const theirs = (await (await other.request(path)).json()) as MapState;
+  await other.json(`${path}/object-type`, {
+    version: theirs.draft.version,
+    id: type.id,
+    baseRevision: basis.revision,
+    value: { name: 'Senare gemensamt namn', description: '', fields: [] },
+  });
+  await other.json(`${path}/save`, {
+    version: theirs.draft.version + 1,
+    operationId: 'exact-presentation',
+  });
+  cleanup();
+  await open();
+  await resolveProperties([
+    ['Namn', 'Ditt förslag', 'Eget namn med nya avsnitt'],
+    ['Avsnitt', 'Sparat i kartan nu', 'Ej uppgivet'],
+    ['Övriga uppgifter', 'Sparat i kartan nu', 'Ej uppgivet'],
+    ['Uppgifternas ordning', 'Sparat i kartan nu', 'Ej uppgivet'],
+  ]);
+  const combined = ((await (await client.request(path)).json()) as MapState).draft.objectTypes?.[0]
+    .after;
+  expect(combined?.name).toBe('Eget namn med nya avsnitt');
+  expect(combined).not.toHaveProperty('sections');
+  expect(combined).not.toHaveProperty('builtins');
+  expect(combined).not.toHaveProperty('propertyOrder');
 });
 
 test('view changes retain unsent object text and filters can clear without changing household content', async () => {

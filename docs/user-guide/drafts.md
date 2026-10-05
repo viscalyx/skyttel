@@ -94,53 +94,33 @@ Nyare förslag finns kvar. Kopiera eventuell formulärtext du vill behålla,
 stäng formuläret och öppna det aktuella förslaget innan du fortsätter.
 
 Vid konflikt sparas inget från försöket, inte heller de konfliktfria
-delarna. Hämta aktuellt underlag. Välj exempelvis **1 konflikt i ditt utkast**
-under hushållets namn. **Konflikter i mitt utkast** öppnas med fokus.
-Välj det berörda objektet, sambandet eller typen för att läsa rätt ändring,
-även när arbetspanelerna är stängda eller objektet är borttaget ur kartan.
-Navigeringen ändrar inga uppgifter och andra oskickade formulär finns kvar.
+förslagen. Välj exempelvis **1 konflikt i ditt utkast** under hushållets
+namn. **Granska konflikter** öppnas med fokus på rubriken från både karta
+och tabell, även när sökningen döljer det berörda objektet.
 
-Utkastet visar ditt tidigare underlag, ditt förslag och det som är sparat
-nu. Avsnitt, dolda egna värden, osäkerhet och datum hör till respektive
-underlag. Välj för varje konflikt:
+Välj posten i **Alla konflikter**. Jämförelsen visar **Sparat i kartan nu**
+och **Ditt förslag**. Varje egenskap som skiljer sig behöver ett aktivt
+val. Klicka på raden på den sida du vill använda, eller välj den med
+Tab och Enter. Du kan kombinera egenskaper från båda sidorna. Identiska
+värden behöver inget val. Egna fältnamn visas som sina vanliga etiketter.
 
-- **Behåll mitt förslag** för att lägga din ändring ovanpå aktuellt
-  underlag. För objekt bevaras fält som bara den andra användaren ändrar.
-- **Använd sparat värde** för att ta bort just ditt överlappande förslag.
-  Övriga förslag finns kvar.
+**Efter dina val** visar den exakta kombinationen. **Lägg valen i utkastet**
+blir tillgänglig först när alla nödvändiga val är gjorda och kombinationen
+är giltig. Om exempelvis **Uttryckligen inget** kombineras med ett
+målobjekt för ett samband förklaras felet och dina val finns kvar. Välj en
+giltig kombination; Skyttel ändrar inte andra egenskaper åt dig.
 
-Du kan också rätta förslaget själv från ändringens **Rätta**-knapp.
-Objekt och samband öppnas i sin redigering; typer öppnas i
-**Inställningar → Typer och egna fält**. Lägg rättelsen i utkastet och
-återgå till konfliktens aktuella underlag. En rättelse kan fortfarande
-behöva ett konfliktval. Slutför eller stäng oskickade formulär innan du
-väljer mellan sparat värde och förslag.
+Bekräftelsen ändrar enbart ditt utkast. Postens namn och typ finns kvar i
+konfliktlistan med en bock. Granska hela utkastet och spara kartan separat.
+Övriga förslag och oskickad formulärtext finns kvar. Stäng dialogen med
+krysset eller Escape för att återgå till knappen som öppnar den.
 
-För samband bevaras oberoende ändringar av status och slutdatum. Ett
-slutdatum och dess säkerhet väljs tillsammans. Sambandets betydelse,
-ändpunkter och säkerhet hålls också ihop, så att exempelvis
-**Uttryckligen inget** inte kombineras med ett utpekat objekt.
-
-Ett nytt samband kan blockera en planerad objektborttagning. Konflikten
-visar vilka ytterligare samband borttagningen berör. Om du behåller
-borttagningen läggs även dessa samband i utkastet som borttagningar.
-Vid en dubblett kan du använda det befintliga sambandet. Om ett objekt
-eller samband är borttaget kan du ta bort förslaget och skapa ett nytt,
-eller rätta ett sambands mål till ett annat befintligt objekt.
-
-Ett konfliktval ändrar bara utkastet. Granska **Hela mitt utkast** igen
-och välj därefter **Spara hela utkastet**. Tidigare sparbesked återanvänds
-inte. Om underlaget ändras medan du väljer avvisas även ett gammalt
-konfliktval; hämta aktuellt underlag och välj igen.
-
-När valet är klart får rubriken **Hela mitt utkast** fokus. Om du går
-vidare till ett annat fält medan svaret väntar stannar fokus där.
-
-Om svaret på ett konfliktval försvinner är valet ännu inte bekräftat i
-din visning. Välj **Hämta aktuellt underlag** och granska det beständiga
-utkastet. Hämta inte ett sparkvitto för själva konfliktvalet: det sparar
-ingen gemensam ändring. Ett nytt uttryckligt sparande behövs även efter
-att valet återfinns.
+Om någon sparar nya uppgifter medan du väljer avvisas den gamla
+jämförelsen. Välj **Visa aktuell jämförelse**, granska uppgifterna och gör
+nya val innan du bekräftar. Ett känt avvisat försök ändrar inte utkastet.
+Om svaret försvinner och resultatet är oklart får samma ändring inte
+skickas igen innan dess utfall kontrolleras. Konfliktval ger inget
+sparkvitto; gemensamt sparande är en separat åtgärd.
 
 ## Följ upp ett oklart sparande
 

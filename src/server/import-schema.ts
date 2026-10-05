@@ -127,7 +127,12 @@ const relationshipChangeShape = {
   objectNames: z.record(id, text).optional(),
 };
 const draftRelationship = z
-  .object({ ...relationshipChangeShape, ...undo, removedWithObjects: z.array(id).optional() })
+  .object({
+    ...relationshipChangeShape,
+    ...undo,
+    proposedAt: z.iso.datetime().optional(),
+    removedWithObjects: z.array(id).optional(),
+  })
   .strict();
 const savedRelationship = z
   .object({
@@ -167,6 +172,7 @@ const draftChange: z.ZodType<DraftChange> = z.lazy(() =>
       after: z.union([objectValue, object]).nullable(),
       type: objectType,
       beforeType: objectType.optional(),
+      proposedAt: z.iso.datetime().optional(),
       ...undo,
       merge: merge.optional(),
     })

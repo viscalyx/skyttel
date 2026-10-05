@@ -363,7 +363,9 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   filtrerad teckenförklaring med kartans färger,
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
   utkast, hantera gamla kastförsök
-  och konfliktval samt granska samtidiga ändringar, dubbletter och
+  och konfliktval, kombinera egenskaper i Granska konflikter från karta
+  och tabell, förklara ogiltiga kombinationer och avvisa inaktuell jämförelse
+  samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner
   vid borttagning efter typbyten. Följ status och legend med stängda

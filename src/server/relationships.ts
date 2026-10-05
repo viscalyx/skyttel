@@ -205,6 +205,7 @@ export function relationships(database: Database.Database, householdId: string) 
       const changes = (draft.relationships ?? []).filter((change) => change.id !== body.id);
       if (before || after)
         changes.push({
+          proposedAt: new Date().toISOString(),
           id: body.id,
           before,
           after,

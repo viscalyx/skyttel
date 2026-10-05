@@ -11,6 +11,18 @@ let householdId: string;
 let path: string;
 const read = async (): Promise<MapState> => (await client.request(path)).json();
 beforeEach(async () => {
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+    configurable: true,
+    value(this: HTMLDialogElement) {
+      this.open = true;
+    },
+  });
+  Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+    configurable: true,
+    value(this: HTMLDialogElement) {
+      this.open = false;
+    },
+  });
   fixture = await applicationFixture();
   client = fixture.client();
   await client.signIn();
@@ -27,6 +39,8 @@ beforeEach(async () => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
   fixture.close();
 });
 async function open() {
@@ -130,12 +144,16 @@ test('the visible relationship conflict preview matches saved independent sectio
   await other.json(`${path}/save`, { version: 1, operationId: 'other' });
   render(<HouseholdMap householdId={householdId} />);
   await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  const heading = await screen.findByText('Mitt förslag med oberoende rättelser bevarade');
-  const preview = heading.nextElementSibling;
-  expect(preview?.parentElement?.textContent).toContain('Avsnitt: Uppgifter → Underhåll');
-  expect(preview?.parentElement?.textContent).toContain('Anteckning: Text · Underhåll');
-  await userEvent.click(screen.getByRole('button', { name: 'Behåll min sambandstyp' }));
-  await waitFor(() => expect(screen.queryByText('Konflikt: sparad sambandstyp')).toBeNull());
+  await userEvent.click(await screen.findByRole('button', { name: '1 konflikt i ditt utkast' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'Granska konflikter' }));
+  await userEvent.click(dialog.getByRole('button', { name: /^Egna fält: Ditt förslag/ }));
+  await userEvent.click(dialog.getByRole('button', { name: /^Avsnitt: Sparat i kartan nu/ }));
+  const preview = dialog.getByRole('region', { name: 'Resultat av valen' });
+  expect(preview.textContent).toContain('Underhåll');
+  expect(preview.textContent).toContain('Anteckning');
+  await userEvent.click(dialog.getByRole('button', { name: 'Lägg valen i utkastet' }));
+  await waitFor(() => expect(dialog.getByRole('status').textContent).toContain('Valen finns'));
+  await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
   expect((await read()).draft.relationshipTypes?.[0].after).toMatchObject({
     sections: [definition.sections[0], { id: 'service', name: 'Underhåll' }],
     fields: [{ ...definition.fields[0], sectionId: 'service' }],

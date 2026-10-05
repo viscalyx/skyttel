@@ -95,6 +95,7 @@ export interface MapObject extends ObjectValue {
   revision: number;
 }
 export interface DraftChange {
+  proposedAt?: string;
   id: string;
   before: MapObject | null;
   after: ObjectValue | null;
@@ -134,6 +135,7 @@ export function draftChangeCount(draft?: MapDraft) {
     : 0;
 }
 export interface MapState {
+  conflictActors?: Record<string, { name: string; savedAt: string }>;
   userId: string;
   contentVersion: number;
   types: ObjectType[];
@@ -194,6 +196,7 @@ export interface MapRelationship extends RelationshipValue {
   revision: number;
 }
 export interface RelationshipChange {
+  proposedAt?: string;
   id: string;
   before: MapRelationship | null;
   after: RelationshipValue | null;

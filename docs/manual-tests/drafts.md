@@ -179,6 +179,119 @@ lifecycle, images and configured field meanings”.
   Oförändrat saknat pris markeras inte som ändrat. Dolda egenskaper kan läsas.
 - Läsningen ändrar inget underlag och startar inget samtal eller medgivande.
 
+### UTKAST-28: kombinera aktiva egenskapsval utan att spara kartan
+
+**Syfte:** Granska samma konflikt från karta och tabell och kombinera
+värden från båda sidor med tydligt fokus och oförändrad gemensam karta.
+
+**Användare:** Administratören och en inbjuden medlem i skilda
+webbläsarprofiler. Använd medlemmens verkliga förnamn i jämförelsen.
+
+**Förutsättningar:** Ett nytt tomt testhushåll med Lo Exempel och
+Molnmusik enligt den allmänna förberedelsen. Administratören lägger
+namnet Lo Lind, beskrivningen Min anteckning, Ospecificerat objekt och
+Gäller fortfarande i sitt utkast. Medlemmen
+sparar Lo Berg med beskrivningen Robins anteckning efter detta förslag.
+Ladda om administratörens sida. Upprepa på dator och telefon.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+testfallen “UTKAST-28: mix explicit property choices without saving the
+shared map at 1440px” och motsvarande scenario vid 390px.
+
+**Steg:**
+
+1. Välj Tabell och öppna **1 konflikt i ditt utkast** under hushållets namn.
+2. Kontrollera rubrikens fokus och de två rutorna **Sparat i kartan nu**
+   och **Ditt förslag**. Läs förklaringen med medlemmens förnamn.
+3. Välj ditt namn Lo Lind. Kontrollera att bekräftelsen är spärrad.
+4. Välj den sparade beskrivningen Robins anteckning och Identifierat
+   objekt. Välj Gäller fortfarande från ditt förslag. Läs **Efter dina val**.
+5. Välj **Lägg valen i utkastet**. Läs status och konfliktlistans bock.
+6. Stäng med Escape. Läs den sparade personen i tabellen och ditt utkast.
+7. Förbered konflikten igen och öppna den från Karta. Använd Tab, Shift+Tab
+   och Enter för motsvarande val. Försök nå verktygen bakom dialogen.
+
+**Förväntat resultat:**
+
+- Rubriken får fokus vid öppning. Tangentbordsfokus stannar i dialogen.
+  Bakgrunden är inaktiv. Varje val markeras med ram och ✓ Vald.
+- Alla skiljande egenskaper kräver aktiva val. Identiska värden behöver
+  inget val. Resultatet visar Lo Lind och Robins anteckning tillsammans.
+- Bara utkastet ändras. Kartan visar fortfarande Lo Berg och samma
+  beskrivning som medlemmen sparar. Historiken får ingen ny sparad ändring.
+- Konfliktlistan behåller typ och namn med bock till höger och en enda
+  tillgänglig status. Inga värden klipps på telefon.
+- När den sista konflikten är löst försvinner ingången. Stängning återför
+  fokus till kartverktygen. En kvarvarande ingång får fokus annars.
+
+### UTKAST-29: ogiltiga sambandsval behålls tills kombinationen rättas
+
+**Syfte:** Validera målobjekt och vad som är känt tillsammans utan att
+Skyttel ändrar en annan egenskap automatiskt.
+
+**Användare:** Administratören och den inbjudna medlemmen.
+
+**Förutsättningar:** Samma testhushåll. Spara först ett känt samband
+Lo Exempel använder Molnmusik. Administratören föreslår Osäkert uppgivet.
+Medlemmen sparar Uttryckligen inget utan målobjekt. Ladda om
+administratörens sida.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+testfallet “UTKAST-29: invalid relationship property combinations keep
+every choice until corrected”.
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast**.
+2. Välj Molnmusik från **Ditt förslag** och Uttryckligen inget från
+   **Sparat i kartan nu**.
+3. Läs förklaringen och kontrollera att båda valmarkeringarna finns kvar.
+4. Byt bara vad som är känt till Osäkert uppgivet från ditt förslag.
+5. Bekräfta och granska utkastet samt den gemensamma kartan.
+
+**Förväntat resultat:**
+
+- Den ogiltiga kombinationen förklaras och bekräftelsen är spärrad.
+  Ingen annan egenskap ändras och valen finns kvar.
+- Den rättade kombinationen blir möjlig att bekräfta. Utifrån utkastet
+  är målobjektet Molnmusik och uppgiften Osäkert uppgivet. Kartan behåller
+  det som medlemmen sparar tills ett separat sparande genomförs.
+- Servern avvisar samma ogiltiga kombination även från en äldre klient.
+
+### UTKAST-30: en samtidig ändring avvisar den gamla jämförelsen
+
+**Syfte:** Förhindra att en kombination läggs i utkastet mot inaktuella
+sparade uppgifter.
+
+**Användare:** Administratören och den inbjudna medlemmen.
+
+**Förutsättningar:** Administratören föreslår Lo Lind. Medlemmen sparar
+Lo Berg. Administratören laddar om och öppnar konfliktfönstret.
+
+**Integrationstest:**
+[conflict-properties.spec.ts](../../tests/integration/conflict-properties.spec.ts),
+testfallet “UTKAST-30: a concurrent save rejects an outdated property
+comparison without changing the draft”.
+
+**Steg:**
+
+1. Välj Lo Lind i konfliktfönstret utan att bekräfta.
+2. Medlemmen sparar ett nytt namn Lo Ek från sin profil.
+3. Administratören väljer **Lägg valen i utkastet**.
+4. Läs felet. Välj **Visa aktuell jämförelse** och läs det nya namnet.
+5. Stäng med Escape utan att lägga nya val i utkastet.
+
+**Förväntat resultat:**
+
+- Servern avvisar det gamla underlaget. Utifrån utkastet finns det
+  ursprungliga förslaget kvar och inga andra förslag ändras.
+- Felet förklarar att underlaget ändras. Valmarkeringen finns kvar vid
+  avvisningen. Aktuell jämförelse visar Lo Ek och kräver ny granskning.
+- Bekräftelsen är spärrad tills nya giltiga val är gjorda. Stängning
+  återför fokus till den kvarvarande konfliktknappen.
+
 ### UTKAST-01: återuppta en konflikt och spara oberoende förslag tillsammans
 
 **Syfte:** Kontrollera att ett privat utkast kan återupptas, att ett aktivt

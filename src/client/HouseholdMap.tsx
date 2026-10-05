@@ -2,11 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { conversationWidths } from '../shared/conversation-preferences.js';
-import {
-  type DraftConflict,
-  draftConflicts,
-  resolvedRelationshipType,
-} from '../shared/draft-conflicts.js';
+import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
 import type {
   MapDraft,
   MapObject,
@@ -27,6 +23,7 @@ import { mergeFor } from '../shared/object-merge.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { DraftReview } from './DraftReview.js';
+import { ConflictDialog } from './ConflictDialog.js';
 import { DraftStatus } from './DraftStatus.js';
 import { useFloatingArea } from './floating-windows.js';
 import {
@@ -410,6 +407,8 @@ export function HouseholdMap({
   const [legacyDirty, setDirty] = useState(false);
   const dirty = legacyDirty || Object.values(objectDirty).some(Boolean);
   const { query, types: typeFilter, onlySelected, sort } = browsing;
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
+  const [conflictDialogKey, setConflictDialogKey] = useState<string>();
   const [conflictLinksOpen, setConflictLinksOpen] = useState(false);
   function returnFromStatus() {
     routeOutsideFocus.current = null;
@@ -853,144 +852,16 @@ export function HouseholdMap({
     if (!hasConflicts) setConflictLinksOpen(false);
   }, [hasConflicts]);
   function conflictReview(conflict: DraftConflict) {
-    if (conflict.kind === 'objectType' || conflict.kind === 'relationshipType') return null;
-    const proposal = (
-      conflict.kind === 'object' ? state?.draft.changes : state?.draft.relationships
-    )?.find((change) => change.id === conflict.id);
-    const deleted = Boolean(proposal?.before && !conflict.current);
-    const editableObject =
-      conflict.kind === 'object' &&
-      !deleted &&
-      state &&
-      !mergeFor(state.draft, 'object', conflict.id)
-        ? displayed.get(conflict.id)
-        : undefined;
-    const editableRelationship =
-      conflict.kind === 'relationship' &&
-      !deleted &&
-      state &&
-      !mergeFor(state.draft, 'relationship', conflict.id)
-        ? displayedEdges.get(conflict.id)
-        : undefined;
     return (
-      <div className="conflict-review">
-        <h4>Konflikt: sparat i kartan nu</h4>
-        {conflict.kind === 'object' ? (
-          details(
-            conflict.current,
-            state?.types.find((type) => type.id === conflict.current?.typeId),
-          )
-        ) : (
-          <p>
-            {conflict.current && state
-              ? relationshipLabel(conflict.current, state, savedObjects)
-              : 'Finns inte i kartan'}
-          </p>
-        )}
-        {conflict.kind === 'relationship' && conflict.current && (
-          <>
-            <CustomFieldsDetails
-              type={state?.relationshipTypes.find((type) => type.id === conflict.current?.typeId)}
-              values={conflict.current.customValues}
-              showHidden
-            />
-            <LifecycleDetails value={conflict.current} />
-          </>
-        )}
-        <p>Välj vilket värde du vill behålla. Valet ändrar bara ditt utkast.</p>
-        {editableObject && (
-          <button
-            type="button"
-            disabled={pending || blocked || legacyDirty}
-            onClick={() => edit(editableObject)}
-          >
-            Rätta objektet
-          </button>
-        )}
-        {editableRelationship && (
-          <button
-            type="button"
-            disabled={pending || blocked || legacyDirty}
-            onClick={() => editRelationship(editableRelationship)}
-          >
-            Rätta sambandet
-          </button>
-        )}
-        {conflict.type !== undefined && (
-          <p>
-            Typdefinitionen har ändrats:{' '}
-            {conflict.type
-              ? `${conflict.type.name}. ${conflict.type.description}`
-              : 'Typen finns inte längre.'}
-          </p>
-        )}
-        {conflict.missingEndpoints && (
-          <p>
-            Sambandet hänvisar till ett borttaget objekt. Ta bort förslaget eller öppna sambandet
-            och välj ett annat objekt.
-          </p>
-        )}
-        {conflict.duplicates && state && (
-          <>
-            <p>
-              Samma samband finns redan. Använd sparat värde för att ta bort ditt överlappande
-              förslag.
-            </p>
-            <ul>
-              {conflict.duplicates.map((edge) => (
-                <li key={edge.id}>{relationshipLabel(edge, effectiveState ?? state, displayed)}</li>
-              ))}
-            </ul>
-          </>
-        )}
-        {conflict.connections && state && (
-          <>
-            <p>
-              Borttagningen berör också dessa samband. Behåll förslaget för att lägga deras
-              borttagningar i utkastet.
-            </p>
-            <ul>
-              {conflict.connections.map((edge) => (
-                <li key={edge.id}>{relationshipLabel(edge, state, savedObjects)}</li>
-              ))}
-            </ul>
-          </>
-        )}
-        <button
-          type="button"
-          disabled={pending || blocked || dirty}
-          onClick={() =>
-            void action('resolve', { version: state?.draft.version, conflict, choice: 'saved' })
-          }
-        >
-          Använd sparat värde
-        </button>
-        {conflict.type !== null &&
-          !conflict.duplicates &&
-          !conflict.missingEndpoints &&
-          (!deleted || proposal?.undo) && (
-            <button
-              type="button"
-              disabled={pending || blocked || dirty}
-              onClick={() =>
-                void action('resolve', {
-                  version: state?.draft.version,
-                  conflict,
-                  choice: 'proposed',
-                })
-              }
-            >
-              Behåll mitt förslag
-            </button>
-          )}
-        {deleted && (
-          <p>
-            {proposal?.undo
-              ? 'Objektet eller sambandet är borttaget. Behåll förslaget för att återställa det i ditt utkast.'
-              : 'Objektet eller sambandet är borttaget. Skapa ett nytt förslag om det fortfarande behövs.'}
-          </p>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setConflictDialogKey(`${conflict.kind}:${conflict.id}`);
+          setConflictDialogOpen(true);
+        }}
+      >
+        Granska konflikten
+      </button>
     );
   }
 
@@ -1709,7 +1580,8 @@ export function HouseholdMap({
                   type="button"
                   className="map-conflict"
                   onClick={() => {
-                    openPanel('work', document.getElementById('draft-conflicts-title'));
+                    setConflictDialogKey(undefined);
+                    setConflictDialogOpen(true);
                   }}
                 >
                   <span aria-hidden="true">⚠</span> {conflicts.length}{' '}
@@ -1911,6 +1783,43 @@ export function HouseholdMap({
             setReadEntry({ kind: 'relationships', id: object.id, restoreFocus })
           }
           relationshipCounts={relationshipCounts}
+          statusContent={
+            conflicts.length > 0 && (
+              <button
+                type="button"
+                className="map-conflict"
+                onClick={() => {
+                  setConflictDialogKey(undefined);
+                  setConflictDialogOpen(true);
+                }}
+              >
+                <span aria-hidden="true">⚠</span> {conflicts.length}{' '}
+                {conflicts.length === 1 ? 'konflikt' : 'konflikter'} i ditt utkast
+              </button>
+            )
+          }
+        />
+      )}
+      {state && (
+        <ConflictDialog
+          state={state}
+          open={conflictDialogOpen}
+          initialKey={conflictDialogKey}
+          disabled={pending || blocked}
+          onClose={() => setConflictDialogOpen(false)}
+          onRefresh={async () => {
+            const latest = await request<MapState>(path);
+            if (isCurrent()) setState(latest);
+            return latest;
+          }}
+          onResolve={async (resolution) => {
+            const draft = await request<MapDraft>(`${path}/resolve`, {
+              version: state.draft.version,
+              contentVersion: state.contentVersion,
+              ...resolution,
+            });
+            if (isCurrent()) setState({ ...state, draft });
+          }}
         />
       )}
       {state && readEntry && (
@@ -2842,68 +2751,7 @@ export function HouseholdMap({
                                 conflict.kind === 'relationshipType' && conflict.id === change.id,
                             )
                             .map((conflict) => (
-                              <div key={conflict.id}>
-                                <h4>Konflikt: sparad sambandstyp</h4>
-                                <RelationshipTypeDetails
-                                  type={
-                                    conflict.kind === 'relationshipType' ? conflict.current : null
-                                  }
-                                />
-                                {conflict.kind === 'relationshipType' && conflict.current && (
-                                  <>
-                                    <h4>Mitt förslag med oberoende rättelser bevarade</h4>
-                                    <RelationshipTypeDetails
-                                      type={resolvedRelationshipType(change, conflict.current)}
-                                    />
-                                  </>
-                                )}
-                                <p>
-                                  Välj definition för utkastet. Oberoende rättelser bevaras när du
-                                  behåller ditt förslag. Granska hela utkastet före ett nytt
-                                  sparbesked.
-                                </p>
-                                {change.after && (
-                                  <button
-                                    type="button"
-                                    disabled={pending || blocked || legacyDirty}
-                                    onClick={() => {
-                                      if (!change.after) return;
-                                      editRelationshipType(change.after);
-                                      onSettings?.('types');
-                                    }}
-                                  >
-                                    Rätta sambandstypen
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  disabled={pending || blocked || dirty}
-                                  onClick={() =>
-                                    void action('resolve', {
-                                      version: state.draft.version,
-                                      contentVersion: state.contentVersion,
-                                      conflict,
-                                      choice: 'saved',
-                                    })
-                                  }
-                                >
-                                  Använd sparad sambandstyp
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={pending || blocked || dirty}
-                                  onClick={() =>
-                                    void action('resolve', {
-                                      version: state.draft.version,
-                                      contentVersion: state.contentVersion,
-                                      conflict,
-                                      choice: 'proposed',
-                                    })
-                                  }
-                                >
-                                  Behåll min sambandstyp
-                                </button>
-                              </div>
+                              <div key={conflict.id}>{conflictReview(conflict)}</div>
                             ))}
                         </article>
                       ))}
@@ -2943,57 +2791,7 @@ export function HouseholdMap({
                                 conflict.kind === 'objectType' && conflict.id === change.id,
                             )
                             .map((conflict) => (
-                              <div key={conflict.id}>
-                                <h4>Konflikt: sparad typdefinition</h4>
-                                <ObjectTypeDetails
-                                  type={conflict.kind === 'objectType' ? conflict.current : null}
-                                />
-                                <p>
-                                  Välj definition för utkastet och granska hela utkastet före ett
-                                  nytt sparbesked.
-                                </p>
-                                {change.after && (
-                                  <button
-                                    type="button"
-                                    disabled={pending || blocked || legacyDirty}
-                                    onClick={() => {
-                                      if (!change.after) return;
-                                      editObjectType(change.after);
-                                      onSettings?.('types');
-                                    }}
-                                  >
-                                    Rätta objekttypen
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  disabled={pending || blocked || dirty}
-                                  onClick={() =>
-                                    void action('resolve', {
-                                      version: state.draft.version,
-                                      contentVersion: state.contentVersion,
-                                      conflict,
-                                      choice: 'saved',
-                                    })
-                                  }
-                                >
-                                  Använd sparad typdefinition
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={pending || blocked || dirty}
-                                  onClick={() =>
-                                    void action('resolve', {
-                                      version: state.draft.version,
-                                      contentVersion: state.contentVersion,
-                                      conflict,
-                                      choice: 'proposed',
-                                    })
-                                  }
-                                >
-                                  Behåll min typdefinition
-                                </button>
-                              </div>
+                              <div key={conflict.id}>{conflictReview(conflict)}</div>
                             ))}
                         </article>
                       ))}

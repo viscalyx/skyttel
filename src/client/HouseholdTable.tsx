@@ -79,6 +79,7 @@ export function HouseholdTable({
   searchContent,
   hasProposals = false,
   objectTypes = [],
+  statusContent,
 }: {
   active: boolean;
   workDisabled?: boolean;
@@ -94,6 +95,7 @@ export function HouseholdTable({
   searchContent?: ReactNode;
   hasProposals?: boolean;
   objectTypes?: ObjectType[];
+  statusContent?: ReactNode;
 }) {
   const prefix = useId();
   const [sort, setSort] = useState('name-asc');
@@ -247,6 +249,7 @@ export function HouseholdTable({
           </button>
         )}
       </header>
+      {statusContent}
       <section className="household-table-search" aria-label="Tabellens sökning och filter">
         {searchContent}
         <ObjectSearchInput

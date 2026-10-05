@@ -170,7 +170,11 @@ export function relationshipTypes(database: Database.Database, householdId: stri
         }
       return { ...draft, version: draft.version + 1 };
     },
-    propose(draft: MapDraft, body: Record<string, unknown>) {
+    propose(
+      draft: MapDraft,
+      body: Record<string, unknown>,
+      presentation: 'retain' | 'exact' = 'retain',
+    ) {
       if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
         throw new MapError('invalid_relationship_type', 400);
       const existing = draft.relationshipTypes?.find((item) => item.id === body.id);
@@ -191,7 +195,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
         id: body.id,
         householdId,
         revision: (before?.revision ?? existing?.restoreRevision ?? 0) + 1,
-        ...validate(body.value, existing?.after ?? before),
+        ...validate(body.value, presentation === 'exact' ? null : (existing?.after ?? before)),
       };
       checkFields(before, after, draft);
       if (existing?.after)

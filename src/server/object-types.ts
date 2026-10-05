@@ -184,7 +184,11 @@ export function objectTypes(database: Database.Database, householdId: string, us
         }
       return { ...draft, version: draft.version + 1 };
     },
-    propose(draft: MapDraft, body: Record<string, unknown>) {
+    propose(
+      draft: MapDraft,
+      body: Record<string, unknown>,
+      presentation: 'retain' | 'exact' = 'retain',
+    ) {
       if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
         throw new MapError('invalid_type_definition', 400);
       const existing = draft.objectTypes?.find((item) => item.id === body.id);
@@ -203,7 +207,7 @@ export function objectTypes(database: Database.Database, householdId: string, us
         id: body.id,
         householdId,
         revision: (before?.revision ?? existing?.restoreRevision ?? 0) + 1,
-        ...validate(body.value, existing?.after ?? before),
+        ...validate(body.value, presentation === 'exact' ? null : (existing?.after ?? before)),
       };
       checkFields(before, after, draft);
       if (existing?.after)
