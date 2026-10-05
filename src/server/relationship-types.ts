@@ -87,16 +87,11 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       ...(type.sections !== undefined ? { sections: type.sections } : {}),
     });
   }
-  function checkFields(
-    before: RelationshipType | null,
-    after: RelationshipType,
-    draft: MapDraft,
-    deferKindChanges = false,
-  ) {
+  function checkFields(before: RelationshipType | null, after: RelationshipType, draft: MapDraft) {
     for (const field of before?.fields ?? []) {
       const next = after.fields?.find((item) => item.id === field.id);
       if (!next) usage.assertUnused('relationshipType', after.id, draft, field.id);
-      else if (next.kind !== field.kind && !deferKindChanges)
+      else if (next.kind !== field.kind)
         usage.assertRelationshipFieldKindUnused(after.id, field.id, next.kind, draft);
     }
   }

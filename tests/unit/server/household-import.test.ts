@@ -392,7 +392,7 @@ test('simultaneous cancellation and confirmation choose one owner before asynchr
   }
 });
 
-test('foreign archive identities never bind by matching login IDs or names and their immutable history remains undoable', async () => {
+test('foreign archive identities never bind by matching login IDs or names and their immutable history remains readable', async () => {
   const before = await (await client.request(`${path}/map`)).json();
   const foreign = changedContent((content) => {
     (content.household as { id: string }).id = 'foreign-household';
@@ -420,26 +420,6 @@ test('foreign archive identities never bind by matching login IDs or names and t
   expect(current.objects[0]).toMatchObject({ id: 'lamp', householdId });
   const { history } = await (await client.request(`${path}/map/history`)).json();
   expect(history[0]).toMatchObject({ userId: before.userId, contentVersion: 1, householdId });
-  expect(
-    (
-      await client.json(`${path}/map/undo`, {
-        version: 0,
-        contentVersion: 2,
-        userId: history[0].userId,
-        operationId: history[0].operationId,
-      })
-    ).status,
-  ).toBe(200);
-  expect(
-    (
-      await client.json(`${path}/map/save`, {
-        version: 1,
-        contentVersion: 2,
-        operationId: 'fresh-undo',
-      })
-    ).status,
-  ).toBe(200);
-  expect((await (await client.request(`${path}/map`)).json()).objects).toEqual([]);
 });
 
 test('confirmation closes the durable gate before cancelling a concurrent stalled import upload', async () => {

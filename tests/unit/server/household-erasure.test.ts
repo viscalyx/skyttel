@@ -7,13 +7,7 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { draftConflicts } from '../../../src/shared/draft-conflicts.js';
 import type { ErasureSelection } from '../../../src/shared/household-erasure.js';
-import {
-  type MapState,
-  type ObjectValue,
-  proposedObjectTypes,
-  proposedRelationshipTypes,
-} from '../../../src/shared/map.js';
-import { mergeConnections, mergeObjects } from '../../../src/shared/object-merge.js';
+import type { MapState, ObjectValue } from '../../../src/shared/map.js';
 import { applicationFixture } from './fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -106,32 +100,6 @@ async function upload(id: string, actor = client, noise = false) {
   return (await readMap(actor)).draft.changes.find((change) => change.id === id)?.after
     ?.profileImageId as string;
 }
-async function proposeMerge(choices: Record<string, string> = {}, actor = client) {
-  const state = await readMap(actor);
-  const objects = mergeObjects(state);
-  const relationships = mergeConnections(state, ['a', 'b']);
-  const response = await actor.json(`${path}/map/merge`, {
-    version: state.draft.version,
-    survivorId: 'a',
-    absorbedId: 'b',
-    identityConfirmed: true,
-    reviewed: {
-      objects: ['a', 'b'].map((id) => objects.get(id)),
-      relationships,
-      types: proposedObjectTypes(state.types, state.draft.objectTypes).filter((type) =>
-        ['a', 'b'].some((id) => objects.get(id)?.typeId === type.id),
-      ),
-      relationshipTypes: proposedRelationshipTypes(
-        state.relationshipTypes,
-        state.draft.relationshipTypes,
-      ).filter((type) => relationships.some((edge) => edge.typeId === type.id)),
-    },
-    choices,
-    relationships: relationships.map((edge) => ({ id: edge.id, action: 'keep' })),
-  });
-  expect(response.status, await response.clone().text()).toBe(200);
-}
-
 test('an administrator reviews exact erasure scope without changing shared or private content', async () => {
   const initial = await (await client.request(`${path}/map`)).json();
   for (const id of ['erase', 'keep']) {
@@ -304,24 +272,6 @@ test('permanent erasure removes one identity from mixed history and private draf
       })
     ).status,
   ).toBe(409);
-  await client.json(`${path}/map/discard`, {
-    version: state.draft.version,
-    contentVersion: state.contentVersion,
-  });
-  state = await read();
-  expect(
-    (
-      await client.json(`${path}/map/undo`, {
-        version: state.draft.version,
-        contentVersion: state.contentVersion,
-        operationId: history[0].operationId,
-        userId: history[0].userId,
-      })
-    ).status,
-  ).toBe(200);
-  state = await read();
-  expect(state.draft.changes.map((item: { id: string }) => item.id)).toEqual(['keep']);
-  expect(state.draft.changes[0].after).toBeNull();
 });
 
 test('a pinned database reader keeps cleanup protected until resume verifies WAL and freed-page cleanup', async () => {
@@ -673,43 +623,6 @@ test('erasing historical meaning preserves images still used by current objects,
   );
 });
 
-test('erasing a private merge’s type removes its orphaned private versions and copy without exposing them or erasing shared source images', async () => {
-  const initial = await readMap();
-  for (const id of ['a', 'b']) await object(id, { name: 'Lo', typeId: initial.types[0].id });
-  const sharedImage = await upload('b', client, true);
-  await save('shared-source-image');
-  const { actor } = await invite();
-  const privateImage = await upload('a', actor, true);
-  await object('a', { typeId: initial.types[1].id }, actor);
-  await proposeMerge({ typeId: 'survivor', profileImageId: 'absorbed' }, actor);
-  const copiedImage = (await readMap(actor)).draft.changes.find((change) => change.id === 'a')
-    ?.after?.profileImageId as string;
-  expect(copiedImage).not.toBe(sharedImage);
-  const selection: ErasureSelection = [{ kind: 'objectType', id: initial.types[1].id }];
-  const review = await (await client.json(`${path}/erasure/review`, { selection })).json();
-  expect(review.objects).toEqual([]);
-  expect(review.images).toBe(2);
-  expect(review.privateImages).toBe(2);
-  expect(review.imageVersions).toEqual([]);
-  expect(JSON.stringify(review)).not.toContain(privateImage);
-  expect(JSON.stringify(review)).not.toContain(copiedImage);
-  const erased = await client.json(`${path}/erasure/execute`, await reviewed(selection));
-  expect(erased.status).toBe(200);
-  expect((await erased.json()).status.counts.images).toBe(2);
-  expect((await readMap()).objects.map(({ id }) => id)).toEqual(['a', 'b']);
-  for (const id of [privateImage, copiedImage])
-    expect((await actor.request(`${path}/profile-images/${id}`)).status).toBe(404);
-  expect((await client.request(`${path}/profile-images/${sharedImage}`)).status).toBe(200);
-  const ready = await (await client.json(`${path}/exports`, {})).json();
-  const archive = unzipSync(
-    new Uint8Array(await (await client.request(`${path}/exports/${ready.id}`)).arrayBuffer()),
-  );
-  const exported = JSON.parse(Buffer.from(archive['content.json']).toString());
-  expect(exported.images.map((image: { id: string }) => image.id)).toEqual([sharedImage]);
-  expect(JSON.stringify(exported)).not.toContain(privateImage);
-  expect(JSON.stringify(exported)).not.toContain(copiedImage);
-});
-
 test('scoped erasure preserves an unrelated orphan image admitted by a complete archive import', async () => {
   await object('erased-object');
   await object('unrelated-owner');
@@ -840,90 +753,6 @@ test('an old endpoint is removed from another owner’s private proposal without
   expect(draftConflicts(state)).toHaveLength(1);
 });
 
-test('merged identities and image copies are explicitly reviewed and erased across all owners while neighbours survive', async () => {
-  for (const [id, iconId] of [
-    ['a', 'bike'],
-    ['b', 'music'],
-    ['neighbour', 'house'],
-  ])
-    await object(id, { name: 'Lo', iconId });
-  const original = await upload('b');
-  await save('images');
-  const { actor } = await invite();
-  await object('b', { iconId: 'telescope' }, actor);
-  const hidden = await upload('b', actor);
-  let state = await readMap();
-  await client.json(`${path}/map/relationship`, {
-    id: 'edge',
-    version: state.draft.version,
-    baseRevision: null,
-    value: {
-      typeId: state.relationshipTypes[0].id,
-      sourceId: 'b',
-      targetId: 'neighbour',
-      knowledge: 'known',
-    },
-  });
-  await save('edge');
-  await proposeMerge({ profileImageId: 'absorbed', iconId: 'absorbed' });
-  const copied = (await readMap()).draft.changes.find((change) => change.id === 'a')?.after
-    ?.profileImageId;
-  expect(copied).not.toBe(original);
-  await save('merge');
-  state = await readMap(actor);
-  for (const id of ['b', 'neighbour'])
-    expect(
-      (
-        await actor.json(`${path}/map/view/position`, {
-          id,
-          version: 0,
-          contentVersion: state.contentVersion,
-          position: { x: 4, y: 2, z: 1 },
-        })
-      ).status,
-    ).toBe(200);
-  const selection: ErasureSelection = [{ kind: 'object', id: 'b' }];
-  const review = await (await client.json(`${path}/erasure/review`, { selection })).json();
-  expect(review.objects.map((item: { id: string }) => item.id)).toEqual(['a', 'b']);
-  expect(review.relationships.map((item: { id: string }) => item.id)).toEqual(['edge']);
-  expect(review.images).toBe(3);
-  expect(review.privateImages).toBe(1);
-  expect(review.positions).toBe(1);
-  expect(review.imageVersions.map((item: { id: string }) => item.id).sort()).toEqual(
-    [original, copied].sort(),
-  );
-  expect(JSON.stringify(review)).not.toContain(hidden);
-  expect(
-    (
-      await client.json(`${path}/erasure/execute`, {
-        selection,
-        token: review.token,
-        operationId: 'erase-merge',
-        confirmation: 'RADERA PERMANENT',
-      })
-    ).status,
-  ).toBe(200);
-  expect((await readMap()).objects.map(({ id }) => id)).toEqual(['neighbour']);
-  expect((await readMap(actor)).draft.changes).toEqual([]);
-  expect(
-    (await (await actor.request(`${path}/map/view`)).json()).positions.map(
-      (item: { id: string }) => item.id,
-    ),
-  ).toEqual(['neighbour']);
-  for (const id of [original, copied, hidden])
-    expect((await client.request(`${path}/profile-images/${id}`)).status).toBe(404);
-  expect(await (await client.request(`${path}/map/history`)).text()).not.toContain('"merge"');
-  expect((await readMap()).objects[0].iconId).toBe('house');
-  const exported = await (await client.json(`${path}/exports`, {})).json();
-  const parts = unzipSync(
-    new Uint8Array(await (await client.request(`${path}/exports/${exported.id}`)).arrayBuffer()),
-  );
-  const content = Buffer.from(parts['content.json']).toString();
-  for (const iconId of ['bike', 'music', 'telescope'])
-    expect(content).not.toContain(`"iconId":"${iconId}"`);
-  expect(content).toContain('"iconId":"house"');
-});
-
 test('erasing a type removes private dependent identities without exposing their identifiers or pictures', async () => {
   const initial = await readMap();
   const typeId = initial.types[0].id;
@@ -1013,96 +842,6 @@ test('private-only definitions and their dependent proposals can be erased witho
   expect(state.draft.objectTypes ?? []).toEqual([]);
   expect(state.draft.relationshipTypes ?? []).toEqual([]);
 });
-
-test('an erased former type cannot remain as a no-op private undo proposal', async () => {
-  const initial = await readMap();
-  await object('keep', { typeId: initial.types[0].id });
-  await save('original');
-  await object('keep', { typeId: initial.types[1].id });
-  const receipt = await save('new-type');
-  let state = await readMap();
-  expect(
-    (
-      await client.json(`${path}/map/undo`, {
-        version: state.draft.version,
-        operationId: receipt.operationId,
-        userId: receipt.userId,
-      })
-    ).status,
-  ).toBe(200);
-  const request = await reviewed([{ kind: 'objectType', id: initial.types[0].id }]);
-  expect((await client.json(`${path}/erasure/execute`, request)).status).toBe(200);
-  state = await readMap();
-  expect(state.objects).toMatchObject([{ id: 'keep', typeId: initial.types[1].id }]);
-  expect(state.draft.changes).toEqual([]);
-});
-
-test.each([false, true])(
-  'erased relationships cannot return through a merge’s previous proposals or history (saved: %s)',
-  async (saved) => {
-    for (const id of ['a', 'b', 'neighbour']) await object(id, { name: 'Lo' });
-    let state = await readMap();
-    const typeId = state.relationshipTypes[0].id;
-    await client.json(`${path}/map/relationship`, {
-      id: 'edge',
-      version: state.draft.version,
-      baseRevision: null,
-      value: { typeId, sourceId: 'b', targetId: 'neighbour', knowledge: 'known' },
-    });
-    await save('original');
-    await object('a', { description: 'Independent prior proposal' });
-    state = await readMap();
-    await client.json(`${path}/map/relationship`, {
-      id: 'edge',
-      version: state.draft.version,
-      baseRevision: 1,
-      value: { ...state.relationships[0], endDate: { knowledge: 'known', value: '2030-01-01' } },
-    });
-    await proposeMerge({ description: 'survivor' });
-    const merged = saved ? await save('merged') : null;
-    const request = await reviewed([{ kind: 'relationshipType', id: typeId }]);
-    expect((await client.json(`${path}/erasure/execute`, request)).status).toBe(200);
-    state = await readMap();
-    expect(state.relationships).toEqual([]);
-    if (merged) {
-      const response = await client.json(`${path}/map/undo`, {
-        version: state.draft.version,
-        contentVersion: state.contentVersion,
-        operationId: merged.operationId,
-        userId: merged.userId,
-      });
-      expect(response.status).toBe(200);
-      await save('fresh-undo');
-      state = await readMap();
-      expect(state.objects.map(({ id }) => id)).toEqual(['a', 'b', 'neighbour']);
-      expect(state.relationships).toEqual([]);
-    } else {
-      const merge = state.draft.changes.find((change) => change.merge)?.merge;
-      expect(merge).toMatchObject({
-        relationships: [],
-        relationshipTypes: [],
-        previousRelationships: [],
-      });
-      expect(
-        (
-          await client.json(`${path}/map/discard-change`, {
-            version: state.draft.version,
-            contentVersion: state.contentVersion,
-            kind: 'object',
-            id: 'a',
-          })
-        ).status,
-      ).toBe(200);
-      state = await readMap();
-      expect(state.draft.relationships ?? []).toEqual([]);
-      expect(state.draft.changes).toMatchObject([
-        { id: 'a', after: { description: 'Independent prior proposal' } },
-      ]);
-      await save('prior-proposal');
-      expect((await readMap()).relationships).toEqual([]);
-    }
-  },
-);
 
 test('erasure is household-scoped even while database-wide cleanup temporarily protects the other household', async () => {
   const { user } = await (await client.request('/api/bootstrap')).json();

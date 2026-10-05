@@ -4,7 +4,6 @@ import { unzipSync, zipSync } from 'fflate';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import type { ImportContent } from '../../../src/server/import-schema.js';
 import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
-import { mergeObjects } from '../../../src/shared/object-merge.js';
 import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { createInstallation } from '../../support/installation.js';
 
@@ -152,107 +151,11 @@ async function restore(source: Awaited<ReturnType<typeof archive>>) {
   ).toBe(200);
 }
 
-test('cancelled and saved merges preserve whole canonical facts and undo keeps an independent presentation edit', async () => {
-  await define();
-  await object('first', 'solar', 'Första texten');
-  await object('second', 'solar', 'Andra texten');
-  await save('originals');
-  const originals = (await read()).objects;
-  await object('first', 'solar', 'Privat text');
-  const privateState = await read();
-  async function merge() {
-    const state = await read();
-    return post('map/merge', {
-      version: state.draft.version,
-      survivorId: 'first',
-      absorbedId: 'second',
-      identityConfirmed: true,
-      reviewed: {
-        objects: ['first', 'second'].map((id) => mergeObjects(state).get(id)),
-        relationships: [],
-        types: state.types.filter(({ id }) => id === 'solar'),
-        relationshipTypes: [],
-      },
-      relationships: [],
-      choices: { description: 'absorbed' },
-    });
-  }
-  expect((await merge()).status()).toBe(200);
-  let state = await read();
-  const proposed = state.draft.changes.find(({ id }) => id === 'first');
-  expect(proposed?.after).toMatchObject({ description: 'Andra texten', financialFacts });
-  expect(proposed?.merge?.types[0]).toMatchObject(definition);
-  expect(
-    (
-      await post('map/discard-change', {
-        version: state.draft.version,
-        kind: 'object',
-        id: 'second',
-      })
-    ).status(),
-  ).toBe(200);
-  expect((await read()).draft.changes).toEqual(privateState.draft.changes);
-  expect((await merge()).status()).toBe(200);
-  const receipt = await save('merged');
-  expect(receipt.changes.find(({ after }) => after?.id === 'first')?.after?.financialFacts).toEqual(
-    financialFacts,
-  );
-  await define({
-    ...definition,
-    builtins: definition.builtins.map((field) =>
-      field.key === 'debt' ? { ...field, sectionId: '' } : field,
-    ),
-  });
-  await save('hide-debt');
-  state = await read();
-  expect(
-    (
-      await post('map/undo', {
-        version: state.draft.version,
-        userId: receipt.userId,
-        operationId: receipt.operationId,
-      })
-    ).status(),
-  ).toBe(200);
-  await save('undo-merge');
-  client = await restartWithSession(client, () => installation.restart());
-  state = await read();
-  for (const original of originals) {
-    const { revision: _revision, ...value } = original;
-    expect(state.objects.find(({ id }) => id === value.id)).toMatchObject(value);
-  }
-  expect(state.types.find(({ id }) => id === 'solar')?.builtins).toContainEqual({
-    key: 'debt',
-    name: 'Skuld',
-    sectionId: '',
-  });
-});
-
-test('archive 21 preserves canonical property placement, sections and hidden values in current, private, history and merged snapshots', async () => {
+test('archive 21 preserves canonical property placement, sections and hidden values in current, private and history snapshots', async () => {
   await define();
   await object('first');
   await object('second');
   await save('originals');
-  const state = await read();
-  expect(
-    (
-      await post('map/merge', {
-        version: state.draft.version,
-        survivorId: 'first',
-        absorbedId: 'second',
-        identityConfirmed: true,
-        reviewed: {
-          objects: state.objects,
-          relationships: [],
-          types: state.types.filter(({ id }) => id === 'solar'),
-          relationshipTypes: [],
-        },
-        relationships: [],
-        choices: {},
-      })
-    ).status(),
-  ).toBe(200);
-  await save('merged');
   await object('first', 'solar', 'Privat text');
   await define({ ...definition, name: 'Privat typnamn' });
   const source = await archive();
@@ -270,8 +173,6 @@ test('archive 21 preserves canonical property placement, sections and hidden val
     source.content.history[0].changes[0].type,
     source.content.saves.find(({ operationId }) => operationId === 'originals')?.receipt
       .objectTypes?.[0].after,
-    source.content.saves.find(({ operationId }) => operationId === 'merged')?.receipt.changes[0]
-      .merge?.types[0],
   ];
   for (const snapshot of snapshots)
     expect(snapshot).toMatchObject({

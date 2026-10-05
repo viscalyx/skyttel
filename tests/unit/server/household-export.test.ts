@@ -71,12 +71,6 @@ test('retained definitions, generic merge history, revoked owners, all private d
     after: survivor,
     type,
     beforeType: type,
-    merge: {
-      ...merge,
-      previousChanges: [{ id: 'absorbed', before: source, after: null, type }],
-      previousRelationships: [],
-    },
-    undoFields: ['objectMeaning'],
     extension: { futureMeaning: 'Behåll äldre underlag' },
   };
   const receipt = {

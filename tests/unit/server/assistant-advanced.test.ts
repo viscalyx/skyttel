@@ -1,7 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { type APIRequestContext, request } from '@playwright/test';
-import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { beginAssistant, callAssistant } from '../../support/assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
@@ -96,7 +95,7 @@ async function member() {
   return other;
 }
 
-test('advanced tools use actual SDK contracts, preserve old read grants and current revocation, and reject stale or incomplete review choices', async () => {
+test('advanced tools use actual SDK contracts, preserve old read grants and current revocation', async () => {
   const client = new Client({ name: 'Avancerad provklient', version: '1' });
   const readClient = new Client({ name: 'Äldre läsande klient', version: '1' });
   try {
@@ -106,12 +105,7 @@ test('advanced tools use actual SDK contracts, preserve old read grants and curr
       }),
     );
     const catalog = (await client.listTools()).tools;
-    const newMutations = [
-      'propose_object_type',
-      'propose_relationship_type',
-      'propose_undo',
-      'propose_merge',
-    ];
+    const newMutations = ['propose_object_type', 'propose_relationship_type'];
     for (const name of newMutations) {
       const tool = catalog.find((item) => item.name === name);
       expect(tool?.annotations?.readOnlyHint).toBe(false);
@@ -176,53 +170,12 @@ test('advanced tools use actual SDK contracts, preserve old read grants and curr
       { operationId: 'missing', userId: 'missing', objectId: 'extra' },
       'invalid_request',
     );
-    await tool('read_history', { operationId: 'missing', userId: 'missing' }, 'undo_unavailable');
+    await tool(
+      'read_history',
+      { operationId: 'missing', userId: 'missing' },
+      'history_unavailable',
+    );
     expect((await tool('read_history', { offset: 20 })).history).toEqual([]);
-    await tool(
-      'read_merge_review',
-      { survivorId: 'missing', absorbedId: 'other' },
-      'object_conflict',
-    );
-    await object('a', { name: 'Lo', identity: 'unspecified' });
-    await object('b', { name: 'Lo' });
-    await save('merge-review-fixture');
-    const merge = await tool('read_merge_review', { survivorId: 'a', absorbedId: 'b' });
-    expect(merge.choices).toEqual([
-      {
-        field: 'identity',
-        survivor: { present: true, value: 'unspecified' },
-        absorbed: { present: false },
-      },
-    ]);
-    await tool('read_merge_review', { survivorId: 'a', absorbedId: 'a' }, 'object_conflict');
-    const body = {
-      ...version(merge),
-      survivorId: 'a',
-      absorbedId: 'b',
-      identityConfirmed: true,
-      reviewed: merge.reviewed,
-      choices: {},
-      relationships: [],
-    };
-    const incomplete = await tool('propose_merge', body, 'merge_choices_required');
-    expect(incomplete.message).toContain('varje avvikande');
-    await object('a', { name: 'Nytt namn' });
-    await save('concurrent-merge-edit');
-    const latest = await tool('read_my_draft');
-    await tool(
-      'propose_merge',
-      { ...body, ...version(latest), choices: { identity: 'survivor' } },
-      'merge_conflict',
-    );
-    await tool(
-      'propose_undo',
-      {
-        ...version(body),
-        operationId: 'merge-review-fixture',
-        userId: (await (await browser.get(path)).json()).userId,
-      },
-      'draft_conflict',
-    );
     const context = await (await browser.get(`${app.origin}/api/assistants/context`)).json();
     for (const connection of context.connections)
       expect(
@@ -234,19 +187,13 @@ test('advanced tools use actual SDK contracts, preserve old read grants and curr
         ).status(),
       ).toBe(200);
     await expect(client.callTool({ name: 'read_history', arguments: {} })).rejects.toThrow();
-    await expect(
-      client.callTool({
-        name: 'propose_undo',
-        arguments: { ...version(latest), operationId: 'merge-review-fixture', userId: 'forged' },
-      }),
-    ).rejects.toThrow();
   } finally {
     await client.close();
     await readClient.close();
   }
 });
 
-test('MCP uses fresh content versions to undo imported historical authorship and rejects every old advanced mutation', async () => {
+test('MCP uses fresh content versions to read imported historical authorship and rejects every old advanced mutation', async () => {
   await object('lamp', { name: 'Historisk lampa' });
   const original = await save('source-save');
   const householdPath = path.replace('/map', '');
@@ -322,31 +269,10 @@ test('MCP uses fresh content versions to undo imported historical authorship and
           },
         },
       ],
-      ['propose_undo', { operationId: original.operationId, userId: original.userId }],
-      [
-        'propose_merge',
-        {
-          survivorId: 'lamp',
-          absorbedId: 'other',
-          identityConfirmed: true,
-          reviewed: { objects: [{}, {}], relationships: [], types: [], relationshipTypes: [] },
-          choices: {},
-          relationships: [],
-        },
-      ],
     ] as const) {
       await tool(name, { ...args, version: review.version, contentVersion: 1 }, 'content_conflict');
     }
     expect(await tool('read_my_draft')).toEqual(review);
-    await tool('propose_undo', {
-      ...version(review),
-      operationId: original.operationId,
-      userId: original.userId,
-    });
-    const undone = await save('fresh-imported-undo');
-    expect(undone.userId).toBe(currentOwner);
-    expect(undone.contentVersion).toBe(2);
-    expect((await tool('read_map')).objects).toEqual([]);
   } finally {
     await browser.dispose();
     await app.close();
@@ -456,7 +382,7 @@ test('MCP rental, loan, credit and installment cases preserve dated uncertainty 
   ]);
 });
 
-test('MCP type change preserves object and edges without field conversion, and undo explicitly restores removed definitions and rejects overlapping private work', async () => {
+test('MCP type change preserves object and edges without field conversion', async () => {
   for (const [id, name, kind] of [
     ['cycle', 'Cykel', 'text'],
     ['vehicle', 'Motorfordon', 'number'],
@@ -476,7 +402,6 @@ test('MCP type change preserves object and edges without field conversion, and u
     customValues: { serial: 'SYNTH-42', insured: false },
   });
   let review = await object('garage', { name: 'Garaget' });
-  const catalog = await tool('read_type_catalog');
   review = await tool('propose_relationship_type', {
     ...version(review),
     id: 'parking-type',
@@ -503,84 +428,13 @@ test('MCP type change preserves object and edges without field conversion, and u
     beforeType: { name: 'Cykel' },
     type: { name: 'Motorfordon' },
   });
-  const changed = await save('type-change');
+  await save('type-change');
   expect((await tool('read_map', { objectId: 'bike' })).relationships).toEqual(
     initial.relationships,
   );
   expect((await tool('read_map', { objectId: 'bike' })).objects[0].customValues).toEqual({
     serial: 42,
   });
-  await definition('cycle', null);
-  await save('remove-old-type');
-  review = await tool('read_my_draft');
-  review = await tool('propose_undo', {
-    ...version(review),
-    operationId: changed.operationId,
-    userId: changed.userId,
-  });
-  expect(review.objectTypes).toEqual([
-    expect.objectContaining({
-      id: 'cycle',
-      before: null,
-      after: expect.objectContaining({ name: 'Cykel' }),
-    }),
-  ]);
-  expect(review.changes[0].after.customValues).toEqual({ serial: 'SYNTH-42', insured: false });
-  expect(
-    (await (await browser.get(path)).json()).types.some(
-      (type: { id: string }) => type.id === 'cycle',
-    ),
-  ).toBe(false);
-  await save('restore-cycle-type');
-  review = await tool('read_my_draft');
-  const bike = (await tool('read_map', { objectId: 'bike' })).objects[0];
-  review = await tool('propose_object', {
-    ...version(review),
-    id: 'bike',
-    baseRevision: bike.revision,
-    value: null,
-  });
-  expect(review.relationships[0]).toMatchObject({ id: 'parking', after: null });
-  const removed = await save('remove-bike');
-  review = await tool('read_my_draft');
-  const edgeType = (await tool('read_type_catalog')).relationshipTypes.find(
-    (type: { id: string }) => type.id === 'parking-type',
-  );
-  await tool('propose_relationship_type', {
-    ...version(review),
-    id: edgeType.id,
-    baseRevision: edgeType.revision,
-    value: null,
-  });
-  await definition('cycle', null);
-  await save('remove-unused-definitions');
-  expect((await tool('read_map')).objects).toHaveLength(1);
-  review = await tool('read_my_draft');
-  review = await tool('propose_undo', {
-    ...version(review),
-    operationId: removed.operationId,
-    userId: removed.userId,
-  });
-  expect(review.objectTypes[0]).toMatchObject({ id: 'cycle', before: null });
-  expect(review.relationshipTypes[0]).toMatchObject({ id: 'parking-type', before: null });
-  await app.restart();
-  await save('restore-bike-and-types');
-  expect((await tool('read_map', { objectId: 'bike' })).relationships[0]).toMatchObject({
-    id: 'parking',
-    sourceId: 'bike',
-    targetId: 'garage',
-  });
-  await object('bike', { description: 'Sparad rättelse' });
-  const corrected = await save('description-change');
-  review = await object('bike', { description: 'Privat rättelse' });
-  const denied = await tool(
-    'propose_undo',
-    { ...version(review), operationId: corrected.operationId, userId: corrected.userId },
-    'undo_draft_overlap',
-  );
-  expect(denied.message).toContain('eget utkast');
-  expect(denied.review).toEqual(review);
-  expect(catalog.types.some((type: { id: string }) => type.id === 'cycle')).toBe(true);
 });
 
 test('MCP protects used fields and ended definitions, explains private-use blocks without leaking content, and rechecks concurrent use at whole save', async () => {
@@ -661,145 +515,7 @@ test('MCP protects used fields and ended definitions, explains private-use block
   }
 });
 
-test('MCP explicitly reviews an identity merge, copies the selected image and restores identities and edges through whole-save undo', async () => {
-  await object('a', { name: 'Lo Exempel', description: 'Första uppgiften' });
-  await object('b', { name: 'Lo Exempel', description: 'Andra uppgiften' });
-  await object('card', { name: 'Blått kort', description: 'Orelaterade kortdetaljer' });
-  await save('merge-fixture');
-  const imagePath = path.replace('/map', '/profile-images');
-  for (const [id, color] of [
-    ['a', '#ff0000'],
-    ['b', '#00ff00'],
-  ]) {
-    const state = await (await browser.get(path)).json();
-    const bytes = await sharp({ create: { width: 10, height: 12, channels: 3, background: color } })
-      .png()
-      .toBuffer();
-    const response = await browser.post(`${imagePath}/${id}`, {
-      headers: {
-        origin: app.origin,
-        'content-type': 'image/png',
-        'x-skyttel-draft-version': String(state.draft.version),
-        'x-skyttel-content-version': String(state.contentVersion),
-        'x-skyttel-object-revision': String(
-          state.objects.find((item: { id: string }) => item.id === id).revision,
-        ),
-      },
-      data: bytes,
-    });
-    expect(response.status(), await response.text()).toBe(200);
-  }
-  await save('images');
-  const originals = (await tool('read_map')).objects;
-  const catalog = await tool('read_type_catalog');
-  let review = await tool('read_my_draft');
-  for (const [id, sourceId] of [
-    ['first', 'a'],
-    ['second', 'b'],
-  ]) {
-    review = await tool('propose_relationship', {
-      ...version(review),
-      id,
-      baseRevision: null,
-      value: {
-        typeId: catalog.relationshipTypes[0].id,
-        sourceId,
-        targetId: 'card',
-        knowledge: 'known',
-      },
-    });
-  }
-  await save('edges');
-  await object('independent', { name: 'Eget oberoende förslag' });
-  let merge = await tool('read_merge_review', { survivorId: 'a', absorbedId: 'b' });
-  expect(merge.reviewed.objects.map((item: { id: string }) => item.id)).toEqual(['a', 'b']);
-  expect(merge.contextObjects).toEqual([
-    {
-      id: 'card',
-      name: 'Blått kort',
-      typeId: originals.find((item: { id: string }) => item.id === 'card').typeId,
-    },
-  ]);
-  expect(JSON.stringify(merge)).not.toContain('Orelaterade kortdetaljer');
-  expect(merge.choices.map((choice: { field: string }) => choice.field)).toEqual([
-    'description',
-    'profileImageId',
-  ]);
-  const request = () => ({
-    ...version(merge),
-    survivorId: 'a',
-    absorbedId: 'b',
-    reviewed: merge.reviewed,
-    identityConfirmed: false,
-    choices: { description: 'absorbed', profileImageId: 'absorbed' },
-    relationships: [
-      { id: 'first', action: 'remove' },
-      { id: 'second', action: 'keep' },
-    ],
-  });
-  await tool(
-    'propose_merge',
-    {
-      ...request(),
-      relationships: [
-        { id: 'first', action: 'keep' },
-        { id: 'second', action: 'keep' },
-      ],
-    },
-    'duplicate_relationship',
-  );
-  review = await tool('propose_merge', request());
-  expect(review.readyToSave).toBe(false);
-  expect(review.unresolvedIdentities).toEqual([{ kind: 'object', id: 'a' }]);
-  await tool(
-    'save_draft',
-    { ...version(review), operationId: 'unconfirmed-merge' },
-    'unresolved_identity',
-  );
-  review = await tool('read_my_draft');
-  await tool('discard_proposal', { ...version(review), kind: 'object', id: 'a' });
-  merge = await tool('read_merge_review', { survivorId: 'a', absorbedId: 'b' });
-  review = await tool('propose_merge', { ...request(), identityConfirmed: true });
-  expect(review.changes.some((change: { id: string }) => change.id === 'independent')).toBe(true);
-  await app.restart();
-  const merged = await save('confirmed-merge');
-  const current = (await tool('read_map', { objectId: 'a' })).objects[0];
-  const sourceImage = originals.find((item: { id: string }) => item.id === 'b').profileImageId;
-  expect(current.profileImageId).not.toBe(sourceImage);
-  expect(await (await browser.get(`${imagePath}/${current.profileImageId}`)).body()).toEqual(
-    await (await browser.get(`${imagePath}/${sourceImage}`)).body(),
-  );
-  await object('a', { name: 'Senare namn' });
-  await save('later-name');
-  review = await tool('read_my_draft');
-  await tool('propose_undo', {
-    ...version(review),
-    userId: merged.userId,
-    operationId: merged.operationId,
-  });
-  await save('undo-merge');
-  await app.restart();
-  const restored = await tool('read_map');
-  expect(restored.objects.find((item: { id: string }) => item.id === 'a')).toMatchObject({
-    name: 'Senare namn',
-    description: 'Första uppgiften',
-    profileImageId: originals.find((item: { id: string }) => item.id === 'a').profileImageId,
-  });
-  expect(restored.objects.find((item: { id: string }) => item.id === 'b')).toMatchObject({
-    name: 'Lo Exempel',
-    description: 'Andra uppgiften',
-    profileImageId: sourceImage,
-  });
-  expect(restored.objects.some((item: { id: string }) => item.id === 'independent')).toBe(false);
-  expect(restored.relationships).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ id: 'first', sourceId: 'a' }),
-      expect.objectContaining({ id: 'second', sourceId: 'b' }),
-    ]),
-  );
-});
-
-test('MCP history discovery is bounded and scoped while a selected save exposes historical facts and fresh undo preserves later independent work', async () => {
+test('MCP history discovery is bounded and scoped while a selected save exposes historical facts', async () => {
   await object('bike', { name: 'Alex blå cykel', description: 'Blå ram' });
   await save('initial-bike');
   await object('unrelated', {
@@ -827,29 +543,6 @@ test('MCP history discovery is bounded and scoped while a selected save exposes 
     savedAt: expect.stringMatching(/T/),
     changes: [{ before: { description: 'Blå ram' }, after: { description: 'Grön ram' } }],
   });
-  await object('private', { name: 'Eget oberoende förslag' });
-  let review = await tool('read_my_draft');
-  review = await tool('propose_undo', {
-    ...version(review),
-    operationId: corrected.operationId,
-    userId: corrected.userId,
-  });
-  expect(review.changes.find((change: { id: string }) => change.id === 'bike').after).toMatchObject(
-    { name: 'Alex stadscykel', description: 'Blå ram' },
-  );
-  expect(review.changes.find((change: { id: string }) => change.id === 'private')).toBeDefined();
-  expect((await tool('read_map', { objectId: 'bike' })).objects[0].description).toBe('Grön ram');
-  await app.restart();
-  expect(await tool('read_my_draft')).toEqual(review);
-  const receipt = await save('undo-repaint');
-  expect(receipt.changes).toHaveLength(2);
-  expect((await tool('read_map', { objectId: 'bike' })).objects[0]).toMatchObject({
-    name: 'Alex stadscykel',
-    description: 'Blå ram',
-  });
-  expect((await tool('read_map', { objectId: 'unrelated' })).objects[0].description).toBe(
-    'Unik orelaterad anteckning',
-  );
 });
 
 test('MCP creates a household solar type with four field kinds and preserves unanswered and false values', async () => {
@@ -971,7 +664,6 @@ test('MCP custom relationship types retain both labels, direction, duplicate reu
   }));
   const customValues = { text: 'Övre hyllan', number: 0, date: '2026-09-27', boolean: false };
   let review = await tool('read_my_draft');
-  const catalog = await tool('read_type_catalog');
   review = await tool('propose_relationship_type', {
     ...version(review),
     id: 'stored',
@@ -985,6 +677,7 @@ test('MCP custom relationship types retain both labels, direction, duplicate reu
       sections,
     },
   });
+  const catalog = await tool('read_type_catalog');
   for (const [id, name] of [
     ['bike', 'Alex blå cykel'],
     ['garage', 'Garaget'],

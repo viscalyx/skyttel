@@ -1,5 +1,6 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import sharp from 'sharp';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
@@ -29,6 +30,7 @@ async function connect(actor: APIRequestContext, origin: string, householdId: st
     return tool(name, { ...versions(await tool('read_my_draft')), ...args }, error);
   }
   return {
+    token,
     tool,
     propose,
     async object(id: string, value: Record<string, unknown>) {
@@ -51,138 +53,9 @@ async function connect(actor: APIRequestContext, origin: string, householdId: st
   };
 }
 
-test('MCP-05: bildval och sammanslagning ångras med senare arbete kvar', async ({ page }) => {
-  const app = await createInstallation();
-  try {
-    await signIn(page.request, app.origin);
-    const { household } = await (await createHousehold(page.request, app.origin)).json();
-    const path = `${app.origin}/api/households/${household.id}`;
-    const mcp = await connect(page.request, app.origin, household.id);
-    const catalog = await mcp.tool('read_type_catalog');
-    const typeId = catalog.types[0].id;
-    for (const [id, name, description] of [
-      ['a', 'Lo Exempel', 'Första uppgiften'],
-      ['b', 'Lo Exempel', 'Andra uppgiften'],
-      ['card', 'Blått kort', 'Orelaterade detaljer'],
-    ])
-      await mcp.object(id, { typeId, name, description });
-    await mcp.save('merge-fixture');
-    for (const [id, color] of [
-      ['a', '#ff0000'],
-      ['b', '#00ff00'],
-    ]) {
-      const state = await (await page.request.get(`${path}/map`)).json();
-      const bytes = await sharp({
-        create: { width: 10, height: 12, channels: 3, background: color },
-      })
-        .png()
-        .toBuffer();
-      expect(
-        (
-          await page.request.post(`${path}/profile-images/${id}`, {
-            headers: {
-              origin: app.origin,
-              'content-type': 'image/png',
-              'x-skyttel-content-version': String(state.contentVersion),
-              'x-skyttel-draft-version': String(state.draft.version),
-              'x-skyttel-object-revision': String(
-                state.objects.find((object: { id: string }) => object.id === id).revision,
-              ),
-            },
-            data: bytes,
-          })
-        ).status(),
-      ).toBe(200);
-    }
-    for (const [id, sourceId] of [
-      ['first', 'a'],
-      ['second', 'b'],
-    ])
-      await mcp.propose('propose_relationship', {
-        id,
-        baseRevision: null,
-        value: {
-          typeId: catalog.relationshipTypes[0].id,
-          sourceId,
-          targetId: 'card',
-          knowledge: 'known',
-        },
-      });
-    await mcp.save('merge-images-edges');
-    const original = await mcp.tool('read_map');
-    let merge = await mcp.tool('read_merge_review', { survivorId: 'a', absorbedId: 'b' });
-    expect(JSON.stringify(merge)).not.toContain('Orelaterade detaljer');
-    const proposal = () => ({
-      survivorId: 'a',
-      absorbedId: 'b',
-      identityConfirmed: false,
-      reviewed: merge.reviewed,
-      choices: { description: 'absorbed', profileImageId: 'absorbed' },
-      relationships: [
-        { id: 'first', action: 'remove' },
-        { id: 'second', action: 'keep' },
-      ],
-    });
-    await mcp.propose('propose_merge', proposal());
-    await page.goto(app.origin);
-    await openWorkspace(page);
-    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(draft).toContainText('Identiteten är inte bekräftad');
-    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
-    await mcp.propose('discard_proposal', { kind: 'object', id: 'a' });
-    merge = await mcp.tool('read_merge_review', { survivorId: 'a', absorbedId: 'b' });
-    await mcp.propose('propose_merge', { ...proposal(), identityConfirmed: true });
-    await page.reload();
-    await openWorkspace(page);
-    await expect(draft).toContainText('Samma företeelse är uttryckligen bekräftad');
-    const merged = await mcp.save('merge-approved');
-    const current = (await mcp.tool('read_map', { objectId: 'a' })).objects[0];
-    const sourceImage = original.objects.find(
-      (object: { id: string }) => object.id === 'b',
-    ).profileImageId;
-    expect(current.profileImageId).not.toBe(sourceImage);
-    expect(
-      await (await page.request.get(`${path}/profile-images/${current.profileImageId}`)).body(),
-    ).toEqual(await (await page.request.get(`${path}/profile-images/${sourceImage}`)).body());
-    await mcp.object('a', { typeId, name: 'Senare namn', description: current.description });
-    await mcp.save('later-name');
-    await mcp.object('independent', { typeId, name: 'Eget senare objekt', description: '' });
-    await mcp.tool('read_history', { operationId: merged.operationId, userId: merged.userId });
-    await mcp.propose('propose_undo', { operationId: merged.operationId, userId: merged.userId });
-    await app.restart();
-    await page.reload();
-    await openWorkspace(page);
-    await expect(draft).toContainText('Eget senare objekt');
-    await expect(draft).toContainText('Första uppgiften');
-    await mcp.save('undo-merge');
-    await page.reload();
-    await openWorkspace(page);
-    const objects = page.getByRole('list', { name: 'Objekt', exact: true });
-    await expect(objects).toContainText('Senare namn');
-    await expect(objects).toContainText('Lo Exempel');
-    await expect(objects).toContainText('Eget senare objekt');
-    const restored = await mcp.tool('read_map');
-    expect(restored.objects.find((object: { id: string }) => object.id === 'a')).toMatchObject({
-      name: 'Senare namn',
-      description: 'Första uppgiften',
-      profileImageId: original.objects.find((object: { id: string }) => object.id === 'a')
-        .profileImageId,
-    });
-    expect(
-      restored.objects.find((object: { id: string }) => object.id === 'b').profileImageId,
-    ).toBe(sourceImage);
-    expect(restored.relationships).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'first', sourceId: 'a' }),
-        expect.objectContaining({ id: 'second', sourceId: 'b' }),
-      ]),
-    );
-  } finally {
-    await app.close();
-  }
-});
-
-test('MCP-06: importerad historik ångras med färskt underlag', async ({ page }) => {
+test('MCP-06: importerad historik läses och vanliga rättelser använder färskt underlag', async ({
+  page,
+}) => {
   const source = await createInstallation();
   const target = await createInstallation();
   try {
@@ -249,41 +122,22 @@ test('MCP-06: importerad historik ångras med färskt underlag', async ({ page }
       },
       'content_conflict',
     );
-    await targetMcp.tool(
-      'propose_undo',
-      {
-        version: old.version,
-        contentVersion: old.contentVersion,
-        operationId: saved.operationId,
-        userId: saved.userId,
-      },
-      'content_conflict',
-    );
-    await targetMcp.propose('propose_undo', {
-      operationId: saved.operationId,
-      userId: saved.userId,
-    });
-    await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Borttagning',
-    );
-    const receipt = await targetMcp.save('fresh-import-undo');
+    await targetMcp.object('lamp', { typeId, name: 'Rättad historisk lampa', description: '' });
+    const receipt = await targetMcp.save('fresh-import-correction');
     expect(receipt.contentVersion).toBe(2);
     expect(receipt.userId).not.toBe(saved.userId);
-    await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).not.toContainText(
-      'Historisk lampa',
+    expect((await targetMcp.tool('read_map', { objectId: 'lamp' })).objects[0].name).toBe(
+      'Rättad historisk lampa',
     );
-    expect((await targetMcp.tool('read_map')).objects).toEqual([]);
   } finally {
     await target.close();
     await source.close();
   }
 });
 
-test('MCP-03: typbyte och riktade samband återställs med äldre typer', async ({ page }) => {
+test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara historik', async ({
+  page,
+}) => {
   const app = await createInstallation();
   try {
     await signIn(page.request, app.origin);
@@ -355,47 +209,13 @@ test('MCP-03: typbyte och riktade samband återställs med äldre typer', async 
       operationId: changed.operationId,
       userId: changed.userId,
     });
-    expect(selected.receipt.changes[0].beforeType.name).toBe('Cykel');
-    const undo = await mcp.propose('propose_undo', {
-      operationId: changed.operationId,
-      userId: changed.userId,
+    expect(selected.receipt.changes[0]).toMatchObject({
+      beforeType: { name: 'Cykel' },
+      before: { customValues: { serial: 'SYNTH-42' } },
+      type: { name: 'Motorfordon' },
+      after: { customValues: { serial: 42 } },
     });
-    expect(undo.objectTypes[0]).toMatchObject({ id: 'cycle', before: null });
-    await page.reload();
-    await openWorkspace(page);
-    await expect(draft).toContainText('Cykel');
-    await expect(draft).toContainText('SYNTH-42');
-    await mcp.save('restore-type-and-object');
-    const bike = (await mcp.tool('read_map', { objectId: 'bike' })).objects[0];
-    await mcp.propose('propose_object', { id: 'bike', baseRevision: bike.revision, value: null });
-    const removed = await mcp.save('remove-bike');
-    await mcp.type('cycle', null);
-    await mcp.propose('propose_relationship_type', { id: 'stored', baseRevision: 1, value: null });
-    await mcp.save('remove-unused-definitions');
-    const restore = await mcp.propose('propose_undo', {
-      operationId: removed.operationId,
-      userId: removed.userId,
-    });
-    expect(restore.objectTypes[0]).toMatchObject({ id: 'cycle', before: null });
-    expect(restore.relationshipTypes[0]).toMatchObject({ id: 'stored', before: null });
-    await app.restart();
-    await page.reload();
-    await openWorkspace(page);
-    await expect(draft).toContainText('Alex blå cykel');
-    await expect(draft).toContainText('Förvaring');
-    await mcp.save('restore-bike');
-    await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Nummer', { exact: true })).toHaveValue('SYNTH-42');
-    await expect(page.getByText('förvaras i', { exact: false }).first()).toBeVisible();
-    expect((await mcp.tool('read_map', { objectId: 'bike' })).relationships).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'parking', sourceId: 'bike', targetId: 'garage' }),
-        expect.objectContaining({ id: 'second-kind' }),
-      ]),
-    );
+    expect((await mcp.tool('read_my_draft')).changes).toEqual([]);
   } finally {
     await app.close();
   }
@@ -459,6 +279,13 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
     });
     await mcp.propose('save_draft', { operationId: 'blocked-removal' }, 'definition_in_use');
     await page.goto(app.origin);
+    await page
+      .getByRole('navigation', { name: 'Kartans verktyg', exact: true })
+      .getByRole('button', { name: 'Sök i kartan', exact: true })
+      .click();
+    const search = page.getByRole('region', { name: 'Kartans sökning och filter' });
+    await search.getByLabel('Ta med upphörda').check();
+    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
     await openWorkspace(page);
     await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText(
       'Upphört testobjekt',
@@ -727,6 +554,59 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
       'Hyra för garaget → Gäller → Garaget',
     );
   } finally {
+    await app.close();
+  }
+});
+
+test('MCP-07: historik är läsbar och historisk ångring och sammanslagning saknar verktyg', async ({
+  page,
+}) => {
+  const app = await createInstallation();
+  const sdk = new Client({ name: 'Skyttel regression client', version: '1' });
+  try {
+    await signIn(page.request, app.origin);
+    const { household } = await (await createHousehold(page.request, app.origin)).json();
+    const mcp = await connect(page.request, app.origin, household.id);
+    await sdk.connect(
+      new StreamableHTTPClientTransport(new URL('/mcp', app.origin), {
+        requestInit: { headers: { authorization: `Bearer ${mcp.token}` } },
+      }),
+    );
+    const names = (await sdk.listTools()).tools.map(({ name }) => name);
+    expect(names).toContain('read_history');
+    expect(names).toContain('save_draft');
+    for (const name of ['propose_undo', 'read_merge_review', 'propose_merge']) {
+      expect(names).not.toContain(name);
+      expect((await sdk.callTool({ name, arguments: {} })).isError).toBe(true);
+    }
+    const path = `${app.origin}/api/households/${household.id}/map`;
+    const before = await (await page.request.get(path)).json();
+    for (const route of ['undo', 'merge']) {
+      const response = await page.request.post(`${path}/${route}`, {
+        headers: { origin: app.origin },
+        data: { version: before.draft.version },
+      });
+      expect(response.status()).toBe(404);
+    }
+    expect(await (await page.request.get(path)).json()).toEqual(before);
+    await mcp.object('lamp', {
+      typeId: before.types[0].id,
+      name: 'Provets lampa',
+      description: '',
+    });
+    const saved = await mcp.save('ordinary-save');
+    const ordinary = await mcp.tool('read_map', { objectId: 'lamp' });
+    expect(ordinary.objects[0].name).toBe('Provets lampa');
+    const draft = await mcp.tool('read_my_draft');
+    const selected = await mcp.tool('read_history', {
+      operationId: saved.operationId,
+      userId: saved.userId,
+    });
+    expect(selected.receipt).toEqual(saved);
+    expect(await mcp.tool('read_my_draft')).toEqual(draft);
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([saved]);
+  } finally {
+    await sdk.close();
     await app.close();
   }
 });

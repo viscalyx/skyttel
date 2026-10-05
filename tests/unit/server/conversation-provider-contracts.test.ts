@@ -139,7 +139,7 @@ test.each(['latest_save', 'save'])(
     expect(result.receipt).toBeUndefined();
     expect(result.operations).toEqual([]);
     if (source === 'save')
-      expect(result).toMatchObject({ phase: 'error', error: 'undo_unavailable' });
+      expect(result).toMatchObject({ phase: 'error', error: 'history_unavailable' });
     else {
       expect(result.phase).toBe('ready');
       expect(result.reply).toBe('Det finns inget tidigare sparande i hushållets historik.');

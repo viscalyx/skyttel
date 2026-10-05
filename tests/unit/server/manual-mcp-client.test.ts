@@ -143,7 +143,7 @@ test('manual MCP controls authenticate independently, retain stale requests and 
     expect(saved.value.receipt.changes[0].after.identity).toBe('unspecified');
     const tools = await command('tools');
     expect(tools.value.tools).toEqual(
-      expect.arrayContaining([expect.objectContaining({ name: 'propose_undo' })]),
+      expect.arrayContaining([expect.objectContaining({ name: 'read_history' })]),
     );
     const receiptReference = JSON.stringify({
       operationId: saved.value.receipt.operationId,
@@ -151,41 +151,34 @@ test('manual MCP controls authenticate independently, retain stale requests and 
     });
     const history = await command(`read-tool read_history ${receiptReference}`);
     expect(history.value.receipt).toEqual(saved.value.receipt);
-    const undo = await command(`capture-tool undo propose_undo ${receiptReference}`, 'captured');
-    expect(undo.arguments).toMatchObject(JSON.parse(receiptReference));
-    const beforeUndo = await command('read');
-    expect(beforeUndo.value.changes).toEqual([]);
+    const removal = '{"kind":"object","id":"Intervening"}';
+    await command(`capture-tool removal discard_proposal ${removal}`, 'captured');
     await propose('Intervening');
-    expect((await command('send undo')).value.error).toBe('draft_conflict');
+    expect((await command('send removal')).value.error).toBe('draft_conflict');
     expect(
-      await command(`capture-tool undo propose_undo ${receiptReference}`, 'error'),
+      await command(`capture-tool removal discard_proposal ${removal}`, 'error'),
     ).toMatchObject({ message: expect.stringContaining('never overwritten') });
-    await command(`capture-tool current-undo propose_undo ${receiptReference}`, 'captured');
-    const proposedUndo = await command('send current-undo');
-    expect(proposedUndo.value.changes).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'manual-bank', after: null }),
-        expect.objectContaining({ id: 'Intervening' }),
-      ]),
-    );
+    await command(`capture-tool current-removal discard_proposal ${removal}`, 'captured');
+    const proposedRemoval = await command('send current-removal');
+    expect(proposedRemoval.value.changes).toEqual([]);
     // Generic controls cannot send writes as reads, bypass save recovery, or
     // replace the authenticated scope and automatically captured versions.
     for (const invalid of [
-      `read-tool propose_undo ${receiptReference}`,
+      `read-tool discard_proposal ${receiptReference}`,
       'capture-tool wrong-read read_history {}',
       'capture-tool wrong-save save_draft {}',
       'capture-tool wrong-prepare prepare_save {}',
       'capture-tool wrong-admin erase_household {}',
-      'capture-tool wrong-version propose_undo {"version":0}',
-      'capture-tool wrong-content propose_undo {"contentVersion":1}',
-      'capture-tool wrong-actor propose_undo {"actorId":"another"}',
+      'capture-tool wrong-version discard_proposal {"version":0}',
+      'capture-tool wrong-content discard_proposal {"contentVersion":1}',
+      'capture-tool wrong-actor discard_proposal {"actorId":"another"}',
       'read-tool read_history {"householdId":"another"}',
       'read-tool read_history []',
-      'capture-tool wrong-json propose_undo null',
+      'capture-tool wrong-json discard_proposal null',
     ]) {
       expect(await command(invalid, 'error')).toHaveProperty('message');
     }
-    expect((await command('read')).value).toEqual(proposedUndo.value);
+    expect((await command('read')).value).toEqual(proposedRemoval.value);
     expect((await (await browser.get(mapPath)).json()).objects).toHaveLength(3);
     const connections = await (await browser.get(`${app.origin}/api/assistants/context`)).json();
     expect(connections.connections).toHaveLength(1);

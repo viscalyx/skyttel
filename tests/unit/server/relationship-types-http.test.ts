@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest';
-import type { MapState } from '../../../src/shared/map.js';
+import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
 import { applicationFixture } from './fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -164,12 +164,13 @@ test('explicit type conflict choices preserve independent labels and refresh dep
   });
   expect((await save('use-current')).status).toBe(200);
   const { history } = await (await client.request(`${path}/history`)).json();
-  expect(history[3].relationshipTypes[0].before).toMatchObject({
+  const resolved = history.find((entry: SaveReceipt) => entry.operationId === 'resolved');
+  expect(resolved.relationshipTypes[0].before).toMatchObject({
     description: 'Ny förklaring',
     reverseLabel: 'rymmer',
     revision: 2,
   });
-  expect(history[3].relationships[0].type).toMatchObject({
+  expect(resolved.relationships[0].type).toMatchObject({
     name: 'Min förvaring',
     description: 'Ny förklaring',
     reverseLabel: 'rymmer',

@@ -174,83 +174,6 @@ test('duplicate selection validates supplied custom answers before retaining the
   expect(await read()).toEqual(before);
 });
 
-test('cancelling and undoing object merges preserve relationship answers and original endpoints', async () => {
-  const arranged = {
-    ...definition,
-    sections: [{ id: 'facts', name: 'Uppgifter' }],
-    fields: fields.map((field) => ({ ...field, sectionId: field.id === 'amount' ? '' : 'facts' })),
-  };
-  await define(arranged);
-  await edge(values);
-  await post('draft', {
-    version: (await read()).draft.version,
-    id: 'spare',
-    baseRevision: null,
-    value: { typeId: (await read()).objects[0].typeId, name: 'spare', description: '' },
-  });
-  await save('initial');
-  const merge = async () => {
-    const state = await read();
-    const response = await post('merge', {
-      version: state.draft.version,
-      survivorId: 'spare',
-      absorbedId: 'bike',
-      identityConfirmed: true,
-      reviewed: {
-        objects: ['spare', 'bike'].map((id) => state.objects.find((object) => object.id === id)),
-        relationships: state.relationships,
-        types: state.types.filter(({ id }) => id === state.objects[0].typeId),
-        relationshipTypes: state.relationshipTypes.filter(({ id }) => id === 'storage'),
-      },
-      choices: { name: 'survivor' },
-      relationships: [{ id: 'edge', action: 'keep' }],
-    });
-    expect(response.status, await response.clone().text()).toBe(200);
-  };
-  await merge();
-  expect((await read()).draft.changes[0].merge?.relationshipTypes[0]).toMatchObject(arranged);
-  expect((await read()).draft.relationships?.[0].type).toMatchObject(arranged);
-  expect((await read()).draft.relationships?.[0].after).toMatchObject({
-    sourceId: 'spare',
-    customValues: values,
-  });
-  expect(
-    (
-      await post('discard-change', {
-        version: (await read()).draft.version,
-        kind: 'object',
-        id: 'spare',
-      })
-    ).status,
-  ).toBe(200);
-  expect((await read()).draft.relationships ?? []).toEqual([]);
-  expect((await read()).relationshipTypes.find(({ id }) => id === 'storage')).toMatchObject(
-    arranged,
-  );
-  expect((await read()).relationships[0]).toMatchObject({ sourceId: 'bike', customValues: values });
-  await merge();
-  const { receipt } = await (await save('merged')).json();
-  expect((await read()).relationships[0]).toMatchObject({
-    sourceId: 'spare',
-    customValues: values,
-  });
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        userId: receipt.userId,
-        operationId: receipt.operationId,
-      })
-    ).status,
-  ).toBe(200);
-  expect((await save('undo-merge')).status).toBe(200);
-  expect((await read()).relationships[0]).toMatchObject({ sourceId: 'bike', customValues: values });
-  expect((await read()).objects.map(({ id }) => id)).toEqual(['bike', 'garage', 'spare']);
-  expect((await read()).relationshipTypes.find(({ id }) => id === 'storage')).toMatchObject(
-    arranged,
-  );
-});
-
 test('used relationship field removal and kind changes are denied without disclosing a private draft', async () => {
   await define();
   await save('definition');
@@ -364,7 +287,7 @@ test('relationship field kind changes are checked against pending definitions, t
   );
 });
 
-test('relationship conflict resolution and undo retain independently changed values and field names', async () => {
+test('relationship conflict resolution retain independently changed values and field names', async () => {
   await define();
   await edge(values);
   await save('initial');
@@ -395,7 +318,7 @@ test('relationship conflict resolution and undo retain independently changed val
     ).status,
   ).toBe(200);
   const saved = await save('my-value');
-  const { receipt } = await saved.json();
+  expect(saved.status).toBe(200);
   expect((await read()).relationships[0].customValues).toEqual({
     ...values,
     note: 'Min anteckning',
@@ -403,17 +326,6 @@ test('relationship conflict resolution and undo retain independently changed val
   });
   await edge({ ...values, note: 'Min anteckning', amount: 15 }, 3);
   await save('later-value');
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        operationId: 'my-value',
-        userId: receipt.userId,
-      })
-    ).status,
-  ).toBe(200);
-  expect((await save('undone')).status).toBe(200);
-  expect((await read()).relationships[0].customValues).toEqual({ ...values, amount: 15 });
   await define(
     {
       ...definition,
@@ -460,107 +372,4 @@ test('relationship conflict resolution and undo retain independently changed val
       ?.fields?.slice(0, 2)
       .map(({ name }) => name),
   ).toEqual(['Min rubrik', 'Ny summa']);
-});
-
-test('restoring a removed relationship restores its historical fields alongside current independent definitions', async () => {
-  await define();
-  await edge(values);
-  await save('initial');
-  await post('relationship', {
-    version: (await read()).draft.version,
-    id: 'edge',
-    baseRevision: 1,
-    value: null,
-  });
-  const { receipt } = await (await save('removed-edge')).json();
-  const extra = { id: 'extra', name: 'Ny uppgift', description: '', kind: 'text' };
-  expect((await define({ ...definition, fields: [extra] }, 1)).status).toBe(200);
-  await save('removed-fields');
-  const undone = await post('undo', {
-    version: (await read()).draft.version,
-    operationId: receipt.operationId,
-    userId: receipt.userId,
-  });
-  expect(undone.status, await undone.clone().text()).toBe(200);
-  const state = await read();
-  expect(state.draft.relationships?.[0].after?.customValues).toEqual(values);
-  expect(state.draft.relationshipTypes?.[0].after?.fields?.map(({ id }) => id)).toEqual([
-    'extra',
-    'note',
-    'amount',
-    'start',
-    'active',
-  ]);
-  expect(
-    (
-      await post('resolve', {
-        version: state.draft.version,
-        choice: 'proposed',
-        conflict: {
-          kind: 'relationshipType',
-          id: 'storage',
-          current: state.relationshipTypes.find(({ id }) => id === 'storage'),
-        },
-      })
-    ).status,
-  ).toBe(200);
-  expect((await save('restored')).status).toBe(200);
-  expect((await read()).relationships[0].customValues).toEqual(values);
-});
-
-test('undoing a relationship type change restores only its own type values while preserving later lifecycle facts', async () => {
-  await define();
-  await edge(values);
-  await save('initial');
-  const otherType = (await read()).relationshipTypes.find(({ id }) => id !== 'storage');
-  if (!otherType) throw new Error('A prefilled relationship type is required.');
-  const member = await otherMember();
-  expect(
-    (
-      await member.json(`${path}/relationship-type`, {
-        version: 0,
-        id: otherType.id,
-        baseRevision: otherType.revision,
-        value: { ...definition, name: 'Annan betydelse', fields: [fields[0]] },
-      })
-    ).status,
-  ).toBe(200);
-  expect(
-    (await member.json(`${path}/save`, { version: 1, operationId: 'prefill-fields' })).status,
-  ).toBe(200);
-  const propose = async (customValues: unknown, baseRevision: number, extra = {}) =>
-    post('relationship', {
-      version: (await read()).draft.version,
-      id: 'edge',
-      baseRevision,
-      value: {
-        typeId: otherType.id,
-        sourceId: 'bike',
-        targetId: 'garage',
-        knowledge: 'known',
-        customValues,
-        ...extra,
-      },
-    });
-  expect((await propose(undefined, 1)).status).toBe(400);
-  expect((await propose({ note: 'Ny betydelse' }, 1)).status).toBe(200);
-  const { receipt } = await (await save('changed-type')).json();
-  expect(receipt.relationships[0].beforeType).toMatchObject({ id: 'storage', fields });
-  expect((await propose({ note: 'Ny betydelse' }, 2, { lifecycle: 'ended' })).status).toBe(200);
-  await save('ended');
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        userId: receipt.userId,
-        operationId: receipt.operationId,
-      })
-    ).status,
-  ).toBe(200);
-  expect((await save('undo-type')).status).toBe(200);
-  expect((await read()).relationships[0]).toMatchObject({
-    typeId: 'storage',
-    customValues: values,
-    lifecycle: 'ended',
-  });
 });

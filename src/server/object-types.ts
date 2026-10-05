@@ -64,19 +64,14 @@ export function objectTypes(database: Database.Database, householdId: string, us
       ...(sections !== undefined ? { sections } : {}),
     };
   }
-  function checkFields(
-    before: ObjectType | null,
-    after: ObjectType,
-    draft: MapDraft,
-    deferKindChanges = false,
-  ) {
+  function checkFields(before: ObjectType | null, after: ObjectType, draft: MapDraft) {
     for (const field of before?.fields ?? []) {
       const next = after.fields?.find((item) => item.id === field.id);
       if (!next) {
         usage.assertUnused('objectType', after.id, draft, field.id);
         continue;
       }
-      if (next.kind === field.kind || deferKindChanges) continue;
+      if (next.kind === field.kind) continue;
       const objects = database
         .prepare(
           'SELECT id, customValues FROM map_object WHERE householdId = ? AND typeId = ? AND deleted = 0',

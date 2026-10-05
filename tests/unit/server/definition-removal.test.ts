@@ -152,7 +152,7 @@ async function removalScenario(kind: DefinitionKind) {
   };
 }
 
-test('unused prefilled definitions are removed only by whole save and remain readable and undoable', async () => {
+test('unused prefilled definitions are removed only by whole save and remain readable', async () => {
   const initial = await read();
   const objectType = initial.types[0];
   const edgeType = initial.relationshipTypes[0];
@@ -167,22 +167,6 @@ test('unused prefilled definitions are removed only by whole save and remain rea
   const receipt = await save('remove-catalog');
   expect((await read()).types).not.toContainEqual(objectType);
   expect((await read()).relationshipTypes).not.toContainEqual(edgeType);
-  expect(
-    (
-      await (
-        await post('undo', {
-          version: (await read()).draft.version,
-          userId: receipt.userId,
-          operationId: receipt.operationId,
-        })
-      ).json()
-    ).objectTypes[0].after,
-  ).toMatchObject({ name: objectType.name });
-  expect(draftConflicts(await read())).toEqual([]);
-  await save('restore-catalog');
-  expect((await read()).types).toContainEqual(
-    expect.objectContaining({ id: objectType.id, name: objectType.name }),
-  );
   expect((await (await client.request(`${path}/history`)).json()).history[0]).toEqual(receipt);
 });
 
@@ -196,7 +180,7 @@ test('an unused field can be removed while other type facts and historical value
   await object('historical', type.id, { customValues: { serial: 'SYNTH-1' } });
   await save('value');
   await object('historical', type.id, null);
-  const removal = await save('object-removal');
+  await save('object-removal');
   expect(
     (await definition('object-type', type.id, { ...type, name: 'Bevarad typ', fields: [] })).status,
   ).toBe(200);
@@ -205,23 +189,13 @@ test('an unused field can be removed while other type facts and historical value
     name: 'Bevarad typ',
   });
   expect(
-    (await (await client.request(`${path}/history`)).json()).history[1].changes[0],
+    (await (await client.request(`${path}/history`)).json()).history.find(
+      (entry: SaveReceipt) => entry.operationId === 'value',
+    ).changes[0],
   ).toMatchObject({
     after: { customValues: { serial: 'SYNTH-1' } },
     type: { fields: [serial] },
   });
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        userId: removal.userId,
-        operationId: removal.operationId,
-      })
-    ).status,
-  ).toBe(200);
-  expect(draftConflicts(await read())).toEqual([
-    expect.objectContaining({ kind: 'objectType', id: type.id }),
-  ]);
 });
 
 test.each(['object', 'relationship', 'field'] as const)(
@@ -394,52 +368,6 @@ test.each(['object-type', 'relationship-type'] as const)(
     expect(await read()).toEqual(before);
   },
 );
-
-test('removed object and relationship definitions return only in an explicit reviewed restoration with independent proposals intact', async () => {
-  const initial = await read();
-  const type = initial.types[0];
-  const edgeType = initial.relationshipTypes[0];
-  await object('source', type.id, { name: 'Historiskt föremål' });
-  await object('target', initial.types[1].id);
-  await relationship('edge', edgeType.id);
-  await save('content');
-  await object('source', type.id, null);
-  const deletion = await save('delete-content');
-  expect((await definition('object-type', type.id, null)).status).toBe(200);
-  expect((await definition('relationship-type', edgeType.id, null)).status).toBe(200);
-  await save('delete-definitions');
-  await object('independent', initial.types[1].id);
-  const before = await read();
-  const body = {
-    version: before.draft.version,
-    userId: deletion.userId,
-    operationId: deletion.operationId,
-  };
-  expect((await post('undo', body)).status).toBe(200);
-  const restored = await read();
-  expect(restored.types).toEqual(before.types);
-  expect(restored.relationshipTypes).toEqual(before.relationshipTypes);
-  expect(restored.objects).toEqual(before.objects);
-  expect(restored.draft.objectTypes?.[0]).toMatchObject({
-    before: null,
-    after: { id: type.id, name: type.name },
-  });
-  expect(restored.draft.relationshipTypes?.[0]).toMatchObject({
-    before: null,
-    after: { id: edgeType.id, name: edgeType.name },
-  });
-  expect(restored.draft.changes).toContainEqual(before.draft.changes[0]);
-  expect((await post('undo', body)).status).toBe(409);
-  expect((await read()).draft).toEqual(restored.draft);
-  await save('restoration');
-  const final = await read();
-  expect(final.objects.map((item) => item.id).sort()).toEqual(['independent', 'source', 'target']);
-  expect(final.objects.find((item) => item.id === 'target')).toEqual(before.objects[0]);
-  expect(final.relationships).toContainEqual(
-    expect.objectContaining({ id: 'edge', typeId: edgeType.id }),
-  );
-  expect((await (await client.request(`${path}/history`)).json()).history[1]).toEqual(deletion);
-});
 
 test('definition and field removals require current household membership and denied requests preserve all drafts', async () => {
   const initial = await read();

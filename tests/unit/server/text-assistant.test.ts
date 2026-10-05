@@ -695,19 +695,8 @@ test.each(['draft', 'latest_save'])(
   },
 );
 
-test('latest-save details and unsaved undo are grounded in the actual receipt and preserve unrelated proposals', async () => {
-  let mode = 'history';
-  let receipt: { operationId: string; userId: string };
-  const model = textModel(() => [
-    mode === 'history'
-      ? modelTool('report_result', { source: 'latest_save' })
-      : modelTool('submit_changes', {
-          version: 3,
-          contentVersion: 1,
-          completion: 'draft',
-          operations: [{ name: 'propose_undo', arguments: receipt }],
-        }),
-  ]);
+test('latest-save details are grounded in the actual receipt and preserve unrelated proposals', async () => {
+  const model = textModel(() => [modelTool('report_result', { source: 'latest_save' })]);
   await setup(model.provider);
   await webProposal('Cykeln', 'bike');
   const mapPath = path.replace('/text-assistant', '/map');
@@ -716,25 +705,14 @@ test('latest-save details and unsaved undo are grounded in the actual receipt an
     data: { version: 1, contentVersion: 1, operationId: 'bike-save' },
   });
   expect(saved.status()).toBe(200);
-  receipt = (await saved.json()).receipt;
-  // Only identity belongs in the undo request, not historical draft versions.
-  receipt = { operationId: receipt.operationId, userId: receipt.userId };
   await webProposal('Hjälmen', 'helmet');
   const history = await message(await start(), 'Vad sparades senast?');
   expect(history).toMatchObject({ phase: 'ready', result: { kind: 'history' } });
   expect(history.reply).toContain('Lade till Cykeln');
   expect(history.reply).not.toContain('Hjälmen');
   expect(history.receipt).toBeUndefined();
-  mode = 'undo';
-  const undone = await message(history, 'Ångra det senaste sparandet i utkastet.');
-  expect(undone.result).toEqual({ kind: 'undo', message: 'Ångrat i utkastet.' });
   const map = await (await browser.get(mapPath)).json();
-  expect(map.objects).toMatchObject([{ id: 'bike', name: 'Cykeln' }]);
-  expect(map.draft.changes).toMatchObject([
-    { id: 'helmet', after: { name: 'Hjälmen' } },
-    { id: 'bike', after: null },
-  ]);
-  expect(model.requests).toHaveLength(2);
+  expect(map.draft.changes).toMatchObject([{ id: 'helmet', after: { name: 'Hjälmen' } }]);
 });
 
 test.each([
@@ -792,37 +770,6 @@ test.each([
   expect(view.receipt).toBeUndefined();
   expect(view.review).toEqual(session.review);
   expect(view.operations).toEqual([]);
-});
-
-test('restoring an unsaved deletion preserves unrelated proposals and never reports a new save', async () => {
-  const model = textModel(() => [
-    modelTool('submit_changes', {
-      version: 4,
-      contentVersion: 1,
-      completion: 'draft',
-      operations: [{ name: 'discard_proposal', arguments: { id: 'bike', kind: 'object' } }],
-    }),
-  ]);
-  await setup(model.provider);
-  await webProposal('Cykeln', 'bike');
-  const mapPath = path.replace('/text-assistant', '/map');
-  const saved = await browser.post(`${mapPath}/save`, {
-    headers: { origin: app.origin },
-    data: { version: 1, contentVersion: 1, operationId: 'bike-save' },
-  });
-  expect(saved.status()).toBe(200);
-  const removed = await browser.post(`${mapPath}/draft`, {
-    headers: { origin: app.origin },
-    data: { version: 2, contentVersion: 1, id: 'bike', baseRevision: 1, value: null },
-  });
-  expect(removed.status()).toBe(200);
-  await webProposal('Hjälmen', 'helmet');
-  const view = await message(await start(), 'Återställ cykeln som jag tog bort i utkastet.');
-  expect(view.result).toEqual({ kind: 'restored', message: 'Återställt i utkastet.' });
-  expect(view.receipt).toBeUndefined();
-  expect(view.review.changes).toMatchObject([{ id: 'helmet', after: { name: 'Hjälmen' } }]);
-  const map = await (await browser.get(mapPath)).json();
-  expect(map.objects).toMatchObject([{ id: 'bike', name: 'Cykeln' }]);
 });
 
 test.each([

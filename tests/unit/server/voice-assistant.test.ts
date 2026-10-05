@@ -240,7 +240,7 @@ test('only one actual delegation executes raw voice fragments through Terra and 
   const sent = voice.live.sent.find(({ event }) => event.type === 'session.commentary.append');
   expect(sent?.event).toMatchObject({ delegation_id: delegationId });
   expect(JSON.stringify(model.requests[0])).toContain('Lägg till Familjens musik.');
-  expect(model.requests[0].tools.some(({ name }) => name === 'read_merge_review')).toBe(true);
+  expect(model.requests[0].tools.some(({ name }) => name === 'read_merge_review')).toBe(false);
   voice.transcript('Vill du spara?', 'output');
   voice.transcript('Spara.');
   const saveId = voice.delegate();
