@@ -7,12 +7,13 @@ const installation = await createInstallation(undefined, {
   modelFetch: async () => Response.json({ output: [] }),
 });
 const client = await request.newContext();
-const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
-const stop = () => input.close();
+let input: ReturnType<typeof createInterface> | undefined;
+const stop = () => input?.close();
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
 try {
   await prepareHouseholdTable(client, installation.origin);
+  input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   console.log(
     JSON.stringify({
       event: 'ready',
@@ -26,5 +27,5 @@ try {
 } finally {
   await client.dispose();
   await installation.close();
-  input.close();
+  input?.close();
 }
