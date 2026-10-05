@@ -204,9 +204,22 @@ exempelvis en bostad eller ett fordon.
 En Skyttel-användares samlade förslag till ändringar som ännu inte ingår
 i hushållets gemensamma karta.
 
+I gränssnittet benämns det **ditt utkast**.
+
+_Undvik_: Privat utkast som benämning i gränssnittet.
+
 **Ändringshistorik**:
 Tidigare sparade ändringar i hushållets karta, med tidigare värden,
 tidpunkter och den Skyttel-användare som sparar respektive ändring.
+
+**Sparförsök**:
+En Skyttel-användares begäran att spara sitt utkast i hushållets
+gemensamma karta, med ett utfall som är väntande, genomfört eller avvisat.
+
+**Sparkvitto**:
+En beständig bekräftelse av ett genomfört sparande i hushållets karta,
+med uppgifter om vilka ändringar som sparas, när och av vilken
+Skyttel-användare.
 
 **Upphört**:
 En uppgift om att ett objekt eller samband inte längre gäller, exempelvis
