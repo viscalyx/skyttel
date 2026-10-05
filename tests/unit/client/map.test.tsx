@@ -1471,7 +1471,7 @@ test('view changes retain unsent object text and filters can clear without chang
   expect(screen.getByText('Fokus: Lo Rymdprov')).toBeTruthy();
   expect(
     within(screen.getByRole('list', { name: 'Objekt' })).queryByText('Kim Rymdprov'),
-  ).toBeNull();
+  ).toBeTruthy();
   await userEvent.click(screen.getByRole('button', { name: 'Visa hela rymden' }));
   await userEvent.type(screen.getByLabelText('Sök objekt'), 'Lo');
   await userEvent.click(

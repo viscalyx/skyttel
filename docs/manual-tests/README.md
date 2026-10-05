@@ -88,7 +88,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   långa namn, modalernas fokus och återgång även när en sida försvinner;
   separat sökning, egna
   detaljträffar, flerval, teckensammansättning, utkastfiltrets återställning,
-  markeringar och kartfokus.
+  markeringar, direkta sammanhang, utforskning utan indirekt expansion,
+  upphört även i sammanhang och tabellens kartknapp med bevarat läge.
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
   fönsterflytt, samtidiga detaljer, sex beständiga personliga riktningar och

@@ -167,13 +167,15 @@ i sidled för att nå alla val utan att minska kartytan.
 
 ## Ändra och granska
 
-Välj **Visa kopplingar** i objektets högerklicksmeny för objektfokus.
-Vid ändrade samband visar fokus både tidigare och föreslagna ändpunkter.
+Välj **Visa samband i kartan** för att se objektets direkta grannar och
+flytta kameran dit. Tidigare visat innehåll och sökning finns kvar.
+Vid ändrade samband visas både tidigare och föreslagna ändpunkter;
+**Ta med upphörda** gäller även det tidigare sambandet.
 Välj den tidigare, böjda linjen eller dess etikett med × för att läsa det
 sparade sambandet utan att ändra det.
 
 Högerklick eller långtryck på ett objekt ger **Redigera objekt**,
-**Visa kopplingar** och **Ta bort objekt**. I listan finns också
+**Visa samband i kartan** och **Ta bort objekt**. I listan finns också
 **Redigera** och **Ta bort** vid det valda objektet. **Uppgifter** i listan
 öppnar objektets panel med rubrikfokus och visar uppgifterna utan att öppna
 formuläret. **Redigera valt objekt** flyttar fokus till formuläret.

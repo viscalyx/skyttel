@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { conversationWidths } from '../shared/conversation-preferences.js';
 import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
+import { hasEnded } from '../shared/lifecycle.js';
 import type {
   MapDraft,
   MapObject,
@@ -42,7 +43,9 @@ import { ConversationSettings } from './ConversationSettings.js';
 import { LifecycleDetails, LifecycleStatus } from './Lifecycle.js';
 import { MapLegend } from './MapLegend.js';
 import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
+import { mapConnections } from './map-presentation.js';
 import { MapRequestError, request } from './map-request.js';
+import { mapSearchContext } from './map-search-context.js';
 import { initialObjectBrowsing, ObjectList, objectListResults } from './ObjectList.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
@@ -148,7 +151,6 @@ export function HouseholdMap({
     selectedIds,
     focusId,
     setFocusId,
-    mapUnfiltered,
     setMapUnfiltered,
     cameraFocusRequest,
     setCameraFocusRequest,
@@ -259,6 +261,7 @@ export function HouseholdMap({
   const reportReturnFocus = useRef<HTMLElement | null>(null);
   const [readEntry, setReadEntry] = useState<HouseholdReadEntry | null>(null);
   const [mapSearchOpen, setMapSearchOpen] = useState(false);
+  const [exploredIds, setExploredIds] = useState<string[]>([]);
   const [mapSearchFilters, setMapSearchFilters] = useState(false);
   const [mapSearchEntryRequestId, setMapSearchEntryRequestId] = useState(0);
   const mapSearchTrigger = useRef<HTMLElement | null>(null);
@@ -270,6 +273,7 @@ export function HouseholdMap({
   function changeMapSearch(next: ObjectSearchState) {
     setBrowsing((previous) => ({ ...previous, ...next, page: 0 }));
     setMapUnfiltered(false);
+    setExploredIds([]);
   }
   const [presentation, setPresentation] = useState<'list' | 'combined' | 'map'>('map');
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -920,6 +924,11 @@ export function HouseholdMap({
     listObjects,
     listResults,
     listEdges,
+    spatialEdges,
+    searchHitIds,
+    hiddenEnded,
+    previousEdges,
+    previousIds,
   } = useMemo(() => {
     const displayed = state
       ? new Map(state.objects.map((object) => [object.id, object]))
@@ -941,25 +950,13 @@ export function HouseholdMap({
     for (const change of state?.draft.relationships ?? []) {
       if (!change.after && change.before) spatialEdges.set(change.id, change.before);
     }
-    const connected = new Set([focusId]);
-    const beforeEdges = (state?.draft.relationships ?? []).flatMap((change) =>
-      change.before ? [change.before] : [],
-    );
-    for (const edge of [...spatialEdges.values(), ...beforeEdges]) {
-      if (edge.sourceId === focusId || edge.targetId === focusId) {
-        connected.add(edge.sourceId);
-        connected.add(edge.targetId);
-      }
-    }
     const mapRows = objectSearchResults(
       (state ? householdTableRows(state, effectiveTypes) : []).filter((row) => !row.removed),
       { ...browsing, query: '', types: [], onlySelected: false },
       selectedIds,
     );
     const allowed = new Set(mapRows.map((row) => row.object.id));
-    const listObjects = [...displayed.values()].filter(
-      (object) => allowed.has(object.id) && (!focusId || connected.has(object.id)),
-    );
+    const listObjects = [...displayed.values()].filter((object) => allowed.has(object.id));
     const listResults = objectListResults(
       listObjects,
       effectiveTypes,
@@ -967,48 +964,59 @@ export function HouseholdMap({
       selectedIds,
       mapRows,
     );
-    const visibleObjects = new Map(
-      (mapUnfiltered ? listObjects : listResults.items).map((object) => [object.id, object]),
-    );
     const listIds = new Set(listResults.items.map((object) => object.id));
     function edgesFor(ids: Set<string>) {
       return new Map(
         [...spatialEdges].filter(
-          ([, edge]) =>
-            ids.has(edge.sourceId) &&
-            (!edge.targetId || ids.has(edge.targetId)) &&
-            (!focusId || edge.sourceId === focusId || edge.targetId === focusId),
+          ([, edge]) => ids.has(edge.sourceId) && (!edge.targetId || ids.has(edge.targetId)),
         ),
       );
     }
     const listEdges = edgesFor(listIds);
-    const visibleEdges = mapUnfiltered ? edgesFor(new Set(visibleObjects.keys())) : listEdges;
+    const previousEdges = state
+      ? mapConnections(state.draft, displayed, spatialEdges)
+          .filter((connection) => connection.previous)
+          .map((connection) => connection.edge)
+      : [];
+    const context = mapSearchContext(
+      displayed,
+      spatialEdges,
+      listIds,
+      exploredIds,
+      Boolean(browsing.includeEnded),
+      previousEdges,
+    );
     return {
       displayed,
       displayedEdges,
-      visibleObjects,
-      visibleEdges,
+      visibleObjects: context.objects,
+      visibleEdges: context.relationships,
       listObjects,
       listResults,
       listEdges,
+      spatialEdges,
+      searchHitIds: listIds,
+      hiddenEnded: context.hiddenEnded,
+      previousEdges,
+      previousIds: context.previousIds,
     };
   }, [
     state,
     householdId,
     effectiveTypes,
-    focusId,
     query,
     typeFilter,
     onlySelected,
     sort,
     selectedIds,
-    mapUnfiltered,
     browsing,
+    exploredIds,
   ]);
   function showAll() {
     setBrowsing(initialObjectBrowsing);
     setMapUnfiltered(false);
     setFocusId(null);
+    setExploredIds([]);
     setSelection(null);
     setStatus('Hela rymden visas. Kameran behåller sin vinkel, zoom och panorering.');
   }
@@ -1029,7 +1037,6 @@ export function HouseholdMap({
       neighbors.add(edge.sourceId);
       if (edge.targetId) neighbors.add(edge.targetId);
     }
-    setMapUnfiltered(true);
     setFocusId(null);
     setCameraFocusRequest({
       id: crypto.randomUUID(),
@@ -1051,17 +1058,19 @@ export function HouseholdMap({
   }
   function focusObject(id: string) {
     setFocusId(id);
-    setMapUnfiltered(false);
-    setBrowsing((previous) => ({
-      ...previous,
-      query: '',
-      types: [],
-      onlySelected: false,
-      page: 0,
-    }));
+    setExploredIds((previous) => [...new Set([...previous, id])]);
     setSelection({ kind: 'object', id });
+    const context = mapSearchContext(
+      displayed,
+      spatialEdges,
+      [id],
+      [],
+      Boolean(browsing.includeEnded),
+      previousEdges,
+    );
+    setCameraFocusRequest({ id: crypto.randomUUID(), objectIds: [...context.objects.keys()] });
     setStatus(
-      `Visar direkta samband för ${displayed.get(id)?.name}. Visa hela rymden lämnar fokus.`,
+      `Visar direkta samband för ${displayed.get(id)?.name}. Sökningen och tidigare innehåll finns kvar.`,
     );
   }
   const savedObjects = new Map((state?.objects ?? []).map((object) => [object.id, object]));
@@ -1502,6 +1511,15 @@ export function HouseholdMap({
           <div className="workspace-context">
             {householdName}
             <span>Gemensam karta</span>
+            {selectedObject && (
+              <button
+                type="button"
+                disabled={pending || !mapAvailable}
+                onClick={() => focusObject(selectedObject.id)}
+              >
+                Visa samband i kartan
+              </button>
+            )}
             <span
               className="workspace-selection-count"
               data-multiple={selectedIds.length > 1}
@@ -1590,6 +1608,7 @@ export function HouseholdMap({
                 objects={visibleObjects}
                 relationships={visibleEdges}
                 selectedIds={selectedIds}
+                previousIds={previousIds}
               />
             )}
           </div>
@@ -1700,6 +1719,26 @@ export function HouseholdMap({
               ).reasons;
               return fields.length ? [{ id: object.id, name: object.name, fields }] : [];
             })}
+            contextCount={Math.max(0, visibleObjects.size - searchHitIds.size)}
+            hiddenEnded={hiddenEnded}
+            explored={exploredIds.length > 0}
+            onReturnToHits={() => {
+              setFocusId(null);
+              setExploredIds([]);
+              const context = mapSearchContext(
+                displayed,
+                spatialEdges,
+                searchHitIds,
+                [],
+                Boolean(browsing.includeEnded),
+                previousEdges,
+              );
+              setCameraFocusRequest({
+                id: crypto.randomUUID(),
+                objectIds: [...context.objects.keys()],
+              });
+              workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus();
+            }}
           />
         </div>
       )}
@@ -1711,6 +1750,8 @@ export function HouseholdMap({
           aria-hidden={mapCovered}
         >
           <SpatialMap
+            previousIds={previousIds}
+            searchHitIds={searchRestricted(browsing) ? searchHitIds : undefined}
             onSearchStart={(text) => {
               mapSearchTrigger.current =
                 document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -1796,6 +1837,37 @@ export function HouseholdMap({
             setReadEntry({ kind: 'relationships', id: object.id, restoreFocus })
           }
           relationshipCounts={relationshipCounts}
+          onReveal={(object) => {
+            const context = mapSearchContext(
+              displayed,
+              spatialEdges,
+              [object.id],
+              [],
+              true,
+              previousEdges,
+            );
+            const includeEnded =
+              [...context.objects.values()].some((value) => hasEnded(value)) ||
+              [...context.relationships.values()].some((value) => hasEnded(value)) ||
+              previousEdges.some((value) => context.previousIds.has(value.id) && hasEnded(value));
+            changeMapSearch({
+              query: '',
+              types: [],
+              proposals: [],
+              onlySelected: false,
+              includeEnded,
+            });
+            setSelection({ kind: 'object', id: object.id });
+            setWorkspaceSurface('map');
+            setMapSearchOpen(false);
+            setCameraFocusRequest({
+              id: crypto.randomUUID(),
+              objectIds: [...context.objects.keys()],
+            });
+            requestAnimationFrame(() =>
+              workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus(),
+            );
+          }}
           statusContent={
             conflicts.length > 0 && (
               <button

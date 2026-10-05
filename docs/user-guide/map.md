@@ -75,6 +75,29 @@ texten; **Återställ sökning och filter** visar startläget med aktuella
 objekt. Träffantal uppdateras automatiskt och noll träffar ger en
 förklaring och möjlighet att återställa.
 
+### Utforska sökträffarnas sammanhang
+
+Kartan visar träffarna och deras direkta grannar. **● Sökträff** och
+**↔ Sammanhang** skiljer dem åt; sammanhang räknas inte som träffar.
+Grannarna får ligga utanför söktext, typval, utkastfilter och
+**Bara markerade**. Upphörda objekt och samband döljs fortfarande;
+en upplysning erbjuder **Ta med upphörda** när sådant sammanhang finns.
+
+Markera ett objekt och välj **Visa samband i kartan**, eller använd
+objektets högerklicksmeny. Åtgärden lägger till dess direkta grannar,
+behåller tidigare innehåll och flyttar kameran. En markering i sig visar
+inga fler objekt. Upprepa för att följa en längre kedja.
+**Tillbaka till sökträffarna** återgår till träffarnas direkta sammanhang.
+Ändrad sökning eller ändrade filter börjar också om där. Att stänga
+sökytan eller besöka tabellen behåller utforskningen.
+
+**Visa i kartan** på en tabellrad markerar bara det valda objektet och
+zoomar till dess direkta grannar. Kartans sökning och filter återställs
+så att de går att se; övrig karta finns kvar. Tabellens läge bevaras och
+återfås via **Tabell**, med fokus på den använda kartknappen.
+En föreslagen borttagning har kvar kartknappen; redan borttagna objekt
+har ingen sådan knapp.
+
 ## Besök andra vyer och fortsätt arbetet
 
 Öppna **Din profil** för kontouppgifter, **Inloggningssätt**, användar-ID,

@@ -99,16 +99,16 @@
   .map-object-search {
     z-index: 31;
     left: 14px;
-    top: 88px;
+    top: calc(var(--tools-bottom, 76px) + 12px);
     width: calc(100% - 28px);
-    max-height: calc(100dvh - 115px);
+    max-height: calc(var(--work-height, 100dvh) - var(--tools-bottom, 76px) - 36px);
   }
   .object-search-filters {
     grid-template-columns: 1fr;
   }
   .map-search-summary {
     left: 14px;
-    top: 88px;
+    top: calc(var(--tools-bottom, 76px) + 12px);
     max-width: calc(100% - 28px);
   }
 }
@@ -153,9 +153,4 @@
 .object-search-filters > button {
   grid-column: 1 / -1;
   justify-self: start;
-}
-@media (max-width: 700px) {
-  .map-object-search {
-    max-height: calc(100dvh - 176px);
-  }
 }

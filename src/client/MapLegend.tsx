@@ -29,13 +29,15 @@ export function MapLegend({
   objects,
   relationships,
   selectedIds,
+  previousIds,
 }: {
   draft: MapDraft;
   objects: Map<string, MapObject>;
   relationships: Map<string, MapRelationship>;
   selectedIds: string[];
+  previousIds?: ReadonlySet<string>;
 }) {
-  const kinds = mapLegendKinds(draft, objects, relationships, selectedIds);
+  const kinds = mapLegendKinds(draft, objects, relationships, selectedIds, previousIds);
   if (!kinds.size) return null;
   return (
     <section aria-label="Teckenförklaring i kartan" className="map-legend">

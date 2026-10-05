@@ -43,6 +43,16 @@ inloggningen innehåller enbart påhittade uppgifter.
    Provdatabasen raderas när processen avslutas. Vanliga gemensamma
    demodata innehåller även Alex Exempel → Alex blå cykel → Familjens garage.
 
+### Förbered utforskning i kartan
+
+1. Bygg med `npm run build` och starta
+   `node --import tsx scripts/manual-map-exploration.ts` från projektroten.
+2. Öppna den utskrivna adressen och logga in med Google som Alex Exempel.
+   Provkartan har kedjan Alex Exempel → Blå cykel → Garaget → Bostaden
+   och ett oberoende objekt. Alla uppgifter är syntetiska.
+3. Lägg till `--ended` för SÖK-07 eller `--removed` för SÖK-08.
+   Skriv `quit` och starta om mellan fallen; databasen raderas vid avslut.
+
 ## Läs objekt och följ samband
 
 ### LÄS-01: följ Alex till cykel och garage med tabelläget kvar
@@ -768,3 +778,141 @@ preserve restrictions”.
 - Sökingången ryms inom skärmen. Söktext och filter bevaras vid stängning.
 - Verklig touch, skärmtangentbord och VoiceOver behöver manuellt prov;
   automatprovet kontrollerar mobil layout och offentlig UI.
+
+### SÖK-06: direkta grannar och fortsatt utforskning bevarar sökträffarna
+
+**Syfte:** Följa en kedja i kartan utan automatisk indirekt expansion.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Förbered utforskning i kartan utan extra flagga.
+
+**Integrationstest:**
+[map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
+testfallet “SÖK-06: map search shows direct context and exploration preserves
+hits through return and table visits”.
+
+**Steg:**
+
+1. Öppna **Sök i kartan** och skriv **Alex**. Stäng sökytan.
+2. Läs Alex som sökträff och Blå cykel som sammanhang. Markera cykeln
+   med tangentbord. Kontrollera att Garaget inte visas ännu.
+3. Välj **Visa samband i kartan**. Kontrollera Garaget, tidigare innehåll
+   och kamerans förflyttning. Markera Garaget och upprepa för Bostaden.
+4. Öppna sökytan och välj Alex objekttyp. Kontrollera återgång till
+   Alex och cykeln. Skriv **Blå** och kontrollera dess direkta grannar;
+   Bostaden visas inte. Skriv **Alex** igen och stäng sökytan.
+5. Markera cykeln och följ dess samband igen. Besök **Tabell** och
+   återgå via **Karta**. Välj **Tillbaka till sökträffarna**.
+
+**Förväntat resultat:**
+
+- En träff visas; sammanhang har egen text och symbol och räknas inte.
+- Enbart markering utökar inte kartan. Varje följd åtgärd visar en nivå
+  till, behåller tidigare innehåll och flyttar kameran.
+- Sökning och filter börjar om med direkt sammanhang. Tabellbesök
+  bevarar däremot utforskningen. Återgången behåller söktext och filter,
+  visar Alex och cykeln och ger användbart fokus i kartan.
+- Karta, utkast och gemensam historik ändras inte.
+
+### SÖK-07: sammanhang går utanför träfffilter men följer upphört
+
+**Syfte:** Skilja träfffilter från livscykelregler för sammanhang.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Förbered utforskning med `--ended`. Alex har ett
+ändringsförslag. Cykeln har annan typ; en upphörd granne och ett upphört
+samband till Oberoende objekt är direkt kopplade till Alex.
+
+**Integrationstest:**
+[map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
+testfallet “SÖK-07: direct context ignores hit filters while ended objects and
+edges require inclusion”.
+
+**Steg:**
+
+1. Markera Alex. Öppna **Sök i kartan**, skriv **Alex**, välj Alex
+   objekttyp, **Ändrat** och **Bara markerade**. Stäng sökytan.
+2. Kontrollera träffantalet och cykelns sammanhang. Läs upplysningen
+   om dolt upphört innehåll.
+3. Välj upplysningens **Ta med upphörda**. Kontrollera båda ytterligare
+   grannarna och träffantalet.
+
+**Förväntat resultat:**
+
+- Alex är enda träffen. Cykeln visas trots annan typ, avsaknad av
+  ändringsförslag, annan söktext och att den inte är markerad.
+- Upphörd granne och upphört samband döljs tills de uttryckligen tas med.
+- Inkludering visar båda grannarna utan att räkna dem som sökträffar.
+- Utkast och gemensam information är oförändrade.
+
+### SÖK-08: tabellens kartknapp återställer kartfilter och bevarar tabelläget
+
+**Syfte:** Visa ett valt tabellobjekt med direkt sammanhang i kartan.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Förbered utforskning med `--removed`. Cykeln har
+föreslagen borttagning och Oberoende objekt är redan borttaget. Prova
+1280, 390 och 320 pixlars bredd, tangentbord och pekning.
+
+**Integrationstest:**
+[map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
+testfallen “SÖK-08: table map actions reset only map filters and retain table
+work at 1280px”,
+“SÖK-08: table map actions reset only map filters and retain table work at
+390px” och “SÖK-08: table map actions reset only map filters and retain table
+work at 320px”.
+
+**Steg:**
+
+1. Sök efter **Alex** i kartan och välj **Bara markerade** utan markering.
+2. Välj **Tabell**, sök **Blå**, sortera namn Ö–A och expandera cykeln.
+3. Välj **Visa Blå cykel i kartan**. Kontrollera markering och direkt
+   sammanhang. Kontrollera även att Bostaden finns kvar i kartan.
+4. Öppna kartans sökyta. Kontrollera tom text, återställda filter och
+   fyra träffar. Stäng och återgå via **Tabell**.
+5. Kontrollera fokus, söktext, sortering och öppen rad. Sök sedan
+   **Oberoende**, öppna **Filter** och välj **Ta med borttagna**.
+
+**Förväntat resultat:**
+
+- Endast cykeln markeras. Kameran visar dess direkta grannar; övrig
+  karta filtreras inte bort och fokus går till kartan.
+- Kartans begränsningar återställs. Tabellens sökning, sortering och
+  expanderade rad finns kvar; fokus återgår till kartknappen.
+- Föreslagen borttagning har kartknapp. Redan borttaget objekt saknar den.
+- Besöket ändrar ingen sparad information och inget förslag.
+
+### SÖK-09: ändrade samband visar tidigare och föreslagna direkta ändpunkter
+
+**Syfte:** Läsa en föreslagen kopplingsändring inom sökträffens sammanhang.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Förbered utforskning utan extra flagga.
+
+**Integrationstest:**
+[map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
+testfallet “SÖK-09: a changed connection shows direct saved and proposed
+endpoints without expanding their chains”.
+
+**Steg:**
+
+1. Öppna Alex samband från tabellen. Ändra sambandet till Blå cykel
+   så att målobjektet är Garaget. Lägg det i utkastet utan att spara.
+2. Öppna kartan, sök **Alex** och stäng sökytan. Läs tidigare och
+   föreslagen koppling. Kontrollera att Bostaden inte visas.
+3. Kasta förslaget. Markera det ursprungliga sambandet som upphört
+   och spara. Föreslå sedan målobjekt Garaget och status Aktuellt.
+4. Sök **Alex** i kartan igen. Kontrollera att tidigare upphört samband
+   och cykeln döljs. Välj upplysningens **Ta med upphörda**.
+
+**Förväntat resultat:**
+
+- Alex är enda träffen. Båda direkta ändpunkterna är sammanhang när
+  deras samband är aktuella eller upphörda uttryckligen tas med.
+- Tidigare koppling skiljs från förslaget med geometri, symbol och text.
+- Ingen indirekt kedja öppnas automatiskt. Upphört gäller även tidigare
+  samband, som åter syns efter uttrycklig inkludering.

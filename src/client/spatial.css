@@ -616,3 +616,11 @@
 .spatial-node:focus-visible {
   z-index: 1;
 }
+.spatial-name.search-context {
+  border: 1px dashed var(--space-line);
+}
+.spatial-search-kind {
+  display: block;
+  font-size: 12px;
+  color: var(--space-text);
+}

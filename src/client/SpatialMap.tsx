@@ -61,6 +61,8 @@ export function SpatialMap({
   state,
   active,
   objects,
+  searchHitIds,
+  previousIds,
   relationships,
   selection,
   selectedIds = selection?.kind === 'object' ? [selection.id] : [],
@@ -95,6 +97,8 @@ export function SpatialMap({
   state: MapState;
   active: boolean;
   objects: Map<string, MapObject>;
+  searchHitIds?: ReadonlySet<string>;
+  previousIds?: ReadonlySet<string>;
   relationships: Map<string, MapRelationship>;
   selection: { kind: 'object' | 'relationship'; id: string; previous?: boolean } | null;
   selectedIds?: string[];
@@ -645,7 +649,7 @@ export function SpatialMap({
     const diameter = Math.max(44, 34 * point.scale);
     reserve({ ...point, width: diameter, height: diameter });
   }
-  const edges = mapConnections(state.draft, objects, relationships).flatMap(
+  const edges = mapConnections(state.draft, objects, relationships, previousIds).flatMap(
     ({ edge, previous, kind }) => {
       const source = locations.get(edge.sourceId);
       const target = edge.targetId ? locations.get(edge.targetId) : undefined;
@@ -1046,7 +1050,7 @@ export function SpatialMap({
             closeMenu();
           }}
         >
-          Visa kopplingar
+          Visa samband i kartan
         </button>
         <button
           type="button"
@@ -1326,11 +1330,16 @@ export function SpatialMap({
                 data-layout-id={`object-${id}`}
                 data-object-label={id}
                 ref={observeLabel}
-                className={`spatial-name ${kind}${adjacent.size && !adjacent.has(id) ? ' subdued' : ''}`}
+                className={`spatial-name ${kind}${searchHitIds && !searchHitIds.has(id) ? ' search-context' : ''}${adjacent.size && !adjacent.has(id) ? ' subdued' : ''}`}
                 style={{ left: label.x, top: label.y }}
               >
                 <span id={`${labelPrefix}-${id}`}>
                   <span className="spatial-caption">{object.name}</span>
+                  {searchHitIds && (
+                    <span className="spatial-search-kind">
+                      {searchHitIds.has(id) ? '● Sökträff' : '↔ Sammanhang'}
+                    </span>
+                  )}
                   <span className="spatial-type-name">
                     {kind === 'added'
                       ? '+ Nytt förslag'

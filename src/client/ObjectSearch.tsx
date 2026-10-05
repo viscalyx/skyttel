@@ -275,6 +275,10 @@ export function MapSearch({
   hasProposals,
   count,
   reasons,
+  contextCount = 0,
+  hiddenEnded = false,
+  explored = false,
+  onReturnToHits,
 }: {
   open: boolean;
   filtersOpen: boolean;
@@ -286,6 +290,10 @@ export function MapSearch({
   selectedIds: string[];
   hasProposals: boolean;
   count: number;
+  contextCount?: number;
+  hiddenEnded?: boolean;
+  explored?: boolean;
+  onReturnToHits?: () => void;
   reasons: { id: string; name: string; fields: string[] }[];
 }) {
   const input = useRef<HTMLInputElement>(null);
@@ -301,6 +309,24 @@ export function MapSearch({
     wasOpen.current = open;
     previousEntryRequestId.current = entryRequestId;
   }, [open, filtersOpen, entryRequestId]);
+  const context = (
+    <div className="map-search-context">
+      {contextCount > 0 && <p>{contextCount} objekt visas som sammanhang, utöver sökträffarna.</p>}
+      {hiddenEnded && (
+        <p>
+          Upphörda objekt eller samband döljs.{' '}
+          <button type="button" onClick={() => onChange({ ...search, includeEnded: true })}>
+            Ta med upphörda
+          </button>
+        </p>
+      )}
+      {explored && (
+        <button type="button" onClick={onReturnToHits}>
+          Tillbaka till sökträffarna
+        </button>
+      )}
+    </div>
+  );
   return (
     <>
       <section
@@ -340,6 +366,7 @@ export function MapSearch({
           />
         </div>
         <p>{count} sökträffar</p>
+        {context}
         {notice && <p>{notice}</p>}
         {!count && (
           <div>
@@ -375,6 +402,7 @@ export function MapSearch({
             .join(' · ')}
         </p>
         <p>{count} sökträffar</p>
+        {context}
         {notice && <p>{notice}</p>}
         {!count && (
           <div>
