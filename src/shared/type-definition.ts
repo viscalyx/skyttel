@@ -126,7 +126,7 @@ export function applyTypeDefinitionFacts<T extends object>(
   return result as T;
 }
 
-/** Merge definition facts identically for conflict previews, saving and undo. */
+/** Merge definition facts identically for conflict previews and saving. */
 export function resolveTypeDefinition<T extends ObjectType | RelationshipType>(
   kind: DefinitionKind,
   before: T | null,

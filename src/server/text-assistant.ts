@@ -1114,23 +1114,11 @@ export function textAssistantRoutes({
                     (change) => change.id === args.id && change.before && !change.after,
                   ),
                 );
-              mutations.add(
-                action.name === 'propose_undo' ? 'undo' : restored ? 'restored' : 'draft',
-              );
-              const kind =
-                mutations.size === 1 && mutations.has('undo')
-                  ? 'undo'
-                  : mutations.size === 1 && mutations.has('restored')
-                    ? 'restored'
-                    : 'draft';
+              mutations.add(restored ? 'restored' : 'draft');
+              const kind = mutations.size === 1 && mutations.has('restored') ? 'restored' : 'draft';
               session.result = {
                 kind,
-                message:
-                  kind === 'undo'
-                    ? 'Ångrat i utkastet.'
-                    : kind === 'restored'
-                      ? 'Återställt i utkastet.'
-                      : 'Utkastet är uppdaterat.',
+                message: kind === 'restored' ? 'Återställt i utkastet.' : 'Utkastet är uppdaterat.',
               };
             }
           }

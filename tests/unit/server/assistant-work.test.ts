@@ -54,6 +54,64 @@ async function post(route: string, data: unknown) {
   return response.json();
 }
 
+test('retired historical mutations are absent from HTTP and MCP while ordinary saving and history remain available', async () => {
+  const token = await connect();
+  const sdk = new Client({ name: 'Historikläsare', version: '1' });
+  try {
+    await sdk.connect(
+      new StreamableHTTPClientTransport(new URL(`${app.origin}/mcp`), {
+        requestInit: { headers: { authorization: `Bearer ${token}` } },
+      }),
+    );
+    const names = (await sdk.listTools()).tools.map(({ name }) => name);
+    expect(names).toContain('read_history');
+    expect(names).toContain('save_draft');
+    for (const name of ['propose_undo', 'read_merge_review', 'propose_merge']) {
+      expect(names).not.toContain(name);
+      const missing = await sdk.callTool({ name, arguments: {} });
+      expect(missing.isError).toBe(true);
+      expect(missing.content).toEqual([
+        { type: 'text', text: `MCP error -32602: Tool ${name} not found` },
+      ]);
+    }
+    const initial = await (await browser.get(path)).json();
+    for (const route of ['undo', 'merge']) {
+      const response = await browser.post(`${path}/${route}`, {
+        headers: { origin: app.origin },
+        data: { version: initial.draft.version, contentVersion: initial.contentVersion },
+      });
+      expect(response.status()).toBe(404);
+      expect(await (await browser.get(path)).json()).toEqual(initial);
+    }
+    await post('draft', {
+      version: initial.draft.version,
+      contentVersion: initial.contentVersion,
+      id: 'cycle',
+      baseRevision: null,
+      value: { typeId: initial.types[0].id, name: 'Blå cykel', description: '' },
+    });
+    const draft = await tool(token, 'read_my_draft');
+    const saved = await tool(token, 'save_draft', {
+      version: draft.value.version,
+      contentVersion: draft.value.contentVersion,
+      operationId: 'ordinary-save',
+    });
+    expect(saved.error).toBe(false);
+    const history = await tool(token, 'read_history');
+    expect(
+      history.value.history.map((receipt: { operationId: string }) => receipt.operationId),
+    ).toEqual(['ordinary-save']);
+    const selected = await tool(token, 'read_history', {
+      operationId: 'ordinary-save',
+      userId: saved.value.receipt.userId,
+    });
+    expect(selected.value.receipt.changes[0].after.name).toBe('Blå cykel');
+    expect((await (await browser.get(path)).json()).draft.changes).toEqual([]);
+  } finally {
+    await sdk.close();
+  }
+});
+
 test('assistant icon search and set/reset proposals share the private object and reject unknown IDs', async () => {
   const token = await connect();
   const found = await tool(token, 'search_object_icons', { query: 'cykel' });

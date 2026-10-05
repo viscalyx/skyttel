@@ -7,7 +7,6 @@ import { readCustomValues, readFieldPresentation } from './custom-fields.js';
 import { definitionUsage } from './definition-usage.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
-import { keepIndependent } from './undo-facts.js';
 
 export function relationshipTypes(database: Database.Database, householdId: string, userId = '') {
   const tombstones = mapTombstones(database, householdId);
@@ -103,21 +102,6 @@ export function relationshipTypes(database: Database.Database, householdId: stri
   }
   return {
     read,
-    validateUndo(draft: MapDraft) {
-      for (const change of draft.relationshipTypes ?? []) {
-        if (!change.after) usage.assertUnused('relationshipType', change.id, draft);
-        else {
-          const current = read().find((type) => type.id === change.id) ?? null;
-          validateDefinition(change.after);
-          checkFields(
-            current ?? read(true).find((type) => type.id === change.id) ?? null,
-            change.after,
-            draft,
-            current?.revision !== change.before?.revision,
-          );
-        }
-      }
-    },
     effective(draft: MapDraft) {
       return proposedRelationshipTypes(read(), draft.relationshipTypes);
     },
@@ -131,24 +115,11 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       if (!change) throw new MapError('type_conflict');
       if (choice === 'saved' || (!current && !change.after)) {
         draft.relationshipTypes = draft.relationshipTypes?.filter((item) => item.id !== id);
-        const remaining = keepIndependent('relationshipType', change, current);
-        if (remaining?.after)
-          draft.relationshipTypes?.push({
-            id,
-            ...remaining,
-            after: {
-              ...remaining.after,
-              revision: (current?.revision ?? remaining.before?.revision ?? 0) + 1,
-            },
-          });
       } else {
         if (current) {
           change.after = resolvedRelationshipType(change, current);
           if (change.after) checkFields(current, change.after, draft);
-        } else if (change.after) {
-          change.restoreRevision = tombstones.revision('relationshipType', id);
-          change.after.revision = change.restoreRevision + 1;
-        }
+        } else if (change.after) throw new MapError('type_conflict');
         if (!change.after) usage.assertUnused('relationshipType', id, draft);
         change.before = current;
       }
@@ -194,7 +165,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       const after: RelationshipType = {
         id: body.id,
         householdId,
-        revision: (before?.revision ?? existing?.restoreRevision ?? 0) + 1,
+        revision: (before?.revision ?? 0) + 1,
         ...validate(body.value, presentation === 'exact' ? null : (existing?.after ?? before)),
       };
       checkFields(before, after, draft);
@@ -215,11 +186,6 @@ export function relationshipTypes(database: Database.Database, householdId: stri
           id: body.id,
           before,
           after,
-          ...(existing?.restoreRevision !== undefined
-            ? { restoreRevision: existing.restoreRevision }
-            : {}),
-          ...(existing?.undo ? { undo: true as const } : {}),
-          ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
         },
       ];
       for (const change of draft.relationships ?? [])
@@ -233,8 +199,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       for (const change of draft.relationshipTypes ?? []) {
         const current = read().find((type) => type.id === change.id) ?? null;
         if (!isDeepStrictEqual(current, change.before)) throw new MapError('type_conflict');
-        if (!current)
-          tombstones.assertCreation('relationshipType', change.id, change.restoreRevision);
+        if (!current) tombstones.assertCreation('relationshipType', change.id);
         if (!change.after) {
           usage.assertUnused('relationshipType', change.id, draft);
           tombstones.removeType('relationshipType', change.id);
@@ -272,7 +237,6 @@ export function relationshipTypes(database: Database.Database, householdId: stri
             JSON.stringify(change.after.fields ?? []),
             change.after.sections === undefined ? null : JSON.stringify(change.after.sections),
           );
-        tombstones.restoreType('relationshipType', change.id);
       }
       return draft.relationshipTypes ?? [];
     },

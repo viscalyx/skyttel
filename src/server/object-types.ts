@@ -8,7 +8,6 @@ import { definitionUsage } from './definition-usage.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
 import { readObjectProperties } from './object-properties.js';
-import { keepIndependent } from './undo-facts.js';
 
 export { readCustomValues } from './custom-fields.js';
 
@@ -116,23 +115,6 @@ export function objectTypes(database: Database.Database, householdId: string, us
   }
   return {
     read,
-    validateUndo(draft: MapDraft) {
-      for (const change of draft.objectTypes ?? []) {
-        if (!change.after) usage.assertUnused('objectType', change.id, draft);
-        else {
-          const current = read().find((type) => type.id === change.id) ?? null;
-          validate({ ...change.after, fields: change.after.fields ?? [] });
-          checkFields(
-            current ?? read(true).find((type) => type.id === change.id) ?? null,
-            change.after,
-            draft,
-            // Conflicting definitions must be reviewed first. Resolution and
-            // atomic saving both enforce usage against the chosen definition.
-            current?.revision !== change.before?.revision,
-          );
-        }
-      }
-    },
     effective(draft: MapDraft) {
       return proposedObjectTypes(read(), draft.objectTypes);
     },
@@ -141,16 +123,6 @@ export function objectTypes(database: Database.Database, householdId: string, us
       if (!change) throw new MapError('type_conflict');
       if (choice === 'saved' || (!current && !change.after)) {
         draft.objectTypes = draft.objectTypes?.filter((item) => item.id !== id);
-        const remaining = keepIndependent('objectType', change, current);
-        if (remaining?.after)
-          draft.objectTypes?.push({
-            id,
-            ...remaining,
-            after: {
-              ...remaining.after,
-              revision: (current?.revision ?? remaining.before?.revision ?? 0) + 1,
-            },
-          });
       } else if (change.after && current) {
         const resolved = resolveTypeDefinition('objectType', change.before, change.after, current);
         const after = { ...resolved, ...validate({ ...resolved, fields: resolved.fields ?? [] }) };
@@ -158,10 +130,7 @@ export function objectTypes(database: Database.Database, householdId: string, us
         change.before = current;
         change.after = after;
       } else {
-        if (!current && change.after) {
-          change.restoreRevision = tombstones.revision('objectType', id);
-          change.after.revision = change.restoreRevision + 1;
-        }
+        if (!current && change.after) throw new MapError('type_conflict');
         if (!change.after) usage.assertUnused('objectType', id, draft);
         change.before = current;
       }
@@ -206,7 +175,7 @@ export function objectTypes(database: Database.Database, householdId: string, us
       const after: ObjectType = {
         id: body.id,
         householdId,
-        revision: (before?.revision ?? existing?.restoreRevision ?? 0) + 1,
+        revision: (before?.revision ?? 0) + 1,
         ...validate(body.value, presentation === 'exact' ? null : (existing?.after ?? before)),
       };
       checkFields(before, after, draft);
@@ -227,11 +196,6 @@ export function objectTypes(database: Database.Database, householdId: string, us
           id: body.id,
           before,
           after,
-          ...(existing?.restoreRevision !== undefined
-            ? { restoreRevision: existing.restoreRevision }
-            : {}),
-          ...(existing?.undo ? { undo: true as const } : {}),
-          ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
         },
       ];
       for (const change of draft.changes)
@@ -245,7 +209,7 @@ export function objectTypes(database: Database.Database, householdId: string, us
       for (const change of draft.objectTypes ?? []) {
         const current = read().find((item) => item.id === change.id) ?? null;
         if (!isDeepStrictEqual(current, change.before)) throw new MapError('type_conflict');
-        if (!current) tombstones.assertCreation('objectType', change.id, change.restoreRevision);
+        if (!current) tombstones.assertCreation('objectType', change.id);
         if (!change.after) {
           usage.assertUnused('objectType', change.id, draft);
           tombstones.removeType('objectType', change.id);
@@ -280,7 +244,6 @@ export function objectTypes(database: Database.Database, householdId: string, us
               ? null
               : JSON.stringify(change.after.propertyOrder),
           );
-        tombstones.restoreType('objectType', change.id);
       }
       return draft.objectTypes ?? [];
     },

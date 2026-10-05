@@ -23,7 +23,6 @@ import type {
 } from '../shared/map.js';
 import { compatibleCustomFields } from '../shared/map.js';
 import { isObjectIconId } from '../shared/object-icons.js';
-import { mergeFor, withoutMerge } from '../shared/object-merge.js';
 import { contentOwner } from './content-identities.js';
 import { assertContentAvailable, assertContentVersion } from './content-maintenance.js';
 import { readFinancialFacts } from './financial-facts.js';
@@ -32,14 +31,10 @@ import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
-import { undoSave } from './map-undo.js';
-import { assertMergeEditable, proposeMerge } from './object-merge.js';
 import { objectTypes, readCustomValues } from './object-types.js';
 import { type EncodedImage, profileImages } from './profile-images.js';
-import { projectReceiptScope } from './project-content-scope.js';
 import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
-import { keepIndependent } from './undo-facts.js';
 
 export { MapError } from './map-error.js';
 
@@ -241,7 +236,6 @@ export function householdMap(database: Database.Database, actorId: string, house
     if (body.contentVersion !== operations.contentVersion()) throw new MapError('content_conflict');
     if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
       throw new MapError('invalid_request', 400);
-    assertMergeEditable(current, 'object', body.id);
     const existing = current.changes.find((change) => change.id === body.id);
     const saved = object(body.id) ?? null;
     const before = existing ? existing.before : saved;
@@ -289,46 +283,13 @@ export function householdMap(database: Database.Database, actorId: string, house
           database
             .prepare(`SELECT s.receipt FROM map_history h
         JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId
-        WHERE h.householdId = ? ORDER BY h.id`)
+        WHERE h.householdId = ? ORDER BY h.id DESC`)
             .all(householdId) as { receipt: string }[]
         ).map((row) => JSON.parse(row.receipt) as SaveReceipt),
       }));
     },
     read(): MapState {
       return transaction(readState);
-    },
-    undo(body: Record<string, unknown>) {
-      return transaction(() => {
-        operations.assertEditable();
-        checkedDraft(body.version, body.contentVersion);
-        if (typeof body.operationId !== 'string' || typeof body.userId !== 'string')
-          throw new MapError('invalid_request', 400);
-        const row = database
-          .prepare(
-            'SELECT receipt FROM map_save WHERE householdId = ? AND userId = ? AND operationId = ?',
-          )
-          .get(householdId, body.userId, body.operationId) as { receipt: string } | undefined;
-        if (!row) throw new MapError('undo_unavailable');
-        const receipt = JSON.parse(row.receipt) as SaveReceipt;
-        const ownDraft = draft();
-        if (
-          receipt.changes.some((change) =>
-            mergeFor(ownDraft, 'object', change.after?.id ?? change.before?.id),
-          ) ||
-          receipt.relationships?.some((change) => mergeFor(ownDraft, 'relationship', change.id))
-        )
-          throw new MapError('undo_draft_overlap');
-        const proposed = undoSave(
-          readState(),
-          projectReceiptScope(receipt, householdId),
-          tombstones,
-          types.read(true),
-          edgeTypes.read(true),
-        );
-        types.validateUndo(proposed);
-        edgeTypes.validateUndo(proposed);
-        return writeDraft(proposed);
-      });
     },
     resolve(body: Record<string, unknown>) {
       return transaction(() => {
@@ -340,8 +301,6 @@ export function householdMap(database: Database.Database, actorId: string, house
           isDeepStrictEqual(item, body.conflict),
         );
         if (!conflict) throw new MapError('resolution_conflict');
-        if (conflict.kind === 'object' || conflict.kind === 'relationship')
-          assertMergeEditable(current, conflict.kind, conflict.id);
         if (body.choices !== undefined) {
           const state = readState();
           if (!isDeepStrictEqual(body.basis, conflictBasis(state, conflict)))
@@ -406,16 +365,14 @@ export function householdMap(database: Database.Database, actorId: string, house
             change.beforeType = types.read().find((type) => type.id === conflict.current?.typeId);
             change.type = type;
             change.after = after;
-            delete change.undo;
-            delete change.undoFields;
+
             return writeDraft({ ...current, version: current.version + 1 });
           }
           if (conflict.kind === 'relationship') {
             const change = current.relationships?.find((item) => item.id === conflict.id);
             if (!change || !conflict.current) throw new MapError('resolution_conflict');
             change.before = conflict.current;
-            delete change.undo;
-            delete change.undoFields;
+
             return writeDraft(
               edges.propose(current, {
                 id: conflict.id,
@@ -463,23 +420,8 @@ export function householdMap(database: Database.Database, actorId: string, house
           if (!change) throw new MapError('resolution_conflict');
           if (body.choice === 'saved' || (!conflict.current && !change.after)) {
             current.changes = current.changes.filter((item) => item.id !== conflict.id);
-            const remaining = keepIndependent('object', change, conflict.current);
-            if (remaining)
-              current.changes.push({
-                ...change,
-                ...remaining,
-                beforeType: types.read().find((type) => type.id === remaining.before?.typeId),
-                undo: undefined,
-                undoFields: undefined,
-                type:
-                  types.effective(current).find((item) => item.id === remaining.after?.typeId) ??
-                  change.type,
-              });
           } else {
-            if (!conflict.current && change.before) {
-              if (!change.undo) throw new MapError('object_conflict');
-              if (change.after) change.restoreRevision = tombstones.revision('object', change.id);
-            }
+            if (!conflict.current && change.before) throw new MapError('object_conflict');
             change.after = resolvedObjectValue(change, conflict.current);
             change.before = conflict.current;
             change.beforeType = types.read().find((type) => type.id === conflict.current?.typeId);
@@ -495,24 +437,8 @@ export function householdMap(database: Database.Database, actorId: string, house
             current.relationships = current.relationships?.filter(
               (item) => item.id !== conflict.id,
             );
-            const remaining = keepIndependent('relationship', change, conflict.current);
-            if (remaining)
-              current.relationships?.push({
-                ...change,
-                ...remaining,
-                undo: undefined,
-                undoFields: undefined,
-                type:
-                  edgeTypes
-                    .effective(current)
-                    .find((item) => item.id === remaining.after?.typeId) ?? change.type,
-              });
           } else {
-            if (!conflict.current && change.before) {
-              if (!change.undo) throw new MapError('relationship_conflict');
-              if (change.after)
-                change.restoreRevision = tombstones.revision('relationship', change.id);
-            }
+            if (!conflict.current && change.before) throw new MapError('relationship_conflict');
             const before = change.before;
             change.after = resolvedRelationshipValue(change, conflict.current);
             change.before = conflict.current;
@@ -537,13 +463,6 @@ export function householdMap(database: Database.Database, actorId: string, house
         return writeDraft({ ...current, version: current.version + 1 });
       });
     },
-    merge(body: Record<string, unknown>) {
-      return transaction(() => {
-        operations.assertEditable();
-        checkedDraft(body.version, body.contentVersion);
-        return writeDraft(proposeMerge(readState(), body, types, edges, images));
-      });
-    },
     proposeObjectType(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
@@ -554,7 +473,6 @@ export function householdMap(database: Database.Database, actorId: string, house
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
-        assertMergeEditable(current, 'relationship', body.id);
         const result = edges.propose(current, body);
         return {
           ...writeDraft(result.draft),
@@ -575,7 +493,6 @@ export function householdMap(database: Database.Database, actorId: string, house
         if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
           throw new MapError('invalid_request', 400);
         const id = body.id;
-        assertMergeEditable(current, 'object', id);
         const existing = current.changes.find((change) => change.id === id);
         const before = existing ? existing.before : (object(id) ?? null);
         if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('object_conflict');
@@ -642,11 +559,6 @@ export function householdMap(database: Database.Database, actorId: string, house
             after,
             type,
             ...(beforeType ? { beforeType } : {}),
-            ...(existing?.restoreRevision !== undefined
-              ? { restoreRevision: existing.restoreRevision }
-              : {}),
-            ...(existing?.undo ? { undo: true } : {}),
-            ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
           });
         if (!after) edges.removeObject(current, id);
         edges.reconcileObjectRemovals(current);
@@ -667,9 +579,6 @@ export function householdMap(database: Database.Database, actorId: string, house
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
         if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
-        const merge = mergeFor(current, body.kind as string, body.id);
-        if (merge)
-          return writeDraft({ ...withoutMerge(current, merge), version: current.version + 1 });
         if (body.kind === 'object') {
           const change = current.changes.find((item) => item.id === body.id);
           if (!change) throw new MapError('draft_conflict');
@@ -764,7 +673,7 @@ export function householdMap(database: Database.Database, actorId: string, house
                     id: change.id,
                     householdId,
                     typeId: change.after.typeId,
-                    revision: (saved?.revision ?? change.restoreRevision ?? 0) + 1,
+                    revision: (saved?.revision ?? 0) + 1,
                     name: change.after.name,
                     description: change.after.description,
                     ...(change.after.customValues
@@ -782,7 +691,7 @@ export function householdMap(database: Database.Database, actorId: string, house
                   }
                 : null;
               if (after) {
-                if (!saved) tombstones.assertCreation('object', change.id, change.restoreRevision);
+                if (!saved) tombstones.assertCreation('object', change.id);
                 database
                   .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle, profileImageId = excluded.profileImageId, iconId = excluded.iconId, deleted = 0`)
@@ -813,21 +722,6 @@ export function householdMap(database: Database.Database, actorId: string, house
                 before: change.before,
                 after,
                 type,
-                ...(change.merge
-                  ? {
-                      merge: {
-                        survivorId: change.merge.survivorId,
-                        absorbedId: change.merge.absorbedId,
-                        identityConfirmed: change.merge.identityConfirmed,
-                        objects: change.merge.objects,
-                        types: change.merge.types,
-                        relationships: change.merge.relationships,
-                        relationshipTypes: change.merge.relationshipTypes,
-                        objectNames: change.merge.objectNames,
-                        ...(change.merge.imageCopy ? { imageCopy: change.merge.imageCopy } : {}),
-                      },
-                    }
-                  : {}),
                 ...(beforeType && !isDeepStrictEqual(beforeType, type) ? { beforeType } : {}),
               });
             }

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { DraftChange, ObjectMerge } from '../shared/map.js';
+import type { DraftChange } from '../shared/map.js';
 import { isObjectIconId } from '../shared/object-icons.js';
 
 const id = z.string().regex(/^[\w-]{1,128}$/);
@@ -107,16 +107,11 @@ const relationshipValue = z
   })
   .strict();
 const relationship = relationshipValue.extend({ id, ...scope, revision: positive });
-const undo = {
-  restoreRevision: natural.optional(),
-  undo: z.literal(true).optional(),
-  undoFields: z.array(text).optional(),
-};
 const objectTypeChange = z
-  .object({ id, before: objectType.nullable(), after: objectType.nullable(), ...undo })
+  .object({ id, before: objectType.nullable(), after: objectType.nullable() })
   .strict();
 const relationshipTypeChange = z
-  .object({ id, before: relationshipType.nullable(), after: relationshipType.nullable(), ...undo })
+  .object({ id, before: relationshipType.nullable(), after: relationshipType.nullable() })
   .strict();
 const relationshipChangeShape = {
   id,
@@ -129,7 +124,6 @@ const relationshipChangeShape = {
 const draftRelationship = z
   .object({
     ...relationshipChangeShape,
-    ...undo,
     proposedAt: z.iso.datetime().optional(),
     removedWithObjects: z.array(id).optional(),
   })
@@ -155,15 +149,6 @@ const mergeShape = {
     .strict()
     .optional(),
 };
-const merge: z.ZodType<ObjectMerge> = z.lazy(() =>
-  z
-    .object({
-      ...mergeShape,
-      previousChanges: z.array(draftChange),
-      previousRelationships: z.array(draftRelationship),
-    })
-    .strict(),
-);
 const draftChange: z.ZodType<DraftChange> = z.lazy(() =>
   z
     .object({
@@ -173,8 +158,6 @@ const draftChange: z.ZodType<DraftChange> = z.lazy(() =>
       type: objectType,
       beforeType: objectType.optional(),
       proposedAt: z.iso.datetime().optional(),
-      ...undo,
-      merge: merge.optional(),
     })
     .strict(),
 );
