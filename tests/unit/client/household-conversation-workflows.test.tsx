@@ -817,7 +817,7 @@ test('a known live manual save is not replayed by the conversation poll and keep
   expect((await home.read()).objects).toEqual([]);
   finish();
   await waitFor(() =>
-    expect(screen.getByRole('region', { name: 'Kartans status' }).textContent).toContain(
+    expect(screen.getByRole('status', { name: 'Sparbekräftelse' }).textContent).toBe(
       'Utkastet är sparat',
     ),
   );

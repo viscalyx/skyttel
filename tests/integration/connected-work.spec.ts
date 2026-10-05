@@ -32,6 +32,8 @@ function required<T>(value: T | undefined): T {
 // Retained free panels can cover the toolbar when the conversation grows.
 // Navigate with the real toolbar buttons' keyboard actions without closing work.
 async function openWorkspace(page: Page) {
+  const returnToWork = page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true });
+  if (await returnToWork.isVisible()) await returnToWork.click();
   await (await utilityButton(page, 'Lista')).press('Enter');
 }
 
@@ -484,24 +486,23 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(assistant.getByRole('region', { name: 'Utkastets återkoppling' })).toHaveCount(
         0,
       );
-      await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
+      await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
         'Utkastet är sparat',
       );
-      await (await utilityButton(page, 'Utkast och historik')).press('Enter');
-      const savedReceipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
-      await savedReceipts.getByText('Tidigare sparförsök', { exact: true }).click();
+      await (await utilityButton(page, 'Rapporter')).press('Enter');
+      const savedReceipts = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
       await expect(savedReceipts).toBeVisible();
-      await savedReceipts.getByText('Visa kvittot', { exact: true }).first().click();
+      await savedReceipts.getByText('Visa ändringarna', { exact: true }).first().click();
       await expect(savedReceipts).toContainText('Familjens Molnmusik');
-      await activatePanel(page, 'Kim Exempel');
-      await expect(person).not.toContainText('Oskickat om Kim');
-      await openConversationText(page);
       const receipts = await history();
       expect(receipts).toHaveLength(1);
       const receipt = receipts[0];
       // The server owns the durable operation identity; model-supplied IDs are not authority.
       const operationId = receipt.operationId;
       await expect(savedReceipts).toContainText(operationId);
+      await activatePanel(page, 'Kim Exempel');
+      await expect(person).not.toContainText('Oskickat om Kim');
+      await openConversationText(page);
       expect(receipt).toMatchObject({
         operationId,
         userId: identity.user.id,

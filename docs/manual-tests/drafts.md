@@ -1520,9 +1520,8 @@ private draft and an atomic household save”.
 
 **Steg:**
 
-1. Lägg **Lo Exempel** i utkastet genom formuläret. Påbörja ett nytt objekt
-   **Oskickad cykel**, skriv **Texten ska finnas kvar** i beskrivningen och
-   lämna texten i formuläret.
+1. Lägg **Lo Exempel** i utkastet genom formuläret med **Lägg i utkastet
+   och stäng**.
 2. Välj **Skriv till Skyttel** och **Godkänn och starta**. Skriv
    **Lägg Molnmusik i utkastet**. Kontrollera två privata förslag på
    **Visa utkastet**.
@@ -1534,8 +1533,11 @@ private draft and an atomic household save”.
    oskickad formulärtext. Kontrollera som medlem att den sparade kartan är tom
    och att
    administratörens förslag inte visas i medlemmens utkast.
-5. Öppna Lista och välj **Fortsätt: Oskickad cykel**. Kontrollera namn och
-   beskrivning och lägg dem i utkastet. Granska fyra förslag i hela utkastet.
+5. Öppna Lista och välj **Nytt objekt**. Skriv **Oskickad cykel** och
+   **Texten ska finnas kvar** i beskrivningen. Välj **Avbryt** och tryck
+   Escape i förlustdialogen. Kontrollera att namn och beskrivning finns
+   kvar utan nytt förslag. Välj **Lägg i utkastet och stäng**.
+   Granska fyra förslag i hela utkastet.
    Välj **Spara hela utkastet** där och stäng panelerna.
 6. Invänta bekräftat kvitto. Stäng klienterna, starta om servern med samma
    databas och öppna kartan som medlem.
@@ -1598,10 +1600,10 @@ fresh explicit save”.
   server och SQLite. Det jämför tomma sparförsök före beskedet och ett
   enda lyckat försök med samma verkliga kvitto i historiken efteråt.
 
-### UTKAST-17: nå en objektkonflikt från status med oskickat arbete kvar
+### UTKAST-17: avbruten formulärförlust och oberoende utkast består vid konflikt
 
-**Syfte:** hitta en samtidig ändring från kartans status och behålla ett
-annat oskickat formulär när konfliktens underlag granskas.
+**Syfte:** Hitta en samtidig ändring och behålla ett oberoende förslag
+efter avbruten formulärförlust och granskning.
 
 **Användare:** Alex och Robin, två medlemmar i samma hushåll, i skilda
 webbläsarsessioner enligt förberedelsen.
@@ -1611,8 +1613,8 @@ av klienternas utkast innehåller tidigare förslag.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-17: closed-panel status leads to a concurrent object
-conflict without losing unsent work”.
+testfallet “UTKAST-17: canceled form loss and staged independent work survive
+concurrent conflict review”.
 
 **Steg:**
 
@@ -1620,23 +1622,25 @@ conflict without losing unsent work”.
    Lo Lind och Robin föreslår Lo Berg. Lägg båda ändringarna i respektive
    privat utkast.
 2. Låt Robin spara. Försök därefter spara Alex utkast. Kontrollera att
-   försöket avvisas och välj **Hämta aktuellt underlag**.
-3. Hos Alex: öppna **Nytt objekt**, skriv Oskickad cykel och stäng
-   arbetsytan utan att lägga texten i utkastet.
+   försöket avvisas. Stäng **Spara utkastet** och ladda om sidan.
+3. Hos Alex: öppna **Nytt objekt**, skriv Oskickad cykel och välj Avbryt.
+   Kontrollera förvalt Fortsätt redigera och tryck Escape. Kontrollera
+   namnet och att bara Lo Lind finns i utkastet. Lägg därefter cykeln i
+   utkastet med **Lägg i utkastet och stäng**.
 4. I kartans återkoppling, välj **1 konflikt i ditt utkast**. Läs
    **Granska konflikter**, **Sparat i kartan nu** och **Ditt förslag**.
-5. Kontrollera att namnvalet är spärrat. Stäng med Escape, öppna Lista
-   och välj **Fortsätt: Oskickad cykel**.
+5. Kontrollera att namnvalet är nåbart utan att välja det. Stäng med
+   Escape, öppna Lista och **Uppgifter för Oskickad cykel**.
 
 **Förväntat resultat:**
 
 - Fokus hamnar på dialogens synliga rubrik Granska konflikter.
   Sparat i kartan nu visar Lo Berg och Ditt förslag visar Lo Lind.
-- Konfliktvalen är spärrade medan oskickad formulärtext återstår.
-  Objektformuläret återkommer med Oskickad cykel kvar.
+- Avbruten förlust bevarar formulärtexten utan att lägga ett förslag.
+  Efter uttryckligt tillägg finns Oskickad cykel kvar under granskningen.
 - Statusnavigeringen varken sparar, ändrar utkastet eller skapar ett
   kvitto. Den gemensamma kartan innehåller Lo Berg och Alex privata
-  utkast innehåller fortfarande Lo Lind.
+  utkast innehåller fortfarande Lo Lind och Oskickad cykel.
 
 ### UTKAST-18: hitta alla konfliktslag och läs varje underlags hela värden
 
@@ -1702,7 +1706,7 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
   sparandet. Valet ändrar bara det privata utkastet; kartan och historiken
   är oförändrade.
 
-### UTKAST-19: rätta objektkonflikten och bevara oskickad text
+### UTKAST-19: rätta objektkonflikten och bevara ett oberoende förslag
 
 **Syfte:** Skriva en egen rättelse utan att tappa annan redigering eller
 oberoende sparade uppgifter, och kräva ett nytt uttryckligt sparande.
@@ -1715,22 +1719,23 @@ Lo Berg, lägger till beskrivningen Spelar piano och sparar hela utkastet.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-19: an own object correction preserves unsent work and
-independent saved facts until a fresh save”.
+testfallet “UTKAST-19: an own object correction preserves staged independent
+work and saved facts until a fresh save”.
 
 **Steg:**
 
 1. Alex öppnar Nytt objekt, skriver Oskickad cykel och beskrivningen Behåll den
-   här texten. Stäng panelerna med kryssen utan att skicka texten.
+   här texten. Välj Avbryt och tryck Escape i förlustdialogen. Kontrollera
+   båda värdena och oförändrat utkast, lägg därefter hela formuläret i utkastet.
 2. Välj konfliktlänken under hushållets namn och stäng dialogen med
    Escape. Öppna Lista, **Uppgifter för Lo Lind** och
    **Redigera valt objekt**.
-3. Kontrollera rätt objektpanel och fokus i Objektets namn. Ändra namnet till
-   Lo Alm och välj Lägg i mitt utkast.
-4. Öppna konfliktknappen, välj Visa aktuell jämförelse och kontrollera
-   att valet av Lo Alm är spärrat.
-   Stäng med Escape, öppna Lista och välj Fortsätt: Oskickad cykel.
-   Kontrollera namnet och beskrivningen, och stäng utan att skicka texten.
+3. Kontrollera rätt objektdialog och fokus i Namn. Ändra namnet till
+   Lo Alm och välj **Lägg i utkastet och stäng**.
+4. Öppna konfliktknappen, välj Visa aktuell jämförelse om kontrollen visas
+   och kontrollera att valet av Lo Alm är nåbart utan att välja det.
+   Stäng med Escape, öppna Lista och Uppgifter för Oskickad cykel.
+   Kontrollera den bevarade beskrivningen.
 5. Öppna Granska konflikter. Välj det egna namnet Lo Alm och den sparade
    beskrivningen Spelar piano, och välj **Lägg valen i utkastet**. Stäng
    med Escape och kontrollera kartan hos Robin före sparandet.
@@ -1739,7 +1744,8 @@ independent saved facts until a fresh save”.
 **Förväntat resultat:**
 
 - Redigera valt objekt öppnar det befintliga förslaget med fokus i namnfältet.
-  Annan oskickad formulärtext finns kvar och spärrar konfliktvalen.
+  Avbruten förlust bevarar cykelns text. Det oberoende cykelförslaget finns
+  kvar medan Lo rättas och konflikten löses.
 - Rättelsen och konfliktvalet ändrar bara Alex utkast. Inget kvitto
   skapas, och Robin ser fortfarande Lo Berg före det nya sparandet.
 - Efter konfliktvalet innehåller förslaget både Lo Alm och den oberoende

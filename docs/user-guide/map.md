@@ -101,73 +101,6 @@ så att de går att se; övrig karta finns kvar. Tabellens läge bevaras och
 En föreslagen borttagning har kvar kartknappen; redan borttagna objekt
 har ingen sådan knapp.
 
-## Besök andra vyer och fortsätt arbetet
-
-Öppna **Din profil** för kontouppgifter, **Inloggningssätt**, användar-ID,
-inbjudningar, **Assistentanslutningar** eller **Logga ut**. Profilen har en
-egen ikon och **Tillbaka till arbetet** återgår till ditt aktiva formulär.
-
-**Inställningar** öppnar en egen sida med **Typer och egna fält** och,
-för administratören, **Administrera tillgång**. Driftansvariga når även
-**Månadskostnad**. På mobil fäller **Välj inställning** ut sidnavigeringen.
-På sidan **Samtal med Skyttel** ser, sparar och återkallar du ditt
-[medgivande](text-assistant.md#medgivande) till samtal.
-Kartan är dold medan du besöker sidan. **Tillbaka till kartan** återger
-ditt pågående arbete och fokus. Typförslag hör till samma privata utkast
-som objekt och samband; granska och spara hela utkastet i kartan.
-
-Du kan besöka **Inloggningssätt**, **Assistentanslutningar** eller
-**Administrera tillgång** och återvända utan att förlora formulärtext,
-samtalstext, sökning, urval eller personlig kartvy. Samma sak gäller
-**Månadskostnad** om du har tillgång till den. Ett pågående sparförsök
-fortsätter; följ dess status och kontrollera samma kvitto vid okänt utfall.
-
-Ett pågående samtal behåller mikrofonens läge. Röstrutan visar i den andra
-vyn vad rösten gör, och stoppikonen **Avbryt** fungerar där. Mikrofonen slår
-du på och av med **Prata med Skyttel** i kartans verktyg.
-Oskickad formulärtext hör fortfarande inte till utkastet; välj
-**Lägg i mitt utkast** för att ta med den i det samlade sparandet.
-
-Stäng panelerna med kryssen för att återgå till kartan.
-Öppna **Lista** och välj **Uppgifter** vid objektet för att fortsätta.
-**Skriv till Skyttel** öppnar textvyn med samtalet. Ett kryss stänger bara
-den panelen; objektets oskickade text finns kvar när du öppnar samma
-objekt igen.
-Ett nytt objekt som ännu inte finns i utkastet öppnar du med **Fortsätt**
-under **Påbörjade objekt** i Lista. Du kan ha flera sådana formulär samtidigt.
-
-Bevarandet gäller under pågående användning. Omladdning kan ta bort
-oskickad text; beständiga utkast och sparade personliga vyer finns kvar.
-Utloggning, förlorad tillgång och ersatt hushållsinnehåll avslutar det
-berörda arbetet och mikrofonen. Vid ett administrativt innehållsbyte kan
-kartarbetet vara spärrat tills innehållet är tillgängligt igen.
-
-## Lägg till ett objekt
-
-1. Välj **Nytt objekt** och ange ett namn som hushållet känner igen.
-2. Välj **Objekttyp**, exempelvis **Person**, **Tjänst** eller **Fordon**.
-   Om en passande typ saknas kan du [skapa en egen](object-types.md).
-3. Ange en beskrivning och de övriga uppgifter du känner till. Egna fält
-   visas för den valda typen. Under **Ekonomiska uppgifter och
-   avtalsvillkor** kan du ange exempelvis pris och datum; se
-   [avtalsguiden](contracts.md).
-4. Kontrollera **Objektets identitet**. Använd **Ospecificerat objekt**
-   när du avsiktligt beskriver något som ännu inte är närmare identifierat,
-   exempelvis bankkontot som betalar hyran utan att veta vilken bank det är.
-5. Välj **Lägg i mitt utkast**. Objektet kan nu användas i andra förslag,
-   exempelvis ett nytt samband, före det gemensamma sparandet.
-
-Du kan börja skriva objektet innan dess typ finns. Besök **Inställningar →
-Typer och egna fält**, skapa typen och lägg typförslaget i utkastet. När du
-väljer **Tillbaka till kartan** finns den oskickade objekttexten kvar och
-den nya typen går att välja. Även en ny sambandstyp kan användas direkt
-mellan objekt i samma privata utkast. Definitioner, objekt och samband
-blir gemensamma först när du sparar hela utkastet.
-
-Samma namn betyder inte att två objekt är samma sak. Läs beskrivningen
-och identiteten innan du väljer ett befintligt objekt. Objekt med samma
-namn behåller sina egna identiteter och samband.
-
 ## Skapa och redigera objekt
 
 **Nytt objekt** börjar på **Namn**, med **Grunduppgifter** öppet.
@@ -175,6 +108,12 @@ namn behåller sina egna identiteter och samband.
 öppnar samma formulär. Ett avsnitt är öppet åt gången. Uppgifterna följer
 vald typ; ekonomi samt livscykel, profilbild och ikon har egna avsnitt.
 På mobil fyller dialogen skärmen. Rulla innehållet; knapparna finns nederst.
+
+Välj **Ospecificerat objekt** när du avsiktligt beskriver något som ännu
+inte är närmare identifierat, exempelvis bankkontot som betalar hyran utan
+att veta vilken bank det är. Samma namn betyder inte att två objekt är
+samma sak. Läs beskrivningen och identiteten innan du väljer ett befintligt
+objekt. Objekt med samma namn behåller sina egna identiteter och samband.
 
 Välj **Lägg i utkastet och stäng** för att lägga hela formuläret i ditt
 utkast och återgå till öppningsplatsen. **Lägg i utkastet och öppna samband**
@@ -222,6 +161,22 @@ och varningen kan utebli på mobil. Beständiga utkast överlever omladdning.
 på sidan **Samtal med Skyttel**. **Tillbaka till kartan** återgår till
 hushållsarbetet. Sökning, urval och pågående samtal finns kvar; ändrad
 objekttext som skulle lämnas omfattas av förlustvarningen.
+
+Profilen ger även **Inloggningssätt**, användar-ID, inbjudningar och
+**Assistentanslutningar**. Inställningarna ger administratören
+**Administrera tillgång**. Driftansvariga når även **Månadskostnad**.
+På mobil fäller **Välj inställning** ut sidnavigeringen. Läs hur du
+[ger eller återkallar medgivande](text-assistant.md#medgivande) till samtal.
+Ett pågående sparförsök fortsätter vid vybyte; kontrollera samma kvitto
+vid okänt utfall.
+
+**Rapporter** öppnar historiken som en egen sida. Den bevarar pågående
+objektformulär, samtal, sökning och urval. **Tillbaka till arbetet** återgår
+till samma arbete och öppningsplats.
+
+Ett pågående samtal behåller mikrofonens läge. Röstrutan visar vad rösten
+gör även i andra vyer. Utloggning, förlorad tillgång och ersatt
+hushållsinnehåll avslutar det berörda arbetet och mikrofonen.
 
 **Skriv till Skyttel** öppnar textvyn. Oskickade samtalsmeddelanden finns
 kvar när textvyn stängs och när du växlar mellan karta och tabell. De

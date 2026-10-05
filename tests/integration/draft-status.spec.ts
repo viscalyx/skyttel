@@ -363,12 +363,6 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     personId = (await read()).draft.changes[0].id;
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
-    await page.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Texten ska finnas kvar');
     await startConversationWithText(page);
     await page.getByLabel('Meddelande till Skyttel').fill('Lägg Molnmusik i utkastet.');
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
@@ -410,7 +404,15 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     expect(beforeMember.relationships).toEqual([]);
     expect(beforeMember.draft.changes).toEqual([]);
     await openWorkspace(page);
-    await page.getByRole('button', { name: /^Fortsätt:/ }).click();
+    await page
+      .getByRole('region', { name: 'Lista och utkast', exact: true })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
+    const form = page.locator('dialog.object-dialog');
+    await form.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Texten ska finnas kvar');
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.keyboard.press('Escape');
     await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Texten ska finnas kvar',

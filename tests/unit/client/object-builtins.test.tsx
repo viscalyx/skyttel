@@ -237,7 +237,7 @@ test('legacy custom placement remains visible once while canonical presentation 
   await userEvent.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
   await screen.findByText(/^Sparat:/, { selector: '[role="status"]' });
   expect((await read()).types.find(({ id }) => id === 'legacy')).not.toHaveProperty('sections');
-  await userEvent.click(screen.getByRole('button', { name: 'Visa historik' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Rapporter' }));
   const history = within(await screen.findByRole('region', { name: 'Ändringshistorik' }));
   await userEvent.click(await history.findByText('Visa ändringarna', { exact: true }));
   await history.findByText('Tidigare fält: 0');

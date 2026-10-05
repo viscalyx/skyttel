@@ -318,7 +318,11 @@ test('the whole image and description proposal saves once with an exact expanded
     expect(status.queryByText(/^Sparat:/)).toBeNull();
     expect(status.queryByText('Sparat · kvitto bekräftat')).toBeNull();
     release();
-    await screen.findByText('Utkastet är sparat');
+    await waitFor(() =>
+      expect(screen.getByRole('status', { name: 'Sparbekräftelse' }).textContent).toBe(
+        'Utkastet är sparat',
+      ),
+    );
     await user.click(screen.getByText('Tidigare sparförsök', { selector: 'summary' }));
     await user.click(screen.getByText('Visa kvittot', { selector: 'summary' }));
     expect(

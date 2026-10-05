@@ -473,7 +473,7 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
    och öppna **Lista → Uppgifter för Kim Exempel**. Kontrollera att
    **Oskickat om Kim** saknas både i läspanelen och sparad beskrivning. Kvittot
-   finns kvar i **Utkast och historik**, och
+   finns kvar i **Rapporter → Ändringshistorik**, och
    mikrofonknappen finns kvar i verktygsraden. Robins privata notering
    ingår inte i kvittot.
 7. Stäng av mikrofonen med **Prata med Skyttel** och vänta tills

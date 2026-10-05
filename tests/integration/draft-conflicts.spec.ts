@@ -9,7 +9,7 @@ import { createHousehold, openMap, openWorkspace, signIn } from '../support/clie
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 
-test('UTKAST-17: closed-panel status leads to a concurrent object conflict without losing unsent work', async ({
+test('UTKAST-17: canceled form loss and staged independent work survive concurrent conflict review', async ({
   page,
   browser,
 }) => {
@@ -33,13 +33,29 @@ test('UTKAST-17: closed-panel status leads to a concurrent object conflict witho
       'Sparat: Lo Berg',
     );
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('Inget sparades');
-    await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
+    const saveDialog = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+    await expect(saveDialog).toContainText('Inget sparades');
+    await saveDialog.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
+    await page.reload();
+    await openWorkspace(page);
     await page
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
     await page.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
+    const form = page.locator('dialog.object-dialog');
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+    await expect(
+      loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
+    expect((await app.read()).draft.changes.map((change) => change.after?.name)).toEqual([
+      'Lo Lind',
+    ]);
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const beforeReview = await app.read();
     await openMap(page);
     const status = page.getByRole('region', { name: 'Kartans status', exact: true });
     await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
@@ -54,14 +70,16 @@ test('UTKAST-17: closed-panel status leads to a concurrent object conflict witho
     await expect(dialog.getByRole('region', { name: 'Ditt förslag' })).toContainText('Lo Lind');
     await expect(
       dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }),
-    ).toBeDisabled();
+    ).toBeEnabled();
     await page.keyboard.press('Escape');
     await openWorkspace(page);
-    await page.getByRole('button', { name: /^Fortsätt:/ }).click();
-    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
+    await page.getByRole('button', { name: 'Uppgifter för Oskickad cykel', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Oskickad cykel', exact: true })).toBeVisible();
+    expect(await app.read()).toEqual(beforeReview);
     expect((await app.read()).objects.find((object) => object.id === 'lo')?.name).toBe('Lo Berg');
     expect((await app.read()).draft.changes.map((change) => change.after?.name)).toEqual([
       'Lo Lind',
+      'Oskickad cykel',
     ]);
     expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(2);
   } finally {
@@ -291,7 +309,7 @@ for (const { width, height } of [
   });
 }
 
-test('UTKAST-19: an own object correction preserves unsent work and independent saved facts until a fresh save', async ({
+test('UTKAST-19: an own object correction preserves staged independent work and saved facts until a fresh save', async ({
   page,
   browser,
 }) => {
@@ -314,9 +332,17 @@ test('UTKAST-19: an own object correction preserves unsent work and independent 
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    const unsent = page.getByRole('region', { name: 'Nytt objekt', exact: true });
+    const unsent = page.locator('dialog.object-dialog');
     await unsent.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
     await unsent.getByLabel('Beskrivning', { exact: true }).fill('Behåll den här texten');
+    await unsent.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await expect(unsent.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
+    await expect(unsent.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Behåll den här texten',
+    );
+    expect((await app.read()).draft.changes).toHaveLength(1);
+    await unsent.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openMap(page);
     const status = page.getByRole('region', { name: 'Kartans status', exact: true });
     await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
@@ -325,8 +351,8 @@ test('UTKAST-19: an own object correction preserves unsent work and independent 
     const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
     await page.getByRole('button', { name: 'Uppgifter för Lo Lind', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    const correction = page.getByRole('region', { name: 'Lo Lind', exact: true });
-    await expect(correction.getByLabel('Objektets namn')).toBeFocused();
+    const correction = page.locator('dialog.object-dialog');
+    await expect(correction.getByLabel('Namn', { exact: true })).toBeFocused();
     await expectFocusedTargetUncovered(page);
     await expect(correction.getByLabel('Namn', { exact: true })).toHaveValue('Lo Lind');
     await correction.getByLabel('Namn', { exact: true }).fill('Lo Alm');
@@ -338,34 +364,36 @@ test('UTKAST-19: an own object correction preserves unsent work and independent 
     ).toBeVisible();
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Granska konflikter' });
-    await dialog.getByRole('button', { name: 'Visa aktuell jämförelse' }).click();
+    const refresh = dialog.getByRole('button', { name: 'Visa aktuell jämförelse' });
+    if (await refresh.isVisible()) await refresh.click();
     await expect(
       dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Alm', exact: true }),
-    ).toBeDisabled();
+    ).toBeEnabled();
     await page.keyboard.press('Escape');
     await openWorkspace(page);
-    await page.getByRole('button', { name: /^Fortsätt:/ }).click();
-    await expect(unsent.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
-    await expect(unsent.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+    await page.getByRole('button', { name: 'Uppgifter för Oskickad cykel', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Oskickad cykel', exact: true })).toContainText(
       'Behåll den här texten',
     );
     const corrected = await app.read();
     expect(corrected.objects).toEqual(saved.objects);
-    expect(corrected.draft.changes).toHaveLength(1);
-    expect(corrected.draft.changes[0].after?.name).toBe('Lo Alm');
+    expect(corrected.draft.changes).toHaveLength(2);
+    expect(corrected.draft.changes.find(({ id }) => id === 'lo')?.after?.name).toBe('Lo Alm');
     expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(2);
-    await unsent.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await openMap(page);
     await applyProposedConflictChanges(page);
     expect((await app.read()).objects).toEqual(saved.objects);
-    expect((await app.read()).draft.changes[0].after).toMatchObject({
+    expect((await app.read()).draft.changes.find(({ id }) => id === 'lo')?.after).toMatchObject({
       name: 'Lo Alm',
       description: 'Spelar piano',
     });
     expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(2);
+    await openWorkspace(page);
     await review.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat: Lo Alm',
-    );
+    const savedStatus = page.getByRole('status', { name: 'Hushållsarbetets status' });
+    await expect(savedStatus).toContainText('Sparat:');
+    await expect(savedStatus).toContainText('Lo Alm');
+    await expect(savedStatus).toContainText('Oskickad cykel');
     expect((await app.read(other.request)).objects.find(({ id }) => id === 'lo')).toMatchObject({
       name: 'Lo Alm',
       description: 'Spelar piano',
