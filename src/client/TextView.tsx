@@ -193,7 +193,7 @@ export function TextView({
           aria-label="Utkastet"
           hidden={!draftOpen}
         >
-          {!prototypeVariant && <h3>Utkast</h3>}
+          {(!prototypeVariant || prototypeVariant === 'D') && <h3>Utkast</h3>}
           {draftContent}
         </section>
         {computer && widthPreferences?.known && (

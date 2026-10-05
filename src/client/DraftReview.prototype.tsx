@@ -1,4 +1,4 @@
-// Throwaway: three arrangements of Visa utkastet inside the text view on
+// Throwaway: four arrangements of Visa utkastet inside the text view on
 // /households/:id?prototype=draft-review&variant=A. Real app host; fictional draft actions.
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -12,10 +12,12 @@ import type {
   RelationshipValue,
 } from '../shared/map.js';
 import { ConflictsPrototype } from './Conflicts.prototype.js';
+import { DraftMainPrototype } from './DraftMain.prototype.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './draft-review.prototype.css';
 
-type Variant = 'A' | 'B' | 'C';
+type Variant = 'A' | 'B' | 'C' | 'D';
+const variants: Variant[] = ['A', 'B', 'C', 'D'];
 type Proposal = {
   id: string;
   name: string;
@@ -35,6 +37,7 @@ const names = {
   A: 'Samtal och granskning bredvid',
   B: 'Grupper i textvyn',
   C: 'Ett förslag åt gången',
+  D: 'Utkast som i main',
 };
 const seeds: Proposal[] = [
   {
@@ -351,7 +354,7 @@ export function DraftReviewPrototype({
 }) {
   const initial = new URLSearchParams(location.search).get('variant');
   const [variant, setVariant] = useState<Variant>(
-    initial === 'B' || initial === 'C' ? initial : 'A',
+    initial === 'A' || initial === 'B' || initial === 'C' ? initial : 'D',
   );
   const [items, setItems] = useState<Proposal[]>(() => environmentDraft(source));
   const [selected, setSelected] = useState('car');
@@ -395,8 +398,11 @@ export function DraftReviewPrototype({
       if (el.closest('input,textarea,select,button,[contenteditable],dialog')) return;
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault();
-        const keys: Variant[] = ['A', 'B', 'C'];
-        const next = keys[(keys.indexOf(variant) + (e.key === 'ArrowRight' ? 1 : 2)) % 3];
+        const next =
+          variants[
+            (variants.indexOf(variant) + (e.key === 'ArrowRight' ? 1 : variants.length - 1)) %
+              variants.length
+          ];
         const url = new URL(location.href);
         url.searchParams.set('variant', next);
         history.replaceState(null, '', url);
@@ -731,8 +737,42 @@ export function DraftReviewPrototype({
     </p>
   );
 
-  useEffect(() => onCountChange(items.length), [items.length, onCountChange]);
+  useEffect(() => {
+    if (variant !== 'D') onCountChange(items.length);
+  }, [variant, items.length, onCountChange]);
   useEffect(() => onVariantChange(variant), [variant, onVariantChange]);
+  const switcher = (
+    <nav className="dr-switcher" aria-label="Välj prototypvariant">
+      <button
+        type="button"
+        onClick={() =>
+          changeVariant(
+            variants[(variants.indexOf(variant) + variants.length - 1) % variants.length],
+          )
+        }
+        aria-label="Föregående variant"
+      >
+        ←
+      </button>
+      <span>
+        {variant} · {names[variant]}
+      </span>
+      <button
+        type="button"
+        onClick={() => changeVariant(variants[(variants.indexOf(variant) + 1) % variants.length])}
+        aria-label="Nästa variant"
+      >
+        →
+      </button>
+    </nav>
+  );
+  if (variant === 'D')
+    return (
+      <>
+        <DraftMainPrototype source={source} host={host} onCountChange={onCountChange} />
+        {switcher}
+      </>
+    );
   return (
     <div className={`dr-root dr-controller dr-variant-${variant}`}>
       {host &&
@@ -913,25 +953,7 @@ export function DraftReviewPrototype({
           </pre>
         </details>
       </details>
-      <nav className="dr-switcher" aria-label="Välj prototypvariant">
-        <button
-          type="button"
-          onClick={() => changeVariant(variant === 'A' ? 'C' : variant === 'B' ? 'A' : 'B')}
-          aria-label="Föregående variant"
-        >
-          ←
-        </button>
-        <span>
-          {variant} · {names[variant]}
-        </span>
-        <button
-          type="button"
-          onClick={() => changeVariant(variant === 'A' ? 'B' : variant === 'B' ? 'C' : 'A')}
-          aria-label="Nästa variant"
-        >
-          →
-        </button>
-      </nav>
+      {switcher}
       {edit && (
         <Modal
           title={

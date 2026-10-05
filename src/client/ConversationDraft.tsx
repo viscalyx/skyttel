@@ -26,7 +26,14 @@ function symbol(before: unknown, after: unknown) {
 }
 
 /** One row per proposal, including relationships and the household's own types. */
-export function ConversationDraft({ draft }: { draft?: MapDraft }) {
+export function ConversationDraft({
+  draft,
+  onRemove,
+}: {
+  draft?: MapDraft;
+  /** Throwaway D: discard a proposal, without opening an editing form. */
+  onRemove?: (key: string) => void;
+}) {
   if (!draftChangeCount(draft) || !draft) return <p>Utkastet är tomt.</p>;
   const rows = [
     ...draft.changes.map((change) => ({
@@ -97,6 +104,16 @@ export function ConversationDraft({ draft }: { draft?: MapDraft }) {
                       ? 'Ändras'
                       : 'Läggs till'
                     : 'Tas bort'}
+                {onRemove && (
+                  <button
+                    type="button"
+                    className="dr-main-remove"
+                    onClick={() => onRemove(row.key)}
+                    aria-label={`Ta bort förslaget: ${row.name}`}
+                  >
+                    Ta bort
+                  </button>
+                )}
               </td>
             </tr>
           ))}

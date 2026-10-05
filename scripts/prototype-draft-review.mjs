@@ -11,7 +11,7 @@ try {
 }
 console.info('Prototypen använder befintlig backend på port 3300.');
 console.info('Logga in som vanligt på http://localhost:5173 i samma webbläsare.');
-console.info('Öppna http://localhost:5176/?prototype=draft-review&variant=B');
+console.info('Öppna http://localhost:5176/?prototype=draft-review&variant=D');
 const child = spawn(
   process.execPath,
   ['node_modules/vite/bin/vite.js', '--host', '0.0.0.0', '--port', '5176', '--strictPort'],
