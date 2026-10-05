@@ -1,8 +1,115 @@
 import { expect, type Locator, test } from '@playwright/test';
 import { consentBox, giveConversationConsent } from '../support/conversation-page.js';
-import { prepareDraftReview, prepareDraftReviewMeanings } from '../support/draft-review.js';
+import {
+  prepareDraftReview,
+  prepareDraftReviewLifecycle,
+  prepareDraftReviewMeanings,
+  prepareDraftReviewWrapping,
+} from '../support/draft-review.js';
 import { createInstallation } from '../support/installation.js';
 import { modelMessage, textModel } from '../support/text-model.js';
+
+test('UTKAST-31: long unbroken field labels wrap in full draft reading at 320 CSS pixels', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { household, customLabel, builtinLabel, read } = await prepareDraftReviewWrapping(
+      page.request,
+      installation.origin,
+    );
+    const before = await read();
+    await page.setViewportSize({ width: 320, height: 740 });
+    await page.goto(`${installation.origin}/households/${household.id}`);
+    await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+    const opener = page.getByRole('button', {
+      name: 'Visa förslaget: Alex blå cykel',
+      exact: true,
+    });
+    await opener.click();
+    const modal = page.getByRole('dialog', { name: 'Alex blå cykel', exact: true });
+    for (const label of [customLabel, builtinLabel]) {
+      const field = modal.locator('dt').filter({ hasText: label });
+      await expect(field).toHaveCount(1);
+      await field.scrollIntoViewIfNeeded();
+      await expect(field).toBeVisible();
+    }
+    for (const area of [modal, modal.locator('.draft-read-body')])
+      expect(await area.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+        true,
+      );
+    await page.keyboard.press('Escape');
+    await expect(opener).toBeFocused();
+    expect(await read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('UTKAST-32: lifecycle-only object and relationship proposals distinguish effective changes and explicit modes', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { household, read } = await prepareDraftReviewLifecycle(
+      page.request,
+      installation.origin,
+    );
+    const before = await read();
+    await page.goto(`${installation.origin}/households/${household.id}`);
+    await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+    const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await expect(draft.getByRole('columnheader')).toHaveText([
+      'Symbol',
+      'Namn',
+      'Typ',
+      'Vad som ändras',
+    ]);
+    await expect(draft.getByRole('rowheader')).toHaveCount(4);
+    for (const [name, expired] of [
+      ['Utgånget provobjekt', true],
+      ['Framtida provobjekt', false],
+      ['Utgånget provobjekt → granskar → Blå cykel', true],
+      ['Framtida provobjekt → granskar → Blå cykel', false],
+    ] as const) {
+      const opener = draft.getByRole('button', { name: `Visa förslaget: ${name}`, exact: true });
+      const summary = draft
+        .getByRole('row')
+        .filter({
+          has: page.getByRole('button', { name: `Visa förslaget: ${name}`, exact: true }),
+        })
+        .getByRole('cell')
+        .last();
+      await expect(summary).toHaveText(
+        `${expired ? 'Gäller: Upphört → Aktuellt' : ''}Status: Följ slutdatum → Gäller fortfarande`,
+      );
+      await opener.click();
+      const modal = page.getByRole('dialog', { name, exact: true });
+      for (const [title, applies, mode] of [
+        ['Sparade värden', expired ? 'Upphört' : 'Aktuellt', 'Följ slutdatum'],
+        ['Föreslagna värden', 'Aktuellt', 'Gäller fortfarande'],
+      ]) {
+        const side = modal
+          .locator('section')
+          .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+        for (const [label, expected] of [
+          ['Gäller', applies],
+          ['Status', mode],
+        ]) {
+          const field = side.locator('dl > div').filter({
+            has: page.locator('dt').filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) }),
+          });
+          await expect(field.locator('dd')).toHaveText(expected);
+        }
+      }
+      await page.keyboard.press('Escape');
+      await expect(opener).toBeFocused();
+    }
+    expect(await read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
 
 for (const mobile of [false, true])
   test(`UTKAST-25: ${mobile ? 'mobile' : 'desktop'} complete draft review works without AI or consent`, async ({

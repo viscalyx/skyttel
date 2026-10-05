@@ -214,3 +214,77 @@ export async function prepareDraftReviewMeanings(client: APIRequestContext, orig
   });
   return fixture;
 }
+
+/** Arbitrary names on both custom and builtin properties remain readable. */
+export async function prepareDraftReviewWrapping(client: APIRequestContext, origin: string) {
+  const fixture = await prepareDraftReview(client, origin);
+  const state = await fixture.read();
+  const type = state.types.find((value) => value.id === 'draft-vehicle');
+  if (!type) throw new Error('Missing draft type');
+  const customLabel = 'Ramnummer'.repeat(12);
+  const builtinLabel = 'Berättelse'.repeat(12);
+  await fixture.post('object-type', {
+    id: type.id,
+    baseRevision: type.revision,
+    value: {
+      ...type,
+      fields: type.fields?.map((field) => ({ ...field, name: customLabel })),
+      builtins: [{ key: 'description', name: builtinLabel, sectionId: '' }],
+    },
+  });
+  const bike = (await fixture.read()).draft.changes.find((change) => change.id === 'draft-bike');
+  if (!bike?.after || !bike.before) throw new Error('Missing draft bike');
+  await fixture.post('draft', {
+    id: bike.id,
+    baseRevision: bike.before.revision,
+    value: bike.after,
+  });
+  return { ...fixture, customLabel, builtinLabel };
+}
+
+/** Four proposals change only explicit lifecycle mode, leaving names and dates intact. */
+export async function prepareDraftReviewLifecycle(client: APIRequestContext, origin: string) {
+  const fixture = await prepareDraftReview(client, origin);
+  await fixture.post('discard', {});
+  for (const [id, name, date] of [
+    ['past', 'Utgånget provobjekt', '2000-01-01'],
+    ['future', 'Framtida provobjekt', '9999-12-31'],
+  ]) {
+    await fixture.post('draft', {
+      id,
+      baseRevision: null,
+      value: {
+        typeId: 'draft-vehicle',
+        name,
+        description: '',
+        financialFacts: { endDate: { knowledge: 'known', value: date } },
+      },
+    });
+    await fixture.post('relationship', {
+      id: `edge-${id}`,
+      baseRevision: null,
+      value: {
+        typeId: 'draft-uses',
+        sourceId: id,
+        targetId: 'draft-bike',
+        knowledge: 'known',
+        endDate: { knowledge: 'known', value: date },
+      },
+    });
+  }
+  await fixture.post('save', { operationId: 'lifecycle-only-setup' });
+  const saved = await fixture.read();
+  for (const value of saved.objects.filter(({ id }) => id === 'past' || id === 'future'))
+    await fixture.post('draft', {
+      id: value.id,
+      baseRevision: value.revision,
+      value: { ...value, lifecycle: 'active' },
+    });
+  for (const value of saved.relationships.filter(({ id }) => id.startsWith('edge-')))
+    await fixture.post('relationship', {
+      id: value.id,
+      baseRevision: value.revision,
+      value: { ...value, lifecycle: 'active' },
+    });
+  return fixture;
+}

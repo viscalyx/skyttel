@@ -8,9 +8,10 @@ import type {
   RelationshipValue,
 } from '../shared/map.js';
 import { objectProperties } from '../shared/object-properties.js';
+import { draftProposalDescriptors } from './draft-proposal-descriptors.js';
 import { factText, objectPropertyValues } from './ObjectReadDetails.js';
 import { ProfileImage } from './ProfileImage.js';
-import { relationshipDetails } from './relationship-description.js';
+import { lifecycleText } from './read-field-values.js';
 
 type Property = { key: string; label: string; value: string };
 export type DraftProposal = {
@@ -77,15 +78,7 @@ function relationship(
     ),
     property('knowledge', 'Uppgiftens säkerhet', knowledge[value.knowledge]),
     property('applies', 'Gäller', hasEnded(value) ? 'Upphört' : 'Aktuellt'),
-    property(
-      'lifecycle',
-      'Status',
-      value.lifecycle === 'ended'
-        ? 'Manuellt upphört'
-        : value.lifecycle === 'active'
-          ? 'Gäller fortfarande'
-          : 'Följ slutdatum',
-    ),
+    property('lifecycle', 'Status', lifecycleText(value.lifecycle)),
     ...(value.endDate ? [property('endDate', 'Slutdatum', factText(value.endDate))] : []),
     ...custom(type, value.customValues),
   ];
@@ -142,49 +135,45 @@ function definition(value: (ObjectType & RelationshipType) | null): Property[] |
 }
 /** Uses the proposal's historical type snapshots, independently of current map filters. */
 export function draftProposals(draft: MapDraft): DraftProposal[] {
-  return [
-    ...draft.changes.map((change) => ({
-      key: `object-${change.id}`,
-      name: change.after?.name ?? change.before?.name ?? 'Objekt',
-      kind: 'Objekt',
-      before: object(change.before, change.beforeType ?? change.type),
-      after: object(change.after, change.type),
-      images: {
-        before: change.before ?? undefined,
-        after: change.after ?? undefined,
-        householdId: change.type.householdId,
-      },
-    })),
-    ...(draft.relationships ?? []).map((change) => ({
-      key: `relationship-${change.id}`,
-      name: relationshipDetails(
-        (change.after ?? change.before) as RelationshipValue,
-        change.type.forwardLabel ?? change.type.name,
-        change.objectNames,
-      ),
-      kind: 'Samband',
-      before: relationship(
-        change.before,
-        change.beforeType ?? change.type,
-        change.objectNames ?? {},
-      ),
-      after: relationship(change.after, change.type, change.objectNames ?? {}),
-    })),
-    ...(
-      [
-        ['Objekttyp', draft.objectTypes],
-        ['Sambandstyp', draft.relationshipTypes],
-      ] as const
-    ).flatMap(([kind, changes]) =>
-      (changes ?? []).map((change) => ({
-        key: `${kind}-${change.id}`,
-        name: change.after?.name ?? change.before?.name ?? kind,
+  return draftProposalDescriptors(draft).map((proposal) => {
+    const { key, name, kind } = proposal;
+    if (proposal.kind === 'Objekt') {
+      const change = proposal.change;
+      return {
+        key,
+        name,
         kind,
-        before: definition(change.before),
-        after: definition(change.after),
-      })),
-    ),
-  ];
+        before: object(change.before, change.beforeType ?? change.type),
+        after: object(change.after, change.type),
+        images: {
+          before: change.before ?? undefined,
+          after: change.after ?? undefined,
+          householdId: change.type.householdId,
+        },
+      };
+    }
+    if (proposal.kind === 'Samband') {
+      const change = proposal.change;
+      return {
+        key,
+        name,
+        kind,
+        before: relationship(
+          change.before,
+          change.beforeType ?? change.type,
+          change.objectNames ?? {},
+        ),
+        after: relationship(change.after, change.type, change.objectNames ?? {}),
+      };
+    }
+    return {
+      key,
+      name,
+      kind,
+      before: definition(proposal.change.before),
+      after: definition(proposal.change.after),
+    };
+  });
 }
 export function DraftProposalDetails({ proposal }: { proposal: DraftProposal }) {
   const paired = !!proposal.before && !!proposal.after;

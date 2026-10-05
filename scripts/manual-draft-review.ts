@@ -1,6 +1,11 @@
 import { createInterface } from 'node:readline';
 import { request } from '@playwright/test';
-import { prepareDraftReview, prepareDraftReviewMeanings } from '../tests/support/draft-review.js';
+import {
+  prepareDraftReview,
+  prepareDraftReviewLifecycle,
+  prepareDraftReviewMeanings,
+  prepareDraftReviewWrapping,
+} from '../tests/support/draft-review.js';
 import { createInstallation } from '../tests/support/installation.js';
 import { modelMessage, textModel } from '../tests/support/text-model.js';
 
@@ -18,9 +23,15 @@ const stop = () => input?.close();
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
 try {
-  const { household, post } = await (process.argv.includes('--meanings')
-    ? prepareDraftReviewMeanings
-    : prepareDraftReview)(client, installation.origin);
+  const prepare =
+    (
+      [
+        ['--wrapping', prepareDraftReviewWrapping],
+        ['--lifecycle', prepareDraftReviewLifecycle],
+        ['--meanings', prepareDraftReviewMeanings],
+      ] as const
+    ).find(([flag]) => process.argv.includes(flag))?.[1] ?? prepareDraftReview;
+  const { household, post } = await prepare(client, installation.origin);
   if (process.argv.includes('--empty')) await post('discard', {});
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   console.log(

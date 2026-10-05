@@ -359,6 +359,7 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   kommando förbereder äldre provdata för uppgraderingen.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
+  långa fältnamn och sammanfattningar som skiljer giltighet från statusläge,
   tomt utkast och bevarat första meddelande;
   filtrerad teckenförklaring med kartans färger,
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta

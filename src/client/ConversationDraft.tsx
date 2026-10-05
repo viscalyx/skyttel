@@ -4,7 +4,7 @@ import {
   relationshipDifferences,
   typeDifferences,
 } from './DraftChangeSummary.js';
-import { relationshipDetails } from './relationship-description.js';
+import { draftProposalDescriptors } from './draft-proposal-descriptors.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 
 export { draftChangeCount as draftCount } from '../shared/map.js';
@@ -41,50 +41,27 @@ export function ConversationDraft({
   blocked?: boolean;
 }) {
   if (!draftChangeCount(draft) || !draft) return <p>Utkastet är tomt.</p>;
-  const rows = [
-    ...draft.changes.map((change) => ({
-      ...change,
-      key: `object-${change.id}`,
-      name: change.after?.name ?? change.before?.name,
-      type: change.type.name,
-      differences: objectDifferences(change),
-    })),
-    ...(draft.relationships ?? []).map((change) => {
-      const describe = (value: NonNullable<typeof change.after>) =>
-        relationshipDetails(
-          value,
-          change.type.forwardLabel ?? change.type.name,
-          change.objectNames,
-        );
-      const differences = relationshipDifferences(change);
-      return {
-        ...change,
-        key: `relationship-${change.id}`,
-        name: change.after
-          ? describe(change.after)
-          : change.before
-            ? describe(change.before)
-            : 'Samband',
-        type: change.type.name,
-        differences,
-      };
-    }),
-    ...(
-      [
-        ['Objekttyp', draft.objectTypes],
-        ['Sambandstyp', draft.relationshipTypes],
-      ] as const
-    ).flatMap(([type, changes]) =>
-      (changes ?? []).map((change) => ({
-        ...change,
-        key: `${type}-${change.id}`,
-        name: change.after?.name ?? change.before?.name,
-        type,
-        differences:
-          change.before && change.after ? typeDifferences(change.before, change.after) : [],
-      })),
-    ),
-  ];
+  const rows = draftProposalDescriptors(draft).map((proposal) => {
+    const differences =
+      proposal.kind === 'Objekt'
+        ? objectDifferences(proposal.change)
+        : proposal.kind === 'Samband'
+          ? relationshipDifferences(proposal.change)
+          : proposal.change.before && proposal.change.after
+            ? typeDifferences(proposal.change.before, proposal.change.after)
+            : [];
+    return {
+      key: proposal.key,
+      name: proposal.name,
+      before: proposal.change.before,
+      after: proposal.change.after,
+      type:
+        proposal.kind === 'Objekt' || proposal.kind === 'Samband'
+          ? proposal.change.type.name
+          : proposal.kind,
+      differences,
+    };
+  });
   return (
     <div className="conversation-draft-table">
       <table aria-label="Osparade ändringar">

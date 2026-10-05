@@ -292,6 +292,71 @@ comparison without changing the draft”.
 - Bekräftelsen är spärrad tills nya giltiga val är gjorda. Stängning
   återför fokus till den kvarvarande konfliktknappen.
 
+### UTKAST-31: läs långa egenskapsnamn på smal skärm
+
+**Syfte:** Läsa hela namnet på egna fält och gemensamma egenskaper även
+när namnet saknar mellanslag.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+
+**Förutsättningar:** Kör `npm run build` och
+`node --import tsx scripts/manual-draft-review.ts --wrapping`.
+Logga in med den syntetiska Google-identiteten. Namnen på cykelns
+Ramnummer och beskrivning består av Ramnummer respektive Berättelse
+upprepat tolv gånger utan mellanslag. Prova en smal skärm och förstoring.
+Skriv `quit` i terminalen efter provningen.
+
+**Integrationstest:**
+[draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
+testfallet “UTKAST-31: long unbroken field labels wrap in full draft reading
+at 320 CSS pixels”.
+
+**Steg:**
+
+1. Öppna Utkast och läs hela förslaget Alex blå cykel.
+2. Läs de långa egenskapsnamnen på den föreslagna sidan. Rulla genom
+   uppgifterna och stäng med Escape.
+
+**Förväntat resultat:**
+
+- Hela egenskapsnamnen bryts och kan läsas utan sidledsrullning i dialogen.
+- Escape återför fokus till radens läsknapp. Läsningen ändrar inga förslag.
+
+### UTKAST-32: läs förslag som bara ändrar livscykel
+
+**Syfte:** Skilja faktisk giltighet från ett uttryckligt val av statusläge
+i både sammanfattningen och den fullständiga läsningen.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+
+**Förutsättningar:** Kör `npm run build` och
+`node --import tsx scripts/manual-draft-review.ts --lifecycle`.
+Logga in med den syntetiska Google-identiteten. Utgånget provobjekt och
+dess samband har slutdatum 2000-01-01. Framtida provobjekt och dess
+samband har slutdatum 9999-12-31. De fyra förslagen anger Gäller
+fortfarande; inga andra uppgifter ändras. Skriv `quit` efter provningen.
+
+**Integrationstest:**
+[draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
+testfallet “UTKAST-32: lifecycle-only object and relationship proposals
+distinguish effective changes and explicit modes”.
+
+**Steg:**
+
+1. Öppna Utkast och läs Vad som ändras för båda objekten och deras samband.
+2. Öppna varje rad och jämför Gäller och Status på den sparade och den
+   föreslagna sidan. Stäng med Escape mellan raderna.
+
+**Förväntat resultat:**
+
+- Alla fyra rader visar Status: Följ slutdatum → Gäller fortfarande.
+- Det utgångna objektet och dess samband visar dessutom
+  Gäller: Upphört → Aktuellt. Framtida uppgifter får ingen falsk
+  giltighetsändring; den uttryckliga statusändringen syns ändå.
+- Den fullständiga läsningen visar samma betydelser som sammanfattningen.
+  De fyra kolumnerna är kvar. Läsningen ändrar inga förslag eller sparade
+  uppgifter och Escape återför fokus till den använda läsknappen.
+
 ### UTKAST-01: återuppta en konflikt och spara oberoende förslag tillsammans
 
 **Syfte:** Kontrollera att ett privat utkast kan återupptas, att ett aktivt

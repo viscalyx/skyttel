@@ -167,6 +167,7 @@
 .draft-values dt {
   font-size: 12px;
   color: var(--space-muted, var(--muted));
+  overflow-wrap: anywhere;
 }
 .draft-values dd {
   margin: 4px 0 0;

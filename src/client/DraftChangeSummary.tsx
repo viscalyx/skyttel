@@ -1,4 +1,5 @@
 import { type FinancialFact, financialFields } from '../shared/financial-facts.js';
+import { hasEnded, type LifecycleValue } from '../shared/lifecycle.js';
 import type {
   DraftChange,
   DraftRelationshipChange,
@@ -8,6 +9,7 @@ import type {
 } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
 import { builtinPresentationChanges } from '../shared/object-properties.js';
+import { lifecycleText } from './read-field-values.js';
 import { relationshipDetails, relationshipTarget } from './relationship-description.js';
 
 function valueText(value: string | number | boolean | undefined) {
@@ -31,6 +33,16 @@ function factText(fact: FinancialFact | undefined) {
 }
 function difference(label: string, before: string, after: string) {
   return before === after ? [] : [`${label}: ${before} → ${after}`];
+}
+function lifecycleDifferences(before: LifecycleValue, after: LifecycleValue) {
+  return [
+    ...difference(
+      'Gäller',
+      hasEnded(before) ? 'Upphört' : 'Aktuellt',
+      hasEnded(after) ? 'Upphört' : 'Aktuellt',
+    ),
+    ...difference('Status', lifecycleText(before.lifecycle), lifecycleText(after.lifecycle)),
+  ];
 }
 export function objectDifferences({ before, after, type, beforeType }: DraftChange) {
   if (!before || !after) return [];
@@ -63,11 +75,7 @@ export function objectDifferences({ before, after, type, beforeType }: DraftChan
         valueText(after.customValues?.[field.id]),
       ),
     ),
-    ...difference(
-      'Gäller',
-      before.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
-      after.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
-    ),
+    ...lifecycleDifferences(before, after),
     ...difference('Identitet', identity(before.identity), identity(after.identity)),
     ...(before.profileImageId !== after.profileImageId
       ? [
@@ -153,11 +161,7 @@ export function relationshipDifferences(change: DraftRelationshipChange) {
         valueText(change.after?.customValues?.[field.id]),
       ),
     ),
-    ...difference(
-      'Gäller',
-      change.before.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
-      change.after.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
-    ),
+    ...lifecycleDifferences(change.before, change.after),
     ...difference('Slutdatum', factText(change.before.endDate), factText(change.after.endDate)),
   ];
 }
@@ -209,11 +213,7 @@ export function DraftChangeSummary({ review }: { review: MapDraft }) {
                     valueText(change.after?.customValues?.[field.id]),
                   ),
                 ),
-                ...difference(
-                  'Gäller',
-                  change.before.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
-                  change.after.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt',
-                ),
+                ...lifecycleDifferences(change.before, change.after),
                 ...difference(
                   'Slutdatum',
                   factText(change.before.endDate),
