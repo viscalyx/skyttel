@@ -432,47 +432,40 @@ export function ConflictsPrototype() {
                       Klicka på det värde du vill använda för varje egenskap. Du kan blanda vänster
                       och höger sida.
                     </p>
-                    <div className="cp-column-headings" aria-hidden="true">
-                      <h3>Sparat i kartan nu</h3>
-                      <h3>Ditt förslag</h3>
-                    </div>
-                    <div className="cp-property-list">
-                      {item.fields.map((f, n) => (
-                        <section
-                          className="cp-property"
-                          key={f.name}
-                          aria-labelledby={`cp-field-${n}`}
-                        >
-                          <h3 id={`cp-field-${n}`}>{f.name}</h3>
-                          {f.saved === f.mine ? (
-                            <p className="cp-same">
-                              {f.saved} <small>· Samma värde på båda sidor</small>
-                            </p>
-                          ) : (
-                            <div className="cp-value-pair">
-                              {(['saved', 'mine'] as const).map((side) => (
+                    <div className="cp-comparison">
+                      {(['saved', 'mine'] as const).map((side) => (
+                        <section key={side} aria-label={sideNames[side]}>
+                          <h3>{sideNames[side]}</h3>
+                          <div className="cp-pick-fields">
+                            {item.fields.map((f) => {
+                              const overlap =
+                                f.saved !== f.before && f.mine !== f.before && f.mine !== f.saved;
+                              const same = f.saved === f.mine;
+                              const picked = selected[f.name] === side;
+                              return (
                                 <button
-                                  key={side}
-                                  className="cp-value"
+                                  key={f.name}
+                                  className={`cp-field-choice${overlap ? ' cp-overlap' : f[side] !== f.before ? ' cp-change' : ''}`}
                                   type="button"
                                   aria-label={`${f.name}: ${sideNames[side]} – ${f[side]}`}
-                                  aria-pressed={selected[f.name] === side}
-                                  disabled={stale || (side === 'mine' && !!item.blocked)}
+                                  aria-pressed={same ? undefined : picked}
+                                  disabled={same || stale || (side === 'mine' && !!item.blocked)}
                                   onClick={() => selectField(f, side)}
                                 >
-                                  <span className="cp-value-side">{sideNames[side]}</span>
-                                  <span className="cp-value-text">{f[side]}</span>
-                                  <span className="cp-selected">
-                                    {selected[f.name] === side
-                                      ? '✓ Valt värde'
-                                      : side === 'mine' && item.blocked
-                                        ? 'Kan inte väljas'
-                                        : 'Välj detta värde'}
+                                  <span className="cp-field-name">
+                                    {f.name}
+                                    {picked && <span className="cp-picked">✓ Vald</span>}
                                   </span>
+                                  {overlap && <span className="cp-tag">Båda ändrar</span>}
+                                  {!overlap && f[side] !== f.before && (
+                                    <span className="cp-tag">Ändrat sedan underlaget</span>
+                                  )}
+                                  <span className="cp-field-value">{f[side]}</span>
+                                  {same && <span className="cp-tag">Samma värde</span>}
                                 </button>
-                              ))}
-                            </div>
-                          )}
+                              );
+                            })}
+                          </div>
                         </section>
                       ))}
                     </div>
