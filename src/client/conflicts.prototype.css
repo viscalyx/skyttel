@@ -113,10 +113,19 @@
 }
 .cp-top {
   display: flex;
+  gap: 16px;
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
   border-bottom: 1px solid #b7c3c8;
+}
+.cp-top > button {
+  flex-shrink: 0;
+}
+.cp-top p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #506777;
 }
 .cp-body {
   min-height: 0;
@@ -130,11 +139,34 @@
   padding: 12px;
 }
 .cp-case-list button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   text-align: left;
   width: 100%;
   margin-bottom: 8px;
   padding: 12px;
   border-color: transparent;
+}
+.cp-case-text {
+  min-width: 0;
+}
+.cp-resolved-mark {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #1d706b;
+  font-size: 22px;
+  line-height: 1;
+}
+.cp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .cp-case-list button span,
 .cp-case-list button small {

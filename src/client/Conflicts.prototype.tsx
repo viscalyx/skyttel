@@ -340,6 +340,7 @@ export function ConflictsPrototype() {
         ref={dialog}
         className="cp-dialog cp-variant-A"
         aria-labelledby="cp-title"
+        aria-describedby="cp-subtitle"
         onCancel={(e) => {
           e.preventDefault();
           close();
@@ -349,6 +350,7 @@ export function ConflictsPrototype() {
           <div>
             <small>Ditt utkast · {remaining} olösta</small>
             <h1 id="cp-title">Granska konflikter</h1>
+            <p id="cp-subtitle">Valen ändrar ditt utkast. Kartan sparas separat.</p>
           </div>
           <button type="button" onClick={close} aria-label="Stäng konfliktdialogen">
             ✕
@@ -364,11 +366,21 @@ export function ConflictsPrototype() {
                 aria-current={index === n ? 'true' : undefined}
                 onClick={() => selectCase(n)}
               >
-                <small>
-                  {resolutions[c.id] ? '✓ Vald lösning' : c.kind}
-                  {c.hidden ? ' · Utanför kartans filter' : ''}
-                </small>
-                <span>{c.name}</span>
+                <span className="cp-case-text">
+                  <small>
+                    {c.kind}
+                    {c.hidden ? ' · Utanför kartans filter' : ''}
+                  </small>
+                  <span>{c.name}</span>
+                </span>
+                {resolutions[c.id] && (
+                  <>
+                    <span className="cp-resolved-mark" aria-hidden="true">
+                      ✓
+                    </span>
+                    <span className="cp-visually-hidden">Vald lösning</span>
+                  </>
+                )}
               </button>
             ))}
           </nav>
@@ -449,11 +461,9 @@ export function ConflictsPrototype() {
                         : '✓ Valen finns i ditt utkast'}
                     </h3>
                     {resultFields(resolutions[item.id])}
-                    <p>
-                      {item.acceptDeletion
-                        ? `${deletedThing} förblir borttaget. Övriga förslag i utkastet finns kvar.`
-                        : 'Gemensamt sparande sker separat från utkastet.'}
-                    </p>
+                    {item.acceptDeletion && (
+                      <p>{deletedThing} förblir borttaget. Övriga förslag i utkastet finns kvar.</p>
+                    )}
                     <button type="button" onClick={() => selectCase((index + 1) % cases.length)}>
                       Nästa konflikt
                     </button>
@@ -535,11 +545,6 @@ export function ConflictsPrototype() {
                       <p>Övriga förslag i utkastet finns kvar.</p>
                     </section>
                     <footer className="cp-actions">
-                      <p>
-                        {item.acceptDeletion
-                          ? 'Inget kastas förrän du accepterar. Du kan stänga dialogen och behålla förslaget olöst.'
-                          : 'Valen ändrar ditt utkast. Kartan sparas separat.'}
-                      </p>
                       <button
                         className="cp-primary"
                         type="button"
@@ -547,7 +552,7 @@ export function ConflictsPrototype() {
                         onClick={apply}
                       >
                         {item.acceptDeletion
-                          ? 'Acceptera borttagningen och kasta mitt förslag'
+                          ? 'Acceptera borttagningen och kasta ditt förslag'
                           : 'Lägg valen i utkastet'}
                       </button>
                     </footer>
