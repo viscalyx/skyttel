@@ -382,12 +382,12 @@ paneler för att
   nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
   och kartans status och teckenförklaring tillsammans utan att tappa åtkomst
   till kontrollerna.
-  Öppna en namngiven konflikt från status med tangentbord och återgå till
-  ett annat oskickat objektformulär med texten kvar. Följ alla fyra
+  Avbryt förlust av oskickad objekttext, lägg hela objektändringen i
+  utkastet och öppna en namngiven konflikt från status med tangentbord. Följ alla fyra
   konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella
   avsnitt, dolda värden och hela ekonomiska uppgifter. Rätta ett
-  konfliktobjekt med annan oskickad text kvar och bevara oberoende
-  sparade uppgifter före ett nytt uttryckligt sparande. Rätta ett sambands
+  konfliktobjekt med det oberoende förslaget och sparade uppgifter kvar
+  före ett nytt uttryckligt sparande. Rätta ett sambands
   borttagna mål utan att återuppliva objektet eller spara i förtid.
   Rätta objekt- och sambandstyper genom inställningarna med oberoende
   sparade uppgifter kvar och ett nytt uttryckligt sparbesked.
