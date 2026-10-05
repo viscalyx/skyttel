@@ -78,7 +78,8 @@ behövs. Behåll samma fordonsobjekt när finansiering eller användning ändras
 ## Lägg till frivilliga belopp och villkor
 
 Välj objektet, **Redigera valt objekt** i detaljpanelen och sedan
-**Ekonomiska uppgifter och avtalsvillkor** i formuläret. Gemensamma
+**Ekonomiska uppgifter** i formuläret. **Grunduppgifter** öppnas först;
+namn, typ och identitet finns där. Ett avsnitt är öppet i taget. Gemensamma
 egenskaper kan också placeras i
 [objekttypens egna avsnitt](object-types.md#placera-gemensamma-uppgifter).
 Uppgifter utanför dessa avsnitt finns kvar och går att rätta även efter
@@ -117,12 +118,16 @@ Varje ekonomisk uppgift har en egen säkerhet:
 
 Ett tomt fält betyder inte noll eller uttryckligen inget. Saknade belopp,
 datum och villkor hindrar inte att resten av utkastet sparas. Säkerheten
-följer med i formuläret, granskningen och den sparade uppgiften.
+följer med i formuläret, granskningen och den sparade uppgiften. Väljer
+du **Känt** måste du ange ett värde. Hela formuläret kontrolleras även
+när avsnitt är stängda. Vid fel får en sammanfattning fokus. Välj
+fellänken för att öppna rätt avsnitt och fokusera fältet; ingen del
+läggs i utkastet innan alla fel är rättade.
 
 För samband anger **Uppgiftens säkerhet** om kopplingen är känd, okänd,
 uttryckligen saknas eller är osäkert uppgiven. Om du vet att hyran betalas
 från ett bankkonto men inte vilket, skapa ett **Bankkonto** med
-**Objektets identitet** satt till **Ospecificerat objekt**. Välj det
+**Identitet** satt till **Ospecificerat objekt**. Välj det
 uttryckligen som mål för **Betalas med**. Senare kan du komplettera samma
 objekt utan att hitta på en bank eller ägare.
 
@@ -135,8 +140,11 @@ att två objekt är samma sak.
 Sök efter avtalet, bostaden, garaget eller bilen i **Sök objekt**. Välj
 objektet och **Redigera valt objekt** i detaljpanelen för att rätta belopp,
 villkor och säkerhet. Välj ett samband och **Redigera valt samband** för
-att rätta exempelvis avtalspart eller betalningsmedel. Lägg ändringarna
-i samma privata utkast som övriga förslag.
+att rätta exempelvis avtalspart eller betalningsmedel. För objekt väljer
+du **Lägg i utkastet och stäng** när hela formuläret är klart.
+**Lägg i utkastet och öppna samband** lägger samma fullständiga ändring
+i utkastet och öppnar sedan objektets samband. Alla ändringar ingår
+i samma utkast som övriga förslag.
 
 Granska tidigare och föreslagna värden i **Hela mitt utkast**. Förslag som
 läggs i utkastet finns kvar efter omladdning; text som bara finns i ett

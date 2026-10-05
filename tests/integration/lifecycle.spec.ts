@@ -63,14 +63,27 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
   const installation = await createInstallation();
   try {
     const { read } = await arrange(page.request, installation.origin);
+    const includeEnded = async () => {
+      await page
+        .getByRole('navigation', { name: 'Kartans verktyg', exact: true })
+        .getByRole('button', { name: 'Sök i kartan', exact: true })
+        .click();
+      const search = page.getByRole('region', { name: 'Kartans sökning och filter' });
+      const filters = search.getByRole('button', { name: 'Filter', exact: true });
+      if ((await filters.getAttribute('aria-expanded')) === 'false') await filters.click();
+      await search.getByLabel('Ta med upphörda').check();
+      await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    };
     await page.goto(installation.origin);
     await openWorkspace(page);
+    await includeEnded();
     const objects = page.getByRole('list', { name: 'Objekt', exact: true });
     const subscription = objects.getByRole('listitem').filter({ hasText: 'Familjemusik' });
     await subscription
       .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('ended');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(subscription).toContainText('Upphört');
@@ -85,10 +98,13 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
       'lifecycle',
     );
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
+    await includeEnded();
     await expect(subscription).toContainText('Upphört');
     await expect(objects.getByRole('listitem').filter({ hasText: 'Lo Exempel' })).not.toContainText(
       'Upphört',
@@ -102,7 +118,9 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
     await page.getByLabel('Sambandets status').selectOption('ended');
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await expect(edges.getByRole('listitem').filter({ hasText: 'Lo Exempel' })).toContainText(
       'Upphört',
     );
@@ -113,12 +131,16 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
       .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('active');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await page.reload();
     await openWorkspace(page);
+    await includeEnded();
     await expect(subscription).not.toContainText('Upphört');
     await expect(edges).toContainText('Upphört');
   } finally {
@@ -260,11 +282,13 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
       .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-20');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await expect(subscription).not.toContainText('Upphört');
     const edges = page.getByRole('list', { name: 'Samband', exact: true });
     const incoming = edges.getByRole('listitem').filter({ hasText: 'Lo Exempel' });
@@ -274,7 +298,9 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await page.getByLabel('Sambandets slutdatum', { exact: true }).fill('2031-03-12');
     await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await expect(incoming).toContainText('Upphört');
     await incoming.getByRole('button', { name: /^Lo Exempel →/ }).click();
     await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
@@ -284,7 +310,9 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
       'Gäller fortfarande',
     );
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(
+      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+    ).toContainText('Sparat');
     await installation.restart();
     await page.reload();
     await openWorkspace(page);

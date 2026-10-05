@@ -48,19 +48,27 @@ independently correctable”.
 
 **Steg:**
 
-1. Öppna **Familjemusik**, välj **Upphört** under **Objektets status** och
-   välj **Lägg i mitt utkast**. Granska utkastet.
+1. Öppna **Sök i kartan**, öppna **Filter** och välj **Ta med upphörda**.
+   Stäng sökningen. Öppna uppgifterna för **Familjemusik** och välj
+   **Redigera valt objekt**.
+   Öppna **Livscykel och utseende** och välj **Upphört** under
+   **Objektets status**. Välj **Lägg i utkastet och stäng** och granska
+   utkastet.
 2. Välj **Spara hela utkastet**. Starta om appen med samma databas och
-   ladda om sidan. Kontrollera objekten och sambanden.
+   ladda om sidan. Välj **Ta med upphörda** igen i kartans sökfilter.
+   Kontrollera objekten och sambanden.
 3. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Upphört** under
    **Sambandets status**, lägg sambandet i utkastet och spara.
-4. Öppna **Familjemusik**, välj **Gäller fortfarande**, lägg ändringen i
-   utkastet och spara. Ladda om sidan.
+4. Öppna uppgifterna för **Familjemusik**, välj **Redigera valt objekt**
+   och **Livscykel och utseende**. Välj **Gäller fortfarande** under
+   **Objektets status** och **Lägg i utkastet och stäng**. Spara hela
+   utkastet och ladda om sidan. Välj **Ta med upphörda** igen för att
+   kontrollera det fortfarande upphörda sambandet.
 
 **Förväntat resultat:**
 
 - Förslaget visar Upphört med text och orange markering, skild från
-  utkastets blå markering. Sparat underlag visar den tidigare statusen.
+  förslagets markering. Sparat underlag visar den tidigare statusen.
 - Efter omstart finns Familjemusik kvar med Upphört. Andra objekt och
   samband har oförändrad status och kan fortfarande öppnas.
 - Det markerade sambandet blir upphört utan att det andra sambandet ändras.
@@ -84,11 +92,15 @@ dates or status can correct it”.
 
 **Steg:**
 
-1. Ange dagens UTC-datum som känt **Slutdatum** för Familjemusik och samma
-   datum som **Osäkert uppgivet** för Lo Exempel. Behåll **Följ slutdatum**
-   för båda, lägg ändringarna i utkastet och spara.
+1. Öppna uppgifterna för Familjemusik, välj **Redigera valt objekt** och
+   **Ekonomiska uppgifter**. Ange dagens UTC-datum som känt **Slutdatum**.
+   Gör samma sak för Lo Exempel med datumet som **Osäkert uppgivet**.
+   Behåll standardvalet **Följ slutdatum** för båda. Välj
+   **Lägg i utkastet och stäng** för varje objekt och spara hela utkastet.
 2. Kontrollera status före och efter nästa midnatt UTC utan omladdning.
-3. Rätta Familjemusiks datum till en framtida dag, lägg i utkastet och spara.
+3. Öppna Familjemusiks uppgifter, välj **Redigera valt objekt** och
+   **Ekonomiska uppgifter**. Rätta slutdatumet till en framtida dag. Välj
+   **Lägg i utkastet och stäng** och spara hela utkastet.
 4. Öppna sambandet från Lo och ange ett känt passerat **Sambandets slutdatum**.
    Lägg sambandet i utkastet, spara och kontrollera statusen.
 5. Ändra sambandets status till **Gäller fortfarande** utan att ändra datumet.
