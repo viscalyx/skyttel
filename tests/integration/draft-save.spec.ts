@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openMap, signIn } from '../support/client.js';
-import { prepareDraftSave } from '../support/draft-save.js';
+import { prepareDraftSave, registerPendingSave } from '../support/draft-save.js';
 import { createInstallation } from '../support/installation.js';
 
 test('UTKAST-36: draft save opens immediately and confirms one persistent save without AI', async ({
@@ -208,19 +208,7 @@ test('UTKAST-39: a durable save attempt remains reachable after reload without a
     const { household } = await (await createHousehold(page.request, app.origin)).json();
     const path = `${app.origin}/api/households/${household.id}/map`;
     const before: MapState = await (await page.request.get(path)).json();
-    const body = {
-      operationId: 'persisted-empty-attempt',
-      version: before.draft.version,
-      contentVersion: before.contentVersion,
-    };
-    expect(
-      (
-        await page.request.post(`${path}/operations`, {
-          headers: { origin: app.origin },
-          data: body,
-        })
-      ).status(),
-    ).toBe(200);
+    const attempt = await registerPendingSave(page.request, path, 'persisted-empty-attempt');
     // Simulate unavailable automatic recovery, using the genuine durable attempt.
     await page.route('**/text-assistant/recover', (route) => route.abort());
     await page.goto(`${app.origin}/households/${household.id}`);
@@ -238,7 +226,7 @@ test('UTKAST-39: a durable save attempt remains reachable after reload without a
     const { operations } = await (await page.request.get(`${path}/operations`)).json();
     expect(operations).toHaveLength(1);
     expect(operations[0]).toMatchObject({
-      operationId: body.operationId,
+      operationId: attempt.operationId,
       status: 'rejected',
       error: 'empty_draft',
     });
@@ -307,20 +295,7 @@ test('UTKAST-39: recovery after reload completes the existing attempt and retire
   let release: (() => void) | undefined;
   try {
     const { path, household, read } = await prepareDraftSave(page.request, app.origin);
-    const before = await read();
-    const body = {
-      operationId: 'persisted-draft-attempt',
-      version: before.draft.version,
-      contentVersion: before.contentVersion,
-    };
-    expect(
-      (
-        await page.request.post(`${path}/operations`, {
-          headers: { origin: app.origin },
-          data: body,
-        })
-      ).status(),
-    ).toBe(200);
+    const attempt = await registerPendingSave(page.request, path, 'persisted-draft-attempt');
     await page.route('**/text-assistant/recover', async (route) => {
       await new Promise<void>((resolve) => {
         release = resolve;
@@ -338,7 +313,7 @@ test('UTKAST-39: recovery after reload completes the existing attempt and retire
     await expect(page.getByRole('button', { name: 'Utkast', exact: true })).toHaveCount(0);
     const { operations } = await (await page.request.get(`${path}/operations`)).json();
     expect(operations).toHaveLength(1);
-    expect(operations[0]).toMatchObject({ operationId: body.operationId, status: 'succeeded' });
+    expect(operations[0]).toMatchObject({ operationId: attempt.operationId, status: 'succeeded' });
     expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
       operations[0].receipt,
     ]);
@@ -441,3 +416,43 @@ test('UTKAST-37: a closed pending save restores the table heading when its focus
     await app.close();
   }
 });
+
+for (const width of [1280, 390])
+  test(`UTKAST-38: Map receipt recovery restores visible draft context after its follow-up disappears at ${width}px`, async ({
+    page,
+  }) => {
+    const app = await createInstallation();
+    try {
+      const { path, household } = await prepareDraftSave(page.request, app.origin);
+      await page.setViewportSize({ width, height: 850 });
+      await page.route('**/map/save', async (route) => {
+        await route.fetch();
+        await route.abort();
+      });
+      await page.goto(`${app.origin}/households/${household.id}`);
+      await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+      const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+      await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      const modal = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+      await expect(modal).toContainText('Sparandet kunde inte bekräftas.');
+      await page.keyboard.press('Escape');
+      await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+      await openMap(page);
+      await expect(draft).not.toBeVisible();
+      await page.getByRole('button', { name: 'Visa sparandet', exact: true }).click();
+      await modal.getByRole('button', { name: 'Kontrollera sparandet igen', exact: true }).click();
+      await expect(modal).not.toBeVisible();
+      await expect(draft).toBeVisible();
+      await expect(draft).toContainText('Utkastet är tomt.');
+      await expect(draft.getByRole('heading', { name: 'Utkast', exact: true })).toBeFocused();
+      await expect(page.getByRole('dialog', { name: 'Samtalsmedgivande' })).toHaveCount(0);
+      const { operations } = await (await page.request.get(`${path}/operations`)).json();
+      expect(operations).toHaveLength(1);
+      expect(operations[0].status).toBe('succeeded');
+      expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
+        operations[0].receipt,
+      ]);
+    } finally {
+      await app.close();
+    }
+  });

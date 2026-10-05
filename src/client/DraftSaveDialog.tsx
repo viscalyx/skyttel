@@ -35,11 +35,13 @@ export function DraftSaveDialog({
   progress,
   onClose,
   onCheck,
+  onRestoreDraft,
 }: {
   open: boolean;
   progress?: SaveProgress;
   onClose: () => void;
   onCheck: () => void;
+  onRestoreDraft: () => void;
 }) {
   const modal = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -67,18 +69,23 @@ export function DraftSaveDialog({
           document.getElementById('text-draft-title'),
           document.querySelector<HTMLElement>('.household-table-heading h1'),
         ];
-        candidates
-          .find(
-            (element) =>
-              element?.isConnected &&
-              !element.matches(':disabled') &&
-              element.getClientRects().length &&
-              !element.closest('[hidden], [inert]'),
-          )
-          ?.focus();
+        const target = candidates.find(
+          (element) =>
+            element?.isConnected &&
+            !element.matches(':disabled') &&
+            element.getClientRects().length &&
+            !element.closest('[hidden], [inert]'),
+        );
+        if (target) target.focus();
+        else if (
+          progress?.status === 'succeeded' &&
+          opener.current?.closest('.draft-save-follow-up') &&
+          !opener.current.closest('.household-table')
+        )
+          onRestoreDraft();
       }
     }
-  }, [open]);
+  }, [open, onRestoreDraft, progress?.status]);
   useLayoutEffect(() => () => modal.current?.close(), []);
   const waiting = progress?.status === 'pending' || progress?.status === 'checking';
   return (

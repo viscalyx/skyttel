@@ -148,7 +148,10 @@ heading when its focused follow-up disappears”.
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
 testfallet “UTKAST-38: a lost save response keeps proposals until the same
-durable attempt is checked from the table”.
+durable attempt is checked from the table” och testfallen “UTKAST-38: Map
+receipt recovery restores visible draft context after its follow-up disappears
+at 1280px” och “UTKAST-38: Map receipt recovery restores visible draft context
+after its follow-up disappears at 390px”.
 
 **Steg:**
 
@@ -158,6 +161,9 @@ durable attempt is checked from the table”.
 3. Stäng textvyn, öppna Tabell och välj **Visa sparandet**.
 4. Välj **Kontrollera sparandet igen** och läs bekräftelsen.
 5. Skriv `result` igen och jämför försöks-ID och historik.
+6. Upprepa från `new-draft` med `lost-response` på dator och mobil.
+   Efter det okända utfallet stänger du både sparmodalen och textvyn.
+   Välj **Visa sparandet** från Karta och **Kontrollera sparandet igen**.
 
 **Förväntat resultat:**
 
@@ -168,6 +174,10 @@ durable attempt is checked from the table”.
   bekräftelsen tar bort uppföljningsknappen.
 - Samma beständiga försöks-ID återfinns. Bara ett sparanrop, ett genomfört
   försök och en historikpost behövs. Ingen AI eller samtalsstart krävs.
+- När kontrollen från Karta bekräftas och uppföljningsknappen försvinner
+  öppnas det tomma Utkastet igen med fokus på dess synliga rubrik.
+  Detta återfokus gäller när modalen fortfarande äger fokus; tidigare
+  flyttat fokus till annat arbete ska bevaras.
 
 ### UTKAST-39: återuppta ett registrerat sparförsök efter omladdning
 
@@ -194,7 +204,8 @@ its unknown follow-up without AI”.
 3. Läs det avvisade utfallet. Stäng med Escape, ladda om sidan och öppna
    uppföljningen igen. Skriv `result` i terminalen.
 4. Välj `new-draft` och `pending-attempt`. Ladda om och kontrollera uppföljningen.
-5. Välj `network-ok` och invänta automatisk kontroll. Skriv `result` igen.
+5. Välj `network-ok` och ladda om sidan för att börja om kontrollen efter
+   det tidigare nätfelet. Invänta automatisk kontroll och skriv `result` igen.
 
 **Förväntat resultat:**
 

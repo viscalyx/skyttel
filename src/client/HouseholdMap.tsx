@@ -67,6 +67,7 @@ import { Reports } from './Reports.js';
 import { rejectionMessage, SaveOperations } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
 import { ConversationWorkspace, conversationFeedback } from './TextAssistant.js';
+import type { TextOpeningFocus } from './TextView.js';
 import { useHouseholdWork } from './use-household-work.js';
 import { VoiceBox, VoiceStatusAnnouncements } from './VoiceBox.js';
 import { type PanelAnchor, type PanelFocusRequest, WorkspacePanels } from './WorkspacePanels.js';
@@ -327,6 +328,7 @@ export function HouseholdMap({
   const [textFocusRequest, setTextFocusRequest] = useState(0);
   const [draftViewOpen, setDraftViewOpen] = useState(false);
   const [draftOpenRequest, setDraftOpenRequest] = useState(0);
+  const [textOpeningFocus, setTextOpeningFocus] = useState<TextOpeningFocus>('text');
   const workOpen = openPanels.length > 0 && (presentation !== 'map' || detailsOpen || editorOpen);
   const viewport = useConversationViewport();
   const { narrow } = viewport;
@@ -1254,6 +1256,7 @@ export function HouseholdMap({
   // The household work owns the conversation. Views only choose where to
   // show its text, voice, notice and controls.
   function showConversation() {
+    setTextOpeningFocus('text');
     setTextViewOpen(true);
     setWorkspaceView('text');
     setTextFocusRequest((previous) => previous + 1);
@@ -1944,6 +1947,13 @@ export function HouseholdMap({
           if (saveAttempt.current) void save(saveAttempt.current, true);
           else if (pendingOperation) retrySave(pendingOperation);
         }}
+        onRestoreDraft={() => {
+          setTextOpeningFocus('draft');
+          setTextFocusRequest((previous) => previous + 1);
+          setTextViewOpen(true);
+          setWorkspaceView('text');
+          setDraftOpenRequest((previous) => previous + 1);
+        }}
       />
       {state && readEntry && (
         <HouseholdReadDialog
@@ -2034,6 +2044,7 @@ export function HouseholdMap({
           textViewOpen={textViewOpen}
           textViewHidden={!textViewVisible || workspaceSurface === 'reports'}
           textFocusRequest={textFocusRequest}
+          textOpeningFocus={textOpeningFocus}
           onDraftOpenChange={setDraftViewOpen}
           draftOpenRequest={draftOpenRequest}
           onStartConversation={(chosen) => {

@@ -1,13 +1,12 @@
 import { createInterface } from 'node:readline';
 import { chromium } from '@playwright/test';
-import type { MapState } from '../src/shared/map.js';
 import { createHousehold, signIn } from '../tests/support/client.js';
-import { prepareDraftSave } from '../tests/support/draft-save.js';
+import { prepareDraftSave, registerPendingSave } from '../tests/support/draft-save.js';
 import { createInstallation } from '../tests/support/installation.js';
 
 // Disposable real HTTP/SQLite installation; only delivery of network responses
 // is controlled. The headed browser remains available for human interaction.
-const app = await createInstallation();
+let app = await createInstallation();
 const browser = await chromium
   .launch({ headless: process.argv.includes('--headless') })
   .catch(async (failure) => {
@@ -24,9 +23,15 @@ let lostResponse = false;
 let refreshFailure = false;
 let recoveryFailure = false;
 let release: (() => void) | undefined;
+let prepared = false;
 async function fresh(empty: boolean) {
   release?.();
   hold = lostResponse = refreshFailure = recoveryFailure = false;
+  if (prepared) {
+    await page.goto('about:blank');
+    await app.close();
+    app = await createInstallation();
+  }
   if (empty) {
     await signIn(page.request, app.origin);
     const { household } = await (await createHousehold(page.request, app.origin)).json();
@@ -37,6 +42,7 @@ async function fresh(empty: boolean) {
     path = data.path;
     await page.goto(`${app.origin}/households/${data.household.id}`);
   }
+  prepared = true;
 }
 try {
   await page.route('**/map/save', async (route) => {
@@ -74,16 +80,7 @@ try {
     else if (command === 'network-ok') {
       lostResponse = refreshFailure = recoveryFailure = false;
     } else if (command === 'pending-attempt') {
-      const state: MapState = await (await page.request.get(path)).json();
-      const response = await page.request.post(`${path}/operations`, {
-        headers: { origin: app.origin },
-        data: {
-          operationId: crypto.randomUUID(),
-          version: state.draft.version,
-          contentVersion: state.contentVersion,
-        },
-      });
-      console.log(await response.json());
+      console.log(await registerPendingSave(page.request, path, crypto.randomUUID()));
       recoveryFailure = true;
       await page.reload();
     } else if (command === 'result') {

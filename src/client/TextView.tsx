@@ -11,6 +11,8 @@ import type { useConversationPreferences } from './use-conversation-preferences.
 import { useConversationViewport } from './use-conversation-viewport.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 
+export type TextOpeningFocus = 'text' | 'draft';
+
 /**
  * The text view: the conversation text and the message field. It reads the
  * conversation and calls its commands. Closing it ends nothing: the
@@ -20,6 +22,7 @@ export function TextView({
   conversation,
   hidden = false,
   focusRequest,
+  openingFocus = 'text',
   onClose,
   children,
   notice,
@@ -33,6 +36,7 @@ export function TextView({
   conversation: Conversation;
   hidden?: boolean;
   focusRequest?: number;
+  openingFocus?: TextOpeningFocus;
   onClose: () => void;
   /** What is shown above the conversation text. */
   children?: ReactNode;
@@ -88,12 +92,26 @@ export function TextView({
     // On a computer the message field gets the focus when the text view opens.
     // On a mobile device and a narrow screen it does not, so that the on-screen
     // keyboard stays down. The focus then stays in the toolbar or goes to the heading.
-    if (hidden) return;
+    if (hidden || openingFocus === 'draft') return;
     if (initialComputer.current) field.current?.focus();
     else if (!document.activeElement?.closest('.workspace-tools')) heading.current?.focus();
     // Opening is the only focus trigger; resizing or revealing a keyboard must
     // preserve the user's current focus.
   }, [focusRequest]);
+  const focusedDraftOpening = useRef<number | undefined | null>(null);
+  useLayoutEffect(() => {
+    if (
+      openingFocus !== 'draft' ||
+      hidden ||
+      !draftOpen ||
+      focusedDraftOpening.current === focusRequest
+    )
+      return;
+    const draftHeading = root.current?.querySelector<HTMLElement>('#text-draft-title');
+    if (!draftHeading) return;
+    draftHeading.focus();
+    focusedDraftOpening.current = focusRequest;
+  }, [openingFocus, focusRequest, draftOpen, hidden]);
   // The newest row stays in view, unless the user has scrolled up to read.
   // biome-ignore lint/correctness/useExhaustiveDependencies: follow new rows
   useLayoutEffect(() => {

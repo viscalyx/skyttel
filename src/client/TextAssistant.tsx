@@ -11,7 +11,7 @@ import { createPortal } from 'react-dom';
 import type { MapDraft } from '../shared/map.js';
 import { ConversationDraft, draftCount } from './ConversationDraft.js';
 import './voice.css';
-import { TextView } from './TextView.js';
+import { type TextOpeningFocus, TextView } from './TextView.js';
 import type { Conversation } from './use-conversation.js';
 import type { useConversationPreferences } from './use-conversation-preferences.js';
 
@@ -35,6 +35,7 @@ export type ConversationPresentation = {
   textViewOpen?: boolean;
   textViewHidden?: boolean;
   textFocusRequest?: number;
+  textOpeningFocus?: TextOpeningFocus;
   onDraftOpenChange?: (open: boolean) => void;
   draftOpenRequest?: number;
   draftContent?: ReactNode;
@@ -71,6 +72,7 @@ export function ConversationWorkspace({
   textViewOpen = false,
   textViewHidden = false,
   textFocusRequest,
+  textOpeningFocus,
   onDraftOpenChange,
   draftOpenRequest,
   draftContent,
@@ -176,6 +178,7 @@ export function ConversationWorkspace({
           widthPreferences={widthPreferences}
           hidden={!workVisible || textViewHidden}
           focusRequest={textFocusRequest}
+          openingFocus={textOpeningFocus}
           onClose={() => onCloseTextView?.()}
           draftOpen={draftOpen}
           draftCount={count}
