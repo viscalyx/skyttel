@@ -8,7 +8,7 @@ import { prepareDraftReview } from '../tests/support/draft-review.js';
 import { createInstallation } from '../tests/support/installation.js';
 
 // Only delivery is controlled; every proposal and discard uses public HTTP and real SQLite.
-const app = await createInstallation();
+let app = await createInstallation();
 const browser = await chromium
   .launch({ headless: process.argv.includes('--headless') })
   .catch(async (failure) => {
@@ -21,11 +21,18 @@ let data!: Awaited<ReturnType<typeof prepareDraftReview>>;
 let hold = false;
 let lostResponse = false;
 let release: (() => void) | undefined;
+let prepared = false;
 process.once('SIGINT', () => input?.close());
 process.once('SIGTERM', () => input?.close());
 async function fresh(kind: string) {
   release?.();
   hold = lostResponse = false;
+  if (prepared) {
+    await page.goto('about:blank');
+    await app.close();
+    app = await createInstallation();
+  }
+  prepared = true;
   data =
     kind === 'new-focus'
       ? await prepareDraftRemovalFocus(page.request, app.origin)
