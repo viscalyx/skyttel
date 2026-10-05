@@ -63,7 +63,7 @@ const cases: Case[] = [
     acceptDeletion: true,
     kind: 'Objekt',
     name: 'Gamla cykeln',
-    reason: 'Objektet tas bort från den gemensamma kartan medan du redigerar det.',
+    reason: 'Objektet togs bort från den gemensamma kartan medan du redigerar det.',
     fields: [field('Objekt', 'Gamla cykeln', 'Borttaget', 'Pendlarcykeln', 'Borttaget')],
     effect: 'Förslaget kastas. Objektet förblir borttaget.',
     blocked: 'Objektet är borttaget. Ditt ändringsförslag kan inte återställa det.',
