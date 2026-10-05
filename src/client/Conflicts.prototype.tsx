@@ -212,17 +212,18 @@ const cases: Case[] = [
     hidden: true,
   },
   {
-    id: 'multiple',
+    id: 'missing-relationship-type',
+    outsideCorrection:
+      'Stäng konfliktfönstret och lägg till sambandstypen under Inställningar → Typer och egna fält. Justera sedan sambandet i den vanliga sambandsdialogen så att det använder rätt typ och lägg ändringen i ditt utkast. När du kommer tillbaka kontrolleras konflikten på nytt.',
     kind: 'Samband',
     name: 'Alex använder reservdatorn',
-    reason: 'Både objektet som sambandet pekar på och den föreslagna sambandstypen saknas.',
+    reason: 'Den föreslagna sambandstypen saknas i det aktuella underlaget.',
     fields: [
-      field('Till objekt', 'Reservdatorn', 'Borttaget', 'Reservdatorn'),
+      field('Till objekt', 'Reservdatorn', 'Reservdatorn', 'Reservdatorn'),
       field('Sambandstyp', 'Använder tillfälligt', 'Saknas', 'Använder tillfälligt'),
     ],
-    effect: 'Förslaget kastas.',
-    blocked: 'Två hinder: välj ett befintligt objekt och en tillgänglig sambandstyp.',
-    repair: 'Redigera samband',
+    effect: 'Konflikten kontrolleras på nytt när sambandet använder en giltig typ.',
+    blocked: 'Sambandet kan inte läggas till eftersom sambandstypen saknas.',
     hidden: true,
   },
 ];
