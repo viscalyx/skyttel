@@ -190,7 +190,8 @@ test('SÖK-03: map-only character and composition entry preserve separate search
 }) => {
   const installation = await createInstallation();
   try {
-    await prepareHouseholdTable(page.request, installation.origin);
+    const { read } = await prepareHouseholdTable(page.request, installation.origin);
+    const before = await read();
     await page.goto(installation.origin);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
     await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
@@ -219,6 +220,9 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await page.keyboard.press('Escape');
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     const tableSearch = page.getByRole('searchbox', { name: 'Sök objekt i tabellen' });
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await table.getByRole('button', { name: 'A 2', exact: true }).click();
+    await expect(table.getByText('✓ Markerad', { exact: true })).toBeVisible();
     await tableSearch.fill('åke');
     await page.keyboard.type('x');
     await expect(tableSearch).toHaveValue('åkex');
@@ -253,6 +257,65 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await expect(panel).not.toBeVisible();
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     await expect(tableSearch).toHaveValue('åkex');
+    await tools.getByRole('button', { name: 'Karta', exact: true }).click();
+    await tools.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const objectName = page.getByLabel('Objektets namn', { exact: true });
+    await objectName.pressSequentially('Ö Testnamn 123');
+    await expect(objectName).toHaveValue('Ö Testnamn 123');
+    await expect(objectName).toBeFocused();
+    await expect(panel).not.toBeVisible();
+    await page.getByRole('button', { name: 'Stäng utan att skicka texten', exact: true }).click();
+    await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).click();
+    const message = page.getByRole('textbox', { name: 'Meddelande till Skyttel', exact: true });
+    await message.pressSequentially('Å Oskickat meddelande 456');
+    await expect(message).toHaveValue('Å Oskickat meddelande 456');
+    await expect(message).toBeFocused();
+    await expect(panel).not.toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await tools.getByRole('button', { name: 'Sök i kartan · aktiv', exact: true }).click();
+    await expect(mapSearch).toHaveValue('å');
+    await expect(panel.getByLabel('Typ 10', { exact: true })).toBeChecked();
+    await expect(panel.getByLabel('Bara markerade (1)', { exact: true })).not.toBeChecked();
+    await panel.getByRole('button', { name: 'Rensa sökning', exact: true }).click();
+    await expect(mapSearch).toHaveValue('');
+    await expect(panel.getByLabel('Typ 10', { exact: true })).toBeChecked();
+    await expect(panel.getByLabel('Bara markerade (1)', { exact: true })).not.toBeChecked();
+
+    // Observe the public live region through actual timer delays and rapid UI edits.
+    const announcements = page.locator('.map-search-status').getByRole('status');
+    await mapSearch.fill('Örn');
+    await expect(announcements).toHaveText('1 träffar.');
+    const observed = await announcements.evaluateHandle((element) => {
+      const messages: string[] = [];
+      const observer = new MutationObserver(() => {
+        if (element.textContent) messages.push(element.textContent);
+      });
+      observer.observe(element, { subtree: true, childList: true, characterData: true });
+      return { messages, observer };
+    });
+    try {
+      await mapSearch.fill('');
+      await mapSearch.fill('finns inte');
+      await mapSearch.fill('Örn');
+      await expect(announcements).toBeEmpty();
+      await expect(announcements).toHaveText('1 träffar.');
+      // Let every pending result's real debounce window elapse before inspecting updates.
+      await page.waitForTimeout(400);
+      expect(await observed.evaluate(({ messages }) => messages)).toEqual(['1 träffar.']);
+      await expect(mapSearch).toBeFocused();
+    } finally {
+      await observed.evaluate(({ observer }) => observer.disconnect());
+      await observed.dispose();
+    }
+    await page.keyboard.press('Escape');
+    await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await expect(tableSearch).toHaveValue('åkex');
+    await tableSearch.fill('A 2');
+    await expect(table.getByText('✓ Markerad', { exact: true })).toBeVisible();
+    await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).click();
+    await expect(message).toHaveValue('Å Oskickat meddelande 456');
+    expect(await read()).toEqual(before);
   } finally {
     await installation.close();
   }

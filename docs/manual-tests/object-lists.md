@@ -668,20 +668,31 @@ and Escape restrictions”.
 1. Öppna Sök i kartan. Sök efter 299 EGEN och läs träffens detaljfält.
 2. Välj Typ 10 och sök efter A 10. Tryck Escape. Kontrollera kvarvarande
    sökning och typ i kartans resultatbesked. Öppna sökningen igen.
-3. Besök Tabell och skriv åke följt av x i dess sökfält. Återgå till Karta.
+3. Besök Tabell och expandera A 2 så att det markeras. Skriv åke följt av x
+   i tabellens sökfält. Återgå till Karta.
 4. Fokusera själva kartbakgrunden med Tab. Skriv ö. Kontrollera att
    tidigare söktext ersätts, filtret behålls och sökfältet får fokus.
 5. Stäng med Escape. Fokusera kartan och bygg ett sammansatt å.
    Kontrollera att bara det färdiga tecknet öppnar sökningen.
-6. Prova ett kortkommando, skriv i samtalsfältet och i ett formulär.
+6. Prova ett kortkommando. Öppna Nytt objekt och skriv ett namn med
+   bokstäver och siffror. Stäng utan att skicka texten. Öppna Skriv till
+   Skyttel och skriv ett oskickat meddelande, utan att starta samtal.
+   Kontrollera att sökytan förblir stängd och texten går att skriva.
+7. Stäng textvyn, öppna Sök i kartan och välj Rensa sökning. Kontrollera tom
+   söktext, kvarvarande Typ 10 och Bara markerade (1) utan nytt filterval.
+8. Sök efter Örn. Ändra snabbt till tom text, finns inte och Örn igen.
+   Kontrollera slutligt träffbesked utan gamla mellanliggande antal.
    <!-- cSpell:disable-next-line -->
    Återvänd till Tabell och kontrollera dess separata text **åkex**.
+   Sök efter A 2 och kontrollera markeringen. Öppna textvyn och kontrollera
+   det oskickade meddelandet.
 
 **Förväntat resultat:**
 
 - Sökknappen öppnar sökning och filter, tangentbordsstart bara sökning.
 - Escape och Stäng bevarar text, filter och markering. Rensa sökning
-  ändrar bara texten. Aktiva begränsningar syns med stängd sökyta.
+  ändrar bara texten; Typ 10 och markeringen av A 2 är kvar. Aktiva
+  begränsningar syns med stängd sökyta.
 - Bara kartytans eget fokus ger bokstavs- eller sifferstart.
   Kortkommandon, formulär och samtal påverkas inte.
 - Träffbesked flyttar inte fokus och snabb inmatning köar inte gamla antal.
