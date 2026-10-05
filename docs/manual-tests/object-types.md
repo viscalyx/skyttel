@@ -294,10 +294,17 @@ utan avsnitt eller egna fält. Använd dator samt 390 och 320 pixlars bredd.
 Pröva även ett kort fönster på 640 × 456 pixlar och verklig webbläsarzoom.
 
 **Integrationstest:**
-[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts),
-testfallen “TYP-10: canonical properties retain meaning through sections,
-hiding, type changes, historical reading at 1280px”, samma titel med “390px”,
-“320px” respektive “640px”.
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts).
+Följande testfall:
+
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 1280px”.
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 390px”.
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 320px”.
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 640px”.
 
 **Steg:**
 
@@ -500,10 +507,21 @@ På cykeln ska följande gemensamma ekonomiska uppgifter finnas:
 - Pris: **Okänt**.
 
 **Integrationstest:**
-[type-change.spec.ts](../../tests/integration/type-change.spec.ts),
-testfallen “TYP-11: repeated type changes confirm loss of former answers and
-complete common values through save and restart at 1280px in light”, samma
-titel med “390px” eller “320px” och “dark”. Kör varje bredd i båda temana.
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts).
+Följande testfall:
+
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 1280px in light”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 1280px in dark”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 390px in light”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 390px in dark”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 320px in light”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 320px in dark”.
 
 **Steg:**
 

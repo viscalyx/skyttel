@@ -48,9 +48,15 @@ fallen anger formulär, samtal, profil eller administration.
 **Förutsättningar:** Tomt utkast, ingen aktiv redigering.
 
 **Integrationstest:**
-[household-work.spec.ts](../../tests/integration/household-work.spec.ts),
-testfallen “ARBETE-01: canceled form loss and staged household work survive
-ordinary navigation at 1280px”, samma titel med “at 390px” och “at 320px”.
+[household-work.spec.ts](../../tests/integration/household-work.spec.ts).
+Följande testfall:
+
+- “ARBETE-01: canceled form loss and staged household work survive ordinary
+  navigation at 1280px”.
+- “ARBETE-01: canceled form loss and staged household work survive ordinary
+  navigation at 390px”.
+- “ARBETE-01: canceled form loss and staged household work survive ordinary
+  navigation at 320px”.
 
 **Steg:**
 

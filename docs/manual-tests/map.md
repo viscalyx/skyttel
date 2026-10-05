@@ -130,10 +130,21 @@ objektförslag rättas, utan att ändra dess samband eller andra förslag.
 Behåll databasen vid omstart.
 
 **Integrationstest:**
-[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts),
-testfallen “KARTA-08: discarding unsent object text preserves proposals before
-correcting an unresolved identity at 1280px in light”, samma titel med
-“390px” eller “320px” och “dark”. Kör varje bredd i båda temana.
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts).
+Följande testfall:
+
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 1280px in light”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 1280px in dark”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 390px in light”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 390px in dark”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 320px in light”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 320px in dark”.
 
 **Steg:**
 
@@ -293,10 +304,21 @@ definitioner, objekt och samband tillsammans.
 **Förutsättningar:** Tom karta och tomt utkast. Behåll databasen vid omstart.
 
 **Integrationstest:**
-[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts),
-testfallen “KARTA-09: complete forms use new draft types and objects in
-one durable relationship save at 1280px in light”, samma titel med “390px”
-eller “320px” och “dark”. Kör varje bredd i båda temana.
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts).
+Följande testfall:
+
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 1280px in light”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 1280px in dark”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 390px in light”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 390px in dark”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 320px in light”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 320px in dark”.
 
 **Steg:**
 
@@ -684,9 +706,12 @@ bevisar inte att servern redan har lagt ändringen i utkastet.
 ```
 
 **Integrationstest:**
-[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
-testfallet “KARTA-18: lost staging response is checked before confirmed
-relationship transition”.
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts).
+Följande testfall:
+
+- “KARTA-18: lost staging response is checked before confirmed relationship
+  transition”.
+- “KARTA-18: lost staging response is checked before safe retry”.
 
 **Steg:**
 
@@ -701,9 +726,6 @@ relationship transition”.
   sambandsdialogens rubrik; en bekräftad utebliven ändring tillåter nytt försök
   med värdena kvar. Stängning av samband återgår till ursprungsplatsen. Kartan
   är inte gemensamt sparad.
-
-Kör också testfallet “KARTA-18: lost staging response is checked before safe
-retry” för utfallet utan tillägg.
 
 ### KARTA-19: öppna samband utan ett onödigt förslag
 
@@ -745,9 +767,13 @@ Anteckning, Månadsbelopp och Avtalstext i den ordningen och dölj ett textfält
 med ett befintligt värde.
 
 **Integrationstest:**
-[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
-testfallet “KARTA-20: configured properties keep their order and hidden values
-in the single-section dialog at 1440px”.
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts).
+Följande testfall:
+
+- “KARTA-20: configured properties keep their order and hidden values in the
+  single-section dialog at 1440px”.
+- “KARTA-20: configured properties keep their order and hidden values in the
+  single-section dialog at 320px”.
 
 **Steg:**
 
@@ -761,5 +787,3 @@ in the single-section dialog at 1440px”.
 - Endast ett avsnitt är öppet. Typens benämningar och ordning används; det dolda
   värdet behålls oförändrat. Formulär och knappar ryms på smal skärm. Den
   gemensamma kartan behåller tidigare värden.
-
-Kör också samma testtitel med “320px”.

@@ -254,10 +254,25 @@ Upprepa i ljust och mörkt tema vid 1440 × 1000, 1440 × 500, 320 × 1000 och
 320 × 250 CSS-bildpunkter. Verklig zoom provas separat vid 200 och 400 procent.
 
 **Integrationstest:**
-[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
-testfallet “BILD-04: delayed whole-form image rejection retains local values
-and earlier proposals at {width}x{height}px {colorScheme}”, med storlekarna
-ovan och temana light och dark.
+[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts).
+Följande testfall:
+
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x1000px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x1000px dark”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x500px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x500px dark”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x1000px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x1000px dark”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x250px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x250px dark”.
 
 **Steg:**
 
@@ -318,10 +333,15 @@ window.fetch = async (...args) => {
 svarsfördröjningen i BILD-04. Ha en andra flik med samma användare.
 
 **Integrationstest:**
-[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
-testfallet “BILD-05: pending image staging blocks navigation and stale
-rejection preserves the complete form at 1440px”, samma titel med 390px
-respektive 320px.
+[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts).
+Följande testfall:
+
+- “BILD-05: pending image staging blocks navigation and stale rejection
+  preserves the complete form at 1440px”.
+- “BILD-05: pending image staging blocks navigation and stale rejection
+  preserves the complete form at 390px”.
+- “BILD-05: pending image staging blocks navigation and stale rejection
+  preserves the complete form at 320px”.
 
 **Steg:**
 
@@ -365,10 +385,47 @@ typ med namnet Egen bildtyp, skapad genom **Typer och egna fält** i
 Inställningar. Använd två giltiga bilder och `fel.png` från förberedelsen.
 
 **Integrationstest:**
-[profile-image-types.spec.ts](../../tests/integration/profile-image-types.spec.ts),
-testfallet “BILD-06: Person shares text, icon and image in one proposal and
-removes the latest image”, med samma titel där “Person” ersätts av var och
-en av de övriga arton typerna ovan.
+[profile-image-types.spec.ts](../../tests/integration/profile-image-types.spec.ts).
+Följande testfall:
+
+- “BILD-06: Person shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Tjänst shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Tjänstekonto shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Abonnemang shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: E-postadress shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Bankkonto shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Kort shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Företag shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Förening shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Bostad shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Garage shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Fordon shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Avtal shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Hyresavtal shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Låneavtal shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Kreditavtal shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Avbetalningsavtal shares text, icon and image in one proposal and
+  removes the latest image”.
+- “BILD-06: Försäkringsavtal shares text, icon and image in one proposal and
+  removes the latest image”.
+- “BILD-06: Egen bildtyp shares text, icon and image in one proposal and removes
+  the latest image”.
 
 **Steg:**
 
