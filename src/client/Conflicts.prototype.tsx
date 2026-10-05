@@ -10,6 +10,7 @@ type Case = {
   kind: string;
   name: string;
   reason: string;
+  savedBy?: string;
   fields: Field[];
   effect: string;
   blocked?: string;
@@ -28,7 +29,9 @@ const cases: Case[] = [
     id: 'object',
     kind: 'Objekt',
     name: 'Familjens bil',
-    reason: 'Ni har båda ändrat bilens namn. Lo har också ändrat beskrivningen.',
+    reason:
+      'Ditt förslag ändrar bilens namn och registreringsnummer. Lo har sparat ett nytt namn och en ny beskrivning.',
+    savedBy: 'Lo',
     fields: [
       field('Namn', 'Bilen', 'Familjens bil', 'Blå bilen'),
       field('Beskrivning', 'Vår bil', 'Elbil, årsmodell 2024', 'Vår bil', 'Elbil, årsmodell 2024'),
@@ -40,7 +43,8 @@ const cases: Case[] = [
     id: 'relationship',
     kind: 'Samband',
     name: 'Alex använder bilen',
-    reason: 'Ni har båda ändrat startdatum för samma samband.',
+    reason: 'Ditt förslag har ett annat startdatum än det som är sparat nu.',
+    savedBy: 'Lo',
     fields: [
       field('Startdatum', '2026-01-01', '2026-02-01', '2026-03-01'),
       field(
@@ -121,7 +125,9 @@ const cases: Case[] = [
     id: 'object-type',
     kind: 'Objekttyp',
     name: 'Fordon',
-    reason: 'Ni har båda ändrat typens namn. Ett eget fält tillkommer i den sparade typen.',
+    reason:
+      'Ditt förslag har ett annat namn på typen än det som är sparat nu. Ett eget fält tillkommer i den sparade typen.',
+    savedBy: 'Lo',
     fields: [
       field('Namn', 'Fordon', 'Transportmedel', 'Mina fordon'),
       field(
@@ -139,7 +145,8 @@ const cases: Case[] = [
     id: 'relationship-type',
     kind: 'Sambandstyp',
     name: 'Använder',
-    reason: 'Ni har båda ändrat sambandstypens beskrivning.',
+    reason: 'Ditt förslag har en annan beskrivning av sambandstypen än den som är sparad nu.',
+    savedBy: 'Lo',
     fields: [field('Beskrivning', 'Användning', 'Regelbunden användning', 'Tillgång till objekt')],
     effect: 'Din beskrivning används.',
     hidden: true,
@@ -456,9 +463,16 @@ export function ConflictsPrototype() {
                                     {f.name}
                                     {picked && <span className="cp-picked">✓ Vald</span>}
                                   </span>
-                                  {overlap && <span className="cp-tag">Båda ändrar</span>}
-                                  {!overlap && f[side] !== f.before && (
-                                    <span className="cp-tag">Ändrat sedan underlaget</span>
+                                  {side === 'saved' && f.saved !== f.before && item.savedBy && (
+                                    <span className="cp-tag">
+                                      {item.savedBy} sparade ett nytt värde
+                                      {overlap
+                                        ? ' efter att du började ändra den här uppgiften.'
+                                        : '.'}
+                                    </span>
+                                  )}
+                                  {side === 'mine' && f.mine !== f.before && (
+                                    <span className="cp-tag">Ditt föreslagna värde</span>
                                   )}
                                   <span className="cp-field-value">{f[side]}</span>
                                   {same && <span className="cp-tag">Samma värde</span>}
