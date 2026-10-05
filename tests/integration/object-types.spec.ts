@@ -413,7 +413,6 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
     expect((await read()).draft).toEqual(before.draft);
     await page.goto(installation.origin);
     await openWorkspace(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
     await applyProposedConflictChanges(page, 'Annans rättelse');
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();

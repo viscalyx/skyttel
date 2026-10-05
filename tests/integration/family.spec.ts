@@ -184,14 +184,7 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
-    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
-    await expect(
-      page
-        .getByRole('dialog', { name: 'Granska konflikter' })
-        .getByRole('region', { name: 'Sparat i kartan nu' }),
-    ).toContainText('Lo Berg');
-    await page.keyboard.press('Escape');
-    await applyProposedConflictChanges(page);
+    await applyProposedConflictChanges(page, 'Lo Berg');
     await expect(review).toContainText('Spelar piano i musikföreningen.');
     await expect(review).toContainText('familjen@example.test');
     await expect(review).toContainText('musik@example.test');
