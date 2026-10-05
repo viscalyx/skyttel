@@ -436,12 +436,15 @@ export function ConflictsPrototype() {
                 )}
                 {item.blocked && !resolutions[item.id] && (
                   <div className="cp-warning">
-                    <strong>
-                      {item.acceptDeletion
-                        ? `${deletedThing} är redan borttaget`
-                        : 'Behöver rättas'}
-                    </strong>
-                    <p>{item.blocked}</p>
+                    {!item.acceptDeletion && <strong>Behöver rättas</strong>}
+                    <p>
+                      {item.acceptDeletion && (
+                        <>
+                          <span aria-hidden="true">⚠</span>{' '}
+                        </>
+                      )}
+                      {item.blocked}
+                    </p>
                     {item.repair && (
                       <button
                         type="button"
