@@ -13,7 +13,9 @@ type Case = {
   savedBy?: string;
   acceptDeletion?: boolean;
   removeDraftRelationship?: boolean;
+  removeDraftObject?: boolean;
   afterRemoval?: string;
+  outsideCorrection?: string;
   fields: Field[];
   effect: string;
   blocked?: string;
@@ -161,6 +163,8 @@ const cases: Case[] = [
   },
   {
     id: 'schema',
+    outsideCorrection:
+      'Stäng konfliktfönstret och rätta uppgiften i den vanliga objektdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit. Ditt förslag ligger kvar under tiden.',
     kind: 'Objekt',
     name: 'Solcellsanläggningen',
     reason:
@@ -168,17 +172,17 @@ const cases: Case[] = [
     fields: [field('Installationsår', '2020', '2020', 'Våren 2021')],
     effect: 'Förslaget behöver rättas så att Installationsår är ett tal.',
     blocked: 'Det föreslagna värdet måste vara ett tal.',
-    repair: 'Redigera objekt',
   },
   {
     id: 'missing-type',
+    removeDraftObject: true,
+    afterRemoval: 'Övriga objekt och samband i kartan påverkas inte.',
     kind: 'Objekt',
     name: 'Vindsförrådet',
     reason: 'Den föreslagna objekttypen saknas i det aktuella underlaget.',
     fields: [field('Objekttyp', 'Förråd', 'Saknas', 'Förråd')],
     effect: 'Förslaget kastas.',
-    blocked: 'Välj en tillgänglig objekttyp.',
-    repair: 'Redigera objekt',
+    blocked: 'Objektet kan inte läggas till eftersom objekttypen saknas.',
     hidden: true,
   },
   {
@@ -248,7 +252,9 @@ export function ConflictsPrototype() {
           fields: base.fields.map((f, i) => (i === 0 ? { ...f, saved: 'Hushållets elbil' } : f)),
         }
       : base;
-  const fixedOutcome = item.acceptDeletion || item.removeDraftRelationship;
+  const removeDraftEntry = item.removeDraftRelationship || item.removeDraftObject;
+  const draftThing = item.removeDraftObject ? 'Objektet' : 'Sambandet';
+  const fixedOutcome = item.acceptDeletion || removeDraftEntry;
   const selected: Record<string, Side> = fixedOutcome
     ? Object.fromEntries(item.fields.map((f) => [f.name, 'saved' as const]))
     : (selections[item.id] ?? {});
@@ -293,33 +299,33 @@ export function ConflictsPrototype() {
     }));
   }
   function apply() {
-    if (unselected || stale || invalid) return;
+    if (unselected || stale || invalid || item.outsideCorrection) return;
     setResolutions((previous) => ({
       ...previous,
-      [item.id]: item.removeDraftRelationship
-        ? { Sambandsförslag: 'Borttaget ur ditt utkast' }
+      [item.id]: removeDraftEntry
+        ? { [draftThing]: 'Borttaget ur ditt utkast' }
         : Object.fromEntries(item.fields.map((f) => [f.name, value(f)])),
     }));
     setStatus(
-      item.removeDraftRelationship
-        ? `Sambandet har tagits bort ur ditt utkast. ${item.afterRemoval} Övriga förslag i utkastet finns kvar.`
+      removeDraftEntry
+        ? `${draftThing} har tagits bort ur ditt utkast. ${item.afterRemoval} Övriga förslag i utkastet finns kvar.`
         : item.acceptDeletion
           ? `Ditt ändringsförslag har kastats. ${deletedThing} förblir borttaget. Övriga förslag i utkastet finns kvar.`
           : 'Valen finns i ditt utkast. Den gemensamma kartan är inte sparad.',
     );
   }
   function resultFields(values?: Record<string, string>) {
-    if (item.removeDraftRelationship)
+    if (removeDraftEntry)
       return (
         <>
-          {!values && (
+          {!values && !item.removeDraftObject && (
             <p>
               <strong>✓ Förvalt</strong>
             </p>
           )}
           <dl className="cp-fields">
             <div>
-              <dt>Sambandet i ditt utkast</dt>
+              <dt>{draftThing} i ditt utkast</dt>
               <dd>{values ? 'Borttaget ur ditt utkast' : 'Tas bort ur ditt utkast'}</dd>
             </div>
           </dl>
@@ -487,8 +493,8 @@ export function ConflictsPrototype() {
                 {resolutions[item.id] ? (
                   <section className="cp-preview">
                     <h3>
-                      {item.removeDraftRelationship
-                        ? '✓ Sambandet har tagits bort ur ditt utkast'
+                      {removeDraftEntry
+                        ? `✓ ${draftThing} har tagits bort ur ditt utkast`
                         : item.acceptDeletion
                           ? '✓ Ditt ändringsförslag har kastats'
                           : '✓ Valen finns i ditt utkast'}
@@ -504,13 +510,16 @@ export function ConflictsPrototype() {
                 ) : (
                   <>
                     <p>
-                      {item.removeDraftRelationship
-                        ? 'Det är förvalt att ta bort sambandet ur ditt utkast. Bekräfta nedan.'
-                        : item.acceptDeletion
-                          ? `${deletedThing} förblir borttaget. Det är förvalt. När du accepterar kastas ditt ändringsförslag för denna post.`
-                          : item.blocked
-                            ? 'Ditt förslag kan inte användas i sin nuvarande form. Du kan välja det sparade värdet eller rätta förslaget där det går.'
-                            : 'Klicka på det värde du vill använda för varje egenskap. Du kan blanda vänster och höger sida.'}
+                      {item.outsideCorrection ??
+                        (item.removeDraftObject
+                          ? 'Stäng konfliktfönstret och lägg till objekttypen under Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt kan du ta bort objektet ur ditt utkast nedan.'
+                          : item.removeDraftRelationship
+                            ? 'Det är förvalt att ta bort sambandet ur ditt utkast. Bekräfta nedan.'
+                            : item.acceptDeletion
+                              ? `${deletedThing} förblir borttaget. Det är förvalt. När du accepterar kastas ditt ändringsförslag för denna post.`
+                              : item.blocked
+                                ? 'Ditt förslag kan inte användas i sin nuvarande form. Du kan välja det sparade värdet eller rätta förslaget där det går.'
+                                : 'Klicka på det värde du vill använda för varje egenskap. Du kan blanda vänster och höger sida.')}
                     </p>
                     <div className="cp-comparison">
                       {(['saved', 'mine'] as const).map((side) => (
@@ -522,7 +531,7 @@ export function ConflictsPrototype() {
                                 f.saved !== f.before && f.mine !== f.before && f.mine !== f.saved;
                               const same = f.saved === f.mine;
                               const picked = selected[f.name] === side;
-                              if (item.removeDraftRelationship)
+                              if (removeDraftEntry || item.outsideCorrection)
                                 return (
                                   <div
                                     key={f.name}
@@ -570,39 +579,51 @@ export function ConflictsPrototype() {
                         </section>
                       ))}
                     </div>
-                    <p role="status">
-                      {fixedOutcome
-                        ? 'Du behöver inte välja några egenskaper.'
-                        : unselected
-                          ? `${unselected} av ${differing.length} egenskaper återstår att välja.`
-                          : 'Alla egenskaper har ett valt värde.'}
-                    </p>
-                    {invalid && (
-                      <div className="cp-warning" role="alert">
-                        <strong>Valen fungerar inte tillsammans</strong>
-                        <p>{invalid}</p>
-                      </div>
+                    {item.outsideCorrection ? (
+                      <footer className="cp-actions">
+                        <button type="button" onClick={close}>
+                          Stäng konfliktfönstret
+                        </button>
+                      </footer>
+                    ) : (
+                      <>
+                        <p role="status">
+                          {fixedOutcome
+                            ? 'Du behöver inte välja några egenskaper.'
+                            : unselected
+                              ? `${unselected} av ${differing.length} egenskaper återstår att välja.`
+                              : 'Alla egenskaper har ett valt värde.'}
+                        </p>
+                        {invalid && (
+                          <div className="cp-warning" role="alert">
+                            <strong>Valen fungerar inte tillsammans</strong>
+                            <p>{invalid}</p>
+                          </div>
+                        )}
+                        <section className="cp-preview" aria-label="Resultat av valen">
+                          <h3>{fixedOutcome ? 'Efter bekräftelsen' : 'Efter dina val'}</h3>
+                          {resultFields()}
+                          {item.acceptDeletion && (
+                            <p>Ditt ändringsförslag för denna post kastas.</p>
+                          )}
+                          <p>Övriga förslag i utkastet finns kvar.</p>
+                        </section>
+                        <footer className="cp-actions">
+                          <button
+                            className="cp-primary"
+                            type="button"
+                            disabled={!!unselected || stale || !!invalid}
+                            onClick={apply}
+                          >
+                            {removeDraftEntry
+                              ? `Ta bort ${draftThing.toLowerCase()} ur ditt utkast`
+                              : item.acceptDeletion
+                                ? 'Acceptera borttagningen och kasta ditt förslag'
+                                : 'Lägg valen i utkastet'}
+                          </button>
+                        </footer>
+                      </>
                     )}
-                    <section className="cp-preview" aria-label="Resultat av valen">
-                      <h3>{fixedOutcome ? 'Efter bekräftelsen' : 'Efter dina val'}</h3>
-                      {resultFields()}
-                      {item.acceptDeletion && <p>Ditt ändringsförslag för denna post kastas.</p>}
-                      <p>Övriga förslag i utkastet finns kvar.</p>
-                    </section>
-                    <footer className="cp-actions">
-                      <button
-                        className="cp-primary"
-                        type="button"
-                        disabled={!!unselected || stale || !!invalid}
-                        onClick={apply}
-                      >
-                        {item.removeDraftRelationship
-                          ? 'Ta bort sambandet ur ditt utkast'
-                          : item.acceptDeletion
-                            ? 'Acceptera borttagningen och kasta ditt förslag'
-                            : 'Lägg valen i utkastet'}
-                      </button>
-                    </footer>
                   </>
                 )}
               </>
