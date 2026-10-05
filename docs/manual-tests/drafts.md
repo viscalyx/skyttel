@@ -444,12 +444,18 @@ after independent later changes”.
 3. Alex ändrar enbart beskrivningen till Alex text och sparar senare.
 4. Robin öppnar **Granska konflikter** och läser den sparade sidans
    namnrad och beskrivningsrad.
+5. Robin stänger dialogen och ändrar sitt föreslagna namn till
+   **Eget senare namn** utan att spara i den gemensamma kartan.
+6. Robin öppnar **Granska konflikter** igen och läser uppgifterna om
+   sparare och ordningen mellan förslag och sparanden.
 
 **Förväntat resultat:**
 
 - Namnraden anger Lo som sparare, även efter Alex senare sparande.
 - Beskrivningsraden anger Alex. Författarnamn hör till den ändrade
   egenskapen och ersätts inte av hela objektets senaste sparare.
+- Efter Robins senare ändring anges samma verkliga sparare, utan att
+  hävda att deras tidigare sparanden sker efter det nya förslaget.
 
 ### UTKAST-01: återuppta en konflikt och spara oberoende förslag tillsammans
 

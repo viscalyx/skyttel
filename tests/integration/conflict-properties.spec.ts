@@ -440,12 +440,38 @@ test('UTKAST-35: saved property attribution identifies each actual saver after i
     });
     await expect(name).toContainText('Lo sparade ett nytt värde');
     await expect(name).not.toContainText('Alex sparade');
+    await expect(name).toContainText('efter att du började ändra den här uppgiften');
     await expect(
       saved.getByRole('button', {
         name: 'Beskrivning: Sparat i kartan nu – Alex text',
         exact: true,
       }),
     ).toContainText('Alex sparade ett nytt värde');
+    // A later ordinary edit retains the old basis but gives the proposal a new timestamp.
+    const draft = (await app.read(proposer.request)).draft;
+    expect(
+      (
+        await app.post(proposer.request, 'draft', {
+          version: draft.version,
+          id: 'lo',
+          baseRevision: draft.changes[0].before?.revision,
+          value: { ...value, name: 'Eget senare namn' },
+        })
+      ).status(),
+    ).toBe(200);
+    await proposerPage.reload();
+    await proposerPage
+      .getByRole('button', { name: '1 konflikt i ditt utkast', exact: true })
+      .click();
+    await expect(saved).toContainText('Lo sparade ett nytt värde');
+    await expect(saved).toContainText('Alex sparade ett nytt värde');
+    await expect(saved).not.toContainText('efter att du började ändra den här uppgiften');
+    await expect(
+      proposerPage.getByRole('dialog', { name: 'Granska konflikter' }),
+    ).not.toContainText('efter att du gjorde ditt förslag');
+    await expect(
+      proposerPage.getByRole('dialog', { name: 'Granska konflikter' }),
+    ).not.toContainText('efter att du började ändra den här uppgiften');
   } finally {
     await proposer.close();
     await lo.close();

@@ -130,6 +130,8 @@ export function ConflictDialog({
     );
   const actor = comparison.conflictActors?.[key];
   const proposedAt = change && 'proposedAt' in change ? change.proposedAt : undefined;
+  const savedAfterProposal = (savedAt: string) =>
+    Boolean(proposedAt && Date.parse(savedAt) > Date.parse(proposedAt));
   const person = actor?.name ?? 'En annan användare';
   const name = (c: DraftConflict, source: MapState) => {
     const proposal = conflictChange(source, c);
@@ -260,11 +262,11 @@ export function ConflictDialog({
           </h2>
           <p>
             Ditt förslag skiljer sig från det som är sparat i kartan nu.{' '}
-            {actor && proposedAt && actor.savedAt > proposedAt
+            {actor && savedAfterProposal(actor.savedAt)
               ? `${person} sparade ändringar efter att du gjorde ditt förslag, men innan du hann spara det.`
               : actor
-                ? `${person} sparade ändringar efter att du började ändra den här uppgiften.`
-                : 'Det sparade underlaget har ändrats sedan du började redigera.'}
+                ? `${person} sparade det aktuella underlaget.`
+                : 'Det sparade underlaget skiljer sig från ditt förslag.'}
           </p>
           {resolved[key] ? (
             <section className="cp-preview">
@@ -328,7 +330,9 @@ export function ConflictDialog({
                               propertyActor && (
                                 <span className="cp-tag">
                                   {propertyActor.name} sparade ett nytt värde
-                                  {overlap ? ' efter att du började ändra den här uppgiften.' : '.'}
+                                  {overlap && savedAfterProposal(propertyActor.savedAt)
+                                    ? ' efter att du började ändra den här uppgiften.'
+                                    : '.'}
                                 </span>
                               )}
                             {side === 'proposed' &&
