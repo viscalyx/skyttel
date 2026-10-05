@@ -11,6 +11,7 @@ type Case = {
   name: string;
   reason: string;
   savedBy?: string;
+  acceptDeletion?: boolean;
   fields: Field[];
   effect: string;
   blocked?: string;
@@ -59,6 +60,7 @@ const cases: Case[] = [
   },
   {
     id: 'deleted',
+    acceptDeletion: true,
     kind: 'Objekt',
     name: 'Gamla cykeln',
     reason: 'Objektet tas bort från den gemensamma kartan medan du redigerar det.',
@@ -174,6 +176,7 @@ const cases: Case[] = [
   },
   {
     id: 'deleted-relationship',
+    acceptDeletion: true,
     kind: 'Samband',
     name: 'Lo använder gamla bilen',
     reason: 'Sambandet tas bort från kartan medan du ändrar dess startdatum.',
@@ -238,7 +241,10 @@ export function ConflictsPrototype() {
           fields: base.fields.map((f, i) => (i === 0 ? { ...f, saved: 'Hushållets elbil' } : f)),
         }
       : base;
-  const selected = selections[item.id] ?? {};
+  const selected: Record<string, Side> = item.acceptDeletion
+    ? Object.fromEntries(item.fields.map((f) => [f.name, 'saved' as const]))
+    : (selections[item.id] ?? {});
+  const deletedThing = item.kind === 'Samband' ? 'Sambandet' : 'Objektet';
   const differing = item.fields.filter((f) => f.saved !== f.mine);
   const unselected = differing.filter((f) => !selected[f.name]).length;
   const remaining = cases.filter((c) => !resolutions[c.id]).length;
@@ -284,7 +290,11 @@ export function ConflictsPrototype() {
       ...previous,
       [item.id]: Object.fromEntries(item.fields.map((f) => [f.name, value(f)])),
     }));
-    setStatus('Valen finns i ditt utkast. Den gemensamma kartan är inte sparad.');
+    setStatus(
+      item.acceptDeletion
+        ? `Ditt ändringsförslag har kastats. ${deletedThing} förblir borttaget. Övriga förslag i utkastet finns kvar.`
+        : 'Valen finns i ditt utkast. Den gemensamma kartan är inte sparad.',
+    );
   }
   function resultFields(values?: Record<string, string>) {
     return (
@@ -407,9 +417,13 @@ export function ConflictsPrototype() {
                     </button>
                   </div>
                 )}
-                {item.blocked && (
+                {item.blocked && !resolutions[item.id] && (
                   <div className="cp-warning">
-                    <strong>Behöver rättas</strong>
+                    <strong>
+                      {item.acceptDeletion
+                        ? `${deletedThing} är redan borttaget`
+                        : 'Behöver rättas'}
+                    </strong>
                     <p>{item.blocked}</p>
                     {item.repair && (
                       <button
@@ -426,9 +440,17 @@ export function ConflictsPrototype() {
                 )}
                 {resolutions[item.id] ? (
                   <section className="cp-preview">
-                    <h3>✓ Valen finns i ditt utkast</h3>
+                    <h3>
+                      {item.acceptDeletion
+                        ? '✓ Ditt ändringsförslag har kastats'
+                        : '✓ Valen finns i ditt utkast'}
+                    </h3>
                     {resultFields(resolutions[item.id])}
-                    <p>Gemensamt sparande sker separat från utkastet.</p>
+                    <p>
+                      {item.acceptDeletion
+                        ? `${deletedThing} förblir borttaget. Övriga förslag i utkastet finns kvar.`
+                        : 'Gemensamt sparande sker separat från utkastet.'}
+                    </p>
                     <button type="button" onClick={() => selectCase((index + 1) % cases.length)}>
                       Nästa konflikt
                     </button>
@@ -436,8 +458,11 @@ export function ConflictsPrototype() {
                 ) : (
                   <>
                     <p>
-                      Klicka på det värde du vill använda för varje egenskap. Du kan blanda vänster
-                      och höger sida.
+                      {item.acceptDeletion
+                        ? `${deletedThing} förblir borttaget. Det är förvalt. När du accepterar kastas ditt ändringsförslag för denna post.`
+                        : item.blocked
+                          ? 'Ditt förslag kan inte användas i sin nuvarande form. Du kan välja det sparade värdet eller rätta förslaget där det går.'
+                          : 'Klicka på det värde du vill använda för varje egenskap. Du kan blanda vänster och höger sida.'}
                     </p>
                     <div className="cp-comparison">
                       {(['saved', 'mine'] as const).map((side) => (
@@ -461,7 +486,11 @@ export function ConflictsPrototype() {
                                 >
                                   <span className="cp-field-name">
                                     {f.name}
-                                    {picked && <span className="cp-picked">✓ Vald</span>}
+                                    {picked && (
+                                      <span className="cp-picked">
+                                        {item.acceptDeletion ? '✓ Förvalt' : '✓ Vald'}
+                                      </span>
+                                    )}
                                   </span>
                                   {side === 'saved' && f.saved !== f.before && item.savedBy && (
                                     <span className="cp-tag">
@@ -484,9 +513,11 @@ export function ConflictsPrototype() {
                       ))}
                     </div>
                     <p role="status">
-                      {unselected
-                        ? `${unselected} av ${differing.length} egenskaper återstår att välja.`
-                        : 'Alla egenskaper har ett valt värde.'}
+                      {item.acceptDeletion
+                        ? 'Du behöver inte välja några egenskaper.'
+                        : unselected
+                          ? `${unselected} av ${differing.length} egenskaper återstår att välja.`
+                          : 'Alla egenskaper har ett valt värde.'}
                     </p>
                     {invalid && (
                       <div className="cp-warning" role="alert">
@@ -495,19 +526,26 @@ export function ConflictsPrototype() {
                       </div>
                     )}
                     <section className="cp-preview" aria-label="Resultat av valen">
-                      <h3>Efter dina val</h3>
+                      <h3>{item.acceptDeletion ? 'Efter bekräftelsen' : 'Efter dina val'}</h3>
                       {resultFields()}
+                      {item.acceptDeletion && <p>Ditt ändringsförslag för denna post kastas.</p>}
                       <p>Övriga förslag i utkastet finns kvar.</p>
                     </section>
                     <footer className="cp-actions">
-                      <p>Valen ändrar ditt utkast. Kartan sparas separat.</p>
+                      <p>
+                        {item.acceptDeletion
+                          ? 'Inget kastas förrän du accepterar. Du kan stänga dialogen och behålla förslaget olöst.'
+                          : 'Valen ändrar ditt utkast. Kartan sparas separat.'}
+                      </p>
                       <button
                         className="cp-primary"
                         type="button"
                         disabled={!!unselected || stale || !!invalid}
                         onClick={apply}
                       >
-                        Lägg valen i utkastet
+                        {item.acceptDeletion
+                          ? 'Acceptera borttagningen och kasta mitt förslag'
+                          : 'Lägg valen i utkastet'}
                       </button>
                     </footer>
                   </>
