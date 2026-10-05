@@ -30,10 +30,16 @@ function symbol(before: unknown, after: unknown) {
 export function ConversationDraft({
   draft,
   onRemove,
+  onOpen,
+  warnings,
+  blocked,
 }: {
   draft?: MapDraft;
   /** Throwaway D: discard a proposal, without opening an editing form. */
   onRemove?: (key: string) => void;
+  onOpen?: (key: string) => void;
+  warnings?: Record<string, string>;
+  blocked?: boolean;
 }) {
   if (!draftChangeCount(draft) || !draft) return <p>Utkastet är tomt.</p>;
   const rows = [
@@ -93,9 +99,33 @@ export function ConversationDraft({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.key}>
+            <tr
+              key={row.key}
+              className={onOpen ? 'dr-main-clickable-row' : undefined}
+              onClick={
+                onOpen
+                  ? (event) => {
+                      if (!(event.target as HTMLElement).closest('button')) onOpen(row.key);
+                    }
+                  : undefined
+              }
+            >
               <td>{symbol(row.before, row.after)}</td>
-              <th scope="row">{row.name}</th>
+              <th scope="row">
+                {onOpen ? (
+                  <button
+                    type="button"
+                    className="dr-main-open"
+                    aria-label={`Visa förslaget: ${row.name}`}
+                    aria-haspopup="dialog"
+                    onClick={() => onOpen(row.key)}
+                  >
+                    {row.name}
+                  </button>
+                ) : (
+                  row.name
+                )}
+              </th>
               <td>{row.type}</td>
               <td>
                 <div className={onRemove ? 'dr-main-change' : undefined}>
@@ -112,7 +142,11 @@ export function ConversationDraft({
                     <button
                       type="button"
                       className="dr-main-icon dr-main-remove"
-                      onClick={() => onRemove(row.key)}
+                      disabled={blocked}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onRemove(row.key);
+                      }}
                       aria-label={`Ta bort förslaget: ${row.name}`}
                       title={`Ta bort förslaget: ${row.name}`}
                     >
@@ -120,6 +154,12 @@ export function ConversationDraft({
                     </button>
                   )}
                 </div>
+                {warnings?.[row.key] && (
+                  <p className="dr-main-row-warning">
+                    <WorkspaceIcon name="warning" />
+                    <span>{warnings[row.key]}</span>
+                  </p>
+                )}
               </td>
             </tr>
           ))}

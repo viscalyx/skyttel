@@ -32,6 +32,7 @@ const paths = {
   expand: 'm9 5 7 7-7 7',
   close: 'm6 6 12 12M18 6 6 18',
   trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
+  warning: 'M12 3 2 21h20L12 3M12 9v5M12 17h.01',
   save: 'M3 3h15l3 3v15H3zM7 3v6h10V3M7 21v-8h10v8M14 5v2',
   draft: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
   detail: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
