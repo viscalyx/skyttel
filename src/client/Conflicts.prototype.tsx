@@ -25,13 +25,14 @@ const field = (
   mine: string,
   result = mine,
 ): Field => ({ name, before, saved, mine, result });
+const savedChangesReason =
+  'Ditt förslag skiljer sig från det som är sparat i kartan nu. {Förnamn} sparade ändringar efter att du gjorde ditt förslag, men innan du hann spara det.';
 const cases: Case[] = [
   {
     id: 'object',
     kind: 'Objekt',
     name: 'Familjens bil',
-    reason:
-      'Ditt förslag ändrar bilens namn och registreringsnummer. {Förnamn} sparade ett nytt namn och en ny beskrivning efter att du gjorde ändringarna, men innan du hann spara ditt förslag.',
+    reason: savedChangesReason,
     savedBy: 'Lo',
     fields: [
       field('Namn', 'Bilen', 'Familjens bil', 'Blå bilen'),
@@ -44,7 +45,7 @@ const cases: Case[] = [
     id: 'relationship',
     kind: 'Samband',
     name: 'Alex använder bilen',
-    reason: 'Ditt förslag har ett annat startdatum än det som är sparat nu.',
+    reason: savedChangesReason,
     savedBy: 'Lo',
     fields: [
       field('Startdatum', '2026-01-01', '2026-02-01', '2026-03-01'),
@@ -72,7 +73,9 @@ const cases: Case[] = [
     id: 'remove',
     kind: 'Objekt',
     name: 'Garaget',
-    reason: 'Du föreslår borttagning. Lo ändrar samtidigt garagets beskrivning.',
+    reason:
+      'Du föreslår borttagning. {Förnamn} sparade ändringar i objektet innan du hann spara ditt förslag.',
+    savedBy: 'Lo',
     fields: [
       field(
         'Objekt',
@@ -89,7 +92,7 @@ const cases: Case[] = [
     id: 'connections',
     kind: 'Objekt',
     name: 'Gamla lägenheten',
-    reason: 'Du föreslår borttagning. Ytterligare ett sparat samband berör nu lägenheten.',
+    reason: 'Du föreslår borttagning. Ytterligare ett sparat samband berör nu objektet.',
     fields: [
       field('Objekt', 'Gamla lägenheten', 'Gamla lägenheten', 'Föreslagen borttagning'),
       field(
@@ -106,7 +109,7 @@ const cases: Case[] = [
     id: 'endpoint',
     kind: 'Samband',
     name: 'Lo använder surfplattan',
-    reason: 'Surfplattan som sambandet pekar på saknas.',
+    reason: 'Ett objekt som sambandet pekar på saknas.',
     fields: [field('Till objekt', 'Surfplattan', 'Borttaget', 'Surfplattan')],
     effect: 'Förslaget till samband kastas.',
     blocked: 'Välj ett befintligt objekt innan sambandet kan läggas i utkastet.',
@@ -127,8 +130,7 @@ const cases: Case[] = [
     id: 'object-type',
     kind: 'Objekttyp',
     name: 'Fordon',
-    reason:
-      'Ditt förslag har ett annat namn på typen än det som är sparat nu. Ett eget fält tillkommer i den sparade typen.',
+    reason: savedChangesReason,
     savedBy: 'Lo',
     fields: [
       field('Namn', 'Fordon', 'Transportmedel', 'Mina fordon'),
@@ -147,7 +149,7 @@ const cases: Case[] = [
     id: 'relationship-type',
     kind: 'Sambandstyp',
     name: 'Använder',
-    reason: 'Ditt förslag har en annan beskrivning av sambandstypen än den som är sparad nu.',
+    reason: savedChangesReason,
     savedBy: 'Lo',
     fields: [field('Beskrivning', 'Användning', 'Regelbunden användning', 'Tillgång till objekt')],
     effect: 'Din beskrivning används.',
@@ -157,17 +159,18 @@ const cases: Case[] = [
     id: 'schema',
     kind: 'Objekt',
     name: 'Solcellsanläggningen',
-    reason: 'Typens eget fält Installationsår ändras från text till tal.',
+    reason:
+      'Ett eget fält har ändrats från text till tal. Det föreslagna värdet passar inte den ändrade typen.',
     fields: [field('Installationsår', '2020', '2020', 'Våren 2021')],
     effect: 'Förslaget behöver rättas så att Installationsår är ett tal.',
-    blocked: 'Värdet Våren 2021 är inte giltigt för den ändrade typen.',
+    blocked: 'Det föreslagna värdet måste vara ett tal.',
     repair: 'Redigera objekt',
   },
   {
     id: 'missing-type',
     kind: 'Objekt',
     name: 'Vindsförrådet',
-    reason: 'Objekttypen Förråd saknas i det aktuella underlaget.',
+    reason: 'Den föreslagna objekttypen saknas i det aktuella underlaget.',
     fields: [field('Objekttyp', 'Förråd', 'Saknas', 'Förråd')],
     effect: 'Förslaget kastas.',
     blocked: 'Välj en tillgänglig objekttyp.',
@@ -179,7 +182,7 @@ const cases: Case[] = [
     acceptDeletion: true,
     kind: 'Samband',
     name: 'Lo använder gamla bilen',
-    reason: 'Sambandet tas bort från kartan medan du ändrar dess startdatum.',
+    reason: 'Sambandet togs bort från den gemensamma kartan medan du redigerade det.',
     fields: [field('Samband', 'Lo använder gamla bilen', 'Borttaget', 'Startdatum 2026-03-01')],
     effect: 'Förslaget kastas. Sambandet förblir borttaget.',
     blocked: 'Ett ändringsförslag kan inte återställa ett borttaget samband.',
@@ -188,7 +191,7 @@ const cases: Case[] = [
     id: 'deleted-definition',
     kind: 'Sambandstyp',
     name: 'Förvaras i',
-    reason: 'Typdefinitionen saknas nu i kartan. Ditt förslag innehåller en ändrad beskrivning.',
+    reason: 'Typdefinitionen saknas nu i kartan. Ditt förslag innehåller ändringar i den.',
     fields: [
       field(
         'Typdefinition',
@@ -204,7 +207,7 @@ const cases: Case[] = [
     id: 'multiple',
     kind: 'Samband',
     name: 'Alex använder reservdatorn',
-    reason: 'Både målet Reservdatorn och sambandstypen Använder tillfälligt saknas.',
+    reason: 'Både objektet som sambandet pekar på och den föreslagna sambandstypen saknas.',
     fields: [
       field('Till objekt', 'Reservdatorn', 'Borttaget', 'Reservdatorn'),
       field('Sambandstyp', 'Använder tillfälligt', 'Saknas', 'Använder tillfälligt'),
@@ -253,7 +256,7 @@ export function ConflictsPrototype() {
   // Demonstrate validation of a mixed result, rather than silently grouping choices.
   const invalid =
     item.id === 'connections' && selected.Objekt === 'mine' && selected.Samband === 'saved'
-      ? 'Lägenheten kan inte tas bort medan sambandet till den finns kvar. Välj att ta bort sambandet eller behåll lägenheten.'
+      ? 'Objektet kan inte tas bort medan sambandet till det finns kvar. Välj att ta bort sambandet eller behåll objektet.'
       : '';
   useEffect(() => {
     if (open && !dialog.current?.open) dialog.current?.showModal();
