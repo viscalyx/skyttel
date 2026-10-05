@@ -33,7 +33,7 @@ type Proposal = {
 type SaveState = 'idle' | 'pending' | 'unknown' | 'checking' | 'rejected' | 'saved';
 const names = {
   A: 'Samtal och granskning bredvid',
-  B: 'Flikar och grupper',
+  B: 'Grupper i textvyn',
   C: 'Ett förslag åt gången',
 };
 const seeds: Proposal[] = [
