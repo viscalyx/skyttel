@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import { consentBox, giveConversationConsent } from '../support/conversation-page.js';
-import { prepareDraftReview } from '../support/draft-review.js';
+import { prepareDraftReview, prepareDraftReviewMeanings } from '../support/draft-review.js';
 import { createInstallation } from '../support/installation.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
@@ -52,7 +52,7 @@ for (const mobile of [false, true])
         'Fullständig föreslagen beskrivning',
         'Uttryckligen inget',
         'Okänt',
-        '500 SEK (osäkert uppgivet) · uppgivet 2026-01-01',
+        '500 SEK (Osäkert uppgivet) · datum för uppgiften: 2026-01-01',
       ])
         await expect(modal.getByText(value, { exact: true })).toBeVisible();
       await expect(modal.getByRole('button')).toHaveCount(1);
@@ -159,3 +159,98 @@ test('UTKAST-26: empty and type-only drafts preserve unsent text and first send 
     await installation.close();
   }
 });
+
+for (const mobile of [false, true])
+  test(`UTKAST-27: ${mobile ? 'mobile' : 'desktop'} draft reading preserves lifecycle, images and configured field meanings`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    try {
+      const { household, read } = await prepareDraftReviewMeanings(
+        page.request,
+        installation.origin,
+      );
+      const before = await read();
+      const starts: string[] = [];
+      page.on('request', (request) => {
+        if (request.method() === 'POST' && /text-assistant(?:\/|$)/.test(request.url()))
+          starts.push(request.url());
+      });
+      await page.setViewportSize(
+        mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 },
+      );
+      await page.goto(`${installation.origin}/households/${household.id}`);
+      await page
+        .getByRole('navigation', { name: 'Kartans verktyg', exact: true })
+        .getByRole('button', { name: 'Utkast', exact: true })
+        .click();
+      const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+      await draft.getByRole('button', { name: 'Visa förslaget: Blå cykel', exact: true }).click();
+      const modal = page.getByRole('dialog');
+      const saved = modal.locator('section').filter({
+        has: page.getByRole('heading', { name: 'Sparade värden', exact: true }),
+      });
+      const proposed = modal.locator('section').filter({
+        has: page.getByRole('heading', { name: 'Föreslagna värden', exact: true }),
+      });
+      const field = (section: Locator, label: string) =>
+        section.locator('dl > div').filter({
+          has: page.locator('dt').filter({ hasText: new RegExp(`^${label}(?: · ändrat)?$`) }),
+        });
+      async function lifecycle() {
+        await expect(field(saved, 'Gäller').locator('dd')).toHaveText('Upphört');
+        await expect(field(proposed, 'Gäller').locator('dd')).toHaveText('Aktuellt');
+        await expect(field(saved, 'Status').locator('dd')).toHaveText('Följ slutdatum');
+        await expect(field(proposed, 'Status').locator('dd')).toHaveText('Gäller fortfarande');
+        await expect(field(proposed, 'Gäller')).toHaveClass('draft-value-changed');
+        await expect(field(proposed, 'Status')).toHaveClass('draft-value-changed');
+      }
+      await lifecycle();
+      await expect(field(saved, 'Fordonets berättelse').locator('dd')).toHaveText(
+        'Hela den sparade beskrivningen',
+      );
+      await expect(field(proposed, 'Cykelns berättelse').locator('dd')).toHaveText('Ej uppgivet');
+      await expect(field(proposed, 'Cykelns berättelse')).toHaveClass('draft-value-changed');
+      for (const side of [saved, proposed]) {
+        await expect(field(side, 'Avtalat pris').locator('dd')).toHaveText('Ej uppgivet');
+        await expect(field(side, 'Avtalat pris')).not.toHaveClass('draft-value-changed');
+        await expect(field(side, 'Sista giltighetsdag').locator('dd')).toHaveText('2000-01-01');
+        await expect(field(side, 'Profilbild')).toHaveClass('draft-value-changed');
+        const image = field(side, 'Profilbild').getByRole('img', {
+          name: 'Profilbild för Blå cykel',
+        });
+        await expect(image).toBeVisible();
+        await expect
+          .poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth))
+          .toBe(96);
+      }
+      const savedImage = await saved.getByRole('img').getAttribute('src');
+      const proposedImage = await proposed.getByRole('img').getAttribute('src');
+      expect(savedImage).not.toEqual(proposedImage);
+      const imageBytes = [];
+      for (const source of [savedImage, proposedImage]) {
+        const response = await page.request.get(`${installation.origin}${source}`);
+        expect(response.status()).toBe(200);
+        imageBytes.push(await response.body());
+      }
+      expect(imageBytes[0]).not.toEqual(imageBytes[1]);
+      await page.screenshot({
+        path: `/tmp/skyttel-244/252-meanings-${mobile ? 'mobile' : 'desktop'}.png`,
+      });
+      await page.keyboard.press('Escape');
+      await draft
+        .getByRole('button', {
+          name: 'Visa förslaget: Blå cykel → granskar → Röd cykel',
+          exact: true,
+        })
+        .click();
+      await lifecycle();
+      for (const side of [saved, proposed])
+        await expect(field(side, 'Slutdatum').locator('dd')).toHaveText('2000-01-01');
+      await expect(consentBox(page)).not.toBeVisible();
+      expect(starts).toEqual([]);
+      expect(await read()).toEqual(before);
+    } finally {
+      await installation.close();
+    }
+  });

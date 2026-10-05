@@ -1,4 +1,4 @@
-import { type FinancialFact, financialFields } from '../shared/financial-facts.js';
+import { hasEnded } from '../shared/lifecycle.js';
 import type {
   CustomValues,
   MapDraft,
@@ -7,8 +7,8 @@ import type {
   RelationshipType,
   RelationshipValue,
 } from '../shared/map.js';
-import { objectIconLabel } from '../shared/object-icons.js';
 import { objectProperties } from '../shared/object-properties.js';
+import { factText, objectPropertyValues } from './ObjectReadDetails.js';
 import { ProfileImage } from './ProfileImage.js';
 import { relationshipDetails } from './relationship-description.js';
 
@@ -30,10 +30,6 @@ function text(value: string | number | boolean | undefined) {
         ? 'Nej'
         : String(value);
 }
-function fact(value?: FinancialFact) {
-  if (!value) return 'Ej uppgivet';
-  return `${value.knowledge === 'unknown' ? 'Okänt' : value.knowledge === 'none' ? 'Uttryckligen inget' : `${value.value}${value.knowledge === 'uncertain' ? ' (osäkert uppgivet)' : ''}`}${value.reportedOn ? ` · uppgivet ${value.reportedOn}` : ''}`;
-}
 function property(key: string, label: string, value: string): Property {
   return { key, label, value };
 }
@@ -50,27 +46,12 @@ function custom(type: ObjectType | RelationshipType, values?: CustomValues) {
 function object(value: ObjectValue | null, type: ObjectType): Property[] | null {
   if (!value) return null;
   return [
-    property('name', 'Namn', value.name),
-    property('type', 'Objekttyp', type.name),
-    property('icon', 'Ikon', objectIconLabel(value.iconId, type.name)),
-    property('description', 'Beskrivning', text(value.description)),
-    property(
-      'identity',
-      'Identitet',
-      value.identity === 'unspecified'
-        ? 'Ospecificerat objekt'
-        : value.identity === 'unresolved'
-          ? 'Olöst identitet'
-          : 'Identifierat',
-    ),
-    property('lifecycle', 'Gäller', value.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt'),
-    property('image', 'Profilbild', value.profileImageId ? 'Bild finns' : 'Ingen bild'),
-    ...financialFields
-      .filter((field) => value.financialFacts?.[field.key])
-      .map((field) =>
-        property(`financial:${field.key}`, field.label, fact(value.financialFacts?.[field.key])),
-      ),
-    ...custom(type, value.customValues),
+    ...Array.from(objectPropertyValues(value, type)).flatMap(([key, entry]) => [
+      ...(key === 'lifecycle'
+        ? [property('applies', 'Gäller', hasEnded(value) ? 'Upphört' : 'Aktuellt')]
+        : []),
+      { key, ...entry },
+    ]),
   ];
 }
 const knowledge = {
@@ -95,8 +76,17 @@ function relationship(
       value.targetId ? (names[value.targetId] ?? value.targetId) : knowledge[value.knowledge],
     ),
     property('knowledge', 'Uppgiftens säkerhet', knowledge[value.knowledge]),
-    property('lifecycle', 'Gäller', value.lifecycle === 'ended' ? 'Upphört' : 'Aktuellt'),
-    ...(value.endDate ? [property('endDate', 'Slutdatum', fact(value.endDate))] : []),
+    property('applies', 'Gäller', hasEnded(value) ? 'Upphört' : 'Aktuellt'),
+    property(
+      'lifecycle',
+      'Status',
+      value.lifecycle === 'ended'
+        ? 'Manuellt upphört'
+        : value.lifecycle === 'active'
+          ? 'Gäller fortfarande'
+          : 'Följ slutdatum',
+    ),
+    ...(value.endDate ? [property('endDate', 'Slutdatum', factText(value.endDate))] : []),
     ...custom(type, value.customValues),
   ];
 }
@@ -228,7 +218,7 @@ export function DraftProposalDetails({ proposal }: { proposal: DraftProposal }) 
                       paired &&
                       (before?.value !== after?.value ||
                         before?.label !== after?.label ||
-                        (key === 'image' &&
+                        (key === 'profileImage' &&
                           proposal.images?.before?.profileImageId !==
                             proposal.images?.after?.profileImageId));
                     const image =
@@ -241,7 +231,7 @@ export function DraftProposalDetails({ proposal }: { proposal: DraftProposal }) 
                         </dt>
                         <dd>
                           {entry?.value ?? 'Ej uppgivet'}
-                          {key === 'image' && image?.profileImageId && proposal.images && (
+                          {key === 'profileImage' && image?.profileImageId && proposal.images && (
                             <ProfileImage householdId={proposal.images.householdId} value={image} />
                           )}
                         </dd>

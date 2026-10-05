@@ -356,7 +356,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   validering, konflikter, historik och bevarade äldre utkast. Ett lokalt
   kommando förbereder äldre provdata för uppgraderingen.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
-  utan AI eller medgivande, tomt utkast och bevarat första meddelande;
+  utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
+  tomt utkast och bevarat första meddelande;
   filtrerad teckenförklaring med kartans färger,
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
   utkast, hantera gamla kastförsök

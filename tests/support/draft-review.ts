@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect } from '@playwright/test';
+import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, signIn } from './client.js';
 
@@ -121,4 +122,95 @@ export async function prepareDraftReview(client: APIRequestContext, origin: stri
     },
   });
   return { household, path, read, post };
+}
+
+/** Expired saved values, explicit active overrides and two distinct authorized images. */
+export async function prepareDraftReviewMeanings(client: APIRequestContext, origin: string) {
+  const fixture = await prepareDraftReview(client, origin);
+  const { household, post, read } = fixture;
+  await post('discard', {});
+  const saved = await read();
+  const bike = saved.objects.find(({ id }) => id === 'draft-bike');
+  const type = saved.types.find(({ id }) => id === 'draft-vehicle');
+  if (!bike || !type) throw new Error('Missing saved draft-review data');
+  const builtins = [
+    { key: 'description', name: 'Fordonets berättelse', sectionId: '' },
+    { key: 'price', name: 'Avtalat pris', sectionId: '' },
+    { key: 'endDate', name: 'Sista giltighetsdag', sectionId: '' },
+  ];
+  await post('object-type', {
+    id: type.id,
+    baseRevision: type.revision,
+    value: { ...type, builtins },
+  });
+  await post('draft', {
+    id: bike.id,
+    baseRevision: bike.revision,
+    value: { ...bike, financialFacts: { endDate: { knowledge: 'known', value: '2000-01-01' } } },
+  });
+  await post('draft', {
+    id: 'draft-peer',
+    baseRevision: null,
+    value: { typeId: type.id, name: 'Röd cykel', description: '' },
+  });
+  await post('relationship', {
+    id: 'draft-expired-edge',
+    baseRevision: null,
+    value: {
+      sourceId: bike.id,
+      targetId: 'draft-peer',
+      typeId: 'draft-uses',
+      knowledge: 'known',
+      endDate: { knowledge: 'known', value: '2000-01-01' },
+    },
+  });
+  async function image(background: string) {
+    const current = await read();
+    const object = current.objects.find(({ id }) => id === bike?.id);
+    const response = await client.post(
+      `${origin}/api/households/${household.id}/profile-images/${bike?.id}`,
+      {
+        headers: {
+          origin,
+          'X-Skyttel-Draft-Version': String(current.draft.version),
+          'X-Skyttel-Content-Version': String(current.contentVersion),
+          'X-Skyttel-Object-Revision': String(object?.revision ?? null),
+          'Content-Type': 'image/png',
+        },
+        data: await sharp({ create: { width: 96, height: 96, channels: 3, background } })
+          .png()
+          .toBuffer(),
+      },
+    );
+    expect(response.status(), await response.text()).toBe(200);
+  }
+  await image('#123abc');
+  await post('save', { operationId: 'draft-meaning-setup' });
+  const current = await read();
+  const currentBike = current.objects.find(({ id }) => id === bike.id);
+  const currentType = current.types.find(({ id }) => id === type.id);
+  const edge = current.relationships.find(({ id }) => id === 'draft-expired-edge');
+  if (!currentBike || !currentType || !edge) throw new Error('Missing saved meaning data');
+  await post('object-type', {
+    id: type.id,
+    baseRevision: currentType.revision,
+    value: {
+      ...currentType,
+      builtins: builtins.map((field) =>
+        field.key === 'description' ? { ...field, name: 'Cykelns berättelse' } : field,
+      ),
+    },
+  });
+  await post('draft', {
+    id: bike.id,
+    baseRevision: currentBike.revision,
+    value: { ...currentBike, lifecycle: 'active', description: '' },
+  });
+  await image('#bc321a');
+  await post('relationship', {
+    id: edge.id,
+    baseRevision: edge.revision,
+    value: { ...edge, lifecycle: 'active' },
+  });
+  return fixture;
 }

@@ -138,6 +138,47 @@ first send asks consent once”.
 - Ett förslag som endast gäller en typ visar den avskilda Utkast-ikonen.
   Den öppnar hela utkastet direkt även utan synliga kartförslag.
 
+### UTKAST-27: läs faktisk giltighet, profilbilder och typens egenskapsnamn
+
+**Syfte:** Skilja slutdatum från uttrycklig status och läsa hela bildförslaget
+samt dolda gemensamma egenskaper med deras egna namn.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+
+**Förutsättningar:** Kör `npm run build` och
+`node --import tsx scripts/manual-draft-review.ts --meanings`.
+Logga in med den syntetiska Google-identiteten. Installationens sparade
+cykel och samband har slutdatum 2000-01-01. Förslagen anger uttryckligen
+att de fortfarande gäller. Cykeln har olika sparad och föreslagen profilbild.
+Skriv `quit` i terminalen efter provningen.
+
+**Integrationstest:**
+[draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
+testfallen “UTKAST-27: desktop draft reading preserves lifecycle, images and
+configured field meanings” och “UTKAST-27: mobile draft reading preserves
+lifecycle, images and configured field meanings”.
+
+**Steg:**
+
+1. Öppna **Utkast** och **Blå cykel** på dator och mobil.
+2. Läs **Gäller**, **Status** och **Sista giltighetsdag** på båda sidorna.
+3. Jämför de två profilbilderna. Läs **Fordonets berättelse** och
+   **Cykelns berättelse**, samt **Avtalat pris** även fast pris saknas.
+4. Stäng dialogen och läs sambandet **Blå cykel → granskar → Röd cykel**.
+   Jämför dess giltighet, status och slutdatum.
+
+**Förväntat resultat:**
+
+- Sparade objektet och sambandet visar Upphört och Följ slutdatum.
+  Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum.
+  Giltighet och status är markerade som ändrade.
+- Båda verkliga profilbilderna visas och bildändringen markeras även när
+  båda sidorna har en bild. Bilderna skiljer sig i färg.
+- Beskrivningen har respektive typs eget namn och markerad ändring.
+  Föreslagen beskrivning och båda prisvärdena visar Ej uppgivet.
+  Oförändrat saknat pris markeras inte som ändrat. Dolda egenskaper kan läsas.
+- Läsningen ändrar inget underlag och startar inget samtal eller medgivande.
+
 ### UTKAST-01: återuppta en konflikt och spara oberoende förslag tillsammans
 
 **Syfte:** Kontrollera att ett privat utkast kan återupptas, att ett aktivt
