@@ -666,6 +666,12 @@ and Escape restrictions”.
 **Steg:**
 
 1. Öppna Sök i kartan. Sök efter 299 EGEN och läs träffens detaljfält.
+   Låt sökytan vara öppen, fokusera kartbakgrunden och skriv b följt av
+   mellanslag och 12. Kontrollera att hela texten blir b 12 i sökfältet,
+   som får fokus, och att filteravsnittet stängs.
+   Välj Sök i kartan igen medan sökytan är öppen. Kontrollera sökfältets
+   fokus och öppet filteravsnitt. Stäng filteravsnittet, skriv 299 EGEN
+   och kontrollera att det förblir stängt. Öppna sedan filteravsnittet.
 2. Välj Typ 10 och sök efter A 10. Tryck Escape. Kontrollera kvarvarande
    sökning och typ i kartans resultatbesked. Öppna sökningen igen.
 3. Besök Tabell och expandera A 2 så att det markeras. Skriv åke följt av x
@@ -689,7 +695,10 @@ and Escape restrictions”.
 
 **Förväntat resultat:**
 
-- Sökknappen öppnar sökning och filter, tangentbordsstart bara sökning.
+- Sökknappen öppnar sökning och filter, tangentbordsstart bara sökning,
+  även när sökytan redan är öppen. Varje ingång flyttar fokus till
+  sökfältet där fortsatt text tas emot. Vanlig inmatning behåller det
+  valda läget för filteravsnittet.
 - Escape och Stäng bevarar text, filter och markering. Rensa sökning
   ändrar bara texten; Typ 10 och markeringen av A 2 är kvar. Aktiva
   begränsningar syns med stängd sökyta.

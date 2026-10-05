@@ -255,7 +255,13 @@ export function HouseholdMap({
   const [readEntry, setReadEntry] = useState<HouseholdReadEntry | null>(null);
   const [mapSearchOpen, setMapSearchOpen] = useState(false);
   const [mapSearchFilters, setMapSearchFilters] = useState(false);
+  const [mapSearchEntryRequestId, setMapSearchEntryRequestId] = useState(0);
   const mapSearchTrigger = useRef<HTMLElement | null>(null);
+  function requestMapSearch(filtersOpen: boolean) {
+    setMapSearchFilters(filtersOpen);
+    setMapSearchOpen(true);
+    setMapSearchEntryRequestId((previous) => previous + 1);
+  }
   function changeMapSearch(next: ObjectSearchState) {
     setBrowsing((previous) => ({ ...previous, ...next, page: 0 }));
     setMapUnfiltered(false);
@@ -356,8 +362,7 @@ export function HouseholdMap({
       mapSearchTrigger.current =
         chosen ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
       setWorkspaceSurface('map');
-      setMapSearchFilters(true);
-      setMapSearchOpen(true);
+      requestMapSearch(true);
       return;
     }
     if (target === 'new') {
@@ -1678,6 +1683,7 @@ export function HouseholdMap({
           <MapSearch
             open={mapSearchOpen && workspaceSurface === 'map'}
             filtersOpen={mapSearchFilters}
+            entryRequestId={mapSearchEntryRequestId}
             search={browsing}
             onChange={changeMapSearch}
             onClose={() => {
@@ -1719,8 +1725,7 @@ export function HouseholdMap({
               mapSearchTrigger.current =
                 document.activeElement instanceof HTMLElement ? document.activeElement : null;
               changeMapSearch({ ...browsing, query: text });
-              setMapSearchFilters(false);
-              setMapSearchOpen(true);
+              requestMapSearch(false);
             }}
             cameraMount={cameraMount}
             navigationMount={navigationMount}

@@ -266,6 +266,7 @@ export function ObjectSearchFilters({
 export function MapSearch({
   open,
   filtersOpen,
+  entryRequestId,
   search,
   onChange,
   onClose,
@@ -277,6 +278,7 @@ export function MapSearch({
 }: {
   open: boolean;
   filtersOpen: boolean;
+  entryRequestId: number;
   search: ObjectSearchState;
   onChange: (next: ObjectSearchState) => void;
   onClose: () => void;
@@ -288,15 +290,17 @@ export function MapSearch({
 }) {
   const input = useRef<HTMLInputElement>(null);
   const wasOpen = useRef(false);
+  const previousEntryRequestId = useRef(entryRequestId);
   const [expanded, setExpanded] = useState(filtersOpen);
   const notice = useDraftFilterReset(hasProposals, search, onChange);
   useEffect(() => {
-    if (open && !wasOpen.current) {
+    if (open && (!wasOpen.current || entryRequestId !== previousEntryRequestId.current)) {
       input.current?.focus();
       setExpanded(filtersOpen);
     }
     wasOpen.current = open;
-  }, [open, filtersOpen]);
+    previousEntryRequestId.current = entryRequestId;
+  }, [open, filtersOpen, entryRequestId]);
   return (
     <>
       <section

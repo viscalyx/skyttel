@@ -197,6 +197,9 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     const mapSearch = panel.getByRole('searchbox');
+    const canvas = page.getByRole('img', {
+      name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.',
+    });
     await expect(mapSearch).toBeFocused();
     await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
       'aria-expanded',
@@ -207,6 +210,28 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await expect(panel.getByRole('list', { name: 'Matchande detaljfält' })).toContainText(
       'A 2: träff i Egen anteckning, Pris',
     );
+    await canvas.focus();
+    await page.keyboard.press('b');
+    await expect(mapSearch).toBeFocused();
+    await page.keyboard.type(' 12');
+    await expect(mapSearch).toHaveValue('b 12');
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    await tools.getByRole('button', { name: 'Sök i kartan · aktiv', exact: true }).click();
+    await expect(mapSearch).toBeFocused();
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await panel.getByRole('button', { name: 'Filter', exact: true }).click();
+    await mapSearch.fill('299 EGEN');
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    await panel.getByRole('button', { name: 'Filter', exact: true }).click();
     await panel.getByLabel('Typ 10', { exact: true }).check();
     await mapSearch.fill('A 10');
     await page.keyboard.press('Escape');
@@ -227,9 +252,6 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await page.keyboard.type('x');
     await expect(tableSearch).toHaveValue('åkex');
     await tools.getByRole('button', { name: 'Karta', exact: true }).click();
-    const canvas = page.getByRole('img', {
-      name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.',
-    });
     await canvas.focus();
     await canvas.dispatchEvent('keydown', { key: 'ö' });
     await expect(mapSearch).toHaveValue('ö');
