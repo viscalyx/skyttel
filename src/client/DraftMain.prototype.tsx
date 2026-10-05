@@ -459,11 +459,6 @@ export function DraftMainPrototype({
               </p>
             )}
           </div>
-          <footer>
-            <button type="button" data-default onClick={() => setReadKey(null)}>
-              Stäng
-            </button>
-          </footer>
         </DraftModal>
       )}
       {discardKey && (
@@ -553,23 +548,24 @@ export function DraftMainPrototype({
               </>
             )}
           </div>
-          <footer>
-            <button type="button" onClick={() => setSaveOpen(false)}>
-              Stäng
-            </button>
-            {saveStatus === 'unknown' && (
+          {saveStatus === 'unknown' && (
+            <footer>
               <button
                 type="button"
                 data-default
-                onClick={() => {
+                onClick={(event) => {
+                  event.currentTarget
+                    .closest('dialog')
+                    ?.querySelector<HTMLElement>('header button')
+                    ?.focus();
                   checkCount.current += 1;
                   setSaveStatus('checking');
                 }}
               >
                 Kontrollera sparandet igen
               </button>
-            )}
-          </footer>
+            </footer>
+          )}
         </DraftModal>
       )}
     </>
