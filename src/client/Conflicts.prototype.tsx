@@ -31,7 +31,7 @@ const cases: Case[] = [
     kind: 'Objekt',
     name: 'Familjens bil',
     reason:
-      'Ditt förslag ändrar bilens namn och registreringsnummer. Lo har sparat ett nytt namn och en ny beskrivning.',
+      'Ditt förslag ändrar bilens namn och registreringsnummer. {Förnamn} sparade ett nytt namn och en ny beskrivning efter att du gjorde ändringarna, men innan du hann spara ditt förslag.',
     savedBy: 'Lo',
     fields: [
       field('Namn', 'Bilen', 'Familjens bil', 'Blå bilen'),
@@ -401,7 +401,7 @@ export function ConflictsPrototype() {
                 <h2 ref={heading} tabIndex={-1}>
                   {item.name}
                 </h2>
-                <p>{item.reason}</p>
+                <p>{item.reason.replaceAll('{Förnamn}', item.savedBy ?? 'En användare')}</p>
                 {stale && (
                   <div className="cp-warning" role="alert">
                     <strong>Underlaget har ändrats.</strong>
