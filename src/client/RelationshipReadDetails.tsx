@@ -1,0 +1,106 @@
+import type { MapObject, RelationshipType, RelationshipValue } from '../shared/map.js';
+import { factText } from './ObjectReadDetails.js';
+import { knowledgeLabels } from './RelationshipEditor.js';
+
+export function relationshipPropertyValues(
+  value: RelationshipValue,
+  type: RelationshipType | undefined,
+  objects: Map<string, MapObject>,
+) {
+  const fields = new Map<string, { label: string; value: string }>([
+    ['type', { label: 'Typ', value: type?.name ?? 'Borttagen typ' }],
+    [
+      'source',
+      {
+        label: 'Från objekt',
+        value: objects.get(value.sourceId)?.name ?? 'Objektet finns inte längre',
+      },
+    ],
+    ['direction', { label: 'Riktning', value: type?.forwardLabel ?? type?.name ?? 'Ej uppgivet' }],
+    ['reverse', { label: 'Omvänd riktning', value: type?.reverseLabel || 'Ej uppgivet' }],
+    [
+      'target',
+      {
+        label: 'Till objekt',
+        value: value.targetId
+          ? (objects.get(value.targetId)?.name ?? 'Objektet finns inte längre')
+          : knowledgeLabels[value.knowledge],
+      },
+    ],
+    ['knowledge', { label: 'Uppgiftens säkerhet', value: knowledgeLabels[value.knowledge] }],
+    [
+      'lifecycle',
+      {
+        label: 'Status',
+        value:
+          value.lifecycle === 'ended'
+            ? 'Manuellt upphört'
+            : value.lifecycle === 'active'
+              ? 'Gäller fortfarande'
+              : 'Följ slutdatum',
+      },
+    ],
+    ['endDate', { label: 'Slutdatum', value: factText(value.endDate) }],
+  ]);
+  for (const field of type?.fields ?? []) {
+    const answer = value.customValues?.[field.id];
+    fields.set(`field:${field.id}`, {
+      label: field.name,
+      value:
+        answer === undefined
+          ? 'Ej uppgivet'
+          : answer === true
+            ? 'Ja'
+            : answer === false
+              ? 'Nej'
+              : String(answer),
+    });
+  }
+  for (const [id, answer] of Object.entries(value.customValues ?? {}))
+    if (!fields.has(`field:${id}`)) fields.set(`field:${id}`, { label: id, value: String(answer) });
+  return fields;
+}
+
+export function RelationshipReadDetails({
+  value,
+  type,
+  before,
+  beforeType,
+  objects,
+}: {
+  value: RelationshipValue;
+  type?: RelationshipType;
+  before?: RelationshipValue | null;
+  beforeType?: RelationshipType;
+  objects: Map<string, MapObject>;
+}) {
+  const after = relationshipPropertyValues(value, type, objects);
+  const saved = before
+    ? relationshipPropertyValues(before, beforeType ?? type, objects)
+    : new Map();
+  return (
+    <dl className="household-read-properties">
+      {[...new Set([...after.keys(), ...saved.keys()])].map((key) => {
+        const current = after.get(key);
+        const previous = saved.get(key);
+        const changed = Boolean(
+          before && (current?.value !== previous?.value || current?.label !== previous?.label),
+        );
+        return (
+          <div key={key}>
+            <dt>{current?.label ?? previous?.label}</dt>
+            <dd>
+              {changed && (
+                <div className="household-table-before">
+                  Sparat: {previous?.value ?? 'Ej uppgivet'}
+                </div>
+              )}
+              {changed && <span className="household-table-proposed">◇ Ditt förslag: </span>}
+              {current?.value ?? 'Ej uppgivet'}
+            </dd>
+          </div>
+        );
+      })}
+    </dl>
+  );
+}

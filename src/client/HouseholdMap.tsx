@@ -28,6 +28,11 @@ import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { DraftStatus } from './DraftStatus.js';
 import { useFloatingArea } from './floating-windows.js';
+import {
+  HouseholdReadDialog,
+  type HouseholdReadEntry,
+  householdReadRelationships,
+} from './HouseholdReadDialog.js';
 import { HouseholdTable, householdTableRows } from './HouseholdTable.js';
 import './draft-status.css';
 import { ConversationConsent } from './ConversationConsent.js';
@@ -242,6 +247,7 @@ export function HouseholdMap({
     baseRevision: number | null;
   } | null>(null);
   const [workspaceSurface, setWorkspaceSurface] = useState<'map' | 'table'>('map');
+  const [readEntry, setReadEntry] = useState<HouseholdReadEntry | null>(null);
   const [presentation, setPresentation] = useState<'list' | 'combined' | 'map'>('map');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -814,6 +820,14 @@ export function HouseholdMap({
   const effectiveState = state
     ? { ...state, types: effectiveTypes, relationshipTypes: effectiveEdgeTypes }
     : null;
+  const readRows = state ? householdTableRows(state, effectiveTypes) : [];
+  const readRelationships = state ? householdReadRelationships(state, effectiveEdgeTypes) : [];
+  const relationshipCounts = new Map<string, number>();
+  for (const { value } of readRelationships) {
+    relationshipCounts.set(value.sourceId, (relationshipCounts.get(value.sourceId) ?? 0) + 1);
+    if (value.targetId && value.targetId !== value.sourceId)
+      relationshipCounts.set(value.targetId, (relationshipCounts.get(value.targetId) ?? 0) + 1);
+  }
   const conflicts = state ? draftConflicts(state) : [];
   const hasConflicts = conflicts.length > 0;
   useEffect(() => {
@@ -1824,12 +1838,25 @@ export function HouseholdMap({
       {state && (
         <HouseholdTable
           active={active && workspaceSurface === 'table'}
-          rows={householdTableRows(state, effectiveTypes)}
+          rows={readRows}
           selectedIds={selectedIds}
           workDisabled={pending || blocked}
           onSelect={(object) => selectObject(object, 'select')}
           onNew={() => edit()}
           onEdit={(object) => edit(object)}
+          onRead={(object) => setReadEntry({ kind: 'object', id: object.id })}
+          onRelationships={(object) => setReadEntry({ kind: 'relationships', id: object.id })}
+          relationshipCounts={relationshipCounts}
+        />
+      )}
+      {state && readEntry && (
+        <HouseholdReadDialog
+          key={`${readEntry.kind}:${readEntry.id}`}
+          entry={readEntry}
+          rows={readRows}
+          state={state}
+          relationshipTypes={effectiveEdgeTypes}
+          onClose={() => setReadEntry(null)}
         />
       )}
       {state && (
@@ -2024,18 +2051,42 @@ export function HouseholdMap({
                           );
                           return next;
                         }}
-                        details={details(selectedObject ?? panel.initial.value, undefined, false)}
+                        details={
+                          <>
+                            {details(selectedObject ?? panel.initial.value, undefined, false)}
+                            {selectedObject && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setReadEntry({ kind: 'object', id: selectedObject.id })
+                                }
+                              >
+                                Läs alla uppgifter för {selectedObject.name}
+                              </button>
+                            )}
+                          </>
+                        }
                         relationships={
                           selectedObject && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                focusObject(selectedObject.id);
-                                openWork('list');
-                              }}
-                            >
-                              Visa samband i listan
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReadEntry({ kind: 'relationships', id: selectedObject.id });
+                                }}
+                              >
+                                Samband för {selectedObject.name}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  focusObject(selectedObject.id);
+                                  openWork('list');
+                                }}
+                              >
+                                Visa samband i listan
+                              </button>
+                            </>
                           )
                         }
                       />

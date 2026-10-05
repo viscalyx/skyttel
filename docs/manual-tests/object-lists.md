@@ -3,6 +3,7 @@
 Testfallen gäller att hitta och återfinna objekt genom listor och tabell,
 filtrering, sortering och sidval samt att läsa fullständiga uppgifter och
 visa en vald träff i kartan.
+Läsdialogerna låter användaren följa samband och gå tillbaka utan kartgrafik.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -29,6 +30,144 @@ inloggningen innehåller enbart påhittade uppgifter.
 3. Prova dator och mobil, tangentbord, pekning och förstoring.
    Skriv `quit` i terminalen och starta om kommandot mellan fallen.
    Provdatabasen raderas när processen avslutas.
+
+### Förbered läskedjan
+
+1. Bygg med `npm run build` och starta
+   `node --import tsx scripts/manual-household-reading.ts` från projektroten.
+2. Öppna den utskrivna adressen och logga in med Google som Alex Exempel.
+   Provhushållet har över 50 objekt, Alex, Cykel och Garage, fullständiga
+   uppgifter samt sparade och föreslagna samband.
+3. Skriv `quit` i terminalen och starta om kommandot mellan fallen.
+   Provdatabasen raderas när processen avslutas. Vanliga gemensamma
+   demodata innehåller även Alex Exempel → Alex blå cykel → Familjens garage.
+
+## Läs objekt och följ samband
+
+### LÄS-01: följ Alex till cykel och garage med tabelläget kvar
+
+**Syfte:** Läsa hela sambandskedjan utan kartgrafik och bevara tabelläget.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Hushållet från Förbered läskedjan. Prova med
+tangentbord och utan kartgrafik. Anteckna miljö, förstoring och hjälpmedel.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+testfallet “LÄS-01: keyboard follows Alex to bicycle to garage and back
+without graphics or lost table state”.
+
+**Steg:**
+
+1. Välj Tabell, expandera A 1 och A 2, välj Nästa och expandera Alex och
+   Cykel. Rulla tabellen och öppna Samband för Alex med tangentbord.
+2. Kontrollera dialogens rubrik och antal samband. Välj Cykel, läs hela
+   beskrivningen, egna fält, ekonomi samt Sparat och Ditt förslag.
+3. Öppna Samband för Cykel och välj Garage. Läs Ospecificerat objekt.
+4. Använd Tab och Skift+Tab vid dialogens första och sista kontroller.
+   Välj Tillbaka tre gånger och stäng med Escape.
+5. Kontrollera sida, rullning och öppna rader. Gå till föregående sida och
+   kontrollera att A 1 och A 2 fortfarande är expanderade.
+
+**Förväntat resultat:**
+
+- Fokus börjar på varje dialogs rubrik. Bakgrunden är inaktiv och
+  tangentbordsfokus stannar i den aktiva dialogen.
+- Fullständiga uppgifter och sparade/föreslagna värden kan läsas utan
+  kartnavigering. Tillbaka går ett steg utan att ändra hushållets data.
+- Stängning återför fokus till Samband för Alex. Sida, flera öppna rader
+  och rullningsläge bevaras.
+
+### LÄS-02: läs samband och olika betydelser på smal skärm
+
+**Syfte:** Skilja okända mål, uttryckligen inga mål, osäkerhet och status.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Hushållet från Förbered läskedjan. Prova på telefon
+och vid 200/400 procent förstoring. Föreslå borttagning av Alex samband
+till Cykel genom sambandsredigeringen, utan att spara det gemensamt.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+testfallet “LÄS-02: mobile full relationship reading separates absent
+targets, uncertainty and proposed removal”.
+
+**Steg:**
+
+1. Öppna Tabell och Samband för Cykel.
+2. Läs samtliga fyra samband, inklusive föreslagen borttagning.
+3. Kontrollera Okänd koppling och Har ingen samt sambandet till Garage.
+   Läs säkerhet, riktning, egna fält, livscykel och slutdatum.
+4. Stäng med Stäng samband och kontrollera fokus.
+
+**Förväntat resultat:**
+
+- Okänt och Uttryckligen inget har inga falska objektlänkar. Osäkert
+  uppgivet är skilt från dessa betydelser.
+- Upphört, Föreslagen borttagning och sparat/föreslaget värde är läsbara
+  även utan färg. Dolda egna fält finns med.
+- Text bryts inom skärmbredden och innehållet rullar i dialogen.
+  Fokus återgår till Samband för Cykel.
+
+### LÄS-03: stäng läsning när öppningsraden försvinner
+
+**Syfte:** Återgå till en användbar radkontroll efter ett bakgrundsbesked.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Hushållet från Förbered läskedjan, ett aktivt
+textsamtal och en andra inloggad flik i samma hushåll.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+testfallet “LÄS-03: a vanished table opener returns to the next equivalent
+control after a real background update”.
+
+**Steg:**
+
+1. Lägg B Tillfälligt objekt i utkastet utan samband. Öppna dess
+   sambandsdialog från tabellen i första fliken.
+2. Ta bort bara detta nya förslag i andra fliken. Vänta tills den första
+   fliken visar att objektet inte längre finns.
+3. Stäng med Escape och kontrollera fokus.
+
+**Förväntat resultat:**
+
+- Bakgrundsuppdateringen skapar ingen falsk läskedja och ändrar inga
+  andra förslag. Dialogen kan stängas.
+- Fokus återgår till Samband för Cykel som nästa motsvarande kontroll.
+  Tabellens sida och filter ändras inte för att återställa raden.
+
+### LÄS-04: återgå till föregående rad eller rubriken
+
+**Syfte:** Behålla användbart fokus när det saknas en följande rad.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Ett tomt provhushåll med två nya objekt A och B i
+utkastet, ett aktivt textsamtal och en andra inloggad flik.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+testfallen “LÄS-04: vanished read openers return to previous when no next
+row remains” och “LÄS-04: vanished read openers return to heading when no
+next row remains”.
+
+**Steg:**
+
+1. Öppna Samband för B från tabellen. Ta bort bara förslaget B i andra
+   fliken. Vänta på uppdateringen och stäng med Escape.
+2. Kontrollera fokus på Samband för A. Lägg B i utkastet igen och öppna
+   dess sambandsdialog.
+3. Ta bort båda förslagen i andra fliken. Vänta på uppdateringen och stäng.
+
+**Förväntat resultat:**
+
+- Utan nästa rad går fokus till samma kontroll på föregående rad.
+- Utan kvarvarande rader går fokus till Hushållets tabell. Filtren ändras
+  inte och inga extra ändringar läggs i utkastet.
 
 ## Sökning och filtrering
 

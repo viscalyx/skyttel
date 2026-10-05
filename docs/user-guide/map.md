@@ -31,6 +31,24 @@ Tabellens sortering, sida, öppna rader, rullning och möjligt fokus finns
 kvar när du återvänder under samma hushållsarbete. På mobil rullar
 tabellen i sidled; fullständiga detaljtexter bryts inom skärmbredden.
 
+### Läs objekt och följ samband
+
+Expandera raden och välj **Läs alla uppgifter** för objektets fullständiga
+läsläge. **Samband för [objektnamn]** är en separat åtgärd med antal
+samband. Samma sambandsdialog kan öppnas från objektets uppgifter.
+Dialogen visar riktning, båda ändpunkterna, säkerhet, egna fält och
+slutdatum, även för upphörda samband och föreslagna borttagningar.
+
+Välj det andra objektets namn för att läsa det och fortsätt via dess
+samband. **Tillbaka** går ett steg i läskedjan. Du behöver inte visa
+objektet i kartan. Okänt och Uttryckligen inget har inga objektlänkar;
+Osäkert uppgivet och Ospecificerat objekt behåller sina betydelser.
+
+Krysset eller Escape stänger läsningen och återför fokus till
+öppningsknappen. Om raden försvinner går fokus till motsvarande kontroll
+på nästa rad, sedan föregående rad eller tabellens rubrik. Sökning,
+sortering, sida, öppna rader och rullning finns kvar.
+
 ## Besök andra vyer och fortsätt arbetet
 
 Öppna **Din profil** för kontouppgifter, **Inloggningssätt**, användar-ID,

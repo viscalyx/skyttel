@@ -56,6 +56,8 @@ export function seedDemo(database: Database.Database, config: Config) {
     ['new-email', 'E-postadress', 'musik@example.test', 'Föreslagen ny inloggningsadress.'],
     ['card', 'Kort', 'Familjens musikkort', 'Påhittat kort utan kortnummer.'],
     ['bank', 'Bankkonto', 'Hushållets betalkonto', 'Betalar kortfakturan.'],
+    ['bike', 'Fordon', 'Alex blå cykel', 'En påhittad cykel som förvaras i garaget.'],
+    ['garage', 'Garage', 'Familjens garage', 'Ett påhittat garage med plats för cykeln.'],
     [
       'linked-bank',
       'Bankkonto',
@@ -78,6 +80,19 @@ export function seedDemo(database: Database.Database, config: Config) {
       },
     });
   }
+  const storageTypeId = randomUUID();
+  map.proposeRelationshipType({
+    version: map.read().draft.version,
+    id: storageTypeId,
+    baseRevision: null,
+    value: {
+      name: 'Förvaras i',
+      description: 'Var objektet förvaras.',
+      forwardLabel: 'förvaras i',
+      reverseLabel: 'förvarar',
+      fields: [],
+    },
+  });
   const links = [
     ['company', 'Erbjuder', 'service'],
     ['account', 'Tillhör tjänsten', 'service'],
@@ -100,6 +115,8 @@ export function seedDemo(database: Database.Database, config: Config) {
     ['service', 'Används av', 'lo', 'uncertain'],
     ['second-account', 'Äger', '', 'unknown'],
     ['association', 'Används av', '', 'none'],
+    ['alex', 'Använder', 'bike'],
+    ['bike', 'Förvaras i', 'garage'],
   ];
   for (const [source, type, target, knowledge] of links) {
     map.proposeRelationship({
@@ -107,7 +124,10 @@ export function seedDemo(database: Database.Database, config: Config) {
       id: randomUUID(),
       baseRevision: null,
       value: {
-        typeId: initial.relationshipTypes.find((value) => value.name === type)?.id,
+        typeId:
+          type === 'Förvaras i'
+            ? storageTypeId
+            : initial.relationshipTypes.find((value) => value.name === type)?.id,
         sourceId: ids.get(source),
         targetId: target ? ids.get(target) : null,
         knowledge: knowledge ?? 'known',

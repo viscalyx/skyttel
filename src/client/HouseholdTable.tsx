@@ -1,10 +1,7 @@
 import { Fragment, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
-import { type FinancialFact, financialFields } from '../shared/financial-facts.js';
 import { hasEnded } from '../shared/lifecycle.js';
-import type { MapObject, MapState, ObjectType, ObjectValue } from '../shared/map.js';
-import { objectIconLabel } from '../shared/object-icons.js';
-import { objectProperties } from '../shared/object-properties.js';
-import { ProfileImage } from './ProfileImage.js';
+import type { MapObject, MapState, ObjectType } from '../shared/map.js';
+import { ObjectReadDetails } from './ObjectReadDetails.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './household-table.css';
 
@@ -48,152 +45,6 @@ export function householdTableRows(state: MapState, types: ObjectType[]): Househ
   return [...rows.values()];
 }
 
-const knowledge = {
-  known: 'Känt',
-  unknown: 'Okänt',
-  none: 'Uttryckligen inget',
-  uncertain: 'Osäkert uppgivet',
-};
-function factText(fact?: FinancialFact) {
-  if (!fact) return 'Ej uppgivet';
-  return `${fact.value ?? knowledge[fact.knowledge]}${fact.knowledge === 'uncertain' ? ' (Osäkert uppgivet)' : ''}${fact.reportedOn ? ` · datum för uppgiften: ${fact.reportedOn}` : ''}`;
-}
-function propertyValues(value: ObjectValue, type?: ObjectType) {
-  const properties = objectProperties(type ?? {});
-  const fields = new Map<string, { label: string; value: string }>();
-  fields.set('name', { label: 'Namn', value: value.name });
-  fields.set('type', { label: 'Typ', value: type?.name ?? 'Borttagen typ' });
-  fields.set('description', {
-    label:
-      properties.find((property) => property.ref === 'builtin:description')?.name ?? 'Beskrivning',
-    value: value.description || 'Ej uppgivet',
-  });
-  fields.set('lifecycle', {
-    label: 'Status',
-    value:
-      value.lifecycle === 'ended'
-        ? 'Manuellt upphört'
-        : value.lifecycle === 'active'
-          ? 'Gäller fortfarande'
-          : 'Följ slutdatum',
-  });
-  fields.set('icon', {
-    label: 'Ikon',
-    value: value.iconId ? objectIconLabel(value.iconId, type?.name) : 'Typens ikon',
-  });
-  fields.set('profileImage', {
-    label: 'Profilbild',
-    value: value.profileImageId ? 'Profilbild finns' : 'Ej uppgivet',
-  });
-  if (value.identity)
-    fields.set('identity', {
-      label: 'Identitet',
-      value:
-        value.identity === 'unspecified' ? 'Ospecificerat objekt' : 'Identiteten behöver redas ut',
-    });
-  for (const field of type?.fields ?? []) {
-    const answer = value.customValues?.[field.id];
-    fields.set(`field:${field.id}`, {
-      label: field.name,
-      value:
-        answer === undefined
-          ? 'Ej uppgivet'
-          : answer === true
-            ? 'Ja'
-            : answer === false
-              ? 'Nej'
-              : String(answer),
-    });
-  }
-  for (const [id, answer] of Object.entries(value.customValues ?? {}))
-    if (!fields.has(`field:${id}`)) fields.set(`field:${id}`, { label: id, value: String(answer) });
-  for (const field of financialFields) {
-    const property = properties.find((property) => property.ref === `builtin:${field.key}`);
-    if (value.financialFacts?.[field.key] || property)
-      fields.set(`builtin:${field.key}`, {
-        label: property?.name ?? field.label,
-        value: factText(value.financialFacts?.[field.key]),
-      });
-  }
-  return fields;
-}
-
-function TableDetails({ row }: { row: HouseholdTableRow }) {
-  const proposed = propertyValues(row.object, row.type);
-  const saved = row.before
-    ? propertyValues(row.before, row.beforeType)
-    : new Map<string, { label: string; value: string }>();
-  const keys = [...new Set([...proposed.keys(), ...saved.keys()])];
-  const descriptionChanged =
-    row.proposal === 'Ändrat' && row.object.description !== row.before?.description;
-  return (
-    <div className="household-table-details">
-      <h3>{row.object.name} · alla uppgifter</h3>
-      <p className="household-table-description">
-        {descriptionChanged && (
-          <span className="household-table-before">
-            Sparat: {row.before?.description || 'Ej uppgivet'}
-          </span>
-        )}
-        {(descriptionChanged || row.proposal === 'Nytt') && (
-          <span className="household-table-proposed">◇ Ditt förslag: </span>
-        )}
-        {row.object.description || 'Ej uppgivet'}
-      </p>
-      <dl>
-        {keys
-          .filter(
-            (key) =>
-              key !== 'description' &&
-              (!(key === 'name' || key === 'type') ||
-                (proposed.get(key)?.value !== saved.get(key)?.value && row.proposal === 'Ändrat')),
-          )
-          .map((key) => {
-            const after = proposed.get(key);
-            const before = saved.get(key);
-            const changed =
-              row.proposal === 'Ändrat' &&
-              (after?.value !== before?.value ||
-                after?.label !== before?.label ||
-                (key === 'profileImage' &&
-                  row.object.profileImageId !== row.before?.profileImageId));
-            return (
-              <div key={key}>
-                <dt>{after?.label ?? before?.label}</dt>
-                <dd>
-                  {changed && (
-                    <div className="household-table-before">
-                      Sparat{before?.label !== after?.label ? ` (${before?.label})` : ''}:{' '}
-                      {before?.value ?? 'Ej uppgivet'}
-                      {key === 'profileImage' && row.before?.profileImageId && (
-                        <ProfileImage
-                          householdId={row.object.householdId}
-                          value={row.before}
-                          typeName={row.beforeType?.name}
-                        />
-                      )}
-                    </div>
-                  )}
-                  {(changed || row.proposal === 'Nytt') && (
-                    <span className="household-table-proposed">◇ Ditt förslag: </span>
-                  )}
-                  {after?.value ?? 'Ej uppgivet'}
-                  {key === 'profileImage' && row.object.profileImageId && (
-                    <ProfileImage
-                      householdId={row.object.householdId}
-                      value={row.object}
-                      typeName={row.type?.name}
-                    />
-                  )}
-                </dd>
-              </div>
-            );
-          })}
-      </dl>
-    </div>
-  );
-}
-
 export function HouseholdTable({
   active,
   workDisabled = false,
@@ -203,6 +54,8 @@ export function HouseholdTable({
   onNew,
   onEdit,
   onRelationships,
+  relationshipCounts,
+  onRead,
   onReveal,
   searchContent,
 }: {
@@ -214,6 +67,8 @@ export function HouseholdTable({
   onNew?: () => void;
   onEdit?: (object: MapObject) => void;
   onRelationships?: (object: MapObject) => void;
+  relationshipCounts?: Map<string, number>;
+  onRead?: (object: MapObject) => void;
   onReveal?: (object: MapObject) => void;
   searchContent?: ReactNode;
 }) {
@@ -500,9 +355,15 @@ export function HouseholdTable({
                               type="button"
                               aria-label={`Samband för ${object.name}`}
                               title={`Samband för ${object.name}`}
+                              data-table-object={object.id}
+                              data-table-action="relationships"
+                              aria-describedby={`${prefix}-relationship-count-${object.id}`}
                               onClick={() => onRelationships(object)}
                             >
                               <span aria-hidden="true">↔</span>
+                              <span id={`${prefix}-relationship-count-${object.id}`}>
+                                {relationshipCounts?.get(object.id) ?? 0} samband
+                              </span>
                             </button>
                           )}
                           {onReveal && !row.removed && (
@@ -523,7 +384,20 @@ export function HouseholdTable({
                       className="household-table-detail-row"
                       hidden={!opened}
                     >
-                      <td colSpan={5}>{opened && <TableDetails row={row} />}</td>
+                      <td colSpan={5}>
+                        {opened && <ObjectReadDetails row={row} />}
+                        {opened && onRead && (
+                          <button
+                            type="button"
+                            data-table-object={object.id}
+                            data-table-action="read"
+                            onClick={() => onRead(object)}
+                            aria-label={`Läs alla uppgifter för ${object.name}`}
+                          >
+                            Läs alla uppgifter
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   </Fragment>
                 );
