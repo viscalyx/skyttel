@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type {
   MapObject,
   ObjectType,
@@ -6,9 +6,9 @@ import type {
   SavedRelationshipChange,
   SaveReceipt,
 } from '../shared/map.js';
+import { HistoricalMergeDetails } from './HistoricalMergeDetails.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
-import { MergeSourceDetails } from './ObjectMerge.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
 import { CustomFieldsDetails, ObjectTypeDetails } from './ObjectTypes.js';
 import { ProfileImage } from './ProfileImage.js';
@@ -176,32 +176,57 @@ function EdgeDetails({
   );
 }
 
+export type HistorySelection = { userId: string; operationId: string };
+
+export function historySaveLink(householdId: string, receipt: HistorySelection) {
+  const query = new URLSearchParams({
+    report: 'history',
+    save: receipt.operationId,
+    savedBy: receipt.userId,
+  });
+  return `/households/${encodeURIComponent(householdId)}?${query}`;
+}
+
 export function MapHistory({
   path,
-  generation = 1,
+  active,
   version,
-  disabled,
-  onUndo,
+  selection,
   onAccessLost,
 }: {
   path: string;
-  generation?: number;
+  active: boolean;
   version: number;
-  disabled: boolean;
-  onUndo: (receipt: SaveReceipt, generation: number) => void;
+  selection?: HistorySelection;
   onAccessLost: () => void;
 }) {
-  const contentId = useId();
   const title = useRef<HTMLHeadingElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const selectedFocused = useRef(false);
   const householdId = decodeURIComponent(path.split('/')[3]);
-  const [loadedGeneration, setLoadedGeneration] = useState(generation);
-  const [open, setOpen] = useState(false);
   const [history, setHistory] = useState<SaveReceipt[] | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [reload, setReload] = useState(0);
+  useLayoutEffect(() => {
+    if (active) title.current?.focus({ preventScroll: true });
+  }, [active]);
+  useLayoutEffect(() => {
+    if (!active || !history || !selection || selectedFocused.current) return;
+    const selected = [...(content.current?.querySelectorAll<HTMLElement>('article') ?? [])].find(
+      (item) =>
+        item.dataset.save === selection.operationId && item.dataset.savedBy === selection.userId,
+    );
+    if (!selected) return;
+    selectedFocused.current = true;
+    // A delayed read must not overwrite a newer keyboard/focus choice.
+    if (document.activeElement === title.current || document.activeElement === document.body) {
+      selected.querySelector<HTMLElement>('h3')?.focus();
+      selected.scrollIntoView?.({ block: 'nearest' });
+    }
+  }, [active, history, selection]);
   useEffect(() => {
-    if (!open) return;
+    if (!active) return;
     const controller = new AbortController();
     setLoading(true);
     setError('');
@@ -213,7 +238,6 @@ export function MapHistory({
       .then((result) => {
         if (!controller.signal.aborted) {
           setHistory(result.history);
-          setLoadedGeneration(generation);
         }
       })
       .catch((failure) => {
@@ -227,7 +251,7 @@ export function MapHistory({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [open, path, version, generation, reload, onAccessLost]);
+  }, [active, path, version, reload, onAccessLost]);
   return (
     <section aria-labelledby="map-history-title" className="map-history">
       <h2 id="map-history-title" ref={title} tabIndex={-1}>
@@ -237,24 +261,7 @@ export function MapHistory({
         Hushållets sparade ändringar, med det senaste sparandet först. Privata utkast visas inte
         här.
       </p>
-      <p>Ångring blir ett privat förslag. Du väljer sedan om du vill spara hela utkastet.</p>
-      <details className="history-help">
-        <summary>Så fungerar ångring</summary>
-        <p>
-          Ångra sparandet skapar ett nytt privat förslag mot dagens karta. Oberoende senare
-          ändringar bevaras. Spara hela utkastet när du vill genomföra förslaget. Saknade typer som
-          behövs för återställningen följer med som synliga definitionsförslag.
-        </p>
-      </details>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={contentId}
-        onClick={() => setOpen(!open)}
-      >
-        {open ? 'Dölj historik' : 'Visa historik'}
-      </button>
-      <div id={contentId} className="history-content" hidden={!open}>
+      <div ref={content} className="history-content">
         <p aria-live="polite" className="history-state">
           {loading ? 'Hämtar historik…' : history?.length === 0 ? 'Inga genomförda sparanden.' : ''}
         </p>
@@ -272,9 +279,14 @@ export function MapHistory({
             </button>
           </>
         )}
-        {[...(history ?? [])].reverse().map((receipt) => (
-          <article className="history-receipt" key={`${receipt.userId}:${receipt.operationId}`}>
-            <h3>
+        {(history ?? []).map((receipt) => (
+          <article
+            className="history-receipt"
+            data-save={receipt.operationId}
+            data-saved-by={receipt.userId}
+            key={`${receipt.userId}:${receipt.operationId}`}
+          >
+            <h3 tabIndex={-1}>
               <time dateTime={receipt.savedAt}>
                 {new Date(receipt.savedAt).toLocaleString('sv-SE')}
               </time>{' '}
@@ -287,7 +299,16 @@ export function MapHistory({
               <p>Skyttel-användare: {receipt.userId}.</p>
               <p>Tidpunkt: {receipt.savedAt}</p>
             </details>
-            <details className="history-changes">
+            <a href={historySaveLink(householdId, receipt)}>Länk till sparandet</a>
+            <details
+              className="history-changes"
+              open={
+                selection?.userId === receipt.userId &&
+                selection.operationId === receipt.operationId
+                  ? true
+                  : undefined
+              }
+            >
               <summary>Visa ändringarna</summary>
               {receipt.objectTypes?.map((change) => (
                 <div key={change.id}>
@@ -321,7 +342,7 @@ export function MapHistory({
                 <div key={change.after?.id ?? change.before?.id}>
                   <h4>Objekt: {change.after?.name ?? change.before?.name}</h4>
                   {change.merge && (
-                    <MergeSourceDetails householdId={householdId} merge={change.merge} />
+                    <HistoricalMergeDetails householdId={householdId} merge={change.merge} />
                   )}
                   {change.merge && (
                     <p>
@@ -361,13 +382,6 @@ export function MapHistory({
                 </div>
               ))}
             </details>
-            <button
-              type="button"
-              disabled={disabled || loading}
-              onClick={() => onUndo(receipt, loadedGeneration)}
-            >
-              Ångra sparandet
-            </button>
           </article>
         ))}
       </div>

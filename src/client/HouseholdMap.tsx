@@ -19,7 +19,6 @@ import {
   proposedRelationships,
   proposedRelationshipTypes,
 } from '../shared/map.js';
-import { mergeFor } from '../shared/object-merge.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { ConflictDialog } from './ConflictDialog.js';
@@ -41,12 +40,10 @@ import {
 } from './ConversationNotice.js';
 import { ConversationSettings } from './ConversationSettings.js';
 import { LifecycleDetails, LifecycleStatus } from './Lifecycle.js';
-import { MapHistory } from './MapHistory.js';
 import { MapLegend } from './MapLegend.js';
 import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
 import { MapRequestError, request } from './map-request.js';
 import { initialObjectBrowsing, ObjectList, objectListResults } from './ObjectList.js';
-import { MergeSourceDetails, ObjectMerge } from './ObjectMerge.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
 import {
@@ -62,6 +59,7 @@ import { PagedList } from './PagedList.js';
 import { ProfileImage } from './ProfileImage.js';
 import { RelationshipEditor, relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeDetails, RelationshipTypeEditor } from './RelationshipTypes.js';
+import { Reports } from './Reports.js';
 import { rejectionMessage, SaveOperations } from './SaveOperations.js';
 import { ProposalSymbol, SpatialMap } from './SpatialMap.js';
 import { ConversationWorkspace, conversationFeedback } from './TextAssistant.js';
@@ -167,7 +165,6 @@ export function HouseholdMap({
       setObjectPanels([]);
       setObjectDirty({});
       setOpenPanels([]);
-      setMergeOpen(false);
       setEdgeEditor(null);
       setTypeEditor(null);
       setEdgeTypeEditor(null);
@@ -192,8 +189,6 @@ export function HouseholdMap({
     },
     onSelectItem: (target, signal) => revealAssistantItem(target, signal),
   });
-  const [mergeOpen, setMergeOpen] = useState(false);
-  const [mergeGeneration, setMergeGeneration] = useState(1);
   const [objectPanels, setObjectPanels] = useState<
     {
       id: string;
@@ -251,7 +246,17 @@ export function HouseholdMap({
     contentVersion: number;
     baseRevision: number | null;
   } | null>(null);
-  const [workspaceSurface, setWorkspaceSurface] = useState<'map' | 'table'>('map');
+  const [reportSelection] = useState(() => {
+    const query = new URLSearchParams(window.location.search);
+    return query.get('report') === 'history' && query.get('save') && query.get('savedBy')
+      ? { operationId: query.get('save') as string, userId: query.get('savedBy') as string }
+      : undefined;
+  });
+  const [workspaceSurface, setWorkspaceSurface] = useState<'map' | 'table' | 'reports'>(() =>
+    new URLSearchParams(window.location.search).get('report') === 'history' ? 'reports' : 'map',
+  );
+  const reportReturnSurface = useRef<'map' | 'table'>('map');
+  const reportReturnFocus = useRef<HTMLElement | null>(null);
   const [readEntry, setReadEntry] = useState<HouseholdReadEntry | null>(null);
   const [mapSearchOpen, setMapSearchOpen] = useState(false);
   const [mapSearchFilters, setMapSearchFilters] = useState(false);
@@ -354,6 +359,12 @@ export function HouseholdMap({
     return target === 'voice' ? 'voice' : null;
   }
   function openWork(target: WorkspaceTarget, chosen?: HTMLElement) {
+    if (target === 'reports') {
+      if (workspaceSurface !== 'reports') reportReturnSurface.current = workspaceSurface;
+      reportReturnFocus.current = chosen ?? null;
+      setWorkspaceSurface('reports');
+      return;
+    }
     if (target === 'map' || target === 'table') {
       setWorkspaceSurface(target);
       return;
@@ -591,11 +602,6 @@ export function HouseholdMap({
     return () => cancelAnimationFrame(frame);
   }, [active, workOpen, textViewOpen, viewport.height, viewport.offset]);
   const newButton = useRef<HTMLButtonElement>(null);
-  const mergeButton = useRef<HTMLButtonElement>(null);
-  useLayoutEffect(() => {
-    if (mergeOpen)
-      setPanelFocusRequest({ id: 'work', element: document.getElementById('merge-title') });
-  }, [mergeOpen]);
   useEffect(() => {
     if (!active) return;
     if (edgeEditor?.id)
@@ -708,14 +714,12 @@ export function HouseholdMap({
 
   async function action(
     kind:
-      | 'merge'
       | 'draft'
       | 'relationship'
       | 'object-type'
       | 'relationship-type'
       | 'discard'
       | 'resolve'
-      | 'undo'
       | 'discard-change',
     body: unknown,
     retainObject?: (draft: MapDraft) => void,
@@ -754,7 +758,7 @@ export function HouseholdMap({
             : 'Det befintliga sambandet har ändrats. Granska aktuellt underlag.',
         );
       } else {
-        const latest = kind === 'undo' ? await request<MapState>(path) : { ...state, draft };
+        const latest = { ...state, draft };
         if (!isCurrent()) return false;
         setState(latest);
         setStatus(
@@ -768,16 +772,13 @@ export function HouseholdMap({
       failedProposalOrigin.current = null;
       if (retainObject) retainObject(draft);
       else {
-        setMergeOpen(false);
-
         setEdgeEditor(null);
         setTypeEditor(null);
         setEdgeTypeEditor(null);
         setDirty(false);
         setBlocked(false);
         if (document.activeElement === submittedFocus || document.activeElement === document.body) {
-          if (kind === 'undo' || kind === 'resolve' || kind === 'merge')
-            openPanel('work', document.getElementById('draft-title'));
+          if (kind === 'resolve') openPanel('work', document.getElementById('draft-title'));
           else newButton.current?.focus();
         }
       }
@@ -791,27 +792,16 @@ export function HouseholdMap({
       if (
         failure instanceof MapRequestError &&
         [
-          'merge_choices_required',
-          'merge_review_required',
-          'merge_conflict',
           'duplicate_relationship',
           'invalid_custom_value',
           'invalid_type_definition',
           'invalid_relationship_type',
           'field_kind_in_use',
-          'undo_draft_overlap',
-          'undo_unavailable',
           'definition_in_use',
           'field_in_use',
         ].includes(failure.code)
       ) {
         setError(rejectionMessage(failure.code));
-        if (
-          kind === 'undo' &&
-          submittedFocus instanceof HTMLElement &&
-          (document.activeElement === submittedFocus || document.activeElement === document.body)
-        )
-          openPanel('work', submittedFocus);
         return false;
       }
       setBlocked(true);
@@ -1676,10 +1666,10 @@ export function HouseholdMap({
       <div
         className="workspace-navigation-mount"
         ref={setNavigationMount}
-        hidden={!active || workspaceSurface === 'table'}
+        hidden={!active || workspaceSurface !== 'map'}
       />
       {state && (
-        <div hidden={!active || workspaceSurface === 'table'}>
+        <div hidden={!active || workspaceSurface !== 'map'}>
           <MapSearch
             open={mapSearchOpen && workspaceSurface === 'map'}
             filtersOpen={mapSearchFilters}
@@ -1716,7 +1706,7 @@ export function HouseholdMap({
       {state && (
         <div
           className="map-space"
-          hidden={!active || workspaceSurface === 'table'}
+          hidden={!active || workspaceSurface !== 'map'}
           inert={mapCovered}
           aria-hidden={mapCovered}
         >
@@ -1769,6 +1759,20 @@ export function HouseholdMap({
             onRemove={(object) => remove('draft', object)}
           />
         </div>
+      )}
+      {state && (
+        <Reports
+          active={active && workspaceSurface === 'reports'}
+          path={path}
+          version={state.draft.version}
+          selection={reportSelection}
+          onAccessLost={loseAccess}
+          onReturn={() => {
+            setWorkspaceSurface(reportReturnSurface.current);
+            if (reportReturnSurface.current === 'map')
+              requestAnimationFrame(() => reportReturnFocus.current?.focus());
+          }}
+        />
       )}
       {state && (
         <HouseholdTable
@@ -1914,7 +1918,7 @@ export function HouseholdMap({
           )}
           active={active}
           textViewOpen={textViewOpen}
-          textViewHidden={!textViewVisible}
+          textViewHidden={!textViewVisible || workspaceSurface === 'reports'}
           textFocusRequest={textFocusRequest}
           onDraftOpenChange={setDraftViewOpen}
           draftOpenRequest={draftOpenRequest}
@@ -1935,7 +1939,7 @@ export function HouseholdMap({
           renderWorkspace={(work) => (
             <WorkspacePanels
               area={floatingArea}
-              hidden={!active || !workOpen || panelsCovered}
+              hidden={!active || !workOpen || panelsCovered || workspaceSurface === 'reports'}
               restoreFocusOnReveal={
                 !profileRequested && !textViewVisible && workspaceView !== 'navigation'
               }
@@ -2432,37 +2436,6 @@ export function HouseholdMap({
                         </ul>
                       </section>
                     )}
-                    <button
-                      ref={mergeButton}
-                      type="button"
-                      disabled={pending || legacyDirty || blocked}
-                      onClick={() => {
-                        setEdgeEditor(null);
-                        setMergeGeneration(state.contentVersion);
-                        setMergeOpen(true);
-                        setDirty(true);
-                      }}
-                    >
-                      Slå samman objekt
-                    </button>
-                    {mergeOpen && (
-                      <ObjectMerge
-                        state={state}
-                        selectedId={selection?.kind === 'object' ? selection.id : undefined}
-                        disabled={pending || blocked}
-                        onSubmit={(body) =>
-                          void action('merge', {
-                            ...(body as Record<string, unknown>),
-                            contentVersion: mergeGeneration,
-                          })
-                        }
-                        onClose={() => {
-                          setMergeOpen(false);
-                          setDirty(false);
-                          openPanel('work', mergeButton.current);
-                        }}
-                      />
-                    )}
                     <h2>Samband</h2>
                     <PagedList
                       label="Samband"
@@ -2530,21 +2503,6 @@ export function HouseholdMap({
                         operations={operations}
                         disabled={pending}
                         onRetry={retrySave}
-                      />
-                      <MapHistory
-                        generation={state.contentVersion}
-                        path={path}
-                        version={state.draft.version}
-                        disabled={pending || dirty || blocked}
-                        onAccessLost={loseAccess}
-                        onUndo={(receipt, contentVersion) =>
-                          void action('undo', {
-                            version: state.draft.version,
-                            contentVersion,
-                            userId: receipt.userId,
-                            operationId: receipt.operationId,
-                          })
-                        }
                       />
                       <div ref={typeSlot} />
                       {createPortal(
@@ -2810,40 +2768,6 @@ export function HouseholdMap({
                                 : 'Ändring'}
                             : {change.after?.name ?? change.before?.name}
                           </h3>
-                          {change.merge && (
-                            <div>
-                              <h4>Sammanslagning</h4>
-                              <MergeSourceDetails merge={change.merge} />
-                              <p>
-                                Identitet {change.merge.absorbedId} tas in i{' '}
-                                {change.merge.survivorId}.
-                              </p>
-                              <p>
-                                {change.merge.identityConfirmed
-                                  ? 'Samma företeelse är uttryckligen bekräftad.'
-                                  : 'Identiteten är inte bekräftad. Hela sparandet är blockerat.'}
-                              </p>
-                              <p>
-                                För att rätta: kasta sammanslagningen, rätta eventuella tidigare
-                                förslag och välj objekten igen. Tidigare egna förslag återkommer;
-                                övriga förslag finns kvar.
-                              </p>
-                              <button
-                                type="button"
-                                disabled={pending || blocked || dirty}
-                                onClick={() =>
-                                  void action('discard-change', {
-                                    version: state.draft.version,
-                                    contentVersion: state.contentVersion,
-                                    kind: 'object',
-                                    id: change.id,
-                                  })
-                                }
-                              >
-                                Kasta sammanslagningen för att rätta
-                              </button>
-                            </div>
-                          )}
                           <h4>Sparat underlag</h4>
                           {details(
                             change.before,
@@ -2861,19 +2785,18 @@ export function HouseholdMap({
                             )}
                           <h4>Förslag</h4>
                           {details(change.after, change.type)}
-                          {change.after?.identity === 'unresolved' &&
-                            !mergeFor(state.draft, 'object', change.id) && (
-                              <button
-                                type="button"
-                                disabled={pending || blocked || legacyDirty}
-                                onClick={() => {
-                                  const object = displayed.get(change.id);
-                                  if (object) edit(object);
-                                }}
-                              >
-                                Red ut identiteten för {change.after.name}
-                              </button>
-                            )}
+                          {change.after?.identity === 'unresolved' && (
+                            <button
+                              type="button"
+                              disabled={pending || blocked || legacyDirty}
+                              onClick={() => {
+                                const object = displayed.get(change.id);
+                                if (object) edit(object);
+                              }}
+                            >
+                              Red ut identiteten för {change.after.name}
+                            </button>
+                          )}
                           <button
                             type="button"
                             disabled={pending || blocked || dirty}
@@ -2886,9 +2809,7 @@ export function HouseholdMap({
                               })
                             }
                           >
-                            {mergeFor(state.draft, 'object', change.id)
-                              ? 'Kasta hela sammanslagningen'
-                              : 'Kasta förslaget'}
+                            Kasta förslaget
                           </button>
                           {conflicts
                             .filter(
@@ -2972,9 +2893,7 @@ export function HouseholdMap({
                               })
                             }
                           >
-                            {mergeFor(state.draft, 'relationship', change.id)
-                              ? 'Kasta hela sammanslagningen'
-                              : 'Kasta förslaget'}
+                            Kasta förslaget
                           </button>
                           {conflicts
                             .filter(

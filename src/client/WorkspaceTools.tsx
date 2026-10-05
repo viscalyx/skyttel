@@ -61,6 +61,7 @@ export function WorkspaceIcon({ name }: { name: keyof typeof paths }) {
 export type WorkspaceTarget =
   | 'map'
   | 'table'
+  | 'reports'
   | 'new'
   | 'list'
   | 'conversation'
@@ -96,7 +97,7 @@ export function WorkspaceTools({
   conversationOngoing = false,
   hasDraft = false,
 }: {
-  surface?: 'map' | 'table';
+  surface?: 'map' | 'table' | 'reports';
   searchActive?: boolean;
   workDisabled?: boolean;
   conversationUnavailable?: boolean;
@@ -217,6 +218,7 @@ export function WorkspaceTools({
             ['overview', 'Karta', 'map'],
             ['list', 'Tabell', 'table'],
             ['new', 'Nytt objekt', 'new'],
+            ['detail', 'Rapporter', 'reports'],
             ['mic', 'Prata med Skyttel', 'voice'],
             ['text', textViewButtonName, 'conversation'],
             ['search', searchActive ? 'Sök i kartan · aktiv' : 'Sök i kartan', 'search'],
@@ -278,7 +280,7 @@ export function WorkspaceTools({
               aria-pressed={
                 target === 'voice'
                   ? voiceControl?.microphone === 'on'
-                  : target === 'map' || target === 'table'
+                  : target === 'map' || target === 'table' || target === 'reports'
                     ? surface === target
                     : undefined
               }
