@@ -1904,8 +1904,12 @@ export function HouseholdMap({
           onSelect={(object) => selectObject(object, 'select')}
           onNew={() => edit()}
           onEdit={(object) => edit(object)}
-          onRead={(object) => setReadEntry({ kind: 'object', id: object.id })}
-          onRelationships={(object) => setReadEntry({ kind: 'relationships', id: object.id })}
+          onRead={(object, restoreFocus) =>
+            setReadEntry({ kind: 'object', id: object.id, restoreFocus })
+          }
+          onRelationships={(object, restoreFocus) =>
+            setReadEntry({ kind: 'relationships', id: object.id, restoreFocus })
+          }
           relationshipCounts={relationshipCounts}
         />
       )}

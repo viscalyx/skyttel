@@ -24,6 +24,15 @@ export type HouseholdTableRow = {
   proposal?: 'Nytt' | 'Ändrat' | 'Föreslagen borttagning';
 };
 
+function usable(element: HTMLElement | null): element is HTMLElement {
+  return Boolean(
+    element?.isConnected &&
+      element.getClientRects().length &&
+      !element.closest('[hidden], [inert]') &&
+      !element.matches(':disabled'),
+  );
+}
+
 /** Includes saved deletions for table filters, without adding them to the map. */
 export function householdTableRows(state: MapState, types: ObjectType[]): HouseholdTableRow[] {
   const rows = new Map<string, HouseholdTableRow>();
@@ -78,9 +87,9 @@ export function HouseholdTable({
   onSelect: (object: MapObject) => void;
   onNew?: () => void;
   onEdit?: (object: MapObject) => void;
-  onRelationships?: (object: MapObject) => void;
+  onRelationships?: (object: MapObject, restoreFocus: () => void) => void;
   relationshipCounts?: Map<string, number>;
-  onRead?: (object: MapObject) => void;
+  onRead?: (object: MapObject, restoreFocus: () => void) => void;
   onReveal?: (object: MapObject) => void;
   searchContent?: ReactNode;
   hasProposals?: boolean;
@@ -128,6 +137,37 @@ export function HouseholdTable({
   const pages = Math.max(1, Math.ceil(found.length / 50));
   const actualPage = Math.min(page, pages - 1);
   const visible = found.slice(actualPage * 50, (actualPage + 1) * 50);
+  function replacementFocus(previous: { id: string; action: string; order: string[] } | null) {
+    const index = previous?.order.indexOf(previous.id) ?? -1;
+    if (previous && index >= 0) {
+      const controls = [
+        ...(root.current?.querySelectorAll<HTMLElement>('[data-table-action]') ?? []),
+      ];
+      const next = [
+        ...previous.order.slice(index + 1),
+        ...previous.order.slice(0, index).reverse(),
+      ];
+      for (const id of next) {
+        const control = controls.find(
+          (control) =>
+            control.dataset.tableObject === id && control.dataset.tableAction === previous.action,
+        );
+        if (usable(control ?? null)) return control;
+      }
+    }
+    return heading.current;
+  }
+  function captureReturnFocus(opener: HTMLButtonElement) {
+    const previous = {
+      id: opener.dataset.tableObject ?? '',
+      action: opener.dataset.tableAction ?? '',
+      order: found.map((row) => row.object.id),
+    };
+    return () => {
+      const target = usable(opener) ? opener : replacementFocus(previous);
+      target?.focus({ preventScroll: true });
+    };
+  }
   useLayoutEffect(() => {
     if (page !== actualPage) setPage(actualPage);
     if (active && pageFocusRequested.current) {
@@ -135,41 +175,12 @@ export function HouseholdTable({
       resultRegion.current?.focus({ preventScroll: true });
       resultRegion.current?.scrollIntoView({ block: 'start' });
     }
-    function usable(element: HTMLElement | null) {
-      return Boolean(
-        element?.isConnected &&
-          element.offsetHeight &&
-          !element.closest('[hidden], [inert]') &&
-          !element.matches(':disabled'),
-      );
-    }
-    function replacementFocus() {
-      const previous = lastRowFocus.current;
-      const index = previous?.order.indexOf(previous.id) ?? -1;
-      if (previous && index >= 0) {
-        const controls = [
-          ...(root.current?.querySelectorAll<HTMLElement>('[data-table-action]') ?? []),
-        ];
-        const next = [
-          ...previous.order.slice(index + 1),
-          ...previous.order.slice(0, index).reverse(),
-        ];
-        for (const id of next) {
-          const control = controls.find(
-            (control) =>
-              control.dataset.tableObject === id && control.dataset.tableAction === previous.action,
-          );
-          if (usable(control ?? null)) return control;
-        }
-      }
-      return heading.current;
-    }
     if (active && !wasActive.current) {
       const target =
         visited.current && usable(lastFocus.current)
           ? lastFocus.current
           : visited.current
-            ? replacementFocus()
+            ? replacementFocus(lastRowFocus.current)
             : heading.current;
       target?.focus({ preventScroll: true });
       if (tableRegion.current) {
@@ -184,7 +195,7 @@ export function HouseholdTable({
       !usable(lastFocus.current) &&
       document.activeElement === document.body
     ) {
-      replacementFocus()?.focus({ preventScroll: true });
+      replacementFocus(lastRowFocus.current)?.focus({ preventScroll: true });
     }
     wasActive.current = active;
   });
@@ -217,7 +228,7 @@ export function HouseholdTable({
             lastRowFocus.current = {
               id: event.target.dataset.tableObject,
               action: event.target.dataset.tableAction,
-              order: visible.map((row) => row.object.id),
+              order: found.map((row) => row.object.id),
             };
           else lastRowFocus.current = null;
         }
@@ -394,7 +405,9 @@ export function HouseholdTable({
                               data-table-object={object.id}
                               data-table-action="relationships"
                               aria-describedby={`${prefix}-relationship-count-${object.id}`}
-                              onClick={() => onRelationships(object)}
+                              onClick={(event) =>
+                                onRelationships(object, captureReturnFocus(event.currentTarget))
+                              }
                             >
                               <span aria-hidden="true">↔</span>
                               <span id={`${prefix}-relationship-count-${object.id}`}>
@@ -427,7 +440,9 @@ export function HouseholdTable({
                             type="button"
                             data-table-object={object.id}
                             data-table-action="read"
-                            onClick={() => onRead(object)}
+                            onClick={(event) =>
+                              onRead(object, captureReturnFocus(event.currentTarget))
+                            }
                             aria-label={`Läs alla uppgifter för ${object.name}`}
                           >
                             Läs alla uppgifter

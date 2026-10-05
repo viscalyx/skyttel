@@ -1,6 +1,7 @@
 import type { MapObject, RelationshipType, RelationshipValue } from '../shared/map.js';
 import { factText } from './ObjectReadDetails.js';
 import { knowledgeLabels } from './RelationshipEditor.js';
+import { customReadFields, lifecycleText } from './read-field-values.js';
 
 export function relationshipPropertyValues(
   value: RelationshipValue,
@@ -32,32 +33,13 @@ export function relationshipPropertyValues(
       'lifecycle',
       {
         label: 'Status',
-        value:
-          value.lifecycle === 'ended'
-            ? 'Manuellt upphört'
-            : value.lifecycle === 'active'
-              ? 'Gäller fortfarande'
-              : 'Följ slutdatum',
+        value: lifecycleText(value.lifecycle),
       },
     ],
     ['endDate', { label: 'Slutdatum', value: factText(value.endDate) }],
   ]);
-  for (const field of type?.fields ?? []) {
-    const answer = value.customValues?.[field.id];
-    fields.set(`field:${field.id}`, {
-      label: field.name,
-      value:
-        answer === undefined
-          ? 'Ej uppgivet'
-          : answer === true
-            ? 'Ja'
-            : answer === false
-              ? 'Nej'
-              : String(answer),
-    });
-  }
-  for (const [id, answer] of Object.entries(value.customValues ?? {}))
-    if (!fields.has(`field:${id}`)) fields.set(`field:${id}`, { label: id, value: String(answer) });
+  for (const [key, field] of customReadFields(type?.fields, value.customValues))
+    fields.set(key, field);
   return fields;
 }
 

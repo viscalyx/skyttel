@@ -8,7 +8,11 @@ import { knowledgeLabels, relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipReadDetails } from './RelationshipReadDetails.js';
 import './household-read-dialog.css';
 
-export type HouseholdReadEntry = { kind: 'object' | 'relationships'; id: string };
+export type HouseholdReadEntry = {
+  kind: 'object' | 'relationships';
+  id: string;
+  restoreFocus?: () => void;
+};
 
 /** Keep proposed deletions readable until the entire draft is saved. */
 export function householdReadRelationships(state: MapState, types: RelationshipType[]) {
@@ -52,21 +56,13 @@ function usable(element: HTMLElement | null): element is HTMLElement {
   );
 }
 
-/** Capture the public row controls, so a vanished opener has a useful successor. */
+/** Restore non-table openers, falling back to an available workspace control. */
 function returnFocus() {
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  const table = opener?.closest('.household-table');
-  const controls = [...(table?.querySelectorAll<HTMLElement>('[data-table-action]') ?? [])];
-  const action = opener?.dataset.tableAction;
-  const matching = controls.filter((control) => control.dataset.tableAction === action);
-  const index = opener ? matching.indexOf(opener) : -1;
-  const candidates = [...matching.slice(index + 1), ...matching.slice(0, index).reverse()];
   return () => {
     const target = usable(opener)
       ? opener
-      : (candidates.find((control) => usable(control)) ??
-        table?.querySelector<HTMLElement>('h1') ??
-        document.querySelector<HTMLElement>('.workspace-tools button'));
+      : document.querySelector<HTMLElement>('.workspace-tools button');
     if (usable(target ?? null)) target?.focus({ preventScroll: true });
   };
 }
@@ -103,13 +99,13 @@ export function HouseholdReadDialog({
     : 'Objektet finns inte längre';
   useLayoutEffect(() => {
     const modal = dialog.current;
-    restoreFocus.current = returnFocus();
+    restoreFocus.current = entry.restoreFocus ?? returnFocus();
     modal?.showModal();
     return () => {
       modal?.close();
       restoreFocus.current?.();
     };
-  }, []);
+  }, [entry.restoreFocus]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: Each navigation step starts at its own heading.
   useLayoutEffect(() => {
     heading.current?.focus({ preventScroll: true });
@@ -209,16 +205,13 @@ export function HouseholdReadDialog({
           </section>
         )}
       </div>
-      <footer>
-        {chain.length > 1 && (
+      {chain.length > 1 && (
+        <footer>
           <button type="button" onClick={() => setChain((old) => old.slice(0, -1))}>
             Tillbaka
           </button>
-        )}
-        <button type="button" onClick={onClose}>
-          {current.kind === 'relationships' ? 'Stäng samband' : 'Stäng'}
-        </button>
-      </footer>
+        </footer>
+      )}
     </dialog>
   );
 }

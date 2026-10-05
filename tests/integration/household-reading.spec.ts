@@ -5,6 +5,146 @@ import { startConversationWithText } from '../support/conversation-page.js';
 import { prepareHouseholdReading } from '../support/household-reading.js';
 import { createInstallation } from '../support/installation.js';
 
+test('LÄS-05: identity reading distinguishes identified, unresolved and a proposal replacing unspecified identity', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { read, post } = await prepareHouseholdReading(page.request, installation.origin, false);
+    const garage = (await read()).objects.find((object) => object.id === 'garage');
+    if (!garage) throw new Error('Missing garage fixture');
+    await post('draft', {
+      id: garage.id,
+      baseRevision: garage.revision,
+      value: { ...garage, identity: undefined },
+    });
+    await post('draft', {
+      id: 'unresolved',
+      baseRevision: null,
+      value: {
+        name: 'Oklart objekt',
+        typeId: garage.typeId,
+        description: '',
+        identity: 'unresolved',
+      },
+    });
+    await page.goto(installation.origin);
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    for (const [name, expected] of [
+      ['Alex', 'Identifierat objekt'],
+      ['Oklart objekt', 'Identiteten behöver redas ut'],
+      ['Garage', 'Identifierat objekt'],
+    ]) {
+      await page.getByRole('button', { name, exact: true }).click();
+      await page
+        .getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true })
+        .click();
+      const dialog = page.getByRole('dialog', { name: `Uppgifter för ${name}`, exact: true });
+      const identity = dialog.locator('dl > div').filter({
+        has: page.getByText('Identitet', { exact: true }),
+      });
+      await expect(identity).toContainText(expected);
+      await expect(identity).not.toContainText('Ej uppgivet');
+      if (name === 'Garage') {
+        await expect(identity).toContainText('Sparat: Ospecificerat objekt');
+        await expect(identity).toContainText('◇ Ditt förslag: Identifierat objekt');
+      }
+      await page.keyboard.press('Escape');
+      await expect(
+        page.getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true }),
+      ).toBeFocused();
+    }
+    const unchanged = (await read()).objects.find((object) => object.id === garage.id);
+    expect(unchanged?.identity).toBe('unspecified');
+    expect(
+      (await read()).draft.changes.find((change) => change.id === garage.id)?.after?.identity,
+    ).toBeUndefined();
+  } finally {
+    await installation.close();
+  }
+});
+
+test('LÄS-06: a vanished sole second-page row restores the preceding control after page collapse', async ({
+  page,
+}) => {
+  const installation = await createInstallation(undefined, {
+    modelFetch: async () => Response.json({ output: [] }),
+  });
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+    async function propose(id: string, name: string | null) {
+      const state = await read();
+      const response = await page.request.post(`${path}/draft`, {
+        headers: { origin: installation.origin },
+        data: {
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+          id,
+          baseRevision: null,
+          value: name ? { name, typeId: state.types[0]?.id, description: '' } : null,
+        },
+      });
+      expect(response.status(), await response.text()).toBe(200);
+    }
+    for (let index = 1; index <= 51; index++) await propose(`item-${index}`, `Objekt ${index}`);
+    await page.goto(installation.origin);
+    await startConversationWithText(page);
+    await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await table.getByRole('button', { name: 'Nästa', exact: true }).click();
+    await expect(table.getByText('Sida 2 av 2 · 50 objekt per sida')).toBeVisible();
+    await table.getByRole('button', { name: 'Samband för Objekt 51', exact: true }).click();
+    await propose('item-51', null);
+    await expect(
+      page.getByRole('dialog', { name: 'Objektet finns inte längre', exact: true }),
+    ).toBeVisible({ timeout: 15000 });
+    await page.keyboard.press('Escape');
+    await expect(table.getByText('Sida 1 av 1 · 50 objekt per sida')).toBeVisible();
+    await expect(
+      table.getByRole('button', { name: 'Samband för Objekt 50', exact: true }),
+    ).toBeFocused();
+    expect((await read()).draft.changes).toHaveLength(50);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('LÄS-07: a long unbroken object name wraps in full reading at 320 CSS pixels', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const { post } = await prepareHouseholdReading(page.request, installation.origin, false);
+    const name = 'Långtobjektnamn'.repeat(12);
+    await post('draft', {
+      id: 'long-name',
+      baseRevision: null,
+      value: { name, typeId: 'read-type', description: '' },
+    });
+    await page.setViewportSize({ width: 320, height: 740 });
+    await page.goto(installation.origin);
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: `Uppgifter för ${name}`, exact: true });
+    const heading = dialog.getByRole('heading', { name: `${name} · alla uppgifter`, exact: true });
+    await expect(heading).toBeVisible();
+    for (const area of [dialog, dialog.locator('.household-read-body')])
+      expect(await area.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+        true,
+      );
+    const bounds = await heading.boundingBox();
+    expect(bounds?.x).toBeGreaterThanOrEqual(0);
+    expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(320);
+  } finally {
+    await installation.close();
+  }
+});
+
 for (const fallback of ['previous', 'heading'] as const) {
   test(`LÄS-04: vanished read openers return to ${fallback} when no next row remains`, async ({
     page,
@@ -94,7 +234,7 @@ test('LÄS-01: keyboard follows Alex to bicycle to garage and back without graph
       dialog.getByRole('heading', { name: 'Samband för Alex', exact: true }),
     ).toBeFocused();
     await page.keyboard.press('Shift+Tab');
-    await expect(dialog.getByRole('button', { name: 'Stäng samband', exact: true })).toBeFocused();
+    await expect(dialog.getByRole('button', { name: 'Cykel', exact: true })).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(dialog.getByRole('button', { name: 'Stäng dialogen', exact: true })).toBeFocused();
     await dialog.getByRole('heading', { name: 'Samband för Alex', exact: true }).focus();
@@ -124,11 +264,12 @@ test('LÄS-01: keyboard follows Alex to bicycle to garage and back without graph
     await page.keyboard.press('Enter');
     dialog = page.getByRole('dialog', { name: 'Uppgifter för Garage', exact: true });
     await expect(dialog.getByText('Ospecificerat objekt', { exact: true })).toBeVisible();
-    await dialog.getByRole('button', { name: 'Stäng', exact: true }).focus();
+    await expect(dialog.getByRole('button', { name: /^(Stäng|Stäng samband)$/ })).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Tillbaka', exact: true }).focus();
     await page.keyboard.press('Tab');
     await expect(dialog.getByRole('button', { name: 'Stäng dialogen', exact: true })).toBeFocused();
     await page.keyboard.press('Shift+Tab');
-    await expect(dialog.getByRole('button', { name: 'Stäng', exact: true })).toBeFocused();
+    await expect(dialog.getByRole('button', { name: 'Tillbaka', exact: true })).toBeFocused();
     for (const name of ['Samband för Cykel', 'Uppgifter för Cykel', 'Samband för Alex']) {
       await dialog.getByRole('button', { name: 'Tillbaka', exact: true }).focus();
       await page.keyboard.press('Enter');
@@ -205,7 +346,8 @@ test('LÄS-02: mobile full relationship reading separates absent targets, uncert
         .locator('.household-read-body')
         .evaluate((element) => element.scrollWidth <= element.clientWidth),
     ).toBe(true);
-    await dialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: /^(Stäng|Stäng samband)$/ })).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
     await expect(
       page.getByRole('button', { name: 'Samband för Cykel', exact: true }),
     ).toBeFocused();

@@ -4,6 +4,7 @@ import { objectIconLabel } from '../shared/object-icons.js';
 import { objectProperties } from '../shared/object-properties.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
 import { ProfileImage } from './ProfileImage.js';
+import { customReadFields, lifecycleText } from './read-field-values.js';
 
 const knowledge = {
   known: 'Känt',
@@ -27,12 +28,7 @@ export function objectPropertyValues(value: ObjectValue, type?: ObjectType) {
   });
   fields.set('lifecycle', {
     label: 'Status',
-    value:
-      value.lifecycle === 'ended'
-        ? 'Manuellt upphört'
-        : value.lifecycle === 'active'
-          ? 'Gäller fortfarande'
-          : 'Följ slutdatum',
+    value: lifecycleText(value.lifecycle),
   });
   fields.set('icon', {
     label: 'Ikon',
@@ -42,28 +38,17 @@ export function objectPropertyValues(value: ObjectValue, type?: ObjectType) {
     label: 'Profilbild',
     value: value.profileImageId ? 'Profilbild finns' : 'Ej uppgivet',
   });
-  if (value.identity)
-    fields.set('identity', {
-      label: 'Identitet',
-      value:
-        value.identity === 'unspecified' ? 'Ospecificerat objekt' : 'Identiteten behöver redas ut',
-    });
-  for (const field of type?.fields ?? []) {
-    const answer = value.customValues?.[field.id];
-    fields.set(`field:${field.id}`, {
-      label: field.name,
-      value:
-        answer === undefined
-          ? 'Ej uppgivet'
-          : answer === true
-            ? 'Ja'
-            : answer === false
-              ? 'Nej'
-              : String(answer),
-    });
-  }
-  for (const [id, answer] of Object.entries(value.customValues ?? {}))
-    if (!fields.has(`field:${id}`)) fields.set(`field:${id}`, { label: id, value: String(answer) });
+  fields.set('identity', {
+    label: 'Identitet',
+    value:
+      value.identity === 'unspecified'
+        ? 'Ospecificerat objekt'
+        : value.identity === 'unresolved'
+          ? 'Identiteten behöver redas ut'
+          : 'Identifierat objekt',
+  });
+  for (const [key, field] of customReadFields(type?.fields, value.customValues))
+    fields.set(key, field);
   for (const field of financialFields) {
     const property = properties.find((property) => property.ref === `builtin:${field.key}`);
     if (value.financialFacts?.[field.key] || property)

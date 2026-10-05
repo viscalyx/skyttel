@@ -463,7 +463,11 @@
     "Läsdialogerna",
     "läskedjan",
     "läskedja",
-    "modalernas"
+    "modalernas",
+    "stängkontroll",
+    "stängkontrollen",
+    "läskontrollen",
+    "Långtobjektnamn"
   ],
   "overrides": [
     {

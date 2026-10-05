@@ -101,7 +101,7 @@ targets, uncertainty and proposed removal”.
 2. Läs samtliga fyra samband, inklusive föreslagen borttagning.
 3. Kontrollera Okänd koppling och Har ingen samt sambandet till Garage.
    Läs säkerhet, riktning, egna fält, livscykel och slutdatum.
-4. Stäng med Stäng samband och kontrollera fokus.
+4. Stäng med krysset och kontrollera fokus.
 
 **Förväntat resultat:**
 
@@ -111,6 +111,7 @@ targets, uncertainty and proposed removal”.
   även utan färg. Dolda egna fält finns med.
 - Text bryts inom skärmbredden och innehållet rullar i dialogen.
   Fokus återgår till Samband för Cykel.
+- Endast krysset är en synlig stängkontroll. Escape fungerar också.
 
 ### LÄS-03: stäng läsning när öppningsraden försvinner
 
@@ -169,6 +170,94 @@ next row remains”.
 - Utan nästa rad går fokus till samma kontroll på föregående rad.
 - Utan kvarvarande rader går fokus till Hushållets tabell. Filtren ändras
   inte och inga extra ändringar läggs i utkastet.
+
+### LÄS-05: läs identitet före och efter ett förslag
+
+**Syfte:** Skilja ett identifierat objekt från ospecificerad eller oklar
+identitet och läsa en föreslagen precisering.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Hushållet från Förbered läskedjan. Garage är sparat
+som Ospecificerat objekt. Lägg ett förslag där Garage är identifierat i
+utkastet. Lägg även Oklart objekt med identitet som behöver redas ut i
+utkastet genom objektformuläret. Spara inte utkastet.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+testfallet “LÄS-05: identity reading distinguishes identified, unresolved
+and a proposal replacing unspecified identity”.
+
+**Steg:**
+
+1. Öppna Tabell, expandera Alex och välj Läs alla uppgifter.
+2. Läs Identitet och stäng med Escape. Läs Oklart objekt på samma sätt.
+3. Läs Garage och jämför Sparat med Ditt förslag för Identitet.
+4. Stäng och kontrollera att förslagen ligger kvar i utkastet.
+
+**Förväntat resultat:**
+
+- Alex visar Identifierat objekt. Oklart objekt visar Identiteten behöver
+  redas ut. Identitet presenteras alltid som en uttrycklig uppgift.
+- Garage visar Sparat: Ospecificerat objekt och Ditt förslag: Identifierat
+  objekt. Ingen del av identitetsjämförelsen visar Ej uppgivet.
+- Läsningen sparar ingenting och Escape återför fokus till läskontrollen.
+
+### LÄS-06: återgå när den sista tabellsidan försvinner
+
+**Syfte:** Återgå till föregående motsvarande radkontroll efter att
+sidantalet minskar under läsning.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Ett tomt provhushåll med 51 nya objekt i utkastet,
+namngivna Objekt 1 till Objekt 51. Ett aktivt textsamtal och en andra
+inloggad flik i samma hushåll. Använd sorteringen Namn A–Ö.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+testfallet “LÄS-06: a vanished sole second-page row restores the preceding
+control after page collapse”.
+
+**Steg:**
+
+1. Öppna Tabell och välj Nästa. Kontrollera att endast Objekt 51 finns på
+   sida två. Öppna Samband för Objekt 51.
+2. Ta bort bara förslaget Objekt 51 i andra fliken. Vänta tills dialogen
+   visar att objektet inte längre finns.
+3. Stäng med Escape och kontrollera tabellens sida och fokus.
+
+**Förväntat resultat:**
+
+- Tabellen visar sida ett av ett med de 50 kvarvarande objekten.
+- Fokus återgår till Samband för Objekt 50. De övriga förslagen är kvar.
+
+### LÄS-07: läs ett långt namn på smal skärm
+
+**Syfte:** Läsa hela objektnamnet även när det saknar mellanslag.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Hushållet från Förbered läskedjan. Lägg ett objekt i
+utkastet vars namn består av Långtobjektnamn upprepat tolv gånger utan
+mellanslag. Prova en smal skärm och 200/400 procent förstoring.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+testfallet “LÄS-07: a long unbroken object name wraps in full reading at
+320 CSS pixels”.
+
+**Steg:**
+
+1. Öppna Tabell, expandera objektet och välj Läs alla uppgifter.
+2. Läs dialogens rubrik och rubriken för alla uppgifter. Rulla genom
+   uppgifterna och stäng med krysset.
+
+**Förväntat resultat:**
+
+- Hela namnet bryts och går att läsa inom dialogen utan sidledsrullning.
+- Uppgifterna och stängkontrollen går att nå. Fokus återgår till
+  läskontrollen när dialogen stängs.
 
 ## Sökning och filtrering
 
