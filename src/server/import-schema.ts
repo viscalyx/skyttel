@@ -149,18 +149,16 @@ const mergeShape = {
     .strict()
     .optional(),
 };
-const draftChange: z.ZodType<DraftChange> = z.lazy(() =>
-  z
-    .object({
-      id,
-      before: object.nullable(),
-      after: z.union([objectValue, object]).nullable(),
-      type: objectType,
-      beforeType: objectType.optional(),
-      proposedAt: z.iso.datetime().optional(),
-    })
-    .strict(),
-);
+const draftChange: z.ZodType<DraftChange> = z
+  .object({
+    id,
+    before: object.nullable(),
+    after: z.union([objectValue, object]).nullable(),
+    type: objectType,
+    beforeType: objectType.optional(),
+    proposedAt: z.iso.datetime().optional(),
+  })
+  .strict();
 const receipt = z
   .object({
     operationId: id,

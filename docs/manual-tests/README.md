@@ -141,7 +141,7 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
 
 - [Typer, historik och rättelser genom MCP](assistant-advanced.md):
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
-  definitioner, bilder och läsbar historik efter import samt vanliga
+  definitioner och läsbar historik efter import samt vanliga
   rättelser med aktuellt underlag och avvecklade verktygs frånvaro.
 
 - [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
@@ -402,7 +402,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
 - [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
   senaste först, fullständiga historiska värden, direktlänkar och återgång
   till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök
-  och fokus under fördröjd hämtning.
+  och fokus under fördröjd hämtning, sparlänkar med bevarad oskickad text
+  och historiska ikonvärden bredvid profilbilder.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
   kända slutdatum och granska, kasta eller spara vanlig borttagning med
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.

@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
+import sharp from 'sharp';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, signIn, utilityButton } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
@@ -94,6 +95,13 @@ for (const width of [1280, 390, 320]) {
       await page.keyboard.press('Enter');
       await expect(card.getByText('Namn: Familjeabonnemang.', { exact: true })).toBeVisible();
       await expect(card.getByText('Namn: Musik för familjen.', { exact: true })).toBeVisible();
+      for (const side of ['Före sparandet', 'Efter sparandet']) {
+        await expect(
+          card.locator(`xpath=.//p[preceding-sibling::h5[1][text()="${side}"]]`).filter({
+            hasText: 'Beskrivning: Hushållets musik',
+          }),
+        ).toBeVisible();
+      }
       await expect(card).toContainText('1 200');
       await expect(card).toContainText('Osäkert uppgivet');
       await expect(card).toContainText('2026-06-01');
@@ -216,6 +224,7 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
     });
     expect(pending.ok()).toBe(true);
     expect((await pending.json()).operation.status).toBe('pending');
+    const operationsBefore = await (await page.request.get(`${data.path}/operations`)).json();
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await (await utilityButton(page, 'Rapporter')).click();
     const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
@@ -225,6 +234,96 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
     await expect(history).not.toContainText('private-rejected');
     await expect(history).not.toContainText('private-pending');
     expect(await data.read()).toEqual(before);
+    expect(await (await page.request.get(`${data.path}/operations`)).json()).toEqual(
+      operationsBefore,
+    );
+  } finally {
+    await installation.close();
+  }
+});
+
+test('HISTORIK-12: following save links preserves table search and unsent conversation text', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const data = await setup(page.request, installation.origin);
+    await data.object('person', 'Lo Exempel');
+    await data.save('initial');
+    await data.object('person', 'Lo Lind');
+    await data.save('rename');
+    await data.object('private', 'Privat person');
+    const before = await data.read();
+    await page.goto(`${installation.origin}/households/${data.household.id}`);
+    await (await utilityButton(page, 'Skriv till Skyttel')).click();
+    const message = page.getByLabel('Meddelande till Skyttel', { exact: true });
+    await message.fill('Bevara mitt oskickade meddelande');
+    await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await (await utilityButton(page, 'Tabell')).click();
+    const search = page.getByRole('searchbox', { name: 'Sök objekt i tabellen' });
+    await search.fill('Lo Lind');
+    await (await utilityButton(page, 'Rapporter')).click();
+    const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+    for (const id of ['initial', 'rename']) {
+      const card = history.getByRole('article').filter({ hasText: `Sparande: ${id}` });
+      await card.getByRole('link', { name: 'Länk till sparandet', exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`save=${id}`));
+      await expect(card.getByRole('heading', { level: 3 })).toBeFocused();
+      await expect(card.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    await expect(search).toHaveValue('Lo Lind');
+    await expect(search).toBeFocused();
+    await (await utilityButton(page, 'Skriv till Skyttel')).click();
+    await expect(message).toHaveValue('Bevara mitt oskickade meddelande');
+    expect(await data.read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('HISTORIK-13: historical icon changes remain readable beside an unchanged profile image', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const data = await setup(page.request, installation.origin);
+    await data.object('person', 'Lo Exempel', { iconId: 'bike' });
+    const buffer = await sharp({
+      create: { width: 40, height: 40, channels: 3, background: '#0088ff' },
+    })
+      .png()
+      .toBuffer();
+    const upload = await page.request.post(
+      `${installation.origin}/api/households/${data.household.id}/profile-images/person`,
+      {
+        headers: {
+          origin: installation.origin,
+          'content-type': 'image/png',
+          'x-skyttel-draft-version': String((await data.read()).draft.version),
+          'x-skyttel-content-version': String((await data.read()).contentVersion),
+          'x-skyttel-object-revision': 'null',
+        },
+        data: buffer,
+      },
+    );
+    expect(upload.ok()).toBe(true);
+    await data.save('initial');
+    await data.object('person', 'Lo Exempel', { iconId: 'car' });
+    await data.save('icon-change');
+    await page.goto(`${installation.origin}/households/${data.household.id}`);
+    await (await utilityButton(page, 'Rapporter')).click();
+    const card = page.getByRole('article').first();
+    await card.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(card.getByAltText('Profilbild för Lo Exempel')).toHaveCount(2);
+    for (const image of await card.getByAltText('Profilbild för Lo Exempel').all()) {
+      await expect(image).toBeVisible();
+      await expect
+        .poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+        .toBeGreaterThan(0);
+    }
+    await expect(card.getByText('Ikon: Cykel', { exact: true })).toBeVisible();
+    await expect(card.getByText('Ikon: Bil', { exact: true })).toBeVisible();
   } finally {
     await installation.close();
   }

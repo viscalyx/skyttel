@@ -7,6 +7,7 @@ export function Reports({
   path,
   version,
   selection,
+  onSelect,
   onAccessLost,
   onReturn,
 }: {
@@ -14,6 +15,7 @@ export function Reports({
   path: string;
   version: number;
   selection?: HistorySelection;
+  onSelect: (selection: HistorySelection, href: string) => void;
   onAccessLost: () => void;
   onReturn: () => void;
 }) {
@@ -43,6 +45,7 @@ export function Reports({
           path={path}
           version={version}
           selection={selection}
+          onSelect={onSelect}
           onAccessLost={onAccessLost}
         />
       </div>

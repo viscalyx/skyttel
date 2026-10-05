@@ -174,6 +174,63 @@ Reports”.
   försök samt det osparade objektet är inte historikposter.
 - Historikläsningen ändrar varken karta, utkast eller sparförsök.
 
+### HISTORIK-12: följ sparlänkar och behåll pågående arbete
+
+**Syfte:** Öppna utpekade sparanden utan att tappa tabellsökningen,
+det egna utkastet eller oskickad samtalstext.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Två sparanden enligt förberedelsen och ett osparat
+förslag för **Privat person**.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
+“HISTORIK-12: following save links preserves table search and unsent conversation
+text”.
+
+**Steg:**
+
+1. Öppna **Skriv till Skyttel**. Skriv ett meddelande utan att skicka det.
+   Stäng textvyn.
+2. Välj **Tabell** och sök efter **Lo Lind**.
+3. Välj **Rapporter** och sedan **Länk till sparandet** på tilläggets kort.
+   Läs uppgifterna och kontrollera fokus på sparandets rubrik.
+4. Följ namnbytets länk på samma sätt. Kontrollera den nya länken i
+   adressfältet och att rätt sparandes uppgifter öppnas.
+5. Välj **Tillbaka till arbetet** och öppna sedan textvyn igen.
+
+**Förväntat resultat:**
+
+- Varje sparlänk öppnar rätt detaljer och flyttar fokus till kortets rubrik.
+- Återgången visar samma tabellsökning med fokus i sökfältet.
+- Utkastet och det oskickade meddelandet är oförändrade. Besöket begär
+  inget medgivande och skickar inget meddelande.
+
+### HISTORIK-13: läs historiska ikoner bredvid samma profilbild
+
+**Syfte:** Läsa ändrade ikonvärden även när profilbilden är oförändrad.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Spara **Lo Exempel** med ikonen **Cykel** och en
+syntetisk profilbild. Byt sedan endast ikonen till **Bil** och spara igen.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
+“HISTORIK-13: historical icon changes remain readable beside an unchanged
+profile image”.
+
+**Steg:**
+
+1. Välj **Rapporter** och öppna ikonbytets **Visa ändringarna**.
+2. Läs ikon och profilbild före respektive efter sparandet.
+
+**Förväntat resultat:**
+
+- Samma profilbild visas på båda sidor.
+- **Ikon: Cykel** före och **Ikon: Bil** efter går att läsa som text.
+
 ## Avvecklade fall
 
 HISTORIK-02–05 och HISTORIK-08–09 är avvecklade med historisk ångring.

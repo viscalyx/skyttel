@@ -124,7 +124,7 @@ async function prepareRemovedHistory() {
       })
     ).status,
   ).toBe(200);
-  const created = await save('created');
+  await save('created');
   const before = await read();
   expect(
     (
@@ -161,30 +161,36 @@ async function prepareRemovedHistory() {
     ).status,
   ).toBe(200);
   await save('renamed-type');
-  // Return the later edits first so the whole original creation can be reversed.
-  for (const id of ['renamed-type', 'changed-object-type', 'changed-direction']) {
-    const { history } = await (await client.request(`${path}/history`)).json();
-    const receipt = history.find((item: SaveReceipt) => item.operationId === id);
-    expect(
-      (
-        await post('undo', {
-          version: (await read()).draft.version,
-          userId: receipt.userId,
-          operationId: id,
-        })
-      ).status,
-    ).toBe(200);
-    await save(`undo-${id}`);
-  }
+  // Ordinary removals preserve the earlier saved values and type snapshots.
+  const current = await read();
   expect(
     (
-      await post('undo', {
-        version: (await read()).draft.version,
-        userId: created.userId,
-        operationId: created.operationId,
+      await post('relationship', {
+        version: current.draft.version,
+        id: 'support',
+        baseRevision: current.relationships[0].revision,
+        value: null,
       })
     ).status,
   ).toBe(200);
+  await object('flower', null);
+  await object('person', null);
+  for (const [route, type] of [
+    ['object-type', current.types.find((item) => item.id === 'plant')],
+    ['relationship-type', current.relationshipTypes.find((item) => item.id === 'supports')],
+  ] as const) {
+    if (!type) throw new Error('Expected saved type');
+    expect(
+      (
+        await post(route, {
+          version: (await read()).draft.version,
+          id: type.id,
+          baseRevision: type.revision,
+          value: null,
+        })
+      ).status,
+    ).toBe(200);
+  }
   await save('removed');
   return state;
 }

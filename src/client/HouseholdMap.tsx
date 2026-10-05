@@ -246,7 +246,7 @@ export function HouseholdMap({
     contentVersion: number;
     baseRevision: number | null;
   } | null>(null);
-  const [reportSelection] = useState(() => {
+  const [reportSelection, setReportSelection] = useState(() => {
     const query = new URLSearchParams(window.location.search);
     return query.get('report') === 'history' && query.get('save') && query.get('savedBy')
       ? { operationId: query.get('save') as string, userId: query.get('savedBy') as string }
@@ -1766,6 +1766,10 @@ export function HouseholdMap({
           path={path}
           version={state.draft.version}
           selection={reportSelection}
+          onSelect={(selection, href) => {
+            window.history.replaceState(window.history.state, '', href);
+            setReportSelection(selection);
+          }}
           onAccessLost={loseAccess}
           onReturn={() => {
             setWorkspaceSurface(reportReturnSurface.current);

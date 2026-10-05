@@ -6,6 +6,7 @@ import type {
   SavedRelationshipChange,
   SaveReceipt,
 } from '../shared/map.js';
+import { objectIconLabel } from '../shared/object-icons.js';
 import { HistoricalMergeDetails } from './HistoricalMergeDetails.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
@@ -117,6 +118,7 @@ function ObjectDetails({
     <>
       <p>Namn: {value.name}.</p>
       <ProfileImage householdId={householdId} value={value} typeName={type.name} />
+      {value.profileImageId && <p>Ikon: {objectIconLabel(value.iconId, type.name)}</p>}
       <details>
         <summary>Objektets identitet</summary>
         <p>{value.id}</p>
@@ -192,17 +194,19 @@ export function MapHistory({
   active,
   version,
   selection,
+  onSelect,
   onAccessLost,
 }: {
   path: string;
   active: boolean;
   version: number;
   selection?: HistorySelection;
+  onSelect: (selection: HistorySelection, href: string) => void;
   onAccessLost: () => void;
 }) {
   const title = useRef<HTMLHeadingElement>(null);
   const content = useRef<HTMLDivElement>(null);
-  const selectedFocused = useRef(false);
+  const selectedFocused = useRef<HistorySelection | undefined>(undefined);
   const householdId = decodeURIComponent(path.split('/')[3]);
   const [history, setHistory] = useState<SaveReceipt[] | null>(null);
   const [error, setError] = useState('');
@@ -212,13 +216,13 @@ export function MapHistory({
     if (active) title.current?.focus({ preventScroll: true });
   }, [active]);
   useLayoutEffect(() => {
-    if (!active || !history || !selection || selectedFocused.current) return;
+    if (!active || !history || !selection || selectedFocused.current === selection) return;
     const selected = [...(content.current?.querySelectorAll<HTMLElement>('article') ?? [])].find(
       (item) =>
         item.dataset.save === selection.operationId && item.dataset.savedBy === selection.userId,
     );
     if (!selected) return;
-    selectedFocused.current = true;
+    selectedFocused.current = selection;
     // A delayed read must not overwrite a newer keyboard/focus choice.
     if (document.activeElement === title.current || document.activeElement === document.body) {
       selected.querySelector<HTMLElement>('h3')?.focus();
@@ -299,7 +303,27 @@ export function MapHistory({
               <p>Skyttel-användare: {receipt.userId}.</p>
               <p>Tidpunkt: {receipt.savedAt}</p>
             </details>
-            <a href={historySaveLink(householdId, receipt)}>Länk till sparandet</a>
+            <a
+              href={historySaveLink(householdId, receipt)}
+              onClick={(event) => {
+                if (
+                  event.button !== 0 ||
+                  event.metaKey ||
+                  event.ctrlKey ||
+                  event.shiftKey ||
+                  event.altKey
+                )
+                  return;
+                event.preventDefault();
+                title.current?.focus({ preventScroll: true });
+                onSelect(
+                  { operationId: receipt.operationId, userId: receipt.userId },
+                  historySaveLink(householdId, receipt),
+                );
+              }}
+            >
+              Länk till sparandet
+            </a>
             <details
               className="history-changes"
               open={
