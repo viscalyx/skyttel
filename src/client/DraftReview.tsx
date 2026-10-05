@@ -64,7 +64,7 @@ export function DraftReview({
   blocked?: boolean;
 }) {
   const removal = useDraftRemoval(state, blocked, removalOwner);
-  const actionsBlocked = blocked || removal.pending;
+  const actionsBlocked = blocked || removal.pending || (!!removal.review && !removal.reviewOpen);
   const [readKey, setReadKey] = useState<string | null>(null);
   const proposals = draftProposals(state.draft);
   const read = proposals.find((proposal) => proposal.key === readKey);
@@ -150,6 +150,16 @@ export function DraftReview({
       {!!Object.keys(warnings).length && <p>Rätta markerade förslag innan du sparar.</p>}
       {feedback && <p>{feedback}</p>}
       {removal.review && (
+        <button
+          type="button"
+          hidden={removal.reviewOpen}
+          disabled={removal.pending}
+          onClick={removal.openReview}
+        >
+          Kontrollera borttagningen
+        </button>
+      )}
+      {removal.review && removal.reviewOpen && (
         <DraftDiscardDialog
           review={removal.review}
           proposals={draftProposalDescriptors(state.draft)}

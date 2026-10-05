@@ -357,6 +357,7 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   uppdaterade beroenden efter inaktuell bekräftelse, typkonflikter med
   bevarade egna värden, fokus efter sista raden och återhämtning av
   borttagning efter tappat svar,
+  beständig borttagningskontroll utan avbrott i senare samtalstext,
   tomt utkast och bevarat första meddelande;
   filtrerad teckenförklaring med kartans färger,
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta

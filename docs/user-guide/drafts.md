@@ -84,6 +84,8 @@ Rubrikens **Kasta hela utkastet** visar alla dina förslag och kräver
 bekräftelse. **Avbryt** ändrar ingenting. Om utkastet har ändrats eller
 svaret försvinner väljer du **Hämta aktuellt utkast** för att kontrollera
 utfallet och läsa aktuella beroenden innan ett nytt försök.
+Om du hunnit fortsätta med annat arbete öppnas ingen feldialog över det.
+**Kontrollera borttagningen** ger en beständig ingång till uppföljningen.
 Ingen av knapparna ångrar ett redan
 genomfört sparande. Läs då [ändringshistoriken](history.md) och lägg
 eventuella rättelser

@@ -181,6 +181,11 @@ for (const kind of ['objectType', 'relationshipType'] as const) {
       });
       await expect(row).toContainText('Typens uppgifter skiljer sig');
       await expect(row.locator('.draft-row-warning')).toBeVisible();
+      await row.getByRole('button', { name: /^Visa förslaget:/ }).click();
+      const details = page.getByRole('dialog');
+      await expect(details).toContainText('Ny uppgift');
+      await expect(details).toContainText('Behåll hela mitt värde');
+      await page.keyboard.press('Escape');
       expect(after.objects).toEqual(before.objects);
       expect(after.relationships).toEqual(before.relationships);
       expect(after.types).toEqual(before.types);
@@ -233,6 +238,69 @@ test('UTKAST-48: lost independent removal checks actual draft before offering an
     expect(after.objects).toEqual(before.objects);
     expect(after.relationships).toEqual(before.relationships);
   } finally {
+    await installation.close();
+  }
+});
+
+test('UTKAST-48: a delayed independent removal failure preserves later composer focus and exposes persistent recovery', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  let release: (() => void) | undefined;
+  try {
+    const data = await prepareDraftReview(page.request, installation.origin);
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let applied: (() => void) | undefined;
+    const changed = new Promise<void>((resolve) => {
+      applied = resolve;
+    });
+    await page.route('**/map/discard-review', async (route) => {
+      if (!route.request().postDataJSON().confirmation) return route.continue();
+      await route.fetch();
+      applied?.();
+      await held;
+      await route.abort();
+    });
+    await page.goto(`${installation.origin}/households/${data.household.id}`);
+    await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+    const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await draft
+      .getByRole('button', { name: 'Ta bort förslaget: Olöst fordon', exact: true })
+      .click();
+    await changed;
+    const message = page.getByLabel('Meddelande till Skyttel', { exact: true });
+    await message.fill('Min senare text och fokus ska finnas kvar');
+    release?.();
+    await expect(page.getByRole('status', { name: 'Utkastets åtgärdsstatus' })).toContainText(
+      'Borttagningen kunde inte bekräftas',
+    );
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(message).toBeFocused();
+    await expect(message).toHaveValue('Min senare text och fokus ska finnas kvar');
+    await expect(
+      draft.getByRole('button', { name: 'Ta bort förslaget: Olöst fordon', exact: true }),
+    ).toBeDisabled();
+    await draft.getByRole('button', { name: 'Kontrollera borttagningen', exact: true }).click();
+    const dialog = page.getByRole('dialog', {
+      name: 'Ta bort förslaget och dess beroenden?',
+      exact: true,
+    });
+    await expect(dialog.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(
+      draft.getByRole('button', { name: 'Kontrollera borttagningen', exact: true }),
+    ).toBeFocused();
+    await draft.getByRole('button', { name: 'Kontrollera borttagningen', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Hämta aktuellt utkast', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(
+      draft.getByRole('button', { name: 'Ta bort förslaget: Olöst fordon', exact: true }),
+    ).toHaveCount(0);
+    await expect(message).toHaveValue('Min senare text och fokus ska finnas kvar');
+  } finally {
+    release?.();
     await installation.close();
   }
 });
@@ -416,6 +484,11 @@ test('UTKAST-45: a stale discard confirmation preserves newer proposals and refr
     await expect(dialog.getByRole('button', { name: 'Ta bort', exact: true })).toBeDisabled();
     await dialog.getByRole('button', { name: 'Hämta aktuellt utkast', exact: true }).click();
     await expect(dialog.getByRole('alert')).toHaveCount(0);
+    await expect(dialog.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(dialog.getByRole('button', { name: 'Ta bort', exact: true })).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(dialog.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
     await expect(dialog.getByRole('listitem')).toHaveCount(4);
     await expect(dialog).not.toContainText('Nyare oberoende typ');
     await dialog.getByRole('button', { name: 'Ta bort', exact: true }).click();

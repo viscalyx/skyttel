@@ -21,6 +21,7 @@ export function DraftDiscardDialog({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const cancel = useRef<HTMLButtonElement>(null);
+  const refreshOrigin = useRef<HTMLElement | null>(null);
   const title = useId();
   useLayoutEffect(() => {
     const element = dialog.current;
@@ -33,6 +34,12 @@ export function DraftDiscardDialog({
         origin.focus();
     };
   }, [review.focus.origin]);
+  useLayoutEffect(() => {
+    const origin = refreshOrigin.current;
+    if (review.error || !origin) return;
+    refreshOrigin.current = null;
+    if (!origin.isConnected && document.activeElement === document.body) cancel.current?.focus();
+  }, [review.error]);
   return (
     <dialog
       ref={dialog}
@@ -87,7 +94,14 @@ export function DraftDiscardDialog({
         {review.error && (
           <>
             <p role="alert">{review.error}</p>
-            <button type="button" disabled={pending} onClick={onRefresh}>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={(event) => {
+                refreshOrigin.current = event.currentTarget;
+                onRefresh();
+              }}
+            >
               Hämta aktuellt utkast
             </button>
           </>

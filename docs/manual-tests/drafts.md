@@ -416,6 +416,7 @@ and refreshes its actual plan”.
    `result` att förslagen är kvar, inklusive **Nyare oberoende typ**.
 4. Välj **Hämta aktuellt utkast**. Läs de fyra förslag som nu omfattas
    av borttagningen; det nya typförslaget ingår inte.
+   Kontrollera fokus på **Avbryt** och att Tab och Skift+Tab stannar i dialogen.
 5. Välj **Ta bort**. Kontrollera att typförslaget är kvar och den
    gemensamma kartan inte har ändrats.
 
@@ -513,6 +514,8 @@ testfallen “UTKAST-48: authoritative discard rejects forged or unauthorized
 requests and recovers an applied removal after a lost reply” och
 “UTKAST-48: lost independent removal checks actual draft before offering
 another removal”.
+Även “UTKAST-48: a delayed independent removal failure preserves later
+composer focus and exposes persistent recovery”.
 
 **Steg:**
 
@@ -523,6 +526,12 @@ another removal”.
 4. Kontrollera att sparade objekt, samband och historik är oförändrade.
 5. Upprepa med `new-base` och `lost-response`, men välj i stället
    papperskorgen för **Olöst fordon**. Hämta aktuellt utkast efter felbeskedet.
+6. Välj `new-base` och `hold`. Ta bort **Olöst fordon**, invänta terminalens
+   besked om hållet svar och skriv sedan ett oskickat samtalsmeddelande.
+   Välj `lost-response` och `release` i terminalen.
+7. Kontrollera att meddelandefältets fokus och text finns kvar. Välj
+   **Kontrollera borttagningen**, avbryt med Escape och kontrollera återfokus.
+   Öppna kontrollen igen och välj **Hämta aktuellt utkast**.
 
 **Förväntat resultat:**
 
@@ -531,6 +540,9 @@ another removal”.
 - Tomt utkast visas med användbart fokus. Inget nytt gemensamt sparande sker.
 - Det oberoende borttagna förslaget visas som borttaget efter kontroll;
   övriga fullständiga förslag behålls. Samma borttagning skickas inte igen.
+- Ett fördröjt fel öppnar ingen dialog över senare arbete. Kontrollknappen
+  och felbeskedet finns kvar utan tidsgräns, även efter stängd kontroll.
+  Meddelandet bevaras. Escape återför fokus till kontrollknappen.
 - HTTP-proven avvisar obehöriga eller inaktuella anrop och en felaktig
   bekräftelselista utan att förändra utkastet.
 

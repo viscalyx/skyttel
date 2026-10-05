@@ -8,7 +8,7 @@ export type DraftRemovalOwner = {
   onChange: (state: MapState) => void;
   onStatus: (message: string) => void;
 };
-type RemovalFocus = { origin: HTMLElement | null; keys: string[] };
+type RemovalFocus = { origin: HTMLElement | null; keys: string[]; control?: HTMLElement | null };
 export type DraftRemovalReview = {
   body: Record<string, unknown>;
   plan: DraftDiscardPlan;
@@ -19,6 +19,8 @@ export type DraftRemovalReview = {
 export function useDraftRemoval(state: MapState, disabled: boolean, owner?: DraftRemovalOwner) {
   const [pending, setPending] = useState(false);
   const [review, setReview] = useState<DraftRemovalReview | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const visible = useRef(false);
   const current = useRef(owner);
   current.current = owner;
   const content = useRef(state.contentVersion);
@@ -27,23 +29,44 @@ export function useDraftRemoval(state: MapState, disabled: boolean, owner?: Draf
   // biome-ignore lint/correctness/useExhaustiveDependencies: A new household or imported content retires the old review and requests.
   useLayoutEffect(() => {
     setReview(null);
+    setReviewOpen(false);
+    visible.current = false;
     setPending(false);
     restore.current = null;
   }, [owner?.path, state.contentVersion]);
   function isCurrent() {
     return current.current?.path === owner?.path && content.current === state.contentVersion;
   }
+  function showReview(selection: DraftRemovalReview) {
+    visible.current = true;
+    setReview(selection);
+    setReviewOpen(true);
+  }
+  function failed(selection: DraftRemovalReview, error: string, ownsFocus: boolean) {
+    setReview({ ...selection, error });
+    visible.current = ownsFocus;
+    setReviewOpen(ownsFocus);
+    if (!ownsFocus) owner?.onStatus(error);
+  }
   useLayoutEffect(() => {
-    if (pending || !restore.current) return;
+    if (pending || reviewOpen || !restore.current) return;
     const target = restore.current;
     restore.current = null;
     if (document.activeElement !== document.body && document.activeElement !== target.origin)
       return;
+    if (
+      target.control?.isConnected &&
+      !target.control.matches(':disabled') &&
+      target.control.getClientRects().length
+    ) {
+      target.control.focus();
+      return;
+    }
     const available = new Set(draftProposalRefs(state.draft).map(({ key }) => key));
     const key = target.keys.find((value) => available.has(value));
     const button = key ? document.getElementById(`draft-remove-${key}`) : null;
     (button ?? document.getElementById('text-draft-title'))?.focus();
-  }, [pending, state.draft]);
+  }, [pending, reviewOpen, state.draft]);
 
   async function apply(selection: DraftRemovalReview) {
     if (!owner) return;
@@ -61,6 +84,8 @@ export function useDraftRemoval(state: MapState, disabled: boolean, owner?: Draf
           : selection.focus.origin,
     };
     setReview(null);
+    visible.current = false;
+    setReviewOpen(false);
     owner.onChange(result);
     owner.onStatus(
       selection.body.kind === 'all'
@@ -76,11 +101,11 @@ export function useDraftRemoval(state: MapState, disabled: boolean, owner?: Draf
       await apply(review);
     } catch {
       if (isCurrent())
-        setReview({
-          ...review,
-          error:
-            'Borttagningen kunde inte bekräftas. Hämta aktuellt utkast för att kontrollera resultatet och granska beroendena igen.',
-        });
+        failed(
+          review,
+          'Borttagningen kunde inte bekräftas. Hämta aktuellt utkast för att kontrollera resultatet och granska beroendena igen.',
+          visible.current,
+        );
     } finally {
       if (isCurrent()) setPending(false);
     }
@@ -98,6 +123,8 @@ export function useDraftRemoval(state: MapState, disabled: boolean, owner?: Draf
       );
       if (!target && (review.body.kind !== 'all' || !draftProposalRefs(latest.draft).length)) {
         setReview(null);
+        visible.current = false;
+        setReviewOpen(false);
         owner.onStatus('Förslaget finns inte längre i ditt utkast. Aktuellt utkast har hämtats.');
         restore.current = review.focus;
         return;
@@ -122,7 +149,7 @@ export function useDraftRemoval(state: MapState, disabled: boolean, owner?: Draf
   }
 
   async function begin(key?: string) {
-    if (!owner || disabled || pending) return;
+    if (!owner || disabled || pending || review) return;
     const entries = draftProposalRefs(state.draft);
     const proposal = entries.find((entry) => entry.key === key);
     if (key && !proposal) return;
@@ -152,18 +179,19 @@ export function useDraftRemoval(state: MapState, disabled: boolean, owner?: Draf
       if (!isCurrent()) return;
       selection = { body, plan, focus };
       if (!key || plan.removed.length > 1 || plan.affected.length) {
-        setReview(selection);
+        showReview(selection);
         return;
       }
       await apply(selection);
     } catch {
       if (isCurrent()) {
         if (selection)
-          setReview({
-            ...selection,
-            error:
-              'Borttagningen kunde inte bekräftas. Hämta aktuellt utkast för att kontrollera resultatet.',
-          });
+          failed(
+            selection,
+            'Borttagningen kunde inte bekräftas. Hämta aktuellt utkast för att kontrollera resultatet.',
+            document.activeElement === focus.origin ||
+              (document.activeElement === document.body && !document.querySelector('dialog:modal')),
+          );
         else
           owner.onStatus(
             'Borttagningen kunde inte bekräftas. Hämta aktuellt utkast och försök igen.',
@@ -178,8 +206,29 @@ export function useDraftRemoval(state: MapState, disabled: boolean, owner?: Draf
     discard: owner ? () => void begin() : undefined,
     pending,
     review,
+    reviewOpen,
+    openReview: () => {
+      if (review)
+        showReview({
+          ...review,
+          focus: {
+            ...review.focus,
+            origin: document.activeElement instanceof HTMLElement ? document.activeElement : null,
+          },
+        });
+    },
     confirm,
     refresh,
-    cancel: () => setReview(null),
+    cancel: () => {
+      if (review && visible.current)
+        restore.current = {
+          ...review.focus,
+          control: review.focus.origin,
+          origin: document.activeElement instanceof HTMLElement ? document.activeElement : null,
+        };
+      visible.current = false;
+      setReviewOpen(false);
+      if (!pending && !review?.error) setReview(null);
+    },
   };
 }
