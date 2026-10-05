@@ -22,8 +22,8 @@ import {
 import { mergeFor } from '../shared/object-merge.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
-import { DraftReview } from './DraftReview.js';
 import { ConflictDialog } from './ConflictDialog.js';
+import { DraftReview } from './DraftReview.js';
 import { DraftStatus } from './DraftStatus.js';
 import { useFloatingArea } from './floating-windows.js';
 import {
