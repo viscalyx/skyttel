@@ -105,7 +105,7 @@ test('EXPORT-07: revocation or demotion interrupts an active download and remove
   }
 });
 
-test('EXPORT-06: a full archive preserves merge identities and original, copied and private image versions', async ({
+test('EXPORT-06: a full archive preserves object identities and saved, historical and private image versions', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -136,7 +136,7 @@ test('EXPORT-06: a full archive preserves merge identities and original, copied 
         ).status(),
       ).toBe(200);
     }
-    let state = await read();
+    const state = await read();
     expect(
       (
         await post('relationship', {
@@ -194,40 +194,10 @@ test('EXPORT-06: a full archive preserves merge identities and original, copied 
     const sourceId = await upload('second', '#2255aa');
     await save('source-image');
     const sourceBytes = await imageBytes(sourceId);
-    state = await read();
-    expect(
-      (
-        await post('merge', {
-          version: state.draft.version,
-          survivorId: 'first',
-          absorbedId: 'second',
-          identityConfirmed: true,
-          reviewed: {
-            objects: ['first', 'second'].map((id) =>
-              state.objects.find((object) => object.id === id),
-            ),
-            relationships: state.relationships,
-            types: state.types.filter((type) => type.id === state.objects[0].typeId),
-            relationshipTypes: state.relationshipTypes.filter(
-              (type) => type.id === state.relationships[0].typeId,
-            ),
-          },
-          choices: { profileImageId: 'absorbed' },
-          relationships: [{ id: 'unknown-endpoint', action: 'keep' }],
-        })
-      ).status(),
-    ).toBe(200);
-    const merged = await save('merge-with-image');
-    const merge = merged.changes.find((change) => change.after?.id === 'first')?.merge;
-    const copiedId = merge?.imageCopy?.copiedImageId;
-    expect(copiedId).toEqual(expect.any(String));
+    const copiedId = await upload('first', '#2255aa');
+    const imageSave = await save('image-with-history');
     expect(copiedId).not.toBe(sourceId);
-    expect(await imageBytes(copiedId as string)).toEqual(sourceBytes);
-    expect(merge?.imageCopy).toEqual({
-      sourceObjectId: 'second',
-      sourceImageId: sourceId,
-      copiedImageId: copiedId,
-    });
+    expect(await imageBytes(copiedId)).toEqual(sourceBytes);
     const privateId = await upload('first', '#aa5522');
     const privateBytes = await imageBytes(privateId);
     expect(privateBytes).not.toEqual(sourceBytes);
@@ -235,7 +205,10 @@ test('EXPORT-06: a full archive preserves merge identities and original, copied 
     await installation.restart();
     expect((await read()).draft).toEqual(expectedDraft);
     const publicView = await (await page.request.get(`${path}/view`)).json();
-    expect(publicView.positions.map((position: { id: string }) => position.id)).toEqual(['first']);
+    expect(publicView.positions.map((position: { id: string }) => position.id).sort()).toEqual([
+      'first',
+      'second',
+    ]);
 
     const prepared = await page.request.post(`${householdPath}/exports`, { headers, data: {} });
     expect(prepared.status()).toBe(201);
@@ -259,19 +232,19 @@ test('EXPORT-06: a full archive preserves merge identities and original, copied 
     }
     const content = JSON.parse(Buffer.from(parts['content.json']).toString());
     const exportedSave = content.saves.find(
-      (save: { operationId: string }) => save.operationId === 'merge-with-image',
+      (save: { operationId: string }) => save.operationId === 'image-with-history',
     );
-    expect(exportedSave.receipt).toEqual(merged);
+    expect(exportedSave.receipt).toEqual(imageSave);
     expect(content.objects).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'first', deleted: 0, profileImageId: copiedId }),
-        expect.objectContaining({ id: 'second', deleted: 1, profileImageId: sourceId }),
+        expect.objectContaining({ id: 'second', deleted: 0, profileImageId: sourceId }),
       ]),
     );
     expect(content.relationships).toEqual([
       expect.objectContaining({
         id: 'unknown-endpoint',
-        sourceId: 'first',
+        sourceId: 'second',
         targetId: null,
         knowledge: 'unknown',
       }),

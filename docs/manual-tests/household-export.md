@@ -2,7 +2,7 @@
 
 Testfallen omfattar administratörens information före export, nedladdning,
 avbrott, ändrad tillgång, giltighetstid och bevarat innehåll efter
-sammanslagning. Anteckna commit, webbläsare och godkänt eller underkänt
+vanliga bildförslag. Anteckna commit, webbläsare och godkänt eller underkänt
 resultat vid körning.
 
 ## Konfigurerade användare
@@ -197,10 +197,10 @@ testfallet “EXPORT-05: an expired export requires a new preparation”.
 
 ## Historiskt och privat innehåll
 
-### EXPORT-06: Bevara sammanslagning, bildversioner och privat utkast
+### EXPORT-06: Bevara objekt, bildversioner och privat utkast
 
 **Syfte:** Kontrollera att exporten efter omstart innehåller underlaget
-för sammanslagning och ångring samt senare privat arbete.
+för sparade bilder och senare privat arbete.
 
 **Användare:** Alex som administratör.
 
@@ -210,22 +210,19 @@ Flytta båda i Alex personliga vy så att placeringarna sparas.
 
 **Integrationstest:**
 [household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts),
-testfallet “EXPORT-06: a full archive preserves merge identities and
-original, copied and private image versions”.
+testfallet “EXPORT-06: a full archive preserves object identities and saved,
+historical and private image versions”.
 
 **Steg:**
 
-1. Följ [guiden för sammanslagning](../user-guide/object-merge.md). Låt det
-   första objektet behålla sin identitet och välj det andra objektets
-   profilbild. Bekräfta samma företeelse och spara hela utkastet.
-2. Anteckna kvittot. Öppna **Visa historik** och granska sammanslagningen,
-   inklusive ursprungliga identiteter och bildval. Kontrollera att den
-   gemensamma bilden på det kvarvarande objektet visar samma motiv som
-   bilden på det andra objektet före sammanslagningen.
-3. Välj en annan profilbild på det kvarvarande objektet. Lämna
+1. Välj samma provbild på det första objektet och spara bildförslaget
+   som ett vanligt sparande. Båda objekten finns kvar.
+2. Anteckna kvittot. Välj **Rapporter** och granska bildsparandets
+   historiska värden och objektens identiteter. Bilderna visar samma motiv.
+3. Välj en annan profilbild på det första objektet. Lämna
    bildförslaget i det privata utkastet utan att spara.
 4. Starta om installationen med samma databas. Kontrollera att det
-   privata bildförslaget och sammanslagningens historik finns kvar.
+   privata bildförslaget och bildsparandets historik finns kvar.
 5. Hämta fullständig export och öppna `content.json` i ZIP-filen.
    Jämför objekten, kvittot och historiken med identifierarna och
    uppgifterna du antecknar. Kontrollera även utkast, bildreferenser
@@ -234,10 +231,9 @@ original, copied and private image versions”.
 
 **Förväntat resultat:**
 
-- Båda objektens ursprungliga identiteter finns i arkivet. Det andra
-  objektet är markerat som borttaget och historiken beskriver hela
-  sammanslagningen med samma kvitto som i Skyttel.
-- Bilden på det andra objektet, kopian på det kvarvarande objektet och
+- Båda objektens identiteter finns i arkivet som aktuella objekt.
+  Historiken beskriver bildsparandet med samma kvitto som i Skyttel.
+- Bilden på det andra objektet, kopian på det första objektet och
   den senare privata bildversionen finns med. Utkastet hänvisar till den
   privata versionen. Arkivet innehåller bilddata i `images.bin`.
 - Alex personliga placeringar för båda objektens identiteter finns kvar.

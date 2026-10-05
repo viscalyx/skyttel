@@ -18,8 +18,8 @@ Nuvarande medlemmar, administratörer, inbjudningar och inloggningar behålls.
    gamla förslag medan resultatet är okänt.
 5. Vid slutförd import väljer du **Läs in det återställda hushållet**.
    Alla användare behöver läsa in aktuellt innehåll. Gamla formulär och
-   sparförsök avvisas. Nytt underlag kan fortfarande ångra importerad
-   historik genom ett nytt granskat utkast.
+   sparförsök avvisas. Importerad historik kan läsas från **Rapporter**
+   med sparandenas historiska värden och benämningar.
 
 Om någon ändrar innehållet under förberedelsen måste filen förberedas igen.
 En trasig, ofullständig eller okänd export avvisas före ersättning. Stöd

@@ -6,6 +6,19 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Assistant tool removal
+
+Refresh connected assistants' tool catalogs after rollout. Historical undo
+and object merge actions are removed from the web interface and assistant
+tools. Update external clients that call those actions before upgrade.
+History remains available for reading. Ordinary drafts and atomic saves
+continue to use durable save receipts.
+
+Older private object merge proposals are not supported by this release.
+Resolve or discard those proposals before upgrade. Keep a database backup
+and its matching image for rollback. Saved history remains readable; removal
+of the actions does not permanently erase historical content.
+
 ### Database compatibility and rollout
 
 This release adds database storage and changes saved content formats. Before
@@ -25,7 +38,7 @@ a change to historical owner assignments invalidates older attempts.
 Backups now retain private drafts, personal views, image versions, save attempts,
 historical names, financial facts and removed content. Apply household access
 and retention restrictions to these records and their recovery copies. Ordinary
-removal and undo do not permanently erase retained information. Follow the
+removal does not permanently erase retained information. Follow the
 [permanent erasure runbook](permanent-erasure.md) for that operation.
 
 ### Object icon and archive compatibility

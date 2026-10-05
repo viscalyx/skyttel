@@ -35,7 +35,7 @@ async function expectSpatialPortrait(page: Page, imageId: string | null | undefi
   }
 }
 
-test('BILD-01: profile image proposals preserve text, survive restart and undo replacement', async ({
+test('BILD-01: profile image proposals preserve text, survive restart and expose historical replacements', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -71,7 +71,9 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
     await details
       .getByLabel('Välj profilbild')
       .setInputFiles({ name: 'syntetisk.png', mimeType: 'image/png', buffer: source });
-    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Bildförslaget finns',
+    );
     const first = (await read()).draft.changes[0].after?.profileImageId;
     await expect(details.getByAltText('Profilbild för Lo Exempel')).toBeVisible();
     expect((await read()).objects).toEqual([]);
@@ -87,7 +89,9 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
     await expect(details.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad text');
     await details.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
@@ -103,11 +107,15 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
       mimeType: 'image/webp',
       buffer: await sharp(source).negate().webp().toBuffer(),
     });
-    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Bildförslaget finns',
+    );
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
     const history = page.getByRole('region', { name: 'Ändringshistorik' });
     await history
       .getByRole('article')
@@ -117,17 +125,9 @@ test('BILD-01: profile image proposals preserve text, survive restart and undo r
     await expect(history.getByRole('article').first().getByRole('img')).toHaveCount(2);
     await expect(history.getByRole('article').first().getByRole('img').first()).toBeVisible();
     await expect(history.getByRole('article').first().getByRole('img').last()).toBeVisible();
-    await history
-      .getByRole('article')
-      .first()
-      .getByRole('button', { name: 'Ångra sparandet' })
-      .click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    expect((await read()).objects[0]).toMatchObject({
-      profileImageId: first,
-      description: 'Oskickad text',
-    });
+    expect((await read()).objects[0].profileImageId).not.toBe(first);
+    expect((await read()).objects[0].description).toBe('Oskickad text');
+    await expect(history.getByRole('button', { name: 'Ångra sparandet' })).toHaveCount(0);
   } finally {
     await installation.close();
   }
@@ -165,7 +165,9 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
     await details
       .getByLabel('Välj profilbild')
       .setInputFiles({ name: 'bild.jpg', mimeType: 'image/jpeg', buffer: source });
-    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Bildförslaget finns',
+    );
     const before = await read();
     await details.getByLabel('Välj profilbild').setInputFiles({
       name: 'fel.png',
@@ -181,11 +183,15 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
     expect(await read()).toEqual(before);
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await details.getByRole('button', { name: 'Ta bort profilbild' }).click();
-    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Bildförslaget finns',
+    );
     expect((await read()).objects[0].profileImageId).toBeDefined();
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.route(
@@ -199,20 +205,22 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
     await page.getByRole('button', { name: 'Hämta samma kvitto igen' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     expect((await read()).objects[0].profileImageId).toBeUndefined();
     const history = (await (await page.request.get(`${path}/history`)).json()).history;
     expect(history).toHaveLength(2);
-    await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
-    await page
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
+    const card = page
       .getByRole('region', { name: 'Ändringshistorik' })
       .getByRole('article')
-      .first()
-      .getByRole('button', { name: 'Ångra sparandet' })
-      .click();
-    expect((await read()).draft.changes[0].after?.profileImageId).toBe(
-      before.draft.changes[0].after?.profileImageId,
-    );
+      .first();
+    await card.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(card.getByRole('img')).toHaveCount(1);
+    await expect(card.getByRole('img')).toBeVisible();
+    expect((await read()).objects[0].profileImageId).toBeUndefined();
+    expect((await read()).draft.changes).toEqual([]);
   } finally {
     await installation.close();
   }
@@ -267,13 +275,17 @@ test('BILD-03: private, historical and known image addresses enforce current hou
       .webp()
       .toBuffer();
     await input.setInputFiles({ name: 'bild.webp', mimeType: 'image/webp', buffer: source });
-    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Bildförslaget finns',
+    );
     const first = (await read()).draft.changes[0].after?.profileImageId;
     expect((await second.request.get(`${images}/${first}`)).status()).toBe(404);
     expect((await anonymous.request.get(`${images}/${first}`)).status()).toBe(401);
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     expect((await second.request.get(`${images}/${first}`)).status()).toBe(200);
     await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
@@ -282,18 +294,22 @@ test('BILD-03: private, historical and known image addresses enforce current hou
       mimeType: 'image/webp',
       buffer: await sharp(source).negate().webp().toBuffer(),
     });
-    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Bildförslaget finns',
+    );
     const replacementId = (await read()).draft.changes[0].after?.profileImageId;
     expect(replacementId).not.toBe(first);
     expect((await second.request.get(`${images}/${replacementId}`)).status()).toBe(404);
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     const replaced = await read();
     expect(replaced.objects[0].profileImageId).toBe(replacementId);
     expect(replaced.draft.changes).toEqual([]);
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(history.at(-1).changes[0]).toMatchObject({
+    expect(history[0].changes[0]).toMatchObject({
       before: { profileImageId: first },
       after: { profileImageId: replacementId },
     });
@@ -307,7 +323,9 @@ test('BILD-03: private, historical and known image addresses enforce current hou
       mimeType: 'image/webp',
       buffer: await sharp(source).grayscale().webp().toBuffer(),
     });
-    await expect(page.getByRole('status')).toContainText('Bildförslaget finns');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Bildförslaget finns',
+    );
     const privateId = (await read()).draft.changes[0].after?.profileImageId;
     expect(privateId).not.toBe(first);
     expect(privateId).not.toBe(replacementId);

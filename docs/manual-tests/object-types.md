@@ -162,7 +162,8 @@ without confusing unanswered and no”.
 
 ### TYP-03: Medlemmar delar typer och kan rätta använda definitioner
 
-**Syfte:** Kontrollera delning, privata förslag och redigerbara förifyllda typer.
+**Syfte:** Kontrollera delning, privata förslag och redigerbara förifyllda
+typer.
 
 **Användare:** Alex och Lo.
 
@@ -237,7 +238,8 @@ until an explicit current choice”.
 
 ### TYP-05: Felaktiga värden och ny användning stoppar hela sparandet
 
-**Syfte:** Kontrollera värdevalidering och ny användning mellan förslag och spara.
+**Syfte:** Kontrollera värdevalidering och ny användning mellan förslag och
+spara.
 
 **Användare:** Alex och Lo.
 
@@ -286,7 +288,7 @@ Pröva även ett kort fönster på 640 × 456 pixlar och verklig webbläsarzoom.
 **Integrationstest:**
 [object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts),
 testfallen “TYP-10: canonical properties retain meaning through sections,
-hiding, type changes, history and undo at 1280px”, samma titel med “390px”,
+hiding, type changes, historical reading at 1280px”, samma titel med “390px”,
 “320px” respektive “640px”.
 
 **Steg:**
@@ -316,9 +318,9 @@ hiding, type changes, history and undo at 1280px”, samma titel med “390px”
    ekonomiska uppgifter. Granska det tidigare egna värdet och bekräfta
    **Jag har hanterat tidigare fältvärden för typbytet**. Lägg i utkastet
    och spara genom Lista.
-7. Öppna Visa historik och Visa ändringarna för typbytet. Granska typbytet,
-   tidigare Anteckning och skuldens säkerhet och datum. Välj Ångra sparandet,
-   granska och spara förslaget. Starta om och kontrollera Husets lån igen.
+7. Välj **Rapporter** och **Visa ändringarna** för typbytet. Granska
+   tidigare Anteckning och skuldens säkerhet och datum. Starta om och
+   kontrollera att Husets lån behåller den sparade nya typen.
 
 **Förväntat resultat:**
 
@@ -329,8 +331,9 @@ hiding, type changes, history and undo at 1280px”, samma titel med “390px”
   även när privat förslag, status och återkoppling visas samtidigt.
 - Beskrivning, skuld, säkerhet och datum består efter döljning och typbyte.
   Okänt, uttryckligen inget och ej uppgivet förblir olika tillstånd.
-- Typbytet kräver hantering av det gamla egna värdet. Ångring återför
-  Husavtal och Anteckning, med samma gemensamma uppgifter efter omstart.
+- Typbytet kräver hantering av det gamla egna värdet. Historiken visar
+  Husavtal och Anteckning före bytet. Den sparade nya typen och de
+  gemensamma uppgifterna består efter omstart.
 
 ### TYP-08: Flytta och dölj fält utan värdeförlust genom sparande och omstart
 
@@ -419,7 +422,7 @@ keyboard controls at 1280px”, samma titel med “390px” respektive “320px�
 
 ### TYP-06: Typbyte bevarar objekt, samband och tidigare fältbetydelse
 
-**Syfte:** Granska gamla värden, rätta nya fält och ångra ett typbyte.
+**Syfte:** Granska gamla värden, rätta nya fält och läsa ett sparat typbyte.
 
 **Användare:** Alex.
 
@@ -432,7 +435,7 @@ och sambandets ID från kartans publika HTTP-svar.
 **Integrationstest:**
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts),
 testfallet “TYP-06: type changes review displaced values and preserve
-identity, edges and history through restart and undo”.
+identity, edges and historical reading through restart”.
 
 **Steg:**
 
@@ -447,19 +450,19 @@ identity, edges and history through restart and undo”.
    förslag. Spara hela utkastet och kontrollera cykelns och sambandets ID.
 4. Byt typdefinitionens namn från Cykel till Trampcykel och dess fältnamn
    till Tidigare Nummer och Tidigare Försäkrad. Spara. Starta om och öppna
-   **Visa historik**. Välj **Visa ändringarna** vid typbytet från Cykel
+   **Rapporter**. Välj **Visa ändringarna** vid typbytet från Cykel
    till Motorfordon.
 5. Kontrollera tidigare typnamn, Nummer `SYNTH-42`, sparande användare
-   och tidpunkt. Välj **Ångra sparandet** för typbytet och granska förslaget.
-   Spara hela utkastet, starta om och läs kartan igen.
+   och tidpunkt. Starta om och läs kartan igen. Kontrollera att
+   den sparade nya typen och sambandet är oförändrade.
 
 **Förväntat resultat:**
 
 - Inga gamla värden kopieras eller konverteras till den nya typens fält.
   Historiken behåller de ursprungliga namnen trots dagens namnbyte.
-- Typbyte och ångring behåller objektets och sambandets identiteter.
-  Typbytet sparar talet `42` och obesvarat Försäkrad; ångring återför
-  texten `SYNTH-42` och uttryckligt **Nej**.
+- Typbytet behåller objektets och sambandets identiteter. Det sparar
+  talet `42` och obesvarat Försäkrad. Historiken visar texten `SYNTH-42`
+  och uttryckligt **Nej** före bytet.
 - Sparat utkast och historik finns kvar efter normal omstart.
 
 ### TYP-11: Upprepade typbyten bevarar gemensamma uppgifter och gamla svar
@@ -531,7 +534,7 @@ Lo har aktuell tillgång till hushållet.
 **Integrationstest:**
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts),
 testfallet “TYP-07: invalid values and concurrent definitions block whole
-saves until fresh choices while undo protects private fields”.
+saves until fresh choices and preserve later private fields”.
 
 **Steg:**
 
@@ -548,15 +551,12 @@ saves until fresh choices while undo protects private fields”.
    efter granskning av den nya definitionen. Återsänd tidigare sparbegäran
    med samma gamla utkastversion men nytt operations-ID: HTTP 409.
 4. Ge ett nytt sparbesked och kontrollera båda sparade ändringarna. Lägg
-   sedan Nummer `43` i eget utkast. Försök ångra typbytet: överlappet ska
-   stoppas utan att det egna fältförslaget ändras.
-5. Kasta eget utkast och lägg i stället beskrivningen Oberoende uppgift på
-   cykeln i utkastet. Ångra typbytet. Starta om och granska det kvarvarande
-   förslaget; spara sedan hela utkastet.
+   sedan Nummer `43` i ditt utkast utan att spara.
+5. Starta om och kontrollera förslaget, sparad karta och historik.
 
 **Förväntat resultat:**
 
 - Felaktiga värden och inaktuella definitioner sparar ingen del av gruppen.
   Konfliktvalet kräver ett nytt sparbesked för det aktuella utkastet.
-- Eget överlappande fältförslag blockerar ångringen. Den oberoende
-  beskrivningen bevaras tillsammans med återförd Cykel och dess gamla värden.
+- Nummer 43 finns kvar i ditt utkast efter omstart. Den sparade kartan
+  behåller Motorfordon och Nummer 42, och tidigare sparanden är oförändrade.

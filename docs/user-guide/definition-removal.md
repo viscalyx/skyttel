@@ -1,4 +1,4 @@
-# Ta bort och återställa typer och fält
+# Ta bort typer och fält
 
 [Till användarguidens innehåll](README.md)
 
@@ -41,26 +41,18 @@ Om någon börjar använda eller ändrar definitionen under tiden sparas
 ingen del av ditt utkast. Hämta aktuellt underlag, hantera användningen
 eller konflikten och granska hela resultatet före ett nytt sparbesked.
 
-## Återställ genom historiken
+## Läs historiska definitioner
 
 Borttaget innehåll och äldre historik hindrar inte katalogborttagning.
 Historiken bevarar definitionerna så att tidigare fältvärden och
 samband fortfarande går att förstå. De återkommer inte i katalogen
 bara för att du läser historiken.
 
-1. Öppna **Visa historik** och hitta sparandet som tar bort innehållet.
-2. Välj **Ångra sparandet**. Om innehållet behöver en borttagen typ visas
-   **Återställ objekttyp** eller **Återställ sambandstyp** i utkastet,
-   tillsammans med objektet och sambanden.
-3. Granska definitionerna och hela utkastet. Oberoende egna förslag finns
-   kvar. Överlapp med egna förslag måste hanteras innan ångringen kan
-   läggas till. En ändrad definition kan kräva ett uttryckligt konfliktval.
-4. Välj **Spara hela utkastet** för att återföra både definitioner och
-   innehåll. Du får ett nytt kvitto; den gamla historiken finns kvar.
-
-Ett borttaget eller ändrat fält kan också behöva återställas för ett äldre
-värde. Då visar Skyttel en definitionskonflikt. Värdet omvandlas aldrig
-automatiskt. Se [historik och ångring](history.md) för konfliktvalen.
+Öppna **Rapporter → Ändringshistorik** och välj **Visa ändringarna** på
+sparandets kort. Läs definitioner och värden före och efter. Historiken
+ändrar inte kartan och skapar inga återställningsförslag. En rättelse
+görs som ett vanligt förslag som granskas i ditt utkast. Se
+[ändringshistorik](history.md).
 
 Vanlig borttagning är skild från permanent radering och har ingen
 automatisk tidsgräns. Aktuella och äldre definitioner, privata utkast och

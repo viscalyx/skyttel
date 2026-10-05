@@ -3,7 +3,7 @@ import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
-test('IMPORT-07: historical field meanings survive replacement and fresh whole-save undo', async ({
+test('IMPORT-07: historical field meanings survive replacement and ordinary corrections', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -47,8 +47,10 @@ test('IMPORT-07: historical field meanings survive replacement and fresh whole-s
       value: { typeId, name: 'Mätare', description: '', customValues: { serial: 42 } },
     });
     const addition = await save('number-and-object');
-    await post('undo', { userId: addition.userId, operationId: addition.operationId });
-    const inverse = await save('restore-text-definition');
+    const removed = (await read()).objects.find((value) => value.id === 'measured-object');
+    await post('draft', { id: 'measured-object', baseRevision: removed?.revision, value: null });
+    await define('text');
+    const inverse = await save('remove-object-and-use-text');
     expect(inverse.changes[0].before?.customValues).toEqual({ serial: 42 });
     expect(inverse.changes[0].beforeType?.fields?.[0].kind).toBe('number');
     expect(inverse.changes[0].type.fields?.[0].kind).toBe('text');
@@ -78,17 +80,23 @@ test('IMPORT-07: historical field meanings survive replacement and fresh whole-s
     expect(await confirmed.json()).toMatchObject({ status: 'completed', contentVersion: 2 });
     await installation.restart();
     expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual(history);
-    await post('undo', { userId: inverse.userId, operationId: inverse.operationId });
-    await save('fresh-restoration');
+    await define('number');
+    await post('draft', {
+      id: 'new-measured-object',
+      baseRevision: null,
+      value: { typeId, name: 'Ny mätare', description: '', customValues: { serial: 43 } },
+    });
+    const correction = await save('ordinary-correction');
     await installation.restart();
     const restored = await read();
     expect(restored.objects).toEqual([
-      expect.objectContaining({ id: 'measured-object', customValues: { serial: 42 } }),
+      expect.objectContaining({ id: 'new-measured-object', customValues: { serial: 43 } }),
     ]);
     expect(restored.types.find((value) => value.id === typeId)?.fields?.[0].kind).toBe('number');
     const finalHistory = (await (await page.request.get(`${path}/history`)).json()).history;
     expect(finalHistory).toContainEqual(inverse);
     expect(finalHistory).toContainEqual(addition);
+    expect(finalHistory).toContainEqual(correction);
   } finally {
     await installation.close();
   }

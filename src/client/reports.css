@@ -4,10 +4,14 @@
   overflow: auto;
   padding: 24px 28px 100px 110px;
   background: var(--space-bg);
-  color: var(--space-ink);
+  color: var(--space-text);
   overflow-wrap: anywhere;
 }
 .household-reports[hidden] {
+  display: none;
+}
+.household-map.workspace-shell.workspace-open[data-workspace-surface="reports"]
+  .workspace-windows[hidden] {
   display: none;
 }
 .household-reports > header {
@@ -36,5 +40,6 @@
 @media (max-width: 700px) {
   .household-reports {
     padding: calc(var(--tools-bottom, 76px) + 24px) 12px 90px;
+    scroll-padding-top: calc(var(--tools-bottom, 76px) + 24px);
   }
 }

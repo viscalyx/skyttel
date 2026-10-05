@@ -8,5 +8,7 @@ domänvillkor och skriver karta, historik, förbrukad version och kvitto
 tillsammans; kvittot styr bekräftelsen och samma operations-ID med samma
 innehåll ger samma resultat vid återförsök.
 En entydig rättelse med sparbesked får slutföras utan extra ja, medan
-konflikter kräver ett aktuellt sparbesked och ångring blir ett nytt
-förslag som bevarar oberoende senare ändringar.
+konflikter kräver ett aktuellt sparbesked. Historiken visar genomförda
+sparanden med historiska värden och typdefinitioner. Historisk ångring
+och sammanslagning av objekt erbjuds inte i gränssnitt eller
+samtalsverktyg; rättelser använder vanliga förslag i det egna utkastet.

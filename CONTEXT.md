@@ -227,8 +227,8 @@ ett avslutat abonnemang.
 Det är skilt från att objektet eller sambandet är borttaget.
 
 **Borttaget**:
-Ett objekt eller samband som är avlägsnat från den aktuella kartan men
-fortfarande kan återställas i Skyttel.
+Ett objekt eller samband som är avlägsnat från den aktuella kartan.
+Historiska uppgifter kan fortfarande finnas kvar i Skyttel.
 
 **Permanent raderat**:
 Information som är borttagen utan möjlighet att ångra raderingen i Skyttel.

@@ -1,7 +1,8 @@
 # Manuella testfall för profilbilder
 
 Testfallen omfattar privata bildförslag, visning i rymdkartan, historik,
-ångring, fel, åtkomst och återgång till ett objekt efter att dess panel stängts.
+historikläsning, fel, åtkomst och återgång till ett objekt efter att dess panel
+stängts.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -59,9 +60,10 @@ dessa kopior i filväljaren. Radera båda testmapparna efter körningen.
 
 ## Bildförslag och historik
 
-### BILD-01: Bevara text och återställ tidigare bild efter omstart
+### BILD-01: Bevara text och läs tidigare bilder efter omstart
 
-**Syfte:** Verifiera samma privata utkast, beständighet och ångring för bilder.
+**Syfte:** Verifiera samma privata utkast, beständighet och historikläsning för
+bilder.
 
 **Användare:** Alex.
 
@@ -70,7 +72,7 @@ dessa kopior i filväljaren. Radera båda testmapparna efter körningen.
 **Integrationstest:**
 [profile-images.spec.ts](../../tests/integration/profile-images.spec.ts),
 testfallet “BILD-01: profile image proposals preserve text, survive restart
-and undo replacement”.
+and expose historical replacements”.
 
 **Steg:**
 
@@ -84,8 +86,9 @@ and undo replacement”.
 3. Starta om servern normalt och ladda om sidan. Kontrollera bilden i
    detaljerna och rymdkartan. Öppna Lo och byt bilden till WebP. Stäng
    formuläret och spara hela utkastet.
-4. Öppna historiken och välj **Visa ändringarna** vid senaste sparandet.
-   Läs och se bilderna före och efter. Ångra sparandet och spara hela utkastet.
+4. Välj **Rapporter** och **Visa ändringarna** vid senaste sparandet.
+   Läs och se bilderna före och efter. Kontrollera att aktuell bild och
+   beskrivning är oförändrade.
 
 **Förväntat resultat:**
 
@@ -93,7 +96,8 @@ and undo replacement”.
   vybyte och bildvalet kan inte skriva över den.
 - Bilden visas i objektets runda symbol före sparandet och efter omstart.
   Sparad bild och beskrivning överlever omstart. Historiken visar bytet.
-- Ångring återför den första bilden och bevarar den ändrade beskrivningen.
+- Historiken visar båda bilderna utan att ändra den aktuella bilden
+  eller beskrivningen.
 
 ### BILD-02: Avvisa felaktiga bilder och återhämta bildborttagning
 
@@ -118,7 +122,8 @@ recovers its durable receipt”.
 3. Stäng formuläret. Kör avbrottskoden nedan i utvecklarkonsolen och
    spara sedan hela utkastet utan att ladda om sidan.
    Läs beskedet om okänt utfall och välj **Hämta samma kvitto igen**.
-4. Kontrollera historiken. Ångra bildborttagningen och granska utkastet.
+4. Välj **Rapporter** och öppna bildborttagningens historiska detaljer.
+   Kontrollera den tidigare bilden och det tomma utkastet.
 
 Koden väntar på serverns svar för nästa sparande och döljer sedan svaret
 för gränssnittet. Den återställer `fetch` efter det enda avbrottet.
@@ -148,7 +153,8 @@ Vanligt offlineläge verifierar inte ett avbrott efter transaktionen.
   beskrivning kvar. Det går fortfarande att spara det giltiga utkastet.
 - Okänt utfall ger ingen falsk sparbekräftelse. Kvittot bekräftar en enda
   bildborttagning och historiken har inget dubbelt sparande.
-- Ångring föreslår rätt tidigare bild igen.
+- Historiken visar rätt tidigare bild. Aktuell bild är borttagen och
+  utkastet är tomt; läsningen skapar inget nytt förslag.
 
 ### BILD-03: Neka privata och historiska bildadresser efter återkallad tillgång
 
@@ -246,7 +252,8 @@ kommer efter att objektets panel stängts.
 beskrivningar. Välj cykelikonen för Cykeln. Använd de syntetiska bilderna
 och den ogiltiga filen från förberedelsen.
 Upprepa i ljust och mörkt tema på dator och vid 320 pixlars fönsterbredd.
-Prova också korta fönster på 1440 × 500 och 320 × 250 pixlar. Verklig webbläsarzoom
+Prova också korta fönster på 1440 × 500 och 320 × 250 pixlar. Verklig
+webbläsarzoom
 kontrolleras separat i flödet vid 200 och 400 procent.
 
 **Integrationstest:**
@@ -300,7 +307,8 @@ window.fetch = async (...args) => {
 **Förväntat resultat:**
 
 - Bildvalet är inaktiverat medan svaret väntar.
-- Felet visas globalt utan att Cykelns panel öppnas eller sökfältets fokus flyttas.
+- Felet visas globalt utan att Cykelns panel öppnas eller sökfältets fokus
+flyttas.
 - Den uttryckliga återgången öppnar Cykelns panel och fokuserar dess rubrik.
 - Den senaste giltiga bilden, Cykelns ikon och båda objektens beskrivningar
   finns kvar. Garagets oskickade text har inte skickats eller sparats.

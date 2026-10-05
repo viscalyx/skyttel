@@ -75,7 +75,9 @@ Mikrofonläge och samtalsproblem visas i röstrutan och
 **Kasta förslaget** tar bort ett enskilt förslag. Om andra delar av
 utkastet behöver det behöver även dessa hanteras. **Kasta hela utkastet**
 tar bort alla dina osparade förslag. Ingen av knapparna ångrar ett redan
-genomfört sparande. Använd då [historik och ångring](history.md).
+genomfört sparande. Läs då [ändringshistoriken](history.md) och lägg
+eventuella rättelser
+i ett nytt utkast.
 
 ## Fortsätt ett utkast och lös konflikter
 

@@ -571,7 +571,7 @@ for (const mode of ['voice', 'text'] as const) {
       expect(await history()).toEqual([receipt]);
       expect(await read()).toEqual(saved);
       await openWorkspace(page);
-      await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+      await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
       const savedHistory = page.getByRole('region', { name: 'Ändringshistorik' });
       const savedGroup = savedHistory
         .getByRole('article')
@@ -620,7 +620,7 @@ for (const mode of ['voice', 'text'] as const) {
           exact: true,
         }),
       ).toBeVisible();
-      await member.getByRole('button', { name: 'Visa historik', exact: true }).click();
+      await member.getByRole('button', { name: 'Rapporter', exact: true }).click();
       const memberHistory = member
         .getByRole('region', { name: 'Ändringshistorik' })
         .getByRole('article')

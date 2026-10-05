@@ -70,7 +70,9 @@ test('KATALOG-01: unused fields and custom and prefilled types are reviewed, dis
       .click();
     await page.getByRole('button', { name: 'Ta bort sambandstypen' }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
@@ -80,7 +82,7 @@ test('KATALOG-01: unused fields and custom and prefilled types are reviewed, dis
     expect(final.relationshipTypes.find((item) => item.id === edgeType.id)).toBeUndefined();
     expect(final.types).toHaveLength(initial.types.length);
     expect(final.relationshipTypes).toHaveLength(initial.relationshipTypes.length - 1);
-    await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
     const latest = page
       .getByRole('region', { name: 'Ändringshistorik' })
       .getByRole('article')
@@ -233,7 +235,7 @@ test('KATALOG-02: private drafts and ended content block removal with a useful e
   }
 });
 
-test('KATALOG-03: history restores missing definitions and content together only after review and a new save', async ({
+test('KATALOG-03: history reads removed definitions and content without changing independent work', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -318,7 +320,7 @@ test('KATALOG-03: history restores missing definitions and content together only
     const before = await read();
     await page.goto(installation.origin);
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
     const history = page.getByRole('region', { name: 'Ändringshistorik' });
     const group = history.getByRole('article').filter({ hasText: 'Sparande: delete-content' });
     await group.getByText('Visa ändringarna', { exact: true }).click();
@@ -328,29 +330,19 @@ test('KATALOG-03: history restores missing definitions and content together only
     await expect(group.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();
     await expect(group.getByText(`Objekttyp: ${type.name}`, { exact: false })).toBeVisible();
     await expect(group.getByRole('heading', { name: `Samband: ${edgeType.name}` })).toBeVisible();
-    await group.getByRole('button', { name: 'Ångra sparandet' }).click();
-    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(draft).toContainText(`Återställ objekttyp: ${type.name}`);
-    await expect(draft).toContainText(`Återställ sambandstyp: ${edgeType.name}`);
-    await expect(draft).toContainText('Lo Exempel');
-    await expect(draft).toContainText('Oberoende förslag');
-    expect((await read()).objects).toEqual(before.objects);
-    expect((await read()).types).toEqual(before.types);
+    expect(await read()).toEqual(before);
     await installation.restart();
-    await page.reload();
-    await openWorkspace(page);
-    await expect(draft).toContainText(`Återställ objekttyp: ${type.name}`);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    const final = await read();
-    expect(final.objects.map((item) => item.id).sort()).toEqual([
-      'independent',
-      'source',
-      'target',
-    ]);
-    expect(final.objects.find((item) => item.id === 'target')).toEqual(before.objects[0]);
-    expect(final.relationships[0]).toMatchObject({ id: 'edge', typeId: edgeType.id });
-    expect((await (await page.request.get(`${path}/history`)).json()).history[1]).toEqual(deletion);
+    const current = await read();
+    expect(current.draft).toEqual(before.draft);
+    expect(current.objects).toEqual(before.objects);
+    expect(current.types).toEqual(before.types);
+    const historyAfter = (await (await page.request.get(`${path}/history`)).json()).history;
+    expect(
+      historyAfter.find(
+        (receipt: { operationId: string }) => receipt.operationId === 'delete-content',
+      ),
+    ).toEqual(deletion);
+    await expect(group.getByRole('button', { name: 'Ångra sparandet' })).toHaveCount(0);
   } finally {
     await installation.close();
   }

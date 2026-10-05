@@ -49,10 +49,8 @@ Använda fält kan inte tas bort eller få annat värdeslag. Skyddet gäller
 visar inte vem som använder fältet eller några privata värden. Skapa
 ett nytt fält om uppgiften behöver ett annat värdeslag.
 
-Historik och ångring behåller uppgifternas betydelse. När ett borttaget
-samband återställs kan nödvändiga äldre fält behöva återställas och
-granskas mot dagens definition. Vid sammanslagning följer värdena det
-samband du väljer att behålla; dubbletters värden slås inte ihop automatiskt.
+[Ändringshistoriken](history.md) behåller uppgifternas betydelse och
+visar sparandets dåvarande definitioner och benämningar.
 
 ## Ordna avsnitt och fält
 

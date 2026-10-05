@@ -4,7 +4,7 @@ import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
-test('IMPORT-06: replacement preserves merged image history and private work, rejects a lost-receipt retry and permits fresh undo after restart', async ({
+test('IMPORT-06: replacement preserves image history and private work, rejects old save attempts and permits ordinary corrections after restart', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -98,34 +98,8 @@ test('IMPORT-06: replacement preserves merged image history and private work, re
     const originalImage = await upload('second', '#2255aa');
     await save('source-image');
     const originalBytes = await imageBytes(originalImage);
-    state = await read();
-    expect(
-      (
-        await post('merge', {
-          version: state.draft.version,
-          survivorId: 'first',
-          absorbedId: 'second',
-          identityConfirmed: true,
-          reviewed: {
-            objects: ['first', 'second'].map((id) =>
-              state.objects.find((object) => object.id === id),
-            ),
-            relationships: state.relationships,
-            types: state.types.filter((type) => type.id === state.objects[0].typeId),
-            relationshipTypes: state.relationshipTypes.filter(
-              (type) => type.id === state.relationships[0].typeId,
-            ),
-          },
-          choices: { profileImageId: 'absorbed' },
-          relationships: [{ id: 'unknown-endpoint', action: 'keep' }],
-        })
-      ).status(),
-    ).toBe(200);
-    const merged = await save('merge-with-image');
-    const copiedImage = merged.changes.find((change) => change.after?.id === 'first')?.merge
-      ?.imageCopy?.copiedImageId;
-    if (!copiedImage)
-      throw new Error('The selected source image must have a distinct copied identity');
+    const copiedImage = await upload('first', '#2255aa');
+    const historicalSave = await save('image-with-history');
     expect(copiedImage).not.toBe(originalImage);
     const privateImage = await upload('first', '#aa5522');
     const privateBytes = await imageBytes(privateImage);
@@ -198,7 +172,7 @@ test('IMPORT-06: replacement preserves merged image history and private work, re
     expect(await imageBytes(copiedImage)).toEqual(originalBytes);
     expect(await imageBytes(privateImage)).toEqual(privateBytes);
 
-    for (const oldReceipt of [lostReceipt, merged]) {
+    for (const oldReceipt of [lostReceipt, historicalSave]) {
       const retried = await post('save', {
         operationId: oldReceipt.operationId,
         version: oldReceipt.draftVersion,
@@ -222,8 +196,7 @@ test('IMPORT-06: replacement preserves merged image history and private work, re
       archivedHistory,
     );
 
-    // A fresh client may discard its restored private proposal and undo the
-    // immutable imported merge, despite the receipt's older content generation.
+    // A fresh client can continue ordinary draft work with the current generation.
     expect(
       (
         await post('discard', {
@@ -233,18 +206,21 @@ test('IMPORT-06: replacement preserves merged image history and private work, re
       ).status(),
     ).toBe(200);
     state = await read();
+    const current = state.objects.find((object) => object.id === 'second');
+    if (!current) throw new Error('The restored object must exist');
     expect(
       (
-        await post('undo', {
+        await post('draft', {
           version: state.draft.version,
           contentVersion: state.contentVersion,
-          userId: merged.userId,
-          operationId: merged.operationId,
+          id: current.id,
+          baseRevision: current.revision,
+          value: { ...current, description: 'Ny vanlig rättelse' },
         })
       ).status(),
     ).toBe(200);
-    const undone = await save('undo-imported-merge');
-    expect(undone.contentVersion).toBe(completed.contentVersion);
+    const corrected = await save('correction-after-import');
+    expect(corrected.contentVersion).toBe(completed.contentVersion);
     await installation.restart();
     state = await read();
     expect(state.objects.map((object) => object.id).sort()).toEqual(['first', 'second']);
@@ -269,8 +245,13 @@ test('IMPORT-06: replacement preserves merged image history and private work, re
     );
     const history: SaveReceipt[] = (await (await page.request.get(`${path}/history`)).json())
       .history;
-    expect(history.find((receipt) => receipt.operationId === merged.operationId)).toEqual(merged);
-    expect(history).toContainEqual(undone);
+    expect(history.find((receipt) => receipt.operationId === historicalSave.operationId)).toEqual(
+      historicalSave,
+    );
+    expect(history).toContainEqual(corrected);
+    expect(state.objects.find((object) => object.id === 'second')?.description).toBe(
+      'Ny vanlig rättelse',
+    );
   } finally {
     await installation.close();
   }

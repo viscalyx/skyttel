@@ -141,7 +141,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
 
 - [Typer, historik och rättelser genom MCP](assistant-advanced.md):
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
-  definitioner, granskad sammanslagning med bilder samt ångring efter import.
+  definitioner, bilder och läsbar historik efter import samt vanliga
+  rättelser med aktuellt underlag och avvecklade verktygs frånvaro.
 
 - [Samtalsmedgivandet](conversation-consent.md): medgivanderutan från
   verktygsraden och snabblänken, avbruten start med bevarat
@@ -253,7 +254,7 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   ny förberedelse efter omstart, samma importförsök i en annan
   administratörs webbläsare, tappat förberedelsesvar, väntande rensning
   efter rolländring, uppföljning av rätt försök trots en senare ersättning
-  och ångring med aktuellt underlag. Tangentbord och fokus följs genom
+  och vanliga rättelser med aktuellt underlag. Tangentbord och fokus följs genom
   filfel, granskning, uttryckligt avbrott av obekräftad förberedelse,
   avbrottets rensningsfel och tappade svar, flera samtidiga granskningar
   och fördröjda avbrotts- och statussvar efter navigering. Ersättning och
@@ -265,27 +266,15 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   nedladdning, verklig återimport av den hämtade filen efter omstart,
   avbrott med oklart rensningsresultat, sidbyte under hämtning,
   återkallad aktiv hämtning, giltighetstid samt
-  bevarade identiteter, bildversioner, utkast och placeringar efter
-  sammanslagning. En lokal kontrollklient pausar en stor HTTP-överföring,
+  bevarade identiteter, bildversioner, utkast och placeringar. En lokal
+  kontrollklient pausar en stor HTTP-överföring,
   mäter olästa byte i serverns källfil och kontrollerar borttagna exportfiler.
-
-- [Sammanslagning](object-merge.md): uttrycklig identitet, val av uppgifter
-  och samband, privata förslag, kontrollerat förlorat sparsvar, omstart
-  och ångring av hela sparandet. Ändrat granskat underlag kräver nya val;
-  oberoende samtidiga ändringar bevarar granskningen. Tangentbord, paneler
-  och Inställningar behåller granskning och annan oskickad text.
-  Typbundna dolda värden, ekonomiska uppgifter, bilder, ikoner och
-  sambandsvärden granskas och återläses i båda teman på dator och mobil.
-  Båda deltagarnas oskickade text bevaras tills den överges uttryckligen;
-  kastning återger tidigare privata förslag med samma identiteter.
-  Fördröjda svar bevarar senare sökfokus; förlorat förslagssvar följs av
-  återläsning utan nytt förslag eller automatiskt sparande.
 
 - [Objektikoner](object-icons.md): svensk sökning och ikonnamn, tangentbord,
   mobil, korta fönster vid förstoring, bildens företräde, typbyte, omstart
   och återgång till standardikon samt fokus vid fördröjda svar och återförsök.
 - [Profilbilder](profile-images.md): privata bildförslag, visning i
-  rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, ångring,
+  rymdkartan, formatfel, gränser, omstart, bildbyte, borttagning, historikläsning,
   kvitton, bildåtkomst och uttrycklig återgång efter bildfel i en stängd panel
   eller i Inställningar samt avbrutet filval och avslutade felåtergångar.
   Bildfelets återgång behåller läsbar text och tangentbordsfokus under
@@ -397,7 +386,7 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
   som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
   kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
-  bild, ikon och samband samt följer historikens ångring.
+  bild, ikon och samband samt läser historiska värden.
   Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
@@ -406,16 +395,14 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   och samtidiga sparanden utan delsparande.
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
-  utkast samt uttrycklig återställning av saknade definitioner med innehållet.
+  utkast samt läsning av historiska definitioner som saknas i katalogen.
 - [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
   försök efter omstart, återförsöka från en annan klient och kontrollera
   privat tillgång.
-- [Historik och ångring](history.md): läsa hela ändringsgrupper, skapa
-  privata ångringsförslag, bevara oberoende arbete, granska överlapp och
-  återställa borttagna objekt och samband med samma identiteter samt
-  granska äldre fält mot dagens definitioner före återställning.
-  Omfattar historikkort, tangentbord, mobil, återförsök och fokus under
-  fördröjd hämtning och ångring.
+- [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
+  senaste först, fullständiga historiska värden, direktlänkar och återgång
+  till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök
+  och fokus under fördröjd hämtning.
 - [Upphört och borttaget](lifecycle.md): markera och rätta status, följa
   kända slutdatum och granska, kasta eller spara vanlig borttagning med
   bevarade anslutna objekt och historikunderlag, även efter privata typbyten.

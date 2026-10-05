@@ -9,7 +9,7 @@ for (const { width, height } of [
   { width: 320, height: 900 },
   { width: 640, height: 456 },
 ]) {
-  test(`TYP-10: canonical properties retain meaning through sections, hiding, type changes, history and undo at ${width}px`, async ({
+  test(`TYP-10: canonical properties retain meaning through sections, hiding, type changes, historical reading at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -181,7 +181,7 @@ for (const { width, height } of [
       const changed = await save();
       expect(changed.changes[0].after?.financialFacts).toEqual(original?.financialFacts);
       expect(changed.changes[0].after?.description).toBe('Gemensam avtalstext');
-      await page.getByRole('button', { name: 'Visa historik' }).click();
+      await page.getByRole('button', { name: 'Rapporter' }).click();
       const history = page
         .getByRole('region', { name: 'Ändringshistorik' })
         .getByRole('article')
@@ -200,10 +200,8 @@ for (const { width, height } of [
           .first(),
       ).toBeVisible();
       await expect(history.getByText('Anteckning: Eget värde', { exact: true })).toBeVisible();
-      await history.getByRole('button', { name: 'Ångra sparandet' }).click();
-      await save();
       await installation.restart();
-      expect((await read()).objects[0]).toMatchObject({ ...original });
+      expect((await read()).objects[0]).toMatchObject({ ...changed.changes[0].after });
     } finally {
       await installation.close();
     }

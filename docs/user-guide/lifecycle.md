@@ -50,14 +50,11 @@ Välj **Kasta hela utkastet** för att ångra förslagen före sparande.
 En konflikt blockerar hela sparandet; ingen del tas bort. Hämta aktuellt
 underlag, gör konfliktvalet, granska hela skillnaden och spara igen.
 
-**Borttaget** innehåll bevaras för återställning. Historiken innehåller
-tidigare värden, samband och typdefinitioner, tidpunkten och den som sparar.
-Det finns ingen automatisk tidsgräns. Återställ innehållet under
-**Ändringshistorik**. Välj **Visa historik** och
-ångra borttagningsgruppen som ett nytt privat förslag. Granska och spara
-hela utkastet för att göra återställningen gemensam. Läs
-[guiden för historik och ångring](history.md), särskilt om du redan har
-egna förslag eller andra ändringar tillkommer efter borttagningen.
+**Borttaget** innehåll bevaras i historiken. Den visar tidigare värden,
+samband och typdefinitioner, tidpunkten och den som sparar. Det finns
+ingen automatisk tidsgräns. Öppna **Rapporter → Ändringshistorik** för
+att läsa uppgifterna; historiken skapar inga återställningsförslag. Läs
+[guiden för ändringshistorik](history.md).
 
 ## Permanent radering
 

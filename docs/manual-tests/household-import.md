@@ -1,7 +1,7 @@
 # Manuella testfall för fullständig återimport
 
 Testfallen omfattar uttrycklig ersättning, bevarad åtkomst, bildhistorik,
-privata utkast, personliga placeringar och ångring med nytt underlag.
+privata utkast, personliga placeringar och rättelser med aktuellt underlag.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 Manuell körning sker efter att hela specifikationen är implementerad.
 
@@ -65,9 +65,9 @@ household content with the keyboard”.
 
 ## Historik och gamla klienter
 
-### IMPORT-06: återställ bildhistorik och ångra med nytt underlag
+### IMPORT-06: återställ bildhistorik och fortsätt med aktuell rättelse
 
-**Syfte:** Kontrollera att en återimport bevarar sammanslagningens
+**Syfte:** Kontrollera att en återimport bevarar sparade
 bildversioner, privata förslag och personliga placeringar, samtidigt som
 gamla klientunderlag och sparförsök inte kan skriva tillbaka senare innehåll.
 
@@ -81,9 +81,9 @@ med utvecklarverktyg i båda profilerna. Kör konsolkoden endast på provsidan.
 
 **Integrationstest:**
 [household-import-history.spec.ts](../../tests/integration/household-import-history.spec.ts),
-testfallet “IMPORT-06: replacement preserves merged image history and
-private work, rejects a lost-receipt retry and permits fresh undo after
-restart”.
+testfallet “IMPORT-06: replacement preserves image history and private work,
+rejects old save
+attempts and permits ordinary corrections after restart”.
 
 **Steg:**
 
@@ -91,12 +91,10 @@ restart”.
    samma påhittade person. Spara ett samband från det andra objektet med
    okänd målpunkt. Placera objekten på två igenkännliga platser i rymdkartan.
 2. Lägg den första provbilden på det andra objektet och spara den.
-   Slå samman objekten med det första som kvarvarande identitet.
-   Bekräfta identiteten, välj det andra objektets bild och behåll sambandet.
-   Kör **Fånga nästa sparbegäran** nedan i profil A och ange `merge`.
-   Välj därefter **Spara hela utkastet** utan att ladda om sidan. Invänta
-   kvittot och konsolbeskedet **IMPORT-06: merge sparat**.
-3. Lägg den andra provbilden som privat bildförslag på kvarvarande objekt.
+   Lägg sedan samma provbild på det första objektet som ett vanligt
+   bildförslag. Kör **Fånga nästa sparbegäran** nedan och ange `image`.
+   Spara utkastet och invänta kvittot samt **IMPORT-06: image sparat**.
+3. Lägg den andra provbilden som privat bildförslag på det första objektet.
    Låt förslaget vara osparat. Hämta en fullständig export i
    **Inställningar → Fullständig export** och behåll ZIP-filen privat.
 4. I profil A: skapa **Senare objekt** och lägg det i utkastet. Kör samma
@@ -113,24 +111,24 @@ restart”.
    servern startas om. Kontrollera att förslaget avvisas och inte syns i
    aktuell karta eller historik. Läs in aktuell karta när klienten begär det.
 6. Starta om servern med samma databas enligt utvecklingsguiden. Ladda om
-   profil A och B. Kontrollera den sammanslagna kartan, den privata andra
-   bilden och det ursprungliga sammanslagningskvittot. **Senare objekt**
+   profil A och B. Kontrollera kartan med båda objekten, den privata andra
+   bilden och det ursprungliga bildkvittot. **Senare objekt**
    ska saknas. Kör **Prova båda gamla sparbegärandena** nedan i profil A,
    på samma ursprung och i samma flik som fångstkodens båda körningar.
    Omladdning behåller de fångade uppgifterna. Kontrollera två HTTP 409,
-   ett för `merge` och ett för `later`, samt beskedet att karta och historik
+   ett för `image` och ett för `later`, samt beskedet att karta och historik
    är oförändrade. Inget gammalt lyckat kvitto får returneras.
-7. I profil B: kasta det återställda privata bildförslaget, välj
-   sammanslagningskvittot i historiken och ångra sparandet. Granska och
-   spara hela det nya utkastet. Starta om med samma databas och kontrollera
-   båda objektens bilder, samband och personliga placeringar.
+7. I profil B: kasta det återställda privata bildförslaget. Ändra
+   beskrivningen på det andra objektet till **Ny vanlig rättelse**, lägg
+   förslaget i utkastet och spara. Starta om och kontrollera båda objektens
+   bilder, samband, beskrivningar och personliga placeringar.
 8. Ta bort konsolens två sparade testbegäranden genom den sista kodraden
    nedan. Stäng testprofilerna och följ provmiljöns städning efter fallet.
 
 **Fånga nästa sparbegäran:**
 
 Öppna F12 → **Console** i profil A. Kör blocket en gång före
-sammanslagningens sparande med svaret `merge`, och en gång före det senare
+bildändringens sparande med svaret `image`, och en gång före det senare
 sparandet med svaret `later`. Ingen annan sparbegäran får skickas mellan
 förberedelsen och respektive knapptryckning. Koden sparar bara sökvägen och
 begärans ursprungliga `version`, `contentVersion` och `operationId` i flikens
@@ -144,8 +142,8 @@ Ladda om fliken om du avbryter innan nästa sparande.
 
 ```javascript
 (() => {
-  const slot = prompt('merge eller later');
-  if (!['merge', 'later'].includes(slot)) throw new Error('invalid slot');
+  const slot = prompt('image eller later');
+  if (!['image', 'later'].includes(slot)) throw new Error('invalid slot');
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const request = new Request(
@@ -181,7 +179,7 @@ Ladda om fliken om du avbryter innan nästa sparande.
 
 **Prova båda gamla sparbegärandena:**
 
-Kör efter import och omstart, före det nya ångringsförslaget. Koden använder
+Kör efter import och omstart, före den nya vanliga rättelsen. Koden använder
 profil A:s egen session och aktuellt bygg-ID, men återanvänder de tre gamla
 begäransfälten exakt. Den tar en aktuell karta och historik före försöken och
 jämför dem efter varje försök. Endast status och felkod skrivs ut; kopiera
@@ -189,7 +187,7 @@ inte privata webbläsardata till en rapport.
 
 ```javascript
 await (async () => {
-  const saved = ['merge', 'later'].map(slot => ({
+  const saved = ['image', 'later'].map(slot => ({
     slot,
     ...JSON.parse(sessionStorage.getItem(`skyttel-import06-${slot}`)),
   }));
@@ -235,7 +233,7 @@ await (async () => {
 Efter fallet, ta bort de två lokalt sparade begärandena:
 
 ```javascript
-for (const slot of ['merge', 'later']) {
+for (const slot of ['image', 'later']) {
   sessionStorage.removeItem(`skyttel-import06-${slot}`);
 }
 ```
@@ -243,62 +241,57 @@ for (const slot of ['merge', 'later']) {
 **Förväntat resultat:**
 
 - För det senare sparandet visas okänt utfall trots att aktuell karta i
-  den andra profilen bekräftar transaktionen. Efter importen finns den
-  sammanslagna kartan och dess första bild samt det osparade förslaget med
+  den andra profilen bekräftar transaktionen. Efter importen finns
+  kartan med båda objekten och dess sparade bilder samt det osparade förslaget
+med
   den andra bilden. Senare sparat innehåll blandas inte in.
 - Både det senare sparandets gamla begäran och den importerade
-  sammanslagningens gamla begäran avvisas med HTTP 409. Karta, privata
+  bildändringens gamla begäran avvisas med HTTP 409. Karta, privata
   utkast och historik är oförändrade efter varje försök. Inget nytt
   sparande eller falskt gammalt lyckat kvitto uppstår.
 - Det gamla öppna objektförslaget avvisas utan ny kartändring. Det
   ursprungliga kvittots identitet, författare och tidpunkt bevaras.
-  Ett nytt aktuellt underlag kan ångra den importerade sammanslagningen.
-- Efter ångrandet finns båda ursprungliga identiteterna. Det andra
+  Ett nytt aktuellt underlag kan spara en vanlig rättelse. Den skapar
+  ett nytt kvitto och en ny historikpost utan att ändra tidigare sparanden.
+- Efter rättelsen finns båda ursprungliga identiteterna. Det andra
   objektets första bild, okända målpunkt och båda personliga placeringarna
-  är bevarade även efter omstart.
+  är bevarade även efter omstart. Beskrivningen visar Ny vanlig rättelse.
 
-### IMPORT-07: bevara äldre fältbetydelser och ångra med nytt underlag
+### IMPORT-07: bevara äldre fältbetydelser och fortsätt med vanlig rättelse
 
-**Syfte:** Kontrollera att import bevarar både dagens fältdefinition och
-historiska värden med en annan definition, utan att konvertera värden.
+**Syfte:** Bevara historiska talvärden när dagens fält är text, utan
+omvandling, och tillåta vanligt arbete med aktuellt underlag efter import.
 
 **Användare:** Alex som administratör.
 
 **Förutsättningar:** Ett separat provhushåll utan andra ändringar. Välj
-en objekttyp utan använda egna fält. Följ förberedelserna för fullständig
-export och återimport i detta dokument.
+en objekttyp utan använda egna fält. Följ export- och importförberedelserna.
 
 **Integrationstest:**
 [household-import-definitions.spec.ts](../../tests/integration/household-import-definitions.spec.ts),
 testfallet “IMPORT-07: historical field meanings survive replacement and
-fresh whole-save undo”.
+ordinary corrections”.
 
 **Steg:**
 
-1. Lägg till textfältet **Serienummer** på den oanvända objekttypen och
-   spara hela utkastet.
-2. Ändra det ännu oanvända fältets värdeslag till tal. Lägg objektet
-   **Mätare** av samma typ med värdet **42** i utkastet. Spara dessa två
-   ändringar tillsammans och anteckna kvittot.
-3. Ångra hela sparandet från steg 2 genom historiken och spara
-   ångringsförslaget. Kontrollera att objektet saknas och fältet är text
-   igen. Behåll även detta kvitto.
-4. Hämta en fullständig export. Återimportera filen till samma hushåll
-   genom **Inställningar → Återimportera hushållet** och bekräfta ersättningen.
-   Starta om servern med
-   samma databas och öppna hushållet igen.
-5. Kontrollera båda kvittona i historiken. Ångra sparandet från steg 3
-   med aktuellt underlag och spara hela förslaget. Starta om igen och
-   kontrollera **Mätare** och fältdefinitionen.
+1. Lägg textfältet **Serienummer** på typen och spara definitionen.
+2. Ändra det oanvända fältet till tal. Lägg **Mätare** med värdet **42**
+   i utkastet och spara definition och objekt tillsammans.
+3. Lägg en borttagning av Mätare i utkastet och ändra det nu oanvända
+   fältet till text. Spara och anteckna kvittot.
+4. Hämta fullständig export och återimportera den till samma hushåll.
+   Bekräfta ersättningen och starta om med samma databas.
+5. Välj **Rapporter** och läs sparandenas historiska värden och typer.
+6. Ändra det oanvända fältet till tal igen. Lägg **Ny mätare** med
+   värdet **43** i utkastet, spara och starta om.
 
 **Förväntat resultat:**
 
-- Exporten accepteras även när ett historiskt talvärde hör till ett fält
-  som nu är text. Fältets och objektets stabila identiteter bevaras.
-- Historiken behåller samma kvitton, författare, tidpunkter och tidigare
-  värden efter importen. Talet **42** konverteras inte till text.
-- Det nya ångrandet återställer **Mätare**, talfältet och värdet **42**.
-  Resultatet kvarstår efter omstart och de tidigare kvittona är oförändrade.
+- Importen bevarar dagens textdefinition och historiska talvärdet 42
+  med dess dåvarande definition, kvitto, författare och tidpunkt.
+- Det nya vanliga sparandet ger Ny mätare, talfältet och värdet 43.
+  Det består efter omstart och skapar ett nytt kvitto. Tidigare kvitton
+  och historiska värden är oförändrade.
 
 ### IMPORT-08: förbered filen på nytt när en tidigare förberedelse saknas
 

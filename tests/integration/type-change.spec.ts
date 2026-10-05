@@ -86,7 +86,7 @@ async function setup(client: APIRequestContext, origin: string) {
   return { path, read, post, save, object };
 }
 
-test('TYP-06: type changes review displaced values and preserve identity, edges and history through restart and undo', async ({
+test('TYP-06: type changes review displaced values and preserve identity, edges and historical reading through restart', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -120,7 +120,9 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     await openWorkspace(page);
     await expect(review).toContainText('Nummer: SYNTH-42');
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+      'Sparat',
+    );
     const changed = await read();
     expect(changed.objects.find((item) => item.id === 'bike')).toMatchObject({
       typeId: 'vehicle',
@@ -149,7 +151,7 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
-    await page.getByRole('button', { name: 'Visa historik' }).click();
+    await page.getByRole('button', { name: 'Rapporter' }).click();
     const selected = page
       .getByRole('region', { name: 'Ändringshistorik' })
       .getByRole('article')
@@ -165,17 +167,11 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     await expect(selected.getByText('Nummer: 42', { exact: true })).toBeVisible();
     await expect(selected).toContainText('Alex Exempel');
     await expect(selected.locator('time')).toHaveAttribute('datetime', /T/);
-    await selected.getByRole('button', { name: 'Ångra sparandet' }).click();
-    await expect(review).toContainText('Nummer: SYNTH-42');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
     await installation.restart();
-    const restored = await read();
-    expect(restored.objects.find((item) => item.id === 'bike')).toMatchObject({
-      typeId: 'cycle',
-      customValues: { serial: 'SYNTH-42', insured: false },
-    });
-    expect(restored.relationships).toEqual(initial.relationships);
+    expect((await read()).objects.find((item) => item.id === 'bike')).toEqual(
+      changed.objects.find((item) => item.id === 'bike'),
+    );
+    expect((await read()).relationships).toEqual(initial.relationships);
   } finally {
     await installation.close();
   }
@@ -275,7 +271,9 @@ for (const width of [1280, 390, 320]) {
         expect(imageId).toBeTruthy();
         await panel.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
         await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-        await expect(page.getByRole('status')).toContainText('Sparat');
+        await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+          'Sparat',
+        );
         const initial = await read();
         await page
           .getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true })
@@ -363,7 +361,9 @@ for (const width of [1280, 390, 320]) {
         );
         expect((await read()).draft).toEqual(staged.draft);
         await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-        await expect(page.getByRole('status')).toContainText('Sparat');
+        await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
+          'Sparat',
+        );
         await installation.restart();
         await page.reload();
         await openWorkspace(page);
@@ -397,7 +397,7 @@ for (const width of [1280, 390, 320]) {
   }
 }
 
-test('TYP-07: invalid values and concurrent definitions block whole saves until fresh choices while undo protects private fields', async ({
+test('TYP-07: invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields', async ({
   page,
   browser,
 }) => {
@@ -463,39 +463,15 @@ test('TYP-07: invalid values and concurrent definitions block whole saves until 
     const selected = await save('change-type');
     await object('bike', { customValues: { serial: 43, insured: false } });
     const own = await read();
-    expect(
-      (
-        await post('undo', {
-          version: own.draft.version,
-          userId: selected.userId,
-          operationId: selected.operationId,
-        })
-      ).status(),
-    ).toBe(409);
-    expect(await read()).toEqual(own);
-    await post('discard', { version: own.draft.version });
-    await object('bike', { description: 'Oberoende uppgift' });
-    expect(
-      (
-        await post('undo', {
-          version: (await read()).draft.version,
-          userId: selected.userId,
-          operationId: selected.operationId,
-        })
-      ).status(),
-    ).toBe(200);
     await installation.restart();
-    const pending = await read();
-    expect(pending.draft.changes.find((item) => item.id === 'bike')?.after).toMatchObject({
-      typeId: 'cycle',
-      description: 'Oberoende uppgift',
-      customValues: { serial: 'SYNTH-42', insured: false },
-    });
-    await save('undo');
+    expect((await read()).draft).toEqual(own.draft);
     expect((await read()).objects.find((item) => item.id === 'bike')).toMatchObject({
-      typeId: 'cycle',
-      description: 'Oberoende uppgift',
+      typeId: 'vehicle',
+      customValues: { serial: 42, insured: false },
     });
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toContainEqual(
+      selected,
+    );
   } finally {
     await other.close();
     await installation.close();

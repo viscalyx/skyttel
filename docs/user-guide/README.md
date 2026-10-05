@@ -33,14 +33,12 @@ med ett [familjeabonnemang](family-subscription.md).
   lägga till fält och byta typ på ett objekt.
 - [Sambandstyper och riktning](relationship-types.md): definiera samband
   och benämningar från båda hållen.
-- [Ta bort och återställa typer och fält](definition-removal.md): hantera
-  användning och återställa definitioner via historiken.
-- [Slå samman objekt](object-merge.md): förena dubbletter efter granskning
-  av identiteter, uppgifter, bilder och samband.
+- [Ta bort typer och fält](definition-removal.md): hantera användning
+  och läsa äldre definitioner i historiken.
 - [Upphört, borttaget och permanent raderat](lifecycle.md): välja rätt
   åtgärd när något slutar gälla eller ska tas bort.
-- [Historik och ångring](history.md): läsa tidigare värden, ångra ett helt
-  sparande och återställa borttaget innehåll.
+- [Ändringshistorik](history.md): läsa sparanden och historiska värden
+  genom Rapporter och direktlänkar.
 
 ### Använd assistenter
 
@@ -77,8 +75,8 @@ med ett [familjeabonnemang](family-subscription.md).
   [sparförsök och kvitton](drafts.md#följ-upp-ett-oklart-sparande).
 - Har någon annan ändrat samma uppgift? Läs om
   [konflikter i utkastet](drafts.md#fortsätt-ett-utkast-och-lös-konflikter).
-- Vill du återställa en borttagen uppgift? Använd
-  [historik och ångring](history.md#återställ-borttaget-innehåll).
+- Vill du läsa en borttagen uppgift? Öppna
+  [ändringshistoriken](history.md).
 - Fungerar inte kartans grafik? Öppna **Lista** enligt
   [rymdkartans guide](spatial-map.md#enheter-och-begränsningar).
 - Fungerar inte mikrofonen? Fortsätt med text eller formulär enligt

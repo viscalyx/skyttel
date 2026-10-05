@@ -39,9 +39,8 @@ ett förslag i samma privata utkast som objektets övriga uppgifter.
 En profilbild visas före ditt ikonval. När du tar bort bilden visas den
 valda ikonen igen. Bildbyte och typbyte behåller ikonvalet. Välj
 **Typens standardikon** för att återgå till typens symbol. Äldre objekt
-utan eget val använder också standardikonen. Ikoner följer med i historik,
-ångring och fullständig export och återimport. Vid sammanslagning väljer
-du vilken ikon som ska gälla, också när ett objekt har standardikonen.
+utan eget val använder också standardikonen. Ikoner följer med i
+historik och fullständig export och återimport.
 
 ## Format och storlek
 
@@ -57,14 +56,12 @@ Originalfotot och dess extra metadata sparas inte som hushållsinnehåll.
 
 ## Historik och tillgång
 
-Historiken visar bilderna före och efter ett sparande. Välj
-**Ångra sparandet** för att föreslå den tidigare bilden igen, också efter
-vanlig borttagning av objektet. Granska överlapp med senare ändringar och
-spara hela utkastet för att genomföra återställningen. Se
-[historik och ångring](history.md).
+[Ändringshistoriken](history.md) visar bilderna före och efter ett
+sparande. Öppna **Rapporter** och kortets **Visa ändringarna** för att
+läsa dem. Ett nytt bildval läggs i ditt utkast före ett nytt sparande.
 
 Kastade bildförslag utan annan användning tas bort. Sparade bildversioner
-finns kvar för historik och ångring utan automatisk tidsgräns. Kända
+finns kvar för historik utan automatisk tidsgräns. Kända
 bildadresser ger inte tillgång utan aktuellt medlemskap i rätt hushåll.
 Andra medlemmars osparade bilder är privata i det vanliga arbetet.
 

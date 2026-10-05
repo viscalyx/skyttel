@@ -78,7 +78,7 @@ Befintliga gemensamma värden som inte visas i typens avsnitt finns under
 **Uppgifter utanför typens avsnitt**. Där kan du läsa och rätta dem även
 efter ett typbyte. Döljning är ingen åtkomstbegränsning eller radering.
 Äldre typer behåller beskrivningen och formulärets ekonomiska uppgifter
-tills du väljer en egen placering. Historik, ångring och återimport behåller
+tills du väljer en egen placering. Historik och återimport behåller
 värden, säkerhet och datum tillsammans med rätt typdefinition.
 
 ## Rätta definitioner och värden
@@ -128,16 +128,10 @@ Tidigare sparade värden finns kvar i historiken. **Stäng utan att skicka
 texten** tar bort oskickade formulärvärden. Panelens kryss behåller i stället
 texten så att du kan fortsätta i samma objekt senare.
 
-Ett typbyte gäller ett objekt. Ett namnbyte på typdefinitionen ändrar
-benämningen för alla objekt av den typen. Sammanslagning gäller flera
-objekt som ska bli ett; ett typbyte slår inte samman objekt och flyttar
-inga samband.
-
-Vid konflikt mellan typer granskar du typen och dess fältvärden som en
-helhet. Oberoende ändringar, exempelvis ett senare namn, bevaras. Ångring
-lägger tillbaka tidigare typ och värden i ett nytt förslag. Senare ändrade
-fält kräver ett uttryckligt val; ett överlappande eget fältförslag behöver
-hanteras innan du ångrar. Oberoende eget utkastarbete finns kvar.
+Ett typbyte gäller ett objekt och behåller dess identitet och samband.
+Ett namnbyte på typdefinitionen ändrar benämningen för alla objekt av
+den typen. Vid konflikt granskar du typen och dess fältvärden som en
+helhet innan du ger ett nytt sparbesked.
 
 ## Samtidiga ändringar och återupptagning
 
@@ -153,7 +147,6 @@ exempelvis ett nytt fält eller en beskrivning som du inte har ändrat.
 Kvittot omfattar definitioner och objekt i samma sparande. Historiken
 bevarar äldre definitioner och fältens betydelse. Följ
 [utkast och sparande](drafts.md) vid oklart sparande.
-[Ångring av ett helt sparande](history.md) omfattar också definitioner
-och egna fält. En typ som fortfarande används kan inte tas bort genom
-ångring utan att användningen hanteras. Läs om
-[borttagning och återställning av typer och fält](definition-removal.md).
+[Ändringshistoriken](history.md) visar sparade definitioner och egna
+fält med sina dåvarande betydelser. Läs om
+[borttagning av typer och fält](definition-removal.md).

@@ -139,8 +139,8 @@ mellan objekt i samma privata utkast. Definitioner, objekt och samband
 blir gemensamma först när du sparar hela utkastet.
 
 Samma namn betyder inte att två objekt är samma sak. Läs beskrivningen
-och identiteten innan du väljer ett befintligt objekt. Bekräftade
-dubbletter kan [slås samman](object-merge.md).
+och identiteten innan du väljer ett befintligt objekt. Objekt med samma
+namn behåller sina egna identiteter och samband.
 
 ## Koppla ihop objekt
 
@@ -191,7 +191,7 @@ Läs [profilbilder](profile-images.md) för bildval och
 [objekttyper och egna fält](object-types.md#byt-typ-på-ett-objekt) för att
 byta typ utan att förlora objektets identitet eller samband.
 
-## Avsluta, ta bort eller ångra
+## Avsluta, ta bort eller rätta
 
 Markera **Upphört** när något slutar gälla men ska synas i kartan.
 **Ta bort** lägger i stället en borttagning i utkastet. Ett objekts
@@ -199,6 +199,6 @@ borttagning omfattar också dess inkommande och utgående samband;
 andra objekt finns kvar. Granska följderna före sparandet.
 
 [Livscykelguiden](lifecycle.md) beskriver status, slutdatum och borttagning.
-[Historiken](history.md) låter dig ångra ett sparande genom ett nytt
-utkast. För att avstå från osparade förslag använder du
+[Historiken](history.md) visar tidigare sparanden och deras värden.
+För att avstå från osparade förslag använder du
 [utkastets kontroller](drafts.md#granska-spara-eller-kasta-förslag).
