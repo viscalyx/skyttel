@@ -2,6 +2,16 @@ import { Fragment, type ReactNode, useId, useLayoutEffect, useRef, useState } fr
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, MapState, ObjectType } from '../shared/map.js';
 import { ObjectReadDetails } from './ObjectReadDetails.js';
+import {
+  initialObjectSearch,
+  ObjectSearchFilters,
+  ObjectSearchInput,
+  objectSearchMatch,
+  objectSearchResults,
+  SearchResultStatus,
+  searchRestricted,
+  useDraftFilterReset,
+} from './ObjectSearch.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './household-table.css';
 
@@ -58,6 +68,8 @@ export function HouseholdTable({
   onRead,
   onReveal,
   searchContent,
+  hasProposals = false,
+  objectTypes = [],
 }: {
   active: boolean;
   workDisabled?: boolean;
@@ -71,13 +83,15 @@ export function HouseholdTable({
   onRead?: (object: MapObject) => void;
   onReveal?: (object: MapObject) => void;
   searchContent?: ReactNode;
+  hasProposals?: boolean;
+  objectTypes?: ObjectType[];
 }) {
   const prefix = useId();
   const [sort, setSort] = useState('name-asc');
   const [page, setPage] = useState(0);
   const [expanded, setExpanded] = useState<string[]>([]);
-  const [includeEnded, setIncludeEnded] = useState(false);
-  const [includeRemoved, setIncludeRemoved] = useState(false);
+  const [search, setSearch] = useState(initialObjectSearch);
+  const notice = useDraftFilterReset(hasProposals, search, setSearch);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterDialog = useRef<HTMLDialogElement>(null);
   const filterButton = useRef<HTMLButtonElement>(null);
@@ -92,9 +106,13 @@ export function HouseholdTable({
   const lastRowFocus = useRef<{ id: string; action: string; order: string[] } | null>(null);
   const visited = useRef(false);
   const wasActive = useRef(false);
-  const found = rows.filter(
-    (row) => (includeRemoved || !row.removed) && (includeEnded || !hasEnded(row.object)),
-  );
+  const found = objectSearchResults(rows, search, selectedIds);
+  const types = [
+    ...new Map([
+      ...objectTypes.map((type) => [type.id, type] as const),
+      ...rows.flatMap((row) => (row.type ? [[row.type.id, row.type] as const] : [])),
+    ]).values(),
+  ];
   const descending = sort.endsWith('desc');
   const collator = new Intl.Collator('sv', { numeric: true });
   found.sort((a, b) => {
@@ -220,13 +238,21 @@ export function HouseholdTable({
       </header>
       <section className="household-table-search" aria-label="Tabellens sökning och filter">
         {searchContent}
+        <ObjectSearchInput
+          search={search}
+          onChange={(next) => {
+            setSearch(next);
+            setPage(0);
+          }}
+          label="Sök objekt i tabellen"
+        />
         <button
           ref={filterButton}
           type="button"
           aria-expanded={filtersOpen}
           onClick={() => setFiltersOpen(true)}
         >
-          Filter{includeEnded || includeRemoved ? ' · aktiva' : ''}
+          Filter{searchRestricted(search) ? ' · aktiva' : ''}
         </button>
       </section>
       <section
@@ -236,7 +262,7 @@ export function HouseholdTable({
         aria-label="Objekt i läsläge"
       >
         <div className="household-table-result-heading">
-          <p role="status">{found.length} träffar · läsläge</p>
+          <SearchResultStatus count={found.length} active={active} notice={notice} />
           <label>
             Sortering
             <select
@@ -296,6 +322,13 @@ export function HouseholdTable({
               {visible.map((row) => {
                 const { object } = row;
                 const opened = expanded.includes(object.id);
+                const reasons = objectSearchMatch(
+                  object,
+                  row.type,
+                  search.query,
+                  row.before,
+                  row.beforeType,
+                ).reasons;
                 return (
                   <Fragment key={object.id}>
                     <tr data-selected={selectedIds.includes(object.id)}>
@@ -319,6 +352,9 @@ export function HouseholdTable({
                         </button>
                         {selectedIds.includes(object.id) && (
                           <span className="household-table-selection">✓ Markerad</span>
+                        )}
+                        {reasons.length > 0 && (
+                          <span className="object-search-reason">Träff i {reasons.join(', ')}</span>
                         )}
                       </th>
                       <td>{row.type?.name ?? 'Borttagen typ'}</td>
@@ -411,8 +447,7 @@ export function HouseholdTable({
               <button
                 type="button"
                 onClick={() => {
-                  setIncludeEnded(false);
-                  setIncludeRemoved(false);
+                  setSearch(initialObjectSearch);
                 }}
               >
                 Återställ sökning och filter
@@ -458,25 +493,17 @@ export function HouseholdTable({
             ×
           </button>
         </header>
-        <fieldset>
-          <legend>Status</legend>
-          <label>
-            <input
-              type="checkbox"
-              checked={includeEnded}
-              onChange={(event) => setIncludeEnded(event.target.checked)}
-            />
-            Ta med upphörda
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={includeRemoved}
-              onChange={(event) => setIncludeRemoved(event.target.checked)}
-            />
-            Ta med borttagna
-          </label>
-        </fieldset>
+        <ObjectSearchFilters
+          search={search}
+          onChange={(next) => {
+            setSearch(next);
+            setPage(0);
+          }}
+          types={types}
+          selectedIds={selectedIds}
+          hasProposals={hasProposals}
+          table
+        />
       </dialog>
     </section>
   );

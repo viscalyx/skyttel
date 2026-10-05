@@ -1,5 +1,6 @@
 import { type ReactNode, type RefObject, useId, useLayoutEffect, useRef } from 'react';
 import type { MapObject, ObjectType } from '../shared/map.js';
+import { objectSearchMatch, type ProposalFilter, type SearchableObject } from './ObjectSearch.js';
 import './object-list.css';
 
 export type ObjectBrowsing = {
@@ -9,6 +10,8 @@ export type ObjectBrowsing = {
   sort: 'name' | 'type';
   page: number;
   filtersOpen: boolean;
+  includeEnded?: boolean;
+  proposals?: ProposalFilter[];
 };
 
 export const initialObjectBrowsing: ObjectBrowsing = {
@@ -25,15 +28,21 @@ export function objectListResults(
   types: ObjectType[],
   browsing: Pick<ObjectBrowsing, 'query' | 'types' | 'onlySelected' | 'sort'>,
   selectedIds: string[],
+  versions: SearchableObject[] = [],
 ) {
   const names = new Map(types.map((type) => [type.id, type.name]));
-  const query = browsing.query.trim().toLocaleLowerCase('sv');
+
+  const versionsById = new Map(versions.map((row) => [row.object.id, row]));
   const matching = objects.filter(
     (object) =>
       (!browsing.onlySelected || selectedIds.includes(object.id)) &&
-      [object.name, names.get(object.typeId) ?? '', object.description].some((value) =>
-        value.toLocaleLowerCase('sv').includes(query),
-      ),
+      objectSearchMatch(
+        object,
+        versionsById.get(object.id)?.type ?? types.find((type) => type.id === object.typeId),
+        browsing.query,
+        versionsById.get(object.id)?.before,
+        versionsById.get(object.id)?.beforeType,
+      ).match,
   );
   const items = matching
     .filter((object) => !browsing.types.length || browsing.types.includes(object.typeId))

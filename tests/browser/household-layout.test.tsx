@@ -448,7 +448,7 @@ test('short list flow restores the used result and yields to an explicit search 
   const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
   await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
   await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
-  await expect.element(work.getByLabelText('Sök objekt', { exact: true })).toHaveFocus();
+  await expect.element(page.getByLabelText('Sök objekt i kartan', { exact: true })).toHaveFocus();
 });
 
 test('a smaller desktop keeps the panel reachable and restores its chosen position when widened', async () => {

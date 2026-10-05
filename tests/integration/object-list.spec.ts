@@ -10,6 +10,7 @@ import {
 } from '../support/client.js';
 import { startConversationWithText } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
+import { includeEndedInMap } from '../support/object-search.js';
 
 test('LISTA-01: multiple type filters combine with search and marks across 500 objects', async ({
   page,
@@ -24,6 +25,7 @@ test('LISTA-01: multiple type filters combine with search and marks across 500 o
     const before = await (await page.request.get(path)).json();
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(installation.origin);
+    await includeEndedInMap(page);
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
     const details = work.getByRole('button', {
@@ -41,24 +43,24 @@ test('LISTA-01: multiple type filters combine with search and marks across 500 o
     await expect(filters).toBeVisible();
     await expect(work.getByText('200 av 500 objekt', { exact: true })).toBeVisible();
     await work.getByLabel('Sök objekt', { exact: true }).fill('sammanhang 0.');
-    await expect(work.getByText('10 av 500 objekt', { exact: true })).toBeVisible();
-    await expect(filters.getByText('5', { exact: true })).toHaveCount(5);
+    await expect(work.getByText('20 av 500 objekt', { exact: true })).toBeVisible();
+    await expect(filters.getByText('10', { exact: true })).toHaveCount(5);
     await work.getByRole('checkbox', { name: /^Bara markerade/ }).check();
     await expect(work.getByText('2 av 500 objekt', { exact: true })).toBeVisible();
     await work.getByRole('button', { name: /^Alla typer/ }).click();
     await expect(filters.getByRole('checkbox', { checked: true })).toHaveCount(0);
     await expect(work.getByText('2 av 500 objekt', { exact: true })).toBeVisible();
     await work.getByRole('checkbox', { name: /^Bara markerade/ }).uncheck();
-    await expect(work.getByText('25 av 500 objekt', { exact: true })).toBeVisible();
+    await expect(work.getByText('50 av 500 objekt', { exact: true })).toBeVisible();
     await filters.getByRole('checkbox', { name: 'Person', exact: true }).check();
-    await work.getByRole('button', { name: 'Visa 5 objekt', exact: true }).click();
+    await work.getByRole('button', { name: 'Visa 10 objekt', exact: true }).click();
     await expect(work.getByRole('region', { name: 'Sökträffar', exact: true })).toBeFocused();
     await expect(filters).not.toBeVisible();
     await expect(work.getByText('Filter · Person', { exact: true })).toBeVisible();
     await expect(
       work.getByRole('button', { name: 'Markera Provobjekt 000', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
-    await expect(work.getByText('Person · 5 träffar', { exact: true })).toBeVisible();
+    await expect(work.getByText('Person · 10 träffar', { exact: true })).toBeVisible();
     await work.getByLabel('Sök objekt', { exact: true }).fill('finns inte');
     await expect(work.getByRole('heading', { name: 'Inga objekt matchar' })).toBeVisible();
     await work.getByRole('button', { name: 'Rensa sökning och filter', exact: true }).click();
@@ -222,6 +224,7 @@ test('LISTA-02: sorting, pages and scroll survive details, settings and map-resu
     installation.seedLargeMap(user.id, household.id);
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(installation.origin);
+    await includeEndedInMap(page);
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
     await work.getByLabel('Sök objekt', { exact: true }).fill('Provobjekt');

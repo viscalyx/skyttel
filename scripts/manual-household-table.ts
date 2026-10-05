@@ -2,6 +2,7 @@ import { createInterface } from 'node:readline';
 import { request } from '@playwright/test';
 import { prepareHouseholdTable } from '../tests/support/household-table.js';
 import { createInstallation } from '../tests/support/installation.js';
+import { prepareObjectSearch } from '../tests/support/object-search.js';
 
 const installation = await createInstallation(undefined, {
   modelFetch: async () => Response.json({ output: [] }),
@@ -12,7 +13,10 @@ const stop = () => input?.close();
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
 try {
-  await prepareHouseholdTable(client, installation.origin);
+  await (process.argv.includes('--search') ? prepareObjectSearch : prepareHouseholdTable)(
+    client,
+    installation.origin,
+  );
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   console.log(
     JSON.stringify({

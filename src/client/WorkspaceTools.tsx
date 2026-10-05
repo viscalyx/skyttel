@@ -71,6 +71,7 @@ export const textViewButtonName = 'Skriv till Skyttel';
 export function WorkspaceTools({
   onOpen,
   surface = 'map',
+  searchActive = false,
   workDisabled = false,
   account,
   onSettings,
@@ -92,6 +93,7 @@ export function WorkspaceTools({
   conversationOngoing = false,
 }: {
   surface?: 'map' | 'table';
+  searchActive?: boolean;
   workDisabled?: boolean;
   conversationUnavailable?: boolean;
   conversationOngoing?: boolean;
@@ -205,7 +207,7 @@ export function WorkspaceTools({
             ['new', 'Nytt objekt', 'new'],
             ['mic', 'Prata med Skyttel', 'voice'],
             ['text', textViewButtonName, 'conversation'],
-            ['search', 'Sök i kartan', 'search'],
+            ['search', searchActive ? 'Sök i kartan · aktiv' : 'Sök i kartan', 'search'],
             ['list', 'Lista', 'list'],
             ['draft', 'Utkast och historik', 'draft'],
           ] as const

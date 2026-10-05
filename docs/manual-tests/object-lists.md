@@ -15,7 +15,8 @@ inloggningen innehåller enbart påhittade uppgifter.
 
 1. Starta provkartan enligt [stora kartor](large-map.md#allmän-förberedelse).
    Den innehåller 500 objekt fördelade på fem typer och 1 500 samband.
-2. Öppna **Lista**. Prova både dator och telefon. Använd tangentbord och
+2. Öppna **Sök i kartan**, välj **Ta med upphörda**, stäng sökytan och
+   öppna **Lista**. Prova både dator och telefon. Använd tangentbord och
    pekning, ljust och mörkt tema samt webbläsarens förstoring.
 3. Starta om provkartan mellan fallen. För kartfokus använder du ett litet
    testhushåll enligt förutsättningarna i LISTA-03.
@@ -188,11 +189,11 @@ hushållets uppgifter.
 
 1. Markera Provobjekt 000 och Provobjekt 001. Öppna **Filter** och kryssa
    i **Person** och **Tjänst**. Kontrollera 200 träffar.
-2. Sök efter **sammanhang 0.**. Kontrollera tio träffar och fem vid vardera
+2. Sök efter **sammanhang 0.**. Kontrollera tjugo träffar och tio vid vardera
    av provkartans typer. Välj **Bara markerade** och kontrollera två träffar.
 3. Välj **Alla typer**. Kontrollera att typkryssen försvinner, men de två
    markeringarna och träffarna består. Stäng av **Bara markerade**.
-4. Välj **Person** och **Visa 5 objekt**. Kontrollera stängt filter,
+4. Välj **Person** och **Visa 10 objekt**. Kontrollera stängt filter,
    synligt typval i filterraden och fokus i **Sökträffar**.
 5. Sök efter **finns inte**. Läs det tomma resultatet och välj
    **Rensa sökning och filter**.
@@ -483,3 +484,178 @@ draft and unsent conversation”.
   och oskickat meddelande består under vanliga vybyten.
 - Kvarstående mänskliga prov omfattar NVDA, VoiceOver, touch,
   skärmtangentbord, 200/400 procents förstoring och kontrastbedömning.
+
+## Separat sökning i karta och tabell
+
+För dessa fall startar du provinstallationen med
+`node --import tsx scripts/manual-household-table.ts --search` efter
+`npm run build`. Den använder samma offentliga förberedelse som
+integrationstesterna och innehåller också **Övrigt Élan** med beskrivningen
+**Åker äpple** och det egna fältet **Hemlig anteckning**. A 2 har ett
+samband till objektet med typen **Endast i sambandet**.
+
+### SÖK-01: alla ord, egna detaljfält och svensk teckensammansättning
+
+**Syfte:** Hitta objekt genom deras fullständiga egna uppgifter.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning är öppen i Tabell.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+“SÖK-01: own detail fields, every word and Swedish normalization find objects”.
+
+**Steg:**
+
+1. Sök efter **399 EGEN**. Kontrollera en träff på A 2 och besked om
+   Egen anteckning och Pris. Sök efter **299 egen** och kontrollera samma
+   träff genom priset som visas som tidigare sparat värde.
+   <!-- cSpell:disable-next-line -->
+2. Sök efter **anteck elan öv**. Kontrollera noll träffar. Sök i stället
+   <!-- cSpell:disable-next-line -->
+   efter **anteck élan öv**, även med sammansatta accenttecken.
+3. Sök efter **Endast i sambandet** och kontrollera noll träffar.
+   Sök efter **Övrigt Élan** och kontrollera en träff, utan A 2.
+   Sök efter **ake**. Kontrollera noll träffar och att fokus stannar i
+   sökfältet. Välj **Återställ sökning och filter**.
+4. Sök efter **åke beskrivning**. Kontrollera en träff på Åke.
+
+**Förväntat resultat:**
+
+- Alla delord måste finnas; ordning och skiftläge spelar ingen roll.
+- Orden kan finnas i olika egna fält, även dolda fält och ekonomi.
+  Både visade sparade värden och förslag kan ge träff.
+- Sammansatta tecken matchar sina färdiga motsvarigheter. Å, ä och ö
+  behåller sina betydelser. Träffens detaljfält anges med namn.
+- Sökning ändrar inte hushållets uppgifter eller utkastet.
+
+### SÖK-02: flerval skiljer utkastförslag från upphörda och borttagna
+
+**Syfte:** Kombinera filter utan att blanda samman olika statusar.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning är öppen i Tabell.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+“SÖK-02: multiple filters combine independently and keep proposals distinct
+from lifecycle”.
+
+**Steg:**
+
+1. Öppna Filter och välj Typ 2, Typ 10, Nytt och Ändrat. Stäng med Escape.
+   Kontrollera A 2, Nytt prov och Övrigt Élan.
+2. Expandera A 2 och välj Bara markerade i Filter. Kontrollera en träff.
+3. Återställ sökning och filter i dialogen. Välj Föreslagen borttagning.
+   Kontrollera noll träffar; utkastfiltret finns kvar.
+4. Välj Ta med upphörda. Stäng dialogen och kontrollera Tas bort prov.
+5. Avmarkera Föreslagen borttagning och välj Ta med borttagna.
+   Stäng och sök efter borttaget. Läs Borttaget prov.
+
+**Förväntat resultat:**
+
+- Val inom samma filter förenas, olika filter begränsar varandra.
+- Escape stänger dialogen med valen kvar och återfokus på Filter.
+- Upphört, borttaget och föreslagen borttagning är olika uppgifter.
+- Aktuella objekt är startläget. Markeringen finns kvar vid återställning.
+
+### SÖK-03: kartans eget fokus startar sökning med färdigt tecken
+
+**Syfte:** Söka från kartan utan att fånga annan inmatning.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning är öppen i Karta.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+“SÖK-03: map-only character and composition entry preserve separate searches
+and Escape restrictions”.
+
+**Steg:**
+
+1. Öppna Sök i kartan. Sök efter 299 EGEN och läs träffens detaljfält.
+2. Välj Typ 10 och sök efter A 10. Tryck Escape. Kontrollera kvarvarande
+   sökning och typ i kartans resultatbesked. Öppna sökningen igen.
+3. Besök Tabell och skriv åke följt av x i dess sökfält. Återgå till Karta.
+4. Fokusera själva kartbakgrunden med Tab. Skriv ö. Kontrollera att
+   tidigare söktext ersätts, filtret behålls och sökfältet får fokus.
+5. Stäng med Escape. Fokusera kartan och bygg ett sammansatt å.
+   Kontrollera att bara det färdiga tecknet öppnar sökningen.
+6. Prova ett kortkommando, skriv i samtalsfältet och i ett formulär.
+   <!-- cSpell:disable-next-line -->
+   Återvänd till Tabell och kontrollera dess separata text **åkex**.
+
+**Förväntat resultat:**
+
+- Sökknappen öppnar sökning och filter, tangentbordsstart bara sökning.
+- Escape och Stäng bevarar text, filter och markering. Rensa sökning
+  ändrar bara texten. Aktiva begränsningar syns med stängd sökyta.
+- Bara kartytans eget fokus ger bokstavs- eller sifferstart.
+  Kortkommandon, formulär och samtal påverkas inte.
+- Träffbesked flyttar inte fokus och snabb inmatning köar inte gamla antal.
+  Kontrollera uppläsningen med NVDA och VoiceOver; automatprovet ersätter
+  inte hjälpmedelsprovet.
+
+### SÖK-04: sista förslaget återställer bara båda vyernas utkastfilter
+
+**Syfte:** Behålla sökning när det villkorliga filtret inte längre behövs.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning har sitt förberedda utkast.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+“SÖK-04: the last proposal resets only draft filters in both views and
+type-only proposals expose them”.
+
+**Steg:**
+
+1. Sök efter A 2 i kartan och välj Typ 2 och Ändrat. Stäng sökytan.
+2. Sök efter prov i Tabell och välj Typ 2 och Nytt. Stäng filterdialogen.
+3. Öppna Ditt utkast och kasta hela utkastet. Kontrollera att det är tomt.
+4. Återvänd till Tabell och sedan kartans sökyta. Kontrollera bevarad
+   söktext och Typ 2, återställt utkastfilter och besked om återställningen.
+5. Skapa enbart ett typförslag under Inställningar. Återgå till kartan
+   och sök efter finns inte. Kontrollera att utkastfiltret visas ändå.
+
+**Förväntat resultat:**
+
+- Bara utkastvalen rensas när det sista förslaget försvinner.
+- Utkastfiltret döljs och återställningen meddelas när det har ett aktivt val.
+- Typförslag och bortfiltrerade förslag räcker för att visa filtret.
+
+### SÖK-05: mobil sökingång och filterdialog bevarar begränsningar
+
+**Syfte:** Använda sökning utan ett fysiskt tangentbord.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning på telefon,
+390 pixlars bredd.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+“SÖK-05: mobile search and native filter dialog provide touch entry and
+preserve restrictions”.
+
+**Steg:**
+
+1. Visa verktygens namn och öppna Sök i kartan. Kontrollera sökfältets
+   fokus och åtkomliga filter. Skriv prov och ta med upphörda.
+2. Stäng sökytan. Läs fortsatt sökning, filter och träffantal.
+3. Välj Tabell, sök efter 399 egen och öppna Filter. Kontrollera rubrikfokus.
+   Välj Typ 2 och stäng med krysset.
+4. Kontrollera samma söktext och en träff. Prova samma flöde med touch,
+   skärmtangentbord och förstoring på iPhone och iPad.
+
+**Förväntat resultat:**
+
+- Kartan har en ingång utan tangentbord och tabellen ett eget synligt fält.
+- Filterdialogen håller fokus inom dialogen och återgår till Filter.
+- Sökingången ryms inom skärmen. Söktext och filter bevaras vid stängning.
+- Verklig touch, skärmtangentbord och VoiceOver behöver manuellt prov;
+  automatprovet kontrollerar mobil layout och offentlig UI.

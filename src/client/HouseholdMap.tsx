@@ -51,6 +51,13 @@ import { initialObjectBrowsing, ObjectList, objectListResults } from './ObjectLi
 import { MergeSourceDetails, ObjectMerge } from './ObjectMerge.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
+import {
+  MapSearch,
+  type ObjectSearchState,
+  objectSearchMatch,
+  objectSearchResults,
+  searchRestricted,
+} from './ObjectSearch.js';
 import { CustomFieldsDetails, ObjectTypeDetails, ObjectTypeEditor } from './ObjectTypes.js';
 import { type ObjectEditor, ObjectWork } from './ObjectWork.js';
 import { PagedList } from './PagedList.js';
@@ -248,6 +255,13 @@ export function HouseholdMap({
   } | null>(null);
   const [workspaceSurface, setWorkspaceSurface] = useState<'map' | 'table'>('map');
   const [readEntry, setReadEntry] = useState<HouseholdReadEntry | null>(null);
+  const [mapSearchOpen, setMapSearchOpen] = useState(false);
+  const [mapSearchFilters, setMapSearchFilters] = useState(false);
+  const mapSearchTrigger = useRef<HTMLElement | null>(null);
+  function changeMapSearch(next: ObjectSearchState) {
+    setBrowsing((previous) => ({ ...previous, ...next, page: 0 }));
+    setMapUnfiltered(false);
+  }
   const [presentation, setPresentation] = useState<'list' | 'combined' | 'map'>('map');
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -339,6 +353,14 @@ export function HouseholdMap({
       setWorkspaceSurface(target);
       return;
     }
+    if (target === 'search') {
+      mapSearchTrigger.current =
+        chosen ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+      setWorkspaceSurface('map');
+      setMapSearchFilters(true);
+      setMapSearchOpen(true);
+      return;
+    }
     if (target === 'new') {
       edit();
       return;
@@ -374,11 +396,9 @@ export function HouseholdMap({
     }
     openPanel(
       'work',
-      target === 'search'
-        ? workspace.current?.querySelector<HTMLInputElement>('.object-browser input[type="search"]')
-        : target === 'draft'
-          ? document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title')
-          : undefined,
+      target === 'draft'
+        ? document.getElementById(hasChanges ? 'draft-title' : 'save-operations-title')
+        : undefined,
     );
   }
   // Closing the text view ends nothing: the conversation, the microphone and
@@ -1066,14 +1086,21 @@ export function HouseholdMap({
         connected.add(edge.targetId);
       }
     }
+    const mapRows = objectSearchResults(
+      (state ? householdTableRows(state, effectiveTypes) : []).filter((row) => !row.removed),
+      { ...browsing, query: '', types: [], onlySelected: false },
+      selectedIds,
+    );
+    const allowed = new Set(mapRows.map((row) => row.object.id));
     const listObjects = [...displayed.values()].filter(
-      (object) => !focusId || connected.has(object.id),
+      (object) => allowed.has(object.id) && (!focusId || connected.has(object.id)),
     );
     const listResults = objectListResults(
       listObjects,
       effectiveTypes,
       { query, types: typeFilter, onlySelected, sort },
       selectedIds,
+      mapRows,
     );
     const visibleObjects = new Map(
       (mapUnfiltered ? listObjects : listResults.items).map((object) => [object.id, object]),
@@ -1111,6 +1138,7 @@ export function HouseholdMap({
     sort,
     selectedIds,
     mapUnfiltered,
+    browsing,
   ]);
   function showAll() {
     setBrowsing(initialObjectBrowsing);
@@ -1516,18 +1544,6 @@ export function HouseholdMap({
       data-short={viewport.short}
       data-wide-touch={viewport.wideTouch}
       data-theme={theme.theme}
-      onKeyDown={(event) => {
-        if (
-          active &&
-          event.currentTarget.contains(event.target as Node) &&
-          event.key === 'Escape' &&
-          !(
-            event.target instanceof HTMLElement &&
-            event.target.closest('form, input, select, textarea, dialog')
-          )
-        )
-          showAll();
-      }}
     >
       {conversationSettingsTarget &&
         // The page in Settings shows and changes the consent of the map's own conversation.
@@ -1586,6 +1602,7 @@ export function HouseholdMap({
             onExpandedChange={setToolsExpanded}
             onOpen={openWork}
             surface={workspaceSurface}
+            searchActive={searchRestricted(browsing)}
             workDisabled={!state || pending || blocked}
             account={account}
             profileRequested={profileRequested}
@@ -1738,7 +1755,7 @@ export function HouseholdMap({
               <WorkspaceIcon name="close" />
             </button>
           )}
-          <p role="status">
+          <p role="status" aria-label="Hushållsarbetets status">
             {pending
               ? saveAttempt.current
                 ? 'Väntande: kontrollerar sparandet…'
@@ -1785,6 +1802,39 @@ export function HouseholdMap({
         hidden={!active || workspaceSurface === 'table'}
       />
       {state && (
+        <div hidden={!active || workspaceSurface === 'table'}>
+          <MapSearch
+            open={mapSearchOpen && workspaceSurface === 'map'}
+            filtersOpen={mapSearchFilters}
+            search={browsing}
+            onChange={changeMapSearch}
+            onClose={() => {
+              setMapSearchOpen(false);
+              const trigger = mapSearchTrigger.current;
+              if (trigger?.offsetHeight) trigger.focus();
+              else
+                workspace.current
+                  ?.querySelector<HTMLElement>('[aria-label="Visa verktygens namn"]')
+                  ?.focus();
+            }}
+            types={effectiveTypes}
+            selectedIds={selectedIds}
+            hasProposals={hasChanges}
+            count={listResults.items.length}
+            reasons={listResults.items.flatMap((object) => {
+              const fields = objectSearchMatch(
+                object,
+                effectiveTypes.find((type) => type.id === object.typeId),
+                query,
+                state?.draft.changes.find((change) => change.id === object.id)?.before,
+                state?.draft.changes.find((change) => change.id === object.id)?.beforeType,
+              ).reasons;
+              return fields.length ? [{ id: object.id, name: object.name, fields }] : [];
+            })}
+          />
+        </div>
+      )}
+      {state && (
         <div
           className="map-space"
           hidden={!active || workspaceSurface === 'table'}
@@ -1792,6 +1842,13 @@ export function HouseholdMap({
           aria-hidden={mapCovered}
         >
           <SpatialMap
+            onSearchStart={(text) => {
+              mapSearchTrigger.current =
+                document.activeElement instanceof HTMLElement ? document.activeElement : null;
+              changeMapSearch({ ...browsing, query: text });
+              setMapSearchFilters(false);
+              setMapSearchOpen(true);
+            }}
             cameraMount={cameraMount}
             navigationMount={navigationMount}
             onNavigationChange={(open) => {
@@ -1839,6 +1896,8 @@ export function HouseholdMap({
         <HouseholdTable
           active={active && workspaceSurface === 'table'}
           rows={readRows}
+          hasProposals={hasChanges}
+          objectTypes={effectiveTypes}
           selectedIds={selectedIds}
           workDisabled={pending || blocked}
           onSelect={(object) => selectObject(object, 'select')}
@@ -1974,7 +2033,7 @@ export function HouseholdMap({
                   content: (
                     <>
                       {active && (
-                        <p role="status" aria-live="off">
+                        <p role="status" aria-live="off" aria-label="Hushållsarbetets status">
                           {pending
                             ? saveAttempt.current
                               ? 'Väntande: kontrollerar sparandet…'

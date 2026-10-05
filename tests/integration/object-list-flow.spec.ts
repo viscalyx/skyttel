@@ -7,6 +7,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { includeEndedInMap } from '../support/object-search.js';
 
 test('LISTA-05: short-screen list returns preserve the visible result and keyboard focus', async ({
   page,
@@ -22,6 +23,7 @@ test('LISTA-05: short-screen list returns preserve the visible result and keyboa
     installation.seedLargeMap(user.id, household.id);
     await page.setViewportSize({ width: 320, height: 250 });
     await page.goto(installation.origin);
+    await includeEndedInMap(page);
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
     const result = work.getByRole('button', {
@@ -85,8 +87,8 @@ test('LISTA-05: short-screen list returns preserve the visible result and keyboa
     await expect(mapResult).toBeFocused();
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
     await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-    await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
-    await expect(work.getByLabel('Sök objekt', { exact: true })).toBeFocused();
+    await tools.getByRole('button', { name: 'Sök i kartan · aktiv', exact: true }).click();
+    await expect(page.getByLabel('Sök objekt i kartan', { exact: true })).toBeFocused();
   } finally {
     await installation.close();
   }
@@ -105,6 +107,7 @@ test('LISTA-06: an inactive visible list opens details on the first pointer clic
     const saved = await (await page.request.get(path)).json();
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto(installation.origin);
+    await includeEndedInMap(page);
     await openWorkspace(page);
     const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
     const body = work.locator('.workspace-panel-body');

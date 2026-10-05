@@ -49,6 +49,32 @@ Krysset eller Escape stänger läsningen och återför fokus till
 på nästa rad, sedan föregående rad eller tabellens rubrik. Sökning,
 sortering, sida, öppna rader och rullning finns kvar.
 
+## Sök och filtrera separat
+
+**Sök i kartan** öppnar ett sökfält med filter. När själva kartytan har
+fokus kan du också börja med en bokstav eller siffra. Första färdiga
+tecknet ersätter tidigare söktext och flyttar fokus till sökfältet;
+filtervalen finns kvar. I Tabell finns ett eget synligt sökfält och
+**Filter** öppnar en separat dialog. Vyernas sökning och filter är separata.
+
+Sök i namn, typ, beskrivning, egna fält och ekonomi. Alla sökord måste
+finnas, men ordning och skiftläge spelar ingen roll och delord fungerar.
+Å, ä och ö behåller sina betydelser. Detaljträffar anger vilket fält som
+matchar. Både visade sparade värden och förslag kan ge träff; samband och
+andra objekts uppgifter ingår inte.
+
+Välj flera objekttyper, **Bara markerade** eller **Ta med upphörda**.
+Tabellen kan dessutom **Ta med borttagna**. **Förslag i ditt utkast** ger
+valen Nytt, Ändrat och Föreslagen borttagning när något förslag finns,
+även ett typförslag. När sista förslaget försvinner återställs bara detta
+filter. Flera val inom ett filter förenas; olika filter begränsar varandra.
+
+**Stäng** och Escape behåller text, filter och markering. Aktiva
+begränsningar visas även med stängd sökyta. **Rensa sökning** tömmer bara
+texten; **Återställ sökning och filter** visar startläget med aktuella
+objekt. Träffantal uppdateras automatiskt och noll träffar ger en
+förklaring och möjlighet att återställa.
+
 ## Besök andra vyer och fortsätt arbetet
 
 Öppna **Din profil** för kontouppgifter, **Inloggningssätt**, användar-ID,

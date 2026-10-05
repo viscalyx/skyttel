@@ -141,7 +141,11 @@ test('the visible relationship conflict preview matches saved independent sectio
     fields: [{ ...definition.fields[0], sectionId: 'service' }],
   });
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
-  await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/^Sparat:/));
+  await waitFor(() =>
+    expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toMatch(
+      /^Sparat:/,
+    ),
+  );
   expect((await read()).relationshipTypes.find(({ id }) => id === 'storage')).toMatchObject({
     sections: [definition.sections[0], { id: 'service', name: 'Underhåll' }],
     fields: [{ ...definition.fields[0], sectionId: 'service' }],

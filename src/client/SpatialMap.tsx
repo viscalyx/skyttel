@@ -72,6 +72,7 @@ export function SpatialMap({
   onFocus,
   onClear,
   onReset,
+  onSearchStart,
   onRemove,
   personal,
   revealRequest,
@@ -105,6 +106,7 @@ export function SpatialMap({
   onFocus: (id: string) => void;
   onClear: () => void;
   onReset: () => void;
+  onSearchStart?: (text: string) => void;
   onRemove: (object: MapObject) => void;
   personal?: ReturnType<typeof usePersonalView>;
   revealRequest?: MapRevealRequest;
@@ -1099,6 +1101,33 @@ export function SpatialMap({
         <canvas
           ref={canvas}
           role="img"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (
+              event.target !== event.currentTarget ||
+              document.activeElement !== event.currentTarget ||
+              !active ||
+              event.nativeEvent.isComposing ||
+              event.ctrlKey ||
+              event.metaKey ||
+              event.altKey
+            )
+              return;
+            if (/^[\p{L}\p{N}]$/u.test(event.key) && onSearchStart) {
+              event.preventDefault();
+              event.stopPropagation();
+              onSearchStart(event.key);
+            }
+          }}
+          onCompositionEnd={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              document.activeElement === event.currentTarget &&
+              active &&
+              /^[\p{L}\p{N}]+$/u.test(event.data.normalize('NFC'))
+            )
+              onSearchStart?.(event.data.normalize('NFC'));
+          }}
           aria-label="Rymdens bakgrund. Välj innehåll med etiketterna eller listan."
           onContextMenu={(event) => {
             if (event.ctrlKey && !pointer.current?.moved) onClear();

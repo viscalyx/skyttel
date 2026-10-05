@@ -226,7 +226,11 @@ test('history undo restores the whole removal and its lifecycle values after an 
     expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain('Rosen'),
   );
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
-  await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Sparat'));
+  await waitFor(() =>
+    expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toContain(
+      'Sparat',
+    ),
+  );
   expect((await read()).objects.find((item) => item.id === 'flower')).toMatchObject({
     name: 'Rosen',
     lifecycle: 'ended',

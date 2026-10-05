@@ -84,7 +84,8 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
 - [Objektlistor](object-lists.md): tabell med fullständiga uppgifter, skilda
   statusar, svenska sorteringsriktningar, 50 objekt per sida och bevarat
   läge på dator och mobil; fullständig läsning och sambandskedjor utan
-  kartgrafik, modalernas fokus och återgång samt listans typfilter,
+  kartgrafik, modalernas fokus och återgång; separat sökning, egna
+  detaljträffar, flerval, teckensammansättning, utkastfiltrets återställning,
   markeringar och kartfokus.
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
