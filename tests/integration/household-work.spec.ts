@@ -188,6 +188,10 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
         },
       },
     );
+    await page
+      .getByRole('dialog', { name: 'Spara utkastet', exact: true })
+      .getByRole('button', { name: 'Stäng dialogen', exact: true })
+      .click();
     await openSettings(page);
     await page
       .getByRole('navigation', { name: 'Inställningarnas sidor' })
@@ -574,6 +578,10 @@ test('ARBETE-05: navigation preserves a save attempt after its response disappea
     });
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect.poll(() => saved).toBe(true);
+    await page
+      .getByRole('dialog', { name: 'Spara utkastet', exact: true })
+      .getByRole('button', { name: 'Stäng dialogen', exact: true })
+      .click();
     await openProfile(page);
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
     await expect(
@@ -584,7 +592,11 @@ test('ARBETE-05: navigation preserves a save attempt after its response disappea
     release();
     await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
     await page.getByRole('link', { name: 'Till startsidan', exact: true }).click();
-    await page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }).click();
+    await page.getByRole('button', { name: 'Visa sparandet', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Spara utkastet', exact: true })
+      .getByRole('button', { name: 'Kontrollera sparandet igen', exact: true })
+      .click();
     await expect(
       page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
     ).toContainText('Sparat: Sparad cykel');

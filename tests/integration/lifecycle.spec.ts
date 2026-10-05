@@ -319,7 +319,7 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await expect(incoming).not.toContainText('Upphört');
     await expect(subscription).not.toContainText('Upphört');
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(history.at(-1).relationships[0]).toMatchObject({
+    expect(history[0].relationships[0]).toMatchObject({
       before: { endDate: { knowledge: 'known', value: '2031-03-12' } },
       after: { lifecycle: 'active', endDate: { knowledge: 'known', value: '2031-03-12' } },
     });

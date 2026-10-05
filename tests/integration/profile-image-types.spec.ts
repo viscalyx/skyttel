@@ -198,8 +198,8 @@ for (const typeName of [
       expect(final.objects[0]).toEqual(removedReceipt.changes[0].after);
       expect(final.objects[0]).not.toHaveProperty('profileImageId');
       expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
-        initialReceipt,
         removedReceipt,
+        initialReceipt,
       ]);
     } finally {
       await installation.close();

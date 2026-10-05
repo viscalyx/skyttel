@@ -122,7 +122,8 @@ recovers its durable receipt”.
    Granska borttagningsförslaget innan separat sparande.
 3. Stäng formuläret. Kör avbrottskoden nedan i utvecklarkonsolen och
    spara sedan hela utkastet utan att ladda om sidan.
-   Läs beskedet om okänt utfall och välj **Hämta samma kvitto igen**.
+   Läs beskedet om okänt utfall i **Spara utkastet** och välj
+   **Kontrollera sparandet igen**.
 4. Välj **Rapporter** och öppna bildborttagningens historiska detaljer.
    Kontrollera den tidigare bilden och det tomma utkastet.
 

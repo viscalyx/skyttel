@@ -36,8 +36,8 @@ async function addRelationship(page: Page, source: string, type: string, target:
 async function save(page: Page) {
   await openWorkspace(page);
   await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-  await expect(page.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
-    /sparat/i,
+  await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+    'Utkastet är sparat',
   );
   await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
     'Inga förslag',

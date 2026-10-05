@@ -226,7 +226,10 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
     );
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
-    await page.getByRole('button', { name: 'Hämta samma kvitto igen' }).click();
+    await page
+      .getByRole('dialog', { name: 'Spara utkastet', exact: true })
+      .getByRole('button', { name: 'Kontrollera sparandet igen', exact: true })
+      .click();
     await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
       'Sparat',
     );

@@ -237,7 +237,8 @@ an admitted save before reloading”.
 3. Välj **Spara hela utkastet**. Invänta konsolens **ARBETE-07: sparandet
    väntar**. I **Network** ska registreringen under `map/operations`
    ha HTTP 200 och status `pending`. Anteckna dess `operationId`.
-   Stäng utvecklarverktygen. Öppna **Inställningar → Permanent radering**.
+   Stäng utvecklarverktygen. Stäng **Spara utkastet** med krysset; försöket
+   fortsätter. Öppna **Inställningar → Permanent radering**.
    Mikrofonen ska fortfarande vara på. Välj endast lampan och granska.
    Stolen och dess privata beskrivning ska inte visas i omfattningen.
 4. Håll en separat verklig databasläsare öppen: kör följande i en andra
@@ -321,9 +322,11 @@ response disappears”.
 
 1. Skapa **Sparad cykel** och lägg objektet i utkastet. Blockera
    `*/map/save` och välj **Spara hela utkastet**.
-2. Kontrollera beskedet om okänt utfall. Besök **Inloggningssätt** och
-   återgå. Kontrollera att beskedet och **Hämta samma kvitto igen** finns kvar.
-3. Ta bort nätblockeringen. Välj **Hämta samma kvitto igen** och kontrollera
+2. Kontrollera beskedet om okänt utfall. Stäng **Spara utkastet** med
+   krysset och besök **Inloggningssätt**; försöket fortsätter.
+   Återgå och kontrollera att beskedet och **Visa sparandet** finns kvar.
+3. Ta bort nätblockeringen. Välj **Visa sparandet** och därefter
+   **Kontrollera sparandet igen**. Kontrollera
    kvittot. Ladda om och kontrollera att cykeln finns en gång i kartan.
 
 **Förväntat resultat:**
