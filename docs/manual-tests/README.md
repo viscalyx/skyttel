@@ -383,8 +383,9 @@ paneler för att
   och kartans status och teckenförklaring tillsammans utan att tappa åtkomst
   till kontrollerna.
   Avbryt förlust av oskickad objekttext, lägg hela objektändringen i
-  utkastet och öppna en namngiven konflikt från status med tangentbord. Följ alla fyra
-  konfliktslag till rätt ändring och läs tidigare, föreslagna och aktuella
+  utkastet och öppna en namngiven konflikt från status med tangentbord.
+  Följ alla fyra konfliktslag till rätt ändring och läs tidigare, föreslagna
+  och aktuella
   avsnitt, dolda värden och hela ekonomiska uppgifter. Rätta ett
   konfliktobjekt med det oberoende förslaget och sparade uppgifter kvar
   före ett nytt uttryckligt sparande. Rätta ett sambands
