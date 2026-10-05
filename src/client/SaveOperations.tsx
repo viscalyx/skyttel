@@ -8,6 +8,12 @@ export interface SaveAttempt {
   userId: string;
 }
 
+export interface SaveProgress {
+  operationId: string;
+  status: 'pending' | 'checking' | 'unknown' | 'rejected' | 'succeeded';
+  message?: string;
+}
+
 export function checkSaveIdentity(
   receipt: Pick<
     SaveReceipt,

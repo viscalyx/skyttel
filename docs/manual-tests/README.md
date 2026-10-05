@@ -353,6 +353,9 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   tomt utkast och bevarat första meddelande;
   filtrerad teckenförklaring med kartans färger,
   tre sekunders sparbesked och beständiga fel med återhämtning; återuppta
+  sparmodalens väntande, okända och avvisade försök från karta och tabell,
+  även utan utkastikon efter omladdning; behåll senare tangentbordsfokus
+  och skilj bekräftat kvitto från fel vid efterföljande hämtning; återuppta
   utkast, hantera gamla kastförsök
   och konfliktval, kombinera egenskaper i Granska konflikter från karta
   och tabell, läsa långa namn, bevara konfigurerade egenskapsnamn och

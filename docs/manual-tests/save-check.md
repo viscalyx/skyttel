@@ -269,15 +269,15 @@ medgivande utan nytt sparande” och samma titel med tillägget
    `tool REQUEST prepare_save {"version":VERSION,"contentVersion":CONTENT}`.
    Släpp nästa anrop med `reply REQUEST Försöket är förberett.`.
    Kräv kontrollfelnotisen. Anteckna det väntande ursprungliga ID:t
-   i **Utkast och historik → Tidigare sparförsök**.
+   i det offentliga svaret från **map/operations** i webbläsarens Network.
 2. Skriv en ny text utan att skicka. Öppna **Inställningar → Samtal med
    Skyttel** och välj **Återkalla medgivandet**. Bekräfta med
    **Återkalla och avsluta samtalet**.
 3. Med ett normalt svar: kräv avstängd röst, återkallat medgivande och
    ett verkligt kvitto. Gå tillbaka till kartan. Ingen gammal kontrollnotis
-   eller felnotis ska ligga kvar. Öppna **Utkast och historik** och välj
-   **Tidigare sparförsök** i **Mina sparförsök**. Kontrollera att samma ID
-   har status **Genomfört**.
+   eller felnotis ska ligga kvar. Öppna **Rapporter → Ändringshistorik**,
+   välj **Identifiera sparandet och användaren** och kontrollera samma ID
+   i den enda genomförda ändringsgruppen för Lo. Välj **Tillbaka till arbetet**.
 4. Upprepa från ett nytt väntande försök. Bryt nu kontakten efter att
    bekräftelsens `/conversation-consent/revoke` skickats men innan dess
    svar når sidan. Ta bort nätblockeringen och återställ kontakten.
@@ -291,7 +291,7 @@ medgivande utan nytt sparande” och samma titel med tillägget
 7. Öppna textsamtalet och ge medgivandet för det nya samtalet. Den
    oskickade texten finns kvar. Efter ett tappat återkallandesvar står
    kontrollens förklaring en gång i samtalstexten. Efter ett normalt svar
-   är det gamla samtalet tomt och kvittot finns i **Mina sparförsök**.
+   är det gamla samtalet tomt och kvittot finns i **Rapporter → Ändringshistorik**.
 
 **Förväntat resultat:**
 

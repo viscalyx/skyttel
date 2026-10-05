@@ -820,7 +820,11 @@ test('refresh recovery confirms an unknown save before a failed map read and ret
   loseResponse = '';
   failMapRead = true;
   await userEvent.click(within(status).getByRole('button', { name: 'Hämta aktuellt underlag' }));
-  await waitFor(() => expect(status.textContent).toContain('Utkastet är sparat'));
+  await waitFor(() =>
+    expect(screen.getByRole('status', { name: 'Sparbekräftelse' }).textContent).toContain(
+      'Utkastet är sparat',
+    ),
+  );
   await waitFor(() =>
     expect(within(status).getByRole('alert').textContent).toContain('sparade enligt kvittot'),
   );
@@ -866,7 +870,7 @@ test('a confirmed receipt remains successful when refreshing the map fails', asy
   expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toContain(
     'Sparat: Lo Exempel',
   );
-  expect(screen.getByRole('region', { name: 'Kartans status' }).textContent).toContain(
+  expect(screen.getByRole('status', { name: 'Sparbekräftelse' }).textContent).toContain(
     'Utkastet är sparat',
   );
   expect(screen.getByRole('region', { name: 'Kartans status' }).textContent).not.toContain(

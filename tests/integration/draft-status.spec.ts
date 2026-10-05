@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
 import {
@@ -7,6 +7,7 @@ import {
   openSettings,
   openWorkspace,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import {
   openConversationDraft,
@@ -19,6 +20,15 @@ import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
+
+function saveToast(page: Page) {
+  return page.locator('p[aria-hidden="true"]').filter({ hasText: /^Utkastet är sparat$/ });
+}
+
+async function closeSaveDialog(page: Page) {
+  const modal = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+  if (await modal.isVisible()) await page.keyboard.press('Escape');
+}
 
 for (const theme of ['light', 'dark'])
   test(`UTKAST-25: filtered legend matches map colours and retains only displayed categories in ${theme}`, async ({
@@ -153,30 +163,28 @@ for (const recoverUnknown of [false, true])
           await route.abort();
         });
       await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await closeSaveDialog(page);
       await openMap(page);
       const status = page.getByRole('region', { name: 'Kartans status', exact: true });
       if (recoverUnknown) {
         await expect(status).toContainText('Sparutfall okänt');
-        await expect(status).not.toContainText('Utkastet är sparat');
+        await expect(saveToast(page)).toHaveCount(0);
         await status.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
       }
-      await expect(status).toContainText('Utkastet är sparat');
+      await expect(saveToast(page)).toHaveCount(1);
       await expect(status).toContainText('kartan kunde inte hämtas');
       await expect(status).not.toContainText('Sparutfall okänt');
-      await expect(status).not.toContainText('Utkastet är sparat', { timeout: 4500 });
+      await expect(saveToast(page)).toHaveCount(0, { timeout: 4500 });
       await expect(status.getByRole('alert')).toContainText('kartan kunde inte hämtas');
       await page.unroute(mapReads);
       const refresh = status.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true });
       await refresh.click();
       await expect(status.getByRole('alert')).toHaveCount(0);
-      await expect(status).not.toContainText('Utkastet är sparat');
-      await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
-      const receipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
-      await expect(
-        page.getByRole('heading', { name: 'Mina sparförsök', exact: true }),
-      ).toBeFocused();
-      await receipts.getByText('Tidigare sparförsök', { exact: true }).click();
-      await expect(receipts).toContainText('Genomfört');
+      await expect(saveToast(page)).toHaveCount(0);
+      await (await utilityButton(page, 'Rapporter')).click();
+      const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+      await expect(history.getByRole('article')).toHaveCount(1);
+      await expect(history.getByRole('article')).toContainText('Lo Exempel');
     } finally {
       await app.close();
     }
@@ -226,6 +234,7 @@ for (const width of [1440, 390, 320])
       });
       await openWorkspace(page);
       await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await closeSaveDialog(page);
       await openMap(page);
       await expect(status).toContainText('Väntar på sparkvitto');
       await expect(legend).toBeVisible();
@@ -235,13 +244,13 @@ for (const width of [1440, 390, 320])
       await expect.poll(() => receipt).toBeTruthy();
       release?.();
       await expect(status).toContainText('Sparutfall okänt');
-      await expect(status).not.toContainText('Utkastet är sparat');
+      await expect(saveToast(page)).toHaveCount(0);
       await expect(legend).toBeVisible();
       await expect(
         status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
       ).toHaveCount(0);
       await page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }).click();
-      await expect(status).toContainText('Utkastet är sparat');
+      await expect(saveToast(page)).toHaveCount(1);
       await expect(legend).not.toContainText('föreslås');
       const saved: MapState = await (await page.request.get(path)).json();
       expect(saved.objects.map((object) => object.name)).toEqual(['Familjeabonnemanget']);
@@ -251,9 +260,9 @@ for (const width of [1440, 390, 320])
       expect(operations).toHaveLength(1);
       expect(operations[0].operationId).toBe(receipt?.operationId);
       expect(operations[0].receipt).toEqual(receipt);
-      await expect(status).not.toContainText('Utkastet är sparat', { timeout: 4500 });
+      await expect(saveToast(page)).toHaveCount(0, { timeout: 4500 });
       await page.reload();
-      await expect(status).not.toContainText('Utkastet är sparat');
+      await expect(saveToast(page)).toHaveCount(0);
     } finally {
       release?.();
       await installation.close();
@@ -433,6 +442,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     });
     await openWorkspace(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await closeSaveDialog(page);
     await openMap(page);
     await expect.poll(() => waiting).toBe(true);
     await openConversationText(page);
@@ -446,7 +456,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     expect(before.relationships).toEqual([]);
     expect(before.draft).toEqual(draft);
     release?.();
-    await expect(status).toContainText('Utkastet är sparat');
+    await expect(saveToast(page)).toHaveCount(1);
     await expect(
       page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
     ).not.toContainText('föreslås');
@@ -518,11 +528,14 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
       await route.fulfill({ response });
     });
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await closeSaveDialog(page);
     await expect.poll(() => committed).toBe(true);
     const search = page.getByLabel('Sök objekt', { exact: true });
     await search.fill('Lo');
     release?.();
-    await expect(page.getByRole('status')).toContainText('Sparat: Lo Exempel');
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+      'Utkastet är sparat',
+    );
     await expect(
       page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
     ).not.toContainText('föreslås');
@@ -531,9 +544,7 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
     await expect(search).toHaveValue('Lo Exempel');
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
     await expect(tools.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
-      'Utkastet är sparat',
-    );
+    await expect(saveToast(page)).toHaveCount(1);
     await expect(search).toBeFocused();
   } finally {
     release?.();
@@ -605,6 +616,12 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
         .getByRole('region', { name: 'Hela mitt utkast', exact: true })
         .getByRole('button', { name: 'Spara hela utkastet', exact: true }),
     ).toBeDisabled();
+    await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+    await expect(
+      page
+        .getByRole('region', { name: 'Utkastet', exact: true })
+        .getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+    ).toBeDisabled();
     expect((await read()).objects).toEqual([]);
     expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
     await openConversationText(page);
@@ -612,16 +629,17 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
     await page.getByRole('button', { name: 'Skicka', exact: true }).click();
     await expect.poll(() => calls).toBe(2);
     await openMap(page);
-    await openWorkspace(page);
+    await page.getByRole('button', { name: 'Utkast', exact: true }).click();
     const save = page
-      .getByRole('region', { name: 'Hela mitt utkast', exact: true })
+      .getByRole('region', { name: 'Utkastet', exact: true })
       .getByRole('button', { name: 'Spara hela utkastet', exact: true });
     await expect(save).toBeEnabled();
     expect(calls).toBe(2);
     expect((await read()).objects).toEqual([]);
     expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
     await save.click();
-    await expect(status).toContainText('Utkastet är sparat');
+    await closeSaveDialog(page);
+    await expect(saveToast(page)).toHaveCount(1);
     const saved = await read();
     expect(saved.objects.map(({ name, description }) => ({ name, description }))).toEqual([
       { name: 'Lo Exempel', description: 'Förslag väntar på svar' },

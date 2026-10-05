@@ -132,6 +132,10 @@
   min-height: 32px;
   padding: 5px;
 }
+.draft-saving svg {
+  width: 22px;
+  height: 22px;
+}
 .draft-read-modal header svg {
   width: 20px;
   height: 20px;
@@ -142,6 +146,38 @@
 }
 .draft-read-body {
   padding: 16px;
+}
+.draft-save-modal footer {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--space-line);
+}
+.draft-saving {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.draft-save-follow-up {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.draft-save-toast {
+  position: absolute;
+  top: calc(var(--tools-bottom, 60px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  padding: 12px 16px;
+  border: 1px solid var(--space-control);
+  border-radius: 12px;
+  background: var(--space-surface);
+  color: var(--space-text);
+  box-shadow: var(--space-shadow);
+  pointer-events: none;
 }
 .draft-values {
   display: grid;
@@ -192,4 +228,13 @@
   .draft-values-pair {
     grid-template-columns: 1fr;
   }
+}
+
+.draft-save-follow-up[hidden] {
+  display: none;
+}
+
+.household-map.workspace-shell
+  .workspace-context:has(.draft-save-follow-up:not([hidden]), .map-status .error) {
+  z-index: 7;
 }

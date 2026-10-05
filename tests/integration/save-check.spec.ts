@@ -540,11 +540,15 @@ for (const lostRevocationReply of [false, true])
         ).toHaveCount(0);
       } else {
         await expect(notice(page)).toHaveCount(0);
-        await (await utilityButton(page, 'Utkast och historik')).click();
-        const receipt = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
-        await receipt.getByText('Tidigare sparförsök', { exact: true }).click();
+        await (await utilityButton(page, 'Rapporter')).click();
+        const reports = page.getByRole('region', { name: 'Rapporter', exact: true });
+        const history = reports.getByRole('region', { name: 'Ändringshistorik', exact: true });
+        await expect(history.getByRole('article')).toHaveCount(1);
+        const receipt = history.getByRole('article');
+        await receipt.getByText('Identifiera sparandet och användaren', { exact: true }).click();
         await expect(receipt).toContainText(original.operationId);
-        await expect(receipt).toContainText('Genomfört');
+        await expect(receipt).toContainText('Lo Exempel');
+        await reports.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
       }
       const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
       expect(operations).toHaveLength(1);

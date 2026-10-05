@@ -63,12 +63,13 @@ Mikrofonläge och samtalsproblem visas i röstrutan och
    Stäng med krysset eller Escape för att återgå till raden.
 3. Utkastets läsdialog erbjuder ingen redigering eller konfliktjämförelse.
    Rättningar görs i vanliga formulär; ta bort förslaget och lägg det på nytt.
-4. Välj **Spara hela utkastet** i **Hela mitt utkast** när
-   förslagen stämmer. Ingen extra granskning krävs för att använda knappen.
+4. Välj sparikonen **Spara hela utkastet** i **Utkast** när
+   förslagen stämmer. Sparmodalen öppnas direkt med besked om sparandet.
    Sparandet gäller
    allt i utkastet tillsammans. Ett fel eller en konflikt stoppar hela
    sparandet; inget sparas delvis.
-5. Invänta kvittot som visar vad som sparas. Det gemensamma innehållet
+5. Invänta bekräftelsen **Utkastet är sparat**. Modalen stängs och det
+   sparade utkastet töms. Bekräftelsen visas i tre sekunder. Det gemensamma innehållet
    blir tillgängligt för de andra medlemmarna och får en ändringsgrupp i
    [historiken](history.md).
 
@@ -126,24 +127,24 @@ sparkvitto; gemensamt sparande är en separat åtgärd.
 
 ## Följ upp ett oklart sparande
 
-**Mina sparförsök** visar dina väntande och senaste sparförsök för
-hushållet. Logga in som samma Skyttel-användare på en annan enhet för
-att hitta dem, även efter omstart. Du behöver inte komma ihåg ett
-operations-ID eller ha kvar den ursprungliga fliken.
+Stäng sparmodalen med krysset eller Escape; det avbryter inte försöket.
+**Visa sparandet** finns i både karta och tabell när försöket fortfarande
+behöver följas upp. Det är nåbart även efter omladdning utan utkastikon,
+aktivt samtal eller medgivande. **Kontrollera sparandet igen** följer
+samma beständiga försök och skapar inga dubblerade sparanden.
 
-- **Väntar på sparkvitto** visas medan det aktuella sparandet kontrolleras.
-  Förslagen är fortfarande privata i din visning tills utfallet bekräftas.
-- **Okänt utfall** betyder att klienten saknar ett säkert besked.
-  Ett avbrutet svar säger inte om ändringarna sparas. Fortsatt ändring
-  blockeras tills försöket kontrolleras. I den ursprungliga fliken kan
-  du välja **Hämta samma kvitto igen**.
-- **Väntande** betyder att försöket finns registrerat men saknar ett
-  slutligt resultat. Välj **Återförsök sparandet** för samma försök.
-- **Genomfört** visar det beständiga kvittot med de sparade ändringarna.
-  Ett återförsök av samma sparande ger samma kvitto utan dubbletter.
-- **Avvisat** betyder att inget sparas genom det försöket. Läs orsaken
-  och välj **Hämta aktuellt underlag**. Rätta eller lös konflikter och
-  granska hela utkastet innan du gör ett nytt sparförsök.
+**Sparar utkastet…** och **Kontrollerar sparandet…** betyder att svaret
+inväntas. **Sparandet kunde inte bekräftas.** lämnar utfallet okänt och
+behåller förslagen; nytt sparande och kastande är spärrade tills försöket
+kontrolleras. **Utkastet kunde inte sparas.** betyder ett avvisat försök:
+läs orsaken och hämta aktuellt underlag innan du rättar förslagen.
+
+Det beständiga kvittot för ett genomfört sparande finns i **Rapporter →
+Ändringshistorik**. **Visa sparandet** gäller ditt aktuella privata försök.
+Logga in som samma Skyttel-användare på en annan enhet för att följa upp det,
+även efter omstart. Du behöver inte komma ihåg ett operations-ID eller
+ha kvar den ursprungliga fliken. Ett återförsök av samma sparande ger samma
+kvitto utan dubbletter.
 
 Ett tidigare kvitto bekräftar bara sitt eget sparande. Nya förslag och
 text som ännu bara finns i ett öppet formulär omfattas inte av kvittot.

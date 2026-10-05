@@ -9,6 +9,7 @@ import {
   receiptMessage,
   rejectionMessage,
   type SaveAttempt,
+  type SaveProgress,
 } from './SaveOperations.js';
 import { type ConversationMode, useConversation } from './use-conversation.js';
 import { useConversationPreferences } from './use-conversation-preferences.js';
@@ -45,7 +46,6 @@ export function useHouseholdWork(options: {
   onContentReplaced?: () => void;
   onAccessLost: () => void;
   onSaved: () => void;
-  onSaveRefreshed: () => void;
   onConversationStarted: (mode: ConversationMode) => void;
   onConversationEnded: () => void;
   onSelectItem: (target: MapSelection, signal: AbortSignal) => Promise<boolean>;
@@ -101,6 +101,9 @@ export function useHouseholdWork(options: {
   const [status, setStatus] = useState('');
   const saveToast = useSaveToast();
   const saveAttempt = useRef<SaveAttempt | null>(null);
+  const [saveProgress, setSaveProgress] = useState<SaveProgress>();
+  const saveProgressRef = useRef(saveProgress);
+  saveProgressRef.current = saveProgress;
   const [operations, setOperations] = useState<SaveOperation[]>([]);
   const [load, setLoad] = useState(0);
   const [mapUnfiltered, setMapUnfiltered] = useState(false);
@@ -117,12 +120,30 @@ export function useHouseholdWork(options: {
     setState(null);
     setOperations([]);
     saveAttempt.current = null;
+    setSaveProgress(undefined);
     setStatus('');
     setError('Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.');
     callbacks.current.onAccessLost();
   }, [setError]);
   const personal = usePersonalView(path, loseAccess);
   const conversationPreferences = useConversationPreferences(path);
+  const confirmSave = useCallback(
+    (receipt: SaveReceipt) => {
+      setStatus(receiptMessage(receipt));
+      saveToast.confirm(receipt.operationId);
+      saveAttempt.current = null;
+      setSaveProgress({ operationId: receipt.operationId, status: 'succeeded' });
+      setState((previous) =>
+        previous && previous.draft.version === receipt.draftVersion
+          ? { ...previous, draft: { version: receipt.draftVersion + 1, changes: [] } }
+          : previous,
+      );
+      setBlocked(false);
+      // Confirmation consumes only the saved draft; unsent form text remains.
+      callbacks.current.onSaved();
+    },
+    [saveToast.confirm],
+  );
   useEffect(() => {
     let active = true;
     let confirmed = false;
@@ -146,10 +167,8 @@ export function useHouseholdWork(options: {
           ...recent.filter((item) => item.operationId !== operation.operationId),
         ];
         if (operation.status === 'succeeded') {
-          setStatus(receiptMessage(operation.receipt));
-          saveToast.confirm(operation.operationId);
           setOperations(recent);
-          saveAttempt.current = null;
+          confirmSave(operation.receipt);
           confirmed = true;
         }
       }
@@ -172,13 +191,38 @@ export function useHouseholdWork(options: {
           if (operation.status === 'rejected') {
             message = rejectionMessage(operation.error);
             saveAttempt.current = null;
+            setSaveProgress({ operationId: operation.operationId, status: 'rejected', message });
           }
         } else {
           message =
             'Utfallet är okänt. Inget registrerat resultat hittades. Återförsök samma sparande.';
         }
       }
-      const waiting = recent.some((item) => item.status === 'pending');
+      if (!attempt) {
+        const tracked = recent.find(
+          (item) => item.operationId === saveProgressRef.current?.operationId,
+        );
+        if (tracked?.status === 'succeeded' && saveProgressRef.current?.status !== 'succeeded') {
+          confirmSave(tracked.receipt);
+          confirmed = true;
+        } else if (
+          tracked?.status === 'rejected' &&
+          saveProgressRef.current?.status !== 'rejected'
+        ) {
+          message = rejectionMessage(tracked.error);
+          setSaveProgress({ operationId: tracked.operationId, status: 'rejected', message });
+        }
+      }
+      const unresolved = recent.find((item) => item.status === 'pending');
+      const waiting = Boolean(unresolved);
+      if (unresolved && !attempt)
+        setSaveProgress({ operationId: unresolved.operationId, status: 'unknown' });
+      else if (!attempt && !saveProgressRef.current && recent[0]?.status === 'rejected')
+        setSaveProgress({
+          operationId: recent[0].operationId,
+          status: 'rejected',
+          message: rejectionMessage(recent[0].error),
+        });
       setState(value);
       setOperations(recent);
       setBlocked(waiting || Boolean(saveAttempt.current));
@@ -201,12 +245,12 @@ export function useHouseholdWork(options: {
     return () => {
       active = false;
     };
-  }, [path, load, householdId, loseAccess, setError, saveToast.confirm]);
+  }, [path, load, householdId, loseAccess, setError, confirmSave]);
 
   async function save(attempt: SaveAttempt, recover = false) {
     if (!isCurrent() || !state || pending) return;
-    const saveOrigin = document.activeElement;
     saveAttempt.current = attempt;
+    setSaveProgress({ operationId: attempt.operationId, status: recover ? 'checking' : 'pending' });
     setPending(true);
     setError('');
     setStatus('');
@@ -243,8 +287,6 @@ export function useHouseholdWork(options: {
           : (await request<{ receipt: SaveReceipt }>(`${path}/save`, body)).receipt;
       if (!isCurrent()) return;
       checkSaveIdentity(receipt, attempt);
-      setStatus(receiptMessage(receipt));
-      saveToast.confirm(receipt.operationId);
       setOperations((previous) =>
         previous.map((item) =>
           item.operationId === attempt.operationId
@@ -252,11 +294,8 @@ export function useHouseholdWork(options: {
             : item,
         ),
       );
-      saveAttempt.current = null;
+      confirmSave(receipt);
       confirmed = true;
-      // Recovery can happen while an older form has unsent text. Keep that text
-      // and let its draft-version check prevent it from overwriting newer work.
-      callbacks.current.onSaved();
       const { operations: recent } = await request<{ operations: SaveOperation[] }>(
         `${path}/operations`,
       );
@@ -267,7 +306,6 @@ export function useHouseholdWork(options: {
       setState(latest);
       setOperations(recent);
       setBlocked(recent.some((item) => item.status === 'pending'));
-      if (document.activeElement === saveOrigin) callbacks.current.onSaveRefreshed();
     } catch (failure) {
       if (!isCurrent()) return;
       setBlocked(true);
@@ -282,6 +320,11 @@ export function useHouseholdWork(options: {
         if (!['operation_conflict', 'client_outdated'].includes(failure.code))
           saveAttempt.current = null;
         setError(rejectionMessage(failure.code));
+        setSaveProgress({
+          operationId: attempt.operationId,
+          status: saveAttempt.current ? 'unknown' : 'rejected',
+          message: rejectionMessage(failure.code),
+        });
         try {
           const recent = await readOperations(path, householdId, state);
           if (isCurrent()) setOperations(recent);
@@ -289,6 +332,7 @@ export function useHouseholdWork(options: {
           // Keep the received rejection visible when the follow-up read fails.
         }
       } else {
+        setSaveProgress({ operationId: attempt.operationId, status: 'unknown' });
         setError(
           'Sparandet kunde inte bekräftas. Utfallet är okänt. Försök hämta samma kvitto igen.',
         );
@@ -301,7 +345,7 @@ export function useHouseholdWork(options: {
   const conversation = useConversation({
     householdId,
     enabled: Boolean(state),
-    manualSaveOperationId: pending ? saveAttempt.current?.operationId : undefined,
+    manualSaveOperationId: saveAttempt.current?.operationId,
     onSaveConfirmed: saveToast.confirm,
     onMapChange: () => {
       // The local save owns completion and the following map refresh.
@@ -340,6 +384,7 @@ export function useHouseholdWork(options: {
     setStatus,
     saveToast,
     saveAttempt,
+    saveProgress,
     operations,
     setLoad,
     save,

@@ -24,6 +24,7 @@ import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { ConflictDialog } from './ConflictDialog.js';
 import { DraftReview } from './DraftReview.js';
+import { DraftSaveDialog, DraftSaveFollowUp } from './DraftSaveDialog.js';
 import { DraftStatus } from './DraftStatus.js';
 import { useFloatingArea } from './floating-windows.js';
 import {
@@ -137,6 +138,7 @@ export function HouseholdMap({
     setStatus,
     saveToast,
     saveAttempt,
+    saveProgress,
     operations,
     setLoad,
     save,
@@ -178,9 +180,6 @@ export function HouseholdMap({
         setTypeEditor(null);
         setEdgeTypeEditor(null);
       }
-    },
-    onSaveRefreshed: () => {
-      if (!dirty) newButton.current?.focus();
     },
     onConversationStarted: (mode) => {
       if (mode === 'text') showConversation();
@@ -643,7 +642,9 @@ export function HouseholdMap({
   }
 
   function saveDraft() {
-    if (!state) return;
+    if (!state || pending || blocked || dirty || conversation.working || conversation.needsAnswer)
+      return;
+    setSaveDialogOpen(true);
     void save({
       version: state.draft.version,
       operationId: crypto.randomUUID(),
@@ -1115,6 +1116,10 @@ export function HouseholdMap({
         state.draft.relationshipTypes?.length),
   );
   const pendingOperation = operations.find((operation) => operation.status === 'pending');
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  useEffect(() => {
+    if (saveProgress?.status === 'succeeded') setSaveDialogOpen(false);
+  }, [saveProgress]);
   const unresolved =
     state?.draft.changes.some((change) => change.after?.identity === 'unresolved') ||
     state?.draft.relationships?.some((change) => change.after?.knowledge === 'unresolved');
@@ -1426,6 +1431,22 @@ export function HouseholdMap({
           />,
           conversationSettingsTarget,
         )}
+      <p
+        className="visually-hidden"
+        role="status"
+        aria-label="Sparbekräftelse"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {saveToast.announcementOperationId && (
+          <span key={saveToast.announcementOperationId}>Utkastet är sparat</span>
+        )}
+      </p>
+      {saveToast.operationId && (
+        <p className="draft-save-toast" aria-hidden="true">
+          Utkastet är sparat
+        </p>
+      )}
       {active && (
         <>
           <a className="skip-link" href="#workspace-tools">
@@ -1525,6 +1546,11 @@ export function HouseholdMap({
               {selectedIds.length} markerade
             </span>
             <section aria-label="Kartans status" className="map-status">
+              <DraftSaveFollowUp
+                progress={saveProgress}
+                hidden={saveDialogOpen}
+                onOpen={() => setSaveDialogOpen(true)}
+              />
               <p aria-live="polite" aria-atomic="true">
                 {conversationFeedback(conversation)}
               </p>
@@ -1536,11 +1562,6 @@ export function HouseholdMap({
                       ? 'Väntar på sparkvitto'
                       : 'Hämtar aktuellt underlag…'
                     : ''}
-              </p>
-              <p aria-live="polite" aria-atomic="true">
-                {saveToast.operationId && (
-                  <span key={saveToast.operationId}>Utkastet är sparat</span>
-                )}
               </p>
               {error && (
                 <p role="alert" className="error">
@@ -1637,7 +1658,11 @@ export function HouseholdMap({
               <WorkspaceIcon name="close" />
             </button>
           )}
-          <p role="status" aria-label="Hushållsarbetets status">
+          <p
+            role="status"
+            aria-live={status.startsWith('Sparat:') ? 'off' : 'polite'}
+            aria-label="Hushållsarbetets status"
+          >
             {pending
               ? saveAttempt.current
                 ? 'Väntande: kontrollerar sparandet…'
@@ -1856,19 +1881,26 @@ export function HouseholdMap({
             );
           }}
           statusContent={
-            conflicts.length > 0 && (
-              <button
-                type="button"
-                className="map-conflict"
-                onClick={() => {
-                  setConflictDialogKey(undefined);
-                  setConflictDialogOpen(true);
-                }}
-              >
-                <span aria-hidden="true">⚠</span> {conflicts.length}{' '}
-                {conflicts.length === 1 ? 'konflikt' : 'konflikter'} i ditt utkast
-              </button>
-            )
+            <>
+              <DraftSaveFollowUp
+                progress={saveProgress}
+                hidden={saveDialogOpen}
+                onOpen={() => setSaveDialogOpen(true)}
+              />
+              {conflicts.length > 0 && (
+                <button
+                  type="button"
+                  className="map-conflict"
+                  onClick={() => {
+                    setConflictDialogKey(undefined);
+                    setConflictDialogOpen(true);
+                  }}
+                >
+                  <span aria-hidden="true">⚠</span> {conflicts.length}{' '}
+                  {conflicts.length === 1 ? 'konflikt' : 'konflikter'} i ditt utkast
+                </button>
+              )}
+            </>
           }
         />
       )}
@@ -1894,6 +1926,15 @@ export function HouseholdMap({
           }}
         />
       )}
+      <DraftSaveDialog
+        open={saveDialogOpen}
+        progress={saveProgress}
+        onClose={() => setSaveDialogOpen(false)}
+        onCheck={() => {
+          if (saveAttempt.current) void save(saveAttempt.current, true);
+          else if (pendingOperation) retrySave(pendingOperation);
+        }}
+      />
       {state && readEntry && (
         <HouseholdReadDialog
           key={`${readEntry.kind}:${readEntry.id}`}
@@ -1989,7 +2030,13 @@ export function HouseholdMap({
             conversationChoice.current = chosen;
             conversation.begin('text');
           }}
-          draftContent={<DraftReview state={state} blocked={pending || blocked} />}
+          draftContent={
+            <DraftReview
+              state={state}
+              blocked={pending || blocked || dirty}
+              onSave={conversation.working || conversation.needsAnswer ? undefined : saveDraft}
+            />
+          }
           draft={state.draft}
           showDraftOnStart={conversationPreferences.preferences.showDraftOnStart}
           preferencesKnown={conversationPreferences.known}

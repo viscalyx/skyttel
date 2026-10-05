@@ -64,6 +64,184 @@ konfiguration och de medgivanden som anges där.
 
 ## Privata utkast
 
+### UTKAST-36: spara hela utkastet direkt utan samtal
+
+**Syfte:** Bekräfta ett enda atomiskt sparande från utkastets sparikon.
+
+**Användare:** Den syntetiska administratören Alex Exempel.
+
+**Förutsättningar:** Kör `npm run build` och
+`node --import tsx scripts/manual-draft-save.ts` på en dator med grafisk
+webbläsare. Den öppnar en separat installation med riktig SQLite, inloggad
+administratör och förslaget Alex blå cykel. Ingen AI-leverantör är konfigurerad.
+Terminalens kommandon styr bara leveransen av riktiga HTTP-svar. Skriv
+`new-draft` inför varje nytt fall och `quit` efter provningen.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+testfallet “UTKAST-36: draft save opens immediately and confirms one
+persistent save without AI”.
+
+**Steg:**
+
+1. Skriv `hold` i terminalen. Öppna **Utkast** och välj **Spara hela utkastet**.
+2. Läs sparmodalen och prova dess tangentbordsfokus. Skriv `result` i terminalen.
+3. Skriv `release`. Läs bekräftelsen, vänta tre sekunder och läs tomt utkast.
+4. Skriv `result` igen och jämför förslagen, sparförsöket och historiken.
+
+**Förväntat resultat:**
+
+- Modalen öppnas genast med fokus på rubriken **Spara utkastet** och texten
+  **Sparar utkastet…**. Bara krysset och Escape stänger den. Förslaget ligger
+  kvar medan kvittot saknas.
+- Bekräftat sparande tömmer utkastet, stänger modalen och återger fokus till
+  utkastets rubrik när sparikonen är inaktiv.
+- **Utkastet är sparat** visas i tre sekunder utan **Visa ändringarna**.
+  En enda artig statusregion behåller beskedet när den visuella toasten försvinner.
+  Faktisk uppläsning kontrolleras separat med mänsklig skärmläsarprovning.
+- Exakt ett genomfört sparförsök och ett motsvarande historikkvitto finns.
+  Inget samtal startas och inget medgivande efterfrågas.
+
+### UTKAST-37: stäng ett väntande mobilt sparande och fortsätt annat arbete
+
+**Syfte:** Behålla uppföljning och korrekt fokus mellan karta och tabell.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-36.
+
+**Förutsättningar:** Välj `new-draft` och `hold`. Använd mobil visning.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+testfallen “UTKAST-37: closing a pending mobile save preserves its follow-up
+across map and table without stealing later focus at 390px” och samma titel
+med “320px” samt “UTKAST-37: a closed pending save restores the table
+heading when its focused follow-up disappears”.
+
+**Steg:**
+
+1. Öppna utkastet och spara. Prova Tab och Skift+Tab och stäng med Escape.
+2. Stäng textvyn. Öppna **Visa sparandet** i kartan och stäng med krysset.
+3. Öppna **Tabell**, välj **Visa sparandet** och stäng med Escape.
+4. Flytta fokus till **Sök objekt i tabellen** och skriv `release` i terminalen.
+5. Skriv `result` och kontrollera det avslutade försöket.
+6. Upprepa utan att flytta fokus från **Visa sparandet** före `release`.
+
+**Förväntat resultat:**
+
+- Tangentbordet cirkulerar mellan modalens tillgängliga kontroller och
+  lämnar inte den öppna modalen. Text och kontroller ryms i smal mobil visning.
+- Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna;
+  efter stängning återgår fokus till **Visa sparandet**.
+- Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus.
+  Utkastet förbrukas med exakt ett sparande och en historikpost.
+  När uppföljningsknappen fortfarande äger fokus och försvinner efter
+  bekräftelsen återgår fokus till tabellens rubrik.
+
+### UTKAST-38: kontrollera samma försök efter ett tappat sparbesked
+
+**Syfte:** Skilja okänt utfall från bekräftad framgång utan att spara två gånger.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-36.
+
+**Förutsättningar:** Välj `new-draft` och `lost-response` i terminalen.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+testfallet “UTKAST-38: a lost save response keeps proposals until the same
+durable attempt is checked from the table”.
+
+**Steg:**
+
+1. Spara från Utkast och läs **Sparandet kunde inte bekräftas.** Stäng med Escape.
+2. Kontrollera att förslaget ligger kvar i klienten och att nytt sparande
+   och kastande är spärrade. Skriv `result` för att läsa serverns verkliga utfall.
+3. Stäng textvyn, öppna Tabell och välj **Visa sparandet**.
+4. Välj **Kontrollera sparandet igen** och läs bekräftelsen.
+5. Skriv `result` igen och jämför försöks-ID och historik.
+
+**Förväntat resultat:**
+
+- Okänt utfall behåller förslagen och gör inget påstående om framgång.
+  Kastande verifieras även tillsammans med dess fullständiga flöde.
+- Kontrollen visar **Kontrollerar sparandet…**. Fokus flyttas till
+  krysset medan kontrollknappen saknas, och till tabellens rubrik när
+  bekräftelsen tar bort uppföljningsknappen.
+- Samma beständiga försöks-ID återfinns. Bara ett sparanrop, ett genomfört
+  försök och en historikpost behövs. Ingen AI eller samtalsstart krävs.
+
+### UTKAST-39: återuppta ett registrerat sparförsök efter omladdning
+
+**Syfte:** Nå resultatet utan utkastikon och avsluta en inaktuell oklar uppföljning.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-36.
+
+**Förutsättningar:** Terminalkommandot `pending-attempt` registrerar ett
+verkligt väntande försök genom offentlig HTTP och laddar om sidan. Automatisk
+nätkontroll blockeras tills du väljer `network-ok`.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+testfallen “UTKAST-39: a durable save attempt remains reachable after reload
+without a draft icon or conversation and reports a confirmed rejection” och
+“UTKAST-39: recovery after reload completes the existing attempt and retires
+its unknown follow-up without AI”.
+
+**Steg:**
+
+1. Välj `new-empty` och `pending-attempt`. Ladda om sidan igen.
+2. Kontrollera att Utkast-ikonen saknas men **Visa sparandet** finns.
+   Öppna den och välj **Kontrollera sparandet igen**.
+3. Läs det avvisade utfallet. Stäng med Escape, ladda om sidan och öppna
+   uppföljningen igen. Skriv `result` i terminalen.
+4. Välj `new-draft` och `pending-attempt`. Ladda om och kontrollera uppföljningen.
+5. Välj `network-ok` och invänta automatisk kontroll. Skriv `result` igen.
+
+**Förväntat resultat:**
+
+- Uppföljningen överlever omladdning utan samtal, medgivande eller AI.
+- Ett tomt utkast avvisas med **Utkastet kunde inte sparas.** Modalens enda
+  knapp är krysset. Avvisningen förblir läsbar efter stängning och återöppning;
+  inget gemensamt innehåll eller historikkvitto skapas.
+- Ett verkligt förslag sparas av samma väntande försök. Uppföljningen med
+  gammalt okänt utfall och Utkast-ikonen försvinner efter bekräftelsen.
+  Exakt ett genomfört försök och ett motsvarande historikkvitto finns.
+
+### UTKAST-40: skilj avvisning från hämtningsfel efter ett bekräftat kvitto
+
+**Syfte:** Bevara både bekräftad framgång och osparade förslag vid rätt sorts fel.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-36.
+
+**Förutsättningar:** Välj `new-draft` inför varje del. För versionskonflikten
+behövs en andra flik med samma inloggning och hushåll.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+testfallen “UTKAST-40: a verified receipt closes the save dialog despite a
+failed map refresh and never repeats its announcement” och “UTKAST-40: a
+rejected stale version retains every proposal until fresh reading and creates
+no saved history”.
+
+**Steg:**
+
+1. Välj `refresh-failure` och spara från Utkast. Läs tomt utkast och bekräftelsen.
+2. Stäng textvyn och läs kartans hämtningsfel. Vänta tills toasten försvinner.
+3. Välj `network-ok` och **Hämta aktuellt underlag**. Skriv `result`.
+4. Välj `new-draft` och öppna Utkast i första fliken. I andra fliken ändrar
+   du cykelns namn till **Alex nya cykelnamn** och lägger ändringen i utkastet.
+   Återvänd till första fliken och spara dess äldre version utan omladdning.
+5. Läs avvisningen och stäng. Kontrollera spärrat sparande. Stäng textvyn,
+   välj **Hämta aktuellt underlag**, öppna Utkast och läs det nya namnet.
+
+**Förväntat resultat:**
+
+- Ett bekräftat kvitto stänger modalen och tömmer det sparade utkastet även
+  om kartan inte kan hämtas. Felet förblir nåbart. Senare hämtning varken
+  startar ett nytt sparförsök eller spelar upp det gamla beskedet igen.
+- En äldre utkastversion avvisas tydligt; modalens enda knapp är krysset.
+  Alla aktuella privata förslag finns kvar och ingen historikpost skapas.
+  Efter hämtning läses det nya namnet och sparikonen blir tillgänglig igen.
+
 ### UTKAST-25: läs hela utkastet utan AI eller medgivande
 
 **Syfte:** Granska alla förslag, även dolda fält, utan att starta samtal.
@@ -914,13 +1092,13 @@ remains recoverable without a conversation” samt samma titel med
 **Steg:**
 
 1. Lägg Lo Exempel i utkastet. Blockera hämtning av kartan och välj Spara
-   hela utkastet från Lista. Stäng panelerna.
+   hela utkastet från Lista. Stäng sparmodalen med Escape och stäng panelerna.
 2. Läs Utkastet är sparat tillsammans med felet att kartan inte kunde
    hämtas. Vänta tre sekunder. Sparbeskedet försvinner; felet består.
 3. Ta bort blockeringen och välj Hämta aktuellt underlag. Felet ska
    försvinna och det tidigare sparbeskedet ska inte spelas upp igen.
-4. Öppna Utkast och historik. Kontrollera fokus på Mina sparförsök och
-   läs Genomfört under Tidigare sparförsök.
+4. Öppna **Rapporter** och läs den enda genomförda ändringsgruppen
+   för Lo Exempel i **Ändringshistorik**.
 5. Upprepa med ett nytt förslag och bryt sparsvaret efter genomförandet.
    Läs Sparutfall okänt utan sparbesked. Blockera sedan kartans hämtning,
    men tillåt hämtning av sparförsök. Välj Hämta aktuellt underlag.
@@ -1099,11 +1277,12 @@ fresh explicit save”.
    kartan inte erbjuder sparande. Ingen separat **Nödvändigt
    svar**-ruta eller **Svara i samtalet**-knapp ska finnas.
 3. Öppna Lista och **Hela mitt utkast**. Kontrollera att **Spara hela
-   utkastet** är inaktiverad även där. Kartan har ännu inga sparade objekt.
+   utkastet** är inaktiverad även där. Öppna även **Utkast** och kontrollera
+   dess sparikon. Kartan har ännu inga sparade objekt.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
    Vänta tills frågan är besvarad. Stäng panelerna med kryssen igen.
-5. Öppna Lista. Kontrollera att sparande erbjuds men inte har genomförts. Välj
-   **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
+5. Öppna **Utkast**. Kontrollera att sparande erbjuds men inte har genomförts.
+   Välj **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
 
 **Förväntat resultat:**
 
