@@ -157,6 +157,7 @@ const draftChange: z.ZodType<DraftChange> = z
     type: objectType,
     beforeType: objectType.optional(),
     proposedAt: z.iso.datetime().optional(),
+    stagingId: z.uuid().optional(),
   })
   .strict();
 const receipt = z

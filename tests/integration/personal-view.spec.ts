@@ -516,8 +516,8 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Ny sak');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Ny sak');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openMap(page);
     expect((await read()).positions).toEqual(placement);
     await expect.poll(async () => (await projection()).x).toBeCloseTo(pointBefore.x, 3);
@@ -529,7 +529,7 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
       .click();
     const lamp = page.getByRole('region', { name: 'Lampan', exact: true });
     await lamp.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await lamp.getByLabel('Objektets namn').fill('Oskickad text');
+    await lamp.getByLabel('Namn', { exact: true }).fill('Oskickad text');
     await openMap(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.setViewportSize({ width: 844, height: 390 });
@@ -540,7 +540,7 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
     expect((axis?.y ?? 0) + (axis?.height ?? 0)).toBeLessThanOrEqual(390);
     await openWorkspace(page);
     await activatePanel(page, 'Lampan');
-    await expect(lamp.getByLabel('Objektets namn')).toHaveValue('Oskickad text');
+    await expect(lamp.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad text');
     expect((await read()).positions).toEqual(placement);
     expect((await (await page.request.get(path)).json()).draft.changes[0].after.name).toBe(
       'Ny sak',

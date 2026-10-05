@@ -12,6 +12,7 @@ import {
 import { userEvent } from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest';
+import { FormLeaveProvider } from '../../../src/client/FormLeave.js';
 import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
 import { createHousehold, signIn } from '../../support/client.js';
@@ -154,7 +155,11 @@ async function household({
     );
   }
   async function open() {
-    render(<Workspace />);
+    render(
+      <FormLeaveProvider>
+        <Workspace />
+      </FormLeaveProvider>,
+    );
     await screen.findByRole('navigation', { name: 'Kartans verktyg' });
     await waitFor(() => expect(screen.queryByText('Hushållets karta hämtas…')).toBeNull());
   }
@@ -169,7 +174,8 @@ async function household({
     await waitFor(() => expect(microphone().getAttribute('aria-pressed')).toBe('true'));
   }
   async function settings() {
-    await userEvent.click(tools().getByRole('button', { name: 'Visa verktygens namn' }));
+    const expand = tools().queryByRole('button', { name: 'Visa verktygens namn' });
+    if (expand) await userEvent.click(expand);
     await userEvent.click(tools().getByRole('button', { name: 'Inställningar' }));
     await screen.findByRole('heading', { name: 'Medgivande' });
   }
@@ -206,31 +212,26 @@ async function household({
   };
 }
 
-test('unavailable conversation remains operable on demand while an unsent map form stays intact', async () => {
+test('unsent object text requires confirmation before unavailable conversation navigation', async () => {
   const home = await household({ unavailable: true });
   await home.open();
-  expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull();
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
   await userEvent.click(
     within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
       name: 'Nytt objekt',
     }),
   );
-  await userEvent.type(screen.getByLabelText('Objektets namn'), 'Oskickad cykel');
+  await userEvent.type(screen.getByLabelText('Namn'), 'Oskickad cykel');
   await userEvent.click(home.microphone());
-  const notice = await screen.findByRole('region', { name: 'Samtalsnotis' });
-  expect(notice.textContent).toContain('Samtal med Skyttel är inte tillgängligt just nu.');
-  expect(home.microphone().getAttribute('aria-description')).toContain(
-    'Inte tillgängligt just nu.',
-  );
-  expect(home.microphone().hasAttribute('disabled')).toBe(false);
-  expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
-  await userEvent.click(within(notice).getByRole('button', { name: 'Stäng notisen' }));
-  expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull();
-  expect((screen.getByLabelText('Objektets namn') as HTMLInputElement).value).toBe(
-    'Oskickad cykel',
-  );
+  const loss = within(screen.getByRole('dialog', { name: 'Lämna ändrade uppgifter?' }));
+  await userEvent.click(loss.getByRole('button', { name: 'Fortsätt redigera' }));
+  expect((screen.getByLabelText('Namn') as HTMLInputElement).value).toBe('Oskickad cykel');
   expect(home.starts).toEqual([]);
+  await userEvent.click(home.microphone());
+  await userEvent.click(screen.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }));
+  expect((await screen.findByRole('region', { name: 'Samtalsnotis' })).textContent).toContain(
+    'Samtal med Skyttel är inte tillgängligt just nu.',
+  );
   expect(home.media.getUserMedia).not.toHaveBeenCalled();
   expect((await home.read()).draft.changes).toEqual([]);
 });
@@ -628,7 +629,7 @@ test('the context failure notice resets the conversation without submitting unse
   expect(home.media.getUserMedia).not.toHaveBeenCalled();
 });
 
-test('a lost map proposal delivered after navigating to Settings preserves focus and is recovered as the original private change', async () => {
+test('pending or unknown object staging must be checked before navigating to Settings', async () => {
   const home = await household();
   await home.open();
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
@@ -637,7 +638,7 @@ test('a lost map proposal delivered after navigating to Settings preserves focus
       name: 'Nytt objekt',
     }),
   );
-  await userEvent.type(screen.getByLabelText('Objektets namn'), 'Ett privat provobjekt');
+  await userEvent.type(screen.getByLabelText('Namn'), 'Ett privat provobjekt');
   let finish!: () => void;
   let delivered = false;
   const held = new Promise<void>((resolve) => {
@@ -645,29 +646,25 @@ test('a lost map proposal delivered after navigating to Settings preserves focus
   });
   cleanups.push(finish);
   home.network.after = async (url, init, response) => {
-    if (url.endsWith('/map/draft') && init?.method === 'POST') {
+    if (url.endsWith('/map/object-form') && init?.method === 'POST') {
       delivered = true;
       await held;
       throw new Error('Synthetic lost proposal acknowledgment');
     }
     return response;
   };
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
   await waitFor(() => expect(delivered).toBe(true));
-  await home.settings();
-  const back = screen.getByRole('link', { name: 'Tillbaka till kartan' });
-  back.focus();
+  await userEvent.click(home.tools().getByRole('button', { name: 'Visa verktygens namn' }));
+  await userEvent.click(home.tools().getByRole('button', { name: 'Inställningar' }));
+  expect(screen.queryByRole('heading', { name: 'Medgivande' })).toBeNull();
+  expect(screen.getByRole('dialog', { name: 'Nytt objekt' })).toBeTruthy();
   finish();
-  await screen.findByRole('button', { name: 'Hämta aktuellt underlag' });
-  expect(document.activeElement).toBe(back);
-  await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
-  await waitFor(() =>
-    expect(screen.queryByRole('button', { name: 'Hämta aktuellt underlag' })).toBeNull(),
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Kontrollera om ändringen lades i utkastet' }),
   );
-  await userEvent.click(back);
-  expect((screen.getByLabelText('Objektets namn') as HTMLInputElement).value).toBe(
-    'Ett privat provobjekt',
-  );
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  await home.settings();
   const after = await home.read();
   expect(after.objects).toEqual([]);
   expect(after.draft.changes).toHaveLength(1);
@@ -675,38 +672,44 @@ test('a lost map proposal delivered after navigating to Settings preserves focus
 });
 
 test('an assistant map request cannot replace unsent object work or acknowledge an unseen selection', async () => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  cleanups.push(() => release());
   const home = await household({
-    reply: (request) =>
-      lastToolResult(request)
+    reply: async (request) => {
+      if (!lastToolResult(request)) await held;
+      return lastToolResult(request)
         ? [modelMessage('Lo kunde inte visas medan formuläret har oskickad text.')]
-        : [modelTool('show_map_item', { kind: 'object', id: 'lo' })],
+        : [modelTool('show_map_item', { kind: 'object', id: 'lo' })];
+    },
   });
   await home.addDraft();
   await home.open();
+  await startConversationWithText();
+  const field = await screen.findByLabelText('Meddelande till Skyttel');
+  await userEvent.type(field, 'Visa Lo i kartan');
+  await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
   await userEvent.click(
     within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
       name: 'Nytt objekt',
     }),
   );
-  await userEvent.type(screen.getByLabelText('Objektets namn'), 'Oskickad och privat');
+  await userEvent.type(screen.getByLabelText('Namn'), 'Oskickad och privat');
   const original = await home.read();
   const acknowledgements: unknown[] = [];
   home.network.before = async (url, init) => {
     if (url.endsWith('/selection')) acknowledgements.push(JSON.parse(String(init?.body)));
   };
-  await startConversationWithText();
-  const field = await screen.findByLabelText('Meddelande till Skyttel');
-  await userEvent.type(field, 'Visa Lo i kartan');
-  await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
+  release();
   await waitFor(() =>
     expect(acknowledgements).toEqual([
       expect.objectContaining({ kind: 'object', id: 'lo', displayed: false }),
     ]),
   );
-  expect((screen.getByLabelText('Objektets namn') as HTMLInputElement).value).toBe(
-    'Oskickad och privat',
-  );
+  expect((screen.getByLabelText('Namn') as HTMLInputElement).value).toBe('Oskickad och privat');
   expect((await home.read()).draft).toEqual(original.draft);
   await waitFor(() =>
     expect(screen.getByRole('log', { name: 'Samtalstext' }).textContent).toContain(
@@ -825,25 +828,24 @@ test('a known live manual save is not replayed by the conversation poll and keep
   expect((await home.read()).draft.changes).toEqual([]);
 });
 
-test('typing starts without recording or consuming map editor text and keeps unsent text when closed', async () => {
+test('typing and unsent conversation text survive confirmed loss of only the object form', async () => {
   const home = await household();
   await home.open();
+  await startConversationWithText();
+  const field = screen.getByLabelText('Meddelande till Skyttel');
+  await userEvent.type(field, 'Oskickat till Skyttel');
   await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
   await userEvent.click(
     within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
       name: 'Nytt objekt',
     }),
   );
-  await userEvent.type(screen.getByLabelText('Objektets namn'), 'Privat oskickat namn');
-  await startConversationWithText();
-  expect(await screen.findByRole('region', { name: 'Skriv till Skyttel' })).toBeTruthy();
-  expect(screen.queryByRole('group', { name: 'Röstruta' })).toBeNull();
+  const form = within(screen.getByRole('dialog', { name: 'Nytt objekt' }));
+  await userEvent.type(form.getByLabelText('Namn'), 'Privat oskickat namn');
+  await userEvent.click(form.getByRole('button', { name: 'Avbryt' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }));
+  expect((field as HTMLTextAreaElement).value).toBe('Oskickat till Skyttel');
   expect(home.media.getUserMedia).not.toHaveBeenCalled();
-  expect((screen.getByLabelText('Objektets namn') as HTMLInputElement).value).toBe(
-    'Privat oskickat namn',
-  );
-  const field = screen.getByLabelText('Meddelande till Skyttel');
-  await userEvent.type(field, 'Oskickat till Skyttel');
   await closeConversationText();
   await openConversationText();
   expect((field as HTMLTextAreaElement).value).toBe('Oskickat till Skyttel');

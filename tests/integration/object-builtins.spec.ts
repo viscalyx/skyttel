@@ -58,7 +58,7 @@ for (const { width, height } of [
         const result = await response;
         expect(result.status()).toBe(200);
         const { receipt } = await result.json();
-        await expect(page.getByText(/^Sparat:/).first()).toBeVisible();
+        await expect(page.getByText(/sparat/i).first()).toBeVisible();
         return receipt;
       };
       await settings();
@@ -109,30 +109,36 @@ for (const { width, height } of [
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      const form = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
+      const form = page.getByRole('dialog', { name: /^(Nytt objekt|Redigera Husets lån)$/ });
       await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Husavtal' });
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-      await expect(form.getByLabel('Objektets namn')).toBeFocused();
-      await form.getByLabel('Objektets namn').fill('Husets lån');
-      const section = form.getByRole('group', { name: 'Avtalet', exact: true });
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(form.getByRole('alert', { name: 'Formuläret innehåller fel' })).toBeFocused();
+      await form.getByRole('link', { name: /^Namn:/ }).click();
+      await expect(form.getByLabel('Namn', { exact: true })).toBeFocused();
+      await form.getByLabel('Namn', { exact: true }).fill('Husets lån');
+      await form.getByRole('button', { name: 'Avtalet', exact: true }).click();
+      const section = form;
       await section.getByLabel('Beskrivning', { exact: true }).fill('Gemensam avtalstext');
       await section.getByLabel('Anteckning', { exact: true }).fill('Eget värde');
       await section.getByLabel('Skuld: uppgiftens säkerhet').selectOption('uncertain');
       await section.getByLabel('Skuld', { exact: true }).fill('12 300');
       await section.getByLabel('Skuld: datum för uppgiften').fill('2026-09-01');
+      await form.getByRole('button', { name: 'Datum', exact: true }).click();
       await form.getByLabel('Startdatum: uppgiftens säkerhet').selectOption('known');
       await form.getByLabel('Startdatum', { exact: true }).fill('2026-08-01');
-      const common = form.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true });
+      const common = form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true });
       await common.click();
       await form.getByLabel('Pris: uppgiftens säkerhet').selectOption('unknown');
       await form.getByLabel('Valuta: uppgiftens säkerhet').selectOption('none');
       await form.getByLabel('Beviljat kreditutrymme: uppgiftens säkerhet').selectOption('known');
-      await common.click();
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(form.getByRole('alert', { name: 'Formuläret innehåller fel' })).toBeFocused();
+      await form.getByRole('link', { name: /^Beviljat kreditutrymme:/ }).click();
       await expect(form.getByLabel('Beviljat kreditutrymme', { exact: true })).toBeFocused();
       await expect(form.getByLabel('Beviljat kreditutrymme', { exact: true })).toBeVisible();
       await form.getByLabel('Beviljat kreditutrymme: uppgiftens säkerhet').selectOption('');
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const proposed = await read();
       expect(proposed.objects).toEqual([]);
       const original = proposed.draft.changes[0].after;
@@ -170,14 +176,14 @@ for (const { width, height } of [
         .click();
       await details.getByRole('button', { name: 'Redigera valt objekt' }).click();
       await form.getByLabel('Objekttyp', { exact: true }).selectOption('other');
+      await page
+        .getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true })
+        .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
+        .click();
       await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         'Gemensam avtalstext',
       );
-      await expect(
-        form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }),
-      ).toBeDisabled();
-      await form.getByLabel('Jag har hanterat tidigare fältvärden för typbytet').check();
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const changed = await save();
       expect(changed.changes[0].after?.financialFacts).toEqual(original?.financialFacts);
       expect(changed.changes[0].after?.description).toBe('Gemensam avtalstext');

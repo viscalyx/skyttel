@@ -3,14 +3,17 @@
 [Till användarguidens innehåll](README.md)
 
 Objekt och samband bildar hushållets gemensamma karta. Du föreslår
-ändringar i ditt privata utkast och sparar dem tillsammans när du är klar.
-Öppna **Lista** i kartans verktyg för att göra hela arbetet med formulär.
+ändringar i ditt utkast och sparar dem tillsammans när du är klar.
+Välj **Nytt objekt** eller **Redigera** i kartan eller tabellen för att
+öppna samma objektformulär. Manuellt arbete kräver inget samtal eller
+medgivande.
 **Skriv till Skyttel** öppnar textvyn, där du skriver till Skyttel.
 På telefon visar **Visa verktygens namn** även de kompletterande verktygen.
 
 **Tema** ger valen **Ljust**, **Mörkt** och **System**. System följer
 inställningen på din enhet. **Information och hjälp** förklarar verktygen.
-Hjälpknappen syns även när telefonens verktyg är hopfällda. Hopplänkarna når verktyg,
+Hjälpknappen syns även när telefonens verktyg är hopfällda. Hopplänkarna når
+verktyg,
 formulär och text med tangentbord före kartgrafiken.
 
 ## Läs hushållets objekt i tabellen
@@ -97,131 +100,65 @@ så att de går att se; övrig karta finns kvar. Tabellens läge bevaras och
 återfås via **Tabell**, med fokus på den använda kartknappen.
 En föreslagen borttagning har kvar kartknappen; redan borttagna objekt
 har ingen sådan knapp.
+## Skapa och redigera objekt
+
+**Nytt objekt** börjar på **Namn**, med **Grunduppgifter** öppet.
+**Redigera [objektnamn]** i tabellen och **Redigera** i objektets läsläge
+öppnar samma formulär. Ett avsnitt är öppet åt gången. Uppgifterna följer
+vald typ; ekonomi samt livscykel, profilbild och ikon har egna avsnitt.
+På mobil fyller dialogen skärmen. Rulla innehållet; knapparna finns nederst.
+
+Välj **Lägg i utkastet och stäng** för att lägga hela formuläret i ditt
+utkast och återgå till öppningsplatsen. **Lägg i utkastet och öppna samband**
+lägger samma uppgifter i utkastet och öppnar sedan objektets samband.
+Ett befintligt objekt som inte ändras kan öppna samband utan nytt förslag.
+Sambandsdialogens stängning återgår till den ursprungliga öppningsplatsen.
+
+Formuläret kontrollerar även stängda avsnitt. Vid fel går fokus till
+felsammanfattningen. Följ en fellänk för att öppna avsnittet och fokusera
+fältet. Alla värden finns kvar; inga delar skickas innan hela formuläret
+är giltigt. Ett tillägg till ditt utkast sparar inte hushållets karta.
+
+Vid typbyte visar **Ta bort tidigare egna fält?** värdena som försvinner.
+**Fortsätt redigera** behåller dem. **Ta bort fältvärdena och byt typ**
+bekräftar borttagningen ur formuläret. Typens nya fält börjar obesvarade.
+Namn, identitet, beskrivning, ekonomi, livscykel, bild och ikon finns kvar.
+
+Skapa en sak separat om den ännu inte finns när du arbetar med samband.
+Skapa också en ny objekttyp före objektet genom **Inställningar → Typer
+och egna fält**. Typförslag kan användas direkt i samma utkast.
+
+## Avbryt eller följ upp objektformuläret
+
+Krysset, **Avbryt** och Escape stänger ett oförändrat formulär direkt.
+Ändrade uppgifter ger **Lämna ändrade uppgifter?** innan de kastas, även
+vid navigation som lämnar objektet eller hushållet och vid utloggning.
+**Fortsätt redigera** är förvalt. Escape i varningen återgår till samma
+fält med värdena kvar. **Kasta ändringarna och fortsätt** kastar bara
+oskickade formulärändringar. Redan lagda förslag och samtalsmeddelanden
+påverkas inte. Stängda formulär har ingen återupptagningsingång.
+
+Medan tillägget behandlas kan du inte redigera, stänga eller skicka igen.
+Avvisning behåller värdena så att du kan rätta och försöka igen. Vid oklart
+utfall väljer du **Kontrollera om ändringen lades i utkastet**. Kontrollen
+bekräftar samma tillägg före övergång eller nytt försök.
+
+Vid omladdning, flikstängning eller navigation ut ur dokumentet används
+webbläsarens varning där den kan visas. Webbläsaren styr utseende och text,
+och varningen kan utebli på mobil. Beständiga utkast överlever omladdning.
 
 ## Besök andra vyer och fortsätt arbetet
 
-Öppna **Din profil** för kontouppgifter, **Inloggningssätt**, användar-ID,
-inbjudningar, **Assistentanslutningar** eller **Logga ut**. Profilen har en
-egen ikon och **Tillbaka till arbetet** återgår till ditt aktiva formulär.
+**Din profil** ger kontouppgifter, inloggningssätt och **Logga ut**.
+**Inställningar** ger bland annat **Typer och egna fält** och medgivande
+på sidan **Samtal med Skyttel**. **Tillbaka till kartan** återgår till
+hushållsarbetet. Sökning, urval och pågående samtal finns kvar; ändrad
+objekttext som skulle lämnas omfattas av förlustvarningen.
 
-**Inställningar** öppnar en egen sida med **Typer och egna fält** och,
-för administratören, **Administrera tillgång**. Driftansvariga når även
-**Månadskostnad**. På mobil fäller **Välj inställning** ut sidnavigeringen.
-På sidan **Samtal med Skyttel** ser, sparar och återkallar du ditt
-[medgivande](text-assistant.md#medgivande) till samtal.
-Kartan är dold medan du besöker sidan. **Tillbaka till kartan** återger
-ditt pågående arbete och fokus. Typförslag hör till samma privata utkast
-som objekt och samband; granska och spara hela utkastet i kartan.
+**Rapporter** öppnar historiken som en egen sida. Den bevarar pågående
+objektformulär, samtal, sökning och urval. **Tillbaka till arbetet** återgår
+till samma arbete och öppningsplats.
 
-Du kan besöka **Inloggningssätt**, **Assistentanslutningar** eller
-**Administrera tillgång** och återvända utan att förlora formulärtext,
-samtalstext, sökning, urval eller personlig kartvy. Samma sak gäller
-**Månadskostnad** om du har tillgång till den. Ett pågående sparförsök
-fortsätter; följ dess status och kontrollera samma kvitto vid okänt utfall.
-
-Ett pågående samtal behåller mikrofonens läge. Röstrutan visar i den andra
-vyn vad rösten gör, och stoppikonen **Avbryt** fungerar där. Mikrofonen slår
-du på och av med **Prata med Skyttel** i kartans verktyg.
-Oskickad formulärtext hör fortfarande inte till utkastet; välj
-**Lägg i mitt utkast** för att ta med den i det samlade sparandet.
-
-Stäng panelerna med kryssen för att återgå till kartan.
-Öppna **Lista** och välj **Uppgifter** vid objektet för att fortsätta.
-**Skriv till Skyttel** öppnar textvyn med samtalet. Ett kryss stänger bara
-den panelen; objektets oskickade text finns kvar när du öppnar samma
-objekt igen.
-Ett nytt objekt som ännu inte finns i utkastet öppnar du med **Fortsätt**
-under **Påbörjade objekt** i Lista. Du kan ha flera sådana formulär samtidigt.
-
-Bevarandet gäller under pågående användning. Omladdning kan ta bort
-oskickad text; beständiga utkast och sparade personliga vyer finns kvar.
-Utloggning, förlorad tillgång och ersatt hushållsinnehåll avslutar det
-berörda arbetet och mikrofonen. Vid ett administrativt innehållsbyte kan
-kartarbetet vara spärrat tills innehållet är tillgängligt igen.
-
-## Lägg till ett objekt
-
-1. Välj **Nytt objekt** och ange ett namn som hushållet känner igen.
-2. Välj **Objekttyp**, exempelvis **Person**, **Tjänst** eller **Fordon**.
-   Om en passande typ saknas kan du [skapa en egen](object-types.md).
-3. Ange en beskrivning och de övriga uppgifter du känner till. Egna fält
-   visas för den valda typen. Under **Ekonomiska uppgifter och
-   avtalsvillkor** kan du ange exempelvis pris och datum; se
-   [avtalsguiden](contracts.md).
-4. Kontrollera **Objektets identitet**. Använd **Ospecificerat objekt**
-   när du avsiktligt beskriver något som ännu inte är närmare identifierat,
-   exempelvis bankkontot som betalar hyran utan att veta vilken bank det är.
-5. Välj **Lägg i mitt utkast**. Objektet kan nu användas i andra förslag,
-   exempelvis ett nytt samband, före det gemensamma sparandet.
-
-Du kan börja skriva objektet innan dess typ finns. Besök **Inställningar →
-Typer och egna fält**, skapa typen och lägg typförslaget i utkastet. När du
-väljer **Tillbaka till kartan** finns den oskickade objekttexten kvar och
-den nya typen går att välja. Även en ny sambandstyp kan användas direkt
-mellan objekt i samma privata utkast. Definitioner, objekt och samband
-blir gemensamma först när du sparar hela utkastet.
-
-Samma namn betyder inte att två objekt är samma sak. Läs beskrivningen
-och identiteten innan du väljer ett befintligt objekt. Objekt med samma
-namn behåller sina egna identiteter och samband.
-
-## Koppla ihop objekt
-
-1. Välj **Nytt samband**.
-2. Välj **Från objekt**, **Sambandstyp** och **Till objekt**. Läs typens
-   förklaring så att riktningen blir rätt. Exempelvis kan
-   `Alex → Använder → Alex cykel` beskriva vem som använder cykeln.
-3. Välj **Uppgiftens säkerhet**. **Känt** och **Osäkert uppgivet** pekar
-   ut ett objekt. **Okänt** anger att uppgiften inte är känd och
-   **Uttryckligen inget** att något uttryckligen saknas; dessa val behöver
-   inget målobjekt.
-4. Ange vid behov status och slutdatum. Lägg sambandet i utkastet.
-5. Granska riktning, objekt och säkerhet i **Hela mitt utkast**. Välj
-   **Spara hela utkastet** för att göra alla förslagen gemensamma.
-
-En **Obesvarad identitetsfråga** kan finnas i utkastet men måste lösas
-innan det kan sparas. Den betyder inte samma sak som ett avsiktligt
-ospecificerat objekt eller en osäker uppgift.
-
-Välj **Red ut identiteter i utkastet** i kartans återkoppling även om
-objektets panel är stängd. Vid objektets förslag väljer du **Red ut
-identiteten för** följt av objektets namn. Formuläret behåller eventuell
-oskickad text. Besvara identitetsfrågan och lägg rättelsen i utkastet.
-Andra formulär behåller sin text; lägg också den i utkastet eller stäng
-utan att skicka innan du uttryckligen sparar hela utkastet.
-
-Ett upprepat tillägg med samma typ, riktning och ändpunkter visar det
-befintliga sambandet. Olika betydelser mellan samma objekt går bra.
-Läs [sambandstyper och riktning](relationship-types.md) för egna typer
-och förklaringar som går att läsa från båda objekten.
-
-## Hitta och rätta uppgifter
-
-Använd **Sök objekt** och **Filtrera objekttyp**. Sökningen gäller hela
-kartan, även objekt som finns på andra listsidor. **Markera** ändrar
-urvalet; **Visa detaljer** öppnar objektets uppgifter och samband.
-**Avmarkera alla** behåller sökning och öppna paneler.
-Längre listor har sidval samt
-**Föregående sida** och **Nästa sida**.
-
-Välj **Redigera valt objekt** eller **Redigera valt samband** i
-detaljpanelen. Rätta uppgifterna och lägg förslaget i utkastet. Du kan
-rätta både sparade uppgifter och dina egna osparade förslag.
-Ett byte av sambandets mål kopplar om sambandet; det skapar inte en ny
-identitet för startobjektet.
-
-Läs [profilbilder](profile-images.md) för bildval och
-[objekttyper och egna fält](object-types.md#byt-typ-på-ett-objekt) för att
-byta typ utan att förlora objektets identitet eller samband.
-
-## Avsluta, ta bort eller rätta
-
-Markera **Upphört** när något slutar gälla men ska synas i kartan.
-**Ta bort** lägger i stället en borttagning i utkastet. Ett objekts
-borttagning omfattar också dess inkommande och utgående samband;
-andra objekt finns kvar. Granska följderna före sparandet.
-
-[Livscykelguiden](lifecycle.md) beskriver status, slutdatum och borttagning.
-[Historiken](history.md) visar tidigare sparanden och deras värden.
-För att avstå från osparade förslag använder du
-[utkastets kontroller](drafts.md#granska-spara-eller-kasta-förslag).
+**Skriv till Skyttel** öppnar textvyn. Oskickade samtalsmeddelanden finns
+kvar när textvyn stängs och när du växlar mellan karta och tabell. De
+omfattas inte av objektformulärets förlustvarning.

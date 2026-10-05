@@ -24,6 +24,7 @@ import type { PersonalView } from '../shared/personal-view.js';
 import { Assistants } from './Assistants.js';
 import { ContentOwners } from './ContentOwners.js';
 import { Costs } from './Costs.js';
+import { FormLeaveProvider, useFormLeave } from './FormLeave.js';
 import { HouseholdErasure } from './HouseholdErasure.js';
 import { HouseholdExport } from './HouseholdExport.js';
 import { HouseholdImport } from './HouseholdImport.js';
@@ -1261,6 +1262,15 @@ function HouseholdPage({
 }
 
 export function App() {
+  return (
+    <FormLeaveProvider>
+      <Application />
+    </FormLeaveProvider>
+  );
+}
+
+function Application() {
+  const { requestLeave } = useFormLeave();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useWorkspaceTheme();
@@ -1311,7 +1321,15 @@ export function App() {
     data?.status === 'anonymous' || (authenticated && data.status !== 'ready' && !settingsPage);
   const logout = (
     <>
-      <button type="button" disabled={signingOut} onClick={() => void signOut()}>
+      <button
+        type="button"
+        disabled={signingOut}
+        onClick={() =>
+          requestLeave(() => {
+            void signOut();
+          })
+        }
+      >
         {signingOut ? 'Loggar ut…' : 'Logga ut'}
       </button>
       {signOutError && (

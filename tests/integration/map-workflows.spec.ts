@@ -1,12 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import {
-  openMap as closeWorkspace,
-  createHousehold,
-  openWorkspace,
-  signIn,
-  utilityButton,
-} from '../support/client.js';
+import { createHousehold, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 async function openMap(page: Page) {
@@ -25,10 +19,10 @@ async function addObject(page: Page, name: string, type: string, description = '
     .getByRole('region', { name: 'Lista och utkast', exact: true })
     .getByRole('button', { name: 'Nytt objekt', exact: true })
     .click();
-  await page.getByLabel('Objektets namn').fill(name);
+  await page.getByLabel('Namn', { exact: true }).fill(name);
   await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: type });
   await page.getByLabel('Beskrivning', { exact: true }).fill(description);
-  await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+  await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
 }
 
 async function addRelationship(page: Page, source: string, type: string, target: string) {
@@ -40,8 +34,11 @@ async function addRelationship(page: Page, source: string, type: string, target:
 }
 
 async function save(page: Page) {
+  await openWorkspace(page);
   await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-  await expect(page.getByRole('status')).toContainText('Sparat');
+  await expect(page.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
+    /sparat/i,
+  );
   await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
     'Inga förslag',
   );
@@ -80,29 +77,29 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
     await save(page);
     const saved = await read();
     const objects = page.getByRole('list', { name: 'Objekt', exact: true });
-    const search = page.getByLabel('Sök objekt');
+    const search = page.getByLabel('Sök objekt', { exact: true });
     await search.fill('åSAS');
     await expect(
       objects.getByRole('button', { name: /^Visa .+ i kartan$/ }).locator('strong'),
     ).toHaveText(['Åsas tjänst']);
     await objects.getByRole('button', { name: 'Uppgifter för Åsas tjänst', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets namn')).toBeFocused();
-    await page.getByLabel('Objektets namn').fill('Text som inte skickas');
+    await expect(page.getByLabel('Namn', { exact: true })).toBeFocused();
+    await page.getByLabel('Namn', { exact: true }).fill('Text som inte skickas');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Inte heller denna text skickas');
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).focus();
-    await page.keyboard.press('Enter');
+    await page.getByRole('dialog').getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }).click();
     await expect(
-      page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true }),
+      page.getByRole('button', { name: 'Redigera valt objekt', exact: true }),
     ).toBeFocused();
     await objects.getByRole('button', { name: 'Uppgifter för Åsas tjänst', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Åsas tjänst');
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Åsas tjänst');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Gemensam musik');
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Avbryt', exact: true }).click();
+    if (await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }).isVisible())
+      await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }).click();
     await search.fill('finns inte');
     await expect(objects.getByRole('listitem')).toHaveCount(0);
     await search.fill('');
@@ -111,8 +108,10 @@ test('KARTA-01: Swedish object search and closing unsent forms preserve the save
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Avbrutet objekt');
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Avbrutet objekt');
+    await page.getByRole('dialog').getByRole('button', { name: 'Avbryt', exact: true }).click();
+    if (await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }).isVisible())
+      await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }).click();
     await page.reload();
     await openWorkspace(page);
     await expect(objects.getByRole('listitem')).toHaveCount(3);
@@ -132,10 +131,10 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Betalkonto');
+    await page.getByLabel('Namn', { exact: true }).fill('Betalkonto');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Bankkonto' });
-    await page.getByLabel('Objektets identitet').selectOption('unresolved');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Identitet').selectOption('unresolved');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const objectId = (await read()).draft.changes[0].id;
     await page.reload();
     await openWorkspace(page);
@@ -146,9 +145,9 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
     expect((await read()).objects).toEqual([]);
     await page.getByRole('button', { name: 'Uppgifter för Betalkonto', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets identitet')).toHaveValue('unresolved');
-    await page.getByLabel('Objektets identitet').selectOption('unspecified');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await expect(page.getByLabel('Identitet')).toHaveValue('unresolved');
+    await page.getByLabel('Identitet').selectOption('unspecified');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await addObject(page, 'Familjemusik', 'Abonnemang');
     await addRelationship(
       page,
@@ -165,11 +164,11 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
     await openWorkspace(page);
     await page.getByRole('button', { name: 'Uppgifter för Betalkonto', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
-    await page.getByLabel('Objektets identitet').selectOption('identified');
-    await page.getByLabel('Objektets namn').fill('Hushållskontot');
+    await expect(page.getByLabel('Identitet')).toHaveValue('unspecified');
+    await page.getByLabel('Identitet').selectOption('identified');
+    await page.getByLabel('Namn', { exact: true }).fill('Hushållskontot');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Gemensamt bankkonto');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await save(page);
     await page.reload();
     await openWorkspace(page);
@@ -178,7 +177,7 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
     );
     await page.getByRole('button', { name: 'Uppgifter för Hushållskontot', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets identitet')).toHaveValue('identified');
+    await expect(page.getByLabel('Identitet')).toHaveValue('identified');
     const after = await read();
     expect(after.objects).toHaveLength(2);
     expect(after.objects.find((object) => object.id === objectId)).toMatchObject({
@@ -194,7 +193,7 @@ test('KARTA-02: an unresolved object can become unspecified and later identified
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`KARTA-08: a closed-panel identity blocker opens the exact retained object without sending other text at ${width}px in ${theme}`, async ({
+    test(`KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at ${width}px in ${theme}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
@@ -209,10 +208,10 @@ for (const width of [1280, 390, 320]) {
           .getByRole('region', { name: 'Lista och utkast', exact: true })
           .getByRole('button', { name: 'Nytt objekt', exact: true })
           .click();
-        await page.getByLabel('Objektets namn').fill('Betalkonto');
+        await page.getByLabel('Namn', { exact: true }).fill('Betalkonto');
         await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Bankkonto' });
-        await page.getByLabel('Objektets identitet').selectOption('unresolved');
-        await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+        await page.getByLabel('Identitet').selectOption('unresolved');
+        await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
         const accountId = (await read()).draft.changes[0].id;
         await addRelationship(
           page,
@@ -224,71 +223,48 @@ for (const width of [1280, 390, 320]) {
         const relationship = proposed.draft.relationships?.[0];
         expect(relationship?.after?.targetId).toBe(accountId);
 
-        for (const name of ['Betalkonto', 'Familjemusik']) {
-          await page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }).click();
-          const panel = page.getByRole('region', { name, exact: true });
-          await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-          await panel.getByLabel('Beskrivning', { exact: true }).fill(`Oskickat om ${name}`);
-          await panel.getByRole('button', { name: `Stäng ${name}`, exact: true }).click();
-        }
-        await closeWorkspace(page);
-        const status = page.getByRole('region', { name: 'Kartans status', exact: true });
-        await expect(status).toContainText('Sparandet är blockerat');
-        await expect(status).not.toContainText('Oskickad formulärtext');
-        const resolve = await utilityButton(page, 'Utkast och historik');
-        await expect(resolve).toBeVisible();
-        await resolve.focus();
+        await openWorkspace(page);
+        await page.getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Familjemusik', exact: true })
+          .getByRole('button', { name: 'Redigera valt objekt', exact: true })
+          .click();
+        const unrelated = page.getByRole('dialog', { name: 'Redigera Familjemusik', exact: true });
+        await unrelated.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Familjemusik');
+        await unrelated.getByRole('button', { name: 'Avbryt', exact: true }).click();
+        await page
+          .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+          .click();
+        expect((await read()).draft).toEqual(proposed.draft);
+        await page.getByRole('button', { name: 'Lista', exact: true }).click();
+        await page.getByRole('button', { name: 'Uppgifter för Betalkonto', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Betalkonto', exact: true })
+          .getByRole('button', { name: 'Redigera valt objekt', exact: true })
+          .click();
+        const editor = page.getByRole('dialog', { name: 'Redigera Betalkonto', exact: true });
+        await expect(editor.getByLabel('Namn', { exact: true })).toBeFocused();
         await expectUncoveredFocus(page);
-        await page.keyboard.press('Enter');
-        const draft = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
-        await expect(
-          draft.getByRole('heading', { name: 'Hela mitt utkast', exact: true }),
-        ).toBeFocused();
-        await expectUncoveredFocus(page);
-        const account = draft.getByRole('article').filter({
-          has: page.getByRole('heading', { name: 'Nytt objekt: Betalkonto', exact: true }),
-        });
-        const correct = account.getByRole('button', {
-          name: 'Red ut identiteten för Betalkonto',
-          exact: true,
-        });
-        await expect(correct).toBeVisible();
-        await correct.focus();
-        await expectUncoveredFocus(page);
-        await page.keyboard.press('Enter');
-        const editor = page.getByRole('region', { name: 'Betalkonto', exact: true });
-        await expect(
-          editor.getByRole('heading', { name: 'Betalkonto', exact: true }),
-        ).toBeFocused();
-        await expectUncoveredFocus(page);
-        await expect(editor.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-          'Oskickat om Betalkonto',
-        );
-        await expect(editor.getByLabel('Objektets identitet')).toHaveValue('unresolved');
-        await editor.getByLabel('Objektets identitet').selectOption('unspecified');
-        await editor.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-        expect((await read()).objects).toEqual(before.objects);
-        expect((await read()).relationships).toEqual(before.relationships);
-        expect((await read()).draft.changes).toEqual([
+        await expect(editor.getByLabel('Identitet', { exact: true })).toHaveValue('unresolved');
+        await editor.getByLabel('Identitet', { exact: true }).selectOption('unspecified');
+        await editor.getByLabel('Beskrivning', { exact: true }).fill('Rättad beskrivning');
+        await editor
+          .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
+          .click();
+        const corrected = await read();
+        expect(corrected.objects).toEqual(before.objects);
+        expect(corrected.relationships).toEqual(before.relationships);
+        expect(corrected.draft.changes).toEqual([
           expect.objectContaining({
             id: accountId,
             after: expect.objectContaining({
               name: 'Betalkonto',
               identity: 'unspecified',
-              description: 'Oskickat om Betalkonto',
+              description: 'Rättad beskrivning',
             }),
           }),
         ]);
-        expect((await read()).draft.relationships).toEqual(proposed.draft.relationships);
-        await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
-        await page.getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true }).click();
-        const unrelated = page.getByRole('region', { name: 'Familjemusik', exact: true });
-        await expect(unrelated.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-          'Oskickat om Familjemusik',
-        );
-        await unrelated
-          .getByRole('button', { name: 'Stäng utan att skicka texten', exact: true })
-          .click();
+        expect(corrected.draft.relationships).toEqual(proposed.draft.relationships);
         await save(page);
         await installation.restart();
         await page.reload();
@@ -298,7 +274,7 @@ for (const width of [1280, 390, 320]) {
         expect(saved.objects.find((object) => object.id === accountId)).toMatchObject({
           name: 'Betalkonto',
           identity: 'unspecified',
-          description: 'Oskickat om Betalkonto',
+          description: 'Rättad beskrivning',
         });
         expect(saved.objects.find((object) => object.id === before.objects[0].id)).toEqual(
           before.objects[0],
@@ -345,7 +321,7 @@ test('KARTA-03: equal object names stay distinct when correcting and deleting a 
     const contact = saved.relationships.find((relationship) => relationship.id !== login?.id);
     expect(contact?.targetId).toBe(second);
     await addRelationship(page, 'Musikkonto (Tjänstekonto)', 'Inloggningsadress', firstLabel);
-    await expect(page.getByRole('status')).toContainText('Sambandet finns redan');
+    await expect(page.getByText(/Sambandet finns redan:/)).toBeVisible();
     await expect(
       page.getByRole('list', { name: 'Samband', exact: true }).getByRole('button'),
     ).toHaveCount(2);
@@ -430,8 +406,7 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     const object = saved.objects.find((item) => item.name === 'Musikkonto');
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
     await page.getByRole('button', { name: 'Uppgifter för Musikkonto', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
+    await page.getByRole('button', { name: 'Ta bort Musikkonto', exact: true }).click();
     await expect(
       review.getByRole('heading', { name: 'Borttagning: Musikkonto', exact: true }),
     ).toBeVisible();
@@ -461,8 +436,7 @@ test('KARTA-04: object deletion reviews incoming and outgoing links and can be d
     expect((await read()).objects).toEqual(saved.objects);
     expect((await read()).relationships).toEqual(saved.relationships);
     await page.getByRole('button', { name: 'Uppgifter för Musikkonto', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
+    await page.getByRole('button', { name: 'Ta bort Musikkonto', exact: true }).click();
     await save(page);
     await page.reload();
     await openWorkspace(page);

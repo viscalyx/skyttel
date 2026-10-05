@@ -20,8 +20,8 @@ test('SPAR-01: find a committed save after losing its response and reopening on 
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     let committedReceipt: SaveReceipt | undefined;
     await page.route('**/map/save', async (route) => {
       const response = await route.fetch();
@@ -93,8 +93,8 @@ test('SPAR-02: automatically recover the same pending save on another client aft
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await page.route('**/map/save', (route) => route.abort());
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
@@ -160,8 +160,8 @@ test('SPAR-02: automatically recover the same pending save on another client aft
     expect(saved.draft.changes).toEqual([]);
 
     await reopened.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await reopened.getByLabel('Objektets namn').fill('Kim Exempel');
-    await reopened.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await reopened.getByLabel('Namn', { exact: true }).fill('Kim Exempel');
+    await reopened.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     const newerDraft: MapState = await (await recovered.request.get(path)).json();
     const repeated = await recovered.request.post(`${path}/save`, {
       headers: { origin: installation.origin },
@@ -203,16 +203,16 @@ test('SPAR-03: a rejected stale save survives restart without consuming newer pr
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await signIn(second.request, installation.origin);
     const newer = await second.newPage();
     await newer.goto(installation.origin);
     await openWorkspace(newer);
     await newer.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
     await newer.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await newer.getByLabel('Objektets namn').fill('Lo Lind');
-    await newer.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await newer.getByLabel('Namn', { exact: true }).fill('Lo Lind');
+    await newer.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     const unchanged: MapState = await (await second.request.get(path)).json();
 
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
@@ -297,8 +297,8 @@ test('SPAR-04: private pending saves stay hidden from administrators and revoked
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await memberPage.getByLabel('Objektets namn').fill('Privat förslag');
-    await memberPage.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await memberPage.getByLabel('Namn', { exact: true }).fill('Privat förslag');
+    await memberPage.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await memberPage.route('**/map/save', (route) => route.abort());
     await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(memberPage.getByRole('alert')).toContainText('Utfallet är okänt');

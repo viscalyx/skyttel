@@ -98,7 +98,7 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    const unsent = page.getByLabel('Objektets namn');
+    const unsent = page.getByLabel('Namn', { exact: true });
     await unsent.fill('Oskickat arbete under avbrottet');
     await openSettings(page);
     await page.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();

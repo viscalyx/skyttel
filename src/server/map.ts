@@ -534,13 +534,19 @@ export function householdMap(database: Database.Database, actorId: string, house
         return writeDraft(edgeTypes.propose(checkedDraft(body.version, body.contentVersion), body));
       });
     },
-    propose(body: Record<string, unknown>) {
+    propose(body: Record<string, unknown>, image?: EncodedImage) {
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
         if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
           throw new MapError('invalid_request', 400);
         const id = body.id;
+        if (
+          body.stagingId !== undefined &&
+          (typeof body.stagingId !== 'string' ||
+            !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(body.stagingId))
+        )
+          throw new MapError('invalid_request', 400);
         const existing = current.changes.find((change) => change.id === id);
         const before = existing ? existing.before : (object(id) ?? null);
         if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('object_conflict');
@@ -572,7 +578,8 @@ export function householdMap(database: Database.Database, actorId: string, house
             : existing
               ? existing.after?.profileImageId
               : before?.profileImageId;
-          const profileImageId = imageId == null ? undefined : images.validate(imageId, id);
+          const profileImageId =
+            imageId == null || image ? undefined : images.validate(imageId, id);
           const iconChoice = Object.hasOwn(value, 'iconId')
             ? value.iconId
             : existing
@@ -596,12 +603,18 @@ export function householdMap(database: Database.Database, actorId: string, house
         const typeId = after?.typeId ?? before?.typeId ?? existing?.type.id;
         const type = types.effective(current).find((item) => item.id === typeId);
         if (!type) throw new MapError('invalid_type', 400);
+        // Insert only after all form values are valid, inside the same draft transaction.
+        if (image) {
+          if (!after) throw new MapError('invalid_request', 400);
+          after.profileImageId = images.insert(id, image);
+        }
         const beforeType =
           existing?.beforeType ?? types.read().find((item) => item.id === before?.typeId);
         current.changes = current.changes.filter((change) => change.id !== id);
         if (before || after)
           current.changes.push({
             proposedAt: new Date().toISOString(),
+            ...(typeof body.stagingId === 'string' ? { stagingId: body.stagingId } : {}),
             id,
             before,
             after,

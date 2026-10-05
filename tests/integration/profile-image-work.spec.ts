@@ -241,11 +241,11 @@ for (const width of [1440, 390, 320]) {
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn', { exact: true }).fill('Bildarbete');
+      await page.getByLabel('Namn', { exact: true }).fill('Bildarbete');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Behåll bildens text');
       await expect(page.getByLabel('Välj profilbild')).toBeDisabled();
       expect((await read()).draft.changes).toEqual([]);
-      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await page.getByRole('button', { name: 'Uppgifter för Bildarbete', exact: true }).click();
       const panel = page.getByRole('region', { name: 'Bildarbete', exact: true });
       await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
@@ -336,7 +336,7 @@ for (const width of [1440, 390, 320]) {
         },
         { times: 1 },
       );
-      await panel.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await panel.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await expect(page.getByRole('alert')).toBeVisible();
       await expect(page.getByRole('alert')).not.toContainText('Bilden');
       await expect(imageReturn).toHaveCount(0);

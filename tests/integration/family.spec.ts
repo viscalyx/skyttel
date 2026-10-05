@@ -95,10 +95,10 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill(name);
+      await page.getByLabel('Namn', { exact: true }).fill(name);
       await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: type });
-      await page.getByLabel('Objektets identitet').selectOption(identity);
-      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await page.getByLabel('Identitet').selectOption(identity);
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     }
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await page.getByLabel('Från objekt').selectOption({ label: 'Familjemusik (Abonnemang)' });
@@ -130,7 +130,7 @@ test('KARTA-05: manual forms preserve incomplete meanings and block an unanswere
     );
     await page.getByRole('button', { name: 'Uppgifter för Betalkonto', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
+    await expect(page.getByLabel('Identitet')).toHaveValue('unspecified');
     await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
     for (const knowledge of ['unknown', 'none']) {
       await page
@@ -192,8 +192,8 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
       .getByRole('button', { name: 'Uppgifter för Familjens musikkonto', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Familjens rättade konto');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Familjens rättade konto');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const relationshipReview = review
       .getByRole('article')
       .filter({ has: page.getByRole('heading', { name: 'Samband', exact: true }) });

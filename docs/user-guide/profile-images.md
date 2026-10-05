@@ -2,39 +2,28 @@
 
 [Till användarguidens innehåll](README.md)
 
-En profilbild hjälper dig att känna igen ett objekt. Välj objektet och
-**Redigera valt objekt** i detaljpanelen. Lägg först eventuell oskickad
-text i ditt utkast och välj sedan **Välj profilbild**. Det gäller också
-nya objekt: lägg objektet i utkastet innan du väljer bilden.
-**Ta bort profilbild** föreslår att bilden tas bort.
+En profilbild hjälper dig att känna igen ett objekt. Öppna **Nytt objekt**
+eller **Redigera** och avsnittet **Livscykel och utseende**. Välj en fil i
+**Profilbild**. Bilden och objektets övriga uppgifter finns först i
+formuläret. **Ta bort profilbilden ur formuläret** tar bort bildvalet där.
 
-Bildval, byte och borttagning blir privata förslag. Du ser bilden i
-detaljerna och kan granska bilden före och efter i hela utkastet.
-Andra medlemmar ser den när du väljer **Spara hela utkastet** och får ett
-bekräftat kvitto. Utkastbilden finns kvar efter omladdning och normal omstart.
-Om du avbryter filväljaren ändras inget. Ett ogiltigt bildval lämnar den
-senaste giltiga bilden, vald ikon och övriga förslag kvar. Medan bilden
-behandlas är hela sparandet tillfälligt spärrat.
-Vid ett oklart resultat hämtar du aktuellt underlag innan du försöker igen.
+**Lägg i utkastet och stäng** och **Lägg i utkastet och öppna samband**
+lägger bilden tillsammans med hela formuläret i ditt utkast. Andra
+medlemmar ser den först efter gemensamt sparande. Ett avbrutet filval
+ändrar inget. En avvisad bild behåller formulärvärdena och tidigare förslag.
+Ingen del av formuläret läggs i utkastet vid ett ogiltigt bildval.
 
-Du kan stänga objektpanelen medan bilden behandlas. Ett bildfel visas i
-den gemensamma statusen utan att flytta dig från ditt pågående arbete.
-Välj **Återgå till bilden för** följt av objektets namn för att öppna
-rätt objekt igen. När felet är avslutat försvinner den återgången.
-Om du tar bort en ny bild som ännu är privat föreslår du ingen bild;
-en äldre sparad bild kommer inte tillbaka automatiskt.
+Under tillägget är redigering och stängning spärrade. Vid oklart resultat
+väljer du **Kontrollera om ändringen lades i utkastet** före nytt försök.
+Efter bekräftat tillägg finns utkastbilden kvar efter omladdning och omstart.
 
 ## Välj ikon
 
-Öppna **Redigera valt objekt** och avsnittet **Ikon**. Sök med svenska
-sökord som cykel eller musik, eller med ett engelskt ikonnamn som bike.
+Öppna **Livscykel och utseende** i objektformuläret. Sök en ikon med
+svenska sökord som cykel eller musik, eller ett engelskt namn som bike.
 Alla ikoner kan användas för alla objekt. **Nästa** och **Föregående**
-bläddrar bland träffarna. Rensa sökningen om inga ikoner matchar.
-
-Om formuläret innehåller oskickade uppgifter, välj **Lägg uppgifterna i
-utkastet först**. Formuläret stannar öppet. Välj sedan en ikon; valet blir
-ett förslag i samma privata utkast som objektets övriga uppgifter.
-**Spara hela utkastet** delar alla förslag med hushållet.
+bläddrar bland träffarna. Valet hör till formuläret tills hela formuläret
+läggs i utkastet. Namn, text, bild och ikon skickas tillsammans.
 
 En profilbild visas före ditt ikonval. När du tar bort bilden visas den
 valda ikonen igen. Bildbyte och typbyte behåller ikonvalet. Välj

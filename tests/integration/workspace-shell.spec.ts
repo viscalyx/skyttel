@@ -25,8 +25,8 @@ test('YTA-05: save results remain readable beside tablet work', async ({ page })
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Familjens gemensamma cykel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Familjens gemensamma cykel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     const status = page
       .getByRole('region', { name: 'Kartans status' })
@@ -64,13 +64,13 @@ test('YTA-01: map tools open real household work and preserve it when closed', a
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Cykeln');
+    await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
     await closePanels(page);
     await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
     await tools.getByRole('button', { name: 'Lista', exact: true }).click();
     await activatePanel(page, 'Nytt objekt');
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Cykeln');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Cykeln');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Sparat: Cykeln' })).toBeVisible();
     await page.reload();
@@ -137,9 +137,9 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill('Min cykel');
+      await page.getByLabel('Namn', { exact: true }).fill('Min cykel');
       await expect(
-        page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }),
+        page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }),
       ).toBeEnabled();
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -367,8 +367,8 @@ for (const theme of ['light', 'dark'] as const) {
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill('Cykeln');
-      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await closePanels(page);
       await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
       await page.getByRole('button', { name: 'Navigera', exact: true }).click();
@@ -457,7 +457,7 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await expect(page.getByLabel('Objektets namn')).toBeVisible();
+    await expect(page.getByLabel('Namn', { exact: true })).toBeVisible();
   } finally {
     await context.setOffline(false);
     await installation.close();

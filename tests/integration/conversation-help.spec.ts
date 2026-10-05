@@ -107,8 +107,8 @@ for (const platform of [
           .getByRole('region', { name: 'Lista och utkast', exact: true })
           .getByRole('button', { name: 'Nytt objekt', exact: true })
           .click();
-        await page.getByLabel('Objektets namn').fill('Lo Exempel');
-        await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+        await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+        await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
         await closePanels(page);
         await shortcut(page, platform.mac);
         await expect(consentBox(page)).toContainText('Släpp stänger av ny inspelning direkt.');

@@ -138,15 +138,15 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const reviewed = await tool(app.origin, token, 'read_my_draft');
     await page
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Kim Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Kim Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const attempt = {
       version: reviewed.version,
       contentVersion: reviewed.contentVersion,
@@ -209,8 +209,8 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('privata utkast');
     const review = await tool(app.origin, token, 'read_my_draft');
     const attempt = {
@@ -351,7 +351,7 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
     ).toHaveCount(0);
     await page.getByRole('button', { name: 'Uppgifter för Betalkonto', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
+    await expect(page.getByLabel('Identitet')).toHaveValue('unspecified');
   } finally {
     await app.close();
   }

@@ -62,7 +62,8 @@ sida med **Typer och egna fält**, **Administrera tillgång** för
 administratören och **Månadskostnad** för driftansvarig. Mobilnavigationen
 öppnas med **Välj inställning**. Följ dessa ingångar när ett fall anger en
 sådan funktion. **Tillbaka till kartan** återger arbetet.
-Panelernas kryss behåller oskickad text. Stäng alla paneler för att
+Objektformulärets kryss bekräftar förlust av oskickade ändringar. Stäng alla
+paneler för att
 återgå till kartan; stäng även textvyn på telefon.
 
 ## Områden
@@ -314,9 +315,10 @@ Panelernas kryss behåller oskickad text. Stäng alla paneler för att
   redan öppen mottagarklient förlorar tillgång.
   Misslyckad urklippsknapp följs av manuell kopiering och faktisk acceptans.
 - [Objekt och samband](map.md): skapa, söka, rätta och ta bort uppgifter,
-  skilja lika namn åt, bevara ofullständiga uppgifter och rätta obesvarad
-  identitet via Utkast och historik med bevarad oskickad text. Påbörjade objekt
-  kan få en ny typ från Inställningar och sparas med nya samband i ett kvitto.
+  skilja lika namn åt och bevara ofullständiga uppgifter; det gemensamma
+  objektformuläret med fullständiga värden, stängda avsnitts fel, typbyte,
+  bild och ikon, förlustvarning, återfokus samt väntande, avvisat och oklart
+  tillägg till utkastet på dator och mobil.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon och placering nära objektet.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta

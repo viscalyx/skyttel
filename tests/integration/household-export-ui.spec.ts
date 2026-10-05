@@ -544,7 +544,7 @@ for (const { width, height } of [
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill('Oskickad exportcykel');
+      await page.getByLabel('Namn', { exact: true }).fill('Oskickad exportcykel');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Texten finns kvar');
       await openSettings(page);
       const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
@@ -570,7 +570,7 @@ for (const { width, height } of [
           }),
         )
         .toBe(true);
-      await expect(page.getByLabel('Objektets namn')).not.toBeVisible();
+      await expect(page.getByLabel('Namn', { exact: true })).not.toBeVisible();
       for (const theme of ['light', 'dark'] as const) {
         await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
         await section.getByRole('button', { name: 'Förbered fullständig export' }).focus();
@@ -620,7 +620,7 @@ for (const { width, height } of [
         section.getByRole('button', { name: 'Förbered fullständig export' }),
       ).toBeFocused();
       await returnLink.click();
-      await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickad exportcykel');
+      await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad exportcykel');
       await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         'Texten finns kvar',
       );
@@ -908,7 +908,7 @@ for (const phase of ['ready', 'downloading'] as const) {
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill('Oskickat vid avbruten export');
+      await page.getByLabel('Namn', { exact: true }).fill('Oskickat vid avbruten export');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Bevara min redigering');
       await openSettings(page);
       const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
@@ -946,7 +946,9 @@ for (const phase of ['ready', 'downloading'] as const) {
       expect((await page.request.get(`${fixture.path}/exports/${ready.id}`)).status()).toBe(404);
       release();
       if (phase === 'downloading') await browserDelivery;
-      await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickat vid avbruten export');
+      await expect(page.getByLabel('Namn', { exact: true })).toHaveValue(
+        'Oskickat vid avbruten export',
+      );
       await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         'Bevara min redigering',
       );

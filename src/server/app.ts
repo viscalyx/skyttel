@@ -97,7 +97,10 @@ export function createApp({
             context.req.method === 'POST' &&
             /^\/api\/households\/[^/]+\/profile-images\/[^/]+$/.test(context.req.path)
               ? imageUploadLimit
-              : 16_384,
+              : context.req.method === 'POST' &&
+                  /^\/api\/households\/[^/]+\/map\/object-form$/.test(context.req.path)
+                ? imageUploadLimit + 32_768
+                : 16_384,
           onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
         })(context, next),
   );

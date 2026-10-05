@@ -35,11 +35,20 @@ check its durable result before retrying; a missing response does not establish
 failure. A retry must use the same operation and content. Imported content or
 a change to historical owner assignments invalidates older attempts.
 
-Backups now retain private drafts, personal views, image versions, save attempts,
+Backups now retain private drafts, personal views, image versions, save
+attempts,
 historical names, financial facts and removed content. Apply household access
 and retention restrictions to these records and their recovery copies. Ordinary
 removal does not permanently erase retained information. Follow the
 [permanent erasure runbook](permanent-erasure.md) for that operation.
+
+### Complete object forms and recovery
+
+New household archives can contain a private identifier for each complete
+object-form addition to a draft. Use the upgraded application to read these
+archives. Supported older archives and drafts remain readable without this
+identifier. Shared history contains saved values and save attribution; it
+does not contain private form-attempt identifiers.
 
 ### Object icon and archive compatibility
 
@@ -59,7 +68,8 @@ uses a null value. Icons are bundled locally and need no external service.
 This release stores named sections, field order and hidden field placement
 with object and relationship type definitions. Existing definitions and
 supported older archives keep their field order and use a default section.
-Hidden fields retain their values, including in drafts, history and recovery copies.
+Hidden fields retain their values, including in drafts, history and recovery
+copies.
 Hiding a field does not erase its content or limit access to it.
 
 Object types can also store the placement and order of built-in description

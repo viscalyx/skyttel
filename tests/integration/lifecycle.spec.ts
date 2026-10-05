@@ -72,7 +72,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('ended');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(subscription).toContainText('Upphört');
     const endedColor = await subscription
       .getByText('Upphört', { exact: true })
@@ -114,7 +114,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('active');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     await page.reload();
@@ -262,7 +262,7 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
     await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-20');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     await expect(subscription).not.toContainText('Upphört');

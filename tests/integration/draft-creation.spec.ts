@@ -5,7 +5,7 @@ import { createInstallation } from '../support/installation.js';
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`KARTA-09: unsent creation uses new draft types and objects in one durable relationship save at ${width}px in ${theme}`, async ({
+    test(`KARTA-09: complete forms use new draft types and objects in one durable relationship save at ${width}px in ${theme}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
@@ -22,16 +22,6 @@ for (const width of [1280, 390, 320]) {
         await page.goto(installation.origin);
         await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
         await openWorkspace(page);
-        await page
-          .getByRole('region', { name: 'Lista och utkast', exact: true })
-          .getByRole('button', { name: 'Nytt objekt', exact: true })
-          .click();
-        const form = page.getByRole('region', { name: 'Nytt objekt', exact: true });
-        await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-        await expect(form.getByLabel('Objektets namn')).toBeFocused();
-        expect((await read()).draft.changes).toEqual([]);
-        await form.getByLabel('Objektets namn').fill('Paneler på taket');
-        await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat före den nya typen');
         await openSettings(page);
         const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
         if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
@@ -63,37 +53,43 @@ for (const width of [1280, 390, 320]) {
         expect(typedDraft.objects).toEqual(initial.objects);
         expect(typedDraft.types).toEqual(initial.types);
         await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-        await expect(
-          page.getByRole('region', { name: 'Kartans status', exact: true }),
-        ).not.toContainText('Oskickad formulärtext');
-        await expect(
-          page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
-        ).toHaveCount(0);
-        await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-          'Oskickat före den nya typen',
-        );
-        await expect(form.getByLabel('Objektets namn')).toHaveValue('Paneler på taket');
-        await form
-          .getByLabel('Objekttyp', { exact: true })
-          .selectOption({ label: 'Solutrustning' });
-        await expect(form.getByLabel('Objektets identitet')).toHaveValue('identified');
-        const section = form.getByRole('group', { name: 'Uppgifter', exact: true });
-        await expect(section.getByLabel('Placering', { exact: true })).toHaveValue('');
-        await expect(section.getByLabel('Reserv', { exact: true })).toHaveValue('');
-        await section.getByLabel('Placering', { exact: true }).fill('Södertak');
-        await section.getByLabel('Reserv', { exact: true }).selectOption('false');
-        await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
         await page
           .getByRole('region', { name: 'Lista och utkast', exact: true })
           .getByRole('button', { name: 'Nytt objekt', exact: true })
           .click();
-        await form.getByLabel('Objektets namn').fill('Batteriet');
+        const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+        await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+        await expect(form.getByRole('alert', { name: 'Formuläret innehåller fel' })).toBeFocused();
+        await form.getByRole('link', { name: /^Namn:/ }).click();
+        await expect(form.getByLabel('Namn', { exact: true })).toBeFocused();
+        expect((await read()).draft.changes).toEqual([]);
+        await form.getByLabel('Namn', { exact: true }).fill('Paneler på taket');
+        await form
+          .getByLabel('Beskrivning', { exact: true })
+          .fill('Beskrivning till den nya typen');
         await form
           .getByLabel('Objekttyp', { exact: true })
           .selectOption({ label: 'Solutrustning' });
-        await form.getByLabel('Objektets identitet').selectOption('unspecified');
+        await expect(form.getByLabel('Identitet')).toHaveValue('identified');
+        await form.getByRole('button', { name: 'Uppgifter', exact: true }).click();
+        const section = form;
+        await expect(section.getByLabel('Placering', { exact: true })).toHaveValue('');
         await expect(section.getByLabel('Reserv', { exact: true })).toHaveValue('');
-        await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+        await section.getByLabel('Placering', { exact: true }).fill('Södertak');
+        await section.getByLabel('Reserv', { exact: true }).selectOption('false');
+        await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+        await page
+          .getByRole('region', { name: 'Lista och utkast', exact: true })
+          .getByRole('button', { name: 'Nytt objekt', exact: true })
+          .click();
+        await form.getByLabel('Namn', { exact: true }).fill('Batteriet');
+        await form
+          .getByLabel('Objekttyp', { exact: true })
+          .selectOption({ label: 'Solutrustning' });
+        await form.getByLabel('Identitet').selectOption('unspecified');
+        await form.getByRole('button', { name: 'Uppgifter', exact: true }).click();
+        await expect(section.getByLabel('Reserv', { exact: true })).toHaveValue('');
+        await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
         await page.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
         const relationshipType = page.getByRole('group', {
           name: 'Sambandstypens definition',
@@ -144,7 +140,7 @@ for (const width of [1280, 390, 320]) {
         expect(panels?.after).toMatchObject({
           typeId: type?.id,
           name: 'Paneler på taket',
-          description: 'Oskickat före den nya typen',
+          description: 'Beskrivning till den nya typen',
           customValues: { [placement]: 'Södertak', [reserve]: false },
         });
         expect(panels?.after?.identity).toBeUndefined();
@@ -172,7 +168,9 @@ for (const width of [1280, 390, 320]) {
         const savedResponse = await response;
         expect(savedResponse.status()).toBe(200);
         const { receipt }: { receipt: SaveReceipt } = await savedResponse.json();
-        await expect(page.getByRole('status')).toContainText('Sparat');
+        await expect(
+          page.getByRole('region', { name: 'Kartans status', exact: true }),
+        ).toContainText(/sparat/i);
         expect(receipt.objectTypes?.map(({ id }) => id)).toEqual([type?.id]);
         expect(receipt.relationshipTypes?.map(({ id }) => id)).toEqual([customRelationship?.id]);
         expect(receipt.changes.map(({ after }) => after?.id).sort()).toEqual(

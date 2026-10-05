@@ -139,9 +139,10 @@ test('editing visible values preserves hidden zero and no answers in the same ob
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
   expect(screen.queryByLabelText('Effekt', { exact: true })).toBeNull();
   expect(screen.queryByLabelText('Batteri', { exact: true })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Uppgifter' }));
   await userEvent.type(screen.getByLabelText('Anteckning', { exact: true }), 'Ny');
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await screen.findByText(/Ändringen finns i ditt utkast/);
   expect((await read()).draft.changes[0].after?.customValues).toEqual({
     power: 0,
     battery: false,

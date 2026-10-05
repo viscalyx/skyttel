@@ -1,3 +1,4 @@
+import { File } from 'node:buffer';
 import type Database from 'better-sqlite3';
 import { Hono, type MiddlewareHandler } from 'hono';
 import type { Auth } from './auth.js';
@@ -5,6 +6,7 @@ import { conversationPreferences } from './conversation-preferences.js';
 import { householdAccess } from './households.js';
 import { householdMap, MapError } from './map.js';
 import { personalView } from './personal-view.js';
+import { type EncodedImage, encodeProfileImage } from './profile-images.js';
 
 export function mapRoutes(database: Database.Database, auth: Auth, origin: string) {
   type Environment = { Variables: { userId: string; body: Record<string, unknown> } };
@@ -15,6 +17,13 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
     context.set('userId', session.user.id);
     if (context.req.method === 'POST') {
       if (context.req.header('Origin') !== origin) throw new MapError('forbidden', 403);
+      if (
+        context.req.path.endsWith('/map/object-form') &&
+        context.req.header('Content-Type')?.startsWith('multipart/form-data;')
+      ) {
+        await next();
+        return;
+      }
       if (
         context.req.header('Content-Type')?.split(';', 1)[0].trim().toLowerCase() !==
         'application/json'
@@ -102,6 +111,42 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
       ),
     ),
   );
+  routes.post('/households/:id/map/object-form', async (context) => {
+    const userId = context.get('userId');
+    const householdId = context.req.param('id');
+    if (!householdAccess(database, userId, householdId)) throw new MapError('forbidden', 403);
+    let body = context.get('body');
+    let image: EncodedImage | undefined;
+    if (context.req.header('Content-Type')?.startsWith('multipart/form-data;')) {
+      let values: FormData;
+      try {
+        values = await context.req.raw.formData();
+      } catch {
+        throw new MapError('invalid_request', 400);
+      }
+      const metadata = values.get('metadata');
+      const file = values.get('image');
+      if (
+        typeof metadata !== 'string' ||
+        Buffer.byteLength(metadata, 'utf8') > 16_384 ||
+        !(file instanceof File) ||
+        values.getAll('metadata').length !== 1 ||
+        values.getAll('image').length !== 1 ||
+        [...values.keys()].some((key) => !['metadata', 'image'].includes(key))
+      )
+        throw new MapError('invalid_request', 400);
+      try {
+        body = JSON.parse(metadata);
+      } catch {
+        throw new MapError('invalid_request', 400);
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body))
+        throw new MapError('invalid_request', 400);
+      image = await encodeProfileImage(await file.arrayBuffer());
+    }
+    if (typeof body?.stagingId !== 'string') throw new MapError('invalid_request', 400);
+    return context.json(householdMap(database, userId, householdId).propose(body, image));
+  });
   routes.post('/households/:id/map/relationship', (context) =>
     context.json(
       householdMap(database, context.get('userId'), context.req.param('id')).proposeRelationship(

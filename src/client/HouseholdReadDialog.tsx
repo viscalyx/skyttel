@@ -73,12 +73,14 @@ export function HouseholdReadDialog({
   state,
   relationshipTypes,
   onClose,
+  onEdit,
 }: {
   entry: HouseholdReadEntry;
   rows: HouseholdTableRow[];
   state: MapState;
   relationshipTypes: RelationshipType[];
   onClose: () => void;
+  onEdit?: (id: string, restoreFocus: () => void) => void;
 }) {
   const [chain, setChain] = useState([entry]);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -146,6 +148,14 @@ export function HouseholdReadDialog({
               {row.proposal && ` · ◇ ${row.proposal}`}
             </p>
             <ObjectReadDetails row={row} full />
+            {onEdit && !row.removed && (
+              <button
+                type="button"
+                onClick={() => onEdit(current.id, restoreFocus.current ?? (() => {}))}
+              >
+                Redigera {row.object.name}
+              </button>
+            )}
             <button
               type="button"
               aria-label={`Samband för ${row.object.name}`}

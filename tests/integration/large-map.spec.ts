@@ -81,7 +81,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
       .getByRole('button', { name: 'Uppgifter för Provobjekt 499', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets namn', { exact: true })).toHaveValue('Provobjekt 499');
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Provobjekt 499');
     await page.getByLabel('Sök objekt', { exact: true }).fill('');
     await page
       .getByRole('navigation', { name: 'Bläddra bland objekt' })
@@ -104,7 +104,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Oskickad text i den täta kartan',
     );
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
       'Oskickad text i den täta kartan',
     );

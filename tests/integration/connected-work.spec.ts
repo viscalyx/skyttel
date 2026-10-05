@@ -228,8 +228,8 @@ for (const mode of ['voice', 'text'] as const) {
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await member.getByLabel('Objektets namn').fill('Robins notering');
-      await member.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await member.getByLabel('Namn', { exact: true }).fill('Robins notering');
+      await member.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const robinPrivate = (await readMember()).draft;
       expect(robinPrivate.changes).toHaveLength(1);
       expect((await read()).draft.changes).toEqual([]);
@@ -340,7 +340,9 @@ for (const mode of ['voice', 'text'] as const) {
         },
         { timeout: 5000 },
       );
-      await subscription.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await subscription
+        .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
+        .click();
       expect((await correction).status()).toBe(200);
       const refreshedMap = await correctedMap;
       expect(refreshedMap.status()).toBe(200);
@@ -593,7 +595,9 @@ for (const mode of ['voice', 'text'] as const) {
         .click();
       await subscription.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
       await subscription.getByLabel('Beskrivning', { exact: true }).fill('Alex privat efteråt');
-      await subscription.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await subscription
+        .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
+        .click();
       await member.reload();
       if (mode === 'text') await loseGraphics(member);
       await openWorkspace(member);

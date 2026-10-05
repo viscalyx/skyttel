@@ -24,7 +24,8 @@ du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
 **Redigera valt objekt** eller **Redigera valt samband** för att öppna
 formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
 
-1. Starta appen enligt [provförberedelsen](../development/devcontainer.md#disposable-local-database).
+1. Starta appen enligt
+   [provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Börja varje fall i ett nytt testhushåll utan privata förslag.
 2. Ha båda profilerna öppna när fallet använder två medlemmar. Använd
    [typguiden](../user-guide/object-types.md) för att hitta formulären.
@@ -61,7 +62,8 @@ await (async () => {
   const path = `/api/households/${encodeURIComponent(householdId)}/map`;
   const read = async (url) => {
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Läsning misslyckades: ${response.status}`);
+    if (!response.ok) throw new Error(`Läsning misslyckades:
+    ${response.status}`);
     return response.json();
   };
   const before = await read(path);
@@ -83,7 +85,8 @@ await (async () => {
     error: (await response.json()).error,
     unchangedMap: JSON.stringify(before) === JSON.stringify(await read(path)),
     unchangedHistory:
-      JSON.stringify(historyBefore) === JSON.stringify(await read(`${path}/history`)),
+      JSON.stringify(historyBefore) === JSON.stringify(await
+      read(`${path}/history`)),
   });
 })();
 ```
@@ -259,7 +262,8 @@ entire draft and map”.
    oberoende nytt Person-objekt i samma utkast.
 2. Skapa ett förslag av typen Solkraft med det giltiga datumet
    `2026-02-28` och lägg förslaget i utkastet. Följ kontrollsteget
-   [för felaktigt fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
+   [för felaktigt
+   fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
    för Datum med värdet `2026-02-30`. Kontrollera HTTP 400 och att kartan,
    hela utkastet och historiken är oförändrade jämfört med före återförsöket.
 3. Lo lägger ett nytt objekt med Effekt `12` i sitt privata utkast utan
@@ -303,14 +307,16 @@ hiding, type changes, historical reading at 1280px”, samma titel med “390px�
    och placera i ett nytt avsnitt Datum. Kontrollera ljust och mörkt tema.
    Lägg typförslaget i utkastet.
 3. Skapa Husets lån av typen Husavtal. Försök först lägga ett namnlöst
-   objekt i utkastet: namnfältet ska få fokus. Ange Gemensam avtalstext som
+   objekt i utkastet: felsammanfattningen ska få fokus. Följ länken till Namn.
+   Ange Gemensam avtalstext som
    beskrivning och Eget värde som Anteckning. Ange Skuld `12 300` som
    **Osäkert uppgivet**, med uppgiftsdatum `2026-09-01`, och Startdatum
    `2026-08-01` som känt.
-4. Under Ekonomiska uppgifter och avtalsvillkor, välj **Okänt** för Pris
+4. Under Ekonomiska uppgifter, välj **Okänt** för Pris
    och **Uttryckligen inget** för Valuta. Välj **Känt** för Beviljat
    kreditutrymme utan belopp. Fäll ihop avsnittet och försök lägga i
-   utkastet. Det ska öppnas och det tomma beloppet få fokus. Välj därefter
+   utkastet. Felsammanfattningen ska få fokus. Följ beloppets länk; avsnittet
+   öppnas och det tomma beloppet får fokus. Välj därefter
    **Ej uppgivet** för kreditutrymmet och lägg objektet i utkastet.
 5. Öppna Lista och spara hela utkastet. Starta om installationen och ladda
    om. Dölj Skuld i typdefinitionen och lägg förslaget i utkastet. Öppna
@@ -442,11 +448,11 @@ identity, edges and historical reading through restart”.
 **Steg:**
 
 1. Öppna Alex blå cykel och välj Motorfordon som **Objekttyp**. Kontrollera
-   **Tidigare fältvärden**: Cykel, Nummer `SYNTH-42` och Försäkrad **Nej**.
-   Kontrollera att nya Nummer är tomt och Försäkrad är **Obesvarat**.
-   **Lägg i mitt utkast** ska vara inaktiverat innan värdena hanteras.
-2. Ange `42` i det nya Nummer. Lämna Försäkrad obesvarat. Markera
-   **Jag har hanterat tidigare fältvärden för typbytet** och lägg i utkastet.
+   dialogen **Ta bort tidigare egna fält?** med Nummer `SYNTH-42` och
+   Försäkrad **Nej**. Bekräfta **Ta bort fältvärdena och byt typ**.
+   Öppna **Egna fält**: Nummer är tomt och Försäkrad är **Obesvarat**.
+2. Ange `42` i det nya Nummer. Lämna Försäkrad obesvarat och välj
+   **Lägg i utkastet och stäng**.
    Granska båda typerna, gamla och nya Nummer samt obesvarat Försäkrad.
 3. Starta om installationen och ladda om. Kontrollera samma privata
    förslag. Spara hela utkastet och kontrollera cykelns och sambandets ID.
@@ -490,25 +496,23 @@ På cykeln ska följande gemensamma ekonomiska uppgifter finnas:
 
 **Integrationstest:**
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts),
-testfallen “TYP-11: repeated type changes keep distinct former answers and
+testfallen “TYP-11: repeated type changes confirm loss of former answers and
 complete common values through save and restart at 1280px in light”, samma
 titel med “390px” eller “320px” och “dark”. Kör varje bredd i båda temana.
 
 **Steg:**
 
-1. Öppna cykelns redigering och byt till Motorfordon. Kontrollera att
-   alla nya egna fält är tomma och de tidigare svaren visas separat.
-   Ange Nummer `B-84`, Antal `8` och Försäkrad **Ja**. Bekräfta att
-   tidigare fältvärden är hanterade utan att lägga förslaget i utkastet.
-2. Byt tillbaka till Cykel. Kontrollera tomma nya fält, två tidigare
-   grupper och att bekräftelsen måste göras på nytt. Ange Nummer
-   `A-126`, Antal `0` och Försäkrad **Nej**. Bekräfta hanteringen igen.
-3. Byt åter till Motorfordon. Kontrollera tre tidigare grupper, inklusive
-   båda grupperna från Cykel med sina egna svar. Fyll bara i Nummer
-   `B-final`, lämna Antal och Försäkrad obesvarade och bekräfta hanteringen.
-4. Kontrollera namn, identitet, beskrivning, profilbild och ekonomiska
-   uppgifter under **Uppgifter utanför typens avsnitt**. Lägg i utkastet.
-   Kontrollera att den sparade kartan fortfarande visar den gamla typen.
+1. Öppna cykelns redigering och byt till Motorfordon. Läs de tidigare
+   svaren i förlustdialogen och bekräfta borttagningen. Öppna Egenskaper:
+   alla egna fält är obesvarade. Ange Nummer B-84, Antal 8 och Försäkrad Ja.
+2. Öppna Grunduppgifter och byt tillbaka till Cykel. Läs B-84, 8 och Ja
+   i förlustdialogen och bekräfta igen. Ange A-126, 0 och Nej i Egenskaper.
+3. Byt åter till Motorfordon och bekräfta borttagningen av A-126, 0 och Nej.
+   Fyll endast Nummer B-final och lämna Antal och Försäkrad obesvarade.
+4. Kontrollera namn, identitet och beskrivning i Grunduppgifter, bilden i
+   Livscykel och utseende och ekonomiska uppgifter i Ekonomiska uppgifter. Välj
+   Lägg i utkastet och stäng. Den sparade kartan har fortfarande den gamla
+   typen.
 5. Starta om installationen, ladda om och granska förslaget. Spara hela
    utkastet uttryckligen. Starta om och granska cykeln och sambandet igen.
 
@@ -516,7 +520,7 @@ titel med “390px” eller “320px” och “dark”. Kör varje bredd i båda
 
 - Varje typbyte börjar med obesvarade egna fält, även när namn och
   värdeslag stämmer. Tidigare noll och Nej blandas inte ihop med obesvarat.
-  Gamla grupper behåller sina typer och svar under redigeringen.
+  Förlustdialogen visar de aktuella svar som just detta typbyte kastar.
 - Varje byte kräver en ny uttrycklig bekräftelse före placering i utkastet.
   Namn, identitet, beskrivning, hela ekonomiska uppgifter, bild och ikon
   finns kvar. Sambandet behåller sina ändpunkter och sin osäkerhet.
@@ -543,7 +547,8 @@ saves until fresh choices and preserve later private fields”.
 1. Alex lägger namnbytet Garaget till Eget namn i sitt utkast. Föreslå
    typbytet till Motorfordon: ange Nummer `42`, välj Försäkrad **Nej**,
    hantera gamla värden och lägg typbytet i utkastet. Följ kontrollsteget
-   [för felaktigt fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
+   [för felaktigt
+   fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
    för Nummer med texten `fel`. Kontrollera HTTP 400 och oförändrad karta,
    helt utkast och historik jämfört med före återförsöket.
 2. Behåll det giltiga typbytet med Nummer `42` och Försäkrad **Nej** i

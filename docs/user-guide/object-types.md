@@ -108,12 +108,15 @@ Objektets identitet och alla dess samband finns kvar. Namn,
 beskrivning och andra uppgifter som inte hör till typens egna fält påverkas
 inte av själva typvalet.
 
-Den nya typens fält börjar obesvarade. Tidigare fältvärden visas separat,
-även om den nya typen har fält med samma namn. Fyll själv i de uppgifter
-som ska gälla efter bytet. Inga värden överförs eller konverteras automatiskt.
-Lämna **Obesvarat** för uppgifter du inte känner till; det är skilt från
-**Nej**. Bekräfta **Jag har hanterat tidigare fältvärden för typbytet** när
-du har rättat de nya fälten eller valt att lämna dem obesvarade.
+**Ta bort tidigare egna fält?** visar namnen och värdena som försvinner.
+**Fortsätt redigera** behåller nuvarande typ och värden. Välj
+**Ta bort fältvärdena och byt typ** för att bekräfta borttagningen ur
+formuläret. Redan lagda förslag ändras först när hela formuläret läggs i
+utkastet.
+
+Den nya typens fält börjar obesvarade, även om namn eller fältidentiteter
+sammanfaller. Fyll själv i de nya uppgifterna. Skyttel överför eller
+konverterar dem inte. **Obesvarat** är skilt från **Nej**.
 
 Om du byter typ flera gånger under redigeringen visas de tidigare svaren
 i skilda grupper med sin ursprungliga typ. Även när du byter tillbaka

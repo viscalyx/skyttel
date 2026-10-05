@@ -138,9 +138,7 @@ test('camera focus includes previous direct neighbors and preserves work through
   const initialSeparation = separation();
   await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Alex', exact: true });
-  await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-  const description = panel.getByLabelText('Beskrivning', { exact: true });
-  await description.fill('Oskickat under kamerafokus');
+  const reading = panel.getByText('Namn: Alex', { exact: true });
   const panelBox = panel.element().getBoundingClientRect().toJSON();
   await focus.click();
   await expect.poll(separation).toBeGreaterThan(initialSeparation * 2);
@@ -162,7 +160,7 @@ test('camera focus includes previous direct neighbors and preserves work through
     .element(page.getByRole('button', { name: 'Visa hela kartan', exact: true }))
     .toBeVisible();
   expect(position(alex)).toEqual(focused);
-  await expect.element(description).toHaveValue('Oskickat under kamerafokus');
+  await expect.element(reading).toBeVisible();
   await expect.element(alex).toHaveAttribute('aria-pressed', 'true');
   await closePanels();
   await page.viewport(320, 250);
@@ -183,12 +181,8 @@ test('camera focus includes previous direct neighbors and preserves work through
 test('compact profile returns to visible work and dismisses before keyboard focus enters the map', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page
-    .getByRole('region', { name: 'Lista och utkast', exact: true })
-    .getByRole('button', { name: 'Nytt objekt', exact: true })
-    .click();
-  const name = page.getByLabelText('Objektets namn', { exact: true });
-  await name.fill('Oskickad profiltext');
+  await page.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();
+  const name = page.getByRole('heading', { name: 'Alex', exact: true });
   const profileButton = page.getByRole('button', { name: 'Din profil', exact: true });
   const profile = page.getByRole('region', { name: 'Din profil', exact: true });
   await profileButton.click();
@@ -197,7 +191,7 @@ test('compact profile returns to visible work and dismisses before keyboard focu
     .toHaveFocus();
   await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
   await expect.element(name).toHaveFocus();
-  await expect.element(name).toHaveValue('Oskickad profiltext');
+  await expect.element(name).toBeVisible();
   await closePanels();
   for (const target of [
     page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }),
@@ -207,7 +201,7 @@ test('compact profile returns to visible work and dismisses before keyboard focu
     await profileButton.click();
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await expect.element(target).toHaveFocus();
-    await expect.element(name).not.toBeVisible();
+    await expect.element(name).not.toBeInTheDocument();
   }
   await profileButton.click();
   (
@@ -256,17 +250,14 @@ test('map selection gestures preserve membership and open retained details only 
   await expect.element(alex).toHaveAttribute('aria-pressed', 'false');
   await music.dblClick();
   await expect.element(panel).toBeVisible();
-  await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-  await panel.getByLabelText('Beskrivning', { exact: true }).fill('Oskickat arbete');
+  await expect.element(panel.getByText('Namn: Tonmoln', { exact: true })).toBeVisible();
   await closePanels();
   await alex.click({ modifiers: ['Control', 'Alt'] });
   await expect.element(page.getByRole('region', { name: 'Alex', exact: true })).toBeVisible();
   await expect.element(music).toHaveAttribute('aria-pressed', 'true');
   await closePanels();
   await music.click({ modifiers: ['Meta', 'Alt'] });
-  await expect
-    .element(panel.getByLabelText('Beskrivning', { exact: true }))
-    .toHaveValue('Oskickat arbete');
+  await expect.element(panel.getByText('Namn: Tonmoln', { exact: true })).toBeVisible();
   await closePanels();
   await alex.click({ button: 'right', modifiers: ['Control'] });
   await expect.element(alex).toHaveAttribute('aria-pressed', 'false');
@@ -317,9 +308,7 @@ test('desktop keeps the map and the bounded text view, object and list panels av
     expect(box.top).toBeGreaterThanOrEqual(0);
     expect(box.bottom).toBeLessThanOrEqual(960);
   }
-  await expect
-    .element(page.getByLabelText('Objektets namn', { exact: true }))
-    .not.toBeInTheDocument();
+  await expect.element(page.getByLabelText('Namn', { exact: true })).not.toBeInTheDocument();
 });
 
 test.each([320, 390, 1440])(
@@ -331,20 +320,14 @@ test.each([320, 390, 1440])(
     await listButton.click();
     await list.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();
     const object = page.getByRole('region', { name: 'Alex', exact: true });
-    await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    const name = object.getByLabelText('Objektets namn', { exact: true });
-    await name.fill('Alex oskickat');
-    await expect.element(name).toHaveFocus();
+    const reading = object.getByText('Namn: Alex', { exact: true });
+    await expect.element(reading).toBeVisible();
     await listButton.click();
     const entry = list.getByRole('button', { name: 'Uppgifter för Alex', exact: true });
     entry.element().focus();
     await userEvent.keyboard('{Enter}');
     await expect.element(object.getByRole('heading', { name: 'Alex', exact: true })).toHaveFocus();
-    await expect.element(name).toHaveValue('Alex oskickat');
-    await name.click();
-    await userEvent.keyboard(' kvar');
-    await expect.element(name).toHaveFocus();
-    await expect.element(name).toHaveValue('Alex oskickat kvar');
+    await expect.element(reading).toBeVisible();
   },
 );
 
@@ -355,7 +338,7 @@ test('opening an editor does not redirect typing after the user chooses another 
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();
   const object = page.getByRole('region', { name: 'Alex', exact: true });
-  const panel = object.element();
+  const panel = document.body;
   // Choose the description as soon as it appears, before the next paint.
   // Initial name focus must finish with the form commit, not steal this choice later.
   const observer = new MutationObserver(() => {
@@ -370,12 +353,10 @@ test('opening an editor does not redirect typing after the user chooses another 
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   await userEvent.keyboard('Min oskickade text');
   await expect
-    .element(object.getByLabelText('Beskrivning', { exact: true }))
+    .element(page.getByLabelText('Beskrivning', { exact: true }))
     .toHaveValue('Min oskickade text');
-  await expect
-    .element(object.getByLabelText('Objektets namn', { exact: true }))
-    .toHaveValue('Alex');
-  await expect.element(object.getByLabelText('Beskrivning', { exact: true })).toHaveFocus();
+  await expect.element(page.getByLabelText('Namn', { exact: true })).toHaveValue('Alex');
+  await expect.element(page.getByLabelText('Beskrivning', { exact: true })).toHaveFocus();
 });
 
 test.each(['list', 'close', 'finish'] as const)(
@@ -400,10 +381,13 @@ test.each(['list', 'close', 'finish'] as const)(
     if (transition === 'list') await activatePanel('Lista och utkast');
     else if (transition === 'close')
       await object.getByRole('button', { name: 'Stäng Alex', exact: true }).click();
-    else
-      await object
-        .getByRole('button', { name: 'Stäng utan att skicka texten', exact: true })
+    else {
+      await page
+        .getByRole('dialog', { name: 'Redigera Alex', exact: true })
+        .getByRole('button', { name: 'Avbryt', exact: true })
         .click();
+      await object.getByRole('button', { name: 'Stäng Alex', exact: true }).click();
+    }
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     await userEvent.keyboard('Min sökning');
     await expect
@@ -546,15 +530,11 @@ test('desktop panels retain chosen positions within the whole screen across scre
   expect(box().top).toBeGreaterThan(legend.element().getBoundingClientRect().bottom);
 });
 
-test('complete view switching retains default form placement, unsent text and resize focus', async () => {
+test('complete view switching retains reading placement, unsent conversation text and resize focus', async () => {
   await open(1440);
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page
-    .getByRole('region', { name: 'Lista och utkast', exact: true })
-    .getByRole('button', { name: 'Nytt objekt', exact: true })
-    .click();
-  const form = page.getByRole('region', { name: 'Nytt objekt', exact: true, includeHidden: true });
-  await form.getByLabelText('Objektets namn').fill('Behåll placering');
+  await page.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();
+  const form = page.getByRole('region', { name: 'Alex', exact: true, includeHidden: true });
   const initial = form.element().getBoundingClientRect();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   const navigation = page.getByRole('region', {
@@ -562,6 +542,9 @@ test('complete view switching retains default form placement, unsent text and re
     exact: true,
     includeHidden: true,
   });
+  const textButton = page.getByRole('button', { name: 'Skriv till Skyttel', exact: true });
+  textButton.element().focus();
+  await userEvent.keyboard('{Enter}');
   await openConversationText();
   const conversation = page.getByRole('region', {
     name: 'Skriv till Skyttel',
@@ -575,7 +558,7 @@ test('complete view switching retains default form placement, unsent text and re
   await expect.element(form).not.toBeVisible();
   await expect.element(navigation).not.toBeVisible();
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: 'Fortsätt: Behåll placering', exact: true }).click();
+  await page.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();
   await expect.element(form).toBeVisible();
   await expect.element(conversation).not.toBeVisible();
   await expect.poll(() => form.element().getBoundingClientRect().x).toBe(380);
@@ -594,7 +577,7 @@ test('complete view switching retains default form placement, unsent text and re
   await expect.element(navigation).toBeVisible();
   await expect.element(message).toHaveFocus();
   await expect.poll(() => form.element().getBoundingClientRect().x).toBe(initial.x);
-  await expect.element(form.getByLabelText('Objektets namn')).toHaveValue('Behåll placering');
+  await expect.element(form.getByText('Namn: Alex', { exact: true })).toBeVisible();
 });
 
 test('conversation edges stop fast panel drags, allow sliding and retain resized placements', async () => {
@@ -675,13 +658,16 @@ test.each([390, 250])(
     await expect.element(handle).toHaveAttribute('aria-expanded', 'true');
     await handle.click();
     await work.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabelText('Objektets namn').fill('Behåll bred text');
-    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
-    await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    await page.getByLabelText('Namn', { exact: true }).fill('Behåll bred text');
+    const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
     await expect
-      .element(page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }))
-      .toBeVisible();
-    await expect.element(page.getByLabelText('Objektets namn')).toHaveValue('Behåll bred text');
+      .element(form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }))
+      .toBeInViewport();
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await expect
+      .element(page.getByLabelText('Namn', { exact: true }))
+      .toHaveValue('Behåll bred text');
   },
 );
 
@@ -965,53 +951,34 @@ test('selecting a map relationship preserves unsent relationship and type forms'
   }
 });
 
-test('phone opens the list from the map and preserves an edited name through map navigation', async () => {
+test('phone editing retains text during resize and canceled loss, and confirmed loss removes the unsent edit', async () => {
   await open(390);
-  await expect
-    .element(
-      page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true }),
-    )
-    .not.toBeInTheDocument();
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();
   const object = page.getByRole('region', { name: 'Alex', exact: true });
-  await expect.element(object.getByRole('heading', { name: 'Alex', exact: true })).toHaveFocus();
-  object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).element().focus();
-  await userEvent.keyboard('{Enter}');
-  await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveFocus();
-  await page.getByLabelText('Objektets namn', { exact: true }).fill('Alex ändrat');
-  const objectElement = object.element();
+  await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+  const name = page.getByLabelText('Namn', { exact: true });
+  await expect.element(name).toHaveFocus();
+  await name.fill('Alex ändrat');
+  await page.viewport(320, 500);
+  await expect.element(name).toHaveValue('Alex ändrat');
+  expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(320);
+  const form = page.getByRole('dialog', { name: 'Redigera Alex', exact: true });
+  await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+  await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+  await expect.element(name).toHaveValue('Alex ändrat');
+  await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+  await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+  await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+  await expect.element(name).toHaveValue('Alex');
+  await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
   await closePanels();
-  await expect
-    .element(page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }))
-    .not.toBeInTheDocument();
   await expect
     .element(page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }))
     .toBeVisible();
-  await expect.element(page.elementLocator(objectElement)).not.toBeVisible();
-  const bounds = document.querySelector('.spatial-surface')?.getBoundingClientRect();
-  expect(bounds?.height).toBeGreaterThan(500);
-  expect(bounds?.width).toBeGreaterThan(340);
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await activatePanel('Alex');
-  await expect
-    .element(page.getByLabelText('Objektets namn', { exact: true }))
-    .toHaveValue('Alex ändrat');
-  await closePanels();
-  await openConversationText();
-  await expect.element(page.getByRole('region', { name: 'Skriv till Skyttel' })).toBeVisible();
-  // On a narrow screen the text view fills the screen, and the list takes its place.
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await expect
-    .element(page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }))
-    .not.toBeInTheDocument();
-  await activatePanel('Alex');
-  await expect
-    .element(page.getByLabelText('Objektets namn', { exact: true }))
-    .toHaveValue('Alex ändrat');
-  expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(390);
+  expect(document.querySelector('.spatial-surface')?.getBoundingClientRect().width).toBeGreaterThan(
+    290,
+  );
 });
 
 test('landscape display options preserve canvas height and reachable controls', async ({
@@ -1052,9 +1019,7 @@ test('full map fills the available desktop and landscape phone area', async () =
   await expect
     .element(page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }))
     .toBeVisible();
-  await expect
-    .element(page.getByLabelText('Objektets namn', { exact: true }))
-    .not.toBeInTheDocument();
+  await expect.element(page.getByLabelText('Namn', { exact: true })).not.toBeInTheDocument();
   await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await page
     .getByRole('region', { name: 'Lista och utkast', exact: true })
@@ -1062,17 +1027,15 @@ test('full map fills the available desktop and landscape phone area', async () =
     .click();
   const object = page.getByRole('region', { name: 'Alex', exact: true });
   await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-  await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Alex');
-  const work = object;
+  await expect.element(page.getByLabelText('Namn', { exact: true })).toHaveValue('Alex');
+  const work = page.getByRole('dialog', { name: 'Redigera Alex', exact: true });
   await expect.element(work).toBeVisible();
   expect(work.element().getBoundingClientRect().height).toBeLessThanOrEqual(390);
   expect(work.element().getBoundingClientRect().width).toBeLessThan(844);
-  await page.viewport(844, 140);
-  const name = page.getByLabelText('Objektets namn', { exact: true });
-  await expect.poll(() => name.element().getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
-  await expect.poll(() => name.element().getBoundingClientRect().bottom).toBeLessThanOrEqual(140);
-  await expect.element(name).toHaveValue('Alex');
-  await page.viewport(844, 390);
+  await expect
+    .element(work.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }))
+    .toBeInViewport();
+  await work.getByRole('button', { name: 'Avbryt', exact: true }).click();
   await closePanels();
   await expect.element(page.getByRole('button', { name: 'Lista', exact: true })).toHaveFocus();
 });

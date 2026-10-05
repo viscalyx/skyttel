@@ -225,7 +225,7 @@ for (const [width, height] of [
           .getByRole('region', { name: 'Lista och utkast', exact: true })
           .getByRole('button', { name: 'Nytt objekt', exact: true })
           .click();
-        const unsent = page.getByLabel('Objektets namn');
+        const unsent = page.getByLabel('Namn', { exact: true });
         await unsent.fill('Oskickat arbete före radering');
         await unsent.focus();
         await openSettings(page);

@@ -76,24 +76,22 @@ and expose historical replacements”.
 
 **Steg:**
 
-1. Öppna Lo Exempels detaljer. Välj en PNG-bild. Kontrollera förhandsbilden
-   och beskedet om privat förslag. Öppna rymdkartan och kontrollera bilden
-   i Lo Exempels runda symbol. Öppna detaljerna igen.
-2. Skriv en ny beskrivning utan att skicka. Kontrollera att bildvalet är
-   inaktiverat. Växla till rymdkartan och kontrollera bilden i Lo Exempels
-   runda symbol. Öppna detaljerna. Lägg texten i utkastet och spara hela
-   utkastet.
-3. Starta om servern normalt och ladda om sidan. Kontrollera bilden i
-   detaljerna och rymdkartan. Öppna Lo och byt bilden till WebP. Stäng
-   formuläret och spara hela utkastet.
+1. Redigera Lo och öppna Livscykel och utseende. Välj en PNG-bild och
+   kontrollera förhandsbilden. Välj Lägg i utkastet och stäng. Öppna kartan
+   och kontrollera bilden i Lo Exempels runda symbol.
+2. Redigera Lo igen. Skriv Oskickad text som beskrivning i Grunduppgifter.
+   Öppna Livscykel och utseende och kontrollera att bildvalet är nåbart.
+   Lägg hela formuläret i utkastet och spara hela utkastet separat.
+3. Starta om servern och ladda om. Kontrollera bilden i redigeringen och
+   kartan. Byt bilden till WebP, lägg hela formuläret i utkastet och spara.
 4. Välj **Rapporter** och **Visa ändringarna** vid senaste sparandet.
    Läs och se bilderna före och efter. Kontrollera att aktuell bild och
    beskrivning är oförändrade.
 
 **Förväntat resultat:**
 
-- Bilden läggs på rätt objekt som privat förslag. Oskickad text bevaras vid
-  vybyte och bildvalet kan inte skriva över den.
+- Bild och text läggs tillsammans på rätt objekt i utkastet först efter
+  bekräftat tillägg av hela formuläret. Bildval skriver inte över text.
 - Bilden visas i objektets runda symbol före sparandet och efter omstart.
   Sparad bild och beskrivning överlever omstart. Historiken visar bytet.
 - Historiken visar båda bilderna utan att ändra den aktuella bilden
@@ -115,10 +113,13 @@ recovers its durable receipt”.
 
 **Steg:**
 
-1. Välj en JPEG-bild på Lo. Försök sedan välja textfilen döpt till PNG och
-   filen över 10 MB. Läs felen och kontrollera bilden och beskrivningen.
-2. Stäng formuläret och spara. Öppna Lo och välj **Ta bort profilbild**.
-   Granska att borttagningen är ett privat förslag.
+1. Välj en JPEG-bild på Lo och lägg hela formuläret i utkastet. Redigera
+   igen, välj textfilen döpt till PNG och försök lägga formuläret i utkastet.
+   Upprepa med filen över 10 MB. Läs felen och kontrollera beskrivningen.
+   Avbryt och kasta endast de oskickade ändringarna.
+2. Spara hela utkastet. Redigera Lo och välj Ta bort profilbilden ur
+   formuläret i Livscykel och utseende. Lägg hela ändringen i utkastet.
+   Granska borttagningsförslaget innan separat sparande.
 3. Stäng formuläret. Kör avbrottskoden nedan i utvecklarkonsolen och
    spara sedan hela utkastet utan att ladda om sidan.
    Läs beskedet om okänt utfall och välj **Hämta samma kvitto igen**.

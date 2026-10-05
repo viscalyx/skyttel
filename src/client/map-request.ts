@@ -21,10 +21,10 @@ export async function request<T>(path: string, body?: unknown, signal?: AbortSig
       body === undefined
         ? undefined
         : {
-            'Content-Type': 'application/json',
+            ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
             'X-Skyttel-Build': buildHeader,
           },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
     signal,
   });
   if (!response.ok) {

@@ -268,6 +268,6 @@ test.each([
     expect(scroller.getBoundingClientRect().bottom).toBeLessThanOrEqual(innerHeight);
     expect(inspector.querySelector('form')).toBeNull();
     await objectPanel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Lo');
+    await expect.element(page.getByLabelText('Namn', { exact: true })).toHaveValue('Lo');
   },
 );

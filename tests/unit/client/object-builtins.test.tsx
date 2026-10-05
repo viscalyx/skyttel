@@ -151,8 +151,9 @@ test('section editors keep complete financial facts and shared description throu
     ),
   ).toBeTruthy();
   await userEvent.click(details.getByRole('button', { name: 'Redigera valt objekt' }));
-  const editor = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
-  const section = within(editor.getByRole('group', { name: 'Avtalets uppgifter' }));
+  const editor = within(screen.getByRole('dialog', { name: 'Redigera Mitt lån' }));
+  await userEvent.click(editor.getByRole('button', { name: 'Avtalets uppgifter' }));
+  const section = editor;
   expect(
     (section.getByLabelText('Återstående skuld: uppgiftens säkerhet') as HTMLSelectElement).value,
   ).toBe('uncertain');
@@ -161,16 +162,14 @@ test('section editors keep complete financial facts and shared description throu
   ).toBe('2026-09-01');
   await userEvent.clear(section.getByLabelText('Återstående skuld', { exact: true }));
   await userEvent.type(section.getByLabelText('Återstående skuld', { exact: true }), '12 000');
+  await userEvent.click(editor.getByRole('button', { name: 'Grunduppgifter' }));
   await userEvent.selectOptions(editor.getByLabelText('Objekttyp', { exact: true }), 'other');
+  await userEvent.click(screen.getByRole('button', { name: 'Ta bort fältvärdena och byt typ' }));
   expect((editor.getByLabelText('Beskrivning', { exact: true }) as HTMLTextAreaElement).value).toBe(
     'Gemensam avtalstext',
   );
-  expect(
-    (editor.getByRole('button', { name: 'Lägg i mitt utkast' }) as HTMLButtonElement).disabled,
-  ).toBe(true);
-  await userEvent.click(editor.getByLabelText('Jag har hanterat tidigare fältvärden för typbytet'));
-  await userEvent.click(editor.getByRole('button', { name: 'Lägg i mitt utkast' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  await userEvent.click(editor.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await screen.findByText(/Ändringen finns i ditt utkast/);
   const state = await read();
   expect(state.objects[0].financialFacts).toEqual(financialFacts);
   expect(state.draft.changes[0].after).toMatchObject({
@@ -276,21 +275,20 @@ test('explicit custom-only order controls object editing and review without inve
       },
     ),
   );
-  const form = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
+  const form = within(screen.getByRole('dialog', { name: 'Nytt objekt' }));
   await userEvent.selectOptions(form.getByLabelText('Objekttyp', { exact: true }), 'ordered');
-  await user.click(form.getByLabelText('Objektets namn'));
+  await user.click(form.getByLabelText('Namn'));
   await user.paste('Sorterade uppgifter');
-  const fields = form.getByRole('group', { name: 'Egna fält' });
-  expect([...fields.querySelectorAll('label')].map((label) => label.textContent)).toEqual([
-    'Andra fältet',
-    'Första fältet',
-  ]);
+  await userEvent.click(form.getByRole('button', { name: 'Egna fält' }));
+  const labels = form.getAllByText(/^(Andra fältet|Första fältet)$/, { selector: 'label' });
+  expect(labels.map((label) => label.textContent)).toEqual(['Andra fältet', 'Första fältet']);
   await userEvent.type(form.getByLabelText('Andra fältet', { exact: true }), 'Två');
   await userEvent.type(form.getByLabelText('Första fältet', { exact: true }), '0');
+  await userEvent.click(form.getByRole('button', { name: 'Grunduppgifter' }));
   await user.click(form.getByLabelText('Beskrivning', { exact: true }));
   await user.paste('Gemensam text');
-  await userEvent.click(form.getByRole('button', { name: 'Lägg i mitt utkast' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await screen.findByText(/Ändringen finns i ditt utkast/);
   const review = within(await screen.findByRole('region', { name: 'Hela mitt utkast' }));
   expect(
     [...review.getByRole('region', { name: 'Egna fält' }).querySelectorAll('p')].map(

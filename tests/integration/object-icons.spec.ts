@@ -27,7 +27,7 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
       .click();
     const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
     const picker = details.getByRole('region', { name: 'Ikon', exact: true });
-    await details.getByLabel('Objektets namn', { exact: true }).fill('Min cykel');
+    await details.getByLabel('Namn', { exact: true }).fill('Min cykel');
     await details.getByLabel('Beskrivning', { exact: true }).fill('Bevara texten');
     await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
     await expect(picker.getByRole('searchbox', { name: 'Sök ikon' })).toBeFocused();
@@ -60,7 +60,7 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     await openWorkspace(page);
     await activatePanel(page, 'Min cykel');
     await details.getByLabel('Beskrivning', { exact: true }).fill('Bevara mer text');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     await installation.restart();
@@ -159,7 +159,7 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
       .click();
     const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
     const picker = details.getByRole('region', { name: 'Ikon', exact: true });
-    await details.getByLabel('Objektets namn', { exact: true }).fill('Lilla cykeln');
+    await details.getByLabel('Namn', { exact: true }).fill('Lilla cykeln');
     await details.getByLabel('Beskrivning', { exact: true }).fill('Min oskickade text');
     // The layout size of a 1280 × 1000 browser at 400% browser zoom.
     await page.setViewportSize({ width: 320, height: 250 });
@@ -179,7 +179,7 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
     await expect(details.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Min oskickade text',
     );
-    await details.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     const saved: MapState = await (await page.request.get(path)).json();
@@ -210,7 +210,7 @@ test('IKON-04: delayed keyboard icon choice and reset restore focus without repl
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
+    await page.getByLabel('Namn', { exact: true }).fill('Lo');
     const picker = page.getByRole('region', { name: 'Ikon', exact: true });
     await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
     await picker.getByRole('searchbox').fill('cykel');
@@ -263,7 +263,7 @@ test('IKON-05: a failed icon request focuses recovery and a successful retry ret
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
+    await page.getByLabel('Namn', { exact: true }).fill('Lo');
     const picker = page.getByRole('region', { name: 'Ikon', exact: true });
     await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
     await picker.getByRole('searchbox').fill('cykel');

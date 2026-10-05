@@ -350,8 +350,8 @@ test('TEXT-03: nekade sparbesked och modellfel lämnar formulärarbetet tillgän
       .getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn', { exact: true }).fill('Lo Lind');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Lind');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     expect((await (await page.request.get(path)).json()).draft.changes[0].after.name).toBe(
       'Lo Lind',
     );

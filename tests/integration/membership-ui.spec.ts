@@ -163,8 +163,8 @@ test('MEDLEM-06: revocation preserves shared objects and only a new invitation r
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await recipientPage.getByLabel('Objektets namn').fill('Robin i kartan');
-    await recipientPage.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await recipientPage.getByLabel('Namn', { exact: true }).fill('Robin i kartan');
+    await recipientPage.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await recipientPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(recipientPage.getByRole('status')).toContainText('Sparat');
     await page.goto(`${installation.origin}/households/${household.id}/administration`);
@@ -506,7 +506,7 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    const unsent = page.getByLabel('Objektets namn');
+    const unsent = page.getByLabel('Namn', { exact: true });
     await unsent.fill('Alex oskickade arbete');
     await openSettings(page);
     await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
@@ -555,7 +555,7 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    const recipientUnsent = recipientPage.getByLabel('Objektets namn');
+    const recipientUnsent = recipientPage.getByLabel('Namn', { exact: true });
     await recipientUnsent.fill('Robins oskickade arbete');
     await expect(invitations).toContainText('Accepterad', { timeout: 10_000 });
     await page.getByRole('button', { name: 'Medlemmar', exact: true }).click();

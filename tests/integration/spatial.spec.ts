@@ -138,19 +138,19 @@ test('RYMD-01: spatial and list editing share private proposals and one durable 
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true }),
     ).toBeVisible();
-    await expect(page.getByLabel('Objektets namn')).toHaveCount(0);
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveCount(0);
     await openWorkspace(page);
     await page
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Uppgifter för Molnmusik', exact: true })
       .click();
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Molnmusik familj');
+    await page.getByLabel('Namn', { exact: true }).fill('Molnmusik familj');
     await openMap(page);
     await openWorkspace(page);
     await activatePanel(page, 'Molnmusik');
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Molnmusik familj');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Molnmusik familj');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     expect((await read()).objects).toHaveLength(0);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
@@ -332,7 +332,7 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
     await music.click({ button: 'right' });
     await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
     await page.getByLabel('Beskrivning', { exact: true }).fill('Syntetiskt musikexempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openMap(page);
     await expect(music).toContainText('✎');
     const musicName = space.getByRole('button', { name: 'Markera objekt: Molnmusik', exact: true });
@@ -458,7 +458,7 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
     expect(
       (await read()).draft.changes.find((change) => change.id === 'music')?.after?.description,
     ).toBe('');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Sparat');
     expect((await read()).objects.find((object) => object.id === 'music')?.description).toBe(
@@ -653,7 +653,7 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await activatePanel(page, 'Lo Exempel');
     await objectPanel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByLabel('Objektets namn')).toBeFocused();
+    await expect(page.getByLabel('Namn', { exact: true })).toBeFocused();
     await expect(
       page
         .getByRole('group', { name: 'Objektets detaljer' })
@@ -703,7 +703,7 @@ test('RYMD-06: losing household access in fullscreen restores login navigation',
     await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
     await page.getByLabel('Beskrivning', { exact: true }).fill('Syntetisk text före åtkomstbyte');
     installation.revokeMembership(state.userId);
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('Du har inte längre tillgång');
     await openProfile(page);
     await expect(page.getByRole('button', { name: 'Logga ut', exact: true })).toBeVisible({

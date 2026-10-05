@@ -35,6 +35,7 @@ export function ObjectWork({
   stageObject,
   details,
   relationships,
+  onEdit,
 }: {
   initial: ObjectEditor;
   object?: MapObject;
@@ -52,6 +53,7 @@ export function ObjectWork({
   stageObject: (editor: ObjectEditor) => Promise<ObjectEditor | undefined>;
   details: ReactNode;
   relationships: ReactNode;
+  onEdit?: () => void;
 }) {
   const prefix = useId();
   const form = useRef<HTMLFormElement>(null);
@@ -121,7 +123,7 @@ export function ObjectWork({
       {!editor && (
         <>
           {details}
-          <button type="button" disabled={pending || blocked} onClick={begin}>
+          <button type="button" disabled={pending || blocked} onClick={onEdit ?? begin}>
             Redigera valt objekt
           </button>
         </>

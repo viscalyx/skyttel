@@ -90,6 +90,8 @@ export interface MapObject extends ObjectValue {
 }
 export interface DraftChange {
   proposedAt?: string;
+  /** Private identifier of a complete object-form staging attempt. */
+  stagingId?: string;
   id: string;
   before: MapObject | null;
   after: ObjectValue | null;

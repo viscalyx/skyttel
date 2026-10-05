@@ -9,6 +9,7 @@ let fixture: Awaited<ReturnType<typeof applicationFixture>>;
 let client: ReturnType<typeof fixture.client>;
 let householdId: string;
 let path: string;
+let failure = 0;
 const read = async (): Promise<MapState> => (await client.request(path)).json();
 beforeEach(async () => {
   fixture = await applicationFixture();
@@ -24,12 +25,18 @@ beforeEach(async () => {
     baseRevision: null,
     value: { typeId: state.types[0].id, name: 'Lo Exempel', description: 'Befintlig text' },
   });
-  vi.stubGlobal('fetch', (url: string, init?: RequestInit) =>
-    client.request(url, {
+  failure = 0;
+  vi.stubGlobal('fetch', (url: string, init?: RequestInit) => {
+    if (url.endsWith('/object-form') && failure)
+      return Response.json(
+        { error: failure === 409 ? 'draft_conflict' : 'forbidden' },
+        { status: failure },
+      );
+    return client.request(url, {
       ...init,
       headers: { ...init?.headers, origin: fixture.config.origin },
-    }),
-  );
+    });
+  });
 });
 afterEach(() => {
   cleanup();
@@ -38,122 +45,83 @@ afterEach(() => {
 });
 async function open() {
   render(<HouseholdMap householdId={householdId} />);
-  const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
-  await userEvent.click(tools.getByLabelText('Lista', { selector: 'button' }));
-  const list = within(await screen.findByRole('region', { name: 'Lista och utkast' }));
-  await userEvent.click(
-    await list.findByLabelText('Uppgifter för Lo Exempel', { selector: 'button' }),
-  );
-  const panel = within(await screen.findByRole('region', { name: 'Lo Exempel' }));
-  await userEvent.click(panel.getByRole('button', { name: 'Redigera valt objekt' }));
-  return within(panel.getByRole('group', { name: 'Objektets detaljer' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Uppgifter för Lo Exempel' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
+  const form = within(screen.getByRole('dialog', { name: 'Redigera Lo Exempel' }));
+  await userEvent.click(form.getByRole('button', { name: 'Livscykel och utseende' }));
+  return form;
 }
-test('Swedish and canonical searches stage an icon into the same object proposal and preserve unsent text', async () => {
-  const details = await open();
-  const picker = within(details.getByRole('region', { name: 'Ikon' }));
+
+test('Swedish and canonical icon searches change only the form until the whole proposal is staged', async () => {
+  const form = await open();
+  const before = await read();
+  const picker = within(form.getByRole('region', { name: 'Ikon' }));
   const search = picker.getByRole('searchbox', { name: 'Sök ikon' });
   await userEvent.type(search, 'cykel');
   await userEvent.click(picker.getByRole('button', { name: 'Välj Cykel' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
-  expect((await read()).draft.changes[0].after).toMatchObject({
-    iconId: 'bike',
-    description: 'Befintlig text',
-  });
-  await userEvent.type(details.getByLabelText('Beskrivning', { exact: true }), ' och nytt');
-  expect((search as HTMLInputElement).disabled).toBe(true);
-  await userEvent.click(picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }));
-  await waitFor(() => expect(document.activeElement).toBe(search));
+  expect(await read()).toEqual(before);
   await userEvent.clear(search);
   await userEvent.type(search, 'telescope');
   await userEvent.click(picker.getByRole('button', { name: 'Välj telescope' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  await userEvent.click(form.getByRole('button', { name: 'Grunduppgifter' }));
+  await userEvent.type(form.getByLabelText('Beskrivning'), ' och nytt');
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   expect((await read()).draft.changes[0].after).toMatchObject({
     iconId: 'telescope',
     description: 'Befintlig text och nytt',
   });
-  await userEvent.clear(search);
-  await userEvent.type(search, 'xyz-no-icon');
-  expect(picker.getByText(/Inga ikoner matchar/)).toBeTruthy();
-  await userEvent.click(picker.getByRole('button', { name: 'Typens standardikon' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
-  expect((await read()).draft.changes[0].after).not.toHaveProperty('iconId');
-}, 10_000);
+  expect((await read()).objects).toEqual([]);
+});
 
-test('a delayed text proposal for the picker does not replace a newer search focus', async () => {
-  const details = await open();
-  const picker = within(details.getByRole('region', { name: 'Ikon' }));
-  await userEvent.type(details.getByLabelText('Beskrivning'), ' och senare text');
-  let reached = () => {};
-  let release = () => {};
-  const ready = new Promise<void>((resolve) => {
-    reached = resolve;
-  });
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-    const response = await client.request(url, {
-      ...init,
-      headers: { ...init?.headers, origin: fixture.config.origin },
-    });
-    if (url.endsWith('/draft')) {
-      reached();
-      await held;
-    }
-    return response;
-  });
-  await userEvent.click(picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }));
-  await ready;
-  const search = screen.getByLabelText('Sök objekt');
-  await userEvent.type(search, 'Lo');
-  release();
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
-  await waitFor(() =>
-    expect(picker.queryByRole('button', { name: 'Lägg uppgifterna i utkastet först' })).toBeNull(),
-  );
-  expect(document.activeElement).toBe(search);
-  expect((await read()).draft.changes[0].after?.description).toBe('Befintlig text och senare text');
-}, 10_000);
-
-test.each([403, 503])(
-  'icon proposal failure %s preserves the earlier draft and reports the access or uncertain result',
+test.each([401, 403, 409, 503])(
+  'complete icon proposal rejection %s preserves the existing draft',
   async (status) => {
-    const details = await open();
-    const picker = within(details.getByRole('region', { name: 'Ikon' }));
-    await userEvent.type(picker.getByRole('searchbox'), 'bike');
+    const form = await open();
     const before = await read();
-    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) =>
-      url.endsWith('/draft')
-        ? Response.json({ error: status === 403 ? 'forbidden' : 'synthetic_failure' }, { status })
-        : client.request(url, {
-            ...init,
-            headers: { ...init?.headers, origin: fixture.config.origin },
-          }),
+    await userEvent.type(form.getByRole('searchbox', { name: 'Sök ikon' }), 'bike');
+    await userEvent.click(form.getByRole('button', { name: 'Välj Cykel' }));
+    failure = status;
+    await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toContain(
+        status === 401 || status === 403
+          ? 'inte längre tillgång'
+          : status === 503
+            ? 'oklart'
+            : 'uppgifter finns kvar',
+      ),
     );
-    await userEvent.click(picker.getByRole('button', { name: 'Välj Cykel' }));
-    await screen.findByRole('alert');
     expect(await read()).toEqual(before);
-    if (status === 403) expect(screen.queryByRole('region', { name: 'Ikon' })).toBeNull();
-    else expect((picker.getByRole('searchbox') as HTMLInputElement).disabled).toBe(true);
+    if (status === 401 || status === 403) expect(screen.queryByRole('dialog')).toBeNull();
+    else {
+      expect(form.getByRole('button', { name: 'Välj Cykel' }).getAttribute('aria-pressed')).toBe(
+        'true',
+      );
+      if (status === 503)
+        expect(
+          (form.getByRole('button', { name: 'Lägg i utkastet och stäng' }) as HTMLButtonElement)
+            .disabled,
+        ).toBe(true);
+    }
   },
 );
 
-test('a new object must contain valid details before its icon controls can create a proposal', async () => {
-  await open();
+test('an icon cannot create a partial proposal when the complete new object lacks a name', async () => {
+  render(<HouseholdMap householdId={householdId} />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
   await userEvent.click(
-    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
+    within(await screen.findByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
       name: 'Nytt objekt',
     }),
   );
-  const panel = within(screen.getByRole('region', { name: 'Nytt objekt' }));
-  const stage = panel.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' });
-  await userEvent.click(stage);
-  expect((await read()).draft.changes).toHaveLength(1);
-  expect((panel.getByRole('searchbox') as HTMLInputElement).disabled).toBe(true);
-  await userEvent.type(panel.getByLabelText('Objektets namn'), 'Ny sak');
-  await userEvent.click(stage);
-  await waitFor(() =>
-    expect((panel.getByRole('searchbox') as HTMLInputElement).disabled).toBe(false),
-  );
-  expect((await read()).draft.changes).toHaveLength(2);
+  const before = await read();
+  const form = within(screen.getByRole('dialog', { name: 'Nytt objekt' }));
+  await userEvent.click(form.getByRole('button', { name: 'Livscykel och utseende' }));
+  await userEvent.type(form.getByRole('searchbox', { name: 'Sök ikon' }), 'bike');
+  await userEvent.click(form.getByRole('button', { name: 'Välj Cykel' }));
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  expect(form.getByRole('alert').textContent).toContain('Namn');
+  expect(await read()).toEqual(before);
 });

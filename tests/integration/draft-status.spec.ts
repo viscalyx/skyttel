@@ -151,8 +151,8 @@ for (const recoverUnknown of [false, true])
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill('Lo Exempel');
-      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const mapReads = /\/map(?:\?.*)?$/;
       await page.route(mapReads, (route) =>
         route.request().method() === 'GET' ? route.abort() : route.continue(),
@@ -207,8 +207,8 @@ for (const width of [1440, 390, 320])
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill('Familjeabonnemanget');
-      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await page.getByLabel('Namn', { exact: true }).fill('Familjeabonnemanget');
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await openMap(page);
       const status = page.getByRole('region', { name: 'Kartans status', exact: true });
       const legend = page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true });
@@ -360,14 +360,14 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     personId = (await read()).draft.changes[0].id;
     await page
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Oskickad cykel');
+    await page.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Texten ska finnas kvar');
     await startConversationWithText(page);
     await page.getByLabel('Meddelande till Skyttel').fill('Lägg Molnmusik i utkastet.');
@@ -411,7 +411,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     expect(beforeMember.draft.changes).toEqual([]);
     await openWorkspace(page);
     await page.getByRole('button', { name: /^Fortsätt:/ }).click();
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickad cykel');
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Texten ska finnas kvar',
     );
@@ -424,7 +424,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
       await saving;
       await route.fulfill({ response: await route.fetch() });
     });
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openMap(page);
     await expect(
       page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
@@ -514,8 +514,8 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const held = new Promise<void>((resolve) => {
       release = resolve;
     });
@@ -593,8 +593,8 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await startConversationWithText(page);
     await page
       .getByLabel('Meddelande till Skyttel')

@@ -77,6 +77,17 @@ export function seedDemo(database: Database.Database, config: Config) {
         name,
         description,
         ...(key === 'linked-bank' ? { identity: 'unspecified' } : {}),
+        ...(key === 'bike'
+          ? {
+              iconId: 'bike',
+              lifecycle: 'active',
+              financialFacts: {
+                price: { knowledge: 'known', value: '4995' },
+                currency: { knowledge: 'known', value: 'SEK' },
+                startDate: { knowledge: 'known', value: '2026-04-03' },
+              },
+            }
+          : {}),
       },
     });
   }

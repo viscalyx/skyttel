@@ -25,7 +25,7 @@ for (const width of [1280, 390, 320]) {
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      const name = page.getByLabel('Objektets namn');
+      const name = page.getByLabel('Namn', { exact: true });
       await name.fill('Oskickad cykel');
       await name.focus();
       await openSettings(page);
@@ -55,7 +55,7 @@ for (const width of [1280, 390, 320]) {
       await expect(page).toHaveURL(/\/households\/[^/]+$/);
       await expect(name).toHaveValue('Oskickad cykel');
       await expect(name).toBeFocused();
-      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await openSettings(page);
       const feedback = page.locator('.household-work-background .workspace-feedback');
       const status = feedback.getByRole('status');
@@ -112,8 +112,8 @@ test('INST-02: type settings retain unsent definitions and save with the same ma
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Cykel i samma utkast');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Cykel i samma utkast');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page
       .getByRole('list', { name: 'Objekt', exact: true })
       .getByRole('button', { name: 'Uppgifter för Cykel i samma utkast', exact: true })
@@ -180,7 +180,7 @@ test('INST-03: the separate profile returns to the active field and groups perso
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Profilens cykel');
+    await page.getByLabel('Namn', { exact: true }).fill('Profilens cykel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Fortsätt här');
     await openProfile(page);
     const profile = page.getByRole('region', { name: 'Din profil', exact: true });
@@ -225,8 +225,8 @@ test('INST-04: settings and profile restore map and toolbar focus without openin
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Cykeln');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await closePanels(page);
     const object = page.getByRole('button', { name: 'Välj objekt: Cykeln', exact: true });
     const microphone = page.getByRole('button', { name: 'Prata med Skyttel', exact: true });
@@ -263,7 +263,7 @@ test('INST-05: leaving the compact profile exposes keyboard focus in the retaine
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Kvar bakom profilen');
+    await page.getByLabel('Namn', { exact: true }).fill('Kvar bakom profilen');
     await openProfile(page);
     const profile = page.getByRole('region', { name: 'Din profil', exact: true });
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).focus();
@@ -281,7 +281,7 @@ test('INST-05: leaving the compact profile exposes keyboard focus in the retaine
         );
       }),
     ).toBe(true);
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Kvar bakom profilen');
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Kvar bakom profilen');
   } finally {
     await installation.close();
   }
@@ -360,7 +360,7 @@ for (const width of [390, 320]) {
         .getByRole('region', { name: 'Lista och utkast', exact: true })
         .getByRole('button', { name: 'Nytt objekt', exact: true })
         .click();
-      await page.getByLabel('Objektets namn').fill('Behåll mobiltexten');
+      await page.getByLabel('Namn', { exact: true }).fill('Behåll mobiltexten');
       await openProfile(page);
       const profile = page.getByRole('region', { name: 'Din profil', exact: true });
       await expect(profile.getByRole('heading', { name: 'Din profil', exact: true })).toBeFocused();
@@ -391,7 +391,7 @@ for (const width of [390, 320]) {
       if (width === 390) await page.keyboard.press('Tab');
       await expect(expansion).toBeFocused();
       await expansion.press('Enter');
-      await expect(page.getByLabel('Objektets namn')).toHaveValue('Behåll mobiltexten');
+      await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Behåll mobiltexten');
     } finally {
       await installation.close();
     }

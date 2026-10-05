@@ -58,12 +58,12 @@ for (const typeName of [
       const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
       const name = `Bild för ${typeName}`;
       const panel = page.getByRole('region', { name, exact: true });
-      await details.getByLabel('Objektets namn', { exact: true }).fill(name);
+      await details.getByLabel('Namn', { exact: true }).fill(name);
       await details.getByLabel('Objekttyp', { exact: true }).selectOption({ label: typeName });
       await details.getByLabel('Beskrivning', { exact: true }).fill('Text i samma förslag');
       await expect(details.getByLabel('Välj profilbild')).toBeDisabled();
       expect((await read()).draft.changes).toEqual([]);
-      await details.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const edit = async () => {
         await openWorkspace(page);
         await page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }).click();
@@ -118,7 +118,7 @@ for (const typeName of [
       await edit();
       await details.getByLabel('Beskrivning', { exact: true }).fill('Ny text före bildbytet');
       await expect(imageInput).toBeDisabled();
-      await details.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await edit();
       await imageInput.setInputFiles({
         name: 'ny.webp',

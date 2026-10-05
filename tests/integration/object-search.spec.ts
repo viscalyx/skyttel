@@ -286,7 +286,7 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await expect(tableSearch).toHaveValue('åkex');
     await tools.getByRole('button', { name: 'Karta', exact: true }).click();
     await tools.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    const objectName = page.getByLabel('Objektets namn', { exact: true });
+    const objectName = page.getByLabel('Namn', { exact: true });
     await objectName.pressSequentially('Ö Testnamn 123');
     await expect(objectName).toHaveValue('Ö Testnamn 123');
     await expect(objectName).toBeFocused();

@@ -92,13 +92,13 @@ test('ACCESS-17: revoked access retires protected work while the operator can op
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Privat oskickat arbete');
+    await page.getByLabel('Namn', { exact: true }).fill('Privat oskickat arbete');
     installation.revokeMembership(user.id);
     await expect(
       page.getByRole('heading', { name: 'Du har inte tillgång till hushållet' }),
     ).toBeFocused({ timeout: 10_000 });
     await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toHaveCount(0);
-    await expect(page.getByLabel('Objektets namn')).toHaveCount(0);
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveCount(0);
     await expect(page.getByText(/Att logga in igen återställer inte/)).toBeVisible();
     await page.getByRole('link', { name: 'Månadskostnad' }).click();
     await expect(page.getByRole('heading', { name: 'Månadskostnad', exact: true })).toBeVisible();

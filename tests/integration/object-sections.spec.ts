@@ -40,7 +40,7 @@ test('TYP-08: sections move and hide fields in the shared draft without losing v
       .getByRole('region', { name: 'Lista och utkast', exact: true })
       .getByRole('button', { name: 'Nytt objekt', exact: true })
       .click();
-    await page.getByLabel('Objektets namn').fill('Paneler');
+    await page.getByLabel('Namn', { exact: true }).fill('Paneler');
     await page
       .getByLabel('Objekttyp', { exact: true })
       .selectOption({ label: 'Solcellsanläggning' });
@@ -48,7 +48,7 @@ test('TYP-08: sections move and hide fields in the shared draft without losing v
     await page.getByLabel('Effekt', { exact: true }).fill('0');
     await page.getByLabel('Datum', { exact: true }).fill('2026-09-01');
     await page.getByLabel('Batteri', { exact: true }).selectOption('false');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openSettings(page);
     await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
     await page.getByText('Objekttyper och egna fält', { exact: true }).click();

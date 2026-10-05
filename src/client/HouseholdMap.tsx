@@ -41,12 +41,14 @@ import {
   useConversationNotice,
 } from './ConversationNotice.js';
 import { ConversationSettings } from './ConversationSettings.js';
+import { useFormLeave } from './FormLeave.js';
 import { LifecycleDetails, LifecycleStatus } from './Lifecycle.js';
 import { MapLegend } from './MapLegend.js';
 import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
 import { mapConnections } from './map-presentation.js';
 import { MapRequestError, request } from './map-request.js';
 import { mapSearchContext } from './map-search-context.js';
+import { ObjectDialog } from './ObjectDialog.js';
 import { initialObjectBrowsing, ObjectList, objectListResults } from './ObjectList.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
@@ -204,6 +206,10 @@ export function HouseholdMap({
   >([]);
   const [objectDirty, setObjectDirty] = useState<Record<string, boolean>>({});
   const [draftRemovalStatus, setDraftRemovalStatus] = useState('');
+  const [objectDialog, setObjectDialog] = useState<ObjectEditor | null>(null);
+  const [objectFormDirty, setObjectFormDirty] = useState(false);
+  const { requestLeave } = useFormLeave();
+  const objectReturnFocus = useRef<(() => void) | undefined>(undefined);
   const [openPanels, setOpenPanels] = useState<string[]>([]);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [panelFocusRequest, setPanelFocusRequest] = useState<PanelFocusRequest | null>(null);
@@ -371,6 +377,12 @@ export function HouseholdMap({
       setWorkspaceSurface('reports');
       return;
     }
+    requestLeave(() => {
+      setObjectDialog(null);
+      openWorkConfirmed(target, chosen);
+    });
+  }
+  function openWorkConfirmed(target: WorkspaceTarget, chosen?: HTMLElement) {
     if (target === 'map' || target === 'table') {
       setWorkspaceSurface(target);
       return;
@@ -427,7 +439,7 @@ export function HouseholdMap({
     if (!restoreOutsideFocus(textViewButtonName)) focusTools();
   }
   const [legacyDirty, setDirty] = useState(false);
-  const dirty = legacyDirty || Object.values(objectDirty).some(Boolean);
+  const dirty = legacyDirty || objectFormDirty || Object.values(objectDirty).some(Boolean);
   const { query, types: typeFilter, onlySelected, sort } = browsing;
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const [conflictDialogKey, setConflictDialogKey] = useState<string>();
@@ -886,8 +898,17 @@ export function HouseholdMap({
     };
   }
   function edit(object?: MapObject, editing = true) {
+    requestLeave(() => editConfirmed(object, editing));
+  }
+  function editConfirmed(object?: MapObject, editing = true, restoreFocus?: () => void) {
     if (!state) return;
     const initial = objectEditor(object);
+    if (editing) {
+      objectReturnFocus.current = restoreFocus;
+      setReadEntry(null);
+      setObjectDialog(initial);
+      return;
+    }
     const id = initial.id;
     const node =
       !narrow && object
@@ -1515,7 +1536,7 @@ export function HouseholdMap({
               setPanelFocusRequest({ id: activePanel, element: lastWorkFocus.current });
               return true;
             }}
-            onSettings={onSettings}
+            onSettings={onSettings ? () => requestLeave(() => onSettings()) : undefined}
             theme={<WorkspaceTheme mode={theme.mode} onChange={theme.changeMode} />}
             onDetails={() => {
               if (selectedObject) edit(selectedObject, false);
@@ -1955,6 +1976,61 @@ export function HouseholdMap({
           setDraftOpenRequest((previous) => previous + 1);
         }}
       />
+      {state && objectDialog && (
+        <ObjectDialog
+          key={objectDialog.id}
+          initial={objectDialog}
+          active={active && (workspaceSurface === 'map' || workspaceSurface === 'table')}
+          restoreFocus={objectReturnFocus.current}
+          householdId={householdId}
+          isNew={
+            !state.objects.some((object) => object.id === objectDialog.id) &&
+            !state.draft.changes.some((change) => change.id === objectDialog.id)
+          }
+          types={effectiveTypes}
+          onClose={() => setObjectDialog(null)}
+          onDirty={setObjectFormDirty}
+          onStage={async (editor, stagingId, image) => {
+            setPending(true);
+            try {
+              const proposal = {
+                ...editor,
+                stagingId,
+                value: {
+                  ...editor.value,
+                  profileImageId: editor.value.profileImageId ?? null,
+                  iconId: editor.value.iconId ?? null,
+                },
+              };
+              let body: typeof proposal | FormData = proposal;
+              if (image) {
+                body = new FormData();
+                body.set('metadata', JSON.stringify(proposal));
+                body.set('image', image);
+              }
+              const draft = await request<MapDraft>(`${path}/object-form`, body);
+              if (isCurrent()) setState((current) => (current ? { ...current, draft } : current));
+              setStatus('Ändringen finns i ditt utkast. Kartan sparas separat.');
+              return draft;
+            } catch (failure) {
+              if (failure instanceof MapRequestError && [401, 403].includes(failure.status))
+                loseAccess();
+              throw failure;
+            } finally {
+              if (isCurrent()) setPending(false);
+            }
+          }}
+          onCheck={async () => {
+            const latest = await request<MapState>(path);
+            if (isCurrent()) setState(latest);
+            return latest;
+          }}
+          onConfirmed={(id, relationships, restoreFocus) => {
+            setObjectDialog(null);
+            if (relationships) setReadEntry({ kind: 'relationships', id, restoreFocus });
+          }}
+        />
+      )}
       {state && readEntry && (
         <HouseholdReadDialog
           key={`${readEntry.kind}:${readEntry.id}`}
@@ -1963,6 +2039,10 @@ export function HouseholdMap({
           state={state}
           relationshipTypes={effectiveEdgeTypes}
           onClose={() => setReadEntry(null)}
+          onEdit={(id, restoreFocus) => {
+            const object = displayed.get(id);
+            if (object) editConfirmed(object, true, restoreFocus);
+          }}
         />
       )}
       {state && (
@@ -2126,6 +2206,9 @@ export function HouseholdMap({
                     anchor: panel.anchor,
                     content: (
                       <ObjectWork
+                        onEdit={() => {
+                          if (selectedObject) edit(selectedObject);
+                        }}
                         initial={
                           selectedObject
                             ? objectEditor(selectedObject)
