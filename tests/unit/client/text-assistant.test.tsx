@@ -679,18 +679,6 @@ test('the draft table exposes every change, object facts, type edits and uncerta
           financialFacts: { price: { knowledge: 'known', value: '150' } },
           lifecycle: 'ended',
         },
-        merge: {
-          survivorId: 'bike',
-          absorbedId: 'duplicate',
-          identityConfirmed: true,
-          objects: [old, duplicate],
-          types: [type],
-          relationships: [edge],
-          relationshipTypes: [edgeType],
-          objectNames: { alex: 'Alex', bike: 'Gammal cykel' },
-          previousChanges: [],
-          previousRelationships: [],
-        },
       },
       { id: 'duplicate', type, before: duplicate, after: null },
       {

@@ -2685,9 +2685,7 @@ export function HouseholdMap({
                               ? 'Borttagen sambandstyp'
                               : change.before
                                 ? 'Ändrad sambandstyp'
-                                : change.restoreRevision !== undefined
-                                  ? 'Återställ sambandstyp'
-                                  : 'Ny sambandstyp'}
+                                : 'Ny sambandstyp'}
                             : {change.after?.name ?? change.before?.name}
                           </h3>
                           <h4>Sparat underlag</h4>
@@ -2725,9 +2723,7 @@ export function HouseholdMap({
                               ? 'Borttagen objekttyp'
                               : change.before
                                 ? 'Ändrad objekttyp'
-                                : change.restoreRevision !== undefined
-                                  ? 'Återställ objekttyp'
-                                  : 'Ny objekttyp'}
+                                : 'Ny objekttyp'}
                             : {change.after?.name ?? change.before?.name}
                           </h3>
                           <h4>Sparat underlag</h4>
