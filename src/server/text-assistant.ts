@@ -62,6 +62,8 @@ type Session = TextAssistantView & {
   summary?: string;
   summaryOffset?: number;
   summaryTask?: AbortController;
+  /** Context status and canceled handoffs wait for the complete reset. */
+  resetCompletion?: Promise<void>;
   previousFailure?: string;
   pendingSave?: { operationId: string; version: number; contentVersion: number };
   displayed?: (value: boolean) => void;
@@ -588,6 +590,15 @@ export function textAssistantRoutes({
     }
   }
   async function startOver(session: Session, discard = false, deferVoiceClose = false) {
+    const completion = resetContext(session, discard, deferVoiceClose);
+    session.resetCompletion = completion;
+    try {
+      await completion;
+    } finally {
+      if (session.resetCompletion === completion) session.resetCompletion = undefined;
+    }
+  }
+  async function resetContext(session: Session, discard: boolean, deferVoiceClose: boolean) {
     session.task?.abort();
     session.summaryTask?.abort();
     session.summaryTask = undefined;
@@ -1433,7 +1444,9 @@ export function textAssistantRoutes({
       return context.json({ error }, status);
     }
     try {
+      await session.resetCompletion;
       await refreshConfirmed(session);
+      await session.resetCompletion;
     } catch {
       await stop(session);
       return context.json({ error: 'assistant_session_expired' }, 404);
@@ -1534,6 +1547,7 @@ export function textAssistantRoutes({
   routes.post(`${base}/:sessionId/summarize`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    await session.resetCompletion;
     if (session.phase === 'working' || session.phase === 'recovery' || session.pendingSave)
       return context.json(view(session));
     if (session.contextSummaryState === 'needed' || needsSummary(session)) {
@@ -1541,6 +1555,7 @@ export function textAssistantRoutes({
       // handoff. Close its server sideband before taking the ledger snapshot.
       await summarize(session, undefined, [], true);
     }
+    await session.resetCompletion;
     return context.json(view(session));
   });
   // Poll a particular accepted message: a subsequent FIFO task may already be

@@ -1,5 +1,5 @@
 import { type APIRequestContext, request } from '@playwright/test';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import { createHousehold, signIn } from '../../support/client.js';
@@ -18,12 +18,16 @@ let providerId: string;
 const post = (route: string, data: unknown = {}) =>
   client.post(`${path}/${route}`, { headers: { origin: app.origin }, data });
 const readMap = async (): Promise<MapState> => (await client.get(`${path}/map`)).json();
-async function setup(provider = textModel(() => [modelMessage('Ett svar.')]).provider) {
+async function setup(
+  provider = textModel(() => [modelMessage('Ett svar.')]).provider,
+  assistantDispatch?: NonNullable<Parameters<typeof createInstallation>[1]>['assistantDispatch'],
+) {
   live = liveProvider();
   app = await createInstallation(undefined, {
     modelFetch: provider,
     liveFetch: live.provider,
     liveSideband: live.attach,
+    assistantDispatch,
   });
   client = await request.newContext();
   await signIn(client, app.origin);
@@ -331,42 +335,79 @@ test('a checked unsaved outcome is spoken once without creating a new attempt or
 
 test('an explicit new conversation aborts a context handoff waiting on an unfinished spoken fragment and preserves the draft', async () => {
   const model = textModel(() => [modelMessage('Det får inte köras som ett uppdrag.')]);
-  await setup(model.provider);
-  await start();
-  const before = await readMap();
-  live.emit(providerId, {
-    type: 'session.input_transcript.delta',
-    event_id: 'unfinished',
-    delta: 'Spara',
-    start_ms: 0,
-    end_ms: 10,
+  let refreshReadsUntilHold = 0;
+  let markHeld = () => {};
+  const held = new Promise<void>((resolve) => {
+    markHeld = resolve;
   });
-  live.emit(providerId, {
-    type: 'session.usage.updated',
-    usage: { seconds: 1 },
-    context_window: { usage_ratio: 0.95 },
+  let releaseRefresh = () => {};
+  const refreshDelivery = new Promise<void>((resolve) => {
+    releaseRefresh = resolve;
   });
-  expect((await poll()).voice.summaryReady).toBe(false);
-  const handingOff = post(`text-assistant/${session.id}/summarize`);
-  await expect
-    .poll(
-      async () =>
-        (await (await client.get(`${path}/text-assistant/${session.id}`)).json())
-          .contextSummaryState,
-    )
-    .toBe('summarizing');
-  const reset = await post(`text-assistant/${session.id}/new`, { discard: false });
-  expect(reset.status(), await reset.text()).toBe(200);
-  const fresh = await reset.json();
-  expect(fresh).toMatchObject({ phase: 'ready', contextRevision: 1, contextPercentage: 0 });
-  expect(fresh.contextSummaryState).toBeUndefined();
-  expect(fresh.review.changes).toEqual(before.draft.changes);
-  const retired = await handingOff;
-  expect(retired.status(), await retired.text()).toBe(200);
-  expect(await retired.json()).toMatchObject({ contextRevision: 1, phase: 'ready' });
-  await expect.poll(() => live.channels.size).toBe(0);
-  expect(model.requests).toEqual([]);
-  expect(await readMap()).toEqual(before);
+  await setup(model.provider, async (incoming, dispatch) => {
+    const rpc =
+      incoming.method === 'POST' && new URL(incoming.url).pathname === '/mcp'
+        ? await incoming.clone().json()
+        : null;
+    if (
+      rpc?.params?.name === 'read_my_draft' &&
+      refreshReadsUntilHold > 0 &&
+      --refreshReadsUntilHold === 0
+    ) {
+      markHeld();
+      await refreshDelivery;
+    }
+    return dispatch(incoming);
+  });
+  try {
+    await start();
+    const before = await readMap();
+    live.emit(providerId, {
+      type: 'session.input_transcript.delta',
+      event_id: 'unfinished',
+      delta: 'Spara',
+      start_ms: 0,
+      end_ms: 10,
+    });
+    live.emit(providerId, {
+      type: 'session.usage.updated',
+      usage: { seconds: 1 },
+      context_window: { usage_ratio: 0.95 },
+    });
+    expect((await poll()).voice.summaryReady).toBe(false);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const handingOff = post(`text-assistant/${session.id}/summarize`);
+    await vi.waitFor(async () => {
+      const current = await (await client.get(`${path}/text-assistant/${session.id}`)).json();
+      expect(current.contextSummaryState).toBe('summarizing');
+    });
+    // The reset first authenticates/read-checks its public request, then reads
+    // the authoritative draft. Hold that second real MCP delivery unchanged.
+    refreshReadsUntilHold = 2;
+    const resetting = post(`text-assistant/${session.id}/new`, { discard: false });
+    await held;
+    const observedDuringReset = client.get(`${path}/text-assistant/${session.id}`);
+    // Let the canceled voice handoff observe its abort while the reset's real
+    // draft refresh remains pending. No scheduler speed can close this window.
+    await vi.advanceTimersByTimeAsync(100);
+    releaseRefresh();
+    const reset = await resetting;
+    expect(reset.status(), await reset.text()).toBe(200);
+    const fresh = await reset.json();
+    expect(fresh).toMatchObject({ phase: 'ready', contextRevision: 1, contextPercentage: 0 });
+    expect(fresh.contextSummaryState).toBeUndefined();
+    expect(fresh.review.changes).toEqual(before.draft.changes);
+    expect(await (await observedDuringReset).json()).toEqual(fresh);
+    const retired = await handingOff;
+    expect(retired.status(), await retired.text()).toBe(200);
+    expect(await retired.json()).toEqual(fresh);
+    await expect.poll(() => live.channels.size).toBe(0);
+    expect(model.requests).toEqual([]);
+    expect(await readMap()).toEqual(before);
+  } finally {
+    releaseRefresh();
+    vi.useRealTimers();
+  }
 });
 
 test('a new spoken input beyond the private pending limit closes voice without creating a task or losing draft work', async () => {
