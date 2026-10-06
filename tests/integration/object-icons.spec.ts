@@ -23,7 +23,7 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
     await page.goto(installation.origin);
     await openNewObject(page);
-    const form = page.locator('dialog.object-dialog');
+    const form = page.locator('dialog.object-dialog-C');
     const stage = () =>
       form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const appearance = () =>

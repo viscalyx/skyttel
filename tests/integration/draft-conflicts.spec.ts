@@ -62,7 +62,7 @@ test('UTKAST-17: canceled form loss and staged independent work survive concurre
     await openTable(page);
     await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
-    const form = page.locator('dialog.object-dialog');
+    const form = page.locator('dialog.object-dialog-C');
     await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
     const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
     await expect(
@@ -410,7 +410,7 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
     await page.goto(app.installation.origin);
     await openTable(page);
     await openNewObject(page);
-    const unsent = page.locator('dialog.object-dialog');
+    const unsent = page.locator('dialog.object-dialog-C');
     await unsent.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
     await unsent.getByLabel('Beskrivning', { exact: true }).fill('Behåll den här texten');
     await unsent.getByRole('button', { name: 'Avbryt', exact: true }).click();
@@ -427,7 +427,7 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
     await page.keyboard.press('Escape');
     await openTable(page);
     await editTableObject(page, 'Lo Lind');
-    const correction = page.locator('dialog.object-dialog');
+    const correction = page.locator('dialog.object-dialog-C');
     await expect(correction.getByLabel('Namn', { exact: true })).toBeFocused();
     await expectFocusedTargetUncovered(page);
     await expect(correction.getByLabel('Namn', { exact: true })).toHaveValue('Lo Lind');

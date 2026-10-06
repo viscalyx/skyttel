@@ -36,7 +36,7 @@ test('refreshing after a conflict preserves text without authorizing a stale for
     await tab.getByLabel('Namn', { exact: true }).fill('Lo nytt förslag');
     await tab.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
-    const form = page.locator('dialog.object-dialog');
+    const form = page.locator('dialog.object-dialog-C');
     await expect(form.getByRole('alert')).toContainText('Dina uppgifter finns kvar');
     await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Lo gammalt förslag');
     await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
@@ -162,7 +162,7 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
       await closeTextView(reopened);
       await editTableObject(reopened, 'Lo Exempel');
       await reopened
-        .locator('dialog.object-dialog')
+        .locator('dialog.object-dialog-C')
         .getByRole('button', { name: 'Avbryt', exact: true })
         .click();
       await openTable(reopened);

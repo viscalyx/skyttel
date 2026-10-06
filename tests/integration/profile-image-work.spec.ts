@@ -49,7 +49,7 @@ for (const [width, height] of [
           expect(response.status()).toBe(200);
         }
         await page.goto(installation.origin);
-        const form = page.locator('dialog.object-dialog');
+        const form = page.locator('dialog.object-dialog-C');
         const edit = async (name: string) => {
           await editTableObject(page, name);
         };
@@ -203,7 +203,7 @@ for (const width of [1440, 390, 320]) {
       await page.goto(settings);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
       await openNewObject(page);
-      const form = page.locator('dialog.object-dialog');
+      const form = page.locator('dialog.object-dialog-C');
       await form.getByLabel('Namn', { exact: true }).fill('Bildarbete');
       await form.getByLabel('Beskrivning', { exact: true }).fill('Behåll bildens text');
       await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();

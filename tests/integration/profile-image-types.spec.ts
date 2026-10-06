@@ -60,7 +60,7 @@ for (const typeName of [
       await openNewObject(page);
       const name = `Bild för ${typeName}`;
       const newForm = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
-      const form = page.locator('dialog.object-dialog');
+      const form = page.locator('dialog.object-dialog-C');
       const stage = () =>
         form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const appearance = () =>

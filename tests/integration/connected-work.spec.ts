@@ -297,7 +297,7 @@ for (const mode of ['voice', 'text'] as const) {
       // 5. Correct the staged financial values, then retain independent dirty text.
       await closeTextView(page);
       await editTableObject(page, 'Familjens Molnmusik');
-      const form = page.locator('dialog.object-dialog');
+      const form = page.locator('dialog.object-dialog-C');
       await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
       await form.getByLabel('Pris', { exact: true }).fill('189');
       await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();

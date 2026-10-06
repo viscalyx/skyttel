@@ -412,7 +412,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     expect(beforeMember.draft.changes).toEqual([]);
     await openTable(page);
     await openNewObject(page);
-    const form = page.locator('dialog.object-dialog');
+    const form = page.locator('dialog.object-dialog-C');
     await form.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
     await form.getByLabel('Beskrivning', { exact: true }).fill('Texten ska finnas kvar');
     await form.getByRole('button', { name: 'Avbryt', exact: true }).click();

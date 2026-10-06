@@ -147,7 +147,7 @@ test('RYMD-01: spatial and list editing share private proposals and one durable 
     await editTableObject(page, 'Molnmusik');
     await page.getByLabel('Namn', { exact: true }).fill('Molnmusik familj');
     await page
-      .locator('dialog.object-dialog')
+      .locator('dialog.object-dialog-C')
       .getByRole('button', { name: 'Avbryt', exact: true })
       .click();
     await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
@@ -459,7 +459,7 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
     await expect(page.getByRole('button', { name: 'Redigera objekt', exact: true })).toBeVisible();
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
-    const form = page.locator('dialog.object-dialog');
+    const form = page.locator('dialog.object-dialog-C');
     await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickad mobiltext');
     await page.setViewportSize({ width: 844, height: 390 });
     await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickad mobiltext');
@@ -677,7 +677,7 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await page.keyboard.press('Enter');
     await expect(page.getByLabel('Namn', { exact: true })).toBeFocused();
     await page
-      .locator('dialog.object-dialog')
+      .locator('dialog.object-dialog-C')
       .getByRole('button', { name: 'Avbryt', exact: true })
       .click();
     const relationship = table.getByRole('button', { name: 'Samband för Lo Exempel', exact: true });
