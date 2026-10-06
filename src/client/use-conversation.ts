@@ -1112,7 +1112,14 @@ export function useConversation({
     revokeConsent,
     send,
     cancel: async () => {
-      const cancelWork = () => command('cancel', { revision: active.current?.revision, all: true });
+      const current = active.current;
+      if (!current) return;
+      const cancelWork = () =>
+        command('cancel', {
+          revision: current.revision,
+          contextRevision: current.contextRevision ?? 0,
+          all: true,
+        });
       if (voice.state === 'listening' || voice.starting) await voice.silence(cancelWork);
       else await cancelWork();
     },

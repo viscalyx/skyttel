@@ -3,6 +3,7 @@ import {
   act,
   cleanup,
   configure,
+  fireEvent,
   getConfig,
   render,
   screen,
@@ -427,6 +428,115 @@ test('a new conversation clears the dialogue but keeps the draft, unsent input a
   expect((field as HTMLTextAreaElement).value).toBe('Min nya oskickade fråga');
   expect((await home.read()).draft).toEqual(original.draft);
 });
+
+test.each(['voice-stop', 'text-escape'] as const)(
+  'a delayed browser cancellation cannot stop work in a new conversation: %s',
+  async (gesture) => {
+    let finish!: () => void;
+    const reply = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    let deliver!: () => void;
+    const held = new Promise<void>((resolve) => {
+      deliver = resolve;
+    });
+    cleanups.push(finish, deliver);
+    const home = await household({
+      reply: async () => {
+        await reply;
+        return [modelMessage('Ett nytt svar.')];
+      },
+    });
+    await home.addDraft();
+    const original = await home.read();
+    await home.open();
+    await home.startVoice();
+    await openConversationText();
+    const field = screen.getByLabelText('Meddelande till Skyttel');
+    await userEvent.type(field, 'Ett gammalt uppdrag.');
+    await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
+    await waitFor(() => expect(home.model.requests).toHaveLength(1));
+    await waitFor(() => expect((field as HTMLTextAreaElement).value).toBe(''));
+    await userEvent.type(field, 'Oskickat efter avbrottet.');
+    let cancelUrl = '';
+    let cancelBody: Record<string, unknown> | undefined;
+    let cancelStatus: number | undefined;
+    let cancelError: unknown;
+    home.network.before = async (url, init) => {
+      if (url.endsWith('/cancel') && init?.method === 'POST') {
+        cancelUrl = url;
+        cancelBody = JSON.parse(String(init.body));
+        await held;
+      }
+    };
+    home.network.after = async (url, _init, response) => {
+      if (url === cancelUrl) {
+        cancelError = await response.clone().json();
+        cancelStatus = response.status;
+      }
+      return response;
+    };
+    try {
+      if (gesture === 'voice-stop')
+        await userEvent.click(
+          within(screen.getByRole('group', { name: 'Röstruta' })).getByRole('button', {
+            name: 'Avbryt',
+          }),
+        );
+      else fireEvent.keyDown(field, { key: 'Escape' });
+      await waitFor(() => expect(cancelUrl).not.toBe(''));
+      // The ordinary browser request is already sent. Hold its transport before
+      // the real handler while the same session starts a successor conversation.
+      const sessionPath = cancelUrl.slice(`${home.base}/`.length, -'/cancel'.length);
+      const reset = await home.post(`${sessionPath}/new`, {});
+      expect(reset.status(), await reset.text()).toBe(200);
+      const renewed = await reset.json();
+      const accepted = await home.post(`${sessionPath}/messages`, {
+        revision: renewed.revision,
+        draftVersion: renewed.review.version,
+        contentVersion: renewed.review.contentVersion,
+        requestId: crypto.randomUUID(),
+        text: 'Ett nytt uppdrag.',
+      });
+      expect(accepted.status(), await accepted.text()).toBe(202);
+      const fresh = await accepted.json();
+      await waitFor(() => expect(home.model.requests).toHaveLength(2));
+      deliver();
+      await waitFor(() => expect(cancelStatus).toBeDefined());
+      const status = await http.get(
+        `${installation.origin}${home.base}/${sessionPath}/messages/${fresh.taskId}`,
+      );
+      expect(await status.json()).toMatchObject({
+        revision: fresh.revision,
+        taskStatus: 'working',
+      });
+      expect(cancelStatus).toBe(409);
+      expect(cancelError).toEqual({ error: 'assistant_turn_changed' });
+      expect(cancelBody).toEqual({
+        revision: renewed.revision - 1,
+        contextRevision: (renewed.contextRevision ?? 0) - 1,
+        all: true,
+      });
+      expect(home.model.requests[1].input).toHaveLength(1);
+      expect(JSON.stringify(home.model.requests[1].input)).not.toContain('Ett gammalt uppdrag.');
+      finish();
+      await waitFor(async () => {
+        const completed = await http.get(`${installation.origin}${home.base}/${sessionPath}`);
+        expect(await completed.json()).toMatchObject({
+          revision: fresh.revision,
+          phase: 'ready',
+          modelReply: 'Ett nytt svar.',
+        });
+      });
+      expect((field as HTMLTextAreaElement).value).toBe('Oskickat efter avbrottet.');
+      expect(await home.read()).toEqual(original);
+      expect(await home.history()).toEqual({ history: [] });
+    } finally {
+      deliver();
+      finish();
+    }
+  },
+);
 
 test('a necessary question is retained across microphone OFF and text closure without frontend question controls', async () => {
   const question = 'Vilken av de två personerna Lo menar du?';
