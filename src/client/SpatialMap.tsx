@@ -470,29 +470,32 @@ export function SpatialMap({
           ),
       );
     }
-    const size = (value: (typeof areas)[number]) =>
+    const fittingAreas = areas
+      .filter((area) => area.right - area.left >= 44 && area.bottom - area.top >= 44)
+      .map((area) => {
+        const width = area.right - area.left;
+        const height = area.bottom - area.top;
+        // A short viewport can leave just enough space for the 44px targets.
+        // Keep a positive fitting area while protecting their full pointer box.
+        const marginX = Math.min(64, Math.max(24, width / 4), (width - 1) / 2);
+        const marginY = Math.min(64, Math.max(24, height / 4), (height - 1) / 2);
+        // Leave a row above the endpoints for the selected relationship's label.
+        const labelRow = reveal?.relationshipId
+          ? Math.min(35, Math.max(0, height - 2 * marginY - 1))
+          : 0;
+        return {
+          left: area.left + marginX,
+          right: area.right - marginX,
+          top: area.top + marginY + labelRow,
+          bottom: area.bottom - marginY,
+        };
+      });
+    // Rank the space left for object centers after reserving targets and labels.
+    // A large but shallow strip can otherwise squeeze both endpoints together.
+    const size = (value: (typeof fittingAreas)[number]) =>
       (value.right - value.left) * (value.bottom - value.top);
-    const area = areas.sort((a, b) => size(b) - size(a))[0];
-    if (!area) return false;
-    const width = area.right - area.left;
-    const height = area.bottom - area.top;
-    if (width < 44 || height < 44) return false;
-    // A short viewport can leave just enough space for the 44px targets.
-    // Keep a positive fitting area while protecting their full pointer box.
-    const marginX = Math.min(64, Math.max(24, width / 4), (width - 1) / 2);
-    const marginY = Math.min(64, Math.max(24, height / 4), (height - 1) / 2);
-    // Leave a row above the endpoints for the selected relationship's label.
-    const labelRow = reveal?.relationshipId
-      ? Math.min(35, Math.max(0, height - 2 * marginY - 1))
-      : 0;
-    return (
-      scene.current?.focus(ids, {
-        left: area.left + marginX,
-        right: area.right - marginX,
-        top: area.top + marginY + labelRow,
-        bottom: area.bottom - marginY,
-      }) ?? false
-    );
+    const area = fittingAreas.sort((a, b) => size(b) - size(a))[0];
+    return area ? (scene.current?.focus(ids, area) ?? false) : false;
   }, []);
   useEffect(() => {
     if (

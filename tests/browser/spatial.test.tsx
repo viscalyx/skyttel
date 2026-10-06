@@ -292,6 +292,73 @@ test('a pending reveal reframes when an obstructing panel grows after the first 
     .toBe(true);
 });
 
+test('a relationship reveal keeps both endpoints reachable beside a wide legend on a phone map', async () => {
+  const content = (revealRequest?: MapRevealRequest) => (
+    <div className="household-map" style={{ position: 'fixed', inset: 0 }}>
+      <div
+        className="map-object-search"
+        style={{
+          position: 'absolute',
+          left: 14,
+          top: 0,
+          width: 362,
+          height: 44,
+          transform: 'none',
+        }}
+      />
+      <div
+        className="workspace-context"
+        style={{
+          position: 'absolute',
+          left: 18,
+          top: 56,
+          width: 222,
+          height: 94,
+          maxWidth: 'none',
+        }}
+      />
+      <MapView active={Boolean(revealRequest)} revealRequest={revealRequest} />
+    </div>
+  );
+  const view = render(content());
+  const surface = document.querySelector('.spatial-surface') as HTMLElement;
+  Object.assign(surface.style, {
+    position: 'absolute',
+    left: '0',
+    top: '0',
+    width: '390px',
+    height: '235px',
+    minHeight: '0',
+  });
+  for (const control of view.container.querySelectorAll<HTMLElement>(
+    '.spatial-tools, .spatial-bottom-bar, .spatial-view-actions',
+  ))
+    control.style.display = 'none';
+  view.rerender(
+    content({ id: 'phone-relationship', objectIds: ['lo', 'music'], relationshipId: 'edge' }),
+  );
+  await expect.poll(() => surface.dataset.revealRequest).toBe('phone-relationship');
+  await expect
+    .poll(() =>
+      ['lo', 'music'].every((id) => {
+        const node = surface.querySelector(`.spatial-node[data-object-id="${id}"]`);
+        if (!node) return false;
+        const box = node.getBoundingClientRect();
+        const bounds = surface.getBoundingClientRect();
+        return (
+          box.left >= bounds.left &&
+          box.right <= bounds.right &&
+          box.top >= bounds.top &&
+          box.bottom <= bounds.bottom &&
+          node.contains(
+            document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2),
+          )
+        );
+      }),
+    )
+    .toBe(true);
+});
+
 test('changing a relationship retains its prior route while the current route remains selectable', async () => {
   const before = state.relationships[0];
   const after = { ...before, sourceId: 'kim' };
