@@ -8,8 +8,8 @@ offentliga funktionsprov eller fysisk tillgänglighetsverifiering.
 ## Källa och metod
 
 Produktionsbilderna gäller den rena versionen
-[`a53edf887937de814e1bcdaacca51782a7afd224`](https://github.com/viscalyx/skyttel/tree/a53edf887937de814e1bcdaacca51782a7afd224),
-med `src`-trädet `c59ee31196ee59aafc27ffd6d13304057acaf4c2`.
+[`5ce3c08036024c841540715af02f2b0a9c5c7c70`](https://github.com/viscalyx/skyttel/tree/5ce3c08036024c841540715af02f2b0a9c5c7c70),
+med `src`-trädet `7726e8b50985835ff315d8eae8d9456c71f51771`.
 Källversionen kontrolleras före och efter bilderna. Dokumentationen ändrar
 inte den källan. Bildtagningen använder Playwrights Chromium på Linux,
 verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
@@ -29,7 +29,7 @@ verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
   52 observationer och bilder; produktionen visar rubrikikoner separat.
 
 Den angivna versionen är byggd och samtliga bilder tagna på nytt efter
-rättelserna av tabellfokus och aktuell hjälp. Oberoende slutgenomgång
+rättelserna av samtalskontext och beroendets säkerhet. Oberoende genomgång
 av samtliga 142 nya produktionsobservationer, 137 faktiska
 referensobservationer och 216 uppmätta radattribut är utförd.
 Alla 439 förväntade bildfiler finns. Upprepade vybredder grupperas utan
@@ -37,17 +37,24 @@ att utelämna tillstånd;
 kritiska faktiska bilder öppnas och jämförs direkt. Inga kvarvarande
 åtgärdbara visuella fynd finns i de granskade tillstånden.
 Text, radmarkering, valram, riktning, läsläge och resultat jämförs.
-219 av 222 produktionsbilder är identiska med föregående källversions
-bilder. De tre ändrade bilderna öppnas tillsammans med sina faktiska
+215 av 222 produktionsbilder är identiska med föregående källversions
+bilder. De sju ändrade bilderna öppnas tillsammans med sina faktiska
 referenser; inga nya text- eller layoutfel fastställs i dessa tillstånd.
 Samtliga uppmätta texter är oförändrade förutom källversionens metadata.
-Tolv kritiska eller ändrade bilder öppnas direkt, inklusive referenser.
+Tjugo kritiska eller ändrade bilder öppnas direkt, inklusive referenser.
 Övriga bildfilers existens och PNG-format kontrolleras; varje bildpixel
 bedöms inte separat. De tre visade produktionsbilderna nedan är identiska
 med både de nya råbilderna och den föregående bildtagningen.
 Bilderna visar ibland en avsiktligt rullad del av dialogen; en rubrik
 utanför den bilden är inte bevis för att rubriken eller krysset saknas.
 Fler fullständiga verkliga uppgifter kräver mer rullning än korta exempel.
+
+En bild av fall A01:s mobilåtgärder visar en tom färgad knapp trots att
+uppmätt knapptext är **Lägg valen i utkastet**. En separat bild efter två
+bildrutor visar texten med samma DOM, tillstånd, mått och stilar.
+Det avgränsade provet visar en övergående bildtagningsskillnad; dess
+underliggande orsak är inte fastställd. Ursprungliga bilden bevaras.
+Underlaget bevisar därför inte läsbarheten hos varje kontroll.
 
 ## A:s 14 obligatoriska fall
 

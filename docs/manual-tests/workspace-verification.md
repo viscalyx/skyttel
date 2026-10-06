@@ -7,25 +7,27 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: automatiska slutkontroller och slutgranskningar GODKÄNDA.**
+**Status: förnyade automatiska slutkontroller och granskningar PÅGÅR.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 
-Standards- och Spec-granskningarna gäller
+Föregående godkända Standards- och Spec-granskningar gäller
 [`62a9b748e2c8bbc148144660ec9a52e536e4f318`](https://github.com/viscalyx/skyttel/tree/62a9b748e2c8bbc148144660ec9a52e536e4f318)
 mot startpunkten
 [`4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123`](https://github.com/viscalyx/skyttel/tree/4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123).
-Båda axlarna har noll kvarstående åtgärdbara fynd i det granskade underlaget.
+Båda axlarna har noll kvarstående åtgärdbara fynd i det äldre underlaget.
+Senare rättelser behöver förnyad hel kontrollkörning och granskning.
 Fokus- och vägledningsrättelserna nedan är granskade och omprovade.
 Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 
 ## Provdata, miljö och metod
 
-- Slutlig kod, bygge och hela automatiska kontrollkörningen gäller
+- Föregående godkända hela automatiska kontrollkörning gäller
   [`a53edf887937de814e1bcdaacca51782a7afd224`](https://github.com/viscalyx/skyttel/tree/a53edf887937de814e1bcdaacca51782a7afd224).
-  Visuella observationer och mätning använder också den rena versionen
-  och samma produktionskatalog `src`:
-  `c59ee31196ee59aafc27ffd6d13304057acaf4c2`.
+  Nya visuella observationer och mätning använder den rena versionen
+  [`5ce3c08036024c841540715af02f2b0a9c5c7c70`](https://github.com/viscalyx/skyttel/tree/5ce3c08036024c841540715af02f2b0a9c5c7c70)
+  med produktionskatalogen `src`:
+  `7726e8b50985835ff315d8eae8d9456c71f51771`.
   Slutkörningen innehåller även den rättade manuella provtransporten och
   kompletterande prov. Dokumentationsändringen som publicerar rapporten
   är separat; den ändrar varken kod, testfall eller mätningen.
@@ -44,7 +46,7 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 - Automatiken använder Linux, Playwright 1.63.0 och dess Chromium
   153.0.8010.12, Node 24.21.0, npm 12.0.2 och två integrationsarbetare.
   Prov med Chromium är inte fysiska Chrome-prov.
-- Hela `CI=1 npm run check` är **GODKÄND**: typkontroll, lint,
+- Föregående hela `CI=1 npm run check` är **GODKÄND**: typkontroll, lint,
   dokumentation och stavning, 140 grindprov, produktionsbygge,
   140 testfiler med 1 576 enhets- och webbläsarprov samt 719
   integrationstestfall i 106 filer. Inga testfall är underkända eller
@@ -120,6 +122,28 @@ fysiska hjälpmedel och enheter är fortfarande **INTE UTFÖRDA**.
 ## Verifierade rättelser
 
 Slutgranskningens rättelser följer samma bindande beslut:
+
+- [`650f5d2`](https://github.com/viscalyx/skyttel/commit/650f5d2):
+  säkerhetsrättningen av det indirekta beroendet `source-map-js` till
+  1.2.2 ändrar inga direkta versionskrav. En ny installation, granskade
+  installationsskript och `npm audit` visar noll höga eller kritiska fynd.
+  GitHubs beroende- och containersäkerhetskontroller är godkända.
+- [`cfb53e0`](https://github.com/viscalyx/skyttel/commit/cfb53e0):
+  avbruten kontextöverlämning visar den färdiga återställningen efter
+  faktisk uppdatering. Riktiga MCP- och SQLite-prov håller läsningen och
+  kontrollerar aktuell revision utan att ändra privata förslag.
+- [`5ce3c08`](https://github.com/viscalyx/skyttel/commit/5ce3c08):
+  medgivandets placeringsprov mäter både tillräckligt utrymme och verklig
+  förskjutning vid för låg vy. Kravet på exakt placering bevaras.
+- [`11e0a4c`](https://github.com/viscalyx/skyttel/commit/11e0a4c):
+  containerproven kräver att avvecklade verktyg saknas och avvisas.
+  Vanlig uttrycklig objektborttagning provas med samlat sparande,
+  beständigt kvitto och oförändrat oberoende innehåll.
+- [`3a9afef`](https://github.com/viscalyx/skyttel/commit/3a9afef) och
+  [`c077405`](https://github.com/viscalyx/skyttel/commit/c077405):
+  historikprovet inväntar den verkliga kvittoläsningen och konfliktprovet
+  inväntar användbar stängning före Escape. Fullständiga sparade värden,
+  förslag och historiska uppgifter kontrolleras fortfarande.
 
 - [`eb13279`](https://github.com/viscalyx/skyttel/commit/eb13279):
   Tabellens Redigera och Visa i kartan behåller motsvarande radkontroll.
@@ -220,19 +244,19 @@ Slutligt automatiskt resultat redovisas med hela kontrollkörningen.
 
 Den rena versionens [mätdata](workspace-measurement.json) bevarar samtliga
 sex observationer och fullständig miljöinformation. Mätningen är utförd
-2026-10-06 08:10 UTC med 500 objekt och 1 500 samband, 1440 × 1000
+2026-10-06 09:00 UTC med 500 objekt och 1 500 samband, 1440 × 1000
 CSS-pixlar, 40 ms latens, 20 Mbit/s ned och 5 Mbit/s upp. Övriga testjobb
 körs separat från denna mätning.
 
 <!-- markdownlint-disable MD013 -->
 | Prov | Cache | Öppning, ms | Sökning, ms | Sparande, ms | Etiketter | Överlapp |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Kall | 3470,61 | 31,58 | 215,62 | 23 | 0 |
-| 1 | Varm | 3544,97 | 28,85 | 214,00 | 23 | 0 |
-| 2 | Kall | 3543,37 | 35,67 | 241,61 | 23 | 0 |
-| 2 | Varm | 3523,32 | 32,04 | 216,01 | 23 | 0 |
-| 3 | Kall | 3647,51 | 29,14 | 208,04 | 23 | 0 |
-| 3 | Varm | 3502,09 | 31,81 | 222,03 | 23 | 0 |
+| 1 | Kall | 3598,45 | 30,07 | 212,37 | 23 | 0 |
+| 1 | Varm | 3526,40 | 30,12 | 223,05 | 23 | 0 |
+| 2 | Kall | 3602,80 | 29,56 | 206,65 | 23 | 0 |
+| 2 | Varm | 3542,38 | 32,07 | 229,17 | 23 | 0 |
+| 3 | Kall | 3545,01 | 29,89 | 218,63 | 23 | 0 |
+| 3 | Varm | 3552,80 | 29,54 | 224,49 | 23 | 0 |
 <!-- markdownlint-enable MD013 -->
 
 Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,

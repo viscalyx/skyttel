@@ -41,8 +41,8 @@ Den samlade kartupplevelsens
 familjeflöden, verklig webbläsarzoom, granskade bilder och miljöbegränsningar.
 De nya arbetsytornas [verifieringsrapport](workspace-verification.md)
 kopplar 25 beslutade kravområden och åtta arbetskedjor till faktiska
-prov och manualer. Den redovisar godkända automatiska slutkontroller och
-slutgranskningarnas resultat separat från återstående fysiska
+prov och manualer. Den redovisar automatiska slutkontroller och
+slutgranskningarnas aktuella status separat från återstående fysiska
 tillgänglighetsprov.
 
 ## Öppna arbetsytor

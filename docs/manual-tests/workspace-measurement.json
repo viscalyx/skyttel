@@ -1,7 +1,7 @@
 {
-  "measuredAt": "2026-10-06T08:10:05.397Z",
-  "commit": "a53edf887937de814e1bcdaacca51782a7afd224",
-  "sourceTree": "9dddc5692b0b4677abe3cdc712fc5d18719a934d",
+  "measuredAt": "2026-10-06T09:00:56.021Z",
+  "commit": "5ce3c08036024c841540715af02f2b0a9c5c7c70",
+  "sourceTree": "0a608b4b65be9226f4b375202d33c7151f5563e6",
   "uncommitted": "",
   "browser": "153.0.8010.12",
   "node": "v24.21.0",
@@ -13,9 +13,9 @@
     "availableParallelism": 10,
     "totalmem": 25159561216,
     "loadavg": [
-      1.44,
-      0.88,
-      1.5
+      1.16,
+      0.84,
+      1.08
     ],
     "memoryLimit": "max\n",
     "cpuLimit": "max 100000\n"
@@ -34,54 +34,54 @@
     {
       "run": 1,
       "cache": "cold",
-      "openMs": 3470.605252,
-      "searchMs": 31.57562499999949,
-      "saveMs": 215.62266700000055,
+      "openMs": 3598.453502,
+      "searchMs": 30.074666000000434,
+      "saveMs": 212.37012499999946,
       "labels": 23,
       "overlappingPairs": 0
     },
     {
       "run": 1,
       "cache": "warm",
-      "openMs": 3544.9693340000003,
-      "searchMs": 28.84795800000029,
-      "saveMs": 214.00145799999882,
+      "openMs": 3526.4027100000003,
+      "searchMs": 30.123333999999886,
+      "saveMs": 223.04754200000025,
       "labels": 23,
       "overlappingPairs": 0
     },
     {
       "run": 2,
       "cache": "cold",
-      "openMs": 3543.367585,
-      "searchMs": 35.669832999999926,
-      "saveMs": 241.61275000000023,
+      "openMs": 3602.7985849999986,
+      "searchMs": 29.561625000000276,
+      "saveMs": 206.64541699999972,
       "labels": 23,
       "overlappingPairs": 0
     },
     {
       "run": 2,
       "cache": "warm",
-      "openMs": 3523.3198349999984,
-      "searchMs": 32.040124999999534,
-      "saveMs": 216.01266599999872,
+      "openMs": 3542.3826260000023,
+      "searchMs": 32.06537500000195,
+      "saveMs": 229.17433399999936,
       "labels": 23,
       "overlappingPairs": 0
     },
     {
       "run": 3,
       "cache": "cold",
-      "openMs": 3647.5080019999987,
-      "searchMs": 29.14025000000038,
-      "saveMs": 208.0444580000003,
+      "openMs": 3545.014085999999,
+      "searchMs": 29.88575000000128,
+      "saveMs": 218.625,
       "labels": 23,
       "overlappingPairs": 0
     },
     {
       "run": 3,
       "cache": "warm",
-      "openMs": 3502.094584999999,
-      "searchMs": 31.805500000002212,
-      "saveMs": 222.02979200000118,
+      "openMs": 3552.800417999999,
+      "searchMs": 29.538000000000466,
+      "saveMs": 224.4924170000013,
       "labels": 23,
       "overlappingPairs": 0
     }
