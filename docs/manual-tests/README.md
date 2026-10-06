@@ -323,7 +323,9 @@ paneler för att
   bild och ikon, förlustvarning, återfokus samt väntande, avvisat och oklart
   tillägg till utkastet på dator och mobil.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
-  textkontroller, aktiv detaljikon och placering nära objektet.
+  textkontroller, aktiv detaljikon och en fast läsyta med fullständiga
+  uppgifter, vanliga formulär, återfokus och oförändrat utkast även i
+  smala och korta fönster.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta
   grannar, återgångsvy, mus, tangentbord och pekskärm i smala och korta vyer.
 - [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
@@ -429,6 +431,8 @@ paneler för att
   kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
   bild, ikon och samband samt läser historiska värden.
   Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
+  Konfigurerad fältordning följer med till formulär, utkast och tabellens
+  fullständiga läsning, inklusive uttrycklig noll och Nej.
 - [Sambandsarbete](relationships.md): skapa objekt separat, koppla dem i den
   gemensamma dialogen och rätta objekt och samband oberoende. Fullständiga
   egna värden, typbyte, riktning och säkerhet behåller sin betydelse.
@@ -444,9 +448,11 @@ paneler för att
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
   utkast samt läsning av historiska definitioner som saknas i katalogen.
-- [Sparförsök](operations.md): återfinna genomförda, väntande och avvisade
-  försök efter omstart, återförsöka från en annan klient och kontrollera
-  privat tillgång.
+- [Sparutfall, återhämtning och gemensamma demodata](operations.md):
+  kontrollera samma väntande eller obekräftade försök efter omstart,
+  läsa genomförda sparanden i Rapporter och kontrollera privat tillgång;
+  SPAR-01–04 och DEMO-01 provar även färdigt TestHousehold med den
+  konfigurerade Google- eller Microsoft-administratören.
 - [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
   senaste först, fullständiga historiska värden, direktlänkar och återgång
   till bevarat arbete. Omfattar tangentbord, smala skärmar, återförsök

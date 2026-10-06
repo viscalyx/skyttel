@@ -133,8 +133,7 @@
   cursor: default;
 }
 @media (min-width: 701px) {
-  .household-map.workspace-shell:not(.workspace-open):has(.conversation-notice)
-    .workspace-feedback {
+  .household-map.workspace-shell:has(.conversation-notice) .workspace-feedback {
     top: calc(var(--conversation-corner-height, 0px) + 36px);
   }
 }
@@ -146,10 +145,5 @@
     order: -1;
     width: 100%;
     max-width: none;
-  }
-  .household-map.workspace-shell.workspace-open:not(.workspace-revealing):has(
-    .conversation-notice
-  ) {
-    padding-bottom: calc(var(--conversation-corner-height, 0px) + 24px);
   }
 }

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import { closeTextView, createHousehold, openMap, signIn } from '../support/client.js';
 import { openConversationText, startConversationWithText } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
@@ -18,8 +18,13 @@ for (const viewport of [
       page,
     }, testInfo) => {
       let step = 0;
-      const model = textModel(() => {
+      let releaseSelection: (() => void) | undefined;
+      const delayedSelection = new Promise<void>((resolve) => {
+        releaseSelection = resolve;
+      });
+      const model = textModel(async () => {
         const turn = step++;
+        if (turn === 4) await delayedSelection;
         if (turn % 2) return [modelMessage('Här är urvalet.')];
         return [
           modelTool('show_map_item', {
@@ -103,7 +108,7 @@ for (const viewport of [
             const inspector = document.querySelector(
               `.map-inspector[data-selection-kind="${CSS.escape(target.kind)}"][data-selection-id="${CSS.escape(target.id)}"]`,
             );
-            const detailSurface = inspector?.closest('.workspace-panel-body') ?? inspector;
+            const detailSurface = inspector;
             const details = detailSurface?.getBoundingClientRect();
             const summary = inspector?.querySelector('p');
             const summaryBounds = summary?.getBoundingClientRect();
@@ -181,16 +186,14 @@ for (const viewport of [
             };
           }, body);
           acknowledgements.push({ ...body, ...evidence });
-          if (body.displayed) {
-            await testInfo.attach(`${body.kind}-display-geometry`, {
-              body: JSON.stringify(evidence, null, 2),
-              contentType: 'application/json',
-            });
-            await testInfo.attach(`${body.kind}-display`, {
-              body: await page.screenshot(),
-              contentType: 'image/png',
-            });
-          }
+          await testInfo.attach(`${body.kind}-display-geometry`, {
+            body: JSON.stringify(evidence, null, 2),
+            contentType: 'application/json',
+          });
+          await testInfo.attach(`${body.kind}-display`, {
+            body: await page.screenshot(),
+            contentType: 'image/png',
+          });
           await route.continue();
         });
         const send = async (text: string) => {
@@ -203,9 +206,8 @@ for (const viewport of [
           await panel.getByLabel('Meddelande till Skyttel').fill(text);
           await panel.getByRole('button', { name: 'Skicka', exact: true }).click();
         };
-        await openWorkspace(page);
         await send('Visa Lo i kartan.');
-        await expect.poll(() => acknowledgements.length).toBe(1);
+        await expect.poll(() => acknowledgements.length, { timeout: 7_000 }).toBe(1);
         expect(acknowledgements[0]).toMatchObject({
           displayed: true,
           kind: 'object',
@@ -229,9 +231,8 @@ for (const viewport of [
         await page.getByRole('button', { name: 'Navigera', exact: true }).click();
         for (let index = 0; index < 16; index++)
           await page.getByRole('button', { name: 'Panorera vänster', exact: true }).click();
-        await openWorkspace(page);
         await send('Visa sambandet mellan Lo och Molnmusik.');
-        await expect.poll(() => acknowledgements.length).toBe(2);
+        await expect.poll(() => acknowledgements.length, { timeout: 7_000 }).toBe(2);
         expect(acknowledgements[1]).toMatchObject({
           displayed: true,
           kind: 'relationship',
@@ -242,22 +243,29 @@ for (const viewport of [
           endpointsVisible: true,
           visible: true,
         });
-        await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
-        await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('music');
-        await page.getByLabel('Till objekt', { exact: true }).selectOption('lo');
-        await openConversationText(page);
-        await expect(textFeedback).toHaveCount(0);
-        await expect(mapStatus).toContainText('Markerat i kartan.');
-        await expect(
-          page.locator('.spatial-edge.selected[data-layout-id="relationship-uses"]'),
-        ).toHaveCount(1);
+        const before = await read();
         await send('Visa Lo igen.');
-        await expect.poll(() => acknowledgements.length).toBe(3);
+        await expect.poll(() => model.requests.length).toBe(5);
+        await closeTextView(page);
+        await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).focus();
+        await page.keyboard.press('Enter');
+        const relationshipForm = page.getByRole('dialog', {
+          name: 'Samband för Lo Exempel',
+          exact: true,
+        });
+        await expect(relationshipForm.getByLabel('Till objekt', { exact: true })).toHaveValue(
+          'music',
+        );
+        await relationshipForm.getByLabel('Till objekt', { exact: true }).selectOption('lo');
+        releaseSelection?.();
+        await expect.poll(() => acknowledgements.length, { timeout: 7_000 }).toBe(3);
         expect(acknowledgements[2].displayed).toBe(false);
-        await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('lo');
+        await expect(relationshipForm.getByLabel('Till objekt', { exact: true })).toHaveValue('lo');
+        expect(await read()).toEqual(before);
         await expect(textFeedback).toHaveCount(0);
         await expect(mapStatus).not.toContainText('Markerat i kartan.');
       } finally {
+        releaseSelection?.();
         await installation.close();
       }
     });

@@ -182,30 +182,12 @@
 .map-navigation[data-mini="true"] .map-navigation-description {
   display: none;
 }
-/* The navigation and ordinary work use separate default areas in either
-   opening order. WorkspacePanels remembers unclamped desktop positions. */
-@media (min-width: 1001px) {
-  .household-map.workspace-shell.workspace-open .map-navigation {
-    --navigation-top: 76px;
-    top: var(--navigation-top);
-  }
-}
 @media (max-width: 700px), (max-width: 1000px) and (max-height: 600px) {
   .map-navigation {
     --navigation-top: 142px;
     top: var(--navigation-top);
     left: 12px;
     right: auto;
-  }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open {
-    --navigation-space: max(124px, calc((100dvh - 200px) * 0.4));
-  }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open .map-navigation {
-    max-height: var(--navigation-space);
-  }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open .workspace-windows {
-    inset: calc(154px + var(--navigation-space)) 12px 12px;
-    height: calc(100dvh - 166px - var(--navigation-space));
   }
 }
 @media (max-width: 700px) and (max-height: 450px) {
@@ -216,19 +198,5 @@
     --navigation-top: 80px;
     top: var(--navigation-top);
     max-height: calc(100dvh - var(--navigation-top) - 12px);
-  }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open
-    .workspace-navigation-mount {
-    position: relative;
-    margin-bottom: 12px;
-  }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open .map-navigation {
-    position: relative;
-    inset: auto;
-    max-height: 180px;
-  }
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open .workspace-windows {
-    inset: auto;
-    height: auto;
   }
 }

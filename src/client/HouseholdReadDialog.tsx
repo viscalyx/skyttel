@@ -417,14 +417,14 @@ export function HouseholdReadDialog({
           Ändringen måste bekräftas. Gå tillbaka till formuläret för att kontrollera utfallet.
         </p>
       )}
-      {(chain.length > 1 || current.kind === 'relationships') && (
+      {(chain.length > 1 || (current.kind === 'relationships' && onStageRelationship)) && (
         <footer>
           {chain.length > 1 && (
             <button type="button" onClick={() => setChain((old) => old.slice(0, -1))}>
               Tillbaka
             </button>
           )}
-          {current.kind === 'relationships' && (
+          {current.kind === 'relationships' && onStageRelationship && (
             <button type="button" disabled={busy} onClick={() => requestLeave(onClose)}>
               Stäng samband
             </button>

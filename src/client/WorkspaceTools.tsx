@@ -63,7 +63,6 @@ export type WorkspaceTarget =
   | 'table'
   | 'reports'
   | 'new'
-  | 'list'
   | 'conversation'
   | 'voice'
   | 'search'
@@ -222,7 +221,6 @@ export function WorkspaceTools({
             ['mic', 'Prata med Skyttel', 'voice'],
             ['text', textViewButtonName, 'conversation'],
             ['search', searchActive ? 'Sök i kartan · aktiv' : 'Sök i kartan', 'search'],
-            ['list', 'Lista', 'list'],
             ...(hasDraft ? [['draft', 'Utkast', 'draft'] as const] : []),
           ] as const
         ).map(([icon, label, target]) => (

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MapState, SaveOperation, SaveReceipt } from '../shared/map.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { MapRequestError, request } from './map-request.js';
-import { initialObjectBrowsing } from './ObjectList.js';
+import { initialObjectSearch } from './ObjectSearch.js';
 import {
   checkOperation,
   checkSaveIdentity,
@@ -76,7 +76,7 @@ export function useHouseholdWork(options: {
     )
       onContentReplaced?.();
   }, [loadedContentVersion, contentVersion, onContentReplaced]);
-  const [browsing, setBrowsing] = useState(initialObjectBrowsing);
+  const [browsing, setBrowsing] = useState(initialObjectSearch);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [selection, setSelection] = useState<{
     kind: 'object' | 'relationship';
@@ -115,7 +115,7 @@ export function useHouseholdWork(options: {
     setSelection(null);
     setFocusId(null);
     setCameraFocusRequest(undefined);
-    setBrowsing(initialObjectBrowsing);
+    setBrowsing(initialObjectSearch);
     setMapUnfiltered(false);
     setState(null);
     setOperations([]);

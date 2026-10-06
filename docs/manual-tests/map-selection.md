@@ -149,3 +149,47 @@ retain manual positions”.
 - Panelen öppnas nära objektet och ryms inom den synliga skärmen.
 - Den manuella placeringen består efter återöppning och storleksbyte.
 - Mindre fönster begränsar panelen utan att radera dess önskade placering.
+
+### MARKERING-05: läs markerade uppgifter och återgå från vanligt formulär
+
+**Syfte:** Läsa ett valt objekt och nå samma fullständiga objektformulär
+utan fria fönster eller ändring av hushållets sparade och privata uppgifter.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Starta läskedjans installation enligt
+[Förbered läskedjan](object-lists.md#förbered-läskedjan). Öppna dess adress
+och logga in med Google som Alex Exempel. Cykel har sparade uppgifter och
+ett privat prisförslag. Starta om förberedelsen mellan körningarna. Prova
+1280 × 900, 320 × 640 och ett kort fönster på 320 × 250 CSS-pixlar.
+Fysisk telefon och skärmläsare redovisas separat om de används.
+
+**Integrationstest:**
+[map-selection-details.spec.ts](../../tests/integration/map-selection-details.spec.ts),
+testfallen “MARKERING-05: selected information is read only and ordinary work
+remains reachable at 1280x900”,
+“MARKERING-05: selected information is read only and ordinary work remains
+reachable at 320x640” och
+“MARKERING-05: selected information is read only and ordinary work remains
+reachable at 320x250”.
+
+**Steg:**
+
+1. Välj **Karta**. Nå **Välj objekt: Cykel** med tangentbord och tryck Enter.
+2. Välj **Visa detaljer**. Läs Cykels namn och fullständiga uppgifter.
+   Skilj sparade värden från det privata prisförslaget. Kontrollera att
+   uppgifterna går att läsa men saknar redigeringsfält.
+3. Nå **Redigera Cykel** med Tab och tryck Enter. Kontrollera att det vanliga
+   fullständiga objektformuläret öppnas med Cykels aktuella uppgifter.
+4. Välj **Stäng objektdialogen** utan att ändra något. Kontrollera att fokus
+   återgår till **Redigera Cykel** och att samma uppgifter finns kvar.
+5. Rulla hela läsytan och upprepa vid varje angiven fönsterstorlek.
+   Kontrollera att knapparna kan nås med tangentbord utan sidrullning.
+
+**Förväntat resultat:**
+
+- En fast läsyta visar det markerade objektets uppgifter. Den har inga
+  redigeringsfält, flytthandtag eller återupptagningsknappar för gamla fönster.
+- Redigering öppnar samma vanliga objektformulär; oförändrad stängning
+  återför fokus utan förslag eller ändrade värden.
+- Sparade uppgifter och hela tidigare privata utkastet är oförändrade.

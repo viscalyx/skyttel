@@ -54,7 +54,6 @@ export function MapNavigation({
   open,
   area,
   focusOnOpen = true,
-  openWork,
   onClose,
   onNavigate,
   object,
@@ -66,7 +65,6 @@ export function MapNavigation({
   open: boolean;
   area?: FloatingArea;
   focusOnOpen?: boolean;
-  openWork?: readonly string[];
   onClose: () => void;
   onNavigate: (action: (typeof cameraButtons)[number][0]) => void;
   object?: { id: string; name: string };
@@ -96,14 +94,6 @@ export function MapNavigation({
     if (!open || !focusOnOpen) return;
     handle.current?.focus({ preventScroll: true });
   }, [open]);
-  useLayoutEffect(() => {
-    if (
-      open &&
-      openWork?.length &&
-      window.matchMedia('(max-width: 700px), (max-height: 600px)').matches
-    )
-      setPosition(null);
-  }, [open, openWork]);
   useLayoutEffect(() => {
     const element = panel.current;
     if (!open || !element) return;
@@ -152,13 +142,6 @@ export function MapNavigation({
       // Refitting belongs to the committed layout/observer, not this event's
       // previous visibility state.
       measure();
-      if (
-        openWork?.length &&
-        window.matchMedia('(max-width: 700px), (max-height: 600px)').matches
-      ) {
-        preferredPosition.current = null;
-        setPosition(null);
-      }
     };
     const observer = new ResizeObserver(fitPanel);
     observer.observe(element);
@@ -167,7 +150,7 @@ export function MapNavigation({
       observer.disconnect();
       window.removeEventListener('resize', resize);
     };
-  }, [open, openWork, area]);
+  }, [open, area]);
   const cancelDrag = useCallback(() => {
     const current = drag.current;
     if (!current) return;
@@ -307,10 +290,6 @@ export function MapNavigation({
           aria-label={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
           title={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
           onClick={() => {
-            if (openWork?.length) {
-              preferredPosition.current = null;
-              setPosition(null);
-            }
             setMini(!mini);
           }}
         >

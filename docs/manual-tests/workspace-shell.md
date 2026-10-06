@@ -176,9 +176,8 @@ Tal som väntar under starten provas i
    inte garanterar behandling enbart i EU eller omedelbar radering av alla
    kopior.
    Nå **Läs OpenAI:s datavillkor** med Tab och kontrollera länkens namn.
-4. Stäng med Escape. Välj **Lista**, **Nytt objekt**, ange **Lo Exempel** och
-   välj **Lägg i mitt utkast** utan att starta något samtal. Stäng panelerna med
-   kryssen.
+4. Stäng med Escape. Välj **Nytt objekt**, ange **Lo Exempel** och
+   välj **Lägg i utkastet och stäng** utan att starta något samtal. Välj **Karta**.
 5. Tryck tangentkombinationen kort. I medgivanderutan, markera
    **Fråga inte igen för det här hushållet** och välj **Godkänn och starta**.
    Tryck kombinationen kort igen för att stänga av mikrofonen.
@@ -189,7 +188,9 @@ Tal som väntar under starten provas i
    utan att skicka. Öppna och stäng hjälpen igen.
 7. Följ hjälpens väg: **Inställningar**, **Samtal med Skyttel**,
    **Återkalla medgivandet** och **Återkalla och avsluta samtalet**.
-   Återgå till kartan och välj **Skriv till Skyttel** igen.
+   Återgå till kartan och välj **Skriv till Skyttel** igen. Kontrollera att
+   textvyn öppnas utan ny medgivanderuta. Välj sedan **Nytt samtal** för en
+   uttrycklig ny start och kontrollera medgivanderutan.
 
 **Förväntat resultat:**
 

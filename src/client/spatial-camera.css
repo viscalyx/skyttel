@@ -45,18 +45,6 @@
   .workspace-shell:has(.workspace-camera-tools) .workspace-context {
     top: 120px;
   }
-  .workspace-shell:has(.workspace-camera-tools):not(.workspace-revealing) .workspace-windows {
-    top: calc(var(--work-offset, 0px) + 178px);
-    height: calc(
-      var(--work-height, 100dvh) -
-      190px -
-      var(--feedback-height, 0px) -
-      var(--voice-height, 0px)
-    );
-  }
-  .workspace-shell:has(.workspace-camera-tools).workspace-revealing .map-space {
-    top: 142px;
-  }
 }
 @media (max-width: 700px) and (max-height: 450px) {
   .workspace-tools:has(.workspace-camera-tools):not(.expanded) {
@@ -117,18 +105,5 @@
   }
   .household-map.workspace-shell .spatial-display-tools label {
     min-height: 44px;
-  }
-  .household-map.workspace-shell:has(.workspace-camera-tools).workspace-open:not(
-    .workspace-revealing
-  ) {
-    padding-top: 80px;
-    scroll-padding-top: 80px;
-  }
-  .household-map.workspace-shell:has(.workspace-camera-tools).workspace-open:not(
-      .workspace-revealing
-    )
-    .workspace-windows {
-    top: auto;
-    height: auto;
   }
 }

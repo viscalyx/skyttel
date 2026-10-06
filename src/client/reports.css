@@ -10,10 +10,7 @@
 .household-reports[hidden] {
   display: none;
 }
-.household-map.workspace-shell.workspace-open[data-workspace-surface="reports"]
-  .workspace-windows[hidden] {
-  display: none;
-}
+
 .household-reports > header {
   display: flex;
   flex-wrap: wrap;

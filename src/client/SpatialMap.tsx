@@ -91,7 +91,6 @@ export function SpatialMap({
   navigationHidden = false,
   navigationFocus = true,
   onAvailabilityChange,
-  openWork,
 }: {
   onAvailabilityChange?: (available: boolean) => void;
   theme?: 'light' | 'dark';
@@ -127,7 +126,6 @@ export function SpatialMap({
   floatingArea?: import('./floating-windows.js').FloatingArea;
   navigationHidden?: boolean;
   navigationFocus?: boolean;
-  openWork?: readonly string[];
 }) {
   const labelPrefix = useId();
   const relationshipLabelPrefix = useId();
@@ -196,7 +194,7 @@ export function SpatialMap({
     if (!bounds || !root) return;
     const boxes = [
       ...root.querySelectorAll(
-        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .workspace-window[data-active="true"]' : ''}`,
+        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -416,12 +414,12 @@ export function SpatialMap({
     if (!element) return false;
     const bounds = element.getBoundingClientRect();
     // Reserve actual fixed tools, including expanded controls and live status.
-    // Free detail panels retain their position and are never closed by focus.
+    // Reading details stay open; focus reserves their actual visible area.
     let areas = [{ left: 0, top: 0, right: bounds.width, bottom: bounds.height }];
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .workspace-window[data-active="true"]' : ''}`,
+        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
@@ -923,7 +921,6 @@ export function SpatialMap({
       open={navigationOpen && !navigationHidden}
       area={floatingArea}
       focusOnOpen={navigationFocus}
-      openWork={openWork}
       onClose={() => changeNavigation(false)}
       onNavigate={(command) => scene.current?.navigate(command)}
       object={selectedIds.length === 1 ? objects.get(selectedIds[0]) : undefined}
@@ -1110,7 +1107,7 @@ export function SpatialMap({
             )
               onSearchStart?.(event.data.normalize('NFC'));
           }}
-          aria-label="Rymdens bakgrund. Välj innehåll med etiketterna eller listan."
+          aria-label="Rymdens bakgrund. Välj innehåll med etiketterna eller tabellen."
           onContextMenu={(event) => {
             if (event.ctrlKey && !pointer.current?.moved) onClear();
           }}
