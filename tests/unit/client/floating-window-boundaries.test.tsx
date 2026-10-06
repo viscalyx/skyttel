@@ -107,3 +107,18 @@ test('corner contact blocks both components and competing panes preserve a compl
   };
   expect(fitWindow({ x: 25, y: 25 }, size, tooSmall)).toEqual({ x: 11, y: 21 });
 });
+
+test('moving away from a pane and grazing its corner does not trap an otherwise clear control', () => {
+  expect(moveWindow({ x: 600, y: 250 }, { x: 700, y: 250 }, size, area)).toEqual({
+    x: 700,
+    y: 250,
+  });
+  expect(moveWindow({ x: 100, y: 250 }, { x: 200, y: 250 }, size, area)).toEqual({
+    x: 200,
+    y: 250,
+  });
+  expect(moveWindow({ x: 100, y: 330 }, { x: 300, y: 530 }, size, area)).toEqual({
+    x: 300,
+    y: 530,
+  });
+});

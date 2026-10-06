@@ -736,3 +736,96 @@ for (const kind of ['object', 'relationship'] as const) {
     expect(await fixture.read()).toEqual(later);
   }, 30_000);
 }
+
+test('search retains saved own-field values after an explicitly confirmed object type change', async () => {
+  const fixture = await readingFixture();
+  const before = await fixture.read();
+  const replacement = before.types.find((type) => type.id !== 'read-type');
+  if (!replacement) throw new Error('Missing ordinary alternative object type');
+  const form = await editTableObjectForm('Cykel');
+  await userEvent.selectOptions(form.getByLabelText('Objekttyp'), replacement.id);
+  let loss = within(await screen.findByRole('dialog', { name: 'Ta bort tidigare egna fält?' }));
+  expect(loss.getByText(/Dold egen uppgift:/)).toBeTruthy();
+  await userEvent.click(loss.getByRole('button', { name: 'Fortsätt redigera' }));
+  expect((form.getByLabelText('Objekttyp') as HTMLSelectElement).value).toBe('read-type');
+  expect(await fixture.read()).toEqual(before);
+  await userEvent.selectOptions(form.getByLabelText('Objekttyp'), replacement.id);
+  loss = within(await screen.findByRole('dialog', { name: 'Ta bort tidigare egna fält?' }));
+  await userEvent.click(loss.getByRole('button', { name: 'Ta bort fältvärdena och byt typ' }));
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Redigera Cykel' })).toBeNull());
+  const current = await fixture.read();
+  expect(current.objects).toEqual(before.objects);
+  const proposal = current.draft.changes.find((value) => value.id === 'bike');
+  expect(proposal?.after?.typeId).toBe(replacement.id);
+  expect(proposal?.after?.customValues).toBeUndefined();
+  expect(proposal?.before?.customValues?.hidden).toBe('Ramens märkning är ett påhittat exempel');
+  const table = within(screen.getByRole('region', { name: 'Hushållets tabell' }));
+  const query = table.getByLabelText('Sök objekt i tabellen');
+  await userEvent.type(query, 'ramens märkning');
+  expect(table.getByRole('button', { name: 'Cykel' })).toBeTruthy();
+  expect(table.getByText('Träff i Dold egen uppgift')).toBeTruthy();
+  await userEvent.clear(query);
+  await userEvent.type(query, 'Läsobjekt');
+  expect(table.getByRole('button', { name: 'Cykel' })).toBeTruthy();
+  expect(await fixture.read()).toEqual(current);
+}, 30_000);
+
+test('a type-only draft keeps proposal filters active until confirmed discard resets only proposal filters', async () => {
+  const fixture = await emptyHousehold();
+  await fixture.post('object-type', {
+    id: 'only-type',
+    baseRevision: null,
+    value: { name: 'Tillfällig provtyp', description: '', fields: [] },
+  });
+  const before = await fixture.read();
+  renderHouseholdWork(fixture.householdId);
+  const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
+  await waitFor(() =>
+    expect(tools.getByRole('button', { name: 'Nytt objekt' }).matches(':disabled')).toBe(false),
+  );
+  await userEvent.click(tools.getByRole('button', { name: /^Sök i kartan/ }));
+  let map = within(await screen.findByRole('region', { name: 'Kartans sökning och filter' }));
+  await userEvent.type(map.getByLabelText('Sök objekt i kartan'), 'behåll sökningen');
+  await userEvent.click(map.getByRole('button', { name: /^Filter/ }));
+  await userEvent.click(map.getByLabelText('Tillfällig provtyp'));
+  await userEvent.click(map.getByLabelText('Bara markerade (0)'));
+  await userEvent.click(map.getByLabelText('Ta med upphörda'));
+  await userEvent.click(map.getByLabelText('Nytt'));
+  expect((map.getByLabelText('Nytt') as HTMLInputElement).checked).toBe(true);
+  expect(map.queryByText('Utkastfiltret är återställt eftersom ditt utkast är tomt.')).toBeNull();
+  await userEvent.click(map.getByLabelText('Sök objekt i kartan'));
+  await userEvent.keyboard('{Escape}');
+  const summary = within(screen.getByRole('complementary', { name: 'Kartans sökresultat' }));
+  expect(
+    summary.getByText(/Tillfällig provtyp.*Bara markerade.*Ta med upphörda.*Nytt/),
+  ).toBeTruthy();
+  expect(await fixture.read()).toEqual(before);
+  const draft = await openDraftReview();
+  await userEvent.click(draft.getByRole('button', { name: 'Kasta hela utkastet' }));
+  let discard = within(await screen.findByRole('dialog', { name: 'Ta bort hela utkastet?' }));
+  await userEvent.click(discard.getByRole('button', { name: 'Avbryt' }));
+  expect(await fixture.read()).toEqual(before);
+  await userEvent.click(draft.getByRole('button', { name: 'Kasta hela utkastet' }));
+  discard = within(await screen.findByRole('dialog', { name: 'Ta bort hela utkastet?' }));
+  await userEvent.click(discard.getByRole('button', { name: 'Ta bort hela utkastet' }));
+  await draft.findByText('Utkastet är tomt.');
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng textvyn' }));
+  expect(
+    summary.getByText('Utkastfiltret är återställt eftersom ditt utkast är tomt.'),
+  ).toBeTruthy();
+  expect(summary.getByText(/Borttagen typ.*Bara markerade.*Ta med upphörda/)).toBeTruthy();
+  await userEvent.click(tools.getByRole('button', { name: /^Sök i kartan/ }));
+  map = within(await screen.findByRole('region', { name: 'Kartans sökning och filter' }));
+  expect((map.getByLabelText('Sök objekt i kartan') as HTMLInputElement).value).toBe(
+    'behåll sökningen',
+  );
+  expect((map.getByLabelText('Bara markerade (0)') as HTMLInputElement).checked).toBe(true);
+  expect((map.getByLabelText('Ta med upphörda') as HTMLInputElement).checked).toBe(true);
+  expect(map.queryByLabelText('Nytt')).toBeNull();
+  const current = await fixture.read();
+  expect(current.objects).toEqual(before.objects);
+  expect(current.relationships).toEqual(before.relationships);
+  expect(current.draft.changes).toEqual([]);
+  expect(current.draft.objectTypes ?? []).toEqual([]);
+}, 30_000);
