@@ -10,6 +10,7 @@ import { createInstallation } from '../../support/installation.js';
 import {
   editTableObjectForm,
   openDraftReview,
+  openObjectRelationships,
   renderHouseholdWork,
   saveHouseholdDraft,
 } from '../../support/native-household-unit.js';
@@ -392,3 +393,89 @@ test('an actually used field rejects a datatype change and definition removal wi
   expect(await fixture.read()).toEqual(before);
   expect(form.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' })).toBeTruthy();
 }, 30_000);
+for (const outcome of ['absent', 'committed', 'duplicate', 'changed-duplicate'] as const) {
+  test(`a lost relationship reply checks the authoritative ${outcome} result while preserving unrelated private work`, async () => {
+    const fixture = await readingFixture();
+    const before = await fixture.read();
+    const dialog = await openObjectRelationships('Alex');
+    await userEvent.click(dialog.getByRole('button', { name: 'Nytt samband' }));
+    const form = within(dialog.getByRole('region', { name: 'Nytt samband' }));
+    await userEvent.selectOptions(form.getByLabelText('Sambandstyp'), 'uses');
+    await userEvent.selectOptions(
+      form.getByLabelText('Till objekt'),
+      outcome.includes('duplicate') ? 'bike' : 'garage',
+    );
+    const actual = authenticatedHttpFetch(client, installation.origin);
+    let dropped = false;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!dropped && String(input).endsWith('/relationship-form') && init?.method === 'POST') {
+        dropped = true;
+        if (outcome !== 'absent') await actual(input, init);
+        throw new TypeError('Synthetic delivery loss at the real HTTP boundary');
+      }
+      return actual(input, init);
+    });
+    await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet' }));
+    await form.findByText(/Det är oklart om ändringen lades i utkastet/);
+    expect(form.getByRole('button', { name: 'Lägg i utkastet' }).matches(':disabled')).toBe(true);
+    expect(form.getByRole('button', { name: 'Avbryt redigeringen' }).matches(':disabled')).toBe(
+      true,
+    );
+    if (outcome === 'changed-duplicate') {
+      const existing = before.relationships.find((edge) => edge.id === 'alex-bike');
+      if (!existing) throw new Error('Missing saved duplicate');
+      await fixture.post('relationship', {
+        id: existing.id,
+        baseRevision: existing.revision,
+        value: { ...existing, targetId: 'garage' },
+      });
+    }
+    await userEvent.click(
+      form.getByRole('button', { name: 'Kontrollera om ändringen lades i utkastet' }),
+    );
+    if (outcome === 'absent') {
+      await form.findByText(/Kontrollen visar att ändringen inte lades i utkastet/);
+      expect(await fixture.read()).toEqual(before);
+      expect((form.getByLabelText('Till objekt') as HTMLSelectElement).value).toBe('garage');
+      await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet' }));
+      await waitFor(() =>
+        expect(dialog.queryByRole('region', { name: 'Nytt samband' })).toBeNull(),
+      );
+    } else if (outcome === 'committed') {
+      await waitFor(() =>
+        expect(dialog.queryByRole('region', { name: 'Nytt samband' })).toBeNull(),
+      );
+    } else if (outcome === 'duplicate') {
+      await form.findByText('Sambandet finns redan');
+      expect(await fixture.read()).toEqual(before);
+      await userEvent.click(form.getByRole('button', { name: 'Redigera befintligt samband' }));
+      const loss = within(await screen.findByRole('dialog', { name: 'Lämna ändrade uppgifter?' }));
+      await userEvent.click(loss.getByRole('button', { name: 'Fortsätt redigera' }));
+      expect((form.getByLabelText('Till objekt') as HTMLSelectElement).value).toBe('bike');
+      expect(await fixture.read()).toEqual(before);
+    } else {
+      await form.findByText(/Försöket hittade ett befintligt samband, men det har ändrats/);
+      expect(form.queryByRole('button', { name: 'Redigera befintligt samband' })).toBeNull();
+      expect((form.getByLabelText('Till objekt') as HTMLSelectElement).value).toBe('bike');
+      const current = await fixture.read();
+      expect(
+        current.draft.relationships?.find((edge) => edge.id === 'alex-bike')?.after?.targetId,
+      ).toBe('garage');
+    }
+    const current = await fixture.read();
+    expect(current.objects).toEqual(before.objects);
+    expect(current.relationships).toEqual(before.relationships);
+    expect(current.draft.changes).toEqual(before.draft.changes);
+    expect(current.draft.relationships?.find((edge) => edge.id === 'bike-garage')).toEqual(
+      before.draft.relationships?.find((edge) => edge.id === 'bike-garage'),
+    );
+    if (outcome === 'committed' || outcome === 'absent') {
+      expect(current.draft.version).toBe(before.draft.version + 1);
+      expect(
+        current.draft.relationships?.filter(
+          (edge) => edge.after?.sourceId === 'alex' && edge.after.targetId === 'garage',
+        ),
+      ).toHaveLength(1);
+    }
+  }, 30_000);
+}
