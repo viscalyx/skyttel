@@ -117,7 +117,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   teman och typdefinitioner i kartans samlade utkast.
 
 - [Objektarbete och samtal](workspace-panels.md): kompletta objektförslag,
-  bevarade läsuppgifter och samtal, skyddad formulärförlust, väntande
+  läsdialoger med återfokus genom dator- och mobilbyte, bevarat samtal,
+  skyddad formulärförlust, väntande
   objektdialog och åtkomliga samband och typer genom vanliga ingångar.
   Gamla fria fönsters placeringsfall är pensionerade utan återanvända ID:n.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,

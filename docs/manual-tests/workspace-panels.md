@@ -1,225 +1,109 @@
-# Manuella testfall för fria paneler
+# Manuella testfall för objektarbete och samtal
 
-Fallen omfattar läspaneler, kompletta objektförslag, samtal, panelplacering
-och byte av skärmstorlek. Objekt redigeras i en modal, inte i flyttbara
-formulär.
-Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
+Fallen omfattar vanliga objekt- och sambandsformulär, läsdialoger, samtal och
+byte av skärmstorlek. Anteckna commit, webbläsare och godkänt eller underkänt
+resultat vid körning. Fysiska hjälpmedelsprov antecknas separat från Chromium.
 
 ## Konfigurerade användare
 
 Alex är administratör i ett separat provhushåll. Använd en konfigurerad
-testidentitet och påhittade uppgifter.
+providentitet och påhittade uppgifter.
 
 ## Allmän förberedelse
 
 1. Förbered en
    [separat provdatabas](../development/devcontainer.md#disposable-local-database)
-   och logga in. Skapa ett tomt hushåll för PANEL-01. I övriga fall behövs
-   objekten Cykeln, Bilen och Garaget.
-2. Spara hela utkastet. Börja varje fall med stängda paneler utan oskickad
-   text. Behåll fliken mellan stegen.
-3. För samtalet krävs en
-   [konfigurerad assistent](setup/assistants.md). Använd text; mikrofon
-   behöver inte startas.
-4. Kör även med tangentbord och skärmläsare på fysisk telefon och dator.
-   Anteckna hjälpmedel och plattformar separat från Chromium-emulering.
+   och logga in. Börja med ett tomt hushåll för PANEL-01. Övriga fall använder
+   Cykeln, Bilen och Garaget enligt respektive steg.
+2. Skapa objekt med **Nytt objekt** och **Lägg i utkastet och stäng**.
+   Läs via **Tabell**, objektets namn och **Läs alla uppgifter**.
+   Redigera med radens **Redigera**. Stäng läsdialogen med krysset.
+3. Spara via **Skriv till Skyttel**, **Visa utkastet** och **Spara hela utkastet**.
+   Vänta på **Utkastet är sparat**. Stäng sedan textvyn när vanliga formulär
+   ska användas.
+4. Samtalsfallen kräver en [konfigurerad assistent](setup/assistants.md).
+   Öppna texten, välj uttryckligen **Nytt samtal** och ge medgivande.
+   PANEL-08 kräver även mikrofonmedgivande och ett fungerande röstsamtal.
+5. PANEL-03 och PANEL-05 använder kontrollerad leverans mot en separat
+   provinstallation. Förbered samma verkliga HTTP-anrop som beskrivs i
+   integrationstestet; vanlig nätverksväxling ger inte ett bestämt leveransutfall.
 
-## Objekt och samtal
+## Objekt och läsning
 
-### PANEL-06: dra läspaneler över legenden och till skärmens kanter
+### PANEL-01: flera kompletta förslag och återanvänd läsning
 
-**Syfte:** Flytta läspaneler fritt och behåll åtkomst till hela panelen.
-
-**Användare:** Alex.
-
-**Förutsättningar:** Använd ett datorfönster med plats för dragbara läspaneler.
-
-**Integrationstest:**
-[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-06: draggable reading panels can cover the legend and reach the
-screen edges”.
-
-**Steg:**
-
-1. Skapa **Cykeln** med **Nytt objekt** och välj **Lägg i utkastet och
-   stäng**. Öppna sedan **Uppgifter för Cykeln** i listan.
-2. Dra läspanelens rubrik till skärmens övre vänstra hörn och över legenden.
-3. Flytta läspanelen med piltangenter och flyttknappar till skärmens övriga
-   kanter. Försök fortsätta utanför skärmen.
-
-**Förväntat resultat:**
-
-- Läspanelen kan täcka legenden och kartans övriga kontroller.
-- Hela läspanelen stannar inom skärmen. Namnet finns kvar.
-- Dragning, piltangenter och flyttknappar har samma gränser.
-
-### PANEL-07: synliga samtalsytor stoppar dragning
-
-**Syfte:** Skydda textvyn och röstrutan utan att begränsa övrig dragning.
+**Syfte:** Hantera flera fullständiga objektförslag och läsa rätt uppgifter
+utan att skapa flera objekt eller förlora samtalstext.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Ett datorfönster rymmer både läspaneler och textvy.
-Samtalet är tillgängligt med mikrofonmedgivande.
-
-**Integrationstest:**
-[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-07: windows stop at visible conversation areas and retain
-relocated positions”.
-
-**Steg:**
-
-1. Skapa **Cykeln**, lägg hela förslaget i utkastet och öppna
-   **Uppgifter för Cykeln**.
-2. Starta samtalet, slå på mikrofonen och stäng textvyn. Dra läspanelen mot
-   röstrutan, längs dess kant och sedan runt den till skärmens högra kant.
-3. Öppna textvyn när läspanelen står på dess plats. Dra därefter läspanelen
-   mot textvyn och längs dess kant. Gör textvyn bredare med dess handtag.
-4. Stäng textvyn och kontrollera läspanelens placering.
-5. Öppna Navigation och upprepa förflyttningen mot röstrutan och textvyn.
-   Använd även piltangenter och fönstrets flyttknappar.
-
-**Förväntat resultat:**
-
-- Synliga samtalsytor kan inte täckas av läspaneler eller Navigation.
-- Fönstret stannar vid kanten och kan glida längs den. Röstrutan skyddar
-  bara sin egen yta; det går att dra runt den.
-- När en samtalsyta öppnas eller växer flyttas ett överlappande fönster
-  kortast möjliga sträcka till en fri plats. Det hoppar inte tillbaka vid
-  stängning. Objektets lästa uppgifter finns kvar.
-
-### PANEL-08: växla mellan hela vyer när utrymmet inte räcker
-
-**Syfte:** Behålla fönstrens bredd, text och röstsamtal vid platsbrist.
-
-**Användare:** Alex.
-
-**Förutsättningar:** Använd dator, en läspanel för Cykeln och Navigation.
-Samtalet är tillgängligt med mikrofonmedgivande.
-
-**Integrationstest:**
-[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-08: limited space switches between full-width work and
-text while voice continues”.
-
-**Steg:**
-
-1. Skapa **Cykeln**, lägg hela förslaget i utkastet och öppna dess
-   **Uppgifter**. Öppna Navigation.
-2. Starta samtalet i text, slå på mikrofonen och skriv ett meddelande utan
-   att skicka det.
-3. Minska datorfönstret tills läspanelerna och textvyn inte får plats bredvid
-   varandra. Kontrollera att textvyn visas med meddelandet kvar.
-4. Välj **Lista** och återöppna **Uppgifter för Cykeln**. Öppna
-   **Skriv till Skyttel** igen och växla sedan till **Navigera**.
-5. Öppna textvyn och förstora fönstret tills båda vyerna får plats.
-   Kontrollera att textvyn behåller fokus.
-6. Stäng Navigation, fokusera objektpanelens rubrik och minska fönstret igen.
-   Kontrollera att läspanelen är kvar. Öppna textvyn och läs meddelandet.
-
-**Förväntat resultat:**
-
-- Vyerna växlar i stället för att göra läspanelerna eller textvyn smalare.
-- Verktygsradens befintliga knappar visar den valda vyn. Navigation kan
-  återöppnas direkt när den väntar bakom textvyn.
-- Vid skärmbyte behålls den senast använda vyn och dess fokus. När utrymmet
-  räcker visas båda igen utan att den andra vyn tar fokus.
-- Oskickad samtalstext och läspanelens placering finns kvar. Mikrofonen förblir
-  påslagen, och den synliga röstrutan skyddas även när textvyn väntar.
-
-### PANEL-01: flera kompletta objektförslag och återanvända läspaneler
-
-**Syfte:** Lägg separata objekt i samma utkast och återanvänd deras läspaneler.
-
-**Användare:** Alex.
-
-**Förutsättningar:** Provhushållets karta är tom.
+**Förutsättningar:** Tomt hushåll, datorfönster med 1440 CSS-pixlars bredd.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
 testfallet “PANEL-01: complete object dialogs stage separate proposals and
-reading panels reuse each object”.
+native readers reuse each object”.
 
 **Steg:**
 
-1. Skapa **Cykeln**, **Bilen** och **Garaget** var för sig. I varje formulär,
-   skriv namnet, välj krysset och sedan **Fortsätt redigera**. Namnet ska
-   finnas kvar. Välj **Lägg i utkastet och stäng** innan nästa objekt skapas.
-2. Spara hela utkastet. Öppna varje objekts **Uppgifter**, kontrollera
-   rubrikfokus, välj **Redigera valt objekt** och skriv
-   **Lagt i utkastet om [objektnamnet]** som beskrivning.
-   Välj **Lägg i utkastet och stäng** för varje ändring.
-3. Öppna **Skriv till Skyttel**. Kontrollera de tre läspanelerna och textvyn.
-   Stäng Cykelns läspanel och öppna dess Uppgifter igen från listan två gånger.
-   Kontrollera samma beskrivning, rubrikfokus och en enda panel för Cykeln.
-4. Spara hela utkastet och ladda om. Läs alla tre beskrivningar igen.
+1. Öppna **Nytt objekt** för Cykeln, Bilen och Garaget i tur och ordning.
+   Skriv namnet, välj krysset och **Fortsätt redigera**. Kontrollera namnet.
+   Välj **Lägg i utkastet och stäng** och spara sedan hela utkastet.
+2. Läs varje objekt via tabellen. Kontrollera rubrikfokus, stäng läsningen
+   och välj radens **Redigera**. Skriv Lagt i utkastet om följt av namnet i
+   **Beskrivning**. Lägg hela förslaget i utkastet och stäng.
+3. Starta textsamtalet och skriv Bevarat meddelande utan att skicka.
+   Stäng textvyn. Läs Cykeln två gånger med stängning mellan öppningarna.
+   Kontrollera beskrivningen, rubrikfokus och en enda läsdialog.
+4. Öppna texten igen. Kontrollera meddelandet. Spara hela utkastet och
+   ladda om sidan. Läs samtliga tre objekt igen.
 
 **Förväntat resultat:**
 
-- Förlustvarningens avbrytande behåller texten; endast bekräftat tillägg
-  stänger objektformuläret och lägger hela förslaget i utkastet.
-- Flera läspaneler och textvyn kan vara öppna samtidigt på dator.
-  Uppgifter återanvänder objektets läspanel utan dubblering.
-- Tre objekt och deras senare beskrivningar sparas i två hela sparanden.
-  Beskrivningarna finns kvar efter omladdning. Inga återupptagningsingångar
-  för stängda oskickade objektformulär skapas.
+- Varje objekt har rätt fullständiga beskrivning efter omstart.
+- Återöppning visar samma objekt med rubrikfokus i en enda dialog.
+- Samtalstexten bevaras. Tre objekt finns sparade och utkastet är tomt.
+- Ändringshistoriken innehåller de två uttryckliga sparandena.
 
-### PANEL-02: flytta paneler och fortsätt på mobil
+### PANEL-02: läsning och samtal genom skärmbyte
 
-**Syfte:** Bevara samtalstext, objekttext och datorplacering vid skärmbyte.
+**Syfte:** Bevara lästa och sparade objektuppgifter samt oskickad samtalstext
+vid växling mellan dator och mobil.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Cykeln finns i kartan och samtalet är tillgängligt.
+**Förutsättningar:** Cykeln sparad med beskrivningen Bevarad cykeltext.
+Prova 390, 320 och 1440 CSS-pixlars bredd med 844 pixlars höjd.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-02: mobile reading navigation retains conversation, staged object
-details and desktop positions”.
+testfallet “PANEL-02: mobile reading navigation retains conversation and staged
+object details across resizing”.
 
 **Steg:**
 
-1. Skapa Cykeln med beskrivningen **Bevarad cykeltext**, lägg hela
-   formuläret i utkastet och spara. Öppna dess **Uppgifter** på dator.
-2. Fokusera **Flytta Cykeln** och flytta med piltangenter. Klicka på
-   rubrikens flyttkontroll, välj **Vänster** och stäng flyttknapparna med
-   Escape. Dra därefter rubriken. Anteckna placeringen. Minska datorfönstret
-   och kontrollera att panelen ryms; återställ fönstret och kontrollera
-   att panelen återfår placeringen.
-3. Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan.
-   Skriv ett meddelande utan att skicka det.
-4. Minska fönstret till telefonbredd. Textvyn fyller skärmen, och panelerna
-   väntar bakom den. Stäng textvyn med **Skriv till Skyttel**. Öppna Lista och
-   välj **Uppgifter för Cykeln**, och återgå sedan till Lista. Kontrollera att
-   fokuserad rubrik eller kontroll syns utan att döljas av statusen. Vid
-   återgång till listan ska **Uppgifter för Cykeln** ha fokus. Öppna Lista och
-   välj Cykeln igen; kontrollera rubrikfokus. Öppna textvyn, kontrollera
-   meddelandet och stäng den med **Stäng textvyn**. Cykeln ska få fokus igen.
-   Öppna textvyn på nytt från verktygsraden.
-5. Återgå till den ursprungliga datorbredden och välj Cykeln.
+1. Starta textsamtalet på dator. Skriv Oskickad samtalstext utan att skicka.
+2. Byt till varje angiven bredd. Stäng textvyn och läs Cykeln via tabellen.
+   Kontrollera rubrikfokus, beskrivningen och en enda läsdialog.
+3. Stäng läsningen. Kontrollera fokus på **Läs alla uppgifter för Cykeln**.
+   Öppna texten igen och läs det oskickade meddelandet.
+4. Kontrollera att sidan ryms utan horisontell rullning och att hela
+   hushållets sparade uppgifter och privata utkast är oförändrade.
 
 **Förväntat resultat:**
 
-- Dragning, piltangenter och flyttknappar fungerar. Escape återför fokus
-  från flyttknapparna till flyttkontrollen.
-- Aktiv panel kommer framför övriga vid pekning eller fokus.
-- Mobil visar en panel i taget. Lista och objektets Uppgifter återöppnar
-  panelerna. Varken Öppna paneler eller Till kartan visas på mobil eller dator.
-- Nya paneler får rubrikfokus; stängning ger fokus till nästa panels rubrik
-  eller den använda listträffen. När sista panelen stängs går fokus till Lista i
-  verktygsfältet.
-- Återgång till listan återför fokus till den tidigare objektkontrollen.
-  Fokus är synligt och åtkomligt även när samtalets status flyttas.
-- Sparad objekttext och oskickad samtalstext finns kvar. Datorplaceringen återkommer.
-- Kontroller och text kan nås utan horisontell sidrullning.
+- Lästa uppgifter och samtalstext finns kvar vid varje skärmbyte.
+- Läsningens rubrik och tidigare öppningsknapp får logiskt fokus.
+- Ingen läsning, navigering eller storleksändring skapar ett förslag.
 
 ### PANEL-03: ett nyare förslag får inte skrivas över
 
-**Syfte:** Bevara oskickad text när samma användares andra klient ändrar utkastet.
+**Syfte:** Behålla oskickad text när samma användares andra klient ändrar
+underlaget innan det fullständiga formuläret skickas.
 
-**Användare:** Alex i två flikar med samma inloggning.
+**Användare:** Alex i två klienter med samma identitet.
 
-**Förutsättningar:** Cykeln finns i den sparade kartan.
+**Förutsättningar:** Cykeln är sparad. Ha två autentiserade klienter.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
@@ -228,61 +112,67 @@ stale complete staging”.
 
 **Steg:**
 
-1. I flik A, öppna Cykelns Uppgifter och **Redigera valt objekt**. Skriv
-   **Min oskickade text** som beskrivning utan att lägga den i utkastet.
-2. I flik B, öppna samma objekt och lägg beskrivningen
-   **Nyare förslag från samma användares andra klient** i utkastet.
-3. I flik A, välj **Lägg i utkastet och stäng**. Läs avvisningen och
-   kontrollera att namnet Cykeln och din oskickade beskrivning finns kvar.
-4. Välj **Avbryt**, sedan **Kasta ändringarna och fortsätt**. Ladda om
-   flik A, öppna Cykeln igen och börja redigera.
+1. Öppna **Redigera Cykeln** i första klienten och skriv Min oskickade text.
+2. Lägg ett nyare förslag för samma objekt i den andra klientens utkast:
+   beskrivningen Nyare förslag från samma användares andra klient.
+3. Välj **Lägg i utkastet och stäng** i första klienten.
+   Kontrollera avvisningen och att både namnet och Min oskickade text finns kvar.
+4. Välj krysset och **Kasta ändringarna och fortsätt**. Ladda om och öppna
+   Cykeln för vanlig redigering igen.
 
 **Förväntat resultat:**
 
-- Det äldre formuläret avvisas utan att skriva över det nyare förslaget.
-  Alla lokala värden finns kvar tills förlusten uttryckligen bekräftas.
-- Ny redigering bygger på det aktuella förslaget. Ingen ytterligare
-  historikpost eller gemensam ändring skapas genom avvisning eller kastning.
+- Det nyare privata förslaget skrivs inte över och sparade fakta ändras inte.
+- Det gamla formuläret behåller texten tills användaren uttryckligen kastar den.
+- Ny öppning visar den andra klientens aktuella beskrivning.
+- Endast det tidigare uttryckliga sparandet finns i ändringshistoriken.
 
 ### PANEL-04: kartval bevarar oskickade samband och typer
 
-**Syfte:** Bevara formulärtext när ett samband markeras i kartan.
+**Syfte:** Skydda sambandets oskickade värden och behålla typdefinitioner
+vid vanliga kartval mellan inställningsbesök.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Cykeln och Garaget finns med ett sparat samband.
+**Förutsättningar:** Cykeln och Garaget är sparade med ett samband mellan dem.
+Välj **Alla etiketter** i kartan.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
-testfallet “PANEL-04: map selection preserves unsent relationship and type forms”.
+testfallet “PANEL-04: map selection preserves unsent relationship and type
+forms”.
 
 **Steg:**
 
-1. Slå på **Alla etiketter** i kartan. Öppna Lista och välj **Nytt samband**.
-   Välj Cykeln som **Från objekt**.
-2. Stäng panelerna med kryssen och markera det sparade sambandet i kartan. Öppna
-   Lista igen och kontrollera ditt oskickade val. Välj **Stäng sambandet utan
-   att skicka**.
-3. Upprepa med **Ny objekttyp**: skriv **Oskickad typ** i **Typens namn**, stäng
-   panelerna med kryssen, markera sambandet och öppna Lista. Kontrollera texten
-   och välj **Stäng typformuläret utan att skicka**.
-4. Upprepa med **Ny sambandstyp** och **Oskickad riktning** i
-   **Sambandstypens namn**. Avsluta med **Stäng sambandstypen utan att skicka**.
+1. Öppna **Tabell**, **Samband för Cykeln** och **Nytt samband**.
+   Välj Garaget under **Från objekt**. Försök nå den bakomliggande tabellen
+   med tangentbord. Den aktiva modalen behåller fokus.
+2. Tryck Escape och välj **Fortsätt redigera**. Kontrollera Garaget.
+   Välj **Stäng samband** och bekräfta **Kasta ändringarna och fortsätt**.
+3. Öppna **Inställningar**, **Typer och egna fält** och **Ny objekttyp**.
+   Skriv Oskickad typ. Välj **Tillbaka till kartan**, **Karta** och nå det
+   sparade sambandet med tangentbord. Öppna typinställningarna igen.
+4. Kontrollera Oskickad typ och välj **Stäng typformuläret utan att skicka**.
+5. Upprepa med **Ny sambandstyp**, namnet Oskickad riktning och
+   **Stäng sambandstypen utan att skicka**.
 
 **Förväntat resultat:**
 
-- Markeringen ändrar inte eller kastar något oskickat formulär.
-- Endast uttrycklig stängning av formuläret kastar den oskickade texten.
-- Inget nytt förslag eller sparande uppstår av navigeringen.
+- Escape avbryter förlusten; den oskickade sambandsuppgiften finns kvar.
+- Kartval ersätter inte de oskickade typnamnen.
+- Inga objekt-, samband- eller typförslag skapas av dessa kontroller.
+- Det ursprungliga sparade sambandet finns kvar.
 
-### PANEL-05: väntande objekttillägg skyddar formuläret före ny sökning
+### PANEL-05: väntande tillägg före ny sökning
 
-**Syfte:** Håll formuläret kvar under tillägg och återgå till läsning före sökning.
+**Syfte:** Skydda ett väntande fullständigt objekttillägg och återföra fokus
+innan användaren söker efter ett annat objekt.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Cykeln och Bilen finns i utkastet. Använd ett separat
-provhushåll och utvecklarverktygens nätverksbegränsning med hög fördröjning.
+**Förutsättningar:** Cykeln och Bilen har lagts i samma privata utkast.
+Förbered en kontrollerad leverans som håller svaret efter faktisk hantering
+av objektformulärets POST-anrop, enligt integrationstestet.
 
 **Integrationstest:**
 [workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
@@ -291,17 +181,64 @@ reading before a new search”.
 
 **Steg:**
 
-1. Sök Cykeln i listan, öppna dess Uppgifter och välj **Redigera valt objekt**.
-   Skriv **Skickad beskrivning** och välj **Lägg i utkastet och stäng**.
-2. Medan svaret väntar, kontrollera att fälten och stängkontrollerna är
-   spärrade. Tryck Escape och försök fokusera listans sökning bakom modalen.
-3. Invänta svaret. Formuläret stängs och den använda redigeringsknappen
-   får fokus. Öppna Lista, skriv **Bi** i sökfältet och fortsätt med **len**.
-4. Stäng av nätverksbegränsningen och kontrollera utkastet.
+1. Sök efter Cykeln i tabellen. Välj **Redigera Cykeln** och skriv
+   Skickad beskrivning. Välj **Lägg i utkastet och stäng**.
+2. Håll det verkliga svaret. Kontrollera att beskrivningsfältet och krysset
+   är inaktiva. Tryck Escape och försök fokusera den bakomliggande sökningen.
+3. Släpp samma svar. Kontrollera att formuläret stängs och
+   **Redigera Cykeln** får fokus. Sök efter Bilen och fortsätt skriva i sökfältet.
+4. Läs utkastet och kontrollera Cykelns Skickad beskrivning.
 
 **Förväntat resultat:**
 
-- Det väntande formuläret behåller texten och spärrar vanlig stängning,
-  redigering och bakgrundens sökning tills tillägget är bekräftat.
-- Efter bekräftelsen kan sökningen bli **Bilen** med sökfältets fokus kvar.
-  Den skickade beskrivningen finns i utkastet; inget sparas gemensamt.
+- Väntande svar tillåter inte ny redigering, stängning eller fokus bakom modalen.
+- Bekräftat tillägg återför fokus och nästa sökning fungerar utan fokusstöld.
+- Beskrivningen finns en gång i det privata förslaget. Inga objekt har sparats.
+
+## Samtal och platsbrist
+
+### PANEL-08: växla hela vyer utan att avsluta rösten
+
+**Syfte:** Bevara oskickad samtalstext, objektläsning och aktiv mikrofon när
+utrymmet kräver växling mellan text, tabell och karta.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Cykeln har lagts i utkastet med Bevarad cykeltext.
+Prova 1440 och 640 CSS-pixlars bredd med 1000 pixlars höjd. Rösten är tillgänglig.
+
+**Integrationstest:**
+[workspace-panels.spec.ts](../../tests/integration/workspace-panels.spec.ts),
+testfallet “PANEL-08: limited space switches between full-width work and text
+while voice continues”.
+
+**Steg:**
+
+1. Starta textsamtalet, slå på mikrofonen och skriv Bevarat meddelande
+   utan att skicka. Byt till 640 pixlars bredd.
+2. Välj **Tabell**. Textvyn döljs. Läs Cykeln, kontrollera rubrikfokus
+   och Bevarad cykeltext. Stäng läsningen och öppna texten igen.
+3. Kontrollera meddelandet. Stäng texten, välj **Karta** och **Navigera**.
+   Öppna texten igen och kontrollera att Navigation inte täcker textvyn.
+4. Byt till 1440 pixlars bredd. Kontrollera att text och Navigation syns
+   och att mikrofonen fortfarande är på med synlig röstruta.
+5. Stäng Navigation och textvyn. Läs Cykeln igen, stäng och öppna texten.
+
+**Förväntat resultat:**
+
+- Samtalstexten bevaras genom samtliga växlingar och mikrofonen fortsätter.
+- De fullständiga läsuppgifterna och alla privata förslag finns kvar.
+- Ingen växling ändrar sparade objekt, samband eller det privata utkastet.
+
+## Pensionerade fall
+
+### PANEL-06: pensionerad placering av fria läspaneler
+
+Den fria objektläsningens dragning och flyttknappar togs bort. ID:t återanvänds
+inte. Vanlig läsning, fokus och fullständiga uppgifter prövas i PANEL-01–05.
+
+### PANEL-07: pensionerad kollision för fria läspaneler
+
+Fria objektfönsters placering kring text och röst togs bort. ID:t återanvänds
+inte. Växling och samtalskontinuitet prövas i PANEL-08; Navigation behåller sina
+egna kontroll- och kamerafall i [map-camera.md](map-camera.md).
