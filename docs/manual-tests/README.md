@@ -208,7 +208,7 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   verkligt tal redovisas separat.
 - [Utkastet i samtalet](conversation-draft.md): tabellen och dess symboler,
   personligt val mellan hushåll och enheter, första förslaget, tomt utkast,
-  sparåterkoppling och kvittots plats i Utkast och historik.
+  sparåterkoppling och kvittots plats i Rapporter → Ändringshistorik.
 
 - [Mikrofontryck](microphone-press.md): kort och långt tryck, släpp och
   systemavbrott, medgivande, pekfångst och tangentkombinationer på riktiga

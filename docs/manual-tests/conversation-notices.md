@@ -17,7 +17,8 @@ vanliga medlemmar; inga administrativa rättigheter används av samtalet.
 1. Starta en ny installation enligt
    [den kontrollerade röstguiden](voice-assistant.md#controlled-voice-fixture).
    Använd bara påhittade uppgifter. Skapa ett hushåll och lägg **Lo Exempel**
-   i ditt privata utkast genom **Lista → Nytt objekt**. Spara inte.
+   i ditt utkast genom **Tabell → Nytt objekt → Lägg i utkastet och stäng**.
+   Spara inte.
 2. Terminalkommandona nedan hör till startguiden. `available off` gör
    samtalet otillgängligt, och `available on` återställer tillgängligheten.
    Vänta upp till fem sekunder på beskedet. Skicka ett skrivet uppdrag och

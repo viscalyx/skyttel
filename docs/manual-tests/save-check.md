@@ -16,7 +16,8 @@ loggar och kvitton vid ett kvarstående fel.
    [den kontrollerade talprovsguiden](voice-assistant.md#controlled-voice-fixture).
    Den har riktig server och tillfällig SQLite men syntetisk leverantör och media.
 2. Logga in som Alex, skapa Kontrollprov och lägg Lo Exempel i utkastet
-   genom **Lista → Nytt objekt → Lägg i mitt utkast**. Anteckna utkastets
+   genom **Tabell → Nytt objekt → Lägg i utkastet och stäng**.
+   Anteckna utkastets
    version och innehållsversion från terminalens nästa `held`.
 3. Öppna **Skriv till Skyttel** och godkänn medgivandet för besöket.
    Använd webbläsarens utvecklarverktyg för **Network request blocking**
@@ -53,8 +54,9 @@ arbete och förklaras en gång”.
    Ingen knapp för att kontrollera sparandet visas under den egna kontrollen.
 4. Återställ kontakten. Vänta på förklaringen **Kontrollen visar att hela
    utkastet sparades. Ändringarna finns i hushållets karta.** i samtalstexten.
-5. Öppna **Utkast och historik → Tidigare sparförsök**. Kontrollera ett
-   genomfört försök och ett kvitto med samma operation-ID. Lo finns i kartan.
+5. Öppna **Rapporter → Ändringshistorik**. Kontrollera ett genomfört
+   sparande och välj **Identifiera sparandet och användaren** för att läsa
+   samma operation-ID. Lo finns i kartan.
 
 **Förväntat resultat:**
 
@@ -221,10 +223,13 @@ await fetch(`${mapPath}/operations`, {
     contentVersion: map.contentVersion,
   }),
 });
+console.log(JSON.stringify(draft));
 ```
 
 Kräv status 200 för båda POST-anropen. Kvittot kan inte skapas innan
-identiteten är utredd. Lämna Console och följ de synliga stegen nedan.
+identiteten är utredd. Kopiera utkastets JSON till en lokal provanteckning
+före omstarten; Console-variabler försvinner när sidan laddas om.
+Lämna Console och följ de synliga stegen nedan.
 
 **Integrationstest:**
 [save-check.spec.ts](../../tests/integration/save-check.spec.ts), testfallet
@@ -235,9 +240,32 @@ behåller samma privata utkast”.
 
 1. Starta om installationen och ladda om sidan. Låt Skyttel kontrollera försöket.
 2. Öppna textsamtalet och läs förklaringen att utkastet inte sparades.
-3. Öppna **Utkast och historik → Tidigare sparförsök**. Kontrollera avvisat
-   resultat med det ursprungliga ID:t. Kontrollera hela privata utkastet.
-4. Red ut identiteten eller konflikten. Ett nytt sparande behöver ett nytt
+3. Välj **Visa utkastet** i textvyn och kontrollera hela förslaget Oklart Lo.
+   Öppna **Rapporter → Ändringshistorik**. Kräv **Inga genomförda sparanden.**
+   Det avvisade försöket ska inte visas som ett genomfört sparande.
+   Välj **Tillbaka till arbetet**.
+4. Kontrollera den beständiga identiteten separat genom den publika
+   HTTP-gränsen. Öppna Console på samma inloggade sida och kör med det
+   hushålls-ID som används i förberedelsen:
+
+   ```javascript
+   const checkPath = '/api/households/ID/map';
+   const attempts = (await (await fetch(`${checkPath}/operations`)).json()).operations;
+   console.log(attempts.length === 1 &&
+     attempts[0].operationId === 'manual-rejected-original' &&
+     attempts[0].status === 'rejected' &&
+     attempts[0].error === 'unresolved_identity');
+   const currentDraft = (await (await fetch(checkPath)).json()).draft;
+   const originalDraft = JSON.parse(prompt('Klistra in utkastets JSON'));
+   console.log(JSON.stringify(currentDraft) === JSON.stringify(originalDraft));
+   const history = (await (await fetch(`${checkPath}/history`)).json()).history;
+   console.log(history.length === 0);
+   ```
+
+   Klistra in JSON-kopian från förberedelsen i frågerutan. Kräv tre `true`.
+   Detta är en separat HTTP-kontroll, inte ett påstående om en synlig
+   lista över misslyckade försök.
+5. Red ut identiteten eller konflikten. Ett nytt sparande behöver ett nytt
    uttryckligt sparbesked; kontrollen får inte skapa eller basera om ett försök.
 
 **Förväntat resultat:**

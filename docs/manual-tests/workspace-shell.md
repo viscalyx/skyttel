@@ -12,8 +12,7 @@ testidentitet och påhittade hushållsuppgifter.
 ## Allmän förberedelse
 
 1. Förbered en
-   [separat provdatabas](../development/devcontainer.md#disposable-local-
-   database),
+   [separat provdatabas](../development/devcontainer.md#disposable-local-database),
    logga in och skapa ett tomt hushåll.
 2. Börja varje fall med ett tomt hushåll utan öppna dialoger eller textvy. Behåll
    fliken mellan steg när inget annat anges.
@@ -21,8 +20,7 @@ testidentitet och påhittade hushållsuppgifter.
    skärmläsarens namn, läsordning och statusmeddelanden separat. Anteckna
    fysiska enheter och hjälpmedel; Chromium-emulering verifierar inte dem.
 4. För YTA-03, YTA-07, YTA-08 och YTA-09: använd i stället
-   [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-
-   fixture).
+   [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-fixture).
    Starta med `node --import tsx scripts/manual-voice.ts` efter bygget,
    följ den privata portvidarebefordran och logga in med Google som Alex.
    Skapa ett tomt hushåll Hjälpprov; kör inte `seed-family`.
@@ -86,7 +84,7 @@ device”.
 2. Ladda om och kontrollera att valet består. Välj sedan **Ljust**.
 3. Välj **System** och ändra enhetens tema till mörkt och sedan ljust.
 4. I varje temaläge, flytta tangentbordsfokus till **Hoppa till innehållet**,
-   **Till verktygen**, **Till lista och formulär** och **Till samtalet med
+   **Till verktygen**, **Till tabellen** och **Till samtalet med
    Skyttel**.
    Kontrollera att länkarna och knapparna går att läsa och har synligt fokus.
 5. Öppna temavalet med tangentbordet och tryck Escape.
@@ -166,6 +164,9 @@ Tal som väntar under starten provas i
    samband, streckade gamla samband, markeringsringen och punktade
    etikettkopplingar. Skilj höjdhjälpens streck från gamla samband.
    Kontrollera förklaringen av tre sekunders sparbesked och kvitton.
+   Läs vägarna **Tabell**, **Skriv till Skyttel → Visa utkastet** och
+   **Rapporter → Ändringshistorik**. Skilj oskickat samtalsmeddelande från
+   formulärändringar som inte lagts i utkastet.
    Kontrollera att läsning inte startar mikrofonen eller frågar om medgivande.
 2. Läs att släpp stoppar ny inspelning direkt och att redan inspelat tal
    från starten kan skickas efter släpp. Läs tangentkombinationen för din
@@ -175,8 +176,15 @@ Tal som väntar under starten provas i
    inte garanterar behandling enbart i EU eller omedelbar radering av alla
    kopior.
    Nå **Läs OpenAI:s datavillkor** med Tab och kontrollera länkens namn.
-4. Stäng med Escape. Välj **Nytt objekt**, ange **Lo Exempel** och
-   välj **Lägg i utkastet och stäng** utan att starta något samtal. Välj **Karta**.
+4. Stäng med Escape. Välj **Tabell → Nytt objekt**, ange
+   **Oskickat formulär** och välj krysset. Kräv fokus på
+   **Fortsätt redigera**; Escape ska behålla namnet. Välj krysset igen och
+   **Kasta ändringarna och fortsätt**. Öppna **Nytt objekt** på nytt och
+   kräv tomt Namn. Ange **Lo Exempel** och välj **Lägg i utkastet och stäng**.
+   Öppna **Skriv till Skyttel → Visa utkastet** utan att starta ett samtal.
+   Läs Lo-förslaget utan medgivande. Stäng textvyn och öppna
+   **Rapporter → Ändringshistorik**; kräv **Inga genomförda sparanden.**
+   Välj **Tillbaka till arbetet** och **Karta**.
 5. Tryck tangentkombinationen kort. I medgivanderutan, markera
    **Fråga inte igen för det här hushållet** och välj **Godkänn och starta**.
    Tryck kombinationen kort igen för att stänga av mikrofonen.
@@ -185,6 +193,11 @@ Tal som väntar under starten provas i
    modellsvaret i terminalen med `reply ANROP Lo-förslaget ligger kvar.`,
    där `ANROP` är ID från `held`. Skriv **Oskickat medan hjälpen läses**
    utan att skicka. Öppna och stäng hjälpen igen.
+   Stäng textvyn, välj **Tabell → Nytt objekt** och skriv
+   **Kastas utan att röra samtalet**. Välj krysset och
+   **Kasta ändringarna och fortsätt**. Välj **Karta → Skriv till Skyttel**.
+   Kräv samma samtalstext och oskickade meddelande utan nytt medgivande.
+   Öppna **Visa utkastet** och kontrollera att bara Lo-förslaget finns kvar.
 7. Följ hjälpens väg: **Inställningar**, **Samtal med Skyttel**,
    **Återkalla medgivandet** och **Återkalla och avsluta samtalet**.
    Återgå till kartan och välj **Skriv till Skyttel** igen. Kontrollera att
@@ -196,6 +209,10 @@ Tal som väntar under starten provas i
 - Hjälpens rubrik får fokus. Texten använder **Prata med Skyttel** och
   **Skriv till Skyttel**, förklarar att röst och text är samma samtal och
   att formulären kan användas utan mikrofon eller samtalsmedgivande.
+- Hjälpens vägar når Tabell, utkastet i textvyn och Rapporter med
+  Ändringshistorik. Avbruten förlust behåller formulärvärden; bekräftad
+  förlust kastar bara oskickade formulärändringar. Lo-förslaget och
+  samtalets oskickade meddelande behålls. Inget sparande tillkommer.
 - Texten förklarar långt och kort tryck, medgivande före inspelning,
   fortsatt svar efter släpp och att väntande tal kasseras vid avbruten start.
   Tangentkombinationen följer plattformen. Kort tryck räcker alltid.

@@ -14,8 +14,9 @@ tysta; faktiskt hört tal och skärmläsarens uppläsning redovisas separat.
 
 1. Starta [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-fixture).
    Skapa Köprov efter inloggningen. Kör inte `seed-family`.
-2. Skapa Lo Exempel, typ Person, beskrivning Påhittad uppgift, via Lista
-   och välj **Lägg i mitt utkast**. Lämna förslaget osparat.
+2. Skapa Lo Exempel, typ Person, beskrivning Påhittad uppgift, via
+   **Tabell → Nytt objekt** och välj **Lägg i utkastet och stäng**.
+   Lämna förslaget osparat.
    Välj **Skriv till Skyttel** och **Godkänn och starta**.
 3. Varje uppdrag hålls i terminalen som `held`. Släpp svaret med
    `reply REQUEST TEXT`, där REQUEST är anrops-ID och TEXT är provsvaret.

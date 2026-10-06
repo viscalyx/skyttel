@@ -1512,7 +1512,7 @@ through an unknown save at 320px and verify the same receipt”.
    Stäng **Spara utkastet** med Escape och stäng textvyn.
    Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
 5. Ta bort blockeringen och välj **Hämta samma kvitto igen**. Läs resultatet.
-   Öppna **Rapporter** och läs **Tidigare sparförsök**.
+   Öppna **Rapporter → Ändringshistorik** och läs det genomförda sparandet.
 
 **Förväntat resultat:**
 
@@ -1525,7 +1525,7 @@ through an unknown save at 320px and verify the same receipt”.
   en gång i kartan. Förslagsraden försvinner efter uppdateringen, men
   markeringsringen och etikettkopplingarnas rad kan finnas kvar.
   Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning.
-  Sparförsöken innehåller ett enda försök.
+  Ändringshistoriken innehåller ett enda genomfört sparande.
 - Det automatiserade provet håller dessutom det riktiga serversvaret
   efter genomfört sparande. Det kontrollerar **Väntar på sparkvitto** och
   kvarvarande legend, bryter svaret och jämför samma operations-ID och
@@ -1561,7 +1561,8 @@ removed status controls”.
 **Förväntat resultat:**
 
 - Sökfältet behåller fokus och innehåller **Lo Exempel** efter sparandet.
-- Sparbeskedet visas i tre sekunder. Kvittot finns kvar i Rapporter → Tidigare sparförsök.
+- Sparbeskedet visas i tre sekunder. Kvittot finns kvar i
+  **Rapporter → Ändringshistorik**.
   Sökfältet behåller fokus även när återkopplingen uppdateras.
 - Det automatiserade provet håller ett verkligt lyckat serversvar för
   att säkerställa ordningen och kontrollerar att utkastet är tomt innan

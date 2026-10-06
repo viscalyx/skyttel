@@ -242,7 +242,9 @@ kvitto ger inget grönt sparbesked”.
 1. Kör `user Berätta om utkastet.` och `delegate` och släpp med
    `reply REQUEST Sparat.`. Ge inget sparbesked.
 2. Starta signalen, skicka **Sparat.** som transporttext och avsluta den.
-3. Kontrollera röstrutan, privata utkastet och **Tidigare sparförsök**.
+3. Kontrollera röstrutan och förslaget genom **Visa utkastet** i textvyn.
+   Öppna **Rapporter → Ändringshistorik** och kontrollera att inget
+   sparande tillkommer. Välj **Tillbaka till arbetet**.
 
 **Förväntat resultat:**
 

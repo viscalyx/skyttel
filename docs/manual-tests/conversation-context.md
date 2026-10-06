@@ -20,7 +20,8 @@ Kontrollerade röstspår är tysta; faktiskt hört tal redovisas separat.
 1. Starta [den kontrollerade röstinstallationen](voice-assistant.md#controlled-voice-fixture).
    Kör inte `seed-family`. Skapa Kontextprov efter inloggningen.
 2. Skapa **Lo Exempel**, typ **Person**, beskrivning **Påhittad uppgift**,
-   via Lista och välj **Lägg i mitt utkast**. Lämna förslaget osparat.
+   via **Tabell → Nytt objekt** och välj **Lägg i utkastet och stäng**.
+   Lämna förslaget osparat.
    Välj **Skriv till Skyttel** och **Godkänn och starta**.
 3. Terminalen håller modelluppdragen. Läs anrops-ID, `draft.version`,
    `draft.contentVersion` och Lo-förslagets ID från varje `held`.

@@ -16,8 +16,8 @@ export function ConversationHelp() {
       <p>
         Det du och Skyttel säger och skriver finns i samtalstexten, också när du öppnar textvyn
         senare. Skyttel kan höra och förstå fel, så samtalstexten kan innehålla fel. Kontrollera
-        ändringarna i kartan och utkastet. Sparat och kvittot i Utkast och historik bekräftar vad
-        som verkligen har sparats.
+        ändringarna i kartan och utkastet. Utkastet är sparat och kvittot under Rapporter,
+        Ändringshistorik, bekräftar vad som verkligen har sparats.
       </p>
       <h3>Håll in för att tala</h3>
       <p>
@@ -62,13 +62,20 @@ export function ConversationHelp() {
       <h3>Arbeta med kartans formulär</h3>
       <p>
         Kartans formulär finns kvar som alternativ till samtalet, utan mikrofon eller
-        samtalsmedgivande. Välj Lista för att läsa, lägga till och rätta objekt och samband. Alla
-        förslag samlas i ditt privata utkast. Spara hela utkastet när du vill dela ändringarna med
-        hushållet.
+        samtalsmedgivande. Välj Tabell för att läsa, lägga till och rätta objekt och samband.
+        Förslagen samlas i ditt utkast. Välj Skriv till Skyttel och Visa utkastet för att granska
+        dem utan att starta ett samtal. Spara hela utkastet när du vill dela ändringarna med
+        hushållet. Genomförda sparanden finns under Rapporter, Ändringshistorik.
       </p>
       <p>
-        Kartan kan också styras med tangentbord genom Navigera. Stäng panelerna med krysset för att
-        återgå till kartan; din oskickade text finns kvar.
+        Kartan kan också styras med tangentbord genom Navigera. Stäng textvyn med krysset; ditt
+        pågående samtal och oskickade samtalsmeddelande finns kvar även när du byter mellan Karta
+        och Tabell.
+      </p>
+      <p>
+        Ett ändrat formulär visar en förlustvarning när du lämnar det. Fortsätt redigera behåller
+        formulärändringarna. Kasta ändringarna och fortsätt kastar bara de formulärändringar som
+        inte lagts i utkastet. Redan lagda förslag och ditt oskickade samtalsmeddelande finns kvar.
       </p>
     </>
   );

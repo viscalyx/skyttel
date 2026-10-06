@@ -234,7 +234,7 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
    felet ska förklara att användande innehåll måste hanteras först.
 2. Robin väljer **Nytt objekt**, typ Privat använd typ, namn
    **Andras privata namn**, beskrivning **Privat hemlig anteckning**, och
-   **Lägg i mitt utkast** utan att spara. Alex ber assistenten ta bort
+   **Lägg i utkastet och stäng** utan att spara. Alex ber assistenten ta bort
    Privat använd typ. Kontrollera avvisningen och att varken namn,
    beskrivning eller privat objekt-ID finns i svaret.
 3. Alex föreslår borttagning av Samtidig typ men sparar inte. Robin lägger
