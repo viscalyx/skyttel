@@ -24,7 +24,7 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 ## Provdata, miljö och metod
 
 - Slutlig kod, bygge och hela automatiska kontrollkörningen gäller
-  [`cace8151d2982ed72b6df2a08befa7a4083927b5`](https://github.com/viscalyx/skyttel/tree/cace8151d2982ed72b6df2a08befa7a4083927b5).
+  [`7c06bc6c5d43df99247e857ffbcf2f96134bd5a5`](https://github.com/viscalyx/skyttel/tree/7c06bc6c5d43df99247e857ffbcf2f96134bd5a5).
   Nya visuella observationer och mätning använder den rena versionen
   [`5ce3c08036024c841540715af02f2b0a9c5c7c70`](https://github.com/viscalyx/skyttel/tree/5ce3c08036024c841540715af02f2b0a9c5c7c70)
   med produktionskatalogen `src`:
@@ -54,9 +54,9 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
   140 testfiler med 1 576 enhets- och webbläsarprov samt 719
   integrationstestfall i 106 filer. Inga testfall är underkända eller
   överhoppade. Integrationskörningen använder två arbetare och tar
-  16,0 minuter.
-- Global täckning är 93,59 procent för satser, **90,26 procent för
-  grenar**, 93,10 procent för funktioner och 95,48 procent för rader.
+  13,8 minuter.
+- Global täckning är 93,58 procent för satser, **90,22 procent för
+  grenar**, 93,10 procent för funktioner och 95,47 procent för rader.
   Kraven är oförändrade: 90 procent för grenar och 85 procent för de
   övriga måtten.
 - Alla nio `npm run test:container`-steg är **GODKÄNDA** på
@@ -156,6 +156,24 @@ Slutgranskningens rättelser följer samma bindande beslut:
   provet för ogiltig eller för stor bild inväntar verkligt valideringssvar
   innan felet läses. Samma formulärvärden och tidigare förslag bevaras;
   varje val gör ett tilläggsförsök och formuläret blir användbart igen.
+- [`6f51f3c`](https://github.com/viscalyx/skyttel/commit/6f51f3c):
+  rapportens sammanfattning och mätningens hela källträd anger samma
+  faktiska underlag som metoden och den fullständiga mätfilen.
+- [`a73b2cf`](https://github.com/viscalyx/skyttel/commit/a73b2cf):
+  alla 19 bildtypsprov inväntar verkligt tillägg och formulärstängning.
+  Fullständiga värden, tidigare förslag, kvitto och historik behålls;
+  ogiltig bild ger samma avvisning med användbart formulär kvar.
+- [`3af850a`](https://github.com/viscalyx/skyttel/commit/3af850a):
+  navigationsprovet upprepar vanlig rullning efter ändrad vyhöjd med
+  samma exakta gränser och träffkontroller.
+- [`c118724`](https://github.com/viscalyx/skyttel/commit/c118724):
+  konfliktprovet inväntar färdig jämförelse och kontrollerar stängning.
+  Resurserna stängs utan att ersätta det ursprungliga provfelet.
+  Oberoende förslag, gemensamma värden och nytt sparande kontrolleras.
+- [`7c06bc6`](https://github.com/viscalyx/skyttel/commit/7c06bc6):
+  den täta kartans prov kontrollerar alla 500 objekt och 1 500 samband
+  genom Chromium:s riktiga tillgänglighetsträd per tabellsida.
+  Alla arbetsflöden och tidsgränsen på 60 sekunder bevaras.
 
 - [`eb13279`](https://github.com/viscalyx/skyttel/commit/eb13279):
   Tabellens Redigera och Visa i kartan behåller motsvarande radkontroll.
@@ -312,10 +330,10 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 <!-- markdownlint-disable MD013 -->
 | Fält | Status |
 | --- | --- |
-| Slutlig kod- och byggversion, webbläsare och provmiljö | `cace8151d2982ed72b6df2a08befa7a4083927b5`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd `7726e8b50985835ff315d8eae8d9456c71f51771` som A/C/D och mätningen på `5ce3c08` |
-| Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `cace815`; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,26 procent mot kravet 90 |
+| Slutlig kod- och byggversion, webbläsare och provmiljö | `7c06bc6c5d43df99247e857ffbcf2f96134bd5a5`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd `7726e8b50985835ff315d8eae8d9456c71f51771` som A/C/D och mätningen på `5ce3c08` |
+| Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `7c06bc6`; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,22 procent mot kravet 90 |
 | Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
-| Containerkontroll | GODKÄND; 9 av 9 steg på `3a9afef`; relevanta produktions- och containerindata är identiska med `cace815` |
+| Containerkontroll | GODKÄND; 9 av 9 steg på `3a9afef`; relevanta produktions- och containerindata är identiska med `7c06bc6` |
 | Standards- och Spec-granskningar samt omprov av deras rättelser | PÅGÅR för det samlade aktuella underlaget; äldre granskningar på `62a9b74` har 0 kvarstående åtgärdbara fynd; fokus och vägledning rättade och omprovade |
 | A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN på `5ce3c08` utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
 | Prestanda för 500 objekt och 1 500 samband | GODKÄND på `5ce3c08` enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
