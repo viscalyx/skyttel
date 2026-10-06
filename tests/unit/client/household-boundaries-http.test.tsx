@@ -479,3 +479,122 @@ for (const outcome of ['absent', 'committed', 'duplicate', 'changed-duplicate'] 
     }
   }, 30_000);
 }
+for (const committed of [false, true]) {
+  test(`checking an ${committed ? 'earlier committed' : 'absent'} existing relationship attempt never overwrites a newer same-owner edit`, async () => {
+    const fixture = await readingFixture();
+    const before = await fixture.read();
+    const edge = before.relationships.find((value) => value.id === 'alex-bike');
+    if (!edge) throw new Error('Missing existing relationship');
+    const dialog = await openObjectRelationships('Alex');
+    await userEvent.click(
+      within(relationshipRow(dialog, 'Alex → använder → Cykel')).getByRole('button', {
+        name: 'Redigera samband',
+      }),
+    );
+    const form = within(dialog.getByRole('region', { name: 'Redigera samband' }));
+    await userEvent.selectOptions(form.getByLabelText('Uppgiftens säkerhet'), 'uncertain');
+    const actual = authenticatedHttpFetch(client, installation.origin);
+    let dropped = false;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!dropped && String(input).endsWith('/relationship-form') && init?.method === 'POST') {
+        dropped = true;
+        if (committed) await actual(input, init);
+        throw new TypeError('Synthetic lost delivery');
+      }
+      return actual(input, init);
+    });
+    await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet' }));
+    await form.findByText(/Det är oklart om ändringen lades i utkastet/);
+    await fixture.post('relationship', {
+      id: edge.id,
+      baseRevision: edge.revision,
+      value: { ...edge, knowledge: 'unknown', targetId: null },
+    });
+    const later = await fixture.read();
+    await userEvent.click(
+      form.getByRole('button', { name: 'Kontrollera om ändringen lades i utkastet' }),
+    );
+    await form.findByText(
+      committed
+        ? /Ändringen lades i utkastet, men det aktuella underlaget har ändrats/
+        : /Kontrollen saknar en bevarad bekräftelse och utkastet har ändrats/,
+    );
+    expect((form.getByLabelText('Uppgiftens säkerhet') as HTMLSelectElement).value).toBe(
+      'uncertain',
+    );
+    expect(await fixture.read()).toEqual(later);
+    if (!committed) {
+      expect(form.getByRole('button', { name: 'Lägg i utkastet' }).matches(':disabled')).toBe(true);
+      expect(form.getByRole('button', { name: 'Föreslå borttagning' }).matches(':disabled')).toBe(
+        true,
+      );
+    }
+    await userEvent.click(form.getByRole('button', { name: 'Avbryt redigeringen' }));
+    const loss = within(await screen.findByRole('dialog', { name: 'Lämna ändrade uppgifter?' }));
+    await userEvent.click(loss.getByRole('button', { name: 'Fortsätt redigera' }));
+    expect((form.getByLabelText('Uppgiftens säkerhet') as HTMLSelectElement).value).toBe(
+      'uncertain',
+    );
+    await userEvent.click(form.getByRole('button', { name: 'Avbryt redigeringen' }));
+    await userEvent.click(
+      within(await screen.findByRole('dialog', { name: 'Lämna ändrade uppgifter?' })).getByRole(
+        'button',
+        { name: 'Kasta ändringarna och fortsätt' },
+      ),
+    );
+    await waitFor(() =>
+      expect(dialog.queryByRole('region', { name: 'Redigera samband' })).toBeNull(),
+    );
+    expect(await fixture.read()).toEqual(later);
+    expect(later.objects).toEqual(before.objects);
+    expect(later.relationships).toEqual(before.relationships);
+    expect(later.draft.changes).toEqual(before.draft.changes);
+  }, 30_000);
+}
+
+for (const kind of ['object', 'relationship'] as const) {
+  test(`signing out in another client prevents a pending ${kind} form from staging private content`, async () => {
+    const fixture = await readingFixture();
+    const before = await fixture.read();
+    const form =
+      kind === 'object' ? await editTableObjectForm('Alex') : await openObjectRelationships('Alex');
+    if (kind === 'object') {
+      await userEvent.clear(form.getByLabelText('Namn'));
+      await userEvent.type(form.getByLabelText('Namn'), 'Osänd uppgift');
+    } else {
+      await userEvent.click(form.getByRole('button', { name: 'Nytt samband' }));
+      await userEvent.selectOptions(form.getByLabelText('Sambandstyp'), 'uses');
+      await userEvent.selectOptions(form.getByLabelText('Till objekt'), 'garage');
+    }
+    const session = (await (await client.get(`${installation.origin}/api/bootstrap`)).json()).user;
+    expect(session).toBeTruthy();
+    const logout = await client.post(`${installation.origin}/api/auth/sign-out`, {
+      headers: { origin: installation.origin },
+      data: {},
+    });
+    expect(logout.status()).toBe(200);
+    await userEvent.click(
+      form.getByRole('button', {
+        name: kind === 'object' ? 'Lägg i utkastet och stäng' : 'Lägg i utkastet',
+      }),
+    );
+    await screen.findByText(
+      'Du har inte längre tillgång. Logga in och kontrollera din tillgång till hushållet.',
+    );
+    expect(screen.queryByRole('region', { name: 'Hushållets tabell' })).toBeNull();
+    expect(
+      screen.queryByRole('dialog', {
+        name: kind === 'object' ? 'Redigera Alex' : 'Samband för Alex',
+      }),
+    ).toBeNull();
+    expect((await client.get(fixture.path)).status()).toBe(401);
+    await signIn(client, installation.origin);
+    expect(await fixture.read()).toEqual(before);
+  }, 30_000);
+}
+
+function relationshipRow(dialog: ReturnType<typeof within>, name: string | RegExp) {
+  const row = dialog.getByRole('heading', { name }).closest('li');
+  if (!row) throw new Error('The public relationship reader must provide its row');
+  return row;
+}
