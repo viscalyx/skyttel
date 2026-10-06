@@ -375,6 +375,8 @@ paneler för att
   och avvisa inaktuell jämförelse; bevara val mellan konflikter och återöppning,
   göra om endast berörda egenskapsval, pröva ändrade typer och referenser igen
   och kontrollera genomförda eller uteblivna konfliktval efter tappat svar
+  samt acceptera en redan genomförd objektborttagning genom att kasta endast
+  den berörda postens förslag med oberoende utkast och sparad historik kvar
   med en beständig status utan fokusstöld
   samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status

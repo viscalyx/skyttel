@@ -8,6 +8,7 @@ import {
   saveConflictElsewhere,
   saveNewerConflictType,
 } from '../tests/support/conflict-continuity.js';
+import { prepareRemovedObjectConflict } from '../tests/support/conflict-special.js';
 
 // Only transport delivery is controlled. All data and results use public HTTP and real SQLite.
 const browser = await chromium.launch({ headless: process.argv.includes('--headless') });
@@ -17,6 +18,7 @@ let app:
   | Awaited<ReturnType<typeof prepareConflictContinuity>>
   | Awaited<ReturnType<typeof prepareConflictTypeContinuity>>
   | Awaited<ReturnType<typeof prepareConflictReferenceContinuity>>
+  | Awaited<ReturnType<typeof prepareRemovedObjectConflict>>
   | undefined;
 let input: ReturnType<typeof createInterface> | undefined;
 let hold = false;
@@ -34,11 +36,13 @@ async function fresh(command: string) {
   await app?.installation.close();
   kind = command;
   app =
-    command === 'new-type'
-      ? await prepareConflictTypeContinuity(page.request, other.request)
-      : command === 'new-reference'
-        ? await prepareConflictReferenceContinuity(page.request, other.request)
-        : await prepareConflictContinuity(page.request, other.request);
+    command === 'new-removed-object'
+      ? await prepareRemovedObjectConflict(page.request, other.request)
+      : command === 'new-type'
+        ? await prepareConflictTypeContinuity(page.request, other.request)
+        : command === 'new-reference'
+          ? await prepareConflictReferenceContinuity(page.request, other.request)
+          : await prepareConflictContinuity(page.request, other.request);
   if (command === 'new-two') {
     const state = await app.read();
     const value = { typeId: state.types[0].id, name: 'Min musiktjänst', description: 'Min tjänst' };
@@ -69,12 +73,14 @@ try {
   });
   await fresh('new-base');
   console.log(
-    'Commands: new-base, new-two, new-type, new-reference, newer-name, newer-type, newer-reference, newer-private, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, result, quit',
+    'Commands: new-base, new-two, new-type, new-reference, new-removed-object, newer-name, newer-type, newer-reference, newer-private, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, result, quit',
   );
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const command of input) {
     if (command === 'quit') break;
-    if (['new-base', 'new-two', 'new-type', 'new-reference'].includes(command))
+    if (
+      ['new-base', 'new-two', 'new-type', 'new-reference', 'new-removed-object'].includes(command)
+    )
       await fresh(command);
     else if (command === 'hold') hold = true;
     else if (command === 'release') {

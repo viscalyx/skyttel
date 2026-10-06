@@ -9,6 +9,7 @@ import {
   conflictPropertyValue,
   sameConflictValue,
 } from '../shared/conflict-properties.js';
+import { specialConflict } from '../shared/conflict-special.js';
 import {
   draftConflicts,
   resolvedObjectValue,
@@ -348,12 +349,33 @@ export function householdMap(database: Database.Database, actorId: string, house
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
-        if (body.choices === undefined && body.choice !== 'saved' && body.choice !== 'proposed')
+        if (
+          body.command === undefined &&
+          body.choices === undefined &&
+          body.choice !== 'saved' &&
+          body.choice !== 'proposed'
+        )
           throw new MapError('invalid_request', 400);
         const conflict = draftConflicts(readState()).find((item) =>
           isDeepStrictEqual(item, body.conflict),
         );
         if (!conflict) throw new MapError('resolution_conflict');
+        if (body.command !== undefined) {
+          const state = readState();
+          if (!isDeepStrictEqual(body.basis, conflictBasis(state, conflict)))
+            throw new MapError('resolution_conflict');
+          if (body.command !== 'discard-proposal' || !specialConflict(state, conflict))
+            throw new MapError('invalid_resolution', 400);
+          if (conflict.kind === 'object')
+            current.changes = current.changes.filter((change) => change.id !== conflict.id);
+          else if (conflict.kind === 'relationship')
+            current.relationships = current.relationships?.filter(
+              (change) => change.id !== conflict.id,
+            );
+          else throw new MapError('invalid_resolution', 400);
+          edges.reconcileObjectRemovals(current);
+          return writeDraft({ ...current, version: current.version + 1 });
+        }
         if (body.choices !== undefined) {
           const state = readState();
           if (!isDeepStrictEqual(body.basis, conflictBasis(state, conflict)))

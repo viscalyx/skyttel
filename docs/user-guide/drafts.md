@@ -152,6 +152,12 @@ erbjuds igen. Kontrollen av utkastet bevisar då inget eget privat resultat.
 Konfliktval ger inget
 sparkvitto; gemensamt sparande är en separat åtgärd.
 
+Om ett sparat objekt redan är borttaget visar jämförelsen **Borttaget** som
+**✓ Förvalt**. Ditt ändringsförslag går att läsa men kan inte återställa
+objektet. **Acceptera borttagningen och kasta ditt förslag** kastar bara
+förslaget för den posten. Andra förslag finns kvar och den gemensamma kartan
+ändras inte av bekräftelsen.
+
 ## Följ upp ett oklart sparande
 
 Stäng sparmodalen med krysset eller Escape; det avbryter inte försöket.

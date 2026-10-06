@@ -12,6 +12,7 @@ import {
   conflictValueText,
   sameConflictValue,
 } from '../shared/conflict-properties.js';
+import { specialConflict } from '../shared/conflict-special.js';
 import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
 import type { MapState } from '../shared/map.js';
 import {
@@ -24,6 +25,7 @@ export type { ConflictResolution } from './use-conflict-resolution.js';
 
 import { trapDialogTab } from './modal-focus.js';
 import { relationshipLabel } from './RelationshipEditor.js';
+import { SpecialConflictDetails } from './SpecialConflictDetails.js';
 import './conflict-dialog.css';
 
 const sideNames = { saved: 'Sparat i kartan nu', proposed: 'Ditt förslag' };
@@ -180,6 +182,7 @@ export function ConflictDialog({
   const stale = staleKeys.has(key);
   const comparisonNoLongerNeeded = noLongerConflicted && !pending && !unknown && !resolved[key];
   const change = conflictChange(comparison, conflict);
+  const special = specialConflict(comparison, conflict);
   const fields = conflictProperties(comparison, conflict);
   const selected = choices[key] ?? {};
   const remaining = fields.filter(
@@ -367,23 +370,35 @@ export function ConflictDialog({
           <h2 ref={caseHeading} tabIndex={-1}>
             {name(conflict, comparison)}
           </h2>
-          {!comparisonNoLongerNeeded && (
-            <p>
-              Ditt förslag skiljer sig från det som är sparat i kartan nu.{' '}
-              {actor && savedAfterProposal(actor.savedAt)
-                ? `${person} sparade ändringar efter att du gjorde ditt förslag, men innan du hann spara det.`
-                : actor
-                  ? `${person} sparade det aktuella underlaget.`
-                  : 'Det sparade underlaget skiljer sig från ditt förslag.'}
-            </p>
+          {!comparisonNoLongerNeeded && special ? (
+            <p>{special.reason}</p>
+          ) : (
+            !comparisonNoLongerNeeded && (
+              <p>
+                Ditt förslag skiljer sig från det som är sparat i kartan nu.{' '}
+                {actor && savedAfterProposal(actor.savedAt)
+                  ? `${person} sparade ändringar efter att du gjorde ditt förslag, men innan du hann spara det.`
+                  : actor
+                    ? `${person} sparade det aktuella underlaget.`
+                    : 'Det sparade underlaget skiljer sig från ditt förslag.'}
+              </p>
+            )
           )}
           {resolved[key] ? (
             <section className="cp-preview">
               <h3>
-                {resolved[key].removed
-                  ? '✓ Förslaget har tagits bort ur ditt utkast'
-                  : '✓ Valen finns i ditt utkast'}
+                {resolved[key].removed && special?.kind === 'removed'
+                  ? '✓ Ditt ändringsförslag har kastats'
+                  : resolved[key].removed
+                    ? '✓ Förslaget har tagits bort ur ditt utkast'
+                    : '✓ Valen finns i ditt utkast'}
               </h3>
+              {resolved[key].removed && special?.kind === 'removed' && (
+                <p>
+                  {conflict.kind === 'object' ? 'Objektet' : 'Sambandet'} förblir borttaget. Övriga
+                  förslag i utkastet finns kvar.
+                </p>
+              )}
               <dl className="cp-fields">
                 {fields.map((field) => (
                   <div key={field.key}>
@@ -403,6 +418,27 @@ export function ConflictDialog({
                 bekräftas igen.
               </p>
             </section>
+          ) : special ? (
+            <SpecialConflictDetails
+              state={comparison}
+              conflict={conflict}
+              special={special}
+              disabled={pending || stale || unknown || disabled}
+              onApply={() => {
+                caseHeading.current?.focus({ preventScroll: true });
+                void resolution.apply({
+                  key,
+                  comparison,
+                  value: {},
+                  discard: true,
+                  resolution: {
+                    conflict,
+                    command: 'discard-proposal',
+                    basis: conflictBasis(comparison, conflict),
+                  },
+                });
+              }}
+            />
           ) : (
             <>
               {blocked ? (

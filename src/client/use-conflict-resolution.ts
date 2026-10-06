@@ -11,9 +11,11 @@ import { MapRequestError } from './map-request.js';
 
 export type ConflictResolution = {
   conflict: DraftConflict;
-  choices: ConflictChoices;
   basis: ReturnType<typeof conflictBasis>;
-};
+} & (
+  | { choices: ConflictChoices; command?: never }
+  | { command: 'discard-proposal'; choices?: never }
+);
 export type AppliedConflictResolution = {
   key: string;
   value: Record<string, unknown>;

@@ -152,6 +152,9 @@ export function conflictBasis(state: MapState, conflict: DraftConflict) {
     .flatMap((field) => [field.saved, field.proposed]);
   const basis = {
     fields,
+    // Null-side cases have no selectable properties; their proposal and blockers still
+    // constitute a real comparison that must be revalidated before any explicit action.
+    ...(!fields.length ? { special: { conflict, change: conflictChange(state, conflict) } } : {}),
     types: (conflict.kind === 'relationship'
       ? proposedRelationshipTypes(state.relationshipTypes, state.draft.relationshipTypes)
       : proposedObjectTypes(state.types, state.draft.objectTypes)

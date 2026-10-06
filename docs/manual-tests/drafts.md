@@ -1980,7 +1980,7 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 
 ## Bevarade konfliktval och kontrollerat utfall
 
-UTKAST-49–56 använder en tillfällig installation med riktig SQLite och två
+UTKAST-49–57 använder en tillfällig installation med riktig SQLite och två
 syntetiska användare: administratören Alex och medlemmen Robin. Starta från
 repo-roten med `npm run build` och
 `npx tsx scripts/manual-conflict-continuity.ts`. Öppna adressen som skrivs ut.
@@ -2292,3 +2292,40 @@ status without stealing later focus”.
 - Bara en av konfliktflödets statusregioner är aktiv för uppläsning åt gången.
   Återöppning återställer inte bekräftelse; faktisk kontroll visar den
 genomförda lösningen.
+
+### UTKAST-57: acceptera en redan genomförd objektborttagning
+
+**Syfte:** Kasta bara det egna ändringsförslaget när ett sparat objekt redan
+är borttaget, utan att återställa objektet eller göra en ny borttagning.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-removed-object`. Alex föreslår **Lo Lind** och
+**Mitt förslag** samt ett oberoende nytt objekt. Robin tar bort det sparade
+objektet. Kör `result` för att läsa utgångsläget.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-57: accepting a removed object discards only its proposal
+and preserves the saved removal”.
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast**. Läs förklaringen om den genomförda
+   borttagningen och varningen att förslaget inte kan återställa objektet.
+2. Läs **Borttaget** och **✓ Förvalt** på den sparade sidan och hela ditt
+   förslag på den andra. Kontrollera att förslaget saknar valbara egenskaper.
+3. Stäng med Escape och kör `result`. Öppna konflikten igen.
+4. Välj **Acceptera borttagningen och kasta ditt förslag**. Läs statusen och
+   postens kvarvarande namn, typ och lösningsmarkering. Kör `result` igen.
+
+**Förväntat resultat:**
+
+- Läsning, öppning och stängning ändrar inget. Förklaringen lyder
+  **Objektet togs bort från den gemensamma kartan medan du redigerade det.**
+  Varningen lyder **Objektet är borttaget. Ditt ändringsförslag kan inte
+  återställa det.**
+- Bekräftelsen kastar endast Lo Linds förslag. Det oberoende förslaget består.
+- Objektet förblir borttaget och historiken får ingen ny gemensam ändring.
+  Beskedet säger att förslaget tas bort ur utkastet. Namnet och typen står
+  kvar i konfliktlistan med en bock och tillgänglig lösningsstatus.
