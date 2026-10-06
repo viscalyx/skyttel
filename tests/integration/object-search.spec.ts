@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import { prepareHouseholdTable } from '../support/household-table.js';
 import { createInstallation } from '../support/installation.js';
 import { prepareObjectSearch } from '../support/object-search.js';
@@ -135,6 +135,63 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
     await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
     const filters = page.getByRole('dialog', { name: 'Tabellens filter' });
     await expect(filters.getByRole('heading')).toBeFocused();
+    const checkButtonHits = async (button: Locator) => {
+      expect(
+        await button.evaluate((button) => {
+          const box = button.getBoundingClientRect();
+          return [
+            [box.left + 8, box.top + 8],
+            [box.right - 8, box.top + 8],
+            [box.left + 8, box.bottom - 8],
+            [box.right - 8, box.bottom - 8],
+            [box.left + box.width / 2, box.top + box.height / 2],
+          ].every(([x, y]) => button.contains(document.elementFromPoint(x, y)));
+        }),
+      ).toBe(true);
+      await button.click({ trial: true });
+    };
+    const checkFilterLayout = async () => {
+      const close = filters.getByRole('button', { name: 'Stäng filter', exact: true });
+      await expect(close).toHaveText('×');
+      const frame = await filters.boundingBox();
+      const closeBox = await close.boundingBox();
+      if (!frame || !closeBox) throw new Error('Filterramen och krysset ska vara synliga.');
+      expect(closeBox.width).toBeGreaterThanOrEqual(44);
+      expect(closeBox.height).toBeGreaterThanOrEqual(44);
+      expect(closeBox.x).toBeGreaterThanOrEqual(frame.x);
+      expect(closeBox.y).toBeGreaterThanOrEqual(frame.y);
+      expect(closeBox.x + closeBox.width).toBeLessThanOrEqual(frame.x + frame.width);
+      expect(closeBox.y + closeBox.height).toBeLessThanOrEqual(frame.y + frame.height);
+      await checkButtonHits(close);
+      for (const checkbox of await filters.getByRole('checkbox').all()) {
+        await checkbox.scrollIntoViewIfNeeded();
+        const geometry = await checkbox.evaluate((input) => {
+          const label = input.closest('label');
+          const text = [...(label?.childNodes ?? [])].find(
+            (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+          );
+          if (!text) throw new Error('Filtervalet behöver sin läsbara etikett.');
+          const range = document.createRange();
+          range.selectNodeContents(text);
+          const firstLine = range.getClientRects()[0];
+          const box = input.getBoundingClientRect();
+          return {
+            name: label?.textContent?.trim(),
+            inline:
+              box.right <= firstLine.left &&
+              box.top < firstLine.bottom &&
+              firstLine.top < box.bottom,
+          };
+        });
+        expect
+          .soft(
+            geometry.inline,
+            `Checkbox must precede its text on the same line: ${geometry.name}`,
+          )
+          .toBe(true);
+      }
+    };
+    await checkFilterLayout();
     await filters.getByLabel('Typ 2', { exact: true }).check();
     await expect(filters.getByText('Filter ändrar vilka objekt tabellen visar.')).toBeVisible();
     const showResults = filters.getByRole('button', { name: 'Visa 1 träffar', exact: true });
@@ -154,6 +211,7 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
       await page.setViewportSize(viewport);
       await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
       await expect(filters.getByRole('heading')).toBeFocused();
+      await checkFilterLayout();
       await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
       await expect(showResults).toBeVisible();
       const frame = await filters.boundingBox();
@@ -175,15 +233,20 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
       expect(action).not.toBeNull();
       if (!action) throw new Error('Knappen för att visa träffar saknas');
       expect(action.y + action.height).toBeLessThanOrEqual(viewport.height);
-      expect(
-        await showResults.evaluate((element) => {
-          const rect = element.getBoundingClientRect();
-          return element.contains(
-            document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2),
-          );
-        }),
-      ).toBe(true);
-      await page.keyboard.press('Enter');
+      await checkButtonHits(showResults);
+      await filters.getByRole('checkbox').first().scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: `/tmp/skyttel-244/259-filter-layout-${viewport.width}x${viewport.height}.png`,
+      });
+      await showResults.click();
+      await expect(filters).not.toBeVisible();
+      await expect(
+        table.getByRole('button', { name: 'Filter · aktiva', exact: true }),
+      ).toBeFocused();
+      await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
+      await expect(table.getByRole('rowheader')).toHaveCount(1);
+      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+      await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
       await expect(filters).not.toBeVisible();
       await expect(
         table.getByRole('button', { name: 'Filter · aktiva', exact: true }),
@@ -193,7 +256,8 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
     }
     await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
     await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
-    await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+    await showResults.focus();
+    await showResults.press('Enter');
     await expect(filters).not.toBeVisible();
     await expect(table.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
     await expect(table.getByRole('searchbox')).toHaveValue('399 egen');

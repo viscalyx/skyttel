@@ -824,18 +824,24 @@ preserve restrictions”.
 2. Stäng sökytan. Läs fortsatt sökning, filter och träffantal.
 3. Välj Tabell, sök efter 399 egen och öppna Filter. Kontrollera fokus på
    Tabellens filter och förklaringen om vilka objekt tabellen visar.
+   Kontrollera att rutorna står före sina texter på samma rad.
    Välj Typ 2, kontrollera Visa 1 träffar och välj knappen.
 4. Kontrollera samma söktext och en träff. Prova samma flöde med touch,
    skärmtangentbord och förstoring på iPhone och iPad.
 5. Öppna Filter igen. Kontrollera Typ 2 och samma träffantal. Nå knappen
    för att visa träffar med tangentbord även när skärmen är kort. Stäng
    med knappen och öppna igen; prova också krysset och Escape.
+   Upprepa på dator, vid 320 pixlars bredd och i ett kort fönster.
+   Kontrollera att både krysset och träffknappen är synliga, nåbara
+   och fungerar utan att ändra söktext eller filter.
 
 **Förväntat resultat:**
 
 - Kartan har en ingång utan tangentbord och tabellen ett eget synligt fält.
 - Filterdialogen håller fokus inom dialogen och återgår till Filter.
 - Knappen visar det aktuella träffantalet och stänger med valen kvar.
+- Rutorna står bredvid sin text på dator och mobil. Krysset och
+  träffknappen förblir nåbara även när filterinnehållet behöver rullas.
 - Sökingången ryms inom skärmen. Söktext och filter bevaras vid stängning.
 - Verklig touch, skärmtangentbord och VoiceOver behöver manuellt prov;
   automatprovet kontrollerar mobil layout och offentlig UI.

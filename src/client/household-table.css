@@ -265,8 +265,9 @@
   border: 0;
   padding: 0;
 }
-.household-table-filter-dialog label {
+.household-map .household-table-filter-dialog .object-search-filters label {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 10px;
   min-height: 44px;
