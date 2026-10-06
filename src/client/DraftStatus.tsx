@@ -117,7 +117,7 @@ export function DraftStatus({
             Hämta aktuellt underlag
           </button>
         )}
-        {dirty && unresolved && (
+        {compact && dirty && unresolved && (
           <button type="button" onClick={onDraft}>
             Red ut identiteter i utkastet
           </button>
