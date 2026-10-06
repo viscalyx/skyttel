@@ -7,7 +7,7 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: förnyade automatiska slutkontroller och granskningar PÅGÅR.**
+**Status: automatiska slutkontroller GODKÄNDA; slutgranskningar PÅGÅR.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 
@@ -16,18 +16,21 @@ Föregående godkända Standards- och Spec-granskningar gäller
 mot startpunkten
 [`4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123`](https://github.com/viscalyx/skyttel/tree/4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123).
 Båda axlarna har noll kvarstående åtgärdbara fynd i det äldre underlaget.
-Senare rättelser behöver förnyad hel kontrollkörning och granskning.
+Senare rättelser ingår i den godkända hela körningen nedan.
+Förnyade granskningar av det samlade underlaget pågår.
 Fokus- och vägledningsrättelserna nedan är granskade och omprovade.
 Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 
 ## Provdata, miljö och metod
 
-- Föregående godkända hela automatiska kontrollkörning gäller
-  [`a53edf887937de814e1bcdaacca51782a7afd224`](https://github.com/viscalyx/skyttel/tree/a53edf887937de814e1bcdaacca51782a7afd224).
+- Slutlig kod, bygge och hela automatiska kontrollkörningen gäller
+  [`cace8151d2982ed72b6df2a08befa7a4083927b5`](https://github.com/viscalyx/skyttel/tree/cace8151d2982ed72b6df2a08befa7a4083927b5).
   Nya visuella observationer och mätning använder den rena versionen
   [`5ce3c08036024c841540715af02f2b0a9c5c7c70`](https://github.com/viscalyx/skyttel/tree/5ce3c08036024c841540715af02f2b0a9c5c7c70)
   med produktionskatalogen `src`:
   `7726e8b50985835ff315d8eae8d9456c71f51771`.
+  Samma produktionskatalog gäller den hela slutkörningen. Senare
+  ändringar gäller prov, containerkontroller och dokumentation.
   Slutkörningen innehåller även den rättade manuella provtransporten och
   kompletterande prov. Dokumentationsändringen som publicerar rapporten
   är separat; den ändrar varken kod, testfall eller mätningen.
@@ -46,16 +49,21 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 - Automatiken använder Linux, Playwright 1.63.0 och dess Chromium
   153.0.8010.12, Node 24.21.0, npm 12.0.2 och två integrationsarbetare.
   Prov med Chromium är inte fysiska Chrome-prov.
-- Föregående hela `CI=1 npm run check` är **GODKÄND**: typkontroll, lint,
+- Hela `CI=1 npm run check` är **GODKÄND**: typkontroll, lint,
   dokumentation och stavning, 140 grindprov, produktionsbygge,
   140 testfiler med 1 576 enhets- och webbläsarprov samt 719
   integrationstestfall i 106 filer. Inga testfall är underkända eller
   överhoppade. Integrationskörningen använder två arbetare och tar
-  15,2 minuter.
-- Global täckning är 93,56 procent för satser, **90,22 procent för
-  grenar**, 93,09 procent för funktioner och 95,47 procent för rader.
+  16,0 minuter.
+- Global täckning är 93,59 procent för satser, **90,26 procent för
+  grenar**, 93,10 procent för funktioner och 95,48 procent för rader.
   Kraven är oförändrade: 90 procent för grenar och 85 procent för de
   övriga måtten.
+- Alla nio `npm run test:container`-steg är **GODKÄNDA** på
+  [`3a9afef128271d25e3c759cce9d1565ebb9f40ba`](https://github.com/viscalyx/skyttel/tree/3a9afef128271d25e3c759cce9d1565ebb9f40ba).
+  Relevanta produktions- och containerindata är identiska med
+  slutkörningens. Kontrollen bygger riktiga images och prövar isolerade
+  volymer, åtkomst, sparande, omstart, radering och återimport.
 - Använd [testguiden](../development/testing.md) för körning och rapporter.
   Följ områdesfallens användare, förberedelser och återställning;
   [utvecklingsguiden](../development/devcontainer.md) ger provinstallationen.
@@ -144,6 +152,10 @@ Slutgranskningens rättelser följer samma bindande beslut:
   historikprovet inväntar den verkliga kvittoläsningen och konfliktprovet
   inväntar användbar stängning före Escape. Fullständiga sparade värden,
   förslag och historiska uppgifter kontrolleras fortfarande.
+- [`cace815`](https://github.com/viscalyx/skyttel/commit/cace815):
+  provet för ogiltig eller för stor bild inväntar verkligt valideringssvar
+  innan felet läses. Samma formulärvärden och tidigare förslag bevaras;
+  varje val gör ett tilläggsförsök och formuläret blir användbart igen.
 
 - [`eb13279`](https://github.com/viscalyx/skyttel/commit/eb13279):
   Tabellens Redigera och Visa i kartan behåller motsvarande radkontroll.
