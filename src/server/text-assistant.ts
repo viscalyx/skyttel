@@ -472,8 +472,12 @@ export function textAssistantRoutes({
     );
   }
   async function refresh(session: Session, guard?: () => void) {
-    session.review = await call(session, 'read_my_draft', {}, guard);
-    session.operations = (await call(session, 'read_my_save_operations', {}, guard)).operations;
+    const review = await call(session, 'read_my_draft', {}, guard);
+    guard?.();
+    session.review = review;
+    const { operations } = await call(session, 'read_my_save_operations', {}, guard);
+    guard?.();
+    session.operations = operations;
     if (
       session.pendingSave &&
       !session.operations.some((item) => item.operationId === session.pendingSave?.operationId)
@@ -484,6 +488,7 @@ export function textAssistantRoutes({
         { operationId: session.pendingSave.operationId },
         guard,
       );
+      guard?.();
       if (operation) session.operations.push(operation);
     }
   }
@@ -1587,6 +1592,10 @@ export function textAssistantRoutes({
     if (body?.all !== true && body?.revision !== session.revision)
       return context.json({ error: 'assistant_turn_changed' }, 409);
     const contextRevision = session.contextRevision ?? 0;
+    const checkContext = () => {
+      if ((session.contextRevision ?? 0) !== contextRevision)
+        throw new MapError('assistant_turn_changed', 409);
+    };
     session.task?.abort();
     session.summaryTask?.abort();
     session.queue = [];
@@ -1602,9 +1611,8 @@ export function textAssistantRoutes({
     session.modelReply = undefined;
     session.questions = undefined;
     session.phase = session.pendingSave ? 'recovery' : 'ready';
-    await refresh(session);
-    if ((session.contextRevision ?? 0) !== contextRevision)
-      return context.json({ error: 'assistant_turn_changed' }, 409);
+    await refresh(session, checkContext);
+    checkContext();
     for (const accepted of session.accepted.values()) {
       if (accepted.status === 'queued' || accepted.status === 'working') {
         accepted.status = 'canceled';
