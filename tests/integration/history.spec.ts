@@ -289,6 +289,7 @@ for (const viewport of [
       }
       const back = page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true });
       await expect(notice).toBeVisible();
+      await back.scrollIntoViewIfNeeded();
       await expect
         .poll(() =>
           back.evaluate((button) => {
