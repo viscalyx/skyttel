@@ -106,6 +106,9 @@ test('SAMBAND-13: staging cancel and explicit outcome checks retain meaningful f
     await page.getByRole('button', { name: 'Samband för Alex', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Samband för Alex', exact: true });
     const heading = dialog.getByRole('heading', { name: 'Samband för Alex', exact: true });
+    await expect(
+      dialog.getByText('Ändringar läggs i ditt utkast. Kartan sparas separat.', { exact: true }),
+    ).toBeVisible();
     await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
     await dialog.getByLabel('Till objekt', { exact: true }).selectOption('bicycle');
@@ -172,6 +175,9 @@ test('SAMBAND-13: staging cancel and explicit outcome checks retain meaningful f
     await arrived;
     await dialog.getByRole('button', { name: 'Blå cykeln', exact: true }).click();
     const later = page.getByRole('dialog', { name: 'Uppgifter för Blå cykeln', exact: true });
+    await expect(
+      later.getByText('Sparade uppgifter och ditt utkast', { exact: true }),
+    ).toBeVisible();
     const laterHeading = later.getByRole('heading', {
       name: 'Uppgifter för Blå cykeln',
       exact: true,

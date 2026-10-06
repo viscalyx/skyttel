@@ -243,7 +243,11 @@ export function HouseholdReadDialog({
           <h2 ref={heading} id={`${prefix}-title`} tabIndex={-1}>
             {title}
           </h2>
-          <p>Sparade uppgifter och ditt utkast</p>
+          <p>
+            {current.kind === 'relationships'
+              ? 'Ändringar läggs i ditt utkast. Kartan sparas separat.'
+              : 'Sparade uppgifter och ditt utkast'}
+          </p>
         </div>
         <button
           type="button"
