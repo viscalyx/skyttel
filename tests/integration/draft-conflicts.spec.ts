@@ -1328,7 +1328,7 @@ for (const side of ['proposed', 'saved'] as const) {
         const service = (await app.read(other.request)).objects.find(
           (object) => object.id === 'service',
         );
-        expect(service).toBeDefined();
+        if (!service) throw new Error('The saved service must exist before its endpoint rename');
         await app.propose(other.request, 'draft', 'service', {
           ...service,
           name: 'Molnmusik aktuell',
