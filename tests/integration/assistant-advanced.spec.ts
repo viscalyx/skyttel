@@ -2,7 +2,12 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openDraftReview, openTable, signIn } from '../support/client.js';
+import {
+  editTableObject,
+  openObjectRelationships,
+  readDraftProposal,
+} from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 async function connect(actor: APIRequestContext, origin: string, householdId: string) {
@@ -102,10 +107,8 @@ test('MCP-06: importerad historik läses och vanliga rättelser använder färsk
     ).toBe('completed');
     await target.restart();
     await page.goto(target.origin);
-    await openWorkspace(page);
-    await expect(
-      page.getByRole('button', { name: 'Uppgifter för Historisk lampa', exact: true }),
-    ).toBeVisible();
+    await openTable(page);
+    await expect(page.getByRole('button', { name: 'Historisk lampa', exact: true })).toBeVisible();
     const selected = await targetMcp.tool('read_history', {
       operationId: saved.operationId,
       userId: saved.userId,
@@ -193,12 +196,29 @@ test('MCP-03: typbyte bevarar riktade samband och äldre typers läsbara histori
       customValues: { serial: 42 },
     });
     await page.goto(app.origin);
-    await openWorkspace(page);
-    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(draft).toContainText('Objekttyp: Cykel');
-    await expect(draft).toContainText('Objekttyp: Motorfordon');
-    await expect(draft).toContainText('Nummer: SYNTH-42');
-    await expect(draft).toContainText('Nummer: 42');
+    await openTable(page);
+    const proposal = await readDraftProposal(page, 'Alex blå cykel');
+    await expect(proposal).toContainText('Cykel');
+    await expect(proposal).toContainText('Motorfordon');
+    const savedValues = proposal
+      .getByRole('heading', { name: 'Sparade värden', exact: true })
+      .locator('..');
+    const proposedValues = proposal
+      .getByRole('heading', { name: 'Föreslagna värden', exact: true })
+      .locator('..');
+    await expect(
+      savedValues
+        .locator('dt')
+        .filter({ hasText: /^Nummer · ändrat$/ })
+        .locator('..'),
+    ).toContainText('SYNTH-42');
+    await expect(
+      proposedValues
+        .locator('dt')
+        .filter({ hasText: /^Nummer · ändrat$/ })
+        .locator('..'),
+    ).toContainText('42');
+    await page.keyboard.press('Escape');
     const changed = await mcp.save('type-change');
     expect((await mcp.tool('read_map', { objectId: 'bike' })).relationships).toEqual(
       initial.relationships,
@@ -279,36 +299,29 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
     });
     await mcp.propose('save_draft', { operationId: 'blocked-removal' }, 'definition_in_use');
     await page.goto(app.origin);
+    await openTable(page);
+    const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
     await page
-      .getByRole('navigation', { name: 'Kartans verktyg', exact: true })
-      .getByRole('button', { name: 'Sök i kartan', exact: true })
+      .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      .getByRole('button', { name: 'Filter', exact: true })
       .click();
-    const search = page.getByRole('region', { name: 'Kartans sökning och filter' });
-    await search.getByLabel('Ta med upphörda').check();
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
-    await openWorkspace(page);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText(
-      'Upphört testobjekt',
-    );
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText('Upphört');
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).not.toContainText(
-      'Andras privata namn',
-    );
+    await filters.getByLabel('Ta med upphörda', { exact: true }).check();
+    await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toContainText('Upphört testobjekt');
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toContainText('Upphört');
+    await expect(await openDraftReview(page)).not.toContainText('Andras privata namn');
     const otherPage = await other.newPage();
     await otherPage.goto(app.origin);
-    await openWorkspace(otherPage);
-    await expect(otherPage.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Andras privata namn',
-    );
-    await expect(otherPage.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Senare privat användning',
-    );
+    const otherDraft = await openDraftReview(otherPage);
+    await expect(otherDraft).toContainText('Andras privata namn');
+    await expect(otherDraft).toContainText('Senare privat användning');
     await app.restart();
     await otherPage.reload();
-    await openWorkspace(otherPage);
-    await expect(otherPage.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Andras privata namn',
-    );
+    await expect(await openDraftReview(otherPage)).toContainText('Andras privata namn');
     expect(
       (await (await page.request.get(`${householdPath}/map`)).json()).types.some(
         (type: { id: string }) => type.id === 'race-type',
@@ -351,10 +364,23 @@ test('MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej', async 
       customValues: { battery: false },
     });
     await page.goto(app.origin);
-    await openWorkspace(page);
-    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(draft).toContainText('Batteri: Obesvarat');
-    await expect(draft).toContainText('Batteri: Nej');
+    await openTable(page);
+    let proposal = await readDraftProposal(page, 'Paneler på taket');
+    await expect(
+      proposal
+        .locator('dt')
+        .filter({ hasText: /^Batteri$/ })
+        .locator('..'),
+    ).toContainText('Ej uppgivet');
+    await page.keyboard.press('Escape');
+    proposal = await readDraftProposal(page, 'Paneler på garaget');
+    await expect(
+      proposal
+        .locator('dt')
+        .filter({ hasText: /^Batteri$/ })
+        .locator('..'),
+    ).toContainText('Nej');
+    await page.keyboard.press('Escape');
     expect((await mcp.tool('read_map')).objects).toEqual([]);
     await mcp.save('solar');
     const blocked = await mcp.type(
@@ -385,19 +411,16 @@ test('MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej', async 
     await mcp.save('catalog-changes');
     await app.restart();
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    const roof = await editTableObject(page, 'Paneler på taket');
+    await roof.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Exempelsol');
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('12.5');
     await expect(page.getByLabel('Installationsdatum', { exact: true })).toHaveValue('2026-09-01');
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('');
     await expect(page.getByLabel('Effektanteckning', { exact: true })).toHaveValue('');
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
-    await page
-      .getByRole('button', { name: 'Uppgifter för Paneler på garaget', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await page.keyboard.press('Escape');
+    const garage = await editTableObject(page, 'Paneler på garaget');
+    await garage.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('false');
     expect(
       (await mcp.tool('read_type_catalog')).types.map((type: { name: string }) => type.name),
@@ -500,11 +523,21 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
       },
     });
     await page.goto(app.origin);
-    await openWorkspace(page);
-    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(draft).toContainText('125 000,50 (Osäkert uppgivet)');
-    await expect(draft).toContainText('Avtalsvillkor: Uttryckligen inget');
-    await expect(draft).toContainText('Ospecificerat objekt');
+    await openTable(page);
+    let proposal = await readDraftProposal(page, 'Exempellån');
+    await expect(proposal).toContainText('125 000,50 (Osäkert uppgivet)');
+    await page.keyboard.press('Escape');
+    proposal = await readDraftProposal(page, 'Exempelkredit');
+    await expect(
+      proposal
+        .locator('dt')
+        .filter({ hasText: /^Avtalsvillkor$/ })
+        .locator('..'),
+    ).toContainText('Uttryckligen inget');
+    await page.keyboard.press('Escape');
+    proposal = await readDraftProposal(page, 'Familjens bil');
+    await expect(proposal).toContainText('Ospecificerat objekt');
+    await page.keyboard.press('Escape');
     await mcp.save('agreements');
     const credit = (await mcp.tool('read_map', { objectId: 'credit' })).objects[0];
     await mcp.object('credit', {
@@ -519,10 +552,8 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
     const receipt = await mcp.save('correct-used-credit');
     await app.restart();
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Exempelkredit', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    const creditForm = await editTableObject(page, 'Exempelkredit');
+    await creditForm.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await expect(page.getByLabel('Beviljat kreditutrymme', { exact: true })).toHaveValue('80 000');
     await expect(page.getByLabel('Utnyttjad kredit', { exact: true })).toHaveValue('0');
     await expect(page.getByLabel('Utnyttjad kredit: datum för uppgiften')).toHaveValue(
@@ -534,25 +565,23 @@ test('MCP-02: daterade avtal kan rättas utan påhittade uppgifter', async ({ pa
       userId: receipt.userId,
     });
     expect(selected.receipt.changes[0].before.financialFacts.usedCredit.value).toBe('12 500');
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
+    await page.keyboard.press('Escape');
     for (const name of [
       'Hyra för lägenheten',
       'Hyra för garaget',
       'Exempellån',
       'Bilens avbetalning',
     ])
-      await expect(
-        page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }),
-      ).toBeVisible();
-    await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
-      'Bilens avbetalning → Finansierar → Familjens bil',
-    );
-    await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
-      'Hyra för lägenheten → Gäller → Lägenheten',
-    );
-    await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
-      'Hyra för garaget → Gäller → Garaget',
-    );
+      await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
+    for (const [source, target] of [
+      ['Bilens avbetalning', 'Familjens bil'],
+      ['Hyra för lägenheten', 'Lägenheten'],
+      ['Hyra för garaget', 'Garaget'],
+    ]) {
+      const relationships = await openObjectRelationships(page, source);
+      await expect(relationships).toContainText(target);
+      await page.keyboard.press('Escape');
+    }
   } finally {
     await app.close();
   }

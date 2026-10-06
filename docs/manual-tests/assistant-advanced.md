@@ -22,11 +22,10 @@ De länkade integrationstesterna verifierar verktygsreglerna. Stegen här
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Ändra objekt genom **Tabell → Redigera [objektets namn]**. Läs hela
+förslag genom **Visa utkastet** och förslagets namn. Stäng läsdialogen
+innan nästa handling. Läs eller ändra samband genom **Samband för
+[objektets namn]**; alla förslag sparas separat som ett helt utkast.
 
 1. Följ [den kontrollerade klientens startguide](#controlled-mcp-client)
    för en ny tillfällig databas på `http://localhost:3301`, privat
@@ -100,8 +99,9 @@ testfallet “MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej�
 2. Be den föreslå **Paneler på taket** med Leverantör **Exempelsol**,
    Effekt **12.5**, Installationsdatum **2026-09-01** och obesvarat Batteri.
    Föreslå också **Paneler på garaget** med enbart Batteri **Nej**.
-3. Ladda om kartan. I **Hela mitt utkast** ska båda objekten och typen
-   finnas. Kontrollera **Batteri: Obesvarat** respektive **Batteri: Nej**.
+3. Ladda om kartan. I **Visa utkastet** ska båda objekten och typen
+   finnas. Öppna varje objektförslag och läs hela värdena. Batteri ska
+   visa **Ej uppgivet** respektive **Nej**. Stäng läsdialogen.
    Be assistenten spara hela utkastet.
 4. Be den ändra det använda fältet Effekt från tal till text. Kontrollera
    att detta avvisas och att beskedet säger att ett nytt fält behövs.
@@ -110,9 +110,11 @@ testfallet “MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej�
 5. Be den ändra den förifyllda typen Person till **Person i hushållet**
    med beskrivningen **Personer ger ingen inloggning**, och ta bort den
    oanvända förifyllda typen Fordon. Spara hela utkastet.
-6. Starta om servern. Öppna takets paneler i kartans lista. Kontrollera
+6. Starta om servern. Välj **Tabell → Redigera Paneler på taket** och
+   öppna avsnittet **Egna fält**. Kontrollera
    de tre angivna värdena och att Batteri och Effektanteckning är tomma.
-   Stäng formuläret och öppna garagets paneler: Batteri ska vara **Nej**.
+   Stäng formuläret och redigera **Paneler på garaget**, med **Egna fält**
+   öppet: Batteri ska vara **Nej**.
    Be assistenten läsa katalogen igen och kontrollera typändringarna.
 
 **Förväntat resultat:**
@@ -148,16 +150,18 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
    Föreslå **Familjens bil** som ett uttryckligen ospecificerat fordon
    och sambandet **Bilens avbetalning → Finansierar → Familjens bil**.
    Lämna alla andra ekonomiska uppgifter obesvarade. Granska utkastet i
-   samtalet och webbläsaren; kontrollera osäkert, okänt, inget och
-   ospecificerat. Spara hela utkastet.
+   samtalet och webbläsaren. Läs fulla förslag för Exempellån,
+   Exempelkredit och Familjens bil; kontrollera osäkert, okänt, inget och
+   ospecificerat. Stäng läsdialogen och spara hela utkastet.
 3. Be assistenten rätta enbart Exempelkredits utnyttjade kredit till **0**,
    uppgiven **2026-09-20**, och spara. Begär kvittot och den rättelsens
    historik: det tidigare beloppet och datumet ska finnas där.
-4. Starta om och ladda om kartan. Sök och öppna varje avtal i listan.
-   Öppna **Ekonomiska uppgifter och avtalsvillkor**. Kontrollera angivna
+4. Starta om och ladda om kartan. Sök varje avtal i **Tabell** och välj
+   dess redigeringsknapp. Öppna **Ekonomiska uppgifter**. Kontrollera angivna
    belopp, datum och säkerheter. Exempelkredits skuld ska fortfarande
    vara obesvarad, kreditutrymmet **80 000** och utnyttjad kredit **0**.
-   Kontrollera finansieringssambandet till bilen och båda hyresavtalens
+   Stäng formuläret. Öppna avtalens namngivna **Samband** och kontrollera
+   finansieringssambandet till bilen och båda hyresavtalens
    riktade samband till rätt bostad respektive garage.
 
 **Förväntat resultat:**
@@ -192,7 +196,8 @@ testfallet “MCP-03: typbyte bevarar riktade samband och äldre typers läsbara
    samma objekt. Granska riktningarna och spara hela utkastet.
 3. Be assistenten byta cykelns typ till Motorfordon. Välj uttryckligen
    Nummer **42**. Granska gammal typ och **SYNTH-42** samt ny typ och **42**
-   i hela utkastet. Spara och anteckna kvittots operation och författare.
+   i förslagets fulla läsdialog, under **Sparade värden** och
+   **Föreslagna värden**. Stäng, spara och anteckna kvittots identiteter.
    Kontrollera att objektets ID och båda sambandens ID är oförändrade.
 4. Ta bort den nu oanvända typen Cykel och spara. Be om historiken för
    cykeln och välj typbytets hela sparande. Läs de tidigare värdena med
@@ -238,8 +243,8 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
 4. Kontrollera att sparandet avvisas, att definitionen finns kvar i
    sparad katalog och att inget innehåll tas bort. Alex webbläsare ska
    visa Upphört testobjekt men inte Robins privata förslag. Välj först
-   **Sök i kartan → Ta med upphörda** och stäng sökpanelen. Robin ska
-   fortfarande se båda sina förslag i **Hela mitt utkast**.
+   **Tabell → Filter → Ta med upphörda** och stäng filtret. Robin ska
+   fortfarande se båda sina förslag i **Visa utkastet**.
 5. Starta om och ladda om Robins profil. Båda privata förslagen ska finnas
    kvar. Alex får fortfarande samma användningsspärr utan deras innehåll.
 
