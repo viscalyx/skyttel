@@ -1,5 +1,76 @@
 # Verifiering av den samlade kartupplevelsen
 
+## Aktuell verifiering av native arbetsflöden i #259
+
+[ARBETE-08 och ARBETE-09](household-work.md) beskriver de aktuella,
+obrutna familjefallen i
+[connected-work.spec.ts](../../tests/integration/connected-work.spec.ts).
+De använder **Tabell**, kompletta objektformulär, läsdialoger,
+**Skriv till Skyttel → Utkastet** och **Rapporter → Ändringshistorik**.
+De tidigare fria panelerna är inte en del av de aktuella stegen.
+
+Den automatiska körningen den 6 oktober 2026 gav **2 av 2 godkända fall**
+på 14,0 sekunder med två arbetare. Provad applikationskälla är
+`730e8c1451b57c355fcc39fca7cfa19a851020b6`, med källträdet för `src`
+`dbb75c4d13bb4e9aee92ca6c619b74a4bd0a5d66`.
+Körningen använder verklig Chromium `153.0.8010.12`, standardvyn
+1280 × 720 CSS-pixlar, applikationsserver, publika HTTP-anrop och en
+ny tillfällig SQLite-databas per fall. Leverantörernas inloggningssvar,
+modellens svar, transkription och mediespår är kontrollerade provsvar.
+
+Kör om båda fallen från det aktuella källträdet:
+
+```sh
+npm run build
+npx playwright test tests/integration/connected-work.spec.ts --workers=2
+```
+
+Båda fallen behåller hela den verkliga följden med sju modellanrop.
+Alex startar hushållet och bjuder in Robin genom det publika
+inbjudningsförloppet. Robin arbetar som medlem i en separat klient med
+sin privata notering. Modellen läser katalogen och föreslår två objekt
+samt **Kim Exempel → Betalar → Familjens Molnmusik** med de faktiskt
+returnerade identifierarna och versionerna.
+
+Alex rättar priset från **179** till **189 SEK per månad** och
+beskrivningen till **Rättad för hand** i det kompletta objektformuläret.
+Kims oskickade formulärtext bevaras efter Avbryt och Escape, och kastas
+först genom ett uttryckligt förlustval. Alla tre förslag läses i D:s
+fullständiga, skrivskyddade läsmodaler. De läsningarna ändrar inga förslag
+eller sparade uppgifter. Läsdialogerna öppnas och stängs uttryckligen;
+provet simulerar inte bevarade fria fönster.
+
+Inställningar bevarar samma samtal, dess oskickade meddelande och de tre
+privata förslagen. Röstfallet kontrollerar samma öppna anslutning och
+levande mikrofonspår. Textfallet framkallar ett faktiskt WebGL-avbrott i
+båda klienterna och begär ingen mikrofon, ljuduppspelning eller röstanslutning.
+Tangentbordsfokus och de synliga texternas mätta kontrast i den kompakta
+återkopplingen kontrolleras automatiskt; detta är inte skärmläsarverifiering.
+
+Ett uttryckligt modellverktyg för helhetssparande ger två objekt, ett
+samband, en faktisk lyckad operation och ett kvitto med hela före- och
+eftervärdena samt utkast- och innehållsversionen. Lokal oskickad text och
+Robins förslag ingår inte. Mikrofonens avstängning stoppar ny inspelning
+utan att omedelbart avsluta svarskanalen; omstarten avslutar mediespåren.
+Efter omstart läses samma fullständiga kvitto genom Rapporter och båda
+medlemmarna läser de gemensamma värdena. Alex nya privata rättelse och
+Robins notering förblir åtskilda åt båda håll.
+
+Detta är två automatiska funktionsflöden, ingen ny presentationsmatris,
+fullsvitkörning, fysisk enhetskontroll eller kontroll av verkligt svenskt tal.
+Inga nya vybilder har tagits för denna rapport. De äldre bilderna och
+mätningarna nedan behåller sina faktiska källversioner och ersätter inte
+aktuell verifiering mot de låsta A-, C- och D-referenserna i #244.
+
+## Historiskt underlag för #151
+
+**Allt från denna rubrik till dokumentets slut är den historiska rapporten.**
+Dess resultat, referenser, skärmbilder och miljöer avser de uttryckligen
+angivna äldre versionerna. Orden om fria paneler, tidigare navigationsvägar
+eller dåvarande slutprov beskriver inte dagens produkt. Länkar till
+manualområden kan nu visa nyare steg; den dåvarande testversionen är därför
+länkad direkt till sin fasta källversion.
+
 Rapport för [#151](https://github.com/viscalyx/skyttel/issues/151), granskad
 mot [#121](https://github.com/viscalyx/skyttel/issues/121), de bindande
 [återstående proven i #107](https://github.com/viscalyx/skyttel/issues/107#issuecomment-5848370279)
@@ -8,10 +79,10 @@ Nya resultat gäller källversion `15b1424b8624b1dcb62fe70717522d517fdd862b`
 och källträd `733878dcc1588f71ae4978380dd372d483559558`, om inget annat anges.
 Dokumentationsändringar efter provet ändrar inte den provade applikationen.
 
-## Sammanhängande arbete och resultat
+### Sammanhängande arbete och resultat
 
 [ARBETE-08 och ARBETE-09](household-work.md) är två hela, obrutna fall i
-[connected-work.spec.ts](../../tests/integration/connected-work.spec.ts).
+[det dåvarande connected-work.spec.ts](https://github.com/viscalyx/skyttel/blob/15b1424b8624b1dcb62fe70717522d517fdd862b/tests/integration/connected-work.spec.ts).
 Båda börjar med synlig Google-inloggning och hushållsstart, och använder en
 andra oberoende Microsoft-klient som bjuds in genom det verkliga gränssnittet.
 Leverantörernas svar och modellens text/tal är kontrollerade ersättningar;
@@ -76,7 +147,7 @@ bildkontroll; inte 1 416 separata mänskliga bildgranskningar.
 [Bildunderlaget](connected-experience-evidence/images.json)
 anger ursprung, bildmått och kontrollsumma för nio oförändrade originalbilder.
 
-## Presentation, referens och tillgängliga alternativ
+### Presentation, referens och tillgängliga alternativ
 
 Referensen är den godkända versionen
 `87ddb0128e25eb5982e7dd910159f628e8ed0703`. Senare beslut om kartgester och
@@ -165,7 +236,7 @@ De frysta bildägarna finns i den godkända versionens
 [samtal](https://github.com/viscalyx/skyttel/tree/87ddb0128e25eb5982e7dd910159f628e8ed0703/src/client/voice-study-assets)
 och [Inställningar](https://github.com/viscalyx/skyttel/tree/87ddb0128e25eb5982e7dd910159f628e8ed0703/src/client/admin-study-assets).
 
-## Konkreta uppföljningar från #107 och #109
+### Konkreta uppföljningar från #107 och #109
 
 Tabellen anger de verkliga produktfall som ingår i slutkontrollen. De
 kontrollerade externa tjänsterna och felfallen är avgränsade som ovan;
@@ -185,7 +256,7 @@ prototypens exempel ersätter inget av dessa flöden.
 | Fullständiga kostnadsuppgifter | [KOST-01–04](costs.md) provar separata kostnader, månadsantaganden, åtkomst, samtliga prisdetaljer, versionshistorik och återhämtning av okänt sparresultat. KOST-04 upprepas i hela matrisen för Inställningar. |
 <!-- markdownlint-enable MD013 -->
 
-## Rättelser och bevarade felresultat
+### Rättelser och bevarade felresultat
 
 Rättelserna omfattar avgränsade produktändringar: hopplänkar har läsbara
 temafärger; Inställningar har primär rubrik, navigation och innehåll med
@@ -239,7 +310,7 @@ och utkastdetaljer** innan samma kontroll av spärrat sparande. Alla elva
 hela bildarbetsfall är godkända med detta offentliga steg. De tre
 ursprungliga felspåren finns kvar; inga produktregler eller tidsgränser ändras.
 
-## Tidigare underlag och dess avgränsning
+### Tidigare underlag och dess avgränsning
 
 De 29 föregående delärendena är accepterade vid utgångsversionen `c555ab8`.
 Dess källträd motsvarar det tidigare fullprovet på `5081076`: 1 095 publika
@@ -257,7 +328,7 @@ nya hela representationsfallen provar berörda sidor och nya lagringsfel.
 Oförändrade kart- och serverregler stöds av den slutliga hela sviten och
 avgränsad källjämförelse, utan att gamla bilder ges en ny versionsetikett.
 
-## Miljöer och återstående begränsningar
+### Miljöer och återstående begränsningar
 
 <!-- markdownlint-disable MD013 -->
 | Miljö eller förmåga | Faktiskt resultat och avgränsning |

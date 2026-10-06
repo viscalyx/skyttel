@@ -389,7 +389,7 @@ and resizing”.
 ### ARBETE-08: familjeabonnemang från inloggning till delad karta
 
 **Syfte:** Prova ett oavbrutet arbete genom inloggning, text, kontrollerat
-tal, privata förslag, oberoende paneler, rättelse, Inställningar, gemensamt
+tal, privata förslag, fullständiga läsdialoger, rättelse, Inställningar, gemensamt
 sparande, omstart och en annan medlems vy.
 
 **Användare:** Alex och Robin i separata webbläsarprofiler.
@@ -422,11 +422,11 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Kopiera Robins användar-ID från **Din profil**. Kör `identity alex`
    efter inloggningen. Följ
    [inbjudningsguiden](../user-guide/access.md#bjud-in-en-skyttel-användare)
-   för att bjuda in och acceptera som Robin. Som Robin, välj **Lista →
-   Nytt objekt**, skriv **Robins notering** och **Lägg i mitt utkast**.
+   för att bjuda in och acceptera som Robin. Som Robin, välj **Nytt objekt**,
+   skriv **Robins notering** och **Lägg i utkastet och stäng**.
    Spara inte. Den gemensamma kartan ska fortfarande vara tom.
-2. Som Alex, välj **Skriv till Skyttel**. Kontrollera att medgivanderutan
-   visas och välj **Godkänn och starta**. Skicka
+2. Som Alex, välj **Skriv till Skyttel** och **Nytt samtal**. Kontrollera
+   medgivanderutan och välj **Godkänn och starta**. Skicka
    **Föreslå Familjens Molnmusik, ett familjeabonnemang för 179 SEK
    per månad.** Släpp `read_type_catalog` med `{}`. Nästa resultat ska ge
    typerna **Abonnemang**, **Person** och **Betalar**. Släpp därefter
@@ -460,19 +460,25 @@ till gemensamt kvitto och privat fortsatt arbete”.
    och `knowledge: "known"`. Släpp sedan ett vanligt `reply`.
    Hela utkastet ska visa två objekt och exakt **Kim Exempel → Betalar →
    Familjens Molnmusik**. Inget ska vara gemensamt sparat.
-4. Öppna abonnemangets **Uppgifter** från Lista och **Redigera valt objekt**.
-   Öppna **Ekonomiska uppgifter** och rätta Pris till
-   **189**. Öppna sedan
-   **Grunduppgifter** och rätta beskrivningen till **Rättad för hand**. Lägg i
-   utkastet och
-   invänta avslutat formulär och beskedet att förslaget finns i ditt
-   privata utkast när kartans inläsning är klar. Öppna abonnemangets
-   uppgifter igen och behåll panelen. Öppna Kims uppgifter och redigera
-   beskrivningen till
-   **Oskickat om Kim**, utan att lägga i utkastet. Välj **Avbryt**, kontrollera
-   förvalt Fortsätt redigera och tryck Escape. Kontrollera kvarvarande text.
-   Välj Avbryt igen och **Kasta ändringarna och fortsätt**. Öppna Kims
-   uppgifter och kontrollera en enda läspanel utan den kastade texten.
+4. Stäng textvyn, öppna **Tabell** och **Redigera Familjens Molnmusik**.
+   Öppna **Ekonomiska uppgifter** och rätta Pris till **189**. Öppna
+   **Grunduppgifter**, rätta beskrivningen till **Rättad för hand** och
+   välj **Lägg i utkastet och stäng**. Invänta avslutat formulär och
+   beskedet **Ändringen finns i ditt utkast. Kartan sparas separat.**
+   Fäll ut abonnemangets rad och välj **Läs alla uppgifter för Familjens
+   Molnmusik**. Kontrollera rättelsen och stäng med krysset. Läs Kims
+   fullständiga uppgifter på samma sätt och kontrollera rubrikfokus.
+   Stäng läsdialogen och välj **Redigera Kim Exempel**. Skriv
+   **Oskickat om Kim** som beskrivning utan att lägga i utkastet.
+   Välj **Avbryt**, kontrollera förvalt **Fortsätt redigera** och tryck
+   Escape. Kontrollera kvarvarande text. Välj **Avbryt** igen och
+   **Kasta ändringarna och fortsätt**. Läs Kims uppgifter på nytt:
+   bara en läsdialog ska finnas och den kastade texten ska saknas.
+   Stäng den. Öppna textvyn och visa utkastet. Öppna **Visa förslaget**
+   för båda objekten och Betalar-sambandet i tur och ordning. Kontrollera
+   fullständiga värden, inklusive **189 / SEK / månad** och **Rättad för
+   hand**, och stäng varje läsmodal med krysset. Ingen granskning ändrar
+   utkastet eller den gemensamma kartan.
 5. Skriv **Oskickat i samtalet** utan att skicka. Låt mikrofonen vara på
    och öppna **Inställningar**. Rubriken ska få fokus och kartarbetet döljas.
    Inställningarnas innehåll ska komma före kartans återkoppling om
@@ -480,7 +486,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    kontrollera att röstrutan visar **Lyssnar**. Ingen knapp **Aktuell
    status** eller **Visa samtals- och utkastdetaljer** finns.
    Välj **Tillbaka till kartan** och välj
-   abonnemanget och Kim genom **Uppgifter** i Lista. Öppna även
+   abonnemanget och Kim genom **Tabell → Läs alla uppgifter**. Stäng
+   varje läsdialog med krysset innan nästa öppnas. Öppna även
    **Skriv till Skyttel**. Kontrollera
    rubrikfokus, den rättade abonnemangsbeskrivningen, samma dialog och
    samtalets oskickade text. Kims uttryckligen kastade text återkommer inte.
@@ -493,21 +500,27 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Släpp exakt ett `save_draft` med den aktuella granskningens version,
    innehållsversion och `operationId: "family-save"`. Servern tilldelar
    sparandets beständiga identifierare; anteckna den från
-   **Utkast och historik → Tidigare sparförsök → Visa kvittot**.
+   **Rapporter → Ändringshistorik → Visa ändringarna**.
    Läs **Utkastet är sparat** under hushållsnamnet i tre sekunder.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
-   och öppna **Lista → Uppgifter för Kim Exempel**. Kontrollera att
-   **Oskickat om Kim** saknas både i läspanelen och sparad beskrivning. Kvittot
+   och välj **Tillbaka till arbetet** i Rapporter. Stäng textvyn och läs
+   Kims fullständiga uppgifter genom **Tabell**. Kontrollera att
+   **Oskickat om Kim** saknas både i läsdialogen och sparad beskrivning.
+   Stäng läsdialogen och återgå till textvyn. Kvittot
    finns kvar i **Rapporter → Ändringshistorik**, och
    mikrofonknappen finns kvar i verktygsraden. Robins privata notering
    ingår inte i kvittot.
-7. Stäng av mikrofonen med **Prata med Skyttel** och vänta tills
-   röstrutan har försvunnit. Kör `restart` i terminalen och ladda sedan om
-   Alex flik. Öppna **Lista → Visa historik → Visa ändringarna** för samma
+7. Stäng av mikrofonen med **Prata med Skyttel**. Kontrollera att ny
+   inspelning är av och att samma anslutning finns kvar för ett eventuellt
+   fördröjt svar. Kör `restart` i terminalen: då avslutas mediespåren.
+   Ladda om Alex flik och öppna
+   **Rapporter → Ändringshistorik → Visa ändringarna** för samma
    kvitto. Kontrollera namn, rättad beskrivning, hela prisuppgiften,
    riktningen Kim till abonnemanget och **Betalar**. Oskickad lokal text
    behöver inte överleva den uttryckliga omladdningen.
-8. Som Alex, redigera abonnemangets beskrivning till **Alex privat efteråt**
+8. Välj **Tillbaka till arbetet**. Som Alex, öppna **Tabell** och
+   **Redigera Familjens Molnmusik**, rätta beskrivningen till
+   **Alex privat efteråt**
    och lägg i utkastet utan att spara. Ladda om Robin. Robin ska se det
    gemensamma abonnemanget med **Rättad för hand**, **189 / SEK / månad**,
    Kim och Betalar-sambandet, samt enbart sin egen privata notering.
@@ -518,7 +531,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
 
 - Ett enda oavbrutet arbete går från tom installation till två gemensamma
   objekt och ett samband, med exakt ett sparande och samma kvitto efter omstart.
-- Vanlig navigation bevarar paneler, dialog, oskickad text och mikrofonläge.
+- Vanlig navigation bevarar samtalet, dess oskickade text och mikrofonläge.
+  Läsmodalerna öppnas och stängs uttryckligen; formulärförlust kräver val.
   Endast det uttryckligen granskade utkastet sparas; lokala oskickade
   uppgifter och en annan medlems privata förslag ingår aldrig.
 - Båda medlemmarna ser samma sparade information men skilda privata utkast.
@@ -555,8 +569,8 @@ utan grafik eller ljud”.
    ```
 
    Kontrollera **Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.**
-   Gör allt fortsatt arbete genom **Lista**, formulär och samtalets text.
-3. Fullfölj rättelse, panelbyten, Inställningar, uttryckligt sparande,
+   Gör allt fortsatt arbete genom **Tabell**, formulär och samtalets text.
+3. Fullfölj rättelse, läsdialoger, Inställningar, uttryckligt sparande,
    historik, omstart och båda privata utkasten enligt ARBETE-08.
    Kör även med tangentbord och tillgänglig skärmläsare. Anteckna den
    faktiska miljön separat från automatiserade kontroller.
@@ -564,10 +578,10 @@ utan grafik eller ljud”.
 **Förväntat resultat:**
 
 - Samma fullständiga slutresultat och privata gränser som ARBETE-08.
-- Grafikavbrottet hindrar inte listor, formulär, text, historik eller kvitto.
+- Grafikavbrottet hindrar inte tabell, formulär, text, historik eller kvitto.
   Ingen mikrofonbegäran, röstanslutning eller ljuduppspelning behövs.
   Automationen räknar dessa medieanrop och kräver noll.
-- Listans namngivna åtgärder ersätter grafisk träffning och dragning.
+- Tabellens namngivna åtgärder ersätter grafisk träffning och dragning.
   Ett kontrollerat grafikavbrott är inte ett verkligt skärmläsarprov.
 
 ## Bedömning och återstående manuella prov
