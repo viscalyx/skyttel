@@ -16,28 +16,30 @@ webbläsarprofil. Alla namn, adresser och beskrivningar nedan är påhittade.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+När ett befintligt objekt ska ändras, välj **Tabell** och
+**Redigera [objektets namn]**. **Samband för [objektets namn]** öppnar dess
+samband; välj ett sambands **Redigera samband** för att ändra det.
+Objektets namn öppnar den utökade läsraden och startar ingen redigering.
 
 1. Förbered en separat testinstallation med en ny, tom databas enligt
    [installationsguiden](../operations/installation.md). Använd inga verkliga
    hushållsuppgifter. Börja varje testfall med en ny testdatabas.
 2. Starta applikationen, öppna dess adress och logga in som administratören.
-   Skapa hushållet **Hushållet Linden**. Kontrollera att objektlistan är tom
-   och att **Hela mitt utkast** visar **Inga förslag**.
+   Skapa hushållet **Hushållet Linden**. Kontrollera att **Tabell** är tom
+   och att **Skriv till Skyttel → Visa utkastet** visar **Utkastet är tomt**.
+   Stäng textvyn innan du börjar formulärarbetet.
 3. Skapa objekt genom **Nytt objekt**, fyll i **Namn** och
    **Objekttyp**, ange eventuell **Beskrivning** och välj
    **Lägg i utkastet och stäng**. Låt **Identitet** vara
    **Identifierat objekt** om testfallet inte anger något annat.
-4. Skapa samband genom **Nytt samband**, välj **Från objekt**,
+4. Öppna objektets **Samband för**, välj **Nytt samband** och **Från objekt**,
    **Sambandstyp** och **Till objekt** och välj
-   **Lägg sambandet i mitt utkast**. Låt **Uppgiftens säkerhet** vara
+   **Lägg i utkastet**. Stäng med **Stäng samband** efter bekräftelsen.
+   Låt **Uppgiftens säkerhet** vara
    **Känt** om testfallet inte anger något annat.
 5. Behåll databasen vid omladdning och omstart inom ett testfall. Ett
-   sparande görs med **Spara hela utkastet**; invänta ett lyckat kvitto.
+   sparande görs via **Skriv till Skyttel → Visa utkastet → Spara hela
+   utkastet**; invänta **Utkastet är sparat** och stäng sedan textvyn.
 
 ## Söka och stänga formulär
 
@@ -58,8 +60,9 @@ the saved map”.
 
 **Steg:**
 
-1. Skriv **åSAS** i **Sök objekt**. Kontrollera vilka objekt som visas och
-   öppna **Åsas tjänst**. Kontrollera tangentbordets fokus.
+1. Öppna **Tabell**, skriv **åSAS** i **Sök objekt i tabellen** och
+   kontrollera träffarna. Öppna utkastvyn, välj sedan tabellens
+   **Redigera Åsas tjänst** och kontrollera tangentbordets fokus.
 2. Ändra namnet till **Text som inte skickas** och beskrivningen till
    **Inte heller denna text skickas**. Kontrollera **Spara hela utkastet**.
 3. Välj **Avbryt** och bekräfta **Kasta ändringarna och fortsätt**.
@@ -72,7 +75,7 @@ the saved map”.
 
 - Sökningen visar bara Åsas tjänst. När objektet öppnas får namnfältet
   fokus. Sparknappen är inaktiverad medan formuläret innehåller ändrad text.
-- Bekräftad stängning flyttar fokus till **Redigera valt objekt**. När objektet
+- Bekräftad stängning flyttar fokus till **Redigera Åsas tjänst**. När objektet
   öppnas igen visas Åsas tjänst och Gemensam musik.
 - En sökning utan träffar ger en tom objektlista. Ett tomt sökfält visar
   alla tre objekt igen.
@@ -100,15 +103,17 @@ identified without changing its links”.
 1. Lägg bankkontot **Betalkonto** i utkastet med **Identitet**
    satt till **Obesvarad identitetsfråga**. Ladda om sidan och granska
    utkastet och **Spara hela utkastet**.
-2. Öppna Betalkonto och kontrollera identiteten. Ändra den till
+2. Stäng textvyn, välj **Redigera Betalkonto** och kontrollera identiteten.
+   Ändra den till
    **Ospecificerat objekt** och lägg ändringen i utkastet.
 3. Lägg till abonnemanget **Familjemusik** och sambandet
    **Familjemusik → Betalas med → Betalkonto**. Spara hela utkastet.
-4. Ladda om sidan och öppna Betalkonto. Kontrollera att det fortfarande
+4. Ladda om sidan och välj **Redigera Betalkonto**. Kontrollera att det fortfarande
    är ospecificerat. Välj **Identifierat objekt**, ändra namnet till
    **Hushållskontot** och beskrivningen till **Gemensamt bankkonto**.
    Lägg ändringen i utkastet och spara.
-5. Ladda om sidan, granska sambandet och öppna Hushållskontot.
+5. Ladda om sidan, läs **Samband för Familjemusik**, stäng samband och
+   välj **Redigera Hushållskontot**.
 
 **Förväntat resultat:**
 
@@ -150,13 +155,13 @@ Följande testfall:
 
 1. Lägg bankkontot Betalkonto med Obesvarad identitetsfråga i utkastet.
    Lägg även Familjemusik → Betalas med → Betalkonto i utkastet.
-2. Återgå till Lista och redigera Familjemusik och skriv Oskickat om
+2. Välj Tabell och Redigera Familjemusik och skriv Oskickat om
    Familjemusik som beskrivning.
    Välj Avbryt och Kasta ändringarna och fortsätt. Granska samma utkast.
 3. Öppna Betalkontos redigering. Kontrollera synligt fokus på Namn och
    identiteten. Välj Ospecificerat objekt och skriv Rättad beskrivning.
    Välj Lägg i utkastet och stäng.
-4. Återgå till Lista och spara hela utkastet uttryckligen. Starta om och ladda
+4. Öppna Visa utkastet och spara hela utkastet uttryckligen. Starta om och ladda
    om sidan.
    Läs båda objekten och sambandet.
 
@@ -237,14 +242,17 @@ deleting a relationship”.
    som mål. Använd beskrivningen och identiteten i väljaren för att skilja
    adresserna åt. Skapa **Musikkonto → Kontaktadress** till det andra
    adressobjektet. Spara hela utkastet.
-3. Försök skapa samma inloggningssamband till det första adressobjektet
-   igen. Kontrollera statusen och antalet samband.
+3. Öppna **Samband för Musikkonto → Nytt samband** och försök lägga samma
+   inloggningssamband till det första adressobjektet i utkastet igen.
+   Kontrollera statusen och antalet samband. Välj **Avbryt redigeringen**,
+   bekräfta **Kasta ändringarna och fortsätt** och stäng samband.
 4. Öppna inloggningssambandet och kontrollera dess mål. Byt till det
-   andra adressobjektet och välj **Stäng sambandet utan att skicka**.
-   Öppna sambandet igen och kontrollera målet.
+   andra adressobjektet och välj **Avbryt redigeringen** följt av
+   **Kasta ändringarna och fortsätt**. Stäng samband, öppna samma
+   redigering igen och kontrollera målet.
 5. Byt åter till det andra adressobjektet, lägg sambandet i utkastet,
    spara och ladda om sidan. Öppna sambandet och kontrollera målet.
-6. Välj **Ta bort sambandet**, granska borttagningen,
+6. Välj **Föreslå borttagning**, stäng samband och granska borttagningen,
    spara och ladda om sidan.
 
 **Förväntat resultat:**
@@ -280,10 +288,14 @@ and can be discarded”.
 
 **Steg:**
 
-1. Välj **Ta bort Musikkonto** i listan. Granska hela utkastet.
-2. Välj **Nytt samband** och kontrollera alternativen i **Från objekt**
-   och **Till objekt**. Välj **Stäng sambandet utan att skicka**.
-3. Välj **Kasta hela utkastet**. Kontrollera objekt och samband.
+1. Öppna Musikkontos utökade tabellrad, välj **Åtgärder för Musikkonto**
+   och **Ta bort objekt**. Öppna utkastvyn och läs hela objektförslaget
+   samt båda sambandsförslagen. Stäng läsdialogerna med Escape.
+2. Stäng textvyn, öppna **Samband för Kim → Nytt samband** och kontrollera
+   alternativen i **Från objekt** och **Till objekt**. Välj
+   **Avbryt redigeringen** och **Stäng samband** utan att ändra något.
+3. Öppna utkastvyn, välj **Kasta hela utkastet** och bekräfta
+   **Ta bort hela utkastet**. Kontrollera objekt och samband från tabellen.
 4. Föreslå åter borttagning av Musikkonto. Spara hela utkastet och
    ladda om sidan.
 
@@ -386,15 +398,17 @@ shared map after review”.
 1. Välj **Nytt objekt**, skriv **Lo Exempel**, välj typen **Person** och
    skriv beskrivningen **En påhittad person**. Flytta fokus till
    **Lägg i utkastet och stäng** och tryck Retur.
-2. Granska utkastet, ladda om sidan och kontrollera namn och beskrivning.
+2. Öppna utkastvyn, granska förslaget, ladda om sidan och välj förslagets
+   rad för att kontrollera hela namnet och beskrivningen. Stäng med Escape.
 3. Starta om applikationen med samma databas. Logga in som samma användare
    i den andra webbläsarprofilen och kontrollera utkastet.
 4. Spara hela utkastet och kontrollera kvittot. Sök efter **Lo**,
-   öppna Lo Exempel, ändra namnet till **Lo Lind** och lägg i utkastet.
-   Granska sparat underlag och förslag.
-5. Välj **Kasta hela utkastet**. Öppna Lo Exempel och redigera utan ändring.
-   Välj Avbryt och sedan **Ta bort Lo Exempel** i listan. Granska utkastet
-   och spara det.
+   välj **Redigera Lo Exempel**, ändra namnet till **Lo Lind** och lägg i
+   utkastet. Öppna utkastvyn och läs hela sparade underlaget och förslaget.
+5. Stäng läsdialogen, välj **Kasta hela utkastet** och bekräfta
+   **Ta bort hela utkastet**. Stäng textvyn och öppna Lo Exempels formulär
+   utan ändring. Välj **Avbryt** och sedan **Åtgärder för Lo Exempel →
+   Ta bort objekt** i den utökade tabellraden. Granska utkastet och spara det.
 
 **Förväntat resultat:**
 
