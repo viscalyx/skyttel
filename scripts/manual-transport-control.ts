@@ -57,8 +57,8 @@ export async function createManualTransport({
     if (request.method === 'GET' && suffix === 'map') return 'read';
     if (request.method !== 'POST') return;
     if (suffix === 'map/save') return 'save';
-    if (suffix === 'map/resolve-conflict') return 'resolve';
-    if (/^map\/(?:discard|discard-proposal)$/.test(suffix)) return 'discard';
+    if (suffix === 'map/resolve') return 'resolve';
+    if (/^map\/(?:discard|discard-change|discard-review)$/.test(suffix)) return 'discard';
     if (
       /^map\/(?:draft|object-form|relationship|relationship-form|object-type|relationship-type)$/.test(
         suffix,
