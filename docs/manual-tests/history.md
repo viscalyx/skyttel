@@ -182,7 +182,9 @@ det egna utkastet eller oskickad samtalstext.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Två sparanden enligt förberedelsen och ett osparat
-förslag för **Privat person**.
+förslag för **Privat person**. Använd en provinstallation utan
+konfigurerad samtalsleverantör för att kontrollera återgången med en
+synlig samtalsnotis.
 
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), testfallet
@@ -192,18 +194,20 @@ text”.
 **Steg:**
 
 1. Öppna **Skriv till Skyttel**. Skriv ett meddelande utan att skicka det.
-   Stäng textvyn.
+   Stäng textvyn. Om samtal inte är tillgängligt, låt notisen vara kvar.
 2. Välj **Tabell** och sök efter **Lo Lind**.
 3. Välj **Rapporter** och sedan **Länk till sparandet** på tilläggets kort.
    Läs uppgifterna och kontrollera fokus på sparandets rubrik.
 4. Följ namnbytets länk på samma sätt. Kontrollera den nya länken i
    adressfältet och att rätt sparandes uppgifter öppnas.
-5. Välj **Tillbaka till arbetet** och öppna sedan textvyn igen.
+5. Välj **Tillbaka till arbetet** med pekaren utan att först stänga
+   samtalsnotisen. Öppna sedan textvyn igen.
 
 **Förväntat resultat:**
 
 - Varje sparlänk öppnar rätt detaljer och flyttar fokus till kortets rubrik.
 - Återgången visar samma tabellsökning med fokus i sökfältet.
+- En synlig samtalsnotis förblir läsbar och täcker inte återgångsknappen.
 - Utkastet och det oskickade meddelandet är oförändrade. Besöket begär
   inget medgivande och skickar inget meddelande.
 
