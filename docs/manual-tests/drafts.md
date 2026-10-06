@@ -123,8 +123,10 @@ persistent save without AI”.
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
 testfallen “UTKAST-37: closing a pending mobile save preserves its follow-up
-across map and table without stealing later focus at 390px” och samma titel
-med “320px” samt “UTKAST-37: a closed pending save restores the table
+across map and table without stealing later focus at 390px”, “UTKAST-37:
+closing a pending mobile save preserves its follow-up across map and table
+without stealing later focus at 320px” samt “UTKAST-37: a closed pending save
+restores the table
 heading when its focused follow-up disappears”.
 
 **Steg:**
@@ -1021,13 +1023,17 @@ relationship proposals”.
 
 **Steg:**
 
-1. Öppna **Lo Exempel**, ändra namnet till **Lo Lind** och välj
-   **Lägg i mitt utkast** i första fliken.
-2. Öppna appen i andra fliken. Välj **Nytt samband** och lägg
-   **Lo Lind → Använder → Molnmusik** i utkastet.
-3. Välj **Kasta hela utkastet** i första fliken utan att ladda om.
-4. Välj **Hämta aktuellt underlag**. Granska namnförslaget och sambandet.
-5. Välj **Kasta hela utkastet** igen och ladda om sidan.
+1. I första fliken: välj **Tabell → Redigera Lo Exempel**, ändra namnet
+   till **Lo Lind** och välj **Lägg i utkastet och stäng**.
+2. Öppna **Utkast → Kasta hela utkastet** i första fliken. Låt
+   bekräftelsen vara öppen utan att kasta ännu.
+3. I andra fliken: öppna **Samband för Lo Lind** i Tabell, skapa
+   **Lo Lind → Använder → Molnmusik** och lägg sambandet i utkastet.
+4. Återvänd till den äldre bekräftelsen och välj **Ta bort hela utkastet**.
+   Läs avvisningen och kontrollera att nytt kastande är spärrat.
+5. Välj **Hämta aktuellt utkast**. Läs både namnförslaget och sambandet
+   i bekräftelsen och kasta sedan hela det aktuella utkastet.
+6. Läs det tomma utkastet och de två oförändrade sparade objekten.
 
 **Förväntat resultat:**
 
@@ -1054,13 +1060,16 @@ before saving”.
 
 1. Lägg namnändringen **Lo Lind** i administratörens utkast utan att spara.
 2. Ändra samma person till **Lo Berg** som medlemmen och spara hela utkastet.
-3. Ladda om administratörens sida. Kontrollera konflikten med **Lo Berg**.
+3. Ladda om administratörens sida och öppna **Granska konflikter**.
+   Låt jämförelsen med Lo Berg och Lo Lind vara öppen.
 4. Ändra personen till **Lo Ek** som medlemmen och spara igen.
-5. Välj **Behåll mitt förslag** som administratören utan omladdning.
-6. Välj **Hämta aktuellt underlag** och granska **Lo Ek** och **Lo Lind**.
-7. Välj **Behåll mitt förslag** igen. Kontrollera medlemmens karta efter
-   omladdning innan administratören väljer **Spara hela utkastet**.
-8. Spara administratörens utkast och ladda om medlemmens sida.
+5. Välj namnet Lo Lind i den äldre jämförelsen och välj
+   **Lägg valen i utkastet**. Läs att underlaget har ändrats.
+6. Välj **Visa aktuell jämförelse**. Läs aktuellt Lo Ek och eget Lo Lind.
+7. Välj det egna namnet och **Lägg valen i utkastet** igen. Stäng med
+   Escape. Kontrollera medlemmens karta före något nytt sparande.
+8. Öppna Utkast och spara hela administratörens utkast. Ladda om
+   medlemmens sida.
 
 **Förväntat resultat:**
 
@@ -1088,17 +1097,19 @@ proposal”.
 
 1. Lägg namnändringen **Lo Lind** och ett nytt objekt **Kim Exempel** i
    administratörens utkast utan att spara.
-2. Öppna **Lo Exempel** som medlemmen, välj **Ta bort** och
-   **Spara hela utkastet**.
-3. Ladda om administratörens sida. Granska konflikten och möjliga val.
-4. Välj **Använd sparat värde**. Granska det återstående utkastet och
-   medlemmens karta innan något sparas.
-5. Välj **Spara hela utkastet** som administratören och ladda om båda sidorna.
+2. Som medlemmen: expandera Lo Exempels rad i Tabell, välj **Ta bort**
+   och spara hela utkastet separat.
+3. Ladda om administratörens sida och öppna **Granska konflikter**.
+   Läs Borttaget och det fullständiga namnförslaget.
+4. Välj **Acceptera borttagningen och kasta ditt förslag**. Stäng med
+   Escape och läs utkastet och medlemmens karta före något nytt sparande.
+5. Spara administratörens återstående utkast. Starta om applikationen
+   med samma databas och ladda om båda sidorna.
 
 **Förväntat resultat:**
 
-- Konflikten säger att objektet är borttaget. **Behåll mitt förslag**
-  erbjuds inte och hela utkastet kan inte sparas före konfliktvalet.
+- Konflikten säger att objektet är borttaget. Förslaget är läsbart
+  men inte valbart och hela utkastet kan inte sparas före konfliktvalet.
 - Valet tar bort namnförslaget men behåller **Kim Exempel** i utkastet.
   Kim finns ännu inte i medlemmens karta.
 - Efter sparandet finns **Kim Exempel** och **Molnmusik** hos båda
@@ -1125,19 +1136,22 @@ and requires a new save”.
 1. Lägg **Alex Exempel** som nytt objekt och namnändringen **Lo Lind** i
    administratörens utkast. Behåll sidan öppen.
 2. Ändra samma person till **Lo Berg** som medlemmen och spara.
-3. Välj **Spara hela utkastet** som administratören utan omladdning.
-4. Kontrollera medlemmens karta. Välj sedan **Hämta aktuellt underlag**
-   som administratören och granska de tre namnvärdena.
-5. Välj **Behåll mitt förslag**. Starta om appen med samma databas och
-   ladda om administratörens sida.
-6. Granska utkastet och välj **Spara hela utkastet**. Ladda om hos medlemmen.
+3. Öppna Utkast och välj **Spara hela utkastet** som administratören.
+4. Läs **Inget sparades**, stäng sparmodalen och textvyn och ladda om.
+   Läs hela förslaget Lo Lind från Utkast: tidigare Lo Exempel och eget
+   Lo Lind. Stäng läsningen och textvyn.
+5. Öppna **Granska konflikter** och läs aktuellt Lo Berg och eget Lo Lind.
+   Välj det egna namnet och **Lägg valen i utkastet**. Stäng med Escape.
+6. Starta om appen med samma databas och ladda om administratörens sida.
+   Läs båda förslagen, spara hela utkastet och ladda om hos medlemmen.
 
 **Förväntat resultat:**
 
 - Det första sparandet avvisas med **Inget sparades**. Medlemmen ser
   **Lo Berg** och inget **Alex Exempel**.
-- Granskningen visar underlaget **Lo Exempel**, förslaget **Lo Lind** och
-  det sparade namnet **Lo Berg**. Sparande kräver ett uttryckligt val.
+- Förslagsläsningen visar underlaget **Lo Exempel** och förslaget **Lo Lind**.
+  Konfliktjämförelsen visar det aktuellt sparade namnet **Lo Berg**.
+  Sparande kräver ett uttryckligt val.
 - Konfliktvalet behåller **Alex Exempel**, ger inget sparkvitto och
   finns kvar efter omstart. Det nya sparandet gör båda förslagen gemensamma.
 
@@ -1194,12 +1208,14 @@ and can accept the saved value”.
 
 **Steg:**
 
-1. Öppna sambandet som administratören och lägg säkerheten
-   **Osäkert uppgivet** i utkastet.
+1. Öppna **Samband för Lo Exempel** i Tabell som administratören och
+   redigera sambandet. Lägg säkerheten **Osäkert uppgivet** i utkastet.
 2. Öppna samma samband som medlemmen, välj **Uttryckligen inget**, lägg
-   det i utkastet och spara.
-3. Ladda om administratörens sida och granska konflikten.
-4. Välj **Använd sparat värde** och kontrollera utkastet och sambandet.
+   det i utkastet och spara separat.
+3. Ladda om administratörens sida och öppna **Granska konflikter**.
+4. Välj den sparade sidans värden för varje egenskap som skiljer sig.
+   Identiska rader är inaktiva. Välj **Lägg valen i utkastet** och
+   kontrollera utkastet och det sparade sambandet.
 
 **Förväntat resultat:**
 
@@ -1225,32 +1241,33 @@ and keep date certainty with its value”.
 
 **Steg:**
 
-1. Öppna sambandet som administratören. Ange **2031-04-12** som känt
-   **Sambandets slutdatum** och lägg sambandet i utkastet utan att spara.
-2. Öppna samma samband som medlemmen. Välj **Upphört** under
-   **Sambandets status**, lägg sambandet i utkastet och spara.
-3. Ladda om administratörens sida. Granska konflikten med slutdatumet och
-   den sparade statusen. Välj **Behåll mitt förslag**.
+1. Öppna **Samband för Lo Exempel** i Tabell som administratören och
+   redigera sambandet. Ange känt slutdatum **2031-04-12** och lägg
+   sambandet i utkastet utan att spara.
+2. Som medlemmen: redigera samma samband, välj **Manuellt upphört**,
+   lägg sambandet i utkastet och spara hela utkastet separat.
+3. Ladda om administratörens sida och öppna **Granska konflikter**.
+   Välj det egna slutdatumet och den sparade statusen. Välj
+   **Lägg valen i utkastet** och stäng med Escape.
 4. Kontrollera hos medlemmen att inget slutdatum är sparat. Starta om
-   appen med samma databas, ladda om administratörens sida och granska
-   hela utkastet igen. Välj **Spara hela utkastet**.
-5. Ändra slutdatumets säkerhet till **Osäkert uppgivet** som administratören.
-   Behåll datumet **2031-04-12** och lägg sambandet i utkastet.
-6. Ändra slutdatumet till **2031-05-15**, behåll säkerheten **Känt** och
-   välj statusen **Gäller fortfarande** som medlemmen. Lägg sambandet i
-   utkastet och spara.
-7. Ladda om administratörens sida, granska båda datumen, deras säkerhet
-   och den sparade statusen. Välj **Behåll mitt förslag**.
-8. Kontrollera hos medlemmen att det kända datumet **2031-05-15** fortfarande
-   är sparat. Välj **Spara hela utkastet** som administratören och ladda
-   om hos medlemmen.
+   appen med samma databas, ladda om och läs hela sambandsförslaget från
+   Utkast. Stäng läsningen och spara hela utkastet separat.
+5. Som administratören: lägg slutdatumet **2031-04-12** med säkerheten
+   **Osäkert uppgivet** i utkastet.
+6. Som medlemmen: lägg känt slutdatum **2031-05-15** och välj
+   **Gäller fortfarande**. Spara hela utkastet separat.
+7. Ladda om administratörens sida och granska datumen med deras säkerhet.
+   Välj eget osäkert datum och sparad status, välj **Lägg valen i utkastet**
+   och stäng med Escape.
+8. Kontrollera medlemmens ännu oförändrade datum. Spara administratörens
+   hela utkast och ladda om hos medlemmen.
 
 **Förväntat resultat:**
 
 - Sparande är blockerat före varje konfliktval. Valet ändrar bara utkastet
   och kräver ett nytt sparande av hela det granskade utkastet.
 - Det första lösta utkastet överlever omstart. Efter sparandet innehåller
-  sambandet både **Upphört** och det kända slutdatumet **2031-04-12**.
+  sambandet både **Manuellt upphört** och det kända slutdatumet **2031-04-12**.
 - Efter det andra sparandet innehåller sambandet **Gäller fortfarande**
   och **2031-04-12 (Osäkert uppgivet)**. Den oberoende statusen bevaras;
   det valda datumet och dess säkerhet hålls ihop.
@@ -1268,32 +1285,53 @@ säkerheten **Känt** utöver de två objekten enligt förberedelsen.
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
 testfallet “UTKAST-11: deletion after concurrent type changes retains the
-matching historical definitions”.
+matching historical definitions” och testfallet “UTKAST-11: keeping a
+changed relationship preserves it and reopens the object removal dependency”.
 
 **Steg:**
 
-1. Öppna **Åtgärder för Lo Exempel** som administratören och välj **Ta bort**.
-   Låt borttagningen av objektet och sambandet ligga kvar i utkastet.
-2. Öppna **Lo Exempel** som medlemmen. Byt **Objekttyp** till
+1. Expandera Lo Exempels rad i Tabell som administratören och välj
+   **Ta bort**. Låt objektets och sambandets borttagningar ligga i utkastet.
+2. Som medlemmen: välj **Redigera Lo Exempel**, byt objekttyp till
    **Abonnemang** och lägg ändringen i utkastet.
-3. Byt sambandets typ från **Använder** till **Används av** i samma utkast.
-   Behåll riktningen från Lo till Molnmusik och spara hela utkastet.
-4. Ladda om administratörens sida och granska konflikterna för objektet
-   och sambandet. Välj **Behåll mitt förslag** för båda.
-5. Kontrollera hos medlemmen att objektet och sambandet fortfarande finns.
-   Välj sedan **Spara hela utkastet** som administratören och ladda om
-   hos medlemmen.
+3. Öppna **Samband för Lo Exempel** och redigera sambandet. Byt typen
+   från **Använder** till **Används av**, behåll ändpunkterna och spara
+   hela medlemmens utkast separat.
+4. Ladda om administratörens sida och öppna **Granska konflikter**.
+   Läs de aktuella typerna. Välj föreslagen borttagning på objektraden
+   och **Lägg valen i utkastet**.
+5. Välj sambandet i konfliktlistan och läs hela aktuella sambandet.
+   Låt jämförelsen stå kvar medan medlemmen ändrar Molnmusiks namn till
+   **Molnmusik aktuell** och sparar hela sitt utkast.
+6. Välj föreslagen borttagning i den äldre jämförelsen och
+   **Lägg valen i utkastet**. Läs avvisningen och välj
+   **Visa aktuell jämförelse**. Kontrollera det aktuella ändpunktsnamnet.
+7. Välj föreslagen borttagning igen och **Lägg valen i utkastet**.
+   Stäng med Escape och läs hela borttagningsförslaget från Utkast.
+   Kontrollera aktuell typ och Molnmusik aktuell; stäng läsningen.
+8. Kontrollera medlemmens fortfarande oförändrade samband. Spara hela
+   administratörens utkast och ladda om hos medlemmen.
+9. Upprepa med ny förberedelse utan namnändringen i steg 5. Efter
+   objektvalet väljer du sparat samband och **Lägg valen i utkastet**.
+   Kontrollera kvarvarande objektborttagning och försök spara hela utkastet.
 
 **Förväntat resultat:**
 
 - Konflikterna visar de aktuella typerna **Abonnemang** och **Används av**.
   Hela sparandet är blockerat tills båda valen är gjorda.
 - Valen ändrar bara utkastet. Efter det nya sparandet är Lo och sambandet
-  borttagna, medan Molnmusik finns kvar.
+  borttagna, medan Molnmusik aktuell finns kvar.
 - Automationen läser historikunderlaget via HTTP. Det tidigare objektet
   och sambandet har sina aktuella typ-ID:n tillsammans med motsvarande
   definitioner för **Abonnemang** och **Används av**, samt tomma eftervärden.
-  Läsning och ångring i gränssnittet provas i [historikfallen](history.md).
+  Läsning i gränssnittet provas i [historikfallen](history.md).
+- Även en senare namnändring hos ändpunkten kräver aktuell jämförelse.
+  Det gamla valet avvisas utan ändrat utkast. Efter uttrycklig granskning
+  visar hela borttagningsförslaget den aktuella typens betydelse och
+  det aktuella ändpunktsnamnet.
+- Det sparade sambandsvalet kastar bara dess borttagningsförslag.
+  Objektborttagningen kräver ny granskning av det kvarvarande sambandet;
+  ett försök att spara avvisas utan ändrat utkast, karta eller historik.
 
 ### UTKAST-08: välj ett befintligt samband och behåll andra förslag
 
@@ -1374,21 +1412,22 @@ och vänd sambandets riktning utan att spara. Upprepa i ljust och mörkt tema.
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
 testfallen “UTKAST-25: filtered legend matches map colours and retains only
-displayed categories in light”, samma titel med “dark”.
+displayed categories in light” och “UTKAST-25: filtered legend matches map
+colours and retains only displayed categories in dark”.
 
 **Steg:**
 
-1. Stäng panelerna. Läs grönt plus, gul penna och rött kryss under
+1. Stäng textvyn och visa Karta. Läs grönt plus, gul penna och rött kryss under
    hushållets namn. Jämför färgerna med förslagen i kartan. Läs gammalt
    samband med rött kryss och streckad linje och nytt med grönt plus och
    heldragen linje utan att markera dem eller välja Alla etiketter.
 2. Öppna Navigera och panorera. Teckenförklaringens rader ska bestå.
 3. Stäng Navigation och välj det nya sambandet. Ingen rad för markerat
    objekt ska tillkomma.
-4. Öppna Lista, sök Kim Exempel och stäng panelerna. Förslagsraderna ska
+4. Öppna **Sök i kartan**, sök Kim Exempel och välj **Stäng**. Förslagsraderna ska
    försvinna. Raden för punktade etikettkopplingar ska finnas kvar.
 5. Markera Kim. Kontrollera markeringsraden. Sök sedan Inga träffar via
-   Lista och stäng panelerna. Hela teckenförklaringen ska försvinna.
+   **Sök i kartan** och välj **Stäng**. Hela teckenförklaringen ska försvinna.
 
 **Förväntat resultat:**
 
@@ -1410,13 +1449,15 @@ inte sparadressen; om ordningen inte kan styras, anteckna begränsningen.
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
 testfallet “UTKAST-26: confirmed save toast expires while failed refresh
-remains recoverable without a conversation” samt samma titel med
-“after an unknown result”.
+remains recoverable without a conversation” och “UTKAST-26: confirmed save
+toast expires while failed refresh remains recoverable without a
+conversation after an unknown result”.
 
 **Steg:**
 
 1. Lägg Lo Exempel i utkastet. Blockera hämtning av kartan och välj Spara
-   hela utkastet från Lista. Stäng sparmodalen med Escape och stäng panelerna.
+   hela utkastet från **Utkast**. Stäng **Spara utkastet** med Escape
+   och stäng textvyn.
 2. Läs Utkastet är sparat tillsammans med felet att kartan inte kunde
    hämtas. Vänta tre sekunder. Sparbeskedet försvinner; felet består.
 3. Ta bort blockeringen och välj Hämta aktuellt underlag. Felet ska
@@ -1440,7 +1481,7 @@ remains recoverable without a conversation” samt samma titel med
 
 ### UTKAST-12: behåll legend och förslag tills samma sparförsök bekräftas
 
-**Syfte:** Följa ett privat förslag med stängda paneler och skilja väntan,
+**Syfte:** Följa ett privat förslag med stängd textvy och skilja väntan,
 okänt resultat och verifierat sparande.
 
 **Användare:** Administratören.
@@ -1453,26 +1494,30 @@ för adressen som slutar med `/map/save`, enligt
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-12: closed panels retain private proposals through an
-unknown save at 1440px/390px/320px and verify the same receipt”.
+testfallen “UTKAST-12: closed work views retain private proposals through an
+unknown save at 1440px and verify the same receipt”, “UTKAST-12: closed work
+views retain private proposals through an unknown save at 390px and verify
+the same receipt” och “UTKAST-12: closed work views retain private proposals
+through an unknown save at 320px and verify the same receipt”.
 
 **Steg:**
 
-1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng panelerna med
-   kryssen.
+1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn
+   och visa Karta.
 2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
    Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
 3. Kontrollera att **Aktuell status** inte längre finns i verktygen.
    Kartans status och teckenförklaring finns under hushållets namn.
-4. Blockera sparadressen. Öppna Lista och välj **Spara hela utkastet**.
-   Stäng panelerna.
+4. Blockera sparadressen. Öppna **Utkast** och välj **Spara hela utkastet**.
+   Stäng **Spara utkastet** med Escape och stäng textvyn.
    Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
 5. Ta bort blockeringen och välj **Hämta samma kvitto igen**. Läs resultatet.
-   Öppna **Utkast och historik** och läs **Tidigare sparförsök**.
+   Öppna **Rapporter** och läs **Tidigare sparförsök**.
 
 **Förväntat resultat:**
 
-- Sparandet kräver ingen extra granskningsdialog. Ett obekräftat försök
+- Sparmodalen öppnas direkt och kan stängas med krysset eller Escape.
+  Ett obekräftat försök
   visas aldrig som säkert lyckat eller säkert misslyckat.
 - Återkopplingens knappar kan användas utan att verktygen täcker dem.
   Ingen separat statuspanel behöver öppnas eller stängas.
@@ -1500,13 +1545,13 @@ nätverksläge så att det går att välja ett annat fält under sparandet.
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
 testfallet “UTKAST-13: a verified save keeps a newer field focused without the
-removed
-status controls”.
+removed status controls”.
 
 **Steg:**
 
 1. Lägg **Lo Exempel** i utkastet och välj **Spara hela utkastet**.
-2. Medan svaret väntar, välj **Sök objekt** och skriv **Lo**.
+2. Medan svaret väntar, stäng **Spara utkastet** med Escape och stäng
+   textvyn. I Tabell, skriv **Lo** i **Sök objekt i tabellen**.
 3. Invänta sparkvittot och fortsätt skriva ett blanksteg och **Exempel**
    utan att klicka igen.
 4. Läs Utkastet är sparat under hushållets namn. Kontrollera att
@@ -1516,7 +1561,7 @@ status controls”.
 **Förväntat resultat:**
 
 - Sökfältet behåller fokus och innehåller **Lo Exempel** efter sparandet.
-- Sparbeskedet visas i tre sekunder. Kvittot finns kvar i Mina sparförsök.
+- Sparbeskedet visas i tre sekunder. Kvittot finns kvar i Rapporter → Tidigare sparförsök.
   Sökfältet behåller fokus även när återkopplingen uppdateras.
 - Det automatiserade provet håller ett verkligt lyckat serversvar för
   att säkerställa ordningen och kontrollerar att utkastet är tomt innan
@@ -1542,23 +1587,25 @@ private draft and an atomic household save”.
 
 1. Lägg **Lo Exempel** i utkastet genom formuläret med **Lägg i utkastet
    och stäng**.
-2. Välj **Skriv till Skyttel** och **Godkänn och starta**. Skriv
-   **Lägg Molnmusik i utkastet**. Kontrollera två privata förslag på
+2. Välj **Skriv till Skyttel**, skriv **Lägg Molnmusik i utkastet** och
+   välj **Skicka**. Godkänn samtalsmedgivandet när det efterfrågas.
+   Kontrollera två privata förslag på
    **Visa utkastet**.
 3. Välj **Prata med Skyttel** och säg **Lo använder Molnmusik**.
    Kontrollera att sambandet ingår och att **Visa utkastet** visar tre privata
    förslag.
 4. Skriv ett oskickat samtalsmeddelande. Besök Inställningar och återgå till
-   kartan. Stäng panelerna med kryssen. Kartan ska inte visa påminnelse om
+   kartan. Stäng textvyn. Kartan ska inte visa påminnelse om
    oskickad formulärtext. Kontrollera som medlem att den sparade kartan är tom
    och att
    administratörens förslag inte visas i medlemmens utkast.
-5. Öppna Lista och välj **Nytt objekt**. Skriv **Oskickad cykel** och
+5. Öppna Tabell och välj **Nytt objekt**. Skriv **Oskickad cykel** och
    **Texten ska finnas kvar** i beskrivningen. Välj **Avbryt** och tryck
    Escape i förlustdialogen. Kontrollera att namn och beskrivning finns
    kvar utan nytt förslag. Välj **Lägg i utkastet och stäng**.
    Granska fyra förslag i hela utkastet.
-   Välj **Spara hela utkastet** där och stäng panelerna.
+   Välj **Spara hela utkastet** från Utkast, stäng sparmodalen med Escape
+   och stäng textvyn.
 6. Invänta bekräftat kvitto. Stäng klienterna, starta om servern med samma
    databas och öppna kartan som medlem.
 
@@ -1580,8 +1627,8 @@ private draft and an atomic household save”.
 
 ### UTKAST-15: besvara nödvändig fråga före ett nytt sparbesked
 
-**Syfte:** Samma nödvändiga fråga ska hindra sparande från både textvyn
-och utkastets arbetsyta. Ett svar ska inte i sig spara utkastet.
+**Syfte:** En nödvändig fråga ska hindra utkastets sparande. Ett svar ska
+inte i sig spara utkastet.
 
 **Användare:** Administratören.
 
@@ -1591,20 +1638,19 @@ en sådan fråga, anteckna att den delen inte har verifierats.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-15: a necessary answer gates both save actions until a
+testfallet “UTKAST-15: a necessary answer gates the native draft save until a
 fresh explicit save”.
 
 **Steg:**
 
 1. Lägg **Lo Exempel** i utkastet via formuläret. Välj **Skriv till Skyttel**
-   och **Godkänn och starta**. Be Skyttel förbereda uppgiften och fråga
-   vilket kort som avses.
-2. Läs frågan i samtalstexten och stäng panelerna med kryssen. Kontrollera att
+   och be Skyttel förbereda uppgiften och fråga vilket kort som avses.
+   Skicka och godkänn samtalsmedgivandet när det efterfrågas.
+2. Läs frågan i samtalstexten och stäng textvyn. Kontrollera att
    kartan inte erbjuder sparande. Ingen separat **Nödvändigt
    svar**-ruta eller **Svara i samtalet**-knapp ska finnas.
-3. Öppna Lista och **Hela mitt utkast**. Kontrollera att **Spara hela
-   utkastet** är inaktiverad även där. Öppna även **Utkast** och kontrollera
-   dess sparikon. Kartan har ännu inga sparade objekt.
+3. Öppna **Utkast**. Kontrollera att **Spara hela utkastet** är
+   inaktiverad. Kartan har ännu inga sparade objekt eller sparförsök.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
    Vänta tills frågan är besvarad. Stäng panelerna med kryssen igen.
 5. Öppna **Utkast**. Kontrollera att sparande erbjuds men inte har genomförts.
@@ -1612,7 +1658,7 @@ fresh explicit save”.
 
 **Förväntat resultat:**
 
-- Varken textvyn eller arbetsytan kringgår den nödvändiga frågan.
+- Utkastets sparikon kringgår inte den nödvändiga frågan.
   Det privata förslaget finns kvar medan frågan besvaras.
 - Att svara skapar inget sparförsök. Först det nya uttryckliga sparbeskedet
   ger ett kvitto och gör uppgifterna till sparat kartinnehåll.
@@ -1650,7 +1696,7 @@ concurrent conflict review”.
 4. I kartans återkoppling, välj **1 konflikt i ditt utkast**. Läs
    **Granska konflikter**, **Sparat i kartan nu** och **Ditt förslag**.
 5. Kontrollera att namnvalet är nåbart utan att välja det. Stäng med
-   Escape, öppna Lista och **Uppgifter för Oskickad cykel**.
+   Escape, öppna Tabell och **Uppgifter för Oskickad cykel**.
 
 **Förväntat resultat:**
 
@@ -1665,7 +1711,7 @@ concurrent conflict review”.
 ### UTKAST-18: hitta alla konfliktslag och läs varje underlags hela värden
 
 **Syfte:** skilja objekt, samband och båda typdefinitionerna åt i status
-och läsa tidigare, föreslagna och aktuella värden med rätt avsnitt.
+och läsa tidigare, föreslagna och aktuella värden med rätt betydelser.
 
 **Användare:** Alex och Robin i skilda sessioner i samma hushåll.
 
@@ -1679,39 +1725,47 @@ igen innan respektive typförslag läggs i utkastet.
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
 testfallen “UTKAST-18: status reaches all conflict kinds and preserves
-complete snapshot values at 1440px”, samma titel med “390px”, “320px”
-och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
+complete snapshot values at 1440px”, “UTKAST-18: status reaches all conflict
+kinds and preserves complete snapshot values at 390px”, “UTKAST-18: status
+reaches all conflict kinds and preserves complete snapshot values at 320px”
+och “UTKAST-18: status reaches all conflict kinds and preserves complete
+snapshot values at 640px”. Sista fallet har 456 pixlars höjd.
 
 **Steg:**
 
 1. Alex ändrar Lo till Lo Lind, föreslår skuld 1 700 med känd säkerhet
-   och datum 2026-09-03 samt en egen anteckning.
-2. I samma privata utkast föreslår Alex objekttypens namn Min objekttyp,
+   och datum 2026-09-03 samt anteckningen Min dolda uppgift.
+2. I samma utkast föreslår Alex objekttypens namn Min objekttyp,
    avsnittet Mitt ekonomiska avsnitt och skuldens visningsnamn Min skuld.
    Dölj anteckningsfältet med värdet kvar.
-3. Alex föreslår också Min sambandstyp med riktningen **använder enligt
-   mig**, samt osäker uppgift för sambandet från Lo till Molnmusik.
+3. Alex föreslår Min sambandstyp med riktningen **använder enligt mig**
+   samt osäker uppgift för det befintliga sambandet till Molnmusik.
 4. Robin föreslår Lo Berg, skuld 2 000 med osäker säkerhet och datum
-   2026-09-02 samt en annan anteckning. Ändra båda typbeskrivningarna
-   men behåll Sparad ekonomi och Sparad skuld. Dölj anteckningsfältet
-   med värdet kvar och föreslå att sambandets mål är okänt. Spara allt.
-5. Alex laddar om kartan utan att kasta sitt utkast. Sök efter ett namn som
-   inte finns och kontrollera att fyra konflikter ändå räknas, även typerna.
-   Stäng arbetspanelerna
-   med kryssen. Välj **4 konflikter i ditt utkast** under hushållets namn
-   med tangentbord och pekare. Kontrollera fokus på Konflikter i mitt utkast.
-6. Använd tangentbordet för att besöka objekttyp, sambandstyp, samband
-   och objekt från listan. Återgå till kartan mellan destinationerna.
-7. Läs objektets tre underlag. Upprepa på telefon och i ett kort fönster.
-8. Behåll den föreslagna objekttypen med tangentbordet medan konfliktlistan
-   i hela utkastet är öppen. Fortsätt granska de återstående konflikterna.
+   2026-09-02 samt Annans dolda uppgift. Ändra typbeskrivningarna men
+   behåll Sparad ekonomi och Sparad skuld. Föreslå okänt mål och spara allt.
+5. Alex laddar om, öppnar **Sök i kartan**, söker ett obefintligt namn
+   och stänger sökningen. Fyra konflikter ska räknas trots tom karta.
+6. Öppna **4 konflikter i ditt utkast** med tangentbord. Besök objekttyp,
+   sambandstyp, samband och objekt i **Alla konflikter** med Enter.
+   Läs aktuella sparade och föreslagna värden i dialogens två kolumner.
+7. Stäng med Escape, öppna **Utkast** och hela förslaget Lo Lind.
+   Läs tidigare sparade och föreslagna värden, inklusive dolda anteckningar.
+   Läs Min objekttyps fullständiga förslag för båda avsnittsbenämningarna.
+8. Försök spara hela utkastet. Läs **Inget sparades**, stäng sparmodalen
+   och textvyn, och ladda om sidan. Öppna konflikterna igen, välj Min objekttyp
+   och välj eget värde för dess egna ändringar samt sparat värde för
+   oberoende ändringar. Bekräfta **Lägg valen i utkastet** med Enter.
+9. Kontrollera rubrikens fokus. Stäng med Escape, läs de tre återstående
+   konflikterna. Försök spara hela utkastet igen och kontrollera **Inget
+   sparades** samt oförändrade egna förslag, karta och historik.
 
 **Förväntat resultat:**
 
 - Konfliktlistans öppningskontroll är tydlig och går att träffa utan
   att aktivera knappen för hela utkastet intill.
-- Varje val öppnar rätt ändringsrubrik med synligt, åtkomligt fokus.
-  Sambandsnamnet visar riktning, båda objekten och den osäkra uppgiften.
+- Varje listval fokuserar rätt konfliktrubrik med synligt, åtkomligt fokus.
+  Sambandsnamnet visar aktuell sparad riktning och aktuella objekt samt
+  förslagets osäkra uppgift. Förslagets egna namn läses i Utkast.
 - Det tidigare underlaget visar Sparad ekonomi och Sparad skuld 1 200.
   Förslaget visar Mitt ekonomiska avsnitt och Min skuld 1 700.
   Aktuellt sparat värde visar Sparad ekonomi och Sparad skuld 2 000,
@@ -1719,11 +1773,11 @@ och “640px”. Det sista fallet använder ett 456 pixlar högt fönster.
 - Alla tre underlag innehåller sina anteckningar trots att fältet är
   dolt. Ingen uppgift försvinner eller får fel betydelse från ett annat
   underlags typdefinition.
-- Hela sparandet är spärrat. Navigeringen ändrar inte kartan, privata
+- Hela sparförsöket avvisas atomiskt. Navigeringen ändrar inte kartan, privata
   förslag eller historik, och innehållet kräver ingen vågrät rullning.
-- Efter typvalet har hela utkastets rubrik synligt fokus utan att döljas
-  bakom status. De tre återstående konflikterna spärrar fortfarande
-  sparandet. Valet ändrar bara det privata utkastet; kartan och historiken
+- Efter typvalet har konfliktrubriken synligt fokus. De tre återstående
+  konflikterna avvisar fortfarande hela sparförsöket. Valet ändrar bara det
+privata utkastet; kartan och historiken
   är oförändrade.
 
 ### UTKAST-19: rätta objektkonflikten och bevara ett oberoende förslag
@@ -1748,13 +1802,12 @@ work and saved facts until a fresh save”.
    här texten. Välj Avbryt och tryck Escape i förlustdialogen. Kontrollera
    båda värdena och oförändrat utkast, lägg därefter hela formuläret i utkastet.
 2. Välj konfliktlänken under hushållets namn och stäng dialogen med
-   Escape. Öppna Lista, **Uppgifter för Lo Lind** och
-   **Redigera valt objekt**.
+   Escape. Öppna Tabell och välj **Redigera Lo Lind**.
 3. Kontrollera rätt objektdialog och fokus i Namn. Ändra namnet till
    Lo Alm och välj **Lägg i utkastet och stäng**.
 4. Öppna konfliktknappen, välj Visa aktuell jämförelse om kontrollen visas
    och kontrollera att valet av Lo Alm är nåbart utan att välja det.
-   Stäng med Escape, öppna Lista och Uppgifter för Oskickad cykel.
+   Stäng med Escape, öppna Tabell och Uppgifter för Oskickad cykel.
    Kontrollera den bevarade beskrivningen.
 5. Öppna Granska konflikter. Välj det egna namnet Lo Alm och den sparade
    beskrivningen Spelar piano, och välj **Lägg valen i utkastet**. Stäng
@@ -1763,7 +1816,7 @@ work and saved facts until a fresh save”.
 
 **Förväntat resultat:**
 
-- Redigera valt objekt öppnar det befintliga förslaget med fokus i namnfältet.
+- Redigera Lo Lind öppnar det befintliga förslaget med fokus i namnfältet.
   Avbruten förlust bevarar cykelns text. Det oberoende cykelförslaget finns
   kvar medan Lo rättas och konflikten löses.
 - Rättelsen och konfliktvalet ändrar bara Alex utkast. Inget kvitto
@@ -1787,27 +1840,29 @@ Robin tar bort Molnmusik och sparar. Upprepa på dator och telefon.
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
 testfallen “UTKAST-20: a relationship correction replaces a deleted endpoint
-and still requires a fresh save at 1440px”, samma titel med “390px”.
+and still requires a fresh save at 1440px” och “UTKAST-20: a relationship
+correction replaces a deleted endpoint and still requires a fresh save at
+390px”.
 
 **Steg:**
 
 1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
-   hämta aktuellt underlag, eller ladda om sidan.
-2. Stäng panelerna med kryssen, välj kartans konfliktlänk och öppna hela
-utkastets konfliktlista och välj
-   sambandet. Läs informationen om borttaget objekt. Behåll mitt förslag ska
-   saknas.
-3. Använd tangentbordet till **Rätta sambandet** och tryck Enter.
-   Kontrollera fokus på Från objekt och förslagets riktning och säkerhet.
-4. Välj Garaget som Till objekt. Molnmusik ska inte kunna väljas.
-   Välj Lägg sambandet i mitt utkast och granska förslaget.
-5. Kontrollera Robins karta före Alex nya sparbesked. Spara därefter
-   hela Alex utkast och ladda om Robins karta.
+   ladda om sidan.
+2. Öppna **1 konflikt i ditt utkast**. Läs borttaget mål och förslaget.
+   Jämförelsen är läsbar, men förslaget kan inte väljas som egenskapsvärde.
+3. Stäng med Escape. Öppna Tabell → **Samband för Lo Exempel** och välj
+   **Redigera samband** vid det befintliga privata sambandsförslaget.
+4. Kontrollera Från objekt, Sambandstyp och Uppgiftens säkerhet.
+   Välj Garaget som Till objekt; Molnmusik ska inte kunna väljas.
+5. Välj **Lägg i utkastet** och **Stäng samband**. Läs hela utkastet:
+   det rättade sambandet och Privat stol finns kvar.
+6. Kontrollera Robins karta före Alex sparande. Spara därefter hela
+   Alex utkast och ladda om Robins karta.
 
 **Förväntat resultat:**
 
 - Försöket med borttaget mål sparar varken sambandet eller Privat stol.
-  Statusens korrigering öppnar det befintliga privata sambandsförslaget.
+  Tabellens ordinarie formulär för samband öppnar samma privata förslag.
 - Rättelsen behåller samma samband, riktning och osäkra uppgift. Konflikten
   försvinner när målet är giltigt. Privat stol finns kvar i utkastet.
 - Rättelsen skapar inget kvitto och ändrar inget i den gemensamma kartan.
@@ -1829,26 +1884,28 @@ Upprepa för objekttyp och sambandstyp, på dator och telefon.
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
 testfallen “UTKAST-21: object-type correction opens retained settings and
-preserves independent edits until a fresh save at 1440px”, samma titel med
-“390px”, samt “UTKAST-21: relationship-type correction opens retained
-settings and preserves independent edits until a fresh save at 1440px”,
-samma titel med “390px”.
+preserves independent edits until a fresh save at 1440px”, “UTKAST-21:
+object-type correction opens retained settings and preserves independent
+edits until a fresh save at 390px”, “UTKAST-21: relationship-type correction
+opens retained settings and preserves independent edits until a fresh save
+at 1440px” och “UTKAST-21: relationship-type correction opens retained
+settings and preserves independent edits until a fresh save at 390px”.
 
 **Steg:**
 
 1. Alex försöker spara hela utkastet. Kontrollera att inget sparas och
-   hämta aktuellt underlag, eller ladda om sidan.
-2. Välj kartans konfliktvarning och välj Min typ för rätt slags typ i
-   utkastets konfliktlista.
-   Läs det egna förslaget och Robins aktuella namn och beskrivning.
-3. Använd tangentbordet till **Rätta objekttypen** eller
-   **Rätta sambandstypen** och tryck Enter. Kontrollera sidan
-   **Typer och egna fält**, rubrikens synliga fokus och rätt typformulär.
-4. Kontrollera att formulärets namn är Min typ. Ändra det till Rättad typ
-   och lägg typförslaget i utkastet.
-5. Välj Tillbaka till kartan, öppna Lista och granska hela utkastet.
-   Behåll den egna typdefinitionen. Kontrollera Robins karta före sparande.
-6. Välj Spara hela utkastet och ladda om Robins karta.
+   ladda om sidan.
+2. Öppna **1 konflikt i ditt utkast**. Läs Min typ, Annans typ och
+   Oberoende typförklaring. Stäng med Escape.
+3. Öppna Inställningar → **Typer och egna fält**. På mobil, öppna
+   **Välj inställning** först. Visa rätt typkategori och välj **Ändra typ:
+   Min typ**. Kontrollera det befintliga formulärets namn.
+4. Ändra till Rättad typ och lägg typförslaget i utkastet.
+5. Välj Tillbaka till kartan och öppna konflikten igen. Välj det egna
+   namnet och den sparade oberoende beskrivningen. Bekräfta **Lägg valen
+   i utkastet** och kontrollera Robins karta före sparandet.
+6. Stäng med Escape, öppna **Utkast** och välj **Spara hela utkastet**.
+   Ladda om Robins karta.
 
 **Förväntat resultat:**
 
@@ -1859,64 +1916,73 @@ samma titel med “390px”.
 - Konfliktvalet bevarar Oberoende typförklaring tillsammans med Rättad typ.
   Ett nytt uttryckligt sparande delar dessa uppgifter och skapar ett kvitto.
 
-### UTKAST-22: konfliktval återför fokus till hela utkastet
+### UTKAST-22: konfliktval behåller användbart fokus utan att spara
 
-**Syfte:** Fortsätta granskningen med tangentbord när konfliktens egna
-valknappar försvinner utan att kartan sparas automatiskt.
+**Syfte:** Fortsätta granskningen med tangentbord när valknapparna
+ersätts av resultatet utan att kartan sparas automatiskt.
 
 **Användare:** Alex och Robin i skilda sessioner i samma hushåll.
 
 **Förutsättningar:** Lo Exempel är sparat. Alex föreslår Lo Lind och
-Robin sparar Lo Berg. Prova på telefon. Upprepa för båda konfliktvalen.
+Robin sparar Lo Berg. Prova på telefon och upprepa för båda sidorna.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallen “UTKAST-22: a saved conflict choice returns focus to the draft
-without saving” och “UTKAST-22: a proposed conflict choice returns focus
-to the draft without saving”.
+testfallen “UTKAST-22: a saved conflict choice keeps the review heading
+focused and restores usable toolbar focus without saving” och “UTKAST-22:
+a proposed conflict choice keeps the review heading focused and restores
+usable toolbar focus without saving”.
 
 **Steg:**
 
-1. Alex väljer kartans konfliktvarning och sedan Objekt: Lo Lind i
-   utkastets konfliktlista.
-2. Använd tangentbordet till Använd sparat värde eller Behåll mitt förslag,
-   och tryck Enter. Ge inget sparbesked.
-3. Kontrollera fokus, privat utkast, Robins sparade karta och historiken.
+1. Välj **1 konflikt i ditt utkast** och läs **Granska konflikter**.
+2. Välj sparade eller föreslagna värden för de egenskaper som skiljer sig.
+   Fokusera **Lägg valen i utkastet** och tryck Enter. Spara inte kartan.
+3. Kontrollera resultatet och fokus på konfliktens rubrik. Tryck Escape.
+4. Kontrollera fokus på **Karta** när den ursprungliga konfliktknappen
+   försvinner. Jämför eget utkast, Robins karta och historiken.
 
 **Förväntat resultat:**
 
-- Fokus hamnar på den synliga rubriken Hela mitt utkast när konfliktvalet
-  är klart. Konfliktens valknappar försvinner och beskedet ber om granskning.
-- Sparat värde tar bort namnförslaget. Eget förslag behåller Lo Lind i
-  utkastet. Båda valen lämnar Lo Berg gemensamt sparat och skapar inget kvitto.
+- Rubriken Lo Lind behåller synligt fokus efter bekräftelsen.
+  Resultatet visar att valen finns i utkastet eller att förslaget tagits bort.
+- Escape stänger modalgranskningen och återför fokus till en synlig,
+  användbar kontroll i verktygsfältet när öppningsknappen försvinner.
+- Sparade värden tar bort namnförslaget. Eget namn behåller Lo Lind.
+  Båda alternativen lämnar Lo Berg sparat och skapar inget kvitto.
 
-### UTKAST-23: fördröjt konfliktval bevarar senare sökfokus
+### UTKAST-23: väntande konfliktval skyddar fokus före fortsatt sökning
 
-**Syfte:** Fortsätta söka medan servern bekräftar ett privat konfliktval
-utan att ett senare fokusval avbryts.
+**Syfte:** Skydda ett pågående konfliktval och sedan fortsätta i tabellen
+utan att ett fördröjt resultat avbryter den fortsatta sökningen.
 
 **Användare:** Alex och Robin i skilda sessioner i samma hushåll.
 
 **Förutsättningar:** Samma namnkonflikt som i UTKAST-22. Testmiljön kan
-fördröja svaret efter att den riktiga servern behandlar ett konfliktval.
+hålla det riktiga svaret efter att servern behandlar konfliktvalet.
 
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
-testfallet “UTKAST-23: delayed conflict resolution preserves a newer search
-and the private result”.
+testfallet “UTKAST-23: delayed conflict resolution protects pending focus
+and allows explicit table continuation”.
 
 **Steg:**
 
-1. Alex öppnar Lista och väljer Behåll mitt förslag. Fördröj svaret.
-2. Kontrollera att valknappen är inaktiv. Skriv Lo i Sök objekt.
-3. Släpp fram det riktiga svaret. Läs beskedet och kontrollera sökfältet,
-   utkastet, Robins karta och historiken. Ge inget sparbesked.
+1. Öppna Tabell och **1 konflikt i ditt utkast**. Välj ditt föreslagna
+   namn och övriga aktuella värden. Bekräfta **Lägg valen i utkastet**.
+2. Håll svaret. Kontrollera väntande besked och inaktiva bekräftelse-
+   och stängknappar. Tryck Escape; dialogen ska finnas kvar.
+3. Släpp fram svaret. Kontrollera resultatet och rubrikens fokus.
+4. Stäng med Escape och skriv Lo i **Sök objekt i tabellen**.
+   Kontrollera söktext och fokus samt utkast, Robins karta och historik.
 
 **Förväntat resultat:**
 
-- Sökfältet behåller texten Lo och synligt fokus efter att svaret kommer.
-- Lo Lind finns i det privata utkastet. Lo Berg är fortfarande gemensamt
-  sparat och ingen historikgrupp eller kvitto tillkommer.
+- Pågående val stannar i modalgranskningen; Escape lämnar inte ett
+  obekräftat kommando. Rubriken behåller synligt fokus när svaret kommer.
+- Efter uttrycklig stängning behåller sökfältet texten Lo och fokus.
+- Lo Lind finns i eget utkast. Lo Berg är fortfarande sparat och ingen
+  historikgrupp eller kvitto tillkommer.
 
 ### UTKAST-24: återfinn konfliktval och ett enda nytt sparkvitto
 
@@ -1933,20 +1999,23 @@ enbart svaret efter serverns behandling. Upprepa på dator och telefon.
 **Integrationstest:**
 [draft-conflicts.spec.ts](../../tests/integration/draft-conflicts.spec.ts),
 testfallen “UTKAST-24: lost resolution and save responses recover the private
-choice and one fresh receipt at 1440px”, samma titel med “390px”.
+choice and one fresh receipt at 1440px” och “UTKAST-24: lost resolution and
+save responses recover the private choice and one fresh receipt at 390px”.
 
 **Steg:**
 
-1. Alex öppnar Lista och väljer Behåll mitt förslag. Avbryt svaret efter
-   att servern behandlar valet. Läs felet och kontrollera att sparande spärras.
-2. Kontrollera Robins karta och historiken. Välj Hämta aktuellt underlag
-   som Alex. Granska Lo Lind, Spelar piano och Privat stol i utkastet.
-3. Ladda om Alex sida, öppna Lista och kontrollera att samma privata
-   resultat finns kvar. Ge fortfarande inget sparbesked.
-4. Välj Spara hela utkastet i Lista. Stäng panelerna och avbryt
-   svaret efter att servern genomför sparandet.
-5. Läs Sparutfall okänt. Välj Hämta samma kvitto igen. Kontrollera Robins
-   karta, det tomma privata utkastet och den nya historikgruppen.
+1. Öppna **1 konflikt i ditt utkast** från Tabell. Välj det egna namnet
+   och sparade oberoende egenskaper, och bekräfta **Lägg valen i utkastet**.
+   Bryt svaret efter serverns behandling. Läs det oklara utfallet och
+   kontrollera att en ny bekräftelse är spärrad.
+2. Kontrollera Robins karta och historiken. Välj **Kontrollera om valet
+   lades i utkastet**. Läs resultatet och stäng med Escape.
+3. Öppna **Utkast** och hela förslaget Lo Lind. Läs Spelar piano, stäng
+   läsningen och ladda om. Kontrollera Lo Lind och Privat stol i utkastet.
+4. Välj **Spara hela utkastet**. Bryt svaret efter genomfört sparande.
+   Läs **Sparandet kunde inte bekräftas** i **Spara utkastet**.
+5. Välj **Kontrollera sparandet igen**. Kontrollera bekräftelsen, tomt
+   utkast, Robins karta och den enda nya historikgruppen.
 
 **Förväntat resultat:**
 
@@ -1961,18 +2030,22 @@ choice and one fresh receipt at 1440px”, samma titel med “390px”.
 
 ### UTKAST-16: använd Navigation och utkastets återkoppling tillsammans
 
-**Syfte:** Behålla åtkomst till personlig placering och sparande när båda
-ytorna är synliga, även när förstoring kräver rullning.
+**Syfte:** Behålla åtkomst till personlig placering och sparande genom växling
+mellan kartan
+och textvyn, även när förstoring kräver rullning.
 
 **Användare:** Administratören.
 
 **Förutsättningar:** Lo Exempel är sparad i kartan. Blå cykeln finns som
-nytt privat förslag. Börja med stängd arbetsyta.
+nytt privat förslag. Börja med stängd textvy och Navigation.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallen “UTKAST-16: navigation and draft feedback keep lower controls
-usable in both opening orders at 1440px”, samma titel med “640px” och “320px”.
+testfallen “UTKAST-16: navigation and native draft review keep controls
+usable through both opening orders at 1440px”, “UTKAST-16: navigation and
+native draft review keep controls usable through both opening orders at
+640px” och “UTKAST-16: navigation and native draft review keep controls
+usable through both opening orders at 320px”.
 
 **Steg:**
 
@@ -1982,10 +2055,11 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 2. Använd tangentbord och pekare för att flytta Lo i alla sex riktningar
    i Navigation.
    Rulla vid behov till de nedre kontrollerna.
-3. Öppna Lista. Flytta fokus till **Spara hela utkastet** och kontrollera
-   att knappen går att nå utan att spara. Det privata förslaget ska bestå.
-4. Välj **Stäng navigering**. Kontrollera fokus på **Navigera**.
-   Upprepa efter att först ha fokuserat hela utkastets sparknapp.
+3. Välj **Stäng navigering** och kontrollera fokus på **Navigera**.
+   Öppna **Utkast** och fokusera **Spara hela utkastet**. Kontrollera att
+   knappen går att nå med pekare utan att spara. Stäng textvyn.
+4. Upprepa efter att först ha öppnat Utkast och fokuserat sparknappen,
+   därefter stängt textvyn och öppnat Navigera.
 5. Upprepa på smal skärm och vid hög förstoring.
 
 **Förväntat resultat:**

@@ -1,7 +1,22 @@
 import { expect, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openSettings,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import {
+  openObjectRelationships,
+  readDraftProposal,
+  readTableObject,
+} from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
@@ -21,7 +36,7 @@ for (const width of [1280, 390, 320]) {
         const initial = await read();
         await page.goto(installation.origin);
         await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
-        await openWorkspace(page);
+        await openTable(page);
         await openSettings(page);
         const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
         if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
@@ -53,10 +68,7 @@ for (const width of [1280, 390, 320]) {
         expect(typedDraft.objects).toEqual(initial.objects);
         expect(typedDraft.types).toEqual(initial.types);
         await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-        await page
-          .getByRole('region', { name: 'Lista och utkast', exact: true })
-          .getByRole('button', { name: 'Nytt objekt', exact: true })
-          .click();
+        await openNewObject(page);
         const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
         await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
         await expect(form.getByRole('alert', { name: 'Formuläret innehåller fel' })).toBeFocused();
@@ -78,10 +90,7 @@ for (const width of [1280, 390, 320]) {
         await section.getByLabel('Placering', { exact: true }).fill('Södertak');
         await section.getByLabel('Reserv', { exact: true }).selectOption('false');
         await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-        await page
-          .getByRole('region', { name: 'Lista och utkast', exact: true })
-          .getByRole('button', { name: 'Nytt objekt', exact: true })
-          .click();
+        await openNewObject(page);
         await form.getByLabel('Namn', { exact: true }).fill('Batteriet');
         await form
           .getByLabel('Objekttyp', { exact: true })
@@ -90,6 +99,9 @@ for (const width of [1280, 390, 320]) {
         await form.getByRole('button', { name: 'Uppgifter', exact: true }).click();
         await expect(section.getByLabel('Reserv', { exact: true })).toHaveValue('');
         await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+        await openSettings(page);
+        if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
+        await navigation.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
         await page.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
         const relationshipType = page.getByRole('group', {
           name: 'Sambandstypens definition',
@@ -104,11 +116,13 @@ for (const width of [1280, 390, 320]) {
         await relationshipType
           .getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' })
           .click();
+        await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+        await openObjectRelationships(page, 'Paneler på taket');
         await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
         const relationship = page.getByRole('group', { name: 'Sambandets detaljer', exact: true });
-        await relationship
-          .getByLabel('Från objekt')
-          .selectOption({ label: 'Paneler på taket (Solutrustning)' });
+        await relationship.getByLabel('Från objekt').selectOption({
+          label: 'Paneler på taket · Solutrustning · Beskrivning till den nya typen',
+        });
         await relationship
           .getByLabel('Sambandstyp', { exact: true })
           .selectOption({ label: 'Komplettering' });
@@ -117,8 +131,8 @@ for (const width of [1280, 390, 320]) {
           .selectOption('uncertain');
         await relationship
           .getByLabel('Till objekt')
-          .selectOption({ label: 'Batteriet (Solutrustning)' });
-        await relationship.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+          .selectOption({ label: 'Batteriet · Solutrustning · Ingen beskrivning' });
+        await stageRelationshipAndClose(page);
         const proposed = await read();
         expect(proposed.objects).toEqual([]);
         expect(proposed.relationships).toEqual([]);
@@ -154,12 +168,26 @@ for (const width of [1280, 390, 320]) {
         });
         await installation.restart();
         await page.reload();
-        await openWorkspace(page);
-        const draft = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+        await openTable(page);
+        const draft = await openDraftReview(page);
         await expect(draft).toContainText('Solutrustning');
         await expect(draft).toContainText('Paneler på taket');
-        await expect(draft).toContainText('Reserv: Nej');
-        await expect(draft).toContainText('Reserv: Obesvarat');
+        const proposedPanels = await readDraftProposal(page, 'Paneler på taket');
+        await expect(
+          proposedPanels
+            .locator('dt')
+            .filter({ hasText: /^Reserv$/ })
+            .locator('..'),
+        ).toContainText('Nej');
+        await closeSupportDialog(page, 'Paneler på taket');
+        const proposedBattery = await readDraftProposal(page, 'Batteriet');
+        await expect(
+          proposedBattery
+            .locator('dt')
+            .filter({ hasText: /^Reserv$/ })
+            .locator('..'),
+        ).toContainText('Ej uppgivet');
+        await closeSupportDialog(page, 'Batteriet');
         expect((await read()).draft).toEqual(proposed.draft);
         const response = page.waitForResponse(
           (value) => value.url() === `${path}/save` && value.request().method() === 'POST',
@@ -169,8 +197,12 @@ for (const width of [1280, 390, 320]) {
         expect(savedResponse.status()).toBe(200);
         const { receipt }: { receipt: SaveReceipt } = await savedResponse.json();
         await expect(
-          page.getByRole('region', { name: 'Kartans status', exact: true }),
-        ).toContainText(/sparat/i);
+          page.getByRole('dialog', { name: 'Spara utkastet', exact: true }),
+        ).not.toBeVisible();
+        await expect(
+          page.getByRole('status', { name: 'Sparbekräftelse', exact: true }),
+        ).toContainText('Utkastet är sparat');
+        await closeTextView(page);
         expect(receipt.objectTypes?.map(({ id }) => id)).toEqual([type?.id]);
         expect(receipt.relationshipTypes?.map(({ id }) => id)).toEqual([customRelationship?.id]);
         expect(receipt.changes.map(({ after }) => after?.id).sort()).toEqual(
@@ -182,7 +214,7 @@ for (const width of [1280, 390, 320]) {
         ]);
         await installation.restart();
         await page.reload();
-        await openWorkspace(page);
+        await openTable(page);
         const saved = await read();
         expect(saved.objects).toHaveLength(2);
         expect(saved.objects.find(({ id }) => id === panels?.id)).toMatchObject({
@@ -195,15 +227,17 @@ for (const width of [1280, 390, 320]) {
           expect.objectContaining({ id: edge?.id, ...edge?.after }),
         ]);
         expect(saved.draft.changes).toEqual([]);
-        await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
+        await expect(await openObjectRelationships(page, 'Paneler på taket')).toContainText(
           'Paneler på taket → kompletteras av → Batteriet (Osäkert uppgivet)',
         );
-        await page
-          .getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true })
-          .click();
+        await closeSupportDialog(page, 'Samband för Paneler på taket');
+        const completePanels = await readTableObject(page, 'Paneler på taket');
         await expect(
-          page.getByRole('region', { name: 'Paneler på taket', exact: true }),
-        ).toContainText('Placering: Södertak');
+          completePanels
+            .locator('dt')
+            .filter({ hasText: /^Placering$/ })
+            .locator('..'),
+        ).toContainText('Södertak');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );

@@ -2,10 +2,14 @@ import { expect, type Page, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
 import {
+  closeSupportDialog,
+  closeTextView,
   createHousehold,
+  openDraftReview,
   openMap,
+  openNewObject,
   openSettings,
-  openWorkspace,
+  openTable,
   signIn,
   utilityButton,
 } from '../support/client.js';
@@ -16,6 +20,7 @@ import {
   turnMicrophoneOn,
   voiceBox,
 } from '../support/conversation-page.js';
+import { openObjectRelationships } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -118,17 +123,25 @@ for (const theme of ['light', 'dark'])
       await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
       await page.getByRole('button', { name: /^Välj samband: Molnmusik/ }).click();
       await expect(legend).not.toContainText('markerat objekt');
-      await openWorkspace(page);
-      await page.getByLabel('Sök objekt', { exact: true }).fill('Kim Exempel');
-      await openMap(page);
+      await (await utilityButton(page, 'Sök i kartan')).click();
+      const mapSearch = page.getByRole('region', {
+        name: 'Kartans sökning och filter',
+        exact: true,
+      });
+      await mapSearch
+        .getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true })
+        .fill('Kim Exempel');
+      await mapSearch.getByRole('button', { name: 'Stäng', exact: true }).click();
       await expect(legend).not.toContainText('föreslås');
       await expect(legend).not.toContainText('tidigare samband');
       await expect(legend).toContainText('Punkter');
       await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
       await expect(legend).toContainText('Ring: markerat objekt');
-      await openWorkspace(page);
-      await page.getByLabel('Sök objekt', { exact: true }).fill('Inga träffar');
-      await openMap(page);
+      await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
+      await mapSearch
+        .getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true })
+        .fill('Inga träffar');
+      await mapSearch.getByRole('button', { name: 'Stäng', exact: true }).click();
       await expect(legend).toHaveCount(0);
       expect((await read()).draft.relationships?.[0].id).toBe(edge.id);
       expect((await read()).draft.relationships?.[0].before?.sourceId).toBe('lo');
@@ -146,11 +159,8 @@ for (const recoverUnknown of [false, true])
       await signIn(page.request, app.origin);
       await createHousehold(page.request, app.origin);
       await page.goto(app.origin);
-      await openWorkspace(page);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openTable(page);
+      await openNewObject(page);
       await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
       await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const mapReads = /\/map(?:\?.*)?$/;
@@ -162,8 +172,10 @@ for (const recoverUnknown of [false, true])
           await route.fetch();
           await route.abort();
         });
+      await openDraftReview(page);
       await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
       await closeSaveDialog(page);
+      await closeTextView(page);
       await openMap(page);
       const status = page.getByRole('region', { name: 'Kartans status', exact: true });
       if (recoverUnknown) {
@@ -191,7 +203,7 @@ for (const recoverUnknown of [false, true])
   });
 
 for (const width of [1440, 390, 320])
-  test(`UTKAST-12: closed panels retain private proposals through an unknown save at ${width}px and verify the same receipt`, async ({
+  test(`UTKAST-12: closed work views retain private proposals through an unknown save at ${width}px and verify the same receipt`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -202,11 +214,8 @@ for (const width of [1440, 390, 320])
       const { household } = await (await createHousehold(page.request, installation.origin)).json();
       const path = `${installation.origin}/api/households/${household.id}/map`;
       await page.goto(installation.origin);
-      await openWorkspace(page);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openTable(page);
+      await openNewObject(page);
       await page.getByLabel('Namn', { exact: true }).fill('Familjeabonnemanget');
       await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await openMap(page);
@@ -232,9 +241,11 @@ for (const width of [1440, 390, 320])
         await held;
         await route.abort();
       });
-      await openWorkspace(page);
+      await openTable(page);
+      await openDraftReview(page);
       await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
       await closeSaveDialog(page);
+      await closeTextView(page);
       await openMap(page);
       await expect(status).toContainText('Väntar på sparkvitto');
       await expect(legend).toBeVisible();
@@ -355,11 +366,8 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     ).toBe(200);
     await page.addInitScript({ content: liveBrowserFixtureSource });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     personId = (await read()).draft.changes[0].id;
@@ -395,19 +403,15 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await expect(status).not.toContainText('Oskickad formulärtext');
     const memberPage = await member.newPage();
     await memberPage.goto(installation.origin);
-    await openWorkspace(memberPage);
-    await expect(memberPage.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Inga förslag',
-    );
+    await openTable(memberPage);
+    await expect(await openDraftReview(memberPage)).toContainText('Utkastet är tomt.');
+    await closeTextView(memberPage);
     const beforeMember: MapState = await (await member.request.get(path)).json();
     expect(beforeMember.objects).toEqual([]);
     expect(beforeMember.relationships).toEqual([]);
     expect(beforeMember.draft.changes).toEqual([]);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     const form = page.locator('dialog.object-dialog');
     await form.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
     await form.getByLabel('Beskrivning', { exact: true }).fill('Texten ska finnas kvar');
@@ -442,7 +446,8 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
       await held;
       await route.continue();
     });
-    await openWorkspace(page);
+    await openTable(page);
+    await openDraftReview(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await closeSaveDialog(page);
     await openMap(page);
@@ -482,13 +487,13 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await installation.restart();
     const reopened = await member.newPage();
     await reopened.goto(installation.origin);
-    await openWorkspace(reopened);
-    const objects = reopened.getByRole('list', { name: 'Objekt', exact: true });
+    await openTable(reopened);
+    const objects = reopened.getByRole('region', { name: 'Hushållets tabell', exact: true });
     for (const name of ['Lo Exempel', 'Molnmusik', 'Oskickad cykel'])
       await expect(objects).toContainText(name);
-    await expect(reopened.getByRole('list', { name: 'Samband', exact: true })).toContainText(
-      'Lo Exempel → Använder → Molnmusik',
-    );
+    const relationships = await openObjectRelationships(reopened, 'Lo Exempel');
+    await expect(relationships).toContainText('Lo Exempel → Använder → Molnmusik');
+    await closeSupportDialog(reopened, 'Samband för Lo Exempel');
     const shared: MapState = await (await member.request.get(path)).json();
     expect(shared.objects).toEqual(saved.objects);
     expect(shared.relationships).toEqual(saved.relationships);
@@ -511,11 +516,8 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const held = new Promise<void>((resolve) => {
@@ -529,18 +531,17 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
       await held;
       await route.fulfill({ response });
     });
+    await openDraftReview(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await closeSaveDialog(page);
     await expect.poll(() => committed).toBe(true);
-    const search = page.getByLabel('Sök objekt', { exact: true });
+    await closeTextView(page);
+    const search = page.getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true });
     await search.fill('Lo');
     release?.();
     await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
       'Utkastet är sparat',
     );
-    await expect(
-      page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
-    ).not.toContainText('föreslås');
     await expect(search).toBeFocused();
     await page.keyboard.type(' Exempel');
     await expect(search).toHaveValue('Lo Exempel');
@@ -548,13 +549,17 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
     await expect(tools.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(0);
     await expect(saveToast(page)).toHaveCount(1);
     await expect(search).toBeFocused();
+    await openMap(page);
+    await expect(
+      page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
+    ).not.toContainText('föreslås');
   } finally {
     release?.();
     await installation.close();
   }
 });
 
-test('UTKAST-15: a necessary answer gates both save actions until a fresh explicit save', async ({
+test('UTKAST-15: a necessary answer gates the native draft save until a fresh explicit save', async ({
   page,
 }) => {
   let calls = 0;
@@ -590,11 +595,8 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
     const path = `${installation.origin}/api/households/${household.id}/map`;
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await startConversationWithText(page);
@@ -612,17 +614,9 @@ test('UTKAST-15: a necessary answer gates both save actions until a fresh explic
     await expect(
       status.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
     ).toHaveCount(0);
-    await openWorkspace(page);
+    const review = await openDraftReview(page);
     await expect(
-      page
-        .getByRole('region', { name: 'Hela mitt utkast', exact: true })
-        .getByRole('button', { name: 'Spara hela utkastet', exact: true }),
-    ).toBeDisabled();
-    await page.getByRole('button', { name: 'Utkast', exact: true }).click();
-    await expect(
-      page
-        .getByRole('region', { name: 'Utkastet', exact: true })
-        .getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+      review.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
     ).toBeDisabled();
     expect((await read()).objects).toEqual([]);
     expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual([]);
@@ -663,7 +657,7 @@ for (const viewport of [
   { width: 640, height: 500 },
   { width: 320, height: 250 },
 ])
-  test(`UTKAST-16: navigation and draft feedback keep lower controls usable in both opening orders at ${viewport.width}px`, async ({
+  test(`UTKAST-16: navigation and native draft review keep controls usable through both opening orders at ${viewport.width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -710,6 +704,14 @@ for (const viewport of [
         (await page.request.get(`${path}/view`)).json();
       let version = 0;
       for (const first of ['navigation', 'status']) {
+        if (first === 'status') {
+          const draft = await openDraftReview(page);
+          const save = draft.getByRole('button', { name: 'Spara hela utkastet', exact: true });
+          await save.focus();
+          await save.click({ trial: true });
+          await expect(save).toBeFocused();
+          await closeTextView(page);
+        }
         if (first === 'navigation')
           await tools.getByRole('button', { name: 'Navigera', exact: true }).click();
         await expect(status).toBeVisible();
@@ -723,6 +725,7 @@ for (const viewport of [
             statusBox.x + statusBox.width <= navigationBox.x ||
             navigationBox.y + navigationBox.height <= statusBox.y ||
             statusBox.y + statusBox.height <= navigationBox.y,
+          JSON.stringify({ navigationBox, statusBox }),
         ).toBe(true);
         for (const direction of ['vänster', 'höger', 'uppåt', 'nedåt', 'framåt', 'bakåt']) {
           const move = navigation.getByRole('button', {
@@ -734,15 +737,14 @@ for (const viewport of [
           await expect.poll(async () => (await view()).positions[0]?.version).toBe(++version);
         }
         expect(await read()).toEqual(shared);
-        await openWorkspace(page);
-        const save = page
-          .getByRole('region', { name: 'Hela mitt utkast', exact: true })
-          .getByRole('button', { name: 'Spara hela utkastet', exact: true });
+        await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+        await expect(tools.getByRole('button', { name: 'Navigera', exact: true })).toBeFocused();
+        const draft = await openDraftReview(page);
+        const save = draft.getByRole('button', { name: 'Spara hela utkastet', exact: true });
         await save.focus();
         await save.click({ trial: true });
         await expect(save).toBeFocused();
-        await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-        await expect(tools.getByRole('button', { name: 'Navigera', exact: true })).toBeFocused();
+        await closeTextView(page);
         expect(await read()).toEqual(shared);
       }
     } finally {

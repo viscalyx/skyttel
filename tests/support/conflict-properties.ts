@@ -1,4 +1,4 @@
-import { type APIRequestContext, expect, type Page } from '@playwright/test';
+import { type APIRequestContext, expect, type Locator, type Page } from '@playwright/test';
 import type { MapState, ObjectValue, RelationshipValue } from '../../src/shared/map.js';
 import { createHousehold, signIn } from './client.js';
 import { createInstallation, type Identity, robin } from './installation.js';
@@ -73,8 +73,14 @@ export async function conflictCollaborators(
   return { installation, path, post, read, propose, save, userId: user.id };
 }
 
-/** Choose proposed changes and retain independently saved properties through the public dialog. */
-export async function applyProposedConflictChanges(page: Page, savedText?: string) {
+export type ConflictPropertyChoice = 'saved' | 'proposed';
+
+/** Choose one side of actual differing properties and apply through the native dialog. */
+export async function applyConflictPropertyChoices(
+  page: Page,
+  choice: ConflictPropertyChoice,
+  savedText?: string,
+) {
   await page.getByRole('button', { name: /^\d+ konflikt(?:er)? i ditt utkast$/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
   await expect(
@@ -86,6 +92,19 @@ export async function applyProposedConflictChanges(page: Page, savedText?: strin
     );
   const refresh = dialog.getByRole('button', { name: 'Visa aktuell jämförelse' });
   if (await refresh.isVisible()) await refresh.click();
+  await chooseConflictProperties(dialog, choice);
+  await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText(
+    choice === 'saved' ? 'Förslaget har tagits bort ur ditt utkast' : 'Valen finns i ditt utkast',
+  );
+  await page.keyboard.press('Escape');
+}
+
+/** Select actual enabled ordinary property rows without submitting them. */
+export async function chooseConflictProperties(dialog: Locator, choice: ConflictPropertyChoice) {
+  await expect(
+    dialog.getByRole('button', { name: 'Stäng konfliktdialogen', exact: true }),
+  ).toBeEnabled();
   const proposed = dialog
     .getByRole('region', { name: 'Ditt förslag', exact: true })
     .getByRole('button');
@@ -94,12 +113,20 @@ export async function applyProposedConflictChanges(page: Page, savedText?: strin
     .getByRole('button');
   for (let index = 0; index < (await proposed.count()); index++) {
     const field = proposed.nth(index);
-    if (await field.isDisabled()) continue;
-    if (await field.getByText('Ditt föreslagna värde', { exact: true }).count())
+    if (await field.isDisabled()) {
+      await expect(field.getByText('Samma värde', { exact: true })).toBeVisible();
+      continue;
+    }
+    if (
+      choice === 'proposed' &&
+      (await field.getByText('Ditt föreslagna värde', { exact: true }).count())
+    )
       await field.click();
     else await saved.nth(index).click();
   }
-  await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
-  await expect(dialog.getByRole('status')).toContainText('Valen finns i ditt utkast');
-  await page.keyboard.press('Escape');
+}
+
+/** Preserve the existing proposed-choice API for retained public scenarios. */
+export async function applyProposedConflictChanges(page: Page, savedText?: string) {
+  await applyConflictPropertyChoices(page, 'proposed', savedText);
 }

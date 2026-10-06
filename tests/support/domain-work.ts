@@ -64,7 +64,16 @@ export async function readDraftProposal(page: Page, name: string) {
 /** Open the administrator's actual catalogue entry in Settings. */
 export async function openTypeDefinitions(page: Page) {
   await openSettings(page);
-  await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+  const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor', exact: true });
+  const link = navigation.getByRole('link', {
+    name: 'Typer och egna fält',
+    exact: true,
+    includeHidden: true,
+  });
+  await expect(link).toBeAttached();
+  if (!(await link.isVisible()))
+    await navigation.getByText('Välj inställning', { exact: true }).click();
+  await link.click();
   const definitions = page.getByRole('heading', { name: 'Typer och egna fält', exact: true });
   await expect(definitions).toBeVisible();
   return definitions;
