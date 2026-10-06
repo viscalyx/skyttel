@@ -49,6 +49,45 @@ async function center(node: Locator) {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
+async function exposed(node: Locator) {
+  await expect
+    .poll(() =>
+      node.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        if (box.left < 0 || box.top < 0 || box.right > innerWidth || box.bottom > innerHeight)
+          return false;
+        return [
+          [box.left + 8, box.top + 8],
+          [box.right - 8, box.top + 8],
+          [box.left + 8, box.bottom - 8],
+          [box.right - 8, box.bottom - 8],
+          [box.left + box.width / 2, box.top + box.height / 2],
+        ].every(([x, y]) => {
+          const hit = document.elementFromPoint(x, y);
+          return hit !== null && element.contains(hit);
+        });
+      }),
+    )
+    .toBe(true);
+}
+
+async function separate(first: Locator, second: Locator) {
+  await expect
+    .poll(async () => {
+      const a = await first.boundingBox();
+      const b = await second.boundingBox();
+      return Boolean(
+        a &&
+          b &&
+          (a.x + a.width <= b.x ||
+            b.x + b.width <= a.x ||
+            a.y + a.height <= b.y ||
+            b.y + b.height <= a.y),
+      );
+    })
+    .toBe(true);
+}
+
 test('NAVIGATION-01: normal and mini navigation move independently with keyboard and cancelled dragging', async ({
   page,
 }) => {
@@ -190,13 +229,13 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
     const { lo, path, read } = await arrange(page, installation.origin);
     const shared = await read();
     for (const [width, height] of [
+      [320, 250],
+      [844, 390],
       [1440, 1000],
       [390, 1000],
       [320, 1000],
-      [844, 390],
       [700, 600],
       [640, 500],
-      [320, 250],
     ]) {
       await page.setViewportSize({ width, height });
       for (const navigationFirst of [true, false]) {
@@ -269,6 +308,25 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
             }),
           )
           .toBe(true);
+        if (combinedNotice) {
+          await separate(notice, navigation);
+          await separate(notice, panel);
+          await exposed(notice.locator('p'));
+          const lastValue = panel.locator('dd').last();
+          await expect(lastValue).not.toHaveText('');
+          await lastValue.scrollIntoViewIfNeeded();
+          await exposed(lastValue);
+          const relationships = panel.getByRole('button', {
+            name: 'Samband för Lo Exempel',
+            exact: true,
+          });
+          await relationships.scrollIntoViewIfNeeded();
+          await exposed(relationships);
+          await relationships.click({ trial: true });
+          await panel
+            .getByRole('heading', { name: 'Lo Exempel', exact: true })
+            .scrollIntoViewIfNeeded();
+        }
         const a = await navigation.boundingBox();
         const b = await panel.boundingBox();
         if (!a || !b) throw new Error('Both work areas must be visible.');
@@ -350,8 +408,22 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         }
         if (combinedNotice) {
           await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
+          const zoom = navigation.getByRole('button', { name: 'Zooma in', exact: true });
+          await zoom.scrollIntoViewIfNeeded();
+          await exposed(zoom);
+          await zoom.click();
+          const pan = navigation.getByRole('button', { name: 'Panorera vänster', exact: true });
+          await pan.scrollIntoViewIfNeeded();
+          await exposed(pan);
+          await pan.click();
+          await separate(notice, navigation);
+          await separate(notice, panel);
+          const lastValue = panel.locator('dd').last();
+          await lastValue.scrollIntoViewIfNeeded();
+          await exposed(lastValue);
+          await expect(panel).toContainText(text);
           await page.screenshot({
-            path: `/tmp/skyttel-244/259-navigation-notice-${width}x${height}-${navigationFirst ? 'navigation-first' : 'details-first'}.png`,
+            path: `/tmp/skyttel-244/259-notice-combination-${width}x${height}-${navigationFirst ? 'navigation-first' : 'details-first'}.png`,
           });
           const unchangedAfterMoves = await read();
           const closeNotice = notice.getByRole('button', { name: 'Stäng notisen', exact: true });

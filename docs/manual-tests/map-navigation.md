@@ -79,6 +79,8 @@ in both opening orders”.
    Vid 844 × 390 och 320 × 250: använd en provinstallation utan samtalstjänst,
    aktivera **Prata med Skyttel** före öppningen och låt den verkliga
    otillgänglighetsnotisen vara öppen under samma steg.
+   Läs uppgiftsytans sista värde och nå **Samband för Lo Exempel** med
+   notisen kvar. Rulla tillbaka för att läsa rubriken.
 2. På dator: flytta navigationen åt vänster med Skift+pil. Ändra fönstrets
    bredd lite och återställ den. Navigationens möjliga placering och
    uppgiftsytans placering ska bestå. Flytta åt vänster igen.
@@ -89,9 +91,11 @@ in both opening orders”.
 4. Välj **Lägg i utkastet och stäng** med tangentbordet. Läs den föreslagna
    beskrivningen i uppgiftsytan. Rulla navigationens innehåll vid behov
    och välj **Flytta Lo Exempel: bakåt**. Vänta på bekräftad personlig vy.
-5. Panorera, byt till mininavigering och zooma med knapparna. Läs den
-   oförändrade föreslagna beskrivningen. Om otillgänglighetsnotisen är öppen,
-   fokusera och aktivera dess **Stäng notisen** utan att ändra utkastet.
+5. Panorera, byt till mininavigering och zooma med knapparna medan
+   otillgänglighetsnotisen fortfarande är öppen. Rulla hela navigationen
+   vid behov i det kortaste fönstret. Läs den oförändrade föreslagna
+   beskrivningen och uppgiftsytans sista värde. Fokusera först därefter
+   notisens **Stäng notisen** och aktivera den utan att ändra utkastet.
    Hushållets sparade uppgifter
    ska fortfarande vara oförändrade.
 6. Ladda om och upprepa med detaljer först och navigation sedan, på
@@ -101,6 +105,10 @@ in both opening orders”.
 
 - Navigation och fasta uppgifter täcker inte varandra. Innehållet går
   att rulla när utrymmet är litet, med nåbara kontroller och synligt fokus.
+- Den öppna samtalsnotisen har en egen plats. Den täcker varken
+  navigationens kontroller eller uppgiftsytans läsbara innehåll. Zoom,
+  panorering, sista värdet och uppgiftsytans åtgärder går att nå utan
+  att först stänga notisen.
 - Navigation kan flyttas med tangentbord och pekare inom användbart
   utrymme, utan att täcka den fasta läsytan. Ingen ny flyttbar
   redigeringspanel eller återupptagningsingång införs.
@@ -135,7 +143,7 @@ while empty and multiple selections retain camera controls”.
 2. Använd vänster, höger, uppåt, nedåt, framåt och bakåt. Vänta på sparad
    personlig vy efter varje rörelse.
 3. Markera även Kim med Ctrl/Cmd. Öppna navigationen igen.
-4. Avmarkera båda genom listan eller Ctrl/Cmd och kontrollera navigationen.
+4. Avmarkera båda med Ctrl/Cmd i kartan och kontrollera navigationen.
 5. Starta om servern, ladda om sidan och kontrollera placeringarna samt
    hushållets sparade uppgifter och utkast.
 
