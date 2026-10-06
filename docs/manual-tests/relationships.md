@@ -587,7 +587,7 @@ same-owner relationship proposal”.
 1. I första fönstret, öppna tabellen, Samband för Alex och Redigera samband.
    Ändra säkerheten till Osäkert uppgivet. Kör
    `relationshipProbe('lost-before')` och välj Lägg i utkastet.
-2. I andra fönstret, redigera samma samband till Ospecificerat objekt och
+2. I andra fönstret, redigera samma samband till Obesvarad identitetsfråga och
    lägg i utkastet. Kontrollera att inget identifierat målobjekt anges.
    Stäng sambandsdialogen, skapa Lo som Person och lägg även det i utkastet.
 3. I första fönstret, välj Kontrollera om ändringen lades i utkastet.
@@ -597,7 +597,7 @@ same-owner relationship proposal”.
 4. Välj Stäng samband och Fortsätt redigera. Kontrollera att de försökta
    värdena finns kvar. Välj Stäng samband igen och bekräfta Kasta ändringarna
    och fortsätt. Öppna Samband för Alex och Redigera samband igen.
-5. Läs det aktuella formuläret: säkerheten är Ospecificerat objekt och
+5. Läs det aktuella formuläret: säkerheten är Obesvarad identitetsfråga och
    ingen väljare för Till objekt visas. Skicka eller ta inte bort något.
 
 **Förväntat resultat:**
@@ -607,7 +607,7 @@ same-owner relationship proposal”.
   granskning och ger inga påhittade framgångsbesked.
 - Stängning skyddas av förlustvarningen. Avbruten förlust behåller de
   försökta värdena. Bekräftad stängning påverkar inte senare förslag.
-- Det befintliga sambandet är fortfarande Ospecificerat objekt utan mål,
+- Det befintliga sambandet är fortfarande Obesvarad identitetsfråga utan mål,
   Lo och båda tidigare objektförslagen finns kvar och den gemensamma kartan
   är tom. Automatiseringen provar även den försenade gamla HTTP-begärans
   avvisning och oförändrat aktuellt utkast.
