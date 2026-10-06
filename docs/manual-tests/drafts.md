@@ -1652,7 +1652,7 @@ fresh explicit save”.
 3. Öppna **Utkast**. Kontrollera att **Spara hela utkastet** är
    inaktiverad. Kartan har ännu inga sparade objekt eller sparförsök.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
-   Vänta tills frågan är besvarad. Stäng panelerna med kryssen igen.
+   Vänta tills frågan är besvarad. Stäng textvyn med krysset igen.
 5. Öppna **Utkast**. Kontrollera att sparande erbjuds men inte har genomförts.
    Välj **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
 
@@ -1777,7 +1777,7 @@ snapshot values at 640px”. Sista fallet har 456 pixlars höjd.
   förslag eller historik, och innehållet kräver ingen vågrät rullning.
 - Efter typvalet har konfliktrubriken synligt fokus. De tre återstående
   konflikterna avvisar fortfarande hela sparförsöket. Valet ändrar bara det
-privata utkastet; kartan och historiken
+  privata utkastet; kartan och historiken
   är oförändrade.
 
 ### UTKAST-19: rätta objektkonflikten och bevara ett oberoende förslag
