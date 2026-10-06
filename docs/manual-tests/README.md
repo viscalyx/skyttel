@@ -102,8 +102,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 
 - [Objektlistor](object-lists.md): tabell med fullständiga uppgifter, skilda
   statusar, svenska sorteringsriktningar, 50 objekt per sida och bevarat
-  läge på dator och mobil; fullständig läsning och sambandskedjor utan
-  kartgrafik, uttrycklig identitet och sparade/föreslagna preciseringar,
+  läge på dator och mobil; nästa och föregående motsvarande radknapp när
+  redigering eller kartbesök döljer en rad; fullständig läsning och
+  sambandskedjor utan kartgrafik, uttrycklig identitet och
+  sparade/föreslagna preciseringar,
   långa namn, modalernas fokus och återgång även när en sida försvinner;
   separat sökning, mobil filterdialog med knapp för aktuella träffar, egna
   detaljträffar, aktuell rad, teckensammansättning, utkastfiltrets återställning,

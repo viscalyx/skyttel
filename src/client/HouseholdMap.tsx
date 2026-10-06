@@ -1700,7 +1700,9 @@ export function HouseholdMap({
           mapAvailable={mapAvailable}
           onSelect={(object) => selectObject(object, 'select')}
           onNew={() => edit()}
-          onEdit={(object) => edit(object)}
+          onEdit={(object, restoreFocus) =>
+            requestLeave(() => editConfirmed(object, true, restoreFocus))
+          }
           onRead={(object, restoreFocus) =>
             setReadEntry({ kind: 'object', id: object.id, restoreFocus })
           }

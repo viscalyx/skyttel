@@ -1,7 +1,135 @@
 import { expect, test } from '@playwright/test';
+import type { MapState } from '../../src/shared/map.js';
+import { createHousehold, signIn } from '../support/client.js';
 import { startConversationWithText } from '../support/conversation-page.js';
 import { prepareHouseholdTable } from '../support/household-table.js';
 import { createInstallation } from '../support/installation.js';
+
+for (const [caseId, action, title] of [
+  [
+    'TABELL-04',
+    'edit',
+    'disappearing edited rows restore the next Edit control then previous then heading',
+  ],
+  [
+    'TABELL-05',
+    'reveal',
+    'map visits restore the corresponding table control after its row disappears',
+  ],
+] as const) {
+  test(`${caseId}: ${title}`, async ({ page }) => {
+    const installation = await createInstallation();
+    try {
+      await signIn(page.request, installation.origin);
+      const { household } = await (await createHousehold(page.request, installation.origin)).json();
+      const path = `${installation.origin}/api/households/${household.id}/map`;
+      const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+      const post = async (route: string, data: object) => {
+        const current = await read();
+        const response = await page.request.post(`${path}/${route}`, {
+          headers: { origin: installation.origin },
+          data: { version: current.draft.version, contentVersion: current.contentVersion, ...data },
+        });
+        expect(response.status(), await response.text()).toBe(200);
+      };
+      const typeId = (await read()).types[0].id;
+      for (const name of ['Alpha', 'Beta', 'Gamma'])
+        await post('draft', {
+          id: `focus-${name}`,
+          baseRevision: null,
+          value: { typeId, name: `Fokus ${name}`, description: '' },
+        });
+      await post('save', { operationId: `table-${action}-focus` });
+      const saved = await read();
+      await page.goto(`${installation.origin}/households/${household.id}`);
+      await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      await table.getByRole('searchbox', { name: 'Sök objekt i tabellen' }).fill('Fokus');
+      const control = (name: string) =>
+        table.getByRole('button', {
+          name: action === 'edit' ? `Redigera Fokus ${name}` : `Visa Fokus ${name} i kartan`,
+          exact: true,
+        });
+      await control('Beta').click();
+      if (action === 'edit') {
+        await page
+          .getByRole('dialog', { name: 'Redigera Fokus Beta', exact: true })
+          .getByRole('button', { name: 'Avbryt', exact: true })
+          .click();
+      } else {
+        await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+      }
+      await expect(control('Beta')).toBeFocused();
+      for (const [name, remaining] of [
+        ['Beta', 'Gamma'],
+        ['Gamma', 'Alpha'],
+        ['Alpha', null],
+      ] as const) {
+        await control(name).click();
+        if (action === 'reveal') {
+          await page
+            .getByRole('button', { name: `Välj objekt: Fokus ${name}`, exact: true })
+            .dblclick();
+          await page.getByRole('button', { name: `Redigera Fokus ${name}`, exact: true }).click();
+        }
+        const form = page.getByRole('dialog', { name: `Redigera Fokus ${name}`, exact: true });
+        await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+        await form.getByLabel('Objektets status', { exact: true }).selectOption('ended');
+        await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+        await expect(form).not.toBeVisible();
+        if (action === 'reveal')
+          await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+        await expect(control(name)).toHaveCount(0);
+        await expect(
+          remaining
+            ? control(remaining)
+            : table.getByRole('heading', {
+                name: 'Hushållets tabell',
+                exact: true,
+              }),
+        ).toBeFocused();
+        await expect(table.getByRole('searchbox', { name: 'Sök objekt i tabellen' })).toHaveValue(
+          'Fokus',
+        );
+        const current = await read();
+        expect(current.objects).toEqual(saved.objects);
+        expect(
+          current.draft.changes.find((change) => change.id === `focus-${name}`)?.after?.lifecycle,
+        ).toBe('ended');
+      }
+      expect((await read()).draft.changes).toHaveLength(3);
+      await expect(
+        table.getByRole('heading', { name: 'Inga objekt matchar', exact: true }),
+      ).toBeVisible();
+      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+      await page
+        .getByRole('dialog', { name: 'Tabellens filter', exact: true })
+        .getByLabel('Ta med upphörda')
+        .check();
+      await page.keyboard.press('Escape');
+      for (const name of ['Alpha', 'Beta', 'Gamma']) {
+        await table.getByRole('button', { name: `Fokus ${name}`, exact: true }).click();
+        const details = table.getByRole('cell').filter({
+          has: page.getByRole('heading', { name: `Fokus ${name} · alla uppgifter`, exact: true }),
+        });
+        await expect(details.getByText('Sparat: Följ slutdatum', { exact: true })).toBeVisible();
+        await expect(details).toContainText('◇ Ditt förslag: Manuellt upphört');
+      }
+      await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+      const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+      await expect(draft.getByRole('rowheader')).toHaveCount(3);
+      for (const name of ['Alpha', 'Beta', 'Gamma']) {
+        const row = draft.getByRole('row').filter({
+          has: page.getByRole('button', { name: `Visa förslaget: Fokus ${name}`, exact: true }),
+        });
+        await expect(row).toContainText('Status: Följ slutdatum → Manuellt upphört');
+      }
+      expect((await read()).objects).toEqual(saved.objects);
+    } finally {
+      await installation.close();
+    }
+  });
+}
 
 test('TABELL-01: Swedish natural sorting, pagination and expanded rows survive map visits', async ({
   page,

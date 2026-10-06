@@ -638,6 +638,88 @@ draft and unsent conversation”.
 - Kvarstående mänskliga prov omfattar NVDA, VoiceOver, touch,
   skärmtangentbord, 200/400 procents förstoring och kontrastbedömning.
 
+### TABELL-04: försvunnen redigerad rad ger fokus till motsvarande knapp
+
+**Syfte:** Bevara användbart fokus när redigering döljer en filtrerad rad.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Starta om provinstallationen enligt Förbered hushållets
+tabell. Skapa **Fokus Alpha**, **Fokus Beta** och **Fokus Gamma** med
+**Nytt objekt**, samma objekttyp och **Lägg i utkastet och stäng**.
+Lämna objektens status på **Följ slutdatum** när de skapas.
+Öppna **Utkast**, välj **Spara hela utkastet** och invänta bekräftelsen.
+Stäng textvyn. Öppna Tabell, sök på **Fokus**, välj stigande namnsortering
+och lämna **Ta med upphörda** omarkerad. Endast de tre aktuella objekten
+ska visas. Prova med tangentbord och anteckna webbläsare och hjälpmedel.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+testfallet “TABELL-04: disappearing edited rows restore the next Edit control
+then previous then heading”.
+
+**Steg:**
+
+1. Öppna **Redigera Fokus Beta** med tangentbordet. Välj **Avbryt**.
+   Kontrollera att fokus återgår till samma redigeringsknapp.
+2. Öppna samma formulär igen. Öppna **Livscykel och utseende**, ändra
+   **Objektets status** till **Upphört** och välj **Lägg i utkastet och stäng**.
+   Kontrollera att Beta försvinner och fokus går till **Redigera Fokus Gamma**.
+3. Gör samma statusändring för Gamma. Kontrollera att Gamma försvinner
+   och fokus går till **Redigera Fokus Alpha** på föregående rad.
+4. Gör samma statusändring för Alpha. Kontrollera att tabellen visar
+   **Inga objekt matchar** och fokus går till rubriken **Hushållets tabell**.
+5. Kontrollera att sökningen fortfarande är Fokus. Öppna Filter och markera
+   **Ta med upphörda**. Expandera varje objekts rad och läs Status:
+   **Sparat: Följ slutdatum** och **Ditt förslag: Manuellt upphört**.
+   Öppna Utkast och läs
+   de tre statusförslagen. Spara dem inte.
+
+**Förväntat resultat:**
+
+- Avbryt återställer samma knapp. När raden försvinner väljs nästa rads
+  redigeringsknapp, sedan föregående rads och slutligen tabellrubriken.
+- Fokusramen går att följa och knappen går att använda med tangentbord.
+  Sökningen består och de tre statusändringarna ligger endast i ditt utkast.
+
+### TABELL-05: återgång från kartan ersätter en försvunnen kartknapp
+
+**Syfte:** Återgå till motsvarande tabellåtgärd efter ändringar i kartan.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation med de tre sparade objekten,
+sökningen och filtret enligt TABELL-04. Kartgrafiken ska fungera.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+testfallet “TABELL-05: map visits restore the corresponding table control
+after its row disappears”.
+
+**Steg:**
+
+1. Välj **Visa Fokus Beta i kartan**. Återgå med **Tabell** och kontrollera
+   att samma kartknapp har fokus.
+2. Välj kartknappen igen. Öppna Betas uppgifter genom att dubbelklicka
+   objektet, eller håll Ctrl+Alt och klicka på objektets kontroll.
+   Välj **Redigera Fokus Beta**, öppna **Livscykel och utseende** och välj
+   **Upphört** som objektets status. Välj **Lägg i utkastet och stäng**.
+3. Återgå med Tabell. Kontrollera att Beta försvinner och fokus går till
+   **Visa Fokus Gamma i kartan**. Upprepa kartbesöket och statusändringen
+   för Gamma; fokus ska därefter gå till **Visa Fokus Alpha i kartan**.
+4. Upprepa för Alpha. Återgå till Tabell och kontrollera fokus på rubriken
+   **Hushållets tabell**, tomt resultat och sökningen Fokus.
+5. Markera **Ta med upphörda** i tabellens Filter och expandera varje rad.
+   Kontrollera Status: **Sparat: Följ slutdatum** och
+   **Ditt förslag: Manuellt upphört**.
+   Läs även de tre statusförslagen i Utkast utan att spara.
+
+**Förväntat resultat:**
+
+- Kartbesöket bevarar tabelläget. Återgång ger samma kartknapp när den finns
+  kvar, annars nästa rads kartknapp, sedan föregående och sist tabellrubriken.
+- Redigering ändrar endast ditt utkast; sökningen och sparade objekt består.
+
 ## Separat sökning i karta och tabell
 
 För dessa fall startar du provinstallationen med

@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react';
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, MapState, ObjectType } from '../shared/map.js';
+import { usableFocusTarget } from './modal-focus.js';
 import { ObjectReadDetails } from './ObjectReadDetails.js';
 import {
   initialObjectSearch,
@@ -24,15 +25,6 @@ export type HouseholdTableRow = {
   removed: boolean;
   proposal?: 'Nytt' | 'Ändrat' | 'Föreslagen borttagning';
 };
-
-function usable(element: HTMLElement | null): element is HTMLElement {
-  return Boolean(
-    element?.isConnected &&
-      element.getClientRects().length &&
-      !element.closest('[hidden], [inert]') &&
-      !element.matches(':disabled'),
-  );
-}
 
 /** Includes saved deletions for table filters, without adding them to the map. */
 export function householdTableRows(state: MapState, types: ObjectType[]): HouseholdTableRow[] {
@@ -91,7 +83,7 @@ export function HouseholdTable({
   selectedIds: string[];
   onSelect: (object: MapObject) => void;
   onNew?: () => void;
-  onEdit?: (object: MapObject) => void;
+  onEdit?: (object: MapObject, restoreFocus: () => void) => void;
   onRelationships?: (object: MapObject, restoreFocus: () => void) => void;
   relationshipCounts?: Map<string, number>;
   onRead?: (object: MapObject, restoreFocus: () => void) => void;
@@ -160,7 +152,7 @@ export function HouseholdTable({
           (control) =>
             control.dataset.tableObject === id && control.dataset.tableAction === previous.action,
         );
-        if (usable(control ?? null)) return control;
+        if (usableFocusTarget(control ?? null)) return control;
       }
     }
     return heading.current;
@@ -172,7 +164,7 @@ export function HouseholdTable({
       order: found.map((row) => row.object.id),
     };
     return () => {
-      const target = usable(opener) ? opener : replacementFocus(previous);
+      const target = usableFocusTarget(opener) ? opener : replacementFocus(previous);
       target?.focus({ preventScroll: true });
     };
   }
@@ -185,7 +177,7 @@ export function HouseholdTable({
     }
     if (active && !wasActive.current) {
       const target =
-        visited.current && usable(lastFocus.current)
+        visited.current && usableFocusTarget(lastFocus.current)
           ? lastFocus.current
           : visited.current
             ? replacementFocus(lastRowFocus.current)
@@ -200,7 +192,8 @@ export function HouseholdTable({
       // A full-page return can change the surrounding toolbar after this layout.
       // Keep the remembered scroll whenever the focused control remains usable.
       const revealFocusedControl = () => {
-        if (!target?.isConnected || document.activeElement !== target || !usable(target)) return;
+        if (!target?.isConnected || document.activeElement !== target || !usableFocusTarget(target))
+          return;
         const box = target.getBoundingClientRect();
         if (box.top < 0 || box.bottom > innerHeight || box.left < 0 || box.right > innerWidth)
           target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -212,7 +205,7 @@ export function HouseholdTable({
     } else if (
       active &&
       lastFocus.current &&
-      !usable(lastFocus.current) &&
+      !usableFocusTarget(lastFocus.current) &&
       document.activeElement === document.body
     ) {
       replacementFocus(lastRowFocus.current)?.focus({ preventScroll: true });
@@ -424,8 +417,12 @@ export function HouseholdTable({
                               type="button"
                               aria-label={`Redigera ${object.name}`}
                               title="Redigera"
+                              data-table-object={object.id}
+                              data-table-action="edit"
                               disabled={workDisabled}
-                              onClick={() => onEdit(object)}
+                              onClick={(event) =>
+                                onEdit(object, captureReturnFocus(event.currentTarget))
+                              }
                             >
                               <WorkspaceIcon name="detail" />
                             </button>
@@ -453,6 +450,8 @@ export function HouseholdTable({
                               type="button"
                               aria-label={`Visa ${object.name} i kartan`}
                               title="Visa i kartan"
+                              data-table-object={object.id}
+                              data-table-action="reveal"
                               disabled={!mapAvailable || workDisabled}
                               onClick={() => onReveal(object)}
                             >

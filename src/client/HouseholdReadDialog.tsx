@@ -4,7 +4,7 @@ import type { MapRelationship, MapState, RelationshipType } from '../shared/map.
 import { knowledgeLabels, relationshipLabel } from '../shared/relationship-label.js';
 import { useFormLeave } from './FormLeave.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
-import { trapDialogTab } from './modal-focus.js';
+import { trapDialogTab, usableFocusTarget } from './modal-focus.js';
 import { ObjectReadDetails } from './ObjectReadDetails.js';
 import {
   RelationshipForm,
@@ -57,23 +57,14 @@ export function householdReadRelationships(state: MapState, types: RelationshipT
   return [...rows.values()];
 }
 
-function usable(element: HTMLElement | null): element is HTMLElement {
-  return Boolean(
-    element?.isConnected &&
-      element.getClientRects().length &&
-      !element.closest('[hidden], [inert]') &&
-      !element.matches(':disabled'),
-  );
-}
-
 /** Restore non-table openers, falling back to an available workspace control. */
 function returnFocus() {
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   return () => {
-    const target = usable(opener)
+    const target = usableFocusTarget(opener)
       ? opener
       : document.querySelector<HTMLElement>('.workspace-tools button');
-    if (usable(target ?? null)) target?.focus({ preventScroll: true });
+    if (usableFocusTarget(target ?? null)) target?.focus({ preventScroll: true });
   };
 }
 
@@ -148,7 +139,7 @@ export function HouseholdReadDialog({
     if (active) {
       if (!dialog.current?.open) {
         dialog.current?.showModal();
-        (usable(editingFocus.current) ? editingFocus.current : heading.current)?.focus({
+        (usableFocusTarget(editingFocus.current) ? editingFocus.current : heading.current)?.focus({
           preventScroll: true,
         });
       }

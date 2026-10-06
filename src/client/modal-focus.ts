@@ -1,5 +1,15 @@
 import type { KeyboardEvent } from 'react';
 
+/** A connected, enabled return target outside hidden or inert content. */
+export function usableFocusTarget(element: HTMLElement | null): element is HTMLElement {
+  return Boolean(
+    element?.isConnected &&
+      element.getClientRects().length &&
+      !element.closest('[hidden], [inert]') &&
+      !element.matches(':disabled'),
+  );
+}
+
 /** Native modal dialogs make the background inert; keep Tab inside their content too. */
 export function trapDialogTab(event: KeyboardEvent<HTMLDialogElement>) {
   if (event.key !== 'Tab') return;
