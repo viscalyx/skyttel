@@ -7,17 +7,17 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: automatiska slutkontroller GODKÄNDA; slutgranskningar PÅGÅR.**
+**Status: lokala slutkontroller GODKÄNDA; förnyad verifiering PÅGÅR.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 
-Föregående godkända Standards- och Spec-granskningar gäller
-[`62a9b748e2c8bbc148144660ec9a52e536e4f318`](https://github.com/viscalyx/skyttel/tree/62a9b748e2c8bbc148144660ec9a52e536e4f318)
+Slutliga Standards- och Spec-granskningar gäller
+[`f89e809cafa45c5378455d65e1d3b555b8caedf1`](https://github.com/viscalyx/skyttel/tree/f89e809cafa45c5378455d65e1d3b555b8caedf1)
 mot startpunkten
 [`4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123`](https://github.com/viscalyx/skyttel/tree/4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123).
-Båda axlarna har noll kvarstående åtgärdbara fynd i det äldre underlaget.
-Senare rättelser ingår i den godkända hela körningen nedan.
-Förnyade granskningar av det samlade underlaget pågår.
+Båda axlarna har noll kvarstående åtgärdbara fynd inom det granskade
+underlaget. Alla verifierade rättelser ingår i den hela körningen nedan.
+GitHubs efterföljande applikationskontroll är underkänd och utreds.
 Fokus- och vägledningsrättelserna nedan är granskade och omprovade.
 Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 
@@ -55,6 +55,7 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
   integrationstestfall i 106 filer. Inga testfall är underkända eller
   överhoppade. Integrationskörningen använder två arbetare och tar
   13,8 minuter.
+  Resultaten gäller de lokala kommandona på angivna versioner.
 - Global täckning är 93,58 procent för satser, **90,22 procent för
   grenar**, 93,10 procent för funktioner och 95,47 procent för rader.
   Kraven är oförändrade: 90 procent för grenar och 85 procent för de
@@ -334,7 +335,7 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 | Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `7c06bc6`; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,22 procent mot kravet 90 |
 | Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
 | Containerkontroll | GODKÄND; 9 av 9 steg på `3a9afef`; relevanta produktions- och containerindata är identiska med `7c06bc6` |
-| Standards- och Spec-granskningar samt omprov av deras rättelser | PÅGÅR för det samlade aktuella underlaget; äldre granskningar på `62a9b74` har 0 kvarstående åtgärdbara fynd; fokus och vägledning rättade och omprovade |
+| Standards- och Spec-granskningar samt omprov av deras rättelser | 0 kvarstående åtgärdbara fynd på båda axlarna vid `f89e809`; förnyad verifiering PÅGÅR efter underkänd GitHub-körning |
 | A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN på `5ce3c08` utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
 | Prestanda för 500 objekt och 1 500 samband | GODKÄND på `5ce3c08` enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
 | Fysiska hjälpmedels-, telefon- och förstoringstester | INTE UTFÖRDA |
