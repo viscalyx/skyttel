@@ -1,7 +1,7 @@
 # Manuella testfall för utkastet i samtalet
 
 Fallen omfattar utkasttabellen i textvyn, det personliga valet på sidan
-**Samtal med Skyttel** och kvittots plats i **Utkast och historik**.
+**Samtal med Skyttel** och sparandets plats i **Rapporter → Ändringshistorik**.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 Mått och placering kontrolleras också automatiskt i Chromium.
 
@@ -20,7 +20,8 @@ Mått och placering kontrolleras också automatiskt i Chromium.
    [den kontrollerade kostnadsmiljön](costs.md#controlled-cost-fixture).
    Följ dess privata portvidarebefordran. Logga in som Alex och skapa
    hushållet Utkastprov. Skapa personen **Lo Exempel** med tom beskrivning
-   genom Lista och välj **Lägg i mitt utkast**. Lämna förslaget osparat.
+   genom **Nytt objekt** och välj **Lägg i utkastet och stäng**.
+   Lämna förslaget osparat.
 2. För SAMTALSUTKAST-03, använd i stället
    [den kontrollerade textmiljön](text-assistant.md#controlled-text-fixture).
    Skapa samma hushåll men lämna kartan och utkastet tomma.
@@ -53,7 +54,7 @@ och eftervärden”.
    **Familjens gemensamma musikkonto hos Molnmusik** och två
    **E-postadress**: `familjen@example.test` och `musik@example.test`.
    Lägg ett samband **Inloggningsadress** från kontot till den första
-   adressen. Spara hela utkastet genom **Utkast och historik**.
+   adressen. Öppna **Visa utkastet** och spara hela utkastet.
 2. Rätta Lo till **Lo Rättad**, lägg rättelsen i utkastet och föreslå att
    Kim tas bort. Skapa objekttypen **Provtyp** i Inställningar och ett
    **Nytt objekt** av denna typ. Byt sambandets mål till
@@ -123,7 +124,7 @@ testfallet “SAMTALSUTKAST-02: valet följer användaren mellan hushåll och en
 1. Öppna **Inställningar**, **Samtal med Skyttel** och delen **Utkastet**.
    Markera **Visa utkastet när ett samtal börjar**. Läs återkopplingen.
 2. Återgå till kartan och starta med text. Dölj utkastet och välj
-   **Nytt samtal**. Spara sedan utkastet genom **Utkast och historik**,
+   **Nytt samtal**. Spara sedan hela utkastet genom **Visa utkastet**,
    återgå till textvyn och välj **Nytt samtal**. Öppna det tomma utkastet.
 3. Logga in som Alex i den andra webbläsarprofilen. Öppna den utskrivna
    adressen följd av `/households/draft-other-household`. Öppna samma
@@ -180,7 +181,7 @@ testfallet “SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil en
   skärm, även på bred pekskärm. Tabellen och samtalstexten går att läsa
   med tangentbord och skärmläsare. Sidan kräver ingen vågrät rullning.
 
-### SAMTALSUTKAST-04: kvittot och tidigare sparförsök finns i Utkast och historik
+### SAMTALSUTKAST-04: sparandet finns i Rapporters ändringshistorik
 
 **Syfte:** Hitta beständigt sparresultat utanför textvyn.
 
@@ -190,20 +191,21 @@ testfallet “SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil en
 
 **Integrationstest:**
 [conversation-draft.spec.ts](../../tests/integration/conversation-draft.spec.ts),
-testfallet “SAMTALSUTKAST-04: kvittot och tidigare sparförsök finns i Utkast och
-historik”.
+testfallet “SAMTALSUTKAST-04: sparandet finns i Rapporters ändringshistorik”.
 
 **Steg:**
 
-1. Välj **Utkast och historik** och spara hela utkastet. Starta därefter
+1. Öppna **Visa utkastet** och spara hela utkastet. Starta därefter
    med text och kontrollera att varken kvitto eller tidigare försök står där.
-2. Välj **Utkast och historik**, **Tidigare sparförsök** och **Visa kvittot**.
+2. Välj **Rapporter → Ändringshistorik**. Kontrollera det enda sparandet
+   med Lo Exempel. Öppna **Identifiera sparandet och användaren** och
+   kontrollera dess ID och tidpunkt.
 
 **Förväntat resultat:**
 
-- Textvyn visar samtalet och utkastet. Sparförsöken och kvittot finns i
-  **Utkast och historik**. Kvittot anger Lo Exempel, sparförsökets ID och
-  tidpunkten. Att läsa kvittot sparar ingenting igen.
+- Textvyn visar samtalet och utkastet. **Ändringshistorik** visar det
+  bekräftade sparandet, Lo Exempel, dess ID och tidpunkt. Att läsa
+  historiken sparar ingenting igen.
 
 ### SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal
 

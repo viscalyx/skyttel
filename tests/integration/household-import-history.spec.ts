@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openDraftReview, openTable, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 test('IMPORT-06: replacement preserves image history and private work, rejects old save attempts and permits ordinary corrections after restart', async ({
@@ -124,7 +124,8 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
       ).status(),
     ).toBe(200);
     await page.goto(installation.origin);
-    await openWorkspace(page);
+    await openTable(page);
+    const draft = await openDraftReview(page);
     let lostReceipt: SaveReceipt | undefined;
     await page.route('**/map/save', async (route) => {
       const response = await route.fetch();
@@ -132,8 +133,14 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
       lostReceipt = (await response.json()).receipt;
       await route.abort();
     });
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
+    await draft.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    const unknownSave = page.getByRole('dialog', { name: 'Spara utkastet' });
+    await expect(unknownSave.getByRole('status')).toContainText('Sparandet kunde inte bekräftas.');
+    await expect(
+      unknownSave.getByRole('button', { name: 'Kontrollera sparandet igen' }),
+    ).toBeEnabled();
+    await expect(draft.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
+    await expect(draft.getByRole('button', { name: 'Kasta hela utkastet' })).toBeDisabled();
     if (!lostReceipt) throw new Error('The later save must commit before its response is lost');
     expect((await read()).objects.some((object) => object.id === 'not-in-archive')).toBe(true);
 

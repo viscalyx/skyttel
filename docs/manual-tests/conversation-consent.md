@@ -305,14 +305,16 @@ frågar igen”.
 2. Läs texten vid knappen och statusraden. Ladda om sidan och läs
    statusraden igen.
 3. Välj **Tillbaka till kartan**. Välj **Prata med Skyttel** och därefter
-   verktygsradens andra samtalsknapp. Välj **Avbryt** i rutan varje gång.
+   **Avbryt** i medgivanderutan. Öppna **Skriv till Skyttel** och kontrollera
+   att inget samtal startar och ingen medgivanderuta visas av själva öppningen.
+   Välj **Nytt samtal** och sedan **Avbryt** i medgivanderutan.
 
 **Förväntat resultat:**
 
 - Texten **Medgivandet är återkallat** visas vid knappen, som nu heter
   **Spara medgivandet** och har kvar fokus. Statusraden visar
   **Inget medgivande är sparat.**, även efter omladdningen.
-- Båda samtalsknapparna visar medgivanderutan. Varken samtal eller
+- Både röststart och **Nytt samtal** visar medgivanderutan. Varken samtal eller
   mikrofon startar.
 
 ### MEDGIVANDE-08: medgivande för besöket går att återkalla och att spara
@@ -672,8 +674,10 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
 3. Vänta på terminalens `save-registered`. Notera dess `operationId`.
    Öppna **Samtal med Skyttel** i Inställningar och välj
    **Återkalla medgivandet**. Läs rutan och bekräfta.
-4. Skriv `release-save`. Gå tillbaka till kartan. Öppna **Utkast och
-   historik**, **Tidigare sparförsök** och kontrollera kvittot.
+4. Skriv `release-save`. Gå tillbaka till kartan. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
+   med Lo Exempel. Öppna **Identifiera sparandet och användaren**
+   och jämför dess ID med det noterade sparförsöket.
 
 **Förväntat resultat:**
 
@@ -681,7 +685,7 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
   stället för att ange antal osparade ändringar.
 - Medgivandet återkallas medan det registrerade sparandet slutförs.
   Kartan innehåller Lo Exempel och utkastet är tomt.
-- Mina sparförsök visar kvittot med det noterade ID:t. Historiken har ett
+- Ändringshistoriken visar sparandet med det noterade ID:t. Den har ett
   sparande för samma ID, även efter att det fördröjda svaret släpps.
 - Textvyn och röstrutan är stängda och ingen samtalsnotis visas.
   Sparresultatet går att kontrollera utan ett nytt samtalsmedgivande.
@@ -737,14 +741,15 @@ enhet”.
 
 **Steg:**
 
-1. Börja ett textsamtal i första profilen. Skriv **Text som inte hunnit
+1. Välj **Skriv till Skyttel → Nytt samtal** i första profilen och invänta
+   att samtalet startar med det sparade medgivandet. Skriv **Text som inte hunnit
    skickas.** i skrivfältet utan att skicka.
 2. Öppna **Samtal med Skyttel** i andra profilen och välj
    **Återkalla medgivandet**. Inget samtal pågår där; ingen
    bekräftelseruta ska visas.
 3. Gå tillbaka direkt till första profilen och välj **Skicka**. Om
    servern redan har avslutat vyn genom sin kontroll, läs notisen där.
-4. Välj **Skriv till Skyttel** igen och godkänn. Läs skrivfältet.
+4. Välj **Skriv till Skyttel → Nytt samtal** igen och godkänn. Läs skrivfältet.
 
 **Förväntat resultat:**
 

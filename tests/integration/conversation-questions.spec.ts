@@ -6,8 +6,8 @@ import { createHousehold, signIn } from '../support/client.js';
 import {
   closeConversationText,
   microphoneButton,
-  openConversationReceipts,
   openConversationText,
+  openSavedHistory,
   startConversationWithText,
   startConversationWithVoice,
   voiceAnnouncement,
@@ -277,11 +277,11 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     speak(live, 'Spara hela utkastet.');
     await waitForResponse(live);
     await expect.poll(() => responses.at(-1)?.response?.receiptOperationId).toBeTruthy();
-    const toast = page
-      .getByRole('region', { name: 'Kartans status' })
-      .getByText('Utkastet är sparat');
-    await expect(toast).toBeVisible();
-    await expect(toast.locator('..')).toHaveAttribute('aria-live', 'polite');
+    await expect(page.locator('.draft-save-toast')).toHaveText('Utkastet är sparat');
+    await expect(page.locator('.draft-save-toast')).toBeVisible();
+    const announcement = page.getByRole('status', { name: 'Sparbekräftelse' });
+    await expect(announcement).toHaveText('Utkastet är sparat');
+    await expect(announcement).toHaveAttribute('aria-live', 'polite');
     expect(commentary(live).at(-1)?.event).toMatchObject({ content: 'Sparat.' });
     const operations = await (await page.request.get(`${path}/operations`)).json();
     expect(operations.operations[0]).toMatchObject({
@@ -312,10 +312,9 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     await expect(voiceBox(page)).toHaveText('Lyssnar', { timeout: 2000 });
     await openConversationText(page);
     await expect(textView(page)).toContainText('Sparat.');
-    await openConversationReceipts(page);
-    await expect(page.getByRole('region', { name: 'Mina sparförsök', exact: true })).toContainText(
-      'Genomfört',
-    );
+    const history = await openSavedHistory(page);
+    await expect(history.getByRole('article')).toHaveCount(1);
+    await expect(history).toContainText('Lo Exempel');
     expect((await (await page.request.get(path)).json()).objects).toHaveLength(1);
   } finally {
     await app.close();
@@ -332,7 +331,7 @@ test('FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunde
     speak(live, 'Spara hela utkastet.');
     await waitForResponse(live);
     await expect.poll(() => responses.at(-1)?.response?.receiptOperationId).toBeTruthy();
-    await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
       'Utkastet är sparat',
     );
     await sound(page, true);

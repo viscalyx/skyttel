@@ -1,7 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
-import { openConversationText, startConversationWithText } from '../support/conversation-page.js';
+import { createHousehold, openSettings, signIn } from '../support/client.js';
+import {
+  openConversationText,
+  openSavedHistory,
+  startConversationWithText,
+} from '../support/conversation-page.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 
@@ -302,9 +306,7 @@ for (const configuration of [
   });
 }
 
-test('SAMTALSUTKAST-04: kvittot och tidigare sparförsök finns i Utkast och historik', async ({
-  page,
-}) => {
+test('SAMTALSUTKAST-04: sparandet finns i Rapporters ändringshistorik', async ({ page }) => {
   const { app, post } = await installation(page);
   try {
     await post('save', { operationId: 'draft-receipt' });
@@ -312,11 +314,11 @@ test('SAMTALSUTKAST-04: kvittot och tidigare sparförsök finns i Utkast och his
     await startConversationWithText(page);
     await expect(view(page).getByText('Visa kvittot')).toHaveCount(0);
     await expect(view(page).getByText('Tidigare sparförsök')).toHaveCount(0);
-    await (await utilityButton(page, 'Lista')).click();
-    await page.getByText('Tidigare sparförsök', { exact: true }).click();
-    const attempts = page.getByRole('region', { name: 'Mina sparförsök' });
-    await attempts.getByText('Visa kvittot', { exact: true }).click();
-    await expect(attempts).toContainText('Sparat: Lo Exempel. Kvitto: draft-receipt.');
+    const history = await openSavedHistory(page);
+    await expect(history.getByRole('article')).toHaveCount(1);
+    await expect(history).toContainText('Lo Exempel');
+    await history.getByText('Identifiera sparandet och användaren', { exact: true }).click();
+    await expect(history).toContainText('draft-receipt');
   } finally {
     await app.close();
   }

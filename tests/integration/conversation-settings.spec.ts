@@ -10,7 +10,7 @@ import {
 } from '@playwright/test';
 import { conversationConsentTextVersion } from '../../src/shared/conversation-consent.js';
 import { bounds, contrast } from '../support/accessibility.js';
-import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
+import { createHousehold, openSettings, signIn } from '../support/client.js';
 import { specifiedConsentText } from '../support/conversation.js';
 import {
   chooseConversationText,
@@ -19,6 +19,7 @@ import {
   consentBoxFor,
   giveConversationConsent,
   openConversationText,
+  openSavedHistory,
   startConversationWithText,
   startConversationWithVoice,
   turnMicrophoneOn,
@@ -295,11 +296,17 @@ test('MEDGIVANDE-07: Återkalla medgivandet gäller genast och Skyttel frågar i
       { error: 'conversation_consent_required' },
     );
 
-    // The revocation stays after a reload, and both conversation buttons ask again.
+    // The revocation stays after a reload; starting either mode asks again.
     await page.reload();
     await expect(consent.status('Inget medgivande är sparat.')).toBeVisible();
     await returnToMap(page);
-    for (const choose of [chooseConversationVoice, openConversationText]) {
+    for (const choose of [
+      chooseConversationVoice,
+      async (page: Page) => {
+        await openConversationText(page);
+        await textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+      },
+    ]) {
       await choose(page);
       await expect(consentBox(page)).toBeVisible();
       await consentBoxFor(page).decline.click();
@@ -813,11 +820,11 @@ test('MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet', async (
     await returnToMap(page);
     await expect(page.getByRole('region', { name: 'Samtalsnotis' })).toHaveCount(0);
     await expect(textView(page)).toHaveCount(0);
-    await (await utilityButton(page, 'Utkast och historik')).click();
-    const receipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
-    await receipts.getByText('Tidigare sparförsök', { exact: true }).click();
-    await expect(receipts).toContainText(before.operationId);
-    await expect(receipts).toContainText('Genomfört');
+    const history = await openSavedHistory(page);
+    await expect(history.getByRole('article')).toHaveCount(1);
+    await expect(history).toContainText('Lo Exempel');
+    await history.getByText('Identifiera sparandet och användaren', { exact: true }).click();
+    await expect(history).toContainText(before.operationId);
   } finally {
     release?.();
     await app.close();
@@ -887,6 +894,12 @@ test('MEDGIVANDE-18: nästa textförsök visar återkallandet på en annan enhet
     await openHousehold(second, app.origin);
     await chooseConversationText(page);
     await expect(message(page)).toBeVisible();
+    const started = page.waitForResponse(
+      (response) =>
+        response.url() === `${path}/text-assistant` && response.request().method() === 'POST',
+    );
+    await textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+    expect((await started).status()).toBe(201);
     await message(page).fill('Text som inte hunnit skickas.');
     await openConversationSettings(second);
     await consentPart(second).revoke.click();
