@@ -206,6 +206,18 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         await lo.focus();
         await lo.press('Enter');
         await expect(lo).toHaveAttribute('aria-pressed', 'true');
+        const combinedNotice =
+          (width === 320 && height === 250) || (width === 844 && height === 390);
+        const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
+        if (combinedNotice) {
+          const talk = page
+            .getByRole('navigation', { name: 'Kartans verktyg' })
+            .getByRole('button', { name: 'Prata med Skyttel', exact: true });
+          await talk.focus();
+          await talk.press('Enter');
+          await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
+          await expect(talk).toBeFocused();
+        }
         const trigger = page.getByRole('button', { name: 'Navigera', exact: true });
         const details = page.getByRole('button', { name: 'Visa detaljer', exact: true });
         if (navigationFirst) {
@@ -335,6 +347,19 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
             y: b.y,
             width: b.width,
           });
+        }
+        if (combinedNotice) {
+          await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
+          await page.screenshot({
+            path: `/tmp/skyttel-244/259-navigation-notice-${width}x${height}-${navigationFirst ? 'navigation-first' : 'details-first'}.png`,
+          });
+          const unchangedAfterMoves = await read();
+          const closeNotice = notice.getByRole('button', { name: 'Stäng notisen', exact: true });
+          await closeNotice.click({ trial: true, timeout: 5000 });
+          await closeNotice.focus();
+          await closeNotice.press('Space');
+          await expect(notice).toHaveCount(0);
+          expect(await read()).toEqual(unchangedAfterMoves);
         }
         await navigation.getByRole('button', { name: 'Zooma in', exact: true }).click();
         await expect(panel).toContainText(text);

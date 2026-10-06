@@ -76,6 +76,9 @@ in both opening orders”.
 1. Markera Lo. Öppna **Navigera**, flytta titelraden med Skift+pil nedåt
    och öppna sedan **Visa detaljer**. Läs Lo i den fasta uppgiftsytan.
    Kontrollera att navigationens stängknapp är nåbar utan att täcka läsningen.
+   Vid 844 × 390 och 320 × 250: använd en provinstallation utan samtalstjänst,
+   aktivera **Prata med Skyttel** före öppningen och låt den verkliga
+   otillgänglighetsnotisen vara öppen under samma steg.
 2. På dator: flytta navigationen åt vänster med Skift+pil. Ändra fönstrets
    bredd lite och återställ den. Navigationens möjliga placering och
    uppgiftsytans placering ska bestå. Flytta åt vänster igen.
@@ -87,7 +90,9 @@ in both opening orders”.
    beskrivningen i uppgiftsytan. Rulla navigationens innehåll vid behov
    och välj **Flytta Lo Exempel: bakåt**. Vänta på bekräftad personlig vy.
 5. Panorera, byt till mininavigering och zooma med knapparna. Läs den
-   oförändrade föreslagna beskrivningen. Hushållets sparade uppgifter
+   oförändrade föreslagna beskrivningen. Om otillgänglighetsnotisen är öppen,
+   fokusera och aktivera dess **Stäng notisen** utan att ändra utkastet.
+   Hushållets sparade uppgifter
    ska fortfarande vara oförändrade.
 6. Ladda om och upprepa med detaljer först och navigation sedan, på
    samtliga angivna skärmstorlekar.
