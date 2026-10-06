@@ -8,8 +8,8 @@ offentliga funktionsprov eller fysisk tillgänglighetsverifiering.
 ## Källa och metod
 
 Produktionsbilderna gäller den rena versionen
-[`d39a5faa4de5ee94dcb182edd1a34dba40e93c37`](https://github.com/viscalyx/skyttel/tree/d39a5faa4de5ee94dcb182edd1a34dba40e93c37),
-med `src`-trädet `f9de95062f01c62e7ea917db6fc629ae99c0a1f8`.
+[`f660fc483da53b804c5005bcca21f33061382f8b`](https://github.com/viscalyx/skyttel/tree/f660fc483da53b804c5005bcca21f33061382f8b),
+med `src`-trädet `1c5dde2baf4e12a1bd67f243a73ec72dbc930d02`.
 Källversionen kontrolleras före och efter bilderna. Dokumentationen ändrar
 inte den källan. Bildtagningen använder Playwrights Chromium på Linux,
 verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
@@ -28,8 +28,12 @@ verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
   54 observationer och bilder. Referensen har 26 punkter vid samma storlekar,
   52 observationer och bilder; produktionen visar rubrikikoner separat.
 
-Oberoende slutgenomgång av samtliga 142 produktionsobservationer och
-de faktiska referensobservationerna är utförd. Alla 439 förväntade
+Oberoende genomgång av samtliga 142 produktionsobservationer och
+de faktiska referensobservationerna är utförd på föregående `d39a5fa`.
+Därefter avvecklas oanvända äldre redigerare och befintliga
+sambandsetiketter hämtas direkt från den gemensamma modulen.
+Den angivna nya versionen byggs och samtliga bilder tas om.
+Dess oberoende slutgenomgång **VÄNTAR**. Alla 439 förväntade
 bildfiler finns. Upprepade vybredder grupperas utan att utelämna tillstånd;
 kritiska faktiska bilder öppnas och jämförs direkt. Inga kvarvarande
 åtgärdbara visuella fynd finns i de granskade tillstånden.

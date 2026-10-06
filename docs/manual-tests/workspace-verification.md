@@ -14,10 +14,10 @@ Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 ## Provdata, miljö och metod
 
 - Kod, visuella observationer och mätning gäller den rena versionen
-  [`d39a5faa4de5ee94dcb182edd1a34dba40e93c37`](https://github.com/viscalyx/skyttel/tree/d39a5faa4de5ee94dcb182edd1a34dba40e93c37).
+  [`f660fc483da53b804c5005bcca21f33061382f8b`](https://github.com/viscalyx/skyttel/tree/f660fc483da53b804c5005bcca21f33061382f8b).
   Produktionskatalogens `src`-träd är
-  `f9de95062f01c62e7ea917db6fc629ae99c0a1f8`.
-  Dokumentationscommiten som publicerar rapporten är separat; den ändrar
+  `1c5dde2baf4e12a1bd67f243a73ec72dbc930d02`.
+  Dokumentationsändringen som publicerar rapporten är separat; den ändrar
   varken produktionskod, testfall eller mätningen.
 - Filernas existens samt samtliga 33 primärtitlars exakta överensstämmelse
   med testupptäckt och manuella hänvisningar kontrolleras på rapportens
@@ -34,7 +34,7 @@ Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 - Automatiken använder Linux, Playwright 1.63.0 och dess Chromium
   153.0.8010.12, Node 24.21.0, npm 12.0.2 och två integrationsarbetare.
   Prov med Chromium är inte fysiska Chrome-prov.
-- Hela `npm run check` på denna version når 127 godkända enhetsfiler och
+- Den tidigare hela körningen på `d39a5fa` når 127 godkända testfiler och
   1 367 godkända testfall men stannar vid global grentäckning:
   **84,77 procent mot kravet 90 procent**. Integrationerna körs inte av
   detta avbrutna kommando. Nytt slutresultat **VÄNTAR**; inga trösklar sänks.
@@ -176,19 +176,19 @@ Slutligt automatiskt resultat redovisas med hela kontrollkörningen.
 
 Den rena versionens [mätdata](workspace-measurement.json) bevarar samtliga
 sex observationer och fullständig miljöinformation. Mätningen är utförd
-2026-10-06 06:08 UTC med 500 objekt och 1 500 samband, 1440 × 1000
+2026-10-06 06:49 UTC med 500 objekt och 1 500 samband, 1440 × 1000
 CSS-pixlar, 40 ms latens, 20 Mbit/s ned och 5 Mbit/s upp. Övriga testjobb
 körs separat från denna mätning.
 
 <!-- markdownlint-disable MD013 -->
 | Prov | Cache | Öppning, ms | Sökning, ms | Sparande, ms | Etiketter | Överlapp |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Kall | 3445,54 | 31,78 | 218,44 | 23 | 0 |
-| 1 | Varm | 3551,84 | 32,81 | 223,41 | 23 | 0 |
-| 2 | Kall | 3551,94 | 29,45 | 212,59 | 23 | 0 |
-| 2 | Varm | 3498,58 | 29,92 | 217,05 | 23 | 0 |
-| 3 | Kall | 3500,07 | 29,74 | 209,33 | 23 | 0 |
-| 3 | Varm | 3493,25 | 28,03 | 216,35 | 23 | 0 |
+| 1 | Kall | 3716,68 | 29,66 | 214,73 | 23 | 0 |
+| 1 | Varm | 3526,78 | 34,97 | 232,56 | 23 | 0 |
+| 2 | Kall | 3578,69 | 32,19 | 237,42 | 23 | 0 |
+| 2 | Varm | 3545,43 | 30,50 | 221,13 | 23 | 0 |
+| 3 | Kall | 3557,59 | 28,77 | 242,32 | 23 | 0 |
+| 3 | Varm | 3524,95 | 29,59 | 213,92 | 23 | 0 |
 <!-- markdownlint-enable MD013 -->
 
 Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,
@@ -196,7 +196,7 @@ Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,
 Efter varje verkligt sparande matchar innehåll, historik och kvitto.
 Efter serverns återstart matchar också det beständiga försöket och dess
 kvitto; utkastet är tomt. JSON-fältet `sourceTree` anger hela repots träd
-`06255b2ade1edb952a851d600d55d7d624b8c242`, inte bara `src`-trädet ovan.
+`be3b68c1f4d33c913de1ab577e4442b099f5b540`, inte bara `src`-trädet ovan.
 
 [Mätplanen](large-map-performance.md) definierar provdata och gränser.
 Kall cache betyder ett nytt webbläsarsammanhang; serverns och systemets
