@@ -8,8 +8,8 @@ offentliga funktionsprov eller fysisk tillgänglighetsverifiering.
 ## Källa och metod
 
 Produktionsbilderna gäller den rena versionen
-[`d3474ed3302505b393038c432d933b211aaa7004`](https://github.com/viscalyx/skyttel/tree/d3474ed3302505b393038c432d933b211aaa7004),
-med `src`-trädet `0030b9882bc1bca1361801d4380a8e7930913e88`.
+[`07f31e9cd1c957999cf223d55463d119a00a1fe3`](https://github.com/viscalyx/skyttel/tree/07f31e9cd1c957999cf223d55463d119a00a1fe3),
+med `src`-trädet `43ddca812c97e9c650aa3b2227cedbe24f1cd758`.
 Källversionen kontrolleras före och efter bilderna. Dokumentationen ändrar
 inte den källan. Bildtagningen använder Playwrights Chromium på Linux,
 verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
@@ -28,43 +28,46 @@ verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
   54 observationer och bilder. Referensen har 26 punkter vid samma storlekar,
   52 observationer och bilder; produktionen visar rubrikikoner separat.
 
-Den angivna versionen är byggd och samtliga bilder tagna på nytt efter
-rättelsen av läsytans utrymme i korta fönster. Oberoende genomgång
+Den angivna versionen är byggd och samtliga produktionsbilder tagna på
+nytt efter rättelsen av samtalets avbrytningar. Oberoende genomgång
 av samtliga 142 nya produktionsobservationer, 137 faktiska
 referensobservationer och 216 uppmätta radattribut är utförd.
-Alla 439 förväntade bildfiler finns. Upprepade vybredder grupperas utan
-att utelämna tillstånd;
-kritiska faktiska bilder öppnas och jämförs direkt. Inga kvarvarande
-åtgärdbara visuella fynd finns i de granskade tillstånden.
+De 137 referensobservationerna behåller sina faktiska låsta källor.
+Deras identiska texter bedöms med det bevarade jämförelseunderlaget;
+referenserna tas inte på nytt i denna bildtagning.
+Alla 439 förväntade bildfiler finns och har giltiga PNG-signaturer.
+Upprepade vybredder grupperas utan att utelämna tillstånd.
 Text, radmarkering, valram, riktning, läsläge och resultat jämförs.
-215 av 222 produktionsbilder är identiska med föregående källversions
-bilder. De sju ändrade bilderna öppnas med både föregående faktiska bilder och
-sina låsta referenser; inga nya text- eller layoutfel fastställs i dessa tillstånd.
-Samtliga uppmätta texter är oförändrade förutom källversionens metadata.
-Tjugosju bilder öppnas direkt: sju före och efter, deras sju referenser
-samt tre kritiska referenspar.
-Övriga bildfilers existens och PNG-format kontrolleras; varje bildpixel
-bedöms inte separat. De tre visade produktionsbilderna nedan är identiska
-med både de nya råbilderna och den föregående bildtagningen.
-Bilderna visar ibland en avsiktligt rullad del av dialogen; en rubrik
-utanför den bilden är inte bevis för att rubriken eller krysset saknas.
-Fler fullständiga verkliga uppgifter kräver mer rullning än korta exempel.
+Alla uppmätta observationer och radattribut är identiska med föregående
+bildtagning när endast källmetadata tas bort.
+214 av 222 produktionsbilder är identiska med föregående bildtagning.
+Alla åtta ändrade bilder öppnas med sina åtta föregående bilder och åtta
+låsta referenser. Tre kritiska referenspar och A02:s åtgärdspar öppnas
+också: totalt 32 faktiska bilder. Övriga bilders existens och PNG-format
+kontrolleras; varje pixel bedöms inte separat. De tre visade
+produktionsbilderna nedan är identiska med både nya och föregående
+råbilder. Bilder kan visa en avsiktligt rullad del av dialogen; en rubrik
+utanför bilden bevisar inte att rubrik eller kryss saknas.
+Fullständiga verkliga uppgifter kräver mer rullning än korta exempel.
 
-Den nya mobilbilden av A01:s åtgärder visar knappens hela etikett.
-A02:s nya motsvarande bild visar däremot en tom färgad knapp trots att
-uppmätt knapptext är **Lägg valen i utkastet**. Dess föregående bild visar
-texten; även den låsta referensens A02-bild saknar synlig etikett.
-Det är en avgränsad bildtagningsskillnad med okänd underliggande orsak,
-inte bevis för att kontrollens text saknas i applikationen.
-En separat bild efter två bildrutor gäller A01 och förklarar inte den nya
-A02-bilden. Ursprungliga bilder bevaras. Underlaget bevisar därför inte
-läsbarheten hos varje kontroll.
+A01:s nya mobilbild av åtgärderna visar en tom, fyrkantig färgad yta.
+Den föregående bildtagningen och låsta referensen visar knappens etikett
+och rundade hörn. A02:s motsvarande nya bild är också tom; det gäller
+även dess föregående bild och låsta referens. I båda fallen är uppmätt
+knapptext fortfarande **Lägg valen i utkastet**. Den underliggande
+orsaken är okänd. Bildskillnaden fastställer inte att kontrollens
+tillgängliga text saknas i applikationen. Ett äldre separat A01-prov
+efter två bildrutor förklarar inte de nuvarande A01/A02-bilderna.
+Ursprungliga bilder bevaras. Underlaget bevisar därför inte läsbarhet
+eller kontrast hos varje kontroll; inga nya åtgärdbara visuella
+funktionsfel fastställs inom denna avgränsade genomgång.
 
-De vanliga A/C/D-storlekarna använder inte läsytans nya regel för fönster
+De vanliga A/C/D-storlekarna använder inte läsytans regel för fönster
 högst 700 × 320 CSS-pixlar. Bildskillnaderna tillskrivs inte den regeln.
-Ett separat verkligt systemtypsnitt DejaVu Sans vid 320 × 250 visar
-den ursprungligen klippta Samband-knappen och hela knappen efter rättelsen.
-De två faktiska diagnosbilderna öppnas också direkt, totalt 29 bilder.
+Två bevarade diagnosbilder med verkligt DejaVu Sans vid 320 × 250 visar
+den klippta Samband-knappen och hela knappen efter rättelsen på `d3474ed`.
+De är historiskt underlag, inte nya bilder på `07f31e9`, och räknas inte
+bland de 32 öppnade bilderna ovan. Produktionsregeln ändras inte.
 Det fullständiga navigationsprovet kontrollerar hela knappens plats inom
 läsytans rullningsgränser, fönstret och fem faktiska pekträffar.
 Notisens text och kryss samt navigationen behålls.
