@@ -60,14 +60,13 @@ export async function openConversationDraft(page: Page) {
   return draft;
 }
 
-/** Receipts belong to the existing draft and history work panel. */
-export async function openConversationReceipts(page: Page) {
-  await (await utilityButton(page, 'Utkast och historik')).click();
-  const receipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
-  const summary = receipts.getByText('Tidigare sparförsök', { exact: true });
-  if ((await summary.locator('..').getAttribute('open')) === null) await summary.click();
-  await expect(receipts).toBeVisible();
-  return receipts;
+/** Read actual completed household saves without starting a conversation. */
+export async function openSavedHistory(page: Page) {
+  await (await utilityButton(page, 'Rapporter')).click();
+  const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+  await expect(history).toBeVisible();
+  await expect(history).not.toContainText('Hämtar historik…');
+  return history;
 }
 
 /** The voice box, which follows the voice wherever the map's tools are shown. */
