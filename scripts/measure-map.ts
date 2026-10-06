@@ -140,19 +140,20 @@ try {
   const verification = await browser.newContext({ storageState });
   const latest: MapState = await (await verification.request.get(path)).json();
   const { history } = await (await verification.request.get(`${path}/history`)).json();
-  if (!latestReceipt) throw new Error('At least one completed measurement save is required.');
+  const finalReceipt = latestReceipt;
+  if (!finalReceipt) throw new Error('At least one completed measurement save is required.');
   expect(
-    history.find((entry: SaveReceipt) => entry.operationId === latestReceipt.operationId),
-  ).toEqual(latestReceipt);
+    history.find((entry: SaveReceipt) => entry.operationId === finalReceipt.operationId),
+  ).toEqual(finalReceipt);
   expect(latest.objects.find((object) => object.id === 'large-499')?.description).toBe(
-    latestReceipt.changes[0].after?.description,
+    finalReceipt.changes[0].after?.description,
   );
   expect(latest.draft.changes).toHaveLength(0);
   const { operation } = await (
-    await verification.request.get(`${path}/operations/${latestReceipt.operationId}`)
+    await verification.request.get(`${path}/operations/${finalReceipt.operationId}`)
   ).json();
   expect(operation.status).toBe('succeeded');
-  expect(operation.receipt).toEqual(latestReceipt);
+  expect(operation.receipt).toEqual(finalReceipt);
   await verification.close();
   const report = {
     measuredAt: new Date().toISOString(),
