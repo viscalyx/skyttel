@@ -21,7 +21,7 @@ kostnader krävs installationens särskilda driftbehörighet.
 
 ## Inställningar
 
-### INST-01: återgå till samma formulär och fokus
+### INST-01: skydda formulärtext och behåll utkastets återkoppling
 
 **Syfte:** Besöka inställningarnas helsida utan att förlora kartarbetet.
 
@@ -31,35 +31,38 @@ kostnader krävs installationens särskilda driftbehörighet.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallen “INST-01: full-page settings preserve the active editor and
-focus at 1280px”, “INST-01: full-page settings preserve the active editor
-and focus at 390px” samt “INST-01: full-page settings preserve the active
-editor and focus at 320px”.
+testfallen “INST-01: full-page settings protect native form input and
+retain draft feedback at 1280px”, “INST-01: full-page settings protect
+native form input and retain draft feedback at 390px” samt “INST-01:
+full-page settings protect native form input and retain draft feedback at 320px”.
 
 **Steg:**
 
-1. Öppna Lista och **Nytt objekt**. Skriv Oskickad cykel i namnfältet.
-2. Öppna **Inställningar**, på telefon via **Visa verktygens namn**.
+1. Öppna **Nytt objekt**. Skriv **Oskickad cykel** i **Namn**.
+2. Tryck Escape och välj **Fortsätt redigera**. Kontrollera namnet och
+   fältfokus. Tryck Escape igen och välj **Kasta ändringarna och fortsätt**.
+   Öppna **Inställningar**, på telefon via **Visa verktygens namn**.
 3. Kontrollera sidrubrikens fokus. Använd Tab för att följa navigationen.
    Kartan och dess formulär ska vara dolda och inte nås bakom sidan.
 4. På mobil: välj **Välj inställning** och kontrollera att **Översikt**
    är aktuell sida. Kontrollera hushållets och administrationens ingångar.
-5. Välj **Tillbaka till kartan** och fortsätt i samma namnfält.
+5. Välj **Tillbaka till kartan** och **Nytt objekt**. Namnet är tomt;
+   kastad text återkommer inte. Stäng det oförändrade formuläret med Escape.
 6. Besök Inställningar igen. Välj **Tillbaka till kartan**.
-   Kontrollera samma namnfält och fokus.
-7. Lägg cykeln i ditt utkast. Besök Inställningar och läs hela beskedet
-   om att förslaget finns i ditt privata utkast. Återkopplingens stängknapp
+   Öppna **Nytt objekt** och kontrollera det tomma namnfältet igen.
+7. Skriv **Oskickad cykel** och välj **Lägg i utkastet och stäng**.
+   Besök Inställningar och läs **Ändringen finns i ditt utkast.
+   Kartan sparas separat.** Återkopplingens stängknapp
    får inte täcka texten. Välj **Tillbaka till kartan** och sedan
-   **Utkast och historik**.
-   Kontrollera utkastets rubrikfokus och
-   cykeln; spara inte.
+   **Visa utkastet**. Kontrollera cykeln; spara inte.
 
 **Förväntat resultat:**
 
 - Inställningar fyller sidan och har egen översikt och sidnavigation.
 - Mobilnavigationen börjar hopfälld och går att öppna med tangentbord.
-- Samma objektpanel, oskickade namn och fältfokus återkommer. Utkastets
-  återkoppling finns kvar och hela det fortfarande privata utkastet
+- **Fortsätt redigera** behåller namn och fokus. Ett uttryckligt val
+  kastar formulärtexten; nya formulär är tomma. Utkastets återkoppling
+  finns kvar och hela det fortfarande privata utkastet
   kan öppnas efter återgången till kartan.
 
 ### INST-02: typdefinitioner följer kartans samlade sparande
@@ -81,8 +84,8 @@ the same map draft”.
 2. Öppna **Inställningar** → **Typer och egna fält** → **Ny objekttyp**.
 3. Skriv Oskickad typ och en beskrivning. Besök **Översikt** och gå tillbaka.
 4. Kontrollera båda texterna. Välj **Lägg typförslaget i mitt utkast**.
-5. Välj **Tillbaka till kartan** och Lista. Granska båda förslagen i
-   **Hela mitt utkast** och välj **Spara hela utkastet**.
+5. Välj **Tillbaka till kartan** och **Visa utkastet**. Granska båda
+   förslagen och välj **Spara hela utkastet**.
 6. Läs sparbeskedet och ladda om. Öppna definitionerna igen och fäll ut
    **Objekttyper och egna fält**. Kontrollera den nya typen och objektet.
 
@@ -95,7 +98,7 @@ the same map draft”.
 
 ## Din profil
 
-### INST-03: separata kontouppgifter och återgång till redigeringsfältet
+### INST-03: separata kontouppgifter och skyddad formulärtext
 
 **Syfte:** Hantera det egna kontot från profilens verktygsikon.
 
@@ -105,26 +108,31 @@ the same map draft”.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallet “INST-03: the separate profile returns to the active field and
+testfallet “INST-03: the separate profile protects native form input and
 groups personal entries”.
 
 **Steg:**
 
 1. Öppna ett nytt objekt. Skriv ett namn och en oskickad beskrivning.
-2. Öppna **Din profil** i kartans verktyg. Kontrollera rubrikfokus,
+2. Tryck Escape och välj **Fortsätt redigera**. Kontrollera båda texterna
+   och fokus. Tryck Escape igen och välj **Kasta ändringarna och fortsätt**.
+   Öppna **Din profil** i kartans verktyg. Kontrollera rubrikfokus,
    användar-ID, **Inloggningssätt**, **Assistentanslutningar** och **Logga ut**.
-3. Välj **Tillbaka till arbetet**. Kontrollera beskrivningen och fältfokus.
+3. Välj **Tillbaka till arbetet** och **Nytt objekt**. Kontrollera att
+   namn och beskrivning är tomma. Stäng det oförändrade formuläret med Escape.
 4. Öppna profilen igen och välj **Inloggningssätt**. Gå tillbaka via
    **Din profil** i kontosidornas navigation, på mobil via **Välj inställning**.
-5. Välj **Tillbaka till arbetet** och fortsätt beskrivningen.
-6. Stäng panelerna med kryssen, öppna profilen och välj **Tillbaka till
-   arbetet**. Kontrollera att Lista får fokus och att formuläret förblir dolt.
+5. Välj **Tillbaka till arbetet** och kontrollera att tabellens rubrik
+   får synligt fokus.
+6. Öppna profilen igen och välj **Tillbaka till arbetet**. Kontrollera
+   samma rubrikfokus och att inget objektformulär öppnas.
 
 **Förväntat resultat:**
 
 - Profilen har en egen ikon och kompakt panel; kontots undersidor har
   egen sida. Kostnader och hushållets administration finns i Inställningar.
-- Återgången bevarar aktivt formulär, text och fokus.
+- Formulärtexten skyddas före profilbesöket och kastas bara efter ett
+  uttryckligt val. Återgången öppnar inte ett dolt formulär.
 - Om arbetsytan har stängts återgår fokus till ett synligt verktyg.
 - Befintliga prov för [bevarat hushållsarbete](household-work.md) täcker
   mikrofon, samtal, urval, väntande sparande och avslut vid förlorad tillgång.
@@ -146,8 +154,8 @@ without opening panels”.
 
 **Steg:**
 
-1. Öppna Lista och ett nytt objekt. Lägg Cykeln i utkastet och stäng panelerna
-   med kryssen.
+1. Öppna **Nytt objekt**, skriv **Cykeln** och välj
+   **Lägg i utkastet och stäng**. Öppna **Karta**.
 2. Fokusera Cykeln med tangentbord. Besök Inställningar och återgå till kartan.
 3. Öppna profilen och välj **Tillbaka till arbetet**.
 4. Upprepa båda besöken med fokus på verktyget **Prata med Skyttel**.
@@ -155,7 +163,7 @@ without opening panels”.
 **Förväntat resultat:**
 
 - Samma kartobjekt eller verktyg återfår fokus efter båda besöken.
-- Arbetsytans stängda paneler öppnas inte.
+- Stängda formulär öppnas inte och tabellen förblir dold.
 
 ### INST-05: tangentbordsfokus skyms inte av profilen
 
@@ -172,7 +180,8 @@ in the retained work”.
 
 **Steg:**
 
-1. Öppna ett nytt objekt och skriv Kvar bakom profilen i namnfältet.
+1. Öppna **Nytt objekt** och skriv **Kvar bakom profilen** i namnfältet.
+   Välj **Lägg i utkastet och stäng** och öppna **Tabell**.
 2. Öppna profilen och gå med Tab till **Tillbaka till arbetet**.
 3. Tryck Tab igen och fortsätt till arbetsytans kontroller.
 
@@ -180,7 +189,8 @@ in the retained work”.
 
 - Profilen stängs när fokus lämnar profilen och kartans verktyg.
 - Nästa kontroll har synligt fokus. Ingen kontroll döljs bakom profilen.
-- Objektets oskickade namn finns kvar. Mikrofonreglage förblir tillgängliga.
+- Objektets förslag finns kvar i tabellen och utkastet.
+  Mikrofonreglage förblir tillgängliga.
 
 ### INST-06: läsbara knappar i båda teman
 
@@ -223,22 +233,23 @@ hovered in both themes”.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallen “INST-07: reverse keyboard navigation exposes covered profile
-tools at 390px” och “INST-07: reverse keyboard navigation exposes covered
-profile tools at 320px”.
+testfallen “INST-07: reverse keyboard navigation keeps profile tools
+reachable at 390px” och “INST-07: reverse keyboard navigation keeps
+profile tools reachable at 320px”.
 
 **Steg:**
 
-1. Öppna Lista och ett nytt objekt. Skriv Behåll mobiltexten i namnfältet.
+1. Öppna **Nytt objekt** och skriv **Behåll mobiltexten** i namnfältet.
+   Välj **Lägg i utkastet och stäng** och öppna **Tabell**.
 2. Välj **Visa verktygens namn** och **Din profil**.
 3. Från profilrubriken: tryck Shift+Tab till **Dölj verktygens namn**.
-   Om knappen ligger nedanför profilen, fortsätt bakåt till
-   **Tema**, som ligger bakom profilen.
 4. Kontrollera att profilen stängs och att verktygets fokus syns.
-   Gå vid behov framåt med Tab till **Dölj verktygens namn** och tryck Enter.
+   Vid 390 pixlar är knappen redan fri från profilen och profilen kan
+   ligga kvar. Tryck Enter på **Dölj verktygens namn**. Fortsätt med Tab
+   till **Behåll mobiltexten** i tabellen; profilen ska då stängas.
 
 **Förväntat resultat:**
 
 - Profilen stängs när den annars skulle täcka det fokuserade verktyget.
 - Verktygets fokus syns och knappen går att använda med tangentbord.
-- Objektets oskickade namn finns kvar när verktygen fällts ihop.
+- Objektets förslag finns kvar i tabellen när verktygen fällts ihop.

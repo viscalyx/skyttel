@@ -1,17 +1,19 @@
 import { expect, test } from '@playwright/test';
 import {
-  closePanels,
   createHousehold,
+  openDraftReview,
+  openMap,
+  openNewObject,
   openProfile,
   openSettings,
-  openWorkspace,
+  openTable,
   signIn,
-  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
 for (const width of [1280, 390, 320]) {
-  test(`INST-01: full-page settings preserve the active editor and focus at ${width}px`, async ({
+  test(`INST-01: full-page settings protect native form input and retain draft feedback at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -20,21 +22,19 @@ for (const width of [1280, 390, 320]) {
       await signIn(page.request, installation.origin);
       await createHousehold(page.request, installation.origin);
       await page.goto(installation.origin);
-      await openWorkspace(page);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openTable(page);
+      await openNewObject(page);
       const name = page.getByLabel('Namn', { exact: true });
       await name.fill('Oskickad cykel');
       await name.focus();
+      await verifyObjectDepartureAndDiscard(page, { Namn: 'Oskickad cykel' });
       await openSettings(page);
       await expect(
         page.getByRole('heading', { name: 'Inställningar', level: 1, exact: true }),
       ).toBeFocused();
       await expect(page).toHaveURL(/\/settings$/);
       await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).not.toBeVisible();
-      await expect(name).not.toBeVisible();
+      await expect(name).toHaveCount(0);
       await expect(page.getByRole('navigation', { name: 'Kartans verktyg' })).not.toBeVisible();
       const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
       if (width <= 800) {
@@ -48,20 +48,20 @@ for (const width of [1280, 390, 320]) {
         'page',
       );
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await expect(name).toHaveValue('Oskickad cykel');
-      await expect(name).toBeFocused();
+      await openNewObject(page);
+      await expect(name).toHaveValue('');
+      await page.keyboard.press('Escape');
       await openSettings(page);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
       await expect(page).toHaveURL(/\/households\/[^/]+$/);
-      await expect(name).toHaveValue('Oskickad cykel');
-      await expect(name).toBeFocused();
+      await openNewObject(page);
+      await expect(name).toHaveValue('');
+      await name.fill('Oskickad cykel');
       await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await openSettings(page);
       const feedback = page.locator('.household-work-background .workspace-feedback');
       const status = feedback.getByRole('status');
-      await expect(status).toHaveText(
-        'Förslaget finns i ditt privata utkast. Kartan är inte ändrad.',
-      );
+      await expect(status).toHaveText('Ändringen finns i ditt utkast. Kartan sparas separat.');
       const fragments = await status.evaluate((element) => {
         const close = element.parentElement?.querySelector('button')?.getBoundingClientRect();
         if (!close) throw new Error('Expected the visible status close control');
@@ -85,14 +85,9 @@ for (const width of [1280, 390, 320]) {
       expect(fragments.length).toBeGreaterThan(0);
       expect(fragments.every(Boolean)).toBe(true);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await (await utilityButton(page, 'Utkast och historik')).click();
+      const draft = await openDraftReview(page);
       await expect(page).toHaveURL(/\/households\/[^/]+$/);
-      await expect(
-        page.getByRole('heading', { name: 'Hela mitt utkast', exact: true }),
-      ).toBeFocused();
-      await expect(
-        page.getByRole('region', { name: 'Hela mitt utkast', exact: true }),
-      ).toContainText('Oskickad cykel');
+      await expect(draft).toContainText('Oskickad cykel');
     } finally {
       await installation.close();
     }
@@ -107,16 +102,13 @@ test('INST-02: type settings retain unsent definitions and save with the same ma
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Cykel i samma utkast');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Cykel i samma utkast', exact: true })
+      .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      .getByRole('button', { name: 'Cykel i samma utkast', exact: true })
       .click();
     await openSettings(page);
     await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
@@ -137,18 +129,14 @@ test('INST-02: type settings retain unsent definitions and save with the same ma
     expect(before.draft.changes).toHaveLength(1);
     expect(before.draft.objectTypes).toHaveLength(1);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await expect(
-      page.getByRole('heading', { name: 'Cykel i samma utkast', exact: true }),
-    ).toBeFocused();
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Oskickad typ',
+    await openTable(page);
+    const draft = await openDraftReview(page);
+    await expect(draft).toContainText('Oskickad typ');
+    await expect(draft).toContainText('Cykel i samma utkast');
+    await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
     );
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Cykel i samma utkast',
-    );
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat:');
     await page.reload();
     await openSettings(page);
     await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
@@ -167,7 +155,7 @@ test('INST-02: type settings retain unsent definitions and save with the same ma
   }
 });
 
-test('INST-03: the separate profile returns to the active field and groups personal entries', async ({
+test('INST-03: the separate profile protects native form input and groups personal entries', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -175,13 +163,14 @@ test('INST-03: the separate profile returns to the active field and groups perso
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Profilens cykel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('Fortsätt här');
+    await verifyObjectDepartureAndDiscard(page, {
+      Namn: 'Profilens cykel',
+      Beskrivning: 'Fortsätt här',
+    });
     await openProfile(page);
     const profile = page.getByRole('region', { name: 'Din profil', exact: true });
     await expect(profile.getByRole('heading', { name: 'Din profil', exact: true })).toBeFocused();
@@ -193,19 +182,24 @@ test('INST-03: the separate profile returns to the active field and groups perso
     await expect(profile.getByRole('button', { name: 'Logga ut', exact: true })).toBeVisible();
     await expect(profile.getByRole('link', { name: 'Månadskostnad', exact: true })).toHaveCount(0);
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toBeFocused();
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Fortsätt här');
+    await openNewObject(page);
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('');
+    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
+    await page.keyboard.press('Escape');
     await openProfile(page);
     await profile.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Inloggningssätt', exact: true })).toBeFocused();
     await page.getByRole('link', { name: 'Din profil', exact: true }).click();
     await expect(profile.getByRole('heading', { name: 'Din profil', exact: true })).toBeFocused();
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toBeFocused();
-    await closePanels(page);
+    await expect(
+      page.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+    ).toBeFocused();
     await openProfile(page);
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
+    await expect(
+      page.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+    ).toBeFocused();
     await expect(page.getByLabel('Beskrivning', { exact: true })).not.toBeVisible();
   } finally {
     await installation.close();
@@ -220,14 +214,11 @@ test('INST-04: settings and profile restore map and toolbar focus without openin
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await closePanels(page);
+    await openMap(page);
     const object = page.getByRole('button', { name: 'Välj objekt: Cykeln', exact: true });
     const microphone = page.getByRole('button', { name: 'Prata med Skyttel', exact: true });
     for (const target of [object, microphone]) {
@@ -238,10 +229,9 @@ test('INST-04: settings and profile restore map and toolbar focus without openin
       await openProfile(page);
       await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
       await expect(target).toBeFocused();
+      await expect(page.getByRole('dialog', { name: 'Nytt objekt', exact: true })).toHaveCount(0);
       await expect(
-        page
-          .getByRole('region', { name: 'Lista och utkast', exact: true })
-          .getByRole('button', { name: 'Nytt objekt', exact: true }),
+        page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
       ).not.toBeVisible();
     }
   } finally {
@@ -258,12 +248,10 @@ test('INST-05: leaving the compact profile exposes keyboard focus in the retaine
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Kvar bakom profilen');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openProfile(page);
     const profile = page.getByRole('region', { name: 'Din profil', exact: true });
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).focus();
@@ -281,7 +269,9 @@ test('INST-05: leaving the compact profile exposes keyboard focus in the retaine
         );
       }),
     ).toBe(true);
-    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Kvar bakom profilen');
+    await expect(
+      page.getByRole('button', { name: 'Kvar bakom profilen', exact: true }),
+    ).toBeVisible();
   } finally {
     await installation.close();
   }
@@ -346,7 +336,7 @@ test('INST-06: settings form buttons retain readable contrast when hovered in bo
 });
 
 for (const width of [390, 320]) {
-  test(`INST-07: reverse keyboard navigation exposes covered profile tools at ${width}px`, async ({
+  test(`INST-07: reverse keyboard navigation keeps profile tools reachable at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -355,17 +345,15 @@ for (const width of [390, 320]) {
       await signIn(page.request, installation.origin);
       await createHousehold(page.request, installation.origin);
       await page.goto(installation.origin);
-      await openWorkspace(page);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openTable(page);
+      await openNewObject(page);
       await page.getByLabel('Namn', { exact: true }).fill('Behåll mobiltexten');
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await openProfile(page);
       const profile = page.getByRole('region', { name: 'Din profil', exact: true });
       await expect(profile.getByRole('heading', { name: 'Din profil', exact: true })).toBeFocused();
       const expansion = page.getByRole('button', { name: 'Dölj verktygens namn', exact: true });
-      const coveredTool = width === 390 ? page.getByRole('button', { name: /^Tema:/ }) : expansion;
+      const coveredTool = expansion;
       expect(
         await coveredTool.evaluate((element) => {
           const box = element.getBoundingClientRect();
@@ -373,13 +361,12 @@ for (const width of [390, 320]) {
             .querySelector('.workspace-utility')
             ?.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
         }),
-      ).toBe(true);
+      ).toBe(width === 320);
       await page.keyboard.press('Shift+Tab');
       await page.keyboard.press('Shift+Tab');
       await expect(expansion).toBeFocused();
-      if (width === 390) await page.keyboard.press('Shift+Tab');
       await expect(coveredTool).toBeFocused();
-      await expect(profile).not.toBeVisible();
+      if (width === 320) await expect(profile).not.toBeVisible();
       expect(
         await coveredTool.evaluate((element) => {
           const box = element.getBoundingClientRect();
@@ -388,10 +375,22 @@ for (const width of [390, 320]) {
           );
         }),
       ).toBe(true);
-      if (width === 390) await page.keyboard.press('Tab');
       await expect(expansion).toBeFocused();
       await expansion.press('Enter');
-      await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Behåll mobiltexten');
+      if (width === 390) {
+        const row = page.getByRole('button', { name: 'Behåll mobiltexten', exact: true });
+        for (
+          let tabs = 0;
+          tabs < 20 && !(await row.evaluate((element) => element === document.activeElement));
+          tabs++
+        )
+          await page.keyboard.press('Tab');
+        await expect(row).toBeFocused();
+        await expect(profile).not.toBeVisible();
+      }
+      await expect(
+        page.getByRole('button', { name: 'Behåll mobiltexten', exact: true }),
+      ).toBeVisible();
     } finally {
       await installation.close();
     }
