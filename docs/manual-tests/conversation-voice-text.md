@@ -169,9 +169,9 @@ verifierat talat sparbesked”.
 1. Skicka **Berätta om utkastet.**. Släpp provsvaret med **Sparat.**,
    utan att anropa något sparverktyg. Läs svaret och kör `sessions`.
 2. Skicka **Sparat.** som transportfragment, slå på ljudaktiviteten och
-   avsluta den. Kontrollera röstrutan och förslaget genom **Visa utkastet**
-   i textvyn. Öppna **Rapporter → Ändringshistorik** och kontrollera att
-   inget sparande tillkommer. Välj **Tillbaka till arbetet**.
+   avsluta den. Kontrollera röstrutan och det tomma utkastet genom
+   **Visa utkastet** i textvyn. Öppna **Rapporter → Ändringshistorik** och
+   kontrollera att inget sparande tillkommer. Välj **Tillbaka till arbetet**.
 
 **Förväntat resultat:**
 
