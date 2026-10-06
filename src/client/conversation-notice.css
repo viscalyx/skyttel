@@ -245,3 +245,51 @@
     max-height: var(--notice-map-controls-height);
   }
 }
+
+/* The fixed reader shares the conversation corner's column on a wide map.
+   Its readable viewport begins below the actual corner, including its voice. */
+@media (min-width: 701px) {
+  .household-map.workspace-shell.map-details-open:has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    .map-selection-details {
+    --notice-details-top: max(84px, calc(var(--conversation-corner-bottom, 0px) + 12px));
+    top: calc(var(--work-offset, 0px) + var(--notice-details-top));
+    max-height: calc(var(--work-height, 100dvh) - var(--notice-details-top) - 24px);
+  }
+}
+
+/* Short maps retain the adjacent 40%/60% work areas above the notice. When
+   the Navigation header exceeds that space, scroll the complete tool pane. */
+@media (max-width: 700px) and (max-height: 600px) {
+  .household-map.workspace-shell.map-details-open:has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    :is(.map-selection-details, .map-navigation) {
+    max-height: max(
+      44px,
+      calc(var(--conversation-corner-top, 100dvh) - var(--tools-bottom, 88px) - 24px)
+    );
+  }
+  .household-map.workspace-shell.map-details-open:has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    .map-navigation {
+    display: block;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding: 6px;
+  }
+  .household-map.workspace-shell.map-details-open:has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    .map-navigation-body {
+    overflow: visible;
+  }
+  .household-map.workspace-shell.map-details-open:has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    .map-navigation-header {
+    touch-action: pan-y;
+  }
+}

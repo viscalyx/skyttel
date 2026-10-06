@@ -3,7 +3,7 @@ import { type RefObject, useLayoutEffect, useState } from 'react';
 export type WindowPosition = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rectangle = WindowPosition & Size;
-const reservedSurfaces = '.text-view, .voice-box, .map-selection-details';
+const reservedSurfaces = '.text-view, .voice-box, .conversation-notice, .map-selection-details';
 export type FloatingArea = { viewport: Rectangle; obstacles: Rectangle[] };
 
 function viewport(): Rectangle {

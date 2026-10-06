@@ -503,6 +503,15 @@ export function HouseholdMap({
         '--conversation-corner-width',
         `${corner?.offsetWidth ?? 0}px`,
       );
+      const cornerBounds = cornerHeight ? corner?.getBoundingClientRect() : null;
+      workspace.current?.style.setProperty(
+        '--conversation-corner-top',
+        `${cornerBounds ? cornerBounds.top - viewport.offset : 0}px`,
+      );
+      workspace.current?.style.setProperty(
+        '--conversation-corner-bottom',
+        `${cornerBounds ? cornerBounds.bottom - viewport.offset : 0}px`,
+      );
       const minimumFloor = (visibleTools?.getBoundingClientRect().bottom ?? 0) + cornerHeight + 12;
       workspace.current?.style.setProperty(
         '--conversation-controls-bottom',
