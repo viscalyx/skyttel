@@ -61,8 +61,23 @@ for (const typeName of [
       const name = `Bild för ${typeName}`;
       const newForm = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
       const form = page.locator('dialog.object-dialog-C');
-      const stage = () =>
-        form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      const stage = async (expectedStatus: 200 | 400 = 200) => {
+        const response = page.waitForResponse(
+          (response) =>
+            response.url() === `${path}/object-form` && response.request().method() === 'POST',
+        );
+        const submit = form.getByRole('button', {
+          name: 'Lägg i utkastet och stäng',
+          exact: true,
+        });
+        await submit.click();
+        expect((await response).status()).toBe(expectedStatus);
+        if (expectedStatus === 200) await expect(form).not.toBeVisible();
+        else {
+          await expect(form).toBeVisible();
+          await expect(submit).toBeEnabled();
+        }
+      };
       const appearance = () =>
         form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
       await newForm.getByLabel('Namn', { exact: true }).fill(name);
@@ -151,7 +166,7 @@ for (const typeName of [
         mimeType: 'image/png',
         buffer: Buffer.from('synthetic invalid pixels'),
       });
-      await stage();
+      await stage(400);
       await expect(form.getByRole('alert')).toContainText(
         'Profilbilden kunde inte läggas i utkastet',
       );
