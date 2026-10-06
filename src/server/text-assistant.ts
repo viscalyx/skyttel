@@ -78,6 +78,7 @@ export function textAssistantRoutes({
   modelFetch,
   modelUsage,
   onStop,
+  onResetStart,
   onNewConversation,
   onSummary,
 }: {
@@ -89,6 +90,7 @@ export function textAssistantRoutes({
   modelFetch?: typeof fetch;
   modelUsage?: TextModelUsage;
   onStop?: (sessionId: string) => void;
+  onResetStart?: (sessionId: string) => void;
   onSummary?: (sessionId: string, signal: AbortSignal) => Promise<void> | undefined;
   /** A conversation has started over, so its voice can do the same and say the statement. */
   onNewConversation?: (view: TextAssistantView, deferVoiceClose?: boolean) => void;
@@ -599,6 +601,9 @@ export function textAssistantRoutes({
     }
   }
   async function resetContext(session: Session, discard: boolean, deferVoiceClose: boolean) {
+    // Retire the old executor before its task records disappear. A delayed
+    // status response must not cancel work belonging to the new conversation.
+    onResetStart?.(session.id);
     session.task?.abort();
     session.summaryTask?.abort();
     session.summaryTask = undefined;
@@ -1571,9 +1576,17 @@ export function textAssistantRoutes({
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
     const body = await context.req.json().catch(() => null);
+    // Voice cancellation can already be in flight when a reset retires its
+    // executor. Its authority ends with that conversation's context.
+    if (
+      body?.contextRevision !== undefined &&
+      body.contextRevision !== (session.contextRevision ?? 0)
+    )
+      return context.json({ error: 'assistant_turn_changed' }, 409);
     if (session.canceled && session.phase !== 'working') return context.json(view(session));
     if (body?.all !== true && body?.revision !== session.revision)
       return context.json({ error: 'assistant_turn_changed' }, 409);
+    const contextRevision = session.contextRevision ?? 0;
     session.task?.abort();
     session.summaryTask?.abort();
     session.queue = [];
@@ -1590,6 +1603,8 @@ export function textAssistantRoutes({
     session.questions = undefined;
     session.phase = session.pendingSave ? 'recovery' : 'ready';
     await refresh(session);
+    if ((session.contextRevision ?? 0) !== contextRevision)
+      return context.json({ error: 'assistant_turn_changed' }, 409);
     for (const accepted of session.accepted.values()) {
       if (accepted.status === 'queued' || accepted.status === 'working') {
         accepted.status = 'canceled';
