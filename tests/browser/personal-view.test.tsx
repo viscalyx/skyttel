@@ -140,7 +140,9 @@ test('the public household editor saves personal movement and settings and reloa
   await page.getByLabelText('Visa stjärnhimmel', { exact: true }).click();
   await expect.poll(() => server.read().settings.stars).toBe(true);
   await page.getByRole('button', { name: 'Tillbaka till kartan', exact: true }).click();
-  await page.getByRole('button', { name: 'Dölj verktygens namn', exact: true }).click();
+  await expect
+    .element(page.getByRole('button', { name: 'Visa verktygens namn', exact: true }))
+    .toHaveAttribute('aria-expanded', 'false');
   await page.getByRole('button', { name: 'Läs in min aktuella vy', exact: true }).click();
   await expect
     .element(page.getByText('Aktuell personlig vy är inläst.', { exact: true }))
@@ -172,7 +174,9 @@ test.each(['position', 'settings'] as const)(
         .element(page.getByLabelText('Visa stjärnhimmel', { exact: true }))
         .not.toBeChecked();
       await page.getByRole('button', { name: 'Tillbaka till kartan', exact: true }).click();
-      await page.getByRole('button', { name: 'Dölj verktygens namn', exact: true }).click();
+      await expect
+        .element(page.getByRole('button', { name: 'Visa verktygens namn', exact: true }))
+        .toHaveAttribute('aria-expanded', 'false');
     }
     await expect
       .element(page.getByLabelText('Visa axlar hela tiden', { exact: true }))
