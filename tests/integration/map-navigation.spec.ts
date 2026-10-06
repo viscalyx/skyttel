@@ -51,8 +51,10 @@ async function center(node: Locator) {
 
 async function exposed(node: Locator) {
   await expect
-    .poll(() =>
-      node.evaluate((element) => {
+    .poll(async () => {
+      // Re-scroll if viewport measurement changes the reader's available height.
+      await node.scrollIntoViewIfNeeded();
+      return node.evaluate((element) => {
         const box = element.getBoundingClientRect();
         if (box.left < 0 || box.top < 0 || box.right > innerWidth || box.bottom > innerHeight)
           return false;
@@ -66,8 +68,8 @@ async function exposed(node: Locator) {
           const hit = document.elementFromPoint(x, y);
           return hit !== null && element.contains(hit);
         });
-      }),
-    )
+      });
+    })
     .toBe(true);
 }
 
