@@ -1017,8 +1017,10 @@ export function HouseholdMap({
   }
   const selectedObject = selection?.kind === 'object' ? displayed.get(selection.id) : undefined;
   const selectedEdge =
-    selection?.kind === 'relationship' && !selection.previous
-      ? displayedEdges.get(selection.id)
+    selection?.kind === 'relationship'
+      ? selection.previous
+        ? previousEdges.find((edge) => edge.id === selection.id)
+        : displayedEdges.get(selection.id)
       : undefined;
   async function revealAssistantItem(target: MapSelection, signal: AbortSignal) {
     revealAbort.current?.abort();
@@ -1673,6 +1675,7 @@ export function HouseholdMap({
           objectTypes={effectiveTypes}
           selectedIds={selectedIds}
           workDisabled={pending || blocked}
+          mapAvailable={mapAvailable}
           onSelect={(object) => selectObject(object, 'select')}
           onNew={() => edit()}
           onEdit={(object) => edit(object)}
@@ -1687,6 +1690,7 @@ export function HouseholdMap({
             requestLeave(() => setObjectActions({ object, restoreFocus }))
           }
           onReveal={(object) => {
+            if (!mapAvailable) return;
             const context = mapSearchContext(contextSource, [object.id], [], true);
             const includeEnded =
               [...context.objects.values()].some((value) => hasEnded(value)) ||

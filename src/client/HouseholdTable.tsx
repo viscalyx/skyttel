@@ -67,6 +67,7 @@ export function householdTableRows(state: MapState, types: ObjectType[]): Househ
 export function HouseholdTable({
   active,
   workDisabled = false,
+  mapAvailable = true,
   rows,
   selectedIds,
   onSelect,
@@ -84,6 +85,7 @@ export function HouseholdTable({
 }: {
   active: boolean;
   workDisabled?: boolean;
+  mapAvailable?: boolean;
   rows: HouseholdTableRow[];
   selectedIds: string[];
   onSelect: (object: MapObject) => void;
@@ -252,6 +254,12 @@ export function HouseholdTable({
         )}
       </header>
       {statusContent}
+      {!mapAvailable && (
+        <p>
+          Kartans grafik är inte tillgänglig. Du kan läsa och arbeta med alla uppgifter här i
+          tabellen.
+        </p>
+      )}
       <section className="household-table-search" aria-label="Tabellens sökning och filter">
         {searchContent}
         <ObjectSearchInput
@@ -425,6 +433,7 @@ export function HouseholdTable({
                               type="button"
                               aria-label={`Visa ${object.name} i kartan`}
                               title="Visa i kartan"
+                              disabled={!mapAvailable || workDisabled}
                               onClick={() => onReveal(object)}
                             >
                               <WorkspaceIcon name="focus" />
