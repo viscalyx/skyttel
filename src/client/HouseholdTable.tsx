@@ -76,6 +76,7 @@ export function HouseholdTable({
   relationshipCounts,
   onRead,
   onReveal,
+  onActions,
   searchContent,
   hasProposals = false,
   objectTypes = [],
@@ -92,6 +93,7 @@ export function HouseholdTable({
   relationshipCounts?: Map<string, number>;
   onRead?: (object: MapObject, restoreFocus: () => void) => void;
   onReveal?: (object: MapObject) => void;
+  onActions?: (object: MapObject, restoreFocus: () => void) => void;
   searchContent?: ReactNode;
   hasProposals?: boolean;
   objectTypes?: ObjectType[];
@@ -449,6 +451,18 @@ export function HouseholdTable({
                             aria-label={`Läs alla uppgifter för ${object.name}`}
                           >
                             Läs alla uppgifter
+                          </button>
+                        )}
+                        {opened && !row.removed && onActions && (
+                          <button
+                            type="button"
+                            data-table-object={object.id}
+                            data-table-action="actions"
+                            onClick={(event) =>
+                              onActions(object, captureReturnFocus(event.currentTarget))
+                            }
+                          >
+                            Åtgärder för {object.name}
                           </button>
                         )}
                       </td>

@@ -16,7 +16,7 @@ import { LifecycleStatus } from './Lifecycle.js';
 import { MapNavigation } from './MapNavigation.js';
 import type { MapRevealRequest } from './map-display.js';
 import { mapConnections, proposalKind } from './map-presentation.js';
-import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
+import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
 import { relationshipLabel } from './RelationshipEditor.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
 import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
@@ -76,6 +76,7 @@ export function SpatialMap({
   onReset,
   onSearchStart,
   onRemove,
+  onObjectActions,
   personal,
   revealRequest,
   focusRequest,
@@ -112,6 +113,7 @@ export function SpatialMap({
   onReset: () => void;
   onSearchStart?: (text: string) => void;
   onRemove: (object: MapObject) => void;
+  onObjectActions?: (entry: ObjectActionsEntry) => void;
   personal?: ReturnType<typeof usePersonalView>;
   revealRequest?: MapRevealRequest;
   focusRequest?: { id: string; objectIds: string[] };
@@ -140,7 +142,6 @@ export function SpatialMap({
   useEffect(() => {
     if (active) setActivated(true);
   }, [active]);
-  const menu = useRef<HTMLDialogElement>(null);
   const [menuObject, setMenuObject] = useState<MapObject | null>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const hold = useRef<{ timer: number; x: number; y: number } | null>(null);
@@ -154,17 +155,29 @@ export function SpatialMap({
     cancelHold();
     movement.cancel();
     returnFocus.current = target;
-    setMenuObject(object);
+    if (onObjectActions) {
+      onObjectActions({
+        object,
+        restoreFocus: () => {
+          if (
+            target.isConnected &&
+            target.getClientRects().length &&
+            !target.closest('[hidden], [inert]')
+          )
+            target.focus();
+          else canvas.current?.focus();
+        },
+        consumeHeldClick: () => {
+          const consumed = held.current;
+          held.current = false;
+          return consumed;
+        },
+      });
+    } else setMenuObject(object);
   }
   function closeMenu() {
-    menu.current?.close();
     setMenuObject(null);
-    returnFocus.current?.focus();
   }
-  useEffect(() => {
-    if (menuObject && active) menu.current?.showModal();
-    else if (menu.current?.open) menu.current.close();
-  }, [menuObject, active]);
   useEffect(() => () => cancelHold(), [cancelHold]);
   const canvas = useRef<HTMLCanvasElement>(null);
   const surface = useRef<HTMLDivElement>(null);
@@ -1018,71 +1031,36 @@ export function SpatialMap({
         )}
       {cameraMount ? createPortal(cameraTools, cameraMount) : cameraTools}
       {navigationMount ? createPortal(navigation, navigationMount) : navigation}
-      <dialog
-        ref={menu}
-        className="spatial-menu"
-        onClickCapture={(event) => {
-          if (held.current) {
-            held.current = false;
-            event.preventDefault();
-            event.stopPropagation();
-          }
-        }}
-        onCancel={(event) => {
-          event.preventDefault();
-          closeMenu();
-        }}
-      >
-        <h3>{menuObject?.name}</h3>
-        <button
-          type="button"
-          onClick={() => {
-            if (menuObject) onEdit(menuObject);
-            closeMenu();
+      {menuObject && active && !onObjectActions && (
+        <ObjectActions
+          entry={{
+            object: menuObject,
+            restoreFocus: () => {
+              if (returnFocus.current?.isConnected) returnFocus.current.focus();
+              else canvas.current?.focus();
+            },
+            consumeHeldClick: () => {
+              const consumed = held.current;
+              held.current = false;
+              return consumed;
+            },
           }}
-        >
-          Redigera objekt
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (menuObject) onFocus(menuObject.id);
-            closeMenu();
+          state={state}
+          disabled={disabled}
+          mapAvailable={!unavailable && !contextLost}
+          onClose={closeMenu}
+          onEdit={onEdit}
+          onFocus={onFocus}
+          onRemove={async (object) => {
+            onRemove(object);
+            return true;
           }}
-        >
-          Visa samband i kartan
-        </button>
-        <button
-          type="button"
-          aria-describedby={`${labelPrefix}-removal`}
-          disabled={
-            disabled ||
-            state.draft.changes.some((change) => change.id === menuObject?.id && !change.after)
-          }
-          onClick={() => {
-            if (menuObject) onRemove(menuObject);
-            closeMenu();
-          }}
-        >
-          Ta bort objekt
-        </button>
-        {menuObject && (
-          <ObjectRemovalNotice
-            state={state}
-            objectId={menuObject.id}
-            id={`${labelPrefix}-removal`}
-          />
-        )}
-        <button type="button" onClick={closeMenu}>
-          Avbryt
-        </button>
-      </dialog>
+        />
+      )}
       {contextLost && (
         <p className="graphics-notice">Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.</p>
       )}
-      {unavailable && (
-        <p>Rymdkartan kan inte visas. Använd Lista och detaljer för att fortsätta.</p>
-      )}
+      {unavailable && <p>Rymdkartan kan inte visas. Använd Tabell för att fortsätta.</p>}
       <div
         ref={surface}
         className="spatial-surface"

@@ -90,7 +90,9 @@ paneler för att
   separat sökning, egna
   detaljträffar, flerval, teckensammansättning, utkastfiltrets återställning,
   markeringar, direkta sammanhang, utforskning utan indirekt expansion,
-  upphört även i sammanhang och tabellens kartknapp med bevarat läge.
+  upphört även i sammanhang och tabellens kartknapp med bevarat läge;
+  textåtgärder med återfokus och verkliga borttagningsberoenden utan
+  kartgrafik, med oberoende förslag och sparade uppgifter kvar.
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
   fönsterflytt, samtidiga detaljer, sex beständiga personliga riktningar och

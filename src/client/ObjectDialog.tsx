@@ -21,7 +21,7 @@ import { MapRequestError } from './map-request.js';
 import { trapDialogTab } from './modal-focus.js';
 import { ObjectIconPicker } from './ObjectIconPicker.js';
 import { CustomFieldValueEditor } from './ObjectTypes.js';
-import type { ObjectEditor } from './ObjectWork.js';
+import type { ObjectEditor } from './object-editor.js';
 import './object-dialog.css';
 
 /** One complete object proposal; shared saving belongs to the household owner. */

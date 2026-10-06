@@ -1,22 +1,12 @@
 import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import type { CustomValues, MapObject, MapState, ObjectType, ObjectValue } from '../shared/map.js';
+import type { MapObject, MapState, ObjectType } from '../shared/map.js';
 import { LifecycleEditor } from './Lifecycle.js';
 import { ObjectIconPicker } from './ObjectIconPicker.js';
 import { ObjectPropertiesEditor } from './ObjectProperties.js';
 import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
 import { CustomFieldsDetails } from './ObjectTypes.js';
+import type { ObjectEditor } from './object-editor.js';
 import { ProfileImageEditor } from './ProfileImage.js';
-
-export type ObjectEditor = {
-  id: string;
-  version: number;
-  contentVersion: number;
-  baseRevision: number | null;
-  typeRevision: number;
-  value: ObjectValue;
-  displacedFields?: { id: string; type: ObjectType; values: CustomValues }[];
-  fieldsHandled?: boolean;
-};
 
 export function ObjectWork({
   initial,

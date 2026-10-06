@@ -49,6 +49,7 @@ import { type MapRevealRequest, waitForMapDisplay } from './map-display.js';
 import { mapConnections } from './map-presentation.js';
 import { MapRequestError, request } from './map-request.js';
 import { mapSearchContext } from './map-search-context.js';
+import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
 import { ObjectDialog } from './ObjectDialog.js';
 import { initialObjectBrowsing, ObjectList, objectListResults } from './ObjectList.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
@@ -61,7 +62,8 @@ import {
   searchRestricted,
 } from './ObjectSearch.js';
 import { CustomFieldsDetails, ObjectTypeDetails, ObjectTypeEditor } from './ObjectTypes.js';
-import { type ObjectEditor, ObjectWork } from './ObjectWork.js';
+import { ObjectWork } from './ObjectWork.js';
+import type { ObjectEditor } from './object-editor.js';
 import { PagedList } from './PagedList.js';
 import { ProfileImage } from './ProfileImage.js';
 import { relationshipLabel } from './RelationshipEditor.js';
@@ -170,6 +172,7 @@ export function HouseholdMap({
       setPresentation('list');
       setDetailsOpen(false);
       setEditorOpen(false);
+      setObjectActions(null);
       setObjectPanels([]);
       setObjectDirty({});
       setOpenPanels([]);
@@ -207,6 +210,7 @@ export function HouseholdMap({
   >([]);
   const [objectDirty, setObjectDirty] = useState<Record<string, boolean>>({});
   const [draftRemovalStatus, setDraftRemovalStatus] = useState('');
+  const [objectActions, setObjectActions] = useState<ObjectActionsEntry | null>(null);
   const [objectDialog, setObjectDialog] = useState<ObjectEditor | null>(null);
   const [objectFormDirty, setObjectFormDirty] = useState(false);
   const [relationshipFormDirty, setRelationshipFormDirty] = useState(false);
@@ -315,7 +319,10 @@ export function HouseholdMap({
     return true;
   }
   useLayoutEffect(() => {
-    if (!active) routeOutsideFocus.current = lastOutsideFocus.current;
+    if (!active) {
+      routeOutsideFocus.current = lastOutsideFocus.current;
+      setObjectActions(null);
+    }
   }, [active]);
   useEffect(() => {
     const returning = active && !previousActive.current;
@@ -1372,16 +1379,20 @@ export function HouseholdMap({
     />
   );
   function remove(kind: 'draft' | 'relationship', item: MapObject | MapRelationship) {
-    if (!state) return;
+    if (!state || pending || blocked || dirty) return;
     const changes = kind === 'draft' ? state.draft.changes : state.draft.relationships;
     const proposal = changes?.find((change) => change.id === item.id);
-    void action(kind, {
-      id: item.id,
-      version: state.draft.version,
-      contentVersion: state.contentVersion,
-      baseRevision: proposal ? (proposal.before?.revision ?? null) : item.revision,
-      value: null,
-    });
+    return action(
+      kind,
+      {
+        id: item.id,
+        version: state.draft.version,
+        contentVersion: state.contentVersion,
+        baseRevision: proposal ? (proposal.before?.revision ?? null) : item.revision,
+        value: null,
+      },
+      () => {},
+    );
   }
   function typeName(id: string) {
     return effectiveTypes.find((type) => type.id === id)?.name ?? id;
@@ -1873,6 +1884,7 @@ export function HouseholdMap({
               showAll();
               setStatus('Översikt återställd. Alla objekt visas.');
             }}
+            onObjectActions={(entry) => requestLeave(() => setObjectActions(entry))}
             onRemove={(object) => remove('draft', object)}
           />
         </div>
@@ -1913,6 +1925,9 @@ export function HouseholdMap({
             setReadEntry({ kind: 'relationships', id: object.id, restoreFocus })
           }
           relationshipCounts={relationshipCounts}
+          onActions={(object, restoreFocus) =>
+            requestLeave(() => setObjectActions({ object, restoreFocus }))
+          }
           onReveal={(object) => {
             const context = mapSearchContext(contextSource, [object.id], [], true);
             const includeEnded =
@@ -1960,6 +1975,24 @@ export function HouseholdMap({
               )}
             </>
           }
+        />
+      )}
+      {state && active && objectActions && (
+        <ObjectActions
+          entry={objectActions}
+          state={state}
+          disabled={pending || blocked || dirty}
+          mapAvailable={mapAvailable}
+          onClose={() => setObjectActions(null)}
+          onEdit={edit}
+          onFocus={(id) => {
+            setWorkspaceSurface('map');
+            focusObject(id);
+            requestAnimationFrame(() =>
+              workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus(),
+            );
+          }}
+          onRemove={(object) => remove('draft', object)}
         />
       )}
       {state && (

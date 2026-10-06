@@ -480,6 +480,59 @@ without moving the result”.
 
 ## Läsa och återfinna objekt
 
+### LISTA-07: textåtgärder tar bort valt objekt utan kartgrafik
+
+**Syfte:** Nå vanliga objektåtgärder utan kartgrafik och föreslå en
+borttagning med verkliga beroenden utan att ändra sparade uppgifter.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Starta läskedjans installation enligt förberedelsen.
+Öppna den i Chrome med WebGL avstängt, exempelvis med startflaggan
+`--disable-webgl` och en separat tillfällig webbläsarprofil. Detta är ett
+kontrollerat datorprov; vanliga nätverksavbrott ersätter inte förberedelsen.
+Cykel har fyra samband, inklusive upphörda och samband utan identifierat
+mål. Skapa separat **Behåll mig** med **Nytt objekt** och välj **Lägg i
+utkastet och stäng**. Spara inte hela utkastet.
+
+**Integrationstest:**
+[object-actions.spec.ts](../../tests/integration/object-actions.spec.ts),
+testfallet “LISTA-07: text object actions preserve cancellation and stage
+only the chosen removal without map graphics”.
+
+**Steg:**
+
+1. Öppna **Tabell**, sök efter **Cykel** och expandera dess rad.
+2. Fokusera **Åtgärder för Cykel** med tangentbordet och tryck Enter.
+   Läs att objektet och dess fyra samband läggs som borttagningar i ditt
+   utkast, medan den sparade kartan ändras först vid separat sparande.
+3. Tryck Escape. Kontrollera återfokus på **Åtgärder för Cykel** och
+   att de befintliga förslagen är kvar oförändrade.
+4. Öppna åtgärderna igen och välj **Redigera objekt**. Ändra
+   beskrivningen till **Behåll mina oskickade uppgifter** och välj krysset.
+5. Kontrollera fokus på **Fortsätt redigera** i förlustvarningen. Tryck
+   Escape och kontrollera att beskrivningen består i samma stora formulär.
+6. Välj krysset igen och **Kasta ändringarna och fortsätt**. Fokus återgår
+   till textåtgärden; redan lagda förslag är kvar.
+7. Öppna åtgärderna igen och välj **Ta bort objekt**.
+8. Läs **Föreslagen borttagning** i raden. Öppna **Utkast** och granska
+   objektets och de fyra sambandens borttagningsförslag samt **Behåll mig**.
+   Läs **Rapporter → Ändringshistorik** och kontrollera att inget nytt
+   gemensamt sparande finns.
+
+**Förväntat resultat:**
+
+- Åtgärderna är tillgängliga utan kartgrafik; tabellens tre radåtgärder
+  och de gemensamma objektformulärens två inskickningsknappar är kvar.
+- Escape stänger bara menyn och återställer användbart fokus. Det ändrar
+  inget förslag eller sparad uppgift.
+- Redigeringen använder samma stora formulär. Escape avbryter förlusten;
+  uttryckligt kastande tar bara bort den oskickade beskrivningen.
+- Borttagningen läggs bara i ditt utkast. Den gäller Cykel och dess fyra
+  verkliga samband; det oberoende förslaget **Behåll mig** består.
+- Fokus återgår till samma textåtgärd. Sparade objekt, samband och
+  ändringshistorik är oförändrade tills hela utkastet sparas separat.
+
 ### TABELL-01: svensk sortering och återbesök med tabelläget kvar
 
 **Syfte:** Läsa fler än 50 objekt och fortsätta i samma tabell efter kartbesök.
