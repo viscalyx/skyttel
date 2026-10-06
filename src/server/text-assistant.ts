@@ -1184,6 +1184,8 @@ export function textAssistantRoutes({
       try {
         await refresh(session, guard);
       } catch {
+        if (task.signal.aborted || session.revision !== revision || !sessions.has(session.id))
+          return;
         await stop(session);
       }
     }

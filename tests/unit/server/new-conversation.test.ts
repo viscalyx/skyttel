@@ -369,6 +369,51 @@ test('a delayed cancellation refresh does not cancel work accepted in a new conv
   }
 });
 
+test('a late failed-task refresh does not close a new conversation', async () => {
+  const releaseRefresh = deferred();
+  let failed = false;
+  let held = false;
+  const model = textModel(() => {
+    failed = true;
+    throw new Error('Controlled provider failure');
+  });
+  await setup({
+    modelFetch: model.provider,
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc =
+        incoming.method === 'POST' && new URL(incoming.url).pathname === '/mcp'
+          ? await incoming.clone().json()
+          : null;
+      if (failed && !held && rpc?.method === 'tools/call' && rpc.params.name === 'read_my_draft') {
+        const response = await dispatch(incoming);
+        held = true;
+        await releaseRefresh.promise;
+        return response;
+      }
+      return dispatch(incoming);
+    },
+  });
+  try {
+    await propose('lo', 'Lo Exempel');
+    const before = await (await browser.get(map)).json();
+    const working = await send(await start(), 'Ett gammalt uppdrag.');
+    await expect.poll(() => held).toBe(true);
+    const renewed = await newConversation(working);
+    releaseRefresh.resolve();
+    const response = await browser.get(`${path}/${renewed.id}`);
+    expect(response.status(), await response.text()).toBe(200);
+    expect(await response.json()).toMatchObject({
+      revision: renewed.revision,
+      phase: 'ready',
+      reply: 'Nytt samtal. 1 osparad ändring ligger kvar i ditt utkast.',
+    });
+    expect(await (await browser.get(map)).json()).toEqual(before);
+    expect(await (await browser.get(`${map}/history`)).json()).toEqual({ history: [] });
+  } finally {
+    releaseRefresh.resolve();
+  }
+});
+
 test('a new conversation still checks a save that has begun before new work', async () => {
   const live = liveProvider();
   const model = textModel(() => [modelMessage('Ett provsvar.')]);
