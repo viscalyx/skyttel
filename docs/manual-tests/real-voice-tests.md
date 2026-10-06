@@ -14,7 +14,8 @@ followed by this spoken request and five seconds of final silence:
 > per månad och spara hela utkastet.
 
 The initial silence allows the real connection to finish before the
-request plays. Keep the recording outside the repository and use only
+request plays and permits opening the ordinary object form after voice starts.
+Keep the recording outside the repository and use only
 the fictional words above. A synthetic speech recording also works.
 Set `SKYTTEL_TEST_SPEECH_WAV` to its absolute path, without `%`.
 Chromium plays it once using its
@@ -32,6 +33,7 @@ npm run test:real-voice
 
 The test uses temporary application storage and synthetic sign-in. It
 checks the changed price, resolved family draft, preserved unsent form
+text, the native departure guard and its explicit discard of only that unsent
 text, one durable receipt and nonzero received audio energy. With the
 microphone off, it checks disabled capture and senders while the connection
 remains available, then waits for the matching save reply's audio to drain.

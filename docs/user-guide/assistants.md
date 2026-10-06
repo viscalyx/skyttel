@@ -63,7 +63,8 @@ Kvitto och detaljer kan begäras vid behov. Om svaret försvinner är utfallet
 okänt: be assistenten kontrollera sparförsöket innan något nytt görs.
 Ett väntande försök kan återförsökas med samma identitet och innehåll;
 ett genomfört försök ska bara återge det befintliga kvittot. Även
-**Mina sparförsök** i kartan visar resultatet. Avbrutet samtal betyder
+**Rapporter → Ändringshistorik** visar genomförda sparanden. Avbrutet samtal
+betyder
 inte att ett genomfört sparande är återställt.
 
 Assistenten ansvarar för tolkningen av ditt besked. Servern kontrollerar

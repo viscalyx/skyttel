@@ -77,7 +77,7 @@ behövs. Behåll samma fordonsobjekt när finansiering eller användning ändras
 
 ## Lägg till frivilliga belopp och villkor
 
-Välj objektet, **Redigera valt objekt** i detaljpanelen och sedan
+Öppna **Tabell**, välj objektets **Redigera** och sedan
 **Ekonomiska uppgifter** i formuläret. **Grunduppgifter** öppnas först;
 namn, typ och identitet finns där. Ett avsnitt är öppet i taget. Gemensamma
 egenskaper kan också placeras i
@@ -137,16 +137,16 @@ att två objekt är samma sak.
 
 ## Hitta, rätta och spara tillsammans
 
-Sök efter avtalet, bostaden, garaget eller bilen i **Sök objekt**. Välj
-objektet och **Redigera valt objekt** i detaljpanelen för att rätta belopp,
-villkor och säkerhet. Välj ett samband och **Redigera valt samband** för
+Sök efter avtalet, bostaden, garaget eller bilen i **Sök objekt i tabellen**.
+Välj objektets **Redigera** för att rätta belopp,
+villkor och säkerhet. Öppna objektets samband och välj **Redigera samband** för
 att rätta exempelvis avtalspart eller betalningsmedel. För objekt väljer
 du **Lägg i utkastet och stäng** när hela formuläret är klart.
 **Lägg i utkastet och öppna samband** lägger samma fullständiga ändring
 i utkastet och öppnar sedan objektets samband. Alla ändringar ingår
 i samma utkast som övriga förslag.
 
-Granska tidigare och föreslagna värden i **Hela mitt utkast**. Förslag som
+Granska tidigare och föreslagna värden i **Visa utkastet**. Förslag som
 läggs i utkastet finns kvar efter omladdning; text som bara finns i ett
 öppet formulär är ännu inte bevarad. **Spara hela utkastet** gör alla
 förslag gemensamma tillsammans. Vid valideringsfel, olöst identitet eller

@@ -239,15 +239,15 @@ benämningar och förklaringar som går att läsa från båda objekten.
 
 ## Hitta och rätta uppgifter
 
-Använd **Sök objekt** och **Filtrera objekttyp**. Sökningen gäller hela
-kartan, även objekt som finns på andra listsidor. **Markera** ändrar
-urvalet; **Visa detaljer** öppnar objektets uppgifter och samband.
-**Avmarkera alla** behåller sökning och öppna paneler.
-Längre listor har sidval samt
-**Föregående sida** och **Nästa sida**.
+Öppna **Tabell** och använd **Sök objekt i tabellen** och **Filter**.
+Sökningen gäller hela kartan, även objekt som finns på andra sidor.
+Objektets namn öppnar uppgifter och samband i den utökade raden.
+Längre tabeller har sidval samt **Föregående** och **Nästa**.
+I kartan ändrar **Markera** urvalet och **Visa detaljer** visar de valda
+uppgifterna. **Avmarkera alla** behåller sökningen.
 
-Välj **Redigera valt objekt** eller **Redigera valt samband** i
-detaljpanelen. Rätta uppgifterna och lägg förslaget i utkastet. Du kan
+Välj objektets **Redigera** eller sambandets **Redigera samband** i
+tabellen. Rätta uppgifterna och lägg förslaget i utkastet. Du kan
 rätta både sparade uppgifter och dina egna osparade förslag.
 Ett byte av sambandets mål kopplar om sambandet; det skapar inte en ny
 identitet för startobjektet.

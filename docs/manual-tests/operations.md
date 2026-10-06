@@ -379,5 +379,6 @@ and recovers a lost committed receipt”.
   privata förslag och alla dess värden finns kvar för granskning.
 - Transporten tillför ingen identitet eller tillgång. Automationen
   kontrollerar dessutom nekad oinloggad läsning, felaktig värdadress,
-  idempotent återförsök med samma kvitto samt oförändrade fulla privata
+  idempotent återförsök med samma kvitto, fördröjd autentiserad kontroll
+  utan aktivt samtal samt oförändrade fulla privata
   och gemensamma uppgifter vid avvisningen genom det publika API:et.

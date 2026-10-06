@@ -22,31 +22,33 @@ inte ångras i Skyttel. Kör inte testfallen mot ett verkligt hushåll.
 
 ## Allmän förberedelse
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+När ett befintligt objekt ska ändras, öppna **Tabell** och välj
+**Redigera [objektets namn]**. Objektets namn öppnar i stället dess uppgifter
+och samband. Där kan du öppna hela läsdialogen eller redigera ett samband.
+Lägg hela formulärets ändring i utkastet innan du öppnar nästa arbetsyta.
 
 1. Starta en ny provdatabas enligt nästa avsnitt inför varje fall. Öppna
    <http://localhost:5173>, logga in som Alex och skriv **Linden** i
    **Hushållets namn**. Välj **Skapa hushåll**.
-2. Välj **Nytt objekt**, fyll i **Lampan att radera** i **Objektets namn**,
-   välj **Fordon** som **Objekttyp** och välj **Lägg i mitt utkast**.
+2. Välj **Nytt objekt**, fyll i **Lampan att radera** i **Namn**,
+   välj **Fordon** som **Objekttyp** och välj **Lägg i utkastet och stäng**.
    Lägg till **Stolen att bevara** på samma sätt. Typen används bara för
-   detta tekniska prov. Välj **Spara hela utkastet** och invänta kvittot.
-3. Öppna lampans detaljer och välj en liten påhittad PNG-bild genom
-   **Välj profilbild**. Stäng detaljerna utan att ändra texten och välj
-   **Spara hela utkastet**. Öppna lampan igen. Högerklicka på bilden,
+   detta tekniska prov. Öppna **Skriv till Skyttel → Visa utkastet**, välj
+   **Spara hela utkastet** och invänta kvittot.
+3. Stäng textvyn, öppna **Tabell** och välj **Redigera Lampan att radera**.
+   Öppna **Livscykel och utseende** och välj en liten påhittad PNG-bild genom
+   **Välj profilbild**. Välj **Lägg i utkastet och stäng** och spara sedan
+   hela utkastet. Öppna lampans hela läsdialog från tabellen. Högerklicka på bilden,
    välj att kopiera bildens adress och spara adressen för senare kontroll.
-4. Välj lampan i listan, stäng panelerna med kryssen och öppna **Navigera**.
+4. Stäng läsdialogen och textvyn. Välj **Visa Lampan att radera i kartan**
+   i tabellen och öppna **Navigera**.
    Välj **Flytta [objektets namn]: höger** en gång. Välj stolen och flytta den
    åt vänster med **Flytta [objektets namn]: vänster**. Ladda om och kontrollera
    placeringarna.
-5. Öppna stolen från **Lista**, välj **Redigera valt objekt** och skriv
-   **Oberoende privat förslag** i **Beskrivning**. Välj **Lägg i mitt utkast**.
+5. Öppna **Tabell**, välj **Redigera Stolen att bevara** och skriv
+   **Oberoende privat förslag** i **Beskrivning**. Välj **Lägg i utkastet och stäng**.
    Kontrollera förslaget
-   under **Hela mitt utkast**. Spara inte hela utkastet.
+   under **Visa utkastet**. Spara inte hela utkastet.
 6. Behåll samma databas vid omstart inom ett fall. RADERING-02 använder
    Chromium med utvecklarverktyg; RADERING-04 behöver en andra terminal.
    Förbered en privat mapp för hämtade exporter och radera filerna efteråt.
@@ -110,10 +112,10 @@ preserves unrelated work after restart”.
    **RADERA PERMANENT** i bekräftelsefältet och aktivera knappen med Enter.
 5. Invänta **Den permanenta raderingen är slutförd.** Starta om enligt
    avsnittet ovan, ladda om sidan och kontrollera samma raderingsstatus.
-6. Välj **Läs in kartan på nytt** och **Lista**. Sök efter lampan;
+6. Välj **Läs in kartan på nytt** och **Tabell**. Sök efter lampan;
    ingen träff ska visas. Öppna stolen och kontrollera dess beskrivning
-   samt förslaget under **Hela mitt utkast**. Välj **Visa historik** under
-   **Ändringshistorik**: stolen ska finnas i det ursprungliga sparandet,
+   samt förslaget under **Visa utkastet**. Öppna **Rapporter → Ändringshistorik**
+   och **Visa ändringarna**: stolen ska finnas i det ursprungliga sparandet,
    men lampan ska saknas.
    Kontrollera också att stolens placering finns kvar i **Rymdkarta**.
 7. Öppna lampans sparade bildadress i en ny flik i samma profil. Ladda om
@@ -187,8 +189,8 @@ light och dark.
 7. Invänta **Den permanenta raderingen är slutförd.** Kontrollera hela
    raderingsidentifieraren och resultatets ett objekt, en bildversion samt
    noll samband och typer. Välj den fokuserade
-   **Läs in kartan på nytt**. Kontrollera i listan att lampan är borta,
-   stolen finns kvar och **Hela mitt utkast** behåller dess privata förslag.
+   **Läs in kartan på nytt**. Kontrollera i tabellen att lampan är borta,
+   stolen finns kvar och **Visa utkastet** behåller dess privata förslag.
 
 **Förväntat resultat:**
 
@@ -288,7 +290,7 @@ innehållet ändras efter granskningen.
 
 **Förutsättningar:** Samma nya provkarta är öppen i båda profilerna.
 Profil A visar **Inställningar → Permanent radering**. Profil B visar hushållets
-**Lista och utkast** och är inloggad med samma konto som profil A.
+**Tabell** och är inloggad med samma konto som profil A.
 
 **Integrationstest:**
 [household-erasure.spec.ts](../../tests/integration/household-erasure.spec.ts),
@@ -298,9 +300,9 @@ confirmation before erasure”.
 **Steg:**
 
 1. Välj lampan och granska raderingen i profil A utan att bekräfta ännu.
-2. Öppna stolen i profil B, ändra **Beskrivning** till
-   **Senare privat förslag** och välj **Lägg i mitt utkast**.
-   Invänta att **Hela mitt utkast** visar den nya texten. Spara inte.
+2. Välj **Redigera Stolen att bevara** i profil B, ändra **Beskrivning** till
+   **Senare privat förslag** och välj **Lägg i utkastet och stäng**.
+   Öppna **Visa utkastet** och läs förslagets fulla beskrivning. Spara inte.
 3. Skriv **RADERA PERMANENT** och välj **Radera permanent** i profil A.
 4. Kontrollera beskedet **Innehållet har ändrats. Granska raderingen igen**.
    Kontrollera i profil B att båda objekten finns kvar. I profil A väljer
@@ -308,7 +310,7 @@ confirmation before erasure”.
 5. Kontrollera att bekräftelsefältet är tomt och knappen inaktiverad.
    Granska, skriv bekräftelsen igen och genomför raderingen.
 6. Invänta slutfört resultat och välj **Läs in kartan på nytt** i profil A.
-   Kontrollera att lampan saknas och att **Hela mitt utkast** visar stolen
+   Kontrollera att lampan saknas och att **Visa utkastet** visar stolen
    med **Senare privat förslag**.
 
 **Förväntat resultat:**
@@ -379,7 +381,7 @@ completes only after the reader releases”.
 5. Tryck Enter i läsarens terminal. Invänta **Läsningen är avslutad**.
    Välj sedan **Försök slutföra raderingen** på raderingssidan.
 6. Invänta **Den permanenta raderingen är slutförd.** Välj **Läs in kartan på nytt**
-   och kontrollera att lampan saknas, stolen finns och **Hela mitt utkast**
+   och kontrollera att lampan saknas, stolen finns och **Visa utkastet**
    visar **Oberoende privat förslag**. Öppna och ladda om lampans sparade
    bildadress; **Network** ska visa HTTP 404 utan bild.
 
@@ -406,7 +408,7 @@ testinstallationens operatör.
 **Förutsättningar:** En ny provkarta enligt allmän förberedelse. Bjud in
 Robin och ge Robin administratörsrollen genom **Administrera tillgång**.
 Robin lägger dessutom **Robins eget privata förslag** i stolens
-**Beskrivning** genom **Lägg i mitt utkast**, utan att spara hela utkastet.
+**Beskrivning** genom **Lägg i utkastet och stäng**, utan att spara hela utkastet.
 Alex behåller sitt eget oberoende privata förslag. Öppna den separata
 SQLite-läsaren enligt RADERING-04 och behåll den till steg 6 nedan.
 
@@ -477,18 +479,23 @@ och skapa Linden. Förbered två tydligt olika påhittade PNG-bilder, till
 exempel en blå bild och en orange bild. Använd följande förberedelse i
 stället för allmän förberedelse steg 2–5:
 
-1. Välj **Ny objekttyp**, skriv **Tidigare bildtyp** i **Typens namn** och
+1. Öppna **Inställningar → Typer och egna fält**, välj **Ny objekttyp**,
+   skriv **Tidigare bildtyp** i **Typens namn** och
    välj **Lägg typförslaget i mitt utkast**. Lägg inga egna fält till typen.
+   Välj **Tillbaka till kartan**.
 2. Skapa **Lampan att radera** av **Tidigare bildtyp** och **Stolen att
    bevara** av **Fordon**. Lägg båda i utkastet och välj
    **Spara hela utkastet**. Trots lampans testnamn ska själva objektet
    bevaras i detta fall.
-3. Öppna lampan, välj den blå bilden med **Välj profilbild** och spara
-   hela utkastet. Öppna lampan igen, kopiera bildens adress och anteckna
+3. Välj **Redigera Lampan att radera** i tabellen, öppna
+   **Livscykel och utseende**, välj den blå bilden med **Välj profilbild**
+   och välj **Lägg i utkastet och stäng**. Spara hela utkastet. Öppna
+   lampans läsdialog, kopiera bildens adress och anteckna
    dess bild-ID, den sista delen efter `/profile-images/` i adressen.
-4. Byt lampans **Objekttyp** till **Fordon**. Bekräfta
-   **Jag har hanterat tidigare fältvärden för typbytet** om fältet visas
-   och välj **Lägg i mitt utkast**. Välj sedan den orange profilbilden.
+4. Stäng läsdialogen och välj **Redigera Lampan att radera**. Byt lampans
+   **Objekttyp** till **Fordon**. Bekräfta borttagningen av tidigare egna
+   fältvärden om valet visas. Öppna **Livscykel och utseende**, välj den
+   orange profilbilden och välj **Lägg i utkastet och stäng**.
    Spara typbytet och bildbytet tillsammans med **Spara hela utkastet**.
    Anteckna den nya bildens adress och ID. ID:na ska skilja sig åt.
 5. Flytta lampan och stolen enligt allmän förberedelse steg 4. Lägg
@@ -513,7 +520,8 @@ from a fresh export while preserving the current object after restart”.
    för samma databas ovan. Ladda om och kontrollera slutförd status.
 4. Välj **Läs in kartan på nytt**. Lampan ska finnas med **Fordon** och orange
    bild. Stolen och dess privata förslag samt båda placeringarna ska
-   finnas kvar. Välj **Visa historik**: stolen ska ha bevarad historik,
+   finnas kvar. Öppna **Rapporter → Ändringshistorik → Visa ändringarna**:
+   stolen ska ha bevarad historik,
    men lampans blå bild och tidigare typ ska inte visas.
 5. Öppna och ladda om de två sparade bildadresserna. I utvecklarverktygens
    **Network** ska den blå bildens adress ge HTTP 404 och den orange

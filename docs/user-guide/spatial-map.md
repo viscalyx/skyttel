@@ -2,22 +2,23 @@
 
 [Till användarguidens innehåll](README.md)
 
-Rymdkartan, listan och detaljerna visar samma hushållskarta och ditt
+Rymdkartan, tabellen och detaljerna visar samma hushållskarta och ditt
 privata utkast. Hushållet öppnar rymdkartan som huvudyta på alla enheter.
-Välj **Lista** i verktygen för listor, formulär och utkast. Stäng
-panelerna med kryssen för att återgå till hela kartan. På telefon visar
+Välj **Tabell** i verktygen för att läsa och redigera alla uppgifter.
+**Karta** återgår till rymdkartan. På telefon visar
 **Visa verktygens namn** även de kompletterande verktygen, däribland Tema.
 
-När Skyttel visar ett objekt eller samband öppnas dess detaljpanel.
-Kartan och det valda innehållets detaljpanel visas samtidigt innan
-markeringsbeskedet. På en smal skärm ligger detaljpanelen direkt under
-kartan; rulla i panelen för att läsa längre uppgifter. Välj
-**Redigera valt objekt** eller **Redigera valt samband** för att ändra dem.
+När Skyttel visar ett objekt eller samband visas kartan och det valda
+innehållets uppgifter samtidigt innan markeringsbeskedet. På en smal skärm
+ligger uppgifterna direkt under kartan och går att rulla separat.
+Välj **Redigera** vid objektet eller **Redigera valt samband** för att
+öppna det vanliga formuläret.
 
 ## Hitta innehåll
 
 Utgångsläget omfattar alla objekt och samband. **Sök i kartan** eller
-**Lista** i verktygen öppnar sökningen. **Sök objekt** hittar namn, typ
+**Tabell** i verktygen öppnar sökningen. **Sök objekt** i kartan och
+**Sök objekt i tabellen** hittar namn, typ
 och beskrivning utan att flytta kameran. Träffarna grupperas efter typ
 med antal för varje grupp.
 
@@ -48,13 +49,12 @@ Klicka på ett sambands etikett för att läsa dess uppgifter. Välj sedan
 Pilen går från det första objektet till det andra. Okänt och uttryckligen
 inget är uppgifter om ett samband, inte nya objekt.
 
-I **Lista** har varje objekt separata kontroller för markering, visning
-i kartan och **Uppgifter**. Markera lägger till eller tar bort objekt
-utan att öppna paneler. Namnet visar objektet i kartan: objektet markeras
-och kameran fokuserar det och dess direkta grannar. Grannarna blir inte
-markerade. Endast söklistan stängs och ingen ny detaljpanel öppnas.
+I **Tabell** öppnar objektets namn uppgifter och samband i samma rad.
+**Läs alla uppgifter för** öppnar hela objektets läsdialog.
+**Visa [objektets namn] i kartan** markerar objektet och fokuserar kameran
+på det och dess direkta grannar. Grannarna blir inte markerade.
 **Avmarkera alla** och ett klick på tom rymd släcker markeringar för
-objekt och samband. Kamera, sökning, filter och öppna paneler finns kvar.
+objekt och samband. Kamera, sökning och filter finns kvar.
 Små rörelser vid klick flyttar inte kameran. Rotation, panorering och
 avbrutna gester behåller urvalet.
 
@@ -65,28 +65,23 @@ rensar sökning och typfilter. Kamerans vinkel, zoom och panorering behålls.
 
 ## Öppna detaljer
 
-Dubbelklick öppnar objektets panel. Det första klickets urval gäller:
+Dubbelklick öppnar objektets fullständiga läsdialog. Det första klickets
+urval gäller:
 ett redan markerat objekt behåller flervalet, medan ett omarkerat objekt
 ersätter det. Ctrl+Alt-klick öppnar detaljer och lägger till objektet
 utan att avmarkera andra. På Mac fungerar Control+Option och Cmd+Option.
-**Visa detaljer** i verktygen öppnar det senast markerade objektet.
-Listans **Uppgifter** fungerar även utan kartgrafik och med tangentbord.
-När grafiken inte kan visas består listan och namnets kartknapp är inaktiv.
+**Visa detaljer** i verktygen visar det valda innehållets uppgifter bredvid
+eller under kartan. Därifrån kan du öppna den fullständiga läsdialogen.
+Tabellens läsdialoger fungerar även utan kartgrafik och med tangentbord.
+När grafiken inte kan visas består tabellen och kartknapparna är inaktiva.
+Stäng läsdialogen med krysset eller Escape för att återgå till dess öppnare.
 
-En ny panel öppnas nära objektet inom arbetsytan. Paneler som du flyttar
-behåller sin placering när du öppnar dem igen. Öppna **Lista** och välj
-objektets **Uppgifter** för att återvända till dess panel. Detaljverktygets
-markering visar
-om det senast markerade objektets panel faktiskt visas. Oskickad text
-finns kvar när panelen stängs eller ett annat verktyg öppnas.
-
-Längre listor visar 50 poster per sida. Använd sidvalet eller
-**Föregående sida** och **Nästa sida** för att nå resten. Sökning gäller
-alla objekt, oavsett listsida. **Visa valt innehåll i listan** återgår till
-sidan med ditt valda objekt eller samband. Formulärtexten behålls när du
-byter sida. Ändrad sökning, filtrering eller sortering börjar på första
+Längre tabeller visar 50 objekt per sida. Använd sidvalet eller
+**Föregående** och **Nästa** för att nå resten. Sökning gäller
+alla objekt, oavsett sida. Objektets utökade rad ger tillgång till alla
+dess samband. Ändrad sökning, filtrering eller sortering börjar på första
 sidan igen. Sökning, filter, sortering, sida och rulläge finns kvar när
-du lämnar listan för uppgifter, samtal, Inställningar eller en kartträff.
+du lämnar tabellen för uppgifter, samtal, Inställningar eller en kartträff.
 Om inga objekt matchar kan du välja **Rensa sökning och filter** utan
 att förlora objektmarkeringarna.
 
@@ -108,14 +103,14 @@ vanligt; panorering och zoom fungerar också som vanligt.
 
 **Fokusera markering** bredvid överblicksknappen hämtar in markeringen och
 dess direkta grannar med marginal till kartans verktyg. Kamerariktning,
-markeringar och öppna paneler behålls. Grannarnas andra samband utökar inte
+markeringar och valda uppgifter behålls. Grannarnas andra samband utökar inte
 utsnittet, och grannarna ändrar inte rotationscentrum. Knappen är inaktiv
 med tomt urval eller dold eller avbruten kartgrafik.
 
 **Visa hela kartan** ramar in hela kartan och växlar till **Återgå till
 föregående vy**. Den tidigare vyn finns kvar även om du panorerar, roterar,
 zoomar eller fokuserar markeringen innan du återgår. Urval och oskickad
-paneltext behålls.
+formulärtext behålls.
 
 I en mycket kort och smal vy samlas återställning och etiketter under
 **Visningsval**. **Navigera** finns i verktygsfältet och innehåller
@@ -123,7 +118,7 @@ I en mycket kort och smal vy samlas återställning och etiketter under
 **Visa verktygens namn** öppnar hela
 verktygsfältet med samtal och detaljer.
 Kamerans fokus, översikt och återgång fäller ihop verktygsnamnen så kartan
-får plats. Öppna arbetspaneler behålls.
+får plats. Valda uppgifter behålls.
 
 Navigeringsfönstret har normal- och miniläge. Miniikonen i titelraden
 växlar till ikoner med verktygstips; alla knappar har tillgängliga namn.
@@ -134,13 +129,11 @@ pågående dragning; annars stängs navigationen och fokus återgår till
 Under **Fönstrets placering** finns också knappar för att flytta och
 återställa fönstret utan dragning.
 
-Navigation och detaljer kan vara öppna samtidigt. På dator reserveras
-utrymme bredvid panelerna. På smala skärmar får de skilda ytor och
-innehållet rullas inuti respektive yta. **Visa samband i listan** i
-objektdetaljerna öppnar dess kopplingar i det redigerbara textalternativet.
-En flyttad navigation återgår till sin reserverade yta när arbete öppnas,
-eller när fönsterstorlek eller navigeringsläge ändras medan arbete är öppet.
-Detaljpanelernas egna placeringar behålls.
+Navigation och valda uppgifter kan vara öppna samtidigt. De får skilda
+ytor, och innehållet kan rullas inuti respektive yta på en kort skärm.
+Öppna **Tabell** för att läsa och redigera objektets alla samband.
+En flyttad navigation återgår till sin reserverade yta när valda uppgifter
+öppnas, eller när fönsterstorlek eller navigeringsläge ändras.
 
 **Återställ vy** rensar fokus, sökning och typfilter och ramar in hela
 kartans placeringar. Valet **Alla etiketter** behålls. Det ändrar inga
@@ -151,17 +144,18 @@ sambandsetiketter. Etiketter för nya, borttagna och ändrade samband i
 utkastet visas nära sina samband när de ryms. De döljs när utrymmet inte
 räcker och visas igen när det finns plats. Ett besked anger hur
 många etiketter som döljs; innehållet och dina personliga placeringar ändras
-inte. Sök, välj i listan och använd fokus för att följa ett tätt sammanhang.
+inte. Sök i tabellen och visa objektet i kartan för att följa ett tätt
+sammanhang.
 Bakgrundens samband tonas ned mer i täta vyer; valda samband framhävs.
 
 **Alla etiketter** öppnar vid behov ett närmare utsnitt som går att
 panorera och visar även etiketter som överlappar. Ett redan nära utsnitt
 behålls när du slår av och på valet. Korta stödlinjer
-till etiketter är heldragna och långa stödlinjer är streckade. Listan och
+till etiketter är heldragna och långa stödlinjer är streckade. Tabellen och
 detaljerna ger tillgång till hela innehållet även när etiketter ligger
 utanför det synliga utsnittet. På en smal telefon kan även en mindre
 karta få överlappande eller delvis dolda etiketter. Använd zoom,
-panorering, objektfokus eller listan för att nå dem.
+panorering, objektfokus eller tabellen för att nå dem.
 På låga skärmar i liggande läge kan du rulla kartans nedersta verktygsrad
 i sidled för att nå alla val utan att minska kartytan.
 
@@ -175,17 +169,17 @@ Välj den tidigare, böjda linjen eller dess etikett med × för att läsa det
 sparade sambandet utan att ändra det.
 
 Högerklick eller långtryck på ett objekt ger **Redigera objekt**,
-**Visa samband i kartan** och **Ta bort objekt**. I listan finns också
-**Redigera** och **Ta bort** vid det valda objektet. **Uppgifter** i listan
-öppnar objektets panel med rubrikfokus och visar uppgifterna utan att öppna
-formuläret. **Redigera valt objekt** flyttar fokus till formuläret.
+**Visa samband i kartan** och **Ta bort objekt**. Samma meny finns under
+**Åtgärder för** i objektets utökade tabellrad. Radens **Redigera** öppnar
+objektformuläret och **Samband** öppnar ett nytt samband från objektet.
+Sambanden i den utökade raden har egna läs- och redigeringsknappar.
 
-Formulärtext skickas först när du lägger den i utkastet. Val och
-oskickad text för samma objekt eller samband finns kvar vid vybyte,
-storleksändring och vändning av enheten. Ett vanligt val i helskärmskartan
-behåller kartan. Öppna **Lista** och välj **Redigera valt objekt** eller
-**Redigera valt samband** för att ändra uppgifter. Panelernas kryss
-behåller texten. **Utkast och historik** ger tillgång till ändringslistan.
+Formulärtext skickas först när du lägger den i utkastet. Texten finns kvar
+vid storleksändring och vändning av enheten. Försöker du lämna ett ändrat
+formulär frågar Skyttel hur du vill göra. **Fortsätt redigera** behåller
+hela texten; **Kasta ändringarna och fortsätt** kastar bara den oskickade
+texten. **Lägg i utkastet och stäng** bevarar förslaget för senare sparande.
+**Skriv till Skyttel → Visa utkastet** ger tillgång till alla förslag.
 
 Markeringarna visar skillnaden mot sparad karta:
 
@@ -203,28 +197,31 @@ Teckenförklaringen följer kartans filter och använder samma färger;
 
 **Upphört** har en egen färg och visas vid objektets namn eller i
 sambandets etikett. Statusen följer samma slutdatum och manuella val som
-i listan. Den kan visas samtidigt med en ändringssymbol och finns kvar
+i tabellen. Den kan visas samtidigt med en ändringssymbol och finns kvar
 efter sparandet. **Gäller fortfarande** åsidosätter ett passerat slutdatum.
 
 **Ta bort** lägger omedelbart objektets och dess inkommande och utgående
 sambands borttagning i utkastet. Antalet berörda samband och följden
 visas vid knappen före borttagningen. Andra objekt finns kvar. Granska
-**Hela mitt utkast** och välj **Spara hela utkastet** för att ändra den
+**Visa utkastet** och välj **Spara hela utkastet** för att ändra den
 gemensamma kartan. **Kasta hela utkastet** tar bort osparade förslag;
 det är inte ångring av ett tidigare sparande.
 
 ## Enheter och begränsningar
 
-Lista och objektpanelerna ger hela det vanliga kartarbetet med tangentbord utan
-rumslig navigering. Fokusmarkeringar, fältnamn och statusbesked finns kvar.
+Tabellen, läsdialogerna och formulären ger hela det vanliga kartarbetet
+med tangentbord utan rumslig navigering. Fokusmarkeringar, fältnamn och
+statusbesked finns kvar.
 Kameran byter läge direkt utan animation och systemets minskade rörelse
 respekteras. Om grafiken avbryts finns utkast och oskickad text kvar.
-Du kan fortsätta i listan medan grafiken återställs. Om WebGL 2 saknas
-visas ett besked och listan kan fortfarande användas.
+Du kan fortsätta i tabellen medan grafiken återställs. Om WebGL 2 saknas
+visas ett besked och tabellen kan fortfarande användas.
 
-På en liten skärm visas en objektpanel åt gången. Öppna **Lista** för
-att välja ett annat objekt. **Skriv till Skyttel** öppnar textvyn.
-Textredigering på liggande iPhone kan kräva att du vänder till stående läge.
+Ett formulär i taget används på både liten och stor skärm. Öppna
+**Tabell** för att välja ett annat objekt efter att du lagt ändringen i
+utkastet eller valt hur den oskickade texten ska hanteras.
+**Skriv till Skyttel** öppnar textvyn. Ett pågående röstsamtal fortsätter
+under formulärarbetet.
 
 ## Ordna din personliga vy
 
@@ -252,7 +249,8 @@ fingerparet.
 Om ankarfingret flyttas återgår objektet till placeringen före hela
 draget, och fingrarna fortsätter med panorering och nypzoom utan hopp.
 En avbruten objektgest återställer placeringen.
-Ett långtryck öppnar menyn utan flyttning. Du kan välja objektet i listan,
+Ett långtryck öppnar menyn utan flyttning. Du kan öppna **Tabell**, välja
+**Visa [objektets namn] i kartan**,
 öppna **Navigera** och använda **Flytta [objektets namn]** i alla sex
 riktningar med knappar och tangentbord. Bara ett markerat objekt visar
 flyttknapparna; kameraknapparna finns kvar även vid tomt urval eller flerval.
@@ -268,8 +266,8 @@ inaktiverar reglaget, även om ditt sparade val är på. Om systemvalet
 stängs av igen kan stjärnhimlen användas enligt ditt personliga val.
 I täta utsnitt kan du välja ett objekt genom dess namnetikett eller markör.
 Etiketterna får egna träffytor och linjer till objektens verkliga lägen.
-Markerade objekt får etikettutrymme först. Använd **Lista** och sökningen
-för objekt vars etiketter inte ryms. Listan fungerar även när kartgrafiken
+Markerade objekt får etikettutrymme först. Använd **Tabell** och sökningen
+för objekt vars etiketter inte ryms. Tabellen fungerar även när kartgrafiken
 inte kan visas. Tangentbordets Tab och Enter kan också markera objekten.
 
 Hjälpvisare, avstånd och placeringar är presentation;

@@ -65,7 +65,7 @@ export async function createManualTransport({
       )
     )
       return 'stage';
-    if (/^(?:text-assistant|voice)\/[^/]+\/recover$/.test(suffix)) return 'recover';
+    if (/^(?:text-assistant|voice)\/(?:[^/]+\/)?recover$/.test(suffix)) return 'recover';
   }
   function track(socket: Duplex) {
     sockets.add(socket);

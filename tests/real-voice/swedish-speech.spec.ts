@@ -6,11 +6,15 @@ import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { openProfile, signIn } from '../support/client.js';
 import {
   chooseConversationVoice,
+  closeConversationText,
   microphoneButton,
+  openConversationText,
   startConversationWithText,
   voiceBox,
 } from '../support/conversation-page.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
 declare global {
   interface Window {
@@ -71,12 +75,6 @@ test('TAL-01: recorded Swedish speech changes the family map through real Live a
     const historyBefore = (await (await page.request.get(`${mapUrl}/history`)).json())
       .history as SaveReceipt[];
     await page.goto(app.origin);
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Kim Exempel', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text från talprovet');
     const panel = page.getByRole('region', { name: 'Arbetsyta', exact: true });
     // Observe the four-second status before speech can trigger the save. Later
     // receipt and media checks may take longer than its visible lifetime.
@@ -99,14 +97,26 @@ test('TAL-01: recorded Swedish speech changes the family map through real Live a
     await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true', {
       timeout: 30_000,
     });
+    // The recording's initial silence permits native form work after voice starts.
+    await closeConversationText(page);
+    await editTableObject(page, 'Kim Exempel');
+    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text från talprovet');
+    await expect
+      .poll(
+        async () => ((await (await page.request.get(mapUrl)).json()) as MapState).draft.changes,
+        { timeout: 180_000 },
+      )
+      .toEqual([]);
+    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Osänd text från talprovet',
+    );
+    await verifyObjectDepartureAndDiscard(page, { Beskrivning: 'Osänd text från talprovet' });
+    await openConversationText(page);
     await expect(panel.getByRole('status')).toHaveText(
       'Sparat. Hela utkastet finns i hushållets karta.',
       { timeout: 180_000 },
     );
     await expect(panel.getByRole('log', { name: 'Samtalstext' })).toContainText(/Molnmusik/i);
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Osänd text från talprovet',
-    );
     const state = (await (await page.request.get(mapUrl)).json()) as MapState;
     expect(
       state.objects.find((object) => object.name === 'Familjens Molnmusik')?.financialFacts?.price,

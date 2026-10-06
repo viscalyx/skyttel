@@ -77,7 +77,7 @@ med ett [familjeabonnemang](family-subscription.md).
   [konflikter i utkastet](drafts.md#fortsätt-ett-utkast-och-lös-konflikter).
 - Vill du läsa en borttagen uppgift? Öppna
   [ändringshistoriken](history.md).
-- Fungerar inte kartans grafik? Öppna **Lista** enligt
+- Fungerar inte kartans grafik? Öppna **Tabell** enligt
   [rymdkartans guide](spatial-map.md#enheter-och-begränsningar).
 - Fungerar inte mikrofonen? Fortsätt med text eller formulär enligt
   [röstguiden](text-assistant.md#tala-med-skyttel).

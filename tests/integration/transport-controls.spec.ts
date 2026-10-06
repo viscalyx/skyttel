@@ -138,6 +138,30 @@ test('SPAR-05: scoped transport holds real staging, rejects stale saves and reco
     expect((await (await reopened.request.get(`${path}/history`)).json()).history).toEqual(
       receipts,
     );
+    // Recovery without a conversation uses the same authenticated transport boundary.
+    await expect.poll(() => proxy.command('status').active).toBeUndefined();
+    proxy.command('arm recover:before');
+    const recovery = reopened.request
+      .post(`${proxy.address}/api/households/${household.id}/text-assistant/recover`, {
+        headers: {
+          host,
+          origin: app.origin,
+          cookie: (await reopened.cookies(app.origin))
+            .map(({ name, value }) => `${name}=${value}`)
+            .join('; '),
+        },
+        data: { operationIds: [receipt.operationId] },
+      })
+      .then(async (response) => ({ status: response.status(), body: await response.json() }))
+      .catch((error: unknown) => ({ error }));
+    await expect.poll(() => events.at(-1)?.phase).toBe('held-before');
+    expect(events.at(-1)?.route).toBe('recover');
+    proxy.command('release');
+    const checked = await recovery;
+    expect(checked).toMatchObject({ status: 200, body: { receipt } });
+    expect((await (await reopened.request.get(`${path}/history`)).json()).history).toEqual(
+      receipts,
+    );
     await fresh.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     if (await fresh.getByRole('button', { name: 'Stäng textvyn', exact: true }).isVisible())
       await closeTextView(fresh);

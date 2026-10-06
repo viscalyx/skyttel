@@ -7,14 +7,15 @@ exempelvis en solcellsanläggning och ha samma egna fält för alla objekt
 av den typen. Även förifyllda typer, som Person och Fordon, går att ändra.
 Den som skapar en typ får ingen särskild roll eller ensam rätt till den.
 
-Du når definitionerna genom **Inställningar** → **Typer och egna fält**
-eller från Lista. Oskickad definitionstext följer med mellan vyerna.
+Du når definitionerna genom **Inställningar** → **Typer och egna fält**.
+Oskickad definitionstext följer med mellan inställningarnas sidor.
 Välj **Tillbaka till kartan** för att granska och spara typförslagen
 med resten av ditt privata utkast.
 
 ## Skapa en typ och ett objekt tillsammans
 
-1. Välj **Ny objekttyp** i kartan. Ange **Typens namn** och en förklarande
+1. Öppna **Inställningar → Typer och egna fält** och välj **Ny objekttyp**.
+   Ange **Typens namn** och en förklarande
    **Typens beskrivning**.
 2. Välj **Lägg till fält** för varje egen uppgift. Ange fältets namn,
    beskrivning och värdeslag: **Text**, **Tal**, **Datum** eller **Ja/nej**.
@@ -23,7 +24,7 @@ med resten av ditt privata utkast.
 3. Välj **Lägg typförslaget i mitt utkast**. Skapa sedan ett **Nytt objekt**
    och välj den nya typen i **Objekttyp**. Fälten visas i objektformuläret.
 4. Lägg objektet i utkastet. Granska definitionen och objektets uppgifter
-   i **Hela mitt utkast**. Välj **Spara hela utkastet** när du vill göra
+   i **Visa utkastet**. Välj **Spara hela utkastet** när du vill göra
    alla förslagen gemensamma.
 
 Alla fyra fälttyper får lämnas obesvarade. För ja/nej är **Obesvarat**,
@@ -88,8 +89,8 @@ Namn och beskrivning kan rättas även när typen eller fältet används.
 Objekten behåller sina identiteter och värden när definitionerna byter namn.
 Snarlika namn kopplas inte ihop automatiskt.
 
-För att rätta ett värde väljer du objektet och **Redigera valt objekt**
-i detaljpanelen. Ändra fältet, lägg rättelsen i utkastet och spara hela
+För att rätta ett värde öppnar du **Tabell** och väljer objektets
+**Redigera**. Ändra fältet, lägg rättelsen i utkastet och spara hela
 utkastet. Du kan också rensa ett värde eller välja **Obesvarat**.
 Andra medlemmar ser den sparade definitionen och kan
 skapa egna objekt med samma fält. Din privata nya typ blir tillgänglig
@@ -102,7 +103,7 @@ värdeslag; felbeskedet avslöjar inte utkastets innehåll.
 
 ## Byt typ på ett objekt
 
-Välj objektet och **Redigera valt objekt** i detaljpanelen. Välj sedan
+Öppna **Tabell** och välj objektets **Redigera**. Välj sedan
 en annan **Objekttyp**, exempelvis från Cykel till Fordon.
 Objektets identitet och alla dess samband finns kvar. Namn,
 beskrivning och andra uppgifter som inte hör till typens egna fält påverkas
@@ -124,12 +125,13 @@ börjar de nya fälten tomma. Bekräfta hanteringen på nytt efter varje byte.
 Gemensamma ekonomiska uppgifter behåller belopp, säkerhet och datum;
 profilbilden och ditt ikonval finns också kvar.
 
-Välj **Lägg i mitt utkast**. I **Hela mitt utkast** ser du tidigare typ och
+Välj **Lägg i utkastet och stäng**. I **Visa utkastet** ser du tidigare typ och
 värden samt den nya typen och dess värden. Typbytet och fälträttelserna
 sparas tillsammans med resten av utkastet. Ett fel stoppar hela sparandet.
-Tidigare sparade värden finns kvar i historiken. **Stäng utan att skicka
-texten** tar bort oskickade formulärvärden. Panelens kryss behåller i stället
-texten så att du kan fortsätta i samma objekt senare.
+Tidigare sparade värden finns kvar i historiken. Försöker du lämna ett
+ändrat formulär visar Skyttel ett val. **Fortsätt redigera** behåller
+hela texten. **Kasta ändringarna och fortsätt** tar bort den oskickade texten
+utan att ändra redan lagda förslag.
 
 Ett typbyte gäller ett objekt och behåller dess identitet och samband.
 Ett namnbyte på typdefinitionen ändrar benämningen för alla objekt av

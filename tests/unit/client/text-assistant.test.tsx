@@ -114,7 +114,7 @@ test('the shared workspace keeps the map available before consent', async () => 
   const form = await openNewObjectForm();
   expect(form.getByLabelText('Namn', { exact: true })).toBeDefined();
   expect(queryConsentBox()).toBeNull();
-  await userEvent.click(form.getByRole('button', { name: 'Avbryt', exact: true }));
+  await userEvent.click(form.getByRole('button', { name: 'Avbryt' }));
   // Opening the text view starts nothing; actual use asks for consent.
   await openConversationText();
   expect(queryConsentBox()).toBeNull();

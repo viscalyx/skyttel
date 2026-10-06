@@ -42,19 +42,20 @@ så långt de ryms utan krockar.
 bekräftas. Ett gammalt kvitto spelas inte upp vid omladdning. Att inga
 förslagsmarkeringar syns bevisar inte att utkastet är sparat: filter kan
 dölja dem och typförslag saknar markeringar i kartan. Läs kvittot i
-**Mina sparförsök** för detaljer utan tidsgräns.
+**Rapporter → Ändringshistorik** för detaljer utan tidsgräns.
 
-Oskickad formulärtext finns kvar när du stänger panelerna. Öppna **Lista**
-och objektets **Uppgifter**, eller **Fortsätt:** för ett nytt objekt.
-Lägg texten i utkastet eller stäng formuläret utan att skicka innan du
-sparar. Oskickade samtalsmeddelanden finns kvar i textvyn.
+Ett ändrat formulär frågar innan du lämnar det. **Fortsätt redigera**
+behåller hela formulärtexten. Lägg texten i utkastet innan du sparar, eller
+välj uttryckligen **Kasta ändringarna och fortsätt** om den ska kastas.
+Valet ändrar inte förslag som redan finns i utkastet.
+Oskickade samtalsmeddelanden finns kvar i textvyn.
 Besvara nödvändiga frågor i samtalet före ett nytt uttryckligt sparbesked.
 Mikrofonläge och samtalsproblem visas i röstrutan och
 [samtalsnotiserna](text-assistant.md#följ-samtalet).
 
 ## Granska, spara eller kasta förslag
 
-1. Lägg formulärets ändringar i utkastet med **Lägg i mitt utkast** eller
+1. Lägg formulärets ändringar i utkastet med **Lägg i utkastet och stäng** eller
    motsvarande knapp för typen av förslag. Text som fortfarande bara
    finns i formuläret ingår inte i sparandet.
 2. Öppna **Utkast** och välj förslagets rad för att läsa hela förslaget,
@@ -62,7 +63,8 @@ Mikrofonläge och samtalsproblem visas i röstrutan och
    Läsdialogen skiljer sparade värden från föreslagna värden.
    Stäng med krysset eller Escape för att återgå till raden.
 3. Utkastets läsdialog erbjuder ingen redigering eller konfliktjämförelse.
-   Rättningar görs i vanliga formulär; ta bort förslaget och lägg det på nytt.
+   Rättningar görs i vanliga formulär. Lägg rättelsen i utkastet och granska
+   den igen före sparandet.
 4. Välj sparikonen **Spara hela utkastet** i **Utkast** när
    förslagen stämmer. Sparmodalen öppnas direkt med besked om sparandet.
    Sparandet gäller
@@ -95,7 +97,7 @@ i ett nytt utkast.
 
 Förslag som du lägger i utkastet finns kvar efter omladdning, stängd app
 och normal omstart av servern. Logga in som samma Skyttel-användare på en
-annan enhet för att fortsätta. **Hela mitt utkast** visar underlaget och
+annan enhet för att fortsätta. **Visa utkastet** visar underlaget och
 förslagen, inklusive osäkerhet och obesvarade frågor. Text som bara finns
 i ett öppet formulär är ännu inte bevarad. Ljud och fullständig
 samtalshistorik behövs inte för att fortsätta.

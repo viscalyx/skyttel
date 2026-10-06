@@ -111,7 +111,7 @@ samtalstexten och meddelandefältet **Meddelande till Skyttel**.
   behåller sina bredder, oskickad text och det pågående röstsamtalet.
 - På en mobil enhet och en smal skärm får fältet inte fokus av sig självt.
   Tryck i fältet när du vill skriva. På en smal skärm fyller textvyn
-  skärmen under verktygsraden, och **Lista** och kartans paneler tar dess
+  skärmen under verktygsraden, och **Tabell** och **Karta** tar dess
   plats när du väljer dem.
 - På en bred pekskärm är textvyn 400 px bred, också på en liggande
   telefon. Kartan syns bredvid. En dator med pekskärm och mus följer
@@ -183,9 +183,9 @@ samtalet. Valet går att spara även när samtalet inte är tillgängligt.
 En kort text vid kryssrutan säger om valet sparades eller om du behöver
 försöka igen.
 
-**Visa kvittot** och **Tidigare sparförsök** finns i **Utkast och historik**
-i kartans verktygsrad. Där kan du granska det beständiga sparresultatet,
-oberoende av om textvyn är öppen.
+**Rapporter → Ändringshistorik** visar genomförda sparanden och deras
+beständiga kvitton, oberoende av om textvyn är öppen. Vid ett oklart
+pågående sparande öppnar **Visa sparandet** dess aktuella status.
 
 ## Samtalets kontext
 
@@ -257,7 +257,7 @@ Med minskad rörelse står arbetsmarkeringen stilla.
 
 Röstrutans korta statusord visar vad rösten gör. **Skriv till Skyttel**
 öppnar samtalstexten, där du kan läsa frågor och svar. Samtalet, mikrofonen
-och oskickad text finns kvar när du växlar mellan kartan, panelerna och
+och oskickad samtalstext finns kvar när du växlar mellan kartan, tabellen och
 Inställningar. På Inställningar har röstrutan och kartans återkoppling
 om utkast och sparande var sitt utrymme under sidans innehåll.
 
@@ -396,7 +396,8 @@ omladdning och omstart.
 
 **Visa utkastet** i textvyn visar de samlade förslagen för objekt,
 samband och typer. Rättelser visar tidigare och föreslagna värden, exempelvis
-**Sista fyra: 1111 → 2222**. Välj **Utkast och historik** för mer information.
+**Sista fyra: 1111 → 2222**. Välj förslagets rad för att läsa alla tidigare
+och föreslagna uppgifter i läsdialogen.
 Skriv eller säg **Läs upp hela utkastet** för att granska förslagen i
 samtalet. Svaret beskriver ändrade värden före och efter, inklusive
 objektens identitet, om de gäller eller har upphört, profilbildsändringar
@@ -463,7 +464,7 @@ kontrollen är klar. Textvyn öppnas inte av förklaringen.
 
 Bara om kontrollen misslyckas visas **Skyttel kunde inte kontrollera om
 utkastet sparades.** med **Kontrollera om utkastet sparades**. Försök igen
-med den knappen. **Utkast och historik → Tidigare sparförsök** innehåller
+med den knappen. **Rapporter → Ändringshistorik** innehåller
 även kvitton från andra enheter. Ett avvisat försök behåller utkastet och
 behöver ett nytt underlag och ett nytt sparbesked.
 

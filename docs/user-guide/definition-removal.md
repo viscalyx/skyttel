@@ -14,7 +14,7 @@ dem för framtida användning.
 2. Välj **Ta bort objekttypen** eller **Ta bort sambandstypen**. För ett
    fält väljer du **Ta bort fält** och sedan **Lägg typförslaget i mitt
    utkast**. Andra fält och typens namn kan vara kvar.
-3. Granska tidigare definition och förslag i **Hela mitt utkast**.
+3. Granska tidigare definition och förslag i **Visa utkastet**.
    Definitionen finns kvar i den gemensamma kartan tills du sparar.
 4. Välj **Spara hela utkastet** för att genomföra alla förslagen, eller
    **Kasta förslaget** för att avstå från just borttagningen.
