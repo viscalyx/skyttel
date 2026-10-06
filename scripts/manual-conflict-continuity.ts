@@ -1,5 +1,6 @@
+import assert from 'node:assert/strict';
 import { createInterface } from 'node:readline';
-import { chromium } from '@playwright/test';
+import { type APIRequestContext, chromium } from '@playwright/test';
 import { conflictBasis } from '../src/shared/conflict-properties.js';
 import { draftConflicts } from '../src/shared/draft-conflicts.js';
 import type { MapState, ObjectType, RelationshipType } from '../src/shared/map.js';
@@ -29,6 +30,7 @@ const page = await browser.newPage();
 const other = await browser.newContext();
 let app: Awaited<ReturnType<typeof conflictCollaborators>> | undefined;
 let historicalDefinition: ObjectType | RelationshipType | undefined;
+let previousDefinitionReview: Record<string, unknown> | undefined;
 const preparations = {
   'new-base': () => prepareConflictContinuity(page.request, other.request),
   'new-two': () => prepareConflictContinuity(page.request, other.request),
@@ -45,6 +47,8 @@ const preparations = {
   'new-connections': () => prepareOwnRemovalConflict(page.request, other.request, true),
   'new-missing-object-type': () =>
     prepareArchiveConflict(other.request, page.request, 'missing-object-type'),
+  'new-missing-relationship-type': () =>
+    prepareArchiveConflict(other.request, page.request, 'missing-relationship-type'),
   'new-invalid-datatype': () =>
     prepareArchiveConflict(other.request, page.request, 'invalid-datatype'),
   'new-object-restoration': () =>
@@ -76,6 +80,7 @@ async function fresh(command: keyof typeof preparations) {
   } = await preparations[command]();
   app = prepared;
   historicalDefinition = prepared.historicalType;
+  previousDefinitionReview = undefined;
   if (command === 'new-two') {
     const state = await app.read();
     const value = { typeId: state.types[0].id, name: 'Min musiktjänst', description: 'Min tjänst' };
@@ -89,6 +94,24 @@ async function fresh(command: keyof typeof preparations) {
   }
   await page.goto(app.installation.origin);
   console.log(`Ready: ${command}, ${app.installation.origin}`);
+}
+async function rejectedWithoutChanges(
+  prepared: NonNullable<typeof app>,
+  client: APIRequestContext,
+  route: string,
+  body: unknown,
+  label: string,
+) {
+  const current = async () => ({
+    member: await (await page.request.get(prepared.path)).json(),
+    administrator: await (await other.request.get(prepared.path)).json(),
+    history: await (await page.request.get(`${prepared.path}/history`)).json(),
+  });
+  const before = await current();
+  const response = await prepared.post(client, route, body);
+  assert.equal(response.status(), 409, await response.text());
+  assert.deepEqual(await current(), before);
+  console.log(`${label}: HTTP 409; both private drafts, shared facts and history unchanged.`);
 }
 try {
   await page.route('**/map/resolve', async (route) => {
@@ -106,7 +129,7 @@ try {
   });
   await fresh('new-base');
   console.log(
-    `Commands: ${Object.keys(preparations).join(', ')}, newer-name, newer-type, newer-reference, newer-private, newer-definition, reimport-restoration, probe-definition-guards, forge-restoration, try-restoration-save, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, result, quit`,
+    `Commands: ${Object.keys(preparations).join(', ')}, newer-name, newer-type, newer-reference, newer-private, newer-definition, reimport-restoration, probe-definition-guards, probe-reused-definition, forge-restoration, try-restoration-save, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, result, quit`,
   );
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const command of input) {
@@ -167,10 +190,22 @@ try {
         version: state.draft.version,
         contentVersion: state.contentVersion,
       };
-      const incorrect = await app.post(page.request, 'resolve', { ...review, basis: {} });
-      const foreign = await app.post(other.request, 'resolve', review);
-      console.log(
-        `Guard responses: incorrect basis ${incorrect.status()}, other private owner ${foreign.status()}`,
+      previousDefinitionReview = review;
+      await rejectedWithoutChanges(
+        app,
+        page.request,
+        'resolve',
+        { ...review, basis: {} },
+        'Incorrect basis',
+      );
+      await rejectedWithoutChanges(app, other.request, 'resolve', review, 'Other private owner');
+    } else if (app && command === 'probe-reused-definition' && previousDefinitionReview) {
+      await rejectedWithoutChanges(
+        app,
+        page.request,
+        'resolve',
+        previousDefinitionReview,
+        'Reused comparison',
       );
     } else if (
       app &&
@@ -201,6 +236,19 @@ try {
       const current: MapState = await (await other.request.get(app.path)).json();
       const type = current.types.find((type) => type.id === conflict.id);
       if (!type) throw new Error('Missing current definition');
+      await rejectedWithoutChanges(
+        app,
+        other.request,
+        'object-type',
+        {
+          id: type.id,
+          version: current.draft.version,
+          contentVersion: current.contentVersion,
+          baseRevision: type.revision,
+          value: null,
+        },
+        'Deletion while another private restoration remains',
+      );
       const staged = await app.post(other.request, 'object-type', {
         id: type.id,
         version: current.draft.version,

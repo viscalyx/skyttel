@@ -1,6 +1,119 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
+import { openSettings } from '../support/client.js';
 import { prepareArchiveConflict } from '../support/conflict-archive.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+
+async function addReplacementField(page: Page) {
+  await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
+  const field = page.getByRole('group', { name: /^Eget fält/ }).last();
+  await field.getByLabel('Fältets namn', { exact: true }).fill('Installationsår');
+  await field.getByLabel('Värdeslag', { exact: true }).selectOption('number');
+}
+
+test('UTKAST-66: a missing relationship type needs an actual new definition and explicit ordinary correction with readable historical field loss', async ({
+  page,
+  browser,
+}) => {
+  const administrator = await browser.newContext();
+  const app = await prepareArchiveConflict(
+    administrator.request,
+    page.request,
+    'missing-relationship-type',
+  );
+  try {
+    const before = await app.read();
+    const history = await (await page.request.get(`${app.path}/history`)).json();
+    await page.goto(app.installation.origin);
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(conflict).toContainText(
+      'Den föreslagna sambandstypen saknas i det aktuella underlaget.',
+    );
+    await expect(conflict).toContainText(
+      'Justera sedan sambandet i den vanliga sambandsdialogen så att det använder rätt typ',
+    );
+    await expect(conflict.getByRole('region', { name: 'Ditt förslag' })).toContainText(
+      'Installationsår',
+    );
+    await expect(conflict.getByRole('region', { name: 'Ditt förslag' })).toContainText(
+      'Våren 2021',
+    );
+    await expect(
+      conflict.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
+    ).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    expect((await app.read()).draft).toEqual(before.draft);
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+    await page.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
+    await page.getByLabel('Sambandstypens namn', { exact: true }).fill('Förvaras i');
+    await page
+      .getByLabel('Sambandstypens beskrivning', { exact: true })
+      .fill('Ny faktisk definition');
+    await page.getByLabel('Benämning från startobjektet', { exact: true }).fill('förvaras i');
+    await page.getByLabel('Benämning från målobjektet', { exact: true }).fill('förvarar');
+    await addReplacementField(page);
+    await page
+      .getByRole('button', { name: 'Lägg sambandstypen i mitt utkast', exact: true })
+      .click();
+    const named = await app.read();
+    const definition = named.draft.relationshipTypes?.find(
+      (change) => change.after?.name === 'Förvaras i',
+    );
+    expect(definition?.id).not.toBe(app.typeId);
+    expect(definition?.after?.fields?.[0]?.id).not.toBe('storage-year');
+    expect(named.draft.relationships).toEqual(before.draft.relationships);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    await expect(conflict).toContainText('Den föreslagna sambandstypen saknas');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Samband för Lo Exempel', exact: true });
+    await dialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
+    await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption(definition?.id ?? '');
+    const loss = page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true });
+    await expect(loss).toContainText('Installationsår: Våren 2021');
+    await expect(loss).not.toContainText('storage-year:');
+    await page.keyboard.press('Escape');
+    expect((await app.read()).draft).toEqual(named.draft);
+    await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption(definition?.id ?? '');
+    await loss
+      .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
+      .click();
+    await expect(dialog.getByLabel('Installationsår', { exact: true })).toHaveValue('');
+    await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(dialog.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+    await dialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }),
+    ).toHaveCount(0);
+    const corrected = await app.read();
+    expect(
+      corrected.draft.relationships?.find((change) => change.id === 'private-target'),
+    ).toMatchObject({ after: { typeId: definition?.id } });
+    expect(
+      Object.keys(
+        corrected.draft.relationships?.find((change) => change.id === 'private-target')?.after
+          ?.customValues ?? {},
+      ),
+    ).toEqual([]);
+    expect(corrected.draft.changes).toEqual(before.draft.changes);
+    expect(corrected.relationships).toEqual(before.relationships);
+    expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await saveReviewedConflictDraft(page);
+    const saved = await app.read();
+    expect(saved.relationships.find((edge) => edge.id === 'private-target')).toMatchObject({
+      typeId: definition?.id,
+    });
+    expect(saved.relationshipTypes.find((type) => type.id === definition?.id)?.fields).toEqual(
+      definition?.after?.fields,
+    );
+  } finally {
+    await administrator.close();
+    await app.installation.close();
+  }
+});
 
 test('UTKAST-64: a missing object type keeps its proposal readable and discards only the explicitly confirmed object', async ({
   page,
@@ -53,6 +166,87 @@ test('UTKAST-64: a missing object type keeps its proposal readable and discards 
     );
     expect(after.objects).toEqual(before.objects);
     expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+  } finally {
+    await administrator.close();
+    await app.installation.close();
+  }
+});
+
+test('UTKAST-72: ordinary correction of a missing object type preserves historical field labels until explicitly confirmed loss', async ({
+  page,
+  browser,
+}) => {
+  const administrator = await browser.newContext();
+  const app = await prepareArchiveConflict(
+    administrator.request,
+    page.request,
+    'missing-object-type',
+  );
+  try {
+    const before = await app.read();
+    const history = await (await page.request.get(`${app.path}/history`)).json();
+    await page.goto(app.installation.origin);
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+    await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
+    await page.getByLabel('Typens namn', { exact: true }).fill('Solcellsanläggning');
+    await page.getByLabel('Typens beskrivning', { exact: true }).fill('Ny faktisk definition');
+    await addReplacementField(page);
+    await page
+      .getByRole('button', { name: 'Lägg typförslaget i mitt utkast', exact: true })
+      .click();
+    const named = await app.read();
+    const definition = named.draft.objectTypes?.find(
+      (change) => change.after?.name === 'Solcellsanläggning',
+    );
+    expect(definition?.id).not.toBe(app.typeId);
+    expect(definition?.after?.fields?.[0]?.id).not.toBe('year');
+    expect(named.draft.changes).toEqual(before.draft.changes);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    await expect(
+      page.getByRole('dialog', { name: 'Granska konflikter', exact: true }),
+    ).toContainText('Den föreslagna objekttypen saknas');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera Solcellsanläggningen', exact: true }).click();
+    const form = page.getByRole('dialog', { name: 'Redigera Solcellsanläggningen', exact: true });
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption(definition?.id ?? '');
+    const loss = page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true });
+    await expect(loss).toContainText('Installationsår: Våren 2021');
+    await expect(loss).not.toContainText('year:');
+    await page.keyboard.press('Escape');
+    expect((await app.read()).draft).toEqual(named.draft);
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption(definition?.id ?? '');
+    await loss
+      .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
+      .click();
+    await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await expect(form.getByLabel('Installationsår', { exact: true })).toHaveValue('');
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(form).not.toBeVisible();
+    const corrected = await app.read();
+    expect(corrected.draft.changes.find((change) => change.id === 'private-target')).toMatchObject({
+      after: { typeId: definition?.id },
+    });
+    expect(
+      Object.keys(
+        corrected.draft.changes.find((change) => change.id === 'private-target')?.after
+          ?.customValues ?? {},
+      ),
+    ).toEqual([]);
+    expect(corrected.draft.changes.find((change) => change.id === 'independent')).toEqual(
+      before.draft.changes.find((change) => change.id === 'independent'),
+    );
+    expect(corrected.objects).toEqual(before.objects);
+    expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await expect(
+      page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }),
+    ).toHaveCount(0);
+    await saveReviewedConflictDraft(page);
+    expect(
+      (await app.read()).objects.find((object) => object.id === 'private-target')?.typeId,
+    ).toBe(definition?.id);
   } finally {
     await administrator.close();
     await app.installation.close();

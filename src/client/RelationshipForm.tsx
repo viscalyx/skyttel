@@ -89,6 +89,9 @@ export function RelationshipForm({
     return !problems.length;
   }
   const type = state.relationshipTypes.find((type) => type.id === value.typeId);
+  const historicalType = state.draft.relationships?.find(
+    (change) => change.id === initial.id && change.type.id === value.typeId,
+  )?.type;
   const choices = [...objects.values()].filter(
     (object) => !state.draft.changes.some((change) => change.id === object.id && !change.after),
   );
@@ -440,7 +443,7 @@ export function RelationshipForm({
       {nextType !== undefined && (
         <ObjectTypeLossDialog
           fields={Object.entries(value.customValues ?? {}).map(([id, answer]) => ({
-            name: type?.fields?.find((field) => field.id === id)?.name ?? id,
+            name: (type ?? historicalType)?.fields?.find((field) => field.id === id)?.name ?? id,
             value: answer,
           }))}
           onCancel={() => setNextType(undefined)}

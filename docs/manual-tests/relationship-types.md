@@ -206,8 +206,13 @@ identity and reject every partial write”.
    cykeln till förrådet. Lo lägger samma samband i sitt eget utkast och
    sparar först. Alex försöker sedan spara hela utkastet.
 5. Kontrollera att inget av Alex förslag sparas. Hämta aktuellt underlag,
-   välj Använd sparat värde för dubbletten och spara återstående förslag.
-   Läs kartan och historiken via HTTP.
+   öppna **Granska konflikter** och läs dubbletten utan egenskapsval.
+   Stäng med Escape och kontrollera att utkastet är oförändrat.
+   Öppna igen och välj **Ta bort sambandet ur ditt utkast**.
+   Kontrollera att typnamnsförslaget, det oberoende objektförslaget och
+   Los sparade samband finns kvar samt att historiken är oförändrad.
+   Spara återstående förslag separat från
+   **Skriv till Skyttel → Visa utkastet**. Läs kartan och historiken via HTTP.
 
 **Förväntat resultat:**
 

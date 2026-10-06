@@ -4,12 +4,23 @@ import { conflictCollaborators } from './conflict-properties.js';
 export async function saveReviewedConflictDraft(page: Page) {
   const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
   if (await conflict.isVisible()) await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: /^Skriv till Skyttel/ }).click();
-  await page.getByRole('button', { name: /^Visa utkastet/ }).click();
-  await page
-    .getByRole('region', { name: 'Utkastet', exact: true })
-    .getByRole('button', { name: 'Spara hela utkastet', exact: true })
-    .click();
+  const text = page.getByRole('button', { name: /^Skriv till Skyttel/ });
+  if ((await text.getAttribute('aria-expanded')) !== 'true') await text.click();
+  const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+  if (!(await draft.isVisible()))
+    await page.getByRole('button', { name: /^Visa utkastet/ }).click();
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        new URL(response.url()).pathname.endsWith('/map/save') &&
+        response.status() === 200,
+    ),
+    draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click(),
+  ]);
+  await expect(
+    page.getByRole('dialog', { name: 'Sparbekräftelse', exact: true }),
+  ).not.toBeVisible();
   await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
     'Utkastet är sparat',
   );

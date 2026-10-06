@@ -48,6 +48,10 @@ for (const kind of ['object', 'relationship'] as const)
       }
       const apply = dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true });
       await expect(apply).toBeDisabled();
+      await expect(dialog).toContainText('1 av 1 egenskaper återstår att välja.');
+      await expect(
+        dialog.getByRole('region', { name: 'Resultat av valen', exact: true }),
+      ).toContainText('Välj ett värde');
       for (const width of [1280, 320]) {
         await page.setViewportSize({ width, height: 900 });
         expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(

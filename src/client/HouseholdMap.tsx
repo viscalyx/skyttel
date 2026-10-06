@@ -2014,6 +2014,7 @@ export function HouseholdMap({
             !state.draft.changes.some((change) => change.id === objectDialog.id)
           }
           types={effectiveTypes}
+          historicalType={state.draft.changes.find((change) => change.id === objectDialog.id)?.type}
           onClose={() => setObjectDialog(null)}
           onDirty={setObjectFormDirty}
           onStage={async (editor, stagingId, image) => {

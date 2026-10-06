@@ -32,6 +32,7 @@ export function ObjectDialog({
   householdId,
   restoreFocus,
   types,
+  historicalType,
   onStage,
   onCheck,
   onClose,
@@ -44,6 +45,7 @@ export function ObjectDialog({
   householdId: string;
   restoreFocus?: () => void;
   types: ObjectType[];
+  historicalType?: ObjectType;
   onStage: (editor: ObjectEditor, stagingId: string, image?: File | null) => Promise<MapDraft>;
   onCheck: () => Promise<MapState>;
   onClose: () => void;
@@ -97,6 +99,9 @@ export function ObjectDialog({
   const dirty =
     !sameConflictValue(comparable(editor.value), comparable(initial.value)) ||
     image instanceof File;
+  const needsDefinitionReview = Boolean(
+    historicalType?.id === editor.value.typeId && historicalType?.revision !== editor.typeRevision,
+  );
   useLayoutEffect(() => {
     onDirty(dirty || busy);
     return () => onDirty(false);
@@ -308,7 +313,7 @@ export function ObjectDialog({
   }, [returnFocus]);
   async function submit(relationships: boolean) {
     if (requestLock.current || busy || !validate()) return;
-    if (!isNew && !dirty) {
+    if (!isNew && !dirty && !needsDefinitionReview) {
       onConfirmed(editor.id, relationships, returnFocus);
       return;
     }
@@ -641,7 +646,10 @@ export function ObjectDialog({
       {typeChange && (
         <ObjectTypeLossDialog
           fields={typeChange.lost.map((id) => ({
-            name: type?.fields?.find((field) => field.id === id)?.name ?? id,
+            name:
+              (
+                type ?? (historicalType?.id === editor.value.typeId ? historicalType : undefined)
+              )?.fields?.find((field) => field.id === id)?.name ?? id,
             value: editor.value.customValues?.[id],
           }))}
           onCancel={() => setTypeChange(null)}

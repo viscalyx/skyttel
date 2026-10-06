@@ -87,7 +87,10 @@ export async function prepareArchiveConflict(
         description: 'Förvaring',
         forwardLabel: 'förvaras i',
         reverseLabel: 'förvarar',
-        fields: [],
+        fields:
+          kind === 'missing-relationship-type'
+            ? [{ id: 'storage-year', name: 'Installationsår', description: '', kind: 'text' }]
+            : [],
       }
     : {
         name: 'Solcellsanläggning',
@@ -131,7 +134,13 @@ export async function prepareArchiveConflict(
       relationship ? 'relationship' : 'draft',
       'private-target',
       relationship
-        ? { typeId, sourceId: 'lo', targetId: 'service', knowledge: 'known' }
+        ? {
+            typeId,
+            sourceId: 'lo',
+            targetId: 'service',
+            knowledge: 'known',
+            customValues: { 'storage-year': 'Våren 2021' },
+          }
         : {
             typeId,
             name: 'Solcellsanläggningen',

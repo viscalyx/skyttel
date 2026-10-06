@@ -190,19 +190,31 @@ and used field kinds stay protected”.
    ändrar typens namn till Solkraft, fältnamnet till Kommentar och båda
    beskrivningarna. Lo lägger också till ett nytt talfält som heter
    Anteckning och sparar definitionen.
-4. Alex försöker spara sitt äldre utkast. Hämta aktuellt underlag och
-   välj **Behåll mitt förslag** för objektet. Granska Kommentar och
-   Privat värde innan ett nytt sparande.
-5. Lo skapar Medlemmens paneler av typen Solkraft och fyller i Kommentar.
-   Spara objektet. Skapa dessutom Lo av typen Person och spara.
+4. Alex försöker spara sitt äldre utkast. Öppna **Granska konflikter** och
+   läs anvisningen om ändrad typdefinition för ett ännu inte sparat objekt.
+   Stäng med Escape. Välj **Tabell → Redigera Paneler → Egna fält**.
+   Granska **Kommentar: Privat värde** och tom **Anteckning** med tal som
+   värdeslag. Välj **Lägg i utkastet och stäng** och spara därefter separat
+   från **Skriv till Skyttel → Visa utkastet**.
+5. Lo skapar Medlemmens paneler av typen Solkraft. Öppna **Egna fält**,
+   fyll i **Kommentar** och lämna **Anteckning** obesvarat. Lägg objektet
+   i utkastet och spara separat. Stäng textvyn, skapa dessutom Lo av typen
+   Person och spara separat.
 6. Lo ändrar namn och beskrivning på den använda typen Person till
-   Människa och En person i kartan. Spara, ladda om och öppna Nytt objekt.
+   Människa och En person i kartan via **Inställningar → Typer och egna fält**.
+   Återgå till kartan och spara separat. Ladda om, stäng textvyn och öppna
+   **Nytt objekt**.
 
 **Förväntat resultat:**
 
 - En privat typ avslöjas inte eller används av en annan medlem.
 - En använd fälttyp ändras inte. Ett nytt fält med liknande namn får eget
   värde; Kommentar behåller Privat värde utan automatisk koppling.
+- Paneler har ingen tidigare sparad sida och beskrivs inte som borttaget.
+  Det tidigare textfältets ID `note` och värde består efter uttrycklig
+  granskning av aktuell definition. Det nya talfältet `numeric-note`
+  förblir obesvarat. Öppning och stängning löser inget; den bekräftade
+  tilläggshandlingen uppdaterar bara utkastet innan separat sparande.
 - Vanliga medlemmar kan använda gemensamma fält och rätta förifyllda typer.
   Formulären visar de aktuella namnen efter sparande och omladdning.
 

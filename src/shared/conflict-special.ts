@@ -24,6 +24,10 @@ export type SpecialConflict = {
 /** A missing saved record differs from a proposal that has never been saved. */
 export function specialConflict(state: MapState, conflict: DraftConflict): SpecialConflict | null {
   const change = conflictChange(state, conflict);
+  const correctionInstruction =
+    conflict.kind === 'object'
+      ? 'Stäng konfliktfönstret och rätta uppgiften i den vanliga objektdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit. Ditt förslag ligger kvar under tiden.'
+      : 'Stäng konfliktfönstret och rätta uppgiften i den vanliga sambandsdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit. Ditt förslag ligger kvar under tiden.';
   if (
     (conflict.kind === 'objectType' || conflict.kind === 'relationshipType') &&
     !conflict.current &&
@@ -127,10 +131,21 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
       warning: textToNumber
         ? 'Det föreslagna värdet måste vara ett tal.'
         : 'Förslaget behöver rättas så att värdena passar de aktuella egna fälten.',
-      instruction:
-        conflict.kind === 'object'
-          ? 'Stäng konfliktfönstret och rätta uppgiften i den vanliga objektdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit. Ditt förslag ligger kvar under tiden.'
-          : 'Stäng konfliktfönstret och rätta uppgiften i den vanliga sambandsdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit. Ditt förslag ligger kvar under tiden.',
+      instruction: correctionInstruction,
+    };
+  }
+  if (
+    (conflict.kind === 'object' || conflict.kind === 'relationship') &&
+    change?.after &&
+    !change.before &&
+    !conflict.current &&
+    conflict.type
+  ) {
+    return {
+      kind: 'outside-correction',
+      reason: `${conflict.kind === 'object' ? 'Objektet' : 'Sambandet'} har ännu inte sparats i kartan. Typdefinitionen har ändrats medan du arbetade med förslaget.`,
+      warning: `Typdefinitionen har ändrats: ${conflict.type.name}.`,
+      instruction: correctionInstruction,
     };
   }
   return null;

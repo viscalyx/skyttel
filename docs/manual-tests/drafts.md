@@ -1980,16 +1980,15 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 
 ## Bevarade konfliktval och kontrollerat utfall
 
-UTKAST-49–65 och 67–71 använder en tillfällig installation med riktig
+UTKAST-49–72 använder en tillfällig installation med riktig
 SQLite och två
 syntetiska användare: administratören Alex och medlemmen Robin. Starta från
 repo-roten med `npm run build` och
 `npx tsx scripts/manual-conflict-continuity.ts`. Öppna adressen som skrivs ut.
 För UTKAST-49–63 är Alex inloggad i det synliga fönstret; konsolkommandon
-för Robin använder hans separata session. Arkivfallen UTKAST-64–65 visar
+för Robin använder hans separata session. Arkivfallen UTKAST-64–72 visar
 i stället medlemmen Robin; administratören Alex använder en separat
-session för export, typändring och import. Samma rollfördelning gäller
-återställningsfallen UTKAST-67–71. Inga externa AI-anrop eller
+session för export, typändring och import. Inga externa AI-anrop eller
 medgivanden behövs.
 
 Varje `new-*` skapar en ny tom installation och stänger föregående databas.
@@ -2600,6 +2599,55 @@ ordinary object form before fresh conflict assessment”.
   och sparade fakta består tills utkastet sparas separat.
 - Det genomförda atomiska sparandet innehåller Installationsår `2021` som Tal.
 
+### UTKAST-66: rätta ett samband med borttagen typ genom en faktisk ny definition
+
+**Syfte:** Bevara läsbara historiska uppgifter och kräva ett uttryckligt
+typbyte innan ett kvarvarande sambandsförslag kan sparas.
+
+**Användare:** Robin i fönstret; Alex förbereder arkivet i sin separata session.
+
+**Förutsättningar:** Kör `new-missing-relationship-type`. Sambandet från
+**Lo Exempel** till **Molnmusik** har den borttagna typen **Förvaras i**
+och ett eget fält **Installationsår: Våren 2021**. Fältets ID är
+`storage-year`. Ett oberoende objektförslag finns kvar.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+testfallet “UTKAST-66: a missing relationship type needs an actual new
+definition and explicit ordinary correction with readable historical field loss”.
+
+**Steg:**
+
+1. Öppna konflikten och läs anvisningen samt förslagets historiska fältnamn
+   och värde. Stäng med Escape och kör `result`.
+2. Öppna **Inställningar → Typer och egna fält → Ny sambandstyp**.
+   Ange namn **Förvaras i**, beskrivning **Ny faktisk definition**,
+   framåtriktning **förvaras i** och bakåtriktning **förvarar**.
+   Lägg till ett eget talfält med namnet **Installationsår**.
+   Lägg typen i utkastet och återgå till kartan.
+3. Öppna konflikten igen. Kontrollera att den fortfarande gäller trots
+   samma typnamn. Stäng och välj **Tabell → Samband för Lo Exempel**.
+4. Välj **Redigera samband**, byt till den nya typen och läs bekräftelsen
+   **Ta bort tidigare egna fält?**. Tryck Escape och kör `result`.
+5. Byt typ igen och välj **Ta bort fältvärdena och byt typ**.
+   Välj **Lägg i utkastet**, stäng samband och kör `result`.
+6. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+
+**Förväntat resultat:**
+
+- Den borttagna typen och **Installationsår: Våren 2021** är läsbara;
+  konfliktfönstret erbjuder inga egenskapsval eller automatisk rättning.
+- En ny typ med samma namn har ett annat ID. Konflikten består tills
+  sambandet uttryckligen använder den faktiska nya definitionen.
+- Typbytesbekräftelsen visar **Installationsår**, inte `storage-year`.
+  Escape bevarar alla privata förslag. Det uttryckligt bekräftade bytet
+  tar bort det gamla fältvärdet utan att kopiera det till den nya typen.
+- Det nya talfältet har ett annat ID och förblir obesvarat trots samma
+  fältnamn. Dess formulärfält är tomt före inskickning.
+- Det oberoende förslaget, kartan och historiken består under rättningen.
+  Konflikten försvinner efter ny granskning; först det separata sparandet
+  gör definitionen, sambandet och övriga giltiga förslag gemensamma.
+
 ### UTKAST-67: återställ en borttagen typdefinition efter uttrycklig granskning
 
 **Syfte:** Bevara typens identitet och revisionsföljd utan att spara kartan
@@ -2664,9 +2712,13 @@ atomically and preserves independent proposals”.
 
 1. Kör `probe-definition-guards` före granskningen och därefter `result`.
 2. Öppna Robins konflikt, välj den föreslagna definitionen och lägg valet i
-   utkastet. Stäng dialogen.
+   utkastet. Stäng dialogen. Kör `probe-reused-definition` för att försöka
+   använda samma tidigare jämförelse igen.
 3. Kör `newer-definition`. Alex granskar sitt eget förslag och sparar
-   definitionen, därefter **Ny gemensam typbenämning** som nästa revision.
+   definitionen. Förberedaren försöker därefter ta bort definitionen medan
+   Robins privata återställningsförslag finns kvar och kontrollerar HTTP 409
+   samt oförändrade privata utkast, gemensamma uppgifter och historik.
+   Alex sparar sedan **Ny gemensam typbenämning** som nästa revision.
 4. Kör `try-restoration-save` och `result`.
 5. Öppna den aktuella konflikten. Välj Robins föreslagna namn och beskrivning;
    samma egna fält behöver inget nytt val. Lägg valen i utkastet.
@@ -2675,8 +2727,9 @@ atomically and preserves independent proposals”.
 **Förväntat resultat:**
 
 - Felaktig jämförelse och den andra privata ägarens jämförelse avvisas med
-  HTTP 409 utan utkaständring. Ett redan använt gammalt underlag kan inte
-  användas igen. Ingen annans privata utkast ändras.
+  HTTP 409 utan utkaständring. `probe-reused-definition` avvisas också med
+  HTTP 409. Förberedaren kontrollerar att båda privata utkasten, gemensamma
+  uppgifter och historik är oförändrade vid varje avvisning.
 - Typens användningsskydd gäller även för privata återställningsförslag;
   en annan användare får inte ta bort definitionen medan förslaget finns.
 - Det gamla sparandet avvisas med HTTP 409. Robins hela utkast, sparade
@@ -2794,3 +2847,45 @@ identity or grant forged restoration authority”.
   behörighet tillåter varken återanvänt ID eller återställning.
 - Robins utkast, gemensamma typer, objekt och historik är oförändrade
   efter den avvisade begäran.
+
+### UTKAST-72: läs historiska fältnamn före bekräftat objektbyte till giltig typ
+
+**Syfte:** Bevara namn och värden från en borttagen objekttyp när en vanlig
+rättning kräver att tidigare egna fält tas bort.
+
+**Användare:** Robin i fönstret; Alex förbereder arkivet i sin separata session.
+
+**Förutsättningar:** Kör `new-missing-object-type`. Det privata objektet
+**Solcellsanläggningen** har **Installationsår: Våren 2021** från en borttagen
+typ. Ett oberoende objektförslag finns i samma utkast.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+testfallet “UTKAST-72: ordinary correction of a missing object type preserves
+historical field labels until explicitly confirmed loss”.
+
+**Steg:**
+
+1. Öppna **Inställningar → Typer och egna fält → Ny objekttyp**.
+   Ange namn **Solcellsanläggning**, beskrivning **Ny faktisk definition**
+   och lägg till ett talfält med namnet **Installationsår**.
+   Lägg typen i utkastet och återgå till kartan. Kontrollera att konflikten
+   fortfarande gäller trots samma typnamn.
+2. Öppna **Tabell → Redigera Solcellsanläggningen**. Byt till den nya
+   typen och läs **Ta bort tidigare egna fält?**. Tryck Escape och kör
+   `result`. Byt till samma nya typ igen.
+3. Välj **Ta bort fältvärdena och byt typ**. Öppna **Egna fält** och läs
+   det tomma nya talfältet **Installationsår**. Välj **Lägg i utkastet och stäng**.
+   Kör `result` och kontrollera att konflikten inte längre visas.
+4. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+
+**Förväntat resultat:**
+
+- Bekräftelsen anger **Installationsår: Våren 2021**, inte fältets ID `year`.
+  Escape bevarar hela utkastet och fältvärdet.
+- Det uttryckliga bytet tar bort det tidigare egna värdet och lägger
+  objektet i utkastet mot den faktiskt valda definitionen.
+- Typen och det nya talfältet har andra ID:n trots samma namn. Det nya
+  **Installationsår** förblir obesvarat; det gamla svaret kopieras inte.
+- Det oberoende förslaget, sparade objekt och historik består under rättningen.
+  Först det separata sparandet gör den rättade typen gemensam för objektet.

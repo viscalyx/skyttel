@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
@@ -637,14 +638,34 @@ test('STY-05: duplicate adds, edits and concurrent saves preserve identity and r
       false,
     );
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Samma samband finns redan');
-    await page.getByRole('button', { name: 'Använd sparat värde', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(conflict).toContainText(
+      'Ett sparat samband har redan samma typ, riktning och objekt.',
     );
+    await expect(
+      conflict.getByRole('region', { name: 'Ditt förslag' }).getByRole('button'),
+    ).toHaveCount(0);
+    await expect(
+      conflict.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
+    ).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    expect(await read()).toEqual(before);
+    const priorHistory = await (await page.request.get(`${path}/history`)).json();
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    await conflict
+      .getByRole('button', { name: 'Ta bort sambandet ur ditt utkast', exact: true })
+      .click();
+    await expect(conflict.getByRole('status')).toContainText(
+      'Förslaget har tagits bort ur ditt utkast',
+    );
+    const resolved = await read();
+    expect(resolved.draft.changes).toEqual(before.draft.changes);
+    expect(resolved.draft.relationshipTypes).toEqual(before.draft.relationshipTypes);
+    expect(resolved.draft.relationships ?? []).toEqual([]);
+    expect(resolved.relationships).toEqual(before.relationships);
+    expect(await (await page.request.get(`${path}/history`)).json()).toEqual(priorHistory);
+    await saveReviewedConflictDraft(page);
     const current = await read();
     expect(current.relationships).toHaveLength(3);
     expect(
@@ -657,13 +678,16 @@ test('STY-05: duplicate adds, edits and concurrent saves preserve identity and r
     expect(current.relationships.some((item: { id: string }) => item.id === 'theirs')).toBe(true);
     const { history } = await (await page.request.get(`${path}/history`)).json();
     expect(history).toHaveLength(4);
-    expect(history[1].relationships[0].before).toMatchObject({
+    const reversed = history.find(
+      (receipt: { operationId: string }) => receipt.operationId === 'reverse',
+    );
+    expect(reversed.relationships[0].before).toMatchObject({
       id: 'second',
       typeId: 'other',
       sourceId: 'bike',
       targetId: 'garage',
     });
-    expect(history[1].relationships[0].after).toMatchObject({
+    expect(reversed.relationships[0].after).toMatchObject({
       id: 'second',
       typeId: 'storage',
       sourceId: 'garage',

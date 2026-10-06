@@ -379,7 +379,9 @@ paneler för att
   att kasta endast den berörda postens förslag; hantera dubbletter och
   saknade ändpunkter, välja objektets och nya sambands borttagning oberoende,
   kontrollera flera privata borttagningar efter tappat svar och rätta
-  inkompatibla egna fält i den vanliga objektdialogen; bevara oberoende
+  inkompatibla egna fält i den vanliga objektdialogen, rätta saknade typer
+  genom faktiska definitioner och läsa historiska fältnamn före typbytesförlust;
+  bevara oberoende
   utkast och sparad historik; granska borttagna typdefinitioner som hela
   aktiva val, återställa endast deras historiska identitet med fortsatt
   revisionsföljd, avvisa inaktuellt sparande atomiskt, ompröva privat

@@ -204,9 +204,8 @@ export function ConflictDialog({
     ? conflictRemovalProperties(comparison, conflict)
     : conflictProperties(comparison, conflict);
   const selected = choices[key] ?? {};
-  const remaining = fields.filter(
-    (field) => !sameConflictValue(field.saved, field.proposed) && !selected[field.key],
-  ).length;
+  const differing = fields.filter((field) => !sameConflictValue(field.saved, field.proposed));
+  const remaining = differing.filter((field) => !selected[field.key]).length;
   const value = combineConflictProperties(fields, selected);
   const invalid = removal
     ? conflictRemovalError(comparison, conflict, selected)
@@ -609,7 +608,7 @@ export function ConflictDialog({
                 <>
                   <p>
                     {remaining
-                      ? `${remaining} egenskaper återstår att välja.`
+                      ? `${remaining} av ${differing.length} egenskaper återstår att välja.`
                       : 'Alla egenskaper har ett valt värde.'}
                   </p>
                   {invalid && (
@@ -632,7 +631,7 @@ export function ConflictDialog({
                               ? propertyValue(field, field.saved)
                               : selected[field.key]
                                 ? propertyValue(field, field[selected[field.key]])
-                                : 'Välj ett värde ovan'}
+                                : 'Välj ett värde'}
                           </dd>
                         </div>
                       ))}

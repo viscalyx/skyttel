@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { createInstallation } from '../support/installation.js';
 
 test('TYP-01: custom definitions and four optional fields share one durable save and history', async ({
@@ -280,67 +281,87 @@ test('TYP-03: members share editable definitions while private proposals and use
     expect((await post('save', { version: 1, operationId: 'stale-object' })).status()).toBe(409);
     expect((await read()).objects).toEqual([]);
     expect((await read()).draft).toEqual(newer.draft);
+    const historyBeforeReview = await (await page.request.get(`${path}/history`)).json();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await expect(page.getByText('Typdefinitionen har ändrats:')).toContainText('Solkraft');
-    await page.getByRole('button', { name: 'Behåll mitt förslag', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Kommentar: Privat värde',
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(conflict).toContainText('Typdefinitionen har ändrats: Solkraft');
+    await expect(conflict).toContainText('Objektet har ännu inte sparats i kartan');
+    await expect(conflict.getByRole('region', { name: 'Sparat i kartan nu' })).not.toContainText(
+      'Borttaget',
     );
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await expect(conflict).not.toContainText('Det föreslagna värdet måste vara ett tal');
     await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat');
+      conflict.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
+    ).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    expect((await read()).draft).toEqual(newer.draft);
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name: 'Redigera Paneler', exact: true }).click();
+    const form = page.getByRole('dialog', { name: 'Redigera Paneler', exact: true });
+    await expect(form.getByLabel('Objekttyp', { exact: true })).toHaveValue('solar');
+    await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await expect(form.getByLabel('Kommentar', { exact: true })).toHaveValue('Privat värde');
+    await expect(form.getByLabel('Anteckning', { exact: true })).toHaveValue('');
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(form).not.toBeVisible();
+    const reviewed = await read();
+    expect(reviewed.draft.version).toBe(newer.draft.version + 1);
+    expect(newer.draft.changes[0].type).toMatchObject({ revision: 1, name: 'Solcellsanläggning' });
+    expect(reviewed.draft.changes[0]).toMatchObject({
+      before: null,
+      after: { customValues: { note: 'Privat värde' } },
+      type: { revision: 2, name: 'Solkraft' },
+    });
+    expect(reviewed.draft.changes[0].after.customValues).not.toHaveProperty('numeric-note');
+    expect(reviewed.objects).toEqual([]);
+    expect(await (await page.request.get(`${path}/history`)).json()).toEqual(historyBeforeReview);
+    await expect(
+      page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }),
+    ).toHaveCount(0);
+    await saveReviewedConflictDraft(page);
     const saved = await read();
     expect(saved.objects[0].customValues).toEqual({ note: 'Privat värde' });
     expect(saved.types.find((type: { id: string }) => type.id === 'solar')).toMatchObject(renamed);
+    await installation.restart();
+    expect((await read()).objects[0].customValues).toEqual({ note: 'Privat värde' });
     const memberPage = await other.newPage();
     await memberPage.goto(installation.origin);
-    await openWorkspace(memberPage);
-    await memberPage
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
-    await memberPage.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Solkraft' });
-    await memberPage.getByLabel('Namn', { exact: true }).fill('Medlemmens paneler');
-    await memberPage.getByLabel('Kommentar', { exact: true }).fill('Eget objekt');
-    await memberPage
+    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    const memberForm = memberPage.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+    await memberForm.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Solkraft' });
+    await memberForm.getByLabel('Namn', { exact: true }).fill('Medlemmens paneler');
+    await memberForm.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await memberForm.getByLabel('Kommentar', { exact: true }).fill('Eget objekt');
+    await expect(memberForm.getByLabel('Anteckning', { exact: true })).toHaveValue('');
+    await memberForm
       .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
       .click();
-    await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(memberPage.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
-    await memberPage
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
-    await memberPage.getByLabel('Namn', { exact: true }).fill('Lo');
-    await memberPage.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
-    await memberPage
+    await saveReviewedConflictDraft(memberPage);
+    await memberPage.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
+    await memberForm.getByLabel('Namn', { exact: true }).fill('Lo');
+    await memberForm.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Person' });
+    await memberForm
       .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
       .click();
-    await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(memberPage.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await saveReviewedConflictDraft(memberPage);
+    await memberPage.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await openSettings(memberPage);
+    await memberPage.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
     await memberPage.getByText('Objekttyper och egna fält', { exact: true }).click();
     await memberPage.getByRole('button', { name: 'Ändra typ: Person', exact: true }).click();
     await memberPage.getByLabel('Typens namn').fill('Människa');
     await memberPage.getByLabel('Typens beskrivning').fill('En person i kartan');
     await memberPage.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
-    await memberPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(memberPage.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await memberPage.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await saveReviewedConflictDraft(memberPage);
     await memberPage.reload();
-    await openWorkspace(memberPage);
-    await memberPage
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    const closeText = memberPage.getByRole('button', { name: 'Stäng textvyn', exact: true });
+    if (await closeText.isVisible()) await closeText.click();
+    await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     await expect(
-      memberPage
+      memberForm
         .getByLabel('Objekttyp', { exact: true })
         .getByRole('option', { name: 'Människa', exact: true }),
     ).toHaveCount(1);
