@@ -1986,12 +1986,12 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 
 ## Bevarade konfliktval och kontrollerat utfall
 
-UTKAST-49–77 använder en tillfällig installation med riktig
+UTKAST-49–78 använder en tillfällig installation med riktig
 SQLite och två
 syntetiska användare: administratören Alex och medlemmen Robin. Starta från
 repo-roten med `npm run build` och
 `npx tsx scripts/manual-conflict-continuity.ts`. Öppna adressen som skrivs ut.
-För UTKAST-49–63, 73 och 77 är Alex inloggad i det synliga fönstret; konsolkommandon
+För UTKAST-49–63, 73, 77 och 78 är Alex inloggad i det synliga fönstret; konsolkommandon
 för Robin använder hans separata session. Arkivfallen UTKAST-64–72 och 74–76 visar
 i stället medlemmen Robin; administratören Alex använder en separat
 session för export, typändring och import. Inga externa AI-anrop eller
@@ -3099,3 +3099,39 @@ replay in Tabell”.
 - Det oberoende förslaget, sparade samband, objekt och historik består.
   Både Karta och Tabell behåller åtkomst även när sista konflikten försvinner.
 - Stängning ger synligt användbart fokus utan att välja en dold kontroll.
+
+### UTKAST-78: gå till nästa verkliga konflikt efter bekräftelsen
+
+**Syfte:** Bevara gjorda egenskapsval och använda samma läsordning och
+rubrikfokus från lösningsresultatet som från konfliktlistan.
+
+**Användare:** Alex i fönstret; Robin sparar i sin separata session.
+
+**Förutsättningar:** Kör `new-two`. Lo och musiktjänsten har varsin
+verklig konflikt enligt den gemensamma förberedelsen.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-78: next conflict preserves retained choices and focuses
+the next real heading without another private mutation”.
+
+**Steg:**
+
+1. Öppna **2 konflikter i ditt utkast**. Välj musiktjänsten och dess
+   föreslagna namn **Min musiktjänst** och beskrivning **Min tjänst**.
+2. Välj Lo i listan och välj dess föreslagna namn och beskrivning.
+   Välj **Lägg valen i utkastet**. Läs resultatet och kör `result`.
+3. Välj **Nästa konflikt** från resultatet. Kontrollera fokus på rubriken
+   **Min musiktjänst** och att båda tidigare valen fortfarande är markerade.
+   Kör `result` igen.
+4. Välj den lösta Lo-posten i listan. Resultatet är kvar. Välj
+   **Nästa konflikt** en gång till och kontrollera samma rubrikfokus.
+
+**Förväntat resultat:**
+
+- Bekräftelsen ändrar bara Lo-förslaget mot aktuellt underlag och ökar
+  utkastets version en gång. Den sparar inte den gemensamma kartan.
+- **Nästa konflikt** använder de faktiskt bevarade posterna i listordning
+  och flyttar fokus till nästa posts rubrik utan att ändra något förslag.
+- Musiktjänstens gjorda egenskapsval och den lösta Lo-postens resultat
+  består. Gemensamma uppgifter och historik ändras inte av navigeringen.

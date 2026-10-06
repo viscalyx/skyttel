@@ -279,6 +279,12 @@ export function ConflictDialog({
       </>
     );
   }
+  function selectConflict(entryKey: string) {
+    if (pending || unknown) return;
+    setSelectedKey(entryKey);
+    setStatus('');
+    requestAnimationFrame(() => caseHeading.current?.focus());
+  }
   function apply() {
     if (
       pending ||
@@ -437,11 +443,7 @@ export function ConflictDialog({
               type="button"
               disabled={pending || unknown}
               aria-current={keyFor(entry.conflict) === key ? 'true' : undefined}
-              onClick={() => {
-                setSelectedKey(keyFor(entry.conflict));
-                setStatus('');
-                requestAnimationFrame(() => caseHeading.current?.focus());
-              }}
+              onClick={() => selectConflict(keyFor(entry.conflict))}
             >
               <span className="cp-case-text">
                 <small>{kindNames[entry.conflict.kind]}</small>
@@ -509,6 +511,17 @@ export function ConflictDialog({
                   ))}
                 </dl>
               )}
+              <button
+                type="button"
+                disabled={pending || unknown}
+                onClick={() =>
+                  selectConflict(
+                    keyFor(entries[(entries.indexOf(entry) + 1) % entries.length].conflict),
+                  )
+                }
+              >
+                Nästa konflikt
+              </button>
             </section>
           ) : comparisonNoLongerNeeded ? (
             <section className="cp-preview">

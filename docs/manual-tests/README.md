@@ -390,7 +390,8 @@ paneler för att
   försvinner, visa samtidiga typ- och ändpunktshinder, läsa historiska
   fältnamn även när en aktuell definition saknar fältet, kasta ägda
   definitionsförslag utan faktisk borttagningsrevision och kontrollera
-  oklara fasta kastval från både Karta och Tabell
+  oklara fasta kastval från både Karta och Tabell samt gå till nästa verkliga
+  konflikt från resultatet med bevarade val och rubrikfokus
   med en beständig status utan fokusstöld
   samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status

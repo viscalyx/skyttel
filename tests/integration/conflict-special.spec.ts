@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { contrast } from '../support/accessibility.js';
+import { prepareConflictContinuity } from '../support/conflict-continuity.js';
 import {
   prepareOwnRemovalConflict,
   prepareRelationshipSpecialConflict,
@@ -38,6 +40,9 @@ test('UTKAST-57: accepting a removed object discards only its proposal and prese
     await expect(saved).toContainText('✓ Förvalt');
     await expect(proposed).toContainText('Mitt förslag');
     await expect(proposed.getByRole('button')).toHaveCount(0);
+    expect(await contrast(proposed.getByText('Lo Lind', { exact: true }))).toBeGreaterThanOrEqual(
+      4.5,
+    );
     await expect(
       dialog.getByText('Du behöver inte välja några egenskaper.', { exact: true }),
     ).toBeVisible();
@@ -520,3 +525,71 @@ for (const surface of ['Karta', 'Tabell'] as const) {
     }
   });
 }
+
+test('UTKAST-78: next conflict preserves retained choices and focuses the next real heading without another private mutation', async ({
+  page,
+  browser,
+}) => {
+  const other = await browser.newContext();
+  const app = await prepareConflictContinuity(page.request, other.request);
+  try {
+    const service = { ...app.value, name: 'Min musiktjänst', description: 'Min tjänst' };
+    await app.propose(page.request, 'draft', 'service', service);
+    await app.propose(other.request, 'draft', 'service', {
+      ...service,
+      name: 'Vår musiktjänst',
+      description: 'Robins tjänst',
+    });
+    expect((await app.save(other.request, 'second-conflict')).status()).toBe(200);
+    const before = await app.read();
+    const history = await (await page.request.get(`${app.path}/history`)).json();
+    await page.goto(app.installation.origin);
+    await page.getByRole('button', { name: '2 konflikter i ditt utkast', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    const list = dialog.getByRole('navigation', { name: 'Alla konflikter', exact: true });
+    await list.getByRole('button', { name: 'Objekt Min musiktjänst', exact: true }).click();
+    const serviceName = dialog.getByRole('button', {
+      name: 'Namn: Ditt förslag – Min musiktjänst',
+      exact: true,
+    });
+    const serviceDescription = dialog.getByRole('button', {
+      name: 'Beskrivning: Ditt förslag – Min tjänst',
+      exact: true,
+    });
+    await serviceName.click();
+    await serviceDescription.click();
+    await list.getByRole('button', { name: 'Objekt Lo Lind', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind', exact: true }).click();
+    await dialog
+      .getByRole('button', { name: 'Beskrivning: Ditt förslag – Min anteckning', exact: true })
+      .click();
+    await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
+    await expect(
+      dialog.getByRole('heading', { name: '✓ Valen finns i ditt utkast', exact: true }),
+    ).toBeVisible();
+    const reviewed = await app.read();
+    expect(reviewed.draft.version).toBe(before.draft.version + 1);
+    const next = dialog.getByRole('button', { name: 'Nästa konflikt', exact: true });
+    await expect(next).toBeVisible();
+    await next.click();
+    await expect(
+      dialog.getByRole('heading', { name: 'Min musiktjänst', exact: true }),
+    ).toBeFocused();
+    await expect(serviceName).toHaveAttribute('aria-pressed', 'true');
+    await expect(serviceDescription).toHaveAttribute('aria-pressed', 'true');
+    expect((await app.read()).draft).toEqual(reviewed.draft);
+    expect((await app.read()).objects).toEqual(before.objects);
+    expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await list.getByRole('button', { name: /^Objekt Lo Lind/ }).click();
+    await expect(
+      dialog.getByRole('heading', { name: '✓ Valen finns i ditt utkast', exact: true }),
+    ).toBeVisible();
+    await dialog.getByRole('button', { name: 'Nästa konflikt', exact: true }).click();
+    await expect(
+      dialog.getByRole('heading', { name: 'Min musiktjänst', exact: true }),
+    ).toBeFocused();
+  } finally {
+    await other.close();
+    await app.installation.close();
+  }
+});
