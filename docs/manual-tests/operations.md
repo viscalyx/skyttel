@@ -1,4 +1,4 @@
-# Manuella testfall för sparförsök
+# Manuella testfall för sparförsök och demoförberedelse
 
 Testfallen gäller att återfinna sparförsök och skilja ett okänt utfall från
 ett väntande, genomfört eller avvisat sparande. Anteckna commit,
@@ -40,6 +40,60 @@ formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
 
 Återställ demodata före varje fall. Behåll samma databas under omstart
 inom ett testfall; kör då inte `npm run db:setup`.
+
+## Gemensamma demodata
+
+### DEMO-01: utvecklingshushållet har verkliga uppgifter och läsbara samband
+
+**Syfte:** Kontrollera den gemensamma utvecklingsförberedelsen genom den
+vanliga arbetsytan, med fulla värden, konflikter och bevarade privata förslag.
+
+**Användare:** Den konfigurerade administratören. Prova Google och Microsoft
+var för sig när båda inloggningarna är konfigurerade. Robin Demo är en
+historisk person utan inloggning och ger ingen annan person medlemskap.
+
+**Förutsättningar:** Använd endast den separata utvecklingsdatabasen.
+Kör steg 1–3 i Allmän förberedelse; kasta inte demoutkastet i steg 4.
+Databasförberedelsen tar bort tidigare utvecklingsdata och sessioner.
+
+**Integrationstest:**
+[database-setup.spec.ts](../../tests/integration/database-setup.spec.ts),
+testfallen “DEMO-01: database setup gives only the configured google
+administrator a ready TestHousehold” och “DEMO-01: database setup gives
+only the configured microsoft administrator a ready TestHousehold”.
+
+**Steg:**
+
+1. Logga in som den konfigurerade administratören och öppna **Tabell**.
+   Kontrollera **TestHousehold**, Alex Exempel, Alex blå cykel och
+   Familjens garage. Expandera cykelns rad.
+2. Läs Ramfärg **Blå**, Extrahjul **0**, Kontrolldatum **2026-04-03**,
+   Elcykel **Nej** och Dold rammärkning **Syntetisk ram: DEMO-CYKEL**.
+   Läs hela beskrivningen, priset **4995 SEK**, ikonen och livscykeln.
+3. Öppna **Samband för Alex Exempel** och välj **Alex blå cykel**.
+   Läs de fulla uppgifterna, öppna cykelns samband och välj
+   **Familjens garage**. Stäng med Escape och återgå till tabellen.
+4. Öppna **Granska konflikter** via konfliktantalet. Läs Lo Lind i
+   ditt förslag och Lo Berg i den gemensamma kartan. Stäng utan att välja
+   eller bekräfta något.
+5. Öppna **Visa utkastet**. Läs de två bevarade förslagen: Lo Lind
+   och den ändrade inloggningsadressen till `musik@example.test`.
+   Öppna **Rapporter → Ändringshistorik** och läs de två verkliga
+   sparandena med skilda personer. Gör inga ändringar.
+6. Starta om applikationen med samma databas och logga in igen om det
+   behövs. Kontrollera att samma uppgifter och förslag finns kvar.
+
+**Förväntat resultat:**
+
+- Hushållet innehåller sexton sparade objekt och tjugotre samband.
+  Alex → cykel → garage nås utan visuell kartnavigation.
+- Alla fyra egna fältslag, det dolda fältet, noll och Nej är läsbara
+  tillsammans med de ekonomiska uppgifterna. Inget värde antas saknas.
+- Granskning och läsning ändrar inte kartan, de två privata förslagen
+  eller historiken. De två sparandena behåller sin verkliga upphovsperson.
+- Endast den konfigurerade inloggningen får administratörstillgång.
+  Den andra leverantörens inloggning ger inte tillgång genom samma namn.
+  Automatiseringen verifierar denna gräns och bevarande efter omstart.
 
 ## Återfinna ett sparande
 

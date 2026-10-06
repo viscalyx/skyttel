@@ -4,7 +4,13 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, request, test } from '@playwright/test';
 import Database from 'better-sqlite3';
-import { createHousehold, signIn } from '../support/client.js';
+import {
+  createHousehold,
+  openDraftReview,
+  openTable,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 
 async function setupDatabase(
@@ -50,9 +56,10 @@ async function setupDatabase(
 }
 
 for (const provider of ['google', 'microsoft'] as const) {
-  test(`database setup gives only the configured ${provider} administrator a ready TestHousehold`, async ({
-    request,
+  test(`DEMO-01: database setup gives only the configured ${provider} administrator a ready TestHousehold`, async ({
+    page,
   }) => {
+    const request = page.request;
     const firstAdmin = { provider, subject: alex.subject };
     const installation = await createInstallation(firstAdmin);
     try {
@@ -81,9 +88,11 @@ for (const provider of ['google', 'microsoft'] as const) {
       expect(map.objects.map((object: { name: string }) => object.name).sort()).toEqual(
         [
           'Alex Exempel',
+          'Alex blå cykel',
           'Familjens Molnmusik',
           'Familjens musikkonto',
           'Familjens musikkort',
+          'Familjens garage',
           'Föreningens musikkonto',
           'Hushållets betalkonto',
           'Kim Exempel',
@@ -96,7 +105,22 @@ for (const provider of ['google', 'microsoft'] as const) {
           'musik@example.test',
         ].sort(),
       );
-      expect(map.relationships).toHaveLength(21);
+      expect(map.relationships).toHaveLength(23);
+      const bicycle = map.objects.find(
+        (object: { name: string }) => object.name === 'Alex blå cykel',
+      );
+      expect(bicycle).toMatchObject({
+        iconId: 'bike',
+        lifecycle: 'active',
+        customValues: {
+          'demo-frame': 'Blå',
+          'demo-wheels': 0,
+          'demo-check': '2026-04-03',
+          'demo-electric': false,
+          'demo-label': 'Syntetisk ram: DEMO-CYKEL',
+        },
+        financialFacts: { price: { knowledge: 'known', value: '4995' } },
+      });
       expect(map.draft.relationships).toHaveLength(1);
       expect(map.draft.relationships[0].before.id).toBe(map.draft.relationships[0].id);
       expect(map.draft.relationships[0].after.sourceId).toBe(
@@ -125,10 +149,59 @@ for (const provider of ['google', 'microsoft'] as const) {
       ).json();
       expect(history).toHaveLength(2);
       expect(history[1].userId).not.toBe(history[0].userId);
-      expect(history[1].changes[0]).toMatchObject({
+      expect(history[1].userId).toBe(map.userId);
+      expect(history[0].userId).not.toBe(map.userId);
+      expect(history[0].changes[0]).toMatchObject({
         before: { name: 'Lo Exempel' },
         after: { name: 'Lo Berg' },
       });
+      await page.goto(installation.origin);
+      await openTable(page);
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      await table.getByRole('button', { name: 'Alex blå cykel', exact: true }).click();
+      const details = table.getByRole('row').filter({ hasText: 'Dold rammärkning' });
+      await expect(details).toContainText('Ramfärg');
+      await expect(details).toContainText('Blå');
+      await expect(details).toContainText('Kontrolldatum');
+      await expect(details).toContainText('2026-04-03');
+      await expect(details).toContainText('Syntetisk ram: DEMO-CYKEL');
+      await expect(details).toContainText('Extrahjul');
+      await expect(details).toContainText('0');
+      await expect(details).toContainText('Elcykel');
+      await expect(details).toContainText('Nej');
+      await expect(details).toContainText('4995');
+      await table.getByRole('button', { name: 'Samband för Alex Exempel', exact: true }).click();
+      let dialog = page.getByRole('dialog', { name: 'Samband för Alex Exempel', exact: true });
+      await dialog.getByRole('button', { name: 'Alex blå cykel', exact: true }).click();
+      dialog = page.getByRole('dialog', { name: 'Uppgifter för Alex blå cykel', exact: true });
+      await expect(dialog).toContainText('Syntetisk ram: DEMO-CYKEL');
+      await dialog.getByRole('button', { name: 'Samband för Alex blå cykel', exact: true }).click();
+      dialog = page.getByRole('dialog', { name: 'Samband för Alex blå cykel', exact: true });
+      await dialog.getByRole('button', { name: 'Familjens garage', exact: true }).click();
+      await expect(
+        page.getByRole('dialog', { name: 'Uppgifter för Familjens garage', exact: true }),
+      ).toBeVisible();
+      await page.keyboard.press('Escape');
+      await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+      const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+      await expect(
+        conflict.getByRole('region', { name: 'Sparat i kartan nu', exact: true }),
+      ).toContainText('Lo Berg');
+      await expect(
+        conflict.getByRole('region', { name: 'Ditt förslag', exact: true }),
+      ).toContainText('Lo Lind');
+      await page.keyboard.press('Escape');
+      const draft = await openDraftReview(page);
+      await expect(draft).toContainText('Lo Lind');
+      await expect(draft).toContainText('musik@example.test');
+      await (await utilityButton(page, 'Rapporter')).click();
+      const report = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+      await expect(report).toContainText('Robin Demo');
+      await expect(report).toContainText('Development administrator');
+      const preserved = await (
+        await request.get(`${installation.origin}/api/households/${household.id}/map`)
+      ).json();
+      expect(preserved).toEqual(map);
       expect(
         (
           await request.get(`${installation.origin}/api/households/${household.id}/administration`)

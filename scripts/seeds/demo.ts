@@ -26,6 +26,55 @@ export function seedDemo(database: Database.Database, config: Config) {
   if ('error' in result) throw new Error('demo_household_setup_failed');
   const map = householdMap(database, administratorId, result.household.id);
   const initial = map.read();
+  const vehicleType = initial.types.find((type) => type.name === 'Fordon');
+  if (!vehicleType) throw new Error('demo_vehicle_type_missing');
+  map.proposeObjectType({
+    version: initial.draft.version,
+    id: vehicleType.id,
+    baseRevision: vehicleType.revision,
+    value: {
+      ...vehicleType,
+      sections: [...(vehicleType.sections ?? []), { id: 'demo-cycle', name: 'Cykeluppgifter' }],
+      fields: [
+        ...(vehicleType.fields ?? []),
+        {
+          id: 'demo-frame',
+          name: 'Ramfärg',
+          description: '',
+          kind: 'text',
+          sectionId: 'demo-cycle',
+        },
+        {
+          id: 'demo-wheels',
+          name: 'Extrahjul',
+          description: '',
+          kind: 'number',
+          sectionId: 'demo-cycle',
+        },
+        {
+          id: 'demo-check',
+          name: 'Kontrolldatum',
+          description: '',
+          kind: 'date',
+          sectionId: 'demo-cycle',
+        },
+        {
+          id: 'demo-electric',
+          name: 'Elcykel',
+          description: '',
+          kind: 'boolean',
+          sectionId: 'demo-cycle',
+        },
+        {
+          id: 'demo-label',
+          name: 'Dold rammärkning',
+          description: '',
+          kind: 'text',
+          sectionId: '',
+        },
+      ],
+    },
+  });
   const ids = new Map<string, string>();
   const objects = [
     ['lo', 'Person', 'Lo Exempel', 'Använder familjens musik.'],
@@ -81,6 +130,13 @@ export function seedDemo(database: Database.Database, config: Config) {
           ? {
               iconId: 'bike',
               lifecycle: 'active',
+              customValues: {
+                'demo-frame': 'Blå',
+                'demo-wheels': 0,
+                'demo-check': '2026-04-03',
+                'demo-electric': false,
+                'demo-label': 'Syntetisk ram: DEMO-CYKEL',
+              },
               financialFacts: {
                 price: { knowledge: 'known', value: '4995' },
                 currency: { knowledge: 'known', value: 'SEK' },

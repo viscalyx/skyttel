@@ -273,14 +273,15 @@ smaller limits for ordinary API requests.
 ### Assistant and integration compatibility
 
 Refresh assistant tool catalogs after rollout to discover type editing,
-history, undo and object merge tools. Keep existing read-only grants unchanged.
+draft work and readable history. Historical undo and object merge tools are
+removed. Keep existing read-only grants unchanged.
 Clients that need to propose and save changes must request new consent for map
 work. Verify that a read-only connection cannot write after rollout. Map-work
 consent does not replace the user's instruction for each whole-draft save.
 
 Update assistant clients to read the complete draft review and preserve both
-content and draft versions. Undo must use current content versions, including
-for imported history. Historical author identifiers grant no access. Clients
+content and draft versions. Use current content after an import before proposing
+or saving changes. Historical author identifiers grant no access. Clients
 must check durable save results before further changes after an interruption;
 a pending attempt is not a successful save.
 
@@ -288,7 +289,10 @@ Clients that read drafts, save results or history must handle object and
 relationship type changes, removed definitions with no resulting definition,
 and restoration proposals. Draft displays must include the retained source
 definition together with a proposed object type and its values. Older clients
-cannot preserve the new grouped conflict choices for type-change undo.
+must support explicit property choices against the current comparison before
+they can resolve these conflicts. Re-read the current comparison after import
+or content replacement. Shared saved history does not carry private restoration
+authority.
 
 ### External assistant access
 
