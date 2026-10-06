@@ -24,7 +24,7 @@ export async function openNewObject() {
 export async function closeSupportDialog(dialogName: string, closeButtonName = 'Stäng dialogen') {
   const dialog = page.getByRole('dialog', { name: dialogName, exact: true });
   await dialog.getByRole('button', { name: closeButtonName, exact: true }).click();
-  await expect.element(dialog).not.toBeVisible();
+  await expect.poll(() => dialog.query()?.checkVisibility() ?? false).toBe(false);
 }
 
 export async function closeTextView() {

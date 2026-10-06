@@ -618,7 +618,7 @@ test('review, search, correction, discard and deletion use the real persistent m
   await closeProposal();
   const draft = await openDraftReview();
   await userEvent.click(draft.getByRole('button', { name: 'Kasta hela utkastet' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ta bort hela utkastet' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Ta bort hela utkastet' }));
   await waitFor(() => expect(draft.getByText('Utkastet är tomt.', { exact: true })).toBeTruthy());
   await userEvent.click(screen.getByRole('button', { name: 'Tabell' }));
   await userEvent.click(table.getByRole('button', { name: 'Lo Lind' }));
