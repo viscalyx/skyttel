@@ -598,3 +598,141 @@ function relationshipRow(dialog: ReturnType<typeof within>, name: string | RegEx
   if (!row) throw new Error('The public relationship reader must provide its row');
   return row;
 }
+test('a relationship form confirms field loss explicitly, validates all values and stages the reversed complete relationship only in the private draft', async () => {
+  const fixture = await readingFixture();
+  const before = await fixture.read();
+  const dialog = await openObjectRelationships('Cykel');
+  await userEvent.click(
+    within(relationshipRow(dialog, /Cykel → förvaras i → Garage/)).getByRole('button', {
+      name: 'Redigera samband',
+    }),
+  );
+  const form = within(dialog.getByRole('region', { name: 'Redigera samband' }));
+  await userEvent.selectOptions(form.getByLabelText('Sambandstyp'), 'uses');
+  const typeLoss = within(
+    await screen.findByRole('dialog', { name: 'Ta bort tidigare egna fält?' }),
+  );
+  expect(typeLoss.getByText(/Dold sambandsuppgift:/)).toBeTruthy();
+  await userEvent.click(typeLoss.getByRole('button', { name: 'Fortsätt redigera' }));
+  expect((form.getByLabelText('Sambandstyp') as HTMLSelectElement).value).toBe('storage');
+  await userEvent.selectOptions(form.getByLabelText('Sambandstyp'), 'uses');
+  await userEvent.click(
+    within(await screen.findByRole('dialog', { name: 'Ta bort tidigare egna fält?' })).getByRole(
+      'button',
+      {
+        name: 'Ta bort fältvärdena och byt typ',
+      },
+    ),
+  );
+  await userEvent.click(form.getByRole('button', { name: 'Byt riktning' }));
+  expect((form.getByLabelText('Från objekt') as HTMLSelectElement).value).toBe('garage');
+  expect((form.getByLabelText('Till objekt') as HTMLSelectElement).value).toBe('bike');
+  await userEvent.selectOptions(form.getByLabelText('Till objekt'), '');
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet' }));
+  const errors = form.getByRole('alert');
+  expect(errors.textContent).toContain('Till objekt');
+  expect(await fixture.read()).toEqual(before);
+  await userEvent.selectOptions(form.getByLabelText('Till objekt'), 'alex');
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet' }));
+  await waitFor(() =>
+    expect(dialog.queryByRole('region', { name: 'Redigera samband' })).toBeNull(),
+  );
+  const current = await fixture.read();
+  expect(current.objects).toEqual(before.objects);
+  expect(current.relationships).toEqual(before.relationships);
+  expect(current.draft.changes).toEqual(before.draft.changes);
+  expect(
+    current.draft.relationships?.find((value) => value.id === 'bike-garage')?.after,
+  ).toMatchObject({
+    sourceId: 'garage',
+    targetId: 'alex',
+    typeId: 'uses',
+    knowledge: 'uncertain',
+    lifecycle: 'ended',
+  });
+  expect(
+    current.draft.relationships?.find((value) => value.id === 'bike-garage')?.after?.customValues,
+  ).toBeUndefined();
+}, 30_000);
+
+for (const kind of ['object', 'relationship'] as const) {
+  test(`a stale ${kind} type form is rejected atomically, retains its text and requires current-basis review`, async () => {
+    const fixture = await readingFixture();
+    const original = await fixture.read();
+    const definition =
+      kind === 'object'
+        ? original.types.find((type) => type.id === 'read-type')
+        : original.relationshipTypes.find((type) => type.id === 'uses');
+    if (!definition) throw new Error('Missing real current type definition');
+    await fixture.post(kind === 'object' ? 'object-type' : 'relationship-type', {
+      id: definition.id,
+      baseRevision: definition.revision,
+      value:
+        kind === 'object'
+          ? { ...definition, name: 'Provets typdefinition' }
+          : {
+              name: 'Provets typdefinition',
+              description: definition.description,
+              forwardLabel: 'forwardLabel' in definition ? definition.forwardLabel : '',
+              reverseLabel: 'reverseLabel' in definition ? definition.reverseLabel : '',
+              fields: definition.fields,
+              sections: definition.sections,
+            },
+    });
+    cleanup();
+    renderHouseholdWork(fixture.path.split('/households/')[1].split('/')[0]);
+    const settings = await typeSettings();
+    if (kind === 'relationship')
+      await userEvent.click(settings.getByText('Sambandstyper och riktning'));
+    await userEvent.click(
+      settings.getByRole('button', {
+        name:
+          kind === 'object'
+            ? 'Ändra typ: Provets typdefinition'
+            : 'Ändra sambandstyp: Provets typdefinition',
+      }),
+    );
+    const form = within(
+      settings.getByRole('group', {
+        name: kind === 'object' ? 'Objekttypens definition' : 'Sambandstypens definition',
+      }),
+    );
+    const name = form.getByLabelText(kind === 'object' ? 'Typens namn' : 'Sambandstypens namn');
+    await userEvent.clear(name);
+    await userEvent.type(name, 'Osänd typbenämning');
+    const before = await fixture.read();
+    const alex = before.objects.find((value) => value.id === 'alex');
+    if (!alex) throw new Error('Missing saved object');
+    await fixture.post('draft', {
+      id: alex.id,
+      baseRevision: alex.revision,
+      value: { ...alex, description: 'En senare oberoende uppgift' },
+    });
+    const later = await fixture.read();
+    await userEvent.click(
+      form.getByRole('button', {
+        name:
+          kind === 'object'
+            ? 'Lägg typförslaget i mitt utkast'
+            : 'Lägg sambandstypen i mitt utkast',
+      }),
+    );
+    await screen.findByText(/Avvisat: Förslaget eller kartan har ändrats/);
+    expect((name as HTMLInputElement).value).toBe('Osänd typbenämning');
+    expect(await fixture.read()).toEqual(later);
+    await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
+    await form.findByText(/Formuläret bygger på ett äldre utkast/);
+    expect(
+      form
+        .getByRole('button', {
+          name:
+            kind === 'object'
+              ? 'Lägg typförslaget i mitt utkast'
+              : 'Lägg sambandstypen i mitt utkast',
+        })
+        .matches(':disabled'),
+    ).toBe(true);
+    expect((name as HTMLInputElement).value).toBe('Osänd typbenämning');
+    expect(await fixture.read()).toEqual(later);
+  }, 30_000);
+}
