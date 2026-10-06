@@ -276,7 +276,7 @@ Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,
 Efter varje verkligt sparande matchar innehåll, historik och kvitto.
 Efter serverns återstart matchar också det beständiga försöket och dess
 kvitto; utkastet är tomt. JSON-fältet `sourceTree` anger hela repots träd
-`9dddc5692b0b4677abe3cdc712fc5d18719a934d`, inte bara `src`-trädet ovan.
+`0a608b4b65be9226f4b375202d33c7151f5563e6`, inte bara `src`-trädet ovan.
 
 [Mätplanen](large-map-performance.md) definierar provdata och gränser.
 Kall cache betyder ett nytt webbläsarsammanhang; serverns och systemets
@@ -312,12 +312,13 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 <!-- markdownlint-disable MD013 -->
 | Fält | Status |
 | --- | --- |
-| Slutlig kod- och byggversion, webbläsare och provmiljö | `a53edf8`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd som A/C/D och mätningen |
-| Hela `npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,22 procent mot kravet 90 |
+| Slutlig kod- och byggversion, webbläsare och provmiljö | `cace8151d2982ed72b6df2a08befa7a4083927b5`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd `7726e8b50985835ff315d8eae8d9456c71f51771` som A/C/D och mätningen på `5ce3c08` |
+| Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `cace815`; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,26 procent mot kravet 90 |
 | Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
-| Standards- och Spec-granskningar samt omprov av deras rättelser | GENOMGÅNGNA; 0 kvarstående åtgärdbara fynd på `62a9b74`; fokus och vägledning rättade och omprovade |
-| A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
-| Prestanda för 500 objekt och 1 500 samband | GODKÄND enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
+| Containerkontroll | GODKÄND; 9 av 9 steg på `3a9afef`; relevanta produktions- och containerindata är identiska med `cace815` |
+| Standards- och Spec-granskningar samt omprov av deras rättelser | PÅGÅR för det samlade aktuella underlaget; äldre granskningar på `62a9b74` har 0 kvarstående åtgärdbara fynd; fokus och vägledning rättade och omprovade |
+| A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN på `5ce3c08` utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
+| Prestanda för 500 objekt och 1 500 samband | GODKÄND på `5ce3c08` enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
 | Fysiska hjälpmedels-, telefon- och förstoringstester | INTE UTFÖRDA |
 <!-- markdownlint-enable MD013 -->
 
