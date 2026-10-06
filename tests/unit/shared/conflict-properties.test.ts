@@ -1,7 +1,10 @@
 import { expect, test } from 'vitest';
 import {
   type ConflictProperty,
+  combineConflictProperties,
   conflictCombinationError,
+  conflictProperties,
+  conflictPropertyLabel,
   conflictValueText,
 } from '../../../src/shared/conflict-properties.js';
 import type { MapState } from '../../../src/shared/map.js';
@@ -46,4 +49,82 @@ test('object type choices accept a builtin property order and reject references 
   expect(conflictCombinationError(state, conflict, { ...value, builtins: [] })).toContain(
     'uppgift som saknas',
   );
+});
+
+test('concurrent type labels keep saved and proposed meanings on the same property identities', () => {
+  const type = {
+    id: 'person',
+    householdId: 'household',
+    revision: 1,
+    name: 'Person',
+    description: '',
+    builtins: [{ key: 'debt' as const, name: 'Sparad skuld', sectionId: '' }],
+    fields: [
+      {
+        id: 'note',
+        name: 'Sparad anteckning',
+        description: '',
+        kind: 'text' as const,
+        sectionId: '',
+      },
+    ],
+  };
+  const before = {
+    id: 'lo',
+    householdId: 'household',
+    revision: 1,
+    typeId: type.id,
+    name: 'Lo',
+    description: '',
+    customValues: { note: 'Tidigare' },
+    financialFacts: { debt: { knowledge: 'known' as const, value: '1200' } },
+  };
+  const saved = {
+    ...before,
+    revision: 2,
+    customValues: { note: 'Sparat' },
+    financialFacts: { debt: { knowledge: 'known' as const, value: '2000' } },
+  };
+  const proposed = {
+    ...before,
+    customValues: { note: 'Mitt' },
+    financialFacts: { debt: { knowledge: 'known' as const, value: '1700' } },
+  };
+  const proposedType = {
+    ...type,
+    revision: 2,
+    builtins: [{ ...type.builtins[0], name: 'Min skuld' }],
+    fields: [{ ...type.fields[0], name: 'Min anteckning' }],
+  };
+  const comparison = {
+    ...state,
+    types: [type],
+    objects: [saved],
+    draft: {
+      version: 2,
+      changes: [{ id: 'lo', before, after: proposed, type: proposedType, beforeType: type }],
+      objectTypes: [{ id: type.id, before: type, after: proposedType }],
+    },
+  };
+  const fields = conflictProperties(comparison, { kind: 'object', id: 'lo', current: saved });
+  const debt = fields.find((field) => field.key === 'financialFacts.debt');
+  const note = fields.find((field) => field.key === 'customValues.note');
+  expect(debt && conflictPropertyLabel(debt, 'saved')).toBe('Sparad skuld');
+  expect(debt && conflictPropertyLabel(debt, 'proposed')).toBe('Min skuld');
+  expect(note && conflictPropertyLabel(note, 'saved')).toBe('Sparad anteckning');
+  expect(note && conflictPropertyLabel(note, 'proposed')).toBe('Min anteckning');
+  expect(
+    combineConflictProperties(
+      fields,
+      Object.fromEntries(
+        fields.map((field) => [
+          field.key,
+          field.key === 'financialFacts.debt' ? 'saved' : 'proposed',
+        ]),
+      ),
+    ),
+  ).toMatchObject({
+    customValues: { note: 'Mitt' },
+    financialFacts: { debt: { knowledge: 'known', value: '2000' } },
+  });
 });

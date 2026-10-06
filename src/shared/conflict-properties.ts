@@ -11,6 +11,7 @@ export type ConflictChoices = Record<string, ConflictSide>;
 export interface ConflictProperty {
   key: string;
   label: string;
+  labels?: Record<ConflictSide, string>;
   saved: unknown;
   proposed: unknown;
   before: unknown;
@@ -96,43 +97,58 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
             ['builtins', 'Övriga uppgifter'],
             ['propertyOrder', 'Uppgifternas ordning'],
           ];
-  if (conflict.kind === 'object') {
-    const type =
-      proposedObjectTypes(state.types, state.draft.objectTypes).find(
-        (type) =>
-          type.id ===
-          (conflict.current && 'typeId' in conflict.current ? conflict.current.typeId : undefined),
-      ) ?? ('type' in change ? change.type : undefined);
-    const label = (key: string, fallback: string) =>
-      (type && 'builtins' in type
-        ? type.builtins?.find((field) => field.key === key)?.name
-        : undefined) ?? fallback;
-    const description = entries.find(([key]) => key === 'description');
-    if (description) description[1] = label('description', description[1]);
-    for (const field of financialFields)
-      entries.push([`financialFacts.${field.key}`, label(field.key, field.label)]);
-  }
+  const labels = new Map<string, Record<ConflictSide, string>>();
   if (conflict.kind === 'object' || conflict.kind === 'relationship') {
-    const types =
+    const currentTypes = conflict.kind === 'object' ? state.types : state.relationshipTypes;
+    const proposedTypes =
       conflict.kind === 'object'
         ? proposedObjectTypes(state.types, state.draft.objectTypes)
         : proposedRelationshipTypes(state.relationshipTypes, state.draft.relationshipTypes);
-    const fields = [
-      ...('type' in change ? (change.type.fields ?? []) : []),
-      ...types.flatMap((type) => type.fields ?? []),
-    ];
+    const savedTypeId = 'typeId' in conflict.current ? conflict.current.typeId : undefined;
+    const savedType = currentTypes.find((type) => type.id === savedTypeId);
+    const proposedTypeId = 'typeId' in change.after ? change.after.typeId : undefined;
+    const historicalType =
+      'type' in change && change.type.id === proposedTypeId ? change.type : undefined;
+    const proposedType = proposedTypes.find((type) => type.id === proposedTypeId) ?? historicalType;
+    const builtinLabel = (type: typeof proposedType, key: string, fallback: string) =>
+      (type && 'builtins' in type
+        ? type.builtins?.find((field) => field.key === key)?.name
+        : undefined) ?? fallback;
+    if (conflict.kind === 'object') {
+      for (const [key, fallback] of [
+        ['description', 'Beskrivning'],
+        ...financialFields.map((field) => [field.key, field.label]),
+      ] as [string, string][]) {
+        const propertyKey = key === 'description' ? key : `financialFacts.${key}`;
+        const sideLabels = {
+          saved: builtinLabel(savedType, key, fallback),
+          proposed: builtinLabel(proposedType, key, fallback),
+        };
+        labels.set(propertyKey, sideLabels);
+        if (key !== 'description') entries.push([propertyKey, sideLabels.proposed]);
+      }
+    }
     const keys = new Set(
       [change.before, change.after, conflict.current].flatMap((value) =>
         Object.keys(value && 'customValues' in value ? (value.customValues ?? {}) : {}),
       ),
     );
-    for (const key of keys)
-      entries.push([`customValues.${key}`, fields.find((field) => field.id === key)?.name ?? key]);
+    for (const key of keys) {
+      const historicalLabel =
+        historicalType?.fields?.find((field) => field.id === key)?.name ?? key;
+      const sideLabels = {
+        saved: savedType?.fields?.find((field) => field.id === key)?.name ?? historicalLabel,
+        proposed: proposedType?.fields?.find((field) => field.id === key)?.name ?? historicalLabel,
+      };
+      labels.set(`customValues.${key}`, sideLabels);
+      entries.push([`customValues.${key}`, sideLabels.proposed]);
+    }
   }
   return entries
     .map(([key, label]) => ({
       key,
-      label,
+      label: labels.get(key)?.proposed ?? label,
+      ...(labels.has(key) ? { labels: labels.get(key) } : {}),
       saved: conflictPropertyValue(conflict.current, key),
       proposed: conflictPropertyValue(change.after, key),
       before: conflictPropertyValue(change.before, key),
@@ -141,6 +157,10 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
       (field) =>
         field.saved !== undefined || field.proposed !== undefined || field.before !== undefined,
     );
+}
+/** Present each property under its actual side's definition without changing its identity. */
+export function conflictPropertyLabel(field: ConflictProperty, side?: ConflictSide): string {
+  return side ? (field.labels?.[side] ?? field.label) : field.label;
 }
 export function combineConflictProperties(fields: ConflictProperty[], choices: ConflictChoices) {
   const result: Record<string, unknown> = {};

@@ -8,6 +8,7 @@ import {
   conflictChange,
   conflictCombinationError,
   conflictProperties,
+  conflictPropertyLabel,
   conflictPropertyValue,
   conflictValueText,
   sameConflictValue,
@@ -500,7 +501,7 @@ export function ConflictDialog({
                 <dl className="cp-fields">
                   {fields.map((field) => (
                     <div key={field.key}>
-                      <dt>{field.label}</dt>
+                      <dt>{conflictPropertyLabel(field, selected[field.key])}</dt>
                       <dd>
                         {propertyValue(
                           field,
@@ -599,7 +600,7 @@ export function ConflictDialog({
                             key={field.key}
                             className={`cp-field-choice${overlap ? ' cp-overlap' : !sameConflictValue(field[side], field.before) ? ' cp-change' : ''}`}
                             type="button"
-                            aria-label={`${field.label}: ${sideNames[side]} – ${conflictValueText(comparison, field, field[side])}`}
+                            aria-label={`${conflictPropertyLabel(field, side)}: ${sideNames[side]} – ${conflictValueText(comparison, field, field[side])}`}
                             aria-pressed={same ? undefined : picked}
                             disabled={
                               same ||
@@ -613,7 +614,7 @@ export function ConflictDialog({
                             onClick={() => choose(field.key, side)}
                           >
                             <span className="cp-field-name">
-                              {field.label}
+                              {conflictPropertyLabel(field, side)}
                               {picked && <span className="cp-picked">✓ Vald</span>}
                             </span>
                             {side === 'saved' &&
@@ -662,7 +663,7 @@ export function ConflictDialog({
                     <dl className="cp-fields">
                       {fields.map((field) => (
                         <div key={field.key}>
-                          <dt>{field.label}</dt>
+                          <dt>{conflictPropertyLabel(field, selected[field.key])}</dt>
                           <dd>
                             {sameConflictValue(field.saved, field.proposed)
                               ? propertyValue(field, field.saved)
