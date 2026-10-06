@@ -19,11 +19,11 @@ Följande användare gäller AI-01 till AI-06:
 
 ## Allmän förberedelse
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Öppna **Tabell** och välj **Redigera** på objektets rad för att ändra
+objektet. För ett samband väljer du radens **Samband**, hittar sambandet
+och väljer **Redigera samband**. Formulärets **Lägg i utkastet och stäng**
+lägger hela förslaget i utkastet. Öppna **Visa utkastet** för att granska
+förslagen eller spara hela utkastet.
 
 Följande förberedelser gäller AI-01 till AI-06. För AI-07 används i stället
 den isolerade installation som anges i testfallet.
@@ -383,7 +383,7 @@ MCP”, med [separat verklig modellkörning](real-model-tests.md).
 
 **Steg:**
 
-1. Kontrollera att **Hela mitt utkast** i webbläsaren innehåller Lo Lind.
+1. Öppna **Visa utkastet** och kontrollera att utkastet innehåller Lo Lind.
    Starta en ny klientanslutning som begär kartarbete.
 2. Välj hushåll och tillåt extern AI-behandling. Kontrollera att
    **Godkänn kartarbete** ännu inte kan väljas. Läs informationen om
@@ -397,8 +397,11 @@ MCP”, med [separat verklig modellkörning](real-model-tests.md).
 5. Säg ”Ändra priset till 189 SEK per månad och spara hela utkastet”.
    Granska de faktiska verktygsanropen och kvittot, inklusive det redan
    föreslagna bytet till `musik@example.test`.
-6. Öppna kartan igen. Kontrollera Lo Lind, den nya inloggningsadressen,
-   priset och det tomma utkastet.
+6. Öppna kartan igen. Kontrollera det tomma utkastet och stäng textvyn.
+   Öppna **Tabell** och kontrollera Lo Lind. Välj **Samband** för
+   **Familjens musikkonto** och kontrollera den nya inloggningsadressen.
+   Stäng läsningen, välj **Redigera Familjens Molnmusik** och öppna
+   **Ekonomiska uppgifter** för att kontrollera priset.
 
 **Förväntat resultat:**
 
@@ -407,7 +410,7 @@ MCP”, med [separat verklig modellkörning](real-model-tests.md).
 - Hela utkastet följer med. Rättelsen och sparandet kräver inte ännu ett
   ja enbart för att rättelsen skapar en ny version.
 - Ett kvitto omfattar de två objekträttelserna och adressambandet.
-  Efter omladdning finns de sparade uppgifterna och **Inga förslag**.
+  Efter omladdning finns de sparade uppgifterna och **Utkastet är tomt.**
 
 Vanlig CI använder bestämda MCP-anrop och provar dessutom omstart och
 exakt återförsök av kvittot. Den separata modellkörningen provar den
@@ -483,9 +486,14 @@ utan dubbelt sparande”.
    med guidens exakta omstartskommando och samma databas. Behåll terminal
    B öppen så att den ursprungliga begäran finns kvar.
 4. Kör `status lost`. Kontrollera `succeeded` och ett beständigt kvitto
-   med samma operations-ID. Kontrollera även **Mina sparförsök** i kartan.
+   med samma operations-ID. Öppna **Rapporter → Ändringshistorik** och
+   kontrollera det enda sparandet av Lo Exempel. Välj
+   **Identifiera sparandet och användaren**
+   och jämför operations-ID:t med det återfunna kvittot.
 5. Kör `send lost`. Jämför kvittots ID, tidpunkt och ändringar med det
    återfunna kvittot; allt ska vara samma. Ladda om kartan och historiken.
+   Välj **Tillbaka till arbetet**, öppna **Visa utkastet** och kontrollera
+   **Utkastet är tomt.**
 6. Följ guidens återkallelse och städning.
 
 **Förväntat resultat:**
@@ -610,8 +618,8 @@ verktygsresultat; den påstår inte att ett mänskligt prov är genomfört.
 
 ### AI-13: Öppna assistentanslutningar och återgå till pågående arbete
 
-**Syfte:** Ge tangentbordsfokus till profilens destination och behålla
-oskickad text och oberoende privata förslag vid återgången.
+**Syfte:** Ge tangentbordsfokus till profilens destination, skydda oskickad
+text före avresa och behålla oberoende privata förslag vid återgången.
 
 **Användare:** Alex Exempel, inloggad medlem i ett provhushåll.
 
@@ -629,15 +637,19 @@ unsent and private work”.
 
 **Steg:**
 
-1. Öppna **Lista**, Cykelns uppgifter och **Redigera valt objekt**. Skriv
+1. Öppna **Tabell** och **Redigera Cykeln**. Skriv
    **Cykelns oskickade profiltext** som beskrivning utan att skicka den.
-2. Öppna **Din profil**. Använd tangentbordet för att välja länken
+2. Tryck Escape och välj **Fortsätt redigera**. Kontrollera beskrivningen
+   och att fokus återkommer. Tryck Escape igen och välj
+   **Kasta ändringarna och fortsätt**. Öppna **Din profil**.
+   Använd tangentbordet för att välja länken
    **Assistentanslutningar**.
 3. Kontrollera att sidans rubrik har synligt tangentbordsfokus och att
    texten visar Alex Exempel med samma Skyttel-ID. Kontrollera beskedet
    **Inga aktiva assistentanslutningar.**
-4. Välj **Tillbaka till kartan** med tangentbordet och öppna Cykelns panel.
-   Kontrollera den oskickade beskrivningen. Kontrollera också att Bilens
+4. Välj **Tillbaka till kartan** med tangentbordet och **Redigera Cykeln**
+   i **Tabell**. Kontrollera den sparade beskrivningen **Sparat om Cykeln**.
+   Den uttryckligen kastade texten ska inte återkomma. Kontrollera också Bilens
    privata förslag finns kvar och att de sparade beskrivningarna är samma.
 
 **Förväntat resultat:**
@@ -645,8 +657,9 @@ unsent and private work”.
 - Destinationens rubrik får synligt fokus och går att läsa utan att sidan
   behöver rullas i sidled. Kontrollen av rubrikens placering och träffyta
   ingår i automationen.
-- Återgången behåller Cykelns exakta oskickade text, Bilens privata förslag,
-  den sparade kartan, kartvyn och användarens Skyttel-ID.
+- **Fortsätt redigera** behåller Cykelns exakta text. Ett uttryckligt val
+  kastar bara den oskickade formulärtexten. Återgången behåller Bilens
+  privata förslag, den sparade kartan, kartvyn och användarens Skyttel-ID.
 - Profilnavigeringen skapar ingen assistentanslutning, inget medgivande
   och inget nytt förslag eller sparande. Automationen jämför kartans och
   anslutningarnas faktiska serverunderlag före och efter flödet.

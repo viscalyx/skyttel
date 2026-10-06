@@ -2,13 +2,15 @@ import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
 import {
-  activatePanel,
   createHousehold,
   openProfile,
-  openWorkspace,
+  openTable,
   signIn,
+  utilityButton,
 } from '../support/client.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
 test('AI-03: medgivandet kräver val av hushåll och AI-behandling', async ({ page }) => {
   const app = await createInstallation();
@@ -41,12 +43,8 @@ test('AI-03: medgivandet kräver val av hushåll och AI-behandling', async ({ pa
     await expect(page.getByText('Inga aktiva assistentanslutningar.')).toBeVisible();
     expect((await callAssistant(app.origin, access_token, 'read_map')).status).toBe(401);
     await page.getByRole('link', { name: 'Till kartan', exact: true }).click();
-    await openWorkspace(page);
-    await expect(
-      page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true }),
-    ).toBeVisible();
+    await openTable(page);
+    await expect(await utilityButton(page, 'Nytt objekt')).toBeVisible();
   } finally {
     await app.close();
   }
@@ -108,12 +106,14 @@ test('AI-13: profile navigation focuses assistant connections and preserves unse
       await page.request.get(`${app.origin}/api/assistants/context`)
     ).json();
     await page.goto(app.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Cykeln', exact: true }).click();
-    const cycle = page.getByRole('region', { name: 'Cykeln', exact: true });
-    await cycle.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    const cycle = await editTableObject(page, 'Cykeln');
     await cycle.getByLabel('Beskrivning', { exact: true }).fill('Cykelns oskickade profiltext');
     const viewBefore = await (await page.request.get(`${path}/view`)).json();
+    await verifyObjectDepartureAndDiscard(page, {
+      Beskrivning: 'Cykelns oskickade profiltext',
+    });
+    expect(await read()).toEqual(before);
     await openProfile(page);
     const connections = page.getByRole('link', { name: 'Assistentanslutningar', exact: true });
     await page.keyboard.press('Tab');
@@ -154,9 +154,9 @@ test('AI-13: profile navigation focuses assistant connections and preserves unse
     const returnToMap = page.getByRole('link', { name: 'Tillbaka till kartan', exact: true });
     await returnToMap.focus();
     await page.keyboard.press('Enter');
-    await activatePanel(page, 'Cykeln');
-    await expect(cycle.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Cykelns oskickade profiltext',
+    const reopened = await editTableObject(page, 'Cykeln');
+    await expect(reopened.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Sparat om Cykeln',
     );
     expect(await read()).toEqual(before);
     expect(await (await page.request.get(`${path}/view`)).json()).toEqual(viewBefore);
@@ -442,12 +442,8 @@ test('AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete', as
     await page.goto(`${app.origin}/assistants`);
     await expect(page.getByText('Inga aktiva assistentanslutningar.')).toBeVisible();
     await page.getByRole('link', { name: 'Till kartan', exact: true }).click();
-    await openWorkspace(page);
-    await expect(
-      page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true }),
-    ).toBeVisible();
+    await openTable(page);
+    await expect(await utilityButton(page, 'Nytt objekt')).toBeVisible();
   } finally {
     await app.close();
   }

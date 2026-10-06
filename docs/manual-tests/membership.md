@@ -289,8 +289,8 @@ new invitation restores membership”.
 **Steg:**
 
 1. Välj **Nytt objekt** som Robin. Ange **Robin i kartan** som
-   **Objektets namn**, välj **Lägg i mitt utkast** och
-   **Spara hela utkastet**. Kontrollera bekräftelsen **Sparat**.
+   **Namn**, välj **Lägg i utkastet och stäng** och öppna **Visa utkastet**.
+   Välj **Spara hela utkastet**. Kontrollera **Utkastet är sparat**.
 2. Öppna **Administrera tillgång** som Alex och försök skapa en inbjudan
    till Robins befintliga ID. Kontrollera felmeddelandet.
 3. Välj **Återkalla tillgång** på Robins rad. Läs bekräftelsen och välj
@@ -337,8 +337,11 @@ revocation retires an open recipient workspace”.
 **Steg:**
 
 1. Alex öppnar **Nytt objekt** och skriver **Alex oskickade arbete** utan
-   att lägga texten i utkastet. Öppna **Inställningar → Administrera tillgång**.
-   Huvudrubriken får fokus; kartans oskickade formulär är dolt.
+   att lägga texten i utkastet. Tryck Escape och välj **Fortsätt redigera**.
+   Kontrollera texten och fokus i **Namn**. Tryck Escape igen och välj
+   **Kasta ändringarna och fortsätt**. Öppna sedan
+   **Inställningar → Administrera tillgång**. Huvudrubriken får fokus;
+   det stängda formuläret finns inte kvar. Cykeln och utkastet är oförändrade.
 2. Läs **Be om användar-ID** och förklaringen om att namn eller e-postadress
    inte säkert identifierar rätt Skyttel-användare. Fältet för mottagarens ID
    visas först när Alex väljer **Jag har personens användar-ID**.
@@ -365,8 +368,9 @@ revocation retires an open recipient workspace”.
 9. Utan omladdning ska Robins sida inom tio sekunder visa
    **Du har inte tillgång till hushållet**. Det oskickade formuläret ska
    vara borta och Robin ska försvinna från Alex medlemslista.
-10. Alex väljer **Tillbaka till kartan**. **Alex oskickade arbete** och
-    fokus i namnfältet finns kvar. Cykeln och dess privata förslag finns kvar.
+10. Alex väljer **Tillbaka till kartan** och öppnar **Nytt objekt**.
+    Namnfältet är tomt: den uttryckligen kastade texten återkommer inte.
+    Stäng det oförändrade formuläret. Cykeln och dess privata förslag finns kvar.
 11. Öppna **Administrera tillgång** igen och ladda om sidan. Den tidigare
     koden ska inte kunna hämtas; den stegvisa inbjudan börjar från första steget.
 
@@ -378,7 +382,8 @@ revocation retires an open recipient workspace”.
   bevaras vid listbyte men rensas när inbjudan avslutas eller sidan lämnas.
 - En verklig andra klient accepterar koden. Återkallelse gäller även den
   redan öppna arbetsytan och avvecklar skyddat oskickat arbete före omladdning.
-- Alex behåller sparad information, eget privat förslag och oskickad text.
+- Alex behåller sparad information och eget privat förslag. Formulärtext
+  finns kvar vid **Fortsätt redigera** och försvinner bara efter uttryckligt val.
   Automationen jämför hela kartsvaret och verifierar nekad HTTP-åtkomst för Robin.
 
 ### MEDLEM-09: Kopiera koden manuellt när urklippsknappen misslyckas

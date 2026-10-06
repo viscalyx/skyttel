@@ -3,8 +3,16 @@ import { expect, test } from '@playwright/test';
 import Database from 'better-sqlite3';
 import type { Administration } from '../../src/shared/administration.js';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openSettings,
+  openTable,
+  signIn,
+} from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
 test('MEDLEM-04: replacing an invitation invalidates the old code and cancellation keeps the new code usable', async ({
   page,
@@ -158,15 +166,15 @@ test('MEDLEM-06: revocation preserves shared objects and only a new invitation r
     expect(accepted.status()).toBe(200);
     const recipientPage = await recipient.newPage();
     await recipientPage.goto(installation.origin);
-    await openWorkspace(recipientPage);
-    await recipientPage
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(recipientPage);
+    await openNewObject(recipientPage);
     await recipientPage.getByLabel('Namn', { exact: true }).fill('Robin i kartan');
     await recipientPage.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
-    await recipientPage.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(recipientPage.getByRole('status')).toContainText('Sparat');
+    const draft = await openDraftReview(recipientPage);
+    await draft.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await expect(recipientPage.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
+    );
     await page.goto(`${installation.origin}/households/${household.id}/administration`);
 
     await page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true }).click();
@@ -190,11 +198,11 @@ test('MEDLEM-06: revocation preserves shared objects and only a new invitation r
     await recipientPage.getByRole('button', { name: 'Acceptera inbjudan' }).click();
     await expect(recipientPage.getByRole('alert')).toContainText('Inbjudan kan inte användas');
     await page.getByRole('link', { name: 'Till hushållet' }).click();
-    await openWorkspace(page);
-    await page.getByLabel('Sök objekt').fill('Robin i kartan');
-    await expect(
-      page.getByRole('button', { name: 'Uppgifter för Robin i kartan', exact: true }),
-    ).toBeVisible();
+    await openTable(page);
+    await page
+      .getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true })
+      .fill('Robin i kartan');
+    await expect(page.getByRole('button', { name: 'Robin i kartan', exact: true })).toBeVisible();
 
     await openSettings(page);
 
@@ -208,10 +216,12 @@ test('MEDLEM-06: revocation preserves shared objects and only a new invitation r
     await recipientPage.getByRole('button', { name: 'Acceptera inbjudan' }).click();
     await expect(recipientPage.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
     await expect(recipientPage.getByText('Medlem', { exact: true })).toBeVisible();
-    await openWorkspace(recipientPage);
-    await recipientPage.getByLabel('Sök objekt').fill('Robin i kartan');
+    await openTable(recipientPage);
+    await recipientPage
+      .getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true })
+      .fill('Robin i kartan');
     await expect(
-      recipientPage.getByRole('button', { name: 'Uppgifter för Robin i kartan', exact: true }),
+      recipientPage.getByRole('button', { name: 'Robin i kartan', exact: true }),
     ).toBeVisible();
   } finally {
     await recipient.close();
@@ -501,20 +511,18 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
       origin: installation.origin,
     });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(page);
+    await openNewObject(page);
     const unsent = page.getByLabel('Namn', { exact: true });
     await unsent.fill('Alex oskickade arbete');
+    await verifyObjectDepartureAndDiscard(page, { Namn: 'Alex oskickade arbete' });
+    expect(await read()).toEqual(before);
     await openSettings(page);
     await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
     await expect(
       page.getByRole('heading', { name: 'Administrera tillgång', exact: true }),
     ).toBeFocused();
-    await expect(unsent).toHaveValue('Alex oskickade arbete');
-    await expect(unsent).not.toBeVisible();
+    await expect(unsent).toHaveCount(0);
     const ready = page.getByRole('button', { name: 'Jag har personens användar-ID', exact: true });
     await expect(ready).toBeVisible();
     await expect(page.getByLabel('Skyttel-användar-ID att bjuda in')).toHaveCount(0);
@@ -550,11 +558,8 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
     await recipientPage.getByRole('button', { name: 'Acceptera inbjudan', exact: true }).click();
     await expect(recipientPage.getByRole('heading', { name: 'Hushållet Linden' })).toBeVisible();
     await expect(recipientPage.getByText('Medlem', { exact: true })).toBeVisible();
-    await openWorkspace(recipientPage);
-    await recipientPage
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openTable(recipientPage);
+    await openNewObject(recipientPage);
     const recipientUnsent = recipientPage.getByLabel('Namn', { exact: true });
     await recipientUnsent.fill('Robins oskickade arbete');
     await expect(invitations).toContainText('Accepterad', { timeout: 10_000 });
@@ -611,8 +616,9 @@ test('MEDLEM-08: staged invitation copies its one-time code and revocation retir
     await expect(member).toHaveCount(0);
     expect(await read()).toEqual(before);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await expect(unsent).toHaveValue('Alex oskickade arbete');
-    await expect(unsent).toBeFocused();
+    await openNewObject(page);
+    await expect(unsent).toHaveValue('');
+    await page.keyboard.press('Escape');
     expect(await read()).toEqual(before);
     await openSettings(page);
     await page.getByRole('link', { name: 'Administrera tillgång', exact: true }).click();
