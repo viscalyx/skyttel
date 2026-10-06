@@ -502,6 +502,10 @@ export function voiceAssistantRoutes({
   });
   return {
     routes,
+    retireSessionWork: (sessionId: string) => {
+      for (const voice of voices.values())
+        if (voice.assistant.id === sessionId && !voice.closed) voice.work?.retire();
+    },
     summarizeSession: async (sessionId: string, signal: AbortSignal) => {
       const active = [...voices.values()].filter((voice) => voice.assistant.id === sessionId);
       for (const voice of active) {

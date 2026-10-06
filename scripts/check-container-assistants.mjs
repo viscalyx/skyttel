@@ -72,7 +72,7 @@ export async function checkContainerAssistants({
     assert.equal(exchange.status, 200);
     return { token: JSON.parse(exchange.body).access_token, clientId };
   }
-  async function tool(token, toolName, args = {}) {
+  async function rpc(token, method, params) {
     const response = await request(name, '/mcp', {
       method: 'POST',
       headers: {
@@ -83,13 +83,15 @@ export async function checkContainerAssistants({
       body: JSON.stringify({
         jsonrpc: '2.0',
         id: 1,
-        method: 'tools/call',
-        params: { name: toolName, arguments: args },
+        method,
+        ...(params ? { params } : {}),
       }),
     });
     assert.equal(response.status, 200);
     return JSON.parse(response.body);
   }
+  const tool = (token, toolName, args = {}) =>
+    rpc(token, 'tools/call', { name: toolName, arguments: args });
   async function result(token, toolName, args) {
     const body = await tool(token, toolName, args);
     assert.equal(body.result.isError, undefined);
@@ -99,6 +101,14 @@ export async function checkContainerAssistants({
   const writable = await authorize(true);
   const catalog = await result(writable.token, 'read_type_catalog', {});
   const draft = await result(writable.token, 'read_my_draft', {});
+  const tools = (await rpc(writable.token, 'tools/list')).result.tools;
+  for (const toolName of ['read_history', 'save_draft', 'propose_object', 'propose_object_type'])
+    assert.ok(tools.some(({ name }) => name === toolName));
+  for (const toolName of ['propose_undo', 'read_merge_review', 'propose_merge']) {
+    assert.ok(!tools.some(({ name }) => name === toolName));
+    assert.equal((await tool(writable.token, toolName)).result.isError, true);
+  }
+  assert.deepEqual(await result(writable.token, 'read_my_draft', {}), draft);
   const proposal = {
     version: draft.version,
     contentVersion: draft.contentVersion,
@@ -168,21 +178,43 @@ export async function checkContainerAssistants({
       customValues: { enabled: false },
     },
   });
-  advanced = await result(writable.token, 'propose_undo', {
+  const removal = {
     version: advanced.version,
     contentVersion: advanced.contentVersion,
-    operationId: saved.receipt.operationId,
-    userId: saved.receipt.userId,
-  });
+    id: proposal.id,
+    baseRevision: map.objects[0].revision,
+    value: null,
+  };
+  assert.equal((await tool(readOnly.token, 'propose_object', removal)).result.isError, true);
+  advanced = await result(writable.token, 'propose_object', removal);
   assert.equal(advanced.changes.length, 2);
   assert.equal(advanced.objectTypes.length, 1);
-  await result(writable.token, 'save_draft', {
+  assert.equal(advanced.changes.find(({ id }) => id === proposal.id).after, null);
+  assert.deepEqual(advanced.changes.find(({ id }) => id === deviceId).after.customValues, {
+    enabled: false,
+  });
+  assert.equal(
+    (await result(writable.token, 'read_map', { objectId: proposal.id })).objects.length,
+    1,
+  );
+  const advancedAttempt = {
     version: advanced.version,
     contentVersion: advanced.contentVersion,
     operationId: `container-advanced-save-${randomUUID()}`,
-  });
+  };
+  const advancedSaved = await result(writable.token, 'save_draft', advancedAttempt);
+  assert.equal(advancedSaved.receipt.changes.length, 2);
   await command(['restart', name]);
   await waitUntilReady(name);
+  assert.deepEqual(await result(writable.token, 'save_draft', advancedAttempt), advancedSaved);
+  assert.deepEqual(
+    (
+      await result(writable.token, 'read_save_operation', {
+        operationId: advancedAttempt.operationId,
+      })
+    ).operation.receipt,
+    advancedSaved.receipt,
+  );
   assert.equal(
     (await result(writable.token, 'read_map', { objectId: proposal.id })).objects.length,
     0,
@@ -190,6 +222,11 @@ export async function checkContainerAssistants({
   assert.deepEqual(
     (await result(writable.token, 'read_map', { objectId: deviceId })).objects[0].customValues,
     { enabled: false },
+  );
+  assert.equal(
+    (await result(writable.token, 'read_map', { objectId: 'erasure-independent' })).objects[0]
+      .description,
+    'Retained after erasure',
   );
   const context = JSON.parse(
     (await request(name, '/api/assistants/context', { headers: { cookie: fixture.cookie } })).body,
@@ -219,6 +256,6 @@ export async function checkContainerAssistants({
   });
   assert.equal(revoked.status, 401);
   console.log(
-    'PASS: production OAuth map consent, read-only isolation, types, scoped history, whole MCP undo, restart receipt recovery, and revocation',
+    'PASS: production OAuth map consent, read-only isolation, retired-tool rejection, types, scoped history, whole-draft creation and ordinary removal, restart receipt recovery, and revocation',
   );
 }

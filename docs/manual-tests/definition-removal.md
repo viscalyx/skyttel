@@ -1,7 +1,7 @@
 # Manuella testfall för borttagning av typer och fält
 
 Prova granskad katalogborttagning, användningsspärrar utan privat
-informationsläckage och återställning av innehåll med saknade definitioner.
+informationsläckage och läsning av historiska definitioner.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -14,6 +14,13 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
+
+Öppna **Inställningar → Typer och egna fält** för typformulären.
+Välj **Tillbaka till kartan** före granskning. Öppna **Skriv till Skyttel →
+Visa utkastet** och välj radens **Visa förslaget: [namn]** för fullständiga
+tidigare och föreslagna definitioner. Stäng läsningen med krysset.
+Utkastets sparikon öppnar **Spara utkastet**. Vänta på **Utkastet är sparat**
+och stäng textvyn före fortsatt arbete i Inställningar eller Tabell.
 
 1. Använd en isolerad provinstallation med påhittade uppgifter. Skapa
    hushållet som Alex och bjud in Robin.
@@ -45,10 +52,14 @@ reviewed, discarded or saved without automatic cleanup”.
    fält: Serienummer**. Lägg typförslaget i utkastet.
 2. Ändra Solcellsanläggning och välj **Ta bort objekttypen**.
 3. Öppna **Sambandstyper och riktning**, ändra Använder och välj **Ta bort
-   sambandstypen**. Granska alla tidigare definitioner och förslag.
-4. Välj **Kasta hela utkastet**. Kontrollera att definitionerna finns kvar.
+   sambandstypen**. Återgå till kartan och granska alla tidigare
+   definitioner och förslag genom utkastets fullständiga läsning.
+4. Välj **Kasta hela utkastet**, läs **Ta bort hela utkastet?** och
+   bekräfta **Ta bort hela utkastet**. Stäng textvyn och återvänd till
+   Inställningar. Kontrollera att definitionerna finns kvar.
 5. Upprepa borttagningarna och välj **Spara hela utkastet**. Starta om
-   appservern med samma databas, ladda om och läs katalogerna och historiken.
+   appservern med samma databas, ladda om och läs katalogerna. Välj
+   **Rapporter** i kartans verktyg för historiken.
    Välj **Visa ändringarna** vid borttagningen för att läsa definitionerna.
 
 **Förväntat resultat:**
@@ -96,40 +107,33 @@ with a useful explanation and no private disclosure”.
 - Felbeskeden avslöjar varken Privat provnamn eller PRIVAT-PROVVÄRDE.
   Kartan och bådas utkast förblir oförändrade av de nekade försöken.
 
-### KATALOG-03: återställ saknade definitioner med innehållet
+### KATALOG-03: läs borttagna definitioner utan att ändra eget arbete
 
-**Syfte:** Historiska definitioner förblir begripliga och återkommer endast
-genom ett granskat återställningsförslag och nytt sparande.
+**Syfte:** Läsa historiska definitioner när de saknas i dagens katalog.
 
 **Användare:** Alex.
 
 **Förutsättningar:** Spara Lo Exempel som Person, Garaget som en annan typ
-och sambandet Lo Exempel Använder Garaget. Ta bort Lo Exempel och spara
-den borttagningen med sambandet. Ta sedan bort de oanvända typerna Person
-och Använder och spara. Lägg ett oberoende objekt med en annan typ i utkastet.
+och sambandet Lo Exempel Använder Garaget. Ta bort Lo och sambandet och
+spara. Ta sedan bort de oanvända typerna Person och Använder och spara.
+Lägg ett oberoende objekt med en annan typ i utkastet utan att spara.
 
 **Integrationstest:**
 [definition-removal.spec.ts](../../tests/integration/definition-removal.spec.ts),
-testfallet “KATALOG-03: history restores missing definitions and content
-together only after review and a new save”.
+testfallet “KATALOG-03: history reads removed definitions and content without
+changing independent work”.
 
 **Steg:**
 
-1. Visa historik och hitta sparandet där Lo Exempel och sambandet tas bort.
-   Välj **Visa ändringarna** och kontrollera tidigare namn och typbetydelser.
-2. Välj **Ångra sparandet**. Granska Lo Exempel, sambandet, **Återställ
-   objekttyp: Person**, **Återställ sambandstyp: Använder** och det redan
-   befintliga oberoende förslaget i hela utkastet.
-3. Kontrollera från Robins profil att sparad karta och katalog fortfarande
-   saknar innehållet. Starta om appservern med samma databas och ladda om.
-4. Granska utkastet igen och välj **Spara hela utkastet**. Läs kvitto,
-   karta och historik.
+1. Välj **Rapporter** och hitta borttagningen av Lo och sambandet.
+2. Välj **Visa ändringarna** och läs tidigare namn och typbetydelser.
+3. Kontrollera att aktuell karta, katalog och eget utkast är oförändrade.
+4. Starta om med samma databas och kontrollera samma värden och historik.
 
 **Förväntat resultat:**
 
 - Historiken beskriver tidigare innehåll även när typerna saknas i katalogen.
-- Båda typerna återställs i samma privata förslag som innehållet. Förslaget
-  överlever omstart och sparar inget automatiskt.
-- Sparandet återför objektet och sambandet med samma identiteter samt båda
-  typerna. Garaget förblir oförändrat och det oberoende förslaget sparas också.
-  Den ursprungliga historikgruppen finns kvar oförändrad.
+- Karta och katalog saknar fortfarande det borttagna innehållet. Garaget
+  är oförändrat och det oberoende förslaget finns kvar i utkastet.
+- Omstart bevarar dessa värden och den ursprungliga historikgruppen.
+  Historikläsningen skapar inga återställningsförslag.

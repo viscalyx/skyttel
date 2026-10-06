@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openSettings,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editObjectRelationship, openObjectRelationships } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 for (const width of [1440, 390, 320])
   test(`STY-08: relationship sections preserve hidden answers and private presentation after restart at ${width}px`, async ({
@@ -81,8 +90,8 @@ for (const width of [1440, 390, 320])
       }
       await page.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+      const relationshipDialog = await openObjectRelationships(page, 'Cykeln');
+      await relationshipDialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
       await page.getByLabel('Från objekt').selectOption('bike');
       await page.getByLabel('Till objekt').selectOption('garage');
       await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Förvaring' });
@@ -90,7 +99,7 @@ for (const width of [1440, 390, 320])
       await page.getByLabel('Effekt', { exact: true }).fill('0');
       await page.getByLabel('Datum', { exact: true }).fill('2026-09-01');
       await page.getByLabel('Batteri', { exact: true }).selectOption('false');
-      await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast', exact: true }).click();
+      await stageRelationshipAndClose(page);
       await settings();
       await page.getByText('Sambandstyper och riktning', { exact: true }).click();
       await page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }).click();
@@ -107,21 +116,16 @@ for (const width of [1440, 390, 320])
       const originalFields = draft.draft.relationshipTypes[0].after.fields;
       expect(Object.values(originalValues)).toEqual(['Exempelsol', 0, '2026-09-01', false]);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await openWorkspace(page);
-      await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-      await expect(page.getByRole('status')).toContainText('Sparat:');
+      await saveReviewedConflictDraft(page);
+      await closeTextView(page);
       await installation.restart();
       await page.reload();
-      await openWorkspace(page);
-      await page
-        .getByRole('list', { name: 'Samband', exact: true })
-        .getByRole('button', { name: 'Cykeln → förvaras i → Garaget', exact: true })
-        .click();
-      await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+      await editObjectRelationship(page, 'Cykeln', 'Cykeln → förvaras i → Garaget');
       await expect(page.getByLabel('Effekt', { exact: true })).toHaveCount(0);
       await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('false');
       await expect(page.getByLabel('Reserv', { exact: true })).toHaveValue('');
-      await page.getByRole('button', { name: 'Stäng sambandet utan att skicka' }).click();
+      await page.getByRole('button', { name: 'Avbryt redigeringen', exact: true }).click();
+      await closeSupportDialog(page, 'Samband för Cykeln');
       await settings();
       await page.getByText('Sambandstyper och riktning', { exact: true }).click();
       await page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }).click();
@@ -131,12 +135,7 @@ for (const width of [1440, 390, 320])
         .selectOption({ label: 'Service' });
       await page.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await openWorkspace(page);
-      await page
-        .getByRole('list', { name: 'Samband', exact: true })
-        .getByRole('button', { name: 'Cykeln → förvaras i → Garaget', exact: true })
-        .click();
-      await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+      await editObjectRelationship(page, 'Cykeln', 'Cykeln → förvaras i → Garaget');
       await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('0');
       await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Exempelsol');
       await expect(page.getByLabel('Datum', { exact: true })).toHaveValue('2026-09-01');

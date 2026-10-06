@@ -41,12 +41,6 @@ async function save(id: string, actor = client): Promise<SaveReceipt> {
   expect(response.status).toBe(200);
   return (await response.json()).receipt;
 }
-const undo = async (receipt: SaveReceipt) =>
-  client.json(`${path}/undo`, {
-    version: (await read()).draft.version,
-    operationId: receipt.operationId,
-    userId: receipt.userId,
-  });
 async function member() {
   fixture.setSubject('robin');
   const actor = fixture.client();
@@ -120,7 +114,7 @@ test('a real PNG becomes a bounded private image proposal and is fetched separat
   expect(encoded).not.toEqual(source);
 });
 
-test('private versions become shared only with a receipt and historical images survive replacement, removal and object undo', async () => {
+test('private versions become shared only with a receipt and historical images survive replacement and removal', async () => {
   const { actor } = await member();
   expect((await upload(await sourceImage())).status).toBe(200);
   const first = (await read()).draft.changes[0].after?.profileImageId;
@@ -135,30 +129,11 @@ test('private versions become shared only with a receipt and historical images s
   expect((await upload(null)).status).toBe(200);
   const removed = await save('remove-image');
   expect((await read()).objects[0].profileImageId).toBeUndefined();
-  expect((await undo(removed)).status).toBe(200);
-  expect((await read()).draft.changes[0].after?.profileImageId).toBe(second);
-  await save('restore-image');
-  const state = await read();
-  expect(
-    (
-      await client.json(`${path}/draft`, {
-        version: state.draft.version,
-        id: 'person',
-        baseRevision: state.objects[0].revision,
-        value: null,
-      })
-    ).status,
-  ).toBe(200);
-  const deletion = await save('delete-object');
-  expect((await undo(deletion)).status).toBe(200);
-  await save('restore-object');
-  expect((await read()).objects[0].profileImageId).toBe(second);
-  expect((await undo(changed)).status).toBe(200);
-  expect(draftConflicts(await read())).toEqual([]);
-  await save('restore-first');
-  expect((await read()).objects[0].profileImageId).toBe(first);
-  expect((await client.request(`${path}/history`)).status).toBe(200);
+  expect((await actor.request(`${images}/${first}`)).status).toBe(200);
+  expect((await actor.request(`${images}/${second}`)).status).toBe(200);
   expect(initial.changes[0].after?.profileImageId).toBe(first);
+  expect(changed.changes[0].before?.profileImageId).toBe(first);
+  expect(removed.changes[0].after?.profileImageId).toBeUndefined();
 });
 
 test('JPEG and WebP content are re-encoded, generic edits keep the image, and discarded versions are inaccessible', async () => {
@@ -295,7 +270,7 @@ test('stale image proposals and failed whole saves preserve the draft and retry 
   expect((await (await client.request(`${path}/history`)).json()).history).toHaveLength(2);
 });
 
-test('independent concurrent facts and image undo overlap follow ordinary conflict rules', async () => {
+test('independent concurrent facts and image proposals follow ordinary conflict rules', async () => {
   await upload(await sourceImage());
   await save('initial');
   const { actor } = await member();
@@ -308,7 +283,7 @@ test('independent concurrent facts and image undo overlap follow ordinary confli
     value: { ...state.objects[0], name: 'Lo Lind' },
   });
   await save('name', actor);
-  let current = await read();
+  const current = await read();
   expect(
     (
       await client.json(`${path}/resolve`, {
@@ -318,29 +293,11 @@ test('independent concurrent facts and image undo overlap follow ordinary confli
       })
     ).status,
   ).toBe(200);
-  const changed = await save('image');
+  await save('image');
   expect((await read()).objects[0].name).toBe('Lo Lind');
-  await upload(await sourceImage('webp', '#123456'));
-  const own = await read();
-  expect((await undo(changed)).status).toBe(409);
-  expect(await read()).toEqual(own);
-  await save('later-image');
-  expect((await undo(changed)).status).toBe(200);
-  current = await read();
-  expect(draftConflicts(current)).toHaveLength(1);
-  expect(
-    (
-      await client.json(`${path}/resolve`, {
-        version: current.draft.version,
-        conflict: draftConflicts(current)[0],
-        choice: 'saved',
-      })
-    ).status,
-  ).toBe(200);
-  expect((await read()).draft.changes).toEqual([]);
 });
 
-test('type changes, conflict choices and undo preserve independently replaced profile images', async () => {
+test('type changes, conflict choices preserve independently replaced profile images', async () => {
   expect((await upload(await sourceImage())).status).toBe(200);
   await save('initial');
   const initial = await read();
@@ -361,7 +318,7 @@ test('type changes, conflict choices and undo preserve independently replaced pr
   const { actor } = await member();
   expect((await upload(await sourceImage('jpeg', '#ffff00'), actor)).status).toBe(200);
   await save('concurrent-image', actor);
-  let current = await read();
+  const current = await read();
   const replacement = current.objects[0].profileImageId;
   expect(replacement).not.toBe(original.profileImageId);
   expect(draftConflicts(current)).toHaveLength(1);
@@ -374,47 +331,12 @@ test('type changes, conflict choices and undo preserve independently replaced pr
       })
     ).status,
   ).toBe(200);
-  const changed = await save('type-change');
+  await save('type-change');
   expect((await read()).objects[0]).toMatchObject({
     id: original.id,
     typeId: target?.id,
     profileImageId: replacement,
   });
-  expect((await upload(await sourceImage('webp', '#123456'), actor)).status).toBe(200);
-  await save('later-image', actor);
-  current = await read();
-  const latest = current.objects[0];
-  const imageBytes = Buffer.from(
-    await (await client.request(`${images}/${latest.profileImageId}`)).arrayBuffer(),
-  );
-  expect(
-    (
-      await client.json(`${path}/draft`, {
-        version: current.draft.version,
-        id: original.id,
-        baseRevision: latest.revision,
-        value: { ...latest, description: 'Egen oberoende anteckning' },
-      })
-    ).status,
-  ).toBe(200);
-  expect((await undo(changed)).status).toBe(200);
-  expect((await read()).draft.changes[0].after).toMatchObject({
-    typeId: original.typeId,
-    profileImageId: latest.profileImageId,
-    description: 'Egen oberoende anteckning',
-  });
-  await save('undo-type-change');
-  expect((await read()).objects[0]).toMatchObject({
-    id: original.id,
-    typeId: original.typeId,
-    profileImageId: latest.profileImageId,
-    description: 'Egen oberoende anteckning',
-  });
-  expect(
-    Buffer.from(await (await client.request(`${images}/${latest.profileImageId}`)).arrayBuffer()),
-  ).toEqual(imageBytes);
-  for (const id of [original.profileImageId, replacement])
-    expect((await client.request(`${images}/${id}`)).status).toBe(200);
 });
 
 test.each(['draft', 'save', 'access'] as const)(

@@ -1,11 +1,12 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import {
-  activatePanel,
   createHousehold,
+  openDraftReview,
   openMap,
-  openWorkspace,
+  openTable,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -117,22 +118,22 @@ test('MARKERING-01: ordinary and modified clicks select objects and open details
     await kim.dblclick();
     await expect(page.getByRole('region', { name: 'Kim Exempel', exact: true })).toBeVisible();
     await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(2);
-    await openMap(page);
+    await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
     await lo.click({ modifiers: ['Control', 'Alt'] });
     await expect(page.getByRole('region', { name: 'Lo Exempel', exact: true })).toBeVisible();
     await expect(kim).toHaveAttribute('aria-pressed', 'true');
     await expect(lo).toHaveAttribute('aria-pressed', 'true');
-    await openMap(page);
+    await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
     await alex.click({ modifiers: ['Meta', 'Alt'] });
     await expect(page.getByRole('region', { name: 'Alex Exempel', exact: true })).toBeVisible();
     await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(3);
-    expect(await positions()).toEqual(before);
-    await openMap(page);
+    await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
+    await expect.poll(positions).toEqual(before);
     const empty = await emptyPoint(page);
     await page.mouse.click(empty.x, empty.y);
     await alex.dblclick();
     await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(1);
-    await openMap(page);
+    await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
     // Control+Option can arrive through the native context-menu path on Mac.
     await lo.click({ button: 'right', modifiers: ['Control', 'Alt'] });
     await expect(page.getByRole('region', { name: 'Lo Exempel', exact: true })).toBeVisible();
@@ -142,97 +143,146 @@ test('MARKERING-01: ordinary and modified clicks select objects and open details
   }
 });
 
-test('MARKERING-03: text selection and detail controls retain work across desktop and compact panels', async ({
-  page,
-}) => {
-  const installation = await createInstallation();
-  try {
-    await arrange(page, installation.origin);
-    const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
-    const details = tools.getByRole('button', { name: 'Visa detaljer', exact: true });
-    const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
-    const panel = page.getByRole('region', { name: 'Kim Exempel', exact: true });
-    for (const width of [1440, 390, 320]) {
+for (const width of [1440, 390, 320]) {
+  test(`MARKERING-03: text selection and native details protect unsent work at ${width}px`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    try {
       await page.setViewportSize({ width, height: 1000 });
+      const app = await arrange(page, installation.origin);
+      const original = await app.read();
+      const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+      const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
+      const details = await utilityButton(page, 'Visa detaljer');
+      await expect(details).toBeDisabled();
       for (const button of await tools.locator('button:visible').all()) {
         const bounds = await button.boundingBox();
         expect(bounds?.width).toBeGreaterThanOrEqual(44);
         expect(bounds?.height).toBeGreaterThanOrEqual(44);
         expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(width - 12);
       }
-      await openWorkspace(page);
-      await work.getByRole('button', { name: 'Avmarkera alla', exact: true }).click();
-      await expect(details).toBeDisabled();
-      const lo = work.getByRole('button', { name: 'Markera Lo Exempel', exact: true });
+      const lo = map.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+      const kim = map.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true });
       await lo.focus();
       await page.keyboard.press('Space');
       await expect(lo).toHaveAttribute('aria-pressed', 'true');
-      await work.getByRole('button', { name: 'Markera Kim Exempel', exact: true }).click();
-      await expect(work.getByText('2 markerade', { exact: true })).toBeVisible();
-      await expect(details).toHaveAttribute('aria-pressed', 'false');
+      await kim.focus();
+      await kim.click({ modifiers: ['Control'] });
+      await expect(kim).toHaveAttribute('aria-pressed', 'true');
+      await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(2);
       await details.click();
-      await expect(panel.getByRole('heading', { name: 'Kim Exempel', exact: true })).toBeFocused();
+      const reader = page.getByRole('region', { name: 'Kim Exempel', exact: true });
+      await expect(reader.getByRole('heading', { name: 'Kim Exempel', exact: true })).toBeFocused();
       await expect(details).toHaveAttribute('aria-pressed', 'true');
-      if (width === 1440)
-        await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      else
-        await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-          `Oskickat ${width === 390 ? 1440 : 390}`,
-        );
-      await panel.getByLabel('Beskrivning', { exact: true }).fill(`Oskickat ${width}`);
-      await openWorkspace(page);
-      await expect(details).toHaveAttribute('aria-pressed', width > 700 ? 'true' : 'false');
-      await work.getByRole('button', { name: 'Uppgifter för Kim Exempel', exact: true }).click();
-      await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      await reader.getByRole('button', { name: 'Redigera Kim Exempel', exact: true }).click();
+      const form = page.getByRole('dialog', { name: 'Redigera Kim Exempel', exact: true });
+      await form.getByLabel('Beskrivning', { exact: true }).fill(`Oskickat ${width}`);
+      await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+      const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+      await expect(
+        loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         `Oskickat ${width}`,
       );
-      await expect(page.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(2);
-      await activatePanel(page, 'Lista och utkast');
-      await expect(details).toHaveAttribute('aria-pressed', width > 700 ? 'true' : 'false');
-      await details.click();
-      await panel.getByRole('button', { name: 'Stäng Kim Exempel', exact: true }).click();
-      await expect(details).toHaveAttribute('aria-pressed', 'false');
-      await openWorkspace(page);
-      await work.getByRole('button', { name: 'Avmarkera alla', exact: true }).click();
-      await expect(details).toBeDisabled();
-      await expect(page.locator('.connection.selected')).toHaveCount(0);
-    }
-    await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-    const theme = tools.getByRole('button', { name: /^Tema:/ });
-    await theme.click();
-    await page.getByRole('radio', { name: 'Mörkt', exact: true }).click();
-    await expect(theme).toBeFocused();
-    await expect(page.getByRole('region', { name: 'Hushållskarta', exact: true })).toHaveAttribute(
-      'data-theme',
-      'dark',
-    );
-    const mark = work.getByRole('button', { name: 'Markera Lo Exempel', exact: true });
-    await tools.getByRole('button', { name: 'Dölj verktygens namn', exact: true }).click();
-    await mark.hover();
-    expect(
-      await mark.evaluate((button) => {
-        const style = getComputedStyle(button);
-        const luminance = (color: string) => {
-          const channels = (color.match(/\d+/g) ?? [])
-            .slice(0, 3)
-            .map(Number)
-            .map((value) => {
+      expect(await app.read()).toEqual(original);
+      await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+      await loss
+        .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+        .click();
+      await expect(form).not.toBeVisible();
+      await expect(
+        reader.getByRole('button', { name: 'Redigera Kim Exempel', exact: true }),
+      ).toBeFocused();
+      await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(2);
+      await reader.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
+      await openTable(page);
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      await table.getByRole('button', { name: 'Redigera Kim Exempel', exact: true }).click();
+      await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
+      await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+      await table.getByRole('button', { name: 'Lo Exempel', exact: true }).focus();
+      await page.keyboard.press('Space');
+      await expect(table.getByRole('button', { name: 'Lo Exempel', exact: true })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      );
+      await expect(
+        table
+          .getByRole('row')
+          .filter({ has: page.getByRole('button', { name: 'Lo Exempel', exact: true }) }),
+      ).toHaveAttribute('data-selected', 'true');
+      const expand = tools.getByRole('button', { name: 'Visa verktygens namn', exact: true });
+      if (await expand.isVisible()) await expand.click();
+      const theme = tools.getByRole('button', { name: /^Tema:/ });
+      await theme.click();
+      await page.getByRole('radio', { name: 'Mörkt', exact: true }).click();
+      await expect(theme).toBeFocused();
+      await expect(
+        page.getByRole('region', { name: 'Hushållskarta', exact: true }),
+      ).toHaveAttribute('data-theme', 'dark');
+      const mark = table.getByRole('button', { name: 'Redigera Kim Exempel', exact: true });
+      await mark.hover();
+      expect(
+        await mark.evaluate((button) => {
+          const style = getComputedStyle(button);
+          const luminance = (color: string) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 1;
+            const context = canvas.getContext('2d');
+            if (!context) throw new Error('Actual CSS colour conversion requires a canvas.');
+            context.fillStyle = color;
+            context.fillRect(0, 0, 1, 1);
+            const pixel = context.getImageData(0, 0, 1, 1).data;
+            if (pixel[3] !== 255)
+              throw new Error('The control requires an opaque measured colour.');
+            const channels = [...pixel].slice(0, 3).map((value) => {
               const unit = value / 255;
               return unit <= 0.04045 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4;
             });
-          return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-        };
-        const foreground = luminance(style.color);
-        const background = luminance(style.backgroundColor);
-        return (
-          (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
-        );
-      }),
-    ).toBeGreaterThanOrEqual(4.5);
-  } finally {
-    await installation.close();
-  }
-});
+            return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+          };
+          const foreground = luminance(style.color),
+            background = luminance(style.backgroundColor);
+          return (
+            (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+          );
+        }),
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(await app.read()).toEqual(original);
+      await openDraftReview(page);
+      await openTable(page);
+      await mark.click({ trial: true });
+      if (width === 1440) {
+        const text = await page
+          .getByRole('region', { name: 'Skriv till Skyttel', exact: true })
+          .boundingBox();
+        const action = await mark.boundingBox();
+        expect(text).not.toBeNull();
+        expect((action?.x ?? 0) + (action?.width ?? 0)).toBeLessThanOrEqual(text?.x ?? 0);
+      }
+      await page.screenshot({ path: test.info().outputPath('table-draft-dark.png') });
+      await (await utilityButton(page, 'Rapporter')).click();
+      await expect(page.getByRole('region', { name: 'Utkastet', exact: true })).not.toBeVisible();
+      const textEntry = await utilityButton(page, 'Skriv till Skyttel');
+      await expect(textEntry).toHaveAttribute('aria-expanded', 'false');
+      const resumedDraft = await openDraftReview(page);
+      await expect(
+        resumedDraft.getByRole('button', { name: 'Visa förslaget: Kim Exempel', exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('dialog', { name: 'Samtalsmedgivande', exact: true }),
+      ).toHaveCount(0);
+      await openTable(page);
+      await mark.click({ trial: true });
+      expect(await app.read()).toEqual(original);
+    } finally {
+      await installation.close();
+    }
+  });
+}
 
 async function emptyPoint(page: Page) {
   return page.locator('.spatial-surface canvas').evaluate((canvas) => {
@@ -251,58 +301,6 @@ async function emptyPoint(page: Page) {
   });
 }
 
-test('MARKERING-04: new detail panels open beside their object and retain manual positions', async ({
-  page,
-}) => {
-  const installation = await createInstallation();
-  try {
-    await page.setViewportSize({ width: 1440, height: 1000 });
-    await arrange(page, installation.origin);
-    const node = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
-    const object = await node.boundingBox();
-    if (!object) throw new Error('The object must be visible.');
-    await node.dblclick();
-    const panel = page.getByRole('region', { name: 'Lo Exempel', exact: true });
-    const box = await panel.boundingBox();
-    if (!box) throw new Error('The object panel must be visible.');
-    expect(
-      Math.min(Math.abs(box.x - object.x - object.width), Math.abs(box.x + box.width - object.x)),
-    ).toBeLessThanOrEqual(40);
-    expect(object.y + object.height / 2).toBeGreaterThanOrEqual(box.y - 32);
-    expect(object.y + object.height / 2).toBeLessThanOrEqual(box.y + box.height + 32);
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.y).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(1440);
-    expect(box.y + box.height).toBeLessThanOrEqual(1000);
-    const handle = panel.getByRole('button', { name: 'Flytta Lo Exempel', exact: true });
-    await handle.focus();
-    await page.keyboard.press('ArrowUp');
-    await page.keyboard.press('ArrowUp');
-    const moved = await panel.boundingBox();
-    expect(moved?.y).toBeLessThan(box.y);
-    await panel.getByRole('button', { name: 'Stäng Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
-    expect(await panel.boundingBox()).toEqual(moved);
-    await page.setViewportSize({ width: 900, height: 700 });
-    await expect
-      .poll(async () => {
-        const fitted = await panel.boundingBox();
-        return (fitted?.x ?? 0) + (fitted?.width ?? 0);
-      })
-      .toBeLessThanOrEqual(900);
-    await expect
-      .poll(async () => {
-        const fitted = await panel.boundingBox();
-        return (fitted?.y ?? 0) + (fitted?.height ?? 0);
-      })
-      .toBeLessThanOrEqual(700);
-    await page.setViewportSize({ width: 1440, height: 1000 });
-    await expect.poll(() => panel.boundingBox()).toEqual(moved);
-  } finally {
-    await installation.close();
-  }
-});
-
 test('MARKERING-02: empty clicks clear highlighting while navigation and cancellation retain selection', async ({
   page,
 }) => {
@@ -317,12 +315,18 @@ test('MARKERING-02: empty clicks clear highlighting while navigation and cancell
         .locator('.spatial-node')
         .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('style')));
     await lo.click();
-    await openWorkspace(page);
-    await page.getByLabel('Sök objekt', { exact: true }).fill('Exempel');
+    await (await utilityButton(page, 'Sök i kartan')).click();
+    const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
+    await search
+      .getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true })
+      .fill('Exempel');
+    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
     const before = await positions();
     await lo.click({ button: 'right', modifiers: ['Control'] });
     await expect(lo).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.getByLabel('Sök objekt', { exact: true })).toHaveValue('Exempel');
+    await expect(
+      page.getByRole('complementary', { name: 'Kartans sökresultat', exact: true }),
+    ).toContainText('Exempel');
     await expect(page.getByRole('region', { name: 'Lo Exempel', exact: true })).toHaveCount(0);
     expect(await positions()).toEqual(before);
     await lo.click({ button: 'right', modifiers: ['Control'] });
@@ -337,8 +341,12 @@ test('MARKERING-02: empty clicks clear highlighting while navigation and cancell
     await page.mouse.up();
     await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(0);
     await expect(map.locator('.connection.selected')).toHaveCount(0);
-    await expect(page.getByLabel('Sök objekt', { exact: true })).toHaveValue('Exempel');
-    await expect(page.getByRole('region', { name: 'Lista och utkast', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('complementary', { name: 'Kartans sökresultat', exact: true }),
+    ).toContainText('Exempel');
+    await expect(
+      page.getByRole('complementary', { name: 'Kartans sökresultat', exact: true }),
+    ).toBeVisible();
     expect(await positions()).toEqual(before);
     await openMap(page);
     await lo.click();

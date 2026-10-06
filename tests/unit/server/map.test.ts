@@ -167,7 +167,11 @@ test('deletion keeps prior values and actor in history, while discard leaves the
   expect(receipt.changes[0]).toMatchObject({ before: original, after: null });
   expect((await read()).objects).toEqual([]);
   const { history } = await (await client.request(`${path}/history`)).json();
-  expect(history[1]).toEqual(receipt);
+  expect(history[0]).toEqual(receipt);
+  expect(history.map((entry: { operationId: string }) => entry.operationId)).toEqual([
+    'delete',
+    'create',
+  ]);
 });
 
 test('all map operations enforce current household membership and request boundaries', async () => {
@@ -360,7 +364,7 @@ test('manual lifecycle corrections retain their prior values in shared history',
     expect((await read()).objects[0]).toMatchObject(value);
   }
   const { history } = await (await client.request(`${path}/history`)).json();
-  expect(history.at(-1).changes[0]).toMatchObject({
+  expect(history[0].changes[0]).toMatchObject({
     before: { lifecycle: 'ended' },
     after: {
       lifecycle: 'active',
@@ -421,8 +425,39 @@ test('shared history does not expose abandoned private relationship endpoint nam
   ).toBe(200);
   const history = await (await actor.request(`${path}/history`)).text();
   expect(history).not.toContain('Private abandoned name');
-  expect(JSON.parse(history).history.at(-1).relationships[0].objectNames).toEqual({
+  expect(JSON.parse(history).history[0].relationships[0].objectNames).toEqual({
     lo: 'Lo',
     kim: 'Kim',
   });
+});
+
+test('unknown authorship of the latest property write never credits an older matching value', async () => {
+  const { actor } = await member();
+  await propose();
+  await client.json(`${path}/save`, { version: 1, operationId: 'initial-property' });
+  await propose('Lo Lind', 'synthetic-person', actor);
+  for (const [index, name] of ['Lo Berg', 'Lo Alm', 'Lo Berg'].entries()) {
+    await propose(name);
+    const state = await read();
+    expect(
+      (
+        await client.json(`${path}/save`, {
+          version: state.draft.version,
+          operationId: `property-${index}`,
+        })
+      ).status,
+    ).toBe(200);
+  }
+  const row = fixture.database
+    .prepare('SELECT receipt FROM map_save WHERE operationId = ?')
+    .get('property-2') as { receipt: string };
+  const receipt = JSON.parse(row.receipt);
+  delete receipt.actorName;
+  fixture.database
+    .prepare('UPDATE map_save SET receipt = ? WHERE operationId = ?')
+    .run(JSON.stringify(receipt), 'property-2');
+  const current = await read(actor);
+  expect(current.objects[0].name).toBe('Lo Berg');
+  expect(current.conflictPropertyActors?.['object:synthetic-person']?.name).toBeUndefined();
+  expect(current.draft.changes[0].after.name).toBe('Lo Lind');
 });

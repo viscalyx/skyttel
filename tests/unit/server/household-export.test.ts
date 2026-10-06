@@ -71,12 +71,6 @@ test('retained definitions, generic merge history, revoked owners, all private d
     after: survivor,
     type,
     beforeType: type,
-    merge: {
-      ...merge,
-      previousChanges: [{ id: 'absorbed', before: source, after: null, type }],
-      previousRelationships: [],
-    },
-    undoFields: ['objectMeaning'],
     extension: { futureMeaning: 'Behåll äldre underlag' },
   };
   const receipt = {
@@ -255,7 +249,14 @@ test('one SQLite read snapshot preserves map, private draft, view and image byte
       .run(
         householdId,
         state.userId,
-        JSON.stringify([{ id: 'private', after: { description: 'Före' } }]),
+        JSON.stringify([
+          {
+            id: 'private',
+            before: null,
+            type: state.types[0],
+            after: { typeId: state.types[0].id, name: 'Privat lampa', description: 'Före' },
+          },
+        ]),
       );
     fixture.database
       .prepare('INSERT INTO personal_position VALUES (?, ?, ?, 1, 1, 2, 3)')
@@ -277,9 +278,17 @@ test('one SQLite read snapshot preserves map, private draft, view and image byte
     writer.transaction(() => {
       writer.prepare('UPDATE household SET name = ? WHERE id = ?').run('Efter', householdId);
       writer.prepare('UPDATE map_object SET description = ? WHERE id = ?').run('Efter', 'lamp');
-      writer
-        .prepare('UPDATE map_draft SET changes = ? WHERE householdId = ?')
-        .run(JSON.stringify([{ id: 'private', after: { description: 'Efter' } }]), householdId);
+      writer.prepare('UPDATE map_draft SET changes = ? WHERE householdId = ?').run(
+        JSON.stringify([
+          {
+            id: 'private',
+            before: null,
+            type: state.types[0],
+            after: { typeId: state.types[0].id, name: 'Privat lampa', description: 'Efter' },
+          },
+        ]),
+        householdId,
+      );
       writer.prepare('UPDATE personal_position SET x = 99 WHERE householdId = ?').run(householdId);
       writer
         .prepare('UPDATE profile_image SET bytes = ? WHERE id = ?')

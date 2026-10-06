@@ -4,12 +4,6 @@ import { draftConflicts } from '../shared/draft-conflicts.js';
 import { financialFields } from '../shared/financial-facts.js';
 import { proposedObjectTypes, proposedRelationshipTypes } from '../shared/map.js';
 import { isObjectIconId, searchObjectIcons } from '../shared/object-icons.js';
-import {
-  mergeConnections,
-  mergeFacts,
-  mergeNeedsChoice,
-  mergeObjects,
-} from '../shared/object-merge.js';
 import type { householdMap } from './map.js';
 import { MapError } from './map.js';
 
@@ -145,14 +139,6 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
           'Fältet har fältvärden i aktuellt eller upphört innehåll eller beständiga utkast. Hantera värdena uttryckligen innan fältet tas bort. Andras privata förslag visas inte.',
         field_kind_in_use:
           'Fältets värdeslag används. Skapa ett nytt fält med önskat värdeslag och bevara tidigare fältvärden tills de hanteras uttryckligen. Ingen automatisk konvertering görs.',
-        undo_draft_overlap:
-          'Ångringen överlappar ditt eget utkast. Granska och lös de berörda förslagen först; inget eget förslag ersattes. Oberoende förslag behöver inte kastas.',
-        undo_unavailable:
-          'Det valda sparandet kan inte återställas från hushållets tillgängliga historik. Permanent raderat innehåll kan inte ångras. Inget återställdes.',
-        merge_conflict:
-          'Underlaget för sammanslagningen har ändrats. Läs read_merge_review igen och gör nya aktuella val; inget slogs samman.',
-        merge_choices_required:
-          'Välj uttryckligen varje avvikande faktum och varje berört samband från read_merge_review. Inget slogs samman.',
         result_unknown:
           'Utfallet är okänt. Kontrollera sparförsöket före nya ändringar eller återförsök. Påstå inte att något sparades eller återställdes.',
       };
@@ -411,94 +397,10 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
       }),
   );
   server.registerTool(
-    'read_merge_review',
-    {
-      description:
-        'Granska en möjlig identitetsrättelse för två uttryckligt valda objekt. Lika namn bevisar inte samma företeelse. Returnerar aktuellt effektivt underlag inklusive eget utkast, berörda samband/typer och fakta som kräver val. Övriga ändpunkter innehåller bara ID, namn och typ. Be användaren bekräfta identiteten och välja varje avvikande faktum samt vilka samband som behålls eller tas bort före propose_merge.',
-      inputSchema: z.object({ survivorId: id, absorbedId: id }).strict(),
-      annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-    },
-    async ({ survivorId, absorbedId }) =>
-      run((domain) => {
-        const state = domain.read();
-        const effective = mergeObjects(state);
-        const left = effective.get(survivorId);
-        const right = effective.get(absorbedId);
-        if (survivorId === absorbedId || !left || !right) throw new MapError('object_conflict');
-        const relationships = mergeConnections(state, [survivorId, absorbedId]);
-        const a = mergeFacts(left);
-        const b = mergeFacts(right);
-        const presence = (value: unknown) =>
-          value === undefined ? { present: false } : { present: true, value };
-        return {
-          version: state.draft.version,
-          contentVersion: state.contentVersion,
-          reviewed: {
-            objects: [left, right],
-            relationships,
-            types: proposedObjectTypes(state.types, state.draft.objectTypes).filter((type) =>
-              [left.typeId, right.typeId].includes(type.id),
-            ),
-            relationshipTypes: proposedRelationshipTypes(
-              state.relationshipTypes,
-              state.draft.relationshipTypes,
-            ).filter((type) => relationships.some((edge) => edge.typeId === type.id)),
-          },
-          contextObjects: [...effective.values()]
-            .filter(
-              (object) =>
-                ![survivorId, absorbedId].includes(object.id) &&
-                relationships.some(
-                  (edge) => edge.sourceId === object.id || edge.targetId === object.id,
-                ),
-            )
-            .map(({ id, name, typeId }) => ({ id, name, typeId })),
-          choices: [...new Set([...Object.keys(a), ...Object.keys(b)])]
-            .filter((key) => mergeNeedsChoice(key, a[key], b[key]))
-            .map((field) => ({
-              field,
-              survivor: presence(a[field]),
-              absorbed: presence(b[field]),
-            })),
-        };
-      }),
-  );
-  server.registerTool(
-    'propose_merge',
-    {
-      description:
-        'Föreslå en sammanslagning av två objekt efter read_merge_review. reviewed är exakt returnerat underlag; ny ändring stoppar gammalt underlag. choices väljer survivor, absorbed eller omit för VARJE avvikande fältnyckel från choices-listan; inga värden konverteras. relationships anger keep/remove för VARJE granskat samband; kolliderande samband måste få ett uttryckligt val. identityConfirmed true kräver användarens uttryckliga besked om samma företeelse; false blockerar hela sparandet. Vald bild kopieras vid behov till bevarad identitet. Hela eget utkast returneras för granskning och separat sparande. Detta slår aldrig samman typdefinitioner.',
-      inputSchema: z
-        .object({
-          ...versionFields,
-          survivorId: id,
-          absorbedId: id,
-          identityConfirmed: z.boolean(),
-          reviewed: z
-            .object({
-              objects: z.array(z.record(z.string(), z.unknown())).length(2),
-              relationships: z.array(z.record(z.string(), z.unknown())),
-              types: z.array(z.record(z.string(), z.unknown())),
-              relationshipTypes: z.array(z.record(z.string(), z.unknown())),
-            })
-            .strict(),
-          choices: z.record(z.string(), z.enum(['survivor', 'absorbed', 'omit'])),
-          relationships: z.array(z.object({ id, action: z.enum(['keep', 'remove']) }).strict()),
-        })
-        .strict(),
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-    },
-    async (body) =>
-      run((domain) => {
-        domain.merge(body);
-        return assistantDraftReview(domain);
-      }),
-  );
-  server.registerTool(
     'read_history',
     {
       description:
-        'Återfinn sparanden genom begränsade sammanfattningar med tid, historisk författare och antal ändringar, gärna avgränsat med objectId. limit/offset bläddrar i nyast först. Inga tidigare sakuppgifter skickas i sammanfattningen. Läs hela ett relevant samlat sparande med både operationId och userId innan ångring; då returneras kvittot med tidigare värden, samband och definitioner. userId är historisk författaridentitet, inte behörighet. Vanlig borttagning kan återställas; permanent raderat innehåll finns inte här.',
+        'Återfinn sparanden genom begränsade sammanfattningar med tid, historisk författare och antal ändringar, gärna avgränsat med objectId. limit/offset bläddrar i nyast först. Inga tidigare sakuppgifter skickas i sammanfattningen. Läs hela ett relevant samlat sparande med både operationId och userId; då returneras kvittot med tidigare värden, samband och definitioner. userId är historisk författaridentitet, inte behörighet. Permanent raderat innehåll finns inte här.',
       inputSchema: z
         .object({
           objectId: id.optional(),
@@ -520,23 +422,21 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
           const receipt = history.find(
             (item) => item.operationId === operationId && item.userId === userId,
           );
-          if (!receipt) throw new MapError('undo_unavailable');
+          if (!receipt) throw new MapError('history_unavailable');
           return { contentVersion, receipt };
         }
-        const relevant = history
-          .filter(
-            (receipt) =>
-              !objectId ||
-              receipt.changes.some(
-                (change) => change.before?.id === objectId || change.after?.id === objectId,
-              ) ||
-              receipt.relationships?.some((change) =>
-                [change.before, change.after].some(
-                  (edge) => edge?.sourceId === objectId || edge?.targetId === objectId,
-                ),
+        const relevant = history.filter(
+          (receipt) =>
+            !objectId ||
+            receipt.changes.some(
+              (change) => change.before?.id === objectId || change.after?.id === objectId,
+            ) ||
+            receipt.relationships?.some((change) =>
+              [change.before, change.after].some(
+                (edge) => edge?.sourceId === objectId || edge?.targetId === objectId,
               ),
-          )
-          .reverse();
+            ),
+        );
         const hasMore = relevant.length > offset + limit;
         return {
           contentVersion,
@@ -555,22 +455,6 @@ export function registerAssistantWork(server: McpServer, map: () => HouseholdMap
           hasMore,
           ...(hasMore ? { nextOffset: offset + limit } : {}),
         };
-      }),
-  );
-  server.registerTool(
-    'propose_undo',
-    {
-      description:
-        'Föreslå ångring av HELA det valda tidigare sparandet som ett nytt privat utkast. Läs först kvittot via read_history. Ange dess historiska userId och operationId men dagens contentVersion och utkastversion från read_my_draft, aldrig kvittots gamla version. Oberoende senare ändringar och eget arbete bevaras; överlapp kräver aktiv lösning. Saknade äldre definitioner visas som uttryckliga återställningsförslag i hela utkastet. Detta är inget sparat återställningsresultat: granska och invänta sparbesked före save_draft.',
-      inputSchema: z
-        .object({ ...versionFields, operationId: id, userId: z.string().min(1).max(200) })
-        .strict(),
-      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-    },
-    async (body) =>
-      run((domain) => {
-        domain.undo(body);
-        return assistantDraftReview(domain);
       }),
   );
   server.registerTool(

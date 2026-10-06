@@ -19,11 +19,13 @@ Stegen här är stöd för felsökning; #97 kräver ingen manuell upprepning.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Öppna **Tabell → Redigera [objektets namn]** för ett befintligt objekt.
+Samband nås genom **Samband för [namn]**. Formulär är modala; oskickade
+uppgifter ligger kvar där medan redan startat arbete fortsätter. En ny
+interaktion med textvyn kräver att formuläret först lämnas uttryckligen.
+Escape visar **Lämna ändrade uppgifter?**. **Fortsätt redigera** behåller
+alla värden. **Kasta ändringarna och fortsätt** lämnar bara det oskickade
+formuläret; befintliga förslag i utkastet påverkas inte.
 
 1. TEXT-01 använder den
    [verkliga modellens isolerade setup](../development/devcontainer.md#optional-assistant-access).
@@ -33,8 +35,8 @@ formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
    Den provar inte en verklig modells svenska språkförståelse.
 2. Skapa hushållet Textprov. Skapa objektet **Lo Exempel** av typen
    **Person**, med beskrivningen **Påhittad uppgift**, genom formuläret.
-   Välj **Lägg i mitt utkast** och lämna förslaget osparat.
-3. Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan.
+   Välj **Lägg i utkastet och stäng** och lämna förslaget osparat.
+3. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**.
    [Samtalsmedgivandet](conversation-consent.md) har egna testfall.
 4. Starta en ny tom kontrollerad installation mellan TEXT-02 till TEXT-09.
    Behåll samma databas under ett omstartsprov. Avsluta med `quit` och
@@ -68,11 +70,19 @@ formulärtext”.
    osäkert uppgiven. Be om en begriplig sammanställning av hela utkastet.
 3. Kontrollera att tidigare Lo-förslaget ingår och att kontot inte har
    blivit en e-postadress. Be om en rättelse av inloggningsadressen.
-4. Öppna ett objekt i formuläret och skriv **Osänd text som ska finnas
-   kvar** i beskrivningen utan att lägga texten i utkastet.
-5. Skriv **Rätta priset till 189 kr och spara** i textvyn. Öppna kvittot.
-6. Återläs abonnemang, betalare, betalningsmedel, konto och adresser.
-   Kontrollera också okända och osäkra uppgifter samt den osända texten.
+4. Skicka **Rätta priset till 189 kr och spara**. Medan uppdraget arbetar,
+   stäng textvyn och välj **Tabell → Redigera Kim Exempel**. Skriv
+   **Osänd text som ska finnas kvar** i beskrivningen. Lägg den inte i
+   utkastet. Det kontrollerade testet håller modellsvar före rättelsen
+   tills formuläret är ändrat; anteckna om den verkliga modellen hinner
+   slutföra uppdraget före detta steg.
+5. När sparandet slutförs, kontrollera att formulärets oskickade text
+   ligger kvar. Tryck Escape, välj **Fortsätt redigera** och kontrollera
+   texten igen. Lämna sedan uttryckligen med **Kasta ändringarna och
+   fortsätt**. Läs **Sparat.** i textvyn och det tomma utkastet.
+6. Öppna **Rapporter → Ändringshistorik**. Återläs abonnemang, betalare,
+   betalningsmedel, konto och adresser. Kontrollera även okända och
+   osäkra uppgifter. Den oskickade texten ingår inte i sparandet.
 
 **Förväntat resultat:**
 
@@ -193,8 +203,8 @@ dubbelt sparande”.
    upprepa bara den skrivskyddade kontrollen; gör inget nytt sparförsök.
    Skriv sedan `restart` i launcher-terminalen.
 6. Ladda om sidan och invänta den automatiska kontrollen av sparandet.
-   Den kräver inget nytt medgivande. Öppna **Utkast och historik**,
-   **Tidigare sparförsök**. Kontrollera kvittot, Lo och det tomma utkastet.
+   Den kräver inget nytt medgivande. Öppna **Rapporter → Ändringshistorik**.
+   Kontrollera det enda sparandet, Lo och det tomma utkastet.
 
 **Förväntat resultat:**
 
@@ -223,16 +233,19 @@ testfallet “TEXT-05: markering kräver visning och skyddar oskickad text”.
 1. Skriv **Markera Lo i kartan**. Kopiera Lo-förslagets ID från `held`.
    Svara med `tool NUMMER show_map_object {"objectId":"LO-ID"}`, där
    `LO-ID` ersätts med det verkliga prov-ID:t.
-2. Kontrollera att Lo blir valt och synligt i kartan och att detaljpanelen
+2. Kontrollera att Lo blir valt och synligt i kartan och att valda uppgifter
    visar **Lo Exempel** samt **Påhittad uppgift**.
    Nästa `held` ska innehålla `displayed: true`. Svara
    `reply NUMMER Markerat!` och kontrollera det faktiska urvalet samt
    **Markerat i kartan.** under hushållets namn.
-3. Öppna Lo och skriv **Osänd uppgift** i beskrivningen. Skicka
-   **Markera Lo igen** och upprepa visningsanropet.
-4. Kontrollera `displayed: false`, släpp sluttexten **Markerat!** igen
-   och kontrollera både urvalet och den oskickade texten. Inget nytt
-   **Markerat i kartan.** ska bekräfta det avvisade försöket.
+3. Skicka **Markera Lo igen** och låt svaret hållas. Stäng textvyn och
+   välj **Tabell → Redigera Lo Exempel**. Skriv **Osänd uppgift** i
+   beskrivningen. Släpp sedan visningsanropet från det hållna uppdraget.
+4. Kontrollera `displayed: false` och släpp sluttexten **Markerat!** igen.
+   Formuläret har kvar texten. Tryck Escape och välj **Fortsätt redigera**;
+   texten bevaras. Lämna uttryckligen med **Kasta ändringarna och fortsätt**,
+   läs samtalstexten och återgå till Karta. Inget nytt **Markerat i kartan.**
+   ska bekräfta det avvisade försöket.
 
 **Förväntat resultat:**
 
@@ -280,7 +293,7 @@ i kartan innan du börjar. Inget sparande är genomfört.
 
 4. Kontrollera att varje svar visas i samma tydligt märkta samtalsdel.
    Frågan ska gå att läsa som en vanlig följdfråga. Kontrollera utkastet,
-   kartans urval och **Tidigare sparförsök** i **Utkast och historik** igen.
+   kartans urval och tomma **Rapporter → Ändringshistorik** igen.
 5. Skicka **Spara hela utkastet nu**. Läs `version` och `contentVersion`
    från det nya `held.draft`. Släpp anropet med följande kommando, efter
    att du ersatt `NUMMER`, `VERSION` och `CONTENT` med aktuella värden:
@@ -291,8 +304,8 @@ i kartan innan du börjar. Inget sparande är genomfört.
    ```
 
 6. Kräv det verifierade beskedet **Sparat.** i samtalstexten.
-   Öppna **Utkast och historik**, **Tidigare sparförsök** och
-   **Visa kvittot** och kontrollera Lo i den sparade kartan
+   Öppna **Rapporter → Ändringshistorik** och kontrollera det enda
+   sparandet, Lo i den sparade kartan
    samt ett tomt utkast.
 
 **Förväntat resultat:**
@@ -329,11 +342,11 @@ eftervärden”.
    Skapa också den oanvända objekttypen **Förvaring** och sambandstypen
    **Förvaras**, med riktningarna **förvaras i** och **innehåller**.
    Lämna alla fyra förslagen osparade.
-4. Välj **Skriv till Skyttel** och **Godkänn och starta**. Läs
+4. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**. Läs
    **Visa utkastet** och läs tabellen utan att öppna andra detaljer.
 5. Kräv **Sista fyra: 1111 → 2222**, sambandet från Kim som betalar
    Kortet samt de båda nya typerna i den synliga listan.
-6. Välj **Utkast och historik** för detaljer vid behov. Kontrollera att den
+6. Välj **Visa förslaget: [namn]** för detaljer vid behov. Kontrollera att den
    sparade kartan fortfarande
    har värdet 1111 och att de fyra förslagen ligger kvar i utkastet.
 
@@ -385,16 +398,17 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
 4. Kontrollera att båda objekten och det valda sambandet syns igen.
    Detaljpanelen ska samtidigt visa **Lo Exempel → Använder → Molnmusik**.
    Kontrollera `displayed: true` och släpp sluttexten.
-5. Välj **Redigera valt samband**. Ändra **Till objekt** i formuläret
-   utan att lägga ändringen i utkastet.
-   Öppna textvyn, skriv **Visa Lo igen** och upprepa
+5. Skriv **Visa Lo igen** och låt modellsvar hållas. Stäng textvyn och
+   välj **Redigera valt samband**. Ändra **Till objekt** i formuläret
+   utan att lägga ändringen i utkastet. Släpp sedan det hållna
    visningsanropet från steg 1.
    Kontrollera `displayed: false`, släpp sluttexten och kontrollera att
    formulärets oskickade ändring finns kvar.
-6. Stäng formuläret och upprepa steg 1–5 med ett smalt telefonfönster.
-   Textvyn stängs när Skyttel visar något i kartan, och detaljpanelen ska
-   synas direkt under kartan. Om uppgifterna är längre
-   kan du rulla inuti panelen. Markeringen öppnar inget redigeringsformulär.
+6. Lämna formuläret uttryckligen: Escape, **Fortsätt redigera**, kontroll
+   av samma värde, Escape och **Kasta ändringarna och fortsätt**. Upprepa
+   steg 1–5 med ett smalt telefonfönster. Textvyn stängs när Skyttel visar
+   något i kartan. Valda uppgifter och karta syns samtidigt; längre
+   uppgifter rullas inuti sin läsvy. Markering öppnar inget formulär.
 7. Prova också faktisk webbläsarzoom 200 och 400 procent. I ett kort
    fönster visas kartan och detaljpanelen bredvid varandra. Rulla ned
    för samtalsstatus och mikrofonkontroller. De ska gå att
@@ -434,7 +448,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 2. Redigera sambandet och byt typen till **Betalar**. Lägg rättelsen i
    utkastet. Redigera sedan Tonrum, välj statusen **Upphört** och lägg
    även den rättelsen i utkastet. Lämna båda osparade.
-3. Öppna **Lista** och sedan textvyn med **Skriv till Skyttel**. Skicka
+3. Öppna **Tabell** och sedan textvyn med **Skriv till Skyttel**. Skicka
    **Läs upp hela utkastet.** i
    textvyn. Ersätt `NUMMER` med det aktuella `held`-numret i terminalen:
 
@@ -445,7 +459,7 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 4. I **Samtalstext**, kräv **Utkast:**, **Gäller: aktuellt → upphört** för
    Tonrum och **Lo Exempel Använder Tonrum → Lo Exempel Betalar Tonrum**.
    Kontrollera att båda rättelserna fortfarande ligger i utkastet och att
-   **Lista** fortfarande visar utkastet.
+   **Tabell** fortfarande visar utkastet.
 5. Skicka **Spara hela utkastet nu.** Läs `version` och `contentVersion`
    från det nya `held.draft`. Ersätt `NUMMER`, `VERSION` och `CONTENT`:
 
@@ -455,10 +469,9 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
    ```
 
 6. Kräv det korta beskedet **Sparat.** i samtalstexten och ett tomt utkast.
-   Öppna **Utkast och historik**, **Tidigare
-   sparförsök** och
-   **Visa kvittot** och kontrollera
-   att **Tonrum** och sambandstypen **Betalar** finns med.
+   Kontrollera att **Tonrum** och sambandstypen **Betalar** finns i
+   Tabell. Det gemensamma sparandet finns i **Rapporter → Ändringshistorik**.
+   Välj **Tillbaka till arbetet** före nästa textmeddelande.
 7. Skicka **Vad sparades senast?** Använd det nya `held`-numret:
 
    ```text
@@ -467,8 +480,8 @@ testfallet “TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitt
 
 8. Kräv **Sparandet:** och samma tidigare och nya status respektive sambandstyp
    i **Samtalstext**. Kontrollera att utkastet förblir tomt och att inget nytt
-   sparförsök tillkommer under **Tidigare sparförsök**. Listpanelen ska
-   fortfarande gå att öppna med **Lista**.
+   sparande tillkommer i **Ändringshistorik**. Tabell ska fortfarande
+   gå att öppna med **Tabell**.
 
 **Förväntat resultat:**
 
@@ -512,7 +525,7 @@ authentication and same-origin checks use the printed address.
 Choose Google sign-in. The substitute provider signs in **Alex Exempel**
 without an external account or password. Complete the normal first-household
 form with the name **Textprov**. Create only made-up content. Choose
-**Skriv till Skyttel** and select **Godkänn och starta** in the consent box.
+**Skriv till Skyttel → Nytt samtal** and select **Godkänn och starta**.
 The substitute uses that same application consent flow.
 
 Enter the scenario's message and press **Skicka**. Each provider request

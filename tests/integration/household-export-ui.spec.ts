@@ -13,12 +13,15 @@ import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings } from '../../src/shared/personal-view.js';
 import {
   createHousehold,
+  openDraftReview,
+  openNewObject,
   openSettings,
-  openWorkspace,
+  openTable,
   restartWithSession,
   signIn,
 } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
 async function arrange(page: Page) {
   const installation = await createInstallation();
@@ -522,7 +525,7 @@ for (const { width, height } of [
   { width: 320, height: 900 },
   { width: 640, height: 500 },
 ]) {
-  test(`EXPORT-09: keyboard export controls retain focus and unsent map work at ${width}px`, async ({
+  test(`EXPORT-09: keyboard export controls retain focus and protect native form input at ${width}px`, async ({
     page,
   }) => {
     const fixture = await arrange(page);
@@ -539,10 +542,15 @@ for (const { width, height } of [
       await page.emulateMedia({ reducedMotion: 'reduce' });
       const before = await fixture.read();
       await page.goto(fixture.installation.origin);
-      await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-      await page.getByLabel('Objektets namn').fill('Oskickad exportcykel');
+      await openTable(page);
+      await openNewObject(page);
+      await page.getByLabel('Namn', { exact: true }).fill('Oskickad exportcykel');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Texten finns kvar');
+      await verifyObjectDepartureAndDiscard(page, {
+        Namn: 'Oskickad exportcykel',
+        Beskrivning: 'Texten finns kvar',
+      });
+      expect(await fixture.read()).toEqual(before);
       await openSettings(page);
       const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
       if (width <= 800) await navigation.getByText('Välj inställning', { exact: true }).click();
@@ -567,7 +575,7 @@ for (const { width, height } of [
           }),
         )
         .toBe(true);
-      await expect(page.getByLabel('Objektets namn')).not.toBeVisible();
+      await expect(page.getByLabel('Namn', { exact: true })).not.toBeVisible();
       for (const theme of ['light', 'dark'] as const) {
         await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
         await section.getByRole('button', { name: 'Förbered fullständig export' }).focus();
@@ -617,11 +625,10 @@ for (const { width, height } of [
         section.getByRole('button', { name: 'Förbered fullständig export' }),
       ).toBeFocused();
       await returnLink.click();
-      await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickad exportcykel');
-      await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Texten finns kvar',
-      );
-      await expect(page.getByLabel('Beskrivning', { exact: true })).toBeFocused();
+      await expect(page.getByLabel('Namn', { exact: true })).toHaveCount(0);
+      await openNewObject(page);
+      await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('');
+      await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('');
       expect(await fixture.read()).toEqual(before);
     } finally {
       release();
@@ -790,7 +797,7 @@ test('EXPORT-10: the downloaded current-format archive restores shared, private 
     await section.getByRole('button', { name: 'Hämta ZIP-fil' }).click();
     const result = await archive(await downloaded);
     const manifest = JSON.parse(Buffer.from(result.parts['manifest.json']).toString());
-    expect(manifest.schemaVersion).toBe(24);
+    expect(manifest.schemaVersion).toBe(25);
     const encoded = Buffer.from(result.parts['content.json']).toString();
     for (const excluded of [
       'synthetic-provider-token',
@@ -865,13 +872,11 @@ test('EXPORT-10: the downloaded current-format archive restores shared, private 
       expect(await response.body()).toEqual(imageBytes[index]);
     }
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await openWorkspace(page);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText(
-      'Gemensam lampa',
-    );
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast', exact: true })).toContainText(
-      'Privat förslag från exporten',
-    );
+    await openTable(page);
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toContainText('Gemensam lampa');
+    await expect(await openDraftReview(page)).toContainText('Privat förslag från exporten');
   } finally {
     await client.dispose();
     await fixture.installation.close();
@@ -879,7 +884,7 @@ test('EXPORT-10: the downloaded current-format archive restores shared, private 
 });
 
 for (const phase of ['ready', 'downloading'] as const) {
-  test(`EXPORT-11: leaving a ${phase} export retires the copy and preserves unsent map work`, async ({
+  test(`EXPORT-11: leaving a ${phase} export retires the copy and preserves private proposals after guarded form departure`, async ({
     page,
   }) => {
     const fixture = await arrange(page);
@@ -900,10 +905,15 @@ for (const phase of ['ready', 'downloading'] as const) {
       const downloads: Download[] = [];
       page.on('download', (download) => downloads.push(download));
       await page.goto(fixture.installation.origin);
-      await openWorkspace(page);
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-      await page.getByLabel('Objektets namn').fill('Oskickat vid avbruten export');
+      await openTable(page);
+      await openNewObject(page);
+      await page.getByLabel('Namn', { exact: true }).fill('Oskickat vid avbruten export');
       await page.getByLabel('Beskrivning', { exact: true }).fill('Bevara min redigering');
+      await verifyObjectDepartureAndDiscard(page, {
+        Namn: 'Oskickat vid avbruten export',
+        Beskrivning: 'Bevara min redigering',
+      });
+      expect(await fixture.read()).toEqual(before);
       await openSettings(page);
       const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
       await navigation.getByRole('link', { name: 'Fullständig export', exact: true }).click();
@@ -940,11 +950,7 @@ for (const phase of ['ready', 'downloading'] as const) {
       expect((await page.request.get(`${fixture.path}/exports/${ready.id}`)).status()).toBe(404);
       release();
       if (phase === 'downloading') await browserDelivery;
-      await expect(page.getByLabel('Objektets namn')).toHaveValue('Oskickat vid avbruten export');
-      await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Bevara min redigering',
-      );
-      await expect(page.getByLabel('Beskrivning', { exact: true })).toBeFocused();
+      await expect(page.getByLabel('Namn', { exact: true })).toHaveCount(0);
       expect(downloads).toHaveLength(0);
       expect(await fixture.read()).toEqual(before);
       await openSettings(page);

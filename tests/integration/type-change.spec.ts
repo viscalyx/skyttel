@@ -2,7 +2,15 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import { draftConflicts } from '../../src/shared/draft-conflicts.js';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject, readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 async function setup(client: APIRequestContext, origin: string) {
@@ -86,7 +94,7 @@ async function setup(client: APIRequestContext, origin: string) {
   return { path, read, post, save, object };
 }
 
-test('TYP-06: type changes review displaced values and preserve identity, edges and history through restart and undo', async ({
+test('TYP-06: type changes review displaced values and preserve identity, edges and historical reading through restart', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -94,33 +102,71 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     const { read, post, save } = await setup(page.request, installation.origin);
     const initial = await read();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Alex blå cykel');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption('vehicle');
-    const previous = page.getByRole('region', { name: 'Tidigare fältvärden' });
+    const previous = page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true });
     await expect(previous).toContainText('Nummer: SYNTH-42');
     await expect(previous).toContainText('Försäkrad: Nej');
-    await expect(page.getByLabel('Nummer', { exact: true })).toHaveValue('');
-    await expect(page.getByLabel('Försäkrad', { exact: true })).toHaveValue('');
+    await previous
+      .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
+      .click();
+    const form = page.getByRole('dialog', { name: 'Redigera Alex blå cykel', exact: true });
+    await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await expect(form.getByLabel('Nummer', { exact: true })).toHaveValue('');
+    await expect(form.getByLabel('Försäkrad', { exact: true })).toHaveValue('');
+    await form.getByLabel('Nummer', { exact: true }).fill('42');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const review = await readDraftProposal(page, 'Alex blå cykel');
     await expect(
-      page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }),
-    ).toBeDisabled();
-    await page.getByLabel('Nummer', { exact: true }).fill('42');
-    await page.getByLabel('Jag har hanterat tidigare fältvärden för typbytet').check();
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Objekttyp: Cykel');
-    await expect(review).toContainText('Objekttyp: Motorfordon');
-    await expect(review).toContainText('Nummer: SYNTH-42');
-    await expect(review).toContainText('Nummer: 42');
-    await expect(review).toContainText('Försäkrad: Obesvarat');
+      review
+        .locator('dt')
+        .filter({ hasText: /^Typ(?: · ändrat)?$/ })
+        .first()
+        .locator('..'),
+    ).toContainText('Cykel');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Typ(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Motorfordon');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+        .first()
+        .locator('..'),
+    ).toContainText('SYNTH-42');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('42');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Försäkrad(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Ej uppgivet');
+    await closeSupportDialog(page, 'Alex blå cykel');
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await expect(review).toContainText('Nummer: SYNTH-42');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await readDraftProposal(page, 'Alex blå cykel');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+        .first()
+        .locator('..'),
+    ).toContainText('SYNTH-42');
+    await closeSupportDialog(page, 'Alex blå cykel');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     const changed = await read();
     expect(changed.objects.find((item) => item.id === 'bike')).toMatchObject({
       typeId: 'vehicle',
@@ -148,8 +194,8 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     await save('rename-source');
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Visa historik' }).click();
+    await openTable(page);
+    await page.getByRole('button', { name: 'Rapporter' }).click();
     const selected = page
       .getByRole('region', { name: 'Ändringshistorik' })
       .getByRole('article')
@@ -165,17 +211,11 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     await expect(selected.getByText('Nummer: 42', { exact: true })).toBeVisible();
     await expect(selected).toContainText('Alex Exempel');
     await expect(selected.locator('time')).toHaveAttribute('datetime', /T/);
-    await selected.getByRole('button', { name: 'Ångra sparandet' }).click();
-    await expect(review).toContainText('Nummer: SYNTH-42');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
     await installation.restart();
-    const restored = await read();
-    expect(restored.objects.find((item) => item.id === 'bike')).toMatchObject({
-      typeId: 'cycle',
-      customValues: { serial: 'SYNTH-42', insured: false },
-    });
-    expect(restored.relationships).toEqual(initial.relationships);
+    expect((await read()).objects.find((item) => item.id === 'bike')).toEqual(
+      changed.objects.find((item) => item.id === 'bike'),
+    );
+    expect((await read()).relationships).toEqual(initial.relationships);
   } finally {
     await installation.close();
   }
@@ -183,7 +223,7 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`TYP-11: repeated type changes keep distinct former answers and complete common values through save and restart at ${width}px in ${theme}`, async ({
+    test(`TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at ${width}px in ${theme}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
@@ -253,90 +293,75 @@ for (const width of [1280, 390, 320]) {
         });
         await page.goto(installation.origin);
         await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
-        await openWorkspace(page);
-        await page
-          .getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true })
-          .click();
-        const panel = page.getByRole('region', { name: 'Alex blå cykel', exact: true });
-        await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+        await openTable(page);
+        await editTableObject(page, 'Alex blå cykel');
+        const form = page.getByRole('dialog', { name: 'Redigera Alex blå cykel', exact: true });
+        await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
         const image = await sharp({
           create: { width: 80, height: 80, channels: 3, background: '#0088ff' },
         })
           .png()
           .toBuffer();
-        await panel.getByLabel('Välj profilbild').setInputFiles({
+        await form.getByLabel('Profilbild', { exact: true }).setInputFiles({
           name: 'cykel.png',
           mimeType: 'image/png',
           buffer: image,
         });
-        await expect(panel.getByAltText('Profilbild för Alex blå cykel')).toBeVisible();
+        await expect(form.getByAltText('Profilbild för Alex blå cykel')).toBeVisible();
+        await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
         const imageId = (await read()).draft.changes.find((change) => change.id === 'bike')?.after
           ?.profileImageId;
         expect(imageId).toBeTruthy();
-        await panel.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
-        await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-        await expect(page.getByRole('status')).toContainText('Sparat');
+        await openTable(page);
+        await saveReviewedConflictDraft(page);
+        await closeTextView(page);
         const initial = await read();
-        await page
-          .getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true })
-          .click();
-        await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-        const previous = panel.getByRole('region', { name: 'Tidigare fältvärden', exact: true });
-        const acknowledge = panel.getByLabel('Jag har hanterat tidigare fältvärden för typbytet');
-        const stage = panel.getByRole('button', { name: 'Lägg i mitt utkast', exact: true });
+        await editTableObject(page, 'Alex blå cykel');
+        const stage = form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true });
         for (const [index, type] of ['vehicle', 'cycle', 'vehicle'].entries()) {
-          await panel.getByLabel('Objekttyp', { exact: true }).selectOption(type);
-          for (const name of ['Nummer', 'Antal', 'Försäkrad']) {
-            await expect(panel.getByLabel(name, { exact: true })).toHaveValue('');
-          }
-          await expect(acknowledge).not.toBeChecked();
-          await expect(stage).toBeDisabled();
-          await expect(previous.getByText(/^Objekttyp:/)).toHaveText(
-            ['Objekttyp: Cykel', 'Objekttyp: Motorfordon', 'Objekttyp: Cykel'].slice(0, index + 1),
-          );
-          await expect(previous.getByText('Nummer: A-42', { exact: true })).toBeVisible();
-          await expect(previous.getByText('Antal: 0', { exact: true })).toHaveCount(
-            index === 2 ? 2 : 1,
-          );
-          await expect(previous.getByText('Försäkrad: Nej', { exact: true })).toHaveCount(
-            index === 2 ? 2 : 1,
-          );
-          if (index > 0) {
-            await expect(previous.getByText('Nummer: B-84', { exact: true })).toBeVisible();
-            await expect(previous.getByText('Antal: 8', { exact: true })).toBeVisible();
-            await expect(previous.getByText('Försäkrad: Ja', { exact: true })).toBeVisible();
-          }
-          if (index === 2)
-            await expect(previous.getByText('Nummer: A-126', { exact: true })).toBeVisible();
-          await expect(panel.getByLabel('Objektets namn')).toHaveValue('Alex blå cykel');
-          await expect(panel.getByLabel('Objektets identitet')).toHaveValue('unspecified');
-          await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+          await form.getByLabel('Objekttyp', { exact: true }).selectOption(type);
+          const loss = page.getByRole('dialog', {
+            name: 'Ta bort tidigare egna fält?',
+            exact: true,
+          });
+          await expect(loss).toContainText(`Nummer: ${['A-42', 'B-84', 'A-126'][index]}`);
+          await expect(loss).toContainText(`Antal: ${index === 1 ? '8' : '0'}`);
+          await expect(loss).toContainText(`Försäkrad: ${index === 1 ? 'Ja' : 'Nej'}`);
+          await loss
+            .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
+            .click();
+          await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Alex blå cykel');
+          await expect(form.getByLabel('Identitet', { exact: true })).toHaveValue('unspecified');
+          await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
             common.description,
           );
-          await expect(panel.getByAltText('Profilbild för Alex blå cykel')).toHaveAttribute(
-            'src',
-            new RegExp(`/profile-images/${imageId}$`),
-          );
-          await panel
+          await form.getByRole('button', { name: 'Egenskaper', exact: true }).click();
+          for (const name of ['Nummer', 'Antal', 'Försäkrad'])
+            await expect(form.getByLabel(name, { exact: true })).toHaveValue('');
+          await form
             .getByLabel('Nummer', { exact: true })
             .fill(['B-84', 'A-126', 'B-final'][index]);
           if (index < 2) {
-            await panel.getByLabel('Antal', { exact: true }).fill(index === 0 ? '8' : '0');
-            await panel
+            await form.getByLabel('Antal', { exact: true }).fill(index === 0 ? '8' : '0');
+            await form
               .getByLabel('Försäkrad', { exact: true })
               .selectOption(index === 0 ? 'true' : 'false');
           }
-          await acknowledge.check();
-          await expect(stage).toBeEnabled();
+          await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
         }
-        await panel.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
-        await expect(panel.getByLabel('Senast uppgiven skuld', { exact: true })).toHaveValue(
+        await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+        await expect(form.getByAltText('Profilbild för Alex blå cykel')).toHaveAttribute(
+          'src',
+          new RegExp(`/profile-images/${imageId}$`),
+        );
+        await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+        await expect(form.getByLabel('Senast uppgiven skuld', { exact: true })).toHaveValue(
           '125 000,50',
         );
-        await expect(panel.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet')).toHaveValue(
+        await expect(form.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet')).toHaveValue(
           'uncertain',
         );
-        await expect(panel.getByLabel('Senast uppgiven skuld: datum för uppgiften')).toHaveValue(
+        await expect(form.getByLabel('Senast uppgiven skuld: datum för uppgiften')).toHaveValue(
           '2026-09-01',
         );
         await stage.click();
@@ -357,16 +382,23 @@ for (const width of [1280, 390, 320]) {
         expect(staged.draft.changes[0].after?.financialFacts).toEqual(common.financialFacts);
         await installation.restart();
         await page.reload();
-        await openWorkspace(page);
-        await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-          'Nummer: B-final',
-        );
+        await openTable(page);
+        const restoredProposal = await readDraftProposal(page, 'Alex blå cykel');
+        await expect(
+          restoredProposal
+            .locator('dt')
+            .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+            .last()
+            .locator('..'),
+        ).toContainText('B-final');
+        await closeSupportDialog(page, 'Alex blå cykel');
         expect((await read()).draft).toEqual(staged.draft);
-        await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-        await expect(page.getByRole('status')).toContainText('Sparat');
+        await openTable(page);
+        await saveReviewedConflictDraft(page);
+        await closeTextView(page);
         await installation.restart();
         await page.reload();
-        await openWorkspace(page);
+        await openTable(page);
         const saved = await read();
         expect(saved.objects.find((object) => object.id === 'bike')).toMatchObject({
           ...common,
@@ -378,11 +410,19 @@ for (const width of [1280, 390, 320]) {
           common.financialFacts,
         );
         expect(saved.relationships).toEqual(initial.relationships);
-        await page
-          .getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true })
-          .click();
-        await expect(panel).toContainText('Nummer: B-final');
-        await expect(panel).toContainText('Senast uppgiven skuld: 125 000,50 (Osäkert uppgivet)');
+        const panel = await readTableObject(page, 'Alex blå cykel');
+        await expect(
+          panel
+            .locator('dt')
+            .filter({ hasText: /^Nummer$/ })
+            .locator('..'),
+        ).toContainText('B-final');
+        await expect(
+          panel
+            .locator('dt')
+            .filter({ hasText: /^Senast uppgiven skuld$/ })
+            .locator('..'),
+        ).toContainText('125 000,50 (Osäkert uppgivet)');
         await expect(panel.getByAltText('Profilbild för Alex blå cykel')).toHaveAttribute(
           'src',
           new RegExp(`/profile-images/${imageId}$`),
@@ -397,7 +437,7 @@ for (const width of [1280, 390, 320]) {
   }
 }
 
-test('TYP-07: invalid values and concurrent definitions block whole saves until fresh choices while undo protects private fields', async ({
+test('TYP-07: invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields', async ({
   page,
   browser,
 }) => {
@@ -463,39 +503,15 @@ test('TYP-07: invalid values and concurrent definitions block whole saves until 
     const selected = await save('change-type');
     await object('bike', { customValues: { serial: 43, insured: false } });
     const own = await read();
-    expect(
-      (
-        await post('undo', {
-          version: own.draft.version,
-          userId: selected.userId,
-          operationId: selected.operationId,
-        })
-      ).status(),
-    ).toBe(409);
-    expect(await read()).toEqual(own);
-    await post('discard', { version: own.draft.version });
-    await object('bike', { description: 'Oberoende uppgift' });
-    expect(
-      (
-        await post('undo', {
-          version: (await read()).draft.version,
-          userId: selected.userId,
-          operationId: selected.operationId,
-        })
-      ).status(),
-    ).toBe(200);
     await installation.restart();
-    const pending = await read();
-    expect(pending.draft.changes.find((item) => item.id === 'bike')?.after).toMatchObject({
-      typeId: 'cycle',
-      description: 'Oberoende uppgift',
-      customValues: { serial: 'SYNTH-42', insured: false },
-    });
-    await save('undo');
+    expect((await read()).draft).toEqual(own.draft);
     expect((await read()).objects.find((item) => item.id === 'bike')).toMatchObject({
-      typeId: 'cycle',
-      description: 'Oberoende uppgift',
+      typeId: 'vehicle',
+      customValues: { serial: 42, insured: false },
     });
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toContainEqual(
+      selected,
+    );
   } finally {
     await other.close();
     await installation.close();

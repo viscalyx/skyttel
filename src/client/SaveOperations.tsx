@@ -8,6 +8,12 @@ export interface SaveAttempt {
   userId: string;
 }
 
+export interface SaveProgress {
+  operationId: string;
+  status: 'pending' | 'checking' | 'unknown' | 'rejected' | 'succeeded';
+  message?: string;
+}
+
 export function checkSaveIdentity(
   receipt: Pick<
     SaveReceipt,
@@ -51,18 +57,8 @@ export function receiptMessage(receipt: SaveReceipt) {
 }
 
 export function rejectionMessage(code: string) {
-  if (code === 'merge_choices_required')
-    return 'Välj uttryckligen varje uppgift som skiljer sig och hur varje samband ska hanteras.';
-  if (code === 'merge_review_required')
-    return 'Detta ingår i en sammanslagning. Kasta sammanslagningen för att rätta; tidigare egna förslag återkommer. Välj sedan objekten igen och granska hela skillnaden.';
-  if (code === 'merge_conflict')
-    return 'Underlaget för sammanslagningen har ändrats. Hämta aktuellt underlag och välj objekten igen.';
   if (code === 'restoration_conflict')
-    return 'Det borttagna innehållet har ändrats sedan återställningsförslaget skapades. Inget sparades. Hämta aktuellt underlag, kasta det gamla återställningsförslaget och välj sparandet i historiken igen.';
-  if (code === 'undo_draft_overlap')
-    return 'Ångringen överlappar ett eget förslag. Utkastet är oförändrat. Rätta eller kasta det överlappande förslaget och försök igen. Oberoende förslag kan vara kvar.';
-  if (code === 'undo_unavailable')
-    return 'Sparandet eller det återställningsbara innehållet finns inte kvar. Inget ångringsförslag lades till.';
+    return 'Det borttagna innehållet har ändrats sedan återställningsförslaget skapades. Inget sparades. Hämta aktuellt underlag, kasta det gamla återställningsförslaget och granska aktuellt underlag igen.';
   if (code === 'definition_in_use')
     return 'Typen används fortfarande i kartan eller privata utkast, även om innehållet är upphört. För en objekttyp: ta bort eller byt typ på användande objekt. För en sambandstyp: ta bort eller byt typ på sambanden; objekten kan finnas kvar. Ingen ändring genomfördes.';
   if (code === 'field_in_use')
@@ -86,62 +82,4 @@ export function rejectionMessage(code: string) {
   if (code === 'operation_pending')
     return 'Ett tidigare sparförsök är väntande. Kontrollera och återförsök det innan du ändrar utkastet.';
   return 'Avvisat: Förslaget eller kartan har ändrats. Inget sparades av detta försök. Hämta aktuellt underlag och granska hela utkastet. Välj hur varje konflikt ska lösas.';
-}
-
-export function SaveOperations({
-  operations,
-  disabled,
-  onRetry,
-}: {
-  operations: SaveOperation[];
-  disabled: boolean;
-  onRetry: (operation: SaveOperation) => void;
-}) {
-  return (
-    <section aria-labelledby="save-operations-title" className="draft-review">
-      <h2 id="save-operations-title" tabIndex={-1}>
-        Mina sparförsök
-      </h2>
-      <p>Dina väntande och senaste sparförsök i hushållet, även från andra enheter.</p>
-      <details>
-        <summary>Tidigare sparförsök</summary>
-        {!operations.length && <p>Inga registrerade sparförsök.</p>}
-        {operations.map((operation) => (
-          <article key={operation.operationId}>
-            <h3>
-              {operation.status === 'succeeded'
-                ? 'Genomfört'
-                : operation.status === 'rejected'
-                  ? 'Avvisat'
-                  : 'Väntande'}
-              {' — utkastversion '}
-              {operation.draftVersion}
-            </h3>
-            <p>
-              Sparförsök: {operation.operationId}. Registrerat: {operation.createdAt}.
-            </p>
-            {operation.status === 'succeeded' && (
-              <details>
-                <summary>Visa kvittot</summary>
-                <p>{receiptMessage(operation.receipt)}</p>
-                <p>Sparat: {operation.receipt.savedAt}</p>
-              </details>
-            )}
-            {operation.status === 'rejected' && <p>{rejectionMessage(operation.error)}</p>}
-            {operation.status === 'pending' && (
-              <>
-                <p>
-                  Inget slutligt kvitto finns ännu. Kontrollera och återförsök samma sparande innan
-                  du ändrar utkastet.
-                </p>
-                <button type="button" disabled={disabled} onClick={() => onRetry(operation)}>
-                  Återförsök sparandet
-                </button>
-              </>
-            )}
-          </article>
-        ))}
-      </details>
-    </section>
-  );
 }

@@ -16,11 +16,10 @@ testmiljön; inga verkliga inloggningsuppgifter behövs.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan. Detaljpanelen visar uppgifterna. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Från hel kartvy öppnar du först **Lista**. Att bara välja
-objektet eller sambandet öppnar inte formuläret.
+Välj **Tabell** för alla objekt, även när grafiken inte fungerar. Namnet
+expanderar fullständiga uppgifter; **Redigera [namn]** öppnar det vanliga
+objektformuläret. **Samband för [namn]** öppnar alla objektets samband,
+inklusive ofullständiga och upphörda. Läsning ändrar inte informationen.
 
 1. Installera projektets beroenden och Chromium enligt
    [utvecklingsguiden](../development/devcontainer.md#prepare-and-start).
@@ -49,28 +48,39 @@ relationship reachable”.
 
 **Steg:**
 
-1. Öppna **Lista**. Läs beskedet om färre etiketter och kontrollera
-   att sökning, listor och navigering är tillgängliga.
-2. Bläddra genom objektsidorna och sambandssidorna med sidvalet. Kontrollera
-   räknaren och att den sista sidan nås. Sök efter **Provobjekt 499**,
-   välj **Uppgifter** vid träffen och kontrollera namnet i detaljerna.
-3. Rensa sökningen. Använd **Visa valt innehåll i listan** och kontrollera
-   att det valda objektet återfinns. Välj **Visa objektets kopplingar**
-   och läs dess direkta samband.
-4. Skriv **Oskickad text i den täta kartan** i **Beskrivning**. Välj
-   **Visa hela rymden**, öppna Lista och sök Provobjekt 499. Välj objektets
-   **Uppgifter** igen. Kontrollera att texten finns kvar. Lägg den i utkastet
-   och granska hela förslaget.
-5. Spara hela utkastet. Invänta kvittot, ladda om och sök objektet igen.
-   Kontrollera den sparade beskrivningen och historiken. Kontrollera också
-   att personliga placeringar finns kvar om du ordnade några före provet.
+1. Börja i **Karta**. Läs beskedet om färre etiketter. Kontrollera att de
+   synliga etiketterna är läsbara och inte ligger över varandra.
+2. Välj **Tabell**, **Filter** och **Ta med upphörda**. Stäng filtret.
+   Bläddra genom de tio tabellsidorna med **Nästa**. Varje sida visar
+   50 objekt, med en namngiven sambandsknapp och rätt antal samband.
+   Öppna en sambandsknapp på varje sida, läs alla dess samband och välj
+   **Stäng samband**. Kontrollera att samma tabellsida finns kvar.
+3. Sök **Provobjekt 499** i **Sök objekt i tabellen**. Kontrollera en träff
+   och välj **Redigera Provobjekt 499**. Kontrollera det fullständiga namnet.
+   Ange **Oskickad text i den täta kartan** i **Beskrivning**.
+4. Välj **Stäng objektdialogen** och kontrollera fokus på **Fortsätt redigera**.
+   Tryck Escape. Texten finns kvar och tidigare sparade fakta är oförändrade.
+   Välj **Lägg i utkastet och stäng**, öppna **Visa utkastet** via textvyn och
+   **Visa förslaget: Provobjekt 499**. Läs hela förslaget och stäng läsningen
+   med dess kryss.
+5. Välj **Spara hela utkastet**. Invänta sparutfallet och stäng textvyn.
+   Ladda om, öppna tabellen och läs samma objekt. Granska ändringen genom
+   **Rapporter** → **Ändringshistorik**. Kontrollera de tidigare personliga
+   placeringarna. Automatprovet läser även efter omstart av samma server
+   med bibehållen databas.
 6. Logga ut. Kontrollera att provkartan inte visas för en oinloggad besökare.
+   Prova också återkallad medlemstillgång i en separat syntetisk profil om
+   rollen och förberedelsen tillåter det; annars anteckna den delen ej utförd.
 
 **Förväntat resultat:**
 
-- Alla objekt och samband kan nås via sidorna; sökning omfattar hela kartan.
+- Alla 500 objekt nås via tabellens sidor, även de upphörda. Varje
+  sambandsknapp öppnar objektets fullständiga samband. Automatprovet
+  stämmer av alla knapparnas antal mot hela det publika innehållet och
+  kontrollerar att de tillsammans ger vägar till samtliga 1 500 samband.
 - Fokus visar sammanhang utan att ändra information eller placeringar.
-- Oskickad text bevaras vid navigering och sparas först på uttryckligt besked.
+- Escape avbryter formulärförlust och bevarar hela texten. Förslaget
+  tillkommer först när hela formuläret uttryckligen läggs i utkastet.
 - Kvittot, återlästa detaljer och historik beskriver samma sparade ändring.
   Automatprovet återläser även efter serveromstart och kontrollerar samtliga
   objekt, samband och tidigare personliga placeringar.

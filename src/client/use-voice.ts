@@ -922,6 +922,8 @@ export function useVoice(options: {
       transport?.setMicrophonePaused(true);
     } else if (
       !off &&
+      // A blur can release input before this render's passive effect runs.
+      !offRef.current &&
       !options.inputBlocked &&
       !options.contextFailed &&
       !contextPaused &&

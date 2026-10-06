@@ -1,6 +1,17 @@
 import { expect, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openSettings,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 for (const { width, height } of [
@@ -9,7 +20,7 @@ for (const { width, height } of [
   { width: 320, height: 900 },
   { width: 640, height: 456 },
 ]) {
-  test(`TYP-10: canonical properties retain meaning through sections, hiding, type changes, history and undo at ${width}px`, async ({
+  test(`TYP-10: canonical properties retain meaning through sections, hiding, type changes, historical reading at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -44,21 +55,17 @@ for (const { width, height } of [
       };
       const returnToWork = async () => {
         await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-        await openWorkspace(page);
+        await openTable(page);
       };
       const save = async (): Promise<SaveReceipt> => {
-        await openWorkspace(page);
         const response = page.waitForResponse(
           (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
         );
-        await page
-          .getByRole('region', { name: 'Hela mitt utkast' })
-          .getByRole('button', { name: 'Spara hela utkastet', exact: true })
-          .click();
+        await saveReviewedConflictDraft(page);
         const result = await response;
         expect(result.status()).toBe(200);
         const { receipt } = await result.json();
-        await expect(page.getByText(/^Sparat:/).first()).toBeVisible();
+        await closeTextView(page);
         return receipt;
       };
       await settings();
@@ -105,31 +112,37 @@ for (const { width, height } of [
       }
       await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
       await returnToWork();
-      await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-      const form = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
+      await openNewObject(page);
+      const form = page.getByRole('dialog', { name: /^(Nytt objekt|Redigera Husets lån)$/ });
       await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Husavtal' });
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-      await expect(form.getByLabel('Objektets namn')).toBeFocused();
-      await form.getByLabel('Objektets namn').fill('Husets lån');
-      const section = form.getByRole('group', { name: 'Avtalet', exact: true });
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(form.getByRole('alert', { name: 'Formuläret innehåller fel' })).toBeFocused();
+      await form.getByRole('link', { name: /^Namn:/ }).click();
+      await expect(form.getByLabel('Namn', { exact: true })).toBeFocused();
+      await form.getByLabel('Namn', { exact: true }).fill('Husets lån');
+      await form.getByRole('button', { name: 'Avtalet', exact: true }).click();
+      const section = form;
       await section.getByLabel('Beskrivning', { exact: true }).fill('Gemensam avtalstext');
       await section.getByLabel('Anteckning', { exact: true }).fill('Eget värde');
       await section.getByLabel('Skuld: uppgiftens säkerhet').selectOption('uncertain');
       await section.getByLabel('Skuld', { exact: true }).fill('12 300');
       await section.getByLabel('Skuld: datum för uppgiften').fill('2026-09-01');
+      await form.getByRole('button', { name: 'Datum', exact: true }).click();
       await form.getByLabel('Startdatum: uppgiftens säkerhet').selectOption('known');
       await form.getByLabel('Startdatum', { exact: true }).fill('2026-08-01');
-      const common = form.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true });
+      const common = form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true });
       await common.click();
       await form.getByLabel('Pris: uppgiftens säkerhet').selectOption('unknown');
       await form.getByLabel('Valuta: uppgiftens säkerhet').selectOption('none');
       await form.getByLabel('Beviljat kreditutrymme: uppgiftens säkerhet').selectOption('known');
-      await common.click();
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(form.getByRole('alert', { name: 'Formuläret innehåller fel' })).toBeFocused();
+      await form.getByRole('link', { name: /^Beviljat kreditutrymme:/ }).click();
       await expect(form.getByLabel('Beviljat kreditutrymme', { exact: true })).toBeFocused();
       await expect(form.getByLabel('Beviljat kreditutrymme', { exact: true })).toBeVisible();
       await form.getByLabel('Beviljat kreditutrymme: uppgiftens säkerhet').selectOption('');
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const proposed = await read();
       expect(proposed.objects).toEqual([]);
       const original = proposed.draft.changes[0].after;
@@ -150,35 +163,30 @@ for (const { width, height } of [
       await page.getByRole('button', { name: 'Dölj Skuld, behåll värden', exact: true }).click();
       await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
       await returnToWork();
-      await page
-        .getByRole('list', { name: 'Objekt', exact: true })
-        .getByRole('button', { name: 'Uppgifter för Husets lån', exact: true })
-        .click();
-      const details = page.getByRole('region', { name: 'Husets lån', exact: true });
-      await expect(
-        details.getByRole('region', { name: 'Uppgifter utanför typens avsnitt' }),
-      ).toContainText(
-        'Senast uppgiven skuld: 12 300 (Osäkert uppgivet) — datum för uppgiften: 2026-09-01',
+      const details = await readTableObject(page, 'Husets lån');
+      const debtRead = details
+        .locator('dt')
+        .filter({ hasText: /^Skuld$/ })
+        .locator('..');
+      await expect(debtRead).toContainText(
+        '12 300 (Osäkert uppgivet) · datum för uppgiften: 2026-09-01',
       );
+      await closeSupportDialog(page, 'Uppgifter för Husets lån');
       await save();
-      await page
-        .getByRole('list', { name: 'Objekt', exact: true })
-        .getByRole('button', { name: 'Uppgifter för Husets lån', exact: true })
-        .click();
-      await details.getByRole('button', { name: 'Redigera valt objekt' }).click();
+      await editTableObject(page, 'Husets lån');
       await form.getByLabel('Objekttyp', { exact: true }).selectOption('other');
+      await page
+        .getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true })
+        .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
+        .click();
       await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         'Gemensam avtalstext',
       );
-      await expect(
-        form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }),
-      ).toBeDisabled();
-      await form.getByLabel('Jag har hanterat tidigare fältvärden för typbytet').check();
-      await form.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const changed = await save();
       expect(changed.changes[0].after?.financialFacts).toEqual(original?.financialFacts);
       expect(changed.changes[0].after?.description).toBe('Gemensam avtalstext');
-      await page.getByRole('button', { name: 'Visa historik' }).click();
+      await page.getByRole('button', { name: 'Rapporter' }).click();
       const history = page
         .getByRole('region', { name: 'Ändringshistorik' })
         .getByRole('article')
@@ -197,12 +205,120 @@ for (const { width, height } of [
           .first(),
       ).toBeVisible();
       await expect(history.getByText('Anteckning: Eget värde', { exact: true })).toBeVisible();
-      await history.getByRole('button', { name: 'Ångra sparandet' }).click();
-      await save();
       await installation.restart();
-      expect((await read()).objects[0]).toMatchObject({ ...original });
+      expect((await read()).objects[0]).toMatchObject({ ...changed.changes[0].after });
     } finally {
       await installation.close();
     }
   });
 }
+
+test('TYP-12: explicit field order preserves zero and false through the native form, draft and table readers', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const initial: MapState = await (await page.request.get(path)).json();
+    const headers = { origin: installation.origin };
+    const definition = {
+      name: 'Sorterad typ',
+      description: '',
+      fields: [
+        { id: 'first', name: 'Första fältet', description: '', kind: 'number' },
+        { id: 'second', name: 'Andra fältet', description: '', kind: 'boolean' },
+      ],
+      propertyOrder: ['field:second', 'field:first'],
+    };
+    expect(
+      (
+        await page.request.post(`${path}/object-type`, {
+          headers,
+          data: {
+            version: initial.draft.version,
+            contentVersion: initial.contentVersion,
+            id: 'ordered-read-type',
+            baseRevision: null,
+            value: definition,
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    const staged: MapState = await (await page.request.get(path)).json();
+    expect(
+      (
+        await page.request.post(`${path}/save`, {
+          headers,
+          data: {
+            version: staged.draft.version,
+            contentVersion: staged.contentVersion,
+            operationId: 'ordered-read-type-setup',
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    await page.goto(installation.origin);
+    const form = await openNewObject(page);
+    await form.getByLabel('Namn', { exact: true }).fill('Ordningsprov');
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption('ordered-read-type');
+    await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    const orderedLabels = /^(Andra fältet|Första fältet)$/;
+    await expect(form.locator('label').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    await form.getByLabel('Andra fältet', { exact: true }).selectOption('false');
+    await form.getByLabel('Första fältet', { exact: true }).fill('0');
+    expect((await (await page.request.get(path)).json()).draft.changes).toEqual([]);
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(form).not.toBeVisible();
+    const proposed: MapState = await (await page.request.get(path)).json();
+    expect(proposed.objects).toEqual([]);
+    expect(proposed.draft.changes[0].after?.customValues).toEqual({ first: 0, second: false });
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Visa förslaget: Ordningsprov', exact: true }).click();
+    const proposal = page.getByRole('dialog', { name: 'Ordningsprov', exact: true });
+    await expect(proposal.locator('dt').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    await expect(
+      proposal.locator('dt').filter({ hasText: 'Andra fältet' }).locator('..'),
+    ).toContainText('Nej');
+    await expect(
+      proposal.locator('dt').filter({ hasText: 'Första fältet' }).locator('..'),
+    ).toContainText('0');
+    await closeSupportDialog(page, 'Ordningsprov');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    const details = await readTableObject(page, 'Ordningsprov');
+    await expect(details.locator('dt').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    await expect(
+      details.locator('dt').filter({ hasText: 'Andra fältet' }).locator('..'),
+    ).toContainText('Nej');
+    await expect(
+      details.locator('dt').filter({ hasText: 'Första fältet' }).locator('..'),
+    ).toContainText('0');
+    await closeSupportDialog(page, 'Uppgifter för Ordningsprov');
+    const tableDetails = page
+      .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      .locator('.household-table-detail-row');
+    await expect(tableDetails.locator('dt').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    const saved: MapState = await (await page.request.get(path)).json();
+    expect(saved.draft.changes).toEqual([]);
+    expect(saved.objects[0].customValues).toEqual({ first: 0, second: false });
+    const type = saved.types.find(({ id }) => id === 'ordered-read-type');
+    expect(type?.fields?.map(({ id }) => id)).toEqual(['first', 'second']);
+    expect(type?.propertyOrder).toEqual(['field:second', 'field:first']);
+  } finally {
+    await installation.close();
+  }
+});

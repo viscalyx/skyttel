@@ -6,6 +6,45 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Private type restoration
+
+Full household files can contain private proposals to restore removed type
+definitions. Use the upgraded application to read these files. Supported older
+files remain readable. Keep the database backup and matching image for rollback.
+
+Import retains these proposals but requires a new explicit review against
+current content before saving. Import does not transfer earlier restoration
+authority. Shared history contains saved definitions without the private
+authority. After an operator imports household content, tell affected users to
+review these retained proposals before they save their drafts.
+
+### Relationship form recovery
+
+The upgraded database retains private evidence of complete relationship form
+attempts so a lost response can be checked before retrying. Keep the database
+and matching application image together for rollback. This evidence is scoped
+to its household and owner; recovery reads current content alongside the earlier
+outcome and does not restore an earlier draft over later work.
+
+Full household files omit this temporary recovery evidence. New exports require
+an upgraded reader; supported older household files and drafts remain readable.
+Import, content replacement, permanent erasure and owner removal invalidate
+the corresponding evidence. After those operations, preserve unsent text and
+review current content before starting another attempt.
+
+### Assistant tool removal
+
+Refresh connected assistants' tool catalogs after rollout. Historical undo
+and object merge actions are removed from the web interface and assistant
+tools. Update external clients that call those actions before upgrade.
+History remains available for reading. Ordinary drafts and atomic saves
+continue to use durable save receipts.
+
+Older private object merge proposals are not supported by this release.
+Resolve or discard those proposals before upgrade. Keep a database backup
+and its matching image for rollback. Saved history remains readable; removal
+of the actions does not permanently erase historical content.
+
 ### Database compatibility and rollout
 
 This release adds database storage and changes saved content formats. Before
@@ -22,11 +61,20 @@ check its durable result before retrying; a missing response does not establish
 failure. A retry must use the same operation and content. Imported content or
 a change to historical owner assignments invalidates older attempts.
 
-Backups now retain private drafts, personal views, image versions, save attempts,
+Backups now retain private drafts, personal views, image versions, save
+attempts,
 historical names, financial facts and removed content. Apply household access
 and retention restrictions to these records and their recovery copies. Ordinary
-removal and undo do not permanently erase retained information. Follow the
+removal does not permanently erase retained information. Follow the
 [permanent erasure runbook](permanent-erasure.md) for that operation.
+
+### Complete object forms and recovery
+
+New household archives can contain a private identifier for each complete
+object-form addition to a draft. Use the upgraded application to read these
+archives. Supported older archives and drafts remain readable without this
+identifier. Shared history contains saved values and save attribution; it
+does not contain private form-attempt identifiers.
 
 ### Object icon and archive compatibility
 
@@ -46,7 +94,8 @@ uses a null value. Icons are bundled locally and need no external service.
 This release stores named sections, field order and hidden field placement
 with object and relationship type definitions. Existing definitions and
 supported older archives keep their field order and use a default section.
-Hidden fields retain their values, including in drafts, history and recovery copies.
+Hidden fields retain their values, including in drafts, history and recovery
+copies.
 Hiding a field does not erase its content or limit access to it.
 
 Object types can also store the placement and order of built-in description
@@ -224,14 +273,15 @@ smaller limits for ordinary API requests.
 ### Assistant and integration compatibility
 
 Refresh assistant tool catalogs after rollout to discover type editing,
-history, undo and object merge tools. Keep existing read-only grants unchanged.
+draft work and readable history. Historical undo and object merge tools are
+removed. Keep existing read-only grants unchanged.
 Clients that need to propose and save changes must request new consent for map
 work. Verify that a read-only connection cannot write after rollout. Map-work
 consent does not replace the user's instruction for each whole-draft save.
 
 Update assistant clients to read the complete draft review and preserve both
-content and draft versions. Undo must use current content versions, including
-for imported history. Historical author identifiers grant no access. Clients
+content and draft versions. Use current content after an import before proposing
+or saving changes. Historical author identifiers grant no access. Clients
 must check durable save results before further changes after an interruption;
 a pending attempt is not a successful save.
 
@@ -239,7 +289,10 @@ Clients that read drafts, save results or history must handle object and
 relationship type changes, removed definitions with no resulting definition,
 and restoration proposals. Draft displays must include the retained source
 definition together with a proposed object type and its values. Older clients
-cannot preserve the new grouped conflict choices for type-change undo.
+must support explicit property choices against the current comparison before
+they can resolve these conflicts. Re-read the current comparison after import
+or content replacement. Shared saved history does not carry private restoration
+authority.
 
 ### External assistant access
 

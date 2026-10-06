@@ -50,7 +50,7 @@ personer och tjänstekonton. **Kontokoppling** går från kort till bankkonto;
 
 Ett upprepat tillägg med samma typ, riktning och objekt visar det befintliga
 sambandet utan dubblett. Välj det befintliga sambandet och sedan
-**Redigera valt samband** i detaljpanelen för att rätta det. Olika
+**Redigera valt samband** vid de valda uppgifterna för att rätta det. Olika
 sambandstyper mellan samma objekt går bra.
 
 ## Bevara det som är ofullständigt
@@ -79,10 +79,10 @@ Det är skilt från en obesvarad fråga och från osäkerhet om själva sambande
 
 ## Granska, hitta och rätta
 
-**Hela mitt utkast** visar sparat underlag och föreslagna värden för objekt
-och samband. Välj objektets eller sambandets knapp och sedan
-**Redigera valt objekt** eller **Redigera valt samband** i detaljpanelen
-för att rätta förslaget. Sök efter objekt i **Sök objekt**.
+**Visa utkastet** visar sparat underlag och föreslagna värden för objekt
+och samband. Välj förslagets rad för att läsa alla uppgifter. Rättningar
+görs i objektets eller sambandets vanliga formulär från **Tabell**.
+Sök efter objekt i **Sök objekt i tabellen**.
 Ett adressbyte görs genom att ändra sambandets mål; tjänstekontots
 identitet behålls.
 

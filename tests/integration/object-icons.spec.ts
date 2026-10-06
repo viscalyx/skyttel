@@ -1,13 +1,15 @@
-import { expect, type Locator, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import {
-  activatePanel,
+  closeTextView,
   createHousehold,
   openMap,
-  openWorkspace,
+  openNewObject,
   signIn,
 } from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('IKON-01: icon choice survives type and image changes, save and restart before explicit reset', async ({
@@ -20,60 +22,71 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     const path = `${installation.origin}/api/households/${household.id}/map`;
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
-    const picker = details.getByRole('region', { name: 'Ikon', exact: true });
-    await details.getByLabel('Objektets namn', { exact: true }).fill('Min cykel');
-    await details.getByLabel('Beskrivning', { exact: true }).fill('Bevara texten');
-    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
-    await expect(picker.getByRole('searchbox', { name: 'Sök ikon' })).toBeFocused();
+    await openNewObject(page);
+    const form = page.locator('dialog.object-dialog-C');
+    const stage = () =>
+      form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const appearance = () =>
+      form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    const edit = async () => {
+      await editTableObject(page, 'Min cykel');
+    };
+    await form.getByLabel('Namn', { exact: true }).fill('Min cykel');
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Bevara texten');
+    await appearance();
+    const picker = form.getByRole('region', { name: 'Ikon', exact: true });
     await picker.getByRole('searchbox', { name: 'Sök ikon' }).fill('cykel');
     await picker.getByRole('button', { name: 'Välj Cykel', exact: true }).click();
-    await expect.poll(async () => (await read()).draft.changes[0].after?.iconId).toBe('bike');
-    await details.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Fordon' });
-    await expect(picker.getByRole('searchbox')).toBeDisabled();
-    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
+    expect((await read()).draft.changes).toEqual([]);
+    await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Fordon' });
+    await appearance();
     await expect(picker.getByRole('searchbox')).toBeEnabled();
+    await expect(picker.getByRole('button', { name: 'Välj Cykel', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     const source = await sharp({
       create: { width: 100, height: 100, channels: 3, background: '#0088ff' },
     })
       .png()
       .toBuffer();
-    await details
-      .getByLabel('Välj profilbild')
+    await form
+      .getByLabel('Profilbild', { exact: true })
       .setInputFiles({ name: 'synthetic.png', mimeType: 'image/png', buffer: source });
-    await expect(details.getByAltText('Profilbild för Min cykel')).toBeVisible();
+    await expect(picker).toContainText('Profilbilden visas i kartan och listan.');
+    await stage();
     await openMap(page);
     const node = page.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true });
     await expect(node.getByAltText('Profilbild för Min cykel')).toBeVisible();
     await expect(node.locator('[data-icon-id="bike"]')).toHaveCount(0);
-    await openWorkspace(page);
-    await activatePanel(page, 'Min cykel');
-    await details.getByRole('button', { name: 'Ta bort profilbild' }).click();
-    await expect(details.getByText('Ikon: Cykel', { exact: true })).toBeVisible();
+    await edit();
+    await appearance();
+    await form
+      .getByRole('button', { name: 'Ta bort profilbilden ur formuläret', exact: true })
+      .click();
+    await expect(picker).toContainText('Ikonen visas i kartan och listan.');
+    await stage();
     await openMap(page);
     await expect(node.locator('[data-icon-id="bike"]')).toBeVisible();
-    await openWorkspace(page);
-    await activatePanel(page, 'Min cykel');
-    await details.getByLabel('Beskrivning', { exact: true }).fill('Bevara mer text');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await edit();
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Bevara mer text');
+    await stage();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
     expect((await read()).objects[0]).toMatchObject({
       iconId: 'bike',
       description: 'Bevara mer text',
     });
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Min cykel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await edit();
+    await appearance();
     await picker.getByRole('button', { name: 'Typens standardikon', exact: true }).click();
-    await expect.poll(async () => (await read()).draft.changes[0].after?.iconId).toBeUndefined();
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    expect((await read()).draft.changes).toEqual([]);
+    await stage();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     expect((await read()).objects[0]).not.toHaveProperty('iconId');
   } finally {
     await installation.close();
@@ -99,9 +112,8 @@ test('IKON-02: full catalog search, empty results and keyboard pagination work i
       },
     });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo');
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     const picker = page.getByRole('region', { name: 'Ikon', exact: true });
     const search = picker.getByRole('searchbox', { name: 'Sök ikon' });
     for (const width of [1440, 390, 320]) {
@@ -149,16 +161,16 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    const details = page.getByRole('group', { name: 'Objektets detaljer', exact: true });
+    await openNewObject(page);
+    const details = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
     const picker = details.getByRole('region', { name: 'Ikon', exact: true });
-    await details.getByLabel('Objektets namn', { exact: true }).fill('Lilla cykeln');
+    await details.getByLabel('Namn', { exact: true }).fill('Lilla cykeln');
     await details.getByLabel('Beskrivning', { exact: true }).fill('Min oskickade text');
     // The layout size of a 1280 × 1000 browser at 400% browser zoom.
     await page.setViewportSize({ width: 320, height: 250 });
-    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
+    await details.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     const search = picker.getByRole('searchbox', { name: 'Sök ikon' });
+    await search.focus();
     await expect(search).toBeFocused();
     await search.fill('cykel');
     await picker.getByRole('button', { name: 'Välj Cykel', exact: true }).click();
@@ -173,9 +185,9 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
     await expect(details.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Min oskickade text',
     );
-    await details.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     const saved: MapState = await (await page.request.get(path)).json();
     expect(saved.objects[0]).toMatchObject({
       name: 'Lilla cykeln',
@@ -190,145 +202,107 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
   }
 });
 
-test('IKON-04: delayed keyboard icon choice and reset restore focus without replacing a later choice', async ({
+test('IKON-04: local keyboard icon choice and reset preserve the chosen focus until complete staging', async ({
   page,
 }) => {
   const installation = await createInstallation();
-  let release = () => {};
   try {
     await signIn(page.request, installation.origin);
-    await createHousehold(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
-    const picker = page.getByRole('region', { name: 'Ikon', exact: true });
-    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
-    await picker.getByRole('searchbox').fill('cykel');
-    async function choose(button: Locator, nextFocus?: Locator) {
-      let reached = () => {};
-      const ready = new Promise<void>((resolve) => {
-        reached = resolve;
-      });
-      const held = new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      await page.route('**/map/draft', async (route) => {
-        const response = await route.fetch();
-        reached();
-        await held;
-        await route.fulfill({ response });
-      });
+    await page
+      .getByRole('navigation', { name: 'Kartans verktyg' })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
+    const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+    await form.getByLabel('Namn', { exact: true }).fill('Lo');
+    await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    const picker = form.getByRole('region', { name: 'Ikon', exact: true });
+    const search = picker.getByRole('searchbox');
+    await search.fill('cykel');
+    for (const name of ['Välj Cykel', 'Typens standardikon', 'Välj Cykel']) {
+      const button = picker.getByRole('button', { name, exact: true });
       await button.focus();
       await page.keyboard.press('Enter');
-      await ready;
-      if (nextFocus) await nextFocus.focus();
-      release();
       await expect(button).toHaveAttribute('aria-pressed', 'true');
-      await expect(nextFocus ?? button).toBeFocused();
-      await page.unroute('**/map/draft');
+      await expect(button).toBeFocused();
     }
-    await choose(picker.getByRole('button', { name: 'Välj Cykel', exact: true }));
-    await choose(picker.getByRole('button', { name: 'Typens standardikon', exact: true }));
-    await choose(
-      picker.getByRole('button', { name: 'Välj Cykel', exact: true }),
-      page.getByRole('button', { name: 'Sök i kartan', exact: true }),
+    await search.focus();
+    await expect(search).toBeFocused();
+    expect((await (await page.request.get(path)).json()).draft.changes).toEqual([]);
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    expect((await (await page.request.get(path)).json()).draft.changes[0].after.iconId).toBe(
+      'bike',
     );
   } finally {
-    release();
     await installation.close();
   }
 });
 
-test('IKON-05: a failed icon request focuses recovery and a successful retry returns to the picker', async ({
+test('IKON-05: rejected and lost complete icon staging preserve the local choice and recover one proposal', async ({
   page,
 }) => {
   const installation = await createInstallation();
-  let release = () => {};
   try {
     await signIn(page.request, installation.origin);
-    await createHousehold(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn', { exact: true }).fill('Lo');
-    const picker = page.getByRole('region', { name: 'Ikon', exact: true });
-    await picker.getByRole('button', { name: 'Lägg uppgifterna i utkastet först' }).click();
+    await page
+      .getByRole('navigation', { name: 'Kartans verktyg' })
+      .getByRole('button', { name: 'Nytt objekt', exact: true })
+      .click();
+    const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+    await form.getByLabel('Namn', { exact: true }).fill('Lo');
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Bevarad ikontext');
+    await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    const picker = form.getByRole('region', { name: 'Ikon', exact: true });
     await picker.getByRole('searchbox').fill('cykel');
-    await page.route(
-      '**/map/draft',
-      (route) => route.fulfill({ status: 503, json: { error: 'temporarily_unavailable' } }),
-      { times: 1 },
-    );
     const cycle = picker.getByRole('button', { name: 'Välj Cykel', exact: true });
     await cycle.focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('alert')).toContainText('Ändringen kunde inte bekräftas');
-    const recovery = page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true });
-    await expect(recovery).toBeFocused();
-    await expect(cycle).toBeDisabled();
-    await page.keyboard.press('Enter');
-    await expect(cycle).toBeEnabled();
-    await expect(cycle).toBeFocused();
-    await expect(cycle).toHaveAttribute('aria-pressed', 'false');
-    await page.keyboard.press('Enter');
-    await expect(cycle).toHaveAttribute('aria-pressed', 'true');
-    await expect(cycle).toBeFocused();
-    // Losing a successful response can leave the original editor stale after recovery.
     await page.route(
-      '**/map/draft',
+      '**/map/object-form',
+      (route) => route.fulfill({ status: 400, json: { error: 'invalid_request' } }),
+      { times: 1 },
+    );
+    const stage = form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true });
+    await stage.focus();
+    await page.keyboard.press('Enter');
+    await expect(form.getByRole('alert')).toContainText('Dina uppgifter finns kvar.');
+    await expect(cycle).toHaveAttribute('aria-pressed', 'true');
+    expect((await (await page.request.get(path)).json()).draft.changes).toEqual([]);
+    await page.route(
+      '**/map/object-form',
       async (route) => {
         expect((await route.fetch()).ok()).toBe(true);
-        await route.fulfill({ status: 503, json: { error: 'response_lost' } });
+        await route.abort();
       },
       { times: 1 },
     );
-    const reset = picker.getByRole('button', { name: 'Typens standardikon', exact: true });
-    await reset.focus();
+    await stage.focus();
     await page.keyboard.press('Enter');
-    await expect(recovery).toBeFocused();
+    const check = form.getByRole('button', {
+      name: 'Kontrollera om ändringen lades i utkastet',
+      exact: true,
+    });
+    await expect(check).toBeVisible();
+    await expect(stage).toBeDisabled();
+    await expect(cycle).toHaveAttribute('aria-pressed', 'true');
+    await check.focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('heading', { name: 'Lo', exact: true })).toBeFocused();
-    await expect(reset).toBeDisabled();
-    await expect(page.getByRole('alert')).toContainText('äldre utkast');
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
-    await page.getByRole('button', { name: 'Uppgifter för Lo', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(reset).toHaveAttribute('aria-pressed', 'true');
-    await picker.getByRole('searchbox').fill('cykel');
-    const toolbar = page.getByRole('button', { name: 'Sök i kartan', exact: true });
-    for (const operation of ['reject', 'recover']) {
-      let reached = () => {};
-      const ready = new Promise<void>((resolve) => {
-        reached = resolve;
-      });
-      const held = new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      await page.route(
-        operation === 'reject' ? '**/map/draft' : /\/map\?reload=/,
-        async (route) => {
-          const response = operation === 'recover' ? await route.fetch() : undefined;
-          reached();
-          await held;
-          await route.fulfill(
-            response ? { response } : { status: 503, json: { error: 'temporarily_unavailable' } },
-          );
-        },
-        { times: 1 },
-      );
-      await (operation === 'reject' ? cycle : recovery).focus();
-      await page.keyboard.press('Enter');
-      await ready;
-      await toolbar.focus();
-      release();
-      if (operation === 'reject')
-        await expect(page.getByRole('alert')).toContainText('Ändringen kunde inte bekräftas');
-      else await expect(cycle).toBeEnabled();
-      await expect(toolbar).toBeFocused();
-    }
+    await expect(form).not.toBeVisible();
+    const state: MapState = await (await page.request.get(path)).json();
+    expect(state.objects).toEqual([]);
+    expect(state.draft.changes).toHaveLength(1);
+    expect(state.draft.changes[0].after).toMatchObject({
+      name: 'Lo',
+      description: 'Bevarad ikontext',
+      iconId: 'bike',
+    });
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([]);
   } finally {
-    release();
     await installation.close();
   }
 });

@@ -57,13 +57,14 @@ with keyboard and cancelled dragging”.
 
 ### NAVIGATION-02: Navigation och oskickade detaljer samtidigt
 
-**Syfte:** Navigera och behåll oskickade detaljer i båda öppningsordningar.
+**Syfte:** Bevara navigation, läsbara uppgifter och oskickad formulärtext
+med den gemensamma objektdialogens förlustskydd i båda öppningsordningarna.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Upprepa på dator samt vid 390 och 320 pixlars bredd,
-även i korta fönster på 640 × 500 och 320 × 250 CSS-pixlar. Prova verklig
-webbläsarzoom separat från ändrad fönsterstorlek.
+även i korta fönster på 844 × 390, 700 × 600, 640 × 500 och 320 × 250
+CSS-pixlar. Prova verklig webbläsarzoom separat från ändrad fönsterstorlek.
 
 **Integrationstest:**
 [map-navigation.spec.ts](../../tests/integration/map-navigation.spec.ts),
@@ -72,27 +73,59 @@ in both opening orders”.
 
 **Steg:**
 
-1. Markera Lo. Öppna **Navigera**, flytta fönstret nedåt från dess
-   standardplacering och öppna sedan **Visa detaljer**.
-2. Välj **Redigera valt objekt** och skriv en oskickad beskrivning.
-3. Rulla inuti navigationen till **Flytta Lo Exempel: bakåt** och flytta.
-   Vänta på beskedet att den personliga vyn är sparad.
-4. Panorera, byt till mininavigering och zooma med knapparna.
-5. Kontrollera beskrivningen. Ladda om och upprepa med detaljer först
-   och navigation sedan.
+1. Markera Lo. Öppna **Navigera**, flytta titelraden med Skift+pil nedåt
+   och öppna sedan **Visa detaljer**. Läs Lo i den fasta uppgiftsytan.
+   Kontrollera att navigationens stängknapp är nåbar utan att täcka läsningen.
+   Vid 844 × 390 och 320 × 250: använd en provinstallation utan samtalstjänst,
+   aktivera **Prata med Skyttel** före öppningen och låt den verkliga
+   otillgänglighetsnotisen vara öppen under samma steg.
+   Läs uppgiftsytans sista värde och nå **Samband för Lo Exempel** med
+   notisen kvar. Läs hela knapptexten även om den står på flera rader.
+   Rulla tillbaka för att läsa rubriken.
+2. På dator: flytta navigationen åt vänster med Skift+pil. Ändra fönstrets
+   bredd lite och återställ den. Navigationens möjliga placering och
+   uppgiftsytans placering ska bestå. Flytta åt vänster igen.
+3. Välj **Redigera Lo Exempel** och skriv en ny beskrivning. Försök stänga
+   med krysset. Kontrollera att **Fortsätt redigera** får fokus och tryck
+   Escape. Beskrivningen ska finnas kvar. Navigationen i bakgrunden är
+   inaktiv medan den fullständiga objektdialogen skyddar formuläret.
+4. Välj **Lägg i utkastet och stäng** med tangentbordet. Läs den föreslagna
+   beskrivningen i uppgiftsytan. Rulla navigationens innehåll vid behov
+   och välj **Flytta Lo Exempel: bakåt**. Vänta på bekräftad personlig vy.
+5. Panorera, byt till mininavigering och zooma med knapparna medan
+   otillgänglighetsnotisen fortfarande är öppen. Rulla hela navigationen
+   vid behov i det kortaste fönstret. Läs den oförändrade föreslagna
+   beskrivningen och uppgiftsytans sista värde. Fokusera först därefter
+   notisens **Stäng notisen** och aktivera den utan att ändra utkastet.
+   Hushållets sparade uppgifter
+   ska fortfarande vara oförändrade.
+6. Ladda om och upprepa med detaljer först och navigation sedan, på
+   samtliga angivna skärmstorlekar.
 
 **Förväntat resultat:**
 
-- Navigation och detaljer får användbara standardplaceringar. Innehållet går att
-  rulla när utrymmet är litet, med åtkomliga kontroller och synligt fokus.
-- På dator behåller en flyttad navigation sin plats när detaljer öppnas
-  och vid storleksändring så länge hela fönstret ryms. Fönstren får dras
-  över varandra. Smala och korta skärmar behåller sina separata arbetsytor.
-- Byte mellan normal- och miniläge med öppet arbete återför Navigation
-  till dess standardplacering. Detaljpanelens placering består.
-- Oskickad text och detaljer består under navigering och objektflytt.
-- Detaljerna visar ingen separat undertitel **Flytta** eller upprepad
-  lista över direkta samband. Sambanden nås genom listalternativet.
+- Navigation och fasta uppgifter täcker inte varandra. Innehållet går
+  att rulla när utrymmet är litet, med nåbara kontroller och synligt fokus.
+- Den öppna samtalsnotisen har en egen plats. Den täcker varken
+  navigationens kontroller eller uppgiftsytans läsbara innehåll. Zoom,
+  panorering, sista värdet och uppgiftsytans åtgärder går att nå utan
+  att först stänga notisen.
+- Hela knapptexten och knappen går att visa inom uppgiftsytans rullade
+  område, även med text på flera rader. Notisens fullständiga text och
+  stängknapp är fortfarande åtkomliga.
+- Navigation kan flyttas med tangentbord och pekare inom användbart
+  utrymme, utan att täcka den fasta läsytan. Ingen ny flyttbar
+  redigeringspanel eller återupptagningsingång införs.
+- Byte till mininavigering bevarar uppgiftsytans placering och lämnar
+  de läsbara uppgifterna åtkomliga. Längre uppgifter kan kräva rullning.
+- Avbruten formulärförlust behåller alla oskickade värden. Ingen personlig
+  flyttning sker genom den inaktiva bakgrunden. Efter uttrycklig komplett
+  tilläggning behålls förslaget under navigering och personlig objektflytt.
+- Personlig flyttning ändrar bara den personliga vyn. Den sparade
+  hushållskartan och dess samband ändras inte.
+- Uppgiftsytan visar ingen separat undertitel **Flytta** eller upprepad
+  lista över direkta samband. **Samband för Lo Exempel** öppnar den
+  ordinarie sambandsdialogen.
 
 ### NAVIGATION-03: Sex personliga riktningar och beständig placering
 
@@ -114,7 +147,7 @@ while empty and multiple selections retain camera controls”.
 2. Använd vänster, höger, uppåt, nedåt, framåt och bakåt. Vänta på sparad
    personlig vy efter varje rörelse.
 3. Markera även Kim med Ctrl/Cmd. Öppna navigationen igen.
-4. Avmarkera båda genom listan eller Ctrl/Cmd och kontrollera navigationen.
+4. Avmarkera båda med Ctrl/Cmd i kartan och kontrollera navigationen.
 5. Starta om servern, ladda om sidan och kontrollera placeringarna samt
    hushållets sparade uppgifter och utkast.
 
@@ -143,16 +176,24 @@ access and editing through the list”.
 **Steg:**
 
 1. Markera Lo och välj **Visa detaljer**.
-2. Välj **Visa samband i listan** i objektpanelen.
-3. Välj **Lo Exempel → Använder → Kim Exempel** i listan Samband.
-4. Välj sambandets **Redigera** och kontrollera formulärets ändpunkter.
+2. Välj **Samband för Lo Exempel** i den fasta uppgiftsytan.
+3. Läs **Lo Exempel → Använder → Kim Exempel**, båda ändpunkterna och
+   riktningen. Välj **Kim Exempel**, läs dess fullständiga uppgifter och
+   kontrollera fokus på rubriken **Uppgifter för Kim Exempel**.
+4. Välj **Tillbaka**. Välj **Redigera samband** vid samma samband och
+   kontrollera Lo som **Från objekt** och Kim som **Till objekt**.
+5. Välj **Osäkert uppgivet** som uppgiftens säkerhet. Läs meningen
+   **Lo Exempel använder Kim Exempel (Osäkert uppgivet)** och välj
+   **Lägg i utkastet**. Sambandsdialogen ska finnas kvar i läsläge.
 
 **Förväntat resultat:**
 
-- Listan anger båda ändpunkterna och sambandets riktning i text.
-- Formuläret anger Lo som **Från objekt**, Kim som **Till objekt** och
-  låter användaren lägga ändringen i samma privata utkast som tidigare.
-- Objektpanelen innehåller ingen upprepad lista över direkta samband.
+- Båda ändpunkterna och riktningen anges i text. Det andra objektets
+  namn öppnar dess verkliga fullständiga uppgifter och Tillbaka återgår.
+- Det vanliga formuläret behåller Lo och Kim i rätt riktning. Det färdiga
+  förslaget ersätter bara samma samband i utkastet; inget extra samband
+  skapas och hushållets sparade objekt och samband ändras inte.
+- Uppgiftsytan innehåller ingen upprepad lista över direkta samband.
 
 ## Zoom med styrplatta
 

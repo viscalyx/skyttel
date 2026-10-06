@@ -1,7 +1,26 @@
-import { type APIRequestContext, expect, test } from '@playwright/test';
+import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openMap,
+  openTable,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { closeConversationText, openConversationDraft } from '../support/conversation-page.js';
+import {
+  editObjectRelationship,
+  editTableObject,
+  openObjectRelationships,
+  readDraftProposal,
+} from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { includeEndedInMap } from '../support/object-search.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 async function arrange(client: APIRequestContext, origin: string) {
   await signIn(client, origin);
@@ -57,6 +76,16 @@ async function arrange(client: APIRequestContext, origin: string) {
   return { read, post, save, path };
 }
 
+async function includeEndedInTable(page: Page) {
+  await page
+    .getByRole('region', { name: 'Tabellens sökning och filter' })
+    .getByRole('button', { name: /^Filter/ })
+    .click();
+  const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
+  await filters.getByLabel('Ta med upphörda').check();
+  await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+}
+
 test('LIVSCYKEL-01: ended objects and relationships stay visible and independently correctable', async ({
   page,
 }) => {
@@ -64,62 +93,66 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
   try {
     const { read } = await arrange(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    const objects = page.getByRole('list', { name: 'Objekt', exact: true });
-    const subscription = objects.getByRole('listitem').filter({ hasText: 'Familjemusik' });
-    await subscription
-      .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await includeEndedInTable(page);
+    const objects = page.getByRole('table');
+    const subscription = objects
+      .getByRole('row')
+      .filter({ has: page.getByRole('button', { name: 'Familjemusik', exact: true }) });
+    await editTableObject(page, 'Familjemusik');
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('ended');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(subscription).toContainText('Upphört');
     const endedColor = await subscription
       .getByText('Upphört', { exact: true })
       .evaluate((node) => getComputedStyle(node).backgroundColor);
     const proposalColor = await subscription
-      .getByText('Förslag i ditt utkast', { exact: true })
+      .locator('[data-kind="Ändrat"]')
       .evaluate((node) => getComputedStyle(node).backgroundColor);
     expect(endedColor).not.toBe(proposalColor);
     expect((await read()).objects.find((item) => item.id === 'subscription')).not.toHaveProperty(
       'lifecycle',
     );
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
+    await includeEndedInTable(page);
     await expect(subscription).toContainText('Upphört');
-    await expect(objects.getByRole('listitem').filter({ hasText: 'Lo Exempel' })).not.toContainText(
-      'Upphört',
-    );
-    const edges = page.getByRole('list', { name: 'Samband', exact: true });
+    await expect(
+      objects
+        .getByRole('row')
+        .filter({ has: page.getByRole('button', { name: 'Lo Exempel', exact: true }) }),
+    ).not.toContainText('Upphört');
+    const edges = await openObjectRelationships(page, 'Familjemusik');
     await expect(edges).not.toContainText('Upphört');
-    await edges
-      .getByRole('button', { name: 'Lo Exempel → Använder → Familjemusik', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+    await closeSupportDialog(page, 'Samband för Familjemusik');
+    await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
     await page.getByLabel('Sambandets status').selectOption('ended');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    await expect(edges.getByRole('listitem').filter({ hasText: 'Lo Exempel' })).toContainText(
-      'Upphört',
-    );
-    await expect(edges.getByRole('listitem').filter({ hasText: 'Molnmusik' })).not.toContainText(
-      'Upphört',
-    );
-    await subscription
-      .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await stageRelationshipAndClose(page);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await openObjectRelationships(page, 'Familjemusik');
+    await expect(
+      edges.locator('.household-read-relationships > li').filter({ hasText: 'Lo Exempel' }),
+    ).toContainText('Upphört');
+    await expect(
+      edges.locator('.household-read-relationships > li').filter({ hasText: 'Molnmusik' }),
+    ).not.toContainText('Upphört');
+    await closeSupportDialog(page, 'Samband för Familjemusik');
+    await editTableObject(page, 'Familjemusik');
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('active');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
+    await includeEndedInTable(page);
     await expect(subscription).not.toContainText('Upphört');
+    await openObjectRelationships(page, 'Familjemusik');
     await expect(edges).toContainText('Upphört');
   } finally {
     await installation.close();
@@ -134,58 +167,86 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     const { read, path } = await arrange(page.request, installation.origin);
     const initial = await read();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
+    await openTable(page);
+    const review = page.getByRole('region', { name: 'Utkastet', exact: true });
     const proposeTypeChange = async () => {
-      await page
-        .getByRole('list', { name: 'Samband', exact: true })
-        .getByRole('button', { name: 'Lo Exempel → Använder → Familjemusik', exact: true })
-        .click();
-      await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+      await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
       await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalar' });
-      await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+      await stageRelationshipAndClose(page);
+      await openDraftReview(page);
       await expect(review).toContainText('Lo Exempel → Betalar → Familjemusik');
+      await closeTextView(page);
     };
     await proposeTypeChange();
-    await page.getByText('Åtgärder för Familjemusik', { exact: true }).click();
-    await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
-    await expect(review).toContainText('Borttagning: Familjemusik');
+    const expand = page.getByRole('button', { name: 'Familjemusik', exact: true });
+    if ((await expand.getAttribute('aria-expanded')) !== 'true') await expand.click();
+    await page.getByRole('button', { name: 'Åtgärder för Familjemusik', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Åtgärder för Familjemusik' })
+      .getByRole('button', { name: 'Ta bort objekt', exact: true })
+      .click();
+    await openDraftReview(page);
+    await expect(review.getByRole('row').filter({ hasText: 'Familjemusik' })).toHaveCount(3);
     await expect(
-      review.getByRole('heading', { name: 'Borttagning av samband', exact: true }),
+      review
+        .getByRole('row')
+        .filter({ hasText: 'Familjemusik' })
+        .getByRole('cell', { name: 'Ta bort', exact: true }),
+    ).toHaveCount(3);
+    await expect(
+      review.getByRole('button', { name: /^Visa förslaget: .+ → Använder →/ }),
     ).toHaveCount(2);
     await expect(review).toContainText('Lo Exempel → Använder → Familjemusik');
     await expect(review).toContainText('Familjemusik → Använder → Molnmusik');
     await expect(review).not.toContainText('Betalar');
-    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
+    await expect(review.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
     expect((await read()).objects).toEqual(initial.objects);
     expect((await read()).relationships).toEqual(initial.relationships);
     await page.reload();
-    await openWorkspace(page);
-    await expect(review).toContainText('Borttagning: Familjemusik');
-    await page.getByRole('button', { name: 'Kasta hela utkastet' }).click();
-    await expect(review).toContainText('Inga förslag');
+    await openDraftReview(page);
+    await expect(review.getByRole('row').filter({ hasText: 'Familjemusik' })).toHaveCount(3);
     await expect(
-      page.getByRole('list', { name: 'Samband', exact: true }).getByRole('listitem'),
-    ).toHaveCount(2);
+      review
+        .getByRole('row')
+        .filter({ hasText: 'Familjemusik' })
+        .getByRole('cell', { name: 'Ta bort', exact: true }),
+    ).toHaveCount(3);
+    const draft = await openConversationDraft(page);
+    await draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
+    await closeConversationText(page);
+    await openTable(page);
+    const unchangedEdges = await openObjectRelationships(page, 'Familjemusik');
+    await expect(unchangedEdges.locator('.household-read-relationships > li')).toHaveCount(2);
+    await closeSupportDialog(page, 'Samband för Familjemusik');
+    await openDraftReview(page);
+    await expect(review).toContainText('Utkastet är tomt.');
+    await closeTextView(page);
     expect((await read()).relationships).toEqual(initial.relationships);
     await proposeTypeChange();
-    await page.getByText('Åtgärder för Familjemusik', { exact: true }).click();
-    await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    if ((await expand.getAttribute('aria-expanded')) !== 'true') await expand.click();
+    await page.getByRole('button', { name: 'Åtgärder för Familjemusik', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Åtgärder för Familjemusik' })
+      .getByRole('button', { name: 'Ta bort objekt', exact: true })
+      .click();
+    await openDraftReview(page);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     const saved = await read();
     expect(saved.objects.map((item) => item.id)).toEqual(['person', 'service']);
     expect(saved.relationships).toEqual([]);
     expect(saved.types).toEqual(initial.types);
     expect(saved.relationshipTypes).toEqual(initial.relationshipTypes);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).not.toContainText(
-      'Familjemusik',
-    );
+    await expect(page.getByRole('table')).not.toContainText('Familjemusik');
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    const deletion = history.at(-1);
+    const deletion = history[0];
     expect(deletion.changes).toEqual([
       {
         before: initial.objects.find((item) => item.id === 'subscription'),
@@ -244,54 +305,61 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     expect((await save()).ok()).toBe(true);
     await page.clock.install({ time: new Date('2031-03-12T23:59:58Z') });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    const objects = page.getByRole('list', { name: 'Objekt', exact: true });
-    const subscription = objects.getByRole('listitem').filter({ hasText: 'Familjemusik' });
+    await openTable(page);
+    await includeEndedInTable(page);
+    const objects = page.getByRole('table');
+    const subscription = objects
+      .getByRole('row')
+      .filter({ has: page.getByRole('button', { name: 'Familjemusik', exact: true }) });
     await expect(objects).not.toContainText('Upphört');
     await page.clock.fastForward(5_000);
     await expect(subscription).toContainText('Upphört');
-    await expect(objects.getByRole('listitem').filter({ hasText: 'Lo Exempel' })).not.toContainText(
-      'Upphört',
-    );
-    await expect(objects.getByRole('listitem').filter({ hasText: 'Molnmusik' })).not.toContainText(
-      'Upphört',
-    );
-    await subscription
-      .getByRole('button', { name: 'Uppgifter för Familjemusik', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    await expect(
+      objects
+        .getByRole('row')
+        .filter({ has: page.getByRole('button', { name: 'Lo Exempel', exact: true }) }),
+    ).not.toContainText('Upphört');
+    await expect(
+      objects
+        .getByRole('row')
+        .filter({ has: page.getByRole('button', { name: 'Molnmusik', exact: true }) }),
+    ).not.toContainText('Upphört');
+    await editTableObject(page, 'Familjemusik');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await page.getByLabel('Slutdatum', { exact: true }).fill('2031-03-20');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await expect(subscription).not.toContainText('Upphört');
-    const edges = page.getByRole('list', { name: 'Samband', exact: true });
-    const incoming = edges.getByRole('listitem').filter({ hasText: 'Lo Exempel' });
-    await incoming.getByRole('button', { name: /^Lo Exempel →/ }).click();
-    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+    await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
     await page.getByLabel('Sambandets slutdatum: uppgiftens säkerhet').selectOption('known');
     await page.getByLabel('Sambandets slutdatum', { exact: true }).fill('2031-03-12');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await stageRelationshipAndClose(page);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    const edges = await openObjectRelationships(page, 'Lo Exempel');
+    const incoming = edges
+      .locator('.household-read-relationships > li')
+      .filter({ hasText: 'Familjemusik' });
     await expect(incoming).toContainText('Upphört');
-    await incoming.getByRole('button', { name: /^Lo Exempel →/ }).click();
-    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+    await closeSupportDialog(page, 'Samband för Lo Exempel');
+    await editObjectRelationship(page, 'Lo Exempel', 'Lo Exempel → Använder → Familjemusik');
     await page.getByLabel('Sambandets status').selectOption('active');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Gäller fortfarande',
-    );
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await stageRelationshipAndClose(page);
+    const statusProposal = await readDraftProposal(page, 'Lo Exempel → Använder → Familjemusik');
+    await expect(statusProposal).toContainText('Gäller fortfarande');
+    await closeSupportDialog(page, 'Lo Exempel → Använder → Familjemusik');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await expect(incoming).not.toContainText('Upphört');
+    await openTable(page);
     await expect(subscription).not.toContainText('Upphört');
+    await openObjectRelationships(page, 'Lo Exempel');
+    await expect(incoming).not.toContainText('Upphört');
+    await closeSupportDialog(page, 'Samband för Lo Exempel');
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(history.at(-1).relationships[0]).toMatchObject({
+    expect(history[0].relationships[0]).toMatchObject({
       before: { endDate: { knowledge: 'known', value: '2031-03-12' } },
       after: { lifecycle: 'active', endDate: { knowledge: 'known', value: '2031-03-12' } },
     });
@@ -344,6 +412,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
     const saved = await read();
     await page.goto(installation.origin);
     await openMap(page);
+    await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     const labels = space.locator('.spatial-labels');
@@ -384,16 +453,27 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
       )
       .toBe(true);
     await page.keyboard.press('Enter');
-    await openWorkspace(page);
-    const details = page.getByRole('region', { name: 'Val och redigering', exact: true });
+    await (await utilityButton(page, 'Visa detaljer')).click();
+    const details = page.getByRole('region', { name: 'Valt samband', exact: true });
     await expect(details).toContainText('Lo Exempel → Använder → Familjemusik');
-    await expect(details).toContainText('Status: Följ slutdatum');
-    await expect(details).toContainText('Slutdatum: 2000-01-01');
+    await expect(
+      details
+        .locator('dt')
+        .filter({ hasText: /^Status$/ })
+        .locator('..'),
+    ).toContainText('Följ slutdatum');
+    await expect(
+      details
+        .locator('dt')
+        .filter({ hasText: /^Slutdatum$/ })
+        .locator('..'),
+    ).toContainText('2000-01-01');
     await expect(details.getByText('Upphört', { exact: true })).toBeVisible();
     expect(await read()).toEqual(saved);
     await installation.restart();
     await page.reload();
     await openMap(page);
+    await includeEndedInMap(page);
     await expect(ended.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(ended).toHaveAccessibleDescription(/Upphört/);
     await expect(active).not.toContainText('Upphört');
@@ -443,6 +523,7 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
     const saved = await read();
     await page.goto(installation.origin);
     await openMap(page);
+    await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     const labels = space.locator('.spatial-labels');
@@ -456,16 +537,17 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
     await expect(edge).toHaveAccessibleDescription(/Upphört/);
     await expect(object.getByText('Kim Exempel', { exact: true })).toBeVisible();
     await expect(object).not.toContainText('Upphört');
-    await expect(object).toHaveAccessibleDescription('Kim Exempel Person');
-    await expect(node).toHaveAccessibleDescription('Kim Exempel Person');
+    await expect(object).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
+    await expect(node).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
     await expect(object).not.toHaveAccessibleDescription(/Upphört/);
     await expect(node).not.toHaveAccessibleDescription(/Upphört/);
     expect(await read()).toEqual(saved);
     await installation.restart();
     await page.reload();
     await openMap(page);
-    await expect(object).toHaveAccessibleDescription('Kim Exempel Person');
-    await expect(node).toHaveAccessibleDescription('Kim Exempel Person');
+    await includeEndedInMap(page);
+    await expect(object).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
+    await expect(node).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
     await expect(edge).toHaveAccessibleDescription(/Upphört/);
     expect(await read()).toEqual(saved);
   } finally {
@@ -530,6 +612,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     expect(privateProposal.relationships).toEqual(saved.relationships);
     await page.goto(installation.origin);
     await openMap(page);
+    await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     const labels = space.locator('.spatial-labels');
@@ -558,6 +641,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     await installation.restart();
     await page.reload();
     await openMap(page);
+    await includeEndedInMap(page);
     await expect(previous.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(previous).toHaveAccessibleDescription(/Upphört/);
     await expect(previous).toHaveAccessibleDescription(/Använder/);

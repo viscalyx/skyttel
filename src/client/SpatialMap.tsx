@@ -12,12 +12,12 @@ import {
 import { createPortal } from 'react-dom';
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
+import { relationshipLabel } from '../shared/relationship-label.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { MapNavigation } from './MapNavigation.js';
 import type { MapRevealRequest } from './map-display.js';
 import { mapConnections, proposalKind } from './map-presentation.js';
-import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
-import { relationshipLabel } from './RelationshipEditor.js';
+import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
 import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
 import { SpatialOrientation } from './SpatialOrientation.js';
@@ -61,6 +61,8 @@ export function SpatialMap({
   state,
   active,
   objects,
+  searchHitIds,
+  previousIds,
   relationships,
   selection,
   selectedIds = selection?.kind === 'object' ? [selection.id] : [],
@@ -72,7 +74,9 @@ export function SpatialMap({
   onFocus,
   onClear,
   onReset,
+  onSearchStart,
   onRemove,
+  onObjectActions,
   personal,
   revealRequest,
   focusRequest,
@@ -87,13 +91,14 @@ export function SpatialMap({
   navigationHidden = false,
   navigationFocus = true,
   onAvailabilityChange,
-  openWork,
 }: {
   onAvailabilityChange?: (available: boolean) => void;
   theme?: 'light' | 'dark';
   state: MapState;
   active: boolean;
   objects: Map<string, MapObject>;
+  searchHitIds?: ReadonlySet<string>;
+  previousIds?: ReadonlySet<string>;
   relationships: Map<string, MapRelationship>;
   selection: { kind: 'object' | 'relationship'; id: string; previous?: boolean } | null;
   selectedIds?: string[];
@@ -105,7 +110,9 @@ export function SpatialMap({
   onFocus: (id: string) => void;
   onClear: () => void;
   onReset: () => void;
+  onSearchStart?: (text: string) => void;
   onRemove: (object: MapObject) => void;
+  onObjectActions?: (entry: ObjectActionsEntry) => void;
   personal?: ReturnType<typeof usePersonalView>;
   revealRequest?: MapRevealRequest;
   focusRequest?: { id: string; objectIds: string[] };
@@ -119,7 +126,6 @@ export function SpatialMap({
   floatingArea?: import('./floating-windows.js').FloatingArea;
   navigationHidden?: boolean;
   navigationFocus?: boolean;
-  openWork?: readonly string[];
 }) {
   const labelPrefix = useId();
   const relationshipLabelPrefix = useId();
@@ -134,7 +140,6 @@ export function SpatialMap({
   useEffect(() => {
     if (active) setActivated(true);
   }, [active]);
-  const menu = useRef<HTMLDialogElement>(null);
   const [menuObject, setMenuObject] = useState<MapObject | null>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const hold = useRef<{ timer: number; x: number; y: number } | null>(null);
@@ -148,17 +153,29 @@ export function SpatialMap({
     cancelHold();
     movement.cancel();
     returnFocus.current = target;
-    setMenuObject(object);
+    if (onObjectActions) {
+      onObjectActions({
+        object,
+        restoreFocus: () => {
+          if (
+            target.isConnected &&
+            target.getClientRects().length &&
+            !target.closest('[hidden], [inert]')
+          )
+            target.focus();
+          else canvas.current?.focus();
+        },
+        consumeHeldClick: () => {
+          const consumed = held.current;
+          held.current = false;
+          return consumed;
+        },
+      });
+    } else setMenuObject(object);
   }
   function closeMenu() {
-    menu.current?.close();
     setMenuObject(null);
-    returnFocus.current?.focus();
   }
-  useEffect(() => {
-    if (menuObject && active) menu.current?.showModal();
-    else if (menu.current?.open) menu.current.close();
-  }, [menuObject, active]);
   useEffect(() => () => cancelHold(), [cancelHold]);
   const canvas = useRef<HTMLCanvasElement>(null);
   const surface = useRef<HTMLDivElement>(null);
@@ -177,7 +194,7 @@ export function SpatialMap({
     if (!bounds || !root) return;
     const boxes = [
       ...root.querySelectorAll(
-        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .workspace-window[data-active="true"]' : ''}`,
+        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -397,12 +414,12 @@ export function SpatialMap({
     if (!element) return false;
     const bounds = element.getBoundingClientRect();
     // Reserve actual fixed tools, including expanded controls and live status.
-    // Free detail panels retain their position and are never closed by focus.
+    // Reading details stay open; focus reserves their actual visible area.
     let areas = [{ left: 0, top: 0, right: bounds.width, bottom: bounds.height }];
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        `.workspace-tools, .workspace-context, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .workspace-window[data-active="true"]' : ''}`,
+        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
@@ -643,7 +660,7 @@ export function SpatialMap({
     const diameter = Math.max(44, 34 * point.scale);
     reserve({ ...point, width: diameter, height: diameter });
   }
-  const edges = mapConnections(state.draft, objects, relationships).flatMap(
+  const edges = mapConnections(state.draft, objects, relationships, previousIds).flatMap(
     ({ edge, previous, kind }) => {
       const source = locations.get(edge.sourceId);
       const target = edge.targetId ? locations.get(edge.targetId) : undefined;
@@ -904,7 +921,6 @@ export function SpatialMap({
       open={navigationOpen && !navigationHidden}
       area={floatingArea}
       focusOnOpen={navigationFocus}
-      openWork={openWork}
       onClose={() => changeNavigation(false)}
       onNavigate={(command) => scene.current?.navigate(command)}
       object={selectedIds.length === 1 ? objects.get(selectedIds[0]) : undefined}
@@ -918,7 +934,7 @@ export function SpatialMap({
         const next = { ...position, [axis]: position[axis] + step };
         const end = scene.current?.place(id, next) ?? next;
         movement.recordMove(id, position, end, axis === 'y');
-        void personal?.move(id, end);
+        return personal?.move(id, end);
       }}
     >
       <div className="navigation-height-help">
@@ -1012,71 +1028,36 @@ export function SpatialMap({
         )}
       {cameraMount ? createPortal(cameraTools, cameraMount) : cameraTools}
       {navigationMount ? createPortal(navigation, navigationMount) : navigation}
-      <dialog
-        ref={menu}
-        className="spatial-menu"
-        onClickCapture={(event) => {
-          if (held.current) {
-            held.current = false;
-            event.preventDefault();
-            event.stopPropagation();
-          }
-        }}
-        onCancel={(event) => {
-          event.preventDefault();
-          closeMenu();
-        }}
-      >
-        <h3>{menuObject?.name}</h3>
-        <button
-          type="button"
-          onClick={() => {
-            if (menuObject) onEdit(menuObject);
-            closeMenu();
+      {menuObject && active && !onObjectActions && (
+        <ObjectActions
+          entry={{
+            object: menuObject,
+            restoreFocus: () => {
+              if (returnFocus.current?.isConnected) returnFocus.current.focus();
+              else canvas.current?.focus();
+            },
+            consumeHeldClick: () => {
+              const consumed = held.current;
+              held.current = false;
+              return consumed;
+            },
           }}
-        >
-          Redigera objekt
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (menuObject) onFocus(menuObject.id);
-            closeMenu();
+          state={state}
+          disabled={disabled}
+          mapAvailable={!unavailable && !contextLost}
+          onClose={closeMenu}
+          onEdit={onEdit}
+          onFocus={onFocus}
+          onRemove={async (object) => {
+            onRemove(object);
+            return true;
           }}
-        >
-          Visa kopplingar
-        </button>
-        <button
-          type="button"
-          aria-describedby={`${labelPrefix}-removal`}
-          disabled={
-            disabled ||
-            state.draft.changes.some((change) => change.id === menuObject?.id && !change.after)
-          }
-          onClick={() => {
-            if (menuObject) onRemove(menuObject);
-            closeMenu();
-          }}
-        >
-          Ta bort objekt
-        </button>
-        {menuObject && (
-          <ObjectRemovalNotice
-            state={state}
-            objectId={menuObject.id}
-            id={`${labelPrefix}-removal`}
-          />
-        )}
-        <button type="button" onClick={closeMenu}>
-          Avbryt
-        </button>
-      </dialog>
+        />
+      )}
       {contextLost && (
         <p className="graphics-notice">Grafiken är tillfälligt avbruten. Ditt utkast finns kvar.</p>
       )}
-      {unavailable && (
-        <p>Rymdkartan kan inte visas. Använd Lista och detaljer för att fortsätta.</p>
-      )}
+      {unavailable && <p>Rymdkartan kan inte visas. Använd Tabell för att fortsätta.</p>}
       <div
         ref={surface}
         className="spatial-surface"
@@ -1099,7 +1080,34 @@ export function SpatialMap({
         <canvas
           ref={canvas}
           role="img"
-          aria-label="Rymdens bakgrund. Välj innehåll med etiketterna eller listan."
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (
+              event.target !== event.currentTarget ||
+              document.activeElement !== event.currentTarget ||
+              !active ||
+              event.nativeEvent.isComposing ||
+              event.ctrlKey ||
+              event.metaKey ||
+              event.altKey
+            )
+              return;
+            if (/^[\p{L}\p{N}]$/u.test(event.key) && onSearchStart) {
+              event.preventDefault();
+              event.stopPropagation();
+              onSearchStart(event.key);
+            }
+          }}
+          onCompositionEnd={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              document.activeElement === event.currentTarget &&
+              active &&
+              /^[\p{L}\p{N}]+$/u.test(event.data.normalize('NFC'))
+            )
+              onSearchStart?.(event.data.normalize('NFC'));
+          }}
+          aria-label="Rymdens bakgrund. Välj innehåll med etiketterna eller tabellen."
           onContextMenu={(event) => {
             if (event.ctrlKey && !pointer.current?.moved) onClear();
           }}
@@ -1297,11 +1305,16 @@ export function SpatialMap({
                 data-layout-id={`object-${id}`}
                 data-object-label={id}
                 ref={observeLabel}
-                className={`spatial-name ${kind}${adjacent.size && !adjacent.has(id) ? ' subdued' : ''}`}
+                className={`spatial-name ${kind}${searchHitIds && !searchHitIds.has(id) ? ' search-context' : ''}${adjacent.size && !adjacent.has(id) ? ' subdued' : ''}`}
                 style={{ left: label.x, top: label.y }}
               >
                 <span id={`${labelPrefix}-${id}`}>
                   <span className="spatial-caption">{object.name}</span>
+                  {searchHitIds && (
+                    <span className="spatial-search-kind">
+                      {searchHitIds.has(id) ? '● Sökträff' : '↔ Sammanhang'}
+                    </span>
+                  )}
                   <span className="spatial-type-name">
                     {kind === 'added'
                       ? '+ Nytt förslag'
@@ -1403,14 +1416,14 @@ export function SpatialMap({
             {/* Size the obstacle independently of the labels it displaces. */}
             <span aria-hidden="true" className="label-note-size">
               <span className="label-note-count">{objects.size + edges.length}</span> etiketter
-              döljs för läsbarhet. Alla objekt och samband finns i listan. Sök eller välj ett objekt
-              och visa dess kopplingar.
+              döljs för läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller
+              välj ett objekt och visa dess kopplingar.
             </span>
             {hiddenLabels > 0 && (
               <span className="label-note-message">
                 <span className="label-note-count">{hiddenLabels}</span> etiketter döljs för
-                läsbarhet. Alla objekt och samband finns i listan. Sök eller välj ett objekt och
-                visa dess kopplingar.
+                läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller välj ett
+                objekt och visa dess kopplingar.
               </span>
             )}
           </p>

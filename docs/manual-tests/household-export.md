@@ -2,7 +2,7 @@
 
 Testfallen omfattar administratörens information före export, nedladdning,
 avbrott, ändrad tillgång, giltighetstid och bevarat innehåll efter
-sammanslagning. Anteckna commit, webbläsare och godkänt eller underkänt
+vanliga bildförslag. Anteckna commit, webbläsare och godkänt eller underkänt
 resultat vid körning.
 
 ## Konfigurerade användare
@@ -197,10 +197,10 @@ testfallet “EXPORT-05: an expired export requires a new preparation”.
 
 ## Historiskt och privat innehåll
 
-### EXPORT-06: Bevara sammanslagning, bildversioner och privat utkast
+### EXPORT-06: Bevara objekt, bildversioner och privat utkast
 
 **Syfte:** Kontrollera att exporten efter omstart innehåller underlaget
-för sammanslagning och ångring samt senare privat arbete.
+för sparade bilder och senare privat arbete.
 
 **Användare:** Alex som administratör.
 
@@ -210,22 +210,19 @@ Flytta båda i Alex personliga vy så att placeringarna sparas.
 
 **Integrationstest:**
 [household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts),
-testfallet “EXPORT-06: a full archive preserves merge identities and
-original, copied and private image versions”.
+testfallet “EXPORT-06: a full archive preserves object identities and saved,
+historical and private image versions”.
 
 **Steg:**
 
-1. Följ [guiden för sammanslagning](../user-guide/object-merge.md). Låt det
-   första objektet behålla sin identitet och välj det andra objektets
-   profilbild. Bekräfta samma företeelse och spara hela utkastet.
-2. Anteckna kvittot. Öppna **Visa historik** och granska sammanslagningen,
-   inklusive ursprungliga identiteter och bildval. Kontrollera att den
-   gemensamma bilden på det kvarvarande objektet visar samma motiv som
-   bilden på det andra objektet före sammanslagningen.
-3. Välj en annan profilbild på det kvarvarande objektet. Lämna
+1. Välj samma provbild på det första objektet och spara bildförslaget
+   som ett vanligt sparande. Båda objekten finns kvar.
+2. Anteckna kvittot. Välj **Rapporter** och granska bildsparandets
+   historiska värden och objektens identiteter. Bilderna visar samma motiv.
+3. Välj en annan profilbild på det första objektet. Lämna
    bildförslaget i det privata utkastet utan att spara.
 4. Starta om installationen med samma databas. Kontrollera att det
-   privata bildförslaget och sammanslagningens historik finns kvar.
+   privata bildförslaget och bildsparandets historik finns kvar.
 5. Hämta fullständig export och öppna `content.json` i ZIP-filen.
    Jämför objekten, kvittot och historiken med identifierarna och
    uppgifterna du antecknar. Kontrollera även utkast, bildreferenser
@@ -234,10 +231,9 @@ original, copied and private image versions”.
 
 **Förväntat resultat:**
 
-- Båda objektens ursprungliga identiteter finns i arkivet. Det andra
-  objektet är markerat som borttaget och historiken beskriver hela
-  sammanslagningen med samma kvitto som i Skyttel.
-- Bilden på det andra objektet, kopian på det kvarvarande objektet och
+- Båda objektens identiteter finns i arkivet som aktuella objekt.
+  Historiken beskriver bildsparandet med samma kvitto som i Skyttel.
+- Bilden på det andra objektet, kopian på det första objektet och
   den senare privata bildversionen finns med. Utkastet hänvisar till den
   privata versionen. Arkivet innehåller bilddata i `images.bin`.
 - Alex personliga placeringar för båda objektens identiteter finns kvar.
@@ -333,7 +329,7 @@ explains cleanup uncertainty”.
 ### EXPORT-09: Tangentbord, tema och bevarat kartarbete
 
 **Syfte:** Behålla användbart fokus genom exporten och återgå till
-oskickad redigering utan att hushållets karta ändras.
+utkastet utan att hushållets karta ändras. Oskickad text skyddas vid stängning.
 
 **Användare:** Alex som administratör.
 
@@ -344,13 +340,15 @@ webbläsarens nätverksverktyg.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
-testfallet “EXPORT-09: keyboard export controls retain focus and unsent map
-work at 1280px”, samma titel med “390px”, “320px” och “640px”.
+testfallet “EXPORT-09: keyboard export controls retain focus and protect native
+form input at 1280px”, samma titel med “390px”, “320px” och “640px”.
 
 **Steg:**
 
-1. Öppna Lista, välj Nytt objekt och skriv namn och beskrivning. Låt
-   formuläret vara oskickat med fokus i beskrivningen.
+1. Välj **Nytt objekt** och skriv namn och beskrivning. Tryck Escape
+   och **Fortsätt redigera**. Kontrollera båda värdena och fokus i
+   beskrivningen. Tryck Escape igen och välj **Kasta ändringarna och
+   fortsätt**. Det privata utkastet ska vara oförändrat.
 2. Öppna Inställningar och Fullständig export. På mobil, fäll först ut
    Välj inställning. Kontrollera att exportens fokuserade rubrik syns
    även efter att navigationen fälls ihop.
@@ -369,7 +367,8 @@ work at 1280px”, samma titel med “390px”, “320px” och “640px”.
 - Förberedelse, avbrott och hämtning lämnar fokus på nästa användbara
   exportkontroll. Ett senare eget fokusval skrivs inte över.
 - Kartans kontroller är dolda i Inställningar. Vid återgång finns namn
-  och beskrivning kvar, med fokus i beskrivningen. Ingenting är sparat.
+  och beskrivning inte kvar från det kastade formuläret. Öppna **Nytt
+  objekt** och kontrollera tomma fält. Ingenting är sparat.
 - Den hämtade filen innehåller hushållets sparade information och privata
   utkast. Oskickad text i formulär är ännu inte del av exporten.
 
@@ -423,7 +422,7 @@ private and historical content after restart”.
 ### EXPORT-11: Lämna en färdig export eller en pågående hämtning
 
 **Syfte:** Kontrollera att sidbyte avbryter exporten utan att kasta
-oskickad redigering eller erbjuda en sen fil.
+privata förslag eller erbjuda en sen fil. Oskickad text skyddas vid stängning.
 
 **Användare:** Alex som administratör.
 
@@ -435,16 +434,20 @@ serverns aktiva överföring och rensning provas separat i EXPORT-07.
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallen “EXPORT-11: leaving a ready export retires the copy and preserves
-unsent map work” och “EXPORT-11: leaving a downloading export retires the copy
-and preserves unsent map work”.
+private proposals after guarded form departure” och “EXPORT-11: leaving a
+downloading export retires the copy and preserves private proposals after
+guarded form departure”.
 
 **Steg:**
 
-1. Öppna Lista, välj Nytt objekt och skriv ett namn och en beskrivning.
-   Låt formuläret vara oskickat med fokus i beskrivningen.
+1. Välj **Nytt objekt** och skriv namn och beskrivning. Tryck Escape
+   och **Fortsätt redigera**. Kontrollera båda värdena och fokus i
+   beskrivningen. Tryck Escape igen och bekräfta **Kasta ändringarna
+   och fortsätt**. Det privata utkastet ska vara oförändrat.
 2. Öppna Inställningar och Fullständig export. Förbered en export.
 3. Välj Tillbaka till kartan innan hämtningen startar. Kontrollera att
-   formulärets namn, beskrivning och fokus finns kvar utan nedladdning.
+   det kastade formuläret är stängt och det privata utkastet finns kvar
+   utan nedladdning.
 4. Öppna Fullständig export igen. Kontrollera att ingen tidigare hämtning
    eller resultat visas. Förbered och hämta en ny export.
 5. Upprepa steg 1–4, men starta den fördröjda hämtningen innan sidbytet.
@@ -453,7 +456,8 @@ and preserves unsent map work”.
 
 **Förväntat resultat:**
 
-- Sidbytet bevarar oskickat arbete och fokus. Exporten ändrar inte kartan
+- Avbruten stängning bevarar oskickade värden och fokus; bekräftad
+  stängning kastar endast dem. Exporten ändrar inte kartan
   eller det privata utkastet och skapar inget sparande.
 - Ingen fil erbjuds efter sidbytet, inte heller när ett sent svar kommer
   fram. Den kända exportens avbrott bekräftas och samma kopia kan inte hämtas.

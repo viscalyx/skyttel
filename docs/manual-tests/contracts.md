@@ -18,17 +18,21 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Välj **Tabell** och använd radens **Redigera [objektets namn]** för att
+öppna hela objektformuläret. För samband väljer du **Samband för [namn]**
+och **Redigera samband** vid det aktuella sambandet. Nytt objekt öppnas
+från kartans verktyg. Att bara markera en rad öppnar inte ett formulär.
+
+Granska ett beständigt förslag genom **Skriv till Skyttel → Visa utkastet**
+och radens **Visa förslaget: [namn]**. Stäng fullständig läsning med krysset.
+Spara separat med utkastets sparikon och vänta på **Utkastet är sparat**.
+Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
 
 1. Starta en separat testinstallation enligt
    [provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Logga in som Alex och
    skapa ett hushåll om installationen ännu saknar ett.
-2. Börja varje fall utan förslag i **Hela mitt utkast**. Använd en ny
+2. Börja varje fall utan förslag i **Utkastet**. Använd en ny
    testinstallation vid omkörning, eller ta bort testfallets egna objekt
    genom utkastet. Bevara övriga testdata.
 
@@ -51,30 +55,37 @@ corrected after reload”.
 **Steg:**
 
 1. Välj **Nytt objekt**. Ange namnet Hyra för lägenheten och typen
-   **Hyresavtal**. Öppna **Ekonomiska uppgifter och avtalsvillkor**.
-2. Välj **Känt** för pris men lämna beloppet tomt. Försök lägga objektet
-   i utkastet. Kontrollera att prisfältet får fokus och att utkastet är
-   tomt. Ange sedan priset `9 500`.
+   **Hyresavtal**. Öppna **Ekonomiska uppgifter**.
+2. Välj **Känt** för pris men lämna beloppet tomt. Öppna
+   **Grunduppgifter** så att prisfältet döljs. Välj
+   **Lägg i utkastet och stäng**. Kontrollera att felsammanfattningen får
+   fokus och att utkastet är tomt. Välj fellänken för pris. Kontrollera
+   att **Ekonomiska uppgifter** öppnas och prisfältet får fokus. Ange
+   sedan priset `9 500`.
 3. Välj **Känt** för valuta, betalningsintervall, startdatum och
    avtalsvillkor. Ange `SEK`, `Månadsvis`, `2026-01-01` och
    `Tre månaders uppsägningstid.`. Lämna slutdatum och övriga uppgifter
    som **Ej uppgivet**.
-4. Välj **Lägg i mitt utkast** och granska pris, datum och villkor i
-   **Hela mitt utkast**. Spara hela utkastet och ladda om sidan.
-5. Sök efter `hyra`. Öppna Hyra för lägenheten och den ekonomiska delen.
-   Kontrollera pris och tomt slutdatum. Rätta priset till `9 700`.
+4. Välj **Lägg i utkastet och stäng** och granska pris, datum och villkor i
+   **Utkastet**, med **Visa förslaget: Hyra för lägenheten**. Stäng
+   läsningen, spara med sparikonen och ladda om sidan.
+5. Välj Tabell och sök efter `hyra` i **Sök objekt i tabellen**. Välj
+   **Redigera Hyra för lägenheten**, sedan **Ekonomiska uppgifter**. Kontrollera
+   pris och tomt slutdatum. Rätta priset till `9 700`.
 6. Kontrollera att hela utkastet inte kan sparas medan formuläret har
-   oskickad text. Lägg rättelsen i utkastet, granska både `9 500` och
-   `9 700` och spara hela utkastet.
+   oskickad text. Välj **Lägg i utkastet och stäng**, granska både `9 500`
+   och `9 700` och spara hela utkastet.
 7. Starta om testinstallationen och ladda om sidan. Öppna objektet igen
-   och kontrollera pris, startdatum och avtalsvillkor.
+   med radens **Redigera [objektets namn]** och **Ekonomiska uppgifter**. Kontrollera
+   pris, startdatum och avtalsvillkor.
 
 **Förväntat resultat:**
 
 - Hyresavtalet går att spara med öppna uppgifter. Ingen gissad uppgift
   visas för slutdatum, och betalningsintervallet ändrar inte objekttypen.
 - Ett pris som anges vara känt kräver ett belopp. Det tomma kända priset
-  blockerar förslaget utan att lägga någon del i utkastet.
+  blockerar hela förslaget även när avsnittet är stängt. Fellänken öppnar
+  avsnittet och fokuserar prisfältet utan att lägga någon del i utkastet.
 - Sökningen hittar avtalet. Det ursprungliga priset och rättelsen visas
   i utkastet innan hela ändringen sparas.
 - Efter omstart finns priset `9 700`, startdatumet `2026-01-01` och
@@ -100,21 +111,25 @@ incomplete meanings in forms and drafts”.
 **Steg:**
 
 1. Skapa ett objekt med namnet Familjens kreditavtal och typen
-   **Kreditavtal**. Öppna **Ekonomiska uppgifter och avtalsvillkor**.
+   **Kreditavtal**. Öppna **Ekonomiska uppgifter**.
 2. Välj **Osäkert uppgivet** för **Senast uppgiven skuld**. Ange
    `Cirka 18 000` med datumet `2026-03-01`. Välj **Känt** för
    **Beviljat kreditutrymme** och ange `50 000` med datumet `2026-03-02`.
 3. Välj **Okänt** för **Utnyttjad kredit** med datumet `2026-03-03`.
-   Välj **Uttryckligen inget** för **Slutdatum**. Lägg objektet i utkastet.
-4. Granska belopp, säkerhet och datum i **Hela mitt utkast**. Ladda om
+   Välj **Uttryckligen inget** för **Slutdatum**. Välj
+   **Lägg i utkastet och stäng**.
+4. Granska belopp, säkerhet och datum i **Utkastet**, genom
+   **Visa förslaget: Familjens kreditavtal**. Stäng läsningen. Ladda om
    sidan och kontrollera att det osäkra beloppet är kvar. Spara utkastet.
-5. Starta om testinstallationen, ladda om sidan och öppna objektet.
+5. Starta om testinstallationen och ladda om sidan. Öppna objektets
+   uppgifter, välj radens **Redigera [objektets namn]** och **Ekonomiska uppgifter**.
    Kontrollera varje belopp, säkerhetsval och datum i formuläret.
 6. Komplettera utnyttjad kredit med **Känt**, `12 000` och `2026-03-04`.
    Ändra skulden till **Okänt**, rensa kreditutrymmets datum och ändra
-   slutdatum till **Ej uppgivet**. Lägg rättelsen i utkastet och granska
-   den okända skulden och den kända utnyttjade krediten.
-7. Spara hela utkastet, ladda om sidan och öppna objektet igen.
+   slutdatum till **Ej uppgivet**. Välj **Lägg i utkastet och stäng** och
+   granska den okända skulden och den kända utnyttjade krediten.
+7. Spara hela utkastet och ladda om sidan. Öppna objektets uppgifter,
+   välj radens **Redigera [objektets namn]** och **Ekonomiska uppgifter** igen.
 
 **Förväntat resultat:**
 
@@ -164,7 +179,8 @@ correction and history”.
 - Noll är ett känt värde, skilt från okänt och uttryckligen inget.
 - Integrationstestet kontrollerar även historikens båda sparanden via
   den publika HTTP-ingången: ursprungliga värden, rättelsen, stabil
-  objektidentitet, sparande användare och tidpunkt bevaras.
+  objektidentitet, sparande användare och tidpunkt bevaras. Historiken
+  visar rättelsen först och det ursprungliga sparandet därefter.
 
 ### AVTAL-05: Avtalens roller och identiteter bevaras vid rättelse
 

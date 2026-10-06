@@ -25,8 +25,7 @@
   padding: 12px 24px 0;
 }
 /* The shared viewport mode, rather than status word length, chooses placement. */
-.household-map.workspace-shell[data-narrow="false"]:not(.workspace-open):has(.voice-box)
-.workspace-feedback {
+.household-map.workspace-shell[data-narrow="false"]:has(.voice-box) .workspace-feedback {
   top: 72px;
 }
 .household-map.workspace-shell[data-narrow="true"] .conversation-corner {

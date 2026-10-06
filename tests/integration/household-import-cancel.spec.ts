@@ -1,7 +1,7 @@
 import { chmodSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openNewObject, openSettings, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 async function prepareReview(page: Page, path: string, archive: Buffer) {
@@ -93,10 +93,18 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
     expect(before.objects).toEqual([expect.objectContaining({ name: 'Senare namn' })]);
     expect(before.draft.changes).toHaveLength(1);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    const unsent = page.getByLabel('Objektets namn');
+    await openNewObject(page);
+    const unsent = page.getByLabel('Namn', { exact: true });
     await unsent.fill('Oskickat arbete under avbrottet');
+    await page.keyboard.press('Escape');
+    const leave = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+    await leave.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await expect(unsent).toHaveValue('Oskickat arbete under avbrottet');
+    expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    await page.keyboard.press('Escape');
+    await leave
+      .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+      .click();
     await openSettings(page);
     await page.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
     const importer = page.getByRole('region', { name: 'Återimportera hushållet', exact: true });
@@ -141,7 +149,7 @@ test('IMPORT-16: an administrator explicitly cancels only an unconfirmed prepara
     ).toBe(404);
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await expect(unsent).toHaveValue('Oskickat arbete under avbrottet');
+    await expect(unsent).toHaveCount(0);
     await openSettings(page);
     await page.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();
     await page.reload();

@@ -2,7 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState, ObjectType, RelationshipType, SaveReceipt } from '../../src/shared/map.js';
 import type { TextAssistantReview } from '../../src/shared/text-assistant.js';
-import { signIn, utilityButton } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  openNewObject,
+  openTable,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
 import {
   chooseConversationVoice,
   microphoneButton,
@@ -12,6 +19,12 @@ import {
   turnMicrophoneOn,
   voiceBox,
 } from '../support/conversation-page.js';
+import {
+  editTableObject,
+  openObjectRelationships,
+  readDraftProposal,
+  readTableObject,
+} from '../support/domain-work.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -27,18 +40,6 @@ function required<T>(value: T | undefined): T {
   if (value === undefined)
     throw new Error('The actual response must contain the requested family value');
   return value;
-}
-
-// Retained free panels can cover the toolbar when the conversation grows.
-// Navigate with the real toolbar buttons' keyboard actions without closing work.
-async function openWorkspace(page: Page) {
-  await (await utilityButton(page, 'Lista')).press('Enter');
-}
-
-async function activatePanel(page: Page, title: string) {
-  await openWorkspace(page);
-  await page.getByRole('button', { name: `Uppgifter för ${title}`, exact: true }).click();
-  await expect(page.getByRole('region', { name: title, exact: true })).toBeVisible();
 }
 
 async function loseGraphics(page: Page) {
@@ -223,10 +224,9 @@ for (const mode of ['voice', 'text'] as const) {
       ).toBe(200);
       await member.goto(app.origin);
       if (mode === 'text') await loseGraphics(member);
-      await openWorkspace(member);
-      await member.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-      await member.getByLabel('Objektets namn').fill('Robins notering');
-      await member.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await openNewObject(member);
+      await member.getByLabel('Namn', { exact: true }).fill('Robins notering');
+      await member.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       const robinPrivate = (await readMember()).draft;
       expect(robinPrivate.changes).toHaveLength(1);
       expect((await read()).draft.changes).toEqual([]);
@@ -295,19 +295,14 @@ for (const mode of ['voice', 'text'] as const) {
       expect((await readMember()).draft).toEqual(robinPrivate);
 
       // 5. Correct the staged financial values, then retain independent dirty text.
-      await openWorkspace(page);
-      const objects = page.getByRole('list', { name: 'Objekt', exact: true });
-      await objects
-        .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
-        .click();
-      const subscription = page.getByRole('region', { name: 'Familjens Molnmusik', exact: true });
-      await subscription.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await subscription
-        .getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true })
-        .click();
-      await subscription.getByLabel('Pris', { exact: true }).fill('189');
-      await subscription.getByLabel('Beskrivning', { exact: true }).fill('Rättad för hand');
-      const correction = page.waitForResponse(`${path}/draft`);
+      await closeTextView(page);
+      await editTableObject(page, 'Familjens Molnmusik');
+      const form = page.locator('dialog.object-dialog-C');
+      await form.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+      await form.getByLabel('Pris', { exact: true }).fill('189');
+      await form.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+      await form.getByLabel('Beskrivning', { exact: true }).fill('Rättad för hand');
+      const correction = page.waitForResponse(`${path}/object-form`);
       const correctionDraft = correction.then(
         (response) => response.json() as Promise<MapState['draft']>,
       );
@@ -337,32 +332,41 @@ for (const mode of ['voice', 'text'] as const) {
         },
         { timeout: 5000 },
       );
-      await subscription.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       expect((await correction).status()).toBe(200);
       const refreshedMap = await correctedMap;
       expect(refreshedMap.status()).toBe(200);
       await refreshedMap.finished();
       await expect(
-        page.getByRole('region', { name: 'Lista och utkast' }).getByRole('status'),
-      ).toHaveText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
-      await expect(subscription).not.toBeVisible();
-      await openWorkspace(page);
-      await objects
-        .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
+        page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
+      ).toHaveText('Ändringen finns i ditt utkast. Kartan sparas separat.');
+      await expect(form).not.toBeVisible();
+      const subscription = await readTableObject(page, 'Familjens Molnmusik');
+      await expect(subscription).toContainText('Rättad för hand');
+      await closeSupportDialog(page, 'Uppgifter för Familjens Molnmusik');
+      const person = await readTableObject(page, 'Kim Exempel');
+      await expect(
+        person.getByRole('heading', { name: 'Uppgifter för Kim Exempel', exact: true }),
+      ).toBeFocused();
+      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
+      await editTableObject(page, 'Kim Exempel');
+      await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Kim');
+      await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+      const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+      await expect(
+        loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue('Oskickat om Kim');
+      await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+      await loss
+        .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
         .click();
-      await openWorkspace(page);
-      await objects.getByRole('button', { name: 'Uppgifter för Kim Exempel', exact: true }).click();
-      const person = page.getByRole('region', { name: 'Kim Exempel', exact: true });
-      await expect(person.getByRole('heading', { name: 'Kim Exempel', exact: true })).toBeFocused();
-      await person.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await person.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Kim');
-      await person.getByRole('button', { name: 'Stäng Kim Exempel', exact: true }).click();
-      await openWorkspace(page);
-      await objects.getByRole('button', { name: 'Uppgifter för Kim Exempel', exact: true }).click();
+      await expect(form).not.toBeVisible();
+      await readTableObject(page, 'Kim Exempel');
       await expect(person).toHaveCount(1);
-      await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Oskickat om Kim',
-      );
+      await expect(person).not.toContainText('Oskickat om Kim');
+      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
       const corrected = await read();
       const expectedFacts = {
         price: { knowledge: 'known', value: '189' },
@@ -377,6 +381,20 @@ for (const mode of ['voice', 'text'] as const) {
       expect(corrected.draft.changes.find(({ id }) => id === personId)?.after?.description).toBe(
         '',
       );
+
+      for (const name of [
+        'Familjens Molnmusik',
+        'Kim Exempel',
+        'Kim Exempel → Betalar → Familjens Molnmusik',
+      ]) {
+        const proposal = await readDraftProposal(page, name);
+        await expect(proposal.locator('input, select, textarea')).toHaveCount(0);
+        if (name === 'Familjens Molnmusik')
+          for (const value of ['Rättad för hand', '189', 'SEK', 'månad'])
+            await expect(proposal).toContainText(value);
+        await closeSupportDialog(page, name);
+      }
+      expect(await read()).toEqual(corrected);
 
       // 6. Settings hides work, retains its exact values and keeps the same microphone.
       await openConversationText(page);
@@ -446,16 +464,21 @@ for (const mode of ['voice', 'text'] as const) {
         });
       }
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await activatePanel(page, 'Familjens Molnmusik');
+      await readTableObject(page, 'Familjens Molnmusik');
       await expect(
-        subscription.getByRole('heading', { name: 'Familjens Molnmusik', exact: true }),
+        subscription.getByRole('heading', {
+          name: 'Uppgifter för Familjens Molnmusik',
+          exact: true,
+        }),
       ).toBeFocused();
       await expect(subscription).toContainText('Rättad för hand');
-      await activatePanel(page, 'Kim Exempel');
-      await expect(person.getByRole('heading', { name: 'Kim Exempel', exact: true })).toBeFocused();
-      await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Oskickat om Kim',
-      );
+      await closeSupportDialog(page, 'Uppgifter för Familjens Molnmusik');
+      await readTableObject(page, 'Kim Exempel');
+      await expect(
+        person.getByRole('heading', { name: 'Uppgifter för Kim Exempel', exact: true }),
+      ).toBeFocused();
+      await expect(person).not.toContainText('Oskickat om Kim');
+      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
       await openConversationText(page);
       await expect(message).toBeVisible();
       await expect(message).toHaveValue('Oskickat i samtalet');
@@ -474,26 +497,29 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(assistant.getByRole('region', { name: 'Utkastets återkoppling' })).toHaveCount(
         0,
       );
-      await expect(page.getByRole('region', { name: 'Kartans status' })).toContainText(
+      await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
         'Utkastet är sparat',
       );
-      await (await utilityButton(page, 'Utkast och historik')).press('Enter');
-      const savedReceipts = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
-      await savedReceipts.getByText('Tidigare sparförsök', { exact: true }).click();
+      await (await utilityButton(page, 'Rapporter')).press('Enter');
+      const savedReceipts = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
       await expect(savedReceipts).toBeVisible();
-      await savedReceipts.getByText('Visa kvittot', { exact: true }).first().click();
+      await savedReceipts.getByText('Visa ändringarna', { exact: true }).first().click();
       await expect(savedReceipts).toContainText('Familjens Molnmusik');
-      await activatePanel(page, 'Kim Exempel');
-      await expect(person.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-        'Oskickat om Kim',
-      );
-      await openConversationText(page);
       const receipts = await history();
       expect(receipts).toHaveLength(1);
       const receipt = receipts[0];
       // The server owns the durable operation identity; model-supplied IDs are not authority.
       const operationId = receipt.operationId;
       await expect(savedReceipts).toContainText(operationId);
+      await page
+        .getByRole('region', { name: 'Rapporter', exact: true })
+        .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
+        .click();
+      await closeTextView(page);
+      await readTableObject(page, 'Kim Exempel');
+      await expect(person).not.toContainText('Oskickat om Kim');
+      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
+      await openConversationText(page);
       expect(receipt).toMatchObject({
         operationId,
         userId: identity.user.id,
@@ -567,8 +593,7 @@ for (const mode of ['voice', 'text'] as const) {
       );
       expect(await history()).toEqual([receipt]);
       expect(await read()).toEqual(saved);
-      await openWorkspace(page);
-      await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+      await (await utilityButton(page, 'Rapporter')).click();
       const savedHistory = page.getByRole('region', { name: 'Ändringshistorik' });
       const savedGroup = savedHistory
         .getByRole('article')
@@ -584,40 +609,34 @@ for (const mode of ['voice', 'text'] as const) {
         'Betalar',
       ])
         await expect(savedGroup).toContainText(value);
-      await openWorkspace(page);
-      await objects
-        .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
+      await page
+        .getByRole('region', { name: 'Rapporter', exact: true })
+        .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
         .click();
-      await subscription.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await subscription.getByLabel('Beskrivning', { exact: true }).fill('Alex privat efteråt');
-      await subscription.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+      await editTableObject(page, 'Familjens Molnmusik');
+      await form.getByLabel('Beskrivning', { exact: true }).fill('Alex privat efteråt');
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await member.reload();
       if (mode === 'text') await loseGraphics(member);
-      await openWorkspace(member);
-      const memberObjects = member.getByRole('list', { name: 'Objekt', exact: true });
+      await openTable(member);
+      const memberObjects = member.getByRole('region', { name: 'Hushållets tabell', exact: true });
       for (const name of ['Familjens Molnmusik', 'Kim Exempel', 'Robins notering'])
-        await expect(
-          memberObjects.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }),
-        ).toBeVisible();
-      await memberObjects
-        .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
-        .click();
-      const memberSubscription = member.getByRole('region', {
-        name: 'Familjens Molnmusik',
-        exact: true,
-      });
+        await expect(memberObjects.getByRole('button', { name, exact: true })).toBeVisible();
+      const memberSubscription = await readTableObject(member, 'Familjens Molnmusik');
       await expect(memberSubscription).toContainText('Rättad för hand');
-      for (const value of ['Pris: 189', 'Valuta: SEK', 'Betalningsintervall: månad'])
-        await expect(memberSubscription.getByText(value, { exact: true })).toBeVisible();
+      for (const value of ['189', 'SEK', 'månad'])
+        await expect(memberSubscription).toContainText(value);
       await expect(memberSubscription).not.toContainText('Alex privat efteråt');
-      await openWorkspace(member);
+      await closeSupportDialog(member, 'Uppgifter för Familjens Molnmusik');
+      const memberRelationships = await openObjectRelationships(member, 'Kim Exempel');
       await expect(
-        member.getByRole('list', { name: 'Samband', exact: true }).getByRole('button', {
+        memberRelationships.getByRole('heading', {
           name: 'Kim Exempel → Betalar → Familjens Molnmusik',
           exact: true,
         }),
       ).toBeVisible();
-      await member.getByRole('button', { name: 'Visa historik', exact: true }).click();
+      await closeSupportDialog(member, 'Samband för Kim Exempel');
+      await (await utilityButton(member, 'Rapporter')).click();
       const memberHistory = member
         .getByRole('region', { name: 'Ändringshistorik' })
         .getByRole('article')

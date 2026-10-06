@@ -48,9 +48,6 @@ export interface ObjectTypeChange {
   id: string;
   before: ObjectType | null;
   after: ObjectType | null;
-  restoreRevision?: number;
-  undo?: true;
-  undoFields?: string[];
 }
 export type CustomValues = Record<string, string | number | boolean>;
 export function compatibleCustomFields(
@@ -73,9 +70,17 @@ export interface RelationshipTypeChange {
   id: string;
   before: RelationshipType | null;
   after: RelationshipType | null;
-  restoreRevision?: number;
-  undo?: true;
-  undoFields?: string[];
+}
+/** Private authority granted only by explicitly reviewing the actual removed definition. */
+export interface DefinitionRestoration<T extends TypeDefinition> {
+  contentVersion: number;
+  definition: T;
+}
+export interface DraftObjectTypeChange extends ObjectTypeChange {
+  restoration?: DefinitionRestoration<ObjectType>;
+}
+export interface DraftRelationshipTypeChange extends RelationshipTypeChange {
+  restoration?: DefinitionRestoration<RelationshipType>;
 }
 
 export interface ObjectValue {
@@ -95,15 +100,14 @@ export interface MapObject extends ObjectValue {
   revision: number;
 }
 export interface DraftChange {
+  proposedAt?: string;
+  /** Private identifier of a complete object-form staging attempt. */
+  stagingId?: string;
   id: string;
   before: MapObject | null;
   after: ObjectValue | null;
   type: ObjectType;
   beforeType?: ObjectType;
-  restoreRevision?: number;
-  undo?: true;
-  undoFields?: string[];
-  merge?: ObjectMerge;
 }
 export interface ObjectMerge {
   survivorId: string;
@@ -114,16 +118,14 @@ export interface ObjectMerge {
   relationships: MapRelationship[];
   relationshipTypes: RelationshipType[];
   objectNames: Record<string, string>;
-  previousChanges: DraftChange[];
-  previousRelationships: DraftRelationshipChange[];
   imageCopy?: { sourceObjectId: string; sourceImageId: string; copiedImageId: string };
 }
 export interface MapDraft {
   version: number;
   changes: DraftChange[];
   relationships?: DraftRelationshipChange[];
-  objectTypes?: ObjectTypeChange[];
-  relationshipTypes?: RelationshipTypeChange[];
+  objectTypes?: DraftObjectTypeChange[];
+  relationshipTypes?: DraftRelationshipTypeChange[];
 }
 export function draftChangeCount(draft?: MapDraft) {
   return draft
@@ -133,11 +135,19 @@ export function draftChangeCount(draft?: MapDraft) {
         (draft.relationshipTypes?.length ?? 0)
     : 0;
 }
+export interface ConflictActor {
+  name: string;
+  savedAt: string;
+}
 export interface MapState {
+  removedDefinitions?: { objectTypes: ObjectType[]; relationshipTypes: RelationshipType[] };
+  conflictActors?: Record<string, ConflictActor>;
+  conflictPropertyActors?: Record<string, Record<string, ConflictActor>>;
   userId: string;
   contentVersion: number;
   types: ObjectType[];
   objects: MapObject[];
+  removedObjects?: { object: MapObject; type?: ObjectType }[];
   relationshipTypes: RelationshipType[];
   relationships: MapRelationship[];
   draft: MapDraft;
@@ -158,7 +168,7 @@ export interface SaveReceipt {
     after: MapObject | null;
     type: ObjectType;
     beforeType?: ObjectType;
-    merge?: Omit<ObjectMerge, 'previousChanges' | 'previousRelationships'>;
+    merge?: ObjectMerge;
   }[];
 }
 
@@ -193,6 +203,7 @@ export interface MapRelationship extends RelationshipValue {
   revision: number;
 }
 export interface RelationshipChange {
+  proposedAt?: string;
   id: string;
   before: MapRelationship | null;
   after: RelationshipValue | null;
@@ -203,9 +214,6 @@ export interface RelationshipChange {
 export interface DraftRelationshipChange extends RelationshipChange {
   // Object deletions that require this generated relationship deletion.
   removedWithObjects?: string[];
-  restoreRevision?: number;
-  undo?: true;
-  undoFields?: string[];
 }
 export interface SavedRelationshipChange extends RelationshipChange {
   after: MapRelationship | null;

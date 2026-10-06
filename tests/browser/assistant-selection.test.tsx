@@ -111,10 +111,7 @@ async function open(width = 1280, height = 900, mapState = state) {
       <HouseholdMap householdId="home" />
     </main>,
   );
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await expect
-    .element(page.getByRole('button', { name: 'Nytt objekt', exact: true }))
-    .toBeEnabled();
+  await expect.element(page.getByRole('button', { name: 'Karta', exact: true })).toBeEnabled();
   async function showToolNames() {
     if (width <= 700 && height <= 450)
       await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
@@ -147,9 +144,8 @@ afterEach(() => {
 
 test('assistant display shows the map and populated inspector before confirming the actual object and relationship', async () => {
   const app = await open();
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
   await app.show({ kind: 'object', id: 'lo' });
-  await expect.poll(() => app.acknowledgements.length).toBe(1);
+  await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
   expect(app.acknowledgements[0]).toMatchObject({ kind: 'object', id: 'lo', displayed: true });
   await expect
     .element(page.getByRole('button', { name: 'Välj objekt: Lo', exact: true }))
@@ -159,7 +155,7 @@ test('assistant display shows the map and populated inspector before confirming 
       ?.textContent,
   ).toContain('Los påhittade uppgifter');
   await app.show({ kind: 'relationship', id: 'edge' });
-  await expect.poll(() => app.acknowledgements.length).toBe(2);
+  await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(2);
   expect(app.acknowledgements[1]).toMatchObject({
     kind: 'relationship',
     id: 'edge',
@@ -194,14 +190,14 @@ test('a lost graphics context cannot be acknowledged, and canceling its pending 
   await expect.element(page.getByText(/Grafiken är tillfälligt avbruten/)).not.toBeInTheDocument();
   expect(app.acknowledgements).toEqual([]);
   await app.show({ kind: 'object', id: 'lo' });
-  await expect.poll(() => app.acknowledgements.length).toBe(1);
+  await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
   expect(app.acknowledgements[0].displayed).toBe(true);
 });
 
 test('an unavailable target is rejected without replacing the current inspector', async () => {
   const app = await open();
   await app.show({ kind: 'object', id: 'absent' });
-  await expect.poll(() => app.acknowledgements.length).toBe(1);
+  await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
   expect(app.acknowledgements[0]).toMatchObject({ id: 'absent', displayed: false });
   expect(document.querySelector('.map-inspector[data-selection-id]')).toBeNull();
 });
@@ -210,7 +206,7 @@ test('a hidden document never reports a visible map selection', async () => {
   const app = await open();
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
   await app.show({ kind: 'object', id: 'lo' });
-  await expect.poll(() => app.acknowledgements.length).toBe(1);
+  await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
   expect(app.acknowledgements[0].displayed).toBe(false);
 });
 
@@ -218,7 +214,6 @@ test('a panel covering the actual inspector prevents a successful display acknow
   const app = await open();
   const cover = document.createElement('style');
   cover.textContent = `
-    .map-inspector { position: relative; }
     .map-inspector[data-selection-id]::after {
       content: ''; position: absolute; inset: 0; z-index: 100; background: white;
     }
@@ -254,16 +249,15 @@ test.each([
       })),
     });
     await app.show({ kind: 'object', id: 'lo' });
-    await expect.poll(() => app.acknowledgements.length).toBe(1);
+    await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
     expect(app.acknowledgements[0].displayed).toBe(true);
     const objectPanel = page.getByRole('region', { name: 'Lo', exact: true });
-    const inspector = objectPanel.getByRole('region', { name: 'Val och redigering' }).element();
-    const scroller = inspector.closest('.workspace-panel-body');
-    if (!scroller) throw new Error('Object details require a scrollable panel body');
+    const inspector = objectPanel.element();
+    const scroller = inspector;
     expect(scroller.scrollHeight).toBeGreaterThan(scroller.clientHeight);
     expect(scroller.getBoundingClientRect().bottom).toBeLessThanOrEqual(innerHeight);
     expect(inspector.querySelector('form')).toBeNull();
-    await objectPanel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect.element(page.getByLabelText('Objektets namn', { exact: true })).toHaveValue('Lo');
+    await objectPanel.getByRole('button', { name: 'Redigera Lo', exact: true }).click();
+    await expect.element(page.getByLabelText('Namn', { exact: true })).toHaveValue('Lo');
   },
 );

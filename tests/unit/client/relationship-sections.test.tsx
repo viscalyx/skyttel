@@ -1,8 +1,12 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
+import {
+  openConflictReview,
+  renderHouseholdWork,
+  saveHouseholdDraft,
+} from '../../support/native-household-unit.js';
 import { applicationFixture } from '../server/fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -11,6 +15,18 @@ let householdId: string;
 let path: string;
 const read = async (): Promise<MapState> => (await client.request(path)).json();
 beforeEach(async () => {
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+    configurable: true,
+    value(this: HTMLDialogElement) {
+      this.open = true;
+    },
+  });
+  Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+    configurable: true,
+    value(this: HTMLDialogElement) {
+      this.open = false;
+    },
+  });
   fixture = await applicationFixture();
   client = fixture.client();
   await client.signIn();
@@ -27,11 +43,12 @@ beforeEach(async () => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
   fixture.close();
 });
 async function open() {
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  renderHouseholdWork(householdId);
   await userEvent.click(await screen.findByRole('button', { name: 'Ny sambandstyp' }));
   const editor = within(screen.getByRole('group', { name: 'Sambandstypens definition' }));
   await userEvent.type(editor.getByLabelText('Sambandstypens namn'), 'Förvaring');
@@ -128,20 +145,21 @@ test('the visible relationship conflict preview matches saved independent sectio
     },
   });
   await other.json(`${path}/save`, { version: 1, operationId: 'other' });
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  const heading = await screen.findByText('Mitt förslag med oberoende rättelser bevarade');
-  const preview = heading.nextElementSibling;
-  expect(preview?.parentElement?.textContent).toContain('Avsnitt: Uppgifter → Underhåll');
-  expect(preview?.parentElement?.textContent).toContain('Anteckning: Text · Underhåll');
-  await userEvent.click(screen.getByRole('button', { name: 'Behåll min sambandstyp' }));
-  await waitFor(() => expect(screen.queryByText('Konflikt: sparad sambandstyp')).toBeNull());
+  renderHouseholdWork(householdId);
+  const dialog = await openConflictReview();
+  await userEvent.click(dialog.getByRole('button', { name: /^Egna fält: Ditt förslag/ }));
+  await userEvent.click(dialog.getByRole('button', { name: /^Avsnitt: Sparat i kartan nu/ }));
+  const preview = dialog.getByRole('region', { name: 'Resultat av valen' });
+  expect(preview.textContent).toContain('Underhåll');
+  expect(preview.textContent).toContain('Anteckning');
+  await userEvent.click(dialog.getByRole('button', { name: 'Lägg valen i utkastet' }));
+  await waitFor(() => expect(dialog.getByRole('status').textContent).toContain('Valen finns'));
+  await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
   expect((await read()).draft.relationshipTypes?.[0].after).toMatchObject({
     sections: [definition.sections[0], { id: 'service', name: 'Underhåll' }],
     fields: [{ ...definition.fields[0], sectionId: 'service' }],
   });
-  await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
-  await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/^Sparat:/));
+  await saveHouseholdDraft();
   expect((await read()).relationshipTypes.find(({ id }) => id === 'storage')).toMatchObject({
     sections: [definition.sections[0], { id: 'service', name: 'Underhåll' }],
     fields: [{ ...definition.fields[0], sectionId: 'service' }],

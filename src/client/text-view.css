@@ -377,10 +377,6 @@
   :is(.workspace-feedback, .workspace-voice-controls) {
   right: calc(24px + var(--text-view-space));
 }
-.household-map.workspace-shell[data-narrow="false"].text-view-open:not(.workspace-open)
-  .workspace-feedback {
-  max-width: min(360px, calc(100vw - 136px - var(--text-view-space)));
-}
 
 .household-map.workspace-shell[data-wide-touch="true"].text-view-open {
   --text-view-space: 400px;
@@ -393,12 +389,6 @@
 }
 .household-map.workspace-shell[data-short="true"][data-wide-touch="true"] .workspace-tools {
   top: calc(var(--work-offset, 0px) + 12px);
-}
-
-/* The panels wait behind a text view that fills a narrow screen. */
-.household-map.workspace-shell.workspace-open.text-view-open:not(.workspace-revealing)
-.workspace-windows[hidden] {
-  display: none;
 }
 
 /* Narrow text fills the visible viewport, without reserving a voice row above

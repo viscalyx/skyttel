@@ -5,7 +5,7 @@ import { applicationFixture } from './fixture.js';
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
 afterEach(() => fixture?.close());
 
-test('a new content generation rejects every old mutation while retaining history for fresh-context undo', async () => {
+test('a new content generation rejects every old mutation while retaining history for reading', async () => {
   fixture = await applicationFixture();
   const client = fixture.client();
   await client.signIn();
@@ -34,12 +34,10 @@ test('a new content generation rejects every old mutation while retaining histor
   expect(current.draft.version).toBe(2);
   for (const [route, body] of [
     ['draft', { ...proposal, version: 2 }],
-    ['merge', { version: 2 }],
     ['object-type', { version: 2 }],
     ['relationship', { version: 2 }],
     ['relationship-type', { version: 2 }],
     ['resolve', { version: 2 }],
-    ['undo', { version: 2, userId: receipt.userId, operationId: receipt.operationId }],
     ['discard-change', { version: 2, kind: 'object', id: 'retained' }],
     ['discard', { version: 2 }],
     ['save', { version: 2, operationId: 'old-save' }],
@@ -60,16 +58,6 @@ test('a new content generation rejects every old mutation while retaining histor
       })
     ).status,
   ).toBe(409);
-  expect(
-    (
-      await client.json(`${path}/undo`, {
-        version: 2,
-        contentVersion: 2,
-        userId: receipt.userId,
-        operationId: receipt.operationId,
-      })
-    ).status,
-  ).toBe(200);
 });
 
 test('a durable prepared maintenance gate blocks household reads, images, writes and exports without changing access', async () => {

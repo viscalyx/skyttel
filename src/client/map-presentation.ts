@@ -26,6 +26,7 @@ export function mapConnections(
   draft: MapDraft,
   objects: Map<string, MapObject>,
   relationships: Map<string, MapRelationship>,
+  previousIds?: ReadonlySet<string>,
 ) {
   const changes = new Map((draft.relationships ?? []).map((change) => [change.id, change]));
   const current = [...relationships.values()].map((edge) => ({
@@ -36,7 +37,7 @@ export function mapConnections(
       : proposalKind(changes.get(edge.id)),
   }));
   const previous = (draft.relationships ?? []).flatMap((change) =>
-    replacesConnection(change) && change.before
+    replacesConnection(change) && change.before && (!previousIds || previousIds.has(change.id))
       ? [{ edge: change.before, previous: true, kind: 'removed' as const }]
       : [],
   );
@@ -50,12 +51,13 @@ export function mapLegendKinds(
   objects: Map<string, MapObject>,
   relationships: Map<string, MapRelationship>,
   selectedIds: string[],
+  previousIds?: ReadonlySet<string>,
 ) {
   const kinds = new Set<ProposalKind | 'selection' | 'connector'>();
   for (const change of draft.changes) {
     if (objects.has(change.id)) kinds.add(proposalKind(change));
   }
-  const connections = mapConnections(draft, objects, relationships);
+  const connections = mapConnections(draft, objects, relationships, previousIds);
   for (const { kind } of connections) if (kind !== 'existing') kinds.add(kind);
   if (selectedIds.some((id) => objects.has(id))) kinds.add('selection');
   // Every eligible name/relationship label has a dotted connector. Camera

@@ -17,11 +17,21 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+För att ändra ett samband, öppna **Tabell**, välj **Samband för** objektet
+och **Redigera samband** vid den aktuella kopplingen. Välj **Nytt samband**
+i samma dialog för ett tillägg. Objekt som saknas skapas separat med
+**Nytt objekt**. **Lägg i utkastet** skickar hela sambandsformuläret och
+lämnar dialogen öppen. Välj **Stäng samband** innan du sparar utkastet
+eller fortsätter med annat arbete.
+
+Definitioner öppnas genom **Inställningar → Typer och egna fält**.
+Välj **Tillbaka till kartan** före sambandsarbete och granskning.
+Granska hela utkastet genom **Skriv till Skyttel → Visa utkastet** och
+öppna **Visa förslaget: [namn]** för kompletta definitioner och värden.
+Stäng läsningen med krysset. Spara separat med utkastets sparikon och vänta
+på **Utkastet är sparat**. Stäng textvyn före fortsatt arbete i Tabell.
+En läsande sambandsöversikt stängs med krysset; **Stäng samband** hör till
+sambandsarbetet efter tillägg och redigering.
 
 1. Starta appen enligt
    [provförberedelsen](../development/devcontainer.md#disposable-local-database)
@@ -83,17 +93,18 @@ objects and edit the shared definition”.
 **Steg:**
 
 1. Skapa Förvaring med benämningarna och beskrivningen i STY-01.
-2. Öppna Nytt samband och välj cykeln samt garaget. Prova att lägga
+2. Öppna cykelns sambandsdialog, välj Nytt samband och garaget. Prova att lägga
    kopplingen i utkastet utan typ. Välj sedan Förvaring och lägg till.
-3. Granska definition och koppling tillsammans. Prova ett identiskt
+3. Öppna utkastets fullständiga definitionsläsning och läs båda
+   benämningarna. Stäng läsningen och textvyn. Prova ett identiskt
    tillägg i samma utkast och läs beskedet med cykelns och garagets namn.
-   Spara hela utkastet och ladda om. Öppna cykeln och välj
-   **Visa samband i listan**. Läs cykelns benämning, stäng cykelns
-   formulär och öppna garaget.
-4. Välj **Visa samband i listan** även från garaget. Läs och klicka på
-   garagets benämning och välj **Redigera valt samband**.
+   Välj **Avbryt redigeringen** och bekräfta att bara den oskickade
+   dubblettinmatningen kastas. Stäng sambandsdialogen, spara hela utkastet
+   och ladda om. Öppna **Samband för Alex blå cykel** i Tabell. Läs
+   cykelns benämning, stäng dialogen och öppna **Samband för Garaget**.
+4. Läs garagets benämning och välj **Redigera samband**.
    Kontrollera att startobjektet fortfarande är cykeln och målobjektet
-   garaget. Stäng sambandsformuläret.
+   garaget. Välj **Avbryt redigeringen** och stäng översikten med krysset.
 5. Ändra typens namn till Plats, beskrivningen till Hushållets
    förvaringsplatser och startbenämningen till finns i. Granska skillnaden,
    spara och ladda om. Läs kartans samband via HTTP.
@@ -125,7 +136,9 @@ and household boundaries stay protected”.
 1. Lo lägger Förvaring i sitt utkast. Alex laddar om och läser kartan.
    Lo sparar, varefter Alex laddar om igen.
 2. Lo ändrar en förifylld typ till Redigerad förifylld typ och anger båda
-   benämningarna. Spara, ladda om och öppna Nytt samband.
+   benämningarna. Spara och ladda om. Skapa **Medlemmens cykel** separat
+   och lägg objektet i utkastet. Öppna dess sambandsdialog och
+   **Nytt samband**. Kontrollera typens namn och stäng utan tillägg.
 3. Alex skapar och sparar en separat typ som också heter Förvaring.
 4. Kopiera Alex vanliga typbegäran i nätverkspanelen. Prova tomt namn,
    tom benämning från respektive håll och ogiltiga `fields: null` i
@@ -163,8 +176,10 @@ resolution preserves independent edits”.
    till rymmer. Lo sparar före Alex.
 3. Alex försöker spara. Hämta aktuellt underlag och läs konflikten.
    Kontrollera att inga av Alex objekt sparas och att utkastet finns kvar.
-4. Välj Behåll min sambandstyp. Kontrollera den bevarade beskrivningen
-   och att objekten fortfarande är privata. Ge ett nytt sparbesked.
+4. Öppna **Granska konflikter**. Välj eget typnamn Plats och egen
+   målbenämning har, men den sparade beskrivningen Los nya förklaring.
+   Välj **Lägg valen i utkastet** och stäng med Escape. Kontrollera att
+   objekten fortfarande är privata och spara sedan hela utkastet.
 5. Starta om och läs kartan samt historiken via HTTP.
 
 **Förväntat resultat:**
@@ -201,8 +216,13 @@ identity and reject every partial write”.
    cykeln till förrådet. Lo lägger samma samband i sitt eget utkast och
    sparar först. Alex försöker sedan spara hela utkastet.
 5. Kontrollera att inget av Alex förslag sparas. Hämta aktuellt underlag,
-   välj Använd sparat värde för dubbletten och spara återstående förslag.
-   Läs kartan och historiken via HTTP.
+   öppna **Granska konflikter** och läs dubbletten utan egenskapsval.
+   Stäng med Escape och kontrollera att utkastet är oförändrat.
+   Öppna igen och välj **Ta bort sambandet ur ditt utkast**.
+   Kontrollera att typnamnsförslaget, det oberoende objektförslaget och
+   Los sparade samband finns kvar samt att historiken är oförändrad.
+   Spara återstående förslag separat från
+   **Skriv till Skyttel → Visa utkastet**. Läs kartan och historiken via HTTP.
 
 **Förväntat resultat:**
 
@@ -238,10 +258,13 @@ definitions, editing and durable save at 390px”.
    på det nya fältets namn. Lägg definitionen i utkastet.
 3. Skapa ett samband från Cykeln till Garaget med Förvaring. Ange
    Låst skåp, 0, 2026-09-27 och Nej. Lämna Obesvarat utan svar.
-4. Lägg sambandet i utkastet, läs värdena och spara hela utkastet.
+4. Lägg sambandet i utkastet med tangentbordet, välj **Stäng samband**,
+   öppna **Utkastet → Visa förslaget: Cykeln → förvaras i → Garaget**
+   och läs värdena. Stäng läsningen och spara med sparikonen.
    Starta om testinstallationen och ladda om sidan.
-5. Välj sambandet i listan och öppna Redigera valt samband. Kontrollera
-   samtliga svar. Ändra Anteckning till Övre hyllan och spara utkastet.
+5. Öppna **Samband för Cykeln** i Tabell och välj **Redigera samband**.
+   Kontrollera samtliga svar. Ändra Anteckning till Övre hyllan, lägg
+   ändringen i utkastet, stäng dialogen och spara utkastet.
 6. Upprepa på mobil och med tangentbord. Kontrollera att kontrollerna
    går att nå genom intern rullning och har synligt fokus.
 
@@ -268,12 +291,15 @@ about earlier custom answers”.
 
 **Steg:**
 
-1. Välj sambandet i listan och öppna Redigera valt samband.
-2. Byt typ till Tillgång. Läs Tidigare egna sambandsvärden och kontrollera
-   att den nya typens Anteckning är tom.
-3. Skriv Ny betydelse. Bekräfta borttagning av tidigare egna värden från
-   förslaget och lägg sambandet i utkastet.
-4. Läs tidigare värde och förslag. Spara hela utkastet och läs historiken.
+1. Öppna cykelns sambandsdialog och välj **Redigera samband**.
+2. Välj Tillgång. Läs **Ta bort tidigare egna fält?**, med
+   **Anteckning: Behåll som historik**. Typen och det sparade sambandet
+   är oförändrade innan beslutet.
+3. Välj **Ta bort fältvärdena och byt typ**. Kontrollera att den nya
+   typens Anteckning är tom. Skriv Ny betydelse och lägg sambandet i
+   utkastet med tangentbordet. Välj **Stäng samband**.
+4. Öppna Utkastet och Visa förslaget för sambandet. Läs tidigare värde
+   och förslag, stäng läsningen och spara med sparikonen. Läs historiken.
 
 **Förväntat resultat:**
 
@@ -293,8 +319,14 @@ Ett nytt provhushåll används för varje skärmbredd.
 
 **Integrationstest:**
 [relationship-sections.spec.ts](../../tests/integration/relationship-sections.spec.ts),
-testfallen “STY-08: relationship sections preserve hidden answers and private
-presentation after restart at 1440px”, samma titel med “390px” och “320px”.
+testfallen:
+
+- “STY-08: relationship sections preserve hidden answers and private
+  presentation after restart at 1440px”.
+- “STY-08: relationship sections preserve hidden answers and private
+  presentation after restart at 390px”.
+- “STY-08: relationship sections preserve hidden answers and private
+  presentation after restart at 320px”.
 
 **Steg:**
 
@@ -312,7 +344,7 @@ presentation after restart at 1440px”, samma titel med “390px” och “320p
    till Service. Lägg förslaget i utkastet och spara hela utkastet.
 6. Starta om testinstallationen och ladda om sidan. Öppna sambandet för
    redigering. Effekt ska vara dolt, Batteri ska vara Nej och Reserv
-   obesvarat. Stäng formuläret utan att skicka.
+   obesvarat. Välj **Avbryt redigeringen** och stäng sambandsdialogen med krysset.
 7. Ändra definitionen igen och visa Effekt i Service. Lägg den i utkastet
    och öppna sambandet. Kontrollera att Effekt är 0 och alla andra svar
    består redan innan definitionen sparas.

@@ -155,6 +155,7 @@ test('a canceled task clears its queue but retains unsent text and earlier assis
         revision: 1,
         phase: 'working',
         queuedMessages: 2,
+        contextRevision: 3,
         completedReplies: [
           {
             id: 'earlier',
@@ -181,6 +182,7 @@ test('a canceled task clears its queue but retains unsent text and earlier assis
   ).toEqual(['Tidigare kontrollerat svar.']);
   expect(posts.find((request) => request.url.endsWith('/cancel'))?.body).toEqual({
     revision: 1,
+    contextRevision: 3,
     all: true,
   });
 });

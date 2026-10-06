@@ -1,8 +1,12 @@
 import { expect, type Page, test } from '@playwright/test';
 import {
-  closePanels,
+  closeTextView,
   createHousehold,
+  openDraftReview,
+  openMap,
+  openNewObject,
   openSettings,
+  openTable,
   signIn,
   utilityButton,
 } from '../support/client.js';
@@ -89,6 +93,13 @@ for (const platform of [
         expect(text).toContain('loggar för att förebygga missbruk');
         expect(text).toContain('inte behandling enbart i EU eller omedelbar radering');
         expect(text).toContain('Kartans formulär finns kvar som alternativ till samtalet');
+        expect(text).toContain('Välj Tabell');
+        expect(text).toContain('Välj Skriv till Skyttel och Visa utkastet');
+        expect(text).toContain('Genomförda sparanden finns under Rapporter, Ändringshistorik');
+        expect(text).toContain('oskickade samtalsmeddelande finns kvar');
+        expect(text).toContain('Fortsätt redigera behåller formulärändringarna');
+        expect(text).toContain('Kasta ändringarna och fortsätt kastar bara');
+        expect(text).not.toMatch(/Välj Lista|Utkast och historik|Tidigare sparförsök/);
         expect(text).not.toMatch(/talsamtal|textassistent|assistenten|kontextfönster|store:|API/i);
         await expect(
           help(page).getByRole('link', { name: 'Läs OpenAI:s datavillkor', exact: true }),
@@ -102,11 +113,38 @@ for (const platform of [
         await expect(button).toBeFocused();
 
         // Follow the documented form alternative before granting conversation consent.
-        await (await utilityButton(page, 'Lista')).click();
-        await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-        await page.getByLabel('Objektets namn').fill('Lo Exempel');
-        await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-        await closePanels(page);
+        await openTable(page);
+        await openNewObject(page);
+        const object = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+        await object.getByLabel('Namn', { exact: true }).fill('Oskickat formulär');
+        await object.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+        await expect(
+          page.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+        ).toBeFocused();
+        await page.keyboard.press('Escape');
+        await expect(object.getByLabel('Namn', { exact: true })).toHaveValue('Oskickat formulär');
+        await object.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+        await page
+          .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+          .click();
+        await expect(object).not.toBeVisible();
+        await openNewObject(page);
+        await expect(object.getByLabel('Namn', { exact: true })).toHaveValue('');
+        await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+        await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+        const draft = await openDraftReview(page);
+        await expect(draft).toContainText('Lo Exempel');
+        await expect(consentBox(page)).toHaveCount(0);
+        expect(model.requests).toHaveLength(0);
+        expect(live.requests).toHaveLength(0);
+        await closeTextView(page);
+        await (await utilityButton(page, 'Rapporter')).click();
+        await expect(
+          page.getByRole('tab', { name: 'Ändringshistorik', exact: true }),
+        ).toBeVisible();
+        await expect(page.getByText('Inga genomförda sparanden.', { exact: true })).toBeVisible();
+        await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+        await openMap(page);
         await shortcut(page, platform.mac);
         await expect(consentBox(page)).toContainText('Släpp stänger av ny inspelning direkt.');
         await giveConversationConsent(page, { remember: true });
@@ -136,7 +174,22 @@ for (const platform of [
         await field(page).fill('Oskickat medan hjälpen läses');
         await openHelp(page);
         await page.keyboard.press('Escape');
+        await closeTextView(page);
+        await openTable(page);
+        await openNewObject(page);
+        await object.getByLabel('Namn', { exact: true }).fill('Kastas utan att röra samtalet');
+        await object.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+        await page
+          .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+          .click();
+        await openMap(page);
+        await chooseConversationText(page);
+        await expect(consentBox(page)).toHaveCount(0);
+        await expect(page.getByRole('log', { name: 'Samtalstext', exact: true })).toContainText(
+          'Lo-förslaget ligger kvar i utkastet.',
+        );
         await expect(field(page)).toHaveValue('Oskickat medan hjälpen läses');
+        await expect(await openDraftReview(page)).toContainText('Lo Exempel');
         expect(
           await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
         ).toBe(1);
@@ -168,6 +221,11 @@ for (const platform of [
         await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
         await expect(voiceBox(page)).toHaveCount(0);
         await chooseConversationText(page);
+        await expect(consentBox(page)).toHaveCount(0);
+        await page
+          .getByRole('region', { name: 'Skriv till Skyttel', exact: true })
+          .getByRole('button', { name: 'Nytt samtal', exact: true })
+          .click();
         await expect(consentBox(page)).toBeVisible();
       } finally {
         await app.close();
@@ -192,7 +250,7 @@ test('YTA-08: hjälpens långa text går att läsa och stänga på smal skärm',
     ).toHaveCount(1);
     await page.keyboard.press('End');
     await expect(
-      help(page).getByText(/Stäng panelerna med krysset för att återgå till kartan/),
+      help(page).getByText(/Kasta ändringarna och fortsätt kastar bara/),
     ).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       320,

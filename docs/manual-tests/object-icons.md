@@ -15,16 +15,19 @@ underkänt resultat vid körning.
    giltig PNG-bild enligt [bildfallen](profile-images.md#allmän-förberedelse).
 2. Börja varje fall med ett nytt hushåll eller motsvarande återställt läge.
    Behåll inloggning och databas vid normal serveromstart.
+3. Redigera genom **Tabell → Redigera [objektnamn]**. För separat sparande,
+   öppna **Skriv till Skyttel → Visa utkastet**, välj utkastets sparikon och
+   läs **Utkastet är sparat**. Stäng textvyn innan nästa tabell- eller kartsteg.
 
 ## Ikonval och visning
 
 ### IKON-01: Bevara ikon genom typbyte, bildval och omstart
 
-**Syfte:** Verifiera samma objektförslag och uttrycklig återgång till standard.
+**Syfte:** Bevara ikon, text och bild i samma kompletta objektförslag.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Hushållet har inget objekt med namnet Min cykel.
+**Förutsättningar:** Hushållet saknar Min cykel. Ha en giltig PNG-bild.
 
 **Integrationstest:**
 [object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
@@ -33,28 +36,27 @@ restart before explicit reset”.
 
 **Steg:**
 
-1. Öppna **Lista** och **Nytt objekt**. Skriv Min cykel och en beskrivning.
-   Välj **Lägg uppgifterna i utkastet först** i avsnittet **Ikon**.
-2. Sök cykel och välj **Cykel**. Byt objekttyp till **Fordon**. Lägg de
-   oskickade uppgifterna i utkastet med samma knapp i ikonavsnittet.
-3. Välj PNG-bilden. Visa kartan och kontrollera att bilden syns i objektets
-   symbol. Återgå till formuläret och välj **Ta bort profilbild**.
-   Kontrollera att Cykel åter visas i detaljerna och kartan.
-4. Skriv mer i beskrivningen, välj **Lägg i mitt utkast** och
-   **Spara hela utkastet**. Vänta på bekräftat sparande. Starta om servern
-   normalt och ladda om sidan. Öppna objektet och kontrollera uppgifterna.
-5. Redigera objektet, välj **Typens standardikon**, stäng formuläret och
-   spara hela utkastet. Kontrollera objektets standardikon.
+1. Välj **Nytt objekt**. Skriv Min cykel och Bevara texten i Grunduppgifter.
+   Öppna **Livscykel och utseende**, sök cykel och välj **Cykel**.
+2. Öppna **Grunduppgifter**, byt typ till **Fordon** och återgå till
+   **Livscykel och utseende**. Kontrollera ikonvalet. Välj PNG-bilden och
+   kontrollera förklaringen att profilbilden visas före ikonen. Välj
+   **Lägg i utkastet och stäng**. Kontrollera bilden i kartans symbol.
+3. Redigera objektet. Öppna **Livscykel och utseende** och välj **Ta bort
+   profilbilden ur formuläret**. Kontrollera att förklaringen nu anger
+   ikonen som synlig. Lägg hela formuläret i utkastet och
+   kontrollera cykelikonen i kartan.
+4. Redigera beskrivningen till Bevara mer text, lägg hela formuläret i
+   utkastet och spara hela utkastet separat. Starta om servern och ladda om.
+5. Kontrollera ikon och beskrivning. Redigera, välj **Typens standardikon**
+   och lägg hela formuläret i utkastet. Spara utkastet separat.
 
 **Förväntat resultat:**
 
-- Formuläret stannar öppet vid den första knappen. Ikonvalet hör till samma
-  privata objektförslag och kan inte ersätta oskickad text.
-- Efter att uppgifterna lagts i utkastet flyttas fokus till ikonsökningen,
-  om användaren inte redan har valt ett annat fält under väntan.
-- Bilden har företräde. Bildborttagning återger Cykel och typbytet behåller
-  valet. Ikon och beskrivning finns kvar efter sparande och omstart.
-- Standardvalet blir ett privat förslag och delas först efter sparandet.
+- Lokala ikon-, bild- och typval ändrar inga förslag före komplett tillägg.
+- Bilden har företräde. Borttagningen återger Cykel. Typbytet behåller valet.
+- Ikon och text finns kvar efter sparande och omstart. Standardvalet delas
+  först efter komplett tillägg och separat sparande.
 
 ### IKON-02: Sök hela katalogen med tangentbord i smala teman
 
@@ -71,22 +73,20 @@ pagination work in narrow themes”.
 
 **Steg:**
 
-1. Öppna Lo och **Redigera valt objekt**. Upprepa följande kontroller på
-   dator och i smala telefonvyer, med ljust och mörkt systemtema.
-2. Sök telescope. Gå till motsvarande val med tangentbord och tryck Enter.
-   Kontrollera markeringen. Sök sedan ingen-symbol-xyz och läs beskedet.
-3. Välj **Rensa sökningen**. Kontrollera fokus i sökfältet. Välj **Nästa**
-   och kontrollera fokus på den första ikonen på nästa sida. Välj
-   **Föregående** och kontrollera att första sidan visas igen.
-4. Sök bike och kontrollera att Cykel går att välja. Kontrollera läsbarhet,
-   synligt fokus och att kontrollerna ryms utan vågrät sidrullning.
+1. Redigera Lo och öppna **Livscykel och utseende**. Upprepa på dator och i
+   smala telefonvyer, med ljust och mörkt systemtema.
+2. Sök telescope. Gå till valet med tangentbord och tryck Enter. Kontrollera
+   markeringen. Sök ingen-symbol-xyz och läs beskedet.
+3. Välj **Rensa sökningen**. Kontrollera fokus i sökfältet. Välj **Nästa** och
+   kontrollera fokus på första ikonen. Välj **Föregående**.
+4. Sök bike. Kontrollera att Cykel går att välja, att text och fokus syns
+   och att kontrollerna ryms utan vågrät sidrullning.
 
 **Förväntat resultat:**
 
-- Både ikonnamn och svenska benämningar går att söka. Hela katalogen kan
-  bläddras; tomma resultat erbjuder en tydlig väg tillbaka.
-- Tangentbordet kan välja ikoner och byta sida. Fokus stannar i det aktiva
-  arbetsflödet. Resultat och valt läge har text och tillgängliga namn.
+- Ikonnamn och svenska benämningar går att söka genom hela katalogen.
+- Tomma resultat erbjuder återgång. Tangentbord kan välja ikon och byta sida.
+- Fokus stannar i arbetsflödet. Resultat och valt läge har tillgängliga namn.
 - Smala vyer och båda teman behåller läsbara, åtkomliga kontroller.
 
 ### IKON-03: Nå ikonval och sparande i ett kort fönster
@@ -95,9 +95,9 @@ pagination work in narrow themes”.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Hushållet har inget objekt med namnet Lilla cykeln.
-Använd ett webbläsarfönster på ungefär 1 280 × 1 000 bildpunkter och
-webbläsarens zoom på 400 procent, eller en vy på 320 × 250 CSS-bildpunkter.
+**Förutsättningar:** Hushållet saknar Lilla cykeln. Använd ett fönster på
+ungefär 1 280 × 1 000 bildpunkter med 400 procents webbläsarzoom, eller
+320 × 250 CSS-bildpunkter.
 
 **Integrationstest:**
 [object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
@@ -106,78 +106,75 @@ shared save reachable”.
 
 **Steg:**
 
-1. Öppna **Lista** och **Nytt objekt**. Skriv Lilla cykeln och en beskrivning.
-2. Rulla till **Ikon** och välj **Lägg uppgifterna i utkastet först**.
-   Kontrollera fokus i **Sök ikon**. Sök cykel och välj **Cykel**.
-3. Rulla tillbaka och välj **Typens standardikon**. Kontrollera markeringen
-   och att beskrivningen finns kvar.
-4. Välj **Lägg i mitt utkast** och **Spara hela utkastet**. Läs bekräftelsen
-   och kontrollera det sparade objektets namn, beskrivning och standardikon.
+1. Välj **Nytt objekt**. Skriv Lilla cykeln och Min oskickade text.
+2. Rulla till **Livscykel och utseende**. Sök cykel och välj **Cykel**.
+3. Välj **Typens standardikon**. Kontrollera markeringen och att
+   beskrivningen i Grunduppgifter finns kvar.
+4. Rulla till **Lägg i utkastet och stäng** och välj den. Spara hela
+   utkastet separat. Kontrollera sparat namn, beskrivning och standardikon.
 
 **Förväntat resultat:**
 
-- Formulär, sidval, status och sparande går att nå genom att rulla.
-  Verktygsraden täcker inte den kontroll som används.
-- Oskickad text bevaras. Ikonens återgång till standard sparas med objektet.
+- Fält, ikonval, sidval och knappar går att nå genom att rulla. Ingen fast
+  rubrik eller knapp täcker den kontroll som används.
+- Oskickad text bevaras. Återgången till standard sparas med objektet.
 - Innehållet kräver ingen vågrät sidrullning.
 
-### IKON-04: Behåll tangentbordsfokus efter ikonval och återgång
+### IKON-04: Behåll tangentbordsfokus under lokalt ikonval
 
-**Syfte:** Verifiera fokus efter ett fördröjt privat ikonförslag.
-
-**Användare:** Alex.
-
-**Förutsättningar:** Objektet Lo finns i det privata utkastet. Använd
-webbläsarens utvecklarverktyg för att tillfälligt begränsa nätverkshastigheten.
-
-**Integrationstest:**
-[object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
-testfallet “IKON-04: delayed keyboard icon choice and reset restore focus
-without replacing a later choice”.
-
-**Steg:**
-
-1. Redigera Lo och sök cykel. Gå till **Cykel** med tangentbord och tryck Enter.
-2. Vänta på markeringen. Kontrollera att Cykel fortfarande har synligt fokus.
-3. Gå till **Typens standardikon** och tryck Enter. Kontrollera fokus efter svaret.
-4. Välj Cykel igen. Medan svaret väntar, flytta fokus till **Sök i kartan**.
-   Kontrollera fokus efter svaret. Återställ nätverkshastigheten.
-
-**Förväntat resultat:**
-
-- Lyckade val och återgång till standard lämnar fokus på den använda knappen.
-- Ett senare fokusval i verktygsraden bevaras när svaret kommer.
-
-### IKON-05: Återhämta ett misslyckat ikonförslag med tangentbord
-
-**Syfte:** Verifiera nåbar återhämtning och återförsök utan förlorat fokus.
+**Syfte:** Behålla fokus utan att lägga ett ofärdigt formulär i utkastet.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Objektet Lo finns i det privata utkastet. Använd
-utvecklarverktygens nätverkspanel för att blockera anrop till `*/map/draft`.
+**Förutsättningar:** Ett nytt hushåll.
 
 **Integrationstest:**
 [object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
-testfallet “IKON-05: a failed icon request focuses recovery and a successful
-retry returns to the picker”.
+testfallet “IKON-04: local keyboard icon choice and reset preserve the chosen
+focus until complete staging”.
 
 **Steg:**
 
-1. Redigera Lo och sök cykel. Välj **Cykel** med Enter medan anropet är blockerat.
-2. Läs felet. Kontrollera fokus på **Hämta aktuellt underlag**.
-3. Ta bort blockeringen och aktivera den fokuserade knappen med Enter.
-4. Kontrollera att Cykel åter kan väljas och har fokus. Tryck Enter igen och
-   kontrollera att valet lyckas med synligt fokus kvar.
+1. Välj **Nytt objekt**, skriv Lo och öppna **Livscykel och utseende**.
+2. Sök cykel. Välj Cykel, Typens standardikon och Cykel igen med Enter.
+   Kontrollera markering och fokus efter varje val.
+3. Flytta fokus till **Sök ikon**. Kontrollera att fokus stannar där och
+   att utkastet ännu saknar förslag.
+4. Välj **Lägg i utkastet och stäng**. Granska objektförslaget.
 
 **Förväntat resultat:**
 
-- Felet gör återhämtningen åtkomlig. Den tidigare privata informationen bevaras.
-- Efter lyckad hämtning återkommer fokus till ikonen. Återförsöket går att utföra
-  med tangentbord och hör till samma privata utkast.
+- Lokala val lämnar fokus på använd knapp och bevarar ett senare fokusval.
+- Först komplett tillägg skapar ett privat förslag med vald cykelikon.
 
-Integrationsfallet provar dessutom ett tappat svar efter att den riktiga servern
-tagit emot förslaget. När hämtningen då visar att formuläret är inaktuellt går
-fokus till den synliga panelrubriken. Den gamla kontrollen förblir spärrad tills
-aktuella uppgifter öppnas. Fördröjda fel och hämtningar får inte flytta fokus från
-ett senare valt verktyg. Dessa kontrollerade svar provas automatiserat.
+### IKON-05: Bevara ikon och text vid avvisat eller okänt tillägg
+
+**Syfte:** Återhämta ett komplett objektförslag utan dubbla tillägg.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett nytt hushåll. Använd kontrollerade svar enligt
+[KARTA-17 och KARTA-18](map.md#karta-17-spärra-väntande-tillägg-och-behåll-ett-avvisat-formulär).
+
+**Integrationstest:**
+[object-icons.spec.ts](../../tests/integration/object-icons.spec.ts),
+testfallet “IKON-05: rejected and lost complete icon staging preserve the
+local choice and recover one proposal”.
+
+**Steg:**
+
+1. Välj **Nytt objekt**, skriv Lo och Bevarad ikontext. Öppna **Livscykel
+   och utseende**, sök cykel och välj Cykel med Enter.
+2. Avvisa nästa kompletta tillägg enligt KARTA-17. Aktivera **Lägg i utkastet
+   och stäng** med Enter. Läs felet och kontrollera text och ikonmarkering.
+3. Dölj svaret efter ett verkligt tillägg enligt KARTA-18. Försök igen och
+   läs beskedet om okänt utfall. Kontrollera att vanligt tillägg är spärrat.
+4. Fokusera **Kontrollera om ändringen lades i utkastet** och tryck Enter.
+   Granska utkastet och historiken.
+
+**Förväntat resultat:**
+
+- Avvisat tillägg lämnar ikon och text kvar, utan något nytt förslag.
+- Okänt utfall behåller ikonvalet och kräver kontroll före nytt försök.
+- Bekräftad kontroll stänger formuläret och visar exakt ett privat
+  objektförslag med text och cykelikon. Kartan och historiken är oförändrade.

@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
 import type { SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openNewObject,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('AVTAL-01: optional rent facts can be reviewed, found and corrected after reload', async ({
@@ -12,17 +21,19 @@ test('AVTAL-01: optional rent facts can be reviewed, found and corrected after r
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Hyra för lägenheten');
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Hyra för lägenheten');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Hyresavtal' });
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await page.getByLabel('Pris: uppgiftens säkerhet').selectOption('known');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
+    await expect(page.getByLabel('Pris', { exact: true })).toBeHidden();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const problems = page.getByRole('alert', { name: 'Formuläret innehåller fel' });
+    await expect(problems).toBeFocused();
+    await problems.getByRole('link', { name: /^Pris:/ }).click();
     await expect(page.getByLabel('Pris', { exact: true })).toBeFocused();
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Inga förslag',
-    );
+    expect((await (await page.request.get(path)).json()).draft.changes).toEqual([]);
     await page.getByLabel('Pris', { exact: true }).fill('9 500');
     await page.getByLabel('Valuta: uppgiftens säkerhet').selectOption('known');
     await page.getByLabel('Valuta', { exact: true }).fill('SEK');
@@ -32,44 +43,74 @@ test('AVTAL-01: optional rent facts can be reviewed, found and corrected after r
     await page.getByLabel('Startdatum', { exact: true }).fill('2026-01-01');
     await page.getByLabel('Avtalsvillkor: uppgiftens säkerhet').selectOption('known');
     await page.getByLabel('Avtalsvillkor', { exact: true }).fill('Tre månaders uppsägningstid.');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Pris: 9 500');
-    await expect(review).toContainText('Startdatum: 2026-01-01');
-    await expect(review).toContainText('Tre månaders uppsägningstid.');
-    await expect(review).not.toContainText('Slutdatum:');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    await page.reload();
-    await openWorkspace(page);
-    await page.getByLabel('Sök objekt').fill('hyra');
-    const objects = page.getByRole('list', { name: 'Objekt', exact: true });
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const review = await readDraftProposal(page, 'Hyra för lägenheten');
     await expect(
-      objects.getByRole('button', { name: /^Visa .+ i kartan$/ }).locator('strong'),
-    ).toHaveText(['Hyra för lägenheten']);
+      review
+        .locator('dt')
+        .filter({ hasText: /^Pris(?: · ändrat)?$/ })
+        .locator('..'),
+    ).toContainText('9 500');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Startdatum(?: · ändrat)?$/ })
+        .locator('..'),
+    ).toContainText('2026-01-01');
+    await expect(review).toContainText('Tre månaders uppsägningstid.');
+    await expect(review.locator('dt').filter({ hasText: /^Slutdatum(?: · ändrat)?$/ })).toHaveCount(
+      0,
+    );
+    await closeSupportDialog(page, 'Hyra för lägenheten');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await page.reload();
+    await openTable(page);
+    await page.getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true }).fill('hyra');
+    const objects = page.getByRole('table');
+    await expect(objects.getByRole('rowheader').getByRole('button')).toHaveCount(1);
+    await expect(objects.getByRole('rowheader').getByRole('button')).toHaveAccessibleName(
+      'Hyra för lägenheten',
+    );
     await expect(objects).toContainText('Hyresavtal');
-    await objects
-      .getByRole('button', { name: 'Uppgifter för Hyra för lägenheten', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    await editTableObject(page, 'Hyra för lägenheten');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await expect(page.getByLabel('Pris', { exact: true })).toHaveValue('9 500');
     await expect(page.getByLabel('Slutdatum: uppgiftens säkerhet')).toHaveValue('');
     await page.getByLabel('Pris', { exact: true }).fill('9 700');
-    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await expect(review).toContainText('Pris: 9 500');
-    await expect(review).toContainText('Pris: 9 700');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    expect(
+      await page
+        .getByRole('dialog', { name: 'Redigera Hyra för lägenheten' })
+        .evaluate((dialog) => dialog.matches(':modal')),
+    ).toBe(true);
+    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toHaveCount(0);
+    expect(
+      (await (await page.request.get(path)).json()).objects[0].financialFacts.price.value,
+    ).toBe('9 500');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await readDraftProposal(page, 'Hyra för lägenheten');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Pris(?: · ändrat)?$/ })
+        .first()
+        .locator('..'),
+    ).toContainText('9 500');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Pris(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('9 700');
+    await closeSupportDialog(page, 'Hyra för lägenheten');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await page
-      .getByRole('button', { name: 'Uppgifter för Hyra för lägenheten', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Hyra för lägenheten');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await expect(page.getByLabel('Pris', { exact: true })).toHaveValue('9 700');
     await expect(page.getByLabel('Startdatum', { exact: true })).toHaveValue('2026-01-01');
     await expect(page.getByLabel('Avtalsvillkor', { exact: true })).toHaveValue(
@@ -103,11 +144,10 @@ test('AVTAL-02: dated debt and credit keep distinct values and incomplete meanin
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Familjens kreditavtal');
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Familjens kreditavtal');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Kreditavtal' });
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await page.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet').selectOption('uncertain');
     await page.getByLabel('Senast uppgiven skuld', { exact: true }).fill('Cirka 18 000');
     await page.getByLabel('Senast uppgiven skuld: datum för uppgiften').fill('2026-03-01');
@@ -117,29 +157,43 @@ test('AVTAL-02: dated debt and credit keep distinct values and incomplete meanin
     await page.getByLabel('Utnyttjad kredit: uppgiftens säkerhet').selectOption('unknown');
     await page.getByLabel('Utnyttjad kredit: datum för uppgiften').fill('2026-03-03');
     await page.getByLabel('Slutdatum: uppgiftens säkerhet').selectOption('none');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText(
-      'Senast uppgiven skuld: Cirka 18 000 (Osäkert uppgivet) — datum för uppgiften: 2026-03-01',
-    );
-    await expect(review).toContainText(
-      'Beviljat kreditutrymme: 50 000 — datum för uppgiften: 2026-03-02',
-    );
-    await expect(review).toContainText('Utnyttjad kredit: Okänt — datum för uppgiften: 2026-03-03');
-    await expect(review).toContainText('Slutdatum: Uttryckligen inget');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const review = await readDraftProposal(page, 'Familjens kreditavtal');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Senast uppgiven skuld(?: · ändrat)?$/ })
+        .locator('..'),
+    ).toContainText('Cirka 18 000 (Osäkert uppgivet) · datum för uppgiften: 2026-03-01');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Beviljat kreditutrymme(?: · ändrat)?$/ })
+        .locator('..'),
+    ).toContainText('50 000 · datum för uppgiften: 2026-03-02');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Utnyttjad kredit(?: · ändrat)?$/ })
+        .locator('..'),
+    ).toContainText('Okänt · datum för uppgiften: 2026-03-03');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Slutdatum(?: · ändrat)?$/ })
+        .locator('..'),
+    ).toContainText('Uttryckligen inget');
     await page.reload();
-    await openWorkspace(page);
+    await readDraftProposal(page, 'Familjens kreditavtal');
     await expect(review).toContainText('Cirka 18 000 (Osäkert uppgivet)');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await closeSupportDialog(page, 'Familjens kreditavtal');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await page
-      .getByRole('button', { name: 'Uppgifter för Familjens kreditavtal', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Familjens kreditavtal');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await expect(page.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet')).toHaveValue(
       'uncertain',
     );
@@ -164,20 +218,29 @@ test('AVTAL-02: dated debt and credit keep distinct values and incomplete meanin
     await page.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet').selectOption('unknown');
     await page.getByLabel('Beviljat kreditutrymme: datum för uppgiften').fill('');
     await page.getByLabel('Slutdatum: uppgiftens säkerhet').selectOption('');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await expect(review).toContainText('Senast uppgiven skuld: Okänt');
-    await expect(review).toContainText(
-      'Utnyttjad kredit: 12 000 — datum för uppgiften: 2026-03-04',
-    );
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await readDraftProposal(page, 'Familjens kreditavtal');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Senast uppgiven skuld(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Okänt');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Utnyttjad kredit(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('12 000 · datum för uppgiften: 2026-03-04');
+    await closeSupportDialog(page, 'Familjens kreditavtal');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await page.reload();
-    await openWorkspace(page);
-    await page
-      .getByRole('button', { name: 'Uppgifter för Familjens kreditavtal', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByText('Ekonomiska uppgifter och avtalsvillkor', { exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Familjens kreditavtal');
+    await page.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
     await expect(page.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet')).toHaveValue(
       'unknown',
     );

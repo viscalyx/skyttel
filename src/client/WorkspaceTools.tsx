@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react';
+import { Fragment, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import logo from '../../docs/images/shuttle-logo-transparent-small.png';
 import { ConversationHelp } from './ConversationHelp.js';
 import { microphoneShortcut, useMicrophonePress } from './use-microphone-press.js';
@@ -23,6 +23,7 @@ const paths = {
   depthBackward: 'M5 3h10v4H5zM10 8v13m-4-4 4 4 4-4M18 9l3 3-3 3',
   mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8',
   activity: 'M3 12h4l3-8 4 16 3-8h4',
+  new: 'M12 4v16M4 12h16',
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   text: 'M4 5h16M12 5v15M8 20h8',
   search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
@@ -32,6 +33,9 @@ const paths = {
   expand: 'm9 5 7 7-7 7',
   close: 'm6 6 12 12M18 6 6 18',
   draft: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
+  save: 'M4 3h13l3 3v15H4zM8 3v6h8V3M8 21v-8h8v8',
+  trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
+  warning: 'm12 3 10 18H2zM12 9v5M12 17h.01',
   detail: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
   focus: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   overview: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 12h8M12 8v8',
@@ -54,13 +58,24 @@ export function WorkspaceIcon({ name }: { name: keyof typeof paths }) {
   );
 }
 
-export type WorkspaceTarget = 'list' | 'conversation' | 'voice' | 'search' | 'draft';
+export type WorkspaceTarget =
+  | 'map'
+  | 'table'
+  | 'reports'
+  | 'new'
+  | 'conversation'
+  | 'voice'
+  | 'search'
+  | 'draft';
 
 /** The name of the toolbar button that opens and closes the text view. */
 export const textViewButtonName = 'Skriv till Skyttel';
 
 export function WorkspaceTools({
   onOpen,
+  surface = 'map',
+  searchActive = false,
+  workDisabled = false,
   account,
   onSettings,
   profileRequested = false,
@@ -79,9 +94,14 @@ export function WorkspaceTools({
   onExpandedChange,
   conversationUnavailable = false,
   conversationOngoing = false,
+  hasDraft = false,
 }: {
+  surface?: 'map' | 'table' | 'reports';
+  searchActive?: boolean;
+  workDisabled?: boolean;
   conversationUnavailable?: boolean;
   conversationOngoing?: boolean;
+  hasDraft?: boolean;
   /** Opens a tool. The chosen button is where a conversation's consent box opens. */
   onOpen: (target: WorkspaceTarget, chosen: HTMLElement) => void;
   account?: ReactNode;
@@ -110,6 +130,13 @@ export function WorkspaceTools({
   const expansionControl = useRef<HTMLButtonElement>(null);
   const tools = useRef<HTMLElement>(null);
   const microphoneButton = useRef<HTMLButtonElement>(null);
+  const draftFocused = useRef(false);
+  useLayoutEffect(() => {
+    if (!hasDraft && draftFocused.current) {
+      draftFocused.current = false;
+      tools.current?.querySelector<HTMLButtonElement>('.workspace-text')?.focus();
+    }
+  }, [hasDraft]);
   const microphonePress = useMicrophonePress({
     button: microphoneButton,
     canHold: () =>
@@ -187,14 +214,20 @@ export function WorkspaceTools({
         </a>
         {(
           [
+            ['overview', 'Karta', 'map'],
+            ['list', 'Tabell', 'table'],
+            ['new', 'Nytt objekt', 'new'],
+            ['detail', 'Rapporter', 'reports'],
             ['mic', 'Prata med Skyttel', 'voice'],
             ['text', textViewButtonName, 'conversation'],
-            ['search', 'Sök i kartan', 'search'],
-            ['list', 'Lista', 'list'],
-            ['draft', 'Utkast och historik', 'draft'],
+            ['search', searchActive ? 'Sök i kartan · aktiv' : 'Sök i kartan', 'search'],
+            ...(hasDraft ? [['draft', 'Utkast', 'draft'] as const] : []),
           ] as const
         ).map(([icon, label, target]) => (
           <Fragment key={target}>
+            {target === 'draft' && (
+              <hr className="workspace-draft-separator" aria-orientation="vertical" />
+            )}
             <button
               ref={target === 'voice' ? microphoneButton : undefined}
               type="button"
@@ -222,7 +255,7 @@ export function WorkspaceTools({
                     : undefined
               }
               data-held={(target === 'voice' && microphonePress.held) || undefined}
-              data-secondary={target === 'draft' || target === 'search' || undefined}
+              data-secondary={target === 'search' || undefined}
               className={
                 target === 'voice'
                   ? 'workspace-talk'
@@ -236,12 +269,34 @@ export function WorkspaceTools({
                 undefined
               }
               disabled={
-                target === 'voice' && conversationOngoing
-                  ? !conversationUnavailable && voiceControl?.disabled
+                target === 'new'
+                  ? workDisabled
+                  : target === 'voice' && conversationOngoing
+                    ? !conversationUnavailable && voiceControl?.disabled
+                    : undefined
+              }
+              aria-pressed={
+                target === 'voice'
+                  ? voiceControl?.microphone === 'on'
+                  : target === 'map' || target === 'table' || target === 'reports'
+                    ? surface === target
+                    : undefined
+              }
+              aria-expanded={target === 'conversation' ? textViewOpen : undefined}
+              onFocus={
+                target === 'draft'
+                  ? () => {
+                      draftFocused.current = true;
+                    }
                   : undefined
               }
-              aria-pressed={target === 'voice' ? voiceControl?.microphone === 'on' : undefined}
-              aria-expanded={target === 'conversation' ? textViewOpen : undefined}
+              onBlur={
+                target === 'draft'
+                  ? (event) => {
+                      if (event.currentTarget.isConnected) draftFocused.current = false;
+                    }
+                  : undefined
+              }
               onClick={(event) => {
                 if (target === 'voice') {
                   microphonePress.onClick(event);

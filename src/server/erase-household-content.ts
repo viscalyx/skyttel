@@ -11,6 +11,8 @@ export function eraseHouseholdContent(
   actorId: string,
   scope: ErasureScope,
 ) {
+  // Form outcomes can contain private values about erased content. They are not history.
+  database.prepare('DELETE FROM relationship_form_attempt WHERE householdId = ?').run(householdId);
   const content = erasureContent(database, householdId, actorId);
   const projection = erasureProjection(content, scope);
   for (const [index, draft] of content.drafts.entries()) {

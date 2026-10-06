@@ -28,14 +28,6 @@ export function assistantFailureMessage(code: string): string {
       return 'Fältet innehåller fortfarande uppgifter i kartan eller utkast. De behöver hanteras innan fältet kan tas bort.';
     case 'field_kind_in_use':
       return 'Fältets värdeslag kan inte ändras medan det används. Ett nytt fält behövs för det nya värdeslaget.';
-    case 'undo_draft_overlap':
-      return 'Ångringen överlappar dina osparade förslag. De berörda förslagen behöver redas ut först.';
-    case 'undo_unavailable':
-      return 'Det valda sparandet kan inte återställas från den tillgängliga historiken.';
-    case 'merge_conflict':
-      return 'Underlaget för sammanslagningen har ändrats. De aktuella uppgifterna behöver kontrolleras igen.';
-    case 'merge_choices_required':
-      return 'Sammanslagningen kräver ett val för de uppgifter och samband som skiljer sig åt.';
     case 'invalid_request':
       return 'Begäran innehöll ogiltiga uppgifter och kunde inte genomföras.';
     case 'forbidden':

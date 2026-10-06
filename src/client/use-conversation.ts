@@ -94,10 +94,12 @@ export type Conversation = {
 
 /**
  * A conversation is ongoing when the transcript has content, the microphone
- * is on or starting, Skyttel is working or speaking, or the text view is open.
+ * is on or starting, Skyttel is working or speaking, or an established
+ * conversation's text view is open. Opening the text view alone starts nothing.
  */
 export function conversationOngoing(
   conversation: Pick<Conversation, 'transcript' | 'working'> & {
+    session?: Conversation['session'];
     voice: Pick<Voice, 'microphone' | 'starting' | 'speaking' | 'phase'>;
   },
   textViewOpen: boolean,
@@ -110,7 +112,7 @@ export function conversationOngoing(
     conversation.working ||
     voice.phase === 'working' ||
     voice.speaking ||
-    textViewOpen
+    (textViewOpen && Boolean(conversation.session))
   );
 }
 
@@ -1110,7 +1112,14 @@ export function useConversation({
     revokeConsent,
     send,
     cancel: async () => {
-      const cancelWork = () => command('cancel', { revision: active.current?.revision, all: true });
+      const current = active.current;
+      if (!current) return;
+      const cancelWork = () =>
+        command('cancel', {
+          revision: current.revision,
+          contextRevision: current.contextRevision ?? 0,
+          all: true,
+        });
       if (voice.state === 'listening' || voice.starting) await voice.silence(cancelWork);
       else await cancelWork();
     },

@@ -3,6 +3,7 @@ import { createHousehold, openSettings, signIn, utilityButton } from '../support
 import { specifiedConsentText } from '../support/conversation.js';
 import {
   chooseConversationVoice,
+  closeConversationText,
   consentBox,
   consentBoxFor,
   giveConversationConsent,
@@ -79,12 +80,24 @@ test('MEDGIVANDE-01: samtalsknapparna visar medgivanderutan och Avbryt startar i
     const starts = await openHousehold(page, app.origin);
     const box = consentBox(page);
     const { remember, approve, decline } = consentBoxFor(page);
+    const textStart = async (entry: Locator) => {
+      await entry.focus();
+      await page.keyboard.press('Enter');
+      await expect(box).toBeHidden();
+      await expect(messageField(page)).toBeVisible();
+      expect(starts).toEqual([]);
+      return page.getByRole('button', { name: 'Nytt samtal', exact: true });
+    };
     const chosen: [string, () => Promise<Locator>][] = [
       ['verktygsradens röstknapp', () => utilityButton(page, 'Prata med Skyttel')],
-      ['verktygsradens textknapp', () => utilityButton(page, 'Skriv till Skyttel')],
+      [
+        'textknapp och explicit samtalsstart',
+        async () => textStart(await utilityButton(page, 'Skriv till Skyttel')),
+      ],
       [
         'snabblänken till samtalet',
-        async () => page.getByRole('button', { name: 'Till samtalet med Skyttel', exact: true }),
+        async () =>
+          textStart(page.getByRole('button', { name: 'Till samtalet med Skyttel', exact: true })),
       ],
     ];
     for (const [index, [name, find]] of chosen.entries()) {
@@ -116,10 +129,13 @@ test('MEDGIVANDE-01: samtalsknapparna visar medgivanderutan och Avbryt startar i
       else await decline.click();
       await expect(box, name).toBeHidden();
       await expect(button, name).toBeFocused();
-      await expect(messageField(page)).toHaveCount(0);
-      await expect(
-        page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }),
-      ).toHaveCount(0);
+      expect(starts).toEqual([]);
+      expect(await microphones(page)).toEqual([]);
+      if (index > 0) {
+        await expect(messageField(page)).toHaveValue('');
+        await closeConversationText(page);
+      }
+      await expect(messageField(page)).toBeHidden();
     }
     await expect(approve).toHaveCount(0);
     expect(starts).toEqual([]);
@@ -171,6 +187,8 @@ test('MEDGIVANDE-02: vald knapp avgör röst eller text och medgivandet gäller 
     await page.reload();
     const reloadedStarts = starts.length;
     await openConversationText(page);
+    await expect(consentBox(page)).toBeHidden();
+    await newConversation(page);
     await expect(consentBox(page)).toBeVisible();
     await expect(consentBoxFor(page).remember).not.toBeChecked();
     expect(starts).toHaveLength(reloadedStarts);
@@ -218,6 +236,7 @@ test('MEDGIVANDE-03: sparat medgivande följer användaren men inte andra medlem
     const otherPage = await otherDevice.newPage();
     await openHousehold(otherPage, app.origin);
     await openConversationText(otherPage);
+    await newConversation(otherPage);
     await expect(messageField(otherPage)).toBeVisible();
     await expect(consentBox(otherPage)).toBeHidden();
 
@@ -238,10 +257,12 @@ test('MEDGIVANDE-03: sparat medgivande följer användaren men inte andra medlem
     const memberPage = await member.newPage();
     const memberStarts = await openHousehold(memberPage, app.origin);
     await openConversationText(memberPage);
+    await expect(consentBox(memberPage)).toBeHidden();
+    await newConversation(memberPage);
     await expect(consentBox(memberPage)).toBeVisible();
     await expect(consentBoxFor(memberPage).remember).not.toBeChecked();
     await consentBoxFor(memberPage).decline.click();
-    await expect(messageField(memberPage)).toHaveCount(0);
+    await expect(messageField(memberPage)).toHaveValue('');
     expect(memberStarts).toEqual([]);
     expect(
       await (await member.request.get(`${householdPath}/conversation-consent`)).json(),
@@ -274,7 +295,7 @@ test('MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och pekskärm', as
       await expect(
         page.getByRole('region', { name: 'Hushållskarta', exact: true }),
       ).toHaveAttribute('data-theme', colorScheme);
-      await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).click();
+      await tools.getByRole('button', { name: 'Prata med Skyttel', exact: true }).click();
       await expect(box).toBeVisible();
       for (const text of [
         box.getByRole('heading'),
@@ -291,22 +312,37 @@ test('MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och pekskärm', as
     await page.emulateMedia({ colorScheme: 'light' });
 
     // The toolbar stands to the left: the box opens next to the chosen button.
-    for (const name of ['Prata med Skyttel', 'Skriv till Skyttel']) {
-      const button = tools.getByRole('button', { name, exact: true });
+    await openConversationText(page);
+    for (const name of ['Prata med Skyttel', 'Nytt samtal']) {
+      const button = page.getByRole('button', { name, exact: true });
       const chosen = await bounds(button);
       await button.click();
       await expect(box).toBeVisible();
       const place = await bounds(box);
-      expect(place.x, name).toBeGreaterThanOrEqual((await bounds(tools)).right);
-      expect(place.x - chosen.right, name).toBeLessThanOrEqual(32);
-      expect(Math.abs(place.y - chosen.y), name).toBeLessThanOrEqual(1);
+      if (name === 'Prata med Skyttel') {
+        expect(place.x, name).toBeGreaterThanOrEqual((await bounds(tools)).right);
+        expect(place.x - chosen.right, name).toBeLessThanOrEqual(32);
+        const viewport = page.viewportSize();
+        if (!viewport) throw new Error('The desktop viewport must be known');
+        if (chosen.y + place.height + 16 <= viewport.height)
+          expect(Math.abs(place.y - chosen.y), name).toBeLessThanOrEqual(1);
+        else {
+          expect(place.y).toBeGreaterThanOrEqual(16);
+          expect(place.bottom).toBeLessThanOrEqual(viewport.height - 16);
+        }
+      } else {
+        expect(place.x).toBeGreaterThanOrEqual(0);
+        expect(place.right).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
+        expect(place.y).toBeGreaterThanOrEqual(0);
+        expect(place.bottom).toBeLessThanOrEqual(page.viewportSize()?.height ?? 0);
+      }
       await page.keyboard.press('Escape');
       await expect(button).toBeFocused();
     }
 
     // A window that is too low still reaches every control, by scrolling inside the box.
     await page.setViewportSize({ width: 1024, height: 320 });
-    await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).click();
+    await newConversation(page);
     await expect(box).toBeVisible();
     const low = await bounds(box);
     expect(low.y).toBeGreaterThanOrEqual(0);
@@ -318,7 +354,7 @@ test('MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och pekskärm', as
     // The toolbar lies at the top of a narrow screen: the box opens under it.
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 844 });
-      const button = await utilityButton(page, 'Skriv till Skyttel');
+      const button = page.getByRole('button', { name: 'Nytt samtal', exact: true });
       await button.click();
       await expect(box).toBeVisible();
       const place = await bounds(box);
@@ -343,7 +379,7 @@ test('MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och pekskärm', as
 
     // Keyboard alone: open, remember, approve.
     await page.setViewportSize({ width: 1280, height: 800 });
-    await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).focus();
+    await page.getByRole('button', { name: 'Nytt samtal', exact: true }).focus();
     await page.keyboard.press('Enter');
     await expect(box.getByRole('heading', { name: 'Samtal med Skyttel' })).toBeFocused();
     const { remember, approve, decline } = consentBoxFor(page);
@@ -385,6 +421,8 @@ test('MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och pekskärm', as
     const touchPage = await touch.newPage();
     await openHousehold(touchPage, app.origin);
     await (await utilityButton(touchPage, 'Skriv till Skyttel')).tap();
+    await expect(consentBox(touchPage)).toBeHidden();
+    await touchPage.getByRole('button', { name: 'Nytt samtal', exact: true }).tap();
     await expect(consentBox(touchPage)).toBeVisible();
     await consentBoxFor(touchPage).approve.tap();
     await expect(messageField(touchPage)).toBeVisible();

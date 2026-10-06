@@ -304,7 +304,7 @@ test.each(['object', 'relationship'] as const)(
     const change = (kind === 'object' ? receipt.changes : receipt.relationships)[0];
     expect(change).toMatchObject({ before: { typeId: type.id }, after: null, type });
     const { history } = await (await client.request(`${path}/history`)).json();
-    expect(history.at(-1)).toEqual(receipt);
+    expect(history[0]).toEqual(receipt);
   },
 );
 
@@ -355,7 +355,7 @@ test('deleting an endpoint after a private type change retains the saved relatio
   expect(saved.relationships).toEqual([]);
   expect(saved.relationshipTypes).toEqual(initial.relationshipTypes);
   const { history } = await (await client.request(`${path}/history`)).json();
-  expect(history.at(-1)).toEqual(receipt);
+  expect(history[0]).toEqual(receipt);
 });
 
 test.each(['before', 'after'] as const)(
@@ -401,7 +401,7 @@ test.each(['before', 'after'] as const)(
       expectedType,
     );
     const { history } = await (await client.request(`${path}/history`)).json();
-    expect(history.at(-1)).toEqual(receipt);
+    expect(history[0]).toEqual(receipt);
   },
 );
 

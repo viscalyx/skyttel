@@ -99,29 +99,6 @@ test('schema14 merge image archive retains every historical receipt and unmapped
   ]);
   expect(content.drafts[0].changes).toHaveLength(1);
   expect(Buffer.from(parts['images.bin'])).toEqual(Buffer.from(golden.imagesBase64, 'base64'));
-  const receipt = content.saves.find(
-    (row: { operationId: string }) => row.operationId === 'merge-with-image',
-  ).receipt;
-  expect(
-    (
-      await client.json(`${path}/map/undo`, {
-        version: 0,
-        contentVersion: 2,
-        userId: receipt.userId,
-        operationId: receipt.operationId,
-      })
-    ).status,
-  ).toBe(200);
-  expect(
-    (
-      await client.json(`${path}/map/save`, {
-        version: 1,
-        contentVersion: 2,
-        operationId: 'new-owner-undo',
-      })
-    ).status,
-  ).toBe(200);
-  expect((await (await client.request(`${path}/map`)).json()).objects).toHaveLength(2);
 });
 
 test('image bytes, image owner references and historical typed references are validated before preview', async () => {

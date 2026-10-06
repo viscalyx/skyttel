@@ -127,7 +127,9 @@ for (const width of [1280, 390])
         await expect(close).toBeFocused();
         await page.keyboard.press('Tab');
         await expect(
-          await utilityButton(page, width <= 700 ? 'Lista' : 'Sök i kartan'),
+          width <= 700
+            ? page.getByRole('button', { name: 'Navigera', exact: true })
+            : await utilityButton(page, 'Sök i kartan'),
         ).toBeFocused();
       };
       await checkOrder();

@@ -96,6 +96,33 @@ async function noticeContentFits(page: Page, scroll = false) {
   }
 }
 
+async function uncovered(locator: Locator) {
+  await expect
+    .poll(() =>
+      locator.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        if (
+          box.width <= 0 ||
+          box.height <= 0 ||
+          box.left < 0 ||
+          box.top < 0 ||
+          box.right > innerWidth ||
+          box.bottom > innerHeight
+        )
+          return false;
+        return [
+          [box.left + 8, box.top + 8],
+          [box.right - 8, box.bottom - 8],
+          [box.left + box.width / 2, box.top + box.height / 2],
+        ].every(([x, y]) => {
+          const hit = document.elementFromPoint(x, y);
+          return hit !== null && element.contains(hit);
+        });
+      }),
+    )
+    .toBe(true);
+}
+
 for (const configuration of [
   { name: 'dator', viewport: { width: 1280, height: 800 }, touch: false },
   { name: 'telefon', viewport: { width: 390, height: 780 }, touch: true },
@@ -148,26 +175,53 @@ test('NOT-01: utan samtal visar avstängda samtalsknappar en stängbar notis uta
   const app = await createInstallation();
   try {
     await openMap(page, app.origin);
+    const conversationWrites: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().includes('/text-assistant'))
+        conversationWrites.push(request.url());
+    });
     await expect(notice(page)).toHaveCount(0);
     for (const button of [microphoneButton(page), textButton(page)]) {
       await expect(button).toBeEnabled();
       await expect(button).not.toHaveAttribute('aria-disabled');
       await expect(button).toHaveAccessibleDescription(/Inte tillgängligt just nu\./);
       await expect(button).toHaveCSS('opacity', '0.45');
-      await button.click();
-      await expect(notice(page)).toContainText(unavailable);
-      await expect(button).toBeFocused();
-      await expect(textView(page)).toHaveCount(0);
-      await expect(assertive(page)).toHaveText(unavailable);
-      await expect(notice(page).locator('.conversation-notice-symbol svg')).toHaveAttribute(
-        'aria-hidden',
-        'true',
-      );
-      await notice(page).getByRole('button', { name: 'Stäng notisen' }).click();
-      await expect(notice(page)).toHaveCount(0);
-      await expect(microphoneButton(page)).toBeFocused();
-      await expect(polite(page)).not.toHaveText('Samtal med Skyttel är tillgängligt igen.');
     }
+    await microphoneButton(page).click();
+    await expect(notice(page)).toContainText(unavailable);
+    await expect(microphoneButton(page)).toBeFocused();
+    await expect(textView(page)).toHaveCount(0);
+    await expect(assertive(page)).toHaveText(unavailable);
+    await expect(notice(page).locator('.conversation-notice-symbol svg')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+    await notice(page).getByRole('button', { name: 'Stäng notisen' }).click();
+    await expect(notice(page)).toHaveCount(0);
+    await expect(microphoneButton(page)).toBeFocused();
+    await expect(polite(page)).not.toHaveText('Samtal med Skyttel är tillgängligt igen.');
+    // Text and draft access remain independent of conversation availability.
+    await textButton(page).click();
+    await expect(textView(page)).toBeVisible();
+    await expect(field(page)).toBeFocused();
+    await expect(page.getByRole('region', { name: 'Arbetsyta', exact: true })).toHaveAttribute(
+      'data-session-active',
+      'false',
+    );
+    await expect(page.getByRole('dialog', { name: 'Samtal med Skyttel', exact: true })).toHaveCount(
+      0,
+    );
+    await expect(
+      textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }),
+    ).toBeDisabled();
+    await expect(notice(page)).toContainText(unavailable);
+    await notice(page).getByRole('button', { name: 'Stäng notisen' }).click();
+    await expect(notice(page)).toHaveCount(0);
+    await expect(microphoneButton(page)).toBeFocused();
+    await textView(page).getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+    await expect(textView(page)).toHaveCount(0);
+    await expect(textButton(page)).toBeFocused();
+    expect(conversationWrites).toEqual([]);
     await expect(page.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Aktuell status', exact: true })).toHaveCount(0);
     await expect(
@@ -365,7 +419,7 @@ test('NOT-06: en stängbar kontakt-notis försvinner automatiskt och nästa avbr
     await openMap(page, app.origin);
     await page.context().setOffline(true);
     await expect(notice(page)).toHaveCount(0);
-    await textButton(page).click();
+    await microphoneButton(page).click();
     await expect(notice(page)).toContainText(disconnectedIdle);
     await expect(textView(page)).toHaveCount(0);
     await notice(page).getByRole('button', { name: 'Stäng notisen' }).focus();
@@ -397,6 +451,8 @@ for (const viewport of [
   { width: 700, height: 900 },
   { width: 390, height: 844 },
   { width: 667, height: 375 },
+  { width: 320, height: 640 },
+  { width: 320, height: 250 },
 ]) {
   test(`NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid ${viewport.width} × ${viewport.height}`, async ({
     page,
@@ -412,15 +468,62 @@ for (const viewport of [
       // A real browser can lose its provider connection independently of HTTP.
       await page.evaluate(() => window.skyttelVoiceFixture.disconnect());
       await expect(notice(page)).toContainText(disconnectedActive);
+      const mapStatus = page.getByRole('region', { name: 'Kartans status', exact: true });
+      if (viewport.height <= 450) {
+        const context = page.getByRole('region', { name: 'Kartans sammanhang', exact: true });
+        for (
+          let tab = 0;
+          tab < 30 && !(await context.evaluate((element) => element === document.activeElement));
+          tab++
+        ) {
+          await page.keyboard.press('Tab');
+        }
+        await expect(context).toBeFocused();
+        expect(await context.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe(
+          'solid',
+        );
+        await context.press('PageDown');
+        await expect
+          .poll(() => context.evaluate((element) => element.scrollTop))
+          .toBeGreaterThan(0);
+        await context.press('End');
+        const legend = page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true });
+        await uncovered(legend.locator('p').last());
+      }
+      await mapStatus.scrollIntoViewIfNeeded();
+      await expect(mapStatus).toContainText('Nya förslag är osparade');
       const card = await bounds(notice(page));
-      const feedback = await bounds(page.locator('.workspace-voice-controls'));
+      const feedback = await bounds(mapStatus);
       expect(overlaps(card, feedback)).toBe(false);
+      await uncovered(mapStatus);
+      await uncovered(notice(page));
       expect(
         overlaps(
           card,
           await bounds(page.getByRole('button', { name: 'Återställ vy', exact: true })),
         ),
       ).toBe(false);
+      await noticeContentFits(page);
+      const reset = page.getByRole('button', { name: 'Återställ vy', exact: true });
+      if (viewport.height <= 320) {
+        for (
+          let tab = 0;
+          tab < 30 && !(await reset.evaluate((element) => element === document.activeElement));
+          tab++
+        ) {
+          await page.keyboard.press('Tab');
+        }
+        await expect(reset).toBeFocused();
+      } else await reset.scrollIntoViewIfNeeded();
+      await uncovered(reset);
+      await reset.click({ trial: true });
+      const camera = page
+        .getByRole('navigation', { name: 'Kameravy', exact: true })
+        .getByRole('button', { name: 'Navigera', exact: true });
+      await camera.scrollIntoViewIfNeeded();
+      await uncovered(camera);
+      await camera.click({ trial: true });
+      expect(overlaps(await bounds(notice(page)), await bounds(camera))).toBe(false);
       if (viewport.width <= 700) {
         expect(card.x).toBe(12);
         expect(card.width).toBe(viewport.width - 24);
@@ -459,7 +562,9 @@ for (const viewport of [
       await page.getByRole('button', { name: 'Stäng textvyn' }).click();
       const box = await bounds(voiceBox(page));
       const card = await bounds(notice(page));
-      const feedback = await bounds(page.locator('.workspace-voice-controls'));
+      const feedback = await bounds(
+        page.getByRole('region', { name: 'Kartans status', exact: true }),
+      );
       expect(overlaps(card, feedback)).toBe(false);
       expect(overlaps(card, box)).toBe(false);
       if (viewport.width <= 700) expect(card.bottom).toBeLessThan(box.y);

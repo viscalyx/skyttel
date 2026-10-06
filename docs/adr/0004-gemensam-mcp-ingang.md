@@ -2,7 +2,7 @@
 
 Samma regler för hushållets information ska gälla oavsett var samtalet
 förs, så både Skyttels egen assistent och externa assistenter använder
-samma MCP-ingång för kartarbete, eget utkast, historik och ångring.
+samma MCP-ingång för kartarbete, eget utkast och läsning av historik.
 MCP och webbformulär använder gemensamma kartregler, och servern
 kontrollerar identifierad användare, valt hushåll och aktuell åtkomst.
 Fullständig export, återimport, permanent radering och användarhantering

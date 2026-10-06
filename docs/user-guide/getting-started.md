@@ -27,7 +27,8 @@ Namnet ska ha 1–100 tecken. Vid ett oklart resultat väljer du
 **Kontrollera status**. Därefter kan du bjuda in de andra medlemmarna.
 
 Kartans verktyg erbjuder **Prata med Skyttel**, **Skriv till Skyttel** och
-**Lista**. **Information och hjälp** förklarar hur du börjar och finns
+**Tabell**, **Nytt objekt** och **Rapporter**. **Information och hjälp**
+förklarar hur du börjar och finns
 även i det kompakta verktygsfältet på telefon.
 Tal börjar först när du själv startar rösten och har lämnat ditt
 [medgivande](text-assistant.md#medgivande).
@@ -57,12 +58,13 @@ innehåller även privata utkast och personliga vyer; läs
 
 ## Gör din första ändring
 
-1. Välj **Lista** i kartans verktyg för att börja med formulären.
-2. Välj **Nytt objekt**. Ange ett namn, exempelvis `Alex cykel`, välj
+1. Välj **Nytt objekt** i kartans verktyg eller i **Tabell**.
+2. Ange ett namn, exempelvis `Alex cykel`, välj
    objekttypen **Fordon** och fyll vid behov i en beskrivning.
-3. Välj **Lägg i mitt utkast**. Förslaget finns nu kvar även efter
+3. Välj **Lägg i utkastet och stäng**. Förslaget finns nu kvar även efter
    omladdning, men ingår ännu inte i den gemensamma kartan.
-4. Läs **Hela mitt utkast**. Kontrollera att alla förslag ska genomföras
+4. Öppna **Skriv till Skyttel → Visa utkastet** och läs förslagens rader.
+   Kontrollera att alla förslag ska genomföras
    och välj **Spara hela utkastet**.
 5. Invänta kvittot som bekräftar sparandet. Om resultatet är oklart följer
    du [stegen för sparförsök](drafts.md#följ-upp-ett-oklart-sparande).
@@ -73,27 +75,20 @@ ett [familjeabonnemang](family-subscription.md). Du kan också öppna
 
 ## Välj arbetssätt
 
-**Lista** ger tillgång till kartans uppgifter och formulär.
-På dator öppnas objekt och samtal i egna paneler över kartan. Välj samma
-objekt igen från Lista för att återvända till dess panel och lyfta den
-framför andra. På telefon visas bara den valda panelen.
+**Tabell** ger tillgång till alla objekt och deras samband, även när
+kartgrafiken inte kan visas. Välj ett objekts namn för att läsa uppgifterna
+och sambanden. **Läs alla uppgifter för** öppnar en fullständig läsdialog.
+Radens knappar öppnar redigering, ett nytt samband eller objektet i kartan.
 
-Flytta datorpanelen genom att dra rubriken, använda piltangenter på
-flyttkontrollen eller öppna dess flyttknappar. Panelernas kryss stänger dem
-utan att kasta oskickad text. Stäng panelerna för att visa hela kartan.
-Öppna Lista och välj objektets **Uppgifter** för att fortsätta.
-Nya objekt som ännu inte skickats till utkastet kan öppnas igen med
-**Fortsätt** under **Påbörjade objekt** i Lista.
-Placeringar och oskickad text bevaras vid skärmbyte under samma session.
-Dragbara fönster kan täcka legenden och kartans kontroller, men hela
-fönstret stannar inom skärmen. Synlig textvy och röstruta går inte att
-täcka. Ett fönster som står i vägen flyttas när samtalsytan öppnas eller
-växer och behåller sedan sin nya plats.
+Objekt och samband redigeras i ett formulär åt gången. Om du stänger ett
+ändrat formulär eller försöker lämna det frågar Skyttel hur du vill göra.
+**Fortsätt redigera** behåller texten och återgår till formuläret.
+**Kasta ändringarna och fortsätt** kastar bara den oskickade formulärtexten.
+Förslag som redan finns i utkastet påverkas inte av det valet.
 
-När formulären och textvyn inte får plats samtidigt kan du växla med
-**Lista**, **Visa detaljer**, **Navigera** och **Skriv till Skyttel**.
-Vyerna behåller sina bredder och oskickad text. Ett pågående röstsamtal
-fortsätter även när du visar formulären.
+Växla mellan **Karta**, **Tabell** och **Skriv till Skyttel** för att välja
+arbetssätt. Kartans kamera och markeringar finns kvar vid vybyten.
+Ett pågående röstsamtal fortsätter även när du visar formulären.
 Läs om [navigering och personlig vy](spatial-map.md) för att söka,
 fokusera på ett objekt och ordna placeringarna så att de passar dig.
 

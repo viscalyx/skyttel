@@ -119,7 +119,7 @@ test('canonical presentation and complete facts survive atomic receipt, restart 
 
 test('older clients can insert, reorder and remove custom definitions while canonical references remain anchored', async () => {
   await define();
-  const receipt = await save('initial');
+  await save('initial');
   const added = {
     id: 'new',
     name: 'Ny anteckning',
@@ -166,27 +166,6 @@ test('older clients can insert, reorder and remove custom definitions while cano
   ]);
   expect(type?.builtins).toEqual(definition.builtins);
   await save('removed');
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        operationId: 'removed',
-        userId: receipt.userId,
-      })
-    ).status(),
-  ).toBe(200);
-  expect((await read()).draft.objectTypes?.[0].after?.propertyOrder).toEqual([
-    'builtin:description',
-    'field:note',
-    'builtin:debt',
-    'builtin:startDate',
-    'field:new',
-  ]);
-  await save('restore-field');
-  client = await restartWithSession(client, () => installation.restart());
-  expect((await read()).types.find(({ id }) => id === 'contract')?.builtins).toEqual(
-    definition.builtins,
-  );
 });
 
 test('older-client label edits retain an explicit mixed order when custom membership and order are unchanged', async () => {
@@ -316,66 +295,6 @@ test('invalid canonical keys, kinds, duplicate references and relationship prope
   expect((await read()).objects).toEqual([]);
 });
 
-test('undo reverses mixed order and hiding while retaining independent names, new-before-old entries and whole facts', async () => {
-  await define();
-  await object();
-  await save('initial');
-  const arranged = {
-    ...definition,
-    propertyOrder: ['builtin:debt', 'field:note', 'builtin:description', 'builtin:startDate'],
-    builtins: definition.builtins?.map((field) =>
-      field.key === 'description' ? { ...field, sectionId: '' } : field,
-    ),
-  };
-  expect((await define(arranged)).status()).toBe(200);
-  const receipt = await save('arranged');
-  expect(
-    (
-      await define({
-        ...arranged,
-        builtins: [
-          ...(arranged.builtins ?? []).map((field) =>
-            field.key === 'debt' ? { ...field, name: 'Återstående skuld' } : field,
-          ),
-          { key: 'currency', name: 'Valuta', sectionId: 'facts' },
-        ],
-        fields: [
-          { id: 'new', name: 'Ny anteckning', description: '', kind: 'text', sectionId: 'facts' },
-          ...(definition.fields ?? []),
-        ],
-        propertyOrder: ['builtin:currency', 'field:new', ...(arranged.propertyOrder ?? [])],
-      })
-    ).status(),
-  ).toBe(200);
-  await save('independent');
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        operationId: 'arranged',
-        userId: receipt.userId,
-      })
-    ).status(),
-  ).toBe(200);
-  const proposed = (await read()).draft.objectTypes?.[0].after;
-  expect(proposed?.propertyOrder).toEqual([
-    'builtin:currency',
-    'field:new',
-    'builtin:description',
-    'field:note',
-    'builtin:debt',
-    'builtin:startDate',
-  ]);
-  expect(proposed?.builtins?.find(({ key }) => key === 'debt')?.name).toBe('Återstående skuld');
-  expect(proposed?.builtins?.find(({ key }) => key === 'description')?.sectionId).toBe('facts');
-  await save('undone');
-  expect((await read()).objects[0]).toMatchObject({
-    financialFacts,
-    description: 'Gemensam text',
-    customValues: { note: 'Bevarat' },
-  });
-});
-
 test.each(['new section', 'deleted by current', 'deleted by proposed'])(
   'definition conflict resolution preserves independent canonical placement: %s',
   async (scenario) => {
@@ -468,154 +387,3 @@ test.each(['new section', 'deleted by current', 'deleted by proposed'])(
     }
   },
 );
-
-test('restoring object values keeps present hidden presentation while restoring a deleted type recovers its canonical layout', async () => {
-  await define();
-  await object();
-  await save('initial');
-  expect(
-    (
-      await post('draft', {
-        version: (await read()).draft.version,
-        id: 'loan',
-        baseRevision: 1,
-        value: null,
-      })
-    ).status(),
-  ).toBe(200);
-  const deleted = await save('deleted');
-  expect(
-    (
-      await define({
-        name: definition.name,
-        description: '',
-        fields: [],
-        sections: [],
-        builtins: [],
-        propertyOrder: [],
-      })
-    ).status(),
-  ).toBe(200);
-  await save('hidden');
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        operationId: 'deleted',
-        userId: deleted.userId,
-      })
-    ).status(),
-  ).toBe(200);
-  let state = await read();
-  expect(state.draft.objectTypes?.[0].after).toMatchObject({
-    builtins: [],
-    propertyOrder: ['field:note'],
-  });
-  expect(state.draft.changes[0].after).toMatchObject({
-    description: 'Gemensam text',
-    financialFacts,
-  });
-  expect(
-    (
-      await post('resolve', {
-        version: state.draft.version,
-        choice: 'proposed',
-        conflict: {
-          kind: 'objectType',
-          id: 'contract',
-          current: state.types.find(({ id }) => id === 'contract'),
-        },
-      })
-    ).status(),
-  ).toBe(200);
-  await save('restored-value');
-  expect((await read()).objects[0].financialFacts).toEqual(financialFacts);
-  expect((await define(definition)).status()).toBe(200);
-  await save('shown');
-  state = await read();
-  expect(
-    (
-      await post('draft', {
-        version: state.draft.version,
-        id: 'loan',
-        baseRevision: state.objects[0].revision,
-        value: null,
-      })
-    ).status(),
-  ).toBe(200);
-  await save('deleted-again');
-  expect((await define(null)).status()).toBe(200);
-  const typeDeleted = await save('type-deleted');
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        operationId: 'type-deleted',
-        userId: typeDeleted.userId,
-      })
-    ).status(),
-  ).toBe(200);
-  expect((await read()).draft.objectTypes?.[0].after).toMatchObject(definition);
-  await save('type-restored');
-  client = await restartWithSession(client, () => installation.restart());
-  expect((await read()).types.find(({ id }) => id === 'contract')).toMatchObject(definition);
-});
-
-test('undo rejects an overlapping private canonical edit and combines a separate private label edit', async () => {
-  await define();
-  await object();
-  await save('initial');
-  const hidden = {
-    ...definition,
-    builtins: definition.builtins?.map((field) =>
-      field.key === 'debt' ? { ...field, sectionId: '' } : field,
-    ),
-  };
-  await define(hidden);
-  const receipt = await save('hidden');
-  await define({
-    ...hidden,
-    builtins: hidden.builtins?.map((field) =>
-      field.key === 'debt' ? { ...field, sectionId: 'dates' } : field,
-    ),
-  });
-  const privatePlacement = await read();
-  expect(
-    (
-      await post('undo', {
-        version: privatePlacement.draft.version,
-        operationId: 'hidden',
-        userId: receipt.userId,
-      })
-    ).status(),
-  ).toBe(409);
-  expect(await read()).toEqual(privatePlacement);
-  await define({
-    ...hidden,
-    builtins: hidden.builtins?.map((field) =>
-      field.key === 'debt' ? { ...field, name: 'Min privata etikett' } : field,
-    ),
-  });
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        operationId: 'hidden',
-        userId: receipt.userId,
-      })
-    ).status(),
-  ).toBe(200);
-  expect((await read()).draft.objectTypes?.[0].after?.builtins).toContainEqual({
-    key: 'debt',
-    name: 'Min privata etikett',
-    sectionId: 'facts',
-  });
-  await save('combined');
-  client = await restartWithSession(client, () => installation.restart());
-  expect((await read()).objects[0].financialFacts).toEqual(financialFacts);
-  expect((await read()).types.find(({ id }) => id === 'contract')?.builtins).toContainEqual({
-    key: 'debt',
-    name: 'Min privata etikett',
-    sectionId: 'facts',
-  });
-});

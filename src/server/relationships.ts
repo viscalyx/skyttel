@@ -126,7 +126,7 @@ export function relationships(database: Database.Database, householdId: string) 
           });
       }
     },
-    propose(draft: MapDraft, body: Record<string, unknown>) {
+    propose(draft: MapDraft, body: Record<string, unknown>, duplicateOutcome = false) {
       if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
         throw new MapError('invalid_request', 400);
       const existing = draft.relationships?.find((change) => change.id === body.id);
@@ -196,7 +196,8 @@ export function relationships(database: Database.Database, householdId: string) 
         );
         if (duplicate) {
           // An add selects the existing relationship; an edit must not erase another one.
-          if (before || existing) throw new MapError('duplicate_relationship');
+          if (!duplicateOutcome && (before || existing))
+            throw new MapError('duplicate_relationship');
           return { draft, existingId: duplicate.id };
         }
       }
@@ -205,17 +206,13 @@ export function relationships(database: Database.Database, householdId: string) 
       const changes = (draft.relationships ?? []).filter((change) => change.id !== body.id);
       if (before || after)
         changes.push({
+          proposedAt: new Date().toISOString(),
           id: body.id,
           before,
           after,
           type,
           ...(beforeType ? { beforeType } : {}),
           objectNames: objectNames(draft, before, after, existing?.objectNames),
-          ...(existing?.restoreRevision !== undefined
-            ? { restoreRevision: existing.restoreRevision }
-            : {}),
-          ...(existing?.undo ? { undo: true as const } : {}),
-          ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
         });
       return { draft: { ...draft, version: draft.version + 1, relationships: changes } };
     },
@@ -258,7 +255,7 @@ export function relationships(database: Database.Database, householdId: string) 
             throw new MapError('type_conflict');
           readCustomValues(change.after.customValues, type);
         }
-        if (!saved) tombstones.assertCreation('relationship', change.id, change.restoreRevision);
+        if (!saved) tombstones.assertCreation('relationship', change.id);
       }
       // Temporarily remove changed edges so endpoint swaps do not violate the unique index.
       for (const change of changes)
@@ -271,7 +268,7 @@ export function relationships(database: Database.Database, householdId: string) 
               ...change.after,
               id: change.id,
               householdId,
-              revision: (change.before?.revision ?? change.restoreRevision ?? 0) + 1,
+              revision: (change.before?.revision ?? 0) + 1,
             }
           : null;
         if (after)

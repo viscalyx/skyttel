@@ -1,7 +1,16 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import type { SaveReceipt } from '../../src/shared/map.js';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { openSavedHistory } from '../support/conversation-page.js';
+import { editTableObject, openObjectRelationships } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 async function connection(actor: APIRequestContext, origin: string, householdId: string) {
@@ -28,8 +37,8 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
     const household = app.seedDemo();
     await signIn(page.request, app.origin);
     await page.goto(app.origin);
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText('Lo Lind');
+    await openTable(page);
+    await expect(await openDraftReview(page)).toContainText('Lo Lind');
     const flow = await beginAssistant(page.request, app.origin, 'skyttel:read skyttel:write');
     await page.goto(flow.consentUrl.href);
     await page.getByLabel('Välj hushåll').selectOption(household.id);
@@ -97,19 +106,20 @@ test('AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärend
     await app.restart();
     expect(await tool(app.origin, token, 'save_draft', attempt)).toEqual(saved);
     await page.goto(app.origin);
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Inga förslag',
-    );
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText('Lo Lind');
-    await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
-      'Familjens musikkonto → Inloggningsadress → musik@example.test',
-    );
-    await page
-      .getByRole('button', { name: 'Uppgifter för Familjens Molnmusik', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Pris', { exact: true })).toHaveValue('189');
+    await openTable(page);
+    await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
+    await closeTextView(page);
+    await openTable(page);
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toContainText('Lo Lind');
+    const relationships = await openObjectRelationships(page, 'Familjens musikkonto');
+    await expect(relationships).toContainText('Inloggningsadress');
+    await expect(relationships).toContainText('musik@example.test');
+    await page.keyboard.press('Escape');
+    const subscription = await editTableObject(page, 'Familjens Molnmusik');
+    await subscription.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await expect(subscription.getByLabel('Pris', { exact: true })).toHaveValue('189');
     const lo = await tool(app.origin, token, 'read_map', { query: 'Lo Lind' });
     expect(lo.objects).toEqual(
       expect.arrayContaining([
@@ -133,14 +143,14 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
     const { household } = await (await createHousehold(page.request, app.origin)).json();
     const token = await connection(page.request, app.origin, household.id);
     await page.goto(app.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await openTable(page);
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const reviewed = await tool(app.origin, token, 'read_my_draft');
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Kim Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Kim Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const attempt = {
       version: reviewed.version,
       contentVersion: reviewed.contentVersion,
@@ -152,13 +162,10 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
     expect(denied.review.changes).toHaveLength(2);
     expect((await tool(app.origin, token, 'read_map')).objects).toEqual([]);
     await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Lo Exempel',
-    );
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Kim Exempel',
-    );
+    await openTable(page);
+    const draft = await openDraftReview(page);
+    await expect(draft).toContainText('Lo Exempel');
+    await expect(draft).toContainText('Kim Exempel');
     const saved = await tool(app.origin, token, 'save_draft', {
       ...attempt,
       operationId: 'fresh-whole-approval',
@@ -180,10 +187,8 @@ test('AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparan
       }),
     ).toMatchObject({ operation: { status: 'succeeded', receipt: saved.receipt } });
     await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Inga förslag',
-    );
+    await openTable(page);
+    await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
   } finally {
     await app.close();
   }
@@ -198,11 +203,11 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     const { household } = await (await createHousehold(page.request, app.origin)).json();
     const token = await connection(page.request, app.origin, household.id);
     await page.goto(app.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('privata utkast');
+    await openTable(page);
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(await openDraftReview(page)).toContainText('Lo Exempel');
     const review = await tool(app.origin, token, 'read_my_draft');
     const attempt = {
       version: review.version,
@@ -258,12 +263,17 @@ test('AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt spar
     ).json();
     expect(history.history).toEqual([committedReceipt]);
     await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Mina sparförsök' })).toContainText('Genomfört');
-    await expect(page.getByRole('region', { name: 'Mina sparförsök' })).toContainText('Lo Exempel');
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Inga förslag',
-    );
+    await openTable(page);
+    const savedHistory = await openSavedHistory(page);
+    await expect(savedHistory.getByRole('article')).toHaveCount(1);
+    await expect(savedHistory).toContainText('Lo Exempel');
+    await savedHistory.getByText('Identifiera sparandet och användaren', { exact: true }).click();
+    await expect(savedHistory).toContainText(attempt.operationId);
+    await page
+      .getByRole('region', { name: 'Rapporter', exact: true })
+      .getByRole('button', { name: 'Tillbaka till arbetet', exact: true })
+      .click();
+    await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
   } finally {
     await app.close();
   }
@@ -305,7 +315,8 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
     ).toBe('unresolved_identity');
     expect((await tool(app.origin, token, 'read_map')).objects).toEqual([]);
     await page.goto(app.origin);
-    await openWorkspace(page);
+    await openTable(page);
+    await openDraftReview(page);
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     review = await tool(app.origin, token, 'propose_object', {
       version: review.version,
@@ -336,13 +347,10 @@ test('AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kasta
       operationId: 'unspecified',
     });
     await page.reload();
-    await openWorkspace(page);
-    await expect(
-      page.getByRole('button', { name: 'Uppgifter för Hushållskonto', exact: true }),
-    ).toHaveCount(0);
-    await page.getByRole('button', { name: 'Uppgifter för Betalkonto', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
+    await openTable(page);
+    await expect(page.getByRole('button', { name: 'Hushållskonto', exact: true })).toHaveCount(0);
+    const account = await editTableObject(page, 'Betalkonto');
+    await expect(account.getByLabel('Identitet')).toHaveValue('unspecified');
   } finally {
     await app.close();
   }

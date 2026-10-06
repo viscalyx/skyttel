@@ -22,17 +22,16 @@ De länkade integrationstesterna verifierar verktygsreglerna. Stegen här
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Ändra objekt genom **Tabell → Redigera [objektets namn]**. Läs hela
+förslag genom **Visa utkastet** och förslagets namn. Stäng läsdialogen
+innan nästa handling. Läs eller ändra samband genom **Samband för
+[objektets namn]**; alla förslag sparas separat som ett helt utkast.
 
 1. Följ [den kontrollerade klientens startguide](#controlled-mcp-client)
    för en ny tillfällig databas på `http://localhost:3301`, privat
    webbläsarfönster och hushållet **MCP-prov**. Behåll terminal A och
    databasens sökväg under fallet. Terminal B ska visa `ready`.
-2. För svenska samtal i MCP-01–05, använd befintlig Codex-inloggning och
+2. För svenska samtal i MCP-01–04, använd befintlig Codex-inloggning och
    kör följande i en tredje terminal från repositoryts rot. Starta inte
    AI-07:s separata server eller guide för demodata; terminal A kör redan
    den tomma provdatabasen. Servernamnet nedan ska vara oanvänt i din
@@ -100,8 +99,9 @@ testfallet “MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej�
 2. Be den föreslå **Paneler på taket** med Leverantör **Exempelsol**,
    Effekt **12.5**, Installationsdatum **2026-09-01** och obesvarat Batteri.
    Föreslå också **Paneler på garaget** med enbart Batteri **Nej**.
-3. Ladda om kartan. I **Hela mitt utkast** ska båda objekten och typen
-   finnas. Kontrollera **Batteri: Obesvarat** respektive **Batteri: Nej**.
+3. Ladda om kartan. I **Visa utkastet** ska båda objekten och typen
+   finnas. Öppna varje objektförslag och läs hela värdena. Batteri ska
+   visa **Ej uppgivet** respektive **Nej**. Stäng läsdialogen.
    Be assistenten spara hela utkastet.
 4. Be den ändra det använda fältet Effekt från tal till text. Kontrollera
    att detta avvisas och att beskedet säger att ett nytt fält behövs.
@@ -110,9 +110,11 @@ testfallet “MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej�
 5. Be den ändra den förifyllda typen Person till **Person i hushållet**
    med beskrivningen **Personer ger ingen inloggning**, och ta bort den
    oanvända förifyllda typen Fordon. Spara hela utkastet.
-6. Starta om servern. Öppna takets paneler i kartans lista. Kontrollera
+6. Starta om servern. Välj **Tabell → Redigera Paneler på taket** och
+   öppna avsnittet **Egna fält**. Kontrollera
    de tre angivna värdena och att Batteri och Effektanteckning är tomma.
-   Stäng formuläret och öppna garagets paneler: Batteri ska vara **Nej**.
+   Stäng formuläret och redigera **Paneler på garaget**, med **Egna fält**
+   öppet: Batteri ska vara **Nej**.
    Be assistenten läsa katalogen igen och kontrollera typändringarna.
 
 **Förväntat resultat:**
@@ -148,16 +150,18 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
    Föreslå **Familjens bil** som ett uttryckligen ospecificerat fordon
    och sambandet **Bilens avbetalning → Finansierar → Familjens bil**.
    Lämna alla andra ekonomiska uppgifter obesvarade. Granska utkastet i
-   samtalet och webbläsaren; kontrollera osäkert, okänt, inget och
-   ospecificerat. Spara hela utkastet.
+   samtalet och webbläsaren. Läs fulla förslag för Exempellån,
+   Exempelkredit och Familjens bil; kontrollera osäkert, okänt, inget och
+   ospecificerat. Stäng läsdialogen och spara hela utkastet.
 3. Be assistenten rätta enbart Exempelkredits utnyttjade kredit till **0**,
    uppgiven **2026-09-20**, och spara. Begär kvittot och den rättelsens
    historik: det tidigare beloppet och datumet ska finnas där.
-4. Starta om och ladda om kartan. Sök och öppna varje avtal i listan.
-   Öppna **Ekonomiska uppgifter och avtalsvillkor**. Kontrollera angivna
+4. Starta om och ladda om kartan. Sök varje avtal i **Tabell** och välj
+   dess redigeringsknapp. Öppna **Ekonomiska uppgifter**. Kontrollera angivna
    belopp, datum och säkerheter. Exempelkredits skuld ska fortfarande
    vara obesvarad, kreditutrymmet **80 000** och utnyttjad kredit **0**.
-   Kontrollera finansieringssambandet till bilen och båda hyresavtalens
+   Stäng formuläret. Öppna avtalens namngivna **Samband** och kontrollera
+   finansieringssambandet till bilen och båda hyresavtalens
    riktade samband till rätt bostad respektive garage.
 
 **Förväntat resultat:**
@@ -168,9 +172,9 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
 
 ## Livscykel och samtidighet
 
-### MCP-03: typbyte och riktade samband återställs med äldre typer
+### MCP-03: typbyte bevarar riktade samband och äldre typers läsbara historik
 
-**Syfte:** Prova typbyte, riktning, dubbletter och uttrycklig återställning.
+**Syfte:** Prova typbyte, riktning, dubbletter och historiska typnamn.
 
 **Användare:** Alex och assistenten.
 
@@ -178,7 +182,7 @@ testfallet “MCP-02: daterade avtal kan rättas utan påhittade uppgifter”.
 
 **Integrationstest:**
 [assistant-advanced.spec.ts](../../tests/integration/assistant-advanced.spec.ts),
-testfallet “MCP-03: typbyte och riktade samband återställs med äldre typer”.
+testfallet “MCP-03: typbyte bevarar riktade samband och äldre typers läsbara historik”.
 
 **Steg:**
 
@@ -192,27 +196,20 @@ testfallet “MCP-03: typbyte och riktade samband återställs med äldre typer�
    samma objekt. Granska riktningarna och spara hela utkastet.
 3. Be assistenten byta cykelns typ till Motorfordon. Välj uttryckligen
    Nummer **42**. Granska gammal typ och **SYNTH-42** samt ny typ och **42**
-   i hela utkastet. Spara och anteckna kvittots operation och författare.
+   i förslagets fulla läsdialog, under **Sparade värden** och
+   **Föreslagna värden**. Stäng, spara och anteckna kvittots identiteter.
    Kontrollera att objektets ID och båda sambandens ID är oförändrade.
 4. Ta bort den nu oanvända typen Cykel och spara. Be om historiken för
-   cykeln, välj typbytets hela sparande och begär ångring. Granska att
-   utkastet återför både typen Cykel och Nummer **SYNTH-42** innan sparande.
-5. Spara återställningen. Be om vanlig borttagning av cykeln och spara.
-   Anteckna detta kvitto. Garaget ska finnas kvar; cykelns båda samband
-   ska vara borttagna. Ta bort de oanvända typerna Cykel och Förvaring
-   och spara. Den andra sambandstypen behöver inte tas bort.
-6. Välj cykelborttagningens hela sparande i historiken och föreslå ångring.
-   Kontrollera att båda saknade definitionerna visas för återställning.
-   Starta om, läs utkastet igen och spara uttryckligen hela återställningen.
-   Öppna cykeln i webbläsaren och kontrollera Nummer **SYNTH-42**, samma
-   objekt-ID och återställda samband till garaget i rätt riktning.
+   cykeln och välj typbytets hela sparande. Läs de tidigare värdena med
+   typen Cykel och Nummer SYNTH-42 samt de nya värdena med Motorfordon
+   och Nummer 42.
 
 **Förväntat resultat:**
 
-- Typbyte överför inte värden på grund av lika fältnamn.
-- Borttagning, upphörande och permanent radering är skilda åtgärder.
-  Detta fall använder vanlig borttagning och återställer från historiken.
-- Ångring blir ett beständigt eget förslag och kräver nytt helt sparande.
+- Typbyte överför inte värden på grund av lika fältnamn. Objektets ID
+  och de riktade sambanden bevaras.
+- Historiken behåller typbytets äldre typnamn och värden även när den
+  aktuella typen tas bort. Läsningen skapar inga nya förslag.
 
 ### MCP-04: upphört innehåll och privata utkast skyddar typer
 
@@ -237,7 +234,7 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
    felet ska förklara att användande innehåll måste hanteras först.
 2. Robin väljer **Nytt objekt**, typ Privat använd typ, namn
    **Andras privata namn**, beskrivning **Privat hemlig anteckning**, och
-   **Lägg i mitt utkast** utan att spara. Alex ber assistenten ta bort
+   **Lägg i utkastet och stäng** utan att spara. Alex ber assistenten ta bort
    Privat använd typ. Kontrollera avvisningen och att varken namn,
    beskrivning eller privat objekt-ID finns i svaret.
 3. Alex föreslår borttagning av Samtidig typ men sparar inte. Robin lägger
@@ -245,8 +242,9 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
    utan att spara. Först nu ber Alex assistenten spara hela utkastet.
 4. Kontrollera att sparandet avvisas, att definitionen finns kvar i
    sparad katalog och att inget innehåll tas bort. Alex webbläsare ska
-   visa Upphört testobjekt men inte Robins privata förslag. Robin ska
-   fortfarande se båda sina förslag i **Hela mitt utkast**.
+   visa Upphört testobjekt men inte Robins privata förslag. Välj först
+   **Tabell → Filter → Ta med upphörda** och stäng filtret. Robin ska
+   fortfarande se båda sina förslag i **Visa utkastet**.
 5. Starta om och ladda om Robins profil. Båda privata förslagen ska finnas
    kvar. Alex får fortfarande samma användningsspärr utan deras innehåll.
 
@@ -255,60 +253,14 @@ testfallet “MCP-04: upphört innehåll och privata utkast skyddar typer”.
 - Upphört innehåll och beständiga utkast skyddar typer även vid sparandet.
 - Ingen del sparas när en definition blockeras. Privat arbete röjs inte.
 
-## Sammanslagning och äldre historik
+## Äldre historik
 
-### MCP-05: bildval och sammanslagning ångras med senare arbete kvar
+MCP-05 för bildval, sammanslagning och historisk ångring utgår.
+Fall-ID:t återanvänds inte.
 
-**Syfte:** Prova uttryckliga identitetsval, bilder och samlad ångring.
+### MCP-06: importerad historik läses och vanliga rättelser använder färskt underlag
 
-**Användare:** Alex och assistenten.
-
-**Förutsättningar:** Nytt provhushåll. Skapa två små PNG-bilder, en röd
-och en grön, i valfritt bildprogram. Använd inga personbilder.
-
-**Integrationstest:**
-[assistant-advanced.spec.ts](../../tests/integration/assistant-advanced.spec.ts),
-testfallet “MCP-05: bildval och sammanslagning ångras med senare arbete kvar”.
-
-**Steg:**
-
-1. Be assistenten skapa två olika objekt **Lo Exempel**, med beskrivning
-   **Första uppgiften** respektive **Andra uppgiften**, samt **Blått kort**.
-   Spara. Anteckna de två Lo-objektens olika ID:n.
-2. Öppna varje Lo-objekt i webbläsaren och använd profilbildsfältet för
-   röd respektive grön PNG. Lägg bildförslagen i utkastet. Be assistenten
-   lägga samma typ av riktat samband från vardera Lo till kortet och
-   spara hela utkastet. Behåll de två sambandens ID:n.
-3. Be assistenten granska en möjlig sammanslagning med första Lo som
-   kvarvarande identitet. Kontrollera båda objektens fakta, bilder och
-   samband. Bekräfta ännu inte samma identitet. Välj andra beskrivningen
-   och gröna bilden, ta bort första sambandet och behåll det andra.
-   Be om ett förslag med obekräftad identitet. Webbläsaren ska visa
-   **Identiteten är inte bekräftad** och inaktiverat helt sparande.
-4. Kasta endast sammanslagningsförslaget. Be om ny granskning, bekräfta
-   uttryckligen att objekten avser samma företeelse och välj samma fakta
-   och samband. Spara hela utkastet. Första ID:t ska vara kvar med den
-   gröna bilden; det andra ska vara borttaget. Begär kvittot och anteckna
-   dess operation och historiska författare.
-5. Rätta kvarvarande namn till **Senare namn** och spara. Lägg därefter
-   **Eget senare objekt** i utkastet utan att spara. Be assistenten läsa
-   sammanslagningens kvitto och föreslå ångring av det hela sparandet.
-6. Starta om. Kontrollera att utkastet både återställer Lo-identiteterna
-   och behåller Eget senare objekt. Spara hela utkastet och ladda om.
-   Kontrollera Senare namn med röd bild och första beskrivningen, andra
-   Lo med grön bild och andra beskrivningen, de ursprungliga riktade
-   sambanden samt det oberoende nya objektet.
-
-**Förväntat resultat:**
-
-- Lika namn ger ingen automatisk sammanslagning. Identitet, fakta, bild
-  och samband väljs uttryckligen; alla ändringar ingår i samma kvitto.
-- Ångringen återför ursprungliga identiteter och bilder utan att skriva
-  över det senare namnet eller kasta det oberoende privata förslaget.
-
-### MCP-06: importerad historik ångras med färskt underlag
-
-**Syfte:** Prova historisk författare, innehållsversion och färsk ångring.
+**Syfte:** Prova historisk författare, innehållsversion och vanliga rättelser.
 
 **Användare:** Alex och den kontrollerade terminalklienten.
 
@@ -318,7 +270,8 @@ Ingen annan server får använda port 3301. Behåll exporten privat på värden.
 
 **Integrationstest:**
 [assistant-advanced.spec.ts](../../tests/integration/assistant-advanced.spec.ts),
-testfallet “MCP-06: importerad historik ångras med färskt underlag”.
+testfallet “MCP-06: importerad historik läses och vanliga rättelser använder
+färskt underlag”.
 
 **Steg:**
 
@@ -361,29 +314,63 @@ testfallet “MCP-06: importerad historik ångras med färskt underlag”.
    importerade sparningen. Skriv `read-tool read_history` följt av ett
    JSON-objekt med exakt dess `operationId` och `userId` som strängvärden.
    Kontrollera författare, tid och den skapade lampan i kvittot.
-7. Skriv `capture-tool fresh-undo propose_undo` följt av samma JSON-objekt
-   med enbart `operationId` och `userId`. Kopiera inga versioner från
-   kvittot; klienten hämtar dagens versioner. Kör sedan:
-
-   ```text
-   send fresh-undo
-   read
-   capture-save undo-save
-   send undo-save
-   map Historisk lampa
-   ```
-
-8. Kontrollera först att `read` visar borttagningen som eget förslag och
-   att det senare sparandet ger ett nytt kvitto i dagens innehållsversion.
-   Ladda om webbläsaren: lampan ska nu saknas. Återkalla anslutningen,
-   städa andra provdatabasen enligt guiden och radera den syntetiska ZIP-filen.
+7. Kör `read-tool read_map {"objectId":"manual-lamp"}`. Kopiera objektets
+   aktuella revision som `baseRevision` och dess `typeId`. Fånga ett
+   `propose_object` med ett nytt etikettvärde, ID manual-lamp, denna revision
+   och `value` med samma typeId, namnet Rättad historisk lampa samt tom
+   beskrivning. Skicka fångsten och spara hela utkastet med ett nytt
+   `capture-save` och `send`. Läs det nya sparandet i historiken.
 
 **Förväntat resultat:**
 
-- Gamla underlag kan inte ändra återimporterat innehåll.
-- Historisk författare ger ingen inloggning. Färsk ångring fungerar med
-  denna innehållsreferens och dagens versioner, utan att återge importens
-  gamla version som aktuell eller påstå att ett osparat förslag är sparat.
+- Det gamla förslaget avvisas efter importen. Historisk författare, tid
+  och lampans sparade värden är läsbara utan att skapa ett ångringsförslag.
+- Den vanliga rättelsen sparas med den nya innehållsversionen och den
+  aktuella författaren. Den importerade historiken bevaras.
+
+### MCP-07: historik är läsbar och historisk ångring och sammanslagning saknar verktyg
+
+**Syfte:** Prova att historiken läses utan historiska mutationsverktyg.
+
+**Användare:** Alex och den kontrollerade terminalklienten.
+
+**Förutsättningar:** Tom karta och tomt utkast i ett nytt provhushåll.
+
+**Integrationstest:**
+[assistant-advanced.spec.ts](../../tests/integration/assistant-advanced.spec.ts),
+testfallet “MCP-07: historik är läsbar och historisk ångring och sammanslagning
+saknar verktyg”.
+
+**Steg:**
+
+1. Kör `tools`. Kontrollera att `read_history` och `save_draft` finns, men
+   att `propose_undo`, `read_merge_review` och `propose_merge` saknas.
+2. Försök `read-tool read_merge_review {}` och
+   `capture-tool retired propose_undo {}`. Klienten ska avvisa de okända
+   verktygen. Kör `read`: inget förslag ska ha skapats.
+3. Kör följande i terminal B:
+
+   <!-- markdownlint-disable MD013 -->
+   ```text
+   capture-object lamp {"id":"manual-lamp","type":"Person","name":"Provets lampa"}
+   send lamp
+   capture-save ordinary
+   send ordinary
+   read-tool read_history {"objectId":"manual-lamp"}
+   ```
+   <!-- markdownlint-enable MD013 -->
+
+4. Välj lampans sparande med `read-tool read_history` och exakt dess
+   `operationId` och `userId`. Kontrollera skapad lampa och sparbekräftelse.
+   Kör `read` igen: utkastet ska vara tomt och oförändrat av läsningen.
+
+**Förväntat resultat:**
+
+- Vanliga förslag och hela sparanden fungerar med ett läsbart kvitto.
+- Historisk ångring och sammanslagning erbjuds inte och skapar inget förslag.
+- Historiken och utkastet går att läsa med aktuell behörighet.
+- Integrationstestet kontrollerar även att de borttagna HTTP-rutterna
+  svarar 404, att direkta MCP-anrop avvisas och att kartan förblir oförändrad.
 
 ## Controlled MCP client
 
@@ -516,7 +503,7 @@ database, authentication override or arbitrary JavaScript command is exposed.
 #### Advanced proposals and historical receipts
 
 Run `tools` to inspect the exact public argument schema. Use `read-tool` for
-current definitions, a merge review, or relevant history. `capture-tool`
+current definitions or relevant history. `capture-tool`
 accepts only listed non-read-only tools with draft and content versions.
 Supply all other documented arguments as one JSON object. The helper rejects
 unknown top-level fields and caller-supplied versions; the server validates
@@ -541,12 +528,10 @@ expected results.
 
 For history, run `read-tool read_history {}` and copy the relevant
 `operationId` and historical `userId` from that result into the documented
-JSON arguments for `read_history` or `propose_undo`. These are content
-references, never authentication overrides. The historical author may be
-unmapped after import. Undo captures today's draft/content versions; never
-copy versions from the old receipt. For a merge, read `read_merge_review`
-with the selected IDs and retain its exact `reviewed` value alongside the
-explicit fact and relationship choices in `propose_merge`.
+JSON arguments for `read_history`. These are content references, never
+authentication overrides. The historical author may be unmapped after import.
+Reading history creates no proposal. Historical undo and object merge tools
+are no longer offered.
 
 To test stale input, capture first, change the draft or relevant saved
 content in the browser, then run `send` with the original label. The helper

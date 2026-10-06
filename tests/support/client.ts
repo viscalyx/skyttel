@@ -13,35 +13,52 @@ export async function restartWithSession(
   return request.newContext({ storageState });
 }
 
-export async function openWorkspace(page: Page) {
-  await page
-    .getByRole('navigation', { name: 'Kartans verktyg' })
-    .getByRole('button', { name: 'Lista', exact: true })
-    .click();
+/** Enter the ordinary table without closing or discarding other work. */
+export async function openTable(page: Page) {
+  await (await utilityButton(page, 'Tabell')).click();
+  await expect(page.getByRole('region', { name: 'Hushållets tabell', exact: true })).toBeVisible();
 }
 
-export async function activatePanel(page: Page, title: string) {
-  await openWorkspace(page);
-  if (title === 'Nytt objekt') await page.getByRole('button', { name: /^Fortsätt:/ }).click();
-  else if (title !== 'Lista och utkast')
-    await page.getByRole('button', { name: `Uppgifter för ${title}`, exact: true }).click();
-  await expect(page.getByRole('region', { name: title, exact: true })).toBeVisible();
-}
-
-export async function closePanels(page: Page) {
-  // On a narrow screen the text view fills the screen. Closing it ends no conversation.
-  const textView = page.getByRole('button', { name: 'Stäng textvyn', exact: true });
-  if ((page.viewportSize()?.width ?? 1280) <= 700 && (await textView.isVisible()))
-    await textView.click();
-  const close = page.locator(
-    '.workspace-window[data-active="true"]:visible .workspace-window-close',
-  );
-  while ((await close.count()) > 0) await close.first().click();
-}
-
+/** Enter the map through its actual toolbar control. */
 export async function openMap(page: Page) {
-  await closePanels(page);
+  await (await utilityButton(page, 'Karta')).click();
   await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
+}
+
+export async function openNewObject(page: Page) {
+  await (await utilityButton(page, 'Nytt objekt')).click();
+  const dialog = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+/** Read the ordinary draft summary without starting a conversation. */
+export async function openDraftReview(page: Page) {
+  const text = await utilityButton(page, 'Skriv till Skyttel');
+  if ((await text.getAttribute('aria-expanded')) !== 'true') await text.click();
+  const show = page.getByRole('button', { name: /^Visa utkastet \(\d+\)$/ });
+  if (await show.isVisible()) await show.click();
+  const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+  await expect(draft).toBeVisible();
+  return draft;
+}
+
+/** Close only this named surface. A loss or outcome guard must remain observable. */
+export async function closeSupportDialog(
+  page: Page,
+  dialogName: string,
+  closeButtonName = 'Stäng dialogen',
+) {
+  const dialog = page.getByRole('dialog', { name: dialogName, exact: true });
+  await dialog.getByRole('button', { name: closeButtonName, exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+}
+
+/** Hide conversation text without ending its conversation or discarding its message. */
+export async function closeTextView(page: Page) {
+  const close = page.getByRole('button', { name: 'Stäng textvyn', exact: true });
+  await close.click();
+  await expect(close).not.toBeVisible();
 }
 
 export async function openProfile(page: Page) {

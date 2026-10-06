@@ -7,14 +7,15 @@ exempelvis en solcellsanläggning och ha samma egna fält för alla objekt
 av den typen. Även förifyllda typer, som Person och Fordon, går att ändra.
 Den som skapar en typ får ingen särskild roll eller ensam rätt till den.
 
-Du når definitionerna genom **Inställningar** → **Typer och egna fält**
-eller från Lista. Oskickad definitionstext följer med mellan vyerna.
+Du når definitionerna genom **Inställningar** → **Typer och egna fält**.
+Oskickad definitionstext följer med mellan inställningarnas sidor.
 Välj **Tillbaka till kartan** för att granska och spara typförslagen
 med resten av ditt privata utkast.
 
 ## Skapa en typ och ett objekt tillsammans
 
-1. Välj **Ny objekttyp** i kartan. Ange **Typens namn** och en förklarande
+1. Öppna **Inställningar → Typer och egna fält** och välj **Ny objekttyp**.
+   Ange **Typens namn** och en förklarande
    **Typens beskrivning**.
 2. Välj **Lägg till fält** för varje egen uppgift. Ange fältets namn,
    beskrivning och värdeslag: **Text**, **Tal**, **Datum** eller **Ja/nej**.
@@ -23,7 +24,7 @@ med resten av ditt privata utkast.
 3. Välj **Lägg typförslaget i mitt utkast**. Skapa sedan ett **Nytt objekt**
    och välj den nya typen i **Objekttyp**. Fälten visas i objektformuläret.
 4. Lägg objektet i utkastet. Granska definitionen och objektets uppgifter
-   i **Hela mitt utkast**. Välj **Spara hela utkastet** när du vill göra
+   i **Visa utkastet**. Välj **Spara hela utkastet** när du vill göra
    alla förslagen gemensamma.
 
 Alla fyra fälttyper får lämnas obesvarade. För ja/nej är **Obesvarat**,
@@ -78,7 +79,7 @@ Befintliga gemensamma värden som inte visas i typens avsnitt finns under
 **Uppgifter utanför typens avsnitt**. Där kan du läsa och rätta dem även
 efter ett typbyte. Döljning är ingen åtkomstbegränsning eller radering.
 Äldre typer behåller beskrivningen och formulärets ekonomiska uppgifter
-tills du väljer en egen placering. Historik, ångring och återimport behåller
+tills du väljer en egen placering. Historik och återimport behåller
 värden, säkerhet och datum tillsammans med rätt typdefinition.
 
 ## Rätta definitioner och värden
@@ -88,8 +89,8 @@ Namn och beskrivning kan rättas även när typen eller fältet används.
 Objekten behåller sina identiteter och värden när definitionerna byter namn.
 Snarlika namn kopplas inte ihop automatiskt.
 
-För att rätta ett värde väljer du objektet och **Redigera valt objekt**
-i detaljpanelen. Ändra fältet, lägg rättelsen i utkastet och spara hela
+För att rätta ett värde öppnar du **Tabell** och väljer objektets
+**Redigera**. Ändra fältet, lägg rättelsen i utkastet och spara hela
 utkastet. Du kan också rensa ett värde eller välja **Obesvarat**.
 Andra medlemmar ser den sparade definitionen och kan
 skapa egna objekt med samma fält. Din privata nya typ blir tillgänglig
@@ -102,18 +103,21 @@ värdeslag; felbeskedet avslöjar inte utkastets innehåll.
 
 ## Byt typ på ett objekt
 
-Välj objektet och **Redigera valt objekt** i detaljpanelen. Välj sedan
+Öppna **Tabell** och välj objektets **Redigera**. Välj sedan
 en annan **Objekttyp**, exempelvis från Cykel till Fordon.
 Objektets identitet och alla dess samband finns kvar. Namn,
 beskrivning och andra uppgifter som inte hör till typens egna fält påverkas
 inte av själva typvalet.
 
-Den nya typens fält börjar obesvarade. Tidigare fältvärden visas separat,
-även om den nya typen har fält med samma namn. Fyll själv i de uppgifter
-som ska gälla efter bytet. Inga värden överförs eller konverteras automatiskt.
-Lämna **Obesvarat** för uppgifter du inte känner till; det är skilt från
-**Nej**. Bekräfta **Jag har hanterat tidigare fältvärden för typbytet** när
-du har rättat de nya fälten eller valt att lämna dem obesvarade.
+**Ta bort tidigare egna fält?** visar namnen och värdena som försvinner.
+**Fortsätt redigera** behåller nuvarande typ och värden. Välj
+**Ta bort fältvärdena och byt typ** för att bekräfta borttagningen ur
+formuläret. Redan lagda förslag ändras först när hela formuläret läggs i
+utkastet.
+
+Den nya typens fält börjar obesvarade, även om namn eller fältidentiteter
+sammanfaller. Fyll själv i de nya uppgifterna. Skyttel överför eller
+konverterar dem inte. **Obesvarat** är skilt från **Nej**.
 
 Om du byter typ flera gånger under redigeringen visas de tidigare svaren
 i skilda grupper med sin ursprungliga typ. Även när du byter tillbaka
@@ -121,23 +125,18 @@ börjar de nya fälten tomma. Bekräfta hanteringen på nytt efter varje byte.
 Gemensamma ekonomiska uppgifter behåller belopp, säkerhet och datum;
 profilbilden och ditt ikonval finns också kvar.
 
-Välj **Lägg i mitt utkast**. I **Hela mitt utkast** ser du tidigare typ och
+Välj **Lägg i utkastet och stäng**. I **Visa utkastet** ser du tidigare typ och
 värden samt den nya typen och dess värden. Typbytet och fälträttelserna
 sparas tillsammans med resten av utkastet. Ett fel stoppar hela sparandet.
-Tidigare sparade värden finns kvar i historiken. **Stäng utan att skicka
-texten** tar bort oskickade formulärvärden. Panelens kryss behåller i stället
-texten så att du kan fortsätta i samma objekt senare.
+Tidigare sparade värden finns kvar i historiken. Försöker du lämna ett
+ändrat formulär visar Skyttel ett val. **Fortsätt redigera** behåller
+hela texten. **Kasta ändringarna och fortsätt** tar bort den oskickade texten
+utan att ändra redan lagda förslag.
 
-Ett typbyte gäller ett objekt. Ett namnbyte på typdefinitionen ändrar
-benämningen för alla objekt av den typen. Sammanslagning gäller flera
-objekt som ska bli ett; ett typbyte slår inte samman objekt och flyttar
-inga samband.
-
-Vid konflikt mellan typer granskar du typen och dess fältvärden som en
-helhet. Oberoende ändringar, exempelvis ett senare namn, bevaras. Ångring
-lägger tillbaka tidigare typ och värden i ett nytt förslag. Senare ändrade
-fält kräver ett uttryckligt val; ett överlappande eget fältförslag behöver
-hanteras innan du ångrar. Oberoende eget utkastarbete finns kvar.
+Ett typbyte gäller ett objekt och behåller dess identitet och samband.
+Ett namnbyte på typdefinitionen ändrar benämningen för alla objekt av
+den typen. Vid konflikt granskar du typen och dess fältvärden som en
+helhet innan du ger ett nytt sparbesked.
 
 ## Samtidiga ändringar och återupptagning
 
@@ -153,7 +152,6 @@ exempelvis ett nytt fält eller en beskrivning som du inte har ändrat.
 Kvittot omfattar definitioner och objekt i samma sparande. Historiken
 bevarar äldre definitioner och fältens betydelse. Följ
 [utkast och sparande](drafts.md) vid oklart sparande.
-[Ångring av ett helt sparande](history.md) omfattar också definitioner
-och egna fält. En typ som fortfarande används kan inte tas bort genom
-ångring utan att användningen hanteras. Läs om
-[borttagning och återställning av typer och fält](definition-removal.md).
+[Ändringshistoriken](history.md) visar sparade definitioner och egna
+fält med sina dåvarande betydelser. Läs om
+[borttagning av typer och fält](definition-removal.md).

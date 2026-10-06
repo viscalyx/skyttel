@@ -12,6 +12,7 @@ export function ObjectIconPicker({
   needsText,
   onStageText,
   onChange,
+  local = false,
 }: {
   value?: string;
   name: string;
@@ -20,6 +21,7 @@ export function ObjectIconPicker({
   needsText: boolean;
   onStageText: () => Promise<boolean>;
   onChange: (id: string | null) => Promise<boolean>;
+  local?: boolean;
 }) {
   const id = useId();
   const [query, setQuery] = useState('');
@@ -83,8 +85,9 @@ export function ObjectIconPicker({
             : 'Ikonen visas i kartan och listan. Om du lägger till en profilbild visas bilden i stället.'}
         </p>
         <p className="object-icon-help">
-          Alla ikoner kan användas för alla objekt. Ett ikonval blir direkt ett privat förslag.
-          Spara hela utkastet för att dela det med hushållet.
+          {local
+            ? 'Alla ikoner kan användas för alla objekt. Ikonvalet läggs i utkastet tillsammans med hela formuläret.'
+            : 'Alla ikoner kan användas för alla objekt. Ett ikonval blir direkt ett privat förslag. Spara hela utkastet för att dela det med hushållet.'}
         </p>
         {needsText && (
           <div className="object-icon-stage-text">

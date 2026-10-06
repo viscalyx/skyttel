@@ -26,8 +26,8 @@ vid körning.
    hushållet och det enda förslaget skapas i nästa steg. Båda installationerna
    håller varje modellsvar tills du släpper det i terminalen.
 2. Skapa hushållet Textprov. Skapa **Lo Exempel** av typen **Person** med
-   beskrivningen **Påhittad uppgift** genom Lista och välj
-   **Lägg i mitt utkast**. Lämna förslaget osparat.
+   beskrivningen **Påhittad uppgift** genom **Nytt objekt** och välj
+   **Lägg i utkastet och stäng**. Lämna förslaget osparat.
 3. Ladda om sidan före varje fall, så att inget medgivande gäller för
    besöket. Behåll hushållet och förslaget mellan fallen.
 4. Avsluta respektive installation med `quit` och kontrollera att dess
@@ -54,8 +54,8 @@ avsluta samtalet”.
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel** i **Kartans verktyg**. Välj
-   **Godkänn och starta** i medgivanderutan.
+1. Välj **Skriv till Skyttel** i **Kartans verktyg**. Textvyn öppnas utan
+   samtalsstart. Välj **Nytt samtal** och **Godkänn och starta**.
 2. Läs textvyn: rubriken **Skriv till Skyttel** med **Nytt samtal** och
    stängknappen **Stäng textvyn**, samtalstexten och meddelandefältet.
 3. Skriv **Oskickat** i fältet utan att skicka. Välj **Stäng textvyn**.
@@ -68,7 +68,7 @@ avsluta samtalet”.
 - Textvyn står vid högerkanten, och kartan syns bredvid.
 - Kontextmätaren står under samtalsrubriken. Ingen separat utkaststatus,
   kvittoruta eller lista över senaste ändringar ligger i samtalskolumnen.
-  Kvittot nås genom **Utkast och historik**.
+  Sparandet nås genom **Rapporter → Ändringshistorik**.
 - **Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.**
   står under hushållets namn, utanför textvyn.
 - **Skicka** står i höjd med fältets mitt. Efter skickandet, också med
@@ -99,7 +99,7 @@ Skyttel arbetar sist”.
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel** i kartans verktyg och **Godkänn och starta**.
+1. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**.
 2. Läs den tomma samtalstexten. Skriv **Vem betalar musiken?** och klicka
    på **Skicka**.
 3. Medan terminalen håller svaret: läs samtalstextens sista rad. Släpp
@@ -214,11 +214,12 @@ skärm”.
 
 **Steg:**
 
-1. På iPad: tryck på **Skriv till Skyttel** och **Godkänn och starta**.
+1. På iPad: tryck på **Skriv till Skyttel → Nytt samtal** och
+   **Godkänn och starta**.
 2. Tryck i meddelandefältet, skriv **Hej Skyttel.** och tryck på
    **Skicka**.
 3. På telefon eller i ett smalt fönster: öppna textvyn, läs den och stäng
-   den med **Skriv till Skyttel**. Öppna den igen och välj sedan **Lista**.
+   den med **Skriv till Skyttel**. Öppna den igen och välj sedan **Tabell**.
 
 **Förväntat resultat:**
 
@@ -229,7 +230,7 @@ skärm”.
 - På smal skärm fyller textvyn skärmen under verktygsraden. Rubriken,
   **Nytt samtal**, fältet och **Skicka** syns utan horisontell rullning.
   Fältet får inte fokus av sig självt.
-- När textvyn stängs syns kartan igen. **Lista** ersätter textvyn på smal
+- När textvyn stängs syns kartan igen. **Tabell** ersätter textvyn på smal
   skärm, och samtalet och den oskickade texten finns kvar.
 
 ## Textvyn på mobil enhet
@@ -424,9 +425,9 @@ riktiga samtalet”, i gruppen “valt mobilt samtalsflöde”.
 
 **Förväntat resultat:**
 
-- Med textvyn stängd står röstrutan vid nedre högra kanten, ovanför
-  kartans rad med **Återställ vy** och utkastets återkoppling. Alla tre
-  ytorna är skilda. Statusordet och stoppikonen ryms på en rad.
+- Med textvyn stängd hör röstrutan till kartans verktyg. Röstrutan,
+  kartans status och **Återställ vy** är åtkomliga utan överlappning.
+  Statusordet och stoppikonen ryms på en rad.
 - Vid 508 och 190 px synlig höjd syns kontextmätare, **Utkast (1)**,
   **Nytt samtal** och stängknapp i en kompakt rad. Fältet har en rad,
   behåller fokus och står under samtalstexten. Röstrutan står ovanför
@@ -633,8 +634,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { unzipSync, zipSync } from 'fflate';
 const parts = unzipSync(readFileSync(process.env.TEXTBREDD_ARCHIVE));
 const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
-if (manifest.format !== 'skyttel-household' || manifest.schemaVersion !== 24)
-  throw Error('En provexport med schemaversion 24 krävs');
+if (manifest.format !== 'skyttel-household' || manifest.schemaVersion !== 25)
+  throw Error('En provexport med schemaversion 25 krävs');
 manifest.schemaVersion = 23;
 parts['manifest.json'] = Buffer.from(JSON.stringify(manifest));
 writeFileSync('/tmp/skyttel-schema-23.zip', zipSync(parts), { mode: 0o600 });
@@ -643,7 +644,7 @@ JS
 
 **Förväntat resultat:**
 
-- Exporten använder schemaversion 24. Personliga samtalsval och medgivande
+- Exporten använder schemaversion 25. Personliga samtalsval och medgivande
   ingår inte i hushållsfilen; automationen granskar detta.
 - En giltig schemaversion 23 går att kontrollera och återimportera genom
   gränssnittet. Lo-förslaget bevaras. Aktuell version provas också.

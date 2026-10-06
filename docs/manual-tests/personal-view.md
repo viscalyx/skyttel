@@ -18,7 +18,7 @@ Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
 1. Starta en isolerad installation enligt
-   [provförberedelsen](../development/devcontainer.md#disposable-local-database).
+[provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Använd ett nytt hushåll
    mellan fallen.
 2. Skapa Lampan och Cykeln och spara hela utkastet. Bjud in Robin till
@@ -45,7 +45,7 @@ reload, clients and server restart”.
 
 1. Dra Lampan åt sidan och nedåt. Håll Shift och dra uppåt. Kontrollera
    höjdhjälpens start och riktning under draget.
-2. Välj Lampan i listan och öppna kartan. Öppna Navigera, fokusera
+2. Välj namnet Lampan i **Tabell** och öppna **Karta**. Öppna Navigera, fokusera
    Flytta [objektets namn]: nedåt och håll Shift utan att dra. Släpp Shift och
    välj Visa höjdhjälp i Navigera för att granska flyttningens start.
    Tryck Enter på Flytta [objektets namn]: nedåt och kontrollera ett steg
@@ -91,8 +91,10 @@ choice across navigation modes and selection”.
    vid den nya placeringen. Dra uppåt igen och kontrollera samma beteende.
 3. Släpp Shift. Granska den senaste flyttningens höjdskillnad. Öppna
    navigeringen och kontrollera att Visa höjdhjälp fortfarande är på.
-4. Välj Cykeln i listan. Kontrollera att valet består. Markera även Lampan
-   och kontrollera att reglaget blir inaktivt med texten
+4. Välj namnet Cykeln i **Tabell** och återgå till **Karta**. Kontrollera att
+valet består. Markera även Lampan
+   genom Control-klick i kartan, öppna Navigera igen och kontrollera
+   att reglaget blir inaktivt med texten
    Välj ett objekt för att visa höjdhjälp.
 
 **Förväntat resultat:**
@@ -205,11 +207,15 @@ viewport changes preserve existing placement and unsent text”.
    minskad rörelse igen utan omladdning och granska samma reglage och
    bakgrund genom att växla mellan inställningarna och kartan. Stäng av
    minskad rörelse igen och välj Tillbaka till kartan.
-3. Skapa Ny sak i listan och lägg i utkastet. Öppna kartan igen.
-4. Välj Lampan och **Redigera valt objekt**. Skriv Oskickad text som nytt namn
-   utan att skicka texten. Öppna kartan och växla mellan stående och liggande
-   smal visningsyta. Öppna Lista och välj **Uppgifter för Lampan** för att
-   återgå till texten.
+3. Välj **Nytt objekt** i verktygen, ange Ny sak och välj
+   **Lägg i utkastet och stäng**. Öppna **Karta** igen.
+4. Välj **Tabell** och **Redigera Lampan**. Skriv Oskickad text som nytt namn.
+   Växla mellan stående 390 × 844 och liggande 844 × 390 CSS-pixlar medan
+   formuläret är öppet. Kontrollera det oskickade namnet i båda vyerna.
+5. Välj **Stäng objektdialogen**, kontrollera fokus på **Fortsätt redigera**
+   och tryck Escape. Namnet finns kvar. Stäng igen och välj uttryckligen
+   **Kasta ändringarna och fortsätt**. Välj **Karta** och kontrollera
+   axelvisarens placering utan att ändra egna flyttar eller Ny sak-förslaget.
 
 **Förväntat resultat:**
 
@@ -218,7 +224,9 @@ viewport changes preserve existing placement and unsent text”.
   minskad rörelse stängs av återkommer det personliga valet. Axelvisaren
   stannar inom kartans synliga yta. Ingen automatisk animation krävs.
 - Nya förslag flyttar inte befintliga placeringar eller kameran.
-- Lampans text och val samt det nya utkastet finns kvar efter vybyten.
+- Lampans oskickade namn består genom storleksbyten och avbruten förlust.
+  Efter uttryckligt kastande finns sparade namn, personliga val och hela
+  tidigare Ny sak-förslaget kvar.
 
 ### PLACERING-05: personlig avskildhet och återkallad tillgång
 
@@ -259,7 +267,8 @@ Utloggad profil ska få tre HTTP 401; Robin utan tillgång ska få tre HTTP 403.
 await (async () => {
   const householdId = prompt('Lindens hushålls-ID');
   const identity = await (await fetch('/api/version')).json();
-  const viewPath = `/api/households/${encodeURIComponent(householdId)}/map/view`;
+  const viewPath =
+`/api/households/${encodeURIComponent(householdId)}/map/view`;
   console.log('read', (await fetch(viewPath)).status);
   for (const kind of ['position', 'settings']) {
     const response = await fetch(`${viewPath}/${kind}`, {
@@ -304,12 +313,14 @@ later refreshes preserve the camera”.
 
 **Steg:**
 
-1. Välj Lampan via Lista och stäng panelerna med kryssen. Öppna Navigera. Använd
+1. Välj namnet Lampan via **Tabell** och återgå med **Karta**.
+   Öppna **Navigera**. Använd
    Flytta [objektets namn]: höger upprepade gånger tills Lampan ligger helt
    utanför den ursprungliga vyn. Vänta på beskedet att din personliga vy är
    sparad. Gör samma sak med Cykeln, utan att ändra kameran.
 2. Aktivera långsam anslutning i webbläsarens nätverksinställningar och
-   ladda om sidan. Kontrollera att lista och rymdkarta visas. Kontrollera
+   ladda om sidan. Kontrollera att **Tabell** och **Karta** kan öppnas.
+Kontrollera
    Visa stjärnhimmel under Inställningar → Rymdkartan medan valet är
    inaktivt i väntan på de personliga placeringarna. Använd inte Återställ vy
    eller kameraknapparna.

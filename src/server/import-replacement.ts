@@ -125,6 +125,7 @@ export function replaceHouseholdContent(
     )
     .run(householdId);
   database.prepare('DELETE FROM map_operation WHERE householdId = ?').run(householdId);
+  database.prepare('DELETE FROM relationship_form_attempt WHERE householdId = ?').run(householdId);
   for (const operationId of new Set(
     [...content.operations, ...content.saves].map((row) => row.operationId),
   ))

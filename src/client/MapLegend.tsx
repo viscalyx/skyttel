@@ -29,13 +29,15 @@ export function MapLegend({
   objects,
   relationships,
   selectedIds,
+  previousIds,
 }: {
   draft: MapDraft;
   objects: Map<string, MapObject>;
   relationships: Map<string, MapRelationship>;
   selectedIds: string[];
+  previousIds?: ReadonlySet<string>;
 }) {
-  const kinds = mapLegendKinds(draft, objects, relationships, selectedIds);
+  const kinds = mapLegendKinds(draft, objects, relationships, selectedIds, previousIds);
   if (!kinds.size) return null;
   return (
     <section aria-label="Teckenförklaring i kartan" className="map-legend">
@@ -91,8 +93,9 @@ export function FullMapLegend() {
       </p>
       <p>
         Utkastet är sparat visas i tre sekunder när ett sparförsök bekräftas. Att förslag inte syns
-        i kartan bevisar inte att de är sparade. Läs detaljerna i Mina sparförsök via Utkast och
-        historik. Där kan du också granska och lösa konflikter som döljs av kartans filter.
+        i kartan bevisar inte att de är sparade. Läs genomförda sparanden i Rapporter och
+        kontrollera obekräftade sparanden med samma kvitto. Konflikter kan öppnas från Karta och
+        Tabell även när kartans filter döljer dem.
       </p>
     </section>
   );

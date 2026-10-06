@@ -133,7 +133,7 @@ export function erasureContent(database: Database.Database, householdId: string,
     objectType: new Set(objectTypes.map((type) => type.id)),
     relationshipType: new Set(relationshipTypes.map((type) => type.id)),
   };
-  const merges: NonNullable<Change['merge']>[] = [];
+  const merges: ObjectMerge[] = [];
   function edgeChange(change: RelationshipChange, publicChange: boolean) {
     for (const value of [change.before, change.after])
       if (value) {
@@ -157,7 +157,7 @@ export function erasureContent(database: Database.Database, householdId: string,
       }
     for (const type of [change.type, change.beforeType])
       if (type) allTypes.set(type.id, allTypes.get(type.id) ?? type);
-    const merge = change.merge;
+    const merge = 'merge' in change ? change.merge : undefined;
     if (!merge) return;
     merges.push(merge);
     for (const object of merge.objects) {
@@ -170,11 +170,6 @@ export function erasureContent(database: Database.Database, householdId: string,
       if (!allEdges.has(edge.id) || (publicChange && !visible.relationship.has(edge.id)))
         allEdges.set(edge.id, edge);
       if (publicChange) visible.relationship.add(edge.id);
-    }
-    if ('previousChanges' in merge) {
-      for (const prior of (merge as ObjectMerge).previousChanges) objectChange(prior, publicChange);
-      for (const prior of (merge as ObjectMerge).previousRelationships)
-        edgeChange(prior, publicChange);
     }
   }
   for (const draft of drafts) {

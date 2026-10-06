@@ -21,7 +21,6 @@ export function DraftStatus({
   onSave,
   onDraft,
   onConflict,
-  onContinue,
 }: {
   compact?: boolean;
   draft: MapDraft;
@@ -44,7 +43,6 @@ export function DraftStatus({
   onSave: () => void;
   onDraft: () => void;
   onConflict: (id: string) => void;
-  onContinue: () => void;
 }) {
   const count =
     draft.changes.length +
@@ -119,17 +117,13 @@ export function DraftStatus({
             Hämta aktuellt underlag
           </button>
         )}
-        {dirty && unresolved && (
+        {compact && dirty && unresolved && (
           <button type="button" onClick={onDraft}>
             Red ut identiteter i utkastet
           </button>
         )}
         {!compact &&
-          (dirty ? (
-            <button type="button" onClick={onContinue}>
-              Fortsätt redigera
-            </button>
-          ) : unresolved || conflicts.length > 0 ? (
+          (unresolved || conflicts.length > 0 ? (
             <button type="button" onClick={onDraft}>
               {conflicts.length ? 'Lös konflikter i utkastet' : 'Red ut identiteter i utkastet'}
             </button>
@@ -140,7 +134,7 @@ export function DraftStatus({
           ) : null)}
         {!compact && (
           <button type="button" onClick={onDraft}>
-            {count ? 'Visa hela utkastet' : 'Sparförsök och kvitton'}
+            Visa hela utkastet
           </button>
         )}
       </div>

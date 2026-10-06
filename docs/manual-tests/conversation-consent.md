@@ -49,7 +49,7 @@ npx tsx scripts/manual-voice.ts
 
 Öppna den utskrivna adressen privat och logga in som Alex med Google.
 Skapa hushållet Medgivandeprov. Lägg till den påhittade personen
-**Lo Exempel** i utkastet genom kartans lista och formulär. Spara inte;
+**Lo Exempel** genom **Nytt objekt → Lägg i utkastet och stäng**. Spara inte;
 utkastet ska innehålla exakt en ändring. Den kontrollerade mikrofonen
 använder tyst ljud och spelar inte in din riktiga mikrofon.
 
@@ -86,14 +86,17 @@ Avbryt startar inget”.
    och **Avbryt**.
 2. Markera kryssrutan och välj **Avbryt**. Kontrollera att fokus står på
    **Prata med Skyttel** och att varken samtal eller mikrofon har startat.
-3. Välj **Skriv till Skyttel**. Kontrollera att kryssrutan är omarkerad igen.
-   Stäng rutan med Escape.
+3. Välj **Skriv till Skyttel**. Textvyn öppnas utan medgivanderuta eller
+   samtalsstart. Välj **Nytt samtal**. Kontrollera att kryssrutan är
+   omarkerad igen. Stäng rutan med Escape och kontrollera att fokus står
+   på **Nytt samtal**. Stäng textvyn.
 4. Gå med Tab från sidans början till snabblänken **Till samtalet med Skyttel**
-   och välj den med Enter. Stäng rutan.
+   och välj den med Enter. Textvyn öppnas utan samtalsstart. Välj
+   **Nytt samtal**, avbryt medgivanderutan och kontrollera fokus.
 
 **Förväntat resultat:**
 
-- Varje ingång visar samma ruta. Kryssrutan är omarkerad varje gång, och
+- Varje explicit samtalsstart visar samma ruta. Kryssrutan är omarkerad, och
   raden om återkallande är ren text utan länk. Rutan hänvisar inte till
   **Information och hjälp**.
 - Rutan är en dialog med namnet **Samtal med Skyttel**. Resten av sidan
@@ -127,13 +130,15 @@ medgivandet gäller besöket”.
 3. Öppna **Inställningar** och välj **Tillbaka till kartan**. Välj
    **Skriv till Skyttel** om textvyn är stängd; samtalet ska visas utan
    medgivanderutan.
-4. Ladda om sidan. Välj **Skriv till Skyttel**. Medgivanderutan ska visas
-   igen, med omarkerad kryssruta. Välj **Godkänn och starta**.
+4. Ladda om sidan. Välj **Skriv till Skyttel → Nytt samtal**.
+   Medgivanderutan ska visas igen med omarkerad kryssruta. Välj
+   **Godkänn och starta**.
 
 **Förväntat resultat:**
 
-- Röstknappen startar samtalet med mikrofonen. Textknappen startar
-  samtalet utan att begära mikrofonåtkomst.
+- Röstknappen startar samtalet med mikrofonen. **Nytt samtal** i textvyn
+  startar textsamtalet utan att begära mikrofonåtkomst. Att bara öppna
+  textvyn startar ingenting och frågar inte om medgivande.
 - **Nytt samtal** frågar inte igen, och samtalet frågar inte igen efter
   ett besök i Inställningar.
 - Efter omladdningen frågar Skyttel igen. Inget medgivande har sparats.
@@ -156,14 +161,15 @@ andra medlemmar”.
 
 **Steg:**
 
-1. Som Alex, välj **Skriv till Skyttel**, markera
+1. Som Alex, välj **Skriv till Skyttel → Nytt samtal**, markera
    **Fråga inte igen för det här hushållet** och välj **Godkänn och starta**.
 2. Ladda om sidan och välj **Prata med Skyttel**. Samtalet ska starta
    direkt med mikrofonen.
 3. Kör `identity alex`. Logga in som Alex i ytterligare en webbläsarprofil,
-   som en andra enhet. Välj **Skriv till Skyttel**; samtalet ska starta direkt.
-4. Som Robin, välj **Skriv till Skyttel**. Medgivanderutan ska visas, med
-   omarkerad kryssruta. Välj **Avbryt**.
+   som en andra enhet. Välj **Skriv till Skyttel → Nytt samtal**;
+   samtalet ska starta direkt.
+4. Som Robin, välj **Skriv till Skyttel → Nytt samtal**.
+   Medgivanderutan ska visas med omarkerad kryssruta. Välj **Avbryt**.
 
 **Förväntat resultat:**
 
@@ -187,16 +193,18 @@ pekskärm”.
 
 **Steg:**
 
-1. På dator, välj en samtalsknapp i verktygsraden. Rutan ska öppnas intill
-   den valda knappen. Stäng den.
+1. På dator, välj **Prata med Skyttel**. Rutan ska öppnas intill
+   röstknappen. Stäng den. Öppna **Skriv till Skyttel** och välj
+   **Nytt samtal**. Läs hela rutan och stäng den. Kontrollera fokus på
+   den knapp som startade frågan.
 2. Minska fönstret till telefonbredd, där verktygsraden ligger överst.
-   Välj **Skriv till Skyttel**. Rutan ska öppnas under verktygsraden och
+   Välj **Nytt samtal** i textvyn. Rutan ska öppnas under verktygsraden och
    rymmas på skärmen utan rullning i sidled. Stäng den.
-3. Återställ fönstret. Flytta fokus till **Skriv till Skyttel** med Tab och
+3. Återställ fönstret. Flytta fokus till **Nytt samtal** med Tab och
    tryck Enter. Gå med Tab till kryssrutan och markera den med
    mellanslag. Gå vidare till **Godkänn och starta** och tryck Enter.
 4. På en pekskärm med en annan användare, eller i en ny installation, tryck
-   på **Skriv till Skyttel** och sedan på **Godkänn och starta**.
+   på **Skriv till Skyttel**, **Nytt samtal** och **Godkänn och starta**.
 5. Upprepa steg 3 med skärmläsare. Lyssna efter dialogens namn,
    medgivandetexten, kryssrutans namn och raden om återkallande.
 
@@ -305,14 +313,16 @@ frågar igen”.
 2. Läs texten vid knappen och statusraden. Ladda om sidan och läs
    statusraden igen.
 3. Välj **Tillbaka till kartan**. Välj **Prata med Skyttel** och därefter
-   verktygsradens andra samtalsknapp. Välj **Avbryt** i rutan varje gång.
+   **Avbryt** i medgivanderutan. Öppna **Skriv till Skyttel** och kontrollera
+   att inget samtal startar och ingen medgivanderuta visas av själva öppningen.
+   Välj **Nytt samtal** och sedan **Avbryt** i medgivanderutan.
 
 **Förväntat resultat:**
 
 - Texten **Medgivandet är återkallat** visas vid knappen, som nu heter
   **Spara medgivandet** och har kvar fokus. Statusraden visar
   **Inget medgivande är sparat.**, även efter omladdningen.
-- Båda samtalsknapparna visar medgivanderutan. Varken samtal eller
+- Både röststart och **Nytt samtal** visar medgivanderutan. Varken samtal eller
   mikrofon startar.
 
 ### MEDGIVANDE-08: medgivande för besöket går att återkalla och att spara
@@ -615,8 +625,8 @@ testfallet “MEDGIVANDE-15: återkallandet behåller utkast och oskickad text�
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel** och **Godkänn och starta**. Vänta på
-   textvyn. Slå på mikrofonen med **Prata med Skyttel**.
+1. Välj **Skriv till Skyttel → Nytt samtal** och **Godkänn och starta**.
+   Vänta på textvyn. Slå på mikrofonen med **Prata med Skyttel**.
 2. Skicka **Tillfälligt provord för återkallandet.**. Låt terminalens
    förfrågan vänta. Skriv **Min oskickade text.** utan att skicka.
 3. Öppna **Inställningar**, sidan **Samtal med Skyttel**, och välj
@@ -625,8 +635,8 @@ testfallet “MEDGIVANDE-15: återkallandet behåller utkast och oskickad text�
 4. Öppna rutan igen och välj **Återkalla och avsluta samtalet**.
 5. Släpp det gamla svaret med `reply ID För sent efter återkallandet.`.
    Välj **Tillbaka till kartan**. Kontrollera utkastet.
-6. Välj **Skriv till Skyttel** och godkänn igen. Läs skrivfältet och
-   samtalstexten. Skicka **Börja om.** och släpp det nya svaret med
+6. Välj **Skriv till Skyttel → Nytt samtal** och godkänn igen. Läs
+   skrivfältet och samtalstexten. Skicka **Börja om.** och släpp svaret med
    `reply ID Ett nytt samtal.`.
 
 **Förväntat resultat:**
@@ -659,7 +669,8 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel**, godkänn för besöket och vänta på textvyn.
+1. Välj **Skriv till Skyttel → Nytt samtal**, godkänn för besöket och
+   vänta på textvyn.
    Slå på mikrofonen med **Prata med Skyttel** och skicka
    **Spara hela utkastet nu.**.
 2. Läs `id`, `draft.version` och `draft.contentVersion` i terminalens
@@ -672,8 +683,10 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
 3. Vänta på terminalens `save-registered`. Notera dess `operationId`.
    Öppna **Samtal med Skyttel** i Inställningar och välj
    **Återkalla medgivandet**. Läs rutan och bekräfta.
-4. Skriv `release-save`. Gå tillbaka till kartan. Öppna **Utkast och
-   historik**, **Tidigare sparförsök** och kontrollera kvittot.
+4. Skriv `release-save`. Gå tillbaka till kartan. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
+   med Lo Exempel. Öppna **Identifiera sparandet och användaren**
+   och jämför dess ID med det noterade sparförsöket.
 
 **Förväntat resultat:**
 
@@ -681,7 +694,7 @@ testfallet “MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet�
   stället för att ange antal osparade ändringar.
 - Medgivandet återkallas medan det registrerade sparandet slutförs.
   Kartan innehåller Lo Exempel och utkastet är tomt.
-- Mina sparförsök visar kvittot med det noterade ID:t. Historiken har ett
+- Ändringshistoriken visar sparandet med det noterade ID:t. Den har ett
   sparande för samma ID, även efter att det fördröjda svaret släpps.
 - Textvyn och röstrutan är stängda och ingen samtalsnotis visas.
   Sparresultatet går att kontrollera utan ett nytt samtalsmedgivande.
@@ -737,14 +750,15 @@ enhet”.
 
 **Steg:**
 
-1. Börja ett textsamtal i första profilen. Skriv **Text som inte hunnit
+1. Välj **Skriv till Skyttel → Nytt samtal** i första profilen och invänta
+   att samtalet startar med det sparade medgivandet. Skriv **Text som inte hunnit
    skickas.** i skrivfältet utan att skicka.
 2. Öppna **Samtal med Skyttel** i andra profilen och välj
    **Återkalla medgivandet**. Inget samtal pågår där; ingen
    bekräftelseruta ska visas.
 3. Gå tillbaka direkt till första profilen och välj **Skicka**. Om
    servern redan har avslutat vyn genom sin kontroll, läs notisen där.
-4. Välj **Skriv till Skyttel** igen och godkänn. Läs skrivfältet.
+4. Välj **Skriv till Skyttel → Nytt samtal** igen och godkänn. Läs skrivfältet.
 
 **Förväntat resultat:**
 
@@ -766,7 +780,7 @@ enhet är provad, och fullständig överensstämmelse intygas inte.
 | --- | --- | --- | --- |
 | 1.3.1, 4.1.2 Namn, roll och relationer | Rutan är en modal dialog med rubriken som namn och medgivandetexten som beskrivning. Raden om återkallande beskriver kryssrutan. | Namn, beskrivning, roller och modalt läge. | Uppläsning med NVDA och VoiceOver. |
 | 1.4.3, 1.4.11 Kontrast | Rutan använder kartans färger för text, ytor och fokus i ljust och mörkt tema. | Textens kontrast mot ytan, minst 4,5:1 i båda teman. | Kontrast för kryssrutan och fokusramen. |
-| 1.4.4, 1.4.10 Förstoring och omflöde | Rutan är högst 380 px bred, ryms på 320 px och rullar inuti när fönstret är lågt. | Placering inom skärmen på 320 och 390 px samt i ett 320 px högt fönster, utan rullning i sidled. | Verklig webbläsarzoom och textförstoring. |
+| 1.4.4, 1.4.10 Förstoring och omflöde | Rutan är högst 380 px bred, ryms på 320 px och rullar inuti när fönstret är lågt. | Placering bredvid vald knapp när plats finns och ovanför när fönstret är lågt; inom skärmen på 320 och 390 px samt i ett 320 px högt fönster, utan rullning i sidled. | Verklig webbläsarzoom och textförstoring. |
 | 2.1.1, 2.1.2 Tangentbord | Alla kontroller nås med Tab. Escape avbryter. | Öppna, markera, godkänna och avbryta med tangentbord. | Hjälpmedlens egna tangentkommandon. |
 | 2.4.3, 2.4.7, 2.4.11 Fokus | Fokus går till rubriken, följer läsordningen och återgår till den valda knappen. Rutan täcker inte den kontroll som har fokus. | Fokus på rubriken, tangentordning, synlig fokusram och återgång till vald knapp. | Fokusordning med skärmläsare. |
 | 2.5.8 Pekmål | Kryssrutans etikett och knapparna är minst 44 px höga. | Mått på etikett och knappar. | Träffsäkerhet på fysisk pekskärm. |

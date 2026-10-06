@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openNewObject, openSettings, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('IMPORT-12: protected Settings recovery pages preserve ordinary work and retire it after replacement', async ({
@@ -33,11 +33,20 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
     ).json();
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    const name = page.getByLabel('Objektets namn');
+    await openNewObject(page);
+    const name = page.getByLabel('Namn', { exact: true });
     await name.fill('Oskickat arbete före återimport');
     await name.focus();
+    await page.keyboard.press('Escape');
+    const leave = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+    await leave.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await expect(name).toHaveValue('Oskickat arbete före återimport');
+    await expect(name).toBeFocused();
+    expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
+    await page.keyboard.press('Escape');
+    await leave
+      .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+      .click();
     await openSettings(page);
     const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
     await expect(
@@ -73,8 +82,10 @@ test('IMPORT-12: protected Settings recovery pages preserve ordinary work and re
     await expect(owners.getByLabel('Historisk innehållsidentitet')).toBeVisible();
     await expect(owners).toContainText('samma namn eller e-postadress är inget bevis');
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await expect(name).toHaveValue('Oskickat arbete före återimport');
-    await expect(name).toBeFocused();
+    await expect(name).toHaveCount(0);
+    await openNewObject(page);
+    await expect(name).toHaveValue('');
+    await page.keyboard.press('Escape');
     expect(await (await page.request.get(`${path}/map`)).json()).toEqual(before);
     await openSettings(page);
     await navigation.getByRole('link', { name: 'Återimportera hushållet', exact: true }).click();

@@ -1,8 +1,14 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
+import {
+  openNewObjectForm,
+  readDraftProposal,
+  readTableObject,
+  renderHouseholdWork,
+  saveHouseholdDraft,
+} from '../../support/native-household-unit.js';
 import { applicationFixture } from '../server/fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -31,8 +37,7 @@ afterEach(() => {
 });
 
 test('canonical properties can be added, ordered, hidden and shown in a private type definition', async () => {
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  renderHouseholdWork(householdId);
   await userEvent.click(await screen.findByRole('button', { name: 'Ny objekttyp' }));
   await userEvent.type(screen.getByLabelText('Typens namn'), 'Husavtal');
   await userEvent.selectOptions(
@@ -136,23 +141,18 @@ test('section editors keep complete financial facts and shared description throu
   expect((await client.json(`${path}/save`, { version: 3, operationId: 'original' })).status).toBe(
     200,
   );
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: 'Uppgifter för Mitt lån' }));
-  const details = within(screen.getByRole('region', { name: 'Mitt lån' }));
+  renderHouseholdWork(householdId);
+  const details = await readTableObject('Mitt lån');
   expect(
-    details.getByText(
-      'Återstående skuld: 12 300 (Osäkert uppgivet) — datum för uppgiften: 2026-09-01',
-    ),
-  ).toBeTruthy();
-  expect(
-    within(details.getByRole('region', { name: 'Uppgifter utanför typens avsnitt' })).getByText(
-      'Pris: Okänt',
-    ),
-  ).toBeTruthy();
-  await userEvent.click(details.getByRole('button', { name: 'Redigera valt objekt' }));
-  const editor = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
-  const section = within(editor.getByRole('group', { name: 'Avtalets uppgifter' }));
+    details.getByText('Återstående skuld', { selector: 'dt' }).nextElementSibling?.textContent,
+  ).toBe('12 300 (Osäkert uppgivet) · datum för uppgiften: 2026-09-01');
+  expect(details.getByText('Pris', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
+    'Okänt',
+  );
+  await userEvent.click(details.getByRole('button', { name: 'Redigera Mitt lån' }));
+  const editor = within(screen.getByRole('dialog', { name: 'Redigera Mitt lån' }));
+  await userEvent.click(editor.getByRole('button', { name: 'Avtalets uppgifter' }));
+  const section = editor;
   expect(
     (section.getByLabelText('Återstående skuld: uppgiftens säkerhet') as HTMLSelectElement).value,
   ).toBe('uncertain');
@@ -161,16 +161,14 @@ test('section editors keep complete financial facts and shared description throu
   ).toBe('2026-09-01');
   await userEvent.clear(section.getByLabelText('Återstående skuld', { exact: true }));
   await userEvent.type(section.getByLabelText('Återstående skuld', { exact: true }), '12 000');
+  await userEvent.click(editor.getByRole('button', { name: 'Grunduppgifter' }));
   await userEvent.selectOptions(editor.getByLabelText('Objekttyp', { exact: true }), 'other');
+  await userEvent.click(screen.getByRole('button', { name: 'Ta bort fältvärdena och byt typ' }));
   expect((editor.getByLabelText('Beskrivning', { exact: true }) as HTMLTextAreaElement).value).toBe(
     'Gemensam avtalstext',
   );
-  expect(
-    (editor.getByRole('button', { name: 'Lägg i mitt utkast' }) as HTMLButtonElement).disabled,
-  ).toBe(true);
-  await userEvent.click(editor.getByLabelText('Jag har hanterat tidigare fältvärden för typbytet'));
-  await userEvent.click(editor.getByRole('button', { name: 'Lägg i mitt utkast' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  await userEvent.click(editor.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await screen.findByText(/Ändringen finns i ditt utkast/);
   const state = await read();
   expect(state.objects[0].financialFacts).toEqual(financialFacts);
   expect(state.draft.changes[0].after).toMatchObject({
@@ -179,12 +177,13 @@ test('section editors keep complete financial facts and shared description throu
     financialFacts: { ...financialFacts, debt: { ...financialFacts.debt, value: '12 000' } },
   });
   expect(state.draft.changes[0].after?.customValues).toBeUndefined();
-  const review = within(await screen.findByRole('region', { name: 'Hela mitt utkast' }));
+  const review = await readDraftProposal('Mitt lån');
+  const proposed = within(
+    review.getByRole('heading', { name: 'Föreslagna värden' }).parentElement as HTMLElement,
+  );
   expect(
-    review.getByText(
-      'Senast uppgiven skuld: 12 000 (Osäkert uppgivet) — datum för uppgiften: 2026-09-01',
-    ),
-  ).toBeTruthy();
+    proposed.getByText('Senast uppgiven skuld', { selector: 'dt' }).nextElementSibling?.textContent,
+  ).toBe('12 000 (Osäkert uppgivet) · datum för uppgiften: 2026-09-01');
 });
 
 test('legacy custom placement remains visible once while canonical presentation and hidden review coexist', async () => {
@@ -222,23 +221,22 @@ test('legacy custom placement remains visible once while canonical presentation 
       })
     ).status,
   ).toBe(200);
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  const review = within(await screen.findByRole('region', { name: 'Hela mitt utkast' }));
-  expect(review.getAllByText('Tidigare fält: 0')).toHaveLength(1);
+  renderHouseholdWork(householdId);
+  const review = await readDraftProposal('Äldre uppgifter');
+  expect(review.getAllByText('Tidigare fält', { selector: 'dt' })).toHaveLength(1);
   expect(
-    within(review.getByRole('region', { name: 'Egna fält' })).getByText('Tidigare fält: 0'),
-  ).toBeTruthy();
-  const hidden = within(review.getByRole('region', { name: 'Dolda fält – bevarade värden' }));
-  expect(hidden.queryByText('Tidigare fält: 0')).toBeNull();
-  expect(hidden.getByText('Dolt fält: Nej')).toBeTruthy();
+    review.getByText('Tidigare fält', { selector: 'dt' }).nextElementSibling?.textContent,
+  ).toBe('0');
+  expect(review.getByText('Dolt fält', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
+    'Nej',
+  );
   expect(
-    review.getByText('Senast uppgiven skuld: Okänt — datum för uppgiften: 2026-09-01'),
-  ).toBeTruthy();
-  await userEvent.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
-  await screen.findByText(/^Sparat:/, { selector: '[role="status"]' });
+    review.getByText('Senast uppgiven skuld', { selector: 'dt' }).nextElementSibling?.textContent,
+  ).toBe('Okänt · datum för uppgiften: 2026-09-01');
+  await userEvent.click(review.getByRole('button', { name: 'Stäng dialogen' }));
+  await saveHouseholdDraft();
   expect((await read()).types.find(({ id }) => id === 'legacy')).not.toHaveProperty('sections');
-  await userEvent.click(screen.getByRole('button', { name: 'Visa historik' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Rapporter' }));
   const history = within(await screen.findByRole('region', { name: 'Ändringshistorik' }));
   await userEvent.click(await history.findByText('Visa ändringarna', { exact: true }));
   await history.findByText('Tidigare fält: 0');
@@ -266,33 +264,32 @@ test('explicit custom-only order controls object editing and review without inve
       })
     ).status,
   ).toBe(200);
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: 'Nytt objekt' }));
-  const form = within(screen.getByRole('group', { name: 'Objektets detaljer' }));
+  renderHouseholdWork(householdId);
+  const form = await openNewObjectForm();
   await userEvent.selectOptions(form.getByLabelText('Objekttyp', { exact: true }), 'ordered');
-  await user.click(form.getByLabelText('Objektets namn'));
+  await user.click(form.getByLabelText('Namn'));
   await user.paste('Sorterade uppgifter');
-  const fields = form.getByRole('group', { name: 'Egna fält' });
-  expect([...fields.querySelectorAll('label')].map((label) => label.textContent)).toEqual([
-    'Andra fältet',
-    'Första fältet',
-  ]);
+  await userEvent.click(form.getByRole('button', { name: 'Egna fält' }));
+  const labels = form.getAllByText(/^(Andra fältet|Första fältet)$/, { selector: 'label' });
+  expect(labels.map((label) => label.textContent)).toEqual(['Andra fältet', 'Första fältet']);
   await userEvent.type(form.getByLabelText('Andra fältet', { exact: true }), 'Två');
   await userEvent.type(form.getByLabelText('Första fältet', { exact: true }), '0');
+  await userEvent.click(form.getByRole('button', { name: 'Grunduppgifter' }));
   await user.click(form.getByLabelText('Beskrivning', { exact: true }));
   await user.paste('Gemensam text');
-  await userEvent.click(form.getByRole('button', { name: 'Lägg i mitt utkast' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
-  const review = within(await screen.findByRole('region', { name: 'Hela mitt utkast' }));
+  await userEvent.click(form.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await screen.findByText(/Ändringen finns i ditt utkast/);
+  const review = await readDraftProposal('Sorterade uppgifter');
   expect(
-    [...review.getByRole('region', { name: 'Egna fält' }).querySelectorAll('p')].map(
-      (element) => element.textContent,
-    ),
+    review
+      .getAllByText(/^(Andra fältet|Första fältet)$/, { selector: 'dt' })
+      .map((element) => `${element.textContent}: ${element.nextElementSibling?.textContent}`),
   ).toEqual(['Andra fältet: Två', 'Första fältet: 0']);
-  expect(review.getByText('Beskrivning: Gemensam text')).toBeTruthy();
-  await userEvent.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
-  await screen.findByText(/^Sparat:/, { selector: '[role="status"]' });
+  expect(review.getByText('Beskrivning', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
+    'Gemensam text',
+  );
+  await userEvent.click(review.getByRole('button', { name: 'Stäng dialogen' }));
+  await saveHouseholdDraft();
   const state = await read();
   expect(state.types.find(({ id }) => id === 'ordered')).not.toHaveProperty('builtins');
   expect(state.types.find(({ id }) => id === 'ordered')?.propertyOrder).toEqual([

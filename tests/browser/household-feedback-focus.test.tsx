@@ -1,8 +1,10 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { FormLeaveProvider } from '../../src/client/FormLeave.js';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
-import { closePanels } from '../support/workspace-browser.js';
+import { openConversationText } from '../support/conversation-browser.js';
+import { openNewObject, openTable } from '../support/workspace-browser.js';
 import '../../src/client/styles.css';
 import { defaultConversationPreferences } from '../../src/shared/conversation-preferences.js';
 import type { MapState } from '../../src/shared/map.js';
@@ -13,7 +15,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** The browser renders the real map and panels against the public HTTP boundary.
+/** The browser renders the real map and native forms against the public HTTP boundary.
  * Persistence and authorization of these same forms have real-SQLite unit cases. */
 async function open(withDraft = true) {
   await page.viewport(1440, 900);
@@ -68,17 +70,19 @@ async function open(withDraft = true) {
         positions: [],
         settings: { ...defaultViewSettings, version: 0 },
       });
-    if (url.includes('/map?')) return Response.json(state);
-    if (url.endsWith('/draft') && init?.method === 'POST') {
+    if (url.includes('/map?') || url.endsWith('/map')) return Response.json(state);
+    if (url.endsWith('/object-form') && init?.method === 'POST') {
       writes.push({ path: url, body: JSON.parse(String(init.body)) });
       if (failProposal) throw new Error('Synthetic proposal transport failure');
     }
     throw new Error(`Unexpected request: ${url}`);
   });
   render(
-    <main>
-      <HouseholdMap householdId="home" />
-    </main>,
+    <FormLeaveProvider>
+      <main>
+        <HouseholdMap householdId="home" />
+      </main>
+    </FormLeaveProvider>,
   );
   await expect.element(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
   return {
@@ -89,71 +93,51 @@ async function open(withDraft = true) {
   };
 }
 
-const feedback = () => page.getByRole('region', { name: 'Kartans status', exact: true });
-
-test('draft navigation opens its review and reopens the retained object work without changing saved or private data', async () => {
+test('leaving an edited object protects unsent text and discards only that text, keeping saved and draft values', async () => {
   const home = await open();
-  await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
-  await expect
-    .element(page.getByRole('region', { name: 'Hela mitt utkast', exact: true }))
-    .toBeVisible();
-  await expect
-    .element(page.getByRole('heading', { name: 'Hela mitt utkast', exact: true }))
-    .toHaveFocus();
-  await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-  const object = page.getByRole('region', { name: 'Lo Exempel', exact: true });
-  await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-  const field = object.getByLabelText('Beskrivning', { exact: true });
+  await openTable();
+  await page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
+  const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
+  const field = form.getByLabelText('Beskrivning', { exact: true });
   await field.fill('Fortfarande oskickat');
-  await closePanels();
-  await expect.element(object).not.toBeInTheDocument();
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-  await expect.element(object).toBeVisible();
+  await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+  await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
   await expect.element(field).toHaveValue('Fortfarande oskickat');
-  await expect
-    .element(object.getByRole('heading', { name: 'Lo Exempel', exact: true }))
-    .toHaveFocus();
+  await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+  await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+  await expect.element(form).not.toBeInTheDocument();
   expect(home.writes).toEqual([]);
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
+  await page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
   await expect
-    .element(review.getByText('Beskrivning: Privat förslag', { exact: true }))
-    .toBeVisible();
-  await expect
-    .element(review.getByText('Beskrivning: Sparad beskrivning', { exact: true }))
-    .toBeVisible();
+    .element(form.getByLabelText('Beskrivning', { exact: true }))
+    .toHaveValue('Privat förslag');
+  await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+  await openConversationText();
+  const draftEntry = page.getByRole('button', { name: /^Visa utkastet \(\d+\)$/ });
+  if (draftEntry.query()) await draftEntry.click();
+  await page.getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true }).click();
+  const review = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+  await expect.element(review.getByText('Privat förslag', { exact: true })).toBeVisible();
+  await expect.element(review.getByText('Sparad beskrivning', { exact: true })).toBeVisible();
 });
 
-test('closed unsent new-object form resumes from the list and an uncertain icon prerequisite refresh restores its focus without retrying', async () => {
+test('unknown complete object staging requires checking before retry and retains all form text without another send', async () => {
   const home = await open(false);
-  await page.getByRole('button', { name: 'Utkast och historik', exact: true }).click();
-  await expect
-    .element(page.getByRole('heading', { name: 'Mina sparförsök', exact: true }))
-    .toBeVisible();
-  await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-  const name = page.getByLabelText('Objektets namn', { exact: true });
+  await openNewObject();
+  const name = page.getByLabelText('Namn', { exact: true });
   await name.fill('Privat oskickat objekt');
-  await closePanels();
-  await expect.element(name).not.toBeVisible();
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: /^Fortsätt:/ }).click();
-  await expect.element(name).toHaveValue('Privat oskickat objekt');
-  await expect
-    .element(page.getByRole('heading', { name: 'Nytt objekt', exact: true }))
-    .toHaveFocus();
-  expect(home.writes).toEqual([]);
   home.failProposal();
-  const submit = page.getByRole('button', {
-    name: 'Lägg uppgifterna i utkastet först',
+  const submit = page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true });
+  await submit.click();
+  const check = page.getByRole('button', {
+    name: 'Kontrollera om ändringen lades i utkastet',
     exact: true,
   });
-  await submit.click();
-  const refresh = page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true });
-  await expect.element(refresh).toBeVisible();
-  await refresh.click();
-  await expect.element(refresh).not.toBeInTheDocument();
-  await expect.element(submit).toHaveFocus();
+  await expect.element(check).toBeVisible();
+  await expect.element(submit).toBeDisabled();
+  await check.click();
+  await expect.element(check).not.toBeInTheDocument();
+  await expect.element(submit).not.toBeDisabled();
   await expect.element(name).toHaveValue('Privat oskickat objekt');
   expect(home.writes).toHaveLength(1);
   expect(home.writes[0].body).toMatchObject({
@@ -161,9 +145,10 @@ test('closed unsent new-object form resumes from the list and an uncertain icon 
     contentVersion: 1,
     value: { name: 'Privat oskickat objekt' },
   });
-  await expect.element(feedback()).not.toHaveTextContent('Inga osparade förslag');
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await expect
-    .element(page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }))
-    .toBeVisible();
+  await page.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+  await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+  await expect.element(name).not.toBeInTheDocument();
+  await openNewObject();
+  await expect.element(name).toHaveValue('');
+  expect(home.writes).toHaveLength(1);
 });

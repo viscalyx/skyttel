@@ -62,6 +62,8 @@ type Session = TextAssistantView & {
   summary?: string;
   summaryOffset?: number;
   summaryTask?: AbortController;
+  /** Context status and canceled handoffs wait for the complete reset. */
+  resetCompletion?: Promise<void>;
   previousFailure?: string;
   pendingSave?: { operationId: string; version: number; contentVersion: number };
   displayed?: (value: boolean) => void;
@@ -76,6 +78,7 @@ export function textAssistantRoutes({
   modelFetch,
   modelUsage,
   onStop,
+  onResetStart,
   onNewConversation,
   onSummary,
 }: {
@@ -87,6 +90,7 @@ export function textAssistantRoutes({
   modelFetch?: typeof fetch;
   modelUsage?: TextModelUsage;
   onStop?: (sessionId: string) => void;
+  onResetStart?: (sessionId: string) => void;
   onSummary?: (sessionId: string, signal: AbortSignal) => Promise<void> | undefined;
   /** A conversation has started over, so its voice can do the same and say the statement. */
   onNewConversation?: (view: TextAssistantView, deferVoiceClose?: boolean) => void;
@@ -468,8 +472,12 @@ export function textAssistantRoutes({
     );
   }
   async function refresh(session: Session, guard?: () => void) {
-    session.review = await call(session, 'read_my_draft', {}, guard);
-    session.operations = (await call(session, 'read_my_save_operations', {}, guard)).operations;
+    const review = await call(session, 'read_my_draft', {}, guard);
+    guard?.();
+    session.review = review;
+    const { operations } = await call(session, 'read_my_save_operations', {}, guard);
+    guard?.();
+    session.operations = operations;
     if (
       session.pendingSave &&
       !session.operations.some((item) => item.operationId === session.pendingSave?.operationId)
@@ -480,6 +488,7 @@ export function textAssistantRoutes({
         { operationId: session.pendingSave.operationId },
         guard,
       );
+      guard?.();
       if (operation) session.operations.push(operation);
     }
   }
@@ -588,6 +597,18 @@ export function textAssistantRoutes({
     }
   }
   async function startOver(session: Session, discard = false, deferVoiceClose = false) {
+    const completion = resetContext(session, discard, deferVoiceClose);
+    session.resetCompletion = completion;
+    try {
+      await completion;
+    } finally {
+      if (session.resetCompletion === completion) session.resetCompletion = undefined;
+    }
+  }
+  async function resetContext(session: Session, discard: boolean, deferVoiceClose: boolean) {
+    // Retire the old executor before its task records disappear. A delayed
+    // status response must not cancel work belonging to the new conversation.
+    onResetStart?.(session.id);
     session.task?.abort();
     session.summaryTask?.abort();
     session.summaryTask = undefined;
@@ -1114,23 +1135,11 @@ export function textAssistantRoutes({
                     (change) => change.id === args.id && change.before && !change.after,
                   ),
                 );
-              mutations.add(
-                action.name === 'propose_undo' ? 'undo' : restored ? 'restored' : 'draft',
-              );
-              const kind =
-                mutations.size === 1 && mutations.has('undo')
-                  ? 'undo'
-                  : mutations.size === 1 && mutations.has('restored')
-                    ? 'restored'
-                    : 'draft';
+              mutations.add(restored ? 'restored' : 'draft');
+              const kind = mutations.size === 1 && mutations.has('restored') ? 'restored' : 'draft';
               session.result = {
                 kind,
-                message:
-                  kind === 'undo'
-                    ? 'Ångrat i utkastet.'
-                    : kind === 'restored'
-                      ? 'Återställt i utkastet.'
-                      : 'Utkastet är uppdaterat.',
+                message: kind === 'restored' ? 'Återställt i utkastet.' : 'Utkastet är uppdaterat.',
               };
             }
           }
@@ -1175,6 +1184,8 @@ export function textAssistantRoutes({
       try {
         await refresh(session, guard);
       } catch {
+        if (task.signal.aborted || session.revision !== revision || !sessions.has(session.id))
+          return;
         await stop(session);
       }
     }
@@ -1445,7 +1456,9 @@ export function textAssistantRoutes({
       return context.json({ error }, status);
     }
     try {
+      await session.resetCompletion;
       await refreshConfirmed(session);
+      await session.resetCompletion;
     } catch {
       await stop(session);
       return context.json({ error: 'assistant_session_expired' }, 404);
@@ -1546,6 +1559,7 @@ export function textAssistantRoutes({
   routes.post(`${base}/:sessionId/summarize`, async (context) => {
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
+    await session.resetCompletion;
     if (session.phase === 'working' || session.phase === 'recovery' || session.pendingSave)
       return context.json(view(session));
     if (session.contextSummaryState === 'needed' || needsSummary(session)) {
@@ -1553,6 +1567,7 @@ export function textAssistantRoutes({
       // handoff. Close its server sideband before taking the ledger snapshot.
       await summarize(session, undefined, [], true);
     }
+    await session.resetCompletion;
     return context.json(view(session));
   });
   // Poll a particular accepted message: a subsequent FIFO task may already be
@@ -1568,9 +1583,21 @@ export function textAssistantRoutes({
     const session = sessions.get(context.req.param('sessionId'));
     if (!session) return context.json({ error: 'assistant_session_expired' }, 404);
     const body = await context.req.json().catch(() => null);
+    // Voice cancellation can already be in flight when a reset retires its
+    // executor. Its authority ends with that conversation's context.
+    if (
+      body?.contextRevision !== undefined &&
+      body.contextRevision !== (session.contextRevision ?? 0)
+    )
+      return context.json({ error: 'assistant_turn_changed' }, 409);
     if (session.canceled && session.phase !== 'working') return context.json(view(session));
     if (body?.all !== true && body?.revision !== session.revision)
       return context.json({ error: 'assistant_turn_changed' }, 409);
+    const contextRevision = session.contextRevision ?? 0;
+    const checkContext = () => {
+      if ((session.contextRevision ?? 0) !== contextRevision)
+        throw new MapError('assistant_turn_changed', 409);
+    };
     session.task?.abort();
     session.summaryTask?.abort();
     session.queue = [];
@@ -1586,7 +1613,8 @@ export function textAssistantRoutes({
     session.modelReply = undefined;
     session.questions = undefined;
     session.phase = session.pendingSave ? 'recovery' : 'ready';
-    await refresh(session);
+    await refresh(session, checkContext);
+    checkContext();
     for (const accepted of session.accepted.values()) {
       if (accepted.status === 'queued' || accepted.status === 'working') {
         accepted.status = 'canceled';

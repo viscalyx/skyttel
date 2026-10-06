@@ -1,415 +1,248 @@
-# Manuella testfall för historik och ångring
+# Manuella testfall för ändringshistorik
 
-Testfallen gäller läsning av sparade ändringsgrupper, ångring som ett nytt
-privat förslag samt konflikter och återställning efter vanlig borttagning.
-Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
+Fallen omfattar Rapporter, fullständiga historiska uppgifter, direktlänkar
+och återgång till pågående arbete. Anteckna commit, webbläsare och godkänt
+eller underkänt resultat. Historiken erbjuder läsning av genomförda sparanden.
 
 ## Konfigurerade användare
 
-Använd två konfigurerade testidentiteter: **Alex Exempel** som
-administratör och **Robin Exempel** som vanlig medlem i samma hushåll.
-Namnen avser testernas roller; logga in genom installationens
-konfigurerade identitetsleverantör. Bjud in Robin enligt
-[tillgång till hushållet](../user-guide/access.md). Använd skilda
-webbläsarprofiler så att båda kan arbeta samtidigt.
+Alex Exempel har tillgång till ett separat provhushåll. Logga in med den
+syntetiska inloggningen enligt [utvecklingsguiden](../development/devcontainer.md).
+Använd inga verkliga personuppgifter.
 
 ## Allmän förberedelse
 
-Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
-fallen anger formulär, samtal, profil eller administration.
+1. Starta den isolerade provinstallationen enligt utvecklingsguiden.
+2. Skapa personen **Lo Exempel**, lägg förslaget i utkastet och spara.
+   Byt därefter namnet till **Lo Lind** och spara separat.
+3. Återställ provhushållet mellan fallen. Behåll databasen när ett steg
+   uttryckligen kräver omladdning eller omstart.
 
-1. Använd en separat utvecklingsdatabas med påhittade uppgifter, exempelvis
-   i devcontainern enligt [utvecklingsguiden](../development/devcontainer.md).
-   Testerna behöver ingen publik adress eller extern assistent.
-2. Skapa ett tomt testhushåll som Alex och ge Robin tillgång. Skapa personen
-   **Lo Exempel** med **Nytt objekt**, **Objektets namn**, **Objekttyp**
-   och **Lägg i mitt utkast**. Välj **Spara hela utkastet**.
-3. Kontrollera att båda användarna ser Lo och har **Inga förslag** i sina
-   egna utkast. Läs [historikguiden](../user-guide/history.md) för begreppen.
-4. Använd ett nytt tomt testhushåll för varje fall. Behåll samma databas
-   vid omstart inom ett fall. Kör ingen återställning av demodata då.
+## Historik och bevarat arbete
 
-## Historik och oberoende ändringar
+### HISTORIK-01: läs sparanden senaste först och återgå till tabellens arbete
 
-### HISTORIK-01: läs ett sparande och bevara oberoende arbete vid ångring
-
-**Syfte:** Läsa tidigare och nya värden och återuppta ett privat
-ångringsförslag från en annan klient utan att förlora oberoende arbete.
-
-**Användare:** Alex Exempel. Robin Exempel kan kontrollera den gemensamma
-kartan före och efter sparandet.
-
-**Förutsättningar:** Lo Exempel enligt förberedelsen, utan beskrivning.
-
-**Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts),
-testfallet “HISTORIK-01: history explains a save and undo preserves
-independent work after restart”.
-
-**Steg:**
-
-1. Ändra namnet **Lo Exempel** till **Lo Lind** som Alex, lägg ändringen
-   i utkastet och spara hela utkastet.
-2. Öppna Lo igen, ange **Oberoende beskrivning** under **Beskrivning**
-   och spara ändringen i ett separat sparande.
-3. Lägg den nya personen **Robin Exempel** i Alex utkast utan att spara.
-   Personen i kartan är skild från Skyttel-användaren med samma namn.
-4. Välj **Visa historik**. Hitta gruppen med namnbytet och öppna
-   **Visa ändringarna**. Öppna
-   **Identifiera sparandet och användaren** och anteckna sparande-ID,
-   tidpunkt och användare. Kontrollera värdena före och efter.
-5. Välj **Ångra sparandet** i den gruppen. Granska **Hela mitt utkast**
-   och kontrollera den gemensamma kartan som Robin.
-6. Välj **Kasta hela utkastet**. Kontrollera att utkastet blir tomt medan
-   den gemensamma kartan och de tre historikgrupperna är oförändrade.
-7. Lägg personen Robin Exempel i utkastet igen. Ångra samma namnbytesgrupp
-   på nytt och granska båda förslagen tillsammans.
-8. Starta om appen med samma databas. Logga in som Alex i en annan
-   webbläsarprofil och öppna samma hushåll. Granska hela utkastet igen.
-9. Välj **Spara hela utkastet**. Kontrollera kvittot, öppna historiken igen
-   och ladda om Robins karta.
-
-**Förväntat resultat:**
-
-- Namnbytesgruppen visar Lo Exempel före, Lo Lind efter, sparande-ID,
-  tidpunkt samt Alex namn och användar-ID. Det privata objektförslaget
-  Robin Exempel finns inte i historiken före sparandet.
-- Ångringsförslaget visar Lo Exempel med **Oberoende beskrivning** och
-  behåller det nya objektet Robin Exempel i samma utkast. Robins gemensamma
-  karta visar fortfarande Lo Lind och inget nytt Robin-objekt.
-- **Kasta hela utkastet** tar bara bort de privata förslagen. Det ångrar
-  inget genomfört sparande och skapar ingen historikgrupp.
-- Samma utkast finns kvar efter omstart och klientbyte. Efter det nya
-  sparandet ser båda användarna Lo Exempel med beskrivningen och det nya
-  objektet Robin Exempel.
-- Sparandet ger ett nytt kvitto och en fjärde historikgrupp. De tre tidigare
-  grupperna, inklusive namnbytesgruppen, finns kvar oförändrade.
-
-## Återställning
-
-### HISTORIK-02: återställ upphörda objekt och samband med samma identiteter
-
-**Syfte:** Återställa vanlig borttagning utan att ändra status, skapa nya
-identiteter eller påverka anslutna objekt.
-
-**Användare:** Alex Exempel och Robin Exempel.
-
-**Förutsättningar:** Lo Exempel enligt förberedelsen. Skapa och spara
-objektet **Blått kort** av typen **Kort** och sambandet
-**Lo Exempel → Använder → Blått kort**.
-
-**Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts),
-testfallet “HISTORIK-02: deletion undo restores ended objects and
-relationships with their identities”.
-
-**Steg:**
-
-1. Markera Lo Exempel som **Upphört** under **Objektets status**.
-   Markera sambandet till kortet som **Upphört** under **Sambandets status**.
-   Lägg båda ändringarna i utkastet och spara hela utkastet.
-2. Öppna **Åtgärder för Lo Exempel** i listan och välj **Ta bort**.
-   Granska borttagningen av objektet och sambandet. Spara utkastet.
-3. Starta om appen med samma databas och logga in som Alex från en annan
-   webbläsarprofil. Öppna **Visa historik** och hitta borttagningsgruppen.
-   Öppna **Visa ändringarna** och **Objektets identitet**.
-   Anteckna objektets och sambandets ID:n,
-   status och tidigare värden.
-4. Välj **Ångra sparandet** i borttagningsgruppen. Granska förslaget.
-   Kontrollera som Robin att Lo och sambandet fortfarande saknas.
-5. Granska hela Alex utkast och välj **Spara hela utkastet**.
-6. Ladda om Robins karta. Öppna objektet, sambanden och den nya
-   historikgruppen. Jämför identiteter och värden med anteckningarna.
-
-**Förväntat resultat:**
-
-- Historiken visar det borttagna objektet och sambandet med tidigare
-  värden och tomma eftervärden. Blått kort finns kvar i kartan.
-- Borttagningen kan ångras efter omstart och klientbyte. Ångringen är
-  privat före det nya sparandet.
-- Lo och sambandet återkommer med samma ID:n, värden och statusen Upphört.
-  Blått kort behåller sin identitet, sina värden och sin egen status.
-- Det nya sparandet ger en ny historikgrupp. Borttagningsgruppen finns kvar.
-  Ingen permanent radering utförs eller återställs i detta fall.
-
-## Överlappande ändringar
-
-### HISTORIK-03: granska senare konflikter och stoppa egna överlapp atomiskt
-
-**Syfte:** Kräva ett nytt val för senare gemensamma ändringar och stoppa
-hela ångringen när det egna utkastet redan innehåller ett överlapp.
-
-**Användare:** Alex Exempel och Robin Exempel.
-
-**Förutsättningar:** Lo Exempel enligt förberedelsen. Håll båda
-webbläsarprofilerna tillgängliga under hela fallet.
-
-**Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts),
-testfallet “HISTORIK-03: later overlaps need a fresh choice and own
-overlaps block atomically”.
-
-**Steg:**
-
-1. Byt Lo Exempels namn till **Lo Lind** som Alex och spara. Hitta och
-   anteckna namnbytesgruppen i historiken.
-2. Byt samma namn till **Lo Ek** som Robin och spara.
-3. Ladda om Alex sida. Lägg namnändringen **Privat namn** och det nya
-   objektet **Robin Exempel**
-   i Alex utkast utan att spara. Öppna historiken och välj
-   **Ångra sparandet** i gruppen från steg 1.
-4. Kontrollera felet, hela utkastet och Robins gemensamma karta.
-5. Välj **Kasta förslaget** för just namnändringen till Privat namn.
-   Kontrollera att objektförslaget Robin Exempel finns kvar i utkastet
-   och försök ångra gruppen från steg 1 igen.
-6. Granska konflikten i **Hela mitt utkast**. Kontrollera att
-   **Spara hela utkastet** är spärrat före ett konfliktval.
-7. Välj **Behåll mitt förslag**. Kontrollera som Robin att Lo Ek
-   fortfarande är sparat och inget nytt objekt Robin Exempel finns.
-8. Granska hela Alex utkast igen och välj **Spara hela utkastet**.
-   Ladda om Robins karta och kontrollera historiken.
-
-**Förväntat resultat:**
-
-- Det egna överlappet i steg 3 stoppar hela ångringen. Namnförslaget
-  Privat namn och det oberoende förslaget Robin Exempel finns kvar.
-  Ingen ny historikgrupp eller gemensam ändring uppstår.
-- När enbart namnförslaget kastas kan ångringen läggas till. Konflikten
-  visar Lo Lind som underlag, Lo Exempel som förslag och Lo Ek som senare
-  sparat namn. Det oberoende förslaget Robin Exempel finns kvar.
-- Konfliktvalet ändrar bara Alex utkast. Först det nya sparbeskedet gör
-  Lo Exempel och det nya objektet Robin Exempel gemensamma och skapar
-  en ny historikgrupp. De tidigare grupperna finns kvar.
-
-### HISTORIK-04: bevara egna uppgifter och konflikter när sparat värde väljs
-
-**Syfte:** Behålla oberoende privata uppgifter när en ångring väljs bort,
-utan att dölja en kvarvarande konflikt eller spara någon del automatiskt.
-
-**Användare:** Alex Exempel och Robin Exempel.
-
-**Förutsättningar:** Lo Exempel enligt förberedelsen, utan beskrivning.
-Håll båda webbläsarprofilerna tillgängliga under hela fallet.
-
-**Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts),
-testfallet “HISTORIK-04: keeping saved values retains independent private
-facts and their conflicts”.
-
-**Steg:**
-
-1. Byt Lo Exempels namn till **Lo Lind** som Alex och spara. Hitta och
-   anteckna namnbytesgruppen i historiken.
-2. Byt samma namn till **Lo Ek** som Robin och spara.
-3. Ladda om Alex sida. Öppna Lo Ek, ange **Egen beskrivning** under
-   **Beskrivning** och lägg ändringen i utkastet utan att spara.
-4. Välj **Visa historik** och **Ångra sparandet** i namnbytesgruppen
-   från steg 1. Granska namnkonflikten och den egna beskrivningen i
-   **Hela mitt utkast**. Gör inget konfliktval ännu.
-5. Ange **Senare delad beskrivning** för Lo Ek som Robin och spara.
-6. Ladda om Alex sida och granska konflikten igen. Välj **Använd sparat
-   värde** för förslaget som innehåller ångringen och den egna beskrivningen.
-7. Kontrollera att beskrivningen finns kvar som ett eget förslag med en
-   konflikt och att **Spara hela utkastet** fortfarande är spärrat.
-8. Välj **Behåll mitt förslag** för beskrivningens konflikt. Kontrollera
-   som Robin att den gemensamma beskrivningen ännu är oförändrad.
-9. Granska hela Alex utkast igen och välj **Spara hela utkastet**.
-   Ladda om Robins karta och kontrollera den nya historikgruppen.
-
-**Förväntat resultat:**
-
-- Ångringen visar Lo Exempel som namnförslag och Lo Ek som senare sparat
-  namn. Den oberoende privata beskrivningen finns med i samma granskning.
-- **Använd sparat värde** väljer bort ångringen av namnet och behåller
-  det sparade namnet Lo Ek. Egen beskrivning finns kvar i utkastet och
-  jämförs med Senare delad beskrivning i en kvarvarande konflikt.
-- Inget av konfliktvalen ändrar den gemensamma kartan. Hela sparandet är
-  blockerat tills beskrivningens konflikt också har ett uttryckligt val.
-- Först det nya sparbeskedet gör namnet Lo Ek och beskrivningen
-  Egen beskrivning gemensamma. Ett nytt kvitto och en ny historikgrupp
-  tillkommer. Namnbytesgruppen och övrig tidigare historik är oförändrade.
-
-### HISTORIK-05: granska fältets värdeslag innan ett äldre värde återställs
-
-**Syfte:** Bevara ett äldre fältvärde utan omvandling och kräva en
-kompatibel definition samt ett nytt sparbesked för återställning.
+**Syfte:** Läsa gemensamma sparanden utan att ändra det egna utkastet,
+tabellens sökning eller fokus.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Lo Exempel enligt förberedelsen. Lägg till fältet
-**Serienummer** med värdeslaget **Tal** på objekttypen Person enligt
-[guiden för egna fält](../user-guide/object-types.md). Spara definitionen,
-ange värdet **42** på Lo och spara. Inget annat objekt eller privat utkast
-ska använda fältet.
+**Förutsättningar:** Två sparanden enligt förberedelsen. Lägg dessutom
+**Privat person** i utkastet utan att spara.
 
 **Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts),
-testfallet “HISTORIK-05: restored field values require a compatible
-definition and a fresh save”.
+[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
+“HISTORIK-01: Reports preserves table work and lists only completed saves latest
+first”.
 
 **Steg:**
 
-1. Ta bort Lo och spara hela utkastet. Anteckna borttagningsgruppen under
-   **Visa historik**.
-2. Ändra det nu oanvända fältet Serienummer till värdeslaget **Text**
-   och spara definitionen.
-3. Välj **Ångra sparandet** i borttagningsgruppen. Granska definitionen
-   och objektet under **Hela mitt utkast**.
-4. Välj **Använd sparad typdefinition**. Kontrollera objektets konflikt
-   och välj sedan **Använd sparat värde** för objektet.
-5. Ångra samma borttagningsgrupp igen. Välj **Behåll min typdefinition**
-   och granska hela utkastet. Kontrollera att Lo ännu saknas i kartan.
-6. Välj **Spara hela utkastet** och kontrollera kvittot, Lo och historiken.
+1. Välj **Tabell**, skriv **Lo Lind** i **Sök objekt i tabellen**.
+2. Välj **Rapporter**. Läs den första fliken **Ändringshistorik**.
+3. Kontrollera kortens ordning, person, tidpunkt och sammanfattning.
+   Öppna **Visa ändringarna** på namnbytets kort och läs före och efter.
+4. Välj **Tillbaka till arbetet**. Kontrollera sökning, fokus och utkast.
 
 **Förväntat resultat:**
 
-- Ångringen visar Serienummer som Tal i förslaget, Text i dagens
-  definition och objektets äldre värde 42. Sparandet är spärrat.
-- Valet av dagens definition lämnar värdet 42 som en objektkonflikt;
-  det omvandlas inte till text och kan inte sparas utan ytterligare val.
-  Valet av sparat objektvärde avstår från återställningen och tömmer
-  utkastet. Lo saknas fortfarande i den gemensamma kartan.
-- Valet av den äldre definitionen ändrar bara utkastet. Först det nya
-  sparbeskedet återställer Lo med samma identitet och talvärdet 42.
-- Ett nytt kvitto och en ny historikgrupp tillkommer. Borttagningsgruppen
-  är oförändrad. Inget fältvärde omvandlas automatiskt.
+- Namnbytet kommer före tillägget. Kortet visar Alex, tidpunkt,
+  sammanfattning samt Lo Exempel före och Lo Lind efter.
+- Privat person förekommer inte i gemensam historik.
+- Sökningen och utkastet är oförändrade. Fokus återgår till tabellens
+  sökfält. Ingen åtgärd startar ett samtal eller begär medgivande.
 
-## Historikkort och tangentbord
+### HISTORIK-06: läs fullständiga historiska värden med tangentbord
 
-### HISTORIK-06: läs historiska värden och fortsätt ångringen i hela utkastet
-
-**Syfte:** Hitta rätt sparande i en kompakt översikt och läsa hela
-underlaget med tangentbord på dator och telefon.
+**Syfte:** Läsa sparandets fullständiga värden på dator och telefon.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Skapa och spara objektet **Familjeabonnemang** med
-beskrivningen **Hushållets musik** och osäkert uppgiven skuld **1200 SEK**,
-daterad **2026-06-01**. Byt namnet till **Musik för familjen** och spara
-separat. Prova ljust och mörkt tema vid 1280, 390 och 320 pixlars bredd,
-samt verklig webbläsarzoom på 200 och 400 procent.
+**Förutsättningar:** Skapa och spara **Familjeabonnemang** med beskrivningen
+**Hushållets musik** och osäkert uppgiven skuld **1 200 SEK**, daterad
+**2026-06-01**. Byt namnet till **Musik för familjen** och spara separat.
+Prova vid 1280, 390 och 320 pixlars bredd samt verklig zoom på 200 och
+400 procent. Registrera manuella zoomresultat separat.
 
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), testfallen
-“HISTORIK-06: receipt cards expose historical values and undo opens the
-shared draft at 1280px”, “HISTORIK-06: receipt cards expose historical
-values and undo opens the shared draft at 390px” och “HISTORIK-06: receipt
-cards expose historical values and undo opens the shared draft at 320px”.
+“HISTORIK-06: Reports exposes complete historical values with keyboard at
+1280px”,
+“HISTORIK-06: Reports exposes complete historical values with keyboard at 390px”
+och “HISTORIK-06: Reports exposes complete historical values with keyboard at
+320px”.
 
 **Steg:**
 
-1. Öppna Lista och välj **Visa historik**. Kontrollera att namnbytets
-   kort ligger först och visar Alex, tidpunkt, **1 objekt** och nytt namn.
-2. Öppna **Visa ändringarna** med tangentbord. Läs namnen före och efter
-   samt skuldens belopp, osäkerhet och datum.
-3. Öppna **Objektets identitet**, läs hela identiteten och stäng igen.
-   Kontrollera att längre text bryts och går att läsa utan sidrullning.
-4. Välj **Dölj historik** och visa den igen. Kontrollera att kortets
-   öppnade värden finns kvar. Stäng **Visa ändringarna** och välj
-   **Ångra sparandet**. Kontrollera
-   fokus i **Hela mitt utkast** och att kartan ännu har det nya namnet.
-5. Välj **Spara hela utkastet**, invänta kvittot och ladda om sidan.
-   Öppna historiken igen och kontrollera det nya sparandet.
+1. Välj **Rapporter**. Hitta namnbytets kort först.
+2. Fokusera **Visa ändringarna** och tryck Enter.
+3. Läs båda namnen, beskrivningen, skulden, dess osäkerhet och datum.
+4. Kontrollera tangentbordsåtkomst, synligt fokus och textens omflöde.
 
 **Förväntat resultat:**
 
-- Kortet skiljer översikt, historiska värden och identiteter åt. Alla
-  värden är nåbara med tangentbord, med synligt fokus och läsbara mål.
-- Ångringen går att starta även med stängda detaljer. Den skapar ett
-  förslag i samma privata utkast och för fokus till detta när det är klart.
-- Först det uttryckliga sparbeskedet återställer Familjeabonnemang som
-  gemensamt namn. Historiken innehåller tre separata sparanden.
+- Fullständiga värden går att läsa utan kartgrafik, ljud eller samtal.
+- Uppgifterna skiljer belopp, osäkerhet och datum åt. Texten är läsbar
+  vid smal bredd utan vågrät rullning av hela sidan.
+- Historiken erbjuder ingen knapp för att ångra sparandet.
 
 ### HISTORIK-07: återförsök bevarar ett senare fokusval
 
-**Syfte:** Skilja hämtning, fel och verkliga historikresultat utan att
-avbryta annat arbete.
+**Syfte:** Återhämta en misslyckad historikhämtning utan påhittade resultat
+eller flytt av användarens senare fokusval.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Ett sparat objekt **Lo Exempel**. Testmiljön kan
-avbryta nästa historikhämtning och fördröja nästa svar utan att ändra
-andra förfrågningar. Använd exempelvis en testproxy.
+**Förutsättningar:** Ett genomfört sparande. En testproxy kan avbryta
+nästa historikhämtning och fördröja nästa svar.
 
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), testfallet
-“HISTORIK-07: failed and delayed history reads preserve newer focus and
-retry real receipts”.
+“HISTORIK-07: failed and delayed Reports reads preserve newer focus and retry
+real saves”.
 
 **Steg:**
 
-1. Avbryt nästa historikhämtning. Öppna Lista och **Visa historik**.
-2. Läs felet och välj **Hämta historik igen**. Fördröj svaret och
-   kontrollera fokus på historikens rubrik samt **Hämtar historik…**.
-3. Skriv **Lo** i **Sök objekt** medan historiken hämtas. Släpp fram svaret.
-4. Kontrollera det riktiga sparandets kort och sökfältet.
+1. Avbryt nästa historikhämtning och välj **Rapporter**. Läs felet.
+2. Fördröj nästa svar och välj **Hämta historik igen**.
+3. Kontrollera fokus på historikens rubrik. Fokusera därefter
+   **Tillbaka till arbetet** utan att aktivera knappen.
+4. Släpp fram svaret. Läs det verkliga sparandets kort och kontrollera fokus.
 
 **Förväntat resultat:**
 
-- Ett nätfel visas med en återförsöksknapp och inga påhittade sparanden.
-- Det lyckade svaret visar det verkliga sparandet och tar bort felet.
-- Sökning och fokus stannar i sökfältet efter det senare valet.
+- Felet erbjuder återförsök. Det lyckade svaret ersätter felet med
+  ett verkligt sparande.
+- Fokus stannar på det senare valda reglaget när svaret kommer.
 
-### HISTORIK-08: fördröjd ångring behåller senare fokus utan automatiskt sparande
+## Direkt åtkomst och historiska typer
 
-**Syfte:** Fortsätta söka medan ångringsförslaget skapas utan att svaret
-flyttar fokus eller sparar ändringarna automatiskt.
+### HISTORIK-10: öppna ett utpekat sparande efter ändrad typdefinition
+
+**Syfte:** Läsa rätt historisk benämning genom en direktlänk.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Lo Exempel är sparat och ett separat sparande byter
-namnet till **Lo Lind**. Testmiljön kan fördröja svaret efter att den
-riktiga servern behandlar ångringsförfrågan.
+**Förutsättningar:** Lo Exempel är sparat. Ändra personens typbenämning
+till **Dagens personbenämning** och spara definitionen separat.
 
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), testfallet
-“HISTORIK-08: a delayed undo preserves newer search focus and never saves implicitly”.
+“HISTORIK-10: a direct save link reads historical types after their definitions
+change”.
 
 **Steg:**
 
-1. Öppna Lista, **Visa historik** och namnbytets kort. Fördröj svaret
-   för nästa ångring och välj **Ångra sparandet**.
-2. Kontrollera att knappen är inaktiv medan förfrågan väntar. Skriv
-   **Lo** i **Sök objekt** och släpp sedan fram det riktiga svaret.
-3. Läs beskedet om privat förslag, kontrollera fokus och granska utkastet.
-   Ge inget sparbesked.
+1. Öppna **Rapporter**. Kopiera **Länk till sparandet** på kortet som
+   lägger till Lo Exempel.
+2. Öppna länken i en ny flik med samma inloggning och utan aktivt samtal.
+3. Kontrollera fokus och öppnade före/efter-detaljer.
+4. Läs objektets typbenämning och jämför den med dagens definition.
 
 **Förväntat resultat:**
 
-- Svaret bevarar fokus och text i sökfältet. Utifrån det nya fokusvalet
-  öppnas ingen annan uppgift över arbetet.
-- Lo Exempel finns som förslag i **Hela mitt utkast**, medan Lo Lind
-  fortfarande är gemensamt sparat. Historiken har kvar två sparanden.
+- Länken öppnar rätt sparande med detaljer och fokus på kortets rubrik.
+- Kortet använder typdefinitionen från sparandet, även om dagens
+  benämning är ändrad. Ingen AI eller medgivanderuta krävs.
 
-### HISTORIK-09: ett fördröjt avslag behåller senare fokus och hela utkastet
+### HISTORIK-11: privata väntande och avvisade sparförsök saknas i historiken
 
-**Syfte:** Läsa ett känt avslag utan att svaret flyttar fokus från ett
-senare valt fält eller ändrar något i det privata utkastet.
+**Syfte:** Skilja privata sparförsök från genomförda gemensamma sparanden.
+
+**Användare:** Alex Exempel i två webbläsarprofiler med samma inloggning.
+
+**Förutsättningar:** Ett genomfört sparande och ett osparat objektförslag.
+En testproxy kan hålla nästa sparbegäran innan den når servern.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
+“HISTORIK-11: private rejected and pending save attempts never enter shared
+Reports”.
+
+**Steg:**
+
+1. Öppna samma utkast i båda profilerna. Ändra förslaget i den andra
+   profilen. Försök spara första profilens äldre underlag och läs avslaget.
+2. Hämta aktuellt underlag. Håll nästa sparbegäran med testproxyn och
+   påbörja sparandet, så att det väntande försöket finns kvar.
+3. Välj **Rapporter** och läs gemensam historik. Kontrollera det verkliga
+   sparandet, det osparade förslaget och de båda privata försöken.
+4. Avsluta provinstallationen; använd en ny isolerad databas för nästa fall.
+
+**Förväntat resultat:**
+
+- Historiken visar bara det genomförda sparandet. Väntande och avvisade
+  försök samt det osparade objektet är inte historikposter.
+- Historikläsningen ändrar varken karta, utkast eller sparförsök.
+
+### HISTORIK-12: följ sparlänkar och behåll pågående arbete
+
+**Syfte:** Öppna utpekade sparanden utan att tappa tabellsökningen,
+det egna utkastet eller oskickad samtalstext.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Lo Exempel är sparat och ett separat sparande byter
-namnet till **Lo Lind**. Lägg ett överlappande namnförslag **Eget privat
-namn** och det nya objektet **Robin Exempel** i utkastet utan att spara.
-Testmiljön kan fördröja ett riktigt svar på en ångringsförfrågan.
+**Förutsättningar:** Två sparanden enligt förberedelsen och ett osparat
+förslag för **Privat person**. Använd en provinstallation utan
+konfigurerad samtalsleverantör för att kontrollera återgången med en
+synlig samtalsnotis.
 
 **Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
-“HISTORIK-09: a delayed overlap rejection preserves newer focus and the
-entire private draft”.
+[history.spec.ts](../../tests/integration/history.spec.ts), testfallen:
+
+- “HISTORIK-12: following save links preserves table search and unsent
+  conversation text”.
+- “HISTORIK-12: following save links preserves table search and unsent
+  conversation text at 390px”.
+- “HISTORIK-12: following save links preserves table search and unsent
+  conversation text at 320px”.
 
 **Steg:**
 
-1. Öppna Lista och **Visa historik**. Fördröj svaret och välj
-   **Ångra sparandet** på namnbytets kort.
-2. Kontrollera att knappen är inaktiv medan förfrågan väntar. Skriv
-   **Robin** i **Sök objekt** och släpp sedan fram serverns avslag.
-3. Läs felet om överlappande eget förslag. Kontrollera sökfältet,
-   hela utkastet, den gemensamma kartan och historiken.
+1. Öppna **Skriv till Skyttel**. Skriv ett meddelande utan att skicka det.
+   Stäng textvyn. Om samtal inte är tillgängligt, låt notisen vara kvar.
+2. Välj **Tabell** och sök efter **Lo Lind**.
+3. Välj **Rapporter** och sedan **Länk till sparandet** på tilläggets kort.
+   Läs uppgifterna och kontrollera fokus på sparandets rubrik.
+4. Följ namnbytets länk på samma sätt. Kontrollera den nya länken i
+   adressfältet och att rätt sparandes uppgifter öppnas.
+5. Välj **Tillbaka till arbetet** med pekaren utan att först stänga
+   samtalsnotisen. Öppna sedan textvyn igen.
+6. Upprepa med en vy på 390 × 844 och 320 × 640 CSS-pixlar. Kontrollera
+   samma återgång med pekaren och att notisen fortfarande går att läsa.
 
 **Förväntat resultat:**
 
-- Fokus stannar i sökfältet med texten Robin. Felet är tillgängligt utan
-  att svaret återför fokus till den tidigare ångringsknappen.
-- Båda privata förslagen, alla gemensamma värden och de två tidigare
-  sparandena är oförändrade. Ingen del av ångringen genomförs eller sparas.
+- Varje sparlänk öppnar rätt detaljer och flyttar fokus till kortets rubrik.
+- Återgången visar samma tabellsökning med fokus i sökfältet.
+- En synlig samtalsnotis förblir läsbar och täcker inte återgångsknappen.
+- Utkastet och det oskickade meddelandet är oförändrade. Besöket begär
+  inget medgivande och skickar inget meddelande.
+
+### HISTORIK-13: läs historiska ikoner bredvid samma profilbild
+
+**Syfte:** Läsa ändrade ikonvärden även när profilbilden är oförändrad.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** Spara **Lo Exempel** med ikonen **Cykel** och en
+syntetisk profilbild. Byt sedan endast ikonen till **Bil** och spara igen.
+
+**Integrationstest:**
+[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
+“HISTORIK-13: historical icon changes remain readable beside an unchanged
+profile image”.
+
+**Steg:**
+
+1. Välj **Rapporter** och öppna ikonbytets **Visa ändringarna**.
+2. Läs ikon och profilbild före respektive efter sparandet.
+
+**Förväntat resultat:**
+
+- Samma profilbild visas på båda sidor.
+- **Ikon: Cykel** före och **Ikon: Bil** efter går att läsa som text.
+
+## Avvecklade fall
+
+HISTORIK-02–05 och HISTORIK-08–09 är avvecklade med historisk ångring.
+Deras identiteter återanvänds inte.

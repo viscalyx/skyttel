@@ -2,12 +2,14 @@ import { act, cleanup, render, screen, waitFor, within } from '@testing-library/
 import { userEvent } from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
+import { defaultConversationPreferences } from '../../../src/shared/conversation-preferences.js';
 import type {
   MapObject,
   ObjectType,
   RelationshipType,
   SaveReceipt,
 } from '../../../src/shared/map.js';
+import { defaultViewSettings } from '../../../src/shared/personal-view.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import {
   closeConversationText,
@@ -18,6 +20,7 @@ import {
   startConversationWithVoice,
 } from '../../support/conversation-dom.js';
 import { StandaloneConversation } from '../../support/conversation-harness.js';
+import { openNewObjectForm, renderHouseholdWork } from '../../support/native-household-unit.js';
 
 const path = '/api/households/linden/text-assistant';
 function session(): TextAssistantView {
@@ -82,26 +85,40 @@ test('the shared workspace keeps the map available before consent', async () => 
   const requests: string[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     requests.push(`${init?.method ?? 'GET'} ${url}`);
+    if (url.includes('/map?'))
+      return Response.json({
+        userId: 'alex',
+        contentVersion: 1,
+        types: [],
+        objects: [],
+        relationshipTypes: [],
+        relationships: [],
+        draft: { version: 0, changes: [] },
+      });
+    if (url.endsWith('/map/view'))
+      return Response.json({
+        contentVersion: 1,
+        positions: [],
+        settings: { ...defaultViewSettings, version: 0 },
+      });
+    if (url.endsWith('/map/conversation-preferences'))
+      return Response.json(defaultConversationPreferences);
+    if (url.endsWith('/map/operations')) return Response.json({ operations: [] });
     return Response.json({ available: true });
   });
-  render(
-    <StandaloneConversation
-      householdId="linden"
-      onMapChange={vi.fn()}
-      onAccessLost={vi.fn()}
-      onSelectItem={async () => false}
-    >
-      <section aria-label="Hushållets karta">Kartan är tillgänglig</section>
-    </StandaloneConversation>,
-  );
+  renderHouseholdWork('linden');
   expect(await screen.findByRole('button', { name: 'Prata med Skyttel' })).toBeTruthy();
   expect(screen.queryByRole('region', { name: 'Aktuell status' })).toBeNull();
-  expect(screen.getByRole('region', { name: 'Hushållets karta' }).textContent).toContain(
-    'Kartan är tillgänglig',
-  );
+  expect(screen.getByRole('region', { name: 'Hushållskarta' })).toBeDefined();
   expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
-  // Nothing starts before the consent: a conversation button only asks for it.
+  const form = await openNewObjectForm();
+  expect(form.getByLabelText('Namn', { exact: true })).toBeDefined();
+  expect(queryConsentBox()).toBeNull();
+  await userEvent.click(form.getByRole('button', { name: 'Avbryt' }));
+  // Opening the text view starts nothing; actual use asks for consent.
   await openConversationText();
+  expect(queryConsentBox()).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt samtal' }));
   expect(await findConsentBox()).toBeDefined();
   expect(requests.every((request) => request.startsWith('GET '))).toBe(true);
 });
@@ -376,7 +393,11 @@ test('a working task can be cancelled and an expired session clears private text
     'Skyttel arbetar…',
   );
   await userEvent.type(screen.getByLabelText('Meddelande till Skyttel'), '{Escape}');
-  expect(cancelled).toHaveBeenCalledExactlyOnceWith({ revision: 3, all: true });
+  expect(cancelled).toHaveBeenCalledExactlyOnceWith({
+    revision: 3,
+    contextRevision: 0,
+    all: true,
+  });
   expect(screen.getByRole('log', { name: 'Samtalstext' }).textContent).not.toContain(
     'Skyttel arbetar…',
   );
@@ -386,9 +407,9 @@ test('a working task can be cancelled and an expired session clears private text
     await screen.findByText(/Samtalet har avslutats eller innehållet har ersatts/),
   ).toBeDefined();
   expect(screen.queryByDisplayValue('Privat nästa meddelande')).toBeNull();
-  // Without a conversation there is nothing to send to and nothing to start over.
+  // An expired conversation permits an explicit new start; empty text cannot send.
   expect((screen.getByRole('button', { name: 'Nytt samtal' }) as HTMLButtonElement).disabled).toBe(
-    true,
+    false,
   );
   expect((screen.getByRole('button', { name: 'Skicka' }) as HTMLButtonElement).disabled).toBe(true);
   expect(lost).not.toHaveBeenCalled();
@@ -411,7 +432,7 @@ test.each([false, 'unreachable'])(
         ? 'Ingen kontakt med Skyttel. Försök igen när kontakten är tillbaka.'
         : 'Samtal med Skyttel är inte tillgängligt just nu.',
     );
-    expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
+    expect(screen.getByRole('region', { name: 'Skriv till Skyttel' })).toBeDefined();
   },
 );
 
@@ -430,7 +451,11 @@ test('closing the panel during connection creation stops the late session', asyn
     return Response.json({ available: true });
   });
   const panel = showAssistant();
-  await startConversationWithText();
+  await openConversationText();
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt samtal' }));
+  await userEvent.click(
+    within(await findConsentBox()).getByRole('button', { name: 'Godkänn och starta' }),
+  );
   panel.unmount();
   await act(async () => release(Response.json(session())));
   expect(stopped).toHaveBeenCalledExactlyOnceWith(`${path}/session/stop`);
@@ -672,18 +697,6 @@ test('the draft table exposes every change, object facts, type edits and uncerta
           customValues: { colour: 'Röd' },
           financialFacts: { price: { knowledge: 'known', value: '150' } },
           lifecycle: 'ended',
-        },
-        merge: {
-          survivorId: 'bike',
-          absorbedId: 'duplicate',
-          identityConfirmed: true,
-          objects: [old, duplicate],
-          types: [type],
-          relationships: [edge],
-          relationshipTypes: [edgeType],
-          objectNames: { alex: 'Alex', bike: 'Gammal cykel' },
-          previousChanges: [],
-          previousRelationships: [],
         },
       },
       { id: 'duplicate', type, before: duplicate, after: null },

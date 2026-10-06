@@ -32,12 +32,6 @@ async function save(operationId: string, actor = client): Promise<SaveReceipt> {
   expect(response.status, JSON.stringify(body)).toBe(200);
   return body.receipt;
 }
-const undo = async (receipt: SaveReceipt) =>
-  post('undo', {
-    version: (await read()).draft.version,
-    userId: receipt.userId,
-    operationId: receipt.operationId,
-  });
 async function member() {
   fixture.setSubject('second-person');
   const actor = fixture.client();
@@ -137,64 +131,6 @@ test('resolving a type change keeps target values separate from same-ID source f
   expect((await read()).relationships).toEqual(edges);
 });
 
-test('undo treats the former type and its field values together while keeping later and private independent facts', async () => {
-  const edges = (await read()).relationships;
-  await object({ typeId: 'vehicle', customValues: { number: 5 } });
-  const selected = await save('change-type');
-  await object({ name: 'Senare namn', customValues: { number: 5, other: 88 } });
-  await save('later-target-fields');
-  await object({ description: 'Egen beskrivning' });
-  expect((await undo(selected)).status).toBe(200);
-  const state = await read();
-  expect(state.draft.changes[0].after).toMatchObject({
-    typeId: 'cycle',
-    name: 'Senare namn',
-    description: 'Egen beskrivning',
-    customValues: { number: 5, insured: false },
-  });
-  expect(state.draft.changes[0].after?.customValues).not.toHaveProperty('other');
-  expect(draftConflicts(state)).toHaveLength(1);
-  expect(
-    (await post('save', { version: state.draft.version, operationId: 'unresolved' })).status,
-  ).toBe(409);
-  expect(
-    (
-      await post('resolve', {
-        version: state.draft.version,
-        conflict: draftConflicts(state)[0],
-        choice: 'saved',
-      })
-    ).status,
-  ).toBe(200);
-  const kept = await read();
-  expect(kept.draft.changes[0].after).toMatchObject({
-    typeId: 'vehicle',
-    description: 'Egen beskrivning',
-    customValues: { number: 5, other: 88 },
-  });
-  await save('keep-private-description');
-  expect((await undo(selected)).status).toBe(200);
-  const retry = await read();
-  expect(
-    (
-      await post('resolve', {
-        version: retry.draft.version,
-        conflict: draftConflicts(retry)[0],
-        choice: 'proposed',
-      })
-    ).status,
-  ).toBe(200);
-  await save('undo-type');
-  const result = await read();
-  expect(result.objects.find((item) => item.id === 'bike')).toMatchObject({
-    typeId: 'cycle',
-    name: 'Senare namn',
-    description: 'Egen beskrivning',
-    customValues: { number: 5, insured: false },
-  });
-  expect(result.relationships).toEqual(edges);
-});
-
 test('the durable type-change review retains the source definition when its catalog names change', async () => {
   await object({ typeId: 'vehicle', customValues: {} });
   const { actor } = await member();
@@ -267,17 +203,6 @@ test('a name-only proposal follows the concurrently selected type but a field co
   });
 });
 
-test('undo blocks any own target-field change and keeps independent current fields of the former type out of the proposal', async () => {
-  await object({ typeId: 'vehicle', customValues: {} });
-  const selected = await save('change-type');
-  await object({ customValues: { other: 42 } });
-  const before = await read();
-  const response = await undo(selected);
-  expect(response.status).toBe(409);
-  expect(await response.json()).toEqual({ error: 'undo_draft_overlap' });
-  expect(await read()).toEqual(before);
-});
-
 test('invalid values and stale object, definition and draft versions leave the entire type-change draft intact', async () => {
   await object({ name: 'Oberoende förslag' }, client, 'garage');
   let before = await read();
@@ -328,9 +253,9 @@ test('invalid values and stale object, definition and draft versions leave the e
   expect(before.objects.find((item) => item.id === 'garage')?.name).toBe('Garaget');
 });
 
-test('type proposal, conflict resolution and undo reject anonymous, foreign and revoked members without changing content', async () => {
+test('type proposal, conflict resolution reject anonymous, foreign and revoked members without changing content', async () => {
   await object({ typeId: 'vehicle', customValues: {} });
-  const selected = await save('change-type');
+  await save('change-type');
   const { actor, userId } = await member();
   await object({ typeId: 'cycle', customValues: { insured: false } }, actor);
   await object({ name: 'Nytt namn' });
@@ -348,15 +273,6 @@ test('type proposal, conflict resolution and undo reject anonymous, foreign and 
       },
     ],
     ['resolve', { version: memberState.draft.version, conflict, choice: 'proposed' }],
-    [
-      'undo',
-      {
-        version: memberState.draft.version,
-        userId: selected.userId,
-        operationId: selected.operationId,
-      },
-    ],
-    ['save', { version: memberState.draft.version, operationId: 'denied' }],
   ] as const;
   const anonymous = fixture.client();
   fixture.setSubject('outsider');
@@ -372,82 +288,4 @@ test('type proposal, conflict resolution and undo reject anonymous, foreign and 
     for (const [route, body] of mutations)
       expect((await post(route, body, denied)).status).toBe(status);
   expect(await read()).toEqual(before);
-});
-
-test('keeping a later name during undo preserves a private type change without carrying new source-type fields', async () => {
-  await object({ name: 'Rättat namn' });
-  const selected = await save('name-change');
-  await object({ typeId: 'vehicle', customValues: { number: 5 } });
-  const { actor } = await member();
-  await object(
-    { name: 'Senaste namn', customValues: { number: 5, insured: false, other: 99 } },
-    actor,
-  );
-  await save('later-name-and-field', actor);
-  expect((await undo(selected)).status).toBe(200);
-  const state = await read();
-  expect(state.draft.changes[0].after).toMatchObject({
-    typeId: 'vehicle',
-    customValues: { number: 5 },
-  });
-  expect(
-    (
-      await post('resolve', {
-        version: state.draft.version,
-        conflict: draftConflicts(state)[0],
-        choice: 'saved',
-      })
-    ).status,
-  ).toBe(200);
-  const kept = await read();
-  expect(kept.draft.changes[0].after).toMatchObject({
-    typeId: 'vehicle',
-    name: 'Senaste namn',
-    customValues: { number: 5 },
-  });
-  expect(kept.draft.changes[0].after?.customValues).not.toHaveProperty('other');
-  expect(kept.draft.changes[0].after?.customValues).not.toHaveProperty('insured');
-  // The independent private type choice still overlaps the newer source fields.
-  expect(draftConflicts(kept)).toHaveLength(1);
-  expect(
-    (
-      await post('resolve', {
-        version: kept.draft.version,
-        conflict: draftConflicts(kept)[0],
-        choice: 'proposed',
-      })
-    ).status,
-  ).toBe(200);
-  await save('keep-name-private-type');
-  expect((await read()).objects.find((item) => item.id === 'bike')?.customValues).toEqual({
-    number: 5,
-  });
-});
-
-test('keeping the current type during undo reviews independent private work with the matching source definition', async () => {
-  await object({ typeId: 'vehicle', customValues: { number: 5 } });
-  const selected = await save('change-type');
-  await object({ typeId: 'cycle', customValues: { number: 8 } });
-  await save('later-type');
-  await object({ description: 'Egen beskrivning' });
-  expect((await undo(selected)).status).toBe(200);
-  const state = await read();
-  expect(
-    (
-      await post('resolve', {
-        version: state.draft.version,
-        conflict: draftConflicts(state)[0],
-        choice: 'saved',
-      })
-    ).status,
-  ).toBe(200);
-  const remaining = (await read()).draft.changes[0];
-  expect(remaining.before?.typeId).toBe('cycle');
-  expect(remaining.beforeType?.id).toBe('cycle');
-  expect(remaining.after).toMatchObject({
-    typeId: 'cycle',
-    customValues: { number: 8 },
-    description: 'Egen beskrivning',
-  });
-  await save('private-description');
 });

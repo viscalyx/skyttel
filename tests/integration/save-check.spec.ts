@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
 import {
   microphoneButton,
@@ -13,8 +13,19 @@ import { lastToolResult, modelMessage, modelTool, textModel } from '../support/t
 
 const checking = 'Det är oklart om utkastet sparades. Skyttel kontrollerar det.';
 const saved = 'Kontrollen visar att hela utkastet sparades. Ändringarna finns i hushållets karta.';
-const notice = (page: import('@playwright/test').Page) =>
-  page.getByRole('region', { name: 'Samtalsnotis', exact: true });
+const notice = (page: Page) => page.getByRole('region', { name: 'Samtalsnotis', exact: true });
+
+async function expectOnlyHistoryReceipt(page: Page, operationId: string) {
+  await (await utilityButton(page, 'Rapporter')).click();
+  const reports = page.getByRole('region', { name: 'Rapporter', exact: true });
+  const history = reports.getByRole('region', { name: 'Ändringshistorik', exact: true });
+  await expect(history.getByRole('article')).toHaveCount(1);
+  const card = history.getByRole('article');
+  await card.getByText('Identifiera sparandet och användaren', { exact: true }).click();
+  await expect(card).toContainText(operationId);
+  await expect(card).toContainText('Lo Exempel');
+  await reports.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+}
 
 test('SPARKONTROLL-01: ett tappat sparbesked kontrolleras automatiskt före nytt arbete och förklaras en gång', async ({
   page,
@@ -169,15 +180,18 @@ for (const failCheck of [false, true])
       await expect(notice(page)).toContainText(checking);
       await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
       expect(starts).toEqual([]);
-      await expect(page.getByRole('dialog', { name: 'Samtalsmedgivande' })).toHaveCount(0);
+      await expect(
+        page.getByRole('dialog', { name: 'Samtal med Skyttel', exact: true }),
+      ).toHaveCount(0);
       await expect(
         notice(page).getByRole('button', { name: 'Kontrollera om utkastet sparades', exact: true }),
       ).toHaveCount(0);
       await expect.poll(() => typeof release).toBe('function');
       release();
-      await expect(page.getByText(checking, { exact: true }).filter({ visible: true })).toHaveCount(
-        0,
-      );
+      await expect(notice(page)).toHaveCount(0);
+      await expect(
+        page.getByRole('button', { name: 'Kontrollera om utkastet sparades', exact: true }),
+      ).toHaveCount(0);
       const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
       expect(operations).toHaveLength(1);
       expect(operations[0]).toMatchObject({
@@ -188,6 +202,7 @@ for (const failCheck of [false, true])
       });
       const receipt = operations[0].receipt;
       expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([receipt]);
+      await expectOnlyHistoryReceipt(page, attempt.operationId);
       await startConversationWithText(page);
       await expect(page.getByRole('log', { name: 'Samtalstext' })).toContainText(saved);
       await expect(
@@ -533,18 +548,17 @@ for (const lostRevocationReply of [false, true])
           await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
         ).toBe(microphoneRequests);
         await expect(notice(page)).toContainText(checking);
-        await expect(page.getByRole('dialog', { name: 'Samtalsmedgivande' })).toHaveCount(0);
-        release?.();
         await expect(
-          page.getByText(checking, { exact: true }).filter({ visible: true }),
+          page.getByRole('dialog', { name: 'Samtal med Skyttel', exact: true }),
+        ).toHaveCount(0);
+        release?.();
+        await expect(notice(page)).toHaveCount(0);
+        await expect(
+          page.getByRole('button', { name: 'Kontrollera om utkastet sparades', exact: true }),
         ).toHaveCount(0);
       } else {
         await expect(notice(page)).toHaveCount(0);
-        await (await utilityButton(page, 'Utkast och historik')).click();
-        const receipt = page.getByRole('region', { name: 'Mina sparförsök', exact: true });
-        await receipt.getByText('Tidigare sparförsök', { exact: true }).click();
-        await expect(receipt).toContainText(original.operationId);
-        await expect(receipt).toContainText('Genomfört');
+        await expectOnlyHistoryReceipt(page, original.operationId);
       }
       const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
       expect(operations).toHaveLength(1);

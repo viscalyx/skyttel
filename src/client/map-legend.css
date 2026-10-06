@@ -85,10 +85,6 @@
   border-color: var(--space-accent);
   color: var(--space-text);
 }
-.household-map.workspace-shell .workspace-windows {
-  top: max(200px, var(--context-bottom, 200px));
-  height: calc(100dvh - max(200px, var(--context-bottom, 200px)) - 100px);
-}
 .household-map.workspace-shell .map-navigation {
   top: var(--context-bottom, 110px);
 }
@@ -96,33 +92,6 @@
 /* Floating windows can cross the legend and all map controls. The ordinary
    narrow and short-screen layouts keep their existing scroll flow. */
 @media (min-width: 701px) and (min-height: 601px) {
-  .household-map.workspace-shell .workspace-windows {
-    inset: var(--work-offset, 0px) 0 auto;
-    width: 100%;
-    height: var(--work-height, 100dvh);
-    z-index: 31;
-  }
-  .household-map.workspace-shell.workspace-revealing .workspace-window[data-active="true"] {
-    left: var(--workspace-window-x, 0px);
-    top: var(--workspace-window-y, 0px);
-    right: auto;
-  }
-  .household-map.workspace-shell .workspace-panel.workspace-window {
-    /* Keep the initial scrollable body above status actions. This limits
-       height only; the complete window can still be moved over those actions. */
-    max-height: min(
-      var(--workspace-window-height, 100%),
-      max(
-        124px,
-        calc(
-          var(--work-height, 100dvh) -
-          max(200px, var(--context-bottom, 200px)) -
-          100px -
-          var(--feedback-height, 0px)
-        )
-      )
-    );
-  }
   .household-map.workspace-shell .map-navigation {
     max-height: calc(var(--work-height, 100dvh) - 200px);
     z-index: 31;
@@ -135,34 +104,6 @@
 @media (max-width: 700px) {
   .household-map.workspace-shell .workspace-context {
     max-width: calc(100vw - 24px);
-  }
-}
-@media (max-width: 700px), (max-height: 600px) {
-  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) .workspace-context {
-    position: relative;
-    inset: auto;
-    max-width: none;
-    max-height: none;
-    margin-bottom: 12px;
-  }
-  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) {
-    padding-top: var(--work-flow-top, 80px);
-    scroll-padding-block-start: var(--work-flow-top, 80px);
-  }
-  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) .workspace-windows {
-    top: auto;
-    height: auto;
-  }
-  .household-map.workspace-shell[data-navigation-open="true"]:not(.workspace-open)
-    .workspace-navigation-mount {
-    margin-top: var(--context-bottom, 142px);
-  }
-}
-
-@media (max-width: 700px) {
-  .household-map.workspace-shell.workspace-open:not(.workspace-revealing) {
-    padding-top: calc(var(--tools-bottom, 80px) + 12px);
-    scroll-padding-block-start: calc(var(--tools-bottom, 80px) + 12px);
   }
 }
 
@@ -179,15 +120,32 @@
   }
 }
 
-@media (max-width: 1000px) and (max-height: 800px) {
-  .household-map.workspace-shell[data-navigation-open="true"].workspace-open:not(
-      .workspace-revealing
-    )
-    .workspace-context {
-    position: relative;
-    inset: auto;
-    max-width: none;
+/* Short screens retain readable status beside the independently scrolling
+   navigation controls, including when an ordinary staging message is shown. */
+@media (max-width: 700px) and (max-height: 600px) {
+  .household-map.workspace-shell:has(.map-navigation:not([hidden])) {
+    overflow-y: auto;
+  }
+  .household-map.workspace-shell:has(.map-navigation:not([hidden])) .workspace-context {
+    position: absolute;
     max-height: none;
-    margin-bottom: 12px;
+    top: calc(var(--map-search-summary-bottom, 120px) + 8px);
+    width: calc(40vw - 24px);
+    max-width: calc(40vw - 24px);
+  }
+  .household-map.workspace-shell:has(.map-navigation:not([hidden])) .map-search-summary {
+    max-width: calc(40vw - 24px);
+  }
+  .household-map.workspace-shell .map-navigation:not([hidden]) {
+    left: 40%;
+    right: 12px;
+    width: min(350px, calc(60vw - 24px));
+  }
+  .household-map.workspace-shell .map-navigation-header {
+    gap: 4px;
+    padding: 4px;
+  }
+  .household-map.workspace-shell .map-navigation-header h2 {
+    font-size: 12px;
   }
 }

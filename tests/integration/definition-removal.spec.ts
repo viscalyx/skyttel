@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { openTypeDefinitions, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('KATALOG-01: unused fields and custom and prefilled types are reviewed, discarded or saved without automatic cleanup', async ({
@@ -40,13 +49,19 @@ test('KATALOG-01: unused fields and custom and prefilled types are reviewed, dis
     ).toBe(true);
     expect((await post('save', { version: 2, operationId: 'definitions' })).ok()).toBe(true);
     await page.goto(installation.origin);
-    await openWorkspace(page);
+    await openTypeDefinitions(page);
     await page.getByText('Objekttyper och egna fält', { exact: true }).click();
     await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
     await page.getByRole('button', { name: 'Ta bort fält: Serienummer' }).click();
     await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
-    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(draft).toContainText('Serienummer: Text');
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const fieldProposal = await readDraftProposal(page, type.name);
+    await expect(fieldProposal).toContainText('Serienummer');
+    await expect(fieldProposal).toContainText('Text');
+    await closeSupportDialog(page, type.name);
+    await closeTextView(page);
+    await openTypeDefinitions(page);
+    const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
     await page.getByRole('button', { name: 'Ändra typ: Solcellsanläggning' }).click();
     await page.getByRole('button', { name: 'Ta bort objekttypen' }).click();
     await page.getByText('Sambandstyper och riktning', { exact: true }).click();
@@ -54,11 +69,23 @@ test('KATALOG-01: unused fields and custom and prefilled types are reviewed, dis
       .getByRole('button', { name: `Ändra sambandstyp: ${edgeType.name}`, exact: true })
       .click();
     await page.getByRole('button', { name: 'Ta bort sambandstypen' }).click();
-    await expect(draft).toContainText('Borttagen objekttyp');
-    await expect(draft).toContainText('Borttagen sambandstyp');
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openDraftReview(page);
+    await expect(draft.getByRole('row').filter({ hasText: 'Solcellsanläggning' })).toContainText(
+      'Ta bort',
+    );
+    await expect(draft.getByRole('row').filter({ hasText: edgeType.name })).toContainText(
+      'Ta bort',
+    );
     expect((await read()).types).toHaveLength(initial.types.length + 1);
     await page.getByRole('button', { name: 'Kasta hela utkastet' }).click();
-    await expect(draft).toContainText('Inga förslag');
+    await page
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
+    await expect(draft).toContainText('Utkastet är tomt.');
+    await closeTextView(page);
+    await openTypeDefinitions(page);
     await expect(page.getByRole('button', { name: 'Ändra typ: Solcellsanläggning' })).toBeVisible();
     await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
     await page.getByRole('button', { name: 'Ta bort fält: Serienummer' }).click();
@@ -69,18 +96,19 @@ test('KATALOG-01: unused fields and custom and prefilled types are reviewed, dis
       .getByRole('button', { name: `Ändra sambandstyp: ${edgeType.name}`, exact: true })
       .click();
     await page.getByRole('button', { name: 'Ta bort sambandstypen' }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     const final = await read();
     expect(final.types.find((item) => item.id === type.id)?.fields).toBeUndefined();
     expect(final.types.find((item) => item.id === 'solar')).toBeUndefined();
     expect(final.relationshipTypes.find((item) => item.id === edgeType.id)).toBeUndefined();
     expect(final.types).toHaveLength(initial.types.length);
     expect(final.relationshipTypes).toHaveLength(initial.relationshipTypes.length - 1);
-    await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
     const latest = page
       .getByRole('region', { name: 'Ändringshistorik' })
       .getByRole('article')
@@ -202,7 +230,7 @@ test('KATALOG-02: private drafts and ended content block removal with a useful e
       const before = await read();
       const otherBefore = await read(other.request);
       await page.goto(installation.origin);
-      await openWorkspace(page);
+      await openTypeDefinitions(page);
       await page.getByText('Objekttyper och egna fält', { exact: true }).click();
       await page.getByRole('button', { name: `Ändra typ: ${type.name}`, exact: true }).click();
       await page.getByRole('button', { name: 'Ta bort objekttypen' }).click();
@@ -233,7 +261,7 @@ test('KATALOG-02: private drafts and ended content block removal with a useful e
   }
 });
 
-test('KATALOG-03: history restores missing definitions and content together only after review and a new save', async ({
+test('KATALOG-03: history reads removed definitions and content without changing independent work', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -317,8 +345,8 @@ test('KATALOG-03: history restores missing definitions and content together only
     await object('independent', initial.types[1].id, 'Oberoende förslag');
     const before = await read();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Visa historik', exact: true }).click();
+    await openTable(page);
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
     const history = page.getByRole('region', { name: 'Ändringshistorik' });
     const group = history.getByRole('article').filter({ hasText: 'Sparande: delete-content' });
     await group.getByText('Visa ändringarna', { exact: true }).click();
@@ -328,29 +356,19 @@ test('KATALOG-03: history restores missing definitions and content together only
     await expect(group.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();
     await expect(group.getByText(`Objekttyp: ${type.name}`, { exact: false })).toBeVisible();
     await expect(group.getByRole('heading', { name: `Samband: ${edgeType.name}` })).toBeVisible();
-    await group.getByRole('button', { name: 'Ångra sparandet' }).click();
-    const draft = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(draft).toContainText(`Återställ objekttyp: ${type.name}`);
-    await expect(draft).toContainText(`Återställ sambandstyp: ${edgeType.name}`);
-    await expect(draft).toContainText('Lo Exempel');
-    await expect(draft).toContainText('Oberoende förslag');
-    expect((await read()).objects).toEqual(before.objects);
-    expect((await read()).types).toEqual(before.types);
+    expect(await read()).toEqual(before);
     await installation.restart();
-    await page.reload();
-    await openWorkspace(page);
-    await expect(draft).toContainText(`Återställ objekttyp: ${type.name}`);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    const final = await read();
-    expect(final.objects.map((item) => item.id).sort()).toEqual([
-      'independent',
-      'source',
-      'target',
-    ]);
-    expect(final.objects.find((item) => item.id === 'target')).toEqual(before.objects[0]);
-    expect(final.relationships[0]).toMatchObject({ id: 'edge', typeId: edgeType.id });
-    expect((await (await page.request.get(`${path}/history`)).json()).history[1]).toEqual(deletion);
+    const current = await read();
+    expect(current.draft).toEqual(before.draft);
+    expect(current.objects).toEqual(before.objects);
+    expect(current.types).toEqual(before.types);
+    const historyAfter = (await (await page.request.get(`${path}/history`)).json()).history;
+    expect(
+      historyAfter.find(
+        (receipt: { operationId: string }) => receipt.operationId === 'delete-content',
+      ),
+    ).toEqual(deletion);
+    await expect(group.getByRole('button', { name: 'Ångra sparandet' })).toHaveCount(0);
   } finally {
     await installation.close();
   }

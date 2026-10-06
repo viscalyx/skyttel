@@ -1,7 +1,7 @@
 # Manuella testfall för rymdkartan
 
 Testfallen omfattar gemensam redigering, navigering och bevarad text i
-lista och rymdkarta. Anteckna commit, webbläsare, enhet, fysisk eller
+tabell och rymdkarta. Anteckna commit, webbläsare, enhet, fysisk eller
 emulerad inmatning samt godkänt eller underkänt resultat vid körning.
 Fysiska enhetsprov och hjälpmedelsprov följs separat i
 [uppföljningen för manuella prov](https://github.com/viscalyx/skyttel/issues/97).
@@ -30,7 +30,7 @@ RYMD-10 använder i stället sin egen förberedelse med ett nytt provhushåll.
 
 ### RYMD-01: samma utkast och beständiga sparande i båda vyerna
 
-**Syfte:** Prova att rymdkartan använder samma uppgifter som listan.
+**Syfte:** Prova att rymdkartan använder samma uppgifter som tabellen.
 
 **Användare:** Alex Exempel.
 
@@ -44,19 +44,20 @@ durable save”.
 **Steg:**
 
 1. Öppna rymdkartan och välj Molnmusik. Kontrollera att kartan ligger
-   kvar. Öppna Lista, välj **Uppgifter för Molnmusik** och sedan
-   **Redigera valt objekt**. Skriv **Molnmusik familj** som namn.
-2. Stäng panelerna med kryssen och öppna Lista igen. Välj **Uppgifter för
-   Molnmusik**. Kontrollera texten och lägg den i utkastet.
-3. Granska och spara hela utkastet. Starta om appen och öppna kartan igen.
+   kvar. Öppna **Tabell** och välj **Redigera Molnmusik**. Skriv
+   **Molnmusik familj** som namn.
+2. Välj Avbryt och Fortsätt redigera i förlustvarningen. Kontrollera
+   namnet och lägg hela formuläret i utkastet med Lägg i utkastet och stäng.
+3. Granska och spara hela utkastet. Starta om appen, öppna kartan och
+   kontrollera sedan båda objekten i **Tabell**.
 
 **Förväntat resultat:**
 
-- Namntexten finns kvar vid vybytet. Förslagen ändrar inte sparad karta.
+- Namntexten finns kvar vid avbruten förlust. Förslagen ändrar inte kartan.
 - Ett samlat sparande ger kvitto. Båda objekten och det rättade namnet
   finns kvar efter omstart, i både lista och karta.
 
-### RYMD-02: fokus och filter ändrar urvalet med bevarad kamera
+### RYMD-02: sökning och samband behåller markering och kamera
 
 **Syfte:** Prova riktade samband, fokus och kamerans separata kontroller.
 
@@ -71,35 +72,38 @@ selection”.
 
 **Steg:**
 
-1. Öppna rymdkartan. Kontrollera pilen från Lo Exempel till Molnmusik
-   före och efter rotation och panorering. Välj
-   Lo Exempels runda symbol. Kontrollera att sambandets etikett visas.
-   Öppna Lista, filtrera på Person och kontrollera att tjänsten döljs.
-2. Välj Visa hela rymden, högerklicka Lo Exempel och välj Visa kopplingar.
-   Kontrollera
-   fokus utan att objektmenyn öppnas. Rulla lodrätt över tom rymd,
-   objektsymbolen och namnet. Kontrollera att alla tre panorerar likadant.
-3. Panorera med knappen under Navigera. Välj Visa hela rymden.
-4. Sök efter Lo. Flytta tangentbordsfokus till en kameraknapp och tryck
-   Escape. Kontrollera att sökningen finns kvar. Flytta fokus till själva
-   kartytan och tryck Escape; kontrollera att sökningen nu är tom.
-5. Fokusera Lo Exempel igen, sök efter Lo och filtrera på Person. Välj
-   Återställ vy och fäll ihop Navigera. Öppna Lista och Filter och
-   kontrollera tom sökning och avmarkerad Person. Återgå till kartan,
-   välj Alla etiketter och sedan användningssambandets etikett.
+1. Öppna **Karta**. Kontrollera pilen från Lo Exempel till Molnmusik
+   före och efter rotation och panorering under **Navigera**. Välj
+   Lo Exempels runda symbol och kontrollera sambandets etikett.
+2. Öppna **Sök i kartan** och markera **Person**. Kontrollera en sökträff,
+   Molnmusik som ett sammanhangsobjekt och den bevarade markeringen på Lo.
+   Välj **Återställ sökning och filter** och stäng sökningen.
+3. Högerklicka Lo Exempel och välj **Visa samband i kartan** i menyn.
+   Kontrollera beskedet om direkta samband och att menyn stängs. Rulla
+   lodrätt över tom rymd, objektsymbolen och namnet; alla tre ska panorera.
+4. Panorera med knappen under **Navigera**. Öppna sökningen och välj
+   **Återställ sökning och filter**; kontrollera att kameran står kvar.
+   Sök efter Lo, stäng sökningen och tryck Escape först från en kameraknapp
+   och sedan från kartytan. Öppna sökningen igen och kontrollera Lo.
+   Välj **Rensa sökning** och stäng sökningen.
+5. Visa Lo Exempels samband igen, sök efter Lo och markera **Person**.
+   Stäng sökningen och välj **Återställ vy**. Öppna sökningen igen och
+   kontrollera tom sökning, avmarkerad Person och ingen knapp för att
+   återgå till sökträffarna. Stäng sökningen och välj **Alla etiketter**.
+6. Välj användningssambandets etikett, **Visa detaljer** och
+   **Redigera valt samband**. Kontrollera Molnmusik som **Till objekt**.
 
 **Förväntat resultat:**
 
 - Pilspetsen syns utanför målets runda symbol, även efter kamerarörelse.
   Riktning och rätt ändobjekt syns. Sparade samband får etiketter när ett
   anslutet objekt väljs eller Alla etiketter är på. Förslagens etiketter
-  visas direkt, med prioritet så långt de ryms utan krockar. Fokus visar direkta
-  samband.
-- Visa hela rymden rensar filter och fokus med bibehållen kamera.
-- Escape från en kameraknapp bevarar sökningen. Escape på kartytan
-  rensar den. Sambandet öppnar rätt detaljer med Molnmusik som mål.
-- Återställ vy rensar även fokus, sökning och typfilter och ramar in hela
-  kartan.
+  visas direkt, med prioritet så långt de ryms utan krockar.
+- Sökningen visar direkta samband som sammanhang och bevarar markeringen.
+  Återställ sökning och filter behåller kameran. Escape bevarar söktexten
+  både från kameraknappen och från kartytan.
+- Återställ vy rensar sökning, typfilter och utforskade samband och ramar
+  in hela kartan. Sambandets vanliga formulär har rätt mål.
 
 ### RYMD-03: menyer och symboler visar ändringar före sparande
 
@@ -118,13 +122,16 @@ from saved content”.
 
 1. Öppna kartan och kontrollera plusmarkeringar och förslagens
    sambandsetiketter utan att välja Alla etiketter.
-   Visa utkastet och spara.
+   Öppna **Skriv till Skyttel**, visa utkastet och spara med sparikonen.
+   Stäng textvyn efter sparbekräftelsen.
 2. Högerklicka Molnmusik och välj Redigera objekt. Lägg en ändrad
    beskrivning i utkastet. Gå tillbaka till kartan.
 3. Kontrollera bärnstensfärgad penna och öppna menyn via objektets namnetikett.
    Läs att objektet och ett samband läggs som borttagningar i utkastet.
    Välj Ta bort objekt.
-4. Kontrollera objektet, sambandet och hela ändringslistan. Kasta utkastet.
+4. Kontrollera objektet, sambandet och hela ändringslistan i **Utkastet**.
+   Välj **Kasta hela utkastet**, läs **Ta bort hela utkastet?** och bekräfta
+   **Ta bort hela utkastet**. Kontrollera åtgärdsbeskedet.
 
 **Förväntat resultat:**
 
@@ -155,12 +162,13 @@ unsent editing”.
 
 1. Kontrollera att rymdkartan är startläge. Håll
    på Molnmusik tills menyn visas. Släpp och välj Redigera objekt.
-2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten, välj Till
-   kartan och byt vy.
-3. Öppna kartan igen. Använd webbläsarens verktyg för att simulera förlust
+2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten och kontrollera
+   texten i det fortfarande öppna formuläret.
+3. Behåll formuläret öppet. Använd webbläsarens verktyg för att simulera förlust
    och återställning av WebGL-kontext, eller kör det länkade automatiska
    provet för detta avbrott. Anteckna separat vad som faktiskt provas.
-4. Öppna detaljerna, kontrollera texten, lägg den i utkastet och spara.
+4. Kontrollera texten i formuläret, lägg hela formuläret i utkastet och
+   öppna kartan. Kontrollera att kartan ryms i liggande vy. Spara utkastet.
 
 För ett avbrott i Chromes utvecklarkonsol, med kartan öppen:
 
@@ -174,7 +182,7 @@ setTimeout(() => skyttelGraphics.restoreContext(), 4000);
 **Förväntat resultat:**
 
 - Fingersläppet väljer inte någon menyåtgärd. Kartan ryms i tillgänglig
-  webbyta i båda orienteringarna och listan kan nås.
+  webbyta i båda orienteringarna och tabellen kan nås.
 - Avbrottsbeskedet förklarar att utkastet finns kvar. Detaljerna behåller
   oskickad text. Texten är inte sparad förrän utkastet sparas med kvitto.
 
@@ -194,38 +202,47 @@ changes”.
 **Steg:**
 
 1. Öppna kartan och välj Lo Exempels runda symbol. Kontrollera namn,
-   typikoner och sambandets etikett. Välj Alla etiketter, slå av och på
-   valet igen och kontrollera att kameran står kvar. Panorera och välj
-   Återställ vy.
-2. Öppna Lista och välj **Uppgifter** för Lo Exempel med tangentbord.
-   Kontrollera rubrikfokus i objektpanelen. Återgå till Lista och prova
-   tabbordningen markering, namn, Uppgifter, Redigera och Ta bort; gå även
-   bakåt från Uppgifter till markeringen. Återgå till objektpanelen.
-   Välj **Redigera valt objekt**,
-   läs att objektet och ett samband läggs som borttagningar i utkastet.
-   Kontrollera rätt formulär och stäng utan ändring.
-3. Välj sambandet i listan med tangentbord och välj Redigera. Ange känt slutdatum
-   2026-12-31 utan att skicka formuläret.
-4. Öppna kartan, ändra fönsterstorlek och öppna detaljer och utkast.
-5. Kontrollera datumet, lägg sambandet i utkastet och spara hela utkastet.
+   typikoner och sambandets etikett. Slå av och på **Alla etiketter** och
+   kontrollera att kameran står kvar. Panorera och välj **Återställ vy**.
+2. Öppna **Tabell**. Fokusera Lo Exempels namn och tryck Enter för att
+   fälla ut raden. Prova tabbordningen namn, **Redigera Lo Exempel**,
+   **Samband för Lo Exempel** och **Visa Lo Exempel i kartan**, samt bakåt.
+3. Öppna **Läs alla uppgifter för Lo Exempel** med Enter och kontrollera
+   rubrikfokus. Stäng med krysset. Öppna **Åtgärder för Lo Exempel** och
+   läs att **Ta bort objekt** lägger objektet och ett samband som
+   borttagningar i utkastet. Stäng med Escape utan att ta bort något.
+4. Öppna **Redigera Lo Exempel** med Enter, kontrollera namnfokus och
+   välj **Avbryt** utan ändring.
+5. Öppna **Samband för Lo Exempel** med Enter och sedan **Redigera samband**.
+   Kontrollera att redigeringsknappen behåller fokus. Använd Tab för att
+   nå **Från objekt** i formuläret och ange känt slutdatum 2026-12-31.
+   Välj **Molnmusik** i den läsbara vänsterspalten och ändra fönsterstorlek.
+   Kontrollera rubrikfokus i **Uppgifter för Molnmusik**.
+6. Välj **Tillbaka** och kontrollera det oskickade datumet. Lägg hela
+   sambandsformuläret i utkastet och stäng sambandsdialogen. Granska och
+   spara hela utkastet med sparikonen; stäng textvyn efter bekräftelsen.
 
 **Förväntat resultat:**
 
 - Alla etiketter ger ett närmare panorerbart utsnitt. Återställ vy ger
   överblick igen och behåller valet Alla etiketter. Objektnamn ligger nära
   sina runda symboler och stödlinjer visar anknytningen.
-- Tangentbordsvägen öppnar rätt samband. Oskickat slutdatum finns kvar
-  efter vybyte och blir beständigt först vid det samlade sparandet.
+- Tangentbordsvägen öppnar rätt läsning och redigering. Oskickat slutdatum
+  finns kvar efter läskedjan och storleksändringen, utan att ha lagts i
+  utkastet. Datumet blir beständigt först vid det samlade sparandet.
 
-### RYMD-06: förlorad tillgång lämnar helskärmen och visar inloggningsvägen
+### RYMD-06: förlorad tillgång stänger kartarbetet och visar inloggningsvägen
 
 **Syfte:** Prova att en nekad ändring inte låser navigationen.
 
 **Användare:** Alex Exempel som medlem; en annan administratör återkallar
 tillgången från en separat inloggning.
 
-**Förutsättningar:** Alex har öppnat Molnmusik i helskärmskartan och
-skrivit oskickad text. Administratören kan administrera hushållet.
+**Förutsättningar:** Robin Exempel är hushållsadministratör i en separat
+inloggning. Bjud vid behov in Robin, ge Robin administratörsrollen och
+låt Robin ändra Alex till vanlig medlem. Alex har öppnat kartan som
+arbetsyta, sedan **Tabell**, **Redigera Molnmusik** och skrivit oskickad
+beskrivning. Administratören kan administrera hushållet.
 
 **Integrationstest:**
 [spatial.spec.ts](../../tests/integration/spatial.spec.ts),
@@ -236,11 +253,13 @@ navigation”.
 
 1. Återkalla Alex tillgång från administratörens separata inloggning.
 2. Försök lägga Alex oskickade text i utkastet innan nästa omladdning.
-3. Läs beskedet och välj Logga ut i den vanliga sidans navigation.
+3. Läs **Du har inte tillgång till hushållet** och välj **Logga ut** i
+   den vanliga sidans navigation.
 
 **Förväntat resultat:**
 
-- Ändringen nekas, privata uppgifter döljs och helskärmsläget lämnas.
+- Ändringen nekas och kartans arbetsyta med privata uppgifter och formulär
+  ersätts av sidan som förklarar den återkallade tillgången.
 - Navigationen kan användas omedelbart. Utloggning visar inloggningssidan
   utan kvarvarande oskickad text.
 
@@ -261,18 +280,21 @@ draft symbols”.
 
 **Steg:**
 
-1. Välj Molnmusik i listan och Redigera, välj status Upphört och lägg
+1. Öppna **Tabell** och **Redigera Molnmusik**, välj status Upphört och lägg
    i utkastet.
-2. Välj Lo Exempel och Redigera. Ange ett känt slutdatum i det förflutna under
-   Ekonomiska uppgifter och avtalsvillkor, välj Gäller fortfarande och
+2. Öppna **Redigera Lo Exempel**. Ange ett känt slutdatum i det förflutna under
+   **Ekonomiska uppgifter**, välj Gäller fortfarande och
    lägg i utkastet.
-3. Välj användningssambandet och Redigera. Ange ett känt slutdatum i det förflutna,
+3. Öppna **Samband för Lo Exempel** och **Redigera samband**. Ange ett
+   känt slutdatum i det förflutna,
    behåll Följ slutdatum och lägg sambandet i utkastet.
-4. Öppna rymdkartan, välj Alla etiketter och kontrollera objektens och
-   sambandets etiketter.
-5. Öppna Utkast och historik, spara hela utkastet, starta om appen och
-   öppna rymdkartan igen.
-6. Välj sambandets etikett, Lista och Redigera valt samband.
+4. Öppna rymdkartan och välj Alla etiketter. Öppna **Sök i kartan**,
+   markera **Ta med upphörda** och stäng sökningen. Kontrollera sedan
+   objektens och sambandets etiketter.
+5. Öppna **Skriv till Skyttel**, visa utkastet och spara med sparikonen.
+   Stäng textvyn, starta om appen och öppna kartan igen. Markera åter
+   **Ta med upphörda** i kartans sökning.
+6. Välj sambandets etikett, **Visa detaljer** och **Redigera valt samband**.
    Välj Gäller fortfarande
    och lägg sambandet
    i utkastet. Gå tillbaka till kartan.
@@ -305,11 +327,15 @@ and opens the saved route read-only”.
 
 **Steg:**
 
-1. Öppna kartan, högerklicka Molnmusik och välj Visa kopplingar.
+1. Öppna kartan, högerklicka Molnmusik och välj Visa samband i kartan.
 2. Kontrollera Lo Exempel och Kim Exempel med båda betalningssambanden.
 3. Välj den tidigare etiketten Lo Exempel → Betalar → Molnmusik med ×.
-4. Läs Tidigare samband. Högerklicka sedan Kim Exempel, välj Visa
-   kopplingar och därefter det föreslagna betalningssambandet.
+4. Välj **Visa detaljer** och läs **Valt samband**. Kontrollera att
+   sparade tidigare värden saknar redigeringsfält. Öppna **Sök i kartan**,
+   kontrollera att **Tillbaka till sökträffarna** fortfarande finns och
+   stäng sökningen. Stäng uppgifterna. Högerklicka Kim Exempel, välj
+   **Visa samband i kartan** och det föreslagna betalningssambandet.
+   Välj **Visa detaljer** och **Redigera valt samband**.
 
 **Förväntat resultat:**
 
@@ -318,7 +344,7 @@ and opens the saved route read-only”.
   grönt plus och heldragen linje. Punktade etikettkopplingar
   går att skilja från riktade samband.
 - Den böjda tidigare linjen och etiketten leder till läsbara tidigare
-  värden utan redigeringsfält. Fokus på Molnmusik behålls vid valet.
+  värden utan redigeringsfält. Utforskningen av Molnmusiks samband behålls vid valet.
 - Det föreslagna sambandet visar Kim som betalare. Redigera valt samband
   öppnar formuläret med Kim som Från objekt. Granskningen ändrar inga
   uppgifter i utkastet eller den sparade kartan.
@@ -348,16 +374,16 @@ selected label priority and text alternatives”.
    att dess etikett prioriteras och kan läsas. Välj Nära objekt 8 och
    därefter dess samband från Nära objekt 7. Sambandets etikett ska vara
    synlig och valbar utan att täckas av objektnamn eller flytta kartan.
-3. Öppna Lista och markera Nära objekt 1 i listan. Läs och arbeta vidare
+3. Öppna **Tabell** och fäll ut Nära objekt 1 med Enter. Läs och arbeta vidare
    utan att använda kartgrafik, tal eller ljud. Vid ett grafikavbrott ska
-   samma listarbete fortfarande fungera.
+   samma tabellarbete fortfarande fungera.
 4. Återgå till kartan och kontrollera att alla objekt finns kvar och att
    deras placeringar består. Upprepa vid den andra bredden och med zoom.
 
 **Förväntat resultat:**
 
 - Etiketter ger separata träffytor med linjer till objektens riktiga lägen.
-- Urval prioriteras när alla namn inte ryms. Listan ger tillgång till alla
+- Urval prioriteras när alla namn inte ryms. Tabellen ger tillgång till alla
   objekt och urval även utan grafik.
 - Varken valet eller de nya etikettlägena ändrar objektens personliga
   placeringar, hushållets information eller kamerans utsnitt.
@@ -384,15 +410,16 @@ its saved and private list”.
 **Steg:**
 
 1. Öppna kartan och ladda om sidan. Öppna
-   Lista och välj **Uppgifter för Familjens Molnmusik**. Läs beskrivningen.
-2. Öppna **Lista** från verktygen igen. Kontrollera Robins notering.
-3. Stäng panelerna med kryssen och välj Kim Exempel i kartan. Kontrollera att
+   **Tabell**, fäll ut Familjens Molnmusik och välj
+   **Läs alla uppgifter för Familjens Molnmusik**. Läs beskrivningen.
+2. Stäng läsdialogen med krysset. Kontrollera Robins notering i tabellen.
+3. Öppna **Karta** och välj Kim Exempel med tangentbord. Kontrollera att
    namnet går att läsa och välja. Om information om dolda etiketter visas får
    den inte täcka namnens träffytor.
 4. Minska vyn till ungefär 320 × 250 CSS-pixlar. Öppna **Visningsval**,
    slå på **Alla etiketter** och kontrollera att samtliga tre namn finns.
    Slå av valet och stäng Visningsval. Återställ den större vyn och öppna
-   Lista igen.
+   **Tabell** igen.
 
 **Förväntat resultat:**
 

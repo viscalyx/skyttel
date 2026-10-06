@@ -12,7 +12,7 @@ export type TextAssistantReview = MapDraft & {
 };
 export type MapSelection = { kind: 'object' | 'relationship'; id: string };
 export type TextAssistantResult = {
-  kind: 'draft' | 'undo' | 'restored' | 'history' | 'failure';
+  kind: 'draft' | 'restored' | 'history' | 'failure';
   /** Server-produced text grounded in checked MCP results or recorded failures. */
   message: string;
 };

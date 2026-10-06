@@ -15,7 +15,7 @@ in med Google. Samtalet kräver inte administrativa rättigheter.
 1. Starta en ny installation enligt
    [den kontrollerade röstguiden](voice-assistant.md#controlled-voice-fixture).
    Skapa ett hushåll. Lägg ett Person-objekt **Lo Exempel** i det privata
-   utkastet genom **Lista → Nytt objekt**. Spara inte.
+   utkastet genom **Nytt objekt → Lägg i utkastet och stäng**. Spara inte.
 2. För identitetsfrågan: välj **Objektets identitet → Obesvarad
    identitetsfråga** innan förslaget läggs i utkastet. Börja en ny
    installation med en identifierad Lo inför sparfallen FRAGA-04–06.
@@ -180,8 +180,9 @@ ljudet innan fyra sekunder börjar”.
    sekunder. Starta signalen igen och håll den på i minst fyra sekunder.
 4. Avsluta signalen och starta tidtagningen. Läs röstrutan efter tre
    sekunder och igen efter drygt fyra sekunder.
-5. Öppna själv textvyn och läs sparbeskedet. Öppna **Utkast och historik**,
-   **Tidigare sparförsök** och **Visa kvittot**.
+5. Öppna själv textvyn och läs sparbeskedet. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera det enda sparandet
+   med Lo Exempel.
 
 **Förväntat resultat:**
 
@@ -193,7 +194,7 @@ ljudet innan fyra sekunder börjar”.
   hushållsnamnet annonseras artigt en gång vid kvittot; röstrutan upprepar
   ingen sparannons. Textvyn öppnas inte av sig själv.
 - **Sparat.** finns i samtalstexten. Lo finns en gång i den sparade kartan
-  och kvittot finns under **Utkast och historik**.
+  och det bekräftade sparandet finns under **Rapporter → Ändringshistorik**.
 
 ### FRAGA-05: stopp startar tiden från avbrottet
 
@@ -241,7 +242,9 @@ kvitto ger inget grönt sparbesked”.
 1. Kör `user Berätta om utkastet.` och `delegate` och släpp med
    `reply REQUEST Sparat.`. Ge inget sparbesked.
 2. Starta signalen, skicka **Sparat.** som transporttext och avsluta den.
-3. Kontrollera röstrutan, privata utkastet och **Tidigare sparförsök**.
+3. Kontrollera röstrutan och förslaget genom **Visa utkastet** i textvyn.
+   Öppna **Rapporter → Ändringshistorik** och kontrollera att inget
+   sparande tillkommer. Välj **Tillbaka till arbetet**.
 
 **Förväntat resultat:**
 

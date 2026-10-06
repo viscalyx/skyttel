@@ -1034,7 +1034,7 @@ test('graphics navigation and label modes expose selectable objects and directed
     .click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Samband: unknown');
   await page
-    .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.' })
+    .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller tabellen.' })
     .click({ position: { x: 5, y: 5 } });
   await expect.element(page.getByRole('status')).toHaveTextContent('Hela rymden');
 });
@@ -1087,7 +1087,7 @@ test('dense labels remain readable and explicit all-label mode retains access to
   await expect
     .element(
       page.getByText(
-        `${100 - document.querySelectorAll('.spatial-name').length} etiketter döljs för läsbarhet. Alla objekt och samband finns i listan. Sök eller välj ett objekt och visa dess kopplingar.`,
+        `${100 - document.querySelectorAll('.spatial-name').length} etiketter döljs för läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller välj ett objekt och visa dess kopplingar.`,
         { exact: true },
       ),
     )
@@ -1225,7 +1225,7 @@ test('automatic draft labels hide near a crowded connector and return when nearb
     )
     .toBe(true);
   await page
-    .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.' })
+    .getByRole('img', { name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller tabellen.' })
     .click({ position: { x: 5, y: 5 } });
   await expect.poll(() => document.querySelector(`[data-layout-id="${layoutId}"]`)).toBeNull();
   // Remove other proposals without moving the endpoints or camera.
@@ -1372,12 +1372,12 @@ test('context menu edits, focuses, cancels and removes only the chosen object', 
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await lo.click({ button: 'right', modifiers: ['Control'] });
   await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
-  expect(document.querySelector('dialog')?.open).toBe(false);
+  expect(document.querySelector('dialog[open]')).toBeNull();
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
   await lo.click({ button: 'right' });
-  await page.getByRole('button', { name: 'Visa kopplingar', exact: true }).click();
+  await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Kopplingar för lo');
   await lo.click({ button: 'right' });
   await userEvent.keyboard('{Escape}');

@@ -27,11 +27,7 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
   function cleanEdge<T extends RelationshipChange>(change: T): T {
     return { ...change, ...(change.objectNames ? { objectNames: names(change.objectNames) } : {}) };
   }
-  function cleanMerge<
-    T extends
-      | NonNullable<DraftChange['merge']>
-      | NonNullable<SaveReceipt['changes'][number]['merge']>,
-  >(merge: T): T {
+  function cleanMerge<T extends ObjectMerge>(merge: T): T {
     const result = {
       ...merge,
       relationships: merge.relationships.filter(
@@ -42,11 +38,6 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
       ),
       objectNames: names(merge.objectNames) ?? {},
     };
-    if ('previousChanges' in result) {
-      const draftMerge = result as ObjectMerge;
-      draftMerge.previousChanges = draftMerge.previousChanges.flatMap(cleanDraftObject);
-      draftMerge.previousRelationships = draftMerge.previousRelationships.flatMap(cleanDraftEdge);
-    }
     return result;
   }
   const objectMeaning = (value: MapObject) => ({
@@ -72,14 +63,7 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
     let next = { ...change };
     if (affected.objectChange(change)) {
       const current = content.objects.find((object) => object.id === change.id);
-      if (
-        !current ||
-        affected.objectValue(current) ||
-        !change.before ||
-        !change.after ||
-        change.merge
-      )
-        return [];
+      if (!current || affected.objectValue(current) || !change.before || !change.after) return [];
       const type = content.allTypes.get(current.typeId);
       if (!type) return [];
       // Remove only erased type/custom meaning. Original expected/proposed
@@ -91,14 +75,9 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
         type,
       };
       delete next.beforeType;
-      if (next.undoFields)
-        next.undoFields = next.undoFields.filter(
-          (key) => key !== 'objectMeaning' && key !== 'typeId' && !key.startsWith('customValues:'),
-        );
       if (isDeepStrictEqual(facts(next.before as MapObject), facts(next.after as object)))
         return [];
     }
-    if (next.merge) next.merge = cleanMerge(next.merge);
     return [next];
   }
   function cleanDraftEdge(change: DraftRelationshipChange): DraftRelationshipChange[] {
@@ -116,11 +95,6 @@ export function erasureProjection(content: Content, scope: ErasureScope) {
         type,
       };
       delete next.beforeType;
-      if (next.undoFields)
-        next.undoFields = next.undoFields.filter(
-          (key) =>
-            key !== 'meaning' && key !== 'relationshipMeaning' && !key.startsWith('customValues:'),
-        );
       if (isDeepStrictEqual(facts(next.before as MapRelationship), facts(next.after as object)))
         return [];
     }
@@ -213,15 +187,13 @@ function imageReferences(content: Pick<Content, 'objects' | 'drafts' | 'saves' |
       image(change.before?.profileImageId, id);
       image(change.after?.profileImageId, id);
     }
-    const merge = change.merge;
+    const merge = 'merge' in change ? change.merge : undefined;
     if (!merge) return;
     for (const object of merge.objects) image(object.profileImageId, object.id);
     if (merge.imageCopy) {
       image(merge.imageCopy.sourceImageId, merge.imageCopy.sourceObjectId);
       image(merge.imageCopy.copiedImageId, merge.survivorId);
     }
-    if ('previousChanges' in merge)
-      for (const previous of merge.previousChanges) changeImages(previous);
   }
   for (const object of content.objects) image(object.profileImageId, object.id);
   for (const draft of content.drafts) for (const change of draft.changes) changeImages(change);
@@ -263,7 +235,8 @@ export function erasurePredicates(scope: ErasureScope) {
         objectValue(change.after) ||
         objectTypes.has(change.type.id) ||
         (change.beforeType && objectTypes.has(change.beforeType.id)) ||
-        (change.merge &&
+        ('merge' in change &&
+          change.merge &&
           (change.merge.objects.some(objectValue) ||
             change.merge.types.some((type) => objectTypes.has(type.id)))),
     );
@@ -278,16 +251,13 @@ export function erasurePredicates(scope: ErasureScope) {
         objects.has(id),
       ));
   function objectTouched(change: Change): boolean {
-    const merge = change.merge;
+    const merge = 'merge' in change ? change.merge : undefined;
     return Boolean(
       objectChange(change) ||
         (merge &&
           (namesTouched(merge.objectNames) ||
             merge.relationships.some((edge) => relationships.has(edge.id) || edgeValue(edge)) ||
-            merge.relationshipTypes.some((type) => relationshipTypes.has(type.id)) ||
-            ('previousChanges' in merge &&
-              ((merge as ObjectMerge).previousChanges.some(objectTouched) ||
-                (merge as ObjectMerge).previousRelationships.some(edgeTouched))))),
+            merge.relationshipTypes.some((type) => relationshipTypes.has(type.id)))),
     );
   }
   return {

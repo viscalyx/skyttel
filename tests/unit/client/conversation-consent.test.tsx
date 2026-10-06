@@ -62,6 +62,16 @@ function show({ failedSaves = 0 } = {}) {
   return posts;
 }
 const messageField = () => screen.queryByLabelText('Meddelande till Skyttel');
+async function requestTextConversation() {
+  await openConversationText();
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt samtal' }));
+}
+const started = () =>
+  waitFor(() =>
+    expect(
+      screen.getByRole('region', { name: 'Arbetsyta' }).getAttribute('data-session-active'),
+    ).toBe('true'),
+  );
 
 test('the consent box states the consent text word for word and offers to remember, approve or cancel', async () => {
   const posts = show();
@@ -102,27 +112,27 @@ test('Avbryt and Escape start nothing and leave the focus on the chosen button',
   expect(queryConsentBox()).toBeNull();
   expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Prata med Skyttel' }));
 
-  await openConversationText();
+  await requestTextConversation();
   // The browser reports Escape in a modal dialog as a cancel event.
   fireEvent(await findConsentBox(), new Event('cancel', { cancelable: true }));
   expect(queryConsentBox()).toBeNull();
-  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Skriv till Skyttel' }));
-  expect(messageField()).toBeNull();
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Nytt samtal' }));
+  expect(messageField()).not.toBeNull();
   expect(posts).toEqual([]);
 
   // The box is asked for again, with the choice to remember unmarked as at first.
-  await openConversationText();
+  await requestTextConversation();
   await findConsentBox();
   await userEvent.click(getConsentBoxControls().remember);
   await userEvent.click(getConsentBoxControls().decline);
-  await openConversationText();
+  await requestTextConversation();
   await findConsentBox();
   expect(getConsentBoxControls().remember.checked).toBe(false);
 });
 
 test.each([
   ['Prata med Skyttel', chooseConversationVoice, true],
-  ['Skriv till Skyttel', openConversationText, false],
+  ['Nytt samtal i textvyn', requestTextConversation, false],
 ] as const)(
   'Godkänn och starta after %s starts the conversation that button stands for',
   async (_button, choose, withVoice) => {
@@ -133,7 +143,7 @@ test.each([
       expect(messageField()).toBeNull();
       await openConversationText();
     }
-    await waitFor(() => expect(messageField()).not.toBeNull());
+    await started();
     expect(queryConsentBox()).toBeNull();
     // Approved for the visit: nothing is saved, and the start states the consent.
     expect(posts).toEqual([{ url: path, body: { consent: { textVersion: 2 } } }]);
@@ -148,18 +158,18 @@ test.each([
 
 test('a remembered consent is saved before the start, and a save that fails is told in the box', async () => {
   const posts = show({ failedSaves: 1 });
-  await openConversationText();
+  await requestTextConversation();
   await giveConversationConsent({ remember: true });
   const box = await findConsentBox();
   expect((await within(box).findByRole('alert')).textContent).toBe(
     'Medgivandet kunde inte sparas. Försök igen.',
   );
   expect(getConsentBoxControls().remember.checked).toBe(true);
-  expect(messageField()).toBeNull();
+  expect(messageField()).not.toBeNull();
   expect(posts).toEqual([{ url: consentPath, body: { textVersion: 2 } }]);
 
   await userEvent.click(getConsentBoxControls().approve);
-  await waitFor(() => expect(messageField()).not.toBeNull());
+  await started();
   expect(queryConsentBox()).toBeNull();
   expect(posts).toEqual([
     { url: consentPath, body: { textVersion: 2 } },
@@ -179,7 +189,7 @@ test('a consent that is being saved can be neither approved again nor cancelled'
         })
       : respond(url, init),
   );
-  await openConversationText();
+  await requestTextConversation();
   await giveConversationConsent({ remember: true });
   await waitFor(() => expect(getConsentBoxControls().approve.disabled).toBe(true));
   expect(getConsentBoxControls().decline.disabled).toBe(true);
@@ -187,5 +197,5 @@ test('a consent that is being saved can be neither approved again nor cancelled'
   fireEvent(await findConsentBox(), new Event('cancel', { cancelable: true }));
   expect(queryConsentBox()).not.toBeNull();
   answer?.(Response.json({ saved: { textVersion: 2, savedAt: '2026-10-01T08:00:00.000Z' } }));
-  await waitFor(() => expect(messageField()).not.toBeNull());
+  await started();
 });

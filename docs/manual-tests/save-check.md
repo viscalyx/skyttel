@@ -16,7 +16,8 @@ loggar och kvitton vid ett kvarstående fel.
    [den kontrollerade talprovsguiden](voice-assistant.md#controlled-voice-fixture).
    Den har riktig server och tillfällig SQLite men syntetisk leverantör och media.
 2. Logga in som Alex, skapa Kontrollprov och lägg Lo Exempel i utkastet
-   genom **Lista → Nytt objekt → Lägg i mitt utkast**. Anteckna utkastets
+   genom **Tabell → Nytt objekt → Lägg i utkastet och stäng**.
+   Anteckna utkastets
    version och innehållsversion från terminalens nästa `held`.
 3. Öppna **Skriv till Skyttel** och godkänn medgivandet för besöket.
    Använd webbläsarens utvecklarverktyg för **Network request blocking**
@@ -53,8 +54,9 @@ arbete och förklaras en gång”.
    Ingen knapp för att kontrollera sparandet visas under den egna kontrollen.
 4. Återställ kontakten. Vänta på förklaringen **Kontrollen visar att hela
    utkastet sparades. Ändringarna finns i hushållets karta.** i samtalstexten.
-5. Öppna **Utkast och historik → Tidigare sparförsök**. Kontrollera ett
-   genomfört försök och ett kvitto med samma operation-ID. Lo finns i kartan.
+5. Öppna **Rapporter → Ändringshistorik**. Kontrollera ett genomfört
+   sparande och välj **Identifiera sparandet och användaren** för att läsa
+   samma operation-ID. Lo finns i kartan.
 
 **Förväntat resultat:**
 
@@ -93,8 +95,11 @@ Blockera `*text-assistant/*/recover` innan registreringen släpps.
    **Kontrollera om utkastet sparades** som återförsök.
 4. Ta bort blockeringen, tabba till knappen och tryck Retur. Kontrollnotisen
    ersätter felnotisen och knappen försvinner medan kontrollen pågår.
-5. Öppna textsamtalet och godkänn det vanliga medgivandet om det behövs.
-   Läs förklaringen och kontrollera kvittot i **Tidigare sparförsök**.
+5. Kräv att kontrollnotisen och dess återförsöksknapp försvinner. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera samma ID med
+   **Identifiera sparandet och användaren** på den enda ändringsgruppen.
+   Välj **Tillbaka till arbetet**, öppna textsamtalet och godkänn det
+   vanliga medgivandet om det behövs. Läs kontrollens förklaring.
 
 **Förväntat resultat:**
 
@@ -218,10 +223,13 @@ await fetch(`${mapPath}/operations`, {
     contentVersion: map.contentVersion,
   }),
 });
+console.log(JSON.stringify(draft));
 ```
 
 Kräv status 200 för båda POST-anropen. Kvittot kan inte skapas innan
-identiteten är utredd. Lämna Console och följ de synliga stegen nedan.
+identiteten är utredd. Kopiera utkastets JSON till en lokal provanteckning
+före omstarten; Console-variabler försvinner när sidan laddas om.
+Lämna Console och följ de synliga stegen nedan.
 
 **Integrationstest:**
 [save-check.spec.ts](../../tests/integration/save-check.spec.ts), testfallet
@@ -232,9 +240,32 @@ behåller samma privata utkast”.
 
 1. Starta om installationen och ladda om sidan. Låt Skyttel kontrollera försöket.
 2. Öppna textsamtalet och läs förklaringen att utkastet inte sparades.
-3. Öppna **Utkast och historik → Tidigare sparförsök**. Kontrollera avvisat
-   resultat med det ursprungliga ID:t. Kontrollera hela privata utkastet.
-4. Red ut identiteten eller konflikten. Ett nytt sparande behöver ett nytt
+3. Välj **Visa utkastet** i textvyn och kontrollera hela förslaget Oklart Lo.
+   Öppna **Rapporter → Ändringshistorik**. Kräv **Inga genomförda sparanden.**
+   Det avvisade försöket ska inte visas som ett genomfört sparande.
+   Välj **Tillbaka till arbetet**.
+4. Kontrollera den beständiga identiteten separat genom den publika
+   HTTP-gränsen. Öppna Console på samma inloggade sida och kör med det
+   hushålls-ID som används i förberedelsen:
+
+   ```javascript
+   const checkPath = '/api/households/ID/map';
+   const attempts = (await (await fetch(`${checkPath}/operations`)).json()).operations;
+   console.log(attempts.length === 1 &&
+     attempts[0].operationId === 'manual-rejected-original' &&
+     attempts[0].status === 'rejected' &&
+     attempts[0].error === 'unresolved_identity');
+   const currentDraft = (await (await fetch(checkPath)).json()).draft;
+   const originalDraft = JSON.parse(prompt('Klistra in utkastets JSON'));
+   console.log(JSON.stringify(currentDraft) === JSON.stringify(originalDraft));
+   const history = (await (await fetch(`${checkPath}/history`)).json()).history;
+   console.log(history.length === 0);
+   ```
+
+   Klistra in JSON-kopian från förberedelsen i frågerutan. Kräv tre `true`.
+   Detta är en separat HTTP-kontroll, inte ett påstående om en synlig
+   lista över misslyckade försök.
+5. Red ut identiteten eller konflikten. Ett nytt sparande behöver ett nytt
    uttryckligt sparbesked; kontrollen får inte skapa eller basera om ett försök.
 
 **Förväntat resultat:**
@@ -258,10 +289,12 @@ Använd nätblockering för `/text-assistant/*/recover` så att den första
 kontrollen misslyckas. Behåll terminalen för modellens `held`-anrop.
 
 **Integrationstest:**
-[save-check.spec.ts](../../tests/integration/save-check.spec.ts), testfallen
-“SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat
-medgivande utan nytt sparande” och samma titel med tillägget
-“även när återkallandets svar tappas”.
+[save-check.spec.ts](../../tests/integration/save-check.spec.ts), testfallen:
+
+- “SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat
+  medgivande utan nytt sparande”.
+- “SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat
+  medgivande utan nytt sparande även när återkallandets svar tappas”.
 
 **Steg:**
 
@@ -269,15 +302,15 @@ medgivande utan nytt sparande” och samma titel med tillägget
    `tool REQUEST prepare_save {"version":VERSION,"contentVersion":CONTENT}`.
    Släpp nästa anrop med `reply REQUEST Försöket är förberett.`.
    Kräv kontrollfelnotisen. Anteckna det väntande ursprungliga ID:t
-   i **Utkast och historik → Tidigare sparförsök**.
+   i det offentliga svaret från **map/operations** i webbläsarens Network.
 2. Skriv en ny text utan att skicka. Öppna **Inställningar → Samtal med
    Skyttel** och välj **Återkalla medgivandet**. Bekräfta med
    **Återkalla och avsluta samtalet**.
 3. Med ett normalt svar: kräv avstängd röst, återkallat medgivande och
    ett verkligt kvitto. Gå tillbaka till kartan. Ingen gammal kontrollnotis
-   eller felnotis ska ligga kvar. Öppna **Utkast och historik** och välj
-   **Tidigare sparförsök** i **Mina sparförsök**. Kontrollera att samma ID
-   har status **Genomfört**.
+   eller felnotis ska ligga kvar. Öppna **Rapporter → Ändringshistorik**,
+   välj **Identifiera sparandet och användaren** och kontrollera samma ID
+   i den enda genomförda ändringsgruppen för Lo. Välj **Tillbaka till arbetet**.
 4. Upprepa från ett nytt väntande försök. Bryt nu kontakten efter att
    bekräftelsens `/conversation-consent/revoke` skickats men innan dess
    svar når sidan. Ta bort nätblockeringen och återställ kontakten.
@@ -287,11 +320,12 @@ medgivande utan nytt sparande” och samma titel med tillägget
    går före andra notiser och blockerar nytt arbete utan att fråga efter
    medgivande. Släpp kontrollen genom att ta bort eventuell nätblockering.
 6. Kräv ett genomfört försök med samma ID, ägare och versioner samt ett
-   enda historikkvitto. Lo finns i kartan; inget nytt försök har skapats.
+   enda historikkvitto. Kontrollnotisen och återförsöksknappen försvinner.
+   Lo finns i kartan; inget nytt försök har skapats.
 7. Öppna textsamtalet och ge medgivandet för det nya samtalet. Den
    oskickade texten finns kvar. Efter ett tappat återkallandesvar står
    kontrollens förklaring en gång i samtalstexten. Efter ett normalt svar
-   är det gamla samtalet tomt och kvittot finns i **Mina sparförsök**.
+   är det gamla samtalet tomt och kvittot finns i **Rapporter → Ändringshistorik**.
 
 **Förväntat resultat:**
 

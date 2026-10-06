@@ -1,7 +1,8 @@
 # Manuella testfall för profilbilder
 
 Testfallen omfattar privata bildförslag, visning i rymdkartan, historik,
-ångring, fel, åtkomst och återgång till ett objekt efter att dess panel stängts.
+historikläsning, fel, åtkomst och återgång till ett objekt efter att dess
+formulär stängts.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -17,11 +18,15 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Välj **Tabell** och använd radens **Redigera [objektets namn]** för att
+öppna hela objektformuläret. För samband väljer du **Samband för [namn]**
+och **Redigera samband** vid det aktuella sambandet. Nytt objekt öppnas
+från kartans verktyg. Att bara markera en rad öppnar inte ett formulär.
+
+Granska ett beständigt förslag genom **Skriv till Skyttel → Visa utkastet**
+och radens **Visa förslaget: [namn]**. Stäng fullständig läsning med krysset.
+Spara separat med utkastets sparikon och vänta på **Utkastet är sparat**.
+Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
 
 1. Använd en isolerad installation med påhittade uppgifter. Skapa objektet
    Lo Exempel med en beskrivning och ett privat förslag. Förbered påhittade
@@ -59,9 +64,10 @@ dessa kopior i filväljaren. Radera båda testmapparna efter körningen.
 
 ## Bildförslag och historik
 
-### BILD-01: Bevara text och återställ tidigare bild efter omstart
+### BILD-01: Bevara text och läs tidigare bilder efter omstart
 
-**Syfte:** Verifiera samma privata utkast, beständighet och ångring för bilder.
+**Syfte:** Verifiera samma privata utkast, beständighet och historikläsning för
+bilder.
 
 **Användare:** Alex.
 
@@ -70,30 +76,30 @@ dessa kopior i filväljaren. Radera båda testmapparna efter körningen.
 **Integrationstest:**
 [profile-images.spec.ts](../../tests/integration/profile-images.spec.ts),
 testfallet “BILD-01: profile image proposals preserve text, survive restart
-and undo replacement”.
+and expose historical replacements”.
 
 **Steg:**
 
-1. Öppna Lo Exempels detaljer. Välj en PNG-bild. Kontrollera förhandsbilden
-   och beskedet om privat förslag. Öppna rymdkartan och kontrollera bilden
-   i Lo Exempels runda symbol. Öppna detaljerna igen.
-2. Skriv en ny beskrivning utan att skicka. Kontrollera att bildvalet är
-   inaktiverat. Växla till rymdkartan och kontrollera bilden i Lo Exempels
-   runda symbol. Öppna detaljerna. Lägg texten i utkastet och spara hela
-   utkastet.
-3. Starta om servern normalt och ladda om sidan. Kontrollera bilden i
-   detaljerna och rymdkartan. Öppna Lo och byt bilden till WebP. Stäng
-   formuläret och spara hela utkastet.
-4. Öppna historiken och välj **Visa ändringarna** vid senaste sparandet.
-   Läs och se bilderna före och efter. Ångra sparandet och spara hela utkastet.
+1. Redigera Lo och öppna Livscykel och utseende. Välj en PNG-bild och
+   kontrollera förhandsbilden. Välj Lägg i utkastet och stäng. Öppna kartan
+   och kontrollera bilden i Lo Exempels runda symbol.
+2. Redigera Lo igen. Skriv Oskickad text som beskrivning i Grunduppgifter.
+   Öppna Livscykel och utseende och kontrollera att bildvalet är nåbart.
+   Lägg hela formuläret i utkastet och spara hela utkastet separat.
+3. Starta om servern och ladda om. Kontrollera bilden i redigeringen och
+   kartan. Byt bilden till WebP, lägg hela formuläret i utkastet och spara.
+4. Välj **Rapporter** och **Visa ändringarna** vid senaste sparandet.
+   Läs och se bilderna före och efter. Kontrollera att aktuell bild och
+   beskrivning är oförändrade.
 
 **Förväntat resultat:**
 
-- Bilden läggs på rätt objekt som privat förslag. Oskickad text bevaras vid
-  vybyte och bildvalet kan inte skriva över den.
+- Bild och text läggs tillsammans på rätt objekt i utkastet först efter
+  bekräftat tillägg av hela formuläret. Bildval skriver inte över text.
 - Bilden visas i objektets runda symbol före sparandet och efter omstart.
   Sparad bild och beskrivning överlever omstart. Historiken visar bytet.
-- Ångring återför den första bilden och bevarar den ändrade beskrivningen.
+- Historiken visar båda bilderna utan att ändra den aktuella bilden
+  eller beskrivningen.
 
 ### BILD-02: Avvisa felaktiga bilder och återhämta bildborttagning
 
@@ -111,14 +117,19 @@ recovers its durable receipt”.
 
 **Steg:**
 
-1. Välj en JPEG-bild på Lo. Försök sedan välja textfilen döpt till PNG och
-   filen över 10 MB. Läs felen och kontrollera bilden och beskrivningen.
-2. Stäng formuläret och spara. Öppna Lo och välj **Ta bort profilbild**.
-   Granska att borttagningen är ett privat förslag.
+1. Välj en JPEG-bild på Lo och lägg hela formuläret i utkastet. Redigera
+   igen, välj textfilen döpt till PNG och försök lägga formuläret i utkastet.
+   Upprepa med filen över 10 MB. Läs felen och kontrollera beskrivningen.
+   Avbryt och kasta endast de oskickade ändringarna.
+2. Spara hela utkastet. Redigera Lo och välj Ta bort profilbilden ur
+   formuläret i Livscykel och utseende. Lägg hela ändringen i utkastet.
+   Granska borttagningsförslaget innan separat sparande.
 3. Stäng formuläret. Kör avbrottskoden nedan i utvecklarkonsolen och
    spara sedan hela utkastet utan att ladda om sidan.
-   Läs beskedet om okänt utfall och välj **Hämta samma kvitto igen**.
-4. Kontrollera historiken. Ångra bildborttagningen och granska utkastet.
+   Läs beskedet om okänt utfall i **Spara utkastet** och välj
+   **Kontrollera sparandet igen**.
+4. Välj **Rapporter** och öppna bildborttagningens historiska detaljer.
+   Kontrollera den tidigare bilden och det tomma utkastet.
 
 Koden väntar på serverns svar för nästa sparande och döljer sedan svaret
 för gränssnittet. Den återställer `fetch` efter det enda avbrottet.
@@ -148,7 +159,8 @@ Vanligt offlineläge verifierar inte ett avbrott efter transaktionen.
   beskrivning kvar. Det går fortfarande att spara det giltiga utkastet.
 - Okänt utfall ger ingen falsk sparbekräftelse. Kvittot bekräftar en enda
   bildborttagning och historiken har inget dubbelt sparande.
-- Ångring föreslår rätt tidigare bild igen.
+- Historiken visar rätt tidigare bild. Aktuell bild är borttagen och
+  utkastet är tomt; läsningen skapar inget nytt förslag.
 
 ### BILD-03: Neka privata och historiska bildadresser efter återkallad tillgång
 
@@ -235,54 +247,61 @@ i ett annat hushåll, inte kan läsa Lindens bilder genom det hushållets
 adress. Det testet skapar det andra hushållet i sin egen databas; den
 manuella kontrollen med en okänd adress ersätter inte medlemskapsprovet.
 
-### BILD-04: Återgå till rätt objekt efter ett fördröjt bildfel
+### BILD-04: Behåll kompletta bildformulär vid fördröjt avvisande
 
-**Syfte:** Behålla senaste bild, ikon och pågående arbete när ett bildfel
-kommer efter att objektets panel stängts.
+**Syfte:** Bevara lokala uppgifter, tidigare bilder och oberoende förslag.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Skapa privata förslag för Cykeln och Garaget med
-beskrivningar. Välj cykelikonen för Cykeln. Använd de syntetiska bilderna
-och den ogiltiga filen från förberedelsen.
-Upprepa i ljust och mörkt tema på dator och vid 320 pixlars fönsterbredd.
-Prova också korta fönster på 1440 × 500 och 320 × 250 pixlar. Verklig webbläsarzoom
-kontrolleras separat i flödet vid 200 och 400 procent.
+**Förutsättningar:** Privata förslag för Cykeln och Garaget med beskrivningar.
+Cykeln har cykelikonen. Ha två giltiga bilder och `fel.png` från förberedelsen.
+Upprepa i ljust och mörkt tema vid 1440 × 1000, 1440 × 500, 320 × 1000 och
+320 × 250 CSS-bildpunkter. Verklig zoom provas separat vid 200 och 400 procent.
 
 **Integrationstest:**
-[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
-testfallet “BILD-04: a delayed image error returns to its closed object without
-losing newer work at {width}x{height}px {colorScheme}”, med storlekarna
-1440 × 1000, 1440 × 500, 320 × 1000 och 320 × 250 samt temana light och dark.
+[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts).
+Följande testfall:
+
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x1000px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x1000px dark”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x500px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 1440x500px dark”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x1000px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x1000px dark”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x250px light”.
+- “BILD-04: delayed whole-form image rejection retains local values and earlier
+  proposals at 320x250px dark”.
 
 **Steg:**
 
-1. Redigera Garaget och skriv en ny beskrivning utan att lägga den i utkastet.
-   Stäng panelen med **Stäng Garaget** och öppna **Lista** från verktygen.
-   Kontrollera att listknappen går att använda i det korta fönstret.
-2. Redigera Cykeln. Välj först den blå PNG-bilden och sedan den gröna
-   WebP-bilden. Vänta på det privata bildförslaget efter varje val.
-3. Fördröj svaret från bildanropet med webbläsarens utvecklarverktyg enligt
-   instruktionen nedan. Välj `fel.png`. Stäng panelen med **Stäng Cykeln**,
-   öppna listan och skriv början av Garagets namn i **Sök objekt**.
-4. Släpp fram svaret. Läs det globala felet och fortsätt skriva i sökfältet.
-   Välj sedan **Återgå till bilden för Cykeln**.
-5. Kontrollera Cykelns beskrivning och gröna bild. Öppna Garaget igen och
-   kontrollera den oskickade beskrivningen.
-6. Använd bildfelets återgång till Cykeln igen. Skriv en ny beskrivning
-   och välj uttryckligen **Stäng utan att skicka texten**. Kontrollera att
-   det redan lagda bildförslaget finns kvar i utkastet.
-7. Ge bildfelets återgång tangentbordsfokus och för pekaren över knappen.
-   Kontrollera läsbar text och synligt fokus. Välj sedan återgången igen.
-   Kontrollera Cykelns ursprungliga
-   utkastbeskrivning, gröna bild och ikon. Kontrollera också att Garagets
-   oskickade beskrivning finns kvar när du öppnar Garaget.
-8. Stäng panelerna med kryssen för att återgå till kartan. Öppna **Lista** och
-   Garaget igen. Kontrollera att den oskickade beskrivningen finns kvar.
+1. Redigera Garaget, skriv Separat förslag om Garaget och välj **Lägg i
+   utkastet och stäng**.
+2. Redigera Cykeln. Öppna **Livscykel och utseende**, välj första bilden
+   och lägg hela formuläret i utkastet. Upprepa med andra bilden.
+3. Redigera Cykeln igen. Skriv Oskickad bildtext i Grunduppgifter. Öppna
+   **Livscykel och utseende** och välj `fel.png`. Håll nästa svar enligt
+   koden nedan och välj **Lägg i utkastet och stäng**.
+4. Kontrollera spärrade fält och Avbryt. Tryck Escape och försök fokusera
+   bakgrundens sökfält. Släpp svaret med `releaseImageError()`.
+5. Läs bildfelet. Öppna Grunduppgifter och kontrollera beskrivningen.
+   Välj **Avbryt**. Kontrollera standardfokus, läsbarhet och synligt fokus
+   på **Fortsätt redigera**, även med pekaren över knappen.
+6. Tryck Escape i varningen. Kontrollera text och fokus på Avbryt.
+   Välj Avbryt igen och **Kasta ändringarna och fortsätt**.
+7. Redigera Cykeln igen. Kontrollera ursprunglig utkastbeskrivning och
+   andra giltiga bilden. Avbryt det oförändrade formuläret och öppna
+   Garaget igen. Kontrollera dess lagda förslag.
 
-För en kontrollerad fördröjning, kör detta i webbläsarens konsol innan steg 3.
-Det verkliga serveranropet och dess svar används. Anropa `releaseImageError()`
-i konsolen i steg 4; kör `window.fetch = originalImageFetch` efter kontrollen:
+Kör före steg 3 i utvecklarkonsolen. Koden håller det verkliga svaret från
+hela formulärets tillägg. Återställ `window.fetch = originalImageFetch`
+efter kontrollen:
 
 ```js
 window.originalImageFetch = window.fetch;
@@ -291,7 +310,7 @@ const held = new Promise(resolve => { release = resolve; });
 window.releaseImageError = release;
 window.fetch = async (...args) => {
   const response = await originalImageFetch(...args);
-  if (String(args[0]).includes('/profile-images/') && args[1]?.method === 'POST')
+  if (String(args[0]).includes('/map/object-form') && args[1]?.method === 'POST')
     await held;
   return response;
 };
@@ -299,64 +318,62 @@ window.fetch = async (...args) => {
 
 **Förväntat resultat:**
 
-- Bildvalet är inaktiverat medan svaret väntar.
-- Felet visas globalt utan att Cykelns panel öppnas eller sökfältets fokus flyttas.
-- Den uttryckliga återgången öppnar Cykelns panel och fokuserar dess rubrik.
-- Den senaste giltiga bilden, Cykelns ikon och båda objektens beskrivningar
-  finns kvar. Garagets oskickade text har inte skickats eller sparats.
-- Efter att Cykelns nya oskickade text uttryckligen kastas öppnar bildfelets
-  återgång objektets aktuella förslag igen med fokus på rubriken. Den kastade
-  texten återkommer inte; det oberoende arbetet i Garaget finns kvar.
-- Återgångens text och fokus är läsbara också när pekaren ligger över den
-  fokuserade knappen, i båda teman och på det smala fönstret. Automationen
-  mäter textkontrast på minst 4,5:1.
-- **Lista** och panelernas kryss går att trycka på i korta fönster. Återgången
-  till kartan ändrar inga privata förslag eller oskickade texter.
+- Bildval ensamt ändrar inte utkastet. Väntande tillägg spärrar fält,
+  stängning och arbete bakom formuläret.
+- Avvisat bildtillägg bevarar lokala värden. Escape i förlustvarningen
+  fortsätter redigering med texten kvar.
+- Uttryckligt kastande tar endast bort oskickade uppgifter. Tidigare
+  giltig bild, ikon och Garagets lagda förslag finns kvar.
+- Varningens fokus och text är synliga och läsbara i båda teman. Automationen
+  mäter minst 4,5:1 textkontrast. Korta fönster tillåter rullning till fält
+  och knappar. Ingen ändring har sparats i kartan eller historiken.
 
-### BILD-05: Behåll bildarbete genom Inställningar och avsluta felåtergången
+### BILD-05: Spärra navigering under bildtillägg och behåll inaktuellt formulär
 
-**Syfte:** Spärra sparande under bildarbete och låta bildfelets återgång gälla
-bara det aktuella felet, också när Inställningar öppnas.
+**Syfte:** Skydda komplett oskickat bildarbete vid navigering och samtidighet.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Ett nytt isolerat hushåll. Använd den ogiltiga filen och
-den kontrollerade svarsfördröjningen i BILD-04. Ha en andra flik med samma
-inloggade användare tillgänglig för det samtidiga förslaget.
+**Förutsättningar:** Ett nytt hushåll. Ha `fel.png`, en giltig bild och
+svarsfördröjningen i BILD-04. Ha en andra flik med samma användare.
 
 **Integrationstest:**
-[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts),
-testfallet “BILD-05: Settings preserves pending image work and retires its error
-destination at 1440px”, samma titel med “390px” respektive “320px”.
+[profile-image-work.spec.ts](../../tests/integration/profile-image-work.spec.ts).
+Följande testfall:
+
+- “BILD-05: pending image staging blocks navigation and stale rejection
+  preserves the complete form at 1440px”.
+- “BILD-05: pending image staging blocks navigation and stale rejection
+  preserves the complete form at 390px”.
+- “BILD-05: pending image staging blocks navigation and stale rejection
+  preserves the complete form at 320px”.
 
 **Steg:**
 
-1. Skapa Bildarbete med en beskrivning. Kontrollera att bildvalet är spärrat
-   innan **Lägg i mitt utkast**. Lägg uppgifterna i utkastet och redigera
-   objektet igen. Öppna filväljaren och avbryt utan fil.
-2. Håll det verkliga bildsvaret enligt BILD-04. Välj `fel.png`, stäng
-   objektpanelen och arbetsytan. Öppna **Utkast och historik** och
-   kontrollera **Spara hela utkastet**.
-3. Öppna Inställningar. Kartans utkaståterkoppling finns kvar. Kontrollera
-   sparknappen igen och sätt tangentbordsfokus på **Tillbaka till kartan**.
-   Släpp bildsvaret enligt BILD-04.
-4. Läs felet utan att lämna Inställningar. Välj **Återgå till bilden för
-   Bildarbete** och kontrollera objektets rubrik och beskrivning.
-5. Välj **Hämta aktuellt underlag**. Kontrollera att bildfelet och dess
-   återgångsknapp försvinner. Skriv en ny beskrivning utan att skicka.
-6. Lägg ett annat objektförslag i samma utkast från den andra fliken.
-   Försök lägga den första flikens text i utkastet utan att ladda om den.
+1. Öppna Inställningar och följ **Tillbaka till kartan**. Välj Nytt objekt,
+   skriv Bildarbete och Behåll bildens text. Öppna Livscykel och utseende.
+   Avbryt filväljaren utan fil och kontrollera oförändrat utkast.
+2. Välj `fel.png`, håll nästa svar och lägg hela formuläret i utkastet.
+   Använd webbläsarens Bakåt. Kontrollera att formuläret stannar och är
+   spärrat. Släpp svaret och läs bildfelet.
+3. Använd Bakåt igen. Tryck Escape i förlustvarningen och kontrollera att
+   formuläret finns kvar. Använd Bakåt igen och välj **Kasta ändringarna
+   och fortsätt**. Kontrollera återgång till Inställningar.
+4. Återgå till kartan och skapa ett nytt formulär för Bildarbete med
+   Oskickat efter bildfelet och en giltig bild, utan att lägga det i utkastet.
+5. Lägg ett oberoende objektförslag, Annat förslag, i utkastet från andra
+   fliken. Försök lägga första flikens hela formulär i utkastet.
+6. Kontrollera felet, beskrivningen i Grunduppgifter och filvalet i
+   Livscykel och utseende. Granska det privata utkastet från andra fliken.
 
 **Förväntat resultat:**
 
-- Avbrutet filval lämnar utkastet oförändrat. Väntande bildarbete spärrar
-  hela sparandet både i kartan och i Inställningar.
-- Bildfelet öppnar inte objektet automatiskt och flyttar inte det nyare
-  tangentbordsfokuset. Den uttryckliga återgången lämnar Inställningar och
-  fokuserar rätt objektrubrik. Beskrivningen finns kvar.
-- Uppdateringen avslutar bildfelet. Det senare samtidighetsfelet återupplivar
-  inte bildens återgång. Oskickad text och det andra förslaget finns kvar;
-  inget delas med hushållet.
+- Avbrutet filval ändrar inget. Väntande tillägg spärrar Bakåt och fält.
+- Känd avvisning behåller formuläret. Escape avbryter förlustvarningen.
+  Uttryckligt kastande tillåter navigering utan att skapa ett förslag.
+- Inaktuellt komplett tillägg bevarar lokal text och bild. Det oberoende
+  förslaget är oförändrat; inget ofullständigt bildförslag eller gemensamt
+  sparande har skapats. Historiken är tom.
 
 ### BILD-06: Dela text, ikon och bild tillsammans för varje objekttyp
 
@@ -373,31 +390,67 @@ typ med namnet Egen bildtyp, skapad genom **Typer och egna fält** i
 Inställningar. Använd två giltiga bilder och `fel.png` från förberedelsen.
 
 **Integrationstest:**
-[profile-image-types.spec.ts](../../tests/integration/profile-image-types.spec.ts),
-testfallet “BILD-06: Person shares text, icon and image in one proposal and
-removes the latest image”, med samma titel där “Person” ersätts av var och
-en av de övriga arton typerna ovan.
+[profile-image-types.spec.ts](../../tests/integration/profile-image-types.spec.ts).
+Följande testfall:
+
+- “BILD-06: Person shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Tjänst shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Tjänstekonto shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Abonnemang shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: E-postadress shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Bankkonto shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Kort shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Företag shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Förening shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Bostad shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Garage shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Fordon shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Avtal shares text, icon and image in one proposal and removes the
+  latest image”.
+- “BILD-06: Hyresavtal shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Låneavtal shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Kreditavtal shares text, icon and image in one proposal and removes
+  the latest image”.
+- “BILD-06: Avbetalningsavtal shares text, icon and image in one proposal and
+  removes the latest image”.
+- “BILD-06: Försäkringsavtal shares text, icon and image in one proposal and
+  removes the latest image”.
+- “BILD-06: Egen bildtyp shares text, icon and image in one proposal and removes
+  the latest image”.
 
 **Steg:**
 
 1. Välj **Nytt objekt**. Fyll namn och beskrivning och välj den aktuella
-   typen. Kontrollera att bildvalet är spärrat. Välj **Lägg i mitt utkast**.
-2. Redigera objektet igen. Sök cykel under **Ikon** och välj **Cykel**.
-   Välj den första giltiga bilden och kontrollera förhandsbilden.
-3. Granska hela utkastet. Objektets text, ikon och bild ska ingå i ett
-   objektförslag. Inget ska ännu vara delat med hushållet. Stäng formuläret
-   utan att skicka mer text och välj **Spara hela utkastet**. Läs kvittot.
-4. Redigera objektet igen. Skriv en ny beskrivning och kontrollera att
-   bildvalet är spärrat tills texten läggs i utkastet. Lägg texten i utkastet
-   och redigera objektet igen.
-5. Välj den andra giltiga bilden. Öppna filväljaren igen och avbryt.
-   Välj därefter `fel.png`. Kontrollera att den andra bilden, ikonen
-   och den nya beskrivningen finns kvar efter felet.
-6. Välj **Ta bort profilbild**. Kontrollera att ingen bild visas och att
-   cykelikonen kommer fram. Den första sparade bilden ska inte komma tillbaka.
-7. Granska det enda objektförslaget med den nya texten och utan bild.
-   Stäng formuläret och välj **Spara hela utkastet**. Läs kvittot och
-   historiken för båda sparandena.
+   typen. Öppna **Livscykel och utseende**. Sök cykel under **Ikon**, välj
+   **Cykel** och välj den första giltiga bilden. Kontrollera förhandsbilden.
+   Inget ska ännu finnas i utkastet.
+2. Välj **Lägg i utkastet och stäng**. Granska hela objektförslaget med text,
+   ikon och bild. Spara hela utkastet och läs kvittot.
+3. Redigera objektet igen. Skriv en ny beskrivning i Grunduppgifter,
+   öppna Livscykel och utseende och välj den andra giltiga bilden.
+   Välj **Lägg i utkastet och stäng** utan att spara gemensamt.
+4. Redigera igen och öppna Livscykel och utseende. Avbryt filväljaren utan
+   fil. Välj sedan `fel.png` och **Lägg i utkastet och stäng**. Läs felet:
+   formuläret ska finnas kvar och det senaste giltiga förslaget är oförändrat.
+5. Välj **Ta bort profilbilden ur formuläret**. Ingen förhandsbild visas.
+   Kontrollera att cykelikonen fortfarande är vald och välj
+   **Lägg i utkastet och stäng**.
+6. Granska det enda objektförslaget med ny text och utan bild. Spara hela
+   utkastet. Läs kvittot och historiken för båda sparandena.
 
 **Förväntat resultat:**
 

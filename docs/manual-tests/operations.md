@@ -1,4 +1,4 @@
-# Manuella testfall för sparförsök
+# Manuella testfall för sparförsök och demoförberedelse
 
 Testfallen gäller att återfinna sparförsök och skilja ett okänt utfall från
 ett väntande, genomfört eller avvisat sparande. Anteckna commit,
@@ -12,8 +12,8 @@ Använd samma inloggning i två separata webbläsarprofiler. En annan
 webbläsare går också bra. Den andra profilen får inte ärva den första
 profilens flikar eller lokala webbläsardata.
 
-SPAR-04 behöver dessutom en separat testidentitet med aktuell tillgång
-till hushållet och rollen medlem. Följ
+SPAR-04 och SPAR-05 behöver dessutom en separat testidentitet med aktuell
+tillgång till hushållet och rollen medlem. Följ
 [inbjudan av en användare](../user-guide/access.md#bjud-in-en-skyttel-användare)
 för att ge identiteten tillgång. Kartans påhittade personer och Robin Demo
 saknar inloggning;
@@ -24,11 +24,11 @@ de kan inte användas som testidentitet.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Öppna **Tabell** och välj **Redigera [objektets namn]** för att ändra ett
+befintligt objekt. **Nytt objekt** finns direkt i verktygsfältet. För
+samband väljer du **Samband för [objektets namn]** och dess namngivna
+redigeringsknapp. Förslag läggs i ditt privata utkast; sparandet görs
+separat genom **Visa utkastet → Spara hela utkastet**.
 
 1. Förbered en separat utvecklingsdatabas enligt
    [demodata och återställning](../development/devcontainer.md#reset-demo-data).
@@ -36,10 +36,65 @@ formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
 2. Kör `npm run db:setup` och starta applikationen med `npm run dev:all`.
 3. Öppna [utvecklingsklienten](http://localhost:5173) och logga in som
    den konfigurerade administratören. Kontrollera **TestHousehold**.
-4. Välj **Kasta hela utkastet** för att ta bort demoutkastet.
+4. Öppna **Visa utkastet**, välj **Kasta hela utkastet** och bekräfta
+   borttagningen för att ta bort demoutkastet.
 
 Återställ demodata före varje fall. Behåll samma databas under omstart
 inom ett testfall; kör då inte `npm run db:setup`.
+
+## Gemensamma demodata
+
+### DEMO-01: utvecklingshushållet har verkliga uppgifter och läsbara samband
+
+**Syfte:** Kontrollera den gemensamma utvecklingsförberedelsen genom den
+vanliga arbetsytan, med fulla värden, konflikter och bevarade privata förslag.
+
+**Användare:** Den konfigurerade administratören. Prova Google och Microsoft
+var för sig när båda inloggningarna är konfigurerade. Robin Demo är en
+historisk person utan inloggning och ger ingen annan person medlemskap.
+
+**Förutsättningar:** Använd endast den separata utvecklingsdatabasen.
+Kör steg 1–3 i Allmän förberedelse; kasta inte demoutkastet i steg 4.
+Databasförberedelsen tar bort tidigare utvecklingsdata och sessioner.
+
+**Integrationstest:**
+[database-setup.spec.ts](../../tests/integration/database-setup.spec.ts),
+testfallen “DEMO-01: database setup gives only the configured google
+administrator a ready TestHousehold” och “DEMO-01: database setup gives
+only the configured microsoft administrator a ready TestHousehold”.
+
+**Steg:**
+
+1. Logga in som den konfigurerade administratören och öppna **Tabell**.
+   Kontrollera **TestHousehold**, Alex Exempel, Alex blå cykel och
+   Familjens garage. Expandera cykelns rad.
+2. Läs Ramfärg **Blå**, Extrahjul **0**, Kontrolldatum **2026-04-03**,
+   Elcykel **Nej** och Dold rammärkning **Syntetisk ram: DEMO-CYKEL**.
+   Läs hela beskrivningen, priset **4995 SEK**, ikonen och livscykeln.
+3. Öppna **Samband för Alex Exempel** och välj **Alex blå cykel**.
+   Läs de fulla uppgifterna, öppna cykelns samband och välj
+   **Familjens garage**. Stäng med Escape och återgå till tabellen.
+4. Öppna **Granska konflikter** via konfliktantalet. Läs Lo Lind i
+   ditt förslag och Lo Berg i den gemensamma kartan. Stäng utan att välja
+   eller bekräfta något.
+5. Öppna **Visa utkastet**. Läs de två bevarade förslagen: Lo Lind
+   och den ändrade inloggningsadressen till `musik@example.test`.
+   Öppna **Rapporter → Ändringshistorik** och läs de två verkliga
+   sparandena med skilda personer. Gör inga ändringar.
+6. Starta om applikationen med samma databas och logga in igen om det
+   behövs. Kontrollera att samma uppgifter och förslag finns kvar.
+
+**Förväntat resultat:**
+
+- Hushållet innehåller sexton sparade objekt och tjugotre samband.
+  Alex → cykel → garage nås utan visuell kartnavigation.
+- Alla fyra egna fältslag, det dolda fältet, noll och Nej är läsbara
+  tillsammans med de ekonomiska uppgifterna. Inget värde antas saknas.
+- Granskning och läsning ändrar inte kartan, de två privata förslagen
+  eller historiken. De två sparandena behåller sin verkliga upphovsperson.
+- Endast den konfigurerade inloggningen får administratörstillgång.
+  Den andra leverantörens inloggning ger inte tillgång genom samma namn.
+  Automatiseringen verifierar denna gräns och bevarande efter omstart.
 
 ## Återfinna ett sparande
 
@@ -61,21 +116,24 @@ reopening on another client”.
 **Steg:**
 
 1. Välj **Nytt objekt**, skriv **Återfunnet sparande** som namn och välj
-   **Lägg i mitt utkast**.
-2. Välj **Spara hela utkastet** och kontrollera kvittot under
-   **Mina sparförsök**. Anteckna kvittots identitet för jämförelse.
+   **Lägg i utkastet och stäng**.
+2. Öppna **Visa utkastet**, välj **Spara hela utkastet** och läs
+   **Utkastet är sparat**. Öppna **Rapporter → Ändringshistorik**.
+   Läs händelsen och öppna **Identifiera sparandet och användaren**.
+   Anteckna sparandets identitet för jämförelse.
 3. Stäng den första profilen. Stoppa och starta applikationen igen med
    samma databas.
 4. Öppna appen i den andra profilen och logga in som samma användare.
-   Sök efter försöket under **Mina sparförsök** utan att skriva in
+   Hitta sparandet i **Rapporter → Ändringshistorik** utan att skriva in
    kvittots identitet eller kopiera webbläsardata.
-5. Kontrollera kvittot, **Hela mitt utkast** och objektlistan.
+5. Kontrollera händelsens identitet och uppgifter. Välj **Tillbaka till
+   arbetet**, läs det tomma utkastet och objektet i **Tabell**.
 
 **Förväntat resultat:**
 
-- Försöket visas som **Genomfört** i den andra profilen. Kvittot har
+- Sparandet visas i historiken i den andra profilen. Händelsen har
   samma identitet och beskriver **Återfunnet sparande**.
-- Utkastet visar **Inga förslag**. Objektet finns en gång i kartan.
+- Utkastet visar **Utkastet är tomt.** Objektet finns en gång i kartan.
 - Ett genomfört sparande går att hitta även när den ursprungliga
   profilen är stängd och servern startar om.
 
@@ -108,7 +166,7 @@ interruption before commit”.
 **Steg:**
 
 1. Välj **Nytt objekt**, skriv **Väntande sparande** som namn och välj
-   **Lägg i mitt utkast**.
+   **Lägg i utkastet och stäng**. Öppna **Visa utkastet**.
 2. Öppna utvecklarverktygen. Öppna kommandomenyn med `Ctrl+Shift+P`
    eller `Cmd+Shift+P`, sök efter **Show Network request blocking**
    och öppna panelen. Aktivera **Enable network request blocking**.
@@ -117,14 +175,17 @@ interruption before commit”.
    **Nytt objekt**, **Spara hela utkastet** och **Kasta hela utkastet**.
    Under **Network** ska `/map/save` vara blockerad medan
    registreringen till `/map/operations` lyckas.
-4. Anteckna försöks-ID i **Utkast och historik**, **Mina sparförsök**.
-   Kontrollera att objektet fortfarande är ett privat förslag, utan
-   gemensamt objekt eller historikhändelse för sparandet.
+4. Stäng stöddialogen med Escape. Öppna **Visa sparandet** för att läsa
+   uppföljningen, och stäng igen. Anteckna den lyckade registreringens
+   `operationId` i utvecklarverktygens nätverkssvar från `/map/operations`.
+   Läs det privata förslaget i utkastet; ingen gemensam historikhändelse
+   finns ännu.
 5. Stäng den första profilen. Stoppa och starta applikationen igen med
    samma databas. Öppna appen i den andra profilen utan nätverksblockering
    och logga in som samma användare.
 6. Vänta på den automatiska kontrollen. Välj inte ett nytt sparande.
-   Granska **Mina sparförsök**, kvittot, utkastet och objektlistan.
+   Granska **Visa sparandet** under kontrollen och därefter
+   **Rapporter → Ändringshistorik**, utkastet och **Tabell**.
    Kontrollera att det ursprungliga försöks-ID:t används. Ladda om och
    kontrollera igen.
 7. Skapa objektet **Nästa privata förslag** och lägg det i utkastet.
@@ -134,11 +195,11 @@ interruption before commit”.
 **Förväntat resultat:**
 
 - Avbrottet visar **Utfallet är okänt**. Ändringar och kastande blockeras.
-- Före omstart visas **Väntande**, med förslaget kvar i det privata
+- Före omstart visas okänt utfall, med förslaget kvar i det privata
   utkastet. Registreringen har inte ändrat den gemensamma kartan.
 - Efter omstart kontrollerar Skyttel det registrerade försöket utan nytt
   medgivande. Ändringar blockeras under kontrollen. Resultatet blir
-  **Genomfört** med samma ID, ett verifierat kvitto och tomt utkast.
+  **Utkastet är sparat** med samma ID i historiken och tomt utkast.
   Objektet och sparhändelsen finns en gång, även efter omladdning.
 - **Nästa privata förslag** ligger kvar i utkastet och omfattas inte
   av det tidigare kvittot.
@@ -152,7 +213,7 @@ Automationen håller också den andra klientens kontrollbegäran medan den
 granskar vänteläget. För ett separat manuellt kontrollfel kan du blockera
 `*/text-assistant/recover` före det andra besöket: utkastet ska då förbli
 privat och ändringar blockerade. Ta bort blockeringen och välj
-**Kontrollera om utkastet sparades** först när ett kontrollfel visas.
+**Visa sparandet → Kontrollera sparandet igen** när kontrollfelet visas.
 Det återförsöket kontrollerar samma registrerade ID; det är ingen ny
 begäran om sparande. Se även [SPARKONTROLL-02](save-check.md).
 
@@ -173,28 +234,30 @@ consuming newer proposals”.
 **Steg:**
 
 1. Skapa **Lo Exempel** med **Nytt objekt** i första profilen och
-   välj **Lägg i mitt utkast**.
+   välj **Lägg i utkastet och stäng**. Öppna **Visa utkastet**.
 2. Öppna appen i andra profilen som samma användare. Öppna **Lo Exempel**,
-   ändra namnet till **Lo Lind** och välj **Lägg i mitt utkast**.
+   välj **Tabell → Redigera Lo Exempel**, ändra namnet till **Lo Lind**
+   och välj **Lägg i utkastet och stäng**.
 3. Välj **Spara hela utkastet** i första profilen utan omladdning. Kontrollera
-   avvisningen. Stäng panelerna med kryssen och läs kartans återkoppling om
+   avvisningen. Stäng sparandets dialog med Escape och läs kartans besked om
    avvisade sparande och kvarvarande legend. Stäng den första profilen.
 4. Stoppa och starta appen med samma databas. Ladda om i andra profilen.
-   Granska **Mina sparförsök**, **Hela mitt utkast** och objektlistan.
+   Läs kartans sparstatus och öppna **Visa utkastet** för **Lo Lind**.
 5. Granska det nyare förslaget och välj **Spara hela utkastet** i den
-   andra profilen. Kontrollera sparförsöken och objektlistan.
+   andra profilen. Kontrollera **Utkastet är sparat** och läs det enda
+   genomförda sparandet i **Rapporter → Ändringshistorik**.
 
 **Förväntat resultat:**
 
 - Det gamla försöket visar **Avvisat** och **Inget sparades**.
-  Statuskortet visar avvisningen även med stängda paneler och legenden
+  Statuskortet visar avvisningen även med stängd stöddialog och legenden
   finns kvar för förslagen.
-- Efter omstart visas fortfarande **Avvisat** med orsaken att förslaget
-  eller kartan ändras. Inget kvitto bekräftar det försöket. Utkastet
-  innehåller **Lo Lind**. Objektlistan visar **förslag i ditt utkast**
-  vid objektet.
-- Ett nytt sparande ger ett eget **Genomfört** försök och kvitto för
-  **Lo Lind**. Det tidigare avvisade försöket visas fortfarande.
+- Efter omstart visar kartans status **Utkastet kunde inte sparas.**
+  **Visa sparandet** förklarar avvisningen. Inget kvitto
+  bekräftar det försöket. Utkastet innehåller **Lo Lind**.
+- Ett nytt sparande ger ett eget kvitto för **Lo Lind**. Historiken visar
+  genomförda sparanden. Automationen kontrollerar separat att det gamla
+  avvisade försöket finns kvar med samma identitet i det privata API:et.
 
 Det automatiserade testet återförsöker dessutom den avvisade begäran
 via API:et och kontrollerar samma fel, oförändrat utkast och tom historik
@@ -224,8 +287,8 @@ administrators and revoked members”.
 1. Logga in som medlemmen. Skapa **Privat förslag** och lägg det i
    utkastet. Aktivera nätverksblockering av `*/map/save` enligt SPAR-02.
 2. Välj **Spara hela utkastet** och kontrollera **Utfallet är okänt**.
-3. Öppna appen som administratören. Granska **Mina sparförsök** och
-   **Hela mitt utkast**.
+3. Öppna appen som administratören. Läs kartans sparstatus och ditt eget
+   utkast. Medlemmens uppföljning och privata förslag ska inte visas.
 4. Välj **Administrera tillgång** som administratören. Välj
    **Återkalla tillgång** för medlemmen och **Bekräfta återkallelse**.
 5. Stäng av medlemmens nätverksblockering och ladda om medlemmens app.
@@ -243,3 +306,79 @@ Det automatiserade testet kontrollerar dessutom direkta API-anrop:
 administratören får inget resultat för medlemmens operations-ID.
 Medlemmen nekas både listning, uppslagning och återförsök efter
 återkallelsen. Dessa API-kontroller utförs inte av de manuella stegen.
+
+## Kontrollerad leverans på den vanliga testinstallationen
+
+### SPAR-05: fördröjd utkaständring, tappat sparkvitto och avvisat sparande
+
+**Syfte:** Skilja leveransens vänteläge och okända utfall från verkligt
+sparande och känd avvisning, med bevarade uppgifter och samma beständiga kvitto.
+
+**Användare:** Administratören Alex och medlemmen Robin med vanliga
+inloggningar. Alex använder också en andra, separat webbläsarprofil.
+
+**Förutsättningar:** Använd ett nytt, tomt provhushåll med påhittade
+uppgifter på en separat HTTPS-testinstallation. En operatör placerar
+`scripts/manual-transport.ts` mellan dess befintliga HTTPS-ingång och
+applikationen, med samma publika adress och hushållets ID. Behåll vanliga
+inloggningar, medgivanden och medlemskap. Transporten styr bara leveransen.
+Kontrollera att vanlig inloggning och läsning fungerar innan något hålls.
+Använd inte utvecklarverktygens nätverksblockering samtidigt.
+
+**Integrationstest:**
+[transport-controls.spec.ts](../../tests/integration/transport-controls.spec.ts),
+testfallet “SPAR-05: scoped transport holds real staging, rejects stale saves
+and recovers a lost committed receipt”.
+
+**Steg:**
+
+1. Skriv `arm stage:before` i operatörens transportterminal. Som Alex,
+   välj **Nytt objekt**, skriv **Lo Exempel** och välj **Lägg i utkastet
+   och stäng**. Vänta på terminalens `held-before`. Formuläret väntar;
+   ändringen finns ännu inte i utkastet. Skriv `release`. Formuläret
+   stängs och exakt ett privat förslag visas. Ingen gemensam ändring eller
+   historikhändelse har skapats.
+2. Skriv `arm stage:after`. Skapa **Kim Exempel** på samma sätt. Vänta på
+   `application-completed` med status 200 och `held-after`. Formuläret
+   väntar trots att servern har lagt ändringen i utkastet. Skriv `drop`.
+   Läs beskedet om oklart utfall och kontrollera att namnet ligger kvar.
+   Välj **Kontrollera om ändringen lades i utkastet**. Formuläret stängs;
+   utkastet har exakt Lo och Kim, utan dubbletter eller sparhändelser.
+3. Skriv `arm save:drop-after`. Öppna **Visa utkastet** och välj
+   **Spara hela utkastet**. Terminalen visar verklig status 200 innan
+   svaret tappas. Läs **Sparandet kunde inte bekräftas.** i sparmodalen.
+   Spara inte igen. Nytt objekt, sparande och kastande är blockerade.
+4. Stäng Alex första profil. Starta om applikationen med samma databas,
+   utan återställning. Logga in som Alex i den andra profilen. Läs det
+   enda sparandet i **Rapporter → Ändringshistorik** och öppna
+   **Identifiera sparandet och användaren**. Anteckna dess identitet.
+   Kontrollera att Lo och Kim finns en gång i Tabell och att utkastet är
+   tomt. Ladda om och kontrollera samma enda sparande med samma identitet.
+5. Som Alex, ändra Lo till beskrivningen **Alex privata beskrivning**
+   och lägg hela formuläret i utkastet. Skriv `arm save:before`. Välj
+   **Spara hela utkastet** som Alex och invänta `held-before`.
+6. Som Robin, öppna Lo i Tabell, ändra beskrivningen till **Robins sparade
+   beskrivning**, lägg den i Robins utkast och spara hela hans utkast.
+   Kontrollera hans bekräftade sparande. Skriv sedan `release`.
+7. Läs Alex kända avvisning **Utkastet kunde inte sparas**. Stäng
+   sparmodalen och granska Alex hela förslag. Läs Robins sparade värde
+   genom konflikten. Historiken har bara det ursprungliga sparandet och
+   Robins sparande; Alex avvisade försök skapar ingen historikhändelse.
+8. Låt operatören återställa HTTPS-ingången till applikationen och
+   avsluta transporten med `quit`. Behåll provdatabasen tills alla
+   okända utfall har kontrollerats.
+
+**Förväntat resultat:**
+
+- Väntande leverans visar verkligt vänteläge utan förtida bekräftelse.
+  Tappat svar behåller uppgifterna och kräver kontroll av samma ändring.
+- Kontroll av utkaständringen ger två privata förslag utan dubbletter.
+  Ett tappat svar efter sparande ändrar inte det beständiga kvittot.
+  Samma enda händelse och tomma utkast återfinns efter klientbyte och omstart.
+- Robins sparande behålls. Alex gamla underlag avvisas atomärt; hans
+  privata förslag och alla dess värden finns kvar för granskning.
+- Transporten tillför ingen identitet eller tillgång. Automationen
+  kontrollerar dessutom nekad oinloggad läsning, felaktig värdadress,
+  idempotent återförsök med samma kvitto, fördröjd autentiserad kontroll
+  utan aktivt samtal samt oförändrade fulla privata
+  och gemensamma uppgifter vid avvisningen genom det publika API:et.

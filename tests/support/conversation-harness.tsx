@@ -8,6 +8,7 @@ import {
 import {
   type ConversationPresentation,
   ConversationWorkspace,
+  conversationFeedback,
 } from '../../src/client/TextAssistant.js';
 import {
   type ConversationMode,
@@ -37,16 +38,21 @@ export function StandaloneConversation({
   const chosen = useRef<HTMLElement | null>(null);
   const microphone = useRef<HTMLButtonElement>(null);
   const [textViewOpen, setTextViewOpen] = useState(false);
+  const [focusRequest, setFocusRequest] = useState(0);
   const conversation = useConversation({
     householdId: presentation.householdId,
     onStarted: (mode) => {
-      if (mode === 'text') setTextViewOpen(true);
+      if (mode === 'text') {
+        setTextViewOpen(true);
+        setFocusRequest((value) => value + 1);
+      }
     },
     onMapChange,
     onAccessLost,
     onSelectItem,
   });
   const { voice } = conversation;
+  const feedback = conversationFeedback(conversation);
   const noticeState = useConversationNotice({
     conditions: {
       saveChecking: Boolean(conversation.saveChecking),
@@ -106,8 +112,10 @@ export function StandaloneConversation({
             // In a conversation that is going on, the voice button is the microphone.
             if (mode === 'voice' && conversation.session && !conversation.inputBlocked)
               voice.activate();
-            else if (conversation.session) setTextViewOpen(!textViewOpen);
-            else conversation.begin(mode);
+            else if (mode === 'text') {
+              if (conversation.inputBlocked) conversation.showNotice?.();
+              setTextViewOpen(!textViewOpen);
+            } else conversation.begin(mode);
           }}
         >
           {conversationTools[mode]}
@@ -120,10 +128,16 @@ export function StandaloneConversation({
       />
       <ConversationNoticeAnnouncements announcement={noticeState.announcement} />
       <ConversationConsent conversation={conversation} chosen={chosen} />
+      {presentation.active !== false && feedback && <p role="status">{feedback}</p>}
       <ConversationWorkspace
         conversation={conversation}
         notice={notice}
         textViewOpen={textViewOpen}
+        textFocusRequest={focusRequest}
+        onStartConversation={(control) => {
+          chosen.current = control;
+          conversation.begin('text');
+        }}
         onCloseTextView={() => setTextViewOpen(false)}
         {...presentation}
       />

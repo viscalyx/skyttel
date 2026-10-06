@@ -3,14 +3,15 @@ import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import type { PersonalView } from '../../src/shared/personal-view.js';
 import {
-  activatePanel,
   createHousehold,
   openMap,
+  openNewObject,
   openProfile,
   openSettings,
-  openWorkspace,
+  openTable,
   signIn,
 } from '../support/client.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 async function arrange(page: Page, origin: string) {
@@ -80,14 +81,14 @@ async function drag(page: Page, dx: number, dy: number, height = false) {
   await expect(space(page).getByText('Din personliga vy är sparad.')).toBeVisible();
 }
 async function selectAndArrange(page: Page, name = 'Lampan') {
-  await openWorkspace(page);
-  await page.getByRole('button', { name: 'Avmarkera alla', exact: true }).click();
+  await openTable(page);
   await page
-    .getByRole('list', { name: 'Objekt', exact: true })
-    .getByRole('button', { name: `Markera ${name}`, exact: true })
+    .getByRole('region', { name: 'Hushållets tabell', exact: true })
+    .getByRole('button', { name, exact: true })
     .click();
   await openMap(page);
-  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  const navigation = page.getByRole('button', { name: 'Navigera', exact: true });
+  if ((await navigation.getAttribute('aria-expanded')) !== 'true') await navigation.click();
   const choices = page.getByText('Ordna min vy', { exact: true });
   if (!(await choices.evaluate((summary) => (summary.parentElement as HTMLDetailsElement).open)))
     await choices.click();
@@ -199,8 +200,11 @@ test('PLACERING-08: height help keeps its preview stable and manual choice acros
     await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
     await selectAndArrange(page, 'Cykeln');
     await expect(heightHelp).toBeChecked();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Markera Lampan', exact: true }).click();
+    await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    await space(page)
+      .getByRole('button', { name: 'Välj objekt: Lampan', exact: true })
+      .click({ modifiers: ['Control'] });
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     await expect(heightHelp).toBeDisabled();
     await expect(heightHelp).toBeChecked();
     await expect(navigation.getByText('Välj ett objekt för att visa höjdhjälp')).toBeVisible();
@@ -458,9 +462,14 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
     // Floating controls now share the canvas area. Compare its unobscured
     // center so focus rings and disabled controls do not masquerade as stars.
     // The status card at the lower right edge is left out of it.
-    const card = await page.locator('.workspace-voice-controls').boundingBox();
+    const card = await page
+      .getByRole('region', { name: 'Kartans status', exact: true })
+      .boundingBox();
     const top = bounds.y + bounds.height / 4;
-    const bottom = Math.min(top + bounds.height / 2, card ? card.y - 12 : Number.POSITIVE_INFINITY);
+    const bottom = Math.min(
+      top + bounds.height / 2,
+      card && card.y > top ? card.y - 12 : Number.POSITIVE_INFINITY,
+    );
     const background = async () =>
       sharp(
         await page.screenshot({
@@ -511,33 +520,38 @@ test('PLACERING-04: personal display settings, new proposals and viewport change
           };
         });
     const pointBefore = await projection();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Ny sak');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    const addition = await openNewObject(page);
+    await addition.getByLabel('Namn', { exact: true }).fill('Ny sak');
+    await addition.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await openMap(page);
     expect((await read()).positions).toEqual(placement);
     await expect.poll(async () => (await projection()).x).toBeCloseTo(pointBefore.x, 3);
     await expect.poll(async () => (await projection()).y).toBeCloseTo(pointBefore.y, 3);
-    await openWorkspace(page);
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Lampan', exact: true })
-      .click();
-    const lamp = page.getByRole('region', { name: 'Lampan', exact: true });
-    await lamp.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await lamp.getByLabel('Objektets namn').fill('Oskickad text');
+    const lamp = await editTableObject(page, 'Lampan');
+    await lamp.getByLabel('Namn', { exact: true }).fill('Oskickad text');
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 844, height: 390 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await expect(lamp.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad text');
+    }
+    await lamp.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+    const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+    await expect(
+      loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(lamp.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad text');
+    await lamp.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+    await loss.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+    await expect(lamp).not.toBeVisible();
     await openMap(page);
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.setViewportSize({ width: 844, height: 390 });
     const axis = await space(page)
       .getByRole('img', { name: /Rummets axlar/ })
       .boundingBox();
     expect(axis?.x).toBeGreaterThanOrEqual(0);
     expect((axis?.y ?? 0) + (axis?.height ?? 0)).toBeLessThanOrEqual(390);
-    await openWorkspace(page);
-    await activatePanel(page, 'Lampan');
-    await expect(lamp.getByLabel('Objektets namn')).toHaveValue('Oskickad text');
     expect((await read()).positions).toEqual(placement);
     expect((await (await page.request.get(path)).json()).draft.changes[0].after.name).toBe(
       'Ny sak',
@@ -579,8 +593,10 @@ test('PLACERING-06: delayed initial personal positions frame once and later refr
     await page.reload();
     const canvas = space(page).locator('canvas');
     await expect(canvas).toBeVisible();
-    await openWorkspace(page);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toBeVisible();
+    await openTable(page);
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toBeVisible();
     await openMap(page);
     await openMapSettings(page);
     const stars = page.getByLabel('Visa stjärnhimmel', { exact: true });

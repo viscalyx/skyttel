@@ -1,8 +1,12 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
+import {
+  editTableObjectForm,
+  readDraftProposal,
+  renderHouseholdWork,
+} from '../../support/native-household-unit.js';
 import { applicationFixture } from '../server/fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -30,8 +34,7 @@ afterEach(() => {
   fixture.close();
 });
 async function open() {
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  renderHouseholdWork(householdId);
   await userEvent.click(await screen.findByRole('button', { name: 'Ny objekttyp' }));
   await userEvent.type(screen.getByLabelText('Typens namn'), 'Solkraft');
 }
@@ -97,14 +100,19 @@ test('empty sections and unused fields can be removed while hidden definitions r
   await userEvent.type(screen.getByLabelText('Fältets namn'), 'Bevarat dolt');
   await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
   await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
-  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
-  expect(review.getByText('Avsnitt: Inga')).toBeTruthy();
-  expect(review.getByText(/Bevarat dolt: Text.*Dold, behåll värden/)).toBeTruthy();
+  const review = await readDraftProposal('Solkraft');
+  expect(review.getByText('Avsnitt', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
+    'Inga avsnitt',
+  );
+  expect(
+    review.getByText('Eget fält: Bevarat dolt', { selector: 'dt' }).nextElementSibling?.textContent,
+  ).toBe('Text · Dold');
   expect((await read()).draft.objectTypes?.[0].after).toMatchObject({
     sections: [],
     fields: [{ name: 'Bevarat dolt', sectionId: '' }],
   });
-});
+  // Allow the complete HTTP/SQLite form and draft-reader workflow under coverage.
+}, 10_000);
 
 test('editing visible values preserves hidden zero and no answers in the same object', async () => {
   await client.json(`${path}/object-type`, {
@@ -133,22 +141,22 @@ test('editing visible values preserves hidden zero and no answers in the same ob
       customValues: { power: 0, battery: false },
     },
   });
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: 'Uppgifter för Paneler' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
+  renderHouseholdWork(householdId);
+  await editTableObjectForm('Paneler');
   expect(screen.queryByLabelText('Effekt', { exact: true })).toBeNull();
   expect(screen.queryByLabelText('Batteri', { exact: true })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Uppgifter' }));
   await userEvent.type(screen.getByLabelText('Anteckning', { exact: true }), 'Ny');
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg i mitt utkast' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i utkastet och stäng' }));
+  await screen.findByText(/Ändringen finns i ditt utkast/);
   expect((await read()).draft.changes[0].after?.customValues).toEqual({
     power: 0,
     battery: false,
     note: 'Ny',
   });
-  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
-  expect(review.getByText('Dolda fält – bevarade värden')).toBeTruthy();
-  expect(review.getByText('Effekt: 0')).toBeTruthy();
-  expect(review.getByText('Batteri: Nej')).toBeTruthy();
+  const review = await readDraftProposal('Paneler');
+  expect(review.getByText('Effekt', { selector: 'dt' }).nextElementSibling?.textContent).toBe('0');
+  expect(review.getByText('Batteri', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
+    'Nej',
+  );
 });

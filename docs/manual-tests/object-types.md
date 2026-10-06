@@ -18,13 +18,18 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Välj **Tabell** och använd radens **Redigera [objektets namn]** för att
+öppna hela objektformuläret. För samband väljer du **Samband för [namn]**
+och **Redigera samband** vid det aktuella sambandet. Nytt objekt öppnas
+från kartans verktyg. Att bara markera en rad öppnar inte ett formulär.
 
-1. Starta appen enligt [provförberedelsen](../development/devcontainer.md#disposable-local-database).
+Granska ett beständigt förslag genom **Skriv till Skyttel → Visa utkastet**
+och radens **Visa förslaget: [namn]**. Stäng fullständig läsning med krysset.
+Spara separat med utkastets sparikon och vänta på **Utkastet är sparat**.
+Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
+
+1. Starta appen enligt
+   [provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Börja varje fall i ett nytt testhushåll utan privata förslag.
 2. Ha båda profilerna öppna när fallet använder två medlemmar. Använd
    [typguiden](../user-guide/object-types.md) för att hitta formulären.
@@ -61,7 +66,8 @@ await (async () => {
   const path = `/api/households/${encodeURIComponent(householdId)}/map`;
   const read = async (url) => {
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Läsning misslyckades: ${response.status}`);
+    if (!response.ok) throw new Error(`Läsning misslyckades:
+    ${response.status}`);
     return response.json();
   };
   const before = await read(path);
@@ -83,7 +89,8 @@ await (async () => {
     error: (await response.json()).error,
     unchangedMap: JSON.stringify(before) === JSON.stringify(await read(path)),
     unchangedHistory:
-      JSON.stringify(historyBefore) === JSON.stringify(await read(`${path}/history`)),
+      JSON.stringify(historyBefore) === JSON.stringify(await
+      read(`${path}/history`)),
   });
 })();
 ```
@@ -146,9 +153,11 @@ without confusing unanswered and no”.
 **Steg:**
 
 1. Skapa samma typ och fyra fält som i TYP-01. Skapa Paneler på taket men
-   lämna alla fälten obesvarade. Lägg båda förslagen i utkastet.
+   öppna Egna fält och lämna alla fälten obesvarade. Lägg båda förslagen
+   i utkastet.
 2. Ladda om och öppna objektet. Kontrollera tomma text-, tal- och datumfält
-   samt **Obesvarat** för Batteri. Stäng formuläret och spara hela utkastet.
+   samt **Obesvarat** för Batteri i Egna fält. Välj Avbryt i det
+   oförändrade formuläret och spara hela utkastet.
 3. Ladda om. Ange Exempelsol, `12.5`, `2026-09-01` och **Nej**.
    Lägg i utkastet och kontrollera **Batteri: Nej**. Spara och ladda om.
 4. Rätta till Ny leverantör, `-14.25`, `2026-09-02` och **Ja**. Granska, spara
@@ -162,7 +171,8 @@ without confusing unanswered and no”.
 
 ### TYP-03: Medlemmar delar typer och kan rätta använda definitioner
 
-**Syfte:** Kontrollera delning, privata förslag och redigerbara förifyllda typer.
+**Syfte:** Kontrollera delning, privata förslag och redigerbara förifyllda
+typer.
 
 **Användare:** Alex och Lo.
 
@@ -184,19 +194,31 @@ and used field kinds stay protected”.
    ändrar typens namn till Solkraft, fältnamnet till Kommentar och båda
    beskrivningarna. Lo lägger också till ett nytt talfält som heter
    Anteckning och sparar definitionen.
-4. Alex försöker spara sitt äldre utkast. Hämta aktuellt underlag och
-   välj **Behåll mitt förslag** för objektet. Granska Kommentar och
-   Privat värde innan ett nytt sparande.
-5. Lo skapar Medlemmens paneler av typen Solkraft och fyller i Kommentar.
-   Spara objektet. Skapa dessutom Lo av typen Person och spara.
+4. Alex försöker spara sitt äldre utkast. Öppna **Granska konflikter** och
+   läs anvisningen om ändrad typdefinition för ett ännu inte sparat objekt.
+   Stäng med Escape. Välj **Tabell → Redigera Paneler → Egna fält**.
+   Granska **Kommentar: Privat värde** och tom **Anteckning** med tal som
+   värdeslag. Välj **Lägg i utkastet och stäng** och spara därefter separat
+   från **Skriv till Skyttel → Visa utkastet**.
+5. Lo skapar Medlemmens paneler av typen Solkraft. Öppna **Egna fält**,
+   fyll i **Kommentar** och lämna **Anteckning** obesvarat. Lägg objektet
+   i utkastet och spara separat. Stäng textvyn, skapa dessutom Lo av typen
+   Person och spara separat.
 6. Lo ändrar namn och beskrivning på den använda typen Person till
-   Människa och En person i kartan. Spara, ladda om och öppna Nytt objekt.
+   Människa och En person i kartan via **Inställningar → Typer och egna fält**.
+   Återgå till kartan och spara separat. Ladda om, stäng textvyn och öppna
+   **Nytt objekt**.
 
 **Förväntat resultat:**
 
 - En privat typ avslöjas inte eller används av en annan medlem.
 - En använd fälttyp ändras inte. Ett nytt fält med liknande namn får eget
   värde; Kommentar behåller Privat värde utan automatisk koppling.
+- Paneler har ingen tidigare sparad sida och beskrivs inte som borttaget.
+  Det tidigare textfältets identitet och värde består efter uttrycklig
+  granskning av aktuell definition. Det nya talfältet har en annan identitet och
+  förblir obesvarat. Öppning och stängning löser inget; den bekräftade
+  tilläggshandlingen uppdaterar bara utkastet innan separat sparande.
 - Vanliga medlemmar kan använda gemensamma fält och rätta förifyllda typer.
   Formulären visar de aktuella namnen efter sparande och omladdning.
 
@@ -222,7 +244,9 @@ until an explicit current choice”.
    lägger till textfältet Smeknamn. Lo sparar hela sitt utkast.
 3. Alex försöker spara, hämtar aktuellt underlag och granskar konflikten.
    Kontrollera att inga objekt sparas och att det egna utkastet finns kvar.
-4. Välj **Behåll min typdefinition**. Kontrollera att inget sparas förrän
+4. Öppna **Granska konflikter**. Välj eget namn och egen beskrivning,
+   men sparade Egna fält med Smeknamn. Välj **Lägg valen i utkastet**
+   och stäng med Escape. Kontrollera att inget sparas förrän
    Alex uttryckligen väljer **Spara hela utkastet** igen.
 5. Starta om och läs historiken via den publika HTTP-adressen.
 
@@ -237,7 +261,8 @@ until an explicit current choice”.
 
 ### TYP-05: Felaktiga värden och ny användning stoppar hela sparandet
 
-**Syfte:** Kontrollera värdevalidering och ny användning mellan förslag och spara.
+**Syfte:** Kontrollera värdevalidering och ny användning mellan förslag och
+spara.
 
 **Användare:** Alex och Lo.
 
@@ -255,7 +280,8 @@ entire draft and map”.
    oberoende nytt Person-objekt i samma utkast.
 2. Skapa ett förslag av typen Solkraft med det giltiga datumet
    `2026-02-28` och lägg förslaget i utkastet. Följ kontrollsteget
-   [för felaktigt fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
+   [för felaktigt
+   fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
    för Datum med värdet `2026-02-30`. Kontrollera HTTP 400 och att kartan,
    hela utkastet och historiken är oförändrade jämfört med före återförsöket.
 3. Lo lägger ett nytt objekt med Effekt `12` i sitt privata utkast utan
@@ -284,10 +310,17 @@ utan avsnitt eller egna fält. Använd dator samt 390 och 320 pixlars bredd.
 Pröva även ett kort fönster på 640 × 456 pixlar och verklig webbläsarzoom.
 
 **Integrationstest:**
-[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts),
-testfallen “TYP-10: canonical properties retain meaning through sections,
-hiding, type changes, history and undo at 1280px”, samma titel med “390px”,
-“320px” respektive “640px”.
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts).
+Följande testfall:
+
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 1280px”.
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 390px”.
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 320px”.
+- “TYP-10: canonical properties retain meaning through sections, hiding, type
+  changes, historical reading at 640px”.
 
 **Steg:**
 
@@ -299,26 +332,30 @@ hiding, type changes, history and undo at 1280px”, samma titel med “390px”
    och placera i ett nytt avsnitt Datum. Kontrollera ljust och mörkt tema.
    Lägg typförslaget i utkastet.
 3. Skapa Husets lån av typen Husavtal. Försök först lägga ett namnlöst
-   objekt i utkastet: namnfältet ska få fokus. Ange Gemensam avtalstext som
+   objekt i utkastet: felsammanfattningen ska få fokus. Följ länken till Namn.
+   Ange Gemensam avtalstext som
    beskrivning och Eget värde som Anteckning. Ange Skuld `12 300` som
    **Osäkert uppgivet**, med uppgiftsdatum `2026-09-01`, och Startdatum
    `2026-08-01` som känt.
-4. Under Ekonomiska uppgifter och avtalsvillkor, välj **Okänt** för Pris
+4. Under Ekonomiska uppgifter, välj **Okänt** för Pris
    och **Uttryckligen inget** för Valuta. Välj **Känt** för Beviljat
    kreditutrymme utan belopp. Fäll ihop avsnittet och försök lägga i
-   utkastet. Det ska öppnas och det tomma beloppet få fokus. Välj därefter
+   utkastet. Felsammanfattningen ska få fokus. Följ beloppets länk; avsnittet
+   öppnas och det tomma beloppet får fokus. Välj därefter
    **Ej uppgivet** för kreditutrymmet och lägg objektet i utkastet.
-5. Öppna Lista och spara hela utkastet. Starta om installationen och ladda
+5. Öppna Utkastet via Skriv till Skyttel och spara med sparikonen.
+   Starta om installationen och ladda
    om. Dölj Skuld i typdefinitionen och lägg förslaget i utkastet. Öppna
-   Husets lån och läs skulden under Uppgifter utanför typens avsnitt.
-   Öppna Lista och spara ändringen.
+   Tabell, fäll ut Husets lån och välj Läs alla uppgifter för Husets lån.
+   Läs den dolda skulden med säkerhet och datum.
+   Stäng läsningen, öppna Utkastet och spara med sparikonen.
 6. Redigera Husets lån och välj Annan typ. Kontrollera beskrivning och
    ekonomiska uppgifter. Granska det tidigare egna värdet och bekräfta
-   **Jag har hanterat tidigare fältvärden för typbytet**. Lägg i utkastet
-   och spara genom Lista.
-7. Öppna Visa historik och Visa ändringarna för typbytet. Granska typbytet,
-   tidigare Anteckning och skuldens säkerhet och datum. Välj Ångra sparandet,
-   granska och spara förslaget. Starta om och kontrollera Husets lån igen.
+   **Ta bort fältvärdena och byt typ** i förlustdialogen. Lägg i utkastet
+   och spara separat med utkastets sparikon.
+7. Välj **Rapporter** och **Visa ändringarna** för typbytet. Granska
+   tidigare Anteckning och skuldens säkerhet och datum. Starta om och
+   kontrollera att Husets lån behåller den sparade nya typen.
 
 **Förväntat resultat:**
 
@@ -329,8 +366,9 @@ hiding, type changes, history and undo at 1280px”, samma titel med “390px”
   även när privat förslag, status och återkoppling visas samtidigt.
 - Beskrivning, skuld, säkerhet och datum består efter döljning och typbyte.
   Okänt, uttryckligen inget och ej uppgivet förblir olika tillstånd.
-- Typbytet kräver hantering av det gamla egna värdet. Ångring återför
-  Husavtal och Anteckning, med samma gemensamma uppgifter efter omstart.
+- Typbytet kräver hantering av det gamla egna värdet. Historiken visar
+  Husavtal och Anteckning före bytet. Den sparade nya typen och de
+  gemensamma uppgifterna består efter omstart.
 
 ### TYP-08: Flytta och dölj fält utan värdeförlust genom sparande och omstart
 
@@ -353,7 +391,8 @@ losing values after restart”.
 2. Lägg till Leverantör som text, Effekt som tal, Datum som datum och
    Batteri samt Reserv som ja/nej. Välj Uppgifter för samtliga fält.
    Lägg typförslaget i utkastet.
-3. Återgå till kartan och skapa Paneler av den nya typen. Ange Exempelsol,
+3. Återgå till kartan och skapa Paneler av den nya typen. Öppna avsnittet
+   **Uppgifter**. Ange Exempelsol,
    `0`, `2026-09-01` och **Nej** för Batteri. Lämna Reserv obesvarat.
    Lägg objektet i samma utkast.
 4. Öppna typdefinitionen igen. Dölj Effekt och flytta Leverantör till
@@ -361,9 +400,11 @@ losing values after restart”.
    de finns ännu inte i den gemensamma kartan.
 5. Spara hela utkastet. Starta om testinstallationen och ladda om sidan.
    Öppna Paneler för redigering. Kontrollera att Effekt inte visas,
-   Batteri är Nej och Reserv är Obesvarat. Stäng utan att skicka.
+   öppna **Uppgifter** och kontrollera att Batteri är Nej och Reserv är
+   Obesvarat. Stäng det oförändrade formuläret med **Avbryt**.
 6. Återvisa Effekt i Service genom typdefinitionen och lägg förslaget
-   i utkastet. Öppna objektformuläret igen.
+   i utkastet. Öppna objektformuläret igen och växla mellan **Service**
+   och **Uppgifter** för att läsa alla svar.
 
 **Förväntat resultat:**
 
@@ -384,8 +425,14 @@ Använd dator och smala fönster motsvarande 390 och 320 CSS-pixlar.
 
 **Integrationstest:**
 [object-sections.spec.ts](../../tests/integration/object-sections.spec.ts),
-testfallen “TYP-09: ordinary members retain prefilled section work and
-keyboard controls at 1280px”, samma titel med “390px” respektive “320px”.
+testfallen:
+
+- “TYP-09: ordinary members retain prefilled section work and keyboard
+  controls at 1280px”.
+- “TYP-09: ordinary members retain prefilled section work and keyboard
+  controls at 390px”.
+- “TYP-09: ordinary members retain prefilled section work and keyboard
+  controls at 320px”.
 
 **Steg:**
 
@@ -419,7 +466,7 @@ keyboard controls at 1280px”, samma titel med “390px” respektive “320px�
 
 ### TYP-06: Typbyte bevarar objekt, samband och tidigare fältbetydelse
 
-**Syfte:** Granska gamla värden, rätta nya fält och ångra ett typbyte.
+**Syfte:** Granska gamla värden, rätta nya fält och läsa ett sparat typbyte.
 
 **Användare:** Alex.
 
@@ -432,34 +479,34 @@ och sambandets ID från kartans publika HTTP-svar.
 **Integrationstest:**
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts),
 testfallet “TYP-06: type changes review displaced values and preserve
-identity, edges and history through restart and undo”.
+identity, edges and historical reading through restart”.
 
 **Steg:**
 
 1. Öppna Alex blå cykel och välj Motorfordon som **Objekttyp**. Kontrollera
-   **Tidigare fältvärden**: Cykel, Nummer `SYNTH-42` och Försäkrad **Nej**.
-   Kontrollera att nya Nummer är tomt och Försäkrad är **Obesvarat**.
-   **Lägg i mitt utkast** ska vara inaktiverat innan värdena hanteras.
-2. Ange `42` i det nya Nummer. Lämna Försäkrad obesvarat. Markera
-   **Jag har hanterat tidigare fältvärden för typbytet** och lägg i utkastet.
+   dialogen **Ta bort tidigare egna fält?** med Nummer `SYNTH-42` och
+   Försäkrad **Nej**. Bekräfta **Ta bort fältvärdena och byt typ**.
+   Öppna **Egna fält**: Nummer är tomt och Försäkrad är **Obesvarat**.
+2. Ange `42` i det nya Nummer. Lämna Försäkrad obesvarat och välj
+   **Lägg i utkastet och stäng**.
    Granska båda typerna, gamla och nya Nummer samt obesvarat Försäkrad.
 3. Starta om installationen och ladda om. Kontrollera samma privata
    förslag. Spara hela utkastet och kontrollera cykelns och sambandets ID.
 4. Byt typdefinitionens namn från Cykel till Trampcykel och dess fältnamn
    till Tidigare Nummer och Tidigare Försäkrad. Spara. Starta om och öppna
-   **Visa historik**. Välj **Visa ändringarna** vid typbytet från Cykel
+   **Rapporter**. Välj **Visa ändringarna** vid typbytet från Cykel
    till Motorfordon.
 5. Kontrollera tidigare typnamn, Nummer `SYNTH-42`, sparande användare
-   och tidpunkt. Välj **Ångra sparandet** för typbytet och granska förslaget.
-   Spara hela utkastet, starta om och läs kartan igen.
+   och tidpunkt. Starta om och läs kartan igen. Kontrollera att
+   den sparade nya typen och sambandet är oförändrade.
 
 **Förväntat resultat:**
 
 - Inga gamla värden kopieras eller konverteras till den nya typens fält.
   Historiken behåller de ursprungliga namnen trots dagens namnbyte.
-- Typbyte och ångring behåller objektets och sambandets identiteter.
-  Typbytet sparar talet `42` och obesvarat Försäkrad; ångring återför
-  texten `SYNTH-42` och uttryckligt **Nej**.
+- Typbytet behåller objektets och sambandets identiteter. Det sparar
+  talet `42` och obesvarat Försäkrad. Historiken visar texten `SYNTH-42`
+  och uttryckligt **Nej** före bytet.
 - Sparat utkast och historik finns kvar efter normal omstart.
 
 ### TYP-11: Upprepade typbyten bevarar gemensamma uppgifter och gamla svar
@@ -484,26 +531,35 @@ På cykeln ska följande gemensamma ekonomiska uppgifter finnas:
 - Pris: **Okänt**.
 
 **Integrationstest:**
-[type-change.spec.ts](../../tests/integration/type-change.spec.ts),
-testfallen “TYP-11: repeated type changes keep distinct former answers and
-complete common values through save and restart at 1280px in light”, samma
-titel med “390px” eller “320px” och “dark”. Kör varje bredd i båda temana.
+[type-change.spec.ts](../../tests/integration/type-change.spec.ts).
+Följande testfall:
+
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 1280px in light”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 1280px in dark”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 390px in light”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 390px in dark”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 320px in light”.
+- “TYP-11: repeated type changes confirm loss of former answers and complete
+  common values through save and restart at 320px in dark”.
 
 **Steg:**
 
-1. Öppna cykelns redigering och byt till Motorfordon. Kontrollera att
-   alla nya egna fält är tomma och de tidigare svaren visas separat.
-   Ange Nummer `B-84`, Antal `8` och Försäkrad **Ja**. Bekräfta att
-   tidigare fältvärden är hanterade utan att lägga förslaget i utkastet.
-2. Byt tillbaka till Cykel. Kontrollera tomma nya fält, två tidigare
-   grupper och att bekräftelsen måste göras på nytt. Ange Nummer
-   `A-126`, Antal `0` och Försäkrad **Nej**. Bekräfta hanteringen igen.
-3. Byt åter till Motorfordon. Kontrollera tre tidigare grupper, inklusive
-   båda grupperna från Cykel med sina egna svar. Fyll bara i Nummer
-   `B-final`, lämna Antal och Försäkrad obesvarade och bekräfta hanteringen.
-4. Kontrollera namn, identitet, beskrivning, profilbild och ekonomiska
-   uppgifter under **Uppgifter utanför typens avsnitt**. Lägg i utkastet.
-   Kontrollera att den sparade kartan fortfarande visar den gamla typen.
+1. Öppna cykelns redigering och byt till Motorfordon. Läs de tidigare
+   svaren i förlustdialogen och bekräfta borttagningen. Öppna Egenskaper:
+   alla egna fält är obesvarade. Ange Nummer B-84, Antal 8 och Försäkrad Ja.
+2. Öppna Grunduppgifter och byt tillbaka till Cykel. Läs B-84, 8 och Ja
+   i förlustdialogen och bekräfta igen. Ange A-126, 0 och Nej i Egenskaper.
+3. Byt åter till Motorfordon och bekräfta borttagningen av A-126, 0 och Nej.
+   Fyll endast Nummer B-final och lämna Antal och Försäkrad obesvarade.
+4. Kontrollera namn, identitet och beskrivning i Grunduppgifter, bilden i
+   Livscykel och utseende och ekonomiska uppgifter i Ekonomiska uppgifter. Välj
+   Lägg i utkastet och stäng. Den sparade kartan har fortfarande den gamla
+   typen.
 5. Starta om installationen, ladda om och granska förslaget. Spara hela
    utkastet uttryckligen. Starta om och granska cykeln och sambandet igen.
 
@@ -511,7 +567,7 @@ titel med “390px” eller “320px” och “dark”. Kör varje bredd i båda
 
 - Varje typbyte börjar med obesvarade egna fält, även när namn och
   värdeslag stämmer. Tidigare noll och Nej blandas inte ihop med obesvarat.
-  Gamla grupper behåller sina typer och svar under redigeringen.
+  Förlustdialogen visar de aktuella svar som just detta typbyte kastar.
 - Varje byte kräver en ny uttrycklig bekräftelse före placering i utkastet.
   Namn, identitet, beskrivning, hela ekonomiska uppgifter, bild och ikon
   finns kvar. Sambandet behåller sina ändpunkter och sin osäkerhet.
@@ -531,14 +587,15 @@ Lo har aktuell tillgång till hushållet.
 **Integrationstest:**
 [type-change.spec.ts](../../tests/integration/type-change.spec.ts),
 testfallet “TYP-07: invalid values and concurrent definitions block whole
-saves until fresh choices while undo protects private fields”.
+saves until fresh choices and preserve later private fields”.
 
 **Steg:**
 
 1. Alex lägger namnbytet Garaget till Eget namn i sitt utkast. Föreslå
    typbytet till Motorfordon: ange Nummer `42`, välj Försäkrad **Nej**,
    hantera gamla värden och lägg typbytet i utkastet. Följ kontrollsteget
-   [för felaktigt fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
+   [för felaktigt
+   fältvärde](#skicka-ett-felaktigt-fältvärde-med-aktuell-utkastversion)
    för Nummer med texten `fel`. Kontrollera HTTP 400 och oförändrad karta,
    helt utkast och historik jämfört med före återförsöket.
 2. Behåll det giltiga typbytet med Nummer `42` och Försäkrad **Nej** i
@@ -548,15 +605,115 @@ saves until fresh choices while undo protects private fields”.
    efter granskning av den nya definitionen. Återsänd tidigare sparbegäran
    med samma gamla utkastversion men nytt operations-ID: HTTP 409.
 4. Ge ett nytt sparbesked och kontrollera båda sparade ändringarna. Lägg
-   sedan Nummer `43` i eget utkast. Försök ångra typbytet: överlappet ska
-   stoppas utan att det egna fältförslaget ändras.
-5. Kasta eget utkast och lägg i stället beskrivningen Oberoende uppgift på
-   cykeln i utkastet. Ångra typbytet. Starta om och granska det kvarvarande
-   förslaget; spara sedan hela utkastet.
+   sedan Nummer `43` i ditt utkast utan att spara.
+5. Starta om och kontrollera förslaget, sparad karta och historik.
 
 **Förväntat resultat:**
 
 - Felaktiga värden och inaktuella definitioner sparar ingen del av gruppen.
   Konfliktvalet kräver ett nytt sparbesked för det aktuella utkastet.
-- Eget överlappande fältförslag blockerar ångringen. Den oberoende
-  beskrivningen bevaras tillsammans med återförd Cykel och dess gamla värden.
+- Nummer 43 finns kvar i ditt utkast efter omstart. Den sparade kartan
+  behåller Motorfordon och Nummer 42, och tidigare sparanden är oförändrade.
+
+### TYP-12: Konfigurerad fältordning i formulär och fullständig läsning
+
+**Syfte:** Kontrollera samma uttryckliga ordning i formuläret, utkastets
+läsning och tabellen, med bevarade svar som är noll och Nej.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett nytt testhushåll utan privata förslag. Ingen
+AI-leverantör eller samtalsstart behövs. Förbered följande syntetiska typ
+genom publika HTTP-anrop i den inloggade profilens Console. Ange hushållets
+faktiska ID från nätverkspanelen. Kör bara på den separata testinstallationen;
+koden lägger typdefinitionen i utkastet och sparar den gemensamt.
+
+```js
+await (async () => {
+  const householdId = prompt('Hushållets ID');
+  const path = `/api/households/${encodeURIComponent(householdId)}/map`;
+  const read = async () => {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error('Kartan kunde inte läsas');
+    return response.json();
+  };
+  const identity = await (await fetch('/api/version')).json();
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Skyttel-Build': `${identity.commit}:${identity.version}`,
+  };
+  const before = await read();
+  if (before.draft.changes.length || before.draft.objectTypes.length ||
+      before.draft.relationships.length ||
+      before.draft.relationshipTypes.length) {
+    throw new Error('Börja med ett tomt utkast');
+  }
+  const staged = await fetch(`${path}/object-type`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      version: before.draft.version,
+      contentVersion: before.contentVersion,
+      id: 'ordered-read-type', baseRevision: null,
+      value: {
+        name: 'Sorterad typ', description: '',
+        fields: [
+          { id: 'first', name: 'Första fältet',
+            description: '', kind: 'number' },
+          { id: 'second', name: 'Andra fältet',
+            description: '', kind: 'boolean' },
+        ],
+        propertyOrder: ['field:second', 'field:first'],
+      },
+    }),
+  });
+  if (staged.status !== 200) throw new Error('Typförberedelsen avvisades');
+  const proposed = await read();
+  const saved = await fetch(`${path}/save`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      version: proposed.draft.version,
+      contentVersion: proposed.contentVersion,
+      operationId: 'ordered-read-type-setup',
+    }),
+  });
+  console.log({ staged: staged.status, saved: saved.status });
+})();
+```
+
+Resultatet ska visa `staged: 200` och `saved: 200`. Ladda därefter om sidan.
+Typens lagrade fältlista är Första fältet följt av Andra fältet; dess
+uttryckliga presentationsordning är Andra fältet följt av Första fältet.
+
+**Integrationstest:**
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts),
+testfallet “TYP-12: explicit field order preserves zero and false through
+the native form, draft and table readers”.
+
+**Steg:**
+
+1. Välj Nytt objekt i kartans verktyg. Ange namnet Ordningsprov och välj
+   Sorterad typ. Öppna Egna fält: Andra fältet ska stå före Första fältet.
+   Välj Nej i Andra fältet och ange `0` i Första fältet.
+2. Kontrollera i nätverkspanelens aktuella kartläsning att det privata
+   objektutkastet fortfarande är tomt. Välj Lägg i utkastet och stäng.
+   Läs kartan igen: inget gemensamt objekt har skapats, medan det privata
+   förslaget innehåller noll och Nej under de två förberedda fältidentiteterna.
+3. Välj Skriv till Skyttel och Visa utkastet. Öppna Visa förslaget:
+   Ordningsprov. Kontrollera ordning och fullständiga värden och stäng
+   läsningen med krysset.
+4. Välj utkastets sparikon. Vänta på Utkastet är sparat och stäng textvyn.
+   Välj Tabell och fäll ut Ordningsprov. Kontrollera samma ordning i raden.
+   Öppna Läs alla uppgifter för Ordningsprov och kontrollera ordning och
+   fullständiga värden igen. Stäng läsningen med krysset.
+5. Läs den aktuella kartan i nätverkspanelen. Kontrollera att objektutkastet
+   är tomt, det gemensamma objektet innehåller `first: 0` och `second: false`,
+   och typens fältidentiteter och uttryckliga ordning är oförändrade.
+
+**Förväntat resultat:**
+
+- Formuläret, utkastets fullständiga läsning, tabellraden och tabellens
+  fullständiga läsning visar Andra fältet före Första fältet.
+- Nej och noll visas som svar, inte som obesvarade fält. Placering i
+  utkastet skapar inget gemensamt objekt; uttryckligt sparande skapar det.
+- Sparandet bevarar båda svaren och fältidentiteterna. Den ursprungliga
+  fältlistan och den separata presentationsordningen ändras inte.

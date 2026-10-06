@@ -49,6 +49,96 @@ async function center(node: Locator) {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
+async function exposed(node: Locator, context = 'The native target must be exposed') {
+  let observation: unknown;
+  try {
+    await expect
+      .poll(
+        async () => {
+          // Re-scroll if viewport measurement changes the reader's available height.
+          await node.scrollIntoViewIfNeeded();
+          const measured = await node.evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            const points = [
+              [box.left + 8, box.top + 8],
+              [box.right - 8, box.top + 8],
+              [box.left + 8, box.bottom - 8],
+              [box.right - 8, box.bottom - 8],
+              [box.left + box.width / 2, box.top + box.height / 2],
+            ].map(([x, y]) => {
+              const hit = document.elementFromPoint(x, y);
+              return {
+                x,
+                y,
+                owned: hit !== null && element.contains(hit),
+                hit: hit?.tagName,
+                hitClass: hit?.getAttribute('class'),
+              };
+            });
+            const style = getComputedStyle(element);
+            const scrollport = element.closest('.map-selection-details, .map-navigation');
+            const clippingBounds = scrollport?.getBoundingClientRect();
+            const clippingStyle = scrollport && getComputedStyle(scrollport);
+            const insideScrollport =
+              !clippingBounds ||
+              !clippingStyle ||
+              (box.top >= clippingBounds.top + Number.parseFloat(clippingStyle.borderTopWidth) &&
+                box.bottom <=
+                  clippingBounds.bottom - Number.parseFloat(clippingStyle.borderBottomWidth) &&
+                box.left >=
+                  clippingBounds.left + Number.parseFloat(clippingStyle.borderLeftWidth) &&
+                box.right <=
+                  clippingBounds.right - Number.parseFloat(clippingStyle.borderRightWidth));
+            return {
+              exposed:
+                box.left >= 0 &&
+                box.top >= 0 &&
+                box.right <= innerWidth &&
+                box.bottom <= innerHeight &&
+                points.every((point) => point.owned) &&
+                insideScrollport,
+              viewport: [innerWidth, innerHeight],
+              bounds: box.toJSON(),
+              font: style.font,
+              insideScrollport,
+              scrollport: scrollport && {
+                bounds: scrollport.getBoundingClientRect().toJSON(),
+                clientHeight: scrollport.clientHeight,
+                scrollHeight: scrollport.scrollHeight,
+                scrollTop: scrollport.scrollTop,
+              },
+              points,
+            };
+          });
+          observation = measured;
+          return measured.exposed;
+        },
+        { message: context },
+      )
+      .toBe(true);
+  } catch (error) {
+    console.error('Native target exposure:', context, JSON.stringify(observation, null, 2));
+    throw error;
+  }
+}
+
+async function separate(first: Locator, second: Locator) {
+  await expect
+    .poll(async () => {
+      const a = await first.boundingBox();
+      const b = await second.boundingBox();
+      return Boolean(
+        a &&
+          b &&
+          (a.x + a.width <= b.x ||
+            b.x + b.width <= a.x ||
+            a.y + a.height <= b.y ||
+            b.y + b.height <= a.y),
+      );
+    })
+    .toBe(true);
+}
+
 test('NAVIGATION-01: normal and mini navigation move independently with keyboard and cancelled dragging', async ({
   page,
 }) => {
@@ -65,7 +155,7 @@ test('NAVIGATION-01: normal and mini navigation move independently with keyboard
     await expect(handle).toBeFocused();
     await expect(navigation.getByRole('heading', { name: 'Flytta Lo Exempel' })).toBeVisible();
     await expect(navigation.getByRole('button', { name: /^Flytta Lo Exempel:/ })).toHaveCount(6);
-    await navigation.getByRole('button', { name: 'Visa mininavigering' }).click();
+    await navigation.getByRole('button', { name: 'Visa mininavigering' }).click({ timeout: 5000 });
     await expect(navigation.getByRole('button', { name: 'Panorera vänster' })).toHaveAttribute(
       'title',
       'Panorera vänster',
@@ -136,19 +226,45 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
     await lo.click();
     await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
     const details = page.getByRole('region', { name: 'Lo Exempel', exact: true });
-    await details.getByRole('button', { name: 'Visa samband i listan', exact: true }).click();
-    const list = page.getByRole('list', { name: 'Samband', exact: true });
-    await list
-      .getByRole('button', { name: 'Lo Exempel → Använder → Kim Exempel', exact: true })
-      .click();
-    await list
-      .getByRole('button', { name: 'Redigera Lo Exempel → Använder → Kim Exempel', exact: true })
-      .click();
-    await expect(page.getByLabel('Från objekt', { exact: true })).toHaveValue('lo');
-    await expect(page.getByLabel('Till objekt', { exact: true })).toHaveValue('kim');
+    await details.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
+    const relationships = page.getByRole('dialog', { name: 'Samband för Lo Exempel', exact: true });
+    const item = relationships
+      .getByRole('heading', { name: 'Lo Exempel → Använder → Kim Exempel', exact: true })
+      .locator('..');
+    await expect(item).toContainText('Från objektLo Exempel');
+    await expect(item).toContainText('Till objektKim Exempel');
+    await item.getByRole('button', { name: 'Kim Exempel', exact: true }).click();
+    const reader = page.getByRole('dialog', { name: 'Uppgifter för Kim Exempel', exact: true });
     await expect(
-      page.getByRole('button', { name: 'Lägg sambandet i mitt utkast', exact: true }),
-    ).toBeEnabled();
+      reader.getByRole('heading', { name: 'Uppgifter för Kim Exempel', exact: true }),
+    ).toBeFocused();
+    await reader.getByRole('button', { name: 'Tillbaka', exact: true }).click();
+    await item.getByRole('button', { name: 'Redigera samband', exact: true }).click();
+    await expect(relationships.getByLabel('Från objekt', { exact: true })).toHaveValue('lo');
+    await expect(relationships.getByLabel('Till objekt', { exact: true })).toHaveValue('kim');
+    await relationships
+      .getByLabel('Uppgiftens säkerhet', { exact: true })
+      .selectOption('uncertain');
+    await expect(
+      relationships.getByRole('region', { name: 'Sambandet före inskickning' }),
+    ).toHaveText('Lo Exempel använder Kim Exempel (Osäkert uppgivet)');
+    const response = page.waitForResponse(
+      (response) =>
+        response.url() === `${path}/relationship-form` && response.request().method() === 'POST',
+    );
+    await relationships.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    expect((await response).status()).toBe(200);
+    await expect(
+      relationships.getByRole('heading', { name: 'Redigera samband', exact: true }),
+    ).toHaveCount(0);
+    const after = await read();
+    expect(after.objects).toEqual(before.objects);
+    expect(after.relationships).toEqual(before.relationships);
+    expect(after.draft.relationships).toHaveLength(1);
+    expect(after.draft.relationships?.[0]).toMatchObject({
+      id: 'uses',
+      after: { sourceId: 'lo', targetId: 'kim', knowledge: 'uncertain' },
+    });
     await expect(details.getByRole('region', { name: /^Samband för/ })).toHaveCount(0);
   } finally {
     await installation.close();
@@ -161,13 +277,16 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
   test.setTimeout(90_000);
   const installation = await createInstallation();
   try {
-    const { lo } = await arrange(page, installation.origin);
+    const { lo, path, read } = await arrange(page, installation.origin);
+    const shared = await read();
     for (const [width, height] of [
+      [320, 250],
+      [844, 390],
       [1440, 1000],
       [390, 1000],
       [320, 1000],
+      [700, 600],
       [640, 500],
-      [320, 250],
     ]) {
       await page.setViewportSize({ width, height });
       for (const navigationFirst of [true, false]) {
@@ -177,6 +296,18 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         await lo.focus();
         await lo.press('Enter');
         await expect(lo).toHaveAttribute('aria-pressed', 'true');
+        const combinedNotice =
+          (width === 320 && height === 250) || (width === 844 && height === 390);
+        const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
+        if (combinedNotice) {
+          const talk = page
+            .getByRole('navigation', { name: 'Kartans verktyg' })
+            .getByRole('button', { name: 'Prata med Skyttel', exact: true });
+          await talk.focus();
+          await talk.press('Enter');
+          await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
+          await expect(talk).toBeFocused();
+        }
         const trigger = page.getByRole('button', { name: 'Navigera', exact: true });
         const details = page.getByRole('button', { name: 'Visa detaljer', exact: true });
         if (navigationFirst) {
@@ -198,20 +329,61 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         ).toBeFocused();
         await navigation
           .getByRole('button', { name: 'Stäng navigering', exact: true })
-          .click({ trial: true });
-        await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-        await panel
-          .getByLabel('Beskrivning', { exact: true })
-          .fill('Oskickad text medan jag navigerar');
+          .click({ trial: true, timeout: 5000 });
+        await expect
+          .poll(
+            async () => {
+              const navigationBox = await navigation.boundingBox();
+              const readingBox = await panel.boundingBox();
+              if (!navigationBox || !readingBox) return { overlap: true };
+              return {
+                overlap: !(
+                  navigationBox.x + navigationBox.width <= readingBox.x ||
+                  readingBox.x + readingBox.width <= navigationBox.x ||
+                  navigationBox.y + navigationBox.height <= readingBox.y ||
+                  readingBox.y + readingBox.height <= navigationBox.y
+                ),
+              };
+            },
+            {
+              message: `Navigation and reading must settle without overlap at ${width}×${height}, navigation first: ${navigationFirst}`,
+            },
+          )
+          .toMatchObject({ overlap: false });
+        await expect
+          .poll(() =>
+            panel.getByRole('heading', { name: 'Lo Exempel', exact: true }).evaluate((heading) => {
+              const box = heading.getBoundingClientRect();
+              const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+              return hit === heading || heading.contains(hit);
+            }),
+          )
+          .toBe(true);
+        if (combinedNotice) {
+          await separate(notice, navigation);
+          await separate(notice, panel);
+          await exposed(notice.locator('p'));
+          const lastValue = panel.locator('dd').last();
+          await expect(lastValue).not.toHaveText('');
+          await lastValue.scrollIntoViewIfNeeded();
+          await exposed(lastValue);
+          const relationships = panel.getByRole('button', {
+            name: 'Samband för Lo Exempel',
+            exact: true,
+          });
+          await relationships.scrollIntoViewIfNeeded();
+          await exposed(
+            relationships,
+            `Relationships at ${width}×${height}, navigation first: ${navigationFirst}`,
+          );
+          await relationships.click({ trial: true });
+          await panel
+            .getByRole('heading', { name: 'Lo Exempel', exact: true })
+            .scrollIntoViewIfNeeded();
+        }
         const a = await navigation.boundingBox();
         const b = await panel.boundingBox();
         if (!a || !b) throw new Error('Both work areas must be visible.');
-        expect(
-          a.x + a.width <= b.x ||
-            b.x + b.width <= a.x ||
-            a.y + a.height <= b.y ||
-            b.y + b.height <= a.y,
-        ).toBe(true);
         if (width > 1000) {
           const handle = navigation.getByRole('group', { name: 'Navigation', exact: true });
           await handle.focus();
@@ -224,25 +396,111 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           await expect.poll(() => panel.boundingBox()).toEqual(b);
           await handle.press('Shift+ArrowLeft');
         }
+        await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
+        const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
+        const description = form.getByLabel('Beskrivning', { exact: true });
+        const text = `Oskickad text medan jag navigerar ${width} ${navigationFirst}`;
+        await description.fill(text);
+        const unchanged = await read();
+        await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+        const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+        await expect(
+          loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+        ).toBeFocused();
+        await page.keyboard.press('Escape');
+        await expect(description).toHaveValue(text);
+        expect(await read()).toEqual(unchanged);
+        // A native complete form protects its input while background navigation is inactive.
+        await expect(
+          navigation
+            .getByRole('button', { name: 'Panorera höger', exact: true })
+            .click({ trial: true, timeout: 300 }),
+        ).rejects.toThrow();
+        const staged = page.waitForResponse(
+          (response) =>
+            response.url() === `${path}/object-form` && response.request().method() === 'POST',
+        );
+        const stage = form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true });
+        await stage.focus();
+        await stage.press('Space');
+        expect((await staged).status()).toBe(200);
+        await expect(form).toHaveCount(0);
+        await expect(panel).toContainText(text);
+        const beforeMove: PersonalView = await (await page.request.get(`${path}/view`)).json();
         await navigation
           .getByRole('button', { name: 'Flytta Lo Exempel: bakåt', exact: true })
           .click();
+        await expect
+          .poll(async () => {
+            const view: PersonalView = await (await page.request.get(`${path}/view`)).json();
+            return view.positions.find((position) => position.id === 'lo')?.version;
+          })
+          .toBe((beforeMove.positions.find((position) => position.id === 'lo')?.version ?? 0) + 1);
         await expect(page.getByText('Din personliga vy är sparad.', { exact: true })).toBeVisible();
         await navigation.getByRole('button', { name: 'Panorera höger', exact: true }).click();
-        await navigation.getByRole('button', { name: 'Visa mininavigering' }).click();
+        await navigation
+          .getByRole('button', { name: 'Visa mininavigering' })
+          .click({ timeout: 5000 });
         await expect(
           navigation.getByRole('button', { name: 'Visa normal navigering' }),
         ).toBeFocused();
         if (width > 1000) {
           const mini = await navigation.boundingBox();
           if (!mini) throw new Error('Mini navigation must remain visible.');
-          expect(mini.x + mini.width).toBe(width - 24);
-          expect(await panel.boundingBox()).toEqual(b);
+          const reading = await panel.boundingBox();
+          if (!reading) throw new Error('Selected information must remain visible.');
+          expect(
+            mini.x + mini.width <= reading.x ||
+              mini.y + mini.height <= reading.y ||
+              reading.y + reading.height <= mini.y,
+          ).toBe(true);
+          expect({ x: reading.x, y: reading.y, width: reading.width }).toEqual({
+            x: b.x,
+            y: b.y,
+            width: b.width,
+          });
+        }
+        if (combinedNotice) {
+          await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
+          const zoom = navigation.getByRole('button', { name: 'Zooma in', exact: true });
+          await zoom.scrollIntoViewIfNeeded();
+          await exposed(zoom);
+          await zoom.click();
+          const pan = navigation.getByRole('button', { name: 'Panorera vänster', exact: true });
+          await pan.scrollIntoViewIfNeeded();
+          await exposed(pan);
+          await pan.click();
+          await separate(notice, navigation);
+          await separate(notice, panel);
+          const lastValue = panel.locator('dd').last();
+          await lastValue.scrollIntoViewIfNeeded();
+          await exposed(lastValue);
+          await expect(panel).toContainText(text);
+          await page.screenshot({
+            path: `/tmp/skyttel-244/259-notice-combination-${width}x${height}-${navigationFirst ? 'navigation-first' : 'details-first'}.png`,
+          });
+          const unchangedAfterMoves = await read();
+          const closeNotice = notice.getByRole('button', { name: 'Stäng notisen', exact: true });
+          await exposed(
+            closeNotice,
+            `Notice close at ${width}×${height}, navigation first: ${navigationFirst}`,
+          );
+          await closeNotice.click({ trial: true, timeout: 5000 });
+          await closeNotice.focus();
+          await closeNotice.press('Space');
+          await expect(notice).toHaveCount(0);
+          expect(await read()).toEqual(unchangedAfterMoves);
         }
         await navigation.getByRole('button', { name: 'Zooma in', exact: true }).click();
-        await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-          'Oskickad text medan jag navigerar',
-        );
+        await expect(panel).toContainText(text);
+        expect(
+          (await read()).draft.changes.find((change) => change.id === 'lo')?.after?.description,
+        ).toBe(text);
+        expect((await read()).objects).toEqual(shared.objects);
+        expect((await read()).relationships).toEqual(shared.relationships);
+        await page.screenshot({
+          path: `/tmp/skyttel-244/259-navigation-${width}x${height}-${navigationFirst ? 'navigation-first' : 'details-first'}.png`,
+        });
         await expect(panel.getByText('Flytta', { exact: true })).toHaveCount(0);
         await expect(panel.getByRole('region', { name: /^Samband för/ })).toHaveCount(0);
       }

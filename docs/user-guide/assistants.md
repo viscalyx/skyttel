@@ -63,7 +63,8 @@ Kvitto och detaljer kan begäras vid behov. Om svaret försvinner är utfallet
 okänt: be assistenten kontrollera sparförsöket innan något nytt görs.
 Ett väntande försök kan återförsökas med samma identitet och innehåll;
 ett genomfört försök ska bara återge det befintliga kvittot. Även
-**Mina sparförsök** i kartan visar resultatet. Avbrutet samtal betyder
+**Rapporter → Ändringshistorik** visar genomförda sparanden. Avbrutet samtal
+betyder
 inte att ett genomfört sparande är återställt.
 
 Assistenten ansvarar för tolkningen av ditt besked. Servern kontrollerar
@@ -92,22 +93,14 @@ En använd definition kan inte tas bort, även om innehållet är upphört
 eller bara används i ett beständigt privat utkast. Felet visar inte
 andra användares privata uppgifter.
 
-Be om relevant historik och välj vilket helt sparande du vill ångra.
-Assistenten kan visa tidigare värden, samband, tidpunkt och författare.
-Ångringen blir ett nytt förslag. Oberoende senare arbete bevaras och
-överlapp behöver lösas. En saknad äldre definition kan återställas
-uttryckligen tillsammans med innehållet. Ett ångringsförslag är inte
-sparat förrän hela utkastet fått ett nytt sparbesked och ett kvitto.
+Be om relevant historik för att läsa tidigare värden, samband, tidpunkt
+och författare. Assistenten använder samma sparade historik som
+**Rapporter**. Rättelser görs som vanliga förslag i ditt utkast före ett
+nytt sparbesked.
 
-Två lika namn räcker inte för en sammanslagning. Bekräfta vilka objekt
-som är samma företeelse, vilken identitet som ska finnas kvar, vilka
-uppgifter och vilken bild som ska behållas och vad som ska ske med varje
-samband. En felaktig sammanslagning kan ångras genom samma förslagsflöde.
-Typdefinitioner slås inte samman.
-
-Upphört innehåll finns kvar i kartan. Vanlig borttagning kan återställas
-från historiken. Permanent radering är en separat administratörsåtgärd
-och kan ta bort möjligheten att ångra berört innehåll.
+Upphört innehåll finns kvar i kartan. Vanlig borttagning bevarar
+historiska uppgifter. Permanent radering är en separat
+administratörsåtgärd som kan radera även historiska värden.
 
 ## Återkalla anslutningen
 

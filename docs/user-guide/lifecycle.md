@@ -10,12 +10,13 @@ osparade ändringar.
 
 Du kan nå kartans samband med tangentbordet. Markeringen **Upphört** ingår
 även i kontrollens beskrivning för hjälpmedel. Välj sambandet och öppna
-**Lista** för att läsa status och slutdatum under **Val och redigering**.
+**Visa detaljer** för att läsa status och slutdatum. I **Tabell** finns
+samma uppgifter i objektets och sambandets läsdialoger.
 
 ## Ange och rätta status
 
-Välj objektet eller sambandet och sedan **Redigera valt objekt** eller
-**Redigera valt samband** i detaljpanelen. Välj **Upphört** under
+Öppna **Tabell** och välj objektets **Redigera**, eller öppna objektets
+samband och välj **Redigera samband**. Välj **Upphört** under
 **Objektets status** eller **Sambandets status** och lägg ändringen
 i utkastet. Granska hela utkastet och spara det för att göra ändringen
 gemensam. Ett avslutat
@@ -35,10 +36,11 @@ sparas med resten av utkastet. Tidigare värden finns kvar i historiken.
 
 ## Ta bort från den aktuella kartan
 
-Öppna **Åtgärder för** objektet eller sambandet i listan och välj **Ta bort**.
+Öppna **Åtgärder för** objektet i den utökade tabellraden och välj
+**Ta bort objekt**, eller välj **Ta bort sambandet** för sambandet.
 Borttagningen läggs direkt i ditt privata utkast. Du kan också välja
 **Ta bort** i objektets formulär eller **Ta bort sambandet** i sambandets
-formulär. Hela skillnaden visas under **Hela mitt utkast**.
+formulär. Hela skillnaden visas under **Visa utkastet**.
 
 Ett borttaget objekt tar med sina inkommande och utgående samband.
 Anslutna objekt finns kvar. Att ta bort en person i kartan återkallar
@@ -50,14 +52,11 @@ Välj **Kasta hela utkastet** för att ångra förslagen före sparande.
 En konflikt blockerar hela sparandet; ingen del tas bort. Hämta aktuellt
 underlag, gör konfliktvalet, granska hela skillnaden och spara igen.
 
-**Borttaget** innehåll bevaras för återställning. Historiken innehåller
-tidigare värden, samband och typdefinitioner, tidpunkten och den som sparar.
-Det finns ingen automatisk tidsgräns. Återställ innehållet under
-**Ändringshistorik**. Välj **Visa historik** och
-ångra borttagningsgruppen som ett nytt privat förslag. Granska och spara
-hela utkastet för att göra återställningen gemensam. Läs
-[guiden för historik och ångring](history.md), särskilt om du redan har
-egna förslag eller andra ändringar tillkommer efter borttagningen.
+**Borttaget** innehåll bevaras i historiken. Den visar tidigare värden,
+samband och typdefinitioner, tidpunkten och den som sparar. Det finns
+ingen automatisk tidsgräns. Öppna **Rapporter → Ändringshistorik** för
+att läsa uppgifterna; historiken skapar inga återställningsförslag. Läs
+[guiden för ändringshistorik](history.md).
 
 ## Permanent radering
 

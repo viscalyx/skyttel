@@ -149,7 +149,7 @@ export function validateImportReferences(
       before: { id: string } | null;
       after: { id?: string; typeId: string } | null;
       id?: string;
-      merge?: { objects: { id: string }[]; previousChanges?: DraftChange[] };
+      merge?: { objects: { id: string }[] };
     }[],
   ) {
     for (const change of changes) {
@@ -158,7 +158,6 @@ export function validateImportReferences(
       objects.add(id);
       identity('object', id);
       for (const value of change.merge?.objects ?? []) objects.add(value.id);
-      if (change.merge?.previousChanges) collect(change.merge.previousChanges);
     }
   }
   for (const draft of content.drafts) collect(draft.changes);
@@ -249,7 +248,7 @@ export function validateImportReferences(
       if (change.before)
         object(change.before, id, [...(change.beforeType ? [change.beforeType] : []), ...meanings]);
       if (change.after) object(change.after, id, meanings);
-      const merge = change.merge;
+      const merge = 'merge' in change ? change.merge : undefined;
       if (!merge) continue;
       requireReference(
         merge.survivorId !== merge.absorbedId &&
@@ -273,13 +272,8 @@ export function validateImportReferences(
         );
         requireReference(images.get(merge.imageCopy.copiedImageId)?.objectId === merge.survivorId);
       }
-      if ('previousChanges' in merge)
-        changesNested(merge.previousChanges, merge.types, mergedTypes);
-      if ('previousRelationships' in merge)
-        for (const value of merge.previousRelationships) edgeChange(value, mergedTypes);
     }
   }
-  const changesNested = changes;
   function edgeChange(
     change: DraftRelationshipChange | SavedRelationshipChange,
     types: Map<string, RelationshipType>,
@@ -330,6 +324,10 @@ export function validateImportReferences(
       identity('objectType', change.id);
       if (change.before) definition(change.before);
       if (change.after) definition(change.after);
+      if (change.restoration) {
+        definition(change.restoration.definition);
+        requireReference(change.restoration.definition.id === change.id);
+      }
       requireReference(
         (!change.before || change.before.id === change.id) &&
           (!change.after || change.after.id === change.id),
@@ -339,6 +337,10 @@ export function validateImportReferences(
       identity('relationshipType', change.id);
       if (change.before) edgeDefinition(change.before);
       if (change.after) edgeDefinition(change.after);
+      if (change.restoration) {
+        edgeDefinition(change.restoration.definition);
+        requireReference(change.restoration.definition.id === change.id);
+      }
       requireReference(
         (!change.before || change.before.id === change.id) &&
           (!change.after || change.after.id === change.id),

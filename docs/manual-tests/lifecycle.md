@@ -15,11 +15,19 @@ Samma kartarbete är tillgängligt för en vanlig hushållsmedlem.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+För samband, öppna **Tabell**, välj **Samband för** objektet och
+**Redigera samband** vid kopplingen. **Lägg i utkastet** skickar hela
+formuläret. Välj **Stäng samband** innan du sparar eller fortsätter med
+annat arbete. Objekt öppnas för redigering från Tabell eller objektets
+uppgifter. Vid kontroll i kartan, öppna **Sök i kartan → Filter** och
+välj **Ta med upphörda**, även efter omladdning, för att se upphörda
+objekt och samband. För kontroll i Tabell, öppna dess **Filter**, välj
+**Ta med upphörda** och stäng filterdialogen med krysset.
+
+Fullständiga förslag läses genom **Skriv till Skyttel → Visa utkastet →
+Visa förslaget: [namn]**. Stäng läsningen med krysset. Utkastets sparikon
+öppnar **Spara utkastet**; vänta på **Utkastet är sparat** och stäng
+textvyn före nästa arbete i Tabell eller Karta.
 
 1. Använd ett tomt testhushåll med påhittade uppgifter enligt
    [familjeabonnemanget](../user-guide/family-subscription.md).
@@ -48,19 +56,27 @@ independently correctable”.
 
 **Steg:**
 
-1. Öppna **Familjemusik**, välj **Upphört** under **Objektets status** och
-   välj **Lägg i mitt utkast**. Granska utkastet.
+1. Öppna **Tabell → Filter**, välj **Ta med upphörda** och stäng
+   filterdialogen. Välj **Redigera Familjemusik** i objektets rad.
+   Öppna **Livscykel och utseende** och välj **Upphört** under
+   **Objektets status**. Välj **Lägg i utkastet och stäng** och granska
+   utkastet.
 2. Välj **Spara hela utkastet**. Starta om appen med samma databas och
-   ladda om sidan. Kontrollera objekten och sambanden.
+   ladda om sidan. Välj **Ta med upphörda** igen i Tabellens filter.
+   Kontrollera objekten och sambanden.
 3. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Upphört** under
-   **Sambandets status**, lägg sambandet i utkastet och spara.
-4. Öppna **Familjemusik**, välj **Gäller fortfarande**, lägg ändringen i
-   utkastet och spara. Ladda om sidan.
+   **Sambandets status**, lägg sambandet i utkastet med tangentbordet,
+   välj **Stäng samband** och spara.
+4. Välj **Redigera Familjemusik** i Tabell och
+   **Livscykel och utseende**. Välj **Gäller fortfarande** under
+   **Objektets status** och **Lägg i utkastet och stäng**. Spara hela
+   utkastet och ladda om sidan. Välj **Ta med upphörda** igen för att
+   kontrollera det fortfarande upphörda sambandet.
 
 **Förväntat resultat:**
 
 - Förslaget visar Upphört med text och orange markering, skild från
-  utkastets blå markering. Sparat underlag visar den tidigare statusen.
+  förslagets markering. Den sparade kartans status är ännu oförändrad.
 - Efter omstart finns Familjemusik kvar med Upphört. Andra objekt och
   samband har oförändrad status och kan fortfarande öppnas.
 - Det markerade sambandet blir upphört utan att det andra sambandet ändras.
@@ -84,15 +100,22 @@ dates or status can correct it”.
 
 **Steg:**
 
-1. Ange dagens UTC-datum som känt **Slutdatum** för Familjemusik och samma
-   datum som **Osäkert uppgivet** för Lo Exempel. Behåll **Följ slutdatum**
-   för båda, lägg ändringarna i utkastet och spara.
-2. Kontrollera status före och efter nästa midnatt UTC utan omladdning.
-3. Rätta Familjemusiks datum till en framtida dag, lägg i utkastet och spara.
+1. Välj **Redigera Familjemusik** i Tabell och
+   **Ekonomiska uppgifter**. Ange dagens UTC-datum som känt **Slutdatum**.
+   Gör samma sak för Lo Exempel med datumet som **Osäkert uppgivet**.
+   Behåll standardvalet **Följ slutdatum** för båda. Välj
+   **Lägg i utkastet och stäng** för varje objekt och spara hela utkastet.
+2. Välj **Ta med upphörda** i Tabellens filter. Kontrollera status före
+   och efter nästa midnatt UTC utan omladdning.
+3. Välj **Redigera Familjemusik** i Tabell och
+   **Ekonomiska uppgifter**. Rätta slutdatumet till en framtida dag. Välj
+   **Lägg i utkastet och stäng** och spara hela utkastet.
 4. Öppna sambandet från Lo och ange ett känt passerat **Sambandets slutdatum**.
-   Lägg sambandet i utkastet, spara och kontrollera statusen.
+   Lägg sambandet i utkastet med tangentbordet, välj **Stäng samband**,
+   spara och kontrollera statusen.
 5. Ändra sambandets status till **Gäller fortfarande** utan att ändra datumet.
-   Granska hela utkastet, spara, starta om appen och ladda om.
+   Lägg ändringen i utkastet, stäng sambandsdialogen, granska hela
+   utkastet, spara, starta om appen och ladda om.
 
 **Förväntat resultat:**
 
@@ -128,8 +151,8 @@ without changing saved facts”.
 2. Använd Tab och Skift+Tab för att nå sambandet från Lo till Familjemusik.
    Kontrollera synligt fokus och sambandets tillgängliga beskrivning med
    webbläsarens tillgänglighetsinspektör eller skärmläsare.
-3. Tryck Enter på sambandet och öppna **Lista**. Läs dess uppgifter under
-   **Val och redigering** utan att redigera eller spara något.
+3. Tryck Enter på sambandet och välj **Visa detaljer** i kartans verktyg.
+   Läs **Valt samband** utan att redigera eller spara något.
 4. Starta om appen med samma databas, ladda om sidan och öppna kartan igen.
    Kontrollera båda sambandens status och tillgängliga beskrivningar.
 
@@ -244,11 +267,16 @@ connected edge and preserves history”.
 **Steg:**
 
 1. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Betalar** som
-   sambandstyp och lägg sambandet i utkastet utan att spara.
-2. Öppna **Åtgärder för Familjemusik** i objektlistan och välj **Ta bort**.
-   Granska **Hela mitt utkast** utan något ytterligare förslagssteg.
-3. Ladda om sidan, granska förslaget igen och välj **Kasta hela utkastet**.
-4. Upprepa typbytet och **Ta bort** i listan. Välj **Spara hela utkastet**.
+   sambandstyp och lägg sambandet i utkastet utan att spara. Välj
+   **Stäng samband**.
+2. Öppna **Åtgärder för Familjemusik** i den expanderade
+   Tabellraden och välj **Ta bort objekt**. Granska **Visa utkastet**
+   utan något ytterligare förslagssteg.
+3. Ladda om sidan och granska förslaget igen. Öppna **Skriv till Skyttel**,
+   välj **Visa utkastet** och **Kasta hela utkastet**. Läs
+   **Ta bort hela utkastet?** och bekräfta **Ta bort hela utkastet**.
+   Stäng textvyn och kontrollera att de sparade sambanden finns kvar.
+4. Upprepa typbytet och **Ta bort objekt** i Tabell. Välj **Spara hela utkastet**.
 5. Starta om appen med samma databas och ladda om sidan.
 
 **Förväntat resultat:**
@@ -263,7 +291,7 @@ connected edge and preserves history”.
   Lo och Molnmusik finns kvar. Inga typdefinitioner städas bort.
 - Automationen läser historikunderlaget via HTTP och kontrollerar tidigare
   objekt, samband, namn och definitioner samt tidpunkt och användare.
-  Läsning och ångring i gränssnittet provas i [historikfallen](history.md).
+  Läsning i gränssnittet provas i [historikfallen](history.md).
 
 Konflikter som blockerar hela borttagningen provas även i
 [UTKAST-06](drafts.md#utkast-06-granska-nya-samband-före-objektborttagning).

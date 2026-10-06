@@ -4,12 +4,21 @@ import { availableParallelism, cpus, loadavg, platform, release, tmpdir, totalme
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, expect } from '@playwright/test';
-import type { MapState } from '../src/shared/map.js';
-import { createHousehold, signIn } from '../tests/support/client.js';
+import type { MapState, SaveReceipt } from '../src/shared/map.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openMap,
+  openTable,
+  signIn,
+} from '../tests/support/client.js';
+import { editTableObject } from '../tests/support/domain-work.js';
 import { createInstallation } from '../tests/support/installation.js';
 
 const installation = await createInstallation();
 const browser = await chromium.launch();
+let latestReceipt: SaveReceipt | undefined;
 const samples: {
   run: number;
   cache: string;
@@ -55,17 +64,12 @@ try {
     for (const cache of ['cold', 'warm']) {
       const started = performance.now();
       await page.goto(installation.origin);
-      await expect(page.getByText('500 objekt och 1500 samband', { exact: true })).toBeVisible();
-      await page.getByRole('button', { name: 'Samlad vy', exact: true }).click();
-      await page.getByText('Navigera rymden', { exact: true }).click();
+      await openMap(page);
+      await page.getByRole('button', { name: 'Navigera', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Rotera vänster', exact: true })).toBeEnabled();
       const labels = page.locator('.spatial-labels [data-layout-id]');
       await expect(labels.first()).toBeVisible();
-      await expect(
-        page
-          .getByRole('list', { name: 'Objekt', exact: true })
-          .getByRole('button', { name: 'Provobjekt 000', exact: true }),
-      ).toBeEnabled();
+      await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
       const openMs = performance.now() - started;
       const overlaps = await labels.evaluateAll((elements) => {
         const boxes = elements.map((element) => element.getBoundingClientRect());
@@ -81,38 +85,52 @@ try {
               count += 1;
         return { labels: boxes.length, overlappingPairs: count };
       });
+      await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+      await openTable(page);
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
       const searchStarted = performance.now();
-      await page.getByLabel('Sök objekt', { exact: true }).fill('Provobjekt 499');
-      const found = page
-        .getByRole('list', { name: 'Objekt', exact: true })
-        .getByRole('button', { name: 'Provobjekt 499', exact: true });
+      await table.getByLabel('Sök objekt i tabellen', { exact: true }).fill('Provobjekt 499');
+      const found = table.getByRole('button', { name: 'Provobjekt 499', exact: true });
       await expect(found).toBeVisible();
-      await expect(
-        page.getByRole('list', { name: 'Objekt', exact: true }).getByRole('listitem'),
-      ).toHaveCount(1);
+      await expect(table.locator('.household-table-row-toggle')).toHaveCount(1);
       const searchMs = performance.now() - searchStarted;
-      await found.click();
-      await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+      await editTableObject(page, 'Provobjekt 499');
       await page
         .getByLabel('Beskrivning', { exact: true })
         .fill(`Påhittad rättelse ${run} ${cache}`);
-      await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-      const saveButton = page.getByRole('button', { name: 'Spara hela utkastet', exact: true });
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      const draft = await openDraftReview(page);
+      const saveButton = draft.getByRole('button', { name: 'Spara hela utkastet', exact: true });
       await expect(saveButton).toBeEnabled();
       const saveStarted = performance.now();
+      const committed = page.waitForResponse(
+        (response) =>
+          response.url() === `${path}/save` &&
+          response.request().method() === 'POST' &&
+          response.status() === 200,
+      );
       await saveButton.click();
-      await expect(page.getByRole('status')).toContainText('Sparat');
+      const { receipt } = await (await committed).json();
+      latestReceipt = receipt;
+      await expect(page.getByRole('dialog', { name: 'Spara utkastet', exact: true })).toBeHidden();
+      await expect(page.locator('.draft-save-toast')).toHaveText('Utkastet är sparat');
       const saveMs = performance.now() - saveStarted;
       const state: MapState = await (await client.request.get(path)).json();
       expect(state.objects.find((object) => object.id === 'large-499')?.description).toBe(
         `Påhittad rättelse ${run} ${cache}`,
       );
       const { history } = await (await client.request.get(`${path}/history`)).json();
-      expect(history.at(-1).changes[0].after.description).toBe(`Påhittad rättelse ${run} ${cache}`);
+      expect(
+        history.find((entry: SaveReceipt) => entry.operationId === receipt.operationId),
+      ).toEqual(receipt);
+      expect(receipt.changes[0].after.description).toBe(`Påhittad rättelse ${run} ${cache}`);
       samples.push({ run: run + 1, cache, openMs, searchMs, saveMs, ...overlaps });
       console.log(JSON.stringify(samples.at(-1)));
       if (process.env.MAP_SCREENSHOT && run === 0 && cache === 'cold') {
-        await page.getByLabel('Sök objekt', { exact: true }).fill('');
+        await closeTextView(page);
+        await openTable(page);
+        await table.getByLabel('Sök objekt i tabellen', { exact: true }).fill('');
+        await openMap(page);
         await page.screenshot({ path: process.env.MAP_SCREENSHOT });
       }
     }
@@ -122,15 +140,20 @@ try {
   const verification = await browser.newContext({ storageState });
   const latest: MapState = await (await verification.request.get(path)).json();
   const { history } = await (await verification.request.get(`${path}/history`)).json();
+  const finalReceipt = latestReceipt;
+  if (!finalReceipt) throw new Error('At least one completed measurement save is required.');
+  expect(
+    history.find((entry: SaveReceipt) => entry.operationId === finalReceipt.operationId),
+  ).toEqual(finalReceipt);
   expect(latest.objects.find((object) => object.id === 'large-499')?.description).toBe(
-    history.at(-1).changes[0].after.description,
+    finalReceipt.changes[0].after?.description,
   );
   expect(latest.draft.changes).toHaveLength(0);
   const { operation } = await (
-    await verification.request.get(`${path}/operations/${history.at(-1).operationId}`)
+    await verification.request.get(`${path}/operations/${finalReceipt.operationId}`)
   ).json();
   expect(operation.status).toBe('succeeded');
-  expect(operation.receipt).toEqual(history.at(-1));
+  expect(operation.receipt).toEqual(finalReceipt);
   await verification.close();
   const report = {
     measuredAt: new Date().toISOString(),

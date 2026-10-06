@@ -11,22 +11,39 @@ import type {
   RelationshipValue,
   SaveReceipt,
 } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import {
+  editObjectRelationship,
+  editTableObject,
+  openObjectRelationships,
+  readDraftProposal,
+} from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 async function addRelationship(
   page: Page,
+  sourceName: string,
   sourceId: string,
   type: string,
   targetId: string | null,
   knowledge: Knowledge = 'known',
 ) {
-  await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+  const dialog = await openObjectRelationships(page, sourceName);
+  await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
   await page.getByLabel('Från objekt').selectOption(sourceId);
   await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: type });
   await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption(knowledge);
   if (targetId) await page.getByLabel('Till objekt').selectOption(targetId);
-  await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+  await stageRelationshipAndClose(page);
 }
 
 test('AVTAL-05: contract relationships preserve separate roles and identities through a blocked save and correction', async ({
@@ -80,7 +97,7 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
       state = await read();
     }
     await page.goto(installation.origin);
-    await openWorkspace(page);
+    await openTable(page);
     const relationships: [string, string, string | null, Knowledge][] = [
       ['home-rent', 'Gäller', 'home', 'known'],
       ['garage-rent', 'Gäller', 'garage', 'known'],
@@ -110,17 +127,22 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
       ['garage-rent', 'Betalas med', 'bank', 'known'],
       ['home-rent', 'Betalas med', null, 'unresolved'],
     ];
-    for (const [sourceId, type, targetId, knowledge] of relationships)
-      await addRelationship(page, sourceId, type, targetId, knowledge);
+    for (const [sourceId, type, targetId, knowledge] of relationships) {
+      const source = objects.find(([id]) => id === sourceId);
+      if (!source) throw new Error(`Missing arranged source: ${sourceId}`);
+      await addRelationship(page, source[2], sourceId, type, targetId, knowledge);
+    }
 
     await page.reload();
 
-    await openWorkspace(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
+    await openTable(page);
+    const review = await openDraftReview(page);
     await expect(review).toContainText('Björkbacken → Används av → Okänt');
     await expect(review).toContainText('Garaget → Används av → Uttryckligen inget');
-    await expect(review).toContainText('Lo → Använder → Blå bilen (Osäkert uppgivet)');
-    await expect(review).toContainText('Ospecificerat objekt');
+    await expect(review).toContainText('Lo → Använder → Blå bilen (osäkert uppgivet)');
+    const bankProposal = await readDraftProposal(page, 'Betalkontot');
+    await expect(bankProposal).toContainText('Ospecificerat objekt');
+    await closeSupportDialog(page, 'Betalkontot');
     await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
     const blocked = await read();
     expect(blocked.objects).toEqual([]);
@@ -137,21 +159,19 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
 
     await page.reload();
 
-    await openWorkspace(page);
-    await page
-      .getByRole('button', {
-        name: 'Bostadshyra → Betalas med → Obesvarad identitetsfråga',
-        exact: true,
-      })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+    await openTable(page);
+    await editObjectRelationship(
+      page,
+      'Bostadshyra',
+      'Bostadshyra → Betalas med → Obesvarad identitetsfråga',
+    );
     await page.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('known');
     await page.getByLabel('Till objekt').selectOption('bank');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+    await stageRelationshipAndClose(page);
     relationships[relationships.length - 1] = ['home-rent', 'Betalas med', 'bank', 'known'];
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    await expect(review).toContainText('Inga förslag');
+    await saveReviewedConflictDraft(page);
+    await expect(review).toContainText('Utkastet är tomt.');
+    await closeTextView(page);
     const saved = await read();
     expect(saved.objects).toHaveLength(objects.length);
     for (const [id, type, name] of objects) {
@@ -195,40 +215,42 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
 
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     expect((await read()).objects).toEqual(saved.objects);
     expect((await read()).relationships).toEqual(saved.relationships);
-    await page.getByLabel('Sök objekt').fill('bostadshyra');
-    await expect(
-      page
-        .getByRole('list', { name: 'Objekt', exact: true })
-        .getByRole('button', { name: /^Visa .+ i kartan$/ })
-        .locator('strong'),
-    ).toHaveText(['Bostadshyra']);
-    await page.getByRole('button', { name: 'Uppgifter för Bostadshyra', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Hyran på Björkbacken');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await page.getByLabel('Sök objekt').fill('');
-    await page.getByRole('button', { name: 'Uppgifter för Betalkontot', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets identitet')).toHaveValue('unspecified');
-    await page.getByLabel('Objektets identitet').selectOption('identified');
-    await page.getByLabel('Objektets namn').fill('Hushållets bankkonto');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
-    await page.getByRole('button', { name: 'Blå bilen → Äger → Kim', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+    await page.getByRole('searchbox', { name: 'Sök objekt i tabellen' }).fill('bostadshyra');
+    const found = page.getByRole('table').getByRole('rowheader').getByRole('button');
+    await expect(found).toHaveCount(1);
+    await expect(found).toHaveAccessibleName('Bostadshyra');
+    await editTableObject(page, 'Bostadshyra');
+    await page.getByLabel('Namn', { exact: true }).fill('Hyran på Björkbacken');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await page.getByRole('searchbox', { name: 'Sök objekt i tabellen' }).fill('');
+    await editTableObject(page, 'Betalkontot');
+    await expect(page.getByLabel('Identitet')).toHaveValue('unspecified');
+    await page.getByLabel('Identitet').selectOption('identified');
+    await page.getByLabel('Namn', { exact: true }).fill('Hushållets bankkonto');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await editObjectRelationship(page, 'Blå bilen', 'Blå bilen → Äger → Kim');
     await page.getByLabel('Till objekt').selectOption('alex');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
-    await expect(review).toContainText('Blå bilen → Äger → Kim');
-    await expect(review).toContainText('Blå bilen → Äger → Alex');
-    await expect(review).toContainText('Betalkontot');
-    await expect(review).toContainText('Hushållets bankkonto');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
-    await expect(review).toContainText('Inga förslag');
+    await stageRelationshipAndClose(page);
+    const ownership = await readDraftProposal(page, 'Blå bilen → Äger → Alex');
+    await expect(
+      ownership.getByRole('heading', { name: 'Sparade värden' }).locator('..'),
+    ).toContainText('Kim');
+    await expect(
+      ownership.getByRole('heading', { name: 'Föreslagna värden' }).locator('..'),
+    ).toContainText('Alex');
+    await closeSupportDialog(page, 'Blå bilen → Äger → Alex');
+    const bankChange = await readDraftProposal(page, 'Hushållets bankkonto');
+    await expect(bankChange).toContainText('Betalkontot');
+    await expect(bankChange).toContainText('Hushållets bankkonto');
+    await closeSupportDialog(page, 'Hushållets bankkonto');
+    await saveReviewedConflictDraft(page);
+    await expect(review).toContainText('Utkastet är tomt.');
+    await closeTextView(page);
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     const corrected = await read();
     expect(corrected.objects).toHaveLength(saved.objects.length);
     expect(corrected.objects.find((object) => object.id === 'home-rent')?.name).toBe(
@@ -251,18 +273,19 @@ test('AVTAL-05: contract relationships preserve separate roles and identities th
     expect(corrected.relationships.filter((edge) => edge.id !== oldOwnership?.id)).toEqual(
       saved.relationships.filter((edge) => edge.id !== oldOwnership?.id),
     );
-    await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
+    const correctedRelationships = await openObjectRelationships(page, 'Hyran på Björkbacken');
+    await expect(correctedRelationships).toContainText(
       'Hyran på Björkbacken → Betalas med → Hushållets bankkonto',
     );
     const finalHistory = (await history()).history;
     expect(finalHistory).toHaveLength(2);
-    expect(finalHistory[0]).toEqual(firstHistory[0]);
-    expect(finalHistory[1].userId).toBe(saved.userId);
-    expect(Date.parse(finalHistory[1].savedAt)).toBeGreaterThanOrEqual(
+    expect(finalHistory[1]).toEqual(firstHistory[0]);
+    expect(finalHistory[0].userId).toBe(saved.userId);
+    expect(Date.parse(finalHistory[0].savedAt)).toBeGreaterThanOrEqual(
       Date.parse(firstHistory[0].savedAt),
     );
-    expect(finalHistory[1].relationships?.[0].before).toEqual(oldOwnership);
-    expect(finalHistory[1].changes.find((change) => change.before?.id === 'bank')?.before).toEqual(
+    expect(finalHistory[0].relationships?.[0].before).toEqual(oldOwnership);
+    expect(finalHistory[0].changes.find((change) => change.before?.id === 'bank')?.before).toEqual(
       saved.objects.find((object) => object.id === 'bank'),
     );
   } finally {

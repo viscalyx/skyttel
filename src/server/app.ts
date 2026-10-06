@@ -97,7 +97,10 @@ export function createApp({
             context.req.method === 'POST' &&
             /^\/api\/households\/[^/]+\/profile-images\/[^/]+$/.test(context.req.path)
               ? imageUploadLimit
-              : 16_384,
+              : context.req.method === 'POST' &&
+                  /^\/api\/households\/[^/]+\/map\/object-form$/.test(context.req.path)
+                ? imageUploadLimit + 32_768
+                : 16_384,
           onError: (failed) => failed.json({ error: 'invalid_request' }, 413),
         })(context, next),
   );
@@ -218,25 +221,26 @@ export function createApp({
   app.route('/api', profileImageRoutes(database, auth, config.origin));
   app.route('/', assistantRoutes(database, auth, config.origin));
   let stopVoice: ((sessionId: string) => void) | undefined;
+  let retireVoiceWork: ((sessionId: string) => void) | undefined;
   let summarizeVoice: ((sessionId: string, signal: AbortSignal) => Promise<void>) | undefined;
   let newVoiceConversation:
     | ((view: TextAssistantView, deferVoiceClose?: boolean) => void)
     | undefined;
+  const dispatchAssistant: LocalDispatch = (request) =>
+    assistantDispatch ? assistantDispatch(request, (next) => app.fetch(next)) : app.fetch(request);
   const textAssistant = textAssistantRoutes({
     database,
     auth,
     config,
     consents,
-    dispatch: (request) =>
-      assistantDispatch
-        ? assistantDispatch(request, (next) => app.fetch(next))
-        : app.fetch(request),
+    dispatch: dispatchAssistant,
     modelFetch,
     modelUsage: (attempt) => {
       costs.model(attempt);
       modelUsage?.(attempt);
     },
     onStop: (sessionId) => stopVoice?.(sessionId),
+    onResetStart: (sessionId) => retireVoiceWork?.(sessionId),
     onSummary: (sessionId, signal) => summarizeVoice?.(sessionId, signal),
     onNewConversation: (view, deferVoiceClose) => newVoiceConversation?.(view, deferVoiceClose),
   });
@@ -253,7 +257,7 @@ export function createApp({
   );
   const voiceAssistant = voiceAssistantRoutes({
     config,
-    dispatch: (request) => app.fetch(request),
+    dispatch: dispatchAssistant,
     liveFetch,
     liveSideband,
     liveUsage,
@@ -265,6 +269,7 @@ export function createApp({
     prepareVoiceContext: textAssistant.prepareVoiceContext,
   });
   stopVoice = voiceAssistant.stopSession;
+  retireVoiceWork = voiceAssistant.retireSessionWork;
   summarizeVoice = voiceAssistant.summarizeSession;
   newVoiceConversation = voiceAssistant.newConversation;
   app.route('/api', voiceAssistant.routes);

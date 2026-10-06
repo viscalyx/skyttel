@@ -8,6 +8,7 @@ import { applicationFixture } from './fixture.js';
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
 let client: ReturnType<typeof fixture.client>;
 let path: string;
+let historicalMerge: MapState | undefined;
 const definition = {
   name: 'Förvaring',
   description: 'Förvaringsplats',
@@ -48,6 +49,7 @@ const read = async (): Promise<MapState> => (await client.request(`${path}/map`)
 const post = (route: string, body: unknown) => client.json(`${path}/${route}`, body);
 
 beforeEach(async () => {
+  historicalMerge = undefined;
   fixture = await applicationFixture();
   client = fixture.client();
   await client.signIn();
@@ -108,27 +110,61 @@ async function save(operationId: string): Promise<SaveReceipt> {
     operationId,
   });
   expect(response.status, await response.clone().text()).toBe(200);
-  return (await response.json()).receipt;
-}
-async function merge() {
-  const state = await read();
-  const response = await post('map/merge', {
-    version: state.draft.version,
-    survivorId: 'spare',
-    absorbedId: 'bike',
-    identityConfirmed: true,
-    reviewed: {
-      objects: ['spare', 'bike'].map((id) => state.objects.find((object) => object.id === id)),
-      relationships: state.relationships,
-      types: state.types.filter(({ id }) => id === state.objects[0].typeId),
-      relationshipTypes: state.relationshipTypes.filter(({ id }) =>
-        state.relationships.some((relationship) => relationship.typeId === id),
+  const receipt: SaveReceipt = (await response.json()).receipt;
+  if (operationId === 'merged' && historicalMerge) {
+    // A saved legacy receipt is fixture data; new proposals use only ordinary routes.
+    receipt.changes[0].merge = {
+      survivorId: 'spare',
+      absorbedId: 'bike',
+      identityConfirmed: true,
+      objects: historicalMerge.objects.filter(({ id }) => id === 'spare' || id === 'bike'),
+      types: historicalMerge.types.filter(({ id }) =>
+        historicalMerge?.objects.some(
+          (object) => object.typeId === id && ['bike', 'spare'].includes(object.id),
+        ),
       ),
-    },
-    relationships: state.relationships.map(({ id }) => ({ id, action: 'keep' })),
-    choices: { name: 'survivor' },
-  });
-  expect(response.status, await response.clone().text()).toBe(200);
+      relationships: historicalMerge.relationships,
+      relationshipTypes: historicalMerge.relationshipTypes.filter(({ id }) =>
+        historicalMerge?.relationships.some((relationship) => relationship.typeId === id),
+      ),
+      objectNames: Object.fromEntries(historicalMerge.objects.map(({ id, name }) => [id, name])),
+    };
+    fixture.database
+      .prepare('UPDATE map_save SET receipt = ? WHERE householdId = ? AND operationId = ?')
+      .run(JSON.stringify(receipt), receipt.householdId, operationId);
+    fixture.database
+      .prepare('UPDATE map_history SET changes = ? WHERE householdId = ? AND operationId = ?')
+      .run(JSON.stringify(receipt.changes), receipt.householdId, operationId);
+  }
+  return receipt;
+}
+async function prepareHistoricalMerge() {
+  const state = await read();
+  historicalMerge = state;
+  const original = state.relationships.find(({ id }) => id === 'edge');
+  if (!original) throw new Error('The historical edge fixture is missing');
+  expect(
+    (
+      await post('map/relationship', {
+        version: state.draft.version,
+        id: original.id,
+        baseRevision: original.revision,
+        value: { ...original, sourceId: 'spare' },
+      })
+    ).status,
+  ).toBe(200);
+  const next = await read();
+  const bike = next.objects.find(({ id }) => id === 'bike');
+  expect(
+    (
+      await post('map/draft', {
+        version: next.draft.version,
+        id: 'bike',
+        baseRevision: bike?.revision,
+        value: null,
+      })
+    ).status,
+  ).toBe(200);
 }
 async function archive() {
   const prepared = await post('exports', {});
@@ -179,7 +215,7 @@ async function populatedArchive() {
   await define();
   await edge();
   await save('original');
-  await merge();
+  await prepareHistoricalMerge();
   await save('merged');
   await edge({ ...values, note: 'Privat anteckning' }, { sourceId: 'spare' });
   await define({ ...definition, name: 'Privat typnamn' });
@@ -188,7 +224,7 @@ async function populatedArchive() {
 
 test('archive 20 preserves relationship sections, fields and zero/false answers through private, saved and merged snapshots', async () => {
   const source = await populatedArchive();
-  expect(source.manifest.schemaVersion).toBe(24);
+  expect(source.manifest.schemaVersion).toBe(25);
   expect(source.content.relationshipTypeFields).toContainEqual({
     typeId: 'storage',
     fields: definition.fields,
@@ -359,7 +395,7 @@ test('erasing a former relationship type removes its values and snapshots while 
   await define(oldDefinition, 'old-storage');
   await edge({ note: 'ERASE-VALUE-SENTINEL' }, { typeId: 'old-storage' });
   await save('original');
-  await merge();
+  await prepareHistoricalMerge();
   await save('merged');
   const state = await read();
   expect(

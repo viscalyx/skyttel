@@ -21,6 +21,26 @@ import {
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './map-navigation.css';
 
+function navigationArea(element: HTMLElement): FloatingArea {
+  const area = measureFloatingArea(element);
+  const style = getComputedStyle(element);
+  // Narrow layouts keep movement inside the usable region beside/below the toolbar.
+  const left = Number.parseFloat(style.getPropertyValue('--navigation-left-limit')) || 0;
+  const toolbar = Number.parseFloat(style.getPropertyValue('--navigation-toolbar-bottom')) || 0;
+  const insetX = Math.max(0, left - area.viewport.x);
+  const insetY = toolbar ? Math.max(0, toolbar + 12) : 0;
+  return {
+    ...area,
+    viewport: {
+      ...area.viewport,
+      x: area.viewport.x + insetX,
+      y: area.viewport.y + insetY,
+      width: area.viewport.width - insetX,
+      height: area.viewport.height - insetY,
+    },
+  };
+}
+
 const cameraButtons = [
   ['left', 'Panorera vänster', 'panLeft'],
   ['right', 'Panorera höger', 'panRight'],
@@ -54,7 +74,6 @@ export function MapNavigation({
   open,
   area,
   focusOnOpen = true,
-  openWork,
   onClose,
   onNavigate,
   object,
@@ -66,11 +85,10 @@ export function MapNavigation({
   open: boolean;
   area?: FloatingArea;
   focusOnOpen?: boolean;
-  openWork?: readonly string[];
   onClose: () => void;
   onNavigate: (action: (typeof cameraButtons)[number][0]) => void;
   object?: { id: string; name: string };
-  onMove: (id: string, axis: keyof Position, step: number) => void;
+  onMove: (id: string, axis: keyof Position, step: number) => void | Promise<void>;
   disabled: boolean;
   movementDisabled: boolean;
   children?: ReactNode;
@@ -90,20 +108,86 @@ export function MapNavigation({
   });
   const [dragging, setDragging] = useState(false);
   const [status, setStatus] = useState('');
+  const moveFocus = useRef<AbortController | null>(null);
+  const completedMove = useRef<(() => void) | null>(null);
+  const [moveCompleted, setMoveCompleted] = useState(0);
+
+  useEffect(() => {
+    if (!open) {
+      moveFocus.current?.abort();
+      completedMove.current = null;
+    }
+    return () => moveFocus.current?.abort();
+  }, [open]);
+  useLayoutEffect(() => {
+    if (!movementDisabled && moveCompleted > 0) {
+      completedMove.current?.();
+      completedMove.current = null;
+    }
+  }, [movementDisabled, moveCompleted]);
+
+  function moveObject(
+    opener: HTMLButtonElement,
+    objectId: string,
+    axis: keyof Position,
+    step: number,
+  ) {
+    moveFocus.current?.abort();
+    completedMove.current = null;
+    const controller = new AbortController();
+    moveFocus.current = controller;
+    let leftControl = false;
+    const leave = (event: Event) => {
+      if (event.target !== document.body && !opener.contains(event.target as Node))
+        leftControl = true;
+    };
+    document.addEventListener('focusin', leave, { signal: controller.signal });
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        if (!opener.contains(event.target as Node)) leftControl = true;
+      },
+      { signal: controller.signal },
+    );
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.key === 'Tab' || event.key === 'Escape') leftControl = true;
+      },
+      { signal: controller.signal },
+    );
+    const result = onMove(objectId, axis, step);
+    if (!result) {
+      controller.abort();
+      return;
+    }
+    const complete = () => {
+      if (controller.signal.aborted) return;
+      // Restore after the owning hook has rendered the control enabled again.
+      completedMove.current = () => {
+        if (
+          !controller.signal.aborted &&
+          !leftControl &&
+          opener.isConnected &&
+          opener.dataset.movementObject === objectId &&
+          !opener.disabled &&
+          !opener.closest('[hidden], [inert]') &&
+          opener.getClientRects().length &&
+          (document.activeElement === document.body || document.activeElement === opener)
+        )
+          opener.focus();
+        controller.abort();
+      };
+      setMoveCompleted((previous) => previous + 1);
+    };
+    void result.then(complete, complete);
+  }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reveal requests focus Navigation; a resize or focus within an already open window must not move focus.
   useLayoutEffect(() => {
     if (!open || !focusOnOpen) return;
     handle.current?.focus({ preventScroll: true });
   }, [open]);
-  useLayoutEffect(() => {
-    if (
-      open &&
-      openWork?.length &&
-      window.matchMedia('(max-width: 700px), (max-height: 600px)').matches
-    )
-      setPosition(null);
-  }, [open, openWork]);
   useLayoutEffect(() => {
     const element = panel.current;
     if (!open || !element) return;
@@ -136,7 +220,7 @@ export function MapNavigation({
       const dimensions = { width: element.offsetWidth, height: element.offsetHeight };
       // Layout effects run before observer notifications. Read this commit's
       // surfaces so switching views cannot relocate against a hidden text view.
-      const currentArea = measureFloatingArea(element);
+      const currentArea = navigationArea(element);
       const next = fitWindow(proposed, dimensions, currentArea);
       const viewportOnly = clampWindow(proposed, dimensions, currentArea.viewport);
       if (next.x !== viewportOnly.x || next.y !== viewportOnly.y) preferredPosition.current = next;
@@ -152,13 +236,6 @@ export function MapNavigation({
       // Refitting belongs to the committed layout/observer, not this event's
       // previous visibility state.
       measure();
-      if (
-        openWork?.length &&
-        window.matchMedia('(max-width: 700px), (max-height: 600px)').matches
-      ) {
-        preferredPosition.current = null;
-        setPosition(null);
-      }
     };
     const observer = new ResizeObserver(fitPanel);
     observer.observe(element);
@@ -167,7 +244,7 @@ export function MapNavigation({
       observer.disconnect();
       window.removeEventListener('resize', resize);
     };
-  }, [open, openWork, area]);
+  }, [open, area]);
   const cancelDrag = useCallback(() => {
     const current = drag.current;
     if (!current) return;
@@ -185,7 +262,7 @@ export function MapNavigation({
   }, [cancelDrag]);
   function clamp(value: WindowPosition) {
     if (area && panel.current && getComputedStyle(panel.current).position === 'fixed') {
-      return clampWindow(value, size, measureFloatingArea(panel.current).viewport);
+      return clampWindow(value, size, navigationArea(panel.current).viewport);
     }
     return {
       x: Math.round(Math.max(12, Math.min(value.x, size.viewportWidth - size.width - 12))),
@@ -200,7 +277,7 @@ export function MapNavigation({
             { x: box.x, y: box.y },
             value,
             size,
-            measureFloatingArea(panel.current as HTMLElement),
+            navigationArea(panel.current as HTMLElement),
           )
         : clamp(value);
     preferredPosition.current = next;
@@ -307,10 +384,6 @@ export function MapNavigation({
           aria-label={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
           title={mini ? 'Visa normal navigering' : 'Visa mininavigering'}
           onClick={() => {
-            if (openWork?.length) {
-              preferredPosition.current = null;
-              setPosition(null);
-            }
             setMini(!mini);
           }}
         >
@@ -358,9 +431,10 @@ export function MapNavigation({
                   key={axis + step}
                   type="button"
                   disabled={movementDisabled}
+                  data-movement-object={object.id}
                   aria-label={`Flytta ${object.name}: ${label.toLocaleLowerCase('sv')}`}
                   title={`Flytta ${object.name}: ${label.toLocaleLowerCase('sv')}`}
-                  onClick={() => onMove(object.id, axis, step)}
+                  onClick={(event) => moveObject(event.currentTarget, object.id, axis, step)}
                 >
                   <WorkspaceIcon name={icon} />
                   <span>{label}</span>

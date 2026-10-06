@@ -63,7 +63,11 @@ export function voiceWork({
     // A spoken task may already have advanced from the queue, beyond its
     // last observed revision. A stop covers the conversation's current work.
     interrupt();
-    canceling = request('cancel', { revision, all: true })
+    canceling = request('cancel', {
+      revision,
+      all: true,
+      contextRevision: initial.contextRevision ?? 0,
+    })
       .then((view) => {
         update(view, false);
         return { revision, view };
@@ -191,7 +195,10 @@ export function voiceWork({
         if ((view.contextRevision ?? 0) > (initial.contextRevision ?? 0)) return;
         if (!current()) {
           interrupt(view.revision);
-          await request('cancel', { revision: view.revision }).catch(() => {});
+          await request('cancel', {
+            revision: view.revision,
+            contextRevision: initial.contextRevision ?? 0,
+          }).catch(() => {});
           return;
         }
         owned = view.revision;
@@ -314,7 +321,20 @@ export function voiceWork({
     }
     void execute(event.delegation.id, text, expected, JSON.stringify(fragments), generation);
   });
+  function retire() {
+    stopped = true;
+    generation++;
+    dispatching?.abort();
+    dispatching = undefined;
+    owned = undefined;
+    fragments = [];
+    pending = [];
+    anchor = undefined;
+  }
   return {
+    // Starting over owns cancellation of the conversation. Retiring its old
+    // voice must invalidate late replies without sending a second cancel.
+    retire,
     readyForSummary: () => owned === undefined && inFlight.size === 0 && pending.length === 0,
     /** Consume each typed FIFO completion once, including while the next task works. */
     answer(view: TextAssistantView, microphoneOn = true) {
@@ -381,13 +401,7 @@ export function voiceWork({
     },
     /** The conversation has started over. Its own work is already stopped, and nothing said before is passed on. */
     reset(view: TextAssistantView) {
-      generation++;
-      dispatching?.abort();
-      dispatching = undefined;
-      owned = undefined;
-      fragments = [];
-      pending = [];
-      anchor = undefined;
+      retire();
       answeredReplies.clear();
       answered.add(view.revision);
       rendered = {

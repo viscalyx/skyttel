@@ -1,14 +1,41 @@
 import { isDeepStrictEqual } from 'node:util';
 import type Database from 'better-sqlite3';
 import {
+  type ConflictChoices,
+  combineConflictProperties,
+  conflictBasis,
+  conflictCombinationError,
+  conflictProperties,
+  conflictPropertyValue,
+  sameConflictValue,
+} from '../shared/conflict-properties.js';
+import { conflictRemovalPlan } from '../shared/conflict-removal.js';
+import { specialConflict } from '../shared/conflict-special.js';
+import { removedConflictDefinition } from '../shared/definition-restoration.js';
+import {
   draftConflicts,
   resolvedObjectValue,
   resolvedRelationshipValue,
 } from '../shared/draft-conflicts.js';
-import type { MapDraft, MapObject, MapState, ObjectValue, SaveReceipt } from '../shared/map.js';
+import {
+  type DraftProposalKind,
+  draftDiscardPlan,
+  draftProposalRefs,
+} from '../shared/draft-discard.js';
+import type {
+  MapDraft,
+  MapObject,
+  MapState,
+  ObjectType,
+  ObjectValue,
+  SaveReceipt,
+} from '../shared/map.js';
 import { compatibleCustomFields } from '../shared/map.js';
 import { isObjectIconId } from '../shared/object-icons.js';
-import { mergeFor, withoutMerge } from '../shared/object-merge.js';
+import type {
+  RelationshipFormOutcome,
+  RelationshipFormResult,
+} from '../shared/relationship-form.js';
 import { contentOwner } from './content-identities.js';
 import { assertContentAvailable, assertContentVersion } from './content-maintenance.js';
 import { readFinancialFacts } from './financial-facts.js';
@@ -17,14 +44,11 @@ import { readLifecycle } from './lifecycle.js';
 import { MapError } from './map-error.js';
 import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
-import { undoSave } from './map-undo.js';
-import { assertMergeEditable, proposeMerge } from './object-merge.js';
 import { objectTypes, readCustomValues } from './object-types.js';
 import { type EncodedImage, profileImages } from './profile-images.js';
-import { projectReceiptScope } from './project-content-scope.js';
+import { relationshipFormAttempts } from './relationship-form-attempts.js';
 import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
-import { keepIndependent } from './undo-facts.js';
 
 export { MapError } from './map-error.js';
 
@@ -137,8 +161,54 @@ export function householdMap(database: Database.Database, actorId: string, house
       })
       .immediate();
   }
+  function removeProposal(current: MapDraft, body: Record<string, unknown>) {
+    if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
+    if (!['object', 'relationship', 'objectType', 'relationshipType'].includes(String(body.kind)))
+      throw new MapError('invalid_request', 400);
+    if (!draftProposalRefs(current).some(({ kind, id }) => kind === body.kind && id === body.id))
+      throw new MapError('draft_conflict');
+    if (body.kind === 'object') {
+      const change = current.changes.find((item) => item.id === body.id);
+      if (!change?.before) edges.removeObject(current, body.id);
+      current.changes = current.changes.filter((item) => item.id !== body.id);
+      edges.reconcileObjectRemovals(current);
+    } else if (body.kind === 'relationship') {
+      current.relationships = current.relationships?.filter((item) => item.id !== body.id);
+    } else if (body.kind === 'objectType') {
+      current.objectTypes = current.objectTypes?.filter((item) => item.id !== body.id);
+    } else if (body.kind === 'relationshipType') {
+      current.relationshipTypes = current.relationshipTypes?.filter((item) => item.id !== body.id);
+    } else throw new MapError('invalid_request', 400);
+    return current;
+  }
   function readState(): MapState {
-    return {
+    const removed = database
+      .prepare(
+        'SELECT id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId FROM map_object WHERE householdId = ? AND deleted = 1 ORDER BY name, id',
+      )
+      .all(householdId)
+      .map(readObject);
+    const removedTypes = new Map<string, ObjectType>();
+    if (removed.length) {
+      // Deletion receipts retain the field meanings at removal, even if a type changes later.
+      const receipts = database
+        .prepare(`SELECT s.receipt FROM map_history h
+        JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId
+        WHERE h.householdId = ? ORDER BY h.id DESC`)
+        .all(householdId) as { receipt: string }[];
+      for (const row of receipts) {
+        const receipt = JSON.parse(row.receipt) as SaveReceipt;
+        for (const change of receipt.changes)
+          if (change.before && !change.after && !removedTypes.has(change.before.id))
+            removedTypes.set(change.before.id, change.beforeType ?? change.type);
+      }
+    }
+    const allTypes = removed.length ? types.read(true) : [];
+    const removedObjects = removed.map((object) => ({
+      object,
+      type: removedTypes.get(object.id) ?? allTypes.find((type) => type.id === object.typeId),
+    }));
+    const state: MapState = {
       userId,
       contentVersion: operations.contentVersion(),
       relationshipTypes: edges.types(),
@@ -151,7 +221,88 @@ export function householdMap(database: Database.Database, actorId: string, house
         .all(householdId)
         .map(readObject),
       draft: draft(),
+      ...(removedObjects.length ? { removedObjects } : {}),
     };
+    const objectDefinitionIds = new Set(state.draft.objectTypes?.map((change) => change.id));
+    const relationshipDefinitionIds = new Set(
+      state.draft.relationshipTypes?.map((change) => change.id),
+    );
+    const objectTypes = types
+      .read(true)
+      .filter(
+        (type) =>
+          objectDefinitionIds.has(type.id) && !state.types.some((active) => active.id === type.id),
+      );
+    const relationshipTypes = edgeTypes
+      .read(true)
+      .filter(
+        (type) =>
+          relationshipDefinitionIds.has(type.id) &&
+          !state.relationshipTypes.some((active) => active.id === type.id),
+      );
+    if (objectTypes.length || relationshipTypes.length)
+      state.removedDefinitions = { objectTypes, relationshipTypes };
+    const conflicts = draftConflicts(state);
+    if (conflicts.length) {
+      const actors: NonNullable<MapState['conflictActors']> = {};
+      const propertyActors: NonNullable<MapState['conflictPropertyActors']> = {};
+      const remainingProperties = new Map(
+        conflicts.map((conflict) => [
+          `${conflict.kind}:${conflict.id}`,
+          new Set(conflictProperties(state, conflict).map((field) => field.key)),
+        ]),
+      );
+      const receipts = database
+        .prepare(
+          `SELECT s.receipt FROM map_history h JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId WHERE h.householdId = ? ORDER BY h.id DESC`,
+        )
+        .all(householdId) as { receipt: string }[];
+      for (const row of receipts) {
+        const receipt = JSON.parse(row.receipt) as SaveReceipt;
+        for (const conflict of conflicts) {
+          const key = `${conflict.kind}:${conflict.id}`;
+          const changes =
+            conflict.kind === 'object'
+              ? receipt.changes
+              : conflict.kind === 'relationship'
+                ? receipt.relationships
+                : conflict.kind === 'objectType'
+                  ? receipt.objectTypes
+                  : receipt.relationshipTypes;
+          const change = changes?.find(
+            (change) =>
+              ('id' in change ? change.id : (change.after?.id ?? change.before?.id)) ===
+              conflict.id,
+          );
+          if (!change) continue;
+          const name = receipt.actorName?.trim().split(/\s+/)[0];
+          const actor = name ? { name, savedAt: receipt.savedAt } : undefined;
+          if (
+            !actors[key] &&
+            actor &&
+            (change.after?.revision ?? null) === (conflict.current?.revision ?? null)
+          )
+            actors[key] = actor;
+          for (const property of remainingProperties.get(key) ?? []) {
+            const before = conflictPropertyValue(change.before, property);
+            const after = conflictPropertyValue(change.after, property);
+            if (sameConflictValue(before, after)) continue;
+            // Stop at the latest actual write, including a receipt without known authorship.
+            remainingProperties.get(key)?.delete(property);
+            if (
+              actor &&
+              sameConflictValue(after, conflictPropertyValue(conflict.current, property))
+            ) {
+              propertyActors[key] ??= {};
+              propertyActors[key][property] = actor;
+            }
+          }
+        }
+      }
+      if (Object.keys(actors).length) state.conflictActors = actors;
+      if (Object.keys(propertyActors).length) state.conflictPropertyActors = propertyActors;
+    }
+    return state;
   }
 
   function imageChange(body: Record<string, unknown>) {
@@ -160,7 +311,6 @@ export function householdMap(database: Database.Database, actorId: string, house
     if (body.contentVersion !== operations.contentVersion()) throw new MapError('content_conflict');
     if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
       throw new MapError('invalid_request', 400);
-    assertMergeEditable(current, 'object', body.id);
     const existing = current.changes.find((change) => change.id === body.id);
     const saved = object(body.id) ?? null;
     const before = existing ? existing.before : saved;
@@ -208,7 +358,7 @@ export function householdMap(database: Database.Database, actorId: string, house
           database
             .prepare(`SELECT s.receipt FROM map_history h
         JOIN map_save s ON s.householdId = h.householdId AND s.userId = h.userId AND s.operationId = h.operationId
-        WHERE h.householdId = ? ORDER BY h.id`)
+        WHERE h.householdId = ? ORDER BY h.id DESC`)
             .all(householdId) as { receipt: string }[]
         ).map((row) => JSON.parse(row.receipt) as SaveReceipt),
       }));
@@ -216,55 +366,187 @@ export function householdMap(database: Database.Database, actorId: string, house
     read(): MapState {
       return transaction(readState);
     },
-    undo(body: Record<string, unknown>) {
-      return transaction(() => {
-        operations.assertEditable();
-        checkedDraft(body.version, body.contentVersion);
-        if (typeof body.operationId !== 'string' || typeof body.userId !== 'string')
-          throw new MapError('invalid_request', 400);
-        const row = database
-          .prepare(
-            'SELECT receipt FROM map_save WHERE householdId = ? AND userId = ? AND operationId = ?',
-          )
-          .get(householdId, body.userId, body.operationId) as { receipt: string } | undefined;
-        if (!row) throw new MapError('undo_unavailable');
-        const receipt = JSON.parse(row.receipt) as SaveReceipt;
-        const ownDraft = draft();
-        if (
-          receipt.changes.some((change) =>
-            mergeFor(ownDraft, 'object', change.after?.id ?? change.before?.id),
-          ) ||
-          receipt.relationships?.some((change) => mergeFor(ownDraft, 'relationship', change.id))
-        )
-          throw new MapError('undo_draft_overlap');
-        const proposed = undoSave(
-          readState(),
-          projectReceiptScope(receipt, householdId),
-          tombstones,
-          types.read(true),
-          edgeTypes.read(true),
-        );
-        types.validateUndo(proposed);
-        edgeTypes.validateUndo(proposed);
-        return writeDraft(proposed);
-      });
-    },
     resolve(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
-        if (body.choice !== 'saved' && body.choice !== 'proposed')
+        if (
+          body.command === undefined &&
+          body.choices === undefined &&
+          body.choice !== 'saved' &&
+          body.choice !== 'proposed'
+        )
           throw new MapError('invalid_request', 400);
         const conflict = draftConflicts(readState()).find((item) =>
           isDeepStrictEqual(item, body.conflict),
         );
         if (!conflict) throw new MapError('resolution_conflict');
-        if (conflict.kind === 'object' || conflict.kind === 'relationship')
-          assertMergeEditable(current, conflict.kind, conflict.id);
+        if (body.command !== undefined) {
+          const state = readState();
+          if (!isDeepStrictEqual(body.basis, conflictBasis(state, conflict)))
+            throw new MapError('resolution_conflict');
+          const special = specialConflict(state, conflict);
+          if (body.command === 'definition-choice' && special?.kind === 'removed-definition') {
+            if (body.definitionChoice !== 'saved' && body.definitionChoice !== 'proposed')
+              throw new MapError('invalid_request', 400);
+            if (body.definitionChoice === 'saved') {
+              if (conflict.kind === 'objectType')
+                current.objectTypes = current.objectTypes?.filter(
+                  (change) => change.id !== conflict.id,
+                );
+              else
+                current.relationshipTypes = current.relationshipTypes?.filter(
+                  (change) => change.id !== conflict.id,
+                );
+              return writeDraft({ ...current, version: current.version + 1 });
+            }
+            const definition = removedConflictDefinition(state, conflict);
+            if (!definition) throw new MapError('type_conflict');
+            return writeDraft(
+              conflict.kind === 'objectType'
+                ? types.restore(current, conflict.id, definition, state.contentVersion)
+                : edgeTypes.restore(current, conflict.id, definition, state.contentVersion),
+            );
+          }
+          if (body.command === 'removal-choices' && special?.kind === 'own-removal') {
+            if (
+              !body.removalChoices ||
+              typeof body.removalChoices !== 'object' ||
+              Array.isArray(body.removalChoices)
+            )
+              throw new MapError('invalid_request', 400);
+            const resolved = conflictRemovalPlan(
+              state,
+              conflict,
+              body.removalChoices as ConflictChoices,
+            );
+            if (!resolved) throw new MapError('invalid_resolution', 400);
+            edges.reconcileObjectRemovals(resolved.draft);
+            return writeDraft({ ...resolved.draft, version: current.version + 1 });
+          }
+          if (
+            body.command !== 'discard-proposal' ||
+            !special?.action ||
+            special.kind === 'own-removal'
+          )
+            throw new MapError('invalid_resolution', 400);
+          if (conflict.kind === 'object')
+            current.changes = current.changes.filter((change) => change.id !== conflict.id);
+          else if (conflict.kind === 'relationship')
+            current.relationships = current.relationships?.filter(
+              (change) => change.id !== conflict.id,
+            );
+          else throw new MapError('invalid_resolution', 400);
+          edges.reconcileObjectRemovals(current);
+          return writeDraft({ ...current, version: current.version + 1 });
+        }
+        if (body.choices !== undefined) {
+          const state = readState();
+          if (!isDeepStrictEqual(body.basis, conflictBasis(state, conflict)))
+            throw new MapError('resolution_conflict');
+          if (!body.choices || typeof body.choices !== 'object' || Array.isArray(body.choices))
+            throw new MapError('invalid_request', 400);
+          const fields = conflictProperties(state, conflict);
+          const choices = body.choices as ConflictChoices;
+          if (
+            Object.entries(choices).some(
+              ([key, value]) =>
+                !fields.some((field) => field.key === key) ||
+                !['saved', 'proposed'].includes(value),
+            )
+          )
+            throw new MapError('invalid_request', 400);
+          const value = combineConflictProperties(fields, choices);
+          if (
+            !fields.length ||
+            !value ||
+            fields.some(
+              (field) => !sameConflictValue(field.saved, field.proposed) && !choices[field.key],
+            )
+          )
+            throw new MapError('resolution_choices_required', 400);
+          if (conflictCombinationError(state, conflict, value))
+            throw new MapError('invalid_resolution', 400);
+          if (
+            fields.every(
+              (field) =>
+                sameConflictValue(field.saved, field.proposed) || choices[field.key] === 'saved',
+            )
+          ) {
+            if (conflict.kind === 'object')
+              current.changes = current.changes.filter((change) => change.id !== conflict.id);
+            else if (conflict.kind === 'relationship')
+              current.relationships = current.relationships?.filter(
+                (change) => change.id !== conflict.id,
+              );
+            else if (conflict.kind === 'objectType')
+              current.objectTypes = current.objectTypes?.filter(
+                (change) => change.id !== conflict.id,
+              );
+            else
+              current.relationshipTypes = current.relationshipTypes?.filter(
+                (change) => change.id !== conflict.id,
+              );
+            edges.reconcileObjectRemovals(current);
+            return writeDraft({ ...current, version: current.version + 1 });
+          }
+          if (conflict.kind === 'object') {
+            const change = current.changes.find((item) => item.id === conflict.id);
+            if (!change || !conflict.current) throw new MapError('resolution_conflict');
+            const type = types.effective(current).find((type) => type.id === value.typeId);
+            if (!type) throw new MapError('type_conflict');
+            const after = value as unknown as ObjectValue;
+            readCustomValues(after.customValues, type);
+            readFinancialFacts(after.financialFacts);
+            readLifecycle(after.lifecycle);
+            if (after.profileImageId) images.validate(after.profileImageId, change.id);
+            change.before = conflict.current;
+            change.beforeType = types.read().find((type) => type.id === conflict.current?.typeId);
+            change.type = type;
+            change.after = after;
+
+            return writeDraft({ ...current, version: current.version + 1 });
+          }
+          if (conflict.kind === 'relationship') {
+            const change = current.relationships?.find((item) => item.id === conflict.id);
+            if (!change || !conflict.current) throw new MapError('resolution_conflict');
+            change.before = conflict.current;
+
+            return writeDraft(
+              edges.propose(current, {
+                id: conflict.id,
+                baseRevision: conflict.current.revision,
+                value,
+              }).draft,
+            );
+          }
+          const change = (
+            conflict.kind === 'objectType' ? current.objectTypes : current.relationshipTypes
+          )?.find((item) => item.id === conflict.id);
+          if (!change || !conflict.current) throw new MapError('resolution_conflict');
+          change.before = conflict.current;
+          delete change.restoration;
+          const definitions = conflict.kind === 'objectType' ? types : edgeTypes;
+          return writeDraft(
+            definitions.propose(
+              current,
+              {
+                id: conflict.id,
+                baseRevision: conflict.current.revision,
+                value: { ...value, fields: value.fields ?? [] },
+              },
+              'exact',
+            ),
+          );
+        }
         if (conflict.kind === 'objectType') {
+          if (body.choice !== 'saved' && body.choice !== 'proposed')
+            throw new MapError('invalid_request', 400);
           return writeDraft(types.resolve(current, conflict.id, conflict.current, body.choice));
         }
         if (conflict.kind === 'relationshipType') {
+          if (body.choice !== 'saved' && body.choice !== 'proposed')
+            throw new MapError('invalid_request', 400);
           return writeDraft(edgeTypes.resolve(current, conflict.id, conflict.current, body.choice));
         }
         if (body.choice === 'proposed' && conflict.duplicates)
@@ -278,23 +560,8 @@ export function householdMap(database: Database.Database, actorId: string, house
           if (!change) throw new MapError('resolution_conflict');
           if (body.choice === 'saved' || (!conflict.current && !change.after)) {
             current.changes = current.changes.filter((item) => item.id !== conflict.id);
-            const remaining = keepIndependent('object', change, conflict.current);
-            if (remaining)
-              current.changes.push({
-                ...change,
-                ...remaining,
-                beforeType: types.read().find((type) => type.id === remaining.before?.typeId),
-                undo: undefined,
-                undoFields: undefined,
-                type:
-                  types.effective(current).find((item) => item.id === remaining.after?.typeId) ??
-                  change.type,
-              });
           } else {
-            if (!conflict.current && change.before) {
-              if (!change.undo) throw new MapError('object_conflict');
-              if (change.after) change.restoreRevision = tombstones.revision('object', change.id);
-            }
+            if (!conflict.current && change.before) throw new MapError('object_conflict');
             change.after = resolvedObjectValue(change, conflict.current);
             change.before = conflict.current;
             change.beforeType = types.read().find((type) => type.id === conflict.current?.typeId);
@@ -310,24 +577,8 @@ export function householdMap(database: Database.Database, actorId: string, house
             current.relationships = current.relationships?.filter(
               (item) => item.id !== conflict.id,
             );
-            const remaining = keepIndependent('relationship', change, conflict.current);
-            if (remaining)
-              current.relationships?.push({
-                ...change,
-                ...remaining,
-                undo: undefined,
-                undoFields: undefined,
-                type:
-                  edgeTypes
-                    .effective(current)
-                    .find((item) => item.id === remaining.after?.typeId) ?? change.type,
-              });
           } else {
-            if (!conflict.current && change.before) {
-              if (!change.undo) throw new MapError('relationship_conflict');
-              if (change.after)
-                change.restoreRevision = tombstones.revision('relationship', change.id);
-            }
+            if (!conflict.current && change.before) throw new MapError('relationship_conflict');
             const before = change.before;
             change.after = resolvedRelationshipValue(change, conflict.current);
             change.before = conflict.current;
@@ -352,13 +603,6 @@ export function householdMap(database: Database.Database, actorId: string, house
         return writeDraft({ ...current, version: current.version + 1 });
       });
     },
-    merge(body: Record<string, unknown>) {
-      return transaction(() => {
-        operations.assertEditable();
-        checkedDraft(body.version, body.contentVersion);
-        return writeDraft(proposeMerge(readState(), body, types, edges, images));
-      });
-    },
     proposeObjectType(body: Record<string, unknown>) {
       return transaction(() => {
         operations.assertEditable();
@@ -369,12 +613,58 @@ export function householdMap(database: Database.Database, actorId: string, house
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
-        assertMergeEditable(current, 'relationship', body.id);
         const result = edges.propose(current, body);
         return {
           ...writeDraft(result.draft),
           ...(result.existingId ? { existingId: result.existingId } : {}),
         };
+      });
+    },
+    relationshipFormOutcome(stagingId: string, contentVersion: number): RelationshipFormResult {
+      return transaction(() => {
+        assertContentVersion(database, householdId, contentVersion);
+        const attempts = relationshipFormAttempts(database, householdId, userId, contentVersion);
+        return { outcome: attempts.outcome(stagingId), state: readState() };
+      });
+    },
+    proposeRelationshipForm(body: Record<string, unknown>): RelationshipFormResult {
+      return transaction(() => {
+        if (!Number.isSafeInteger(body.contentVersion) || (body.contentVersion as number) < 1)
+          throw new MapError('invalid_request', 400);
+        if (!Number.isSafeInteger(body.typeRevision) || (body.typeRevision as number) < 0)
+          throw new MapError('invalid_request', 400);
+        assertContentVersion(database, householdId, body.contentVersion);
+        const attempts = relationshipFormAttempts(
+          database,
+          householdId,
+          userId,
+          body.contentVersion as number,
+        );
+        const previous = attempts.previous(body);
+        if (previous) return { outcome: previous, state: readState() };
+        operations.assertEditable();
+        const current = checkedDraft(body.version, body.contentVersion);
+        const result = edges.propose(current, body, true);
+        let outcome: RelationshipFormOutcome;
+        if (result.existingId)
+          outcome = {
+            status: 'duplicate',
+            stagingId: body.stagingId as string,
+            relationshipId: result.existingId,
+          };
+        else {
+          writeDraft(result.draft);
+          outcome = {
+            status: 'staged',
+            stagingId: body.stagingId as string,
+            relationshipId: body.id as string,
+            draftVersion: result.draft.version,
+            value:
+              result.draft.relationships?.find((change) => change.id === body.id)?.after ?? null,
+          };
+        }
+        attempts.record(body, outcome);
+        return { outcome, state: readState() };
       });
     },
     proposeRelationshipType(body: Record<string, unknown>) {
@@ -383,14 +673,19 @@ export function householdMap(database: Database.Database, actorId: string, house
         return writeDraft(edgeTypes.propose(checkedDraft(body.version, body.contentVersion), body));
       });
     },
-    propose(body: Record<string, unknown>) {
+    propose(body: Record<string, unknown>, image?: EncodedImage) {
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
         if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
           throw new MapError('invalid_request', 400);
         const id = body.id;
-        assertMergeEditable(current, 'object', id);
+        if (
+          body.stagingId !== undefined &&
+          (typeof body.stagingId !== 'string' ||
+            !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(body.stagingId))
+        )
+          throw new MapError('invalid_request', 400);
         const existing = current.changes.find((change) => change.id === id);
         const before = existing ? existing.before : (object(id) ?? null);
         if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('object_conflict');
@@ -422,7 +717,8 @@ export function householdMap(database: Database.Database, actorId: string, house
             : existing
               ? existing.after?.profileImageId
               : before?.profileImageId;
-          const profileImageId = imageId == null ? undefined : images.validate(imageId, id);
+          const profileImageId =
+            imageId == null || image ? undefined : images.validate(imageId, id);
           const iconChoice = Object.hasOwn(value, 'iconId')
             ? value.iconId
             : existing
@@ -446,21 +742,23 @@ export function householdMap(database: Database.Database, actorId: string, house
         const typeId = after?.typeId ?? before?.typeId ?? existing?.type.id;
         const type = types.effective(current).find((item) => item.id === typeId);
         if (!type) throw new MapError('invalid_type', 400);
+        // Insert only after all form values are valid, inside the same draft transaction.
+        if (image) {
+          if (!after) throw new MapError('invalid_request', 400);
+          after.profileImageId = images.insert(id, image);
+        }
         const beforeType =
           existing?.beforeType ?? types.read().find((item) => item.id === before?.typeId);
         current.changes = current.changes.filter((change) => change.id !== id);
         if (before || after)
           current.changes.push({
+            proposedAt: new Date().toISOString(),
+            ...(typeof body.stagingId === 'string' ? { stagingId: body.stagingId } : {}),
             id,
             before,
             after,
             type,
             ...(beforeType ? { beforeType } : {}),
-            ...(existing?.restoreRevision !== undefined
-              ? { restoreRevision: existing.restoreRevision }
-              : {}),
-            ...(existing?.undo ? { undo: true } : {}),
-            ...(existing?.undoFields ? { undoFields: existing.undoFields } : {}),
           });
         if (!after) edges.removeObject(current, id);
         edges.reconcileObjectRemovals(current);
@@ -480,26 +778,28 @@ export function householdMap(database: Database.Database, actorId: string, house
       return transaction(() => {
         operations.assertEditable();
         const current = checkedDraft(body.version, body.contentVersion);
-        if (typeof body.id !== 'string') throw new MapError('invalid_request', 400);
-        const merge = mergeFor(current, body.kind as string, body.id);
-        if (merge)
-          return writeDraft({ ...withoutMerge(current, merge), version: current.version + 1 });
-        if (body.kind === 'object') {
-          const change = current.changes.find((item) => item.id === body.id);
-          if (!change) throw new MapError('draft_conflict');
-          if (!change.before) edges.removeObject(current, change.id);
-          current.changes = current.changes.filter((item) => item.id !== body.id);
-          edges.reconcileObjectRemovals(current);
-        } else if (body.kind === 'relationship') {
-          current.relationships = current.relationships?.filter((item) => item.id !== body.id);
-        } else if (body.kind === 'objectType') {
-          current.objectTypes = current.objectTypes?.filter((item) => item.id !== body.id);
-        } else if (body.kind === 'relationshipType') {
-          current.relationshipTypes = current.relationshipTypes?.filter(
-            (item) => item.id !== body.id,
-          );
-        } else throw new MapError('invalid_request', 400);
+        removeProposal(current, body);
         return writeDraft({ ...current, version: current.version + 1 });
+      });
+    },
+    discardReview(body: Record<string, unknown>) {
+      return transaction(() => {
+        operations.assertEditable();
+        const current = checkedDraft(body.version, body.contentVersion);
+        const after =
+          body.kind === 'all'
+            ? { version: current.version, changes: [] }
+            : removeProposal(structuredClone(current), body);
+        const plan = draftDiscardPlan(
+          readState(),
+          after,
+          body.kind as DraftProposalKind | 'all',
+          body.id as string,
+        );
+        if (body.confirmation === undefined) return { plan };
+        if (!isDeepStrictEqual(body.confirmation, plan)) throw new MapError('draft_conflict');
+        writeDraft({ ...after, version: current.version + 1 });
+        return { plan, state: readState() };
       });
     },
     save(body: Record<string, unknown>) {
@@ -578,7 +878,7 @@ export function householdMap(database: Database.Database, actorId: string, house
                     id: change.id,
                     householdId,
                     typeId: change.after.typeId,
-                    revision: (saved?.revision ?? change.restoreRevision ?? 0) + 1,
+                    revision: (saved?.revision ?? 0) + 1,
                     name: change.after.name,
                     description: change.after.description,
                     ...(change.after.customValues
@@ -596,7 +896,7 @@ export function householdMap(database: Database.Database, actorId: string, house
                   }
                 : null;
               if (after) {
-                if (!saved) tombstones.assertCreation('object', change.id, change.restoreRevision);
+                if (!saved) tombstones.assertCreation('object', change.id);
                 database
                   .prepare(`INSERT INTO map_object (id, householdId, typeId, revision, name, description, identity, financialFacts, customValues, lifecycle, profileImageId, iconId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
               ON CONFLICT(id) DO UPDATE SET typeId = excluded.typeId, revision = excluded.revision, name = excluded.name, description = excluded.description, identity = excluded.identity, financialFacts = excluded.financialFacts, customValues = excluded.customValues, lifecycle = excluded.lifecycle, profileImageId = excluded.profileImageId, iconId = excluded.iconId, deleted = 0`)
@@ -627,21 +927,6 @@ export function householdMap(database: Database.Database, actorId: string, house
                 before: change.before,
                 after,
                 type,
-                ...(change.merge
-                  ? {
-                      merge: {
-                        survivorId: change.merge.survivorId,
-                        absorbedId: change.merge.absorbedId,
-                        identityConfirmed: change.merge.identityConfirmed,
-                        objects: change.merge.objects,
-                        types: change.merge.types,
-                        relationships: change.merge.relationships,
-                        relationshipTypes: change.merge.relationshipTypes,
-                        objectNames: change.merge.objectNames,
-                        ...(change.merge.imageCopy ? { imageCopy: change.merge.imageCopy } : {}),
-                      },
-                    }
-                  : {}),
                 ...(beforeType && !isDeepStrictEqual(beforeType, type) ? { beforeType } : {}),
               });
             }

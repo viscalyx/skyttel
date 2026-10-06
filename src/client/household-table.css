@@ -1,0 +1,346 @@
+.household-table {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 24px 28px 100px 110px;
+  background: var(--space-bg);
+}
+.household-table > * {
+  max-width: 1660px;
+  margin-inline: auto;
+}
+.household-table-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 0 24px;
+}
+.household-table h1 {
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin: 0 0 12px;
+}
+.household-table h2 {
+  font-size: 23px;
+}
+.household-table h3 {
+  font-size: 17px;
+}
+.household-table :is(h2, h3, p) {
+  margin: 0 0 12px;
+}
+.household-table-heading span {
+  color: var(--space-muted);
+}
+.household-table button {
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 1px solid var(--space-control);
+  border-radius: 8px;
+  background: var(--space-surface);
+  color: var(--space-text);
+}
+.household-table button:hover:enabled {
+  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 90%);
+  border-color: var(--space-accent);
+}
+.household-map.workspace-shell[data-narrow="false"].text-view-open .household-table {
+  right: var(--text-view-space);
+}
+.household-table :is(select, input) {
+  font: inherit;
+  padding: 10px;
+  border: 1px solid var(--space-control);
+  border-radius: 8px;
+}
+.household-table-search {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.household-table-results {
+  border: 1px solid var(--space-line);
+  border-radius: 14px;
+  background: var(--space-surface);
+  overflow: hidden;
+  min-width: 0;
+}
+.household-table-result-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+}
+.household-table-result-heading p {
+  margin: 0;
+}
+.household-table-result-heading label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  font-weight: 400;
+}
+.household-table-scroll {
+  overflow: auto;
+  max-height: 75dvh;
+  scroll-padding-top: 48px;
+}
+.household-table table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  min-width: 800px;
+}
+.household-table .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.household-table :is(th, td):nth-child(2) {
+  min-width: 120px;
+}
+.household-table :is(th, td):nth-child(4) {
+  min-width: 145px;
+  overflow-wrap: normal;
+}
+.household-table :is(th, td):nth-child(5) {
+  min-width: 150px;
+}
+.household-table thead th {
+  white-space: nowrap;
+}
+.household-table :is(th, td) {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--space-line), transparent 55%);
+  vertical-align: top;
+}
+.household-table thead th {
+  position: sticky;
+  top: 0;
+  background: color-mix(in srgb, var(--space-line), var(--space-surface) 85%);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  z-index: 1;
+}
+.household-table tbody tr[data-selected="true"] > :is(td, th) {
+  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 94%);
+}
+.household-table tbody th {
+  width: 30%;
+  min-width: 190px;
+  font-weight: 600;
+  font-size: 17px;
+}
+.household-map.workspace-shell .household-table .household-table-row-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  text-align: left;
+  border: none;
+  padding: 0;
+  background: transparent;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.household-table-truncate {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-width: 145px;
+  max-width: 450px;
+}
+.household-table-selection {
+  display: block;
+  font-size: 12px;
+  color: var(--space-accent);
+}
+.household-table-badge {
+  display: block;
+  font-size: 12px;
+  color: var(--proposal-changed);
+  background: color-mix(in srgb, var(--proposal-changed), var(--space-surface) 90%);
+  padding: 3px 7px;
+  border-radius: 6px;
+  width: fit-content;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.household-table-badge[data-kind="Nytt"] {
+  color: var(--proposal-added);
+}
+.household-table-badge[data-kind="Föreslagen borttagning"] {
+  color: var(--proposal-removed);
+}
+.household-table-row-actions {
+  display: flex;
+  gap: 5px;
+}
+.household-table-row-actions button {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.household-table-row-actions svg {
+  width: 22px;
+  height: 22px;
+}
+.household-table .household-table-detail-row td {
+  background: color-mix(in srgb, var(--space-bg), var(--space-surface) 65%);
+  padding: 20px 30px;
+}
+.household-table-details {
+  max-width: 1100px;
+}
+.household-table-description {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.household-table-details dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 30px;
+  margin: 0;
+}
+.household-table-details dl > div {
+  border-left: 2px solid var(--space-line);
+  padding-left: 12px;
+  overflow-wrap: anywhere;
+}
+.household-table-details dt {
+  font-size: 13px;
+  color: var(--space-muted);
+  margin-bottom: 5px;
+}
+.household-table-details dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.household-table-before {
+  display: block;
+  color: var(--space-muted);
+  font-size: 13px;
+}
+.household-table-proposed {
+  color: var(--proposal-changed);
+  font-weight: 600;
+}
+.household-table-pages {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--space-line);
+  font-size: 13px;
+}
+.household-table-empty {
+  padding: 20px;
+}
+.household-table > .household-table-filter-dialog {
+  max-width: 800px;
+}
+.household-table-filter-dialog .object-search-filters {
+  grid-template-columns: 2fr 1fr 1.5fr;
+}
+.household-table-filter-dialog .object-search-filters fieldset:first-child {
+  grid-row: auto;
+}
+.household-table-filter-dialog fieldset {
+  border: 0;
+  padding: 0;
+}
+.household-map .household-table-filter-dialog .object-search-filters label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.household-table-filter-dialog input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+.household-map[data-workspace-surface="table"] > .workspace-context {
+  display: none;
+}
+.household-map[data-workspace-surface="table"] .workspace-camera-tools {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .household-table-details dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .household-table-filter-dialog .object-search-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .household-table-filter-dialog .object-search-filters fieldset:first-child {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 700px) {
+  .household-table-filter-dialog .object-search-filters {
+    grid-template-columns: 1fr;
+  }
+  .household-table {
+    padding: calc(var(--tools-bottom, 76px) + 24px) 12px 90px;
+    font-size: 14px;
+  }
+  .household-table-heading {
+    gap: 12px;
+    align-items: start;
+    flex-wrap: wrap;
+  }
+  .household-table-search {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+  .household-table-search > button {
+    align-self: start;
+  }
+  .household-table-result-heading {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+  .household-table-scroll {
+    max-height: 75dvh;
+  }
+  .household-table :is(th, td) {
+    padding: 12px;
+  }
+  .household-table .household-table-detail-row td {
+    padding: 14px;
+  }
+  .household-table-details {
+    max-width: min(300px, calc(100vw - 54px));
+  }
+  .household-table-details dl {
+    grid-template-columns: 1fr;
+  }
+  .household-table-pages {
+    padding: 10px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .household-table-pages span {
+    width: 100%;
+    order: -1;
+    text-align: center;
+  }
+}

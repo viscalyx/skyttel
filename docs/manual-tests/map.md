@@ -16,28 +16,30 @@ webbläsarprofil. Alla namn, adresser och beskrivningar nedan är påhittade.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+När ett befintligt objekt ska ändras, välj **Tabell** och
+**Redigera [objektets namn]**. **Samband för [objektets namn]** öppnar dess
+samband; välj ett sambands **Redigera samband** för att ändra det.
+Objektets namn öppnar den utökade läsraden och startar ingen redigering.
 
 1. Förbered en separat testinstallation med en ny, tom databas enligt
    [installationsguiden](../operations/installation.md). Använd inga verkliga
    hushållsuppgifter. Börja varje testfall med en ny testdatabas.
 2. Starta applikationen, öppna dess adress och logga in som administratören.
-   Skapa hushållet **Hushållet Linden**. Kontrollera att objektlistan är tom
-   och att **Hela mitt utkast** visar **Inga förslag**.
-3. Skapa objekt genom **Nytt objekt**, fyll i **Objektets namn** och
+   Skapa hushållet **Hushållet Linden**. Kontrollera att **Tabell** är tom
+   och att **Skriv till Skyttel → Visa utkastet** visar **Utkastet är tomt**.
+   Stäng textvyn innan du börjar formulärarbetet.
+3. Skapa objekt genom **Nytt objekt**, fyll i **Namn** och
    **Objekttyp**, ange eventuell **Beskrivning** och välj
-   **Lägg i mitt utkast**. Låt **Objektets identitet** vara
+   **Lägg i utkastet och stäng**. Låt **Identitet** vara
    **Identifierat objekt** om testfallet inte anger något annat.
-4. Skapa samband genom **Nytt samband**, välj **Från objekt**,
+4. Öppna objektets **Samband för**, välj **Nytt samband** och **Från objekt**,
    **Sambandstyp** och **Till objekt** och välj
-   **Lägg sambandet i mitt utkast**. Låt **Uppgiftens säkerhet** vara
+   **Lägg i utkastet**. Stäng med **Stäng samband** efter bekräftelsen.
+   Låt **Uppgiftens säkerhet** vara
    **Känt** om testfallet inte anger något annat.
 5. Behåll databasen vid omladdning och omstart inom ett testfall. Ett
-   sparande görs med **Spara hela utkastet**; invänta ett lyckat kvitto.
+   sparande görs via **Skriv till Skyttel → Visa utkastet → Spara hela
+   utkastet**; invänta **Utkastet är sparat** och stäng sedan textvyn.
 
 ## Söka och stänga formulär
 
@@ -58,21 +60,22 @@ the saved map”.
 
 **Steg:**
 
-1. Skriv **åSAS** i **Sök objekt**. Kontrollera vilka objekt som visas och
-   öppna **Åsas tjänst**. Kontrollera tangentbordets fokus.
+1. Öppna **Tabell**, skriv **åSAS** i **Sök objekt i tabellen** och
+   kontrollera träffarna. Öppna utkastvyn, välj sedan tabellens
+   **Redigera Åsas tjänst** och kontrollera tangentbordets fokus.
 2. Ändra namnet till **Text som inte skickas** och beskrivningen till
    **Inte heller denna text skickas**. Kontrollera **Spara hela utkastet**.
-3. Flytta tangentbordets fokus till **Stäng utan att skicka texten** och
-   tryck Retur. Kontrollera fokus och öppna **Åsas tjänst** igen.
+3. Välj **Avbryt** och bekräfta **Kasta ändringarna och fortsätt**.
+   Kontrollera fokus och öppna **Åsas tjänst** igen.
 4. Stäng formuläret, sök efter **finns inte** och töm därefter sökfältet.
 5. Välj **Nytt objekt**, skriv **Avbrutet objekt** och välj
-   **Stäng utan att skicka texten**. Ladda om sidan.
+   **Avbryt** följt av **Kasta ändringarna och fortsätt**. Ladda om sidan.
 
 **Förväntat resultat:**
 
 - Sökningen visar bara Åsas tjänst. När objektet öppnas får namnfältet
   fokus. Sparknappen är inaktiverad medan formuläret innehåller ändrad text.
-- Stängning med Retur flyttar fokus till **Nytt objekt**. När objektet
+- Bekräftad stängning flyttar fokus till **Redigera Åsas tjänst**. När objektet
   öppnas igen visas Åsas tjänst och Gemensam musik.
 - En sökning utan träffar ger en tom objektlista. Ett tomt sökfält visar
   alla tre objekt igen.
@@ -97,18 +100,20 @@ identified without changing its links”.
 
 **Steg:**
 
-1. Lägg bankkontot **Betalkonto** i utkastet med **Objektets identitet**
+1. Lägg bankkontot **Betalkonto** i utkastet med **Identitet**
    satt till **Obesvarad identitetsfråga**. Ladda om sidan och granska
    utkastet och **Spara hela utkastet**.
-2. Öppna Betalkonto och kontrollera identiteten. Ändra den till
+2. Stäng textvyn, välj **Redigera Betalkonto** och kontrollera identiteten.
+   Ändra den till
    **Ospecificerat objekt** och lägg ändringen i utkastet.
 3. Lägg till abonnemanget **Familjemusik** och sambandet
    **Familjemusik → Betalas med → Betalkonto**. Spara hela utkastet.
-4. Ladda om sidan och öppna Betalkonto. Kontrollera att det fortfarande
+4. Ladda om sidan och välj **Redigera Betalkonto**. Kontrollera att det fortfarande
    är ospecificerat. Välj **Identifierat objekt**, ändra namnet till
    **Hushållskontot** och beskrivningen till **Gemensamt bankkonto**.
    Lägg ändringen i utkastet och spara.
-5. Ladda om sidan, granska sambandet och öppna Hushållskontot.
+5. Ladda om sidan, läs **Samband för Familjemusik**, stäng samband och
+   välj **Redigera Hushållskontot**.
 
 **Förväntat resultat:**
 
@@ -119,53 +124,55 @@ identified without changing its links”.
   Familjemusik → Betalas med → Hushållskontot. Bankkontot visar
   Identifierat objekt och Gemensamt bankkonto. Ingen dubblett skapas.
 
-### KARTA-08: rätta obesvarad identitet från status med stängda formulär
+### KARTA-08: kasta oskickad text och rätta en obesvarad identitet
 
-**Syfte:** Nå rätt objekt från ett blockerande identitetsbesked och bevara
-oskickad text i både det objektet och ett annat formulär.
+**Syfte:** Kasta enbart oskickat formulärarbete innan ett tidigare
+objektförslag rättas, utan att ändra dess samband eller andra förslag.
 
 **Användare:** Den konfigurerade administratören.
 
-**Förutsättningar:** Spara abonnemanget **Familjemusik** med beskrivningen
-**Sparad beskrivning**. Behåll databasen under omstarten.
+**Förutsättningar:** Spara Familjemusik med beskrivningen Sparad beskrivning.
+Behåll databasen vid omstart.
 
 **Integrationstest:**
-[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts),
-testfallen “KARTA-08: a closed-panel identity blocker opens the exact
-retained object without sending other text at 1280px in light”, samma titel
-med “390px” eller “320px” och “dark”. Kör varje bredd i båda temana.
+[map-workflows.spec.ts](../../tests/integration/map-workflows.spec.ts).
+Följande testfall:
+
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 1280px in light”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 1280px in dark”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 390px in light”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 390px in dark”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 320px in light”.
+- “KARTA-08: discarding unsent object text preserves proposals before correcting
+  an unresolved identity at 320px in dark”.
 
 **Steg:**
 
-1. Lägg bankkontot **Betalkonto** i utkastet med identiteten
-   **Obesvarad identitetsfråga**. Lägg också sambandet
-   **Familjemusik → Betalas med → Betalkonto** i utkastet.
-2. Öppna Betalkontos redigering, skriv **Oskickat om Betalkonto** som
-   beskrivning och stäng panelen med **Stäng Betalkonto**.
-3. Öppna Familjemusiks redigering, skriv **Oskickat om Familjemusik** som
-   beskrivning och stäng panelen med **Stäng Familjemusik**. Stäng panelerna med
-   kryssen.
-4. Använd tangentbordet för att aktivera **Red ut identiteter i utkastet**
-   under hushållets namn. Öppna **Utkast och historik**. Aktivera **Red ut
-   identiteten för Betalkonto**
-   vid objektets förslag. Kontrollera fokus och beskrivning.
-5. Välj **Ospecificerat objekt** och **Lägg i mitt utkast**.
-   Öppna Familjemusik igen och kontrollera dess oskickade text.
-   Välj **Stäng utan att skicka texten** i det formuläret.
-6. Spara hela utkastet uttryckligen. Starta om installationen, ladda om
-   sidan och kontrollera båda objekten och sambandet.
+1. Lägg bankkontot Betalkonto med Obesvarad identitetsfråga i utkastet.
+   Lägg även Familjemusik → Betalas med → Betalkonto i utkastet.
+2. Välj Tabell och Redigera Familjemusik och skriv Oskickat om
+   Familjemusik som beskrivning.
+   Välj Avbryt och Kasta ändringarna och fortsätt. Granska samma utkast.
+3. Öppna Betalkontos redigering. Kontrollera synligt fokus på Namn och
+   identiteten. Välj Ospecificerat objekt och skriv Rättad beskrivning.
+   Välj Lägg i utkastet och stäng.
+4. Öppna Visa utkastet och spara hela utkastet uttryckligen. Starta om och ladda
+   om sidan.
+   Läs båda objekten och sambandet.
 
 **Förväntat resultat:**
 
-- Status förklarar både identitetsfrågan och den oskickade texten.
-  Tangentbordet når utkastet och därefter Betalkontos bevarade redigering
-  med synligt fokus. Beskrivningen **Oskickat om Betalkonto** finns kvar.
-- Rättelsen ändrar bara Betalkontos förslag. Sparandet är fortfarande
-  blockerat medan Familjemusiks oskickade text finns kvar.
-- Den gemensamma kartan ändras först efter det uttryckliga sparandet.
-  Efter omstart är Betalkonto ospecificerat med den rättade beskrivningen.
-  Familjemusik behåller **Sparad beskrivning**. Sambandet går fortfarande
-  till samma Betalkonto utan en dubblett.
+- Endast Familjemusiks oskickade beskrivning kastas. Bankkontot och
+  sambandsförslaget finns kvar. Familjemusiks sparade beskrivning bevaras.
+- Rättelsen ändrar samma bankkonto och bevarar sambandsförslaget.
+  Kartan ändras först efter det separata, uttryckliga sparandet.
+- Efter omstart är Betalkonto ospecificerat med Rättad beskrivning.
+  Familjemusik behåller Sparad beskrivning och sambandet pekar på samma konto.
 
 ### KARTA-05: skilj på obesvarat, osäkert, okänt och uttryckligen inget
 
@@ -184,16 +191,21 @@ unanswered identity question”.
 
 **Steg:**
 
-1. Skapa ett samband från Familjemusik med typen **Betalas med**.
-   Välj **Obesvarad identitetsfråga** under **Uppgiftens säkerhet** och
-   lägg sambandet i utkastet. Ladda om sidan.
-2. Kontrollera utkastet och **Spara hela utkastet**. Öppna sambandet,
-   välj **Osäkert uppgivet** och välj Betalkonto som **Till objekt**.
-   Lägg sambandet i utkastet, spara och ladda om sidan.
-3. Kontrollera sambandets säkerhet. Öppna Betalkonto, kontrollera
-   **Objektets identitet** och stäng utan att skicka texten.
-4. Öppna sambandet och välj **Okänt**. Lägg i utkastet, spara och
-   ladda om sidan. Kontrollera sambandets betydelse.
+1. Välj **Tabell**, **Samband för Familjemusik** och **Nytt samband**.
+   Välj typen **Betalas med** och **Obesvarad identitetsfråga** under
+   **Uppgiftens säkerhet**. Välj **Lägg i utkastet** och **Stäng samband**.
+   Ladda om sidan.
+2. Välj **Skriv till Skyttel** och **Visa utkastet**. Läs **Olöst identitet**
+   och **Målet är oklart**. Kontrollera att **Spara hela utkastet** är inaktivt.
+   Stäng textvyn och öppna samma samband från tabellen. Välj **Redigera samband**,
+   **Osäkert uppgivet** och Betalkonto som **Till objekt**. Lägg hela sambandet
+   i utkastet och stäng samband. Öppna utkastvyn igen och spara uttryckligen.
+   Invänta **Utkastet är sparat**, stäng textvyn och ladda om sidan.
+3. Läs sambandet från **Samband för Familjemusik** och kontrollera säkerheten.
+   Stäng samband. Välj **Redigera Betalkonto**, kontrollera **Identitet** och
+   stäng det oförändrade formuläret med **Stäng objektdialogen**.
+4. Redigera samma samband från Familjemusik och välj **Okänt**. Lägg i utkastet,
+   stäng samband och spara separat via utkastvyn. Ladda om och läs betydelsen.
 5. Upprepa föregående steg med **Uttryckligen inget**.
 
 **Förväntat resultat:**
@@ -230,14 +242,17 @@ deleting a relationship”.
    som mål. Använd beskrivningen och identiteten i väljaren för att skilja
    adresserna åt. Skapa **Musikkonto → Kontaktadress** till det andra
    adressobjektet. Spara hela utkastet.
-3. Försök skapa samma inloggningssamband till det första adressobjektet
-   igen. Kontrollera statusen och antalet samband.
+3. Öppna **Samband för Musikkonto → Nytt samband** och försök lägga samma
+   inloggningssamband till det första adressobjektet i utkastet igen.
+   Kontrollera statusen och antalet samband. Välj **Avbryt redigeringen**,
+   bekräfta **Kasta ändringarna och fortsätt** och stäng samband.
 4. Öppna inloggningssambandet och kontrollera dess mål. Byt till det
-   andra adressobjektet och välj **Stäng sambandet utan att skicka**.
-   Öppna sambandet igen och kontrollera målet.
+   andra adressobjektet och välj **Avbryt redigeringen** följt av
+   **Kasta ändringarna och fortsätt**. Stäng samband, öppna samma
+   redigering igen och kontrollera målet.
 5. Byt åter till det andra adressobjektet, lägg sambandet i utkastet,
    spara och ladda om sidan. Öppna sambandet och kontrollera målet.
-6. Välj **Ta bort sambandet**, granska borttagningen,
+6. Välj **Föreslå borttagning**, stäng samband och granska borttagningen,
    spara och ladda om sidan.
 
 **Förväntat resultat:**
@@ -273,10 +288,14 @@ and can be discarded”.
 
 **Steg:**
 
-1. Öppna Musikkonto och välj **Ta bort**. Granska hela utkastet.
-2. Välj **Nytt samband** och kontrollera alternativen i **Från objekt**
-   och **Till objekt**. Välj **Stäng sambandet utan att skicka**.
-3. Välj **Kasta hela utkastet**. Kontrollera objekt och samband.
+1. Öppna Musikkontos utökade tabellrad, välj **Åtgärder för Musikkonto**
+   och **Ta bort objekt**. Öppna utkastvyn och läs hela objektförslaget
+   samt båda sambandsförslagen. Stäng läsdialogerna med Escape.
+2. Stäng textvyn, öppna **Samband för Kim → Nytt samband** och kontrollera
+   alternativen i **Från objekt** och **Till objekt**. Välj
+   **Avbryt redigeringen** och **Stäng samband** utan att ändra något.
+3. Öppna utkastvyn, välj **Kasta hela utkastet** och bekräfta
+   **Ta bort hela utkastet**. Kontrollera objekt och samband från tabellen.
 4. Föreslå åter borttagning av Musikkonto. Spara hela utkastet och
    ladda om sidan.
 
@@ -292,49 +311,65 @@ and can be discarded”.
 
 ## Skapa och spara kartans innehåll
 
-### KARTA-09: skapa typer, objekt och samband i samma privata utkast
+### KARTA-09: skapa typer, kompletta objekt och samband i samma utkast
 
-**Syfte:** Behåll ett påbörjat objekt medan dess typ skapas i Inställningar
-och spara nya definitioner, objekt och samband tillsammans.
+**Syfte:** Använd nya typer i kompletta objektformulär och spara
+definitioner, objekt och samband tillsammans.
 
 **Användare:** Den konfigurerade administratören.
 
 **Förutsättningar:** Tom karta och tomt utkast. Behåll databasen vid omstart.
 
 **Integrationstest:**
-[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts),
-testfallen “KARTA-09: unsent creation uses new draft types and objects in
-one durable relationship save at 1280px in light”, samma titel med “390px”
-eller “320px” och “dark”. Kör varje bredd i båda temana.
+[draft-creation.spec.ts](../../tests/integration/draft-creation.spec.ts).
+Följande testfall:
+
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 1280px in light”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 1280px in dark”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 390px in light”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 390px in dark”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 320px in light”.
+- “KARTA-09: complete forms use new draft types and objects in one durable
+  relationship save at 320px in dark”.
 
 **Steg:**
 
-1. Välj **Nytt objekt** och försök lägga det i utkastet utan namn.
-   Kontrollera fokus. Ange sedan **Paneler på taket** och beskrivningen
-   **Oskickat före den nya typen** utan att lägga objektet i utkastet.
-2. Öppna **Inställningar → Typer och egna fält**. Skapa objekttypen
-   **Solutrustning** med beskrivningen **Hushållets elproduktion** och
-   avsnittet **Uppgifter**. Lägg till **Placering** som text och
-   **Reserv** som ja/nej. Lägg typförslaget i utkastet.
-3. Välj **Tillbaka till kartan**. Kontrollera det påbörjade objektets namn
-   och beskrivning. Välj typen Solutrustning. Kontrollera att fälten i
-   Uppgifter är obesvarade. Ange Placering **Södertak** och Reserv **Nej**
-   och lägg objektet i utkastet med **Identifierat objekt**.
-4. Skapa **Batteriet** av samma nya typ. Välj **Ospecificerat objekt**,
-   lämna de egna fälten obesvarade och lägg objektet i utkastet.
-5. Skapa sambandstypen **Komplettering**, beskrivningen **Delar som används
-   ihop**, benämningen **kompletteras av** från startobjektet och
-   **kompletterar** från målobjektet. Lägg definitionen i utkastet.
-6. Skapa ett samband av den nya typen från Paneler på taket till Batteriet.
-   Välj **Osäkert uppgivet** och lägg sambandet i utkastet. Granska alla
-   fem förslag utan att spara dem.
-7. Starta om installationen och ladda om. Granska samma utkast och välj
-   **Spara hela utkastet**. Invänta kvittot. Starta om och ladda om igen.
+1. Öppna **Inställningar → Typer och egna fält**. Skapa Solutrustning med
+   beskrivningen Hushållets elproduktion och avsnittet Uppgifter. Lägg till
+   Placering som text och Reserv som ja/nej. Lägg typförslaget i utkastet.
+2. Välj **Tillbaka till kartan** och verktygens **Nytt objekt**. Försök lägga
+   det i utkastet utan namn. Kontrollera felsammanfattningens fokus och välj
+   fellänken Namn.
+3. Ange Paneler på taket och Beskrivning till den nya typen. Välj Solutrustning,
+   öppna Uppgifter och ange Placering Södertak och Reserv Nej. Behåll Identifierat
+   objekt och välj **Lägg i utkastet och stäng**.
+4. Skapa **Batteriet** av samma nya typ. Välj **Ospecificerat objekt**, lämna
+   de egna fälten obesvarade och välj **Lägg i utkastet och stäng**.
+5. Öppna **Inställningar → Typer och egna fält** igen. Skapa sambandstypen
+   **Komplettering**, beskrivningen **Delar som används ihop**, benämningen
+   **kompletteras av** från startobjektet och **kompletterar** från målobjektet.
+   Lägg definitionen i utkastet och välj **Tillbaka till kartan**.
+6. Välj **Tabell**, **Samband för Paneler på taket** och **Nytt samband**.
+   Välj Komplettering, Batteriet i målvalet med namn, typ och beskrivning samt
+   **Osäkert uppgivet**. Lägg i utkastet och stäng samband.
+7. Välj **Skriv till Skyttel** och **Visa utkastet**. Öppna båda objektförslagen
+   med **Visa förslaget** och läs fullständiga uppgifter. Skilj Reserv **Nej**
+   från **Ej uppgivet** och stäng varje läsdialog med krysset. Granska alla fem
+   förslag utan att spara.
+8. Starta om installationen och ladda om. Öppna och granska samma utkast.
+   Välj **Spara hela utkastet** och invänta **Utkastet är sparat**.
+   Stäng textvyn. Starta om och ladda om igen. Läs båda objektens fullständiga
+   uppgifter via tabellen och sambandet från **Samband för Paneler på taket**.
 
 **Förväntat resultat:**
 
-- Ett tomt namn stoppar förslaget och får fokus. Det påbörjade objektets
-  namn och beskrivning finns kvar när den nya typen väljs efter Inställningar.
+- Ett tomt namn stoppar hela förslaget. Sammanfattningen får fokus och
+  fellänken öppnar Grunduppgifter med fokus på Namn. Typförslaget bevaras.
 - Typens valfria fält visas i Uppgifter. **Nej** på panelerna är skilt
   från Batteriets obesvarade Reserv. Identifierat och ospecificerat består.
 - Nya objekt- och sambandstyper samt båda objekten kan användas i sambandet
@@ -362,15 +397,18 @@ shared map after review”.
 
 1. Välj **Nytt objekt**, skriv **Lo Exempel**, välj typen **Person** och
    skriv beskrivningen **En påhittad person**. Flytta fokus till
-   **Lägg i mitt utkast** och tryck Retur.
-2. Granska utkastet, ladda om sidan och kontrollera namn och beskrivning.
+   **Lägg i utkastet och stäng** och tryck Retur.
+2. Öppna utkastvyn, granska förslaget, ladda om sidan och välj förslagets
+   rad för att kontrollera hela namnet och beskrivningen. Stäng med Escape.
 3. Starta om applikationen med samma databas. Logga in som samma användare
    i den andra webbläsarprofilen och kontrollera utkastet.
 4. Spara hela utkastet och kontrollera kvittot. Sök efter **Lo**,
-   öppna Lo Exempel, ändra namnet till **Lo Lind** och lägg i utkastet.
-   Granska sparat underlag och förslag.
-5. Välj **Kasta hela utkastet**. Öppna Lo Exempel, välj
-   **Ta bort**, granska utkastet och spara det.
+   välj **Redigera Lo Exempel**, ändra namnet till **Lo Lind** och lägg i
+   utkastet. Öppna utkastvyn och läs hela sparade underlaget och förslaget.
+5. Stäng läsdialogen, välj **Kasta hela utkastet** och bekräfta
+   **Ta bort hela utkastet**. Stäng textvyn och öppna Lo Exempels formulär
+   utan ändring. Välj **Avbryt** och sedan **Åtgärder för Lo Exempel →
+   Ta bort objekt** i den utökade tabellraden. Granska utkastet och spara det.
 
 **Förväntat resultat:**
 
@@ -394,8 +432,12 @@ behåller separata identiteter när hela utkastet sparas.
 testinstallationen med samma databas.
 
 **Integrationstest:** [family.spec.ts](../../tests/integration/family.spec.ts),
-testfallet “KARTA-07: family objects and directed relationships save
-together and keep their identities”.
+följande testfall:
+
+- “KARTA-07: family objects and directed relationships save together and
+  keep their identities”.
+- “KARTA-07: a concurrent duplicate refreshes the saved relationship and
+  allows explicit editing”.
 
 **Steg:**
 
@@ -418,3 +460,386 @@ together and keep their identities”.
   Sambandet går från abonnemanget till tjänstekontot och behåller sin typ.
 - Integrationstestet kontrollerar dessutom att sparandet och historiken
   bevarar samma ändringsgrupp och objektens identiteter.
+
+**Samtidig dubblett:** Förbered ett separat provhushåll med demodata enligt
+[DEMO-01](operations.md). Alex är administratör och Robin medlem i en
+separat profil. Kasta Alex tidigare privata utkast genom **Visa utkastet →
+Kasta hela utkastet** och den uttryckliga bekräftelsen. Bevara sparade fakta.
+
+1. Som Alex, öppna **Tabell → Samband för Kim Exempel → Nytt samband**.
+   Välj **Från objekt: Kim Exempel**, typen **Använder** och
+   **Till objekt: Molnmusik**. Behåll formuläret öppet utan att skicka.
+2. Som Robin, öppna samma vanliga sambandsformulär och lägg det identiska
+   kända sambandet i Robins utkast. Spara uttryckligen genom **Visa
+   utkastet → Spara hela utkastet** och invänta bekräftat sparande.
+3. Som Alex, välj **Lägg i utkastet**. Läs **Sambandet finns redan**,
+   meningen **Kim Exempel använder Molnmusik** och det befintliga
+   sambandet **Kim Exempel → Använder → Molnmusik**. Ingen dubblett ska
+   ligga i Alex utkast och kartan ska innehålla exakt ett sådant samband.
+4. Välj **Redigera befintligt samband**. Bekräfta den verkliga förlusten
+   av det oskickade tillägget med **Kasta ändringarna och fortsätt**.
+   Formuläret visar **Redigera samband** för det befintliga sambandet.
+   Att öppna redigeringen ska inte ändra det sparade sambandet eller
+   skapa något privat förslag. Automationen kontrollerar samma faktiska
+   sambands-ID och hela oförändrade publika kartsvaret.
+
+## Gemensamt objektformulär
+
+För KARTA-10–20 används samma administratör och en separat installation.
+Öppna formuläret från **Nytt objekt** eller tabellens **Redigera**.
+Ingen AI-leverantör eller samtalsmedgivande behövs. För egna fält skapar
+du typen genom **Inställningar → Typer och egna fält** före objektet.
+Använd enbart påhittade värden och syntetiska bilder. Återställ utkastet
+mellan fallen. KARTA-17–18 använder styrda nätfel; integrationstesterna
+förbereder dessa i en isolerad installation med riktig SQLite.
+Manuell kontroll av skärmläsare och verkligt skärmtangentbord redovisas
+separat från automatiska fönster- och fokusprov.
+
+### KARTA-10: skapa från tabellen och återgå till öppningsknappen
+
+**Syfte:** Kontrollera skapa från tabellen och återgå till öppningsknappen.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Tom karta och tomt utkast.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-10: create a complete object in the shared dialog and return
+without saving”.
+
+**Steg:**
+
+1. Öppna Tabell och välj Nytt objekt. Kontrollera fokus på Namn och
+   Grunduppgifter öppet.
+2. Ange Alex blå cykel och Hela cykelns beskrivning. Välj Lägg i utkastet och
+   stäng.
+
+**Förväntat resultat:**
+
+- Dialogen stängs och fokus återgår till Nytt objekt i tabellen. Ett komplett
+  förslag finns i utkastet; den gemensamma kartan är fortfarande tom.
+
+### KARTA-11: rätta fel i ett stängt avsnitt
+
+**Syfte:** Kontrollera rätta fel i ett stängt avsnitt.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Tomt utkast.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-11: closed-section errors preserve all fields and focus the
+linked correction”.
+
+**Steg:**
+
+1. Ange namnet Cykeln. Öppna Ekonomiska uppgifter, välj Känt för Pris och lämna
+   beloppet tomt.
+2. Öppna Grunduppgifter och skicka. Följ länken till Pris i felsammanfattningen,
+   fyll i 399 och skicka igen.
+
+**Förväntat resultat:**
+
+- Fokus går först till felsammanfattningen. Fellänken öppnar ekonomi och
+  fokuserar Pris. Namnet finns kvar och ingen del läggs i utkastet före
+  rättelsen.
+
+### KARTA-12: behåll alla uppgifter i skapa och redigera
+
+**Syfte:** Kontrollera behåll alla uppgifter i skapa och redigera.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Skapa typen Cykel med textfält, talfält, datumfält och
+ja/nej-fält.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-12: identity, custom fields, lifecycle and icon stay together
+when staging and editing”.
+
+**Steg:**
+
+1. Skapa Alex cykel med Ospecificerat objekt, beskrivning och värden i alla fyra
+   egna fält.
+2. Öppna Livscykel och utseende, välj Upphört och ikonen Cykel. Öppna
+   Ekonomiska uppgifter, välj Känt för Slutdatum och ange datumet. Lägg hela
+   formuläret i utkastet.
+3. Öppna Tabell → Filter, välj Ta med upphörda och stäng filtret
+   med Escape. Välj objektets Redigera och kontrollera uppgifterna igen.
+
+**Förväntat resultat:**
+
+- Identitet, beskrivning, samtliga egna värden, livscykel och ikon finns kvar.
+  Grunduppgifter är öppet vid återöppning; kartan ändras först vid gemensamt
+  sparande.
+
+### KARTA-13: bekräfta egna fält som försvinner vid typbyte
+
+**Syfte:** Kontrollera bekräfta egna fält som försvinner vid typbyte.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Ett objekt med typen Cykel, Ramnummer CYKEL-42 och en annan
+valbar typ utan det fältet.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-13: changing type requires explicit confirmation before custom
+values are lost”.
+
+**Steg:**
+
+1. Öppna objektets redigering och välj den andra typen. Kontrollera berörda
+   fältnamn och värden samt fokus på Fortsätt redigera.
+2. Tryck Escape och kontrollera typ och värden. Välj typen igen och Ta bort
+   fältvärdena och byt typ.
+
+**Förväntat resultat:**
+
+- Escape behåller nuvarande typ och Ramnummer. Bekräftelsen tar bort egna värden
+  endast ur formuläret; beskrivning och ekonomi behålls och utkastet ändras
+  först efter hela tillägget.
+
+### KARTA-14: lägg bild och uppgifter i utkastet tillsammans
+
+**Syfte:** Kontrollera lägg bild och uppgifter i utkastet tillsammans.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** En syntetisk PNG-bild och en textfil med ändelsen .png.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-14: image and full form stage atomically and invalid image
+preserves the unsent form”.
+
+**Steg:**
+
+1. Skapa ett objekt med namn och beskrivning. Välj den felaktiga bilden under
+   Livscykel och utseende och skicka.
+2. Kontrollera felet och värdena. Välj den giltiga bilden och skicka hela
+   formuläret.
+
+**Förväntat resultat:**
+
+- Avvisningen lägger inga delar i utkastet. Den giltiga bilden, namnet och
+  beskrivningen läggs där tillsammans; profilbilden kan läsas av den egna
+  användaren utan gemensamt sparande.
+
+### KARTA-15: skydda enbart oskickade formulärändringar
+
+**Syfte:** Kontrollera skydda enbart oskickade formulärändringar.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Ett redan lagt förslag och ett nytt öppet objektformulär.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-15: close and Escape protect only unsent form changes and
+restore the editing focus”.
+
+**Steg:**
+
+1. Skriv Oskickad cykel. Prova krysset, Avbryt och Escape; välj Fortsätt
+   redigera eller Escape i varje förlustvarning.
+2. Kontrollera tidigare fokus och text. Välj därefter Kasta ändringarna och
+   fortsätt. Öppna Nytt objekt igen.
+
+**Förväntat resultat:**
+
+- Varje varning börjar på Fortsätt redigera. Avbruten förlust behåller text och
+  fokus. Kastandet tar bara oskickad text; det lagda förslaget finns kvar och
+  nästa nya formulär är tomt utan återupptagningsingång.
+
+### KARTA-16: skydda oskickat arbete vid bakåtnavigation
+
+**Syfte:** Kontrollera skydda oskickat arbete vid bakåtnavigation.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Besök hushållets Inställningar och återgå till kartan så
+att webbläsarens Tillbaka leder till Inställningar.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-16: browser back protects unsent work and confirms
+navigation”.
+
+**Steg:**
+
+1. Öppna Nytt objekt, skriv ett namn och använd webbläsarens Tillbaka.
+2. Välj Fortsätt redigera. Prova Tillbaka igen och välj Kasta ändringarna och
+   fortsätt.
+
+**Förväntat resultat:**
+
+- Första försöket behåller formulär och adress. Bekräftat kastande tillåter
+  navigationen till Inställningar utan att skapa ett förslag. Dokumentnavigation
+  och omladdning använder webbläsarens varning där den kan visas.
+
+### KARTA-17: spärra väntande tillägg och behåll ett avvisat formulär
+
+**Syfte:** Kontrollera spärra väntande tillägg och behåll ett avvisat formulär.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Tomt utkast i en separat provinstallation. Kör följande
+kod i webbläsarens konsol innan steg 1. Den fördröjer och avvisar endast nästa
+tillägg utan att nå servern. Kör `window.releaseObjectStage()` i steg 2.
+Ladda om efter fallet om du avbryter innan begäran har släppts fram.
+
+```javascript
+(() => {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    const target = args[0] instanceof Request ? args[0].url : args[0];
+    const method = args[1]?.method ?? args[0]?.method ?? 'GET';
+    if (new URL(target, location.href).pathname.endsWith('/map/object-form')
+        && method === 'POST') {
+      window.fetch = originalFetch;
+      await new Promise(resolve => { window.releaseObjectStage = resolve; });
+      return new Response(JSON.stringify({ error: 'invalid_name' }), {
+        status: 400, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return originalFetch(...args);
+  };
+})();
+```
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-17: pending staging blocks duplicate sends and known rejection
+keeps all values”.
+
+**Steg:**
+
+1. Ange Väntande cykel och Bevarad beskrivning. Dubbelaktivera Lägg i utkastet
+   och stäng. Prova Escape medan svaret väntar.
+2. Släpp fram avvisningen. Kontrollera värdena och rätta orsaken före nytt
+   försök.
+
+**Förväntat resultat:**
+
+- Bara en begäran skickas. Fält och vanlig stängning är spärrade medan den
+  väntar. Avvisningen behåller samtliga värden och skapar inget förslag; efter
+  rättelse kan exakt ett fullständigt förslag läggas i utkastet.
+
+### KARTA-18: kontrollera tappat svar före övergång eller nytt försök
+
+**Syfte:** Kontrollera kontrollera tappat svar före övergång eller nytt försök.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Tomt utkast i en separat provinstallation. Kör koden
+nedan i konsolen före steg 1. Den första körningen använder
+`const applied = true`: servern lägger till ändringen innan svaret tappas.
+Ladda om och börja med nytt tomt utkast för andra körningen, och ändra till
+`const applied = false`: begäran når då inte servern. Koden återställer
+`fetch` efter avbrottet. Ladda om om du avbryter tidigare. Vanligt offlineläge
+bevisar inte att servern redan har lagt ändringen i utkastet.
+
+```javascript
+(() => {
+  const applied = true;
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    const target = args[0] instanceof Request ? args[0].url : args[0];
+    const method = args[1]?.method ?? args[0]?.method ?? 'GET';
+    if (new URL(target, location.href).pathname.endsWith('/map/object-form')
+        && method === 'POST') {
+      window.fetch = originalFetch;
+      if (applied) await originalFetch(...args);
+      throw new TypeError('Synthetic connection interrupted');
+    }
+    return originalFetch(...args);
+  };
+})();
+```
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts).
+Följande testfall:
+
+- “KARTA-18: lost staging response is checked before confirmed relationship
+  transition”.
+- “KARTA-18: lost staging response is checked before safe retry”.
+
+**Steg:**
+
+1. Ange Cykeln efter tappat svar och välj Lägg i utkastet och öppna samband.
+   Kontrollera spärrad redigering och stängning.
+2. Välj Kontrollera om ändringen lades i utkastet. I körningen utan tillägg,
+   invänta uttrycklig bekräftelse och försök därefter igen.
+
+**Förväntat resultat:**
+
+- Ingen dubblett skickas vid oklart utfall. Ett bekräftat tillägg öppnar
+  sambandsdialogens rubrik; en bekräftad utebliven ändring tillåter nytt försök
+  med värdena kvar. Stängning av samband återgår till ursprungsplatsen. Kartan
+  är inte gemensamt sparad.
+
+### KARTA-19: öppna samband utan ett onödigt förslag
+
+**Syfte:** Kontrollera öppna samband utan ett onödigt förslag.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Spara Sparad cykel med Hela beskrivningen, Pris 249
+och Valuta SEK (båda Känt).
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts),
+testfallet “KARTA-19: unchanged edits open relationships without staging and
+every reading entry uses the same object dialog”.
+
+**Steg:**
+
+1. Välj tabellens Redigera Sparad cykel. Ändra namnet och ändra tillbaka.
+   Rensa och återställ ett redan uppgivet Pris i Ekonomiska uppgifter. Välj Lägg
+   i utkastet och öppna samband.
+2. Stäng samband. Expandera tabellraden, välj Läs alla uppgifter och därefter
+   Redigera Sparad cykel. Avbryt utan ändring.
+
+**Förväntat resultat:**
+
+- Oförändrade uppgifter skapar inget förslag eller versionsbyte.
+  Sambandsrubriken får fokus och stängning återför det till den ursprungliga
+  redigeringsknappen. Läsingången öppnar samma dialog och återgår till
+  läsknappen.
+
+### KARTA-20: bevara typens ordning och dolda värden
+
+**Syfte:** Kontrollera bevara typens ordning och dolda värden.
+
+**Användare:** Den konfigurerade administratören.
+
+**Förutsättningar:** Skapa typen Avtal med avsnittet Avtalets uppgifter. Placera
+Anteckning, Månadsbelopp och Avtalstext i den ordningen och dölj ett textfält
+med ett befintligt värde.
+
+**Integrationstest:**
+[object-dialog.spec.ts](../../tests/integration/object-dialog.spec.ts).
+Följande testfall:
+
+- “KARTA-20: configured properties keep their order and hidden values in the
+  single-section dialog at 1440px”.
+- “KARTA-20: configured properties keep their order and hidden values in the
+  single-section dialog at 320px”.
+
+**Steg:**
+
+1. Öppna ett sparat objekt av typen. Öppna Avtalets uppgifter och kontrollera
+   fältnamn, ordning och värden.
+2. Ändra Anteckning och lägg hela formuläret i utkastet. Upprepa på en smal
+   skärm.
+
+**Förväntat resultat:**
+
+- Endast ett avsnitt är öppet. Typens benämningar och ordning används; det dolda
+  värdet behålls oförändrat. Formulär och knappar ryms på smal skärm. Den
+  gemensamma kartan behåller tidigare värden.

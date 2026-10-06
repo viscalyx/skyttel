@@ -1,5 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('refreshing after a conflict preserves text without authorizing a stale form', async ({
@@ -12,34 +21,36 @@ test('refreshing after a conflict preserves text without authorizing a stale for
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await openTable(page);
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await signIn(second.request, installation.origin);
     const tab = await second.newPage();
     await tab.goto(installation.origin);
-    await openWorkspace(tab);
+    await openTable(tab);
     for (const editor of [page, tab]) {
-      await editor.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-      await editor.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+      await editTableObject(editor, 'Lo Exempel');
     }
-    await page.getByLabel('Objektets namn').fill('Lo gammalt förslag');
-    await tab.getByLabel('Objektets namn').fill('Lo nytt förslag');
-    await tab.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
-    await expect(page.getByRole('alert')).toContainText('Förslaget eller kartan har ändrats');
-    await page.getByRole('button', { name: 'Hämta aktuellt underlag' }).click();
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Lo nytt förslag',
-    );
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Lo gammalt förslag');
-    await expect(page.getByRole('button', { name: 'Lägg i mitt utkast' })).toBeDisabled();
-    await page.getByRole('button', { name: 'Stäng utan att skicka texten' }).click();
-    await page.getByRole('button', { name: 'Uppgifter för Lo nytt förslag', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Lo nytt förslag');
-    await expect(page.getByRole('button', { name: 'Lägg i mitt utkast' })).toBeEnabled();
+    await page.getByLabel('Namn', { exact: true }).fill('Lo gammalt förslag');
+    await tab.getByLabel('Namn', { exact: true }).fill('Lo nytt förslag');
+    await tab.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+    const form = page.locator('dialog.object-dialog-C');
+    await expect(form.getByRole('alert')).toContainText('Dina uppgifter finns kvar');
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Lo gammalt förslag');
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Lo gammalt förslag');
+    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+    await page.reload();
+    await openDraftReview(page);
+    await expect(page.getByRole('region', { name: 'Utkastet' })).toContainText('Lo nytt förslag');
+    await closeTextView(page);
+    await editTableObject(page, 'Lo nytt förslag');
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Lo nytt förslag');
+    await expect(page.getByRole('button', { name: 'Lägg i utkastet och stäng' })).toBeEnabled();
   } finally {
     await second.close();
     await installation.close();
@@ -56,36 +67,38 @@ test('an uncertain save recovers its receipt and stale tabs cannot save newer dr
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await openTable(page);
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await signIn(other.request, installation.origin);
     const tab = await other.newPage();
     await tab.goto(installation.origin);
-    await openWorkspace(tab);
-    await expect(tab.getByRole('region', { name: 'Hela mitt utkast' })).toContainText('Lo Exempel');
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Lo Lind');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
+    await openDraftReview(tab);
+    await expect(tab.getByRole('region', { name: 'Utkastet' })).toContainText('Lo Exempel');
+    await editTableObject(page, 'Lo Exempel');
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Lind');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     await tab.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(tab.getByRole('alert')).toContainText('Inget sparades');
+    const save = tab.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+    await expect(save).toContainText('Inget sparades');
     await expect(tab.getByRole('button', { name: 'Spara hela utkastet' })).toBeDisabled();
+    await tab.keyboard.press('Escape');
     await tab.getByRole('button', { name: 'Hämta aktuellt underlag' }).click();
-    await expect(tab.getByRole('region', { name: 'Hela mitt utkast' })).toContainText('Lo Lind');
+    await expect(tab.getByRole('region', { name: 'Utkastet' })).toContainText('Lo Lind');
     await tab.route('**/map/save', async (route) => {
-      await route.fetch();
+      expect((await route.fetch()).status()).toBe(200);
       await route.abort();
     });
     await tab.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(tab.getByRole('alert')).toContainText('Utfallet är okänt');
+    await expect(save).toContainText('Sparandet kunde inte bekräftas');
     await tab.unroute('**/map/save');
-    await tab.getByRole('button', { name: 'Hämta samma kvitto igen' }).click();
-    await expect(tab.getByRole('status')).toContainText('Sparat: Lo Lind');
-    await expect(tab.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Inga förslag',
+    await save.getByRole('button', { name: 'Kontrollera sparandet igen' }).click();
+    await expect(save).toBeHidden();
+    await expect(tab.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+      'Utkastet är sparat',
     );
+    await expect(tab.getByRole('region', { name: 'Utkastet' })).toContainText('Utkastet är tomt');
   } finally {
     await other.close();
     await installation.close();
@@ -101,54 +114,71 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await page.getByLabel('Objektets namn').fill('Lo Exempel');
+    await openTable(page);
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
     await page.getByLabel('Beskrivning', { exact: true }).fill('En påhittad person');
     await page.setViewportSize({ width: 320, height: 568 });
-    await expect(page.getByLabel('Objektets namn')).toHaveValue('Lo Exempel');
+    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Lo Exempel');
     await page.setViewportSize({ width: 1024, height: 768 });
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('En påhittad person');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast' }).focus();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng' }).focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Lo Exempel',
-    );
+    await openDraftReview(page);
+    await expect(page.getByRole('region', { name: 'Utkastet' })).toContainText('Lo Exempel');
     await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'En påhittad person',
-    );
+    await expect(await readDraftProposal(page, 'Lo Exempel')).toContainText('En påhittad person');
+    await page.keyboard.press('Escape');
     await installation.restart();
     const second = await browser.newContext();
     try {
       await signIn(second.request, installation.origin);
       const reopened = await second.newPage();
       await reopened.goto(installation.origin);
-      await openWorkspace(reopened);
-      await expect(reopened.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-        'Lo Exempel',
+      await openDraftReview(reopened);
+      await expect(reopened.getByRole('region', { name: 'Utkastet' })).toContainText('Lo Exempel');
+      await saveReviewedConflictDraft(reopened);
+      await expect(reopened.getByRole('region', { name: 'Utkastet' })).toContainText(
+        'Utkastet är tomt',
       );
-      await reopened.getByRole('button', { name: 'Spara hela utkastet' }).click();
-      await expect(reopened.getByRole('status')).toContainText('Sparat');
-      await expect(reopened.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-        'Inga förslag',
-      );
-      await reopened.getByLabel('Sök objekt').fill('Lo');
-      await reopened.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-      await reopened.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await reopened.getByLabel('Objektets namn').fill('Lo Lind');
-      await reopened.getByRole('button', { name: 'Lägg i mitt utkast' }).click();
-      const review = reopened.getByRole('region', { name: 'Hela mitt utkast' });
+      await closeTextView(reopened);
+      await openTable(reopened);
+      await reopened.getByLabel('Sök objekt i tabellen', { exact: true }).fill('Lo');
+      await editTableObject(reopened, 'Lo Exempel');
+      await reopened.getByLabel('Namn', { exact: true }).fill('Lo Lind');
+      await reopened.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
+      const proposal = await readDraftProposal(reopened, 'Lo Lind');
+      await expect(proposal).toContainText('Lo Exempel');
+      await expect(proposal).toContainText('Lo Lind');
+      await reopened.keyboard.press('Escape');
+      const review = reopened.getByRole('region', { name: 'Utkastet' });
       await expect(review).toContainText('Lo Exempel');
       await expect(review).toContainText('Lo Lind');
       await reopened.getByRole('button', { name: 'Kasta hela utkastet' }).click();
-      await reopened.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-      await reopened.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-      await reopened.getByRole('button', { name: 'Ta bort', exact: true }).click();
-      await expect(review).toContainText('Borttagning');
-      await reopened.getByRole('button', { name: 'Spara hela utkastet' }).click();
-      await expect(reopened.getByRole('list', { name: 'Objekt' })).not.toContainText('Lo Exempel');
+      await reopened
+        .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+        .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+        .click();
+      await closeTextView(reopened);
+      await editTableObject(reopened, 'Lo Exempel');
+      await reopened
+        .locator('dialog.object-dialog-C')
+        .getByRole('button', { name: 'Avbryt', exact: true })
+        .click();
+      await openTable(reopened);
+      const table = reopened.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      await table.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
+      await table.getByRole('button', { name: 'Åtgärder för Lo Exempel', exact: true }).click();
+      await reopened
+        .getByRole('dialog', { name: 'Åtgärder för Lo Exempel', exact: true })
+        .getByRole('button', { name: 'Ta bort objekt', exact: true })
+        .click();
+      await openDraftReview(reopened);
+      await expect(review).toContainText('Tas bort');
+      await saveReviewedConflictDraft(reopened);
+      await closeTextView(reopened);
+      await openTable(reopened);
+      await expect(table.getByRole('button', { name: 'Lo Exempel', exact: true })).toHaveCount(0);
     } finally {
       await second.close();
     }

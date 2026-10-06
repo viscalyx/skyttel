@@ -1,0 +1,284 @@
+import { expect, type Page, test } from '@playwright/test';
+import { utilityButton } from '../support/client.js';
+import { createInstallation } from '../support/installation.js';
+import { prepareMapExploration } from '../support/map-exploration.js';
+
+async function prepare(page: Page, origin: string, variant: 'base' | 'ended' | 'removed' = 'base') {
+  const data = await prepareMapExploration(page.request, origin, variant);
+  await page.goto(`${origin}/households/${data.household.id}`);
+  return data;
+}
+
+test('SÖK-06: map search shows direct context and exploration preserves hits through return and table visits', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const data = await prepare(page, installation.origin);
+    const before = await data.read();
+    const historyPath = `${installation.origin}/api/households/${data.household.id}/map/history`;
+    const historyBefore = await (await page.request.get(historyPath)).json();
+    await (await utilityButton(page, 'Sök i kartan')).click();
+    const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
+    await panel.getByRole('searchbox').fill('Alex');
+    await expect(panel.getByText('1 sökträffar', { exact: true })).toBeVisible();
+    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    const node = (name: string) =>
+      map.getByRole('button', { name: `Välj objekt: ${name}`, exact: true });
+    await expect(node('Alex Exempel')).toBeVisible();
+    await expect(node('Blå cykel')).toBeVisible();
+    await expect(node('Blå cykel')).toHaveAccessibleDescription(/Sammanhang/);
+    await expect(node('Alex Exempel')).toHaveAccessibleDescription(/Sökträff/);
+    await expect(node('Garaget')).toHaveCount(0);
+    await node('Blå cykel').focus();
+    await page.keyboard.press('Enter');
+    await expect(node('Blå cykel')).toHaveAttribute('aria-pressed', 'true');
+    await expect(node('Garaget')).toHaveCount(0);
+    const cameraBefore = await node('Alex Exempel').boundingBox();
+    await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+    await expect(node('Garaget')).toBeVisible();
+    await expect(node('Alex Exempel')).toBeVisible();
+    await expect(node('Bostaden')).toHaveCount(0);
+    await expect
+      .poll(async () => {
+        const after = await node('Alex Exempel').boundingBox();
+        return after?.x !== cameraBefore?.x || after?.y !== cameraBefore?.y;
+      })
+      .toBe(true);
+    await node('Garaget').focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+    await expect(node('Bostaden')).toBeVisible();
+    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
+    await panel.getByLabel(data.initial.types[0].name, { exact: true }).check();
+    await expect(node('Garaget')).toHaveCount(0);
+    await expect(node('Bostaden')).toHaveCount(0);
+    await panel.getByRole('searchbox').fill('Blå');
+    await expect(node('Garaget')).toBeVisible();
+    await expect(node('Bostaden')).toHaveCount(0);
+    await panel.getByRole('searchbox').fill('Alex');
+    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await node('Blå cykel').focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+    await (await utilityButton(page, 'Tabell')).click();
+    await (await utilityButton(page, 'Karta')).click();
+    await expect(node('Garaget')).toBeVisible();
+    await page.getByRole('button', { name: 'Tillbaka till sökträffarna', exact: true }).click();
+    await expect(node('Garaget')).toHaveCount(0);
+    await expect(node('Blå cykel')).toBeVisible();
+    await expect(page.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
+    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
+    await expect(panel.getByRole('searchbox')).toHaveValue('Alex');
+    expect(await data.read()).toEqual(before);
+    expect(await (await page.request.get(historyPath)).json()).toEqual(historyBefore);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('SÖK-09: a changed connection shows direct saved and proposed endpoints without expanding their chains', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const data = await prepare(page, installation.origin);
+    const state = await data.read();
+    const edge = state.relationships.find((item) => item.id === 'uses');
+    if (!edge) throw new Error('Expected connection');
+    await data.post('relationship', {
+      id: edge.id,
+      baseRevision: edge.revision,
+      value: { ...edge, targetId: 'garage' },
+    });
+    await page.reload();
+    await (await utilityButton(page, 'Sök i kartan')).click();
+    const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
+    await panel.getByRole('searchbox').fill('Alex');
+    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    await expect(
+      map.getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true }),
+    ).toBeVisible();
+    await expect(
+      map.getByRole('button', { name: 'Välj objekt: Garaget', exact: true }),
+    ).toBeVisible();
+    await expect(
+      map.getByRole('button', { name: 'Välj objekt: Bostaden', exact: true }),
+    ).toHaveCount(0);
+    await expect(map.locator('.connection.previous')).toHaveCount(1);
+    await expect(
+      page
+        .getByRole('complementary', { name: 'Kartans sökresultat' })
+        .getByText('1 sökträffar', { exact: true }),
+    ).toBeVisible();
+    await data.post('discard', {});
+    await data.post('relationship', {
+      id: edge.id,
+      baseRevision: edge.revision,
+      value: { ...edge, lifecycle: 'ended' },
+    });
+    await data.post('save', { operationId: 'ended-connection' });
+    const ended = (await data.read()).relationships.find((item) => item.id === edge.id);
+    if (!ended) throw new Error('Expected ended connection');
+    await data.post('relationship', {
+      id: ended.id,
+      baseRevision: ended.revision,
+      value: { ...ended, lifecycle: 'active', targetId: 'garage' },
+    });
+    await page.reload();
+    await (await utilityButton(page, 'Sök i kartan')).click();
+    await panel.getByRole('searchbox').fill('Alex');
+    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await expect(
+      map.getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true }),
+    ).toHaveCount(0);
+    await expect(map.locator('.connection.previous')).toHaveCount(0);
+    await page
+      .getByRole('complementary', { name: 'Kartans sökresultat' })
+      .getByRole('button', { name: 'Ta med upphörda', exact: true })
+      .click();
+    await expect(
+      map.getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true }),
+    ).toBeVisible();
+    await expect(map.locator('.connection.previous')).toHaveCount(1);
+  } finally {
+    await installation.close();
+  }
+});
+
+for (const width of [1280, 390, 320]) {
+  test(`SÖK-08: table map actions reset only map filters and retain table work at ${width}px`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    try {
+      await page.setViewportSize({ width, height: 950 });
+      const data = await prepare(page, installation.origin, 'removed');
+      const before = await data.read();
+      await (await utilityButton(page, 'Sök i kartan')).click();
+      const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
+      await panel.getByRole('searchbox').fill('Alex');
+      if (width <= 700) {
+        const tools = await page.getByRole('navigation', { name: 'Kartans verktyg' }).boundingBox();
+        const searchBounds = await panel.boundingBox();
+        expect(searchBounds?.y).toBeGreaterThan((tools?.y ?? 0) + (tools?.height ?? 0));
+      }
+      await panel.getByLabel('Bara markerade').check();
+      await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+      if (width <= 700) {
+        const tools = await page.getByRole('navigation', { name: 'Kartans verktyg' }).boundingBox();
+        const summary = await page
+          .getByRole('complementary', { name: 'Kartans sökresultat' })
+          .boundingBox();
+        expect(summary?.y).toBeGreaterThan((tools?.y ?? 0) + (tools?.height ?? 0));
+      }
+      await (await utilityButton(page, 'Tabell')).click();
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      const search = table.getByRole('searchbox');
+      await search.fill('Blå');
+      await table.getByLabel('Sortering', { exact: true }).selectOption('name-desc');
+      await table.getByRole('button', { name: 'Blå cykel', exact: true }).click();
+      const reveal = table.getByRole('button', { name: 'Visa Blå cykel i kartan', exact: true });
+      await expect(reveal).toBeVisible();
+      await reveal.click();
+      const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+      const node = (name: string) =>
+        map.getByRole('button', { name: `Välj objekt: ${name}`, exact: true });
+      await expect(node('Blå cykel')).toHaveAttribute('aria-pressed', 'true');
+      await expect(node('Alex Exempel')).toHaveAttribute('aria-pressed', 'false');
+      await expect(node('Garaget')).toBeInViewport();
+      await expect(node('Bostaden')).toBeVisible();
+      await expect(page.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
+      await (await utilityButton(page, 'Sök i kartan')).click();
+      await expect(panel.getByRole('searchbox')).toHaveValue('');
+      await expect(panel.getByLabel('Bara markerade')).not.toBeChecked();
+      await expect(panel.getByText('4 sökträffar', { exact: true })).toBeVisible();
+      await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+      await (await utilityButton(page, 'Tabell')).click();
+      await expect(reveal).toBeFocused();
+      await expect(search).toHaveValue('Blå');
+      await expect(table.getByLabel('Sortering', { exact: true })).toHaveValue('name-desc');
+      await expect(table.getByRole('button', { name: 'Blå cykel', exact: true })).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      );
+      await search.fill('Oberoende');
+      await table.getByRole('button', { name: /^Filter/ }).click();
+      const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
+      await filters.getByLabel('Ta med borttagna', { exact: true }).check();
+      await page.keyboard.press('Escape');
+      await expect(
+        table.getByRole('button', { name: 'Oberoende objekt', exact: true }),
+      ).toBeVisible();
+      await expect(
+        table.getByRole('button', { name: 'Visa Oberoende objekt i kartan', exact: true }),
+      ).toHaveCount(0);
+      expect(await data.read()).toEqual(before);
+    } finally {
+      await installation.close();
+    }
+  });
+}
+
+test('SÖK-07: direct context ignores hit filters while ended objects and edges require inclusion', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const data = await prepare(page, installation.origin, 'ended');
+    const state = await data.read();
+    const before = await data.read();
+    const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+    const node = (name: string) =>
+      map.getByRole('button', { name: `Välj objekt: ${name}`, exact: true });
+    await node('Alex Exempel').focus();
+    await page.keyboard.press('Enter');
+    await (await utilityButton(page, 'Sök i kartan')).click();
+    const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
+    await panel.getByRole('searchbox').fill('Alex');
+    await panel.getByLabel(state.types[0].name, { exact: true }).check();
+    await panel.getByLabel('Ändrat', { exact: true }).check();
+    await panel.getByLabel('Bara markerade').check();
+    await expect(panel.getByText('1 sökträffar', { exact: true })).toBeVisible();
+    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await expect(node('Blå cykel')).toBeVisible();
+    await expect(node('Upphörd granne')).toHaveCount(0);
+    await expect(node('Oberoende objekt')).toHaveCount(0);
+    const summary = page.getByRole('complementary', { name: 'Kartans sökresultat' });
+    await expect(summary).toContainText('Upphörda objekt eller samband döljs');
+    await summary.getByRole('button', { name: 'Ta med upphörda', exact: true }).click();
+    await expect(node('Upphörd granne')).toBeVisible();
+    await expect(node('Oberoende objekt')).toBeVisible();
+    await expect(summary.getByText('1 sökträffar', { exact: true })).toBeVisible();
+    expect(await data.read()).toEqual(before);
+    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
+    await panel.getByLabel('Bara markerade').uncheck();
+    await panel.getByLabel('Ta med upphörda', { exact: true }).uncheck();
+    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await node('Blå cykel').focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+    await expect(node('Garaget')).toBeVisible();
+    await (await utilityButton(page, 'Tabell')).click();
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await table.getByRole('button', { name: 'Redigera Blå cykel', exact: true }).click();
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    await page.getByLabel('Objektets status').selectOption('ended');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await (await utilityButton(page, 'Karta')).click();
+    await expect(node('Blå cykel')).toHaveCount(0);
+    await expect(summary).toContainText('Upphörda objekt eller samband döljs');
+    await summary.getByRole('button', { name: 'Ta med upphörda', exact: true }).click();
+    await expect(node('Blå cykel')).toBeVisible();
+    await expect(node('Garaget')).toHaveCount(0);
+    await node('Blå cykel').focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+    await expect(node('Garaget')).toBeVisible();
+    expect((await data.read()).objects).toEqual(before.objects);
+  } finally {
+    await installation.close();
+  }
+});

@@ -240,7 +240,7 @@ test.each(['create', 'update'])(
     expect(state.draft.objectTypes).toBeUndefined();
     const { history } = await (await client.get(`${path}/history`)).json();
     expect(history).toHaveLength(2);
-    expect(history[1]).toEqual(receipt);
+    expect(history[0]).toEqual(receipt);
   },
 );
 
@@ -300,8 +300,8 @@ test('definition conflict choices preserve atomic history and update dependent o
   expect((await save('rebased')).status()).toBe(200);
   expect((await read()).types.find((type) => type.id === 'solar')?.revision).toBe(4);
   const { history } = await (await client.get(`${path}/history`)).json();
-  expect(history.at(-1).objectTypes[0].before.name).toBe('Annans andra namn');
-  expect(history.at(-1).objectTypes[0].after.name).toBe('Mitt namn igen');
+  expect(history[0].objectTypes[0].before.name).toBe('Annans andra namn');
+  expect(history[0].objectTypes[0].after.name).toBe('Mitt namn igen');
 });
 
 test.each([false, true])(
@@ -356,11 +356,11 @@ test.each([false, true])(
     });
     expect(resolved.objects[0].customValues).toEqual({ text: 'På taket' });
     const { history } = await (await client.get(`${path}/history`)).json();
-    expect(history.at(-1).objectTypes[0].before).toMatchObject(theirs);
-    expect(history.at(-1).objectTypes[0].after).toEqual(
+    expect(history[0].objectTypes[0].before).toMatchObject(theirs);
+    expect(history[0].objectTypes[0].after).toEqual(
       resolved.types.find((type) => type.id === 'solar'),
     );
-    expect(history.at(-1).changes[0].type).toEqual(history.at(-1).objectTypes[0].after);
+    expect(history[0].changes[0].type).toEqual(history[0].objectTypes[0].after);
   },
 );
 

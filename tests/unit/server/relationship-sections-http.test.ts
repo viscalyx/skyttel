@@ -1,7 +1,7 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
-import { createHousehold, signIn } from '../../support/client.js';
+import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { createInstallation, robin } from '../../support/installation.js';
 
 let installation: Awaited<ReturnType<typeof createInstallation>>;
@@ -83,7 +83,7 @@ test('relationship sections retain field identity and hidden answers through ato
   const { receipt } = await response.json();
   expect(receipt.relationshipTypes[0].after).toMatchObject(definition);
   expect(receipt.relationships[0].type).toMatchObject(definition);
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   expect((await read()).relationshipTypes.find(({ id }) => id === 'storage')).toMatchObject(
     definition,
   );
@@ -158,82 +158,6 @@ test('malformed sections and placements reject the whole proposal without changi
     expect(await response.json()).toEqual({ error: 'invalid_relationship_type' });
     expect(await read()).toEqual(before);
   }
-});
-
-test('undo reverses section order and field placement while preserving independent names and values', async () => {
-  const save = async (operationId: string) =>
-    post('save', { version: (await read()).draft.version, operationId });
-  await define();
-  await save('created');
-  const rearranged = {
-    ...definition,
-    sections: [...definition.sections].reverse(),
-    fields: [...fields]
-      .reverse()
-      .map((field) => ({ ...field, sectionId: field.id === 'note' ? '' : field.sectionId })),
-  };
-  expect((await define(rearranged, 1)).status()).toBe(200);
-  const rearrangedSave = await save('rearranged');
-  expect(rearrangedSave.status()).toBe(200);
-  const { receipt } = await rearrangedSave.json();
-  const independent = {
-    ...rearranged,
-    sections: [
-      ...rearranged.sections.map((section) => ({
-        ...section,
-        name: section.id === 'service' ? 'Underhåll' : section.name,
-      })),
-      { id: 'later', name: 'Senare avsnitt' },
-    ],
-    fields: [
-      ...rearranged.fields.map((field) => ({
-        ...field,
-        name: field.id === 'amount' ? 'Kapacitet' : field.name,
-      })),
-      { id: 'later', name: 'Senare fält', description: '', kind: 'text', sectionId: 'later' },
-    ],
-  };
-  await define(independent, 2);
-  await post('relationship', {
-    version: (await read()).draft.version,
-    id: 'edge',
-    baseRevision: null,
-    value: {
-      typeId: 'storage',
-      sourceId: 'bike',
-      targetId: 'garage',
-      knowledge: 'known',
-      customValues: { note: 'Dolt men bevarat', amount: 0, active: false },
-    },
-  });
-  expect((await save('independent')).status()).toBe(200);
-  const undone = await post('undo', {
-    version: (await read()).draft.version,
-    operationId: 'rearranged',
-    userId: receipt.userId,
-  });
-  expect(undone.status()).toBe(200);
-  const after = (await read()).draft.relationshipTypes?.[0].after;
-  expect(after?.sections).toEqual([
-    { id: 'facts', name: 'Uppgifter' },
-    { id: 'later', name: 'Senare avsnitt' },
-    { id: 'service', name: 'Underhåll' },
-  ]);
-  expect(after?.fields?.map(({ id }) => id)).toEqual([
-    'note',
-    'later',
-    'amount',
-    'start',
-    'active',
-  ]);
-  expect(after?.fields?.[0].sectionId).toBe('facts');
-  expect(after?.fields?.find(({ id }) => id === 'amount')?.name).toBe('Kapacitet');
-  expect((await save('undo-rearranged')).status()).toBe(200);
-  expect((await read()).relationships[0].customValues).toEqual({
-    note: 'Dolt men bevarat',
-    amount: 0,
-    active: false,
-  });
 });
 
 test.each(['saved', 'proposed'])(
@@ -318,68 +242,6 @@ test.each(['saved', 'proposed'])(
     }
   },
 );
-
-test('restoring deleted values also restores their removed section without losing current presentation', async () => {
-  const save = async (operationId: string) => {
-    const response = await post('save', { version: (await read()).draft.version, operationId });
-    expect(response.status()).toBe(200);
-    return (await response.json()).receipt;
-  };
-  await define();
-  await post('relationship', {
-    version: (await read()).draft.version,
-    id: 'edge',
-    baseRevision: null,
-    value: {
-      typeId: 'storage',
-      sourceId: 'bike',
-      targetId: 'garage',
-      knowledge: 'known',
-      customValues: { note: 'Återställ', amount: 0 },
-    },
-  });
-  await save('initial');
-  await post('relationship', {
-    version: (await read()).draft.version,
-    id: 'edge',
-    baseRevision: 1,
-    value: null,
-  });
-  const receipt = await save('deleted');
-  await define(
-    { ...definition, fields: [], sections: [{ id: 'current', name: 'Dagens avsnitt' }] },
-    1,
-  );
-  await save('removed-fields');
-  const undo = await post('undo', {
-    version: (await read()).draft.version,
-    operationId: receipt.operationId,
-    userId: receipt.userId,
-  });
-  expect(undo.status(), await undo.text()).toBe(200);
-  const state = await read();
-  expect(state.draft.relationshipTypes?.[0].after?.sections).toEqual([
-    { id: 'current', name: 'Dagens avsnitt' },
-    { id: 'facts', name: 'Uppgifter' },
-  ]);
-  expect(state.draft.relationshipTypes?.[0].after?.fields).toEqual(fields.slice(0, 2));
-  expect(
-    (
-      await post('resolve', {
-        version: state.draft.version,
-        choice: 'proposed',
-        conflict: {
-          kind: 'relationshipType',
-          id: 'storage',
-          current: state.relationshipTypes.find(({ id }) => id === 'storage'),
-        },
-      })
-    ).status(),
-  ).toBe(200);
-  await save('restored');
-  await installation.restart();
-  expect((await read()).relationships[0].customValues).toEqual({ note: 'Återställ', amount: 0 });
-});
 
 test.each(['proposed-removal', 'current-removal'] as const)(
   'explicit resolution keeps a section needed by an independent field after %s',
@@ -512,88 +374,4 @@ test('conflict resolution places new fields and sections before old items while 
   } finally {
     await other.dispose();
   }
-});
-
-test('undo retains a currently hidden field while restoring missing historical fields and section names', async () => {
-  await define();
-  expect(
-    (
-      await post('relationship', {
-        version: (await read()).draft.version,
-        id: 'edge',
-        baseRevision: null,
-        value: {
-          typeId: 'storage',
-          sourceId: 'bike',
-          targetId: 'garage',
-          knowledge: 'known',
-          customValues: { ...values, start: '2026-09-27' },
-        },
-      })
-    ).status(),
-  ).toBe(200);
-  await save('initial');
-  await post('relationship', {
-    version: (await read()).draft.version,
-    id: 'edge',
-    baseRevision: 1,
-    value: null,
-  });
-  const { receipt } = await (await save('removed')).json();
-  await define(
-    {
-      ...definition,
-      sections: [{ id: 'facts', name: 'Dagens uppgifter' }],
-      fields: [{ ...fields[0], sectionId: '' }],
-    },
-    1,
-  );
-  await save('current');
-  expect(
-    (
-      await post('undo', {
-        version: (await read()).draft.version,
-        operationId: receipt.operationId,
-        userId: receipt.userId,
-      })
-    ).status(),
-  ).toBe(200);
-  const state = await read();
-  expect(state.draft.relationshipTypes?.[0].after).toMatchObject({
-    sections: [{ id: 'facts', name: 'Dagens uppgifter' }],
-    fields: [{ ...fields[0], sectionId: '' }, fields[1], fields[3], fields[2]],
-  });
-  expect(
-    (
-      await post('resolve', {
-        version: state.draft.version,
-        choice: 'proposed',
-        conflict: {
-          kind: 'relationshipType',
-          id: 'storage',
-          current: state.relationshipTypes.find(({ id }) => id === 'storage'),
-        },
-      })
-    ).status(),
-  ).toBe(200);
-  expect((await save('restored')).status()).toBe(200);
-  expect((await read()).relationships[0].customValues).toEqual({ ...values, start: '2026-09-27' });
-});
-
-test('undo rejects an overlapping private presentation edit without changing either definition', async () => {
-  await define();
-  await save('initial');
-  const hidden = { ...definition, fields: fields.map((field) => ({ ...field, sectionId: '' })) };
-  await define(hidden, 1);
-  const { receipt } = await (await save('hidden')).json();
-  await define(definition, 2);
-  const before = await read();
-  const response = await post('undo', {
-    version: before.draft.version,
-    operationId: receipt.operationId,
-    userId: receipt.userId,
-  });
-  expect(response.status()).toBe(409);
-  expect(await response.json()).toEqual({ error: 'undo_draft_overlap' });
-  expect(await read()).toEqual(before);
 });

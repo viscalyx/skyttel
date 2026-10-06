@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openNewObject, signIn } from '../support/client.js';
 import { expectContentOwnerReview } from '../support/content-owners.js';
 import { createInstallation, robin } from '../support/installation.js';
 
@@ -145,9 +145,8 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
       operationId: 'before-identity-assignment',
     };
     await stale.goto(`${destination.origin}/households/${target.id}`);
-    await openWorkspace(stale);
-    await stale.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
-    await stale.getByLabel('Objektets namn').fill('Gammalt oskickat formulär');
+    await openNewObject(stale);
+    await stale.getByLabel('Namn', { exact: true }).fill('Gammalt oskickat formulär');
     expect(
       (await targetClient.post(`${path}/map/operations`, { headers, data: pending })).status(),
     ).toBe(200);
@@ -264,7 +263,7 @@ test('FLYTT-02: an uncertain explicit identity assignment is read back while bot
       409,
     );
     releaseRecovery();
-    await expect(stale.getByLabel('Objektets namn')).toHaveCount(0);
+    await expect(stale.getByLabel('Namn', { exact: true })).toHaveCount(0);
 
     await page.unroute('**/content-owners/assign');
     await owners.getByLabel('Historisk innehållsidentitet').selectOption(independent.userId);
