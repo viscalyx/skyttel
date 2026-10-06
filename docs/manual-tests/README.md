@@ -102,11 +102,15 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   kartgrafik, uttrycklig identitet och sparade/föreslagna preciseringar,
   långa namn, modalernas fokus och återgång även när en sida försvinner;
   separat sökning, egna
-  detaljträffar, flerval, teckensammansättning, utkastfiltrets återställning,
+  detaljträffar, aktuell rad, teckensammansättning, utkastfiltrets återställning,
   markeringar, direkta sammanhang, utforskning utan indirekt expansion,
   upphört även i sammanhang och tabellens kartknapp med bevarat läge;
   textåtgärder med återfokus och verkliga borttagningsberoenden utan
   kartgrafik, med oberoende förslag och sparade uppgifter kvar.
+  Kartknappen är inaktiv vid grafikavbrott, medan vanlig läsning och
+  redigering fungerar. Återgång från inställningarna behåller användbart
+  läge och synligt, otäckt fokus. LISTA-06:s gamla fönstergeometri är
+  pensionerad utan återanvänt ID; första aktiveringens läsning finns kvar.
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
   fönsterflytt, samtidiga detaljer, sex beständiga personliga riktningar och
