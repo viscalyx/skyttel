@@ -15,7 +15,7 @@ testidentitet och påhittade hushållsuppgifter.
    [separat provdatabas](../development/devcontainer.md#disposable-local-
    database),
    logga in och skapa ett tomt hushåll.
-2. Börja varje fall med ett tomt hushåll och stängda arbetsytor. Behåll
+2. Börja varje fall med ett tomt hushåll utan öppna dialoger eller textvy. Behåll
    fliken mellan steg när inget annat anges.
 3. Kör med tangentbord på dator och pekskärm på telefon. Kontrollera
    skärmläsarens namn, läsordning och statusmeddelanden separat. Anteckna
@@ -49,23 +49,23 @@ closed”.
 **Steg:**
 
 1. Öppna hushållet. Kontrollera att den tomma kartan öppnas utan startdialoger.
-2. Välj **Visa verktygens namn**, sedan **Lista** och **Nytt objekt**.
+2. Välj **Visa verktygens namn**, **Tabell** och **Nytt objekt**.
    Ange namnet **Cykeln**.
-3. Välj **Avbryt** i objektdialogen. Kontrollera förvalt **Fortsätt redigera**
+3. Välj krysset i objektdialogen. Kontrollera förvalt **Fortsätt redigera**
    och tryck Escape. Namnet ska finnas kvar.
-4. Välj **Lägg i utkastet och stäng**. Stäng läspanelerna med kryssen och
-   öppna **Lista** igen. Kontrollera cykelns förslag och att ingen Fortsätt-
-   ingång
-   för stängda objektformulär finns. Välj **Spara hela utkastet**.
-5. Läs sparbeskedet och ladda om sidan.
+4. Välj **Lägg i utkastet och stäng**. Välj **Karta**, sedan **Tabell**.
+   Kontrollera Cykeln och att ingen ingång för att återuppta ett stängt
+   objektformulär finns. Öppna **Skriv till Skyttel**, **Visa utkastet** och
+   välj **Spara hela utkastet**.
+5. Läs **Utkastet är sparat** och ladda om sidan.
 
 **Förväntat resultat:**
 
-- Verktygen har begripliga namn. Stängning återför fokus till **Lista**.
-- Avbruten förlust behåller texten. Bekräftat tillägg bevarar hela
-  förslaget när läspanelerna stängs, utan automatiskt gemensamt sparande.
-- Det verifierade sparbeskedet anger Cykeln, som finns i kartan efter
-  omladdning. Ingen startdialog visas på kartan med det sparade objektet.
+- Verktygen har begripliga namn. Den vanliga nya objektingången är åtkomlig.
+- Avbruten förlust behåller texten. Bekräftat tillägg bevarar hela förslaget
+  genom kart- och tabellbyte utan automatiskt gemensamt sparande.
+- Cykeln finns i kartan efter uttryckligt sparande och omladdning.
+  Ingen startdialog visas på kartan med det sparade objektet.
 
 ### YTA-02: temaval och enhetens inställning
 
@@ -117,16 +117,15 @@ without graphics”.
 
 1. Öppna direkt från de hopfällda verktygen
    **Information och hjälp**. Läs instruktionerna och tryck Escape.
-2. Välj **Lista**, **Nytt objekt** och skriv **Min cykel**. Kontrollera att
+2. Välj **Tabell**, **Nytt objekt** och skriv **Min cykel**. Kontrollera att
    fält och knappen för att lägga i utkastet går att nå.
-3. Välj Avbryt och Kasta ändringarna och fortsätt i objektformuläret.
-   Stäng läspanelerna med kryssen och välj **Skriv till Skyttel**. Ge medgivande
-   med **Godkänn och starta** om rutan visas. Kontrollera att samtalsytan går
-   att nå utan mikrofon.
-4. Upprepa med förstoring och tangentbord; använd hopplänkarna till
-   formulär och samtal före kartgrafiken.
-5. Öppna **Sök i kartan** och **Utkast och historik** från de expanderade
-   verktygen. Stäng panelerna med kryssen efter varje val och kontrollera fokus.
+3. Välj krysset och **Kasta ändringarna och fortsätt**. Välj **Karta**,
+   öppna **Sök i kartan**, kontrollera sökfältets fokus och tryck Escape.
+4. Öppna **Skriv till Skyttel** och **Visa utkastet**. Läs det tomma utkastet
+   utan samtyckesfråga. Stäng texten, välj **Karta**, öppna texten igen och
+   välj uttryckligen **Nytt samtal** före medgivande och samtalsstart.
+5. Upprepa med förstoring och tangentbord; använd hopplänkarna till
+   tabell och samtal före kartgrafiken.
 6. Öppna hjälpen igen och fäll ihop verktygen. Flytta fokus till hjälpen
    och tryck Escape. Kontrollera att fokus är kvar på en synlig knapp.
 
@@ -134,11 +133,11 @@ without graphics”.
 
 - Hjälpens rubrik får fokus; Escape återför fokus till hjälpknappen,
   även efter att verktygen har fällts ihop.
-- Formulär och samtal går att nå utan att välja något grafiskt objekt.
+- Formulär, utkastets läsning och samtal går att nå utan grafiskt objektval.
+- Texten och utkastet kan öppnas utan att starta ett samtal eller fråga om AI.
 - Innehållet är läsbart och kontrollerna nåbara även med förstoring.
-- Fokus återgår till en synlig verktygsknapp. Täckta kartkontroller går
-  inte att tabba till medan arbetsytan ligger över kartan; stäng
-  arbetsytan för att använda kartans kontroller igen.
+- Fokus återgår till en synlig verktygsknapp. Den aktiva modalen skyddar
+  sina fält från fokus på bakomliggande kontroller.
 
 ### YTA-07: hjälpen förklarar samtalet och leder till rätt kontroller
 
@@ -304,18 +303,17 @@ testfallet “YTA-05: save results remain readable beside tablet work”.
 
 **Steg:**
 
-1. Öppna **Lista** och **Nytt objekt**. Skriv
-   **Familjens gemensamma cykel** och välj **Lägg i mitt utkast**.
-2. Välj **Spara hela utkastet** och läs **Utkastet är sparat** under
-   hushållsnamnet.
-3. Vänta tre sekunder tills sparbeskedet försvinner och stäng därefter
-   panelerna med kryssen.
+1. Öppna **Tabell** och **Nytt objekt**. Skriv
+   **Familjens gemensamma cykel** och välj **Lägg i utkastet och stäng**.
+2. Öppna **Skriv till Skyttel**, **Visa utkastet** och **Spara hela utkastet**.
+   Läs **Utkastet är sparat** under hushållsnamnet.
+3. Vänta tre sekunder tills sparbeskedet försvinner och välj **Karta**.
 
 **Förväntat resultat:**
 
-- Sparbeskedet är läsbart medan arbetsytan är öppen.
+- Sparbeskedet är läsbart medan textvyn är öppen.
 - Att beskedet försvinner ändrar inte det sparade innehållet. Cykeln finns
-  kvar i kartan när arbetsytan stängs.
+  kvar i kartan när kartvyn väljs igen.
 
 ### YTA-06: synliga visningsval på en tom mobilkarta
 
@@ -346,10 +344,10 @@ choices readable and operable in dark”.
    **Visa höjdhjälp** under kameraknapparna. Hela etiketten ska synas.
    Reglaget ska vara av och inaktivt med texten
    **Välj ett objekt för att visa höjdhjälp**. Stäng navigeringen.
-   Nå **Lista** i verktygsfältet
+   Nå **Tabell** i verktygsfältet
    med tangentbordet och kontrollera att knappen syns.
-3. Öppna Lista, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
-   Stäng panelerna med kryssen och öppna Navigera. Höjdhjälpen ska
+3. Öppna Tabell, välj **Nytt objekt**, skriv **Cykeln** och lägg i utkastet.
+   Välj **Karta** och öppna **Navigera**. Höjdhjälpen ska
    fortfarande vara avstängd.
    Spara inte utkastet.
 
@@ -383,13 +381,13 @@ controls reachable”.
 1. Välj **Prata med Skyttel** och godkänn samtalsmedgivandet. Läs **Lyssnar**
    i röstrutan. Välj
    **Återställ vy**. Ingen beständig rutinbekräftelse ska visas i kartan.
-2. Nå verktygsfältets **Lista** med tangentbordet. Fokus och knappen ska synas
+2. Nå verktygsfältets **Tabell** med tangentbordet. Fokus och knappen ska synas
    och vara fria från röstrutan. Kontrollera båda fönsterhöjderna.
 3. Slå på **Offline** i webbläsarens nätverkspanel. Läs samtalsnotisen
    **Ingen kontakt med Skyttel. Mikrofonen är av.** och kontrollera samma
-   listknapp vid båda höjderna.
-4. Slå av **Offline**, välj **Lista** och sedan **Nytt objekt**.
-   Formuläret med **Objektets namn** ska gå att använda. Skapa inget objekt.
+   tabellknapp vid båda höjderna.
+4. Slå av **Offline**, välj **Tabell** och sedan **Nytt objekt**.
+   Formuläret med **Namn** ska gå att använda. Skapa inget objekt.
 
 **Förväntat resultat:**
 

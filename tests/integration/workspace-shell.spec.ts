@@ -1,5 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { closePanels, createHousehold, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openMap,
+  openNewObject,
+  openTable,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import {
   startConversationWithText,
   startConversationWithVoice,
@@ -19,25 +29,20 @@ test('YTA-05: save results remain readable beside tablet work', async ({ page })
     await page.goto(installation.origin);
     await page
       .getByRole('navigation', { name: 'Kartans verktyg' })
-      .getByRole('button', { name: 'Lista', exact: true })
+      .getByRole('button', { name: 'Tabell', exact: true })
       .click();
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Familjens gemensamma cykel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    const status = page
-      .getByRole('region', { name: 'Kartans status' })
-      .getByText('Utkastet är sparat', { exact: true });
+    await saveReviewedConflictDraft(page);
+    const status = page.locator('.draft-save-toast');
     await expect(status).toBeVisible();
     const size = await status.boundingBox();
     expect(size?.x).toBeGreaterThanOrEqual(0);
     expect((size?.x ?? 0) + (size?.width ?? 0)).toBeLessThanOrEqual(768);
     expect(size?.height).toBeLessThan(160);
     await expect(status).toHaveCount(0, { timeout: 4500 });
-    await closePanels(page);
+    await openMap(page);
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Familjens gemensamma cykel', exact: true }),
     ).toBeVisible();
@@ -58,32 +63,33 @@ test('YTA-01: map tools protect unsent object loss and preserve staged work when
     await expect(tools).toBeVisible();
     await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
     await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).not.toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).not.toBeVisible();
     await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
-    await expect(tools.getByText('Lista', { exact: true })).toBeVisible();
-    await tools.getByRole('button', { name: 'Lista', exact: true }).click();
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await expect(tools.getByText('Tabell', { exact: true })).toBeVisible();
+    await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
     const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
-    await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
     await expect(
       page.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
     ).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Cykeln');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await closePanels(page);
-    await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
-    await tools.getByRole('button', { name: 'Lista', exact: true }).click();
+    await openMap(page);
+    await expect(tools.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeEnabled();
+    await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     await expect(page.getByRole('button', { name: /^Fortsätt:/ })).toHaveCount(0);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText('Cykeln');
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat: Cykeln');
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).toContainText('Cykeln');
+    await saveReviewedConflictDraft(page);
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+      'Utkastet är sparat',
+    );
     await page.reload();
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Cykeln', exact: true }),
@@ -112,7 +118,7 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
       await page.keyboard.press('Tab');
       await expect(page.getByRole('link', { name: 'Till verktygen', exact: true })).toBeFocused();
       await page.keyboard.press('Tab');
-      const skip = page.getByRole('button', { name: 'Till lista och formulär', exact: true });
+      const skip = page.getByRole('button', { name: 'Till tabellen', exact: true });
       await expect(skip).toBeFocused();
       expect(
         await skip.evaluate((element) => {
@@ -142,12 +148,9 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
       await expect(
         tools.getByRole('button', { name: 'Information och hjälp', exact: true }),
       ).toBeFocused();
-      await tools.getByRole('button', { name: 'Lista', exact: true }).click();
-      await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toHaveCount(0);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
+      await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).not.toBeVisible();
+      await openNewObject(page);
       await page.getByLabel('Namn', { exact: true }).fill('Min cykel');
       await expect(
         page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }),
@@ -157,22 +160,22 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
       ).toBe(true);
       await page
         .getByRole('dialog', { name: 'Nytt objekt', exact: true })
-        .getByRole('button', { name: 'Avbryt', exact: true })
+        .getByRole('button', { name: 'Stäng objektdialogen', exact: true })
         .click();
       await page
         .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
         .click();
-      await closePanels(page);
-      await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
-      for (const entry of ['Sök i kartan', 'Utkast och historik']) {
-        await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
-        await tools.getByRole('button', { name: entry, exact: true }).click();
-        await closePanels(page);
-        await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
-      }
-      await page.getByRole('button', { name: 'Lista', exact: true }).click();
-      await closePanels(page);
-      await expect(tools.getByRole('button', { name: 'Lista', exact: true })).toBeFocused();
+      await openMap(page);
+      await expect(tools.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeEnabled();
+      await (await utilityButton(page, 'Sök i kartan')).click();
+      await expect(
+        page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press('Escape');
+      const draft = await openDraftReview(page);
+      await expect(draft).toBeVisible();
+      await closeTextView(page);
+      await openMap(page);
       await startConversationWithText(page);
       await expect(
         page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }),
@@ -229,7 +232,7 @@ test('YTA-02: theme choice returns focus and System follows the device', async (
       for (const [role, name] of [
         ['link', 'Hoppa till innehållet'],
         ['link', 'Till verktygen'],
-        ['button', 'Till lista och formulär'],
+        ['button', 'Till tabellen'],
         ['button', 'Till samtalet med Skyttel'],
       ] as const) {
         const control = page.getByRole(role, { name, exact: true });
@@ -362,7 +365,7 @@ for (const theme of ['light', 'dark'] as const) {
         ).toBe(true);
         await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
         const action = page.getByRole('button', {
-          name: 'Lista',
+          name: 'Tabell',
           exact: true,
         });
         await action.focus();
@@ -380,14 +383,11 @@ for (const theme of ['light', 'dark'] as const) {
           }),
         ).toBe(true);
       }
-      await page.getByRole('button', { name: 'Lista', exact: true }).click();
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+      await openNewObject(page);
       await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
       await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-      await closePanels(page);
+      await openMap(page);
       await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
       await page.getByRole('button', { name: 'Navigera', exact: true }).click();
       await expect(
@@ -456,7 +456,7 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
             cornerStatusClear: true,
             cornerVisible: true,
           });
-        const entry = page.getByRole('button', { name: 'Lista', exact: true });
+        const entry = page.getByRole('button', { name: 'Tabell', exact: true });
         await entry.focus();
         await expect(entry).toBeFocused();
         expect(
@@ -470,11 +470,8 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
       }
     }
     await context.setOffline(false);
-    await page.getByRole('button', { name: 'Lista', exact: true }).click();
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await openNewObject(page);
     await expect(page.getByLabel('Namn', { exact: true })).toBeVisible();
   } finally {
     await context.setOffline(false);
