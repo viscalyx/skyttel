@@ -14,6 +14,7 @@ export type SpecialConflict = {
   reason: string;
   warning: string;
   instruction?: string;
+  afterDiscard?: string;
   additionalBlockers?: { reason: string; warning: string; instruction?: string }[];
   action?:
     | 'Acceptera borttagningen och kasta ditt förslag'
@@ -95,6 +96,11 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
         ? 'Sambandet finns redan. Ta bort det föreslagna sambandet ur ditt utkast.'
         : 'Sambandet kan inte läggas till eftersom ett objekt som det pekar på saknas.',
       action: 'Ta bort sambandet ur ditt utkast',
+      afterDiscard: duplicate
+        ? savedDuplicate
+          ? 'Det redan sparade sambandet och dess uppgifter behålls.'
+          : 'Det andra förslaget i ditt utkast och dess uppgifter behålls.'
+        : 'Om du vill lägga till ett nytt samband gör du det den vanliga vägen.',
       ...(conflict.type === null ? { additionalBlockers: [missingRelationshipType] } : {}),
     };
   }
@@ -112,6 +118,7 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
         ? 'Stäng konfliktfönstret och lägg till objekttypen under Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt kan du ta bort objektet ur ditt utkast nedan.'
         : missingRelationshipType.instruction,
       ...(object ? { action: 'Ta bort objektet ur ditt utkast' as const } : {}),
+      ...(object ? { afterDiscard: 'Övriga objekt och samband i kartan påverkas inte.' } : {}),
     };
   }
   if (

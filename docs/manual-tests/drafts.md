@@ -1146,8 +1146,11 @@ relationships”.
 1. Öppna **Lo Exempel** som administratören och välj **Ta bort**.
 2. Lägg **Lo Exempel → Använder → Molnmusik** med säkerheten
    **Osäkert uppgivet** i medlemmens utkast och spara det.
-3. Försök spara administratörens äldre utkast. Hämta aktuellt underlag.
-4. Granska det nytillkomna sambandet och välj **Behåll mitt förslag**.
+3. Försök spara administratörens äldre utkast från Utkastets sparikon. Läs
+   **Utkastet kunde inte sparas**, stäng och ladda om för aktuellt underlag.
+4. Öppna **Granska konflikter**, läs det nytillkomna sambandet och välj
+   föreslagen borttagning för både objektet och sambandet. Välj
+   **Lägg valen i utkastet**.
 5. Kontrollera att sambandet fortfarande finns hos medlemmen. Välj sedan
    **Spara hela utkastet** som administratören och ladda om hos medlemmen.
 
@@ -1297,11 +1300,13 @@ another proposal”.
    **Kim Exempel** i administratörens utkast.
 2. Skapa samma samband som medlemmen och spara det.
 3. Ladda om administratörens sida och granska konflikten.
-4. Välj **Använd sparat värde** och sedan **Spara hela utkastet**.
+4. Välj **Ta bort sambandet ur ditt utkast**. Öppna därefter
+   **Skriv till Skyttel → Visa utkastet** och spara separat.
 
 **Förväntat resultat:**
 
-- Granskningen visar **Samma samband finns redan** och det befintliga
+- Granskningen visar **Ett sparat samband har redan samma typ, riktning
+  och objekt.** och det befintliga
   sambandet med läsbara objektnamn och riktning.
 - Valet tar bort dubblettförslaget men behåller **Kim Exempel**.
 - Efter sparandet finns Kim och exakt ett sådant samband i kartan.
@@ -1327,15 +1332,16 @@ recovery choice”.
 2. Öppna **Molnmusik** som medlemmen, välj **Ta bort** och spara.
 3. Ladda om administratörens sida och granska konflikten.
 4. Starta om appen med samma databas och öppna administratörens utkast.
-5. Välj **Använd sparat värde**.
+5. Öppna **Granska konflikter** och välj **Ta bort sambandet ur ditt utkast**.
 
 **Förväntat resultat:**
 
-- Konflikten säger att sambandet hänvisar till ett borttaget objekt.
-  **Behåll mitt förslag** erbjuds inte.
+- Konflikten säger **Ett objekt som sambandet pekar på saknas.**
+  Förslaget går att läsa utan valbara egenskaper.
 - Efter omstart visas fortfarande **Lo Exempel → Använder → Molnmusik**
   med **Osäkert uppgivet**, även om målobjektet saknas i kartan.
-- Valet tar bort förslaget och visar **Inga förslag**. Inget samband
+- Valet tar bort förslaget och visar **Sambandet har tagits bort ur ditt
+  utkast**. Inget samband
   skapas och det borttagna objektet återkommer inte.
 
 ## Status, fokus och samlat sparande
@@ -2319,6 +2325,7 @@ and preserves the saved removal”.
    borttagningen och varningen att förslaget inte kan återställa objektet.
 2. Läs **Borttaget** och **✓ Förvalt** på den sparade sidan och hela ditt
    förslag på den andra. Kontrollera att förslaget saknar valbara egenskaper.
+   Under **Efter bekräftelsen** anges **Objekt: Borttaget**.
 3. Stäng med Escape och kör `result`. Öppna konflikten igen.
 4. Välj **Acceptera borttagningen och kasta ditt förslag**. Läs statusen och
    postens kvarvarande namn, typ och lösningsmarkering. Kör `result` igen.
@@ -2352,6 +2359,7 @@ proposal without restoring the saved edge”.
 
 1. Öppna konflikten och läs förklaringen om det borttagna sambandet.
 2. Läs **Borttaget**, **✓ Förvalt** och hela det egna förslaget i läsläge.
+   Under **Efter bekräftelsen** anges **Samband: Borttaget**.
 3. Stäng med Escape, kör `result` och öppna igen.
 4. Välj **Acceptera borttagningen och kasta ditt förslag** och kör `result`.
 
@@ -2392,7 +2400,9 @@ discards only the proposed duplicate”.
   och objekt.** Varningen lyder **Sambandet finns redan. Ta bort det
   föreslagna sambandet ur ditt utkast.**
 - Jämförelsen är i läsläge, utan egenskapsval eller redigering. Utfallet
-  **Borttaget ur utkast** är markerat **✓ Förvalt**.
+  **Sambandet i ditt utkast: Tas bort ur ditt utkast** är markerat
+  **✓ Förvalt**. Det redan sparade sambandet och dess uppgifter behålls.
+  Efter bekräftelsen visas **Borttaget ur ditt utkast**.
 - Öppning och stängning ändrar inget. Bekräftelsen kastar bara dubblettens
   förslag. Sparade uppgifter, historik och oberoende utkast består.
 
@@ -2423,7 +2433,9 @@ removes only the unusable relationship proposal”.
   Varningen lyder **Sambandet kan inte läggas till eftersom ett objekt
   som det pekar på saknas.**
 - Ingen objektväljare, redigering eller egenskapslösning erbjuds i dialogen.
-  Utfallet är förvalt och hela förslaget går att läsa.
+  Utfallet **Sambandet i ditt utkast: Tas bort ur ditt utkast** är förvalt
+  och hela förslaget går att läsa. Ett nytt samband läggs till den vanliga
+  vägen. Efter bekräftelsen visas **Borttaget ur ditt utkast**.
 - Stängning ändrar inget. Bekräftelsen kastar bara sambandsförslaget.
   Den sparade borttagningen, historiken och det oberoende utkastet består.
 
@@ -2554,7 +2566,9 @@ discards only the explicitly confirmed object”.
 **Förväntat resultat:**
 
 - Jämförelsen är i läsläge. Typen visas som **Saknas**; det egna förslaget
-  finns kvar när dialogen stängs.
+  finns kvar när dialogen stängs. Förhandsvisningen anger **Objektet i ditt
+  utkast: Tas bort ur ditt utkast** och att övriga objekt och samband inte
+  påverkas. Efter bekräftelsen visas **Borttaget ur ditt utkast**.
 - Instruktionen lyder **Stäng konfliktfönstret och lägg till objekttypen under
   Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt
   kan du ta bort objektet ur ditt utkast nedan.**

@@ -31,6 +31,10 @@ test('UTKAST-57: accepting a removed object discards only its proposal and prese
     const saved = dialog.getByRole('region', { name: 'Sparat i kartan nu', exact: true });
     const proposed = dialog.getByRole('region', { name: 'Ditt förslag', exact: true });
     await expect(saved).toContainText('Borttaget');
+    const preview = dialog.getByRole('region', { name: 'Resultat av valen', exact: true });
+    await expect(preview.locator('dt')).toHaveText('Objekt');
+    await expect(preview.locator('dd')).toHaveText('Borttaget');
+    await expect(preview).not.toContainText('✓ Förvalt');
     await expect(saved).toContainText('✓ Förvalt');
     await expect(proposed).toContainText('Mitt förslag');
     await expect(proposed.getByRole('button')).toHaveCount(0);
@@ -138,15 +142,48 @@ for (const [id, kind, title, reason, warning, action] of [
       await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
         'Osäkert uppgivet',
       );
-      await expect(dialog.getByRole('region', { name: 'Resultat av valen' })).toContainText(
-        '✓ Förvalt',
+      if (kind === 'missing-endpoint') {
+        const missing = dialog.getByRole('region', { name: 'Sparat i kartan nu', exact: true });
+        await expect(missing).toContainText('Till objekt');
+        await expect(missing).toContainText('Borttaget');
+        await expect(missing.locator('.cp-field-choice')).toHaveClass(/cp-change/);
+        await expect(missing.locator('.cp-field-choice')).not.toHaveClass(/cp-overlap/);
+        await expect(
+          dialog
+            .getByRole('region', { name: 'Ditt förslag', exact: true })
+            .getByText('Molnmusik', { exact: true })
+            .locator('..'),
+        ).not.toHaveClass(/cp-change|cp-overlap/);
+      }
+      const preview = dialog.getByRole('region', { name: 'Resultat av valen', exact: true });
+      await expect(preview.locator('dt')).toHaveText(
+        kind === 'removed' ? 'Samband' : 'Sambandet i ditt utkast',
       );
+      await expect(preview.locator('dd')).toHaveText(
+        kind === 'removed' ? 'Borttaget' : 'Tas bort ur ditt utkast',
+      );
+      if (kind === 'removed') await expect(preview).not.toContainText('✓ Förvalt');
+      else {
+        await expect(preview).toContainText('✓ Förvalt');
+        await expect(preview).toContainText(
+          kind === 'duplicate'
+            ? 'Det redan sparade sambandet och dess uppgifter behålls.'
+            : 'Om du vill lägga till ett nytt samband gör du det den vanliga vägen.',
+        );
+      }
       await page.keyboard.press('Escape');
       expect((await app.read()).draft).toEqual(before.draft);
       await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
       await dialog.getByRole('button', { name: action, exact: true }).click();
       await expect(dialog.getByRole('status')).toContainText(
         'Förslaget har tagits bort ur ditt utkast',
+      );
+      const result = dialog.locator('.cp-preview');
+      await expect(result.locator('dt')).toHaveText(
+        kind === 'removed' ? 'Samband' : 'Sambandet i ditt utkast',
+      );
+      await expect(result.locator('dd')).toHaveText(
+        kind === 'removed' ? 'Borttaget' : 'Borttaget ur ditt utkast',
       );
       const after = await app.read();
       expect(after.draft.relationships ?? []).toEqual([]);

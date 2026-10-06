@@ -11,6 +11,59 @@ import type {
 import { objectPropertyValues } from './ObjectReadDetails.js';
 import { relationshipPropertyValues } from './RelationshipReadDetails.js';
 
+/** The fixed private effect is the same before and after its explicit confirmation. */
+export function SpecialConflictResult({
+  kind,
+  special,
+  confirmed = false,
+}: {
+  kind: DraftConflict['kind'];
+  special: SpecialConflict;
+  confirmed?: boolean;
+}) {
+  const removed = special.kind === 'removed';
+  const object = kind === 'object';
+  return (
+    <>
+      {!confirmed && !removed && !object && (
+        <p>
+          <strong>
+            <span aria-hidden="true">✓</span> Förvalt
+          </strong>
+        </p>
+      )}
+      <dl className="cp-fields">
+        <div>
+          <dt>
+            {removed
+              ? object
+                ? 'Objekt'
+                : 'Samband'
+              : `${object ? 'Objektet' : 'Sambandet'} i ditt utkast`}
+          </dt>
+          <dd>
+            {removed
+              ? 'Borttaget'
+              : confirmed
+                ? 'Borttaget ur ditt utkast'
+                : 'Tas bort ur ditt utkast'}
+          </dd>
+        </div>
+      </dl>
+      {removed ? (
+        <p>
+          {confirmed
+            ? `${object ? 'Objektet' : 'Sambandet'} förblir borttaget.`
+            : 'Ditt ändringsförslag för denna post kastas.'}
+        </p>
+      ) : (
+        <p>{special.afterDiscard}</p>
+      )}
+      <p>Övriga förslag i utkastet finns kvar.</p>
+    </>
+  );
+}
+
 export function SpecialConflictDetails({
   state,
   conflict,
@@ -56,10 +109,25 @@ export function SpecialConflictDetails({
           (type) => type.id === current.typeId,
         )
       : undefined;
-  const saved =
-    special.kind === 'missing-object-type'
-      ? new Map([['type', { label: 'Objekttyp', value: 'Saknas' }]])
-      : readFields(current, savedType ?? type);
+  const saved = readFields(current, savedType ?? type);
+  if (conflict.missingEndpoints?.length && proposal && 'sourceId' in proposal) {
+    for (const [key, id] of [
+      ['source', proposal.sourceId],
+      ['target', proposal.targetId],
+    ] as const)
+      if (id && conflict.missingEndpoints.includes(id)) {
+        saved.set(key, { label: fields.get(key)?.label ?? key, value: 'Borttaget' });
+        // A new relationship has no saved before record. Its captured selected
+        // endpoint still supplies the actual meaning before that object disappeared.
+        if (!before.has(key) && objectNames?.[id])
+          before.set(key, { label: fields.get(key)?.label ?? key, value: objectNames[id] });
+      }
+  } else if (conflict.type === null) {
+    saved.set('type', {
+      label: conflict.kind === 'object' ? 'Objekttyp' : 'Sambandstyp',
+      value: 'Saknas',
+    });
+  }
   const removed = special.kind === 'removed';
   function provenanceClass(key: string, side: 'saved' | 'proposed') {
     const previous = before.get(key)?.value;
@@ -149,14 +217,7 @@ export function SpecialConflictDetails({
           <p>Du behöver inte välja några egenskaper.</p>
           <section className="cp-preview" aria-label="Resultat av valen">
             <h3>Efter bekräftelsen</h3>
-            <p>
-              {removed ? 'Borttaget' : 'Borttaget ur utkast'}{' '}
-              <span className="cp-picked">
-                <span aria-hidden="true">✓</span> Förvalt
-              </span>
-            </p>
-            {removed && <p>Ditt ändringsförslag för denna post kastas.</p>}
-            <p>Övriga förslag i utkastet finns kvar.</p>
+            <SpecialConflictResult kind={conflict.kind} special={special} />
           </section>
         </>
       )}

@@ -1184,10 +1184,59 @@ test.each(['changed', 'duplicate', 'endpoint', 'deletion'] as const)(
     } else {
       const before = await read();
       const dialog = await openConflict();
-      expect(dialog.getByText(/Den här konflikten behöver rättas/)).toBeTruthy();
-      expect(dialog.queryByRole('button', { name: 'Lägg valen i utkastet' })).toBeNull();
-      await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktfönstret' }));
+      if (scenario === 'deletion') {
+        expect(
+          dialog.getByText(
+            'Du föreslår borttagning. Ytterligare ett sparat samband berör nu objektet.',
+          ),
+        ).toBeTruthy();
+        expect(
+          (dialog.getByRole('button', { name: 'Lägg valen i utkastet' }) as HTMLButtonElement)
+            .disabled,
+        ).toBe(true);
+      } else {
+        expect(
+          dialog.getByText(
+            scenario === 'duplicate'
+              ? 'Sambandet finns redan. Ta bort det föreslagna sambandet ur ditt utkast.'
+              : 'Sambandet kan inte läggas till eftersom ett objekt som det pekar på saknas.',
+          ),
+        ).toBeTruthy();
+        expect(dialog.queryByRole('button', { name: 'Lägg valen i utkastet' })).toBeNull();
+      }
+      await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
       expect((await read()).draft).toEqual(before.draft);
+      const reopened = await openConflict();
+      if (scenario === 'deletion') {
+        await userEvent.click(
+          within(reopened.getByRole('region', { name: 'Sparat i kartan nu' })).getByRole('button', {
+            name: /^Objekt:/,
+          }),
+        );
+        await userEvent.click(
+          within(reopened.getByRole('region', { name: 'Ditt förslag' })).getByRole('button', {
+            name: /^Samband:/,
+          }),
+        );
+        await userEvent.click(reopened.getByRole('button', { name: 'Lägg valen i utkastet' }));
+      } else
+        await userEvent.click(
+          reopened.getByRole('button', { name: 'Ta bort sambandet ur ditt utkast' }),
+        );
+      await waitFor(() =>
+        expect(reopened.getByRole('status').textContent).toMatch(
+          /Valen finns i ditt utkast|Förslaget har tagits bort ur ditt utkast/,
+        ),
+      );
+      const after = await read();
+      expect(after.objects).toEqual(before.objects);
+      expect(after.relationships).toEqual(before.relationships);
+      if (scenario === 'deletion') {
+        expect(after.draft.changes).toEqual([]);
+        expect(after.draft.relationships).toEqual([
+          expect.objectContaining({ id: 'link', before: before.relationships[0], after: null }),
+        ]);
+      } else expect(after.draft.relationships ?? []).toEqual([]);
     }
   },
 );
@@ -1234,21 +1283,36 @@ test('accepting a saved object removes only that proposal after another user del
 test.each(['lo', 'new'])(
   'changed type definitions must be reviewed before keeping proposal %s',
   async (id) => {
-    const { read, propose, state } = await concurrentEditors();
+    const { other, read, propose, commit, state } = await concurrentEditors();
     await propose(client, 'draft', id, {
       typeId: state.types[0].id,
       name: 'Lo Lind',
       description: '',
     });
-    // Catalog editing is not exposed yet; arrange its concurrent revision in SQLite.
-    fixture.database
-      .prepare('UPDATE object_type SET description = ?, revision = revision + 1 WHERE id = ?')
-      .run('Ny typbeskrivning', state.types[0].id);
+    const current = await read(other);
+    const type = current.types.find((type) => type.id === state.types[0].id);
+    if (!type) throw new Error('Missing current type');
+    expect(
+      (
+        await other.json(`${path}/object-type`, {
+          version: current.draft.version,
+          contentVersion: current.contentVersion,
+          id: type.id,
+          baseRevision: type.revision,
+          value: { ...type, description: 'Ny typbeskrivning', fields: type.fields ?? [] },
+        })
+      ).status,
+    ).toBe(200);
+    await commit(other);
     await open();
     const before = await read();
     const dialog = await openConflict();
     if (id === 'new') {
-      expect(dialog.getByText(/Den här konflikten behöver rättas/)).toBeTruthy();
+      expect(
+        dialog.getByText(
+          'Objektet har ännu inte sparats i kartan. Typdefinitionen har ändrats medan du arbetade med förslaget.',
+        ),
+      ).toBeTruthy();
       await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktfönstret' }));
       expect((await read()).draft).toEqual(before.draft);
     } else {

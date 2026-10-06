@@ -7,6 +7,7 @@ import type {
 } from '../../src/shared/map.js';
 import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
 
 test('UTKAST-17: canceled form loss and staged independent work survive concurrent conflict review', async ({
@@ -1018,8 +1019,12 @@ test('UTKAST-06: deleting an object requires reviewing newly saved relationships
     const state = await app.read();
     await app.propose(page.request, 'draft', 'lo', null);
     await page.goto(app.installation.origin);
-    await openWorkspace(page);
-    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
+    await page.getByRole('button', { name: /^Skriv till Skyttel/ }).click();
+    await page.getByRole('button', { name: /^Visa utkastet/ }).click();
+    const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+    await expect(
+      draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }),
+    ).toBeEnabled();
     await app.propose(other.request, 'relationship', 'new-edge', {
       typeId: state.relationshipTypes[0].id,
       sourceId: 'lo',
@@ -1027,18 +1032,37 @@ test('UTKAST-06: deleting an object requires reviewing newly saved relationships
       knowledge: 'uncertain',
     });
     expect((await app.save(other.request, 'new-edge')).status()).toBe(200);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('alert')).toContainText('Inget sparades');
-    await page.getByRole('button', { name: 'Hämta aktuellt underlag' }).click();
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)');
-    await review.getByRole('button', { name: 'Behåll mitt förslag' }).click();
-    await expect(review).toContainText('Borttagning av samband');
-    expect((await app.read()).relationships).toHaveLength(1);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat:',
-    );
+    const before = await app.read();
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' &&
+          response.url().endsWith('/map/save') &&
+          response.status() === 409,
+      ),
+      draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click(),
+    ]);
+    const saveDialog = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+    await expect(saveDialog.getByRole('status')).toContainText('Utkastet kunde inte sparas.');
+    expect((await app.read()).draft).toEqual(before.draft);
+    await page.keyboard.press('Escape');
+    await page.reload();
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const review = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(
+      review.getByRole('region', { name: 'Sparat i kartan nu', exact: true }),
+    ).toContainText('Lo Exempel Använder Molnmusik');
+    const proposed = review.getByRole('region', { name: 'Ditt förslag', exact: true });
+    await proposed.getByRole('button', { name: /^Objekt:/ }).click();
+    await proposed.getByRole('button', { name: /^Samband:/ }).click();
+    await review.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
+    await expect(review.getByRole('status')).toContainText('Valen finns i ditt utkast');
+    const staged = await app.read();
+    expect(staged.draft.relationships).toEqual([
+      expect.objectContaining({ id: 'new-edge', before: before.relationships[0], after: null }),
+    ]);
+    expect(staged.relationships).toEqual(before.relationships);
+    await saveReviewedConflictDraft(page);
     const saved = await app.read(other.request);
     expect(saved.relationships).toEqual([]);
     expect(saved.objects.map((object) => object.name)).toEqual(['Molnmusik']);
@@ -1255,15 +1279,26 @@ test('UTKAST-08: a saved duplicate can be selected without losing another propos
     expect((await app.save(other.request, 'other-edge')).status()).toBe(200);
     expect((await app.save(page.request, 'blocked-duplicate')).status()).toBe(409);
     await page.goto(app.installation.origin);
-    await openWorkspace(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Samma samband finns redan');
-    await review.getByRole('button', { name: 'Använd sparat värde' }).click();
-    await expect(review).not.toContainText('Konflikt');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat: Kim Exempel',
+    const before = await app.read();
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const review = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(review).toContainText(
+      'Ett sparat samband har redan samma typ, riktning och objekt.',
     );
+    await expect(
+      review.getByRole('region', { name: 'Sparat i kartan nu', exact: true }),
+    ).toContainText('Molnmusik');
+    await review
+      .getByRole('button', { name: 'Ta bort sambandet ur ditt utkast', exact: true })
+      .click();
+    await expect(review.getByRole('status')).toContainText(
+      'Förslaget har tagits bort ur ditt utkast',
+    );
+    const discarded = await app.read();
+    expect(discarded.draft.relationships ?? []).toEqual([]);
+    expect(discarded.draft.changes).toEqual(before.draft.changes);
+    expect(discarded.relationships).toEqual(before.relationships);
+    await saveReviewedConflictDraft(page);
     const saved = await app.read();
     expect(saved.relationships.map((edge) => edge.id)).toEqual(['other-edge']);
     expect(saved.objects.map((object) => object.name)).toContain('Kim Exempel');
@@ -1291,17 +1326,33 @@ test('UTKAST-09: a deleted relationship endpoint has an explicit recovery choice
     expect((await app.save(other.request, 'delete-service')).status()).toBe(200);
     expect((await app.save(page.request, 'blocked-endpoint')).status()).toBe(409);
     await page.goto(app.installation.origin);
-    await openWorkspace(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Sambandet hänvisar till ett borttaget objekt');
+    const before = await app.read();
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const review = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(review).toContainText('Ett objekt som sambandet pekar på saknas.');
+    await page.keyboard.press('Escape');
+    expect((await app.read()).draft).toEqual(before.draft);
     await app.installation.restart();
     await page.reload();
-    await openWorkspace(page);
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     await expect(review).toContainText('Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)');
-    await expect(review.getByRole('button', { name: 'Behåll mitt förslag' })).toHaveCount(0);
-    await review.getByRole('button', { name: 'Använd sparat värde' }).click();
-    await expect(review).toContainText('Inga förslag');
-    expect((await app.read()).relationships).toEqual([]);
+    await expect(
+      review.getByRole('region', { name: 'Ditt förslag', exact: true }).getByRole('button'),
+    ).toHaveCount(0);
+    await review
+      .getByRole('button', { name: 'Ta bort sambandet ur ditt utkast', exact: true })
+      .click();
+    await expect(
+      review.getByRole('heading', {
+        name: '✓ Sambandet har tagits bort ur ditt utkast',
+        exact: true,
+      }),
+    ).toBeVisible();
+    const after = await app.read();
+    expect(after.draft.relationships ?? []).toEqual([]);
+    expect(after.draft.changes).toEqual(before.draft.changes);
+    expect(after.objects).toEqual(before.objects);
+    expect(after.relationships).toEqual([]);
   } finally {
     await other.close();
     await app.installation.close();

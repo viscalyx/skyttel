@@ -32,7 +32,7 @@ export type { ConflictResolution } from './use-conflict-resolution.js';
 
 import { trapDialogTab } from './modal-focus.js';
 import { relationshipLabel } from './RelationshipEditor.js';
-import { SpecialConflictDetails } from './SpecialConflictDetails.js';
+import { SpecialConflictDetails, SpecialConflictResult } from './SpecialConflictDetails.js';
 import './conflict-dialog.css';
 
 const sideNames = { saved: 'Sparat i kartan nu', proposed: 'Ditt förslag' };
@@ -486,26 +486,29 @@ export function ConflictDialog({
                   ? '✓ Ditt ändringsförslag har kastats'
                   : resolved[key].removed && restoration
                     ? '✓ Typdefinitionen förblir borttagen'
-                    : resolved[key].removed
+                    : resolved[key].removed && special && !removal
                       ? `✓ ${conflict.kind === 'object' ? 'Objektet' : 'Sambandet'} har tagits bort ur ditt utkast`
-                      : '✓ Valen finns i ditt utkast'}
+                      : resolved[key].removed && !removal
+                        ? '✓ Förslaget har tagits bort ur ditt utkast'
+                        : '✓ Valen finns i ditt utkast'}
               </h3>
-              {resolved[key].removed && special?.kind === 'removed' && (
-                <p>
-                  {conflict.kind === 'object' ? 'Objektet' : 'Sambandet'} förblir borttaget. Övriga
-                  förslag i utkastet finns kvar.
-                </p>
+              {resolved[key].removed && special && !restoration && !removal ? (
+                <SpecialConflictResult kind={conflict.kind} special={special} confirmed />
+              ) : (
+                <dl className="cp-fields">
+                  {fields.map((field) => (
+                    <div key={field.key}>
+                      <dt>{field.label}</dt>
+                      <dd>
+                        {propertyValue(
+                          field,
+                          conflictPropertyValue(resolved[key].value, field.key),
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               )}
-              <dl className="cp-fields">
-                {fields.map((field) => (
-                  <div key={field.key}>
-                    <dt>{field.label}</dt>
-                    <dd>
-                      {propertyValue(field, conflictPropertyValue(resolved[key].value, field.key))}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
             </section>
           ) : comparisonNoLongerNeeded ? (
             <section className="cp-preview">

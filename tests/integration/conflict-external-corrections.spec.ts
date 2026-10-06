@@ -285,6 +285,11 @@ test('UTKAST-64: a missing object type keeps its proposal readable and discards 
       dialog.getByRole('region', { name: 'Ditt förslag' }).getByRole('button'),
     ).toHaveCount(0);
     await expect(dialog.getByRole('button', { name: 'Lägg valen i utkastet' })).toHaveCount(0);
+    const preview = dialog.getByRole('region', { name: 'Resultat av valen', exact: true });
+    await expect(preview.locator('dt')).toHaveText('Objektet i ditt utkast');
+    await expect(preview.locator('dd')).toHaveText('Tas bort ur ditt utkast');
+    await expect(preview).toContainText('Övriga objekt och samband i kartan påverkas inte.');
+    await expect(preview).not.toContainText('✓ Förvalt');
     await page.keyboard.press('Escape');
     expect((await app.read()).draft).toEqual(before.draft);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
@@ -300,6 +305,8 @@ test('UTKAST-64: a missing object type keeps its proposal readable and discards 
         exact: true,
       }),
     ).toBeVisible();
+    await expect(dialog.locator('.cp-preview dt')).toHaveText('Objektet i ditt utkast');
+    await expect(dialog.locator('.cp-preview dd')).toHaveText('Borttaget ur ditt utkast');
     const after = await app.read();
     expect(after.draft.changes).toEqual(
       before.draft.changes.filter((change) => change.id !== 'private-target'),

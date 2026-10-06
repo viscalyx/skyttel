@@ -186,6 +186,9 @@ Efter import kan ett tidigare privat återställningsförslag behöva
 bekräftas igen i **Granska konflikter**. Förslaget och dess egna uppgifter
 finns kvar, men en export överför ingen tidigare återställningsbehörighet.
 Granska aktuellt underlag och lägg valet i utkastet före separat sparande.
+Om aktuell import saknar en faktisk borttagningsrevision kan definitionen
+inte återställas. Du kan fortfarande välja den sparade sidans **Borttaget**
+för att kasta just ditt definitionsförslag. Andra förslag finns kvar.
 
 ## Följ upp ett oklart sparande
 
