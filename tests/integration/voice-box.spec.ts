@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
+import { createHousehold, openMap, openSettings, openTable, signIn } from '../support/client.js';
 import {
   chooseConversationVoice,
   consentBox,
@@ -612,21 +612,32 @@ for (const [name, width, height, place] of [
         else {
           // The box stays above the actual protected map row and feedback.
           // Their visible placement can follow the viewport's scrolling flow.
-          const card = await bounds(page.locator('.workspace-voice-controls'));
-          const floor = Math.min(card.y, (await bounds(row)).y);
-          expect(box.bottom).toBeLessThanOrEqual(floor);
-          expect(overlaps(box, card)).toBe(false);
+          expect(box.bottom).toBeLessThanOrEqual((await bounds(row)).y);
+          expect(overlaps(box, await bounds(microphoneButton(page)))).toBe(false);
           expect(box.y).toBeGreaterThanOrEqual(0);
           expect(box.bottom).toBeLessThanOrEqual(height);
         }
-        expect(overlaps(box, await bounds(feedback))).toBe(false);
-        expect(overlaps(box, await bounds(row))).toBe(false);
+        if (await row.isVisible()) {
+          expect(overlaps(box, await bounds(feedback))).toBe(false);
+          expect(overlaps(box, await bounds(row))).toBe(false);
+        }
+        for (const control of await page
+          .locator(
+            '.household-table button, .household-table input, .household-table select, .conversation-draft button',
+          )
+          .all()) {
+          if (await control.isVisible())
+            expect(
+              overlaps(box, await bounds(control)),
+              (await control.getAttribute('aria-label')) ?? (await control.innerText()),
+            ).toBe(false);
+        }
         return box;
       };
       const first = await check();
       if (name === 'dator') {
-        for (const control of ['Lista', 'Utkast och historik']) {
-          await (await utilityButton(page, control)).click();
+        for (const open of [openTable, openMap]) {
+          await open(page);
           await check();
           await openConversationText(page);
           await check();
@@ -637,9 +648,9 @@ for (const [name, width, height, place] of [
             await draftToggle.click();
           await check();
           await panel(page).getByRole('button', { name: 'Stäng textvyn' }).click();
-          await page.getByRole('button', { name: 'Stäng Lista och utkast', exact: true }).click();
           await check();
         }
+        await openMap(page);
       }
 
       // A longer status word and the stop icon make the box wider. It stays in its place.

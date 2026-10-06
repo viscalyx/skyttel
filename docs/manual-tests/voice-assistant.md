@@ -19,11 +19,11 @@ bedömning av faktiskt hört ljud och användning med egen utrustning.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Objekt redigeras med **Tabell → Redigera [namn]**. Samband nås genom
+**Samband för [namn]**. Formulär är modala; pågående mikrofon och arbete
+fortsätter där. Oskickade uppgifter lämnas uttryckligen genom Escape och
+**Lämna ändrade uppgifter?**. **Fortsätt redigera** bevarar alla värden;
+**Kasta ändringarna och fortsätt** lämnar bara det oskickade formuläret.
 
 1. Välj den kontrollerade vägen eller det verkliga talprovet i TAL-01.
    TAL-02 och TAL-03 använder den
@@ -33,7 +33,7 @@ formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
 2. För TAL-02 och TAL-03: skapa Talprov och lägg **Lo Exempel**, typ
    **Person**, med beskrivningen **Påhittad uppgift** i ditt utkast.
    Spara inte. TAL-01 har egna förberedelser nedan.
-3. För TAL-02 och TAL-03: välj **Skriv till Skyttel**, välj
+3. För TAL-02 och TAL-03: välj **Skriv till Skyttel → Nytt samtal**, välj
    **Godkänn och starta** i medgivanderutan och sedan **Prata med Skyttel**
    i **Kartans verktyg**. Knappen är intryckt, och röstrutan visar
    **Lyssnar**.
@@ -75,11 +75,11 @@ and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
 1. Starta en ny kontrollerad installation. Kör `seed-family` i terminalen
    före första inloggningen och vänta på `seeded`. Logga in som Alex.
    Hushållet TestHousehold finns redan; skapa inget nytt.
-2. Välj **Kim Exempel** i listan. Skriv **Osänd text som ska finnas kvar**
-   i beskrivningen utan att lägga texten i utkastet. Välj **Prata med
-   Skyttel** och **Godkänn och starta**. Kontrollera Lo-förslaget,
-   adressändringen och namnkonflikten
-   i hela utkastet.
+2. Öppna utkastet och kontrollera Lo-förslaget, adressändringen och
+   namnkonflikten. Välj **Prata med Skyttel** och **Godkänn och starta**.
+   Stäng textvyn. Välj **Tabell → Redigera Kim Exempel** och skriv
+   **Osänd text som ska finnas kvar** i beskrivningen utan att lägga den
+   i utkastet. Mikrofonen fortsätter medan formuläret är öppet.
 3. Skriv `user Behåll Lo-förslaget, rätta priset till 189 kr och spara.`
    och sedan `delegate`. Från `held.draft` kopieras `version`,
    `contentVersion` och hela första objektet i `conflicts`. Ersätt markörerna
@@ -120,15 +120,18 @@ and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
    tool REQUEST save_draft {"version":VERSION,"contentVersion":CONTENT,"operationId":"family-manual-save"}
    ```
 
-7. Välj **Skriv med Skyttel** och kräv **Sparat.** i samtalstexten.
-   Öppna **Utkast och historik** och
-   **Visa kvittot**. Återläs priset 189, Lo Lind, inloggningsadressen och
-   befintliga betalningsroller. Utkastet ska vara tomt, osänd formulärtext
-   bevarad och tidigare okända/osäkra uppgifter oförändrade.
-8. Slå av mikrofonen med **Prata med Skyttel**. Kontrollera att spåret är
+7. Kontrollera att formulärets oskickade text ligger kvar efter sparandet.
+   Tryck Escape, välj **Fortsätt redigera** och kontrollera texten igen.
+   Lämna uttryckligen med **Kasta ändringarna och fortsätt**. Öppna
+   **Skriv till Skyttel** och kräv **Sparat.** samt tomt utkast. Läs
+   sparandet i **Rapporter → Ändringshistorik**: priset 189, Lo Lind,
+   inloggningsadressen och betalningsrollerna. Oskickad text ingår inte;
+   tidigare okända och osäkra uppgifter är oförändrade.
+8. Välj **Tillbaka till arbetet** och slå av mikrofonen med **Prata med
+   Skyttel**. Kontrollera att spåret är
    avstängt; en tyst röstanslutning kan ligga kvar. Välj **Nytt samtal**
-   i textvyn. Ingen medgivanderuta visas. Öppna **Utkast och historik**
-   och **Tidigare sparförsök**. Familjens kvitto och sparade karta ska
+   i textvyn. Ingen medgivanderuta visas. Öppna **Rapporter →
+   Ändringshistorik**. Familjens kvitto och sparade karta ska
    finnas kvar utan ett nytt modelluppdrag.
    Avsluta med `quit` och kontrollera att den tillfälliga katalogen försvinner.
 
@@ -138,11 +141,12 @@ and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
    [förberedelsen i TAL-17](#tal-17-röstrutan-med-riktig-mikrofon-pekskärm-och-skärmläsare)
    i en ny isolerad installation med påhittade data. Skapa Talprov och lägg
    Lo Exempel, typ Person, med beskrivningen Påhittad uppgift i utkastet.
-   Välj Lo och skriv **Osänd text som ska finnas kvar** i beskrivningen
-   utan att lägga texten i utkastet. Kontrollera att mikrofonen inte
-   används före **Prata med Skyttel**. Välj knappen, **Godkänn och starta**
+   Kontrollera att mikrofonen inte används före **Prata med Skyttel**.
+   Välj knappen, **Godkänn och starta**
    och tillåt mikrofonen. Om ljud blockeras, välj
-   **Starta ljudet**.
+   **Starta ljudet**. Öppna sedan **Tabell → Redigera Lo Exempel** och
+   skriv **Osänd text som ska finnas kvar** i beskrivningen utan att
+   lägga den i utkastet. Låt mikrofonen fortsätta.
 2. Beskriv familjens Molnmusik med rösten: separat tjänstekonto, kontaktadress
    och inloggningsadress, Alex som avtalspart, Kim som betalare och ett kort
    som betalningsmedel. Lo använder tjänsten. Ange 149 kr per månad.
@@ -153,9 +157,10 @@ and Terra”, provar inspelat svenskt tal genom verkliga leverantörer enligt
    ska förbli olika objekt. Säg en rättelse av inloggningsadressen.
 5. Säg **Rätta priset till 189 kr och spara**. Inget tangentbord behövs
    för kartarbetet efter röststart.
-6. Öppna **Utkast och historik**, visa kvittot och återläs roller, pris,
-   kunskapsstatus och osänd text.
-   Stäng av mikrofonen. Fortsätt med ett normalt formulär.
+6. Kontrollera först formulärets oskickade text och lämna uttryckligen
+   enligt steg 7 ovan. Öppna **Rapporter → Ändringshistorik** och återläs
+   roller, pris och kunskapsstatus. Välj **Tillbaka till arbetet**,
+   stäng av mikrofonen och fortsätt med ett normalt formulär.
 7. Anteckna den faktiskt provade enheten, mikrofonen och ljudutgången.
    Chrome på Windows, macOS, iPhone och iPad med riktiga mikrofoner och
    hjälpmedel ingår i den kvarstående mänskliga kontrollen i
@@ -260,22 +265,24 @@ databasens sparande; redovisa inte det som ett prov av förlorat sådant svar.
    Avsluta nästa anrop med `reply REQUEST Försöket är förberett.`.
 3. Kräv väntande sparförsök och samtalsnotisen **Skyttel kunde inte
    kontrollera om utkastet sparades.**. Anteckna det riktiga operation-ID:t
-   från **Utkast och historik → Tidigare sparförsök**. Modellens `tal-prov`
+   från nätverkssvaret för `/map/operations`. Modellens `tal-prov`
    är inte kvittots ID. Mikrofonen är av under den blockerade kontrollen.
    Kör `restart` i terminalen.
 4. Ta bort nätblockeringen och ladda om webbläsaren. Skyttel kontrollerar
    och slutför själv det registrerade försöket, innan något nytt samtal
-   startas eller något medgivande ges. Välj sedan **Skriv till Skyttel**
+   startas eller något medgivande ges. Välj sedan **Skriv till Skyttel →
+   Nytt samtal**
    och godkänn medgivandet om det behövs. Kräv förklaringen **Kontrollen
    visar att hela utkastet sparades. Ändringarna finns i hushållets karta.**
    i samtalstexten. Slå på mikrofonen för resten av fallet.
 5. Kontrollera ett genomfört kvitto med samma operation-ID och Lo i kartan.
    Kör `drop` efter sparandet; kontrollera att det genomförda kvittot finns
    kvar även om ett ljudsvar inte hördes. Vänta på avstängd röst, ladda om
-   och välj **Skriv till Skyttel**. Godkänn medgivanderutan om den visas.
-   Öppna **Utkast och historik → Tidigare sparförsök**
-   och kontrollera samma genomförda kvitto igen.
-6. Slå på mikrofonen igen. Kör `usage 12`, `usage 15` och `finalize off`.
+   och välj **Skriv till Skyttel → Nytt samtal**. Godkänn om rutan visas.
+   Öppna **Rapporter → Ändringshistorik**, öppna **Identifiera sparandet
+   och användaren** och kontrollera samma genomförda kvitto igen.
+6. Välj **Tillbaka till arbetet** och slå på mikrofonen igen.
+   Kör `usage 12`, `usage 15` och `finalize off`.
    Anteckna adressen och svarets `voice.id` för det senaste POST-anropet
    till `/voice` i nätverkspanelen. Öppna textvyn och välj **Nytt samtal**.
    Den gamla röstanslutningen stängs, och en ny behåller mikrofonens läge.
@@ -599,7 +606,8 @@ avbruten start.
 **Steg:**
 
 1. Välj **Prata med Skyttel**. Medgivanderutan visas, och mikrofonen är
-   av. Välj **Avbryt**. Välj **Skriv till Skyttel** och **Godkänn och starta**.
+   av. Välj **Avbryt**. Välj **Skriv till Skyttel → Nytt samtal** och
+   **Godkänn och starta**.
 2. Skicka ett textmeddelande och svara från startguiden. Mikrofonen ska
    fortfarande vara oanvänd och inga röstanslutningar skapade.
 3. Kör `window.skyttelVoiceFixture.setMicrophone('hold')` i konsolen.
@@ -658,7 +666,7 @@ någon panel öppnas”.
 5. Välj **Prata med Skyttel** igen.
 6. Välj **Prata med Skyttel** en gång till. Vänta några sekunder och kör
    `window.skyttelVoiceFixture.stats()`. Kontrollera Lo-förslaget i
-   **Utkast och historik** utan att föreslå någon ändring.
+   **Visa utkastet** utan att föreslå någon ändring.
 7. Välj **Prata med Skyttel** igen.
 
 **Förväntat resultat:**
@@ -1078,7 +1086,7 @@ window. Sign in with Google as the controlled **Alex Exempel**. The prepared
 family case opens its existing household. Otherwise, create **Talprov** through
 the normal form. Use only invented information.
 
-Choose **Skriv till Skyttel** from the map tools and select
+Choose **Skriv till Skyttel → Nytt samtal** from the map tools and select
 **Godkänn och starta** in the consent box. Then choose **Prata med Skyttel**
 in the map tools to turn the microphone on. The fixture needs no hardware
 microphone permission.

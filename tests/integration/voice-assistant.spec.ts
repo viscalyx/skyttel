@@ -5,7 +5,7 @@ import {
   openMap,
   openProfile,
   openSettings,
-  openWorkspace,
+  openTable,
   signIn,
 } from '../support/client.js';
 import {
@@ -15,16 +15,18 @@ import {
   consentBoxFor,
   microphoneButton,
   openConversationDraft,
-  openConversationReceipts,
   openConversationText,
+  openSavedHistory,
   startConversationWithText,
   turnMicrophoneOff,
   turnMicrophoneOn,
   voiceBox,
 } from '../support/conversation-page.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
 
 const openVoiceConnections = (page: Page) =>
@@ -481,6 +483,7 @@ test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async (
   try {
     const { path } = await simpleMap(page, app);
     const before = await (await page.request.get(path)).json();
+    await openMap(page);
     const object = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
     const selected = await object.getAttribute('aria-pressed');
     for (const [index, reply] of replies.entries()) {
@@ -538,9 +541,9 @@ test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async (
       );
     await expect.poll(() => saveCommentary().length).toBe(1);
     expect(saveCommentary()[0]).toContain('Sparat.');
-    const receipts = await openConversationReceipts(page);
-    await receipts.getByText('Visa kvittot', { exact: true }).first().click();
-    await expect(receipts).toContainText('Sparat: Lo Exempel. Kvitto:');
+    const receipts = await openSavedHistory(page);
+    await expect(receipts.getByRole('article')).toHaveCount(1);
+    await expect(receipts).toContainText('Lo Exempel');
     expect((await (await page.request.get(path)).json()).objects).toMatchObject([{ id: 'lo' }]);
   } finally {
     await app.close();
@@ -607,26 +610,33 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
     await signIn(page.request, app.origin);
     await page.addInitScript({ content: liveBrowserFixtureSource });
     await page.goto(app.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Kim Exempel', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text som ska finnas kvar');
     await consent(page);
     await expect(await openConversationDraft(page)).toContainText('Lo Lind');
     await startVoice(page);
+    await closeConversationText(page);
+    await editTableObject(page, 'Kim Exempel');
+    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text som ska finnas kvar');
     speak(live, 'Behåll Lo-förslaget, rätta priset till 189 kr och spara.');
-    await expect(assistant(page).getByRole('log', { name: 'Samtalstext' })).toContainText(
-      'Sparat.',
-    );
+    await expect
+      .poll(
+        async () =>
+          (
+            await (
+              await page.request.get(`${app.origin}/api/households/${household.id}/map`)
+            ).json()
+          ).draft.changes,
+      )
+      .toEqual([]);
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Osänd text som ska finnas kvar',
     );
+    await verifyObjectDepartureAndDiscard(page, { Beskrivning: 'Osänd text som ska finnas kvar' });
+    await openConversationText(page);
+    await expect(assistant(page).getByRole('log', { name: 'Samtalstext' })).toContainText(
+      'Sparat.',
+    );
     await expect(await openConversationDraft(page)).toContainText('Utkastet är tomt.');
-    const receipts = await openConversationReceipts(page);
-    await receipts.getByText('Visa kvittot', { exact: true }).first().click();
+    const receipts = await openSavedHistory(page);
     await expect(receipts).toContainText('Familjens Molnmusik');
     const map = await (
       await page.request.get(`${app.origin}/api/households/${household.id}/map`)
@@ -644,6 +654,7 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
     await expect
       .poll(() => live.sent.some(({ event }) => event.type === 'session.commentary.append'))
       .toBe(true);
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await turnMicrophoneOff(page);
     // Nytt samtal does not ask for the consent again.
     await openConversationText(page);
@@ -653,10 +664,7 @@ test('TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtex
     expect(await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneTracks)).toEqual([
       { enabled: false, state: 'live' },
     ]);
-    await openConversationReceipts(page);
-    await expect(
-      assistant(page).locator('details').filter({ hasText: 'Tidigare sparförsök' }),
-    ).toContainText('Familjens Molnmusik');
+    await expect(await openSavedHistory(page)).toContainText('Familjens Molnmusik');
     expect(
       await (await page.request.get(`${app.origin}/api/households/${household.id}/map`)).json(),
     ).toEqual(map);
@@ -687,7 +695,7 @@ async function simpleMap(page: Page, app: Awaited<ReturnType<typeof createInstal
   });
   await page.addInitScript({ content: liveBrowserFixtureSource });
   await page.goto(app.origin);
-  await openWorkspace(page);
+  await openTable(page);
   await consent(page);
   await startVoice(page);
   return { path, value };
@@ -839,7 +847,10 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
       .getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true })
       .click({ trial: true });
     await expect(
-      page.getByRole('region', { name: 'Lo Exempel', exact: true }).getByText('Namn: Lo Exempel'),
+      page
+        .getByRole('region', { name: 'Lo Exempel', exact: true })
+        .getByRole('definition')
+        .filter({ hasText: 'Lo Exempel' }),
     ).toBeVisible();
     for (const [width, height] of [
       [640, 500],
@@ -858,7 +869,10 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
         page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }),
       ).toHaveAttribute('aria-pressed', 'true');
       await expect(
-        page.getByRole('region', { name: 'Lo Exempel', exact: true }).getByText('Namn: Lo Exempel'),
+        page
+          .getByRole('region', { name: 'Lo Exempel', exact: true })
+          .getByRole('definition')
+          .filter({ hasText: 'Lo Exempel' }),
       ).toBeVisible();
     }
     await page.setViewportSize({ width: 390, height: 844 });
@@ -885,7 +899,7 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     await app.restart();
     await page.unroute('**/text-assistant/*/recover');
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     await expect
       .poll(
         async () =>
@@ -914,9 +928,14 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     const afterDrop = (await (await page.request.get(`${path}/operations`)).json()).operations;
     expect(afterDrop).toEqual(operations);
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     await consent(page);
-    await expect(await openConversationReceipts(page)).toContainText(operation.operationId);
+    const recoveredHistory = await openSavedHistory(page);
+    await recoveredHistory
+      .getByText('Identifiera sparandet och användaren', { exact: true })
+      .click();
+    await expect(recoveredHistory).toContainText(operation.operationId);
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     const voiceStarted = page.waitForResponse(
       (response) => response.url().endsWith('/voice') && response.request().method() === 'POST',
     );

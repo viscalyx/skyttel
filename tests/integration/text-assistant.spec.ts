@@ -1,8 +1,14 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { TextAssistantReview, TextAssistantView } from '../../src/shared/text-assistant.js';
-import { createHousehold, openWorkspace, signIn, utilityButton } from '../support/client.js';
-import { openConversationText, startConversationWithText } from '../support/conversation-page.js';
+import { closeTextView, createHousehold, openMap, openTable, signIn } from '../support/client.js';
+import {
+  openConversationText,
+  openSavedHistory,
+  startConversationWithText,
+} from '../support/conversation-page.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../support/text-model.js';
 
 const assistant = (page: Page) => page.getByRole('region', { name: 'Arbetsyta', exact: true });
@@ -29,8 +35,9 @@ async function showDraft(page: Page) {
   return assistant(page).getByRole('region', { name: 'Utkastet', exact: true });
 }
 async function showAttempts(page: Page) {
-  await (await utilityButton(page, 'Utkast och historik')).click();
-  await page.getByText('Tidigare sparförsök', { exact: true }).click();
+  const history = await openSavedHistory(page);
+  await history.getByText('Identifiera sparandet och användaren', { exact: true }).last().click();
+  return history;
 }
 async function arrange(page: Page, app: Awaited<ReturnType<typeof createInstallation>>) {
   await signIn(page.request, app.origin);
@@ -43,7 +50,7 @@ async function arrange(page: Page, app: Awaited<ReturnType<typeof createInstalla
     data: { version: 0, contentVersion: 1, id: 'lo', baseRevision: null, value },
   });
   await page.goto(app.origin);
-  await openWorkspace(page);
+  await openTable(page);
   return { path, value };
 }
 
@@ -121,7 +128,7 @@ test('TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och
       },
     });
     await page.goto(app.origin);
-    await openWorkspace(page);
+    await openTable(page);
     await consent(page);
     const summary = (await showDraft(page)).getByRole('table', { name: 'Osparade ändringar' });
     await expect(summary.locator('tbody tr')).toHaveCount(4);
@@ -154,7 +161,12 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
 }) => {
   let step = 0;
   let version = 0;
-  const model = textModel((body) => {
+  let releaseModel = () => {};
+  const heldModel = new Promise<void>((resolve) => {
+    releaseModel = resolve;
+  });
+  const model = textModel(async (body) => {
+    await heldModel;
     const current = JSON.parse(String(body.input.findLast((item) => item.role === 'user')?.content))
       .draft as TextAssistantReview;
     if (step++ === 0)
@@ -203,28 +215,30 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
     const household = app.seedDemo();
     await signIn(page.request, app.origin);
     await page.goto(app.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Kim Exempel', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text som ska finnas kvar');
     await consent(page);
     await expect(await showDraft(page)).toContainText('Lo Lind');
     await send(page, 'Behåll Lo-förslaget, rätta priset till 189 kr och spara.');
+    await expect.poll(() => model.requests.length).toBe(1);
+    await closeTextView(page);
+    await editTableObject(page, 'Kim Exempel');
+    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd text som ska finnas kvar');
+    releaseModel();
+    const path = `${app.origin}/api/households/${household.id}/map`;
+    await expect
+      .poll(async () => (await (await page.request.get(path)).json()).draft.changes)
+      .toEqual([]);
+    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Osänd text som ska finnas kvar',
+    );
+    await verifyObjectDepartureAndDiscard(page, { Beskrivning: 'Osänd text som ska finnas kvar' });
+    await openConversationText(page);
     await expect(
       transcript(page)
         .getByRole('listitem')
         .filter({ hasText: /^Skyttel: Sparat\.$/ }),
     ).toHaveCount(1);
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Osänd text som ska finnas kvar',
-    );
     await expect(await showDraft(page)).toContainText('Utkastet är tomt.');
-    await showAttempts(page);
-    await assistant(page).getByText('Visa kvittot', { exact: true }).last().click();
-    await expect(assistant(page)).toContainText('Familjens Molnmusik');
+    await expect(await showAttempts(page)).toContainText('Familjens Molnmusik');
     const map = await (
       await page.request.get(`${app.origin}/api/households/${household.id}/map`)
     ).json();
@@ -239,6 +253,7 @@ test('TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext'
     );
     expect(model.requests).toHaveLength(4);
   } finally {
+    releaseModel();
     await app.close();
   }
 });
@@ -345,11 +360,8 @@ test('TEXT-03: nekade sparbesked och modellfel lämnar formulärarbetet tillgän
     await send(page, 'Beskriv mitt utkast.');
     await expect.poll(async () => (await currentTask()).error).toBe('assistant_provider_failed');
     await expect(notice(page)).toContainText('Skyttel kunde inte slutföra');
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await closeTextView(page);
+    await editTableObject(page, 'Lo Exempel');
     await page.getByLabel('Namn', { exact: true }).fill('Lo Lind');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     expect((await (await page.request.get(path)).json()).draft.changes[0].after.name).toBe(
@@ -401,11 +413,11 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
     await app.restart();
     await page.unroute('**/text-assistant/*/messages');
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     await consent(page);
-    await showAttempts(page);
-    await assistant(page).getByText('Visa kvittot', { exact: true }).last().click();
-    await expect(assistant(page)).toContainText('Sparat:');
+    const history = await showAttempts(page);
+    await expect(history.getByRole('article')).toHaveCount(1);
+    await expect(history).toContainText('Lo Exempel');
     const operations = (await (await page.request.get(`${path}/operations`)).json()).operations;
     expect(operations).toHaveLength(1);
     expect(operations[0].status).toBe('succeeded');
@@ -417,11 +429,16 @@ test('TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt spara
 
 test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ page }) => {
   let step = 0;
-  const model = textModel(() =>
-    step++ % 2 === 0
+  let releaseDisplay = () => {};
+  const heldDisplay = new Promise<void>((resolve) => {
+    releaseDisplay = resolve;
+  });
+  const model = textModel(async () => {
+    if (step === 2) await heldDisplay;
+    return step++ % 2 === 0
       ? [modelTool('show_map_object', { objectId: 'lo' })]
-      : [modelMessage('Markerat!')],
-  );
+      : [modelMessage('Markerat!')];
+  });
   const app = await createInstallation(undefined, { modelFetch: model.provider });
   try {
     await arrange(page, app);
@@ -436,25 +453,22 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
     await expect(
       assistant(page).getByRole('region', { name: 'Utkastets återkoppling' }),
     ).toHaveCount(0);
-    await openWorkspace(page);
-    await expect(
-      page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }),
-    ).toBeVisible();
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd uppgift');
     await send(page, 'Markera Lo igen.');
+    await expect.poll(() => model.requests.length).toBe(3);
+    await closeTextView(page);
+    await editTableObject(page, 'Lo Exempel');
+    await page.getByLabel('Beskrivning', { exact: true }).fill('Osänd uppgift');
+    releaseDisplay();
     await expect.poll(() => model.requests.length).toBe(4);
     expect(lastToolResult(model.requests[3])).toMatchObject({ displayed: false });
-    await expect(
-      assistant(page).getByRole('log', { name: 'Samtalstext', exact: true }),
-    ).toContainText('Markerat!');
     await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue('Osänd uppgift');
+    await verifyObjectDepartureAndDiscard(page, { Beskrivning: 'Osänd uppgift' });
+    await openConversationText(page);
+    await expect(transcript(page)).toContainText('Markerat!');
+    await openMap(page);
     await expect(mapStatus).not.toContainText('Markerat i kartan.');
   } finally {
+    releaseDisplay();
     await app.close();
   }
 });
@@ -482,6 +496,7 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
   try {
     const { path } = await arrange(page, app);
     const before = await (await page.request.get(path)).json();
+    await openMap(page);
     await consent(page);
     const object = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
     const selected = await object.getAttribute('aria-pressed');
@@ -506,9 +521,9 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
         .getByRole('listitem')
         .filter({ hasText: /^Skyttel: Sparat\.$/ }),
     ).toHaveCount(1);
-    await showAttempts(page);
-    await assistant(page).getByText('Visa kvittot', { exact: true }).last().click();
-    await expect(assistant(page)).toContainText('Sparat: Lo Exempel. Kvitto:');
+    const history = await showAttempts(page);
+    await expect(history.getByRole('article')).toHaveCount(1);
+    await expect(history).toContainText('Lo Exempel');
     expect((await (await page.request.get(path)).json()).objects).toMatchObject([{ id: 'lo' }]);
   } finally {
     await app.close();
@@ -579,10 +594,10 @@ test('TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto', asyn
       value: { ...relationship, typeId: paymentType.id },
     });
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     await consent(page);
-    await openWorkspace(page);
-    const listPanel = page.getByRole('region', { name: 'Lista och utkast', exact: true });
+    await openTable(page);
+    const listPanel = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     const report = transcript(page);
     const beforeReview = await read();
 

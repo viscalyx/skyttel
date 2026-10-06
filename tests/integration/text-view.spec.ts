@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { createHousehold, openWorkspace, signIn, utilityButton } from '../support/client.js';
+import { createHousehold, openTable, signIn, utilityButton } from '../support/client.js';
 import {
   closeConversationText,
   consentBox,
@@ -70,10 +70,12 @@ test('TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avslut
     await expect(tool).toHaveAttribute('aria-expanded', 'false');
     const map = await bounds(page.locator('.map-space'));
 
-    // Without a consent the button asks first. The text view opens once the conversation has started.
+    // Opening the text view starts nothing; explicit use asks for consent.
     await tool.click();
+    await expect(consentBox(page)).toBeHidden();
+    await expect(textView(page)).toBeVisible();
+    await textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
     await expect(consentBox(page)).toBeVisible();
-    await expect(textView(page)).toHaveCount(0);
     await giveConversationConsent(page);
     await expect(textView(page)).toBeVisible();
     await expect(
@@ -151,6 +153,7 @@ test('TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar s
       .getByRole('navigation', { name: 'Kartans verktyg' })
       .getByRole('button', { name: 'Skriv till Skyttel', exact: true })
       .click();
+    await textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }).click();
     await giveConversationConsent(page);
     await expect(conversationText(page)).toHaveText(
       'Här visas det du och Skyttel säger och skriver.',
@@ -368,7 +371,7 @@ test.describe('a wide touch screen', () => {
       await openConversationText(page);
       await expect(messageField(page)).not.toBeFocused();
       await expect(conversationText(page)).toContainText('Skyttel: Ett provsvar.');
-      await openWorkspace(page);
+      await openTable(page);
       await expect(textView(page)).toHaveCount(0);
     } finally {
       await app.close();
