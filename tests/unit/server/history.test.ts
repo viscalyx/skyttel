@@ -243,6 +243,7 @@ test('per-proposal discard requires current household access and preserves every
 test('discarding an unsaved object drops only its incident proposals and all proposal kinds are individually removable', async () => {
   await object('person', {});
   await object('card', {});
+  await object('service', {});
   await edge('private-edge', 'person', 'card');
   let state = await read();
   expect(
@@ -250,12 +251,13 @@ test('discarding an unsaved object drops only its incident proposals and all pro
       .status,
   ).toBe(200);
   state = await read();
-  expect(state.draft.changes.map((change) => change.id)).toEqual(['card']);
+  expect(state.draft.changes.map((change) => change.id)).toEqual(['card', 'service']);
   expect(state.draft.relationships ?? []).toEqual([]);
+  await edge('independent-edge', 'card', 'service');
   expect(
     (
       await post('object-type', {
-        version: state.draft.version,
+        version: (await read()).draft.version,
         id: 'new-type',
         baseRevision: null,
         value: { name: 'Ny typ', description: '', fields: [] },
@@ -275,13 +277,15 @@ test('discarding an unsaved object drops only its incident proposals and all pro
   for (const [kind, id] of [
     ['objectType', 'new-type'],
     ['relationshipType', 'new-edge-type'],
-    ['relationship', 'private-edge'],
+    ['relationship', 'independent-edge'],
   ]) {
     expect(
       (await post('discard-change', { version: (await read()).draft.version, kind, id })).status,
     ).toBe(200);
   }
-  expect((await read()).draft.changes.map((change) => change.id)).toEqual(['card']);
+  const remaining = await read();
+  expect(remaining.draft.changes.map((change) => change.id)).toEqual(['card', 'service']);
+  expect(remaining.draft.relationships ?? []).toEqual([]);
 });
 
 afterEach(() => fixture.close());
