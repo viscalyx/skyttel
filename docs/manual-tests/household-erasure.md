@@ -160,10 +160,12 @@ light och dark.
 **Steg:**
 
 1. Öppna **Nytt objekt**. Skriv **Oskickat arbete före radering** i
-   **Objektets namn** utan att lägga texten i utkastet.
+   **Namn** utan att lägga texten i utkastet. Tryck Escape och välj
+   **Fortsätt redigera**. Kontrollera namnet och fokus. Tryck Escape
+   igen och bekräfta **Kasta ändringarna och fortsätt**.
 2. Öppna **Inställningar** och välj **Permanent radering** i
    sidnavigationen med tangentbordet. Sidans huvudrubrik får fokus;
-   kartan och det oskickade formuläret är dolda.
+   kartan är dold och det uttryckligen kastade formuläret är stängt.
    På smala fönster öppnar du **Välj inställning** med Enter.
    Kontrollera att den valda sidans länk är läsbar innan menyn stängs igen.
 3. Välj **Lampan att radera** och **Granska raderingen**. Kontrollera
@@ -176,8 +178,8 @@ light och dark.
    Granskningen stängs, valrubriken får fokus med hela fokusringen synlig
    och lampans val finns kvar.
    Ingen radering genomförs.
-5. Välj **Tillbaka till kartan**. Den oskickade texten och fokus i
-   **Objektets namn** finns kvar. De sparade objekten, deras placeringar
+5. Välj **Tillbaka till kartan**. Öppna **Nytt objekt** och kontrollera
+   ett tomt namnfält. Stäng utan ändringar. De sparade objekten, placeringarna
    och stolens privata förslag är oförändrade.
 6. Öppna samma inställningssida igen. Välj lampan och granska på nytt.
    Bekräftelsefältet är tomt och **Radera permanent** är inaktiverad.

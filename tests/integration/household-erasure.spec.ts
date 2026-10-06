@@ -5,8 +5,17 @@ import { unzipSync } from 'fflate';
 import sharp from 'sharp';
 import type { ErasureStatus } from '../../src/shared/household-erasure.js';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openSettings,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
+import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 import { denyRecoveryStorage, restoreRecoveryStorage } from '../support/recovery-storage.js';
 
 async function arrange(page: Page, formerImageType = false) {
@@ -220,14 +229,13 @@ for (const [width, height] of [
           if (request.url().endsWith('/erasure/execute')) executions += 1;
         });
         await page.goto(fixture.installation.origin);
-        await openWorkspace(page);
-        await page
-          .getByRole('region', { name: 'Lista och utkast', exact: true })
-          .getByRole('button', { name: 'Nytt objekt', exact: true })
-          .click();
+        await openTable(page);
+        await openNewObject(page);
         const unsent = page.getByLabel('Namn', { exact: true });
         await unsent.fill('Oskickat arbete före radering');
         await unsent.focus();
+        await verifyObjectDepartureAndDiscard(page, { Namn: 'Oskickat arbete före radering' });
+        expect(await fixture.read()).toEqual(before);
         await openSettings(page);
         const navigation = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
         const menu = navigation.getByText('Välj inställning', { exact: true });
@@ -330,8 +338,10 @@ for (const [width, height] of [
         );
         await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).focus();
         await page.keyboard.press('Enter');
-        await expect(unsent).toHaveValue('Oskickat arbete före radering');
-        await expect(unsent).toBeFocused();
+        await expect(unsent).toHaveCount(0);
+        await openNewObject(page);
+        await expect(unsent).toHaveValue('');
+        await page.keyboard.press('Escape');
         await openSettings(page);
         if (width <= 800) {
           await menu.focus();
@@ -391,16 +401,14 @@ for (const [width, height] of [
         await expect(page).toHaveURL(fixture.administration.replace(/\/administration$/, ''));
         await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
         await expect(unsent).toHaveCount(0);
-        await openWorkspace(page);
+        await openTable(page);
         await expect(
-          page.getByRole('button', { name: 'Uppgifter för Lampan att radera', exact: true }),
+          page.getByRole('button', { name: 'Lampan att radera', exact: true }),
         ).toHaveCount(0);
         await expect(
-          page.getByRole('button', { name: 'Uppgifter för Stolen att bevara', exact: true }),
+          page.getByRole('button', { name: 'Stolen att bevara', exact: true }),
         ).toBeVisible();
-        await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-          'Oberoende privat förslag',
-        );
+        await expect(await openDraftReview(page)).toContainText('Oberoende privat förslag');
         expect(await fixture.read()).toEqual(current);
         expect((await (await page.request.get(fixture.path)).json()).household.role).toBe(
           'administrator',
@@ -747,15 +755,10 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
     expect(JSON.stringify(content)).toContain('Oberoende privat förslag');
     await section.getByRole('button', { name: 'Läs in kartan på nytt', exact: true }).click();
     await page.waitForURL(fixture.administration.replace(/\/administration$/, ''));
-    await openWorkspace(page);
-    await page
-      .getByRole('button', { name: 'Uppgifter för Lampan att radera', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    const form = await editTableObject(page, 'Lampan att radera');
+    await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await expect(
-      page
-        .getByRole('region', { name: 'Val och redigering' })
-        .getByRole('img', { name: 'Profilbild för Lampan att radera' }),
+      form.getByRole('img', { name: 'Profilbild för Lampan att radera' }),
     ).toHaveAttribute('src', new RegExp(`/profile-images/${currentImage}$`));
   } finally {
     await fixture.installation.close();

@@ -329,7 +329,7 @@ explains cleanup uncertainty”.
 ### EXPORT-09: Tangentbord, tema och bevarat kartarbete
 
 **Syfte:** Behålla användbart fokus genom exporten och återgå till
-oskickad redigering utan att hushållets karta ändras.
+utkastet utan att hushållets karta ändras. Oskickad text skyddas vid stängning.
 
 **Användare:** Alex som administratör.
 
@@ -340,13 +340,15 @@ webbläsarens nätverksverktyg.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
-testfallet “EXPORT-09: keyboard export controls retain focus and unsent map
-work at 1280px”, samma titel med “390px”, “320px” och “640px”.
+testfallet “EXPORT-09: keyboard export controls retain focus and protect native
+form input at 1280px”, samma titel med “390px”, “320px” och “640px”.
 
 **Steg:**
 
-1. Öppna Lista, välj Nytt objekt och skriv namn och beskrivning. Låt
-   formuläret vara oskickat med fokus i beskrivningen.
+1. Välj **Nytt objekt** och skriv namn och beskrivning. Tryck Escape
+   och **Fortsätt redigera**. Kontrollera båda värdena och fokus i
+   beskrivningen. Tryck Escape igen och välj **Kasta ändringarna och
+   fortsätt**. Det privata utkastet ska vara oförändrat.
 2. Öppna Inställningar och Fullständig export. På mobil, fäll först ut
    Välj inställning. Kontrollera att exportens fokuserade rubrik syns
    även efter att navigationen fälls ihop.
@@ -365,7 +367,8 @@ work at 1280px”, samma titel med “390px”, “320px” och “640px”.
 - Förberedelse, avbrott och hämtning lämnar fokus på nästa användbara
   exportkontroll. Ett senare eget fokusval skrivs inte över.
 - Kartans kontroller är dolda i Inställningar. Vid återgång finns namn
-  och beskrivning kvar, med fokus i beskrivningen. Ingenting är sparat.
+  och beskrivning inte kvar från det kastade formuläret. Öppna **Nytt
+  objekt** och kontrollera tomma fält. Ingenting är sparat.
 - Den hämtade filen innehåller hushållets sparade information och privata
   utkast. Oskickad text i formulär är ännu inte del av exporten.
 
@@ -419,7 +422,7 @@ private and historical content after restart”.
 ### EXPORT-11: Lämna en färdig export eller en pågående hämtning
 
 **Syfte:** Kontrollera att sidbyte avbryter exporten utan att kasta
-oskickad redigering eller erbjuda en sen fil.
+privata förslag eller erbjuda en sen fil. Oskickad text skyddas vid stängning.
 
 **Användare:** Alex som administratör.
 
@@ -431,16 +434,20 @@ serverns aktiva överföring och rensning provas separat i EXPORT-07.
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallen “EXPORT-11: leaving a ready export retires the copy and preserves
-unsent map work” och “EXPORT-11: leaving a downloading export retires the copy
-and preserves unsent map work”.
+private proposals after guarded form departure” och “EXPORT-11: leaving a
+downloading export retires the copy and preserves private proposals after
+guarded form departure”.
 
 **Steg:**
 
-1. Öppna Lista, välj Nytt objekt och skriv ett namn och en beskrivning.
-   Låt formuläret vara oskickat med fokus i beskrivningen.
+1. Välj **Nytt objekt** och skriv namn och beskrivning. Tryck Escape
+   och **Fortsätt redigera**. Kontrollera båda värdena och fokus i
+   beskrivningen. Tryck Escape igen och bekräfta **Kasta ändringarna
+   och fortsätt**. Det privata utkastet ska vara oförändrat.
 2. Öppna Inställningar och Fullständig export. Förbered en export.
 3. Välj Tillbaka till kartan innan hämtningen startar. Kontrollera att
-   formulärets namn, beskrivning och fokus finns kvar utan nedladdning.
+   det kastade formuläret är stängt och det privata utkastet finns kvar
+   utan nedladdning.
 4. Öppna Fullständig export igen. Kontrollera att ingen tidigare hämtning
    eller resultat visas. Förbered och hämta en ny export.
 5. Upprepa steg 1–4, men starta den fördröjda hämtningen innan sidbytet.
@@ -449,7 +456,8 @@ and preserves unsent map work”.
 
 **Förväntat resultat:**
 
-- Sidbytet bevarar oskickat arbete och fokus. Exporten ändrar inte kartan
+- Avbruten stängning bevarar oskickade värden och fokus; bekräftad
+  stängning kastar endast dem. Exporten ändrar inte kartan
   eller det privata utkastet och skapar inget sparande.
 - Ingen fil erbjuds efter sidbytet, inte heller när ett sent svar kommer
   fram. Den kända exportens avbrott bekräftas och samma kopia kan inte hämtas.
