@@ -10,13 +10,71 @@ let app: Awaited<ReturnType<typeof createInstallation>>;
 let browser: APIRequestContext;
 let path: string;
 let release = () => {};
-afterEach(async () => {
+const testBudget = 30_000;
+type Delivery = {
+  channel: 'MCP' | 'model';
+  action: string;
+  startedMs: number;
+  endedMs?: number;
+  elapsedMs?: number;
+  status?: number;
+};
+const deliveries: Delivery[] = [];
+let completionDiagnostic: (() => object) | undefined;
+function observe(channel: Delivery['channel'], action: string) {
+  const started = performance.now();
+  const delivery: Delivery = { channel, action, startedMs: Math.round(started) };
+  deliveries.push(delivery);
+  if (deliveries.length > 16) deliveries.shift();
+  return {
+    delivered(response: Response) {
+      delivery.status = response.status;
+    },
+    finish() {
+      delivery.elapsedMs = Math.round(performance.now() - started);
+      delivery.endedMs = Math.round(performance.now());
+    },
+  };
+}
+afterEach(async ({ task }) => {
+  if (task.result?.state === 'fail' && completionDiagnostic)
+    console.error(JSON.stringify(completionDiagnostic()));
   release();
   await browser?.dispose();
   await app?.close();
 });
 async function setup(modelFetch: typeof fetch): Promise<TextAssistantView> {
-  app = await createInstallation(undefined, { modelFetch });
+  deliveries.length = 0;
+  completionDiagnostic = undefined;
+  app = await createInstallation(undefined, {
+    modelFetch: async (input, init) => {
+      const body = JSON.parse(String(init?.body));
+      const observation = observe('model', body.tools.length ? 'turn' : 'summary');
+      try {
+        const response = await modelFetch(input, init);
+        observation.delivered(response);
+        return response;
+      } finally {
+        observation.finish();
+      }
+    },
+    assistantDispatch: async (incoming, dispatch) => {
+      const rpc =
+        incoming.method === 'POST' && new URL(incoming.url).pathname === '/mcp'
+          ? await incoming.clone().json()
+          : null;
+      const action = rpc?.method === 'tools/call' ? rpc.params.name : rpc?.method;
+      if (typeof action !== 'string') return dispatch(incoming);
+      const observation = observe('MCP', action);
+      try {
+        const response = await dispatch(incoming);
+        observation.delivered(response);
+        return response;
+      } finally {
+        observation.finish();
+      }
+    },
+  });
   browser = await request.newContext();
   await signIn(browser, app.origin);
   const { household } = await (await createHousehold(browser, app.origin)).json();
@@ -38,23 +96,61 @@ function message(session: TextAssistantView, requestId: string) {
     text: `Förklara uppgift ${requestId}.`,
   };
 }
-async function completed(requestId: string): Promise<TextAssistantView> {
+async function completed(
+  requestId: string,
+  deadline: number,
+  summarized = false,
+): Promise<TextAssistantView> {
   let result!: TextAssistantView;
-  await expect
-    .poll(
-      async () => {
-        result = await (await browser.get(`${path}/messages/${requestId}`)).json();
-        return result.taskStatus;
-      },
-      { interval: 10 },
-    )
-    .toBe('completed');
+  let stage = 'GET pending';
+  let httpStatus: number | undefined;
+  const started = performance.now();
+  completionDiagnostic = () => ({
+    event: 'admission_completion_failed',
+    requestId,
+    summarized,
+    stage,
+    elapsedMs: Math.round(performance.now() - started),
+    httpStatus,
+    observed: result && {
+      phase: result.phase,
+      revision: result.revision,
+      taskStatus: result.taskStatus,
+      contextGeneration: result.contextGeneration,
+      contextSummaryState: result.contextSummaryState,
+      queuedMessages: result.queuedMessages,
+      error: result.error,
+    },
+    deliveries,
+  });
+  try {
+    await expect
+      .poll(
+        async () => {
+          stage = 'GET pending';
+          httpStatus = undefined;
+          const response = await browser.get(`${path}/messages/${requestId}`);
+          stage = 'JSON pending';
+          httpStatus = response.status();
+          result = await response.json();
+          stage = 'JSON decoded';
+          expect(httpStatus).toBe(200);
+          return result.taskStatus;
+        },
+        // All 205 reads share the existing deadline, including real MCP delivery.
+        { interval: 10, timeout: Math.max(1, Math.floor(deadline - performance.now())) },
+      )
+      .toBe('completed');
+  } catch (cause) {
+    throw new Error(JSON.stringify(completionDiagnostic()), { cause });
+  }
   return result;
 }
 
 test.each([false, true])(
   'a conversation continues beyond 200 completed messages and retains request idempotency, summarized=%s',
   async (summarized) => {
+    const deadline = performance.now() + testBudget;
     let turns = 0;
     const model = textModel((body) => {
       if (!body.tools.length) return [modelMessage('Tidigare uppgifter har diskuterats.')];
@@ -74,7 +170,7 @@ test.each([false, true])(
       const body = index === 0 ? first : message(session, `turn-${index}`);
       const response = await post(`${path}/messages`, body);
       expect(response.status(), await response.text()).toBe(202);
-      session = await completed(body.requestId);
+      session = await completed(body.requestId, deadline, summarized);
       expect(session.modelReply).toBe(`Förklaring ${index + 1}.`);
     }
     expect(session.completedReplies).toHaveLength(205);
@@ -85,50 +181,57 @@ test.each([false, true])(
       (await post(`${path}/messages`, { ...first, text: 'Ett annat uppdrag.' })).status(),
     ).toBe(409);
     expect((await post(`${path}/messages`, message(session, 'first'))).status()).toBe(409);
-    expect((await completed('first')).modelReply).toBe('Förklaring 1.');
+    expect((await completed('first', deadline, summarized)).modelReply).toBe('Förklaring 1.');
     expect(turns).toBe(205);
   },
-  30_000,
+  testBudget,
 );
 
-test('pending work stays bounded, duplicates keep one queue entry and cancellation releases capacity', async () => {
-  let held = true;
-  const waiting = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  const model = textModel(async () => {
-    if (held) await waiting;
-    return [modelMessage('Uppgiften är förklarad.')];
-  });
-  const session = await setup(model.provider);
-  const first = message(session, 'held');
-  expect((await post(`${path}/messages`, first)).status()).toBe(202);
-  await expect.poll(() => model.requests.length).toBe(1);
-  const working = await (await browser.get(path)).json();
-  const queued = message(working, 'queued');
-  expect((await post(`${path}/messages`, queued)).status()).toBe(202);
-  expect((await post(`${path}/messages`, queued)).status()).toBe(202);
-  expect((await post(`${path}/messages`, { ...queued, text: 'Ett annat uppdrag.' })).status()).toBe(
-    409,
-  );
-  expect((await (await browser.get(path)).json()).queuedMessages).toBe(1);
-  for (let index = 0; index < 198; index++)
-    expect((await post(`${path}/messages`, message(working, `pending-${index}`))).status()).toBe(
-      202,
+test(
+  'pending work stays bounded, duplicates keep one queue entry and cancellation releases capacity',
+  async () => {
+    const deadline = performance.now() + testBudget;
+    let held = true;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const model = textModel(async () => {
+      if (held) await waiting;
+      return [modelMessage('Uppgiften är förklarad.')];
+    });
+    const session = await setup(model.provider);
+    const first = message(session, 'held');
+    expect((await post(`${path}/messages`, first)).status()).toBe(202);
+    await expect.poll(() => model.requests.length).toBe(1);
+    const working = await (await browser.get(path)).json();
+    const queued = message(working, 'queued');
+    expect((await post(`${path}/messages`, queued)).status()).toBe(202);
+    expect((await post(`${path}/messages`, queued)).status()).toBe(202);
+    expect(
+      (await post(`${path}/messages`, { ...queued, text: 'Ett annat uppdrag.' })).status(),
+    ).toBe(409);
+    expect((await (await browser.get(path)).json()).queuedMessages).toBe(1);
+    for (let index = 0; index < 198; index++)
+      expect((await post(`${path}/messages`, message(working, `pending-${index}`))).status()).toBe(
+        202,
+      );
+    const overflow = await post(`${path}/messages`, message(working, 'overflow'));
+    expect(overflow.status()).toBe(409);
+    expect(await overflow.json()).toEqual({ error: 'assistant_busy' });
+    expect((await (await browser.get(path)).json()).queuedMessages).toBe(199);
+    expect((await post(`${path}/messages`, first)).status()).toBe(202);
+    expect((await post(`${path}/messages`, queued)).status()).toBe(202);
+    const canceled = await (await post(`${path}/cancel`, { all: true })).json();
+    expect(canceled.queuedMessages).toBe(0);
+    expect((await (await browser.get(`${path}/messages/queued`)).json()).taskStatus).toBe(
+      'canceled',
     );
-  const overflow = await post(`${path}/messages`, message(working, 'overflow'));
-  expect(overflow.status()).toBe(409);
-  expect(await overflow.json()).toEqual({ error: 'assistant_busy' });
-  expect((await (await browser.get(path)).json()).queuedMessages).toBe(199);
-  expect((await post(`${path}/messages`, first)).status()).toBe(202);
-  expect((await post(`${path}/messages`, queued)).status()).toBe(202);
-  const canceled = await (await post(`${path}/cancel`, { all: true })).json();
-  expect(canceled.queuedMessages).toBe(0);
-  expect((await (await browser.get(`${path}/messages/queued`)).json()).taskStatus).toBe('canceled');
-  expect((await post(`${path}/messages`, queued)).status()).toBe(202);
-  held = false;
-  release();
-  expect((await post(`${path}/messages`, message(canceled, 'after-cancel'))).status()).toBe(202);
-  expect((await completed('after-cancel')).modelReply).toBe('Uppgiften är förklarad.');
-  expect(model.requests).toHaveLength(2);
-}, 30_000);
+    expect((await post(`${path}/messages`, queued)).status()).toBe(202);
+    held = false;
+    release();
+    expect((await post(`${path}/messages`, message(canceled, 'after-cancel'))).status()).toBe(202);
+    expect((await completed('after-cancel', deadline)).modelReply).toBe('Uppgiften är förklarad.');
+    expect(model.requests).toHaveLength(2);
+  },
+  testBudget,
+);
