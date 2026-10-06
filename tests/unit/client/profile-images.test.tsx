@@ -1,5 +1,5 @@
 import { File as ServerFile } from 'node:buffer';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import sharp from 'sharp';
@@ -18,6 +18,7 @@ let client: ReturnType<typeof fixture.client>;
 let householdId: string;
 let path: string;
 let failure: number;
+let objectFormRequests: Promise<Response>[];
 const read = async (): Promise<MapState> => (await client.request(path)).json();
 const file = async () =>
   new File(
@@ -59,7 +60,8 @@ beforeEach(async () => {
     },
   });
   failure = 0;
-  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+  objectFormRequests = [];
+  const forward = async (url: string, init?: RequestInit) => {
     if (url.endsWith('/object-form') && failure) {
       if (failure === 503) throw new Error('Synthetic network interruption');
       return Response.json(
@@ -110,6 +112,11 @@ beforeEach(async () => {
     } finally {
       vi.stubGlobal('File', browserFile);
     }
+  };
+  vi.stubGlobal('fetch', (url: string, init?: RequestInit) => {
+    const response = forward(url, init);
+    if (url.endsWith('/object-form')) objectFormRequests.push(response);
+    return response;
   });
 });
 afterEach(() => {
@@ -159,13 +166,22 @@ test('an image stays local until the whole proposal is staged and removal preser
 test('invalid and oversized image staging retains every form value and earlier proposals', async () => {
   const form = await open();
   const before = await read();
-  for (const invalid of [
+  for (const [index, invalid] of [
     new File(['invalid'], 'bad.png', { type: 'image/png' }),
     new File([new Uint8Array(10_000_001)], 'large.png', { type: 'image/png' }),
-  ]) {
+  ].entries()) {
     await userEvent.upload(form.getByLabelText('Profilbild', { exact: true }), invalid);
     await stage(form);
+    // Await real multipart validation before starting the DOM assertion's timer.
+    expect(objectFormRequests).toHaveLength(index + 1);
+    await act(async () => {
+      expect((await objectFormRequests[index]).status).toBe(400);
+    });
     await screen.findByText(/Profilbilden kunde inte läggas i utkastet/);
+    expect(form.getByRole('button', { name: 'Lägg i utkastet och stäng' })).toHaveProperty(
+      'disabled',
+      false,
+    );
     expect(await read()).toEqual(before);
     await userEvent.click(form.getByRole('button', { name: 'Grunduppgifter' }));
     expect(form.getByLabelText('Beskrivning')).toHaveProperty('value', 'Befintlig text');
