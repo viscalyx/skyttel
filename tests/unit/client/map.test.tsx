@@ -436,6 +436,7 @@ test('changing type shows displaced values and requires handling them without co
 });
 
 test('relationship type forms review both labels and show one edge from either object', async () => {
+  const deadline = performance.now() + 30_000;
   const initial = await (await client.request(path)).json();
   for (const [version, id, name] of [
     [0, 'bike', 'Cykeln'],
@@ -491,8 +492,45 @@ test('relationship type forms review both labels and show one edge from either o
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Ändra sambandstyp: Plats' })).toBeTruthy(),
   );
-  await save();
-  await openTypeEditor('Ändra sambandstyp: Plats');
+  let release!: () => void;
+  const reading = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let refreshHeld = false;
+  beforeOperationsRead = async () => {
+    refreshHeld = true;
+    await reading;
+  };
+  try {
+    await save();
+    expect(refreshHeld).toBe(true);
+    const committed: MapState = await (await client.request(path)).json();
+    expect(committed.relationshipTypes.some((type) => type.name === 'Plats')).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Ändra sambandstyp: Plats' })).toBeNull();
+    release();
+    // The receipt confirms durable saving before the map refresh finishes.
+    // Editing resumes only when the public work controls are available again.
+    await waitFor(
+      () =>
+        expect(
+          (screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled,
+        ).toBe(false),
+      { timeout: Math.max(1, Math.floor(deadline - performance.now())) },
+    );
+    await openTypeEditor('Ändra sambandstyp: Plats');
+    expect((screen.getByLabelText('Sambandstypens namn') as HTMLInputElement).value).toBe('Plats');
+    expect((screen.getByLabelText('Benämning från startobjektet') as HTMLInputElement).value).toBe(
+      'förvaras i',
+    );
+    expect((screen.getByLabelText('Benämning från målobjektet') as HTMLInputElement).value).toBe(
+      'innehåller',
+    );
+  } finally {
+    release();
+  }
   await userEvent.click(
     screen.getByRole('button', { name: 'Stäng sambandstypen utan att skicka' }),
   );
