@@ -1416,14 +1416,14 @@ export function SpatialMap({
             {/* Size the obstacle independently of the labels it displaces. */}
             <span aria-hidden="true" className="label-note-size">
               <span className="label-note-count">{objects.size + edges.length}</span> etiketter
-              döljs för läsbarhet. Alla objekt och samband finns i listan. Sök eller välj ett objekt
-              och visa dess kopplingar.
+              döljs för läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller
+              välj ett objekt och visa dess kopplingar.
             </span>
             {hiddenLabels > 0 && (
               <span className="label-note-message">
                 <span className="label-note-count">{hiddenLabels}</span> etiketter döljs för
-                läsbarhet. Alla objekt och samband finns i listan. Sök eller välj ett objekt och
-                visa dess kopplingar.
+                läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller välj ett
+                objekt och visa dess kopplingar.
               </span>
             )}
           </p>

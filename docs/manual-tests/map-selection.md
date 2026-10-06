@@ -1,8 +1,8 @@
 # Manuella testfall för markering och detaljer
 
-Testfallen omfattar flerval, tomrumsgester, tillgängliga textkontroller och
-objektpanelernas placering. Anteckna commit, webbläsare, enhet, fysisk eller
-emulerad inmatning samt godkänt eller underkänt resultat vid körning.
+Testfallen omfattar flerval, tomrumsgester, textkontroller, läsning och
+vanliga formulär. Anteckna commit, webbläsare, enhet, fysisk eller emulerad
+inmatning samt godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
 
@@ -12,143 +12,143 @@ påhittade uppgifter. Administratörsrollen behövs inte för kartarbetet.
 ## Allmän förberedelse
 
 1. Starta en isolerad installation enligt
-   [provförberedelsen](../development/devcontainer.md#disposable-local-database).
+[provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Använd ett nytt provhushåll mellan fallen.
-2. Skapa personerna Lo Exempel, Kim Exempel och Alex Exempel i Lista.
-   Lägg till Lo Exempel → Använder → Kim Exempel och Kim Exempel →
-   Använder → Alex Exempel. Uppgifterna är syntetiska provdata.
-3. Stäng panelerna med kryssen.
-   Följ [arbetsytornas ingångar](README.md#öppna-arbetsytor) för Lista.
+2. Välj **Nytt objekt** i verktygen. Skapa personerna Lo Exempel, Kim Exempel
+   och Alex Exempel, ett helt formulär åt gången. Välj varje gång
+   **Lägg i utkastet och stäng**.
+3. Välj **Tabell**, **Samband för Lo Exempel**, **Nytt samband** och ange
+   Använder till Kim Exempel. Lägg hela sambandet i utkastet och stäng
+   samband. Skapa likadant Kim Exempel → Använder → Alex Exempel.
+4. Välj **Karta**. Alla tre objekt och båda privata samband visas.
+   Spara inte utkastet under dessa markeringstester.
 
 ## Markering och kartgester
 
 ### MARKERING-01: flerval och uttrycklig detaljöppning
 
-**Syfte:** Skilja markering från detaljöppning utan kamerahopp.
+**Syfte:** Skilja markering från detaljöppning utan ändrade fakta eller kamera.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Alla tre objekt visas på en dator.
+**Förutsättningar:** Alla tre objekt visas på en dator med kartgrafik.
 
 **Integrationstest:**
 [map-selection.spec.ts](../../tests/integration/map-selection.spec.ts),
-testfallet “MARKERING-01: ordinary and modified clicks select objects and
-open details separately”.
+testfallet “MARKERING-01: ordinary and modified clicks select objects and open
+details separately”.
 
 **Steg:**
 
-1. Klicka Lo. Kontrollera att Lo markeras utan ny panel eller kamerarörelse.
-2. Ctrl-klicka Alex. Kontrollera båda markeringarna, antalet och båda
-   direkta sambanden. Klicka Lo igen och kontrollera att Alex finns kvar.
-3. Cmd-klicka Alex för att ta bort Alex. Klicka det omarkerade Kim och
-   kontrollera att Kim ersätter Lo.
-4. Dubbelklicka Kim. Kontrollera panelen och oförändrad kamera.
-5. Återgå till kartan. Ctrl+Alt-klicka Lo och kontrollera att Kim finns
-   kvar. På Mac prövar du också Control+Option och Cmd+Option på Alex.
+1. Klicka Lo. Kontrollera markeringen, solid ram och det direkta sambandet,
+   utan öppnade uppgifter. Ctrl-klicka Alex och kontrollera två markerade
+   objekt och båda direkta sambanden.
+2. Klicka Lo igen: Alex finns kvar. Cmd-klicka Alex för att ta bort Alex.
+   Klicka det omarkerade Kim och kontrollera att Kim ersätter Lo.
+3. Ctrl-klicka Lo, dubbelklicka Kim och läs Kims fasta uppgifter.
+   Välj **Stäng uppgifterna**. Kontrollera att de två markeringarna finns kvar.
+4. Ctrl+Alt-klicka Lo, läs Lo och stäng uppgifterna. Cmd+Alt-klicka Alex,
+   läs Alex och stäng igen. Kontrollera tre markeringar och samma kamera.
+5. Klicka fri bakgrund. Dubbelklicka Alex och kontrollera en markering.
+   Stäng uppgifterna och pröva höger Control+Option-klick på Lo där
+   enhetens motsvarande modifierare används.
 
 **Förväntat resultat:**
 
 - Vanligt klick, Ctrl/Cmd-flerval och detaljöppning följer stegen.
 - Alla markerade objekts direkta samband framhävs. Grannar blir inte markerade.
-- Detaljer återanvänder objektets panel; inget klick flyttar kameran.
+- En fast läsyta återger det valda objektet. När den stängs återkommer samma
+  kartläge; ingen handling ändrar hushållets uppgifter.
 
 ### MARKERING-02: tomrumsklick och avbrutna gester
 
-**Syfte:** Avmarkera utan att ändra sökning, kamera eller pågående arbete.
+**Syfte:** Avmarkera utan att ändra sökning eller oavsiktligt flytta kameran.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Kartan och Lista ryms samtidigt på datorn.
+**Förutsättningar:** Kartan visas på datorn med fri bakgrund att klicka.
 
 **Integrationstest:**
 [map-selection.spec.ts](../../tests/integration/map-selection.spec.ts),
-testfallet “MARKERING-02: empty clicks clear highlighting while navigation
-and cancellation retain selection”.
+testfallet “MARKERING-02: empty clicks clear highlighting while navigation and
+cancellation retain selection”.
 
 **Steg:**
 
-1. Markera Lo. Öppna Lista och skriv Exempel i Sök objekt.
-   Avmarkera och markera Lo med Control-klick. Kontrollera att söktext
-   och kamera finns kvar och att inga detaljer öppnas.
+1. Markera Lo. Välj **Sök i kartan**, skriv Exempel i **Sök objekt i kartan**
+   och välj **Stäng**. Avmarkera och markera Lo med Control-klick.
+   Kontrollera söksammanfattning, kamera och att inga detaljer öppnas.
 2. Klicka fri bakgrund med en mycket liten rörelse. Kontrollera att
-   markeringen släcks medan söktext, panel och kamera finns kvar.
-3. Återgå till kartan och markera Lo. Dra bakgrunden för att rotera.
-   Kontrollera att Lo förblir markerad. Klicka sedan direkt i tomrummet.
+   markeringarna släcks medan söktext och kamera finns kvar.
+3. Markera Lo, dra bakgrunden och kontrollera att Lo förblir markerad.
+   Klicka sedan direkt i tomrummet: Lo avmarkeras utan ett nytt kamerahopp.
 4. Markera Lo igen. Börja en pekgest på bakgrunden och avbryt den genom
    webbläsarens eller enhetens avbrottshandling. Kontrollera urvalet.
-5. Välj ett samband och klicka tom bakgrund.
+5. Välj sambandet från Lo till Kim och klicka tom bakgrund.
 
 **Förväntat resultat:**
 
 - Ett enda tomrumsklick släcker all framhävning, även efter en dragning.
 - Små rörelser flyttar inte kameran. Verklig eller avbruten navigering
-  behåller markeringarna. Sökning och öppna paneler består.
+  behåller markeringarna. Söktext och söksammanfattning består.
 
-## Textalternativ och paneler
+## Textalternativ och vanliga formulär
 
-### MARKERING-03: tangentbord och synlig detaljpanel
+### MARKERING-03: tangentbord, läsning och uttrycklig formulärförlust
 
-**Syfte:** Arbeta utan kartgester och bevara oskickad text på små skärmar.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** Pröva dator samt 390 och 320 pixlars bredd.
-
-**Integrationstest:**
-[map-selection.spec.ts](../../tests/integration/map-selection.spec.ts),
-testfallet “MARKERING-03: text selection and detail controls retain work
-across desktop and compact panels”.
-
-**Steg:**
-
-1. Öppna Lista och välj Avmarkera alla. Kontrollera att detaljverktyget
-   är inaktivt. Fokusera Markera Lo Exempel och tryck mellanslag.
-2. Markera också Kim och kontrollera antalet. Välj Visa detaljer i
-   verktygen. Kontrollera rubrikfokus och aktiv detaljikon för Kim.
-3. Välj Redigera valt objekt och skriv en oskickad beskrivning.
-   Återgå till Lista och välj **Uppgifter för Kim Exempel**.
-4. Öppna Lista och välj Kims Uppgifter igen. Stäng Kims panel och öppna den
-   igen. Kontrollera text och detaljikon vid varje steg.
-5. Avmarkera alla. Upprepa med tangentbord på varje skärmbredd.
-6. På den smala skärmen väljer du Visa verktygens namn och Tema. Välj
-   Mörkt och kontrollera tema och fokus tillbaka till temaknappen.
-   Välj Dölj verktygens namn.
-   För pekaren över Markera och kontrollera att knapptexten är läsbar.
-
-**Förväntat resultat:**
-
-- Markera och Visa detaljer är skilda handlingar. Flerval finns kvar
-  när detaljer öppnas, och Avmarkera alla släcker framhävningen.
-- Oskickad beskrivning finns kvar. På mobil är detaljikonen aktiv bara
-  när Kims panel visas; på dator kan flera paneler visas samtidigt.
-- Fokus följer öppnad panel. Kontrollerna går att nå på varje bredd.
-
-### MARKERING-04: placering nära objektet och bevarad manuell flytt
-
-**Syfte:** Hitta nya detaljer nära kartobjektet och behålla egna placeringar.
+**Syfte:** Läsa markerade uppgifter, skydda oskickad text och nå samma
+formulär från tabellen på stora och små skärmar.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Kartan visas på datorn, utan öppna objektpaneler.
+**Förutsättningar:** Kör varje gång i ett nytt förberett provhushåll.
+Prova 1440, 390 och 320 CSS-pixlars bredd med 1000 pixlars höjd.
 
 **Integrationstest:**
 [map-selection.spec.ts](../../tests/integration/map-selection.spec.ts),
-testfallet “MARKERING-04: new detail panels open beside their object and
-retain manual positions”.
+testfallen “MARKERING-03: text selection and native details protect unsent work
+at 1440px”,
+“MARKERING-03: text selection and native details protect unsent work at 390px”
+och
+“MARKERING-03: text selection and native details protect unsent work at 320px”.
 
 **Steg:**
 
-1. Dubbelklicka Lo och kontrollera att den nya panelen ligger nära Lo
-   inom den synliga skärmen med åtkomliga kontroller.
-2. Fokusera panelens flytthandtag och flytta med piltangenterna.
-3. Stäng panelen och öppna den med Visa detaljer i verktygen.
-4. Gör fönstret mindre och större igen.
+1. Kontrollera att **Visa detaljer** är inaktivt utan urval och att
+   verktygsknapparna ryms med minst 44 × 44 CSS-pixlars tryckyta.
+   Nå **Välj objekt: Lo Exempel** med Tab och tryck mellanslag.
+2. Ctrl-klicka Kim och välj **Visa detaljer**. Kontrollera två markerade
+   objekt, Kims rubrikfokus och aktiv detaljikon.
+3. Välj **Redigera Kim Exempel** och skriv Oskickat samt aktuell bredd i
+   **Beskrivning**. Välj **Stäng objektdialogen**. Kontrollera fokus på
+   **Fortsätt redigera** och tryck Escape. Texten finns kvar, utan nytt förslag.
+4. Stäng igen och välj uttryckligen **Kasta ändringarna och fortsätt**.
+   Kontrollera fokus på den tidigare redigeringsknappen och båda markeringarna.
+5. Stäng uppgifterna. Välj **Tabell** och **Redigera Kim Exempel**.
+   Kontrollera att den kastade beskrivningen är tom. Stäng utan ändring.
+6. Nå namnet **Lo Exempel** i tabellen och tryck mellanslag.
+   Kontrollera expanderade uppgifter och markerad rad.
+7. Öppna verktygens namn vid behov, välj **Tema** och **Mörkt**.
+   Kontrollera fokus tillbaka till temaknappen och läsbar knapptext
+   när pekaren hålls över **Redigera Kim Exempel**.
+8. Öppna utkastets läsning via **Skriv till Skyttel** och **Visa utkastet**.
+   Välj **Tabell** igen. Kontrollera att samma redigeringsknapp kan nås
+   utan att textvyn täcker den. På dator ryms tabellen bredvid textvyn;
+   på smal skärm visas den valda tabellen.
 
 **Förväntat resultat:**
 
-- Panelen öppnas nära objektet och ryms inom den synliga skärmen.
-- Den manuella placeringen består efter återöppning och storleksbyte.
-- Mindre fönster begränsar panelen utan att radera dess önskade placering.
+- Markering, fast läsning och det fullständiga formuläret är skilda handlingar.
+- Escape avbryter förlusten och bevarar text; endast uttryckligt kastande
+  tar bort formulärtexten. Återöppning använder aktuellt underlag.
+- Fokus och kontroller är åtkomliga på varje bredd. Text i mörkt tema har
+  tillräcklig kontrast. Sparade fakta och hela tidigare utkastet är oförändrade.
+
+### MARKERING-04: pensionerat fall för fria fönster
+
+Fallet pensionerades när fria objektfönster och manuell fönsterflytt togs bort.
+ID:t återanvänds inte. Läsning, återgång och åtkomliga kontroller prövas i
+MARKERING-01, MARKERING-03 och MARKERING-05.
 
 ### MARKERING-05: läs markerade uppgifter och återgå från vanligt formulär
 

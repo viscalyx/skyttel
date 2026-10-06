@@ -39,6 +39,15 @@
   padding: 8px 13px;
   border: 1px solid var(--space-control);
   border-radius: 8px;
+  background: var(--space-surface);
+  color: var(--space-text);
+}
+.household-table button:hover:enabled {
+  background: color-mix(in srgb, var(--space-accent), var(--space-surface) 90%);
+  border-color: var(--space-accent);
+}
+.household-map.workspace-shell[data-narrow="false"].text-view-open .household-table {
+  right: var(--text-view-space);
 }
 .household-table :is(select, input) {
   font: inherit;

@@ -42,29 +42,43 @@ familjeflöden, verklig webbläsarzoom, granskade bilder och miljöbegränsninga
 
 ## Öppna arbetsytor
 
-Hushållet öppnar rymdkartan. Välj **Lista** i **Kartans verktyg** före
-fallens formulär, listor, typer, historik och utkast. Välj **Skriv till
-Skyttel**
-före samtalsfallen. Utan giltigt medgivande visas medgivanderutan först;
-välj **Godkänn och starta**. På telefon öppnar **Visa verktygens namn**
-även de kompletterande verktygen.
+Hushållet öppnar **Karta**. Välj **Tabell** i **Kartans verktyg** för sökning,
+filter, sortering och alla objekt. Namnet expanderar radens läsuppgifter.
+**Läs alla uppgifter för [namn]** öppnar fullständig läsning; **Samband för
+[namn]** öppnar objektets samband och följbara objektlänkar. Läsning ändrar
+inte uppgifter och behöver varken samtal eller medgivande.
 
-Välj **Uppgifter** vid objektet i Lista för att öppna dess panel. Namnet
-visar i stället objektet i kartan. När ett fall återvänder
-till ett redan öppet objekt, öppna Lista och välj dess **Uppgifter** igen.
-Stäng panelerna med kryssen inför kartgester om panelerna täcker kartan eller
-dess reglage;
-öppna Lista igen för sökning, filter, samband och utkast.
+Välj **Nytt objekt** i verktygen eller **Redigera [namn]** i tabellen för samma
+fullständiga objektformulär. **Lägg i utkastet och stäng** lägger hela förslaget
+i det privata utkastet. **Lägg i utkastet och öppna samband** övergår först
+efter bekräftat förslag till objektets samband. Där finns **Nytt samband**
+och **Redigera samband**. Radens läsuppgifter innehåller också **Åtgärder
+för [namn]**, med vanliga objektåtgärder även när kartgrafiken inte fungerar.
+
+Välj **Skriv till Skyttel** för textvyn. Den öppnas utan modellkontakt eller
+nytt medgivande. **Visa utkastet** öppnar läsning, borttagning och sparande av
+hela utkastet. Förslag kan läsas men redigeras via de vanliga formulären
+efter borttagning och nytt förslag. Konflikter granskas från **Karta** eller
+**Tabell**. **Rapporter** och **Ändringshistorik** visar gemensamt sparade fakta.
+För att starta ett nytt samtal väljer du uttryckligen **Nytt samtal**; om
+medgivande behövs väljer du därefter **Godkänn och starta**.
+
+På telefon öppnar **Visa verktygens namn** de kompletterande verktygen.
+**Visa detaljer** läser den aktuella kartmarkeringen i en fast läsyta.
+Stäng den med **Stäng uppgifterna** före kartgester om den tar plats.
+Stäng text med **Stäng textvyn** när ett fall behöver själva kartan.
 
 **Din profil** innehåller användar-ID, inbjudningar, **Inloggningssätt**,
 **Assistentanslutningar** och **Logga ut**. **Inställningar** öppnar en egen
 sida med **Typer och egna fält**, **Administrera tillgång** för
 administratören och **Månadskostnad** för driftansvarig. Mobilnavigationen
-öppnas med **Välj inställning**. Följ dessa ingångar när ett fall anger en
-sådan funktion. **Tillbaka till kartan** återger arbetet.
-Objektformulärets kryss bekräftar förlust av oskickade ändringar. Stäng alla
-paneler för att
-återgå till kartan; stäng även textvyn på telefon.
+öppnas med **Välj inställning**. **Tillbaka till kartan** återger arbetet.
+
+Objekt- och sambandsformulär skyddar oskickade ändringar när de stängs eller
+lämnas. **Fortsätt redigera** eller Escape avbryter förlusten; endast
+**Kasta ändringarna och fortsätt** kastar texten. Vid väntande eller oklart
+utfall följer du formulärets uttryckliga kontroll före nytt försök.
+Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 
 ## Områden
 
@@ -102,12 +116,10 @@ paneler för att
   återgång med fokus, synligt tangentbordsfokus i båda riktningar, läsbara
   teman och typdefinitioner i kartans samlade utkast.
 
-- [Fria paneler](workspace-panels.md): flera objekt och samtal, fri placering
-  över legenden inom skärmens kanter, skydd för synliga samtalsytor och
-  växling mellan hela vyer vid platsbrist,
-  mobilnavigering genom Lista med synligt återgångsfokus, kompletta
-  objektförslag, bevarade läsuppgifter och samtal, skyddad väntande
-  objektdialog samt bevarade samband och typer.
+- [Objektarbete och samtal](workspace-panels.md): kompletta objektförslag,
+  bevarade läsuppgifter och samtal, skyddad formulärförlust, väntande
+  objektdialog och åtkomliga samband och typer genom vanliga ingångar.
+  Gamla fria fönsters placeringsfall är pensionerade utan återanvända ID:n.
 - [Kartans arbetsyta](workspace-shell.md): kompakt och expanderad verktygslåda,
   teman, läsbara hopplänkar och fokus, hjälp i det kompakta verktygsfältet,
   samtalshjälp med

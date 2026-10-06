@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openMap, openTable, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 
 async function arrange(page: Page, origin: string) {
@@ -123,7 +123,8 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
   const installation = await createInstallation();
   try {
     await page.setViewportSize({ width: 1440, height: 1000 });
-    const { map, lo } = await arrange(page, installation.origin);
+    const { map, lo, read } = await arrange(page, installation.origin);
+    const content = await read();
     const focus = page.getByRole('button', { name: 'Fokusera markering', exact: true });
     await expect(focus).toBeDisabled();
     await lo.click();
@@ -136,8 +137,6 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
     const overview = await separation();
     await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
     const panel = page.getByRole('region', { name: 'Lo Exempel', exact: true });
-    await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await panel.getByLabel('Beskrivning', { exact: true }).fill('Oskickat under kamerafokus');
     const panelPosition = await panel.boundingBox();
     await focus.click();
     await expect(focus).toBeFocused();
@@ -167,9 +166,25 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
     await expect(page.getByRole('button', { name: 'Visa hela kartan', exact: true })).toBeVisible();
     expect(await center(lo)).toEqual(beforeOverview);
     await expect(lo).toHaveAttribute('aria-pressed', 'true');
-    await expect(panel.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
+    const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat under kamerafokus');
+    await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+    const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
+    await expect(
+      loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Oskickat under kamerafokus',
     );
+    expect(await read()).toEqual(content);
+    await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+    await loss.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+    await expect(form).not.toBeVisible();
+    expect(await center(lo)).toEqual(beforeOverview);
+    expect(await read()).toEqual(content);
   } finally {
     await installation.close();
   }
@@ -237,9 +252,9 @@ test('KAMERA-03: mouse and touch rotation preserve the pivot and narrow focus co
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       expect(await center(lo)).toEqual(initial);
       await expect(lo).toHaveAttribute('aria-pressed', 'true');
-      await openWorkspace(page);
+      await openTable(page);
       await expect(
-        page.getByRole('button', { name: 'Fokusera markering', exact: true }),
+        page.getByRole('button', { name: 'Fokusera markering', exact: true, includeHidden: true }),
       ).toBeDisabled();
       await openMap(page);
       await expect(focus).toBeEnabled();

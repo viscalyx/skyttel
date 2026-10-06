@@ -65,17 +65,25 @@ overview retains its return view”.
 **Steg:**
 
 1. Kontrollera att **Fokusera markering** är inaktiv med tomt urval.
-2. Markera Lo, öppna detaljer och skriv oskickad beskrivningstext.
+2. Markera Lo och välj **Visa detaljer**. Läs Los fasta uppgifter.
 3. Välj **Fokusera markering**. Kontrollera Lo och Kim i det närmare
    utsnittet, med marginal till verktygen och oförändrad kamerariktning.
 4. Välj **Visa hela kartan**. Panorera, fokusera markeringen igen och
    rotera. Välj sedan **Återgå till föregående vy**.
+5. Stäng **Navigera**. Välj **Redigera Lo Exempel** och skriv Oskickat under
+   kamerafokus i **Beskrivning**. Välj **Stäng objektdialogen** och kontrollera
+   fokus på **Fortsätt redigera**. Tryck Escape och kontrollera att texten består.
+6. Stäng igen och välj uttryckligen **Kasta ändringarna och fortsätt**.
+   Kontrollera oförändrad kamera, tidigare utkast och sparade uppgifter.
 
 **Förväntat resultat:**
 
 - Endast Lo och dess direkta granne Kim bestämmer fokusutsnittet.
-  Långt borta utökar inte utsnittet genom Kims andra samband.
-- Kim blir inte markerad. Panelens läge och oskickade text finns kvar.
+  Långt borta utökar inte fokusutsnittet genom Kims andra samband; övrigt
+  kartinnehåll finns fortfarande kvar.
+- Kim blir inte markerad. Den fasta läsytan behåller sitt läge under
+  kamerarörelser. Escape bevarar senare oskickad formulärtext, medan
+  uttryckligt kastande lämnar tidigare fakta och utkast oförändrade.
 - Återgången återställer vyn före översikten trots mellanliggande rörelser.
   Knappen heter åter **Visa hela kartan** och urvalet består.
 
@@ -100,7 +108,7 @@ narrow focus controls survive unavailable graphics”.
    mus. Kontrollera både start och fortsatt rotation.
 2. Upprepa med ett finger på pekskärmen. Kontrollera att Lo ligger kvar
    på samma plats i bilden och behåller markeringen.
-3. Öppna **Lista** och återgå till kartan. Kontrollera att fokus går att
+3. Öppna **Tabell** och återgå med **Karta**. Kontrollera att fokus går att
    använda igen och att båda kameraknapparna är åtkomliga.
 4. Avbryt kartgrafiken, kontrollera att fokus är inaktivt och återställ
    grafiken. Kontrollera att fokusering blir tillgänglig igen.

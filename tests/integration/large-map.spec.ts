@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { activatePanel, createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openMap,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('STORKARTA-01: dense overview keeps readable labels and every object and relationship reachable', async ({
@@ -28,8 +37,10 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     const personal = await (await page.request.get(`${path}/view`)).json();
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await expect(page.getByText('500 objekt och 1500 samband', { exact: true })).toBeVisible();
+    await openMap(page);
+    const baseline: MapState = await (await page.request.get(path)).json();
+    expect(baseline.objects).toHaveLength(500);
+    expect(baseline.relationships).toHaveLength(1500);
     const labels = page.locator('.spatial-labels [data-layout-id]');
     await expect(labels.first()).toBeVisible();
     await expect
@@ -48,71 +59,82 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
       )
       .toBe(true);
     await expect(
-      page.getByText(/Alla objekt och samband finns i listan/).filter({ visible: true }),
+      page
+        .getByText(/Alla objekt och deras samband kan läsas via Tabell/)
+        .filter({ visible: true }),
     ).toBeVisible();
-    const objects = page.getByRole('list', { name: 'Objekt', exact: true });
-    await expect(objects.getByRole('listitem')).toHaveCount(50);
+    await openTable(page);
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await table.getByRole('button', { name: 'Filter', exact: true }).click();
+    const filter = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+    await filter.getByRole('checkbox', { name: 'Ta med upphörda', exact: true }).check();
+    await filter.getByRole('button', { name: 'Stäng filter', exact: true }).click();
     const names = new Set<string>();
-    for (let index = 1; index <= 10; index += 1) {
-      await page
-        .getByRole('combobox', { name: 'Sida för objekt', exact: true })
-        .selectOption(String(index));
-      for (const name of await objects
-        .getByRole('button', { name: /^Uppgifter för/ })
-        .evaluateAll((buttons) =>
-          buttons.map(
-            (button) => button.getAttribute('aria-label')?.replace('Uppgifter för ', '') ?? '',
-          ),
-        ))
-        names.add(name);
+    const reachable = new Set<string>();
+    const pages = table.getByRole('navigation', { name: 'Tabellsidor', exact: true });
+    for (let index = 1; index <= 10; index++) {
+      await expect(pages).toContainText(`Sida ${index} av 10`);
+      const buttons = table.locator('.household-table-row-toggle');
+      await expect(buttons).toHaveCount(50);
+      for (const name of await buttons.allTextContents()) {
+        const clean = name.replace(/^[▾▸]/, '').trim();
+        names.add(clean);
+        const object = baseline.objects.find((object) => object.name === clean);
+        if (!object) throw new Error(`Unknown visible object ${clean}`);
+        const edges = baseline.relationships.filter(
+          (edge) => edge.sourceId === object.id || edge.targetId === object.id,
+        );
+        const entry = table.getByRole('button', { name: `Samband för ${clean}`, exact: true });
+        await expect(entry).toBeEnabled();
+        await expect(entry).toHaveAccessibleDescription(`${edges.length} samband`);
+        for (const edge of edges) reachable.add(edge.id);
+      }
+      const sample = (await buttons.first().textContent())?.replace(/^[▾▸]/, '').trim();
+      if (!sample) throw new Error('Each table page must contain a readable object');
+      await table.getByRole('button', { name: `Samband för ${sample}`, exact: true }).click();
+      const relations = page.getByRole('dialog', { name: `Samband för ${sample}`, exact: true });
+      const object = baseline.objects.find((object) => object.name === sample);
+      const edges = baseline.relationships.filter(
+        (edge) => edge.sourceId === object?.id || edge.targetId === object?.id,
+      );
+      await expect(relations.locator('.household-read-relationships > li')).toHaveCount(
+        edges.length,
+      );
+      await relations.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+      if (index < 10) await pages.getByRole('button', { name: 'Nästa', exact: true }).click();
     }
-    expect([...names].filter((name) => name.startsWith('Provobjekt '))).toHaveLength(500);
-    const relationships = page.getByRole('list', { name: 'Samband', exact: true });
-    const connections = new Set<string>();
-    for (let index = 1; index <= 30; index += 1) {
-      await page.getByLabel('Sida för samband', { exact: true }).selectOption(String(index));
-      for (const name of await relationships.getByRole('button').allTextContents())
-        connections.add(name);
-    }
-    expect([...connections].filter((name) => name.startsWith('Provobjekt '))).toHaveLength(1500);
-    await page.getByLabel('Sök objekt', { exact: true }).fill('Provobjekt 499');
-    await expect(objects.getByRole('listitem')).toHaveCount(1);
-    await objects
-      .getByRole('button', { name: 'Uppgifter för Provobjekt 499', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
-    await expect(page.getByLabel('Namn', { exact: true })).toHaveValue('Provobjekt 499');
-    await page.getByLabel('Sök objekt', { exact: true }).fill('');
-    await page
-      .getByRole('navigation', { name: 'Bläddra bland objekt' })
-      .getByRole('button', { name: 'Visa valt innehåll i listan' })
-      .click();
+    expect(names.size).toBe(500);
+    expect(reachable.size).toBe(1500);
+    await table
+      .getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true })
+      .fill('Provobjekt 499');
+    await expect(table.locator('.household-table-row-toggle')).toHaveCount(1);
+    const form = await editTableObject(page, 'Provobjekt 499');
+    await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Provobjekt 499');
+    await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickad text i den täta kartan');
+    await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+    const loss = page.getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true });
     await expect(
-      objects.getByRole('button', { name: 'Uppgifter för Provobjekt 499', exact: true }),
-    ).toBeVisible();
-    await page.getByRole('button', { name: 'Visa objektets kopplingar', exact: true }).click();
-    await expect(relationships.getByRole('listitem')).not.toHaveCount(0);
-    await page.getByLabel('Beskrivning', { exact: true }).fill('Oskickad text i den täta kartan');
-    await page.getByLabel('Sök objekt', { exact: true }).fill('');
-    await page.getByRole('button', { name: 'Visa hela rymden', exact: true }).click();
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      loss.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
       'Oskickad text i den täta kartan',
     );
-    await openWorkspace(page);
-    await page.getByLabel('Sök objekt', { exact: true }).fill('Provobjekt 499');
-    await activatePanel(page, 'Provobjekt 499');
-    await expect(page.getByLabel('Beskrivning', { exact: true })).toHaveValue(
-      'Oskickad text i den täta kartan',
-    );
-    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Oskickad text i den täta kartan',
-    );
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    expect(await (await page.request.get(path)).json()).toEqual(baseline);
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const draft = await openDraftReview(page);
+    await draft
+      .getByRole('button', { name: 'Visa förslaget: Provobjekt 499', exact: true })
+      .click();
+    const proposal = page.getByRole('dialog', { name: 'Provobjekt 499', exact: true });
+    await expect(proposal).toContainText('Oskickad text i den täta kartan');
+    await proposal.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     const saved: MapState = await (await page.request.get(path)).json();
     expect(saved.objects).toHaveLength(500);
     expect(saved.relationships).toHaveLength(1500);
@@ -132,7 +154,9 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     installation.revokeMembership(user.id);
     expect((await page.request.get(path)).status()).toBe(403);
     await page.reload();
-    await expect(page.getByText('500 objekt och 1500 samband', { exact: true })).not.toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+    ).not.toBeVisible();
   } finally {
     await installation.close();
   }
