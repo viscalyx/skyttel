@@ -1,11 +1,11 @@
 import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapRelationship, MapState, RelationshipType } from '../shared/map.js';
+import { knowledgeLabels, relationshipLabel } from '../shared/relationship-label.js';
 import { useFormLeave } from './FormLeave.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
 import { trapDialogTab } from './modal-focus.js';
 import { ObjectReadDetails } from './ObjectReadDetails.js';
-import { knowledgeLabels, relationshipLabel } from './RelationshipEditor.js';
 import {
   RelationshipForm,
   type RelationshipFormSubmission,

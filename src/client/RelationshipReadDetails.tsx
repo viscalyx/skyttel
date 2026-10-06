@@ -1,6 +1,6 @@
 import type { MapObject, RelationshipType, RelationshipValue } from '../shared/map.js';
+import { knowledgeLabels } from '../shared/relationship-label.js';
 import { factText } from './ObjectReadDetails.js';
-import { knowledgeLabels } from './RelationshipEditor.js';
 import { customReadFields, lifecycleText } from './read-field-values.js';
 
 export function relationshipPropertyValues(

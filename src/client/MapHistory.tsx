@@ -7,13 +7,13 @@ import type {
   SaveReceipt,
 } from '../shared/map.js';
 import { objectIconLabel } from '../shared/object-icons.js';
+import { relationshipLabel } from '../shared/relationship-label.js';
 import { HistoricalMergeDetails } from './HistoricalMergeDetails.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { MapRequestError, request } from './map-request.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
 import { CustomFieldsDetails, ObjectTypeDetails } from './ObjectTypes.js';
 import { ProfileImage } from './ProfileImage.js';
-import { relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeDetails } from './RelationshipTypes.js';
 import './map-history.css';
 

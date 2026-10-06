@@ -32,8 +32,8 @@ import {
 
 export type { ConflictResolution } from './use-conflict-resolution.js';
 
+import { relationshipLabel } from '../shared/relationship-label.js';
 import { trapDialogTab } from './modal-focus.js';
-import { relationshipLabel } from './RelationshipEditor.js';
 import { SpecialConflictDetails, SpecialConflictResult } from './SpecialConflictDetails.js';
 import './conflict-dialog.css';
 

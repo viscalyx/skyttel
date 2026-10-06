@@ -1,10 +1,10 @@
 import { useId, useLayoutEffect, useRef } from 'react';
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, MapState } from '../shared/map.js';
+import { relationshipLabel } from '../shared/relationship-label.js';
 import type { HouseholdReadEntry, householdReadRelationships } from './HouseholdReadDialog.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
 import { ObjectReadDetails } from './ObjectReadDetails.js';
-import { relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipReadDetails } from './RelationshipReadDetails.js';
 import './map-selection-details.css';
 

@@ -32,6 +32,7 @@ import {
 } from './HouseholdReadDialog.js';
 import { HouseholdTable, householdTableRows } from './HouseholdTable.js';
 import './draft-status.css';
+import { relationshipLabel } from '../shared/relationship-label.js';
 import { ConversationConsent } from './ConversationConsent.js';
 import {
   ConversationNoticeAnnouncements,
@@ -58,7 +59,6 @@ import {
 } from './ObjectSearch.js';
 import { ObjectTypeEditor } from './ObjectTypes.js';
 import type { ObjectEditor } from './object-editor.js';
-import { relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeEditor } from './RelationshipTypes.js';
 import { Reports } from './Reports.js';
 import { rejectionMessage } from './SaveOperations.js';

@@ -95,39 +95,6 @@ export function FinancialFactEditor({
   );
 }
 
-export function FinancialFactsEditor({
-  facts = {},
-  onChange,
-  fields = financialFields,
-}: {
-  facts?: FinancialFacts;
-  onChange: (facts: FinancialFacts) => void;
-  fields?: readonly (typeof financialFields)[number][];
-}) {
-  return (
-    <details>
-      <summary>Ekonomiska uppgifter och avtalsvillkor</summary>
-      <p>
-        Alla uppgifter är frivilliga och beskrivande. Belopp används inte för att beräkna ränta
-        eller betalningar.
-      </p>
-      {fields.map((field) => (
-        <FinancialFactEditor
-          key={field.key}
-          field={field}
-          fact={facts[field.key]}
-          onChange={(fact) => {
-            const next = { ...facts };
-            if (fact) next[field.key] = fact;
-            else delete next[field.key];
-            onChange(next);
-          }}
-        />
-      ))}
-    </details>
-  );
-}
-
 export function FinancialFactDetails({ fact, label }: { fact?: FinancialFact; label: string }) {
   return fact ? (
     <p>

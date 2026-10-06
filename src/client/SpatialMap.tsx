@@ -12,12 +12,12 @@ import {
 import { createPortal } from 'react-dom';
 import type { MapObject, MapRelationship, MapState } from '../shared/map.js';
 import { defaultViewSettings, type Position, type ViewSettings } from '../shared/personal-view.js';
+import { relationshipLabel } from '../shared/relationship-label.js';
 import { LifecycleStatus } from './Lifecycle.js';
 import { MapNavigation } from './MapNavigation.js';
 import type { MapRevealRequest } from './map-display.js';
 import { mapConnections, proposalKind } from './map-presentation.js';
 import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
-import { relationshipLabel } from './RelationshipEditor.js';
 import { SpatialHeightGuide } from './SpatialHeightGuide.js';
 import { SpatialObjectGlyph } from './SpatialObjectGlyph.js';
 import { SpatialOrientation } from './SpatialOrientation.js';

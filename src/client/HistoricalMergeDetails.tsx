@@ -1,9 +1,9 @@
 import type { SaveReceipt } from '../shared/map.js';
+import { relationshipLabel } from '../shared/relationship-label.js';
 import { LifecycleDetails } from './Lifecycle.js';
 import { ObjectPropertiesDetails } from './ObjectProperties.js';
 import { CustomFieldsDetails } from './ObjectTypes.js';
 import { ProfileImage } from './ProfileImage.js';
-import { relationshipLabel } from './RelationshipEditor.js';
 
 export function HistoricalMergeDetails({
   merge,

@@ -3,6 +3,7 @@ import { sameConflictValue } from '../shared/conflict-properties.js';
 import type { MapObject, MapState, RelationshipValue } from '../shared/map.js';
 import { proposedRelationships } from '../shared/map.js';
 import type { RelationshipFormResult } from '../shared/relationship-form.js';
+import { knowledgeLabels } from '../shared/relationship-label.js';
 import { useFormLeave } from './FormLeave.js';
 import { FormLossGuard } from './FormLossGuard.js';
 import { validateFormControls } from './form-validation.js';
@@ -10,7 +11,6 @@ import { LifecycleEditor, RelationshipEndDate } from './Lifecycle.js';
 import { MapRequestError } from './map-request.js';
 import { ObjectTypeLossDialog } from './ObjectDialog.js';
 import { CustomFieldsEditor } from './ObjectTypes.js';
-import { knowledgeLabels } from './RelationshipEditor.js';
 
 export type RelationshipFormValue = {
   id: string;
