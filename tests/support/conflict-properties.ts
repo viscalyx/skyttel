@@ -70,6 +70,9 @@ export async function conflictCollaborators(
 export async function applyProposedConflictChanges(page: Page, savedText?: string) {
   await page.getByRole('button', { name: /^\d+ konflikt(?:er)? i ditt utkast$/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+  await expect(
+    dialog.getByRole('button', { name: 'Stäng konfliktdialogen', exact: true }),
+  ).toBeEnabled();
   if (savedText)
     await expect(dialog.getByRole('region', { name: 'Sparat i kartan nu' })).toContainText(
       savedText,

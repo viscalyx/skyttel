@@ -128,7 +128,14 @@ async function openConflict() {
   await userEvent.click(
     screen.getByRole('button', { name: /[0-9]+ konflikt(?:er)? i ditt utkast/ }),
   );
-  return within(screen.getByRole('dialog', { name: 'Granska konflikter' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'Granska konflikter' }));
+  await waitFor(() =>
+    expect(
+      (dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false),
+  );
+  return dialog;
 }
 async function resolveProperties(values: [string, string, string][]) {
   const dialog = await openConflict();
@@ -142,7 +149,9 @@ async function resolveProperties(values: [string, string, string][]) {
   expect(confirm.disabled, confirm.closest('dialog')?.textContent ?? '').toBe(false);
   await userEvent.click(confirm);
   await waitFor(() =>
-    expect(dialog.getByRole('status').textContent).toContain('Valen finns i ditt utkast'),
+    expect(dialog.getByRole('status').textContent).toMatch(
+      /Valen finns i ditt utkast|Förslaget har tagits bort ur ditt utkast/,
+    ),
   );
   await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
 }

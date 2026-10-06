@@ -210,6 +210,7 @@ export function HouseholdMap({
   const [objectFormDirty, setObjectFormDirty] = useState(false);
   const { requestLeave } = useFormLeave();
   const objectReturnFocus = useRef<(() => void) | undefined>(undefined);
+  const [conflictResolutionStatus, setConflictResolutionStatus] = useState('');
   const [openPanels, setOpenPanels] = useState<string[]>([]);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [panelFocusRequest, setPanelFocusRequest] = useState<PanelFocusRequest | null>(null);
@@ -443,6 +444,7 @@ export function HouseholdMap({
   const { query, types: typeFilter, onlySelected, sort } = browsing;
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const [conflictDialogKey, setConflictDialogKey] = useState<string>();
+  const [conflictRecovery, setConflictRecovery] = useState(false);
   const [conflictLinksOpen, setConflictLinksOpen] = useState(false);
   function returnFromStatus() {
     routeOutsideFocus.current = null;
@@ -863,6 +865,11 @@ export function HouseholdMap({
   }
   const conflicts = state ? draftConflicts(state) : [];
   const hasConflicts = conflicts.length > 0;
+  const conflictFollowUp = conflictRecovery && conflicts.length === 0 && !conflictDialogOpen && (
+    <button type="button" className="map-conflict" onClick={() => setConflictDialogOpen(true)}>
+      Visa konfliktvalet
+    </button>
+  );
   useEffect(() => {
     if (!hasConflicts) setConflictLinksOpen(false);
   }, [hasConflicts]);
@@ -1571,6 +1578,7 @@ export function HouseholdMap({
               {selectedIds.length} markerade
             </span>
             <section aria-label="Kartans status" className="map-status">
+              {conflictFollowUp}
               <DraftSaveFollowUp
                 progress={saveProgress}
                 hidden={saveDialogOpen}
@@ -1676,6 +1684,16 @@ export function HouseholdMap({
         hidden={!active}
       >
         {draftRemovalStatus}
+      </p>
+      <p
+        className="visually-hidden"
+        role="status"
+        aria-label="Konfliktvalens status"
+        aria-live={conflictDialogOpen ? 'off' : 'polite'}
+        aria-atomic="true"
+        hidden={!active}
+      >
+        {conflictResolutionStatus}
       </p>
       <p className="visually-hidden text-button-announcement" aria-live="polite" aria-atomic="true">
         <span key={textButton.announcement.count}>{textButton.announcement.text}</span>
@@ -1916,6 +1934,7 @@ export function HouseholdMap({
           }}
           statusContent={
             <>
+              {conflictFollowUp}
               <DraftSaveFollowUp
                 progress={saveProgress}
                 hidden={saveDialogOpen}
@@ -1945,6 +1964,8 @@ export function HouseholdMap({
           initialKey={conflictDialogKey}
           disabled={pending || blocked || dirty}
           onClose={() => setConflictDialogOpen(false)}
+          onStatus={setConflictResolutionStatus}
+          onUnknownChange={setConflictRecovery}
           onRefresh={async () => {
             const latest = await request<MapState>(path);
             if (isCurrent()) setState(latest);

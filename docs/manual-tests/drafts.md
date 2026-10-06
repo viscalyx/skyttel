@@ -1977,3 +1977,314 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 - Fokus följer den uttryckliga handlingen och går tillbaka till verktygen
   vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll
   som används.
+
+## Bevarade konfliktval och kontrollerat utfall
+
+UTKAST-49–56 använder en tillfällig installation med riktig SQLite och två
+syntetiska användare: administratören Alex och medlemmen Robin. Starta från
+repo-roten med `npm run build` och
+`npx tsx scripts/manual-conflict-continuity.ts`. Öppna adressen som skrivs ut.
+Alex är inloggad i det synliga fönstret; konsolkommandon för Robin använder
+hans separata session. Inga externa AI-anrop eller medgivanden behövs.
+
+Varje `new-*` skapar en ny tom installation och stänger föregående databas.
+Använd kommandot före varje fall; behåll installationen inom fallet. Grundfallet
+har Alex privata **Lo Lind**, **Min anteckning**, medan Robin har sparat
+**Lo Berg**, **Robins anteckning**. Båda utgår från **Lo Exempel**.
+`result` visar aktuellt privat utkast, gemensam karta och historik genom
+offentlig
+HTTP. `quit` stänger installationen och tar bort testdatabasen.
+
+### UTKAST-49: behåll val mellan konflikter och vid återöppning
+
+**Syfte:** Bevara varje posts val och spärren för inaktuell jämförelse.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-two`. Även tjänstens namn och beskrivning skiljer
+sig.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallet “UTKAST-49: switching conflicts and reopening preserves choices and
+never clears another conflict’s stale guard”.
+
+**Steg:**
+
+1. Öppna **2 konflikter i ditt utkast**. Välj Alex namn och beskrivning för Lo.
+2. Välj **Min musiktjänst** i konfliktlistan och välj Alex namn och beskrivning.
+3. Stäng med Escape och öppna igen. Tjänstens val är kvar. Växla till Lo.
+4. Kör `newer-name` medan Lo visas. Försök **Lägg valen i utkastet** och läs
+   felet.
+5. Växla till tjänsten, sedan tillbaka till Lo. Kontrollera båda posternas val.
+
+**Förväntat resultat:**
+
+- Valen för respektive post finns kvar över växling och återöppning.
+- Lo visar inaktuellt underlag och kräver aktuell jämförelse. Växling till en
+  annan
+  post kan inte häva den spärren; tjänstens opåverkade val består.
+- Ingen gemensam ändring eller nytt sparande görs av det avvisade försöket.
+
+### UTKAST-50: gör bara om val för ändrade egenskaper
+
+**Syfte:** Bevara oberoende val efter en samtidig ändring.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-base`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallen “UTKAST-50: refreshed conflict data clears only choices for
+properties that actually changed” och “UTKAST-50: a later save after a lost
+applied reply retains unchanged choices when reviewing the new conflict”.
+
+**Steg:**
+
+1. Öppna konflikten och välj Alex namn och beskrivning.
+2. Kör `newer-name`. Försök lägga valen i utkastet; läs att underlaget ändrats.
+3. Kör `check-error` och välj **Visa aktuell jämförelse**. Läs hämtningsfelet
+   med fokus kvar i dialogen och båda valen bevarade.
+4. Kör `network-ok` och visa aktuell jämförelse igen. Beskrivningen är
+   fortfarande vald, namnet kräver val.
+5. Välj Alex namn igen och lägg valen i utkastet. Kör `result`.
+6. Börja om med `new-base` och `lose-applied`. Välj Alex två värden och
+   bekräfta, stäng efter det oklara svaret och kör `newer-name`.
+7. Öppna och kontrollera faktiskt utfall. Den nya konflikten kräver aktuell
+   jämförelse; ingen lösningsbock visas. Visa jämförelsen och kontrollera att
+   beskrivningen är vald medan namnet kräver nytt val. Kör `network-ok`
+   innan du bekräftar igen.
+
+**Förväntat resultat:**
+
+- Bara det berörda namnvalet återställs. Beskrivningsvalet behålls.
+- Det privata utkastet innehåller Lo Lind och Min anteckning mot nytt underlag.
+- Den gemensamma kartan behåller Lo Ås och Robins anteckning. Inget sparande
+  görs.
+
+### UTKAST-51: pröva kombinationen igen efter ändrad typ eller referens
+
+**Syfte:** Behålla opåverkade val utan att bekräfta en inaktuell eller ogiltig
+kombination.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Börja med `new-type`, sedan en ny installation med
+`new-reference`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallen “UTKAST-51: a changed object type revalidates mixed values while
+unaffected choices remain”
+och “UTKAST-51: a changed relationship reference refreshes its meaning without
+clearing unchanged property choices”.
+
+**Steg:**
+
+1. I `new-type`, öppna konflikten. Välj Alex namn, beskrivning och **Min text**.
+2. Kör `newer-type`: Robin sparar Mätobjekt och en ny förklaring för
+   Anteckningsobjekt. Försök lägga valen i utkastet och visa aktuell jämförelse.
+3. Namn och beskrivning är kvar. Välj Min text igen och den sparade typen
+   **Mätobjekt**.
+4. Läs felet. Välj Alex **Anteckningsobjekt** och lägg kombinationen i utkastet.
+5. Kör `new-reference`. Öppna sambandskonflikten och välj Alex **Molnmusik**
+   och **Osäkert uppgivet**.
+6. Kör `newer-reference`. Försök bekräfta och visa aktuell jämförelse.
+   Kontrollera det nya namnet **Ny musiktjänst** och de två valen. Bekräfta.
+
+**Förväntat resultat:**
+
+- Ändrad typ kräver aktuell jämförelse. Texten passar inte Mätobjekts numeriska
+  fält; orsaken förklaras och bekräftelsen spärras utan automatisk ändring av
+val.
+- En giltig typkombination kan läggas i utkastet. Kartans sparade typ och värden
+  består.
+- Ändrad referens upptäcks trots oförändrat objekt-ID. Aktuellt namn visas,
+  opåverkade egenskapsval behålls och prövas mot aktuellt underlag.
+- Sambandet ändras bara i Alex privata utkast, inte i den gemensamma kartan.
+
+### UTKAST-52: behåll val vid känd avvisning och återförsök efter kontroll
+
+**Syfte:** Hantera ett nyare privat utkast utan att kasta val eller andra
+förslag.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-base`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallet “UTKAST-52: a known version rejection retains choices and retries
+only after a current comparison”.
+
+**Steg:**
+
+1. Välj Alex namn och beskrivning i konflikten.
+2. Kör `newer-private`: en annan klient för Alex lägger Privat stol i utkastet.
+3. Försök lägga konfliktvalen i utkastet. Läs avvisningen och kontrollera
+   spärren.
+4. Visa aktuell jämförelse. Båda valen finns kvar. Bekräfta och kör `result`.
+
+**Förväntat resultat:**
+
+- Ett gammalt versionsförsök avvisas utan ändring; orsaken förklaras och valen
+  består.
+- Efter aktuell jämförelse kan samma val bekräftas utan att göras om.
+- Privat stol finns kvar. Bekräftelsen gör en enda privat ändring och skapar
+  ingen historikgrupp.
+
+### UTKAST-53: kontrollera ett tappat svar efter genomförd ändring
+
+**Syfte:** Återfinna faktiskt utfall utan att skicka samma lösning två gånger.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-base`, sedan `lose-applied`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallen “UTKAST-53: a lost resolution reply stays reachable after the last
+conflict disappears in Karta (proposed) at 1280px”, “UTKAST-53: a lost
+resolution reply stays reachable after the last conflict disappears in Karta
+(proposed) at 320px”, “UTKAST-53: a lost resolution reply stays reachable after
+the last conflict disappears in Karta (saved) at 1280px”, “UTKAST-53: a lost
+resolution reply stays reachable after the last conflict disappears in Karta
+(saved) at 320px”, “UTKAST-53: a lost resolution reply stays reachable after the
+last conflict disappears in Tabell (proposed) at 1280px”, “UTKAST-53: a lost
+resolution reply stays reachable after the last conflict disappears in Tabell
+(proposed) at 320px”, “UTKAST-53: a lost resolution reply stays reachable after
+the last conflict disappears in Tabell (saved) at 1280px”, “UTKAST-53: a lost
+resolution reply stays reachable after the last conflict disappears in Tabell
+(saved) at 320px”,
+“UTKAST-53: another client consuming the draft cannot turn an unknown saved
+choice into private success” och “UTKAST-53: another client consuming the
+draft cannot turn an unknown proposed choice into private success”.
+
+**Steg:**
+
+1. Välj Alex namn och beskrivning, bekräfta och läs det oklara utfallet.
+2. Stäng med Escape och öppna igen. Invänta att konfliktantalet försvinner
+   när aktuellt utkast hämtas. Stäng igen utan att kontrollera.
+3. Välj **Visa konfliktvalet** och sedan **Kontrollera om valet lades i utkastet**.
+   Kör `result`. Upprepa från `new-base` i Tabell med `lose-applied`.
+4. Upprepa även på Karta och Tabell med båda Robins sparade värden valda.
+   Kontrollera att samma kontroll återfinner borttaget privat förslag.
+5. Upprepa båda utfallen från Karta och Tabell på smal skärm.
+6. Börja om med `new-base`, `newer-private` och `lose-unsent`. Välj båda
+   sparade värdena och bekräfta. Stäng efter det oklara svaret och kör
+   `save-elsewhere`: en annan klient för Alex löser med föreslagna värden
+   och sparar hela utkastet. Öppna och kontrollera faktiskt utfall.
+7. Upprepa steg 6 med `lose-applied` och Alex föreslagna värden valda.
+
+**Förväntat resultat:**
+
+- Återöppning häver inte spärren för ny bekräftelse. Uppföljningen finns kvar
+  på Karta och Tabell även när sista konflikten försvinner, och öppnar samma
+  kontroll utan automatisk upprepning. Dialogens rubrik får fokus vid öppning.
+- Kontrollen läser utkastet och visar den genomförda privata lösningen med bock.
+  Postens namn och typ finns kvar; **Vald lösning** är en tillgänglig status.
+- Bara en privat ändring har gjorts. Alex val finns i utkastet; när båda
+  sparade värden valdes är i stället det berörda förslaget borttaget.
+  Kartan och historiken har inte ändrats och inget gemensamt sparkvitto har skapats.
+- Om en annan klient har sparat och tömt utkastet visas i stället aktuellt
+  besked i läsläge, utan privat lösningsbock eller uppmaning att upprepa
+  åtgärden. Det gemensamma sparandet framställs inte som osparat.
+  Kontrollen ändrar varken det tömda utkastet, kartan eller historiken.
+
+### UTKAST-54: kontrollera en utebliven ändring före nytt försök
+
+**Syfte:** Behålla val även när kontrollen först misslyckas.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-base`, sedan `lose-unsent`. Upprepa på smal skärm.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallen “UTKAST-54: an unsent resolution is verified before retrying with the
+retained choices at 1280px”
+och “UTKAST-54: an unsent resolution is verified before retrying with the
+retained choices at 320px”.
+
+**Steg:**
+
+1. Välj Alex namn och beskrivning, bekräfta och läs det oklara utfallet.
+2. Stäng och öppna igen. Kör `check-error` och välj **Kontrollera om valet lades
+   i utkastet**.
+3. Läs att utfallet fortfarande är oklart. Kör `network-ok` och kontrollera
+   igen.
+4. Läs att ändringen inte genomfördes. Bekräfta med de bevarade valen och kör
+   `result`.
+
+**Förväntat resultat:**
+
+- Misslyckad kontroll och återöppning ger aldrig tillstånd att upprepa åtgärden.
+- En lyckad faktisk kontroll av utebliven ändring tillåter ett nytt försök.
+- Valen finns kvar på dator och smal skärm. Ett enda genomfört försök ändrar
+  det privata utkastet; den gemensamma kartan består.
+
+### UTKAST-55: upptäck nytt underlag vid återöppning
+
+**Syfte:** Förhindra bekräftelse mot uppgifter som ändrats medan dialogen var
+stängd.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-base`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallen “UTKAST-55: reopening discovers new saved data before stale choices
+can be confirmed” och “UTKAST-55: a conflict resolved by another client becomes
+read-only after reopening”.
+
+**Steg:**
+
+1. Välj Alex namn och beskrivning. Stäng med Escape.
+2. Kör `newer-name`. Öppna konflikten igen och läs beskedet om nytt underlag.
+3. Visa aktuell jämförelse och granska kvarvarande val. Kör `result`.
+4. Börja om med `new-base`. Välj Alex två värden och stäng. Kör
+   `resolve-elsewhere`: en annan klient för Alex väljer de sparade värdena.
+   Öppna igen och kontrollera att den tidigare jämförelsen nu är i läsläge.
+
+**Förväntat resultat:**
+
+- Aktuellt underlag hämtas innan någon gammal lösning kan bekräftas.
+- Bara namnvalet behöver göras om. Beskrivningen behålls.
+- Om en annan klient redan har löst konflikten visas aktuellt besked med
+  fokus kvar på dialogens rubrik. Ingen gammal bekräftelse erbjuds.
+- Ingen öppning, stängning eller jämförelse ändrar utkastet eller den gemensamma
+  kartan.
+
+### UTKAST-56: följ väntan och oklart utfall utan fokusstöld
+
+**Syfte:** Ge ett tillgängligt besked och spärra upprepning över dialogens
+livstid.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-base`, `hold` och `lose-applied`.
+
+**Integrationstest:**
+[conflict-continuity.spec.ts](../../tests/integration/conflict-continuity.spec.ts),
+testfallet “UTKAST-56: pending and unknown conflict outcomes have one accessible
+status without stealing later focus”.
+
+**Steg:**
+
+1. Välj Alex namn och beskrivning och bekräfta. Läs väntestatusen.
+2. Försök växla konflikt, stänga med krysset och använda Escape.
+3. Kör `release`, läs det oklara utfallet och stäng med Escape.
+4. Flytta tangentbordsfokus till Tabell i kartverktygen. Kontrollera att det
+   stannar där.
+5. Öppna konflikten och kontrollera faktiskt utfall.
+
+**Förväntat resultat:**
+
+- Under väntan kan begäran inte upprepas och dialogen kan inte lämnas.
+- Vid oklart utfall går det att stänga. Ett beständigt tillgängligt statusbesked
+  finns utanför dialogen och flyttar inte fokus från senare arbete.
+- Bara en av konfliktflödets statusregioner är aktiv för uppläsning åt gången.
+  Återöppning återställer inte bekräftelse; faktisk kontroll visar den
+genomförda lösningen.

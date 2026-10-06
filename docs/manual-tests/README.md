@@ -372,7 +372,10 @@ paneler för att
   och konfliktval, kombinera egenskaper i Granska konflikter från karta
   och tabell, läsa långa namn, bevara konfigurerade egenskapsnamn och
   ange varje egenskaps verkliga sparare, förklara ogiltiga kombinationer
-  och avvisa inaktuell jämförelse
+  och avvisa inaktuell jämförelse; bevara val mellan konflikter och återöppning,
+  göra om endast berörda egenskapsval, pröva ändrade typer och referenser igen
+  och kontrollera genomförda eller uteblivna konfliktval efter tappat svar
+  med en beständig status utan fokusstöld
   samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner

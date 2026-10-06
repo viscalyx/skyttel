@@ -130,10 +130,26 @@ konfliktlistan med en bock. Granska hela utkastet och spara kartan separat.
 krysset eller Escape för att återgå till knappen som öppnar den.
 
 Om någon sparar nya uppgifter medan du väljer avvisas den gamla
-jämförelsen. Välj **Visa aktuell jämförelse**, granska uppgifterna och gör
-nya val innan du bekräftar. Ett känt avvisat försök ändrar inte utkastet.
+jämförelsen. Även återöppning kontrollerar aktuellt underlag. Välj
+**Visa aktuell jämförelse**, granska uppgifterna och gör om bara val för
+berörda egenskaper. Opåverkade val finns kvar mellan konflikter och när
+dialogen stängs och öppnas under samma sidbesök. Ändrade typer och
+referenser prövas på nytt innan du bekräftar. Ett känt avvisat försök ändrar
+inte utkastet. Har en annan klient redan löst konflikten visas ett
+aktuellt besked i läsläge utan gammal bekräftelse.
 Om svaret försvinner och resultatet är oklart får samma ändring inte
-skickas igen innan dess utfall kontrolleras. Konfliktval ger inget
+skickas igen innan dess utfall kontrolleras. Välj **Kontrollera om valet
+lades i utkastet**. Har ändringen genomförts visas lösningen med bock;
+annars kan du försöka igen med de bevarade valen. Misslyckas kontrollen
+är utfallet fortfarande oklart och ett nytt försök spärrat. Stängning och
+återöppning kringgår inte kontrollen. Under en pågående begäran är
+växling och stängning spärrade; vid oklart utfall kan du stänga utan att
+förlora det tillgängliga statusbeskedet. Om den sista konflikten försvinner
+när aktuellt underlag hämtas når du kontrollen med **Visa konfliktvalet**
+i Karta eller Tabell. Om en annan klient har sparat och tömt utkastet
+visas i stället aktuellt besked utan att det tidigare konfliktvalet
+erbjuds igen. Kontrollen av utkastet bevisar då inget eget privat resultat.
+Konfliktval ger inget
 sparkvitto; gemensamt sparande är en separat åtgärd.
 
 ## Följ upp ett oklart sparande

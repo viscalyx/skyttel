@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   type ConflictChoices,
   type ConflictProperty,
@@ -14,16 +14,18 @@ import {
 } from '../shared/conflict-properties.js';
 import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
 import type { MapState } from '../shared/map.js';
-import { MapRequestError } from './map-request.js';
+import {
+  type AppliedConflictResolution,
+  type ConflictResolution,
+  useConflictResolution,
+} from './use-conflict-resolution.js';
+
+export type { ConflictResolution } from './use-conflict-resolution.js';
+
 import { trapDialogTab } from './modal-focus.js';
 import { relationshipLabel } from './RelationshipEditor.js';
 import './conflict-dialog.css';
 
-export type ConflictResolution = {
-  conflict: DraftConflict;
-  choices: ConflictChoices;
-  basis: ReturnType<typeof conflictBasis>;
-};
 const sideNames = { saved: 'Sparat i kartan nu', proposed: 'Ditt förslag' };
 const kindNames = {
   object: 'Objekt',
@@ -40,6 +42,8 @@ export function ConflictDialog({
   onClose,
   onResolve,
   onRefresh,
+  onStatus,
+  onUnknownChange,
 }: {
   state: MapState;
   open: boolean;
@@ -48,6 +52,8 @@ export function ConflictDialog({
   onClose: () => void;
   onResolve: (resolution: ConflictResolution) => Promise<void>;
   onRefresh: () => Promise<MapState>;
+  onStatus?: (message: string) => void;
+  onUnknownChange?: (unknown: boolean) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -58,12 +64,27 @@ export function ConflictDialog({
   const [entries, setEntries] = useState(live.map((conflict) => ({ conflict, state })));
   const [selectedKey, setSelectedKey] = useState(initialKey ?? '');
   const [choices, setChoices] = useState<Record<string, ConflictChoices>>({});
-  const [resolved, setResolved] = useState<Record<string, Record<string, unknown>>>({});
-  const [pending, setPending] = useState(false);
-  const [stale, setStale] = useState(false);
-  const [unknown, setUnknown] = useState(false);
+  const [resolved, setResolved] = useState<Record<string, AppliedConflictResolution>>({});
+  const [comparisonPending, setComparisonPending] = useState(false);
+  const [staleKeys, setStaleKeys] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState('');
-  const lock = useRef(false);
+  const report = useCallback(
+    (message: string) => {
+      setStatus(message);
+      onStatus?.(message);
+    },
+    [onStatus],
+  );
+  const resolution = useConflictResolution({
+    onResolve,
+    onRefresh,
+    onStatus: report,
+    onApplied: (result) => setResolved((previous) => ({ ...previous, [result.key]: result })),
+    onStale: (key) => setStaleKeys((previous) => new Set([...previous, key])),
+  });
+  const { unknown } = resolution;
+  useEffect(() => onUnknownChange?.(unknown), [unknown, onUnknownChange]);
+  const pending = resolution.pending || comparisonPending;
   useEffect(() => {
     const next = [...entries];
     let changed = false;
@@ -79,14 +100,44 @@ export function ConflictDialog({
         )
       ) {
         // Keep the reviewed basis until the user explicitly asks for a current comparison.
-        setStale(true);
+        const entryKey = keyFor(conflict);
+        if (!staleKeys.has(entryKey)) {
+          setStaleKeys((previous) => new Set([...previous, entryKey]));
+          setResolved((previous) =>
+            Object.fromEntries(Object.entries(previous).filter(([key]) => key !== entryKey)),
+          );
+          report(
+            'Underlaget har ändrats. Visa aktuell jämförelse innan du bekräftar. Opåverkade val finns kvar.',
+          );
+        }
       } else if (next[index].state !== state) {
         next[index] = { conflict, state };
         changed = true;
       }
     }
     if (changed) setEntries(next);
-  }, [state, entries]);
+  }, [state, entries, staleKeys, report]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Read current data once per explicit opening; background renders must not start another opening request.
+  useEffect(() => {
+    if (!open) return;
+    let current = true;
+    setComparisonPending(true);
+    void onRefresh()
+      .catch(() => {
+        if (current) {
+          setStaleKeys(new Set(entries.map((entry) => keyFor(entry.conflict))));
+          report(
+            'Aktuellt underlag kunde inte hämtas. Kontrollera jämförelsen innan du bekräftar.',
+          );
+        }
+      })
+      .finally(() => {
+        if (current) setComparisonPending(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, [open]);
   useLayoutEffect(() => {
     const modal = dialog.current;
     if (open) {
@@ -109,9 +160,25 @@ export function ConflictDialog({
     return () => modal?.close();
   }, []);
   const entry = entries.find((entry) => keyFor(entry.conflict) === selectedKey) ?? entries[0];
+  const noLongerConflicted = Boolean(
+    entry && !live.some((conflict) => keyFor(conflict) === keyFor(entry.conflict)),
+  );
+  useEffect(() => {
+    if (
+      open &&
+      entry &&
+      noLongerConflicted &&
+      !pending &&
+      !unknown &&
+      !resolved[keyFor(entry.conflict)]
+    )
+      report('Konflikten finns inte längre i aktuellt underlag. Granska ditt aktuella utkast.');
+  }, [open, entry, noLongerConflicted, pending, unknown, resolved, report]);
   if (!entry) return null;
   const { conflict, state: comparison } = entry;
   const key = keyFor(conflict);
+  const stale = staleKeys.has(key);
+  const comparisonNoLongerNeeded = noLongerConflicted && !pending && !unknown && !resolved[key];
   const change = conflictChange(comparison, conflict);
   const fields = conflictProperties(comparison, conflict);
   const selected = choices[key] ?? {};
@@ -163,33 +230,74 @@ export function ConflictDialog({
       </>
     );
   }
-  async function apply() {
-    if (lock.current || !value || remaining || invalid || blocked || stale || unknown || disabled)
+  function apply() {
+    if (
+      pending ||
+      noLongerConflicted ||
+      !value ||
+      remaining ||
+      invalid ||
+      blocked ||
+      stale ||
+      unknown ||
+      disabled
+    )
       return;
-    lock.current = true;
-    setPending(true);
-    setStatus('Lägger valen i ditt utkast…');
+    caseHeading.current?.focus({ preventScroll: true });
+    void resolution.apply({
+      key,
+      resolution: { conflict, choices: selected, basis: conflictBasis(comparison, conflict) },
+      value,
+      comparison,
+      discard: fields.every(
+        (field) =>
+          sameConflictValue(field.saved, field.proposed) || selected[field.key] === 'saved',
+      ),
+    });
+  }
+  async function refreshComparison() {
+    if (pending || unknown) return;
+    caseHeading.current?.focus({ preventScroll: true });
+    setComparisonPending(true);
     try {
-      await onResolve({ conflict, choices: selected, basis: conflictBasis(comparison, conflict) });
-      setResolved((previous) => ({ ...previous, [key]: value }));
-      setStatus('Valen finns i ditt utkast. Den gemensamma kartan är inte sparad.');
-    } catch (failure) {
-      if (failure instanceof MapRequestError) {
-        setStale(failure.status === 409);
-        setStatus(
-          failure.status === 409
-            ? 'Underlaget har ändrats. Visa aktuell jämförelse innan du bekräftar. Dina val finns kvar.'
-            : 'Valen kunde inte läggas i utkastet. Dina val finns kvar. Kontrollera kombinationen och försök igen.',
-        );
-      } else {
-        setUnknown(true);
-        setStatus(
-          'Det är oklart om valen lades i utkastet. Kontrollera utfallet innan du försöker igen.',
-        );
-      }
+      const latest = await onRefresh();
+      const latestConflicts = draftConflicts(latest);
+      setChoices((previous) =>
+        Object.fromEntries(
+          entries.map((entry) => {
+            const entryKey = keyFor(entry.conflict);
+            const current = latestConflicts.find((conflict) => keyFor(conflict) === entryKey);
+            if (!current) return [entryKey, previous[entryKey] ?? {}];
+            const reviewed = conflictProperties(entry.state, entry.conflict);
+            const fresh = conflictProperties(latest, current);
+            const retained = Object.entries(previous[entryKey] ?? {}).filter(([key]) => {
+              const before = reviewed.find((field) => field.key === key);
+              const after = fresh.find((field) => field.key === key);
+              return (
+                before &&
+                after &&
+                sameConflictValue(before.saved, after.saved) &&
+                sameConflictValue(before.proposed, after.proposed)
+              );
+            });
+            return [entryKey, Object.fromEntries(retained)];
+          }),
+        ),
+      );
+      setEntries((previous) =>
+        previous.map((entry) => {
+          const current = latestConflicts.find(
+            (conflict) => keyFor(conflict) === keyFor(entry.conflict),
+          );
+          return current ? { state: latest, conflict: current } : entry;
+        }),
+      );
+      setStaleKeys(new Set());
+      report('Aktuell jämförelse visas. Opåverkade val finns kvar.');
+    } catch {
+      report('Aktuellt underlag kunde inte hämtas. Dina val finns kvar. Försök igen.');
     } finally {
-      lock.current = false;
-      setPending(false);
+      setComparisonPending(false);
     }
   }
   return (
@@ -229,12 +337,11 @@ export function ConflictDialog({
             <button
               key={keyFor(entry.conflict)}
               type="button"
-              disabled={pending}
+              disabled={pending || unknown}
               aria-current={keyFor(entry.conflict) === key ? 'true' : undefined}
               onClick={() => {
                 setSelectedKey(keyFor(entry.conflict));
                 setStatus('');
-                setStale(false);
                 requestAnimationFrame(() => caseHeading.current?.focus());
               }}
             >
@@ -260,25 +367,41 @@ export function ConflictDialog({
           <h2 ref={caseHeading} tabIndex={-1}>
             {name(conflict, comparison)}
           </h2>
-          <p>
-            Ditt förslag skiljer sig från det som är sparat i kartan nu.{' '}
-            {actor && savedAfterProposal(actor.savedAt)
-              ? `${person} sparade ändringar efter att du gjorde ditt förslag, men innan du hann spara det.`
-              : actor
-                ? `${person} sparade det aktuella underlaget.`
-                : 'Det sparade underlaget skiljer sig från ditt förslag.'}
-          </p>
+          {!comparisonNoLongerNeeded && (
+            <p>
+              Ditt förslag skiljer sig från det som är sparat i kartan nu.{' '}
+              {actor && savedAfterProposal(actor.savedAt)
+                ? `${person} sparade ändringar efter att du gjorde ditt förslag, men innan du hann spara det.`
+                : actor
+                  ? `${person} sparade det aktuella underlaget.`
+                  : 'Det sparade underlaget skiljer sig från ditt förslag.'}
+            </p>
+          )}
           {resolved[key] ? (
             <section className="cp-preview">
-              <h3>✓ Valen finns i ditt utkast</h3>
+              <h3>
+                {resolved[key].removed
+                  ? '✓ Förslaget har tagits bort ur ditt utkast'
+                  : '✓ Valen finns i ditt utkast'}
+              </h3>
               <dl className="cp-fields">
                 {fields.map((field) => (
                   <div key={field.key}>
                     <dt>{field.label}</dt>
-                    <dd>{propertyValue(field, conflictPropertyValue(resolved[key], field.key))}</dd>
+                    <dd>
+                      {propertyValue(field, conflictPropertyValue(resolved[key].value, field.key))}
+                    </dd>
                   </div>
                 ))}
               </dl>
+            </section>
+          ) : comparisonNoLongerNeeded ? (
+            <section className="cp-preview">
+              <h3>Aktuellt underlag</h3>
+              <p>
+                Granska ditt aktuella utkast innan du sparar. Den tidigare jämförelsen behöver inte
+                bekräftas igen.
+              </p>
             </section>
           ) : (
             <>
@@ -288,7 +411,7 @@ export function ConflictDialog({
                     Den här konflikten behöver rättas innan egenskapsval kan läggas i utkastet. Ditt
                     förslag ligger kvar.
                   </p>
-                  <button type="button" onClick={onClose}>
+                  <button type="button" disabled={pending} onClick={onClose}>
                     Stäng konfliktfönstret
                   </button>
                 </div>
@@ -397,32 +520,32 @@ export function ConflictDialog({
               )}
             </>
           )}
-          {stale && (
+          {stale && !noLongerConflicted && !resolved[key] && (
             <div className="cp-warning" role="alert">
               <strong>Underlaget har ändrats.</strong>
               <button
                 type="button"
-                disabled={pending}
-                onClick={async () => {
-                  const latest = await onRefresh();
-                  setEntries((previous) =>
-                    previous.map((entry) => {
-                      const current = draftConflicts(latest).find(
-                        (conflict) => keyFor(conflict) === keyFor(entry.conflict),
-                      );
-                      return current ? { state: latest, conflict: current } : entry;
-                    }),
-                  );
-                  setChoices((previous) => ({ ...previous, [key]: {} }));
-                  setStale(false);
-                }}
+                disabled={pending || unknown}
+                onClick={() => void refreshComparison()}
               >
                 Visa aktuell jämförelse
               </button>
             </div>
           )}
-          <p className="cp-status" role="status">
-            {status}
+          {unknown && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                caseHeading.current?.focus();
+                void resolution.check();
+              }}
+            >
+              Kontrollera om valet lades i utkastet
+            </button>
+          )}
+          <p className="cp-status" role="status" aria-live={open ? 'polite' : 'off'}>
+            {comparisonPending ? 'Kontrollerar aktuellt underlag…' : status}
           </p>
         </article>
       </div>
