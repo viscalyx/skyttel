@@ -276,8 +276,10 @@ test('voice survives closing text and visiting Settings with its microphone choi
 });
 
 test('an idle offline press explains the block without opening text and recovery permits a fresh consent choice', async () => {
+  const online = vi.spyOn(navigator, 'onLine', 'get');
   const home = await household();
   await home.open();
+  online.mockReturnValue(false);
   act(() => window.dispatchEvent(new Event('offline')));
   expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull();
   await userEvent.click(home.microphone());
@@ -287,6 +289,7 @@ test('an idle offline press explains the block without opening text and recovery
   );
   expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
   expect(home.starts).toEqual([]);
+  online.mockReturnValue(true);
   act(() => window.dispatchEvent(new Event('online')));
   await waitFor(() => expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull());
   await startConversationWithText();
@@ -295,10 +298,33 @@ test('an idle offline press explains the block without opening text and recovery
 });
 
 test('contact loss stops capture and sending while text remains editable and returning contact never restarts the microphone', async () => {
+  const online = vi.spyOn(navigator, 'onLine', 'get');
   const home = await household();
   await home.open();
   await home.startVoice();
   await openConversationText();
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  cleanups.push(release);
+  let checkHeld = false;
+  let checkDelivered = false;
+  home.network.after = async (url, init, response) => {
+    if (!checkHeld && url === `${home.base}/text-assistant` && init?.method === 'GET') {
+      expect(response.status).toBe(200);
+      expect(await response.clone().json()).toEqual({ available: true });
+      checkHeld = true;
+      await held;
+      checkDelivered = true;
+    }
+    return response;
+  };
+  // An admitted contact check can finish after contact is lost. Its actual
+  // successful reply must not authorize capture while the browser is offline.
+  act(() => window.dispatchEvent(new Event('online')));
+  await waitFor(() => expect(checkHeld).toBe(true));
+  online.mockReturnValue(false);
   act(() => window.dispatchEvent(new Event('offline')));
   const notice = await screen.findByRole('region', { name: 'Samtalsnotis' });
   expect(notice.textContent).toContain(
@@ -310,9 +336,16 @@ test('contact loss stops capture and sending while text remains editable and ret
   await userEvent.type(field, 'Väntande text');
   expect((field as HTMLTextAreaElement).value).toBe('Väntande text');
   expect(screen.getByRole('button', { name: 'Skicka' }).hasAttribute('disabled')).toBe(true);
+  await act(async () => {
+    release();
+    await waitFor(() => expect(checkDelivered).toBe(true));
+  });
+  expect(screen.getByRole('region', { name: 'Samtalsnotis' })).toBe(notice);
+  expect(screen.getByRole('button', { name: 'Skicka' }).hasAttribute('disabled')).toBe(true);
   await closeConversationText();
   await userEvent.click(home.microphone());
   expect(home.media.getUserMedia).toHaveBeenCalledTimes(1);
+  online.mockReturnValue(true);
   act(() => window.dispatchEvent(new Event('online')));
   await waitFor(() => expect(screen.queryByRole('region', { name: 'Samtalsnotis' })).toBeNull());
   expect(home.media.microphone.enabled).toBe(false);
