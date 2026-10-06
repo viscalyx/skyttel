@@ -4,6 +4,13 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "standardvyn",
+    "läsmodaler",
+    "skärmläsarverifiering",
+    "fullsvitkörning",
+    "manualområden",
+    "läsmodal",
+    "läsmodalerna",
     "tabelläsning",
     "läsraden",
     "modalgranskningen",
