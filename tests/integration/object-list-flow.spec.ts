@@ -105,12 +105,10 @@ async function expectUncovered(target: Locator) {
       hit: hit?.outerHTML.slice(0, 400),
     };
   });
-  await test
-    .info()
-    .attach('Focused table control geometry', {
-      body: JSON.stringify(geometry),
-      contentType: 'application/json',
-    });
+  await test.info().attach('Focused table control geometry', {
+    body: JSON.stringify(geometry),
+    contentType: 'application/json',
+  });
   await expect
     .poll(() =>
       target.evaluate((element) => {

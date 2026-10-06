@@ -5,7 +5,6 @@ import {
   openDraftReview,
   openMap,
   openNewObject,
-  openTable,
   signIn,
   utilityButton,
 } from '../support/client.js';
