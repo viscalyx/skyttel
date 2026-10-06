@@ -121,6 +121,7 @@ export function HouseholdTable({
   const lastRowFocus = useRef<{ id: string; action: string; order: string[] } | null>(null);
   const visited = useRef(false);
   const wasActive = useRef(false);
+  const returnFrame = useRef<number | undefined>(undefined);
   const found = objectSearchResults(rows, search, selectedIds);
   const types = [
     ...new Map([
@@ -195,6 +196,16 @@ export function HouseholdTable({
       }
       if (root.current) root.current.scrollTop = outerScroll.current;
       visited.current = true;
+      // A full-page return can change the surrounding toolbar after this layout.
+      // Keep the remembered scroll whenever the focused control remains usable.
+      returnFrame.current = requestAnimationFrame(() => {
+        returnFrame.current = requestAnimationFrame(() => {
+          if (!target?.isConnected || document.activeElement !== target || !usable(target)) return;
+          const box = target.getBoundingClientRect();
+          if (box.top < 0 || box.bottom > innerHeight || box.left < 0 || box.right > innerWidth)
+            target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        });
+      });
     } else if (
       active &&
       lastFocus.current &&
@@ -205,6 +216,12 @@ export function HouseholdTable({
     }
     wasActive.current = active;
   });
+  useLayoutEffect(() => {
+    if (!active && returnFrame.current !== undefined) cancelAnimationFrame(returnFrame.current);
+    return () => {
+      if (returnFrame.current !== undefined) cancelAnimationFrame(returnFrame.current);
+    };
+  }, [active]);
   useLayoutEffect(() => {
     const dialog = filterDialog.current;
     if (filtersOpen && dialog && !dialog.open) {
