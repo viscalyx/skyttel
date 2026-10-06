@@ -299,7 +299,7 @@ export function ConflictDialog({
       disabled
     )
       return;
-    caseHeading.current?.focus({ preventScroll: true });
+    caseHeading.current?.focus();
     if (restoration) {
       const discarded = selected.definition === 'saved';
       if (!change?.after || (!discarded && !removedDefinition)) return;
