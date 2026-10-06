@@ -198,13 +198,15 @@ export function HouseholdTable({
       visited.current = true;
       // A full-page return can change the surrounding toolbar after this layout.
       // Keep the remembered scroll whenever the focused control remains usable.
+      const revealFocusedControl = () => {
+        if (!target?.isConnected || document.activeElement !== target || !usable(target)) return;
+        const box = target.getBoundingClientRect();
+        if (box.top < 0 || box.bottom > innerHeight || box.left < 0 || box.right > innerWidth)
+          target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      };
+      revealFocusedControl();
       returnFrame.current = requestAnimationFrame(() => {
-        returnFrame.current = requestAnimationFrame(() => {
-          if (!target?.isConnected || document.activeElement !== target || !usable(target)) return;
-          const box = target.getBoundingClientRect();
-          if (box.top < 0 || box.bottom > innerHeight || box.left < 0 || box.right > innerWidth)
-            target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-        });
+        returnFrame.current = requestAnimationFrame(revealFocusedControl);
       });
     } else if (
       active &&

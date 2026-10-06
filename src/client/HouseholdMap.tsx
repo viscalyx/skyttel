@@ -1288,7 +1288,15 @@ export function HouseholdMap({
             account={account}
             profileRequested={profileRequested}
             onReturnWork={() => restoreOutsideFocus(lastOutsideFocus.current)}
-            onSettings={onSettings ? () => requestLeave(() => onSettings()) : undefined}
+            onSettings={
+              onSettings
+                ? () =>
+                    requestLeave(() => {
+                      setToolsExpanded(false);
+                      onSettings();
+                    })
+                : undefined
+            }
             theme={<WorkspaceTheme mode={theme.mode} onChange={theme.changeMode} />}
             onDetails={() => {
               if (selectedObject) edit(selectedObject, false);
