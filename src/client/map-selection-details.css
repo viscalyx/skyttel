@@ -51,16 +51,16 @@
    its summary stay together while full details scroll independently. */
 @media (max-width: 700px) and (max-height: 600px) {
   .household-map.workspace-shell.map-details-open .map-space {
-    top: 100px;
+    top: calc(var(--work-offset, 0px) + var(--tools-bottom, 88px) + 12px);
     right: calc(60% + 6px);
     bottom: 12px;
   }
   .household-map.workspace-shell .map-selection-details {
-    top: 100px;
+    top: calc(var(--work-offset, 0px) + var(--tools-bottom, 88px) + 12px);
     left: 40%;
     right: 12px;
     width: auto;
-    max-height: calc(100dvh - 112px);
+    max-height: calc(100dvh - var(--tools-bottom, 88px) - 24px);
     padding: 6px;
   }
   .map-selection-details :is(h2, .map-selection-summary) {

@@ -3,6 +3,7 @@ import { type RefObject, useLayoutEffect, useState } from 'react';
 export type WindowPosition = { x: number; y: number };
 type Size = { width: number; height: number };
 type Rectangle = WindowPosition & Size;
+const reservedSurfaces = '.text-view, .voice-box, .map-selection-details';
 export type FloatingArea = { viewport: Rectangle; obstacles: Rectangle[] };
 
 function viewport(): Rectangle {
@@ -18,15 +19,15 @@ export function measureFloatingArea(element: HTMLElement): FloatingArea {
   const workspace = element.closest('.household-map') ?? element;
   return {
     viewport: viewport(),
-    obstacles: [...workspace.querySelectorAll<HTMLElement>('.text-view, .voice-box')]
+    obstacles: [...workspace.querySelectorAll<HTMLElement>(reservedSurfaces)]
       .map((surface) => surface.getBoundingClientRect())
       .filter((box) => box.width > 0 && box.height > 0)
       .map(({ x, y, width, height }) => ({ x, y, width, height })),
   };
 }
 
-/** Only visible conversation surfaces reserve space. Map controls and other
- * windows are deliberately absent from this geometry. */
+/** Visible conversation and fixed reading surfaces reserve space. Map controls
+ * and movable windows are deliberately absent from this geometry. */
 export function useFloatingArea(workspace: RefObject<HTMLElement | null>): FloatingArea {
   const [area, setArea] = useState<FloatingArea>(() => ({ viewport: viewport(), obstacles: [] }));
   useLayoutEffect(() => {
@@ -34,7 +35,7 @@ export function useFloatingArea(workspace: RefObject<HTMLElement | null>): Float
     if (!root) return;
     const observed = new Set<Element>();
     const measure = () => {
-      const elements = [...root.querySelectorAll<HTMLElement>('.text-view, .voice-box')];
+      const elements = [...root.querySelectorAll<HTMLElement>(reservedSurfaces)];
       for (const element of observed) {
         if (!elements.includes(element as HTMLElement)) {
           resize.unobserve(element);
@@ -99,9 +100,9 @@ function forbidden(size: Size, obstacles: Rectangle[]) {
   }));
 }
 
-/** Find the nearest complete placement when a conversation appears or grows.
- * Testing obstacle edges together also handles the voice box and text view
- * when both are visible. */
+/** Find the nearest complete placement when a reserved surface appears or grows.
+ * Testing obstacle edges together handles simultaneously visible conversation
+ * and fixed reading surfaces. */
 export function fitWindow(
   position: WindowPosition,
   size: Size,

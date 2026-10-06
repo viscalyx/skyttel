@@ -21,6 +21,26 @@ import {
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './map-navigation.css';
 
+function navigationArea(element: HTMLElement): FloatingArea {
+  const area = measureFloatingArea(element);
+  const style = getComputedStyle(element);
+  // Narrow layouts keep movement inside the usable region beside/below the toolbar.
+  const left = Number.parseFloat(style.getPropertyValue('--navigation-left-limit')) || 0;
+  const toolbar = Number.parseFloat(style.getPropertyValue('--navigation-toolbar-bottom')) || 0;
+  const insetX = Math.max(0, left - area.viewport.x);
+  const insetY = toolbar ? Math.max(0, toolbar + 12) : 0;
+  return {
+    ...area,
+    viewport: {
+      ...area.viewport,
+      x: area.viewport.x + insetX,
+      y: area.viewport.y + insetY,
+      width: area.viewport.width - insetX,
+      height: area.viewport.height - insetY,
+    },
+  };
+}
+
 const cameraButtons = [
   ['left', 'Panorera vänster', 'panLeft'],
   ['right', 'Panorera höger', 'panRight'],
@@ -200,7 +220,7 @@ export function MapNavigation({
       const dimensions = { width: element.offsetWidth, height: element.offsetHeight };
       // Layout effects run before observer notifications. Read this commit's
       // surfaces so switching views cannot relocate against a hidden text view.
-      const currentArea = measureFloatingArea(element);
+      const currentArea = navigationArea(element);
       const next = fitWindow(proposed, dimensions, currentArea);
       const viewportOnly = clampWindow(proposed, dimensions, currentArea.viewport);
       if (next.x !== viewportOnly.x || next.y !== viewportOnly.y) preferredPosition.current = next;
@@ -242,7 +262,7 @@ export function MapNavigation({
   }, [cancelDrag]);
   function clamp(value: WindowPosition) {
     if (area && panel.current && getComputedStyle(panel.current).position === 'fixed') {
-      return clampWindow(value, size, measureFloatingArea(panel.current).viewport);
+      return clampWindow(value, size, navigationArea(panel.current).viewport);
     }
     return {
       x: Math.round(Math.max(12, Math.min(value.x, size.viewportWidth - size.width - 12))),
@@ -257,7 +277,7 @@ export function MapNavigation({
             { x: box.x, y: box.y },
             value,
             size,
-            measureFloatingArea(panel.current as HTMLElement),
+            navigationArea(panel.current as HTMLElement),
           )
         : clamp(value);
     preferredPosition.current = next;
