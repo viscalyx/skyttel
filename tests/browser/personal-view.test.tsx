@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
-import { closePanels } from '../support/workspace-browser.js';
 import '../../src/client/styles.css';
 import { defaultViewSettings, type PersonalView } from '../../src/shared/personal-view.js';
 
@@ -114,11 +113,10 @@ function PersonalMap() {
     </>
   );
 }
-async function open() {
+async function open(selectObject = true) {
   render(<PersonalMap />);
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: 'Uppgifter för Lampan', exact: true }).click();
-  await closePanels();
+  if (selectObject)
+    await page.getByRole('button', { name: 'Välj objekt: Lampan', exact: true }).click();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   await page.getByText('Ordna min vy', { exact: true }).click();
 }
@@ -218,7 +216,7 @@ test.each(['network', 'uncertain', 'denied'] as const)(
 test('an initial read outage is recoverable and a revoked refresh clears personal content', async () => {
   const server = service();
   server.initialFailure(true);
-  await open();
+  await open(false);
   await expect.element(page.getByText(/Din vy kunde inte sparas/)).toBeVisible();
   await page.getByRole('button', { name: 'Läs in min aktuella vy', exact: true }).click();
   server.initialFailure(false);
