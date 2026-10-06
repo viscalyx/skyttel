@@ -11,7 +11,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { readTableObject } from '../support/domain-work.js';
+import { editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 for (const { width, height } of [
@@ -58,18 +58,14 @@ for (const { width, height } of [
         await openTable(page);
       };
       const save = async (): Promise<SaveReceipt> => {
-        await openTable(page);
         const response = page.waitForResponse(
           (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
         );
-        await page
-          .getByRole('region', { name: 'Hela mitt utkast' })
-          .getByRole('button', { name: 'Spara hela utkastet', exact: true })
-          .click();
+        await saveReviewedConflictDraft(page);
         const result = await response;
         expect(result.status()).toBe(200);
         const { receipt } = await result.json();
-        await expect(page.getByText(/sparat/i).first()).toBeVisible();
+        await closeTextView(page);
         return receipt;
       };
       await settings();
@@ -116,10 +112,7 @@ for (const { width, height } of [
       }
       await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
       await returnToWork();
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openNewObject(page);
       const form = page.getByRole('dialog', { name: /^(Nytt objekt|Redigera Husets lån)$/ });
       await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: 'Husavtal' });
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
@@ -170,22 +163,17 @@ for (const { width, height } of [
       await page.getByRole('button', { name: 'Dölj Skuld, behåll värden', exact: true }).click();
       await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
       await returnToWork();
-      await page
-        .getByRole('list', { name: 'Objekt', exact: true })
-        .getByRole('button', { name: 'Uppgifter för Husets lån', exact: true })
-        .click();
-      const details = page.getByRole('region', { name: 'Husets lån', exact: true });
-      await expect(
-        details.getByRole('region', { name: 'Uppgifter utanför typens avsnitt' }),
-      ).toContainText(
-        'Senast uppgiven skuld: 12 300 (Osäkert uppgivet) — datum för uppgiften: 2026-09-01',
+      const details = await readTableObject(page, 'Husets lån');
+      const debtRead = details
+        .locator('dt')
+        .filter({ hasText: /^Skuld$/ })
+        .locator('..');
+      await expect(debtRead).toContainText(
+        '12 300 (Osäkert uppgivet) · datum för uppgiften: 2026-09-01',
       );
+      await closeSupportDialog(page, 'Uppgifter för Husets lån');
       await save();
-      await page
-        .getByRole('list', { name: 'Objekt', exact: true })
-        .getByRole('button', { name: 'Uppgifter för Husets lån', exact: true })
-        .click();
-      await details.getByRole('button', { name: 'Redigera valt objekt' }).click();
+      await editTableObject(page, 'Husets lån');
       await form.getByLabel('Objekttyp', { exact: true }).selectOption('other');
       await page
         .getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true })

@@ -249,7 +249,8 @@ definitions, editing and durable save at 390px”.
 3. Skapa ett samband från Cykeln till Garaget med Förvaring. Ange
    Låst skåp, 0, 2026-09-27 och Nej. Lämna Obesvarat utan svar.
 4. Lägg sambandet i utkastet med tangentbordet, välj **Stäng samband**,
-   läs värdena och spara hela utkastet.
+   öppna **Utkastet → Visa förslaget: Cykeln → förvaras i → Garaget**
+   och läs värdena. Stäng läsningen och spara med sparikonen.
    Starta om testinstallationen och ladda om sidan.
 5. Öppna **Samband för Cykeln** i Tabell och välj **Redigera samband**.
    Kontrollera samtliga svar. Ändra Anteckning till Övre hyllan, lägg
@@ -287,7 +288,8 @@ about earlier custom answers”.
 3. Välj **Ta bort fältvärdena och byt typ**. Kontrollera att den nya
    typens Anteckning är tom. Skriv Ny betydelse och lägg sambandet i
    utkastet med tangentbordet. Välj **Stäng samband**.
-4. Läs tidigare värde och förslag. Spara hela utkastet och läs historiken.
+4. Öppna Utkastet och Visa förslaget för sambandet. Läs tidigare värde
+   och förslag, stäng läsningen och spara med sparikonen. Läs historiken.
 
 **Förväntat resultat:**
 
@@ -307,8 +309,14 @@ Ett nytt provhushåll används för varje skärmbredd.
 
 **Integrationstest:**
 [relationship-sections.spec.ts](../../tests/integration/relationship-sections.spec.ts),
-testfallen “STY-08: relationship sections preserve hidden answers and private
-presentation after restart at 1440px”, samma titel med “390px” och “320px”.
+testfallen:
+
+- “STY-08: relationship sections preserve hidden answers and private
+  presentation after restart at 1440px”.
+- “STY-08: relationship sections preserve hidden answers and private
+  presentation after restart at 390px”.
+- “STY-08: relationship sections preserve hidden answers and private
+  presentation after restart at 320px”.
 
 **Steg:**
 
@@ -326,7 +334,7 @@ presentation after restart at 1440px”, samma titel med “390px” och “320p
    till Service. Lägg förslaget i utkastet och spara hela utkastet.
 6. Starta om testinstallationen och ladda om sidan. Öppna sambandet för
    redigering. Effekt ska vara dolt, Batteri ska vara Nej och Reserv
-   obesvarat. Stäng formuläret utan att skicka.
+   obesvarat. Välj **Avbryt redigeringen** och stäng sambandsdialogen med krysset.
 7. Ändra definitionen igen och visa Effekt i Service. Lägg den i utkastet
    och öppna sambandet. Kontrollera att Effekt är 0 och alla andra svar
    består redan innan definitionen sparas.

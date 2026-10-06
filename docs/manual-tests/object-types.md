@@ -18,11 +18,15 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Välj **Tabell** och använd radens **Redigera [objektets namn]** för att
+öppna hela objektformuläret. För samband väljer du **Samband för [namn]**
+och **Redigera samband** vid det aktuella sambandet. Nytt objekt öppnas
+från kartans verktyg. Att bara markera en rad öppnar inte ett formulär.
+
+Granska ett beständigt förslag genom **Skriv till Skyttel → Visa utkastet**
+och radens **Visa förslaget: [namn]**. Stäng fullständig läsning med krysset.
+Spara separat med utkastets sparikon och vänta på **Utkastet är sparat**.
+Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
 
 1. Starta appen enligt
    [provförberedelsen](../development/devcontainer.md#disposable-local-database).
@@ -339,14 +343,16 @@ Följande testfall:
    utkastet. Felsammanfattningen ska få fokus. Följ beloppets länk; avsnittet
    öppnas och det tomma beloppet får fokus. Välj därefter
    **Ej uppgivet** för kreditutrymmet och lägg objektet i utkastet.
-5. Öppna Lista och spara hela utkastet. Starta om installationen och ladda
+5. Öppna Utkastet via Skriv till Skyttel och spara med sparikonen.
+   Starta om installationen och ladda
    om. Dölj Skuld i typdefinitionen och lägg förslaget i utkastet. Öppna
-   Husets lån och läs skulden under Uppgifter utanför typens avsnitt.
-   Öppna Lista och spara ändringen.
+   Tabell, fäll ut Husets lån och välj Läs alla uppgifter för Husets lån.
+   Läs den dolda skulden med säkerhet och datum.
+   Stäng läsningen, öppna Utkastet och spara med sparikonen.
 6. Redigera Husets lån och välj Annan typ. Kontrollera beskrivning och
    ekonomiska uppgifter. Granska det tidigare egna värdet och bekräfta
-   **Jag har hanterat tidigare fältvärden för typbytet**. Lägg i utkastet
-   och spara genom Lista.
+   **Ta bort fältvärdena och byt typ** i förlustdialogen. Lägg i utkastet
+   och spara separat med utkastets sparikon.
 7. Välj **Rapporter** och **Visa ändringarna** för typbytet. Granska
    tidigare Anteckning och skuldens säkerhet och datum. Starta om och
    kontrollera att Husets lån behåller den sparade nya typen.
@@ -419,8 +425,14 @@ Använd dator och smala fönster motsvarande 390 och 320 CSS-pixlar.
 
 **Integrationstest:**
 [object-sections.spec.ts](../../tests/integration/object-sections.spec.ts),
-testfallen “TYP-09: ordinary members retain prefilled section work and
-keyboard controls at 1280px”, samma titel med “390px” respektive “320px”.
+testfallen:
+
+- “TYP-09: ordinary members retain prefilled section work and keyboard
+  controls at 1280px”.
+- “TYP-09: ordinary members retain prefilled section work and keyboard
+  controls at 390px”.
+- “TYP-09: ordinary members retain prefilled section work and keyboard
+  controls at 320px”.
 
 **Steg:**
 

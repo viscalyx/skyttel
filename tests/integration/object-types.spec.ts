@@ -1,7 +1,17 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openSettings,
+  openTable,
+  signIn,
+} from '../support/client.js';
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('TYP-01: custom definitions and four optional fields share one durable save and history', async ({
@@ -73,7 +83,8 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await signIn(page.request, installation.origin);
     await createHousehold(page.request, installation.origin);
     await page.goto(installation.origin);
-    await openWorkspace(page);
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
     await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
     await page.getByLabel('Typens namn').fill('Solcellsanläggning');
     await page.getByLabel('Typens beskrivning').fill('Hushållets elproduktion');
@@ -90,10 +101,8 @@ test('TYP-02: forms create, review and correct optional custom fields without co
       await last.getByLabel('Värdeslag').selectOption(kind);
     }
     await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Paneler på taket');
     await page
       .getByLabel('Objekttyp', { exact: true })
@@ -101,13 +110,21 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Batteri: Obesvarat');
-    await expect(review).toContainText('Objekttyp: Solcellsanläggning');
+    const review = await readDraftProposal(page, 'Paneler på taket');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Batteri(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Ej uppgivet');
+    await expect(review.locator('dt').filter({ hasText: /^Typ$/ }).locator('..')).toContainText(
+      'Solcellsanläggning',
+    );
+    await closeSupportDialog(page, 'Paneler på taket');
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Paneler på taket');
     await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('');
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('');
@@ -116,15 +133,12 @@ test('TYP-02: forms create, review and correct optional custom fields without co
       .getByRole('dialog', { name: 'Redigera Paneler på taket', exact: true })
       .getByRole('button', { name: 'Avbryt', exact: true })
       .click();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat');
+    await openTable(page);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Paneler på taket');
     await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('');
     await page.getByLabel('Leverantör', { exact: true }).fill('Exempelsol');
@@ -132,16 +146,27 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await page.getByLabel('Installationsdatum', { exact: true }).fill('2026-09-01');
     await page.getByLabel('Batteri', { exact: true }).selectOption('false');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await expect(review).toContainText('Batteri: Nej');
-    await expect(review).toContainText('Effekt: 12.5');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await readDraftProposal(page, 'Paneler på taket');
     await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat');
+      review
+        .locator('dt')
+        .filter({ hasText: /^Batteri(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Nej');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Effekt(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('12.5');
+    await closeSupportDialog(page, 'Paneler på taket');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Paneler på taket');
     await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('false');
     await page.getByLabel('Leverantör', { exact: true }).fill('Ny leverantör');
@@ -150,15 +175,20 @@ test('TYP-02: forms create, review and correct optional custom fields without co
     await page.getByLabel('Installationsdatum', { exact: true }).fill('2026-09-02');
     await page.getByLabel('Batteri', { exact: true }).selectOption('true');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await expect(review).toContainText('Batteri: Ja');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await readDraftProposal(page, 'Paneler på taket');
     await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat');
+      review
+        .locator('dt')
+        .filter({ hasText: /^Batteri(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Ja');
+    await closeSupportDialog(page, 'Paneler på taket');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Paneler på taket', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Paneler på taket');
     await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Ny leverantör');
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('-14.25');
@@ -446,13 +476,10 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
     expect((await read()).objects).toEqual([]);
     expect((await read()).draft).toEqual(before.draft);
     await page.goto(installation.origin);
-    await openWorkspace(page);
+    await openTable(page);
     await applyProposedConflictChanges(page, 'Annans rättelse');
-    await expect(page.getByRole('button', { name: 'Spara hela utkastet' })).toBeEnabled();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     const after = await read();
     expect(after.types.find((item: { id: string }) => item.id === type.id)).toMatchObject({
@@ -463,9 +490,8 @@ test('TYP-04: concurrent definition changes reject the whole draft until an expl
     });
     expect(after.objects).toHaveLength(1);
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Alex', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Alex');
     await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
     await expect(page.getByLabel('Smeknamn', { exact: true })).toHaveValue('');
     const { history } = await (await page.request.get(`${path}/history`)).json();
@@ -593,10 +619,12 @@ test('TYP-05: invalid values and newly used field kinds preserve the entire draf
       ).status(),
     ).toBe(200);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('alert')).toContainText('Skapa ett nytt fält');
-    await expect(page.getByRole('alert')).not.toContainText('Hemligt');
+    await openTable(page);
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    const rejected = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+    await expect(rejected).toContainText('Skapa ett nytt fält');
+    await expect(rejected).not.toContainText('Hemligt');
     expect((await read()).objects).toEqual([]);
     expect((await read()).draft).toEqual(unchanged.draft);
     const { history } = await (await page.request.get(`${path}/history`)).json();

@@ -2,7 +2,15 @@ import { type APIRequestContext, expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import { draftConflicts } from '../../src/shared/draft-conflicts.js';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject, readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 async function setup(client: APIRequestContext, origin: string) {
@@ -94,9 +102,8 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     const { read, post, save } = await setup(page.request, installation.origin);
     const initial = await read();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await openTable(page);
+    await editTableObject(page, 'Alex blå cykel');
     await page.getByLabel('Objekttyp', { exact: true }).selectOption('vehicle');
     const previous = page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true });
     await expect(previous).toContainText('Nummer: SYNTH-42');
@@ -110,20 +117,56 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     await expect(form.getByLabel('Försäkrad', { exact: true })).toHaveValue('');
     await form.getByLabel('Nummer', { exact: true }).fill('42');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Objekttyp: Cykel');
-    await expect(review).toContainText('Objekttyp: Motorfordon');
-    await expect(review).toContainText('Nummer: SYNTH-42');
-    await expect(review).toContainText('Nummer: 42');
-    await expect(review).toContainText('Försäkrad: Obesvarat');
+    const review = await readDraftProposal(page, 'Alex blå cykel');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Typ(?: · ändrat)?$/ })
+        .first()
+        .locator('..'),
+    ).toContainText('Cykel');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Typ(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Motorfordon');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+        .first()
+        .locator('..'),
+    ).toContainText('SYNTH-42');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('42');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Försäkrad(?: · ändrat)?$/ })
+        .last()
+        .locator('..'),
+    ).toContainText('Ej uppgivet');
+    await closeSupportDialog(page, 'Alex blå cykel');
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await expect(review).toContainText('Nummer: SYNTH-42');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await readDraftProposal(page, 'Alex blå cykel');
+    await expect(
+      review
+        .locator('dt')
+        .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+        .first()
+        .locator('..'),
+    ).toContainText('SYNTH-42');
+    await closeSupportDialog(page, 'Alex blå cykel');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     const changed = await read();
     expect(changed.objects.find((item) => item.id === 'bike')).toMatchObject({
       typeId: 'vehicle',
@@ -151,7 +194,7 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
     await save('rename-source');
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     await page.getByRole('button', { name: 'Rapporter' }).click();
     const selected = page
       .getByRole('region', { name: 'Ändringshistorik' })
@@ -250,12 +293,8 @@ for (const width of [1280, 390, 320]) {
         });
         await page.goto(installation.origin);
         await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', theme);
-        await openWorkspace(page);
-        await page
-          .getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true })
-          .click();
-        const panel = page.getByRole('region', { name: 'Alex blå cykel', exact: true });
-        await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+        await openTable(page);
+        await editTableObject(page, 'Alex blå cykel');
         const form = page.getByRole('dialog', { name: 'Redigera Alex blå cykel', exact: true });
         await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
         const image = await sharp({
@@ -273,16 +312,11 @@ for (const width of [1280, 390, 320]) {
         const imageId = (await read()).draft.changes.find((change) => change.id === 'bike')?.after
           ?.profileImageId;
         expect(imageId).toBeTruthy();
-        await openWorkspace(page);
-        await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-        await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-          'Sparat',
-        );
+        await openTable(page);
+        await saveReviewedConflictDraft(page);
+        await closeTextView(page);
         const initial = await read();
-        await page
-          .getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true })
-          .click();
-        await panel.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+        await editTableObject(page, 'Alex blå cykel');
         const stage = form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true });
         for (const [index, type] of ['vehicle', 'cycle', 'vehicle'].entries()) {
           await form.getByLabel('Objekttyp', { exact: true }).selectOption(type);
@@ -348,19 +382,23 @@ for (const width of [1280, 390, 320]) {
         expect(staged.draft.changes[0].after?.financialFacts).toEqual(common.financialFacts);
         await installation.restart();
         await page.reload();
-        await openWorkspace(page);
-        await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-          'Nummer: B-final',
-        );
+        await openTable(page);
+        const restoredProposal = await readDraftProposal(page, 'Alex blå cykel');
+        await expect(
+          restoredProposal
+            .locator('dt')
+            .filter({ hasText: /^Nummer(?: · ändrat)?$/ })
+            .last()
+            .locator('..'),
+        ).toContainText('B-final');
+        await closeSupportDialog(page, 'Alex blå cykel');
         expect((await read()).draft).toEqual(staged.draft);
-        await openWorkspace(page);
-        await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-        await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-          'Sparat',
-        );
+        await openTable(page);
+        await saveReviewedConflictDraft(page);
+        await closeTextView(page);
         await installation.restart();
         await page.reload();
-        await openWorkspace(page);
+        await openTable(page);
         const saved = await read();
         expect(saved.objects.find((object) => object.id === 'bike')).toMatchObject({
           ...common,
@@ -372,11 +410,19 @@ for (const width of [1280, 390, 320]) {
           common.financialFacts,
         );
         expect(saved.relationships).toEqual(initial.relationships);
-        await page
-          .getByRole('button', { name: 'Uppgifter för Alex blå cykel', exact: true })
-          .click();
-        await expect(panel).toContainText('Nummer: B-final');
-        await expect(panel).toContainText('Senast uppgiven skuld: 125 000,50 (Osäkert uppgivet)');
+        const panel = await readTableObject(page, 'Alex blå cykel');
+        await expect(
+          panel
+            .locator('dt')
+            .filter({ hasText: /^Nummer$/ })
+            .locator('..'),
+        ).toContainText('B-final');
+        await expect(
+          panel
+            .locator('dt')
+            .filter({ hasText: /^Senast uppgiven skuld$/ })
+            .locator('..'),
+        ).toContainText('125 000,50 (Osäkert uppgivet)');
         await expect(panel.getByAltText('Profilbild för Alex blå cykel')).toHaveAttribute(
           'src',
           new RegExp(`/profile-images/${imageId}$`),

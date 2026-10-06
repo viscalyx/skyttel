@@ -18,11 +18,15 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Välj **Tabell** och använd radens **Redigera [objektets namn]** för att
+öppna hela objektformuläret. För samband väljer du **Samband för [namn]**
+och **Redigera samband** vid det aktuella sambandet. Nytt objekt öppnas
+från kartans verktyg. Att bara markera en rad öppnar inte ett formulär.
+
+Granska ett beständigt förslag genom **Skriv till Skyttel → Visa utkastet**
+och radens **Visa förslaget: [namn]**. Stäng fullständig läsning med krysset.
+Spara separat med utkastets sparikon och vänta på **Utkastet är sparat**.
+Stäng textvyn före nästa steg i Tabell, Karta eller Inställningar.
 
 1. Använd en isolerad installation med påhittade uppgifter. Skapa objektet
    Lo Exempel med en beskrivning och ett privat förslag. Förbered påhittade

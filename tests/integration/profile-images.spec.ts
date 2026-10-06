@@ -1,7 +1,15 @@
 import { expect, type Page, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openMap,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 async function expectSpatialPortrait(page: Page, imageId: string | null | undefined) {
@@ -53,9 +61,7 @@ test('BILD-01: profile image proposals preserve text, survive restart and expose
       },
     });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await page
       .getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true })
       .getByRole('button', { name: 'Livscykel och utseende', exact: true })
@@ -78,23 +84,17 @@ test('BILD-01: profile image proposals preserve text, survive restart and expose
     expect((await read()).objects).toEqual([]);
     await openMap(page);
     await expectSpatialPortrait(page, first);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await details.getByLabel('Beskrivning', { exact: true }).fill('Oskickad text');
     await details.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await expect(details.getByLabel('Profilbild', { exact: true })).toBeEnabled();
     expect((await read()).draft.changes[0].after?.description).toBe('Bevara beskrivningen');
     await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await page
       .getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true })
       .getByRole('button', { name: 'Livscykel och utseende', exact: true })
@@ -103,9 +103,7 @@ test('BILD-01: profile image proposals preserve text, survive restart and expose
     await details.getByRole('button', { name: 'Avbryt', exact: true }).click();
     await openMap(page);
     await expectSpatialPortrait(page, first);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await details.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await details.getByLabel('Profilbild', { exact: true }).setInputFiles({
       name: 'ny.webp',
@@ -117,10 +115,8 @@ test('BILD-01: profile image proposals preserve text, survive restart and expose
       .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
       .click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
     const history = page.getByRole('region', { name: 'Ändringshistorik' });
     await history
@@ -159,9 +155,7 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
       },
     });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await page
       .getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true })
       .getByRole('button', { name: 'Livscykel och utseende', exact: true })
@@ -181,7 +175,7 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
       .click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
     const before = await read();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await details.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await details.getByLabel('Profilbild', { exact: true }).setInputFiles({
       name: 'fel.png',
@@ -199,12 +193,9 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
     await details.getByRole('button', { name: 'Avbryt', exact: true }).click();
     await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
     expect(await read()).toEqual(before);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await editTableObject(page, 'Lo Exempel');
     await page
       .getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true })
       .getByRole('button', { name: 'Livscykel och utseende', exact: true })
@@ -224,15 +215,22 @@ test('BILD-02: invalid images retain proposals and interrupted removal recovers 
       },
       { times: 1 },
     );
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Spara hela utkastet' }).click();
+    await expect(page.getByRole('dialog', { name: 'Spara utkastet' })).toContainText(
+      'Sparandet kunde inte bekräftas.',
+    );
     await page
       .getByRole('dialog', { name: 'Spara utkastet', exact: true })
       .getByRole('button', { name: 'Kontrollera sparandet igen', exact: true })
       .click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
+    await expect(
+      page.getByRole('dialog', { name: 'Spara utkastet', exact: true }),
+    ).not.toBeVisible();
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+      'Utkastet är sparat',
     );
+    await closeTextView(page);
     expect((await read()).objects[0].profileImageId).toBeUndefined();
     const history = (await (await page.request.get(`${path}/history`)).json()).history;
     expect(history).toHaveLength(2);
@@ -290,9 +288,7 @@ test('BILD-03: private, historical and known image addresses enforce current hou
       data: { code },
     });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await page
       .getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true })
       .getByRole('button', { name: 'Livscykel och utseende', exact: true })
@@ -312,13 +308,10 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     const first = (await read()).draft.changes[0].after?.profileImageId;
     expect((await second.request.get(`${images}/${first}`)).status()).toBe(404);
     expect((await anonymous.request.get(`${images}/${first}`)).status()).toBe(401);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     expect((await second.request.get(`${images}/${first}`)).status()).toBe(200);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await page
       .getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true })
       .getByRole('button', { name: 'Livscykel och utseende', exact: true })
@@ -336,10 +329,8 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     const replacementId = (await read()).draft.changes[0].after?.profileImageId;
     expect(replacementId).not.toBe(first);
     expect((await second.request.get(`${images}/${replacementId}`)).status()).toBe(404);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     const replaced = await read();
     expect(replaced.objects[0].profileImageId).toBe(replacementId);
     expect(replaced.draft.changes).toEqual([]);
@@ -351,8 +342,7 @@ test('BILD-03: private, historical and known image addresses enforce current hou
     // The old image is retained only through history; the replacement is current.
     for (const id of [first, replacementId])
       expect((await second.request.get(`${images}/${id}`)).status()).toBe(200);
-    await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo Exempel');
     await page
       .getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true })
       .getByRole('button', { name: 'Livscykel och utseende', exact: true })

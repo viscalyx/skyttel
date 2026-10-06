@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  signIn,
+} from '../support/client.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 for (const typeName of [
@@ -50,11 +57,7 @@ for (const typeName of [
         ).toBe(200);
       }
       await page.goto(installation.origin);
-      await openWorkspace(page);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openNewObject(page);
       const name = `Bild för ${typeName}`;
       const newForm = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
       const form = page.locator('dialog.object-dialog');
@@ -91,24 +94,23 @@ for (const typeName of [
       });
       expect(first.type.name).toBe(typeName);
       const edit = async () => {
-        await openWorkspace(page);
-        await page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }).click();
-        await page
-          .getByRole('region', { name, exact: true })
-          .getByRole('button', { name: 'Redigera valt objekt', exact: true })
-          .click();
+        await editTableObject(page, name);
       };
       const save = async (): Promise<SaveReceipt> => {
-        await openWorkspace(page);
+        const draft = await openDraftReview(page);
         const response = page.waitForResponse(
           (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
         );
-        await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+        await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
         const saved = await response;
         expect(saved.status()).toBe(200);
         await expect(
-          page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-        ).toContainText('Sparat:');
+          page.getByRole('dialog', { name: 'Spara utkastet', exact: true }),
+        ).not.toBeVisible();
+        await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+          'Utkastet är sparat',
+        );
+        await closeTextView(page);
         return (await saved.json()).receipt;
       };
       const initialReceipt = await save();

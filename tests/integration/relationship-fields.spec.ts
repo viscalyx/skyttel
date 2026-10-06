@@ -1,5 +1,17 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openSettings,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import {
+  editObjectRelationship,
+  openObjectRelationships,
+  readDraftProposal,
+} from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
@@ -33,7 +45,10 @@ for (const width of [1440, 390])
           ).status(),
         ).toBe(200);
       await page.goto(installation.origin);
-      await openWorkspace(page);
+      await openSettings(page);
+      const nav = page.getByRole('navigation', { name: 'Inställningarnas sidor' });
+      if (width <= 800) await nav.getByText('Välj inställning', { exact: true }).click();
+      await nav.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
       await page.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
       await page.getByLabel('Sambandstypens namn').fill('Förvaring');
       await page.getByLabel('Sambandstypens beskrivning').fill('Var saker finns');
@@ -48,7 +63,9 @@ for (const width of [1440, 390])
         await field.getByLabel('Värdeslag').selectOption(kind);
       }
       await page.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
-      await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+      await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+      const relationships = await openObjectRelationships(page, 'Cykeln');
+      await relationships.getByRole('button', { name: 'Nytt samband', exact: true }).click();
       await page.getByLabel('Från objekt').selectOption('bike');
       await page.getByLabel('Till objekt').selectOption('garage');
       await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Förvaring' });
@@ -58,21 +75,15 @@ for (const width of [1440, 390])
       await page.getByLabel('Bekräftat', { exact: true }).selectOption('false');
       await expect(page.getByLabel('Obesvarat', { exact: true })).toHaveValue('');
       await stageRelationshipAndClose(page);
-      const review = page.getByRole('region', { name: 'Hela mitt utkast' });
+      const review = await readDraftProposal(page, 'Cykeln → förvaras i → Garaget');
       await expect(review).toContainText('Låst skåp');
       await expect(review).toContainText('Nej');
-      await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-      await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
-        'Utkastet är sparat',
-      );
+      await closeSupportDialog(page, 'Cykeln → förvaras i → Garaget');
+      await saveReviewedConflictDraft(page);
+      await closeTextView(page);
       await installation.restart();
       await page.reload();
-      await openWorkspace(page);
-      await page
-        .getByRole('list', { name: 'Samband', exact: true })
-        .getByRole('button', { name: 'Cykeln → förvaras i → Garaget', exact: true })
-        .click();
-      await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
+      await editObjectRelationship(page, 'Cykeln', 'Cykeln → förvaras i → Garaget');
       await expect(page.getByLabel('Anteckning', { exact: true })).toHaveValue('Låst skåp');
       await expect(page.getByLabel('Belopp', { exact: true })).toHaveValue('0');
       await expect(page.getByLabel('Startdatum', { exact: true })).toHaveValue('2026-09-27');
@@ -80,10 +91,8 @@ for (const width of [1440, 390])
       await expect(page.getByLabel('Obesvarat', { exact: true })).toHaveValue('');
       await page.getByLabel('Anteckning', { exact: true }).fill('Övre hyllan');
       await stageRelationshipAndClose(page);
-      await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-      await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
-        'Utkastet är sparat',
-      );
+      await saveReviewedConflictDraft(page);
+      await closeTextView(page);
       const state = await read();
       const fields = state.relationshipTypes.find(
         (type: { name: string }) => type.name === 'Förvaring',
@@ -145,12 +154,7 @@ test('STY-07: relationship type changes require an explicit decision about earli
       ).status(),
     ).toBe(200);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('list', { name: 'Samband', exact: true })
-      .getByRole('button', { name: 'bike → hör till → garage', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt samband' }).click();
+    await editObjectRelationship(page, 'bike', 'bike → hör till → garage');
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption('second');
     const loss = page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true });
     await expect(loss).toContainText('Anteckning: Behåll som historik');
@@ -162,13 +166,12 @@ test('STY-07: relationship type changes require an explicit decision about earli
     await expect(page.getByLabel('Anteckning', { exact: true })).toHaveValue('');
     await page.getByLabel('Anteckning', { exact: true }).fill('Ny betydelse');
     await stageRelationshipAndClose(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
+    const review = await readDraftProposal(page, 'bike → hör till → garage');
     await expect(review).toContainText('Behåll som historik');
     await expect(review).toContainText('Ny betydelse');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
-      'Utkastet är sparat',
-    );
+    await closeSupportDialog(page, 'bike → hör till → garage');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     expect((await read()).relationships[0]).toMatchObject({
       typeId: 'second',
       customValues: { note: 'Ny betydelse' },

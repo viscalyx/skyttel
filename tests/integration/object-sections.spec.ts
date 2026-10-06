@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openNewObject,
+  openSettings,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('TYP-08: sections move and hide fields in the shared draft without losing values after restart', async ({
@@ -35,11 +43,7 @@ test('TYP-08: sections move and hide fields in the shared draft without losing v
     }
     await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Paneler');
     await page
       .getByLabel('Objekttyp', { exact: true })
@@ -67,19 +71,11 @@ test('TYP-08: sections move and hide fields in the shared draft without losing v
     const originalFields = draft.draft.objectTypes[0].after.fields;
     expect(Object.values(originalValues)).toEqual(['Exempelsol', 0, '2026-09-01', false]);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat:');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
-    await openWorkspace(page);
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Paneler', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Paneler');
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Uppgifter', exact: true }).click();
     await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('false');
@@ -98,12 +94,7 @@ test('TYP-08: sections move and hide fields in the shared draft without losing v
       .selectOption({ label: 'Service' });
     await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await openWorkspace(page);
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Paneler', exact: true })
-      .click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Paneler');
     await page.getByRole('button', { name: 'Service', exact: true }).click();
     await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('0');
     await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Exempelsol');
