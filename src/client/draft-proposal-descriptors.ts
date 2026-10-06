@@ -15,6 +15,18 @@ export type DraftProposalDescriptor = { key: string; name: string } & (
   | { kind: 'Sambandstyp'; change: RelationshipTypeChange }
 );
 
+/** Planned endpoint names follow only this owner's staged object values. */
+export function proposedRelationshipNames(draft: MapDraft, change: DraftRelationshipChange) {
+  const names = { ...change.objectNames };
+  if (change.after) {
+    const endpoints = new Set([change.after.sourceId, change.after.targetId]);
+    for (const object of draft.changes) {
+      if (object.after && endpoints.has(object.id)) names[object.id] = object.after.name;
+    }
+  }
+  return names;
+}
+
 /** One identity and display name for every draft row and its full reader. */
 export function draftProposalDescriptors(draft: MapDraft): DraftProposalDescriptor[] {
   return [
@@ -32,7 +44,7 @@ export function draftProposalDescriptors(draft: MapDraft): DraftProposalDescript
           ? relationshipDetails(
               value,
               change.type.forwardLabel ?? change.type.name,
-              change.objectNames,
+              proposedRelationshipNames(draft, change),
             )
           : 'Samband',
         kind: 'Samband' as const,

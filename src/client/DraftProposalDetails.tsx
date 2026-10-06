@@ -8,7 +8,10 @@ import type {
   RelationshipValue,
 } from '../shared/map.js';
 import { objectProperties } from '../shared/object-properties.js';
-import { draftProposalDescriptors } from './draft-proposal-descriptors.js';
+import {
+  draftProposalDescriptors,
+  proposedRelationshipNames,
+} from './draft-proposal-descriptors.js';
 import { factText, objectPropertyValues } from './ObjectReadDetails.js';
 import { ProfileImage } from './ProfileImage.js';
 import { lifecycleText } from './read-field-values.js';
@@ -165,7 +168,7 @@ export function draftProposals(draft: MapDraft): DraftProposal[] {
           change.beforeType ?? change.type,
           change.objectNames ?? {},
         ),
-        after: relationship(change.after, change.type, change.objectNames ?? {}),
+        after: relationship(change.after, change.type, proposedRelationshipNames(draft, change)),
       };
     }
     return {

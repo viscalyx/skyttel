@@ -24,11 +24,21 @@ Använd skilda webbläsarprofiler för administratören och medlemmen.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+Objekt redigeras från **Tabell** med radens **Redigera [namn]**.
+**Nytt objekt** i kartans verktyg öppnar hela objektformuläret. Välj
+**Lägg i utkastet och stäng** för att skicka hela formuläret.
+Samband öppnas från Tabell med **Samband för [namn]** och **Redigera
+samband** eller **Nytt samband**. Välj **Lägg i utkastet** och
+**Stäng samband** före fortsatt arbete. Läsande översikter stängs med
+krysset. Definitioner öppnas i **Inställningar → Typer och egna fält**;
+välj **Tillbaka till kartan** före granskning.
+
+Granska genom **Skriv till Skyttel → Visa utkastet**. Välj radens
+**Visa förslaget: [namn]** för fullständigt tidigare underlag och förslag.
+Stäng läsningen med krysset. Utkastets sparikon öppnar **Spara utkastet**
+och skickar hela utkastet direkt. Vänta på **Utkastet är sparat** och
+stäng textvyn före nästa arbete i Tabell eller Karta. Inga samtal eller
+AI-medgivanden behövs för detta arbete.
 
 För UTKAST-01 används demodata:
 
@@ -49,10 +59,10 @@ För UTKAST-02–11 används en separat, tom testinstallation enligt
 
 1. Logga in som den konfigurerade administratören och skapa ett hushåll.
 2. Skapa personen **Lo Exempel** och tjänsten **Molnmusik** med
-   **Nytt objekt**, **Objektets namn**, **Objekttyp** och
-   **Lägg i mitt utkast**. Välj **Spara hela utkastet**.
+   **Nytt objekt**, **Namn**, **Objekttyp** och
+   **Lägg i utkastet och stäng**. Välj **Spara hela utkastet**.
 3. Ge medlemmen tillgång för fallen som kräver två användare. Kontrollera
-   att båda ser objekten och har **Inga förslag** i sina egna utkast.
+   att båda ser objekten och har **Utkastet är tomt** i sina egna utkast.
 4. Använd ett nytt tomt testhushåll inför varje fall. Behåll databasen vid
    omladdning och omstart inom fallet.
 
@@ -71,7 +81,7 @@ konfiguration och de medgivanden som anges där.
 **Användare:** Den syntetiska administratören Alex Exempel.
 
 **Förutsättningar:** Kör `npm run build` och
-`node --import tsx scripts/manual-draft-save.ts` på en dator med grafisk
+`node --import tsx scripts/manual-draft-save.ts --chrome` på en dator med grafisk
 webbläsare. Den öppnar en separat installation med riktig SQLite, inloggad
 administratör och förslaget Alex blå cykel. Ingen AI-leverantör är konfigurerad.
 Terminalens kommandon styr bara leveransen av riktiga HTTP-svar. Skriv
@@ -399,7 +409,7 @@ conversation and shared history at 320px”.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Kör `npm run build` och
-`npx tsx scripts/manual-draft-removal.ts`. Kommandot öppnar en separat
+`npx tsx scripts/manual-draft-removal.ts --chrome`. Kommandot öppnar en separat
 webbläsare och en isolerad installation med syntetiska uppgifter.
 Terminalens `new-base` skapar ett nytt provhushåll; `quit` städar installationen.
 
@@ -960,34 +970,38 @@ kommandon som kör integrationstesterna.
 
 **Steg:**
 
-1. Öppna **Hela mitt utkast**. Granska namnkonflikten och förslaget om byte
-   av inloggningsadress. Kontrollera knappen **Spara hela utkastet**.
-2. Ladda om sidan. Stoppa och starta sedan applikationen igen med samma
-   databas. Öppna sidan och granska utkastet på nytt.
-3. Öppna **Granska konflikter** via konfliktknappen. Välj det egna namnet
-   Lo Lind och den sparade beskrivningen. Välj **Lägg valen i utkastet**
-   och stäng med Escape. Granska även förslaget om inloggningsadress.
-4. Öppna **Familjens musikkonto**, ändra namnet till
-   **Familjens rättade konto** och välj **Lägg i mitt utkast**. Granska
-   sambandets **Sparat underlag** och **Förslag**.
-5. Välj **Spara hela utkastet**. Kontrollera kvittot och utkastet.
-6. Ladda om sidan. Kontrollera utkastet och det sparade sambandet.
+1. Öppna utkastet och **Visa förslaget: Lo Lind**. Läs det tidigare
+   namnet och förslaget. Stäng läsningen och textvyn, öppna konfliktknappen
+   och läs det aktuella sparade namnet. Stäng med Escape.
+2. Öppna utkastet och försök spara. Läs **Utkastet kunde inte sparas**,
+   stäng sparmodalen och textvyn. Ladda om sidan och starta om
+   applikationen med samma databas. Granska konflikten på nytt.
+3. Öppna **Granska konflikter**. Välj det egna namnet Lo Lind och den
+   sparade beskrivningen. Välj **Lägg valen i utkastet** och stäng med
+   Escape. Läs hela Lo-förslaget och förslaget om inloggningsadress.
+4. Stäng textvyn och välj **Redigera Familjens musikkonto** i Tabell.
+   Ändra namnet till **Familjens rättade konto** och välj **Lägg i
+   utkastet och stäng**. Läs sedan sambandets fullständiga förslag.
+5. Stäng läsningen och spara hela utkastet med sparikonen.
+6. Ladda om. Läs det tomma utkastet, stäng textvyn och öppna **Samband för
+   Familjens rättade konto** i Tabell.
 
 **Förväntat resultat:**
 
-- Före konfliktvalet visas ursprungsnamnet Lo Exempel, förslaget Lo Lind
-  och det aktuella sparade namnet Lo Berg. **Spara hela utkastet** är
-  inaktiverad. Konflikten och adressförslaget finns kvar efter omladdning
-  och omstart.
-- Konfliktvalet ger inget sparkvitto. Dialogens status visar att valen finns
-  i utkastet. Förslaget innehåller Lo Lind och den oberoende sparade
-  beskrivningen “Spelar piano i musikföreningen.” Adressförslaget finns kvar.
+- Före konfliktvalet visar fullständig förslagsläsning ursprungsnamnet
+  Lo Exempel och förslaget Lo Lind. Konflikten visar aktuellt sparat
+  Lo Berg. Sparförsöket avvisas utan ändrad karta, utkast eller historik.
+  Konflikten och adressförslaget finns kvar efter omladdning och omstart.
+- Konfliktvalet ger inget sparkvitto. Dialogens status visar att valen
+  finns i utkastet. Förslaget innehåller Lo Lind och den oberoende
+  sparade beskrivningen “Spelar piano i musikföreningen.” Adressförslaget
+  finns kvar.
 - Sambandets tidigare underlag visar Familjens musikkonto och
   `familjen@example.test`. Förslaget visar Familjens rättade konto och
-  `musik@example.test`.
-- Det uttryckliga sparandet ger ett lyckat sparkvitto. Utkastet visar
-  **Inga förslag** även efter omladdning. Det sparade sambandet visar
-  **Familjens rättade konto → Inloggningsadress → `musik@example.test`**.
+  `musik@example.test`, med samma ändpunktsidentiteter.
+- Det uttryckliga sparandet ger ett lyckat sparkvitto. **Utkastet är tomt**
+  även efter omladdning. Det sparade sambandet visar **Familjens rättade
+  konto → Inloggningsadress** → `musik@example.test`.
 
 ## Aktuellt underlag och borttagning
 
@@ -1990,7 +2004,8 @@ UTKAST-49–78 använder en tillfällig installation med riktig
 SQLite och två
 syntetiska användare: administratören Alex och medlemmen Robin. Starta från
 repo-roten med `npm run build` och
-`npx tsx scripts/manual-conflict-continuity.ts`. Öppna adressen som skrivs ut.
+`npx tsx scripts/manual-conflict-continuity.ts --chrome`. Öppna adressen
+som skrivs ut.
 För UTKAST-49–63, 73, 77 och 78 är Alex inloggad i det synliga fönstret; konsolkommandon
 för Robin använder hans separata session. Arkivfallen UTKAST-64–72 och 74–76 visar
 i stället medlemmen Robin; administratören Alex använder en separat
