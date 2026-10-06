@@ -1,7 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
 import {
-  closePanels,
   createHousehold,
+  openMap,
+  openNewObject,
   openSettings,
   signIn,
   utilityButton,
@@ -102,14 +103,10 @@ for (const platform of [
         await expect(button).toBeFocused();
 
         // Follow the documented form alternative before granting conversation consent.
-        await (await utilityButton(page, 'Lista')).click();
-        await page
-          .getByRole('region', { name: 'Lista och utkast', exact: true })
-          .getByRole('button', { name: 'Nytt objekt', exact: true })
-          .click();
+        await openNewObject(page);
         await page.getByLabel('Namn', { exact: true }).fill('Lo Exempel');
         await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-        await closePanels(page);
+        await openMap(page);
         await shortcut(page, platform.mac);
         await expect(consentBox(page)).toContainText('Släpp stänger av ny inspelning direkt.');
         await giveConversationConsent(page, { remember: true });
@@ -171,6 +168,11 @@ for (const platform of [
         await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
         await expect(voiceBox(page)).toHaveCount(0);
         await chooseConversationText(page);
+        await expect(consentBox(page)).toHaveCount(0);
+        await page
+          .getByRole('region', { name: 'Skriv till Skyttel', exact: true })
+          .getByRole('button', { name: 'Nytt samtal', exact: true })
+          .click();
         await expect(consentBox(page)).toBeVisible();
       } finally {
         await app.close();

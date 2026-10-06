@@ -540,7 +540,7 @@ cancelled before leaving”.
 
 ### ACCESS-15: Kartans verktyg och frivilliga hjälp ersätter startdialogerna
 
-**Syfte:** Börja med tal, text eller lista och läsa hjälp när den behövs.
+**Syfte:** Börja med tal, text eller tabell och läsa hjälp när den behövs.
 
 **Användare:** Alex.
 
@@ -565,10 +565,11 @@ without start prompts”.
    att ingen mikrofon lyssnar före **Godkänn och starta**. Godkänn och
    kontrollera röstrutans **Lyssnar**, utan att textvyn öppnas.
 3. Ladda om på telefon med hopfällda verktyg. Upprepa hjälpkontrollen.
-   Välj **Skriv till Skyttel**. Godkänn och kontrollera textvyn, utan
-   röstruta eller påslagen mikrofon.
-4. Ladda om på en smal telefon. Upprepa hjälpkontrollen. Välj **Lista**
-   direkt i verktygen. Kontrollera **Nytt objekt**.
+   Välj **Skriv till Skyttel**. Läs textvyn utan medgivande eller startat
+   samtal. Välj sedan **Nytt samtal**, godkänn medgivandet och kontrollera
+   textvyn, utan röstruta eller påslagen mikrofon.
+4. Ladda om på en smal telefon. Upprepa hjälpkontrollen. Välj **Tabell**
+   direkt i verktygen. Kontrollera hushållets tabell.
 
 **Förväntat resultat:**
 
@@ -576,8 +577,9 @@ without start prompts”.
 - Hjälpen syns som en knapp även i telefonens hopfällda verktygsfält.
   Hjälpens rubrik får fokus; Escape återför fokus till hjälpknappen.
   Att läsa hjälpen startar inget samtal och kräver inget medgivande.
-- Röst och text startar efter medgivandet från den valda verktygsknappen.
-  Lista öppnar kartarbetet utan att kräva medgivande till samtal.
+- Röst startar efter medgivandet. Textvyn öppnas utan att starta ett
+  samtal; **Nytt samtal** begär medgivande innan samtalet börjar.
+  Tabell öppnar kartarbetet utan att kräva medgivande till samtal.
 
 ### ACCESS-16: Utgånget inloggningsförsök kan ersättas
 
@@ -621,7 +623,7 @@ operator can open costs”.
 
 **Steg:**
 
-1. Öppna **Lista**, välj **Nytt objekt** och skriv ett namn utan att skicka.
+1. Välj **Nytt objekt** och skriv ett namn utan att skicka.
 2. Återkalla Alex tillgång med den andra administratören. Vänta på
    uppdateringen i Alex öppna flik.
 3. Öppna **Månadskostnad** som Alex.

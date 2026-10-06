@@ -196,11 +196,7 @@ test('ACCESS-08: logout in another tab closes an already open household', async 
     await expect(page.getByRole('heading', { name: 'Hushållet Linden', exact: true })).toHaveCount(
       0,
     );
-    await expect(
-      page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Nytt objekt', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Fortsätt med Google' }).click();
     await page.getByRole('button', { name: 'Fortsätt till Google' }).click();
     await expect(

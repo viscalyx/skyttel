@@ -25,7 +25,13 @@ import {
 } from '../tests/support/conflict-special.js';
 
 // Only transport delivery is controlled. All data and results use public HTTP and real SQLite.
-const browser = await chromium.launch({ headless: process.argv.includes('--headless') });
+const browser = await chromium.launch({
+  channel: process.argv.includes('--chrome') ? 'chrome' : undefined,
+  headless: process.argv.includes('--headless'),
+});
+console.log(
+  `Browser: ${process.argv.includes('--chrome') ? 'Chrome' : 'Chromium'} ${browser.version()}`,
+);
 const page = await browser.newPage();
 const other = await browser.newContext();
 let app: Awaited<ReturnType<typeof conflictCollaborators>> | undefined;

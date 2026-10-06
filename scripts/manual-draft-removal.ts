@@ -10,12 +10,18 @@ import { createInstallation } from '../tests/support/installation.js';
 // Only delivery is controlled; every proposal and discard uses public HTTP and real SQLite.
 let app = await createInstallation();
 const browser = await chromium
-  .launch({ headless: process.argv.includes('--headless') })
+  .launch({
+    channel: process.argv.includes('--chrome') ? 'chrome' : undefined,
+    headless: process.argv.includes('--headless'),
+  })
   .catch(async (failure) => {
     await app.close();
     throw failure;
   });
 const page = await browser.newPage();
+console.log(
+  `Browser: ${process.argv.includes('--chrome') ? 'Chrome' : 'Chromium'} ${browser.version()}`,
+);
 let input: ReturnType<typeof createInterface> | undefined;
 let data!: Awaited<ReturnType<typeof prepareDraftReview>>;
 let hold = false;

@@ -133,6 +133,24 @@ The cost integration tests launch `manual-costs.ts` directly. Other suites
 use test helpers directly; starting these interactive processes is optional
 and is not a prerequisite for Playwright or issue #97.
 
+For the headed delivery-control fixtures, choose an installed Chrome with
+`--chrome`. This selects Playwright's `chrome` channel and prints the browser
+version; it fails if Chrome is unavailable instead of substituting Chromium.
+Without the option these fixtures use Playwright Chromium. Build first, then
+run one launcher on a desktop with a graphical display:
+
+```sh
+node --import tsx scripts/manual-draft-save.ts --chrome
+node --import tsx scripts/manual-draft-removal.ts --chrome
+node --import tsx scripts/manual-conflict-continuity.ts --chrome
+```
+
+Use only one launcher at a time and enter `quit` when finished. `--headless`
+is available for automated preparation checks; those checks do not execute
+assistive technology or physical devices. These disposable loopback fixtures
+use synthetic authentication. Physical phones require an ordinary test
+installation with configured HTTPS, provider sign-in and household membership.
+
 ### Offline map fixtures
 
 For interactive upgrade or household-isolation debugging, the helper

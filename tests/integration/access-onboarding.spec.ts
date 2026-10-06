@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import Database from 'better-sqlite3';
-import { createHousehold, openProfile, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openNewObject, openProfile, signIn } from '../support/client.js';
 import {
   consentBox,
   giveConversationConsent,
@@ -87,11 +87,7 @@ test('ACCESS-17: revoked access retires protected work while the operator can op
     await createHousehold(page.request, installation.origin);
     const { user } = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Privat oskickat arbete');
     installation.revokeMembership(user.id);
     await expect(
@@ -124,7 +120,7 @@ test('ACCESS-15: first visits use toolbar entries and optional help without star
     for (const [width, action] of [
       [1280, 'Prata med Skyttel'],
       [390, 'Skriv till Skyttel'],
-      [320, 'Lista'],
+      [320, 'Tabell'],
     ] as const) {
       await page.setViewportSize({ width, height: 568 });
       await page.goto(installation.origin);
@@ -160,13 +156,18 @@ test('ACCESS-15: first visits use toolbar entries and optional help without star
         await page.evaluate(() => window.skyttelVoiceFixture.stats().microphoneRequests),
       ]).toEqual(requestsBeforeHelp);
       await tools.getByRole('button', { name: action, exact: true }).click();
-      if (action === 'Lista')
+      if (action === 'Tabell')
         await expect(
-          page
-            .getByRole('region', { name: 'Lista och utkast', exact: true })
-            .getByRole('button', { name: 'Nytt objekt', exact: true }),
+          page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
         ).toBeVisible();
       else {
+        if (action === 'Skriv till Skyttel') {
+          const text = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
+          await expect(text).toBeVisible();
+          await expect(consentBox(page)).toHaveCount(0);
+          expect(model.requests).toHaveLength(0);
+          await text.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
+        }
         await expect(consentBox(page)).toBeVisible();
         await giveConversationConsent(page);
         if (action === 'Prata med Skyttel') {

@@ -8,12 +8,18 @@ import { createInstallation } from '../tests/support/installation.js';
 // is controlled. The headed browser remains available for human interaction.
 let app = await createInstallation();
 const browser = await chromium
-  .launch({ headless: process.argv.includes('--headless') })
+  .launch({
+    channel: process.argv.includes('--chrome') ? 'chrome' : undefined,
+    headless: process.argv.includes('--headless'),
+  })
   .catch(async (failure) => {
     await app.close();
     throw failure;
   });
 const page = await browser.newPage();
+console.log(
+  `Browser: ${process.argv.includes('--chrome') ? 'Chrome' : 'Chromium'} ${browser.version()}`,
+);
 let input: ReturnType<typeof createInterface> | undefined;
 process.once('SIGINT', () => input?.close());
 process.once('SIGTERM', () => input?.close());
