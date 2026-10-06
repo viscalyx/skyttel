@@ -248,16 +248,24 @@ test.describe('valt mobilt samtalsflöde', () => {
       await expect(voiceBox(page).getByRole('button', { name: 'Avbryt' })).toBeVisible();
       await expect(view(page)).toHaveCount(0);
       const voice = await voiceBox(page).boundingBox();
-      const row = await page.locator('.spatial-bottom-bar').boundingBox();
-      const feedback = await page.locator('.workspace-voice-controls').boundingBox();
-      expect(voice).not.toBeNull();
-      expect(row).not.toBeNull();
-      expect(feedback).not.toBeNull();
-      // Both protected map surfaces belong at the lower edge, with voice above them.
-      expect(row?.y).toBeGreaterThan(844 / 2);
-      expect(voice?.y).toBeGreaterThan(844 / 2);
-      expect((voice?.y ?? 0) + (voice?.height ?? 0)).toBeLessThanOrEqual(row?.y ?? 0);
-      expect((row?.y ?? 0) + (row?.height ?? 0)).toBeLessThanOrEqual(feedback?.y ?? 0);
+      const feedback = await page
+        .getByRole('region', { name: 'Kartans status', exact: true })
+        .boundingBox();
+      if (!voice || !feedback) throw new Error('Voice and map status must be visible');
+      // The voice belongs to the native toolbar; map status remains readable.
+      await expect(
+        page
+          .getByRole('navigation', { name: 'Kartans verktyg' })
+          .getByRole('group', { name: 'Röstruta', exact: true }),
+      ).toBeVisible();
+      expect(voice.x + voice.width).toBeLessThanOrEqual(390);
+      expect(voice.y + voice.height).toBeLessThanOrEqual(844);
+      expect(
+        voice.x + voice.width <= feedback.x ||
+          feedback.x + feedback.width <= voice.x ||
+          voice.y + voice.height <= feedback.y ||
+          feedback.y + feedback.height <= voice.y,
+      ).toBe(true);
       await capture(page, 'selected-voice-equivalent');
       await expect.poll(() => Boolean(release)).toBe(true);
       release?.([modelMessage('Lo-förslaget ligger kvar i utkastet.')]);

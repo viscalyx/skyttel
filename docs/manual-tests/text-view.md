@@ -425,9 +425,9 @@ riktiga samtalet”, i gruppen “valt mobilt samtalsflöde”.
 
 **Förväntat resultat:**
 
-- Med textvyn stängd står röstrutan vid nedre högra kanten, ovanför
-  kartans rad med **Återställ vy** och utkastets återkoppling. Alla tre
-  ytorna är skilda. Statusordet och stoppikonen ryms på en rad.
+- Med textvyn stängd hör röstrutan till kartans verktyg. Röstrutan,
+  kartans status och **Återställ vy** är åtkomliga utan överlappning.
+  Statusordet och stoppikonen ryms på en rad.
 - Vid 508 och 190 px synlig höjd syns kontextmätare, **Utkast (1)**,
   **Nytt samtal** och stängknapp i en kompakt rad. Fältet har en rad,
   behåller fokus och står under samtalstexten. Röstrutan står ovanför
