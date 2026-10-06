@@ -253,6 +253,16 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
       ).toBeFocused();
       await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
       await expect(table.getByRole('rowheader')).toHaveCount(1);
+      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+      await showResults.focus();
+      await showResults.press('Enter');
+      await expect(filters).not.toBeVisible();
+      await expect(
+        table.getByRole('button', { name: 'Filter · aktiva', exact: true }),
+      ).toBeFocused();
+      await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
+      await expect(table.getByRole('rowheader')).toHaveCount(1);
+      expect(await read()).toEqual(before);
     }
     await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
     await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
