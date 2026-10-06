@@ -234,7 +234,7 @@ test('LÄS-01: keyboard follows Alex to bicycle to garage and back without graph
       dialog.getByRole('heading', { name: 'Samband för Alex', exact: true }),
     ).toBeFocused();
     await page.keyboard.press('Shift+Tab');
-    await expect(dialog.getByRole('button', { name: 'Cykel', exact: true })).toBeFocused();
+    await expect(dialog.getByRole('button', { name: 'Stäng samband', exact: true })).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(dialog.getByRole('button', { name: 'Stäng dialogen', exact: true })).toBeFocused();
     await dialog.getByRole('heading', { name: 'Samband för Alex', exact: true }).focus();
@@ -327,10 +327,14 @@ test('LÄS-02: mobile full relationship reading separates absent targets, uncert
     const links = dialog.locator('.household-read-relationships > li');
     await expect(links).toHaveCount(4);
     const none = links.filter({ has: page.getByRole('heading', { name: /Har ingen|har ingen/ }) });
-    await expect(none.getByRole('button')).toHaveCount(0);
+    await expect(none.locator('.household-read-link')).toHaveCount(0);
+    await expect(none.getByRole('button', { name: 'Redigera samband', exact: true })).toBeVisible();
     await expect(none).toContainText('Uttryckligen inget');
     const unknown = links.filter({ has: page.getByRole('heading', { name: /okänd koppling/ }) });
-    await expect(unknown.getByRole('button')).toHaveCount(0);
+    await expect(unknown.locator('.household-read-link')).toHaveCount(0);
+    await expect(
+      unknown.getByRole('button', { name: 'Redigera samband', exact: true }),
+    ).toBeVisible();
     await expect(unknown).toContainText('Okänt');
     const storage = links.filter({
       has: page.getByRole('button', { name: 'Garage', exact: true }),
@@ -346,8 +350,8 @@ test('LÄS-02: mobile full relationship reading separates absent targets, uncert
         .locator('.household-read-body')
         .evaluate((element) => element.scrollWidth <= element.clientWidth),
     ).toBe(true);
-    await expect(dialog.getByRole('button', { name: /^(Stäng|Stäng samband)$/ })).toHaveCount(0);
-    await dialog.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: 'Stäng samband', exact: true })).toHaveCount(1);
+    await dialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
     await expect(
       page.getByRole('button', { name: 'Samband för Cykel', exact: true }),
     ).toBeFocused();

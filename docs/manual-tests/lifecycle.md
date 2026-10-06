@@ -15,11 +15,13 @@ Samma kartarbete är tillgängligt för en vanlig hushållsmedlem.
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
-När ett befintligt objekt eller samband ska ändras, välj det först i
-kartan eller listan och öppna dess detaljpanel. För objekt i listan använder
-du **Uppgifter**; i kartverktygen väljer du **Visa detaljer**. Välj sedan
-**Redigera valt objekt** eller **Redigera valt samband** för att öppna
-formuläret. Att bara välja objektet eller sambandet öppnar inte formuläret.
+För samband, öppna **Tabell**, välj **Samband för** objektet och
+**Redigera samband** vid kopplingen. **Lägg i utkastet** skickar hela
+formuläret. Välj **Stäng samband** innan du sparar eller fortsätter med
+annat arbete. Objekt öppnas för redigering från Tabell eller objektets
+uppgifter. Vid kontroll i kartan, öppna **Sök i kartan → Filter** och
+välj **Ta med upphörda**, även efter omladdning, för att se upphörda
+objekt och samband.
 
 1. Använd ett tomt testhushåll med påhittade uppgifter enligt
    [familjeabonnemanget](../user-guide/family-subscription.md).
@@ -58,7 +60,8 @@ independently correctable”.
    ladda om sidan. Välj **Ta med upphörda** igen i kartans sökfilter.
    Kontrollera objekten och sambanden.
 3. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Upphört** under
-   **Sambandets status**, lägg sambandet i utkastet och spara.
+   **Sambandets status**, lägg sambandet i utkastet med tangentbordet,
+   välj **Stäng samband** och spara.
 4. Öppna uppgifterna för **Familjemusik**, välj **Redigera valt objekt**
    och **Livscykel och utseende**. Välj **Gäller fortfarande** under
    **Objektets status** och **Lägg i utkastet och stäng**. Spara hela
@@ -102,9 +105,11 @@ dates or status can correct it”.
    **Ekonomiska uppgifter**. Rätta slutdatumet till en framtida dag. Välj
    **Lägg i utkastet och stäng** och spara hela utkastet.
 4. Öppna sambandet från Lo och ange ett känt passerat **Sambandets slutdatum**.
-   Lägg sambandet i utkastet, spara och kontrollera statusen.
+   Lägg sambandet i utkastet med tangentbordet, välj **Stäng samband**,
+   spara och kontrollera statusen.
 5. Ändra sambandets status till **Gäller fortfarande** utan att ändra datumet.
-   Granska hela utkastet, spara, starta om appen och ladda om.
+   Lägg ändringen i utkastet, stäng sambandsdialogen, granska hela
+   utkastet, spara, starta om appen och ladda om.
 
 **Förväntat resultat:**
 
@@ -256,10 +261,14 @@ connected edge and preserves history”.
 **Steg:**
 
 1. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Betalar** som
-   sambandstyp och lägg sambandet i utkastet utan att spara.
+   sambandstyp och lägg sambandet i utkastet utan att spara. Välj
+   **Stäng samband**.
 2. Öppna **Åtgärder för Familjemusik** i objektlistan och välj **Ta bort**.
    Granska **Hela mitt utkast** utan något ytterligare förslagssteg.
-3. Ladda om sidan, granska förslaget igen och välj **Kasta hela utkastet**.
+3. Ladda om sidan och granska förslaget igen. Öppna **Skriv till Skyttel**,
+   välj **Visa utkastet** och **Kasta hela utkastet**. Läs
+   **Ta bort hela utkastet?** och bekräfta **Ta bort hela utkastet**.
+   Stäng textvyn och kontrollera att de sparade sambanden finns kvar.
 4. Upprepa typbytet och **Ta bort** i listan. Välj **Spara hela utkastet**.
 5. Starta om appen med samma databas och ladda om sidan.
 
@@ -275,7 +284,7 @@ connected edge and preserves history”.
   Lo och Molnmusik finns kvar. Inga typdefinitioner städas bort.
 - Automationen läser historikunderlaget via HTTP och kontrollerar tidigare
   objekt, samband, namn och definitioner samt tidpunkt och användare.
-  Läsning och ångring i gränssnittet provas i [historikfallen](history.md).
+  Läsning i gränssnittet provas i [historikfallen](history.md).
 
 Konflikter som blockerar hela borttagningen provas även i
 [UTKAST-06](drafts.md#utkast-06-granska-nya-samband-före-objektborttagning).

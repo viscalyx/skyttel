@@ -73,7 +73,8 @@ without graphics or lost table state”.
 
 1. Välj Tabell, expandera A 1 och A 2, välj Nästa och expandera Alex och
    Cykel. Rulla tabellen och öppna Samband för Alex med tangentbord.
-2. Kontrollera dialogens rubrik och antal samband. Välj Cykel, läs hela
+2. Kontrollera dialogens rubrik och antal samband. Från rubriken ska
+   Skift+Tab nå **Stäng samband** och Tab sedan nå krysset. Välj Cykel, läs hela
    beskrivningen, egna fält, ekonomi samt Sparat och Ditt förslag.
 3. Öppna Samband för Cykel och välj Garage. Läs Ospecificerat objekt.
 4. Använd Tab och Skift+Tab vid dialogens första och sista kontroller.
@@ -111,17 +112,18 @@ targets, uncertainty and proposed removal”.
 2. Läs samtliga fyra samband, inklusive föreslagen borttagning.
 3. Kontrollera Okänd koppling och Har ingen samt sambandet till Garage.
    Läs säkerhet, riktning, egna fält, livscykel och slutdatum.
-4. Stäng med krysset och kontrollera fokus.
+4. Välj **Stäng samband** och kontrollera fokus.
 
 **Förväntat resultat:**
 
 - Okänt och Uttryckligen inget har inga falska objektlänkar. Osäkert
-  uppgivet är skilt från dessa betydelser.
+  uppgivet är skilt från dessa betydelser. **Redigera samband** finns
+  för de två giltiga sambanden utan målobjekt.
 - Upphört, Föreslagen borttagning och sparat/föreslaget värde är läsbara
   även utan färg. Dolda egna fält finns med.
 - Text bryts inom skärmbredden och innehållet rullar i dialogen.
   Fokus återgår till Samband för Cykel.
-- Endast krysset är en synlig stängkontroll. Escape fungerar också.
+- Sambandsdialogen har **Stäng samband** och kryss. Escape fungerar också.
 
 ### LÄS-03: stäng läsning när öppningsraden försvinner
 

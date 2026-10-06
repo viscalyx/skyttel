@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { createHousehold, openWorkspace, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 for (const width of [1440, 390])
   test(`STY-06: optional relationship fields share definitions, editing and durable save at ${width}px`, async ({
@@ -56,12 +57,14 @@ for (const width of [1440, 390])
       await page.getByLabel('Startdatum', { exact: true }).fill('2026-09-27');
       await page.getByLabel('Bekräftat', { exact: true }).selectOption('false');
       await expect(page.getByLabel('Obesvarat', { exact: true })).toHaveValue('');
-      await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+      await stageRelationshipAndClose(page);
       const review = page.getByRole('region', { name: 'Hela mitt utkast' });
       await expect(review).toContainText('Låst skåp');
       await expect(review).toContainText('Nej');
       await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-      await expect(page.getByRole('status')).toContainText('Sparat');
+      await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+        'Utkastet är sparat',
+      );
       await installation.restart();
       await page.reload();
       await openWorkspace(page);
@@ -72,12 +75,15 @@ for (const width of [1440, 390])
       await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
       await expect(page.getByLabel('Anteckning', { exact: true })).toHaveValue('Låst skåp');
       await expect(page.getByLabel('Belopp', { exact: true })).toHaveValue('0');
+      await expect(page.getByLabel('Startdatum', { exact: true })).toHaveValue('2026-09-27');
       await expect(page.getByLabel('Bekräftat', { exact: true })).toHaveValue('false');
       await expect(page.getByLabel('Obesvarat', { exact: true })).toHaveValue('');
       await page.getByLabel('Anteckning', { exact: true }).fill('Övre hyllan');
-      await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+      await stageRelationshipAndClose(page);
       await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-      await expect(page.getByRole('status')).toContainText('Sparat');
+      await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+        'Utkastet är sparat',
+      );
       const state = await read();
       const fields = state.relationshipTypes.find(
         (type: { name: string }) => type.name === 'Förvaring',
@@ -146,27 +152,29 @@ test('STY-07: relationship type changes require an explicit decision about earli
       .click();
     await page.getByRole('button', { name: 'Redigera valt samband' }).click();
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption('second');
-    await expect(page.getByLabel('Anteckning', { exact: true })).toHaveValue('');
-    await expect(page.getByRole('region', { name: 'Tidigare egna sambandsvärden' })).toContainText(
-      'Behåll som historik',
-    );
-    await expect(page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' })).toBeDisabled();
-    await page.getByLabel('Anteckning', { exact: true }).fill('Ny betydelse');
-    await page
-      .getByRole('button', { name: 'Bekräfta borttagning av tidigare egna värden' })
+    const loss = page.getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true });
+    await expect(loss).toContainText('Anteckning: Behåll som historik');
+    await expect(page.getByLabel('Sambandstyp', { exact: true })).toHaveValue('first');
+    expect((await read()).draft.relationships ?? []).toHaveLength(0);
+    await loss
+      .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
       .click();
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+    await expect(page.getByLabel('Anteckning', { exact: true })).toHaveValue('');
+    await page.getByLabel('Anteckning', { exact: true }).fill('Ny betydelse');
+    await stageRelationshipAndClose(page);
     const review = page.getByRole('region', { name: 'Hela mitt utkast' });
     await expect(review).toContainText('Behåll som historik');
     await expect(review).toContainText('Ny betydelse');
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
+    );
     expect((await read()).relationships[0]).toMatchObject({
       typeId: 'second',
       customValues: { note: 'Ny betydelse' },
     });
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    expect(history.at(-1).relationships[0]).toMatchObject({
+    expect(history[0].relationships[0]).toMatchObject({
       before: { customValues: { note: 'Behåll som historik' } },
       beforeType: { id: 'first' },
       type: { id: 'second' },

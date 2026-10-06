@@ -1,7 +1,10 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, openMap, openWorkspace, signIn } from '../support/client.js';
+import { closeConversationText, openConversationDraft } from '../support/conversation-page.js';
 import { createInstallation } from '../support/installation.js';
+import { includeEndedInMap } from '../support/object-search.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 async function arrange(client: APIRequestContext, origin: string) {
   await signIn(client, origin);
@@ -116,7 +119,7 @@ test('LIVSCYKEL-01: ended objects and relationships stay visible and independent
       .click();
     await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Sambandets status').selectOption('ended');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+    await stageRelationshipAndClose(page);
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(
       page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
@@ -165,7 +168,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
         .click();
       await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
       await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Betalar' });
-      await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+      await stageRelationshipAndClose(page);
       await expect(review).toContainText('Lo Exempel → Betalar → Familjemusik');
     };
     await proposeTypeChange();
@@ -184,7 +187,14 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     await page.reload();
     await openWorkspace(page);
     await expect(review).toContainText('Borttagning: Familjemusik');
-    await page.getByRole('button', { name: 'Kasta hela utkastet' }).click();
+    const draft = await openConversationDraft(page);
+    await draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
+    await closeConversationText(page);
+    await openWorkspace(page);
     await expect(review).toContainText('Inga förslag');
     await expect(
       page.getByRole('list', { name: 'Samband', exact: true }).getByRole('listitem'),
@@ -194,7 +204,9 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     await page.getByText('Åtgärder för Familjemusik', { exact: true }).click();
     await page.getByRole('button', { name: 'Ta bort', exact: true }).click();
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status')).toContainText('Sparat');
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+      'Utkastet är sparat',
+    );
     await installation.restart();
     await page.reload();
     await openWorkspace(page);
@@ -207,7 +219,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
       'Familjemusik',
     );
     const { history } = await (await page.request.get(`${path}/history`)).json();
-    const deletion = history.at(-1);
+    const deletion = history[0];
     expect(deletion.changes).toEqual([
       {
         before: initial.objects.find((item) => item.id === 'subscription'),
@@ -296,7 +308,7 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Sambandets slutdatum: uppgiftens säkerhet').selectOption('known');
     await page.getByLabel('Sambandets slutdatum', { exact: true }).fill('2031-03-12');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+    await stageRelationshipAndClose(page);
     await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
     await expect(
       page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
@@ -305,7 +317,7 @@ test('LIVSCYKEL-02: only a known elapsed end date ends content and dates or stat
     await incoming.getByRole('button', { name: /^Lo Exempel →/ }).click();
     await page.getByRole('button', { name: 'Redigera valt samband', exact: true }).click();
     await page.getByLabel('Sambandets status').selectOption('active');
-    await page.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }).click();
+    await stageRelationshipAndClose(page);
     await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
       'Gäller fortfarande',
     );
@@ -372,6 +384,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
     const saved = await read();
     await page.goto(installation.origin);
     await openMap(page);
+    await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     const labels = space.locator('.spatial-labels');
@@ -422,6 +435,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
     await installation.restart();
     await page.reload();
     await openMap(page);
+    await includeEndedInMap(page);
     await expect(ended.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(ended).toHaveAccessibleDescription(/Upphört/);
     await expect(active).not.toContainText('Upphört');
@@ -471,6 +485,7 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
     const saved = await read();
     await page.goto(installation.origin);
     await openMap(page);
+    await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     const labels = space.locator('.spatial-labels');
@@ -484,16 +499,17 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
     await expect(edge).toHaveAccessibleDescription(/Upphört/);
     await expect(object.getByText('Kim Exempel', { exact: true })).toBeVisible();
     await expect(object).not.toContainText('Upphört');
-    await expect(object).toHaveAccessibleDescription('Kim Exempel Person');
-    await expect(node).toHaveAccessibleDescription('Kim Exempel Person');
+    await expect(object).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
+    await expect(node).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
     await expect(object).not.toHaveAccessibleDescription(/Upphört/);
     await expect(node).not.toHaveAccessibleDescription(/Upphört/);
     expect(await read()).toEqual(saved);
     await installation.restart();
     await page.reload();
     await openMap(page);
-    await expect(object).toHaveAccessibleDescription('Kim Exempel Person');
-    await expect(node).toHaveAccessibleDescription('Kim Exempel Person');
+    await includeEndedInMap(page);
+    await expect(object).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
+    await expect(node).toHaveAccessibleDescription(/^Kim Exempel (?:● Sökträff )?Person$/);
     await expect(edge).toHaveAccessibleDescription(/Upphört/);
     expect(await read()).toEqual(saved);
   } finally {
@@ -558,6 +574,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     expect(privateProposal.relationships).toEqual(saved.relationships);
     await page.goto(installation.origin);
     await openMap(page);
+    await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     const labels = space.locator('.spatial-labels');
@@ -586,6 +603,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     await installation.restart();
     await page.reload();
     await openMap(page);
+    await includeEndedInMap(page);
     await expect(previous.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(previous).toHaveAccessibleDescription(/Upphört/);
     await expect(previous).toHaveAccessibleDescription(/Använder/);

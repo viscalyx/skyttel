@@ -14,16 +14,24 @@ privata utkast, tillsammans med objekt och samband du föreslår.
 
 ## Skapa en typ och ett samband
 
-1. Välj **Ny sambandstyp**. Ange ett namn som hjälper hushållet att välja
+1. Öppna **Inställningar → Typer och egna fält → Sambandstyper och riktning**
+   och välj **Ny sambandstyp**. Ange ett namn som hjälper hushållet att välja
    rätt betydelse och en förklarande beskrivning.
 2. Ange benämningarna från startobjektet och målobjektet, till exempel
    **förvaras i** och **innehåller**. Lägg vid behov till egna fält med
    namn, beskrivning och värdeslaget Text, Tal, Datum eller Ja/nej.
    Lägg sambandstypen i ditt utkast.
-3. Välj **Nytt samband**, startobjekt, sambandstyp och målobjekt. Alla
-   objekt kan väljas, oavsett deras objekttyper. Typen är obligatorisk.
-4. Lägg sambandet i ditt utkast. Granska definitionen, riktningen och
-   objekten i **Hela mitt utkast**. Välj **Spara hela utkastet** när allt
+3. Skapa de två objekten separat om de saknas. Öppna **Tabell**, välj
+   **Samband för** startobjektet och **Nytt samband**. Startobjektet är
+   förvalt. Välj sambandstyp, det andra objektet och riktning.
+   Objektväljaren omfattar hushållets valbara objekt och nya objekt i
+   ditt utkast, oberoende av kartans och tabellens filter. Typen är
+   obligatorisk. Borttagna objekt kan inte väljas.
+4. Välj **Lägg i utkastet**. Dialogen stannar öppen för nästa samband.
+   Tidigare färdiga förslag behålls om nästa formulär innehåller ett
+   fel eller avbryts. Välj **Stäng samband** när du är färdig.
+5. Öppna **Skriv till Skyttel → Visa utkastet**, granska definitionen,
+   riktningen och objekten och välj **Spara hela utkastet** när allt
    stämmer. Kvittot omfattar definitionen och kopplingen tillsammans.
 
 Sambandets säkerhet, status och slutdatum
@@ -38,11 +46,13 @@ sambandets formulär. Lämna ett fält tomt eller välj **Obesvarat** om
 uppgiften är obesvarad. Noll och Nej är uttryckliga svar och sparas som
 sådana. Definitioner och värden kan läggas i samma utkast och sparas ihop.
 
-Läs uppgifterna genom att välja sambandet i kartan eller listan. Välj
-**Redigera valt samband** för att rätta dem. Vid typbyte börjar den nya
-typens egna fält tomma. Tidigare egna värden visas separat och måste
-hanteras uttryckligen innan förslaget kan skickas. Lika fältnamn flyttar
-eller omtolkar aldrig svar automatiskt.
+Läs uppgifterna i objektets sambandsdialog och välj **Redigera samband**
+för att rätta dem. Ett typbyte som tar bort egna svar öppnar
+**Ta bort tidigare egna fält?**. Läs de berörda svaren och välj
+**Ta bort fältvärdena och byt typ** om de ska tas bort ur formuläret.
+Den nya typens egna fält börjar då tomma. Att avbryta behåller den
+tidigare typen och svaren. Lika fältnamn flyttar eller omtolkar aldrig
+svar automatiskt. Sparad historik behåller tidigare uppgifter.
 
 Använda fält kan inte tas bort eller få annat värdeslag. Skyddet gäller
 även upphörda samband och andra medlemmars privata utkast. Ett avslag
@@ -73,17 +83,19 @@ och Nej. Äldre definitioner visas först under **Egna fält**.
 
 ## Läs och rätta från båda objekten
 
-Öppna cykelns detaljer och välj **Visa samband i listan** för att se
-**Cykeln → förvaras i → Garaget**. Gör samma sak från garagets detaljer
-för att se **Garaget → innehåller → Cykeln**. Klicka på sambandet från
-valfritt håll för att öppna samma koppling. Formuläret visar alltid dess
-startobjekt och målobjekt i den sparade riktningen.
+Välj **Samband för Cykeln** i Tabell för att se
+**Cykeln → förvaras i → Garaget**. Välj **Samband för Garaget** för att
+se **Garaget → innehåller → Cykeln**. **Redigera samband** öppnar samma
+koppling från båda hållen. Formuläret visar dess startobjekt och
+målobjekt i den sparade riktningen.
 
 Du kan ändra typ eller ändpunkter och lägga till fler samband. Andra
 betydelser mellan samma objekt är tillåtna. Ett upprepat tillägg med
-samma typ, riktning och ändpunkter visar det befintliga sambandet utan
-att skapa en dubblett. Ändring till ett samband som redan finns stoppas;
-behåll det befintliga sambandet eller rätta ditt förslag.
+samma typ, riktning och ändpunkter visar **Sambandet finns redan** och
+erbjuder **Redigera befintligt samband** utan att skapa en dubblett
+eller skriva över sparade uppgifter. Ett ändrat formulär bevaras tills
+du uttryckligen väljer att lämna det. Vid byte till det befintliga
+sambandet gäller [förlustvarningen](map.md).
 
 ## Ändra en gemensam definition
 
@@ -103,10 +115,12 @@ kvittot bevarar tidigare definitioner och ändrade kopplingar.
 
 Vid samtidiga likadana tillägg sparas bara ett samband. Den andra
 medlemmens hela utkast finns kvar och visar vilket samband som redan
-finns. **Använd sparat värde** tar bort det överlappande förslaget ur
-utkastet. Granska övriga förslag innan du sparar igen.
+finns. Öppna **Granska konflikter** och bekräfta
+**Ta bort sambandet ur ditt utkast** för det överlappande förslaget.
+Det sparade sambandet och andra förslag behålls. Granska övriga förslag
+innan du sparar igen.
 
 Läs också om [objekttyper och egna fält](object-types.md) och
 [hushållets abonnemang](family-subscription.md). Oanvända typer kan
-[tas bort och återställas genom historiken](definition-removal.md);
+[tas bort](definition-removal.md);
 användande samband måste först hanteras och ändpunkterna kan finnas kvar.
