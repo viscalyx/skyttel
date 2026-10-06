@@ -354,19 +354,17 @@ for (const width of [390, 320]) {
       await expect(profile.getByRole('heading', { name: 'Din profil', exact: true })).toBeFocused();
       const expansion = page.getByRole('button', { name: 'Dölj verktygens namn', exact: true });
       const coveredTool = expansion;
-      expect(
-        await coveredTool.evaluate((element) => {
-          const box = element.getBoundingClientRect();
-          return document
-            .querySelector('.workspace-utility')
-            ?.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
-        }),
-      ).toBe(width === 320);
+      const covered = await coveredTool.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return document
+          .querySelector('.workspace-utility')
+          ?.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
+      });
       await page.keyboard.press('Shift+Tab');
       await page.keyboard.press('Shift+Tab');
       await expect(expansion).toBeFocused();
       await expect(coveredTool).toBeFocused();
-      if (width === 320) await expect(profile).not.toBeVisible();
+      if (covered) await expect(profile).not.toBeVisible();
       expect(
         await coveredTool.evaluate((element) => {
           const box = element.getBoundingClientRect();

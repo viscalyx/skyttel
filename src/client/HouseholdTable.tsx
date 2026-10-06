@@ -9,7 +9,6 @@ import {
   ObjectSearchInput,
   objectSearchMatch,
   objectSearchResults,
-  SearchResultStatus,
   searchRestricted,
   useDraftFilterReset,
 } from './ObjectSearch.js';
@@ -299,7 +298,7 @@ export function HouseholdTable({
         aria-label="Objekt i läsläge"
       >
         <div className="household-table-result-heading">
-          <SearchResultStatus count={found.length} active={active} notice={notice} />
+          <p role="status">{active ? notice : ''}</p>
           <label>
             Sortering
             <select
@@ -500,20 +499,6 @@ export function HouseholdTable({
               })}
             </tbody>
           </table>
-          {!visible.length && (
-            <div className="household-table-empty">
-              <h2>Inga objekt matchar</h2>
-              <p>Ändra sökningen eller återställ sökning och filter.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch(initialObjectSearch);
-                }}
-              >
-                Återställ sökning och filter
-              </button>
-            </div>
-          )}
         </section>
         <nav className="household-table-pages" aria-label="Tabellsidor">
           <button
@@ -571,7 +556,7 @@ export function HouseholdTable({
         </div>
         <footer>
           <button type="button" className="primary" onClick={() => setFiltersOpen(false)}>
-            Visa {found.length} träffar
+            Visa objekt
           </button>
         </footer>
       </dialog>

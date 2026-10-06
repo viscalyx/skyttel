@@ -292,13 +292,15 @@ across 500 objects”.
 1. Expandera Provobjekt 000 och Provobjekt 001. Båda raderna är öppna;
    Provobjekt 001 är den aktuella markeringen.
 2. Öppna Filter, välj Person och Tjänst och stäng med Stäng filter.
-   Kontrollera 200 träffar. Sök sammanhang 0. och kontrollera tjugo träffar.
+   Kontrollera fyra sidor med femtio objekt per sida. Sök sammanhang 0.
+   och kontrollera tjugo objekt på en sida.
 3. Öppna Filter, välj Bara markerade och stäng. Kontrollera Provobjekt 001
    som enda träff. Välj Alla typer i Filter och kontrollera samma träff.
 4. Stäng av Bara markerade och stäng filtret: femtio träffar. Välj Person
    och stäng filtret: tio träffar och fokus tillbaka på Filter.
-5. Sök finns inte. Läs det tomma resultatet och välj Återställ sökning
-   och filter. Välj Ta med upphörda igen och kontrollera 500 träffar.
+5. Sök finns inte. Kontrollera tom tabell utan särskilt besked. Öppna
+   Filter och välj Återställ sökning och filter. Stäng dialogen.
+   Välj Ta med upphörda igen och kontrollera tio sidor med objekt.
 
 **Förväntat resultat:**
 
@@ -444,7 +446,7 @@ and keyboard focus”.
    tabelläge och synligt, åtkomligt fokus.
 5. Rulla till Visa Provobjekt 045 i kartan, fokusera kontrollen och
    anteckna rulläget. Välj den och återvänd med Tabell.
-6. Visa Karta och öppna Sök i kartan. Kontrollera fokus i sökfältet.
+6. Visa Karta och klicka i kartans sökfält. Kontrollera fokus i sökfältet.
 
 **Förväntat resultat:**
 
@@ -667,8 +669,8 @@ then previous then heading”.
    Kontrollera att Beta försvinner och fokus går till **Redigera Fokus Gamma**.
 3. Gör samma statusändring för Gamma. Kontrollera att Gamma försvinner
    och fokus går till **Redigera Fokus Alpha** på föregående rad.
-4. Gör samma statusändring för Alpha. Kontrollera att tabellen visar
-   **Inga objekt matchar** och fokus går till rubriken **Hushållets tabell**.
+4. Gör samma statusändring för Alpha. Kontrollera att tabellen är tom
+   utan särskilt besked och fokus går till rubriken **Hushållets tabell**.
 5. Kontrollera att sökningen fortfarande är Fokus. Öppna Filter och markera
    **Ta med upphörda**. Expandera varje objekts rad och läs Status:
    **Sparat: Följ slutdatum** och **Ditt förslag: Manuellt upphört**.
@@ -753,7 +755,8 @@ samband till objektet med typen **Endast i sambandet**.
 3. Sök efter **Endast i sambandet** och kontrollera noll träffar.
    Sök efter **Övrigt Élan** och kontrollera en träff, utan A 2.
    Sök efter **ake**. Kontrollera noll träffar och att fokus stannar i
-   sökfältet. Välj **Återställ sökning och filter**.
+   sökfältet. Kontrollera att inget träffantal eller tomhetsbesked visas.
+   Öppna **Filter**, välj **Återställ sökning och filter** och stäng dialogen.
 4. Sök efter **åke beskrivning**. Kontrollera en träff på Åke.
 
 **Förväntat resultat:**
@@ -811,49 +814,50 @@ and Escape restrictions”.
 
 **Steg:**
 
-1. Öppna Sök i kartan. Sök efter 299 EGEN och läs träffens detaljfält.
-   Låt sökytan vara öppen, fokusera kartbakgrunden och skriv b följt av
-   mellanslag och 12. Kontrollera att hela texten blir b 12 i sökfältet,
-   som får fokus, och att filteravsnittet stängs.
-   Välj Sök i kartan igen medan sökytan är öppen. Kontrollera sökfältets
-   fokus och öppet filteravsnitt. Stäng filteravsnittet, skriv 299 EGEN
-   och kontrollera att det förblir stängt. Öppna sedan filteravsnittet.
-2. Välj Typ 10 och sök efter A 10. Tryck Escape. Kontrollera kvarvarande
-   sökning och typ i kartans resultatbesked. Öppna sökningen igen.
-3. Besök Tabell och expandera A 2 så att det markeras. Skriv åke följt av x
-   i tabellens sökfält. Återgå till Karta.
-4. Fokusera själva kartbakgrunden med Tab. Skriv ö. Kontrollera att
-   tidigare söktext ersätts, filtret behålls och sökfältet får fokus.
-5. Stäng med Escape. Fokusera kartan och bygg ett sammansatt å.
-   Kontrollera att bara det färdiga tecknet öppnar sökningen.
-6. Prova ett kortkommando. Öppna Nytt objekt och skriv ett namn med
-   bokstäver och siffror. Välj **Avbryt** och sedan **Kasta ändringarna och
-   fortsätt** i förlustvarningen. Öppna Skriv till
-   Skyttel och skriv ett oskickat meddelande, utan att starta samtal.
-   Kontrollera att sökytan förblir stängd och texten går att skriva.
-7. Stäng textvyn, öppna Sök i kartan och välj Rensa sökning. Kontrollera tom
-   söktext, kvarvarande Typ 10 och Bara markerade (1) utan nytt filterval.
-8. Sök efter Örn. Ändra snabbt till tom text, finns inte och Örn igen.
-   Kontrollera slutligt träffbesked utan gamla mellanliggande antal.
-   <!-- cSpell:disable-next-line -->
-   Återvänd till Tabell och kontrollera dess separata text **åkex**.
+1. Kontrollera att sökfältet och Filter syns direkt, utan träffantal.
+   Klicka i kartans sökfält och kontrollera sökfältets fokus. Sök efter 299 EGEN.
+   Kontrollera A 2 i kartan, utan lista över matchande detaljfält.
+2. Öppna Filter, välj Typ 10 och tryck Escape. Kontrollera fokus på Filter,
+   en punkt för aktivt filter och bevarad söktext. Fokusera kartbakgrunden
+   och skriv b följt av mellanslag och 12. Kontrollera b 12 i sökfältet,
+   sökfältets fokus och stängd filterdialog.
+3. Sök efter A 10. Tryck Escape i sökfältet och kontrollera fokus på
+   kartan med text och filter kvar. Öppna Filter och kontrollera Typ 10.
+   Klicka i sökfältet och kontrollera stängd dialog med valen kvar.
+4. Besök Tabell, expandera A 2 så att det markeras och skriv åke följt av x
+   i tabellens sökfält. Återgå till Karta. Fokusera kartbakgrunden och
+   skriv ö. Kontrollera ersatt söktext, kvarvarande Typ 10 och sökfokus.
+5. Fokusera kartan och bygg ett sammansatt å. Bara det färdiga tecknet
+   flyttar fokus och ändrar sökningen. Prova ett kortkommando: söktexten
+   ska finnas kvar och sökfältet ska inte få fokus.
+6. Öppna Nytt objekt och skriv ett namn med bokstäver och siffror.
+   Avbryt och kasta formulärtexten via förlustvarningen. Öppna Skriv till
+   Skyttel och skriv ett oskickat meddelande. Kontrollera vanlig inmatning
+   utan ändrad söktext. Stäng textvyn och kontrollera samma söktext.
+7. Välj krysset i sökfältet. Kontrollera tom text med kvarvarande Typ 10
+   och markering. Skriv A 2 och välj Återställ filter i dialogen:
+   söktexten ska finnas kvar och alla filter ska vara återställda.
+8. Välj Typ 2 och Bara markerade. Stäng dialogen, fokusera kartbakgrunden
+   och tryck Escape en gång. Kontrollera tom söktext, återställda filter
+   och bevarad markering. Upprepa med bara Typ 10 och redan tom söktext.
+9. Sök efter finns inte. Kontrollera tom karta utan tomhetsbesked eller
+   träffantal. Återgå till Tabell och kontrollera dess separata söktext.
    Sök efter A 2 och kontrollera markeringen. Öppna textvyn och kontrollera
    det oskickade meddelandet.
 
 **Förväntat resultat:**
 
-- Sökknappen öppnar sökning och filter, tangentbordsstart bara sökning,
-  även när sökytan redan är öppen. Varje ingång flyttar fokus till
-  sökfältet där fortsatt text tas emot. Vanlig inmatning behåller det
-  valda läget för filteravsnittet.
-- Escape och Stäng bevarar text, filter och markering. Rensa sökning
-  ändrar bara texten; Typ 10 och markeringen av A 2 är kvar. Aktiva
-  begränsningar syns med stängd sökyta.
-- Bara kartytans eget fokus ger bokstavs- eller sifferstart.
-  Kortkommandon, formulär och samtal påverkas inte.
-- Träffbesked flyttar inte fokus och snabb inmatning köar inte gamla antal.
-  Kontrollera uppläsningen med NVDA och VoiceOver; automatprovet ersätter
-  inte hjälpmedelsprovet.
+- Sökfältet och Filter syns utan att en sökning behöver startas.
+  Ett klick i fältet och färdigt tecken från kartbakgrunden ger sökfältet fokus.
+- Krysset rensar bara texten. Återställ filter rensar bara filtervalen.
+  Escape på kartbakgrunden rensar båda i en tryckning och behåller urvalet.
+- Escape i sökfältet återför fokus till kartan med sökningen kvar.
+  Escape i dialogen stänger den med valen kvar och återfokus på Filter.
+- Kortkommandon, formulär och samtal behåller sin vanliga inmatning.
+  Vyernas sökningar, markeringen och oskickat meddelande finns kvar.
+- Inga träffantal eller särskilda tomhetsbesked visas eller läses upp.
+  Kontrollera fokus och reglagens namn med NVDA och VoiceOver;
+  automatprovet ersätter inte hjälpmedelsprovet.
 
 ### SÖK-04: sista förslaget återställer bara båda vyernas utkastfilter
 
@@ -870,14 +874,16 @@ type-only proposals expose them”.
 
 **Steg:**
 
-1. Sök efter A 2 i kartan och välj Typ 2 och Ändrat. Stäng sökytan.
+1. Sök efter A 2 i kartan, öppna Filter och välj Typ 2 och Ändrat.
+   Stäng filterdialogen.
 2. Sök efter prov i Tabell och välj Typ 2 och Nytt. Stäng filterdialogen.
 3. Öppna **Utkast**, välj **Kasta hela utkastet**, läs bekräftelsen och
    välj **Ta bort hela utkastet**. Kontrollera att utkastet är tomt.
 4. Stäng textvyn. Återvänd till Tabell och sedan kartans sökyta. Kontrollera bevarad
    söktext och Typ 2, återställt utkastfilter och besked om återställningen.
 5. Skapa enbart ett typförslag under Inställningar. Återgå till kartan
-   och sök efter finns inte. Kontrollera att utkastfiltret visas ändå.
+   och sök efter finns inte. Öppna Filter och kontrollera att
+   utkastfiltret finns trots tom karta och utan träffantal.
 
 **Förväntat resultat:**
 
@@ -901,32 +907,72 @@ preserve restrictions”.
 
 **Steg:**
 
-1. Visa verktygens namn och öppna Sök i kartan. Kontrollera sökfältets
-   fokus och åtkomliga filter. Skriv prov och ta med upphörda.
-2. Stäng sökytan. Läs fortsatt sökning, filter och träffantal.
+1. Visa verktygens namn och klicka i kartans sökfält. Kontrollera sökfältets
+   fokus. Skriv prov, öppna Filter och välj Ta med upphörda.
+2. Stäng filterdialogen. Kontrollera samma text och punkten vid Filter,
+   utan träffantal.
 3. Välj Tabell, sök efter 399 egen och öppna Filter. Kontrollera fokus på
    Tabellens filter och förklaringen om vilka objekt tabellen visar.
    Kontrollera att rutorna står före sina texter på samma rad.
-   Välj Typ 2, kontrollera Visa 1 träffar och välj knappen.
+   Välj Typ 2 och välj Visa objekt. Knappen visar inget träffantal.
 4. Kontrollera samma söktext och en träff. Prova samma flöde med touch,
    skärmtangentbord och förstoring på iPhone och iPad.
-5. Öppna Filter igen. Kontrollera Typ 2 och samma träffantal. Nå knappen
-   för att visa träffar med tangentbord även när skärmen är kort. Stäng
+5. Öppna Filter igen. Kontrollera Typ 2 och samma objekt. Nå knappen
+   Visa objekt med tangentbord även när skärmen är kort. Stäng
    med knappen och öppna igen; prova också krysset och Escape.
    Upprepa på dator, vid 320 pixlars bredd och i ett kort fönster.
-   Kontrollera att både krysset och träffknappen är synliga, nåbara
+   Kontrollera att både krysset och knappen Visa objekt är synliga, nåbara
    och fungerar utan att ändra söktext eller filter.
 
 **Förväntat resultat:**
 
 - Kartan har en ingång utan tangentbord och tabellen ett eget synligt fält.
-- Filterdialogen håller fokus inom dialogen och återgår till Filter.
-- Knappen visar det aktuella träffantalet och stänger med valen kvar.
+- Tabellens filterdialog håller fokus inom dialogen och återgår till Filter.
+- Visa objekt stänger tabellens dialog med valen kvar, utan träffantal.
 - Rutorna står bredvid sin text på dator och mobil. Krysset och
-  träffknappen förblir nåbara även när filterinnehållet behöver rullas.
+  knappen Visa objekt förblir nåbara även när filterinnehållet behöver rullas.
 - Sökingången ryms inom skärmen. Söktext och filter bevaras vid stängning.
 - Verklig touch, skärmtangentbord och VoiceOver behöver manuellt prov;
   automatprovet kontrollerar mobil layout och offentlig UI.
+
+### SÖK-10: synlig kapselsökning och liten filterdialog på olika skärmar
+
+**Syfte:** Nå kartans sökning och filter på dator och liten skärm.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning är öppen i Karta.
+Prova dator, telefon, förstoring och ett kort fönster med tangentbord.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+“SÖK-10: capsule search and attached filters fit desktop and narrow short
+screens”.
+
+**Steg:**
+
+1. Kontrollera att ett kapselformat sökfält syns direkt, centrerat högst
+   upp på dator och under verktygen på telefon. Krysset finns i fältet
+   och Filter till höger. Ingen del ska täcka verktygens knappar.
+2. Öppna Filter. Kontrollera liten dialog under knappen och avsnitten
+   Objekttyp, Status och Förslag i ditt utkast. Fokus går till rubriken.
+3. Använd Tab för att nå de sista filtervalen och Återställ filter.
+   Kontrollera att innehållet går att rulla utan rullning i sidled.
+4. Tryck Escape och kontrollera stängd dialog och fokus tillbaka på Filter.
+   Upprepa i ett kort fönster och med förstoring.
+5. Öppna Utkast på dator och skriv ett oskickat meddelande. Öppna Filter,
+   välj Återställ filter och tryck Escape. Kontrollera att dialogen går
+   att använda över textvyn och att meddelandet finns kvar.
+6. Öppna ett objekts uppgifter i ett mycket kort telefonfönster.
+   Sökfältet ska synas bredvid de rullbara verktygen och uppgifterna
+   ska gå att läsa. Stäng uppgifterna och kontrollera sökfältet under verktygen.
+
+**Förväntat resultat:**
+
+- Sökfält, kryss och Filter är synliga och går att använda på alla skärmar.
+- Dialogen ryms på skärmen och långa filterlistor går att rulla.
+- Krysset och filtervalen har begripliga namn för skärmläsaren.
+  Verklig förstoring, touch och hjälpmedel behöver manuellt prov.
 
 ### SÖK-06: direkta grannar och fortsatt utforskning bevarar sökträffarna
 
@@ -943,14 +989,14 @@ hits through return and table visits”.
 
 **Steg:**
 
-1. Öppna **Sök i kartan** och skriv **Alex**. Stäng sökytan.
+1. Klicka i kartans sökfält, skriv **Alex** och tryck Escape i sökfältet.
 2. Läs Alex som sökträff och Blå cykel som sammanhang. Markera cykeln
    med tangentbord. Kontrollera att Garaget inte visas ännu.
 3. Välj **Visa samband i kartan**. Kontrollera Garaget, tidigare innehåll
    och kamerans förflyttning. Markera Garaget och upprepa för Bostaden.
-4. Öppna sökytan och välj Alex objekttyp. Kontrollera återgång till
+4. Öppna Filter och välj Alex objekttyp. Kontrollera återgång till
    Alex och cykeln. Skriv **Blå** och kontrollera dess direkta grannar;
-   Bostaden visas inte. Skriv **Alex** igen och stäng sökytan.
+   Bostaden visas inte. Skriv **Alex** igen och tryck Escape i sökfältet.
 5. Markera cykeln och följ dess samband igen. Besök **Tabell** och
    återgå via **Karta**. Välj **Tillbaka till sökträffarna**.
 
@@ -981,14 +1027,14 @@ edges require inclusion”.
 
 **Steg:**
 
-1. Markera Alex. Öppna **Sök i kartan**, skriv **Alex**, välj Alex
-   objekttyp, **Ändrat** och **Bara markerade**. Stäng sökytan.
-2. Kontrollera träffantalet och cykelns sammanhang. Läs upplysningen
-   om dolt upphört innehåll.
+1. Markera Alex. Skriv **Alex** i sökfältet. Öppna Filter och välj Alex
+   objekttyp, **Ändrat** och **Bara markerade**. Stäng filterdialogen.
+2. Kontrollera Alex som sökträff och cykeln som sammanhang. Läs
+   upplysningen om dolt upphört innehåll. Inget träffantal ska visas.
 3. Välj upplysningens **Ta med upphörda**. Kontrollera båda ytterligare
-   grannarna och träffantalet.
-4. Öppna sökytan och avmarkera **Bara markerade** och **Ta med upphörda**.
-   Stäng sökytan, markera cykeln och välj **Visa samband i kartan**.
+   grannarna och att Alex fortfarande är sökträff.
+4. Öppna Filter och avmarkera **Bara markerade** och **Ta med upphörda**.
+   Stäng filterdialogen, markera cykeln och välj **Visa samband i kartan**.
 5. Öppna **Tabell**, välj **Redigera Blå cykel** och öppna
    **Livscykel och utseende**. Ändra objektets status till **Upphört**
    och välj **Lägg i utkastet och stäng**.
@@ -1034,8 +1080,9 @@ work at 320px”.
 2. Välj **Tabell**, sök **Blå**, sortera namn Ö–A och expandera cykeln.
 3. Välj **Visa Blå cykel i kartan**. Kontrollera markering och direkt
    sammanhang. Kontrollera även att Bostaden finns kvar i kartan.
-4. Öppna kartans sökyta. Kontrollera tom text, återställda filter och
-   fyra träffar. Stäng och återgå via **Tabell**.
+4. Kontrollera tom text i kartans synliga sökfält. Öppna Filter och
+   kontrollera återställda filter. De fyra objekten ska finnas i kartan.
+   Stäng filterdialogen och återgå via **Tabell**.
 5. Kontrollera fokus, söktext, sortering och öppen rad. Sök sedan
    **Oberoende**, öppna **Filter** och välj **Ta med borttagna**.
 
@@ -1065,7 +1112,7 @@ endpoints without expanding their chains”.
 
 1. Öppna Alex samband från tabellen. Ändra sambandet till Blå cykel
    så att målobjektet är Garaget. Lägg det i utkastet utan att spara.
-2. Öppna kartan, sök **Alex** och stäng sökytan. Läs tidigare och
+2. Öppna kartan, sök **Alex** och tryck Escape i sökfältet. Läs tidigare och
    föreslagen koppling. Kontrollera att Bostaden inte visas.
 3. Kasta förslaget. Markera det ursprungliga sambandet som upphört
    och spara. Föreslå sedan målobjekt Garaget och status Aktuellt.

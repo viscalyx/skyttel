@@ -92,9 +92,9 @@ test('LISTA-01: multiple type filters combine with search and the current row ac
     await filters.getByLabel('Tjänst', { exact: true }).check();
     await expect(filters).toBeVisible();
     await closeFilters(page);
-    await expect(table.getByText('200 träffar', { exact: true })).toBeVisible();
+    await expect(table.getByRole('rowheader')).toHaveCount(50);
     await table.getByLabel('Sök objekt i tabellen', { exact: true }).fill('sammanhang 0.');
-    await expect(table.getByText('20 träffar', { exact: true })).toBeVisible();
+    await expect(table.getByRole('rowheader')).toHaveCount(20);
     await tableFilters(page);
     await filters.getByLabel(/^Bara markerade/).check();
     await closeFilters(page);
@@ -112,19 +112,21 @@ test('LISTA-01: multiple type filters combine with search and the current row ac
     await tableFilters(page);
     await filters.getByLabel(/^Bara markerade/).uncheck();
     await closeFilters(page);
-    await expect(table.getByText('50 träffar', { exact: true })).toBeVisible();
+    await expect(table.getByRole('rowheader')).toHaveCount(50);
     await tableFilters(page);
     await filters.getByLabel('Person', { exact: true }).check();
     await closeFilters(page);
     await expect(table.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
-    await expect(table.getByText('10 träffar', { exact: true })).toBeVisible();
+    await expect(table.getByRole('rowheader')).toHaveCount(10);
     await table.getByLabel('Sök objekt i tabellen', { exact: true }).fill('finns inte');
-    await expect(
-      table.getByRole('heading', { name: 'Inga objekt matchar', exact: true }),
-    ).toBeVisible();
-    await table.getByRole('button', { name: 'Återställ sökning och filter', exact: true }).click();
+    await expect(table.getByRole('rowheader')).toHaveCount(0);
+    await tableFilters(page);
+    await filters
+      .getByRole('button', { name: 'Återställ sökning och filter', exact: true })
+      .click();
+    await closeFilters(page);
     await includeEnded(page);
-    await expect(table.getByText('500 träffar', { exact: true })).toBeVisible();
+    await expect(table.getByRole('rowheader')).toHaveCount(50);
     await expect(
       table.getByRole('row', { name: /Provobjekt 001/ }).getByText('✓ Markerad', { exact: true }),
     ).toBeVisible();
@@ -236,7 +238,7 @@ test('LISTA-02: sorting, pages and scroll survive native details, settings and m
         if (number < 4) await pages.getByRole('button', { name: 'Nästa', exact: true }).click();
       }
       namesBySort.push(names);
-      await expect(table.getByText('200 träffar', { exact: true })).toBeVisible();
+      await expect(table.getByRole('rowheader')).toHaveCount(50);
     }
     expect(namesBySort[0]).toHaveLength(200);
     expect(new Set(namesBySort[0]).size).toBe(200);

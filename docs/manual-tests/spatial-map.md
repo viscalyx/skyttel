@@ -17,7 +17,7 @@ Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
 
 1. Starta en isolerad installation enligt
-   [provförberedelsen](../development/devcontainer.md#disposable-local-database).
+[provförberedelsen](../development/devcontainer.md#disposable-local-database).
    Använd ett nytt
    provhushåll mellan fallen så att inget tidigare utkast finns kvar.
 2. Skapa förslag för personen Lo Exempel och tjänsten Molnmusik. Lägg vid
@@ -75,21 +75,22 @@ selection”.
 1. Öppna **Karta**. Kontrollera pilen från Lo Exempel till Molnmusik
    före och efter rotation och panorering under **Navigera**. Välj
    Lo Exempels runda symbol och kontrollera sambandets etikett.
-2. Öppna **Sök i kartan** och markera **Person**. Kontrollera en sökträff,
+2. Öppna **Filter** vid sökfältet och markera **Person**. Kontrollera Lo,
    Molnmusik som ett sammanhangsobjekt och den bevarade markeringen på Lo.
-   Välj **Återställ sökning och filter** och stäng sökningen.
+   Välj **Återställ filter** och stäng filterdialogen.
 3. Högerklicka Lo Exempel och välj **Visa samband i kartan** i menyn.
    Kontrollera beskedet om direkta samband och att menyn stängs. Rulla
    lodrätt över tom rymd, objektsymbolen och namnet; alla tre ska panorera.
-4. Panorera med knappen under **Navigera**. Öppna sökningen och välj
-   **Återställ sökning och filter**; kontrollera att kameran står kvar.
-   Sök efter Lo, stäng sökningen och tryck Escape först från en kameraknapp
-   och sedan från kartytan. Öppna sökningen igen och kontrollera Lo.
-   Välj **Rensa sökning** och stäng sökningen.
-5. Visa Lo Exempels samband igen, sök efter Lo och markera **Person**.
-   Stäng sökningen och välj **Återställ vy**. Öppna sökningen igen och
+4. Panorera med knappen under **Navigera**. Öppna Filter och välj
+   **Återställ filter**; kontrollera att kameran står kvar.
+   Sök efter Lo och tryck Escape i sökfältet. Tryck Escape från en
+   kameraknapp och kontrollera Lo i sökfältet. Tryck sedan Escape från
+   kartbakgrunden och kontrollera tom söktext och återställda filter.
+5. Visa Lo Exempels samband igen, sök efter Lo, öppna Filter och markera
+   **Person**.
+   Stäng filterdialogen och välj **Återställ vy**. Öppna Filter igen och
    kontrollera tom sökning, avmarkerad Person och ingen knapp för att
-   återgå till sökträffarna. Stäng sökningen och välj **Alla etiketter**.
+   återgå till sökträffarna. Stäng filterdialogen och välj **Alla etiketter**.
 6. Välj användningssambandets etikett, **Visa detaljer** och
    **Redigera valt samband**. Kontrollera Molnmusik som **Till objekt**.
 
@@ -100,8 +101,8 @@ selection”.
   anslutet objekt väljs eller Alla etiketter är på. Förslagens etiketter
   visas direkt, med prioritet så långt de ryms utan krockar.
 - Sökningen visar direkta samband som sammanhang och bevarar markeringen.
-  Återställ sökning och filter behåller kameran. Escape bevarar söktexten
-  både från kameraknappen och från kartytan.
+  Återställ filter behåller kameran. Escape från en kameraknapp behåller
+  söktexten. Escape på kartbakgrunden rensar text och filter tillsammans.
 - Återställ vy rensar sökning, typfilter och utforskade samband och ramar
   in hela kartan. Sambandets vanliga formulär har rätt mål.
 
@@ -288,8 +289,9 @@ draft symbols”.
 3. Öppna **Samband för Lo Exempel** och **Redigera samband**. Ange ett
    känt slutdatum i det förflutna,
    behåll Följ slutdatum och lägg sambandet i utkastet.
-4. Öppna rymdkartan och välj Alla etiketter. Öppna **Sök i kartan**,
-   markera **Ta med upphörda** och stäng sökningen. Kontrollera sedan
+4. Öppna rymdkartan och välj Alla etiketter. Klicka i kartans sökfält,
+   öppna Filter, markera **Ta med upphörda** och stäng filterdialogen.
+   Kontrollera sedan
    objektens och sambandets etiketter.
 5. Öppna **Skriv till Skyttel**, visa utkastet och spara med sparikonen.
    Stäng textvyn, starta om appen och öppna kartan igen. Markera åter
@@ -331,9 +333,9 @@ and opens the saved route read-only”.
 2. Kontrollera Lo Exempel och Kim Exempel med båda betalningssambanden.
 3. Välj den tidigare etiketten Lo Exempel → Betalar → Molnmusik med ×.
 4. Välj **Visa detaljer** och läs **Valt samband**. Kontrollera att
-   sparade tidigare värden saknar redigeringsfält. Öppna **Sök i kartan**,
+   sparade tidigare värden saknar redigeringsfält. Klicka i kartans sökfält,
    kontrollera att **Tillbaka till sökträffarna** fortfarande finns och
-   stäng sökningen. Stäng uppgifterna. Högerklicka Kim Exempel, välj
+   tryck Escape i sökfältet. Stäng uppgifterna. Högerklicka Kim Exempel, välj
    **Visa samband i kartan** och det föreslagna betalningssambandet.
    Välj **Visa detaljer** och **Redigera valt samband**.
 
@@ -344,7 +346,8 @@ and opens the saved route read-only”.
   grönt plus och heldragen linje. Punktade etikettkopplingar
   går att skilja från riktade samband.
 - Den böjda tidigare linjen och etiketten leder till läsbara tidigare
-  värden utan redigeringsfält. Utforskningen av Molnmusiks samband behålls vid valet.
+  värden utan redigeringsfält. Utforskningen av Molnmusiks samband behålls vid
+valet.
 - Det föreslagna sambandet visar Kim som betalare. Redigera valt samband
   öppnar formuläret med Kim som Från objekt. Granskningen ändrar inga
   uppgifter i utkastet eller den sparade kartan.

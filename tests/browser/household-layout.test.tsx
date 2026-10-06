@@ -446,9 +446,7 @@ test('short table flow restores the used result and yields to an explicit map se
       ),
   ).toBe(true);
   await openMap();
-  const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-  await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-  await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true }).click();
   await expect
     .element(page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true }))
     .toHaveFocus();

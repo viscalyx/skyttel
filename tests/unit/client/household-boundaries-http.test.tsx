@@ -57,25 +57,17 @@ test('table and map searches normalize Swedish own fields independently and neve
   await userEvent.type(query, 'hemlig anteckning');
   expect(fixture.table.getByText('Träff i Egen anteckning')).toBeTruthy();
   await userEvent.click(fixture.tools.getByRole('button', { name: 'Karta' }));
-  await userEvent.click(fixture.tools.getByRole('button', { name: 'Sök i kartan' }));
+  await userEvent.click(screen.getByRole('searchbox', { name: 'Sök objekt i kartan' }));
   const map = within(await screen.findByRole('region', { name: 'Kartans sökning och filter' }));
   const mapQuery = map.getByLabelText('Sök objekt i kartan');
   expect((mapQuery as HTMLInputElement).value).toBe('');
   await userEvent.type(mapQuery, 'endast i sambandet');
-  expect(map.getByRole('heading', { name: 'Inga objekt matchar' })).toBeTruthy();
-  const empty = map.getByRole('heading', { name: 'Inga objekt matchar' }).parentElement;
-  if (!empty) throw new Error('The ordinary empty-results message is required');
-  await userEvent.click(
-    within(empty).getByRole('button', { name: 'Återställ sökning och filter' }),
-  );
+  expect(map.queryByRole('heading', { name: 'Inga objekt matchar' })).toBeNull();
+  await userEvent.click(map.getByRole('button', { name: 'Rensa sökning' }));
   await userEvent.type(mapQuery, 'hemlig');
-  expect(map.getByRole('list', { name: 'Matchande detaljfält' }).textContent).toContain(
-    'Övrigt Élan: träff i Egen anteckning',
-  );
-  await userEvent.click(map.getByRole('button', { name: 'Stäng' }));
-  expect(screen.getByRole('complementary', { name: 'Kartans sökresultat' }).textContent).toContain(
-    'Sökning: hemlig',
-  );
+  expect(map.queryByRole('list', { name: 'Matchande detaljfält' })).toBeNull();
+  await userEvent.keyboard('{Escape}');
+  expect((mapQuery as HTMLInputElement).value).toBe('hemlig');
   await userEvent.click(fixture.tools.getByRole('button', { name: 'Tabell' }));
   expect((query as HTMLInputElement).value).toBe('hemlig anteckning');
   expect(await fixture.read()).toEqual(before);
@@ -142,10 +134,10 @@ test('sorting and pagination preserve numeric Swedish order and resetting a no-m
   await userEvent.selectOptions(fixture.table.getByLabelText('Sortering'), 'type-asc');
   await userEvent.selectOptions(fixture.table.getByLabelText('Sortering'), 'type-desc');
   await userEvent.type(fixture.table.getByLabelText('Sök objekt i tabellen'), 'hittas aldrig');
-  expect(fixture.table.getByRole('heading', { name: 'Inga objekt matchar' })).toBeTruthy();
-  await userEvent.click(
-    fixture.table.getByRole('button', { name: 'Återställ sökning och filter' }),
-  );
+  expect(fixture.table.queryAllByRole('rowheader')).toHaveLength(0);
+  const filters = await filterDialog(fixture.table);
+  await userEvent.click(filters.getByRole('button', { name: 'Återställ sökning och filter' }));
+  await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
   expect(pages.getByRole('status').textContent).toContain('Sida 1 av 2');
   expect(await fixture.read()).toEqual(before);
 }, 30_000);
@@ -784,7 +776,8 @@ test('a type-only draft keeps proposal filters active until confirmed discard re
   await waitFor(() =>
     expect(tools.getByRole('button', { name: 'Nytt objekt' }).matches(':disabled')).toBe(false),
   );
-  await userEvent.click(tools.getByRole('button', { name: /^Sök i kartan/ }));
+  await userEvent.click(tools.getByRole('button', { name: 'Karta' }));
+  await userEvent.click(screen.getByRole('searchbox', { name: 'Sök objekt i kartan' }));
   let map = within(await screen.findByRole('region', { name: 'Kartans sökning och filter' }));
   await userEvent.type(map.getByLabelText('Sök objekt i kartan'), 'behåll sökningen');
   await userEvent.click(map.getByRole('button', { name: /^Filter/ }));
@@ -796,10 +789,10 @@ test('a type-only draft keeps proposal filters active until confirmed discard re
   expect(map.queryByText('Utkastfiltret är återställt eftersom ditt utkast är tomt.')).toBeNull();
   await userEvent.click(map.getByLabelText('Sök objekt i kartan'));
   await userEvent.keyboard('{Escape}');
-  const summary = within(screen.getByRole('complementary', { name: 'Kartans sökresultat' }));
-  expect(
-    summary.getByText(/Tillfällig provtyp.*Bara markerade.*Ta med upphörda.*Nytt/),
-  ).toBeTruthy();
+  expect((map.getByLabelText('Sök objekt i kartan') as HTMLInputElement).value).toBe(
+    'behåll sökningen',
+  );
+  expect(map.getByRole('button', { name: 'Filter · aktiva' })).toBeTruthy();
   expect(await fixture.read()).toEqual(before);
   const draft = await openDraftReview();
   await userEvent.click(draft.getByRole('button', { name: 'Kasta hela utkastet' }));
@@ -812,14 +805,15 @@ test('a type-only draft keeps proposal filters active until confirmed discard re
   await draft.findByText('Utkastet är tomt.');
   await userEvent.click(screen.getByRole('button', { name: 'Stäng textvyn' }));
   expect(
-    summary.getByText('Utkastfiltret är återställt eftersom ditt utkast är tomt.'),
+    await screen.findByText('Utkastfiltret är återställt eftersom ditt utkast är tomt.'),
   ).toBeTruthy();
-  expect(summary.getByText(/Borttagen typ.*Bara markerade.*Ta med upphörda/)).toBeTruthy();
-  await userEvent.click(tools.getByRole('button', { name: /^Sök i kartan/ }));
+  await userEvent.click(tools.getByRole('button', { name: 'Karta' }));
+  await userEvent.click(screen.getByRole('searchbox', { name: 'Sök objekt i kartan' }));
   map = within(await screen.findByRole('region', { name: 'Kartans sökning och filter' }));
   expect((map.getByLabelText('Sök objekt i kartan') as HTMLInputElement).value).toBe(
     'behåll sökningen',
   );
+  await userEvent.click(map.getByRole('button', { name: /^Filter/ }));
   expect((map.getByLabelText('Bara markerade (0)') as HTMLInputElement).checked).toBe(true);
   expect((map.getByLabelText('Ta med upphörda') as HTMLInputElement).checked).toBe(true);
   expect(map.queryByLabelText('Nytt')).toBeNull();

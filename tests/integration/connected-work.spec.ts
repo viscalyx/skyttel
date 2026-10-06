@@ -199,7 +199,10 @@ for (const mode of ['voice', 'text'] as const) {
       const identity = await (await page.request.get(`${app.origin}/api/bootstrap`)).json();
       const householdId = identity.household.id;
       const path = `${app.origin}/api/households/${householdId}/map`;
-      const read = async (): Promise<MapState> => (await page.request.get(path)).json();
+      // UI work can outlive the fixture's idle keep-alive socket. Retry that
+      // transport reset once; HTTP errors and mutations are never retried.
+      const read = async (): Promise<MapState> =>
+        (await page.request.get(path, { maxRetries: 1 })).json();
       const readMember = async (): Promise<MapState> => (await member.request.get(path)).json();
       const history = async (): Promise<SaveReceipt[]> =>
         (await (await page.request.get(`${path}/history`)).json()).history;

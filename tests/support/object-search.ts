@@ -1,6 +1,12 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { prepareHouseholdTable } from './household-table.js';
 
+/** Return to the map and focus its always-visible search input. */
+export async function focusMapSearch(page: Page) {
+  await page.getByRole('button', { name: 'Karta', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true }).click();
+}
+
 /** Same public-HTTP Unicode preparation for manual and automated searches. */
 export async function prepareObjectSearch(client: APIRequestContext, origin: string) {
   const prepared = await prepareHouseholdTable(client, origin);
@@ -38,18 +44,17 @@ export async function prepareObjectSearch(client: APIRequestContext, origin: str
   return prepared;
 }
 
+/** Open the map's filter dialog without changing search or toolbar state. */
+export async function mapFilters(page: Page) {
+  const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
+  const button = panel.getByRole('button', { name: /^Filter/ });
+  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+  return page.getByRole('dialog', { name: 'Kartans filter', exact: true });
+}
+
 /** Existing large-list cases deliberately include the fixture's ended objects. */
 export async function includeEndedInMap(page: Page) {
-  const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-  await tools.waitFor({ state: 'visible' });
-  const expand = tools.getByRole('button', { name: 'Visa verktygens namn', exact: true });
-  const collapse = tools.getByRole('button', { name: 'Dölj verktygens namn', exact: true });
-  const wasExpanded = await collapse.isVisible();
-  if (await expand.isVisible()) await expand.click();
-  await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
-  const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
-  await panel.getByLabel('Ta med upphörda').check();
-  await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
-  if (wasExpanded && (await expand.isVisible())) await expand.click();
-  else if (!wasExpanded && (await collapse.isVisible())) await collapse.click();
+  const filters = await mapFilters(page);
+  await filters.getByLabel('Ta med upphörda').check();
+  await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
 }

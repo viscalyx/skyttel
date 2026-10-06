@@ -1,7 +1,7 @@
 import { expect, type Locator, test } from '@playwright/test';
 import { prepareHouseholdTable } from '../support/household-table.js';
 import { createInstallation } from '../support/installation.js';
-import { prepareObjectSearch } from '../support/object-search.js';
+import { focusMapSearch, mapFilters, prepareObjectSearch } from '../support/object-search.js';
 
 test('SÖK-01: own detail fields, every word and Swedish normalization find objects', async ({
   page,
@@ -34,8 +34,13 @@ test('SÖK-01: own detail fields, every word and Swedish normalization find obje
     await search.fill('ake');
     await expect(table.getByRole('rowheader')).toHaveCount(0);
     await expect(search).toBeFocused();
-    await expect(table.getByRole('heading', { name: 'Inga objekt matchar' })).toBeVisible();
-    await table.getByRole('button', { name: 'Återställ sökning och filter', exact: true }).click();
+    await expect(table.getByRole('heading', { name: 'Inga objekt matchar' })).toHaveCount(0);
+    await table.getByRole('button', { name: /^Filter/ }).click();
+    await page
+      .getByRole('dialog', { name: 'Tabellens filter' })
+      .getByRole('button', { name: 'Återställ sökning och filter', exact: true })
+      .click();
+    await page.keyboard.press('Escape');
     await expect(search).toHaveValue('');
     await search.fill('åke beskrivning');
     await expect(table.getByRole('rowheader')).toHaveCount(1);
@@ -54,11 +59,11 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     const { post, read } = await prepareHouseholdTable(page.request, installation.origin);
     await page.goto(installation.origin);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-    await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
+    await focusMapSearch(page);
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     await panel.getByRole('searchbox').fill('A 2');
-    await panel.getByLabel('Typ 2', { exact: true }).check();
-    await panel.getByLabel('Ändrat', { exact: true }).check();
+    await (await mapFilters(page)).getByLabel('Typ 2', { exact: true }).check();
+    await (await mapFilters(page)).getByLabel('Ändrat', { exact: true }).check();
     await page.keyboard.press('Escape');
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
@@ -79,7 +84,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     await expect(table.getByRole('searchbox')).toHaveValue('prov');
     await expect(
-      table.getByText('0 träffar · Utkastfiltret är återställt eftersom ditt utkast är tomt.', {
+      table.getByText('Utkastfiltret är återställt eftersom ditt utkast är tomt.', {
         exact: true,
       }),
     ).toBeVisible();
@@ -87,9 +92,9 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
     await expect(filters.getByRole('group', { name: 'Förslag i ditt utkast' })).toHaveCount(0);
     await page.keyboard.press('Escape');
-    await tools.getByRole('button', { name: 'Sök i kartan · aktiv', exact: true }).click();
+    await focusMapSearch(page);
     await expect(panel.getByRole('searchbox')).toHaveValue('A 2');
-    await expect(panel.getByLabel('Typ 2', { exact: true })).toBeChecked();
+    await expect((await mapFilters(page)).getByLabel('Typ 2', { exact: true })).toBeChecked();
     await expect(panel.getByRole('group', { name: 'Förslag i ditt utkast' })).toHaveCount(0);
     await post('object-type', {
       id: 'only-type',
@@ -97,10 +102,13 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
       value: { name: 'Enbart typförslag', description: '', fields: [] },
     });
     await page.reload();
-    await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
+    await focusMapSearch(page);
     await panel.getByRole('searchbox').fill('finns inte');
-    await expect(panel.getByRole('group', { name: 'Förslag i ditt utkast' })).toBeVisible();
-    await expect(panel.getByText('0 sökträffar', { exact: true })).toBeVisible();
+    await expect(
+      (await mapFilters(page)).getByRole('group', { name: 'Förslag i ditt utkast' }),
+    ).toBeVisible();
+    await expect(panel.getByText(/\d+ sökträffar/)).toHaveCount(0);
+    await expect(page.locator('.spatial-node')).toHaveCount(0);
   } finally {
     await installation.close();
   }
@@ -117,18 +125,20 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
     await page.goto(installation.origin);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
     await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
-    await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
+    await focusMapSearch(page);
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     await expect(panel.getByRole('searchbox')).toBeFocused();
-    await expect(panel.getByLabel('Ta med upphörda')).toBeVisible();
+    await expect((await mapFilters(page)).getByLabel('Ta med upphörda')).toBeVisible();
     await panel.getByRole('searchbox').fill('prov');
-    await panel.getByLabel('Ta med upphörda').check();
-    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
-    await expect(page.getByRole('complementary', { name: 'Kartans sökresultat' })).toContainText(
-      'Sökning: prov · Ta med upphörda',
-    );
+    await (await mapFilters(page)).getByLabel('Ta med upphörda').check();
+    await page
+      .getByRole('dialog', { name: 'Kartans filter' })
+      .getByRole('button', { name: 'Stäng filter', exact: true })
+      .click();
+    await expect(panel.getByRole('searchbox')).toHaveValue('prov');
+    await expect(panel.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeVisible();
     await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
-    await expect(tools.getByRole('button', { name: 'Sök i kartan · aktiv' })).toBeVisible();
+    await expect(tools.getByRole('button', { name: /^Sök i kartan/ })).toHaveCount(0);
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('searchbox').fill('399 egen');
@@ -194,7 +204,7 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
     await checkFilterLayout();
     await filters.getByLabel('Typ 2', { exact: true }).check();
     await expect(filters.getByText('Filter ändrar vilka objekt tabellen visar.')).toBeVisible();
-    const showResults = filters.getByRole('button', { name: 'Visa 1 träffar', exact: true });
+    const showResults = filters.getByRole('button', { name: 'Visa objekt', exact: true });
     await expect(showResults).toBeVisible();
     await showResults.click();
     await expect(table.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
@@ -331,60 +341,58 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     const before = await read();
     await page.goto(installation.origin);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-    await tools.getByRole('button', { name: 'Sök i kartan', exact: true }).click();
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
-    const mapSearch = panel.getByRole('searchbox');
-    const canvas = page.getByRole('img', {
-      name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller tabellen.',
-    });
-    await expect(mapSearch).toBeFocused();
+    const mapSearch = panel.getByRole('searchbox', { name: 'Sök objekt i kartan' });
+    const canvas = page.getByRole('img', { name: /Rymdens bakgrund/ });
+    const nodes = page
+      .getByRole('region', { name: 'Rymdkarta', exact: true })
+      .locator('.spatial-node');
+    await expect(mapSearch).toBeVisible();
+    await expect(mapSearch).toHaveValue('');
     await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
       'aria-expanded',
-      'true',
+      'false',
     );
+    await expect(page.getByText(/\d+ (sökträffar|träffar)/)).toHaveCount(0);
+    await focusMapSearch(page);
+    await expect(mapSearch).toBeFocused();
     await mapSearch.fill('299 EGEN');
-    await expect(panel.getByText('1 sökträffar', { exact: true })).toBeVisible();
-    await expect(panel.getByRole('list', { name: 'Matchande detaljfält' })).toContainText(
-      'A 2: träff i Egen anteckning, Pris',
-    );
+    await expect(nodes).toHaveCount(1);
+    await expect(nodes).toHaveAccessibleName('Välj objekt: A 2');
+    await expect(panel.getByRole('list', { name: 'Matchande detaljfält' })).toHaveCount(0);
+    // Search text alone does not mark filters as active.
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeVisible();
+    const filters = await mapFilters(page);
+    await expect(filters.getByRole('heading', { name: 'Kartans filter' })).toBeFocused();
+    await filters.getByLabel('Typ 10', { exact: true }).check();
+    await page.keyboard.press('Escape');
+    await expect(filters).not.toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
+    await expect(mapSearch).toHaveValue('299 EGEN');
     await canvas.focus();
     await page.keyboard.press('b');
     await expect(mapSearch).toBeFocused();
     await page.keyboard.type(' 12');
     await expect(mapSearch).toHaveValue('b 12');
-    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
-    await tools.getByRole('button', { name: 'Sök i kartan · aktiv', exact: true }).click();
+    await expect(filters).not.toBeVisible();
+    await focusMapSearch(page);
     await expect(mapSearch).toBeFocused();
-    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    );
-    await panel.getByRole('button', { name: 'Filter', exact: true }).click();
-    await mapSearch.fill('299 EGEN');
-    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
-    await panel.getByRole('button', { name: 'Filter', exact: true }).click();
-    await panel.getByLabel('Typ 10', { exact: true }).check();
+    await expect(filters).not.toBeVisible();
     await mapSearch.fill('A 10');
-    await page.keyboard.press('Escape');
-    await expect(panel).not.toBeVisible();
-    await expect(tools.getByRole('button', { name: 'Sök i kartan · aktiv' })).toBeFocused();
-    await expect(page.getByRole('complementary', { name: 'Kartans sökresultat' })).toContainText(
-      'Typ 10',
-    );
-    await tools.getByRole('button', { name: 'Sök i kartan · aktiv' }).click();
+    await (await mapFilters(page)).getByRole('button', { name: 'Stäng filter' }).click();
+    await mapSearch.press('Escape');
+    await expect(canvas).toBeFocused();
     await expect(mapSearch).toHaveValue('A 10');
-    await page.keyboard.press('Escape');
+    await expect((await mapFilters(page)).getByLabel('Typ 10', { exact: true })).toBeChecked();
+    // Outside click closes the dialog and keeps its changes.
+    await mapSearch.click();
+    await expect(filters).not.toBeVisible();
+    await expect(mapSearch).toHaveValue('A 10');
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
-    const tableSearch = page.getByRole('searchbox', { name: 'Sök objekt i tabellen' });
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('button', { name: 'A 2', exact: true }).click();
     await expect(table.getByText('✓ Markerad', { exact: true })).toBeVisible();
+    const tableSearch = table.getByRole('searchbox');
     await tableSearch.fill('åke');
     await page.keyboard.type('x');
     await expect(tableSearch).toHaveValue('åkex');
@@ -393,16 +401,12 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await canvas.dispatchEvent('keydown', { key: 'ö' });
     await expect(mapSearch).toHaveValue('ö');
     await expect(mapSearch).toBeFocused();
-    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
-    await panel.getByRole('button', { name: 'Filter', exact: true }).click();
-    await expect(panel.getByLabel('Typ 10', { exact: true })).toBeChecked();
+    await expect((await mapFilters(page)).getByLabel('Typ 10', { exact: true })).toBeChecked();
     await page.keyboard.press('Escape');
     await canvas.focus();
     await canvas.dispatchEvent('keydown', { key: 'Process', isComposing: true });
-    await expect(panel).not.toBeVisible();
+    await expect(mapSearch).toHaveValue('ö');
+    await expect(mapSearch).not.toBeFocused();
     await canvas.evaluate((element) => {
       element.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '' }));
       element.dispatchEvent(
@@ -410,19 +414,17 @@ test('SÖK-03: map-only character and composition entry preserve separate search
       );
     });
     await expect(mapSearch).toHaveValue('å');
-    await page.keyboard.press('Escape');
-    await canvas.focus();
+    await expect(mapSearch).toBeFocused();
+    await mapSearch.press('Escape');
     await page.keyboard.press('Control+f');
-    await expect(panel).not.toBeVisible();
-    await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
-    await expect(tableSearch).toHaveValue('åkex');
-    await tools.getByRole('button', { name: 'Karta', exact: true }).click();
+    await expect(canvas).toBeFocused();
+    await expect(mapSearch).toHaveValue('å');
     await tools.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     const objectName = page.getByLabel('Namn', { exact: true });
     await objectName.pressSequentially('Ö Testnamn 123');
     await expect(objectName).toHaveValue('Ö Testnamn 123');
     await expect(objectName).toBeFocused();
-    await expect(panel).not.toBeVisible();
+    await expect(mapSearch).toHaveValue('å');
     await page
       .getByRole('dialog', { name: 'Nytt objekt', exact: true })
       .getByRole('button', { name: 'Avbryt', exact: true })
@@ -433,52 +435,177 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await message.pressSequentially('Å Oskickat meddelande 456');
     await expect(message).toHaveValue('Å Oskickat meddelande 456');
     await expect(message).toBeFocused();
-    await expect(panel).not.toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
-    await tools.getByRole('button', { name: 'Sök i kartan · aktiv', exact: true }).click();
     await expect(mapSearch).toHaveValue('å');
-    await expect(panel.getByLabel('Typ 10', { exact: true })).toBeChecked();
-    await expect(panel.getByLabel('Bara markerade (1)', { exact: true })).not.toBeChecked();
     await panel.getByRole('button', { name: 'Rensa sökning', exact: true }).click();
     await expect(mapSearch).toHaveValue('');
-    await expect(panel.getByLabel('Typ 10', { exact: true })).toBeChecked();
-    await expect(panel.getByLabel('Bara markerade (1)', { exact: true })).not.toBeChecked();
-
-    // Observe the public live region through actual timer delays and rapid UI edits.
-    const announcements = page.locator('.map-search-status').getByRole('status');
-    await mapSearch.fill('Örn');
-    await expect(announcements).toHaveText('1 träffar.');
-    const observed = await announcements.evaluateHandle((element) => {
-      const messages: string[] = [];
-      const observer = new MutationObserver(() => {
-        if (element.textContent) messages.push(element.textContent);
-      });
-      observer.observe(element, { subtree: true, childList: true, characterData: true });
-      return { messages, observer };
-    });
-    try {
-      await mapSearch.fill('');
-      await mapSearch.fill('finns inte');
-      await mapSearch.fill('Örn');
-      await expect(announcements).toBeEmpty();
-      await expect(announcements).toHaveText('1 träffar.');
-      // Let every pending result's real debounce window elapse before inspecting updates.
-      await page.waitForTimeout(400);
-      expect(await observed.evaluate(({ messages }) => messages)).toEqual(['1 träffar.']);
-      await expect(mapSearch).toBeFocused();
-    } finally {
-      await observed.evaluate(({ observer }) => observer.disconnect());
-      await observed.dispose();
-    }
+    await expect(mapSearch).toBeFocused();
+    await expect((await mapFilters(page)).getByLabel('Typ 10', { exact: true })).toBeChecked();
+    await expect(filters.getByLabel('Bara markerade (1)', { exact: true })).not.toBeChecked();
     await page.keyboard.press('Escape');
+    await mapSearch.fill('A 2');
+    await (await mapFilters(page))
+      .getByRole('button', { name: 'Återställ filter', exact: true })
+      .click();
+    await expect(mapSearch).toHaveValue('A 2');
+    await expect(filters.getByRole('checkbox', { checked: true })).toHaveCount(0);
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeVisible();
+    await filters.getByLabel('Typ 2', { exact: true }).check();
+    await filters.getByLabel('Bara markerade').check();
+    await page.keyboard.press('Escape');
+    await canvas.focus();
+    await page.keyboard.press('Escape');
+    await expect(canvas).toBeFocused();
+    await expect(mapSearch).toHaveValue('');
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeVisible();
+    await expect(page.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(1);
+    await expect((await mapFilters(page)).getByRole('checkbox', { checked: true })).toHaveCount(0);
+    // One Escape also clears filters when the text was already empty.
+    await filters.getByLabel('Typ 10', { exact: true }).check();
+    await page.keyboard.press('Escape');
+    await canvas.press('Escape');
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeVisible();
+    await mapSearch.fill('finns inte');
+    await expect(nodes).toHaveCount(0);
+    await expect(page.getByText('Inga objekt matchar', { exact: true })).toHaveCount(0);
+    await expect(page.getByText(/\d+ (sökträffar|träffar)/)).toHaveCount(0);
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     await expect(tableSearch).toHaveValue('åkex');
+    await expect(table.getByRole('rowheader')).toHaveCount(0);
+    await expect(table.getByText('Inga objekt matchar', { exact: true })).toHaveCount(0);
     await tableSearch.fill('A 2');
     await expect(table.getByText('✓ Markerad', { exact: true })).toBeVisible();
     await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).click();
     await expect(message).toHaveValue('Å Oskickat meddelande 456');
     expect(await read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('SÖK-10: capsule search and attached filters fit desktop and narrow short screens', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await prepareHouseholdTable(page.request, installation.origin);
+    await page.goto(installation.origin);
+    const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
+    const search = panel.getByRole('searchbox');
+    const clear = panel.getByRole('button', { name: 'Rensa sökning', exact: true });
+    const filter = panel.getByRole('button', { name: 'Filter', exact: true });
+    for (const viewport of [
+      { width: 1280, height: 900 },
+      { width: 800, height: 900 },
+      { width: 390, height: 844 },
+      { width: 320, height: 640 },
+      { width: 320, height: 250 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await expect(search).toBeVisible();
+      const input = await search.boundingBox();
+      const x = await clear.boundingBox();
+      const f = await filter.boundingBox();
+      if (!input || !x || !f) throw new Error('Search controls must be visible');
+      expect(input.x).toBeGreaterThanOrEqual(0);
+      expect(f.x + f.width).toBeLessThanOrEqual(viewport.width);
+      expect(f.x).toBeGreaterThanOrEqual(input.x + input.width);
+      expect(x.x).toBeGreaterThanOrEqual(input.x);
+      expect(x.x + x.width).toBeLessThanOrEqual(input.x + input.width);
+      expect(x.width).toBeGreaterThanOrEqual(44);
+      expect(x.height).toBeGreaterThanOrEqual(44);
+      expect(await clear.textContent()).toBe('×');
+      const circle = await clear.evaluate((element) => {
+        const background = getComputedStyle(element, '::before');
+        return {
+          width: Number.parseFloat(background.width),
+          height: Number.parseFloat(background.height),
+          fontSize: getComputedStyle(element).fontSize,
+        };
+      });
+      expect(circle).toEqual({ width: 32, height: 32, fontSize: '22px' });
+      expect(
+        await search.evaluate((element) =>
+          Number.parseFloat(getComputedStyle(element).borderRadius),
+        ),
+      ).toBeGreaterThanOrEqual(input.height / 2);
+      if (viewport.width > 700) {
+        expect(input.width).toBe(300);
+        expect(input.x + input.width / 2).toBeCloseTo(viewport.width / 2, 0);
+      } else {
+        const toolbar = await page
+          .getByRole('navigation', { name: 'Kartans verktyg' })
+          .boundingBox();
+        if (!toolbar) throw new Error('Toolbar must be visible');
+        expect(input.y).toBeGreaterThan(toolbar.y + toolbar.height);
+      }
+      await clear.click({ trial: true });
+      const dialog = await mapFilters(page);
+      const box = await dialog.boundingBox();
+      if (!box) throw new Error('Filter dialog must be visible');
+      expect(box.y).toBeGreaterThanOrEqual(f.y + f.height);
+      expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      expect(box.width).toBeLessThanOrEqual(360);
+      expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+        true,
+      );
+      await expect(dialog.getByRole('group', { name: 'Objekttyp' })).toBeVisible();
+      await expect(dialog.getByRole('group', { name: 'Status' })).toBeVisible();
+      await expect(dialog.getByRole('group', { name: 'Förslag i ditt utkast' })).toBeVisible();
+      await page.screenshot({
+        path: `/tmp/skyttel-search/filters-${viewport.width}x${viewport.height}.png`,
+      });
+      const reset = dialog.getByRole('button', { name: 'Återställ filter', exact: true });
+      await reset.focus();
+      await reset.press('Enter');
+      await page.keyboard.press('Escape');
+      await expect(dialog).not.toBeVisible();
+      await expect(filter).toBeFocused();
+      await page.screenshot({
+        path: `/tmp/skyttel-search/search-${viewport.width}x${viewport.height}.png`,
+      });
+      if (viewport.width > 700) {
+        await page.getByRole('button', { name: 'Utkast', exact: true }).click();
+        const message = page.getByRole('textbox', { name: 'Meddelande till Skyttel' });
+        await message.fill('Oskickat meddelande');
+        await mapFilters(page);
+        expect(
+          await dialog.evaluate((element) => {
+            const bounds = element.getBoundingClientRect();
+            return element.contains(
+              document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
+            );
+          }),
+        ).toBe(true);
+        await reset.click();
+        await page.keyboard.press('Escape');
+        await expect(message).toHaveValue('Oskickat meddelande');
+        await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+      }
+      if (viewport.width === 320 && viewport.height === 250) {
+        await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+        const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+        const object = table.getByRole('button', { name: 'A 2', exact: true });
+        await object.click();
+        await table.getByRole('button', { name: 'Visa A 2 i kartan', exact: true }).click();
+        const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
+        await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+        await tools.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+        await expect(search).toBeVisible();
+        await clear.click({ trial: true });
+        const toolbar = await tools.boundingBox();
+        const input = await search.boundingBox();
+        if (!toolbar || !input) throw new Error('Reading search and toolbar must be visible');
+        expect(input.x).toBeGreaterThanOrEqual(toolbar.x + toolbar.width);
+        await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
+        await expect
+          .poll(async () => (await search.boundingBox())?.y ?? 0)
+          .toBeGreaterThan(toolbar.y + toolbar.height);
+      }
+    }
   } finally {
     await installation.close();
   }

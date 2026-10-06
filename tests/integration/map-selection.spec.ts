@@ -9,6 +9,7 @@ import {
   utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { focusMapSearch } from '../support/object-search.js';
 
 async function arrange(page: Page, origin: string) {
   await signIn(page.request, origin);
@@ -315,18 +316,16 @@ test('MARKERING-02: empty clicks clear highlighting while navigation and cancell
         .locator('.spatial-node')
         .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('style')));
     await lo.click();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
     await search
       .getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true })
       .fill('Exempel');
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await search.getByRole('searchbox').press('Escape');
     const before = await positions();
     await lo.click({ button: 'right', modifiers: ['Control'] });
     await expect(lo).toHaveAttribute('aria-pressed', 'false');
-    await expect(
-      page.getByRole('complementary', { name: 'Kartans sökresultat', exact: true }),
-    ).toContainText('Exempel');
+    await expect(search.getByRole('searchbox')).toHaveValue('Exempel');
     await expect(page.getByRole('region', { name: 'Lo Exempel', exact: true })).toHaveCount(0);
     expect(await positions()).toEqual(before);
     await lo.click({ button: 'right', modifiers: ['Control'] });
@@ -341,12 +340,8 @@ test('MARKERING-02: empty clicks clear highlighting while navigation and cancell
     await page.mouse.up();
     await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(0);
     await expect(map.locator('.connection.selected')).toHaveCount(0);
-    await expect(
-      page.getByRole('complementary', { name: 'Kartans sökresultat', exact: true }),
-    ).toContainText('Exempel');
-    await expect(
-      page.getByRole('complementary', { name: 'Kartans sökresultat', exact: true }),
-    ).toBeVisible();
+    await expect(search.getByRole('searchbox')).toHaveValue('Exempel');
+    await expect(search).toBeVisible();
     expect(await positions()).toEqual(before);
     await openMap(page);
     await lo.click();

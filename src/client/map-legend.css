@@ -129,11 +129,8 @@
   .household-map.workspace-shell:has(.map-navigation:not([hidden])) .workspace-context {
     position: absolute;
     max-height: none;
-    top: calc(var(--map-search-summary-bottom, 120px) + 8px);
+    top: calc(var(--map-search-bottom, 120px) + 8px);
     width: calc(40vw - 24px);
-    max-width: calc(40vw - 24px);
-  }
-  .household-map.workspace-shell:has(.map-navigation:not([hidden])) .map-search-summary {
     max-width: calc(40vw - 24px);
   }
   .household-map.workspace-shell .map-navigation:not([hidden]) {

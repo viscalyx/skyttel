@@ -108,53 +108,24 @@ export function useDraftFilterReset(
   }, [hasProposals, search, onChange]);
   return notice;
 }
-/** Replace pending results so rapid typing never queues stale counts. */
-export function SearchResultStatus({
-  count,
-  active = true,
-  notice = '',
-}: {
-  count: number;
-  active?: boolean;
-  notice?: string;
-}) {
-  const [spoken, setSpoken] = useState('');
-  useEffect(() => {
-    setSpoken('');
-    if (!active) return;
-    const timer = window.setTimeout(
-      () => setSpoken(`${count} träffar.${notice ? ` ${notice}` : ''}`),
-      350,
-    );
-    return () => window.clearTimeout(timer);
-  }, [count, active, notice]);
-  return (
-    <>
-      <p>
-        {count} träffar{notice ? ` · ${notice}` : ''}
-      </p>
-      <span className="visually-hidden" role="status" aria-atomic="true">
-        {spoken}
-      </span>
-    </>
-  );
-}
 export function ObjectSearchInput({
   search,
   onChange,
   inputRef,
   label,
+  compact = false,
 }: {
   search: ObjectSearchState;
   onChange: (next: ObjectSearchState) => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
   label: string;
+  compact?: boolean;
 }) {
   const id = useId();
   return (
-    <div className="object-search-input">
+    <div className={`object-search-input${compact ? ' map-search-input' : ''}`}>
       <label htmlFor={id}>
-        {label}
+        <span className={compact ? 'visually-hidden' : undefined}>{label}</span>
         <input
           ref={inputRef}
           id={id}
@@ -164,8 +135,15 @@ export function ObjectSearchInput({
           onChange={(event) => onChange({ ...search, query: event.target.value })}
         />
       </label>
-      <button type="button" onClick={() => onChange({ ...search, query: '' })}>
-        Rensa sökning
+      <button
+        type="button"
+        aria-label="Rensa sökning"
+        onClick={() => {
+          onChange({ ...search, query: '' });
+          if (compact) inputRef?.current?.focus();
+        }}
+      >
+        {compact ? '×' : 'Rensa sökning'}
       </button>
     </div>
   );
@@ -257,60 +235,166 @@ export function ObjectSearchFilters({
           ))}
         </fieldset>
       )}
-      <button type="button" onClick={() => onChange(initialObjectSearch)}>
-        Återställ sökning och filter
+      <button
+        type="button"
+        onClick={() =>
+          onChange(table ? initialObjectSearch : { ...initialObjectSearch, query: search.query })
+        }
+      >
+        {table ? 'Återställ sökning och filter' : 'Återställ filter'}
       </button>
     </div>
   );
 }
 export function MapSearch({
-  open,
-  filtersOpen,
+  active,
   entryRequestId,
   search,
   onChange,
-  onClose,
+  onReturnToMap,
   types,
   selectedIds,
   hasProposals,
-  count,
-  reasons,
-  contextCount = 0,
-  hiddenEnded = false,
-  explored = false,
-  onReturnToHits,
 }: {
-  open: boolean;
-  filtersOpen: boolean;
+  active: boolean;
   entryRequestId: number;
   search: ObjectSearchState;
   onChange: (next: ObjectSearchState) => void;
-  onClose: () => void;
+  onReturnToMap: () => void;
   types: ObjectType[];
   selectedIds: string[];
   hasProposals: boolean;
-  count: number;
-  contextCount?: number;
-  hiddenEnded?: boolean;
-  explored?: boolean;
-  onReturnToHits?: () => void;
-  reasons: { id: string; name: string; fields: string[] }[];
 }) {
   const input = useRef<HTMLInputElement>(null);
-  const wasOpen = useRef(false);
+  const filterButton = useRef<HTMLButtonElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  const title = useRef<HTMLHeadingElement>(null);
+  const dialogId = useId();
   const previousEntryRequestId = useRef(entryRequestId);
-  const [expanded, setExpanded] = useState(filtersOpen);
-  const notice = useDraftFilterReset(hasProposals, search, onChange);
+  const [expanded, setExpanded] = useState(false);
+  const filtersActive = searchRestricted({ ...search, query: '' });
+  function closeFilters() {
+    setExpanded(false);
+    filterButton.current?.focus();
+  }
   useEffect(() => {
-    if (open && (!wasOpen.current || entryRequestId !== previousEntryRequestId.current)) {
+    if (active && entryRequestId !== previousEntryRequestId.current) {
+      setExpanded(false);
       input.current?.focus();
-      setExpanded(filtersOpen);
     }
-    wasOpen.current = open;
     previousEntryRequestId.current = entryRequestId;
-  }, [open, filtersOpen, entryRequestId]);
-  const context = (
-    <div className="map-search-context">
+  }, [active, entryRequestId]);
+  useEffect(() => {
+    if (!active) setExpanded(false);
+  }, [active]);
+  useEffect(() => {
+    if (!expanded || !active) return;
+    title.current?.focus();
+    const dismiss = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !dialog.current?.contains(event.target) &&
+        !filterButton.current?.contains(event.target)
+      ) {
+        setExpanded(false);
+        filterButton.current?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', dismiss, true);
+    return () => document.removeEventListener('pointerdown', dismiss, true);
+  }, [expanded, active]);
+  return (
+    <section
+      className="map-object-search"
+      aria-label="Kartans sökning och filter"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !event.nativeEvent.isComposing) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (expanded) closeFilters();
+          else onReturnToMap();
+        }
+      }}
+    >
+      <ObjectSearchInput
+        search={search}
+        onChange={onChange}
+        inputRef={input}
+        label="Sök objekt i kartan"
+        compact
+      />
+      <div className="map-search-filter">
+        <button
+          ref={filterButton}
+          type="button"
+          aria-label={filtersActive ? 'Filter · aktiva' : 'Filter'}
+          aria-expanded={expanded}
+          aria-controls={dialogId}
+          aria-haspopup="dialog"
+          onClick={() => {
+            if (expanded) closeFilters();
+            else setExpanded(true);
+          }}
+        >
+          Filter
+          {filtersActive && (
+            <span className="map-filter-dot" aria-hidden="true">
+              ●
+            </span>
+          )}
+        </button>
+        <div
+          ref={dialog}
+          id={dialogId}
+          role="dialog"
+          aria-labelledby={`${dialogId}-title`}
+          className="map-filter-dialog"
+          hidden={!expanded}
+        >
+          <header>
+            <h2 ref={title} id={`${dialogId}-title`} tabIndex={-1}>
+              Kartans filter
+            </h2>
+            <button type="button" aria-label="Stäng filter" onClick={closeFilters}>
+              ×
+            </button>
+          </header>
+          <ObjectSearchFilters
+            search={search}
+            onChange={onChange}
+            types={types}
+            selectedIds={selectedIds}
+            hasProposals={hasProposals}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function MapSearchContext({
+  search,
+  onChange,
+  notice,
+  contextCount,
+  hiddenEnded,
+  explored,
+  onReturnToHits,
+}: {
+  search: ObjectSearchState;
+  onChange: (next: ObjectSearchState) => void;
+  notice: string;
+  contextCount: number;
+  hiddenEnded: boolean;
+  explored: boolean;
+  onReturnToHits: () => void;
+}) {
+  return (
+    <aside
+      className="map-search-context"
+      aria-label="Kartans sökresultat"
+      hidden={!contextCount && !hiddenEnded && !explored && !notice}
+    >
       {contextCount > 0 && <p>{contextCount} objekt visas som sammanhang, utöver sökträffarna.</p>}
       {hiddenEnded && (
         <p>
@@ -325,97 +409,7 @@ export function MapSearch({
           Tillbaka till sökträffarna
         </button>
       )}
-    </div>
-  );
-  return (
-    <>
-      <section
-        hidden={!open}
-        className="map-object-search"
-        aria-label="Kartans sökning och filter"
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault();
-            event.stopPropagation();
-            onClose();
-          }
-        }}
-      >
-        <header>
-          <h2>Sök i kartan</h2>
-          <button type="button" onClick={onClose}>
-            Stäng
-          </button>
-        </header>
-        <ObjectSearchInput
-          search={search}
-          onChange={onChange}
-          inputRef={input}
-          label="Sök objekt i kartan"
-        />
-        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-          Filter
-        </button>
-        <div hidden={!expanded}>
-          <ObjectSearchFilters
-            search={search}
-            onChange={onChange}
-            types={types}
-            selectedIds={selectedIds}
-            hasProposals={hasProposals}
-          />
-        </div>
-        <p>{count} sökträffar</p>
-        {context}
-        {notice && <p>{notice}</p>}
-        {!count && (
-          <div>
-            <h3>Inga objekt matchar</h3>
-            <p>Ändra sökningen eller återställ sökning och filter.</p>
-            <button type="button" onClick={() => onChange(initialObjectSearch)}>
-              Återställ sökning och filter
-            </button>
-          </div>
-        )}
-        {reasons.length > 0 && (
-          <ul aria-label="Matchande detaljfält">
-            {reasons.map(({ id, name, fields }) => (
-              <li key={id}>
-                {name}: träff i {fields.join(', ')}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <aside className="map-search-summary" aria-label="Kartans sökresultat" hidden={open}>
-        <p>
-          {[
-            search.query && `Sökning: ${search.query}`,
-            ...search.types.map(
-              (id) => types.find((type) => type.id === id)?.name ?? 'Borttagen typ',
-            ),
-            search.onlySelected && 'Bara markerade',
-            search.includeEnded && 'Ta med upphörda',
-            ...(search.proposals ?? []),
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-        </p>
-        <p>{count} sökträffar</p>
-        {context}
-        {notice && <p>{notice}</p>}
-        {!count && (
-          <div>
-            <p>Inga objekt matchar. Ändra sökningen eller återställ sökning och filter.</p>
-            <button type="button" onClick={() => onChange(initialObjectSearch)}>
-              Återställ sökning och filter
-            </button>
-          </div>
-        )}
-      </aside>
-      <span className="map-search-status">
-        <SearchResultStatus count={count} notice={notice} />
-      </span>
-    </>
+      <p role="status">{notice}</p>
+    </aside>
   );
 }

@@ -156,17 +156,13 @@
     ):has(.conversation-notice:not([data-inline="true"]))
     .workspace-context {
     box-sizing: border-box;
+    position: fixed;
     z-index: 7;
     max-width: calc(100vw - 36px);
-    top: calc(var(--tools-bottom, 68px) + 8px);
+    top: calc(var(--work-offset, 0px) + var(--map-search-bottom, 124px) + 8px);
     max-height: max(
       56px,
-      calc(
-        var(--conversation-floor, 100dvh) -
-        var(--conversation-corner-height, 0px) -
-        var(--tools-bottom, 68px) -
-        24px
-      )
+      calc(var(--conversation-corner-top, 100dvh) - var(--map-search-bottom, 124px) - 20px)
     );
   }
 }
@@ -201,20 +197,15 @@
   }
 }
 
-/* A very short map gives status and display controls separate scroll areas
+/* A short map gives status and display controls separate scroll areas
    above the notice. Their height follows the actual notice and toolbar. */
-@media (max-width: 700px) and (max-height: 320px) {
+@media (max-width: 700px) and (max-height: 450px) {
   .household-map.workspace-shell[data-workspace-surface="map"]:not(.map-details-open):not(
     [data-navigation-open="true"]
   ):has(.conversation-notice:not([data-inline="true"])) {
     --notice-map-controls-height: max(
       44px,
-      calc(
-        var(--work-height, 100dvh) -
-        var(--conversation-corner-height, 0px) -
-        var(--tools-bottom, 68px) -
-        32px
-      )
+      calc(var(--conversation-corner-top, 100dvh) - var(--map-search-bottom, 124px) - 8px)
     );
   }
   .household-map.workspace-shell[data-workspace-surface="map"]:not(.map-details-open):not(
@@ -222,7 +213,9 @@
     ):has(.conversation-notice:not([data-inline="true"]))
     .workspace-context {
     max-width: calc(60vw - 24px);
-    max-height: var(--notice-map-controls-height);
+    max-height: min(90px, var(--notice-map-controls-height));
+    top: calc(var(--work-offset, 0px) + var(--map-search-bottom, 124px) + 4px);
+    padding: 2px;
   }
   .household-map.workspace-shell[data-workspace-surface="map"]:not(.map-details-open):not(
       [data-navigation-open="true"]
@@ -239,10 +232,17 @@
       [data-navigation-open="true"]
     ):has(.conversation-notice:not([data-inline="true"]))
     .spatial-display-tools {
-    top: calc(var(--tools-bottom, 68px) + 8px);
+    top: calc(var(--map-search-bottom, 124px) + 4px);
+    left: auto;
+    right: 12px;
     bottom: auto;
     width: calc(40vw - 12px);
     max-height: var(--notice-map-controls-height);
+  }
+  .household-map.workspace-shell[data-workspace-surface="map"]
+    .conversation-notice:not([data-inline="true"]) {
+    padding: 4px 8px;
+    gap: 6px;
   }
 }
 
@@ -298,6 +298,22 @@
    The notice keeps its text and targets; its measured height still reserves
    the reader's space above it. */
 @media (max-width: 700px) and (max-height: 320px) {
+  .household-map.workspace-shell[data-workspace-surface="map"]:not(.map-details-open)
+    .conversation-notice:not([data-inline="true"]) {
+    grid-template-columns: 1fr 28px;
+    padding-inline: 4px;
+    gap: 4px;
+  }
+  .household-map.workspace-shell[data-workspace-surface="map"]:not(.map-details-open)
+    .conversation-notice:not([data-inline="true"])
+    .conversation-notice-symbol {
+    display: none;
+  }
+  .household-map.workspace-shell[data-workspace-surface="map"]:not(.map-details-open)
+    .conversation-notice:not([data-inline="true"]):not(:has(.conversation-notice-close))
+    .conversation-notice-content {
+    grid-column: 1 / -1;
+  }
   .household-map.workspace-shell[data-workspace-surface="map"].map-details-open
     .conversation-notice:not([data-inline="true"]) {
     gap: 1px;

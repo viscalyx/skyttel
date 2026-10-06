@@ -75,6 +75,7 @@ export function SpatialMap({
   onClear,
   onReset,
   onSearchStart,
+  onSearchClear,
   onRemove,
   onObjectActions,
   personal,
@@ -111,6 +112,7 @@ export function SpatialMap({
   onClear: () => void;
   onReset: () => void;
   onSearchStart?: (text: string) => void;
+  onSearchClear?: () => void;
   onRemove: (object: MapObject) => void;
   onObjectActions?: (entry: ObjectActionsEntry) => void;
   personal?: ReturnType<typeof usePersonalView>;
@@ -194,7 +196,7 @@ export function SpatialMap({
     if (!bounds || !root) return;
     const boxes = [
       ...root.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .map-filter-dialog, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -413,13 +415,15 @@ export function SpatialMap({
     const element = canvas.current;
     if (!element) return false;
     const bounds = element.getBoundingClientRect();
+    // Short screens need every available pixel for the full 44px targets.
+    const clearance = (window.visualViewport?.height ?? window.innerHeight) <= 450 ? 0 : 12;
     // Reserve actual fixed tools, including expanded controls and live status.
     // Reading details stay open; focus reserves their actual visible area.
     let areas = [{ left: 0, top: 0, right: bounds.width, bottom: bounds.height }];
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .map-filter-dialog, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
@@ -441,10 +445,10 @@ export function SpatialMap({
         )
           return [area];
         return [
-          { ...area, left: Math.max(area.left, obstacle.right + 12) },
-          { ...area, right: Math.min(area.right, obstacle.left - 12) },
-          { ...area, top: Math.max(area.top, obstacle.bottom + 12) },
-          { ...area, bottom: Math.min(area.bottom, obstacle.top - 12) },
+          { ...area, left: Math.max(area.left, obstacle.right + clearance) },
+          { ...area, right: Math.min(area.right, obstacle.left - clearance) },
+          { ...area, top: Math.max(area.top, obstacle.bottom + clearance) },
+          { ...area, bottom: Math.min(area.bottom, obstacle.top - clearance) },
         ].filter((value) => value.right - value.left >= 44 && value.bottom - value.top >= 44);
       });
       // Keep alternative free rectangles until every overlay is considered.
@@ -466,34 +470,37 @@ export function SpatialMap({
           ),
       );
     }
-    const size = (value: (typeof areas)[number]) =>
+    const fittingAreas = areas
+      .filter((area) => area.right - area.left >= 44 && area.bottom - area.top >= 44)
+      .map((area) => {
+        const width = area.right - area.left;
+        const height = area.bottom - area.top;
+        // A short viewport can leave just enough space for the 44px targets.
+        // Keep a positive fitting area while protecting their full pointer box.
+        const marginX = Math.min(64, Math.max(24, width / 4), (width - 1) / 2);
+        const marginY = Math.min(64, Math.max(24, height / 4), (height - 1) / 2);
+        // Leave a row above the endpoints for the selected relationship's label.
+        const labelRow = reveal?.relationshipId
+          ? Math.min(35, Math.max(0, height - 2 * marginY - 1))
+          : 0;
+        return {
+          left: area.left + marginX,
+          right: area.right - marginX,
+          top: area.top + marginY + labelRow,
+          bottom: area.bottom - marginY,
+        };
+      });
+    // Rank the space left for object centers after reserving targets and labels.
+    // A large but shallow strip can otherwise squeeze both endpoints together.
+    const size = (value: (typeof fittingAreas)[number]) =>
       (value.right - value.left) * (value.bottom - value.top);
-    const area = areas.sort((a, b) => size(b) - size(a))[0];
-    if (!area) return false;
-    const width = area.right - area.left;
-    const height = area.bottom - area.top;
-    if (width < 44 || height < 44) return false;
-    // A short viewport can leave just enough space for the 44px targets.
-    // Keep a positive fitting area while protecting their full pointer box.
-    const marginX = Math.min(64, Math.max(24, width / 4), (width - 1) / 2);
-    const marginY = Math.min(64, Math.max(24, height / 4), (height - 1) / 2);
-    // Leave a row above the endpoints for the selected relationship's label.
-    const labelRow = reveal?.relationshipId
-      ? Math.min(35, Math.max(0, height - 2 * marginY - 1))
-      : 0;
-    return (
-      scene.current?.focus(ids, {
-        left: area.left + marginX,
-        right: area.right - marginX,
-        top: area.top + marginY + labelRow,
-        bottom: area.bottom - marginY,
-      }) ?? false
-    );
+    const area = fittingAreas.sort((a, b) => size(b) - size(a))[0];
+    return area ? (scene.current?.focus(ids, area) ?? false) : false;
   }, []);
   useEffect(() => {
     if (
       revealRequest &&
-      revealRequest.id !== completedRevealId &&
+      !revealRequest.complete &&
       active &&
       activated &&
       personalReady &&
@@ -502,18 +509,39 @@ export function SpatialMap({
       (!revealRequest.relationshipId || relationships.has(revealRequest.relationshipId))
     ) {
       if (navigationOpen) {
-        // Framing uses the committed canvas dimensions after navigation closes.
-        setNavigationOpen(false);
-        onNavigationChange?.(false);
+        // Close navigation for the initial reveal, then respect any navigation
+        // the user opens while the acknowledgement is still pending.
+        if (revealRequest.id !== completedRevealId) {
+          setNavigationOpen(false);
+          onNavigationChange?.(false);
+        }
         return;
       }
-      // Panel placement commits in layout effects. Measure its final rectangle
-      // on the next frame before reserving clearance for the assistant's target.
-      const frame = requestAnimationFrame(() => {
-        if (focusObjects(revealRequest.objectIds, revealRequest))
-          setCompletedRevealId(revealRequest.id);
-      });
-      return () => cancelAnimationFrame(frame);
+      // Keep framing against the actual layout until display is acknowledged.
+      // A later toolbar, search or inspector resize can invalidate the first fit.
+      let frame = 0;
+      const schedule = () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => {
+          if (focusObjects(revealRequest.objectIds, revealRequest))
+            setCompletedRevealId(revealRequest.id);
+        });
+      };
+      const observer = new ResizeObserver(schedule);
+      if (canvas.current) {
+        observer.observe(canvas.current);
+        for (const overlay of canvas.current
+          .closest('.household-map')
+          ?.querySelectorAll(
+            '.workspace-tools, .workspace-context, .map-object-search, .map-selection-details, .map-navigation, .conversation-corner',
+          ) ?? [])
+          observer.observe(overlay);
+      }
+      schedule();
+      return () => {
+        observer.disconnect();
+        cancelAnimationFrame(frame);
+      };
     }
   }, [
     revealRequest,
@@ -536,10 +564,15 @@ export function SpatialMap({
       personalReady &&
       !contextLost &&
       !unavailable &&
-      focusRequest.objectIds.every((id) => objects.has(id)) &&
-      focusObjects(focusRequest.objectIds)
-    )
-      setCompletedFocusId(focusRequest.id);
+      focusRequest.objectIds.every((id) => objects.has(id))
+    ) {
+      // Expanded tools close with the request. Wait for their final layout,
+      // including the search row that follows them on small screens.
+      const frame = requestAnimationFrame(() => {
+        if (focusObjects(focusRequest.objectIds)) setCompletedFocusId(focusRequest.id);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
   }, [
     focusRequest,
     completedFocusId,
@@ -1092,7 +1125,11 @@ export function SpatialMap({
               event.altKey
             )
               return;
-            if (/^[\p{L}\p{N}]$/u.test(event.key) && onSearchStart) {
+            if (event.key === 'Escape' && onSearchClear) {
+              event.preventDefault();
+              event.stopPropagation();
+              onSearchClear();
+            } else if (/^[\p{L}\p{N}]$/u.test(event.key) && onSearchStart) {
               event.preventDefault();
               event.stopPropagation();
               onSearchStart(event.key);

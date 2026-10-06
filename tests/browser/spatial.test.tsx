@@ -4,6 +4,7 @@ import { afterEach, expect, test } from 'vitest';
 import { cdp, page, userEvent } from 'vitest/browser';
 import { SpatialMap } from '../../src/client/SpatialMap.js';
 import '../../src/client/styles.css';
+import type { MapRevealRequest } from '../../src/client/map-display.js';
 import type { MapState } from '../../src/shared/map.js';
 import { defaultViewSettings, type PersonalView } from '../../src/shared/personal-view.js';
 
@@ -113,7 +114,7 @@ function MapView({
   mapState?: MapState;
   relationships?: MapState['relationships'];
   active?: boolean;
-  revealRequest?: { id: string; objectIds: string[]; relationshipId?: string };
+  revealRequest?: MapRevealRequest;
 } = {}) {
   const [settingsMount, setSettingsMount] = useState<HTMLDivElement | null>(null);
   const [view, setView] = useState<PersonalView>({
@@ -244,6 +245,9 @@ test('an explicit reveal opens an inactive scene and brings requested objects in
     return b.left >= a.left && b.right <= a.right && b.top >= a.top && b.bottom <= a.bottom;
   };
   await expect.poll(inside).toBe(true);
+  view.rerender(
+    <MapView revealRequest={{ id: 'show-music', objectIds: ['music'], complete: true }} />,
+  );
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   for (let index = 0; index < 10; index++)
     await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
@@ -252,6 +256,107 @@ test('an explicit reveal opens an inactive scene and brings requested objects in
   await expect.poll(() => surface.dataset.revealRequest).toBe('show-music-again');
   await expect.poll(inside).toBe(true);
   expect(document.querySelector('[data-placement]')?.textContent).toBe('[]');
+});
+
+test('a pending reveal reframes when an obstructing panel grows after the first fit', async () => {
+  const view = render(
+    <div className="household-map">
+      <div
+        className="workspace-context"
+        style={{ position: 'fixed', left: 0, height: 0, padding: 0, zIndex: 40 }}
+      />
+      <MapView revealRequest={{ id: 'pending-music', objectIds: ['music'] }} />
+    </div>,
+  );
+  const surface = document.querySelector('.spatial-surface') as HTMLElement;
+  await expect.poll(() => surface.dataset.revealRequest).toBe('pending-music');
+  const music = page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true });
+  const panel = view.container.querySelector('.workspace-context') as HTMLElement;
+  const bounds = surface.getBoundingClientRect();
+  const target = music.element().getBoundingClientRect();
+  panel.style.top = `${bounds.top}px`;
+  panel.style.width = `${bounds.width}px`;
+  panel.style.maxWidth = 'none';
+  panel.style.height = `${target.bottom - bounds.top + 12}px`;
+  await expect
+    .poll(() => {
+      const box = music.element().getBoundingClientRect();
+      return (
+        box.top >= panel.getBoundingClientRect().bottom &&
+        box.bottom <= surface.getBoundingClientRect().bottom &&
+        music
+          .element()
+          .contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
+      );
+    })
+    .toBe(true);
+});
+
+test('a relationship reveal keeps both endpoints reachable beside a wide legend on a phone map', async () => {
+  const content = (revealRequest?: MapRevealRequest) => (
+    <div className="household-map" style={{ position: 'fixed', inset: 0 }}>
+      <div
+        className="map-object-search"
+        style={{
+          position: 'absolute',
+          left: 14,
+          top: 0,
+          width: 362,
+          height: 44,
+          transform: 'none',
+        }}
+      />
+      <div
+        className="workspace-context"
+        style={{
+          position: 'absolute',
+          left: 18,
+          top: 56,
+          width: 222,
+          height: 94,
+          maxWidth: 'none',
+        }}
+      />
+      <MapView active={Boolean(revealRequest)} revealRequest={revealRequest} />
+    </div>
+  );
+  const view = render(content());
+  const surface = document.querySelector('.spatial-surface') as HTMLElement;
+  Object.assign(surface.style, {
+    position: 'absolute',
+    left: '0',
+    top: '0',
+    width: '390px',
+    height: '235px',
+    minHeight: '0',
+  });
+  for (const control of view.container.querySelectorAll<HTMLElement>(
+    '.spatial-tools, .spatial-bottom-bar, .spatial-view-actions',
+  ))
+    control.style.display = 'none';
+  view.rerender(
+    content({ id: 'phone-relationship', objectIds: ['lo', 'music'], relationshipId: 'edge' }),
+  );
+  await expect.poll(() => surface.dataset.revealRequest).toBe('phone-relationship');
+  await expect
+    .poll(() =>
+      ['lo', 'music'].every((id) => {
+        const node = surface.querySelector(`.spatial-node[data-object-id="${id}"]`);
+        if (!node) return false;
+        const box = node.getBoundingClientRect();
+        const bounds = surface.getBoundingClientRect();
+        return (
+          box.left >= bounds.left &&
+          box.right <= bounds.right &&
+          box.top >= bounds.top &&
+          box.bottom <= bounds.bottom &&
+          node.contains(
+            document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2),
+          )
+        );
+      }),
+    )
+    .toBe(true);
 });
 
 test('changing a relationship retains its prior route while the current route remains selectable', async () => {

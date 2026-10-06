@@ -460,10 +460,15 @@ for (const viewport of [
     const { app } = await configured();
     try {
       await page.setViewportSize(viewport);
+      if (viewport.height <= 450) await page.clock.install();
       await openMap(page, app.origin);
       await startConversationWithVoice(page);
       await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'true');
       await expect(voiceBox(page)).toBeVisible();
+      // Keep the temporary disconnection stable during the geometry checks.
+      // Its transport grace period is covered by the voice tests.
+      if (viewport.height <= 450)
+        await page.clock.pauseAt(await page.evaluate(() => Date.now() + 60_000));
       if (viewport.height <= 450) await page.getByText('Visningsval', { exact: true }).click();
       // A real browser can lose its provider connection independently of HTTP.
       await page.evaluate(() => window.skyttelVoiceFixture.disconnect());
@@ -492,9 +497,10 @@ for (const viewport of [
       }
       await mapStatus.scrollIntoViewIfNeeded();
       await expect(mapStatus).toContainText('Nya förslag är osparade');
+      await expect
+        .poll(async () => overlaps(await bounds(notice(page)), await bounds(mapStatus)))
+        .toBe(false);
       const card = await bounds(notice(page));
-      const feedback = await bounds(mapStatus);
-      expect(overlaps(card, feedback)).toBe(false);
       await uncovered(mapStatus);
       await uncovered(notice(page));
       expect(
@@ -531,7 +537,8 @@ for (const viewport of [
         expect(card.right).toBe(viewport.width - 24);
       }
       await page.evaluate(() => window.skyttelVoiceFixture.reconnect());
-      await expect(notice(page)).toHaveCount(0);
+      if (viewport.height <= 450) await page.clock.resume();
+      await expect(notice(page)).toHaveCount(0, { timeout: networkRecheckTimeout });
       await expect(microphoneButton(page)).toHaveAttribute('aria-pressed', 'false');
     } finally {
       await app.close();

@@ -1424,10 +1424,12 @@ colours and retains only displayed categories in dark”.
 2. Öppna Navigera och panorera. Teckenförklaringens rader ska bestå.
 3. Stäng Navigation och välj det nya sambandet. Ingen rad för markerat
    objekt ska tillkomma.
-4. Öppna **Sök i kartan**, sök Kim Exempel och välj **Stäng**. Förslagsraderna ska
-   försvinna. Raden för punktade etikettkopplingar ska finnas kvar.
+4. Klicka i kartans sökfält, sök Kim Exempel och tryck Escape i sökfältet.
+   Förslagsraderna ska försvinna. Raden för punktade etikettkopplingar ska
+   finnas kvar.
 5. Markera Kim. Kontrollera markeringsraden. Sök sedan Inga träffar via
-   **Sök i kartan** och välj **Stäng**. Hela teckenförklaringen ska försvinna.
+   kartans sökfält och tryck Escape i sökfältet. Hela teckenförklaringen ska
+   försvinna.
 
 **Förväntat resultat:**
 
@@ -1744,8 +1746,8 @@ snapshot values at 640px”. Sista fallet har 456 pixlars höjd.
 4. Robin föreslår Lo Berg, skuld 2 000 med osäker säkerhet och datum
    2026-09-02 samt Annans dolda uppgift. Ändra typbeskrivningarna men
    behåll Sparad ekonomi och Sparad skuld. Föreslå okänt mål och spara allt.
-5. Alex laddar om, öppnar **Sök i kartan**, söker ett obefintligt namn
-   och stänger sökningen. Fyra konflikter ska räknas trots tom karta.
+5. Alex laddar om, klickar i kartans sökfält, söker ett obefintligt namn
+   och trycker Escape i sökfältet. Fyra konflikter ska räknas trots tom karta.
 6. Öppna **4 konflikter i ditt utkast** med tangentbord. Besök objekttyp,
    sambandstyp, samband och objekt i **Alla konflikter** med Enter.
    Läs aktuella sparade och föreslagna värden i dialogens två kolumner.

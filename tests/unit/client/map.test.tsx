@@ -222,7 +222,7 @@ test('table browsing combines type identities, description search and the shared
   await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
   const search = table.getByLabelText('Sök objekt i tabellen');
   await userEvent.type(search, 'sammanhang 0.');
-  expect(table.getByText('50 träffar')).toBeTruthy();
+  expect(table.getAllByRole('rowheader')).toHaveLength(50);
   await userEvent.click(table.getByRole('button', { name: 'Provobjekt 000' }));
   await userEvent.click(table.getByRole('button', { name: 'Provobjekt 001' }));
   expect(table.getAllByText('✓ Markerad')).toHaveLength(1);
@@ -230,18 +230,18 @@ test('table browsing combines type identities, description search and the shared
   await userEvent.click(filters.getByLabelText('Person'));
   await userEvent.click(filters.getByLabelText('Tjänst'));
   await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
-  expect(table.getByText('20 träffar')).toBeTruthy();
+  expect(table.getAllByRole('rowheader')).toHaveLength(20);
   await userEvent.click(table.getByRole('button', { name: /^Filter/ }));
   await userEvent.click(filters.getByLabelText(/^Bara markerade/));
   await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
-  expect(table.getByText('1 träffar')).toBeTruthy();
+  expect(table.getAllByRole('rowheader')).toHaveLength(1);
   await userEvent.selectOptions(table.getByRole('combobox', { name: 'Sortering' }), 'type-asc');
-  expect(table.getByText('1 träffar')).toBeTruthy();
+  expect(table.getAllByRole('rowheader')).toHaveLength(1);
   await userEvent.click(table.getByRole('button', { name: /^Filter/ }));
   await userEvent.click(filters.getByRole('button', { name: 'Återställ sökning och filter' }));
   await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
   // Reset also restores the default exclusion of ended objects.
-  expect(table.getByText('470 träffar')).toBeTruthy();
+  expect(table.getAllByRole('rowheader')).toHaveLength(50);
   expect(await (await client.request(path)).json()).toEqual(initial);
 });
 
@@ -1670,11 +1670,11 @@ test('abandoning an object form confirms text loss and filters clear without cha
   const filters = within(screen.getByRole('dialog', { name: 'Tabellens filter' }));
   await userEvent.click(filters.getByLabelText('Abonnemang'));
   await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
-  expect(table.getByText('0 träffar')).toBeTruthy();
+  expect(table.queryAllByRole('rowheader')).toHaveLength(0);
   await userEvent.click(table.getByRole('button', { name: /^Filter/ }));
   await userEvent.click(filters.getByRole('button', { name: 'Återställ sökning och filter' }));
   await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
-  expect(table.getByText('2 träffar')).toBeTruthy();
+  expect(table.getAllByRole('rowheader')).toHaveLength(2);
   expect(search).toHaveProperty('value', '');
   expect(await (await client.request(path)).json()).toEqual(original);
 });
