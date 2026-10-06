@@ -1,4 +1,5 @@
 import { useId, useLayoutEffect, useRef } from 'react';
+import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, MapState } from '../shared/map.js';
 import type { HouseholdReadEntry, householdReadRelationships } from './HouseholdReadDialog.js';
 import type { HouseholdTableRow } from './HouseholdTable.js';
@@ -67,6 +68,7 @@ export function MapSelectionDetails({
         {object ? object.object.name : 'Valt samband'}
       </h2>
       <p className="map-selection-summary">{name}</p>
+      <p>{object?.removed ? 'Borttaget' : hasEnded(item) ? 'Upphört' : 'Aktuellt'}</p>
       <button type="button" onClick={onClose}>
         Stäng uppgifterna
       </button>
