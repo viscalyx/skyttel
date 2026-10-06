@@ -7,18 +7,17 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: automatiska slutkontroller GODKÄNDA; oberoende granskning VÄNTAR.**
+**Status: automatiska slutkontroller GODKÄNDA; granskning VÄNTAR.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 
 ## Provdata, miljö och metod
 
 - Slutlig kod, bygge och hela automatiska kontrollkörningen gäller
-  [`e1e129fcb7ea819c478e9c26b88c30cd784efd7b`](https://github.com/viscalyx/skyttel/tree/e1e129fcb7ea819c478e9c26b88c30cd784efd7b).
-  Visuella observationer och mätning gäller den rena versionen
-  [`f660fc483da53b804c5005bcca21f33061382f8b`](https://github.com/viscalyx/skyttel/tree/f660fc483da53b804c5005bcca21f33061382f8b).
-  Båda har samma produktionskatalog `src`:
-  `1c5dde2baf4e12a1bd67f243a73ec72dbc930d02`.
+  [`a53edf887937de814e1bcdaacca51782a7afd224`](https://github.com/viscalyx/skyttel/tree/a53edf887937de814e1bcdaacca51782a7afd224).
+  Visuella observationer och mätning använder också den rena versionen
+  och samma produktionskatalog `src`:
+  `c59ee31196ee59aafc27ffd6d13304057acaf4c2`.
   Slutkörningen innehåller även den rättade manuella provtransporten och
   kompletterande prov. Dokumentationsändringen som publicerar rapporten
   är separat; den ändrar varken kod, testfall eller mätningen.
@@ -39,11 +38,11 @@ Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
   Prov med Chromium är inte fysiska Chrome-prov.
 - Hela `CI=1 npm run check` är **GODKÄND**: typkontroll, lint,
   dokumentation och stavning, 140 grindprov, produktionsbygge,
-  140 testfiler med 1 576 enhets- och webbläsarprov samt 717
+  140 testfiler med 1 576 enhets- och webbläsarprov samt 719
   integrationstestfall i 106 filer. Inga testfall är underkända eller
   överhoppade. Integrationskörningen använder två arbetare och tar
-  15,9 minuter.
-- Global täckning är 93,57 procent för satser, **90,23 procent för
+  15,2 minuter.
+- Global täckning är 93,56 procent för satser, **90,22 procent för
   grenar**, 93,09 procent för funktioner och 95,47 procent för rader.
   Kraven är oförändrade: 90 procent för grenar och 85 procent för de
   övriga måtten.
@@ -111,6 +110,24 @@ fysiska hjälpmedel och enheter är fortfarande **INTE UTFÖRDA**.
 <!-- markdownlint-enable MD013 -->
 
 ## Verifierade rättelser
+
+Slutgranskningens rättelser följer samma bindande beslut:
+
+- [`eb13279`](https://github.com/viscalyx/skyttel/commit/eb13279):
+  Tabellens Redigera och Visa i kartan behåller motsvarande radkontroll.
+  TABELL-04/05 prövar samma öppnare, nästa rad, föregående rad och rubriken
+  genom riktiga formulär, HTTP och SQLite. Sparade objekt, utkastets
+  statusförslag och sökningen kontrolleras separat.
+  Identiska tillgänglighetskontroller för fokusmål delas utan att ändra
+  dialogernas egna återgångar.
+- [`458ce0f`](https://github.com/viscalyx/skyttel/commit/458ce0f) och
+  [`a53edf8`](https://github.com/viscalyx/skyttel/commit/a53edf8):
+  Hjälp och körbara manuella steg använder Tabell, utkastet i textvyn och
+  Rapporter med Ändringshistorik. YTA-07 skiljer bekräftad förlust av
+  formulärändringar från bevarade förslag och oskickat samtalsmeddelande.
+  SPARKONTROLL-05 skiljer ett avvisat försök från genomförd historik och
+  jämför samma beständiga identitet, utkast och frånvaro av kvitto.
+  Två delade Markdown-länkar får hela, fungerande adresser.
 
 Följande rättelser ingår i den angivna rena versionen. De riktade proven
 bevarar fullständiga värden, privata förslag, delat innehåll och historik.
@@ -195,19 +212,19 @@ Slutligt automatiskt resultat redovisas med hela kontrollkörningen.
 
 Den rena versionens [mätdata](workspace-measurement.json) bevarar samtliga
 sex observationer och fullständig miljöinformation. Mätningen är utförd
-2026-10-06 06:49 UTC med 500 objekt och 1 500 samband, 1440 × 1000
+2026-10-06 08:10 UTC med 500 objekt och 1 500 samband, 1440 × 1000
 CSS-pixlar, 40 ms latens, 20 Mbit/s ned och 5 Mbit/s upp. Övriga testjobb
 körs separat från denna mätning.
 
 <!-- markdownlint-disable MD013 -->
 | Prov | Cache | Öppning, ms | Sökning, ms | Sparande, ms | Etiketter | Överlapp |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Kall | 3716,68 | 29,66 | 214,73 | 23 | 0 |
-| 1 | Varm | 3526,78 | 34,97 | 232,56 | 23 | 0 |
-| 2 | Kall | 3578,69 | 32,19 | 237,42 | 23 | 0 |
-| 2 | Varm | 3545,43 | 30,50 | 221,13 | 23 | 0 |
-| 3 | Kall | 3557,59 | 28,77 | 242,32 | 23 | 0 |
-| 3 | Varm | 3524,95 | 29,59 | 213,92 | 23 | 0 |
+| 1 | Kall | 3470,61 | 31,58 | 215,62 | 23 | 0 |
+| 1 | Varm | 3544,97 | 28,85 | 214,00 | 23 | 0 |
+| 2 | Kall | 3543,37 | 35,67 | 241,61 | 23 | 0 |
+| 2 | Varm | 3523,32 | 32,04 | 216,01 | 23 | 0 |
+| 3 | Kall | 3647,51 | 29,14 | 208,04 | 23 | 0 |
+| 3 | Varm | 3502,09 | 31,81 | 222,03 | 23 | 0 |
 <!-- markdownlint-enable MD013 -->
 
 Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,
@@ -215,7 +232,7 @@ Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,
 Efter varje verkligt sparande matchar innehåll, historik och kvitto.
 Efter serverns återstart matchar också det beständiga försöket och dess
 kvitto; utkastet är tomt. JSON-fältet `sourceTree` anger hela repots träd
-`be3b68c1f4d33c913de1ab577e4442b099f5b540`, inte bara `src`-trädet ovan.
+`9dddc5692b0b4677abe3cdc712fc5d18719a934d`, inte bara `src`-trädet ovan.
 
 [Mätplanen](large-map-performance.md) definierar provdata och gränser.
 Kall cache betyder ett nytt webbläsarsammanhang; serverns och systemets
@@ -251,10 +268,10 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 <!-- markdownlint-disable MD013 -->
 | Fält | Status |
 | --- | --- |
-| Slutlig kod- och byggversion, webbläsare och provmiljö | `e1e129f`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd som A/C/D och mätningen |
-| Hela `npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,23 procent mot kravet 90 |
-| Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 717 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
-| Oberoende Standards- och Spec-granskningar samt omprov av deras rättelser | VÄNTAR |
+| Slutlig kod- och byggversion, webbläsare och provmiljö | `a53edf8`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd som A/C/D och mätningen |
+| Hela `npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,22 procent mot kravet 90 |
+| Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
+| Standards- och Spec-granskningar samt omprov av deras rättelser | VÄNTAR |
 | A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
 | Prestanda för 500 objekt och 1 500 samband | GODKÄND enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
 | Fysiska hjälpmedels-, telefon- och förstoringstester | INTE UTFÖRDA |

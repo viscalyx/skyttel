@@ -8,8 +8,8 @@ offentliga funktionsprov eller fysisk tillgänglighetsverifiering.
 ## Källa och metod
 
 Produktionsbilderna gäller den rena versionen
-[`f660fc483da53b804c5005bcca21f33061382f8b`](https://github.com/viscalyx/skyttel/tree/f660fc483da53b804c5005bcca21f33061382f8b),
-med `src`-trädet `1c5dde2baf4e12a1bd67f243a73ec72dbc930d02`.
+[`a53edf887937de814e1bcdaacca51782a7afd224`](https://github.com/viscalyx/skyttel/tree/a53edf887937de814e1bcdaacca51782a7afd224),
+med `src`-trädet `c59ee31196ee59aafc27ffd6d13304057acaf4c2`.
 Källversionen kontrolleras före och efter bilderna. Dokumentationen ändrar
 inte den källan. Bildtagningen använder Playwrights Chromium på Linux,
 verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
@@ -29,7 +29,7 @@ verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
   52 observationer och bilder; produktionen visar rubrikikoner separat.
 
 Den angivna versionen är byggd och samtliga bilder tagna på nytt efter
-avvecklingen av oanvända äldre redigerare. Oberoende slutgenomgång
+rättelserna av tabellfokus och aktuell hjälp. Oberoende slutgenomgång
 av samtliga 142 nya produktionsobservationer, 137 faktiska
 referensobservationer och 216 uppmätta radattribut är utförd.
 Alla 439 förväntade bildfiler finns. Upprepade vybredder grupperas utan
@@ -37,6 +37,14 @@ att utelämna tillstånd;
 kritiska faktiska bilder öppnas och jämförs direkt. Inga kvarvarande
 åtgärdbara visuella fynd finns i de granskade tillstånden.
 Text, radmarkering, valram, riktning, läsläge och resultat jämförs.
+219 av 222 produktionsbilder är identiska med föregående källversions
+bilder. De tre ändrade bilderna öppnas tillsammans med sina faktiska
+referenser; inga nya text- eller layoutfel fastställs i dessa tillstånd.
+Samtliga uppmätta texter är oförändrade förutom källversionens metadata.
+Tolv kritiska eller ändrade bilder öppnas direkt, inklusive referenser.
+Övriga bildfilers existens och PNG-format kontrolleras; varje bildpixel
+bedöms inte separat. De tre visade produktionsbilderna nedan är identiska
+med både de nya råbilderna och den föregående bildtagningen.
 Bilderna visar ibland en avsiktligt rullad del av dialogen; en rubrik
 utanför den bilden är inte bevis för att rubriken eller krysset saknas.
 Fler fullständiga verkliga uppgifter kräver mer rullning än korta exempel.
