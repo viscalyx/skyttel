@@ -72,10 +72,39 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     const names = new Set<string>();
     const reachable = new Set<string>();
     const pages = table.getByRole('navigation', { name: 'Tabellsidor', exact: true });
+    const accessibility = await page.context().newCDPSession(page);
+    async function relationshipAccess() {
+      const { nodes } = await accessibility.send('Accessibility.getFullAXTree');
+      const region = nodes.find(
+        (node) => node.role?.value === 'region' && node.name?.value === 'Hushållets tabell',
+      );
+      if (!region || region.ignored) return [];
+      const byId = new Map(nodes.map((node) => [node.nodeId, node]));
+      const pending = [...(region.childIds ?? [])];
+      const entries = [];
+      for (const id of pending) {
+        const node = byId.get(id);
+        if (!node) continue;
+        pending.push(...(node.childIds ?? []));
+        if (node.ignored || node.role?.value !== 'button') continue;
+        if (!node.name?.value.startsWith('Samband för ')) continue;
+        entries.push({
+          role: node.role.value,
+          name: node.name.value,
+          description: node.description?.value,
+          disabled:
+            node.properties?.some(
+              (property) => property.name === 'disabled' && property.value.value === true,
+            ) ?? false,
+        });
+      }
+      return entries;
+    }
     for (let index = 1; index <= 10; index++) {
       await expect(pages).toContainText(`Sida ${index} av 10`);
       const buttons = table.locator('.household-table-row-toggle');
       await expect(buttons).toHaveCount(50);
+      const expectedEntries = [];
       for (const name of await buttons.allTextContents()) {
         const clean = name.replace(/^[▾▸]/, '').trim();
         names.add(clean);
@@ -84,11 +113,17 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
         const edges = baseline.relationships.filter(
           (edge) => edge.sourceId === object.id || edge.targetId === object.id,
         );
-        const entry = table.getByRole('button', { name: `Samband för ${clean}`, exact: true });
-        await expect(entry).toBeEnabled();
-        await expect(entry).toHaveAccessibleDescription(`${edges.length} samband`);
+        expectedEntries.push({
+          role: 'button',
+          name: `Samband för ${clean}`,
+          description: `${edges.length} samband`,
+          disabled: false,
+        });
         for (const edge of edges) reachable.add(edge.id);
       }
+      // Chromium computes every role, name, description and enabled state in one
+      // public accessibility-tree read per page instead of 100 serial assertions.
+      await expect.poll(relationshipAccess).toEqual(expectedEntries);
       const sample = (await buttons.first().textContent())?.replace(/^[▾▸]/, '').trim();
       if (!sample) throw new Error('Each table page must contain a readable object');
       await table.getByRole('button', { name: `Samband för ${sample}`, exact: true }).click();
@@ -103,6 +138,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
       await relations.getByRole('button', { name: 'Stäng samband', exact: true }).click();
       if (index < 10) await pages.getByRole('button', { name: 'Nästa', exact: true }).click();
     }
+    await accessibility.detach();
     expect(names.size).toBe(500);
     expect(reachable.size).toBe(1500);
     await table
