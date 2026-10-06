@@ -119,3 +119,33 @@
     z-index: 0;
   }
 }
+
+/* Short screens retain readable status beside the independently scrolling
+   navigation controls, including when an ordinary staging message is shown. */
+@media (max-width: 700px) and (max-height: 600px) {
+  .household-map.workspace-shell:has(.map-navigation:not([hidden])) {
+    overflow-y: auto;
+  }
+  .household-map.workspace-shell:has(.map-navigation:not([hidden])) .workspace-context {
+    position: absolute;
+    max-height: none;
+    top: calc(var(--map-search-summary-bottom, 120px) + 8px);
+    width: calc(40vw - 24px);
+    max-width: calc(40vw - 24px);
+  }
+  .household-map.workspace-shell:has(.map-navigation:not([hidden])) .map-search-summary {
+    max-width: calc(40vw - 24px);
+  }
+  .household-map.workspace-shell .map-navigation:not([hidden]) {
+    left: 40%;
+    right: 12px;
+    width: min(350px, calc(60vw - 24px));
+  }
+  .household-map.workspace-shell .map-navigation-header {
+    gap: 4px;
+    padding: 4px;
+  }
+  .household-map.workspace-shell .map-navigation-header h2 {
+    font-size: 12px;
+  }
+}

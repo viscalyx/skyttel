@@ -454,6 +454,13 @@ export function HouseholdMap({
         '.workspace-tools:not(.expanded)',
       );
       if (tools) workspace.current?.style.setProperty('--tools-height', `${tools.offsetHeight}px`);
+      const searchSummary = workspace.current?.querySelector<HTMLElement>('.map-search-summary');
+      if (searchSummary) {
+        workspace.current?.style.setProperty(
+          '--map-search-summary-bottom',
+          `${searchSummary.getBoundingClientRect().bottom - viewport.offset}px`,
+        );
+      }
       const context = workspace.current?.querySelector<HTMLElement>('.workspace-context');
       if (context) {
         workspace.current?.style.setProperty(
@@ -513,6 +520,7 @@ export function HouseholdMap({
       hasMap && '.spatial-bottom-bar',
       active && '.workspace-tools',
       active && '.workspace-context',
+      active && '.map-search-summary',
       hasMap && '.workspace-voice-controls',
       textViewOpen && '.text-view-message',
       textViewOpen && '.text-view',

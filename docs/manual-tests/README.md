@@ -339,7 +339,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   uppgifter, vanliga formulär, återfokus och oförändrat utkast även i
   smala och korta fönster.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta
-  grannar, återgångsvy, mus, tangentbord och pekskärm i smala och korta vyer.
+  grannar, återgångsvy, mus, tangentbord och pekskärm i smala och korta vyer;
+  nå återkoppling och alla sex personliga flyttar utan täckta kontroller,
+  återfå fokus efter flytt och bevara senare fokus eller stängd navigering
+  när ett verkligt svar hålls och släpps.
 - [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
   stabil etikettinformation vid växling mellan kompakt karta och lista,
   täta mobilutsnitt med prioriterade objekt- och sambandsetiketter samt

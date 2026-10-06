@@ -934,7 +934,7 @@ export function SpatialMap({
         const next = { ...position, [axis]: position[axis] + step };
         const end = scene.current?.place(id, next) ?? next;
         movement.recordMove(id, position, end, axis === 'y');
-        void personal?.move(id, end);
+        return personal?.move(id, end);
       }}
     >
       <div className="navigation-height-help">

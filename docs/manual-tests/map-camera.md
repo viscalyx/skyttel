@@ -136,17 +136,56 @@ testfallet “KAMERA-04: short viewports retain a usable focus rectangle
 and reachable camera and display controls”. Testet använder motsvarande
 CSS-mått; riktig webbläsarzoom provas separat.
 
+För de två kontrollerade svaren i steg 7 använder du bara provinstallationens
+påhittade uppgifter och webbläsarens utvecklarkonsol. Kör följande före varje
+försök. Det verkliga svaret hålls efter att den personliga flytten har genomförts;
+`releasePersonalMove()` släpper samma svar. Detta är ingen telefonförberedelse
+eller uppgift om faktiskt utförd fysisk provning.
+
+```js
+(() => {
+  const originalFetch = window.fetch.bind(window);
+  let deliver;
+  window.releasePersonalMove = () => deliver?.();
+  window.fetch = async (input, options) => {
+    const response = await originalFetch(input, options);
+    const url = input instanceof Request ? input.url : input;
+    const method = options?.method
+      ?? (input instanceof Request ? input.method : 'GET');
+    if (new URL(url, location.href).pathname.endsWith('/map/view/position')
+        && method === 'POST') {
+      window.fetch = originalFetch;
+      await new Promise(resolve => { deliver = resolve; });
+    }
+    return response;
+  };
+})();
+```
+
 **Steg:**
 
 1. Fokusera **Fokusera markering** med tangentbord och tryck Enter.
 2. Kontrollera Lo och Kim mellan övre och nedre verktyg. Välj översikt
    och återgå till den föregående vyn.
 3. Öppna **Visningsval**, slå på och av **Alla etiketter** och stäng valet.
-4. Öppna **Navigera**, rotera och stäng navigeringen.
+4. Öppna **Navigera**. Läs söksammanfattningen och hushållets återkoppling
+   bredvid navigeringen. Nå **Visa samband i kartan** med tangentbord; rulla
+   vid behov hela arbetsytan för att läsa och nå hela kontrollen.
+   Nå var och en av de sex **Flytta Lo Exempel**-knapparna med tangentbord och
+   aktivera dem: vänster, höger, uppåt, nedåt, framåt och bakåt. Kontrollera
+   fokus och att enbart din personliga placering ändras. Rotera och stäng
+   navigeringen. Upprepa detta steg vid 640 × 500 CSS-pixlar.
 5. Välj **Visa verktygens namn** och kontrollera att **Skriv till Skyttel**
    samt **Visa detaljer** går att nå.
 6. Aktivera kamerafokus med tangentbord från det utökade verktygsfältet.
    Upprepa med översikt och återgång efter att verktygsnamnen öppnats igen.
+7. Förbered det kontrollerade svaret och öppna Navigera. Flytta Lo med
+   tangentbord och kontrollera att flyttknappen blir inaktiv i väntan på svaret.
+   Flytta fokus till **Stäng navigering** utan att aktivera den. Släpp samma
+   svar med `releasePersonalMove()` och kontrollera att fokus ligger kvar.
+   Upprepa förberedelsen och flytten, men aktivera nu **Stäng navigering**
+   före svaret. Släpp svaret och kontrollera att **Navigera** behåller fokus;
+   den stängda navigeringen återöppnas inte.
 
 **Förväntat resultat:**
 
@@ -156,4 +195,10 @@ CSS-mått; riktig webbläsarzoom provas separat.
 - Kamera- och visningskontroller går att använda. Inga kontroller kräver
   vågrät rullning av sidan.
 - Kameraåtgärder fäller ihop verktygsnamnen och behåller fokus på samma
-  knapp. Urval och öppna arbetspaneler finns kvar.
+  knapp. Urval och personliga inställningar finns kvar.
+- Efter en vanlig flytt återgår fokus till samma aktiva flyttknapp.
+  Ett kontrollerat fördröjt svar tar inte fokus från en senare kontroll och
+  återöppnar inte stängd navigering.
+- Navigering och återkoppling täcker inte varandras kontroller. Sökräkningen,
+  fullständiga benämningar och alla sex flyttknappar går att läsa och nå
+  med tangentbord och rullning. Sparade fakta och privata förslag ändras inte.

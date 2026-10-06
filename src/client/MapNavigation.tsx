@@ -68,7 +68,7 @@ export function MapNavigation({
   onClose: () => void;
   onNavigate: (action: (typeof cameraButtons)[number][0]) => void;
   object?: { id: string; name: string };
-  onMove: (id: string, axis: keyof Position, step: number) => void;
+  onMove: (id: string, axis: keyof Position, step: number) => void | Promise<void>;
   disabled: boolean;
   movementDisabled: boolean;
   children?: ReactNode;
@@ -88,6 +88,80 @@ export function MapNavigation({
   });
   const [dragging, setDragging] = useState(false);
   const [status, setStatus] = useState('');
+  const moveFocus = useRef<AbortController | null>(null);
+  const completedMove = useRef<(() => void) | null>(null);
+  const [moveCompleted, setMoveCompleted] = useState(0);
+
+  useEffect(() => {
+    if (!open) {
+      moveFocus.current?.abort();
+      completedMove.current = null;
+    }
+    return () => moveFocus.current?.abort();
+  }, [open]);
+  useLayoutEffect(() => {
+    if (!movementDisabled && moveCompleted > 0) {
+      completedMove.current?.();
+      completedMove.current = null;
+    }
+  }, [movementDisabled, moveCompleted]);
+
+  function moveObject(
+    opener: HTMLButtonElement,
+    objectId: string,
+    axis: keyof Position,
+    step: number,
+  ) {
+    moveFocus.current?.abort();
+    completedMove.current = null;
+    const controller = new AbortController();
+    moveFocus.current = controller;
+    let leftControl = false;
+    const leave = (event: Event) => {
+      if (event.target !== document.body && !opener.contains(event.target as Node))
+        leftControl = true;
+    };
+    document.addEventListener('focusin', leave, { signal: controller.signal });
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        if (!opener.contains(event.target as Node)) leftControl = true;
+      },
+      { signal: controller.signal },
+    );
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.key === 'Tab' || event.key === 'Escape') leftControl = true;
+      },
+      { signal: controller.signal },
+    );
+    const result = onMove(objectId, axis, step);
+    if (!result) {
+      controller.abort();
+      return;
+    }
+    const complete = () => {
+      if (controller.signal.aborted) return;
+      // Restore after the owning hook has rendered the control enabled again.
+      completedMove.current = () => {
+        if (
+          !controller.signal.aborted &&
+          !leftControl &&
+          opener.isConnected &&
+          opener.dataset.movementObject === objectId &&
+          !opener.disabled &&
+          !opener.closest('[hidden], [inert]') &&
+          opener.getClientRects().length &&
+          (document.activeElement === document.body || document.activeElement === opener)
+        )
+          opener.focus();
+        controller.abort();
+      };
+      setMoveCompleted((previous) => previous + 1);
+    };
+    void result.then(complete, complete);
+  }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reveal requests focus Navigation; a resize or focus within an already open window must not move focus.
   useLayoutEffect(() => {
@@ -337,9 +411,10 @@ export function MapNavigation({
                   key={axis + step}
                   type="button"
                   disabled={movementDisabled}
+                  data-movement-object={object.id}
                   aria-label={`Flytta ${object.name}: ${label.toLocaleLowerCase('sv')}`}
                   title={`Flytta ${object.name}: ${label.toLocaleLowerCase('sv')}`}
-                  onClick={() => onMove(object.id, axis, step)}
+                  onClick={(event) => moveObject(event.currentTarget, object.id, axis, step)}
                 >
                   <WorkspaceIcon name={icon} />
                   <span>{label}</span>

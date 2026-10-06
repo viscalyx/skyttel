@@ -281,7 +281,7 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
   const installation = await createInstallation();
   try {
     await page.setViewportSize({ width: 320, height: 1000 });
-    const { lo, map } = await arrange(page, installation.origin);
+    const { lo, map, read, path } = await arrange(page, installation.origin);
     await lo.click();
     await page.setViewportSize({ width: 320, height: 250 });
     const focus = page.getByRole('button', { name: 'Fokusera markering', exact: true });
@@ -317,9 +317,115 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
     await map.getByLabel('Alla etiketter', { exact: true }).check();
     await map.getByLabel('Alla etiketter', { exact: true }).uncheck();
     await map.getByText('Visningsval', { exact: true }).click();
-    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
-    await page.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
-    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    const beforeMoves = await read();
+    for (const viewport of [
+      { width: 640, height: 500 },
+      { width: 320, height: 250 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+      const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
+      const context = page.locator('.workspace-context');
+      await expect
+        .poll(async () => {
+          const nav = await navigation.boundingBox();
+          const status = await context.boundingBox();
+          return Boolean(
+            nav && status && (nav.x + nav.width <= status.x || status.x + status.width <= nav.x),
+          );
+        })
+        .toBe(true);
+      const reveal = context.getByRole('button', { name: 'Visa samband i kartan', exact: true });
+      await reveal.focus();
+      await reveal.click({ trial: true });
+      await expect(reveal).toBeFocused();
+      await page.screenshot({
+        path: test.info().outputPath(`navigation-status-${viewport.width}.png`),
+      });
+      for (const direction of ['vänster', 'höger', 'uppåt', 'nedåt', 'framåt', 'bakåt']) {
+        const move = navigation.getByRole('button', {
+          name: `Flytta Lo Exempel: ${direction}`,
+          exact: true,
+        });
+        await move.focus();
+        await move.click({ trial: true });
+        const before = await (await page.request.get(`${path}/view`)).json();
+        const version =
+          before.positions.find((position: { id: string; version: number }) => position.id === 'lo')
+            ?.version ?? 0;
+        const applied = page.waitForResponse(
+          (response) =>
+            response.url() === `${path}/view/position` &&
+            response.request().method() === 'POST' &&
+            response.status() === 200,
+        );
+        await expect(move).toBeFocused();
+        await page.keyboard.press('Enter');
+        await applied;
+        const after = await (await page.request.get(`${path}/view`)).json();
+        expect(
+          after.positions.find((position: { id: string; version: number }) => position.id === 'lo')
+            ?.version,
+        ).toBe(version + 1);
+        await expect(move).toBeEnabled();
+        await expect(move).toBeFocused();
+        await move.click({ trial: true });
+      }
+      await page.screenshot({
+        path: test.info().outputPath(`navigation-moves-${viewport.width}.png`),
+      });
+      expect(await read()).toEqual(beforeMoves);
+      for (const departure of ['later-focus', 'closed']) {
+        let release!: () => void;
+        let committed!: () => void;
+        const held = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const actualCommit = new Promise<void>((resolve) => {
+          committed = resolve;
+        });
+        await page.route(`${path}/view/position`, async (route) => {
+          const response = await route.fetch();
+          expect(response.status()).toBe(200);
+          committed();
+          await held;
+          await route.fulfill({ response });
+        });
+        const move = navigation.getByRole('button', {
+          name: 'Flytta Lo Exempel: vänster',
+          exact: true,
+        });
+        await move.focus();
+        await page.keyboard.press('Enter');
+        await actualCommit;
+        await expect(move).toBeDisabled();
+        const close = navigation.getByRole('button', { name: 'Stäng navigering', exact: true });
+        await close.focus();
+        if (departure === 'closed') await page.keyboard.press('Enter');
+        const delivered = page.waitForResponse(
+          (response) => response.url() === `${path}/view/position` && response.status() === 200,
+        );
+        release();
+        await delivered;
+        await expect(
+          page.locator('.map-navigation button[aria-label="Flytta Lo Exempel: vänster"]'),
+        ).toBeEnabled();
+        if (departure === 'later-focus') {
+          await expect(close).toBeFocused();
+          await close.click({ trial: true });
+        } else {
+          const trigger = page.getByRole('button', { name: 'Navigera', exact: true });
+          await expect(navigation).not.toBeVisible();
+          await expect(trigger).toBeFocused();
+          await trigger.click({ trial: true });
+          await trigger.click();
+        }
+        await page.unroute(`${path}/view/position`);
+        expect(await read()).toEqual(beforeMoves);
+      }
+      await navigation.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
+      await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+    }
     await expand.click();
     await page
       .getByRole('button', { name: 'Skriv till Skyttel', exact: true })
