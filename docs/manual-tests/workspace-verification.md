@@ -7,15 +7,16 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: lokala slutkontroller GODKÄNDA; slutgranskning PÅGÅR.**
+**Status: slutkontroller och slutgranskningar GODKÄNDA.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 
-Förnyade Standards- och Spec-granskningar gäller hela ändringen mot
-startpunkten
+Slutliga Standards- och Spec-granskningar gäller
+[`5b5926cad65284d27b625db50c6667b196bf394d`](https://github.com/viscalyx/skyttel/tree/5b5926cad65284d27b625db50c6667b196bf394d)
+mot startpunkten
 [`4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123`](https://github.com/viscalyx/skyttel/tree/4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123).
-Slutligt granskningsresultat inväntas. GitHubs kontroll av den nya versionen
-redovisas separat från de godkända lokala kommandona.
+Båda axlarna har noll kvarstående åtgärdbara fynd inom det granskade
+underlaget. Alla verifierade rättelser ingår i den hela körningen nedan.
 Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 
 ## Provdata, miljö och metod
@@ -49,6 +50,12 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
   överhoppade. Integrationskörningen använder två arbetare och tar
   13,9 minuter.
   Resultaten gäller de lokala kommandona på angivna versioner.
+- GitHubs applikationskontroll är också **GODKÄND** på `d3474ed`.
+  Dess 719 integrationstestfall tar 15,7 minuter och grentäckningen är
+  90,21 procent mot samma krav på 90 procent. Alla nio containersteg
+  och övriga obligatoriska GitHub-grindar är godkända på samma version.
+  Detta resultat gäller den angivna kodversionen; rapportens publicering
+  ändrar endast dokumentation.
 - Global täckning är 93,57 procent för satser, **90,23 procent för
   grenar**, 93,10 procent för funktioner och 95,47 procent för rader.
   Kraven är oförändrade: 90 procent för grenar och 85 procent för de
@@ -338,7 +345,7 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 | Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `d3474ed`; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,23 procent mot kravet 90 |
 | Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
 | Containerkontroll | GODKÄND; 9 av 9 steg på `d3474ed`, samma rena version som hela kontrollkörningen |
-| Standards- och Spec-granskningar samt omprov av deras rättelser | PÅGÅR; förnyad granskning av hela ändringen med rättelsen för läsytans rullningsgränser |
+| Standards- och Spec-granskningar samt omprov av deras rättelser | 0 kvarstående åtgärdbara fynd på båda axlarna vid `5b5926c`; alla rättelser ingår i den godkända hela körningen |
 | A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN på `d3474ed` utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
 | Prestanda för 500 objekt och 1 500 samband | GODKÄND på `d3474ed` enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
 | Fysiska hjälpmedels-, telefon- och förstoringstester | INTE UTFÖRDA |
