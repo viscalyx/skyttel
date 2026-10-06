@@ -49,6 +49,7 @@ test('SAMBAND-12: long relationship names and field labels reflow without horizo
     );
     const sentence = dialog.getByRole('region', { name: 'Sambandet före inskickning' });
     await expect(sentence).toHaveCSS('font-weight', '650');
+    await expect(sentence).toHaveCSS('border-top-left-radius', '0px');
     await expect(sentence).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(sentence).toContainText(targetName);
     await expect(sentence).toContainText(`l${'L'.repeat(179)}`);
