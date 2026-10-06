@@ -101,7 +101,7 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   läge på dator och mobil; fullständig läsning och sambandskedjor utan
   kartgrafik, uttrycklig identitet och sparade/föreslagna preciseringar,
   långa namn, modalernas fokus och återgång även när en sida försvinner;
-  separat sökning, egna
+  separat sökning, mobil filterdialog med knapp för aktuella träffar, egna
   detaljträffar, aktuell rad, teckensammansättning, utkastfiltrets återställning,
   markeringar, direkta sammanhang, utforskning utan indirekt expansion,
   upphört även i sammanhang och tabellens kartknapp med bevarat läge;

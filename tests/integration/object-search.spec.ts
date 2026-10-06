@@ -64,7 +64,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('searchbox').fill('prov');
     await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
-    const filters = page.getByRole('dialog', { name: 'Filter i tabellen' });
+    const filters = page.getByRole('dialog', { name: 'Tabellens filter' });
     await filters.getByLabel('Typ 2', { exact: true }).check();
     await filters.getByLabel('Nytt', { exact: true }).check();
     await page.keyboard.press('Escape');
@@ -111,7 +111,8 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
 }) => {
   const installation = await createInstallation();
   try {
-    await prepareHouseholdTable(page.request, installation.origin);
+    const { read } = await prepareHouseholdTable(page.request, installation.origin);
+    const before = await read();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(installation.origin);
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
@@ -132,15 +133,72 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('searchbox').fill('399 egen');
     await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
-    const filters = page.getByRole('dialog', { name: 'Filter i tabellen' });
+    const filters = page.getByRole('dialog', { name: 'Tabellens filter' });
     await expect(filters.getByRole('heading')).toBeFocused();
     await filters.getByLabel('Typ 2', { exact: true }).check();
-    await filters.getByRole('button', { name: 'Stäng filter' }).click();
+    await expect(filters.getByText('Filter ändrar vilka objekt tabellen visar.')).toBeVisible();
+    const showResults = filters.getByRole('button', { name: 'Visa 1 träffar', exact: true });
+    await expect(showResults).toBeVisible();
+    await showResults.click();
+    await expect(table.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
     await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
     await expect(table.getByRole('rowheader')).toHaveCount(1);
     const box = await table.getByRole('searchbox').boundingBox();
     expect(box?.x).toBeGreaterThanOrEqual(0);
     expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
+    for (const viewport of [
+      { width: 320, height: 640 },
+      { width: 320, height: 250 },
+      { width: 1280, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+      await expect(filters.getByRole('heading')).toBeFocused();
+      await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
+      await expect(showResults).toBeVisible();
+      const frame = await filters.boundingBox();
+      expect(frame).not.toBeNull();
+      if (!frame) throw new Error('Filterdialogens ram saknas');
+      if (viewport.width === 320) {
+        expect(frame.x).toBe(0);
+        expect(frame.y).toBe(0);
+        expect(frame.width).toBe(viewport.width);
+        expect(frame.height).toBe(viewport.height);
+      } else {
+        expect(frame.width).toBe(800);
+      }
+      expect(await filters.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+        true,
+      );
+      await showResults.focus();
+      const action = await showResults.boundingBox();
+      expect(action).not.toBeNull();
+      if (!action) throw new Error('Knappen för att visa träffar saknas');
+      expect(action.y + action.height).toBeLessThanOrEqual(viewport.height);
+      expect(
+        await showResults.evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          return element.contains(
+            document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2),
+          );
+        }),
+      ).toBe(true);
+      await page.keyboard.press('Enter');
+      await expect(filters).not.toBeVisible();
+      await expect(
+        table.getByRole('button', { name: 'Filter · aktiva', exact: true }),
+      ).toBeFocused();
+      await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
+      await expect(table.getByRole('rowheader')).toHaveCount(1);
+    }
+    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+    await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
+    await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+    await expect(filters).not.toBeVisible();
+    await expect(table.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
+    await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
+    await expect(table.getByRole('rowheader')).toHaveCount(1);
+    expect(await read()).toEqual(before);
   } finally {
     await installation.close();
   }
@@ -156,7 +214,7 @@ test('SÖK-02: multiple filters combine independently and keep proposals distinc
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('button', { name: 'Filter', exact: true }).click();
-    const filters = page.getByRole('dialog', { name: 'Filter i tabellen' });
+    const filters = page.getByRole('dialog', { name: 'Tabellens filter' });
     await filters.getByLabel('Typ 2', { exact: true }).check();
     await filters.getByLabel('Typ 10', { exact: true }).check();
     await filters.getByLabel('Nytt', { exact: true }).check();
@@ -203,7 +261,7 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     const mapSearch = panel.getByRole('searchbox');
     const canvas = page.getByRole('img', {
-      name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller listan.',
+      name: 'Rymdens bakgrund. Välj innehåll med etiketterna eller tabellen.',
     });
     await expect(mapSearch).toBeFocused();
     await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toHaveAttribute(

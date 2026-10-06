@@ -252,21 +252,8 @@
 .household-table-empty {
   padding: 20px;
 }
-.household-table-filter-dialog {
-  width: min(700px, calc(100% - 24px));
-  color: var(--space-text);
-  background: var(--space-surface);
-  border: 1px solid var(--space-line);
-  border-radius: 14px;
-  padding: 24px;
-}
-.household-table-filter-dialog::backdrop {
-  background: #10283388;
-}
-.household-table-filter-dialog header {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
+.household-table > .household-table-filter-dialog {
+  max-width: 800px;
 }
 .household-table-filter-dialog fieldset {
   border: 0;

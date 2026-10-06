@@ -822,15 +822,20 @@ preserve restrictions”.
 1. Visa verktygens namn och öppna Sök i kartan. Kontrollera sökfältets
    fokus och åtkomliga filter. Skriv prov och ta med upphörda.
 2. Stäng sökytan. Läs fortsatt sökning, filter och träffantal.
-3. Välj Tabell, sök efter 399 egen och öppna Filter. Kontrollera rubrikfokus.
-   Välj Typ 2 och stäng med krysset.
+3. Välj Tabell, sök efter 399 egen och öppna Filter. Kontrollera fokus på
+   Tabellens filter och förklaringen om vilka objekt tabellen visar.
+   Välj Typ 2, kontrollera Visa 1 träffar och välj knappen.
 4. Kontrollera samma söktext och en träff. Prova samma flöde med touch,
    skärmtangentbord och förstoring på iPhone och iPad.
+5. Öppna Filter igen. Kontrollera Typ 2 och samma träffantal. Nå knappen
+   för att visa träffar med tangentbord även när skärmen är kort. Stäng
+   med knappen och öppna igen; prova också krysset och Escape.
 
 **Förväntat resultat:**
 
 - Kartan har en ingång utan tangentbord och tabellen ett eget synligt fält.
 - Filterdialogen håller fokus inom dialogen och återgår till Filter.
+- Knappen visar det aktuella träffantalet och stänger med valen kvar.
 - Sökingången ryms inom skärmen. Söktext och filter bevaras vid stängning.
 - Verklig touch, skärmtangentbord och VoiceOver behöver manuellt prov;
   automatprovet kontrollerar mobil layout och offentlig UI.
@@ -896,8 +901,9 @@ edges require inclusion”.
    grannarna och träffantalet.
 4. Öppna sökytan och avmarkera **Bara markerade** och **Ta med upphörda**.
    Stäng sökytan, markera cykeln och välj **Visa samband i kartan**.
-5. Öppna **Tabell**, välj **Redigera Blå cykel**, ändra objektets status
-   till **Upphört** och lägg hela ändringen i utkastet.
+5. Öppna **Tabell**, välj **Redigera Blå cykel** och öppna
+   **Livscykel och utseende**. Ändra objektets status till **Upphört**
+   och välj **Lägg i utkastet och stäng**.
 6. Återgå till **Karta**. Kontrollera att den utforskade cykeln döljs.
    Välj **Ta med upphörda** från upplysningen och kontrollera cykeln.
    Markera cykeln och välj **Visa samband i kartan** igen för att

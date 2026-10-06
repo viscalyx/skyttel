@@ -27,7 +27,7 @@ test('LISTA-05: short-screen table returns preserve the visible result and keybo
     await openTable(page);
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('button', { name: 'Filter', exact: true }).click();
-    const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+    const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
     await filters.getByLabel('Ta med upphörda', { exact: true }).check();
     await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
     await table.getByRole('button', { name: 'Provobjekt 045', exact: true }).click();

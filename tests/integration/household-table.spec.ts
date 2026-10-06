@@ -156,8 +156,8 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
         .poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth))
         .toBe(96);
     await table.getByRole('button', { name: 'Filter', exact: true }).click();
-    const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
-    await expect(filters.getByRole('heading', { name: 'Filter i tabellen' })).toBeFocused();
+    const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
+    await expect(filters.getByRole('heading', { name: 'Tabellens filter' })).toBeFocused();
     await filters.getByLabel('Ta med upphörda').check();
     await filters.getByLabel('Ta med borttagna').check();
     await page.keyboard.press('Escape');

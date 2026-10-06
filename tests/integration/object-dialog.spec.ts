@@ -469,7 +469,7 @@ test('KARTA-12: identity, custom fields, lifecycle and icon stay together when s
     expect((await read()).objects).toHaveLength(0);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     await page.getByRole('button', { name: 'Filter', exact: true }).click();
-    const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+    const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
     await filters.getByLabel('Ta med upphörda').check();
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Redigera Pendlarcykeln', exact: true }).click();

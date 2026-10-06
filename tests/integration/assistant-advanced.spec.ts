@@ -300,7 +300,7 @@ test('MCP-04: upphört innehåll och privata utkast skyddar typer', async ({ pag
     await mcp.propose('save_draft', { operationId: 'blocked-removal' }, 'definition_in_use');
     await page.goto(app.origin);
     await openTable(page);
-    const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+    const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
     await page
       .getByRole('region', { name: 'Hushållets tabell', exact: true })
       .getByRole('button', { name: 'Filter', exact: true })

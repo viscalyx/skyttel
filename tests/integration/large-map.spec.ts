@@ -66,7 +66,7 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     await openTable(page);
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('button', { name: 'Filter', exact: true }).click();
-    const filter = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+    const filter = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
     await filter.getByRole('checkbox', { name: 'Ta med upphörda', exact: true }).check();
     await filter.getByRole('button', { name: 'Stäng filter', exact: true }).click();
     const names = new Set<string>();

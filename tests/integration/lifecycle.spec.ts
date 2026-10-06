@@ -81,7 +81,7 @@ async function includeEndedInTable(page: Page) {
     .getByRole('region', { name: 'Tabellens sökning och filter' })
     .getByRole('button', { name: /^Filter/ })
     .click();
-  const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+  const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
   await filters.getByLabel('Ta med upphörda').check();
   await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
 }

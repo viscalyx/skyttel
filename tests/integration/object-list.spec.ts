@@ -392,11 +392,11 @@ for (const width of [390, 320]) {
 async function tableFilters(page: Page) {
   const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
   await table.getByRole('button', { name: /^Filter/ }).click();
-  return page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+  return page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
 }
 async function closeFilters(page: Page) {
   await page
-    .getByRole('dialog', { name: 'Filter i tabellen', exact: true })
+    .getByRole('dialog', { name: 'Tabellens filter', exact: true })
     .getByRole('button', { name: 'Stäng filter', exact: true })
     .click();
 }

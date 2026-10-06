@@ -14,6 +14,7 @@ import {
 } from './ObjectSearch.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
 import './household-table.css';
+import './object-dialog.css';
 
 export type HouseholdTableRow = {
   object: MapObject;
@@ -537,7 +538,7 @@ export function HouseholdTable({
       </section>
       <dialog
         ref={filterDialog}
-        className="household-table-filter-dialog"
+        className="object-dialog household-table-filter-dialog"
         aria-labelledby={`${prefix}-filters-title`}
         onCancel={() => setFiltersOpen(false)}
         onClose={() => {
@@ -546,24 +547,34 @@ export function HouseholdTable({
         }}
       >
         <header>
-          <h2 id={`${prefix}-filters-title`} tabIndex={-1}>
-            Filter i tabellen
-          </h2>
+          <div>
+            <h2 id={`${prefix}-filters-title`} tabIndex={-1}>
+              Tabellens filter
+            </h2>
+            <p>Filter ändrar vilka objekt tabellen visar.</p>
+          </div>
           <button type="button" aria-label="Stäng filter" onClick={() => setFiltersOpen(false)}>
             ×
           </button>
         </header>
-        <ObjectSearchFilters
-          search={search}
-          onChange={(next) => {
-            setSearch(next);
-            setPage(0);
-          }}
-          types={types}
-          selectedIds={selectedIds}
-          hasProposals={hasProposals}
-          table
-        />
+        <div className="object-dialog-body">
+          <ObjectSearchFilters
+            search={search}
+            onChange={(next) => {
+              setSearch(next);
+              setPage(0);
+            }}
+            types={types}
+            selectedIds={selectedIds}
+            hasProposals={hasProposals}
+            table
+          />
+        </div>
+        <footer>
+          <button type="button" className="primary" onClick={() => setFiltersOpen(false)}>
+            Visa {found.length} träffar
+          </button>
+        </footer>
       </dialog>
     </section>
   );

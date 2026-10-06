@@ -206,7 +206,7 @@ for (const width of [1280, 390, 320]) {
       );
       await search.fill('Oberoende');
       await table.getByRole('button', { name: /^Filter/ }).click();
-      const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+      const filters = page.getByRole('dialog', { name: 'Tabellens filter', exact: true });
       await filters.getByLabel('Ta med borttagna', { exact: true }).check();
       await page.keyboard.press('Escape');
       await expect(
@@ -264,8 +264,9 @@ test('SÖK-07: direct context ignores hit filters while ended objects and edges 
     await (await utilityButton(page, 'Tabell')).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('button', { name: 'Redigera Blå cykel', exact: true }).click();
+    await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     await page.getByLabel('Objektets status').selectOption('ended');
-    await page.getByRole('button', { name: 'Lägg i mitt utkast', exact: true }).click();
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await (await utilityButton(page, 'Karta')).click();
     await expect(node('Blå cykel')).toHaveCount(0);
     await expect(summary).toContainText('Upphörda objekt eller samband döljs');
