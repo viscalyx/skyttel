@@ -20,6 +20,7 @@ import {
   proposedRelationships,
   proposedRelationshipTypes,
 } from '../shared/map.js';
+import type { RelationshipFormResult } from '../shared/relationship-form.js';
 import type { MapSelection } from '../shared/text-assistant.js';
 import { buildHeader, notifyOutdatedClient } from './build-guard.js';
 import { ConflictDialog } from './ConflictDialog.js';
@@ -63,7 +64,7 @@ import { CustomFieldsDetails, ObjectTypeDetails, ObjectTypeEditor } from './Obje
 import { type ObjectEditor, ObjectWork } from './ObjectWork.js';
 import { PagedList } from './PagedList.js';
 import { ProfileImage } from './ProfileImage.js';
-import { RelationshipEditor, relationshipLabel } from './RelationshipEditor.js';
+import { relationshipLabel } from './RelationshipEditor.js';
 import { RelationshipTypeDetails, RelationshipTypeEditor } from './RelationshipTypes.js';
 import { Reports } from './Reports.js';
 import { rejectionMessage, SaveOperations } from './SaveOperations.js';
@@ -208,6 +209,7 @@ export function HouseholdMap({
   const [draftRemovalStatus, setDraftRemovalStatus] = useState('');
   const [objectDialog, setObjectDialog] = useState<ObjectEditor | null>(null);
   const [objectFormDirty, setObjectFormDirty] = useState(false);
+  const [relationshipFormDirty, setRelationshipFormDirty] = useState(false);
   const { requestLeave } = useFormLeave();
   const objectReturnFocus = useRef<(() => void) | undefined>(undefined);
   const [conflictResolutionStatus, setConflictResolutionStatus] = useState('');
@@ -380,6 +382,7 @@ export function HouseholdMap({
     }
     requestLeave(() => {
       setObjectDialog(null);
+      setReadEntry(null);
       openWorkConfirmed(target, chosen);
     });
   }
@@ -440,7 +443,11 @@ export function HouseholdMap({
     if (!restoreOutsideFocus(textViewButtonName)) focusTools();
   }
   const [legacyDirty, setDirty] = useState(false);
-  const dirty = legacyDirty || objectFormDirty || Object.values(objectDirty).some(Boolean);
+  const dirty =
+    legacyDirty ||
+    objectFormDirty ||
+    relationshipFormDirty ||
+    Object.values(objectDirty).some(Boolean);
   const { query, types: typeFilter, onlySelected, sort } = browsing;
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const [conflictDialogKey, setConflictDialogKey] = useState<string>();
@@ -1156,34 +1163,32 @@ export function HouseholdMap({
     state?.draft.relationships?.some((change) => change.after?.knowledge === 'unresolved');
   function editRelationship(edge?: MapRelationship, previous = false) {
     if (!state) return;
-    if (presentation === 'map') setEditorOpen(true);
-    else setDetailsOpen(true);
-    if (edge) setSelection({ kind: 'relationship', id: edge.id, previous });
-    if (legacyDirty) return;
-    if (previous) {
+    if (previous) return;
+    const object = edge
+      ? displayed.get(edge.sourceId)
+      : (selectedObject ?? readRows.find((row) => !row.removed)?.object);
+    if (!object) {
+      setStatus('Skapa ett objekt separat med Nytt objekt innan du lägger till ett samband.');
+      return;
+    }
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    requestLeave(() => {
       setEdgeEditor(null);
       setTypeEditor(null);
       setEdgeTypeEditor(null);
       setDirty(false);
-      return;
-    }
-    if (edge && edgeEditor?.id === edge.id) {
-      editorDialog.current?.querySelector<HTMLSelectElement>('#relationship-source')?.focus();
-      return;
-    }
-    const proposal = state.draft.relationships?.find((change) => change.id === edge?.id);
-
-    setTypeEditor(null);
-    setEdgeTypeEditor(null);
-    setEdgeEditor({
-      id: edge?.id ?? crypto.randomUUID(),
-      version: state.draft.version,
-      contentVersion: state.contentVersion,
-      baseRevision: proposal ? (proposal.before?.revision ?? null) : (edge?.revision ?? null),
-      value: proposal?.after ??
-        edge ?? { typeId: '', sourceId: '', targetId: '', knowledge: 'known' },
+      setObjectDialog(null);
+      setReadEntry({
+        kind: 'relationships',
+        id: object.id,
+        ...(edge ? { relationshipId: edge.id } : { startNewRelationship: true }),
+        restoreFocus: () => {
+          if (opener?.isConnected && !opener.matches(':disabled'))
+            opener.focus({ preventScroll: true });
+          else newButton.current?.focus({ preventScroll: true });
+        },
+      });
     });
-    setDirty(true);
   }
   function editObjectType(type: ObjectType) {
     if (!state || legacyDirty) return;
@@ -2056,9 +2061,36 @@ export function HouseholdMap({
         <HouseholdReadDialog
           key={`${readEntry.kind}:${readEntry.id}`}
           entry={readEntry}
+          active={active && workspaceSurface !== 'reports'}
+          suspended={active && workspaceSurface === 'reports'}
+          onDirty={setRelationshipFormDirty}
           rows={readRows}
-          state={state}
+          state={effectiveState ?? state}
           relationshipTypes={effectiveEdgeTypes}
+          onStageRelationship={async (editor, stagingId) => {
+            setPending(true);
+            try {
+              const result = await request<RelationshipFormResult>(`${path}/relationship-form`, {
+                ...editor,
+                stagingId,
+              });
+              if (isCurrent()) setState(result.state);
+              return result;
+            } catch (failure) {
+              if (failure instanceof MapRequestError && [401, 403].includes(failure.status))
+                loseAccess();
+              throw failure;
+            } finally {
+              if (isCurrent()) setPending(false);
+            }
+          }}
+          onCheckRelationship={async (stagingId, contentVersion) => {
+            const result = await request<RelationshipFormResult>(
+              `${path}/relationship-form/${encodeURIComponent(stagingId)}?contentVersion=${contentVersion}`,
+            );
+            if (isCurrent()) setState(result.state);
+            return result;
+          }}
           onClose={() => setReadEntry(null)}
           onEdit={(id, restoreFocus) => {
             const object = displayed.get(id);
@@ -2407,25 +2439,6 @@ export function HouseholdMap({
                       </section>
                     ) : null;
                   })()}
-                {edgeEditor && (
-                  <RelationshipEditor
-                    key={edgeEditor.id}
-                    state={effectiveState ?? state}
-                    objects={displayed}
-                    initial={edgeEditor}
-                    disabled={pending || blocked}
-                    onSubmit={(body) =>
-                      void action('relationship', {
-                        ...(body as Record<string, unknown>),
-                        contentVersion: edgeEditor.contentVersion,
-                      })
-                    }
-                    onClose={() => {
-                      setEdgeEditor(null);
-                      setDirty(false);
-                    }}
-                  />
-                )}
               </section>
             </dialog>
           }

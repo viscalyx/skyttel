@@ -633,8 +633,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { unzipSync, zipSync } from 'fflate';
 const parts = unzipSync(readFileSync(process.env.TEXTBREDD_ARCHIVE));
 const manifest = JSON.parse(Buffer.from(parts['manifest.json']).toString());
-if (manifest.format !== 'skyttel-household' || manifest.schemaVersion !== 24)
-  throw Error('En provexport med schemaversion 24 krävs');
+if (manifest.format !== 'skyttel-household' || manifest.schemaVersion !== 25)
+  throw Error('En provexport med schemaversion 25 krävs');
 manifest.schemaVersion = 23;
 parts['manifest.json'] = Buffer.from(JSON.stringify(manifest));
 writeFileSync('/tmp/skyttel-schema-23.zip', zipSync(parts), { mode: 0o600 });
@@ -643,7 +643,7 @@ JS
 
 **Förväntat resultat:**
 
-- Exporten använder schemaversion 24. Personliga samtalsval och medgivande
+- Exporten använder schemaversion 25. Personliga samtalsval och medgivande
   ingår inte i hushållsfilen; automationen granskar detta.
 - En giltig schemaversion 23 går att kontrollera och återimportera genom
   gränssnittet. Lo-förslaget bevaras. Aktuell version provas också.

@@ -701,7 +701,7 @@ function FormLossDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfi
   );
 }
 
-function ObjectTypeLossDialog({
+export function ObjectTypeLossDialog({
   fields,
   onCancel,
   onConfirm,

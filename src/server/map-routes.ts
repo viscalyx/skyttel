@@ -154,6 +154,27 @@ export function mapRoutes(database: Database.Database, auth: Auth, origin: strin
       ),
     ),
   );
+  routes.post('/households/:id/map/relationship-form', (context) =>
+    context.json(
+      householdMap(
+        database,
+        context.get('userId'),
+        context.req.param('id'),
+      ).proposeRelationshipForm(context.get('body')),
+    ),
+  );
+  routes.get('/households/:id/map/relationship-form/:stagingId', (context) =>
+    context.json(
+      householdMap(
+        database,
+        context.get('userId'),
+        context.req.param('id'),
+      ).relationshipFormOutcome(
+        context.req.param('stagingId'),
+        Number(context.req.query('contentVersion')),
+      ),
+    ),
+  );
   routes.post('/households/:id/map/relationship-type', (context) =>
     context.json(
       householdMap(

@@ -29,6 +29,10 @@ import type {
 } from '../shared/map.js';
 import { compatibleCustomFields } from '../shared/map.js';
 import { isObjectIconId } from '../shared/object-icons.js';
+import type {
+  RelationshipFormOutcome,
+  RelationshipFormResult,
+} from '../shared/relationship-form.js';
 import { contentOwner } from './content-identities.js';
 import { assertContentAvailable, assertContentVersion } from './content-maintenance.js';
 import { readFinancialFacts } from './financial-facts.js';
@@ -39,6 +43,7 @@ import { mapOperations } from './map-operations.js';
 import { mapTombstones } from './map-tombstones.js';
 import { objectTypes, readCustomValues } from './object-types.js';
 import { type EncodedImage, profileImages } from './profile-images.js';
+import { relationshipFormAttempts } from './relationship-form-attempts.js';
 import { relationshipTypes } from './relationship-types.js';
 import { relationships } from './relationships.js';
 
@@ -526,6 +531,53 @@ export function householdMap(database: Database.Database, actorId: string, house
           ...writeDraft(result.draft),
           ...(result.existingId ? { existingId: result.existingId } : {}),
         };
+      });
+    },
+    relationshipFormOutcome(stagingId: string, contentVersion: number): RelationshipFormResult {
+      return transaction(() => {
+        assertContentVersion(database, householdId, contentVersion);
+        const attempts = relationshipFormAttempts(database, householdId, userId, contentVersion);
+        return { outcome: attempts.outcome(stagingId), state: readState() };
+      });
+    },
+    proposeRelationshipForm(body: Record<string, unknown>): RelationshipFormResult {
+      return transaction(() => {
+        if (!Number.isSafeInteger(body.contentVersion) || (body.contentVersion as number) < 1)
+          throw new MapError('invalid_request', 400);
+        if (!Number.isSafeInteger(body.typeRevision) || (body.typeRevision as number) < 0)
+          throw new MapError('invalid_request', 400);
+        assertContentVersion(database, householdId, body.contentVersion);
+        const attempts = relationshipFormAttempts(
+          database,
+          householdId,
+          userId,
+          body.contentVersion as number,
+        );
+        const previous = attempts.previous(body);
+        if (previous) return { outcome: previous, state: readState() };
+        operations.assertEditable();
+        const current = checkedDraft(body.version, body.contentVersion);
+        const result = edges.propose(current, body, true);
+        let outcome: RelationshipFormOutcome;
+        if (result.existingId)
+          outcome = {
+            status: 'duplicate',
+            stagingId: body.stagingId as string,
+            relationshipId: result.existingId,
+          };
+        else {
+          writeDraft(result.draft);
+          outcome = {
+            status: 'staged',
+            stagingId: body.stagingId as string,
+            relationshipId: body.id as string,
+            draftVersion: result.draft.version,
+            value:
+              result.draft.relationships?.find((change) => change.id === body.id)?.after ?? null,
+          };
+        }
+        attempts.record(body, outcome);
+        return { outcome, state: readState() };
       });
     },
     proposeRelationshipType(body: Record<string, unknown>) {

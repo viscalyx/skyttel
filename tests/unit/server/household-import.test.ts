@@ -40,7 +40,7 @@ test('household archives exclude personal conversation choices and import preser
     await (await client.request(`${path}/exports/${prepared.id}`)).arrayBuffer(),
   );
   const parts = unzipSync(bytes);
-  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(24);
+  expect(JSON.parse(new TextDecoder().decode(parts['manifest.json'])).schemaVersion).toBe(25);
   const encoded = new TextDecoder().decode(parts['content.json']);
   for (const field of ['showDraftOnStart', 'textWidth', 'draftWidth', 'conversationPreferences'])
     expect(encoded).not.toContain(field);
@@ -86,7 +86,7 @@ function changedContent(change: (content: Record<string, unknown>) => void) {
   });
 }
 
-test.each([14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])(
+test.each([14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])(
   'schema %i household archives remain importable with their saved content and history',
   async (schemaVersion) => {
     const bytes = altered((parts) => {

@@ -73,6 +73,61 @@
 .household-read-link {
   text-decoration: underline;
 }
+.relationship-work-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 28px;
+}
+.relationship-work-layout > div {
+  min-width: 0;
+}
+.relationship-form-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.relationship-form-fields > div > label {
+  display: block;
+  margin-bottom: 6px;
+}
+.relationship-form-wide {
+  grid-column: 1 / -1;
+}
+.relationship-form-fields > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.household-map .household-read-dialog :is(input, select, textarea) {
+  padding: 10px;
+  margin: 0;
+  font: inherit;
+  border-radius: 8px;
+}
+.household-map .household-read-dialog {
+  font: 15px / 1.5 Inter, system-ui, sans-serif;
+}
+.relationship-form-fields :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+}
+.relationship-sentence {
+  background: var(--space-hover);
+  padding: 14px;
+  border-radius: 8px;
+}
+.relationship-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .household-read-properties {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -88,11 +143,15 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 700px) {
+  .relationship-work-layout {
+    grid-template-columns: 1fr;
+  }
   .household-read-dialog {
     width: 100vw;
-    height: 100dvh;
+    height: var(--relationship-viewport-height, 100dvh);
     max-width: 100vw;
-    max-height: 100dvh;
+    max-height: var(--relationship-viewport-height, 100dvh);
+    top: var(--relationship-viewport-top, 0px);
     margin: 0;
     border-radius: 0;
     border: none;
@@ -117,5 +176,17 @@
   }
   .household-read-properties {
     grid-template-columns: 1fr;
+  }
+  .relationship-form-fields {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-height: 480px) {
+  .household-read-dialog > :is(header, footer) {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .household-read-dialog > header p {
+    display: none;
   }
 }

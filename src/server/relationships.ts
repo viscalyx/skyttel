@@ -126,7 +126,7 @@ export function relationships(database: Database.Database, householdId: string) 
           });
       }
     },
-    propose(draft: MapDraft, body: Record<string, unknown>) {
+    propose(draft: MapDraft, body: Record<string, unknown>, duplicateOutcome = false) {
       if (typeof body.id !== 'string' || !/^[\w-]{1,128}$/.test(body.id))
         throw new MapError('invalid_request', 400);
       const existing = draft.relationships?.find((change) => change.id === body.id);
@@ -196,7 +196,8 @@ export function relationships(database: Database.Database, householdId: string) 
         );
         if (duplicate) {
           // An add selects the existing relationship; an edit must not erase another one.
-          if (before || existing) throw new MapError('duplicate_relationship');
+          if (!duplicateOutcome && (before || existing))
+            throw new MapError('duplicate_relationship');
           return { draft, existingId: duplicate.id };
         }
       }
