@@ -32,6 +32,7 @@ export async function conflictCollaborators(
       (
         await post(client, kind, {
           version: state.draft.version,
+          contentVersion: state.contentVersion,
           id,
           baseRevision: previous?.revision ?? null,
           value,
@@ -39,8 +40,14 @@ export async function conflictCollaborators(
       ).status(),
     ).toBe(200);
   }
-  const save = async (client: APIRequestContext, operationId: string) =>
-    post(client, 'save', { version: (await read(client)).draft.version, operationId });
+  const save = async (client: APIRequestContext, operationId: string) => {
+    const state = await read(client);
+    return post(client, 'save', {
+      version: state.draft.version,
+      contentVersion: state.contentVersion,
+      operationId,
+    });
+  };
   installation.setIdentity(memberIdentity);
   await signIn(second, installation.origin);
   const { user } = await (await second.get(`${installation.origin}/api/bootstrap`)).json();

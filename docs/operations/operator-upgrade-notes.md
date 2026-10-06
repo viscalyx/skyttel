@@ -6,6 +6,18 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Private type restoration
+
+Full household files can contain private proposals to restore removed type
+definitions. Use the upgraded application to read these files. Supported older
+files remain readable. Keep the database backup and matching image for rollback.
+
+Import retains these proposals but requires a new explicit review against
+current content before saving. Import does not transfer earlier restoration
+authority. Shared history contains saved definitions without the private
+authority. After an operator imports household content, tell affected users to
+review these retained proposals before they save their drafts.
+
 ### Relationship form recovery
 
 The upgraded database retains private evidence of complete relationship form

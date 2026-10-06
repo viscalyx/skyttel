@@ -1,3 +1,4 @@
+import { conflictRemovalProperties } from './conflict-removal.js';
 import type { DraftConflict } from './draft-conflicts.js';
 import { financialFields } from './financial-facts.js';
 import type { MapState, ObjectType, ObjectValue, RelationshipValue } from './map.js';
@@ -24,7 +25,7 @@ export function sameConflictValue(left: unknown, right: unknown): boolean {
     a.every(([key, value]) => sameConflictValue(value, (right as Record<string, unknown>)[key]))
   );
 }
-export function conflictChange(state: MapState, conflict: DraftConflict) {
+export function conflictChange(state: MapState, conflict: Pick<DraftConflict, 'kind' | 'id'>) {
   const changes =
     conflict.kind === 'object'
       ? state.draft.changes
@@ -48,6 +49,22 @@ export function conflictPropertyValue(value: unknown, key: ConflictProperty['key
 }
 export function conflictProperties(state: MapState, conflict: DraftConflict): ConflictProperty[] {
   const change = conflictChange(state, conflict);
+  if (
+    (conflict.kind === 'objectType' || conflict.kind === 'relationshipType') &&
+    !conflict.current &&
+    change?.after
+  )
+    return [
+      {
+        key: 'definition',
+        label: 'Typdefinition',
+        before: change.before,
+        saved: null,
+        proposed: change.after,
+      },
+    ];
+  if (change && !change.after && conflict.kind === 'object' && conflict.current)
+    return conflictRemovalProperties(state, conflict);
   if (!change?.after || !conflict.current) return [];
   const entries: [string, string][] =
     conflict.kind === 'object'
@@ -152,9 +169,23 @@ export function conflictBasis(state: MapState, conflict: DraftConflict) {
     .flatMap((field) => [field.saved, field.proposed]);
   const basis = {
     fields,
+    ...((conflict.kind === 'objectType' || conflict.kind === 'relationshipType') &&
+    !conflict.current
+      ? {
+          restoration: {
+            contentVersion: state.contentVersion,
+            definition: (conflict.kind === 'objectType'
+              ? state.removedDefinitions?.objectTypes
+              : state.removedDefinitions?.relationshipTypes
+            )?.find((type) => type.id === conflict.id),
+          },
+        }
+      : {}),
     // Null-side cases have no selectable properties; their proposal and blockers still
     // constitute a real comparison that must be revalidated before any explicit action.
-    ...(!fields.length ? { special: { conflict, change: conflictChange(state, conflict) } } : {}),
+    ...(!fields.length || !conflictChange(state, conflict)?.after
+      ? { special: { conflict, change: conflictChange(state, conflict) } }
+      : {}),
     types: (conflict.kind === 'relationship'
       ? proposedRelationshipTypes(state.relationshipTypes, state.draft.relationshipTypes)
       : proposedObjectTypes(state.types, state.draft.objectTypes)
@@ -172,6 +203,7 @@ export function conflictCombinationError(
   value: Record<string, unknown> | null,
 ): string {
   if (!value) return '';
+  if ('definition' in value) return '';
   if (conflict.kind === 'objectType' || conflict.kind === 'relationshipType') {
     const sections = value.sections as { id: string }[] | undefined;
     const sectionIds = new Set(sections?.map((section) => section.id) ?? ['custom-fields']);
@@ -269,6 +301,11 @@ export function conflictValueText(
   field: ConflictProperty,
   value: unknown,
 ): string {
+  if (field.key === 'definition') {
+    if (!value) return 'Borttaget';
+    const type = value as ObjectType;
+    return `${type.name}${type.description ? ` · ${type.description}` : ''}`;
+  }
   if (field.key === 'identity')
     return value === undefined
       ? 'Identifierat objekt'

@@ -324,6 +324,10 @@ export function validateImportReferences(
       identity('objectType', change.id);
       if (change.before) definition(change.before);
       if (change.after) definition(change.after);
+      if (change.restoration) {
+        definition(change.restoration.definition);
+        requireReference(change.restoration.definition.id === change.id);
+      }
       requireReference(
         (!change.before || change.before.id === change.id) &&
           (!change.after || change.after.id === change.id),
@@ -333,6 +337,10 @@ export function validateImportReferences(
       identity('relationshipType', change.id);
       if (change.before) edgeDefinition(change.before);
       if (change.after) edgeDefinition(change.after);
+      if (change.restoration) {
+        edgeDefinition(change.restoration.definition);
+        requireReference(change.restoration.definition.id === change.id);
+      }
       requireReference(
         (!change.before || change.before.id === change.id) &&
           (!change.after || change.after.id === change.id),

@@ -19,6 +19,14 @@ export function mapTombstones(database: Database.Database, householdId: string) 
       .get(id) as { householdId: string; revision: number; deleted: number } | undefined;
   }
   return {
+    assertRestoration(kind: 'objectType' | 'relationshipType', id: string, revision: number) {
+      const current = read(kind, id);
+      if (!current?.deleted || current.householdId !== householdId || current.revision !== revision)
+        throw new MapError('type_conflict');
+    },
+    restoreType(kind: 'objectType' | 'relationshipType', id: string) {
+      database.prepare('DELETE FROM removed_type WHERE kind = ? AND typeId = ?').run(kind, id);
+    },
     removeType(kind: 'objectType' | 'relationshipType', id: string) {
       database
         .prepare(

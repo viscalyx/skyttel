@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import type { PrivateConflictEffect } from '../shared/conflict-effects.js';
 import {
   type ConflictChoices,
   type conflictBasis,
@@ -15,18 +16,21 @@ export type ConflictResolution = {
 } & (
   | { choices: ConflictChoices; command?: never }
   | { command: 'discard-proposal'; choices?: never }
+  | { command: 'removal-choices'; removalChoices: ConflictChoices; choices?: never }
+  | { command: 'definition-choice'; definitionChoice: 'saved' | 'proposed'; choices?: never }
 );
 export type AppliedConflictResolution = {
   key: string;
-  value: Record<string, unknown>;
+  value: Record<string, unknown> | null;
   removed: boolean;
 };
 type ResolutionRequest = {
   key: string;
   resolution: ConflictResolution;
-  value: Record<string, unknown>;
+  value: Record<string, unknown> | null;
   comparison: MapState;
   discard: boolean;
+  effects?: PrivateConflictEffect[];
 };
 function savedMapBasis(state: MapState) {
   const { contentVersion, objects, relationships, types, relationshipTypes } = state;
@@ -107,13 +111,31 @@ export function useConflictResolution({
     try {
       const latest = await onRefresh();
       const change = conflictChange(latest, current.resolution.conflict);
+      const effects: PrivateConflictEffect[] = current.effects ?? [
+        {
+          target: current.resolution.conflict,
+          ...(current.discard
+            ? { kind: 'discard' }
+            : {
+                kind: 'retain',
+                before: current.resolution.conflict.current,
+                after: current.value,
+              }),
+        },
+      ];
       const applied =
         latest.draft.version > current.version &&
-        (current.discard
-          ? !change
-          : change &&
-            sameConflictValue(change.after, current.value) &&
-            sameConflictValue(change.before, current.resolution.conflict.current));
+        effects.every((effect) => {
+          const proposal = conflictChange(latest, effect.target);
+          return effect.kind === 'discard'
+            ? !proposal
+            : proposal &&
+                sameConflictValue(proposal.after, effect.after) &&
+                sameConflictValue(proposal.before, effect.before) &&
+                (!effect.restoration ||
+                  ('restoration' in proposal &&
+                    sameConflictValue(proposal.restoration, effect.restoration)));
+        });
       const stillConflicted = draftConflicts(latest).some(
         (conflict) =>
           conflict.kind === current.resolution.conflict.kind &&

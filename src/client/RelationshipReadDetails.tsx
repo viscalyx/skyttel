@@ -7,6 +7,7 @@ export function relationshipPropertyValues(
   value: RelationshipValue,
   type: RelationshipType | undefined,
   objects: Map<string, MapObject>,
+  objectNames?: Record<string, string>,
 ) {
   const fields = new Map<string, { label: string; value: string }>([
     ['type', { label: 'Typ', value: type?.name ?? 'Borttagen typ' }],
@@ -14,7 +15,10 @@ export function relationshipPropertyValues(
       'source',
       {
         label: 'Från objekt',
-        value: objects.get(value.sourceId)?.name ?? 'Objektet finns inte längre',
+        value:
+          objects.get(value.sourceId)?.name ??
+          objectNames?.[value.sourceId] ??
+          'Objektet finns inte längre',
       },
     ],
     ['direction', { label: 'Riktning', value: type?.forwardLabel ?? type?.name ?? 'Ej uppgivet' }],
@@ -24,7 +28,9 @@ export function relationshipPropertyValues(
       {
         label: 'Till objekt',
         value: value.targetId
-          ? (objects.get(value.targetId)?.name ?? 'Objektet finns inte längre')
+          ? (objects.get(value.targetId)?.name ??
+            objectNames?.[value.targetId] ??
+            'Objektet finns inte längre')
           : knowledgeLabels[value.knowledge],
       },
     ],

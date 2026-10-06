@@ -1,0 +1,112 @@
+import type { PrivateConflictEffect } from './conflict-effects.js';
+import type { ConflictChoices, ConflictProperty } from './conflict-properties.js';
+import type { DraftConflict } from './draft-conflicts.js';
+import type { MapDraft, MapState } from './map.js';
+
+export const removalCombinationMessage =
+  'Objektet kan inte tas bort medan sambandet till det finns kvar. Välj att ta bort sambandet eller behåll objektet.';
+
+export function conflictRemovalProperties(
+  state: MapState,
+  conflict: DraftConflict,
+): ConflictProperty[] {
+  if (conflict.kind !== 'object' || !conflict.current) return [];
+  const change = state.draft.changes.find((change) => change.id === conflict.id);
+  const record = (
+    value: Pick<NonNullable<typeof conflict.current>, 'name' | 'description'> | null,
+  ) => (value ? `${value.name}${value.description ? ` · ${value.description}` : ''}` : 'Borttaget');
+  return [
+    {
+      key: 'object',
+      label: 'Objekt',
+      before: change?.before && 'name' in change.before ? record(change.before) : undefined,
+      saved: record(conflict.current),
+      proposed: 'Föreslagen borttagning',
+    },
+    ...(conflict.connections ?? []).map((edge) => {
+      const type = state.relationshipTypes.find((type) => type.id === edge.typeId);
+      const source =
+        state.objects.find((object) => object.id === edge.sourceId)?.name ?? edge.sourceId;
+      const target =
+        state.objects.find((object) => object.id === edge.targetId)?.name ?? 'Ej uppgivet';
+      return {
+        key: `relationship:${edge.id}`,
+        label: 'Samband',
+        before: 'Inga',
+        saved: `${source} ${type?.forwardLabel ?? type?.name ?? 'har samband med'} ${target}`,
+        proposed: 'Föreslagen borttagning av sambandet',
+      };
+    }),
+  ];
+}
+export function conflictRemovalError(
+  state: MapState,
+  conflict: DraftConflict,
+  choices: ConflictChoices,
+) {
+  return choices.object === 'proposed' &&
+    conflictRemovalProperties(state, conflict).some(
+      (field) => field.key !== 'object' && choices[field.key] === 'saved',
+    )
+    ? removalCombinationMessage
+    : '';
+}
+/** The explicit object and connection choices produce private proposals only. */
+export function conflictRemovalPlan(
+  state: MapState,
+  conflict: DraftConflict,
+  choices: ConflictChoices,
+): { draft: MapDraft; effects: PrivateConflictEffect[] } | null {
+  const fields = conflictRemovalProperties(state, conflict);
+  if (
+    !fields.length ||
+    fields.some((field) => !choices[field.key]) ||
+    Object.entries(choices).some(
+      ([key, side]) =>
+        !fields.some((field) => field.key === key) || (side !== 'saved' && side !== 'proposed'),
+    ) ||
+    conflictRemovalError(state, conflict, choices) ||
+    conflict.kind !== 'object' ||
+    !conflict.current
+  )
+    return null;
+  const draft = structuredClone(state.draft);
+  const effects: PrivateConflictEffect[] = [];
+  const change = draft.changes.find((change) => change.id === conflict.id);
+  if (!change || change.after) return null;
+  if (choices.object === 'saved') {
+    draft.changes = draft.changes.filter((change) => change.id !== conflict.id);
+    effects.push({ target: conflict, kind: 'discard' });
+  } else {
+    change.before = conflict.current;
+    const type = state.types.find((type) => type.id === conflict.current?.typeId);
+    if (!type) return null;
+    change.beforeType = type;
+    change.type = type;
+    effects.push({ target: conflict, kind: 'retain', before: change.before, after: change.after });
+  }
+  for (const edge of conflict.connections ?? []) {
+    if (choices[`relationship:${edge.id}`] !== 'proposed') continue;
+    const type = state.relationshipTypes.find((type) => type.id === edge.typeId);
+    if (!type) return null;
+    draft.relationships = [
+      ...(draft.relationships ?? []).filter((change) => change.id !== edge.id),
+      {
+        id: edge.id,
+        before: edge,
+        after: null,
+        type,
+        beforeType: type,
+        proposedAt: new Date().toISOString(),
+        objectNames: Object.fromEntries(state.objects.map((object) => [object.id, object.name])),
+      },
+    ];
+    effects.push({
+      target: { kind: 'relationship', id: edge.id },
+      kind: 'retain',
+      before: edge,
+      after: null,
+    });
+  }
+  return { draft, effects };
+}

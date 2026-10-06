@@ -12,9 +12,16 @@ import {
   conflictValueText,
   sameConflictValue,
 } from '../shared/conflict-properties.js';
+import {
+  conflictRemovalError,
+  conflictRemovalPlan,
+  conflictRemovalProperties,
+} from '../shared/conflict-removal.js';
 import { specialConflict } from '../shared/conflict-special.js';
+import { removedConflictDefinition } from '../shared/definition-restoration.js';
 import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
-import type { MapState } from '../shared/map.js';
+import type { MapState, ObjectType } from '../shared/map.js';
+import { definitionPropertyValues } from './DraftProposalDetails.js';
 import {
   type AppliedConflictResolution,
   type ConflictResolution,
@@ -150,10 +157,18 @@ export function ConflictDialog({
       if (initialKey) setSelectedKey(initialKey);
     } else if (modal?.open) {
       modal.close();
-      const target =
-        opener.current?.isConnected && !opener.current.closest('[hidden], [inert]')
-          ? opener.current
-          : document.querySelector<HTMLElement>('.workspace-tools button');
+      const target = [
+        opener.current,
+        ...document.querySelectorAll<HTMLElement>('.workspace-tools button'),
+      ].find(
+        (element) =>
+          element?.isConnected &&
+          element.matches('button, a[href], input, select, textarea, [tabindex]') &&
+          element.getClientRects().length &&
+          !element.matches(':disabled') &&
+          !element.closest('[hidden], [inert]') &&
+          getComputedStyle(element).visibility === 'visible',
+      );
       target?.focus({ preventScroll: true });
     }
   }, [open, initialKey]);
@@ -183,21 +198,28 @@ export function ConflictDialog({
   const comparisonNoLongerNeeded = noLongerConflicted && !pending && !unknown && !resolved[key];
   const change = conflictChange(comparison, conflict);
   const special = specialConflict(comparison, conflict);
-  const fields = conflictProperties(comparison, conflict);
+  const removal = special?.kind === 'own-removal';
+  const restoration = special?.kind === 'removed-definition';
+  const fields = removal
+    ? conflictRemovalProperties(comparison, conflict)
+    : conflictProperties(comparison, conflict);
   const selected = choices[key] ?? {};
   const remaining = fields.filter(
     (field) => !sameConflictValue(field.saved, field.proposed) && !selected[field.key],
   ).length;
   const value = combineConflictProperties(fields, selected);
-  const invalid = conflictCombinationError(comparison, conflict, value);
+  const invalid = removal
+    ? conflictRemovalError(comparison, conflict, selected)
+    : conflictCombinationError(comparison, conflict, value);
   const blocked =
     !fields.length ||
-    Boolean(
-      conflict.duplicates ||
-        conflict.missingEndpoints ||
-        conflict.type === null ||
-        conflict.connections,
-    );
+    (!removal &&
+      Boolean(
+        conflict.duplicates ||
+          conflict.missingEndpoints ||
+          conflict.type === null ||
+          conflict.connections,
+      ));
   const actor = comparison.conflictActors?.[key];
   const proposedAt = change && 'proposedAt' in change ? change.proposedAt : undefined;
   const savedAfterProposal = (savedAt: string) =>
@@ -206,9 +228,20 @@ export function ConflictDialog({
   const name = (c: DraftConflict, source: MapState) => {
     const proposal = conflictChange(source, c);
     if (c.kind === 'relationship') {
-      const objects = new Map(source.objects.map((object) => [object.id, object]));
+      const objects = new Map<string, { name: string }>(
+        Object.entries(
+          proposal && 'objectNames' in proposal ? (proposal.objectNames ?? {}) : {},
+        ).map(([id, name]) => [id, { name }]),
+      );
+      for (const object of source.objects) objects.set(object.id, object);
+      const types = [
+        ...source.relationshipTypes,
+        ...(proposal && 'type' in proposal ? [proposal.type] : []),
+      ];
       const edge = proposal?.after ?? proposal?.before;
-      return edge && 'sourceId' in edge ? relationshipLabel(edge, source, objects) : c.id;
+      return edge && 'sourceId' in edge
+        ? relationshipLabel(edge, { relationshipTypes: types }, objects)
+        : c.id;
     }
     const item = proposal?.after ?? proposal?.before ?? c.current;
     return item && 'name' in item ? item.name : c.id;
@@ -217,6 +250,17 @@ export function ConflictDialog({
     setChoices((previous) => ({ ...previous, [key]: { ...previous[key], [field]: side } }));
   }
   function propertyValue(field: ConflictProperty, value: unknown) {
+    if (field.key === 'definition' && value)
+      return (
+        <>
+          {definitionPropertyValues(value as ObjectType)?.map((property) => (
+            <span key={property.key} className="cp-definition-property">
+              <strong>{property.label}: </strong>
+              {property.value}
+            </span>
+          ))}
+        </>
+      );
     const text = conflictValueText(comparison, field, value);
     return (
       <>
@@ -247,6 +291,51 @@ export function ConflictDialog({
     )
       return;
     caseHeading.current?.focus({ preventScroll: true });
+    if (restoration) {
+      const removed = removedConflictDefinition(comparison, conflict);
+      if (!removed || !change?.after) return;
+      const after = { ...change.after, revision: removed.revision + 1 };
+      const authority = { contentVersion: comparison.contentVersion, definition: removed };
+      void resolution.apply({
+        key,
+        comparison,
+        discard: selected.definition === 'saved',
+        value: selected.definition === 'saved' ? {} : { definition: after },
+        resolution: {
+          conflict,
+          command: 'definition-choice',
+          definitionChoice: selected.definition,
+          basis: conflictBasis(comparison, conflict),
+        },
+        effects: [
+          {
+            target: conflict,
+            ...(selected.definition === 'saved'
+              ? { kind: 'discard' as const }
+              : { kind: 'retain' as const, before: null, after, restoration: authority }),
+          },
+        ],
+      });
+      return;
+    }
+    if (removal) {
+      const result = conflictRemovalPlan(comparison, conflict, selected);
+      if (!result) return;
+      void resolution.apply({
+        key,
+        comparison,
+        discard: false,
+        value,
+        resolution: {
+          conflict,
+          command: 'removal-choices',
+          removalChoices: selected,
+          basis: conflictBasis(comparison, conflict),
+        },
+        effects: result.effects,
+      });
+      return;
+    }
     void resolution.apply({
       key,
       resolution: { conflict, choices: selected, basis: conflictBasis(comparison, conflict) },
@@ -389,9 +478,11 @@ export function ConflictDialog({
               <h3>
                 {resolved[key].removed && special?.kind === 'removed'
                   ? '✓ Ditt ändringsförslag har kastats'
-                  : resolved[key].removed
-                    ? '✓ Förslaget har tagits bort ur ditt utkast'
-                    : '✓ Valen finns i ditt utkast'}
+                  : resolved[key].removed && restoration
+                    ? '✓ Typdefinitionen förblir borttagen'
+                    : resolved[key].removed
+                      ? `✓ ${conflict.kind === 'object' ? 'Objektet' : 'Sambandet'} har tagits bort ur ditt utkast`
+                      : '✓ Valen finns i ditt utkast'}
               </h3>
               {resolved[key].removed && special?.kind === 'removed' && (
                 <p>
@@ -418,12 +509,14 @@ export function ConflictDialog({
                 bekräftas igen.
               </p>
             </section>
-          ) : special ? (
+          ) : special && !removal && !restoration ? (
             <SpecialConflictDetails
               state={comparison}
               conflict={conflict}
               special={special}
               disabled={pending || stale || unknown || disabled}
+              pending={pending}
+              onClose={onClose}
               onApply={() => {
                 caseHeading.current?.focus({ preventScroll: true });
                 void resolution.apply({
@@ -469,7 +562,10 @@ export function ConflictDialog({
                           !sameConflictValue(field.proposed, field.before) &&
                           !same;
                         const picked = selected[field.key] === side;
-                        const propertyActor = comparison.conflictPropertyActors?.[key]?.[field.key];
+                        const propertyActor =
+                          removal && field.key === 'object'
+                            ? actor
+                            : comparison.conflictPropertyActors?.[key]?.[field.key];
                         return (
                           <button
                             key={field.key}
@@ -524,6 +620,9 @@ export function ConflictDialog({
                   )}
                   <section className="cp-preview" aria-label="Resultat av valen">
                     <h3>Efter dina val</h3>
+                    {restoration && selected.definition === 'proposed' && (
+                      <p>Typdefinitionen föreslås återställas med din ändring.</p>
+                    )}
                     <dl className="cp-fields">
                       {fields.map((field) => (
                         <div key={field.key}>

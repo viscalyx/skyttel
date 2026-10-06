@@ -1,5 +1,19 @@
-import { type APIRequestContext, expect } from '@playwright/test';
+import { type APIRequestContext, expect, type Page } from '@playwright/test';
 import { conflictCollaborators } from './conflict-properties.js';
+
+export async function saveReviewedConflictDraft(page: Page) {
+  const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+  if (await conflict.isVisible()) await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: /^Skriv till Skyttel/ }).click();
+  await page.getByRole('button', { name: /^Visa utkastet/ }).click();
+  await page
+    .getByRole('region', { name: 'Utkastet', exact: true })
+    .getByRole('button', { name: 'Spara hela utkastet', exact: true })
+    .click();
+  await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+    'Utkastet är sparat',
+  );
+}
 
 export async function prepareRemovedObjectConflict(
   first: APIRequestContext,
@@ -20,5 +34,67 @@ export async function prepareRemovedObjectConflict(
   });
   await app.propose(second, 'draft', 'lo', null);
   expect((await app.save(second, 'removed-object')).status()).toBe(200);
+  return app;
+}
+
+export async function prepareRelationshipSpecialConflict(
+  first: APIRequestContext,
+  second: APIRequestContext,
+  kind: 'removed' | 'duplicate' | 'missing-endpoint',
+) {
+  const app = await conflictCollaborators(first, second);
+  const state = await app.read();
+  const value = {
+    typeId: state.relationshipTypes[0].id,
+    sourceId: 'lo',
+    targetId: 'service',
+    knowledge: 'known' as const,
+  };
+  if (kind === 'removed') {
+    await app.propose(first, 'relationship', 'mine', value);
+    expect((await app.save(first, 'initial-edge')).status()).toBe(200);
+  }
+  await app.propose(first, 'relationship', 'mine', { ...value, knowledge: 'uncertain' });
+  await app.propose(first, 'draft', 'independent', {
+    typeId: state.types[0].id,
+    name: 'Oberoende förslag',
+    description: '',
+  });
+  if (kind === 'removed') await app.propose(second, 'relationship', 'mine', null);
+  else if (kind === 'duplicate') await app.propose(second, 'relationship', 'theirs', value);
+  else await app.propose(second, 'draft', 'service', null);
+  expect((await app.save(second, `special-${kind}`)).status()).toBe(200);
+  return app;
+}
+
+export async function prepareOwnRemovalConflict(
+  first: APIRequestContext,
+  second: APIRequestContext,
+  connections = false,
+) {
+  const app = await conflictCollaborators(first, second);
+  const initial = await app.read();
+  const original = initial.objects.find((object) => object.id === 'lo');
+  if (!original) throw new Error('Missing fixture object');
+  await app.propose(first, 'draft', 'lo', null);
+  await app.propose(first, 'draft', 'independent', {
+    typeId: original.typeId,
+    name: 'Oberoende förslag',
+    description: '',
+  });
+  if (connections)
+    await app.propose(second, 'relationship', 'new-edge', {
+      typeId: initial.relationshipTypes[0].id,
+      sourceId: 'lo',
+      targetId: 'service',
+      knowledge: 'known',
+    });
+  else
+    await app.propose(second, 'draft', 'lo', {
+      ...original,
+      name: 'Lo Berg',
+      description: 'Nya sparade fakta',
+    });
+  expect((await app.save(second, 'after-proposed-removal')).status()).toBe(200);
   return app;
 }

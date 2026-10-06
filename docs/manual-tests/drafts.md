@@ -1980,12 +1980,17 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 
 ## Bevarade konfliktval och kontrollerat utfall
 
-UTKAST-49–57 använder en tillfällig installation med riktig SQLite och två
+UTKAST-49–65 och 67–71 använder en tillfällig installation med riktig
+SQLite och två
 syntetiska användare: administratören Alex och medlemmen Robin. Starta från
 repo-roten med `npm run build` och
 `npx tsx scripts/manual-conflict-continuity.ts`. Öppna adressen som skrivs ut.
-Alex är inloggad i det synliga fönstret; konsolkommandon för Robin använder
-hans separata session. Inga externa AI-anrop eller medgivanden behövs.
+För UTKAST-49–63 är Alex inloggad i det synliga fönstret; konsolkommandon
+för Robin använder hans separata session. Arkivfallen UTKAST-64–65 visar
+i stället medlemmen Robin; administratören Alex använder en separat
+session för export, typändring och import. Samma rollfördelning gäller
+återställningsfallen UTKAST-67–71. Inga externa AI-anrop eller
+medgivanden behövs.
 
 Varje `new-*` skapar en ny tom installation och stänger föregående databas.
 Använd kommandot före varje fall; behåll installationen inom fallet. Grundfallet
@@ -2329,3 +2334,463 @@ and preserves the saved removal”.
 - Objektet förblir borttaget och historiken får ingen ny gemensam ändring.
   Beskedet säger att förslaget tas bort ur utkastet. Namnet och typen står
   kvar i konfliktlistan med en bock och tillgänglig lösningsstatus.
+
+### UTKAST-58: acceptera ett redan borttaget samband
+
+**Syfte:** Kasta sambandsförslaget utan att återställa det sparade sambandet.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-removed-relationship`. Alex ändrar säkerheten
+för ett sparat samband från Lo till Molnmusik. Robin tar bort sambandet.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-58: accepting a removed relationship discards only its
+proposal without restoring the saved edge”.
+
+**Steg:**
+
+1. Öppna konflikten och läs förklaringen om det borttagna sambandet.
+2. Läs **Borttaget**, **✓ Förvalt** och hela det egna förslaget i läsläge.
+3. Stäng med Escape, kör `result` och öppna igen.
+4. Välj **Acceptera borttagningen och kasta ditt förslag** och kör `result`.
+
+**Förväntat resultat:**
+
+- Förklaringen lyder **Sambandet togs bort från den gemensamma kartan medan
+  du redigerade det.** Varningen lyder **Ett ändringsförslag kan inte
+  återställa ett borttaget samband.**
+- Öppning och stängning ändrar inget. Bara det bekräftade förslaget kastas;
+  oberoende förslag består. Säkerheten **Osäkert uppgivet** går att läsa.
+- Sambandet förblir borttaget, kartan och historiken ändras inte och den
+  lösta postens namn och typ finns kvar med lösningsmarkering.
+
+### UTKAST-59: kasta bara ett föreslaget dubblettsamband
+
+**Syfte:** Behålla det faktiskt sparade sambandet och dess uppgifter.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-duplicate`. Alex föreslår ett osäkert samband;
+Robin sparar ett annat samband med samma typ, riktning och objekt.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-59: a duplicate relationship has a readonly comparison and
+discards only the proposed duplicate”.
+
+**Steg:**
+
+1. Öppna konflikten. Läs det sparade sambandet och det egna förslaget.
+2. Läs varningen och det förvalda utfallet under **Efter bekräftelsen**.
+3. Stäng, kör `result` och öppna igen.
+4. Välj **Ta bort sambandet ur ditt utkast**. Läs status och kör `result`.
+
+**Förväntat resultat:**
+
+- Förklaringen lyder **Ett sparat samband har redan samma typ, riktning
+  och objekt.** Varningen lyder **Sambandet finns redan. Ta bort det
+  föreslagna sambandet ur ditt utkast.**
+- Jämförelsen är i läsläge, utan egenskapsval eller redigering. Utfallet
+  **Borttaget ur utkast** är markerat **✓ Förvalt**.
+- Öppning och stängning ändrar inget. Bekräftelsen kastar bara dubblettens
+  förslag. Sparade uppgifter, historik och oberoende utkast består.
+
+### UTKAST-60: kasta ett sambandsförslag med saknat målobjekt
+
+**Syfte:** Ta bort ett oanvändbart förslag utan att påverka andra uppgifter.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-missing-endpoint`. Robin tar bort målobjektet
+Molnmusik efter att Alex föreslår ett samband till det.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-60: a missing endpoint has a readonly comparison and
+removes only the unusable relationship proposal”.
+
+**Steg:**
+
+1. Öppna konflikten, läs de berörda uppgifterna och förklaringen.
+2. Läs det förvalda utfallet. Stäng med Escape och kör `result`.
+3. Öppna igen och välj **Ta bort sambandet ur ditt utkast**.
+4. Läs status och kör `result` för att jämföra kartan och övriga förslag.
+
+**Förväntat resultat:**
+
+- Förklaringen lyder **Ett objekt som sambandet pekar på saknas.**
+  Varningen lyder **Sambandet kan inte läggas till eftersom ett objekt
+  som det pekar på saknas.**
+- Ingen objektväljare, redigering eller egenskapslösning erbjuds i dialogen.
+  Utfallet är förvalt och hela förslaget går att läsa.
+- Stängning ändrar inget. Bekräftelsen kastar bara sambandsförslaget.
+  Den sparade borttagningen, historiken och det oberoende utkastet består.
+
+### UTKAST-61: behåll ett eget borttagningsförslag mot ändrade fakta
+
+**Syfte:** Kräva ett aktivt val innan borttagningen får sparas mot nytt underlag.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-own-removal`. Alex föreslår att Lo tas bort;
+Robin sparar **Lo Berg** och **Nya sparade fakta** innan Alex hinner spara.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-61: an own removal is explicitly rebased against changed
+saved facts before a separate save”.
+
+**Steg:**
+
+1. Öppna konflikten och läs Robins aktuella uppgifter samt förklaringen.
+2. Kontrollera att **Lägg valen i utkastet** är spärrad utan ett aktivt val.
+3. Välj **Föreslagen borttagning** för objektet. Läs **Efter dina val** och
+   lägg valet i utkastet. Kör `result`.
+4. Stäng dialogen. Öppna **Skriv till Skyttel → Visa utkastet** och spara
+   hela utkastet från sparikonen.
+
+**Förväntat resultat:**
+
+- Förklaringen lyder **Du föreslår borttagning. Robin sparade ändringar i
+  objektet innan du hann spara ditt förslag.**
+- Bekräftelsen behåller en föreslagen borttagning mot de faktiskt nya
+  sparade uppgifterna. Kartan ändras först vid separat sparande.
+- Det oberoende förslaget består. Det senare atomiska sparandet genomför
+  den uttryckligen valda borttagningen och sparar övriga giltiga förslag.
+
+### UTKAST-62: välj objekt och tillkommande samband oberoende
+
+**Syfte:** Behålla objektet och ta bort ett samband eller välja en giltig
+borttagning, utan automatiskt ändrade val.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-connections`. Robin sparar ett nytt samband
+som berör Lo efter Alex borttagningsförslag.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-62: object and new connection removal choices remain
+independent and reject an invalid combination”.
+
+**Steg:**
+
+1. Öppna konflikten. Välj föreslagen objektborttagning och det sparade sambandet.
+2. Läs kombinationsfelet och kontrollera att bekräftelsen är spärrad.
+3. Välj det sparade objektet och föreslagen borttagning av sambandet.
+4. Lägg valen i utkastet och kör `result`. Stäng och öppna
+   **Skriv till Skyttel → Visa utkastet**. Spara utkastet separat.
+
+**Förväntat resultat:**
+
+- Förklaringen lyder **Du föreslår borttagning. Ytterligare ett sparat
+  samband berör nu objektet.**
+- Felet lyder **Objektet kan inte tas bort medan sambandet till det finns
+  kvar. Välj att ta bort sambandet eller behåll objektet.** Inga val ändras
+  automatiskt och inget läggs i utkastet vid den ogiltiga kombinationen.
+- Den giltiga kombinationen kastar objektets borttagningsförslag och lägger
+  en uttrycklig sambandsborttagning i utkastet. Kartan ändras först vid sparande.
+- Efter sparandet består Lo med samma sparade uppgifter; bara sambandet
+  tas bort och det oberoende objektförslaget sparas.
+
+### UTKAST-63: kontrollera oklara föreslagna borttagningar
+
+**Syfte:** Verifiera båda faktiskt bevarade borttagningsförslagen utan replay.
+
+**Användare:** Alex och Robin enligt förberedelsen ovan.
+
+**Förutsättningar:** Kör `new-connections`, sedan `lose-applied`. Prova Karta
+och Tabell var för sig på smal skärm med ny installation mellan körningarna.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallen “UTKAST-63: a lost reply verifies retained object and connection
+removals without replay in Karta” och “UTKAST-63: a lost reply verifies retained
+object and connection removals without replay in Tabell”.
+
+**Steg:**
+
+1. Öppna konflikten, välj borttagning av både objektet och sambandet och bekräfta.
+2. Läs det oklara utfallet, stäng och öppna igen så att den nya jämförelsen hämtas.
+3. Stäng. När konfliktknappen försvinner, välj **Visa konfliktvalet**.
+4. Kontrollera att vanlig bekräftelse är spärrad. Välj **Kontrollera om valet
+   lades i utkastet** och kör `result`.
+
+**Förväntat resultat:**
+
+- Kontroll och återöppning skickar aldrig en ny resolution. Båda
+  borttagningsförslagens faktiska underlag och privata utfall kontrolleras.
+- Den genomförda lösningen visas med bock och båda föreslagna borttagningarna.
+  Beskedet säger att valen finns i utkastet och kartan sparas separat.
+- Uppföljningen förblir nåbar från Karta och Tabell när sista konflikten
+  försvinner. Sparade objekt, samband och historik är oförändrade.
+
+### UTKAST-64: saknad objekttyp och uttryckligt kastande
+
+**Syfte:** Ge en tydlig rättelseväg eller kasta endast det berörda objektförslaget.
+
+**Användare:** Medlemmen Robin arbetar i det synliga fönstret. Administratören
+Alex förbereder den isolerade installationen genom offentliga HTTP-anrop.
+
+**Förutsättningar:** Kör `new-missing-object-type`. Förberedelsen exporterar
+Robins giltiga äldre utkast, kastar det offentligt och tar sedan bort den
+oanvända typen med vanligt sparande. Alex återimporterar aktuell giltig export
+med endast Robins tidigare utkast och uppdaterade arkivkontrollsummor. Robins
+ägarkoppling bevaras; inga databasändringar eller externa AI-anrop används.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+testfallet “UTKAST-64: a missing object type keeps its proposal readable and
+discards only the explicitly confirmed object”.
+
+**Steg:**
+
+1. Öppna konflikten och läs varningen, hänvisningen till Inställningar och
+   hela objektförslaget med **Våren 2021**.
+2. Kontrollera att inga egenskapsval eller typväljare finns. Stäng och kör `result`.
+3. Öppna igen och välj **Ta bort objektet ur ditt utkast**. Kör `result`.
+
+**Förväntat resultat:**
+
+- Jämförelsen är i läsläge. Typen visas som **Saknas**; det egna förslaget
+  finns kvar när dialogen stängs.
+- Instruktionen lyder **Stäng konfliktfönstret och lägg till objekttypen under
+  Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt
+  kan du ta bort objektet ur ditt utkast nedan.**
+- Bekräftelsen kastar endast det berörda objektförslaget. Oberoende utkast,
+  sparade objekt och historik består. Medlemmen behöver ingen administrativ
+  behörighet för själva konfliktåtgärden.
+
+### UTKAST-65: rätta ändrad datatyp i den vanliga objektdialogen
+
+**Syfte:** Rätta värdet uttryckligen i ordinarie flöde före en faktisk ny bedömning.
+
+**Användare:** Robin i det synliga fönstret och Alex som administrativ förberedare.
+
+**Förutsättningar:** Kör `new-invalid-datatype`. Den offentliga förberedelsen
+följer UTKAST-64 men ändrar lagligen Installationsår från Text till Tal medan
+utkastet är tomt. Robins tidigare textvärde återimporteras mot aktuell definition.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+testfallet “UTKAST-65: an incompatible historical field is corrected in the
+ordinary object form before fresh conflict assessment”.
+
+**Steg:**
+
+1. Öppna konflikten och läs det tidigare värdet **Våren 2021** i läsläge.
+2. Läs hänvisningen till den vanliga objektdialogen och välj **Stäng konfliktfönstret**.
+3. Välj Tabell och **Redigera Solcellsanläggningen**. Öppna Egna fält,
+   fyll Installationsår med `2021` och välj **Lägg i utkastet och stäng**.
+4. Kontrollera att den enda konflikten försvinner. Kör `result`, öppna
+   **Skriv till Skyttel → Visa utkastet** och spara utkastet separat från
+   sparikonen.
+
+**Förväntat resultat:**
+
+- Ingen egenskapslösning eller redigering erbjuds i konfliktfönstret.
+  Stängning bevarar utkastet.
+- Instruktionen lyder **Stäng konfliktfönstret och rätta uppgiften i den vanliga
+  objektdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit.
+  Ditt förslag ligger kvar under tiden.**
+- Den vanliga dialogen lägger talvärdet och den aktuella typdefinitionen i
+  utkastet. Faktisk ny bedömning tar bort det lösta hindret; oberoende förslag
+  och sparade fakta består tills utkastet sparas separat.
+- Det genomförda atomiska sparandet innehåller Installationsår `2021` som Tal.
+
+### UTKAST-67: återställ en borttagen typdefinition efter uttrycklig granskning
+
+**Syfte:** Bevara typens identitet och revisionsföljd utan att spara kartan
+eller återställa objekt när konfliktvalet bekräftas.
+
+**Användare:** Medlemmen Robin i fönstret; Alex förbereder arkivet som
+administratör i en separat session.
+
+**Förutsättningar:** Använd förberedaren ovan. Kör `new-object-restoration`
+för objekttyp eller `new-relationship-restoration` för sambandstyp. Den
+förbereder en faktiskt sparad definition, ett äldre privat ändringsförslag
+och en senare laglig gemensam borttagning. Alex återimporterar det äldre
+ägda utkastet i en aktuell, validerad export med nya kontrollsummor. Inga
+databasrader ändras direkt. Ett oberoende objektförslag finns i Robins utkast.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+testfallen “UTKAST-67: an explicitly reviewed removed object definition
+restores its historical identity only on a separate save” och
+“UTKAST-67: an explicitly reviewed removed relationship definition restores
+its historical identity only on a separate save”.
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast** och läs hela typdefinitionen.
+2. Kontrollera **Borttaget** på den sparade sidan och att bekräftelsen är
+   spärrad utan ett aktivt val. Stäng med Escape och kör `result`.
+3. Öppna igen och välj hela den föreslagna **Typdefinition**. Läs resultatet.
+4. Välj **Lägg valen i utkastet** och kör `result`. Stäng dialogen och öppna
+   **Skriv till Skyttel → Visa utkastet**. Spara hela utkastet separat.
+
+**Förväntat resultat:**
+
+- Förklaringen lyder **Typdefinitionen saknas nu i kartan. Ditt förslag
+  innehåller ändringar i den.** Fullständiga privata namn, beskrivningar,
+  fält och riktningar är läsbara i ett aktivt val för hela definitionen.
+- Förhandsresultatet lyder **Typdefinitionen föreslås återställas med din
+  ändring.** Stängning ändrar inget. Bekräftelsen ändrar bara Robins utkast,
+  behåller det oberoende förslaget och skapar inget gemensamt historikpost.
+- Förslaget behåller den ursprungliga typens ID och går från den faktiskt
+  borttagna revisionen 2 till revision 3. Kartan saknar typen fram till
+  det separata sparandet. Inget borttaget objekt eller samband återställs.
+- Sparandet gör definitionen och det oberoende objektet gemensamma.
+  Den privata återställningsbehörigheten finns inte i kvittot eller historiken.
+
+### UTKAST-68: avvisa inaktuell återställning utan delvis sparande
+
+**Syfte:** Kräva aktuell granskning när en annan användare hunnit återställa
+och ändra samma definition och bevara oberoende förslag vid avvisning.
+
+**Användare:** Robin i fönstret; Alex i förberedarens separata session.
+
+**Förutsättningar:** Kör `new-restoration-two`. Båda har var sitt verkligt
+ägt tidigare definitionsförslag. Robin har också ett oberoende objektförslag.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+testfallet “UTKAST-68: a newer saved definition rejects stale restoration
+atomically and preserves independent proposals”.
+
+**Steg:**
+
+1. Kör `probe-definition-guards` före granskningen och därefter `result`.
+2. Öppna Robins konflikt, välj den föreslagna definitionen och lägg valet i
+   utkastet. Stäng dialogen.
+3. Kör `newer-definition`. Alex granskar sitt eget förslag och sparar
+   definitionen, därefter **Ny gemensam typbenämning** som nästa revision.
+4. Kör `try-restoration-save` och `result`.
+5. Öppna den aktuella konflikten. Välj Robins föreslagna namn och beskrivning;
+   samma egna fält behöver inget nytt val. Lägg valen i utkastet.
+6. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+
+**Förväntat resultat:**
+
+- Felaktig jämförelse och den andra privata ägarens jämförelse avvisas med
+  HTTP 409 utan utkaständring. Ett redan använt gammalt underlag kan inte
+  användas igen. Ingen annans privata utkast ändras.
+- Typens användningsskydd gäller även för privata återställningsförslag;
+  en annan användare får inte ta bort definitionen medan förslaget finns.
+- Det gamla sparandet avvisas med HTTP 409. Robins hela utkast, sparade
+  objekt, Alex revision 4 och historik består. Det oberoende objektet
+  blir inte gemensamt genom det avvisade försöket.
+- Ny aktuell granskning använder den faktiskt sparade definitionen. Robins
+  förslag blir en vanlig ändring mot revision 4, utan gammal
+  återställningsbehörighet. Separat sparande ger revision 5 och sparar
+  det oberoende objektet tillsammans med definitionen.
+
+### UTKAST-69: ompröva återställningsförslag efter import
+
+**Syfte:** Läsa och rätta ett importerat privat förslag utan att arkivet
+överför behörighet från en tidigare innehållsgeneration.
+
+**Användare:** Robin i fönstret; administratören Alex utför export och import.
+
+**Förutsättningar:** Kör `new-relationship-restoration`. Förberedelsen
+använder verklig offentlig export, kontrollsummor och validerad import
+inom samma hushåll med oförändrad betrodd privat ägare.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+testfallet “UTKAST-69: importing a private restoration requires a fresh
+explicit review in the replacement generation”.
+
+**Steg:**
+
+1. Granska definitionen och lägg det föreslagna återställningsvalet i utkastet.
+2. Kör `result`, därefter `reimport-restoration`. Alex exporterar och
+   återimporterar aktuellt innehåll genom den offentliga HTTP-gränsen.
+3. Kör `try-restoration-save` och kontrollera avvisningen. Ladda om fönstret.
+   Öppna konflikten på nytt och kontrollera definitionen.
+4. Välj och bekräfta den föreslagna definitionen på aktuellt underlag.
+5. Spara hela utkastet separat från Utkastets sparikon.
+
+**Förväntat resultat:**
+
+- Exporten bevarar det privata förslaget. Importen behåller dess ägare,
+  värden och oberoende förslag men överför ingen gammal
+  återställningsbehörighet. Innehållsgenerationen ökar.
+- Förslaget är fortfarande läsbart och uttryckligen granskningsbart, inte
+  tyst godkänt eller permanent spärrat. Sparande före den nya granskningen
+  avvisas utan utkaständring; integrationstestet kontrollerar detta via HTTP.
+- Ny bekräftelse gäller den faktiska borttagna definitionen och den nya
+  generationen. Separat sparande behåller typens ID och ger revision 3.
+
+### UTKAST-70: kontrollera återställning efter tappat svar
+
+**Syfte:** Verifiera faktisk privat återställning med en uttrycklig hämtning
+utan att upprepa bekräftelsen eller tappa åtkomst från Karta eller Tabell.
+
+**Användare:** Robin i fönstret; Alex förbereder arkivet separat.
+
+**Förutsättningar:** Kör `new-object-restoration`, välj Karta eller Tabell
+och använd ett smalt fönster. `lose-applied` tappar bara ett verkligt svar
+efter att servern behandlat bekräftelsen; det ersätter inte servern.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+testfallen “UTKAST-70: a lost definition restoration reply verifies its
+private authority without replay in Karta” och
+“UTKAST-70: a lost definition restoration reply verifies its private
+authority without replay in Tabell”.
+
+**Steg:**
+
+1. Öppna konflikten och välj den föreslagna definitionen. Kör `lose-applied`
+   och bekräfta valet. Läs det oklara beskedet och stäng med Escape.
+2. Öppna igen för en aktuell hämtning. Stäng när konfliktlänken försvunnit
+   och välj **Visa konfliktvalet**. Kontrollera att ny bekräftelse är spärrad.
+3. Välj **Kontrollera om valet lades i utkastet** och kör `result`.
+4. Stäng med Escape och kontrollera synligt användbart återgångsfokus.
+   Upprepa med en ny installation i den andra vyn.
+
+**Förväntat resultat:**
+
+- Bara en bekräftelse skickas. Återöppning upprepar ingen mutation.
+  Uppföljningen består även när den sista olösta raden försvinner.
+- Den uttryckliga hämtningen jämför hela faktiska privata resultatet:
+  förslaget, dess underlag och dess aktuella återställningsbehörighet.
+  Beskedet lyder att valen finns i utkastet och kartan sparas separat.
+- Typen är fortfarande borttagen ur kartan, historiken är oförändrad och
+  det oberoende objektförslaget består. Stängning återför fokus till en
+  synlig användbar kontroll även när öppningsknappen har försvunnit.
+
+### UTKAST-71: avvisa vanligt nyskapande med borttagen typidentitet
+
+**Syfte:** Hindra att en vanlig definitionsbegäran återanvänder en borttagen
+identitet eller själv tilldelar återställningsbehörighet.
+
+**Användare:** Medlemmen Robin; administratören Alex förbereder arkivet.
+
+**Förutsättningar:** Kör `new-object-restoration`. Terminalkommandot nedan
+skickar en vanlig offentlig definitionsbegäran med det verkliga gamla ID:t
+och påstådd återställningsbehörighet. Ingen databas eller server ersätts.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+testfallet “UTKAST-71: ordinary definition creation cannot reuse a removed
+identity or grant forged restoration authority”.
+
+**Steg:**
+
+1. Öppna konflikten och välj den sparade sidans **Borttaget** för
+   **Typdefinition**. Bekräfta med **Lägg valen i utkastet**.
+2. Kontrollera **Typdefinitionen förblir borttagen**. Kör `result`.
+3. Kör `forge-restoration` och därefter `result` igen.
+
+**Förväntat resultat:**
+
+- Det uttryckliga valet kastar bara det privata definitionsförslaget.
+  Det oberoende objektförslaget består och typen förblir borttagen.
+- Den vanliga definitionsbegäran avvisas med HTTP 409. Dess påstådda
+  behörighet tillåter varken återanvänt ID eller återställning.
+- Robins utkast, gemensamma typer, objekt och historik är oförändrade
+  efter den avvisade begäran.

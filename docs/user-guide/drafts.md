@@ -152,11 +152,40 @@ erbjuds igen. Kontrollen av utkastet bevisar då inget eget privat resultat.
 Konfliktval ger inget
 sparkvitto; gemensamt sparande är en separat åtgärd.
 
-Om ett sparat objekt redan är borttaget visar jämförelsen **Borttaget** som
+Om ett sparat objekt eller samband redan är borttaget visar jämförelsen
+**Borttaget** som
 **✓ Förvalt**. Ditt ändringsförslag går att läsa men kan inte återställa
-objektet. **Acceptera borttagningen och kasta ditt förslag** kastar bara
+posten. **Acceptera borttagningen och kasta ditt förslag** kastar bara
 förslaget för den posten. Andra förslag finns kvar och den gemensamma kartan
 ändras inte av bekräftelsen.
+
+Ett dubblerat samband eller ett samband med saknat objekt går att läsa men
+har inga valbara egenskaper. **Ta bort sambandet ur ditt utkast** tar bara
+bort det förslaget. När din egen objektborttagning möter nya sparade
+uppgifter eller samband väljer du objektets och varje nytt sambands
+borttagning för sig. Objektet kan inte tas bort medan ett sådant samband
+behålls. Valen ändrar ditt utkast; spara hela utkastet separat när du har
+granskat resultatet.
+
+En saknad objekttyp eller ett eget fält med ändrad datatyp behöver rättas
+utanför konfliktfönstret. Följ den visade instruktionen till
+**Inställningar → Typer och egna fält** eller den vanliga objektdialogen.
+Ditt förslag finns kvar medan du rättar det. Lägg rättelsen i utkastet så
+bedöms det på nytt mot aktuellt underlag. Ett objekt med saknad typ kan
+också tas bort ur utkastet med den uttryckliga åtgärden i jämförelsen.
+
+Om själva typdefinitionen har tagits bort jämför du **Borttaget** med hela
+din föreslagna definition och väljer uttryckligen en sida. Ett
+återställningsval bevarar typens ursprungliga identitet och föreslår din
+definition i utkastet. Det återställer inga objekt eller samband. Kartan
+ändras först vid separat sparande, som kontrollerar att underlaget
+fortfarande gäller. Har någon hunnit återställa och ändra typen behöver
+du granska den faktiskt aktuella definitionen på nytt.
+
+Efter import kan ett tidigare privat återställningsförslag behöva
+bekräftas igen i **Granska konflikter**. Förslaget och dess egna uppgifter
+finns kvar, men en export överför ingen tidigare återställningsbehörighet.
+Granska aktuellt underlag och lägg valet i utkastet före separat sparande.
 
 ## Följ upp ett oklart sparande
 

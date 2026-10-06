@@ -14,6 +14,12 @@ export function projectDraftScope<T extends MapDraft>(value: T, householdId: str
     scope(change.beforeType);
   }
   for (const change of [...(projected.objectTypes ?? []), ...(projected.relationshipTypes ?? [])]) {
+    if (change.restoration) {
+      // An archive carries historical proposals, never authority granted in its old generation.
+      // Returning to that historical basis leaves a normal, explicitly reviewable conflict.
+      change.before = change.restoration.definition;
+      delete change.restoration;
+    }
     scope(change.before);
     scope(change.after);
   }

@@ -83,7 +83,9 @@ function relationship(
     ...custom(type, value.customValues),
   ];
 }
-function definition(value: (ObjectType & RelationshipType) | null): Property[] | null {
+export function definitionPropertyValues(
+  value: (ObjectType & RelationshipType) | null,
+): Property[] | null {
   if (!value) return null;
   const kinds = { text: 'Text', number: 'Tal', date: 'Datum', boolean: 'Ja/nej' };
   const section = (id?: string) =>
@@ -170,8 +172,8 @@ export function draftProposals(draft: MapDraft): DraftProposal[] {
       key,
       name,
       kind,
-      before: definition(proposal.change.before),
-      after: definition(proposal.change.after),
+      before: definitionPropertyValues(proposal.change.before),
+      after: definitionPropertyValues(proposal.change.after),
     };
   });
 }

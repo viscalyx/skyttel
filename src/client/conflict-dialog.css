@@ -247,7 +247,8 @@
   border-left-color: #1d706b;
   background: #e7f3f0;
 }
-.household-map .cp-dialog.cp-product .cp-field-choice[aria-pressed="true"] {
+.household-map .cp-dialog.cp-product .cp-field-choice[aria-pressed="true"],
+.household-map .cp-dialog.cp-product .cp-field-choice.cp-default {
   box-shadow: inset 0 0 0 2px #1d706b;
 }
 .household-map .cp-dialog.cp-product .cp-field-choice:hover:enabled {
@@ -262,6 +263,9 @@
   font-weight: 650;
 }
 .household-map .cp-product .cp-field-value {
+  .cp-definition-property {
+    display: block;
+  }
   display: block;
   margin-top: 4px;
 }

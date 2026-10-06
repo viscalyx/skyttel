@@ -71,6 +71,17 @@ export interface RelationshipTypeChange {
   before: RelationshipType | null;
   after: RelationshipType | null;
 }
+/** Private authority granted only by explicitly reviewing the actual removed definition. */
+export interface DefinitionRestoration<T extends TypeDefinition> {
+  contentVersion: number;
+  definition: T;
+}
+export interface DraftObjectTypeChange extends ObjectTypeChange {
+  restoration?: DefinitionRestoration<ObjectType>;
+}
+export interface DraftRelationshipTypeChange extends RelationshipTypeChange {
+  restoration?: DefinitionRestoration<RelationshipType>;
+}
 
 export interface ObjectValue {
   profileImageId?: string;
@@ -113,8 +124,8 @@ export interface MapDraft {
   version: number;
   changes: DraftChange[];
   relationships?: DraftRelationshipChange[];
-  objectTypes?: ObjectTypeChange[];
-  relationshipTypes?: RelationshipTypeChange[];
+  objectTypes?: DraftObjectTypeChange[];
+  relationshipTypes?: DraftRelationshipTypeChange[];
 }
 export function draftChangeCount(draft?: MapDraft) {
   return draft
@@ -129,6 +140,7 @@ export interface ConflictActor {
   savedAt: string;
 }
 export interface MapState {
+  removedDefinitions?: { objectTypes: ObjectType[]; relationshipTypes: RelationshipType[] };
   conflictActors?: Record<string, ConflictActor>;
   conflictPropertyActors?: Record<string, Record<string, ConflictActor>>;
   userId: string;

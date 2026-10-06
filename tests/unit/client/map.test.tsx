@@ -1214,8 +1214,10 @@ test('accepting a saved object removes only that proposal after another user del
   ).toBe(409);
   await open();
   const dialog = await openConflict();
-  expect(dialog.getByText(/Den här konflikten behöver rättas/)).toBeTruthy();
-  await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktfönstret' }));
+  expect(
+    dialog.getByText('Objektet är borttaget. Ditt ändringsförslag kan inte återställa det.'),
+  ).toBeTruthy();
+  await userEvent.click(dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }));
   expect((await read()).draft).toEqual(current.draft);
   expect(
     (

@@ -375,8 +375,16 @@ paneler för att
   och avvisa inaktuell jämförelse; bevara val mellan konflikter och återöppning,
   göra om endast berörda egenskapsval, pröva ändrade typer och referenser igen
   och kontrollera genomförda eller uteblivna konfliktval efter tappat svar
-  samt acceptera en redan genomförd objektborttagning genom att kasta endast
-  den berörda postens förslag med oberoende utkast och sparad historik kvar
+  samt acceptera redan genomförda objekt- och sambandsborttagningar genom
+  att kasta endast den berörda postens förslag; hantera dubbletter och
+  saknade ändpunkter, välja objektets och nya sambands borttagning oberoende,
+  kontrollera flera privata borttagningar efter tappat svar och rätta
+  inkompatibla egna fält i den vanliga objektdialogen; bevara oberoende
+  utkast och sparad historik; granska borttagna typdefinitioner som hela
+  aktiva val, återställa endast deras historiska identitet med fortsatt
+  revisionsföljd, avvisa inaktuellt sparande atomiskt, ompröva privat
+  återställning efter import och kontrollera dess fullständiga privata
+  utfall utan dubblerad mutation
   med en beständig status utan fokusstöld
   samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status

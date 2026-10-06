@@ -9,7 +9,9 @@ import {
   conflictPropertyValue,
   sameConflictValue,
 } from '../shared/conflict-properties.js';
+import { conflictRemovalPlan } from '../shared/conflict-removal.js';
 import { specialConflict } from '../shared/conflict-special.js';
+import { removedConflictDefinition } from '../shared/definition-restoration.js';
 import {
   draftConflicts,
   resolvedObjectValue,
@@ -221,6 +223,25 @@ export function householdMap(database: Database.Database, actorId: string, house
       draft: draft(),
       ...(removedObjects.length ? { removedObjects } : {}),
     };
+    const objectDefinitionIds = new Set(state.draft.objectTypes?.map((change) => change.id));
+    const relationshipDefinitionIds = new Set(
+      state.draft.relationshipTypes?.map((change) => change.id),
+    );
+    const objectTypes = types
+      .read(true)
+      .filter(
+        (type) =>
+          objectDefinitionIds.has(type.id) && !state.types.some((active) => active.id === type.id),
+      );
+    const relationshipTypes = edgeTypes
+      .read(true)
+      .filter(
+        (type) =>
+          relationshipDefinitionIds.has(type.id) &&
+          !state.relationshipTypes.some((active) => active.id === type.id),
+      );
+    if (objectTypes.length || relationshipTypes.length)
+      state.removedDefinitions = { objectTypes, relationshipTypes };
     const conflicts = draftConflicts(state);
     if (conflicts.length) {
       const actors: NonNullable<MapState['conflictActors']> = {};
@@ -364,7 +385,50 @@ export function householdMap(database: Database.Database, actorId: string, house
           const state = readState();
           if (!isDeepStrictEqual(body.basis, conflictBasis(state, conflict)))
             throw new MapError('resolution_conflict');
-          if (body.command !== 'discard-proposal' || !specialConflict(state, conflict))
+          const special = specialConflict(state, conflict);
+          if (body.command === 'definition-choice' && special?.kind === 'removed-definition') {
+            if (body.definitionChoice !== 'saved' && body.definitionChoice !== 'proposed')
+              throw new MapError('invalid_request', 400);
+            if (body.definitionChoice === 'saved') {
+              if (conflict.kind === 'objectType')
+                current.objectTypes = current.objectTypes?.filter(
+                  (change) => change.id !== conflict.id,
+                );
+              else
+                current.relationshipTypes = current.relationshipTypes?.filter(
+                  (change) => change.id !== conflict.id,
+                );
+              return writeDraft({ ...current, version: current.version + 1 });
+            }
+            const definition = removedConflictDefinition(state, conflict);
+            if (!definition) throw new MapError('type_conflict');
+            return writeDraft(
+              conflict.kind === 'objectType'
+                ? types.restore(current, conflict.id, definition, state.contentVersion)
+                : edgeTypes.restore(current, conflict.id, definition, state.contentVersion),
+            );
+          }
+          if (body.command === 'removal-choices' && special?.kind === 'own-removal') {
+            if (
+              !body.removalChoices ||
+              typeof body.removalChoices !== 'object' ||
+              Array.isArray(body.removalChoices)
+            )
+              throw new MapError('invalid_request', 400);
+            const resolved = conflictRemovalPlan(
+              state,
+              conflict,
+              body.removalChoices as ConflictChoices,
+            );
+            if (!resolved) throw new MapError('invalid_resolution', 400);
+            edges.reconcileObjectRemovals(resolved.draft);
+            return writeDraft({ ...resolved.draft, version: current.version + 1 });
+          }
+          if (
+            body.command !== 'discard-proposal' ||
+            !special?.action ||
+            special.kind === 'own-removal'
+          )
             throw new MapError('invalid_resolution', 400);
           if (conflict.kind === 'object')
             current.changes = current.changes.filter((change) => change.id !== conflict.id);
@@ -461,6 +525,7 @@ export function householdMap(database: Database.Database, actorId: string, house
           )?.find((item) => item.id === conflict.id);
           if (!change || !conflict.current) throw new MapError('resolution_conflict');
           change.before = conflict.current;
+          delete change.restoration;
           const definitions = conflict.kind === 'objectType' ? types : edgeTypes;
           return writeDraft(
             definitions.propose(

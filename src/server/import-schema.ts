@@ -113,6 +113,15 @@ const objectTypeChange = z
 const relationshipTypeChange = z
   .object({ id, before: relationshipType.nullable(), after: relationshipType.nullable() })
   .strict();
+const draftObjectTypeChange = objectTypeChange.extend({
+  restoration: z.object({ contentVersion: positive, definition: objectType }).strict().optional(),
+});
+const draftRelationshipTypeChange = relationshipTypeChange.extend({
+  restoration: z
+    .object({ contentVersion: positive, definition: relationshipType })
+    .strict()
+    .optional(),
+});
 const relationshipChangeShape = {
   id,
   before: relationship.nullable(),
@@ -270,8 +279,8 @@ export const importContentSchema = z
           version: natural,
           changes: z.array(draftChange),
           relationships: z.array(draftRelationship),
-          objectTypes: z.array(objectTypeChange),
-          relationshipTypes: z.array(relationshipTypeChange),
+          objectTypes: z.array(draftObjectTypeChange),
+          relationshipTypes: z.array(draftRelationshipTypeChange),
         })
         .strict(),
     ),

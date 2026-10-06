@@ -1,3 +1,4 @@
+import { restorationIsCurrent } from './definition-restoration.js';
 import { type FinancialFact, type FinancialFacts, financialFields } from './financial-facts.js';
 import type {
   CustomValues,
@@ -11,7 +12,6 @@ import type {
   RelationshipType,
   RelationshipTypeChange,
   RelationshipValue,
-  TypeDefinition,
 } from './map.js';
 import {
   compatibleCustomFields,
@@ -26,7 +26,7 @@ export type DraftConflict = {
   connections?: MapRelationship[];
   duplicates?: MapRelationship[];
   missingEndpoints?: string[];
-  type?: TypeDefinition | null;
+  type?: ObjectType | RelationshipType | null;
 } & (
   | { kind: 'object'; current: MapObject | null }
   | { kind: 'relationship'; current: MapRelationship | null }
@@ -203,12 +203,24 @@ export function draftConflicts(state: MapState): DraftConflict[] {
   });
   for (const change of state.draft.objectTypes ?? []) {
     const current = state.types.find((type) => type.id === change.id) ?? null;
-    if ((current?.revision ?? null) !== (change.before?.revision ?? null))
+    if (
+      (current?.revision ?? null) !== (change.before?.revision ?? null) ||
+      (change.restoration &&
+        !restorationIsCurrent(state, { kind: 'objectType', id: change.id }, change.restoration))
+    )
       conflicts.push({ kind: 'objectType', id: change.id, current });
   }
   for (const change of state.draft.relationshipTypes ?? []) {
     const current = state.relationshipTypes.find((type) => type.id === change.id) ?? null;
-    if ((current?.revision ?? null) !== (change.before?.revision ?? null))
+    if (
+      (current?.revision ?? null) !== (change.before?.revision ?? null) ||
+      (change.restoration &&
+        !restorationIsCurrent(
+          state,
+          { kind: 'relationshipType', id: change.id },
+          change.restoration,
+        ))
+    )
       conflicts.push({ kind: 'relationshipType', id: change.id, current });
   }
   for (const change of state.draft.relationships ?? []) {

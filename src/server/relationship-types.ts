@@ -4,12 +4,14 @@ import { resolvedRelationshipType } from '../shared/draft-conflicts.js';
 import type { MapDraft, RelationshipType } from '../shared/map.js';
 import { compatibleCustomFields, proposedRelationshipTypes } from '../shared/map.js';
 import { readCustomValues, readFieldPresentation } from './custom-fields.js';
+import { definitionRestorations } from './definition-restoration.js';
 import { definitionUsage } from './definition-usage.js';
 import { MapError } from './map-error.js';
 import { mapTombstones } from './map-tombstones.js';
 
 export function relationshipTypes(database: Database.Database, householdId: string, userId = '') {
   const tombstones = mapTombstones(database, householdId);
+  const restorations = definitionRestorations(database, householdId);
   const usage = definitionUsage(database, householdId, userId);
   function read(includeRemoved = false): RelationshipType[] {
     return database
@@ -78,7 +80,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
     };
   }
   function validateDefinition(type: RelationshipType) {
-    validate({
+    return validate({
       name: type.name,
       description: type.description,
       forwardLabel: type.forwardLabel ?? type.name,
@@ -97,6 +99,29 @@ export function relationshipTypes(database: Database.Database, householdId: stri
   }
   return {
     read,
+    restore(draft: MapDraft, id: string, removed: RelationshipType, contentVersion: number) {
+      const change = draft.relationshipTypes?.find((change) => change.id === id);
+      if (
+        !change?.after ||
+        read().some((type) => type.id === id) ||
+        !isDeepStrictEqual(
+          read(true).find((type) => type.id === id),
+          removed,
+        )
+      )
+        throw new MapError('type_conflict');
+      const after = {
+        ...change.after,
+        id,
+        householdId,
+        revision: removed.revision + 1,
+        ...validateDefinition(change.after),
+      };
+      checkFields(removed, after, draft);
+      change.after = after;
+      restorations.grant('relationshipType', change, removed, contentVersion);
+      return { ...draft, version: draft.version + 1 };
+    },
     effective(draft: MapDraft) {
       return proposedRelationshipTypes(read(), draft.relationshipTypes);
     },
@@ -117,6 +142,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
         } else if (change.after) throw new MapError('type_conflict');
         if (!change.after) usage.assertUnused('relationshipType', id, draft);
         change.before = current;
+        delete change.restoration;
       }
       const type =
         choice === 'saved'
@@ -147,6 +173,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       const before = existing
         ? existing.before
         : (read().find((type) => type.id === body.id) ?? null);
+      if (!before && !existing) tombstones.assertCreation('relationshipType', body.id);
       if ((before?.revision ?? null) !== body.baseRevision) throw new MapError('type_conflict');
       if (body.value === null) {
         if (!before && !existing) throw new MapError('type_conflict');
@@ -160,7 +187,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       const after: RelationshipType = {
         id: body.id,
         householdId,
-        revision: (before?.revision ?? 0) + 1,
+        revision: (existing?.restoration?.definition.revision ?? before?.revision ?? 0) + 1,
         ...validate(body.value, presentation === 'exact' ? null : (existing?.after ?? before)),
       };
       checkFields(before, after, draft);
@@ -181,6 +208,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
           id: body.id,
           before,
           after,
+          ...(existing?.restoration ? { restoration: existing.restoration } : {}),
         },
       ];
       for (const change of draft.relationships ?? [])
@@ -194,7 +222,13 @@ export function relationshipTypes(database: Database.Database, householdId: stri
       for (const change of draft.relationshipTypes ?? []) {
         const current = read().find((type) => type.id === change.id) ?? null;
         if (!isDeepStrictEqual(current, change.before)) throw new MapError('type_conflict');
-        if (!current) tombstones.assertCreation('relationshipType', change.id);
+        if (change.restoration)
+          restorations.assertAtSave(
+            'relationshipType',
+            change,
+            read(true).find((type) => type.id === change.id),
+          );
+        else if (!current) tombstones.assertCreation('relationshipType', change.id);
         if (!change.after) {
           usage.assertUnused('relationshipType', change.id, draft);
           tombstones.removeType('relationshipType', change.id);
@@ -216,6 +250,7 @@ export function relationshipTypes(database: Database.Database, householdId: stri
             change.after.name,
             change.after.description,
           );
+        if (change.restoration) tombstones.restoreType('relationshipType', change.id);
         if (change.after.forwardLabel && change.after.reverseLabel)
           database
             .prepare(`INSERT INTO relationship_type_labels (typeId, forwardLabel, reverseLabel) VALUES (?, ?, ?)
@@ -233,7 +268,11 @@ export function relationshipTypes(database: Database.Database, householdId: stri
             change.after.sections === undefined ? null : JSON.stringify(change.after.sections),
           );
       }
-      return draft.relationshipTypes ?? [];
+      return (draft.relationshipTypes ?? []).map(({ id, before, after }) => ({
+        id,
+        before,
+        after,
+      }));
     },
   };
 }
