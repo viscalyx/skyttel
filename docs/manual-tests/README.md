@@ -180,7 +180,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   en separat tillfällig installation förbereder det syntetiska tillståndet.
 - [Samtalsnotiser](conversation-notices.md): bruten kontakt, otillgängligt
   samtal och uppdragsfel; en gemensam ordning, bara ett besked, stängning och
-  automatisk återkomst, bevarad text med stoppad sändning och mikrofon,
+  automatisk återkomst, textåtkomst utan tillgängligt samtal, bevarad text
+  med stoppad sändning och mikrofon,
   hjälpmedel utan dubbel uppläsning, fokus och placering vid röstrutan
   eller meddelandefältet med hela beskedet läsbart på bred och smal skärm,
   verkligt registrerat

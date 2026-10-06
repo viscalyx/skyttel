@@ -51,7 +51,9 @@ notis utan att öppna textvyn”.
 1. Läs kartan utan att trycka på samtalsknapparna.
 2. Fokusera **Prata med Skyttel** och tryck Retur. Läs notisen.
 3. Välj **Stäng notisen**. Fokusera **Skriv till Skyttel** och tryck Retur.
-4. Stäng notisen igen. Läs teckenförklaringen och övriga verktyg.
+   Kontrollera textvyn, notisen och knappen **Nytt samtal**.
+4. Stäng notisen och sedan textvyn. Läs teckenförklaringen och övriga
+   verktyg.
 
 **Förväntat resultat:**
 
@@ -60,9 +62,14 @@ notis utan att öppna textvyn”.
   beskrivningen slutar med **Inte tillgängligt just nu.**
 - Texten är **Samtal med Skyttel är inte tillgängligt just nu. Kontakta
   administratören om det fortsätter.** Symbolen är en överstruken cirkel
-  och dold för hjälpmedel. Textvyn och medgivanderutan öppnas inte.
-- Fokus stannar på den valda knappen när notisen visas. Stängning återför
-  fokus till **Prata med Skyttel** och läser inte upp ett återkomstbesked.
+  och dold för hjälpmedel. Mikrofonknappen öppnar varken textvyn eller
+  medgivanderutan och startar inget samtal.
+- **Skriv till Skyttel** öppnar textvyn även utan tillgängligt samtal.
+  Fokus börjar i meddelandefältet på dator. **Nytt samtal** är inaktiverad;
+  inget samtal startas och ingen medgivanderuta visas.
+- Fokus stannar på mikrofonknappen när den visar notisen. Stängning
+  återför fokus till **Prata med Skyttel** och läser inte upp ett
+  återkomstbesked. När textvyn stängs återgår fokus till textknappen.
 - **Aktuell status** och **Visa samtals- och utkastdetaljer** finns inte.
   Teckenförklaringens gröna plus finns kvar. Kartan visar inget privat
   förslagsantal.
@@ -213,7 +220,7 @@ nästa avbrott väntar på ett nytt tryck”.
 
 **Steg:**
 
-1. Sätt nätverket i **Offline**. Välj **Skriv till Skyttel**.
+1. Sätt nätverket i **Offline**. Välj **Prata med Skyttel**.
 2. Fokusera **Stäng notisen** utan att trycka och återställ nätverket.
 3. Bryt nätverket igen. Tryck **Prata med Skyttel** och stäng notisen.
 4. Återställ nätverket igen.
@@ -232,7 +239,7 @@ nästa avbrott väntar på ett nytt tryck”.
 
 ### NOT-07: en kontakt-notis täcker inte kartans återkoppling
 
-**Syfte:** Bevara kartans rad med Återställ vy och gemensam återkoppling.
+**Syfte:** Bevara kartans rad med Återställ vy och kartans status.
 
 **Användare:** Alex.
 
@@ -246,21 +253,33 @@ testfallen “NOT-07: notisen har sin plats och täcker inte kartans
 återkoppling vid 1280 × 900”, “NOT-07: notisen har sin plats och täcker
 inte kartans återkoppling vid 700 × 900”, “NOT-07: notisen har sin plats
 och täcker inte kartans återkoppling vid 390 × 844” och “NOT-07: notisen
-har sin plats och täcker inte kartans återkoppling vid 667 × 375”.
+har sin plats och täcker inte kartans återkoppling vid 667 × 375”,
+“NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid
+320 × 640” och “NOT-07: notisen har sin plats och täcker inte kartans
+återkoppling vid 320 × 250”.
 
 **Steg:**
 
 1. Bryt och återställ kontakten genom webbläsarens nätverksläge.
-2. Läs notisen, utkastets återkoppling och kartans rad med **Återställ vy**.
+2. Läs notisen, kartans status och kartans rad med **Återställ vy**.
+   Kontrollera att kameraverktyget **Navigera** går att nå utan att täckas.
+3. I korta fönster: gå med Tab till **Kartans sammanhang**. Kontrollera
+   den synliga fokusringen och använd PageDown för att läsa teckenförklaringen.
+   Rulla **Visningsval** vid behov i det minsta fönstret för att nå
+   **Återställ vy**.
 
 **Förväntat resultat:**
 
 - Med röstrutan borta finns kortet på rutans plats. På smal skärm står
   det över hela bredden, ovanför återkopplingen och kartans nederkant.
-- Notisen täcker varken **Återställ vy** eller utkastets återkoppling.
+- Notisen täcker varken **Återställ vy** eller kartans status.
   Inget måste rullas i sidled för att läsa notisen.
 - Vid återkomst är mikrofonen av. Automationen bryter även ljudtransporten
-  oberoende av HTTP och kontrollerar kortets geometri vid de fyra måtten.
+  oberoende av HTTP och kontrollerar kortets geometri vid de sex måtten.
+- Kartans sammanhang är en namngiven rullningsyta för tangentbord. Hela
+  statusen och teckenförklaringen går att läsa utan att täckas av kartan
+  eller notisen. Vid 320 × 250 har sammanhanget och visningsvalen var sin rullningsyta
+  ovanför notisen.
 
 ### NOT-08: röstruta och uppdragsnotis har var sin plats
 
@@ -281,7 +300,7 @@ uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid 390 × 
 **Steg:**
 
 1. Skicka **Ge ett förslag.** och kör `fail REQUEST`.
-2. Stäng textvyn. Läs notisen, röstrutan och utkastets återkoppling.
+2. Stäng textvyn. Läs notisen, röstrutan och kartans status.
 3. Fokusera **Skriv till Skyttel** och tryck Tab. Tryck Retur på
    **Stäng notisen**.
 
