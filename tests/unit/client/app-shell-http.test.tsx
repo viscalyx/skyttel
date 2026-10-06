@@ -22,6 +22,7 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   cleanup();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   await client?.dispose();
   await other?.dispose();
@@ -62,6 +63,22 @@ async function foreground() {
   await act(async () => {
     fireEvent(window, new Event('focus'));
   });
+}
+
+async function installModel(model: ReturnType<typeof textModel>) {
+  await installation.close();
+  // Restore the server's Node boundary while constructing the provider SDK.
+  const browserWindow = window;
+  vi.stubGlobal('window', undefined);
+  try {
+    installation = await createInstallation(undefined, { modelFetch: model.provider });
+  } finally {
+    vi.stubGlobal('window', browserWindow);
+  }
+  vi.stubGlobal('fetch', authenticatedHttpFetch(client, installation.origin));
+  await signIn(client, installation.origin);
+  const { household } = await (await createHousehold(client, installation.origin)).json();
+  return `/households/${household.id}`;
 }
 
 test('a lost setup reply is recovered through status without creating another household', async () => {
@@ -438,21 +455,8 @@ test('return from a cancelled external sign-in restores provider choice and igno
 }, 30_000);
 
 test('lost conversation message replies recover the real conversation before accepting another instruction', async () => {
-  await installation.close();
-  // The HTTP server constructs its external-provider SDK in Node. jsdom shares
-  // this process, so restore that boundary during server construction only.
-  const browserWindow = window;
   const model = textModel(() => [modelMessage('Jag hör din fråga.')]);
-  vi.stubGlobal('window', undefined);
-  try {
-    installation = await createInstallation(undefined, {
-      modelFetch: model.provider,
-    });
-  } finally {
-    vi.stubGlobal('window', browserWindow);
-  }
-  await signIn(client, installation.origin);
-  const { household } = await (await createHousehold(client, installation.origin)).json();
+  const householdPath = await installModel(model);
   const transport = authenticatedHttpFetch(client, installation.origin);
   let lost = false;
   let recovered = 0;
@@ -466,7 +470,7 @@ test('lost conversation message replies recover the real conversation before acc
     }
     return response;
   });
-  mount(`/households/${household.id}`);
+  mount(householdPath);
   await screen.findByRole('region', { name: 'Arbetsyta' });
   await userEvent.click(screen.getByRole('button', { name: /^Skriv till Skyttel/ }));
   await userEvent.type(screen.getByLabelText('Meddelande till Skyttel'), 'Vad hör till hushållet?');
@@ -494,9 +498,157 @@ test('lost conversation message replies recover the real conversation before acc
   await userEvent.type(screen.getByLabelText('Meddelande till Skyttel'), 'nytt samtal');
   await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
   await waitFor(() => expect(screen.queryByText('Vad hör till hushållet?')).toBeNull());
-  const state = await (
-    await client.get(`${installation.origin}/api/households/${household.id}/map`)
-  ).json();
+  const state = await (await client.get(`${installation.origin}/api${householdPath}/map`)).json();
   expect(state.objects).toEqual([]);
   expect(state.draft.changes).toEqual([]);
+}, 30_000);
+
+test.each(['assistants', 'assistant-consent'])(
+  'revoked membership retains profile identity and gates the personal %s route',
+  async (page) => {
+    const fixture = await prepareAccess();
+    await post(client, `/api${fixture.path}/members/${fixture.user.id}/revoke`, {});
+    vi.stubGlobal('fetch', authenticatedHttpFetch(other, installation.origin));
+    mount('/profile');
+    await screen.findByRole('heading', { name: 'Din profil' });
+    expect((screen.getByLabelText('Ditt Skyttel-användar-ID') as HTMLInputElement).value).toBe(
+      fixture.user.id,
+    );
+    expect(screen.getByLabelText('Inbjudningskod')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Arbetsyta' })).toBeNull();
+    if (page === 'assistants')
+      await userEvent.click(screen.getByRole('link', { name: 'Assistentanslutningar' }));
+    else {
+      cleanup();
+      mount('/assistant-consent');
+    }
+    await screen.findByRole('heading', { name: 'Du har inte tillgång till hushållet' });
+    expect((screen.getByLabelText('Ditt Skyttel-användar-ID') as HTMLInputElement).value).toBe(
+      fixture.user.id,
+    );
+    expect(screen.queryByRole('button', { name: 'Godkänn och fortsätt' })).toBeNull();
+  },
+  30_000,
+);
+
+test.each([
+  ['export', 'Fullständig export'],
+  ['import', 'Återimportera hushållet'],
+  ['content-owners', 'Koppla historiskt innehåll'],
+  ['erasure', 'Permanent radering'],
+])(
+  'administrator route %s opens its separate public review page and returns to current household work',
+  async (page, heading) => {
+    const fixture = await prepareAccess();
+    mount(`${fixture.path}/settings/${page}`);
+    await screen.findByRole('heading', { name: heading });
+    expect(
+      screen.queryByRole('heading', { name: 'Du kan inte administrera hushållet' }),
+    ).toBeNull();
+    if (page === 'content-owners') {
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }),
+      );
+      await screen.findByText(
+        'Aktuella innehållskopplingar är hämtade. Granska den visade kopplingen efter ett osäkert resultat.',
+      );
+    }
+    await userEvent.click(screen.getByRole('link', { name: 'Tillbaka till kartan' }));
+    await screen.findByRole('heading', { name: 'Hushållet Linden' });
+    expect(window.location.pathname).toBe(fixture.path);
+  },
+  30_000,
+);
+
+test('direct profile entry returns to household work and help closes through its visible keyboard control', async () => {
+  const fixture = await prepareAccess();
+  mount('/profile');
+  await screen.findByRole('region', { name: 'Rymdkarta' });
+  if (!screen.queryByRole('region', { name: 'Din profil' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Din profil' }));
+  const profile = within(screen.getByRole('region', { name: 'Din profil' }));
+  expect(profile.getByText('Alex Exempel')).toBeTruthy();
+  expect(profile.getByText('Administratör')).toBeTruthy();
+  await userEvent.click(profile.getByRole('button', { name: 'Tillbaka till arbetet' }));
+  expect(screen.queryByRole('region', { name: 'Din profil' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Information och hjälp' }));
+  await screen.findByRole('region', { name: 'Information och hjälp' });
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('region', { name: 'Information och hjälp' })).toBeNull();
+  expect(window.location.pathname).toBe(fixture.path);
+}, 30_000);
+
+test('cancelling real in-flight model work retires its reply while keeping household work intact', async () => {
+  // The narrow text view exposes its ordinary stop control. This is a media
+  // query boundary only; layout and physical interaction belong to Chromium.
+  const matchMedia = window.matchMedia;
+  vi.spyOn(window, 'matchMedia').mockImplementation((query) =>
+    Object.assign(matchMedia(query), { matches: query === '(max-width: 700px)' }),
+  );
+  let started = false;
+  const model = textModel(
+    (_request, signal) =>
+      new Promise<unknown[]>((_resolve, reject) => {
+        started = true;
+        signal?.addEventListener('abort', () => reject(signal.reason), { once: true });
+      }),
+  );
+  const path = await installModel(model);
+  mount(path);
+  await screen.findByRole('region', { name: 'Arbetsyta' });
+  await userEvent.click(screen.getByRole('button', { name: /^Skriv till Skyttel/ }));
+  await userEvent.type(screen.getByLabelText('Meddelande till Skyttel'), 'Vilka uppgifter saknas?');
+  await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
+  await userEvent.click(
+    within(await screen.findByRole('dialog', { name: 'Samtal med Skyttel' })).getByRole('button', {
+      name: 'Godkänn och starta',
+    }),
+  );
+  await waitFor(() => expect(started).toBe(true));
+  const stop = await screen.findByRole('button', { name: 'Avbryt' });
+  await userEvent.click(stop);
+  await screen.findByText('Avbrutet. Föreslagna ändringar ligger kvar i utkastet.');
+  const state = await (await client.get(`${installation.origin}/api${path}/map`)).json();
+  expect(state.objects).toEqual([]);
+  expect(state.draft.changes).toEqual([]);
+  expect(
+    screen.getByRole('region', { name: 'Arbetsyta' }).getAttribute('data-session-active'),
+  ).toBe('true');
+}, 30_000);
+
+test('consent revoked through public HTTP retires the conversation while retaining unsent text and household access', async () => {
+  const model = textModel(() => [modelMessage('Ett svar innan återkallandet.')]);
+  const path = await installModel(model);
+  mount(path);
+  await screen.findByRole('region', { name: 'Arbetsyta' });
+  await userEvent.click(screen.getByRole('button', { name: /^Skriv till Skyttel/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Nytt samtal' }));
+  await userEvent.click(
+    within(await screen.findByRole('dialog', { name: 'Samtal med Skyttel' })).getByRole('button', {
+      name: 'Godkänn och starta',
+    }),
+  );
+  await waitFor(() =>
+    expect(
+      screen.getByRole('region', { name: 'Arbetsyta' }).getAttribute('data-session-active'),
+    ).toBe('true'),
+  );
+  await post(client, `/api${path}/conversation-consent/revoke`, {});
+  await userEvent.type(
+    screen.getByLabelText('Meddelande till Skyttel'),
+    'Text efter återkallat medgivande',
+  );
+  await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
+  await waitFor(() =>
+    expect(
+      screen.getByRole('region', { name: 'Arbetsyta' }).getAttribute('data-session-active'),
+    ).toBe('false'),
+  );
+  await userEvent.click(screen.getByRole('button', { name: /^Skriv till Skyttel/ }));
+  expect((screen.getByLabelText('Meddelande till Skyttel') as HTMLTextAreaElement).value).toBe(
+    'Text efter återkallat medgivande',
+  );
+  const { household } = await (await client.get(`${installation.origin}/api/bootstrap`)).json();
+  expect(household.role).toBe('administrator');
+  expect(screen.getByRole('heading', { name: 'Hushållet Linden' })).toBeTruthy();
 }, 30_000);
