@@ -260,7 +260,7 @@ no saved history”.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Förbered den isolerade utkastinstallationen enligt
-UTKAST-25. Starta om provkommandot mellan fallen.
+UTKAST-90. Starta om provkommandot mellan fallen.
 
 **Integrationstest:**
 [draft-removal.spec.ts](../../tests/integration/draft-removal.spec.ts),
@@ -289,7 +289,7 @@ history and focuses the next control”.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Förbered installationen enligt UTKAST-25. Prova dator
+**Förutsättningar:** Förbered installationen enligt UTKAST-90. Prova dator
 och smal skärm med tangentbord och pekning. Starta om mellan fallen.
 
 **Integrationstest:**
@@ -326,7 +326,7 @@ cancellation changes nothing at 320px”.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Installation enligt UTKAST-25. Skapa under
+**Förutsättningar:** Installation enligt UTKAST-90. Skapa under
 Inställningar en ny objekttyp **Tillfällig typ** och lägg ett nytt
 **Tillfälligt föremål** med den typen i utkastet. Upprepa i en ny
 installation med en ny sambandstyp **Tillfällig typ**, framåtnamnet
@@ -364,7 +364,7 @@ relationshipType preserves dependent proposals with a truthful type warning”.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Installation enligt UTKAST-25. Prova dator och
+**Förutsättningar:** Installation enligt UTKAST-90. Prova dator och
 smal skärm med tangentbord och pekning. Starta om mellan fallen.
 
 **Integrationstest:**
@@ -546,7 +546,7 @@ composer focus and exposes persistent recovery”.
 - HTTP-proven avvisar obehöriga eller inaktuella anrop och en felaktig
   bekräftelselista utan att förändra utkastet.
 
-### UTKAST-25: läs hela utkastet utan AI eller medgivande
+### UTKAST-90: läs hela utkastet utan AI eller medgivande
 
 **Syfte:** Granska alla förslag, även dolda fält, utan att starta samtal.
 
@@ -560,8 +560,8 @@ Skriv `quit` i terminalen efter provningen för att ta bort installationen.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
-testfallen “UTKAST-25: desktop complete draft review works without AI or
-consent” och “UTKAST-25: mobile complete draft review works without AI or
+testfallen “UTKAST-90: desktop complete draft review works without AI or
+consent” och “UTKAST-90: mobile complete draft review works without AI or
 consent”.
 
 **Steg:**
@@ -586,11 +586,11 @@ consent”.
 - Verklig olöst identitet eller obesvarad fråga har feltext och symbol.
   Giltiga okända, osäkra och ospecificerade uppgifter får ingen felvarning.
 
-### UTKAST-26: nå tomt utkast och bevara meddelandet före första skickandet
+### UTKAST-91: nå tomt utkast och bevara meddelandet före första skickandet
 
 **Syfte:** Skilja öppning och utkastgranskning från faktisk samtalsanvändning.
 
-**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+**Användare:** Alex Exempel i provinstallationen för UTKAST-90.
 
 **Förutsättningar:** Starta en ny provinstallation med tillägget
 `--with-model --empty`. Den använder en kontrollerad, syntetisk leverantör
@@ -598,7 +598,7 @@ och börjar med ett tomt utkast.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
-testfallet “UTKAST-26: empty and type-only drafts preserve unsent text and
+testfallet “UTKAST-91: empty and type-only drafts preserve unsent text and
 first send asks consent once”.
 
 **Steg:**
@@ -625,7 +625,7 @@ first send asks consent once”.
 **Syfte:** Skilja slutdatum från uttrycklig status och läsa hela bildförslaget
 samt dolda gemensamma egenskaper med deras egna namn.
 
-**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+**Användare:** Alex Exempel i provinstallationen för UTKAST-90.
 
 **Förutsättningar:** Kör `npm run build` och
 `node --import tsx scripts/manual-draft-review.ts --meanings`.
@@ -779,7 +779,7 @@ comparison without changing the draft”.
 **Syfte:** Läsa hela namnet på egna fält och gemensamma egenskaper även
 när namnet saknar mellanslag.
 
-**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+**Användare:** Alex Exempel i provinstallationen för UTKAST-90.
 
 **Förutsättningar:** Kör `npm run build` och
 `node --import tsx scripts/manual-draft-review.ts --wrapping`.
@@ -809,7 +809,7 @@ at 320 CSS pixels”.
 **Syfte:** Skilja faktisk giltighet från ett uttryckligt val av statusläge
 i både sammanfattningen och den fullständiga läsningen.
 
-**Användare:** Alex Exempel i provinstallationen för UTKAST-25.
+**Användare:** Alex Exempel i provinstallationen för UTKAST-90.
 
 **Förutsättningar:** Kör `npm run build` och
 `node --import tsx scripts/manual-draft-review.ts --lifecycle`.

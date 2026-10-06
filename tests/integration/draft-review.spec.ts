@@ -112,7 +112,7 @@ test('UTKAST-32: lifecycle-only object and relationship proposals distinguish ef
 });
 
 for (const mobile of [false, true])
-  test(`UTKAST-25: ${mobile ? 'mobile' : 'desktop'} complete draft review works without AI or consent`, async ({
+  test(`UTKAST-90: ${mobile ? 'mobile' : 'desktop'} complete draft review works without AI or consent`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -212,7 +212,7 @@ for (const mobile of [false, true])
     }
   });
 
-test('UTKAST-26: empty and type-only drafts preserve unsent text and first send asks consent once', async ({
+test('UTKAST-91: empty and type-only drafts preserve unsent text and first send asks consent once', async ({
   page,
 }) => {
   let messages = 0;
