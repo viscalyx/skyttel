@@ -437,6 +437,94 @@ test('special conflicts distinguish saved and private duplicates, simultaneous m
   expect(specialConflict(state, { kind: 'object', id: 'absent', current: bike })).toBeNull();
 });
 
+test('ordinary correction preserves a proposal when its retained field meaning no longer fits the current type', () => {
+  for (const kind of ['object', 'relationship'] as const) {
+    const state = household();
+    const type = kind === 'object' ? objectType : edgeType;
+    if (kind === 'object')
+      state.draft.changes = [
+        {
+          id: 'bike',
+          before: bike,
+          after: { ...bike, customValues: { note: 'Hela mitt förslag' } },
+          type: objectType,
+        },
+      ];
+    else
+      state.draft.relationships = [
+        {
+          id: 'edge',
+          before: edge,
+          after: { ...edge, customValues: { note: 'Hela mitt förslag' } },
+          type: edgeType,
+        },
+      ];
+    const conflict: DraftConflict =
+      kind === 'object' ? { kind, id: 'bike', current: bike } : { kind, id: 'edge', current: edge };
+    const before = structuredClone(state);
+    for (const fields of [
+      [{ id: 'note', name: 'Taluppgift', description: '', kind: 'number' as const }],
+      [{ id: 'note', name: 'Datumuppgift', description: '', kind: 'date' as const }],
+      [],
+    ]) {
+      const result = specialConflict(state, { ...conflict, type: { ...type, fields } });
+      expect(result).toMatchObject({
+        kind: 'outside-correction',
+        instruction: expect.stringContaining(
+          kind === 'object' ? 'vanliga objektdialogen' : 'vanliga sambandsdialogen',
+        ),
+      });
+      expect(result?.warning).toBe(
+        fields[0]?.kind === 'number'
+          ? 'Det föreslagna värdet måste vara ett tal.'
+          : 'Förslaget behöver rättas så att värdena passar de aktuella egna fälten.',
+      );
+      expect(state).toEqual(before);
+    }
+  }
+});
+
+test('own removal explains actual actor or new incident edges and keeps unnamed endpoints readable', () => {
+  const state = household();
+  state.draft.changes = [{ id: 'bike', before: bike, after: null, type: objectType }];
+  state.draft.relationships = [{ id: 'edge', before: edge, after: null, type: edgeType }];
+  expect(specialConflict(state, { kind: 'object', id: 'bike', current: bike })?.reason).toContain(
+    'En annan användare sparade ändringar i objektet',
+  );
+  state.conflictActors = {
+    'relationship:edge': { name: 'Robin', savedAt: '2026-01-01T12:00:00Z' },
+  };
+  expect(
+    specialConflict(state, { kind: 'relationship', id: 'edge', current: edge })?.reason,
+  ).toContain('Robin sparade ändringar i sambandet');
+  expect(
+    specialConflict(state, { kind: 'object', id: 'bike', current: bike, connections: [edge] })
+      ?.reason,
+  ).toBe('Du föreslår borttagning. Ytterligare ett sparat samband berör nu objektet.');
+  const missingNames = { ...state, objects: [], relationshipTypes: [] };
+  expect(
+    conflictRemovalProperties(missingNames, {
+      kind: 'object',
+      id: 'bike',
+      current: bike,
+      connections: [edge],
+    })[1].saved,
+  ).toBe('alex har samband med Ej uppgivet');
+  expect(
+    conflictRemovalProperties(
+      { ...missingNames, relationshipTypes: [{ ...edgeType, forwardLabel: undefined }] },
+      { kind: 'object', id: 'bike', current: bike, connections: [edge] },
+    )[1].saved,
+  ).toBe('alex Använder Ej uppgivet');
+  expect(
+    conflictRemovalProperties(state, {
+      kind: 'object',
+      id: 'bike',
+      current: { ...bike, description: '' },
+    })[0].saved,
+  ).toBe('Cykeln');
+});
+
 test('removal choices reject incomplete, invented and stale combinations while retaining independent proposals', () => {
   const state = household();
   state.draft.changes = [
