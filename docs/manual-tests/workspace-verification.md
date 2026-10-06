@@ -52,11 +52,13 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
   överhoppade. Integrationskörningen använder två arbetare och tar
   15,1 minuter.
   Resultaten gäller de lokala kommandona på angivna versioner.
-- GitHubs nya applikationskontroll på `aa8af52` pågår vid
-  rapportens sammanställning. Lokala resultat nedan är egna faktiska
-  körningar. En äldre GitHub-körning på `d3474ed` har 719 godkända
-  integrationstestfall och 90,21 procent grentäckning; det är historiskt
-  underlag och inte slutkontroll av denna kodversion.
+- [GitHub-körningen](https://github.com/viscalyx/skyttel/actions/runs/37468444481)
+  är **GODKÄND** på `aa8af52`: 1 582 enhets- och webbläsarprov,
+  719 integrationstestfall på 16,5 minuter, 90,26 procent grentäckning
+  och alla nio containersteg. Övriga obligatoriska grindar är godkända.
+  Det är en separat faktisk körning från de lokala resultaten nedan.
+  Publiceringen ändrar endast dokumentation och ordlistan; dess nya
+  GitHub-körning redovisas separat.
 - Global täckning är 93,61 procent för satser, **90,21 procent för
   grenar**, 93,13 procent för funktioner och 95,50 procent för rader.
   Kraven är oförändrade: 90 procent för grenar och 85 procent för de
