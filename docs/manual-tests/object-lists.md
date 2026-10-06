@@ -15,9 +15,9 @@ inloggningen innehåller enbart påhittade uppgifter.
 
 1. Starta provkartan enligt [stora kartor](large-map.md#allmän-förberedelse).
    Den innehåller 500 objekt fördelade på fem typer och 1 500 samband.
-2. Öppna **Sök i kartan**, välj **Ta med upphörda**, stäng sökytan och
-   öppna **Lista**. Prova både dator och telefon. Använd tangentbord och
-   pekning, ljust och mörkt tema samt webbläsarens förstoring.
+2. Öppna **Tabell → Filter**, välj **Ta med upphörda** och stäng filtret.
+   Prova dator och telefon, tangentbord och pekning, ljust och mörkt tema
+   samt webbläsarens förstoring.
 3. Starta om provkartan mellan fallen. För kartfokus använder du ett litet
    testhushåll enligt förutsättningarna i LISTA-03.
 
@@ -273,210 +273,192 @@ testfallet “LÄS-07: a long unbroken object name wraps in full reading at
 
 ## Sökning och filtrering
 
-### LISTA-01: flera typval kombineras med sökning och markeringar
+### LISTA-01: flera typval kombineras med sökning och aktuell rad
 
-**Syfte:** Begränsa en stor lista utan att ändra objektmarkeringarna eller
-hushållets uppgifter.
+**Syfte:** Begränsa en stor tabell utan att ändra hushållets uppgifter.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Provkartan med 500 objekt är öppen i Lista.
+**Förutsättningar:** Provkartan med 500 objekt är öppen i Tabell.
+Välj Ta med upphörda i tabellens eget filter.
 
 **Integrationstest:**
 [object-list.spec.ts](../../tests/integration/object-list.spec.ts), testfallet
-“LISTA-01: multiple type filters combine with search and marks across 500 objects”.
+“LISTA-01: multiple type filters combine with search and the current row
+across 500 objects”.
 
 **Steg:**
 
-1. Markera Provobjekt 000 och Provobjekt 001. Öppna **Filter** och kryssa
-   i **Person** och **Tjänst**. Kontrollera 200 träffar.
-2. Sök efter **sammanhang 0.**. Kontrollera tjugo träffar och tio vid vardera
-   av provkartans typer. Välj **Bara markerade** och kontrollera två träffar.
-3. Välj **Alla typer**. Kontrollera att typkryssen försvinner, men de två
-   markeringarna och träffarna består. Stäng av **Bara markerade**.
-4. Välj **Person** och **Visa 10 objekt**. Kontrollera stängt filter,
-   synligt typval i filterraden och fokus i **Sökträffar**.
-5. Sök efter **finns inte**. Läs det tomma resultatet och välj
-   **Rensa sökning och filter**.
+1. Expandera Provobjekt 000 och Provobjekt 001. Båda raderna är öppna;
+   Provobjekt 001 är den aktuella markeringen.
+2. Öppna Filter, välj Person och Tjänst och stäng med Stäng filter.
+   Kontrollera 200 träffar. Sök sammanhang 0. och kontrollera tjugo träffar.
+3. Öppna Filter, välj Bara markerade och stäng. Kontrollera Provobjekt 001
+   som enda träff. Välj Alla typer i Filter och kontrollera samma träff.
+4. Stäng av Bara markerade och stäng filtret: femtio träffar. Välj Person
+   och stäng filtret: tio träffar och fokus tillbaka på Filter.
+5. Sök finns inte. Läs det tomma resultatet och välj Återställ sökning
+   och filter. Välj Ta med upphörda igen och kontrollera 500 träffar.
 
 **Förväntat resultat:**
 
 - Typval kombineras med eller; sökning och markeringsfilter begränsar vidare.
-- Filter förblir öppet under val. Typgrupperna visar sina träffantal.
-- Återställda filter ger 500 träffar och behåller båda markeringarna.
-- Inga hushållsuppgifter eller personliga placeringar ändras.
+- Filter förblir öppet under val. Stängning återför fokus till Filter.
+- Provobjekt 001 behåller markeringen när sökning och filter återställs.
+- Inga objekt, samband, utkast eller personliga placeringar ändras.
 
-## Återfinna en lista
+## Återfinna tabellen
 
 ### LISTA-02: sortering, sida och rulläge består vid tillfälliga besök
 
-**Syfte:** Behålla orienteringen och oskickad redigering när listan lämnas.
+**Syfte:** Behålla tabelläget och skydda oskickad formulärtext.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Provkartan med 500 objekt är öppen i Lista.
+**Förutsättningar:** Provkartan med 500 objekt i Tabell; Ta med upphörda
+är valt i tabellens Filter.
 
 **Integrationstest:**
 [object-list.spec.ts](../../tests/integration/object-list.spec.ts), testfallet
-“LISTA-02: sorting, pages and scroll survive details, settings and
+“LISTA-02: sorting, pages and scroll survive native details, settings and
 map-result navigation”.
 
 **Steg:**
 
-1. Sök efter **Provobjekt**, välj typerna Person och Tjänst och stäng
-   filtret med **Visa 200 objekt**.
-2. Bläddra genom de fyra sidorna med båda sorteringarna. Kontrollera samma
-   200 objekt. Lämna **Typ, sedan namn** och sida fyra valda.
-3. Rulla till Provobjekt 496 och välj **Uppgifter**. Välj **Redigera valt
-   objekt** och skriv **Oskickat under listbesöket** i Beskrivning.
-4. Öppna **Lista** från verktygen. Kontrollera rulläget. Stäng listpanelen,
-   öppna Lista igen och kontrollera samma sida och rulläge.
-5. Besök Inställningar och välj **Tillbaka till kartan**. Kontrollera
-   sökning, typval, sortering, sida och rulläge.
-6. Välj Provobjekt 496:s namn för att visa det i kartan. Kontrollera att
-   redigeringspanelen finns kvar med sin text. Öppna Lista igen.
-7. Sök efter **Provobjekt 496**. Kontrollera en träff utan kvarvarande
-   ogiltigt sidval.
+1. Sök Provobjekt och välj Person och Tjänst i Filter. Stäng filtret.
+2. Bläddra genom fyra sidor med Namn A–Ö och sedan Typ A–Ö. Kontrollera
+   samma 200 objekt. Lämna Typ A–Ö och sida fyra valda.
+3. Expandera Provobjekt 496, rulla till Läs alla uppgifter och öppna den
+   läsningen. Stäng med krysset. Kontrollera samma rulläge och öppningsfokus.
+4. Redigera Provobjekt 496 och skriv Oskickat under listbesöket i
+   Beskrivning. Välj Avbryt och tryck Escape i förlustvarningen.
+   Kontrollera texten. Välj Avbryt igen och kasta endast formulärändringen.
+5. Besök Inställningar och välj Tillbaka till kartan. Kontrollera Tabell,
+   sökning, sortering, sida fyra och den fortfarande expanderade raden.
+6. Välj Visa Provobjekt 496 i kartan och återvänd med Tabell.
+   Kontrollera samma sökning, sida och typval.
+7. Sök Provobjekt 496. Kontrollera en träff och Sida 1 av 1.
 
 **Förväntat resultat:**
 
-- Sortering ändrar ordningen och sidornas fördelning, inte resultatmängden.
-- Tillfälliga besök behåller listans val och rulläge samt oskickad text.
-- Kartträffen stänger bara listan. Befintligt redigeringsarbete består.
+- Sortering ändrar ordningen, men inte resultatmängden eller antalet objekt.
+- Läsdialogen återför fokus och rulläge. Kart- och inställningsbesök
+  bevarar sökning, filter, sortering, sida och expansion.
+- Avbruten förlustvarning behåller oskickad text. Uttrycklig förlust
+  påverkar bara formuläret; hushållets data och utkast är oförändrade.
 - Sökning med färre träffar visar en giltig sida.
 
 ## Visa en träff i kartan
 
 ### LISTA-03: kartträffen fokuserar direkta grannar och behåller samtalet
 
-**Syfte:** Skilja listans markering, kartvisning och uppgifter åt.
+**Syfte:** Skilja tabellens aktuella rad från kartans fokuserade utsnitt.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Ett testhushåll har Lo Exempel, Kim Exempel och
+**Förutsättningar:** Ett hushåll har Lo Exempel, Kim Exempel och
 Långt borta. Lo har ett samband till Kim och Kim har ett till Långt borta.
 Placera det sista objektet tydligt längre bort i den personliga vyn.
-Samtal med Skyttel är tillgängligt med testmiljöns ersättare för modelltjänsten.
+Samtal kan startas med testmiljöns ersättare för modelltjänsten.
 
 **Integrationstest:**
 [object-list.spec.ts](../../tests/integration/object-list.spec.ts), testfallet
-“LISTA-03: a map result focuses only its direct neighbors and closes only the list”.
+“LISTA-03: a table map result focuses direct neighbors and preserves unsent
+conversation”.
 
 **Steg:**
 
-1. Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan.
-   Skriv **Oskickat medan jag söker** utan att skicka.
-2. Öppna Lista och markera både Lo och Kim. Sök efter **Lo Exempel**.
-   Kontrollera att kameran behåller sitt läge medan du skriver.
-3. Välj träffens namn för att visa Lo i kartan. Kontrollera att Lo och
-   Kim ryms och att Långt borta inte utökar utsnittet.
-4. Öppna Lista igen och kontrollera samma sökning med en träff.
+1. Starta ett samtal i textläge. Skriv Oskickat medan jag söker utan att
+   skicka och stäng textvyn.
+2. Öppna Tabell, expandera Lo och Kim och sök Lo Exempel.
+3. Välj Visa Lo Exempel i kartan. Kontrollera Lo:s markering och att
+   Lo och direkta grannen Kim ryms i utsnittet.
+4. Öppna Skriv till Skyttel. Kontrollera samma oskickade meddelande.
+   Stäng textvyn och återvänd med Tabell.
 
 **Förväntat resultat:**
 
-- Lo blir ensam markerad, Kim avmarkeras och ingen detaljpanel öppnas.
-- Endast listan stängs; samtalet och dess oskickade text finns kvar.
-- Sökningen bevaras och hushållets data och personliga placeringar är orörda.
+- Lo är ensam markerad. Indirekta grannen Långt borta utökar inte utsnittet.
+- Kartvisningen markerar objektet utan att öppna en detaljyta.
+- Samtalet och dess oskickade text består. Tabellens sökning ger en träff.
+- Hushållets uppgifter, utkast och personliga placeringar är oförändrade.
 
-### LISTA-04: smal lista och uppgifter fungerar när grafiken avbryts
+### LISTA-04: smal tabell och uppgifter fungerar när grafiken avbryts
 
-**Syfte:** Behålla ett tillgängligt listalternativ vid förlorad kartgrafik.
+**Syfte:** Behålla tabellens arbete vid förlorad kartgrafik.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Hushållet från LISTA-03. Prova vid 390 och 320 pixlars
-bredd. Automatprovet använder webbläsarens riktiga WebGL-förlust; vid manuell
-körning behövs en testmiljö där grafikavbrott kan framkallas.
+bredd. Automatprovet framkallar verklig WebGL-förlust. För manuellt prov
+behövs en testmiljö där grafikavbrott kan framkallas.
 
 **Integrationstest:**
 [object-list.spec.ts](../../tests/integration/object-list.spec.ts), testfallen
-“LISTA-04: narrow lists retain search and accessible details after graphics
-loss at 390px” och “LISTA-04: narrow lists retain search and accessible details
+“LISTA-04: narrow tables retain search and native details after graphics
+loss at 390px” och “LISTA-04: narrow tables retain search and native details
 after graphics loss at 320px”.
 
 **Steg:**
 
-1. Öppna Lista, sök efter Lo Exempel och välj Person i Filter. Kontrollera
-   tangentbordsfokus och att typvalet går att peka på.
-2. Välj **Visa 1 objekt** och kontrollera resultatfokus. Välj Lo:s namn
-   för att visa objektet i kartan. Kontrollera markering utan detaljpanel.
-3. Öppna Lista igen och framkalla grafikavbrottet. Kontrollera att listan
-   och sökningen består och att knappen för kartvisning blir inaktiv.
-   Läs beskedet om att fortsätta genom **Uppgifter**.
-4. Välj **Uppgifter**, kontrollera rubrikfokus och redigera Beskrivning till
-   **Utan grafik**. Öppna **Lista** från verktygen.
+1. Öppna Tabell, sök Lo Exempel och välj Person i Filter. Kontrollera
+   synligt tangentbordsfokus och åtkomligt typval. Stäng filtret.
+2. Välj Visa Lo Exempel i kartan. Kontrollera markeringen.
+3. Återvänd med Tabell och framkalla grafikavbrottet. Kontrollera samma
+   sökning och att knappen för kartvisning blir inaktiv.
+4. Expandera Lo och välj Läs alla uppgifter. Kontrollera rubrikfokus och
+   stäng läsningen. Redigera Beskrivning till Utan grafik.
+5. Välj Avbryt och Escape i förlustvarningen. Kontrollera samma text och
+   oförändrat utkast. Avbryt igen och kasta endast formulärändringen.
+6. Öppna Filter och kontrollera Person. Stäng filtret och läs sökningen.
 
 **Förväntat resultat:**
 
-- Namn, typval, resultat och uppgifter kan nås utan vågrät sidrullning.
-- Grafikavbrottet stänger inte listan eller raderar markering och sökning.
-- Uppgifter och oskickad redigering fungerar utan grafik. Hushållets data
-  och personliga placeringar ändras inte genom listvalen.
+- Sökning, typval och läsning fungerar utan kartgrafik. Tabellens kolumner
+  kan rullas i sidled; detaljer och formulär ryms inom skärmbredden.
+- Grafikavbrottet förlorar varken markering, sökning eller filter.
+- Oskickad text skyddas av förlustvarningen. Varken hushållets data,
+  utkast eller personliga placeringar ändras av provet.
 
 ### LISTA-05: återgång på kort skärm bevarar synlig träff och fokus
 
-**Syfte:** Återgå till samma listarbete när hela arbetsytan behöver rullas.
+**Syfte:** Återgå till samma tabellarbete i ett kort fönster.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Testhushållet med 500 objekt. Prova en kort skärm
-med 320 × 250 CSS-pixlar och verklig webbläsarzoom på 400 procent.
+**Förutsättningar:** Provkartan med 500 objekt. Prova 320 × 250 CSS-pixlar
+och verklig webbläsarzoom på 400 procent.
 
 **Integrationstest:**
 [object-list-flow.spec.ts](../../tests/integration/object-list-flow.spec.ts),
-“LISTA-05: short-screen list returns preserve the visible result and keyboard focus”.
+testfallet “LISTA-05: short-screen table returns preserve the visible result
+and keyboard focus”.
 
 **Steg:**
 
-1. Öppna Lista och rulla till **Provobjekt 045**. Fokusera **Uppgifter**
-   och anteckna rulläget.
-2. Öppna uppgifterna. Öppna **Lista** från verktygen.
-3. Kontrollera samma rulläge och synligt fokus på träffens **Uppgifter**.
-4. Besök Inställningar och välj **Tillbaka till kartan**. Kontrollera
-   samma rulläge och att den fokuserade kontrollen är synlig och går att peka på.
-5. Fokusera träffens namn och anteckna dess rulläge. Välj namnet för att
-   visa objektet i kartan. Öppna Lista igen.
-6. Öppna verktygen och välj **Sök i kartan**. Kontrollera fokus i sökfältet.
+1. Öppna Tabell och välj Ta med upphörda i Filter. Expandera Provobjekt 045
+   och rulla till Läs alla uppgifter. Fokusera knappen och anteckna rulläget.
+2. Öppna läsningen. Kontrollera rubrikfokus och stäng med krysset.
+3. Besök Karta och återvänd med Tabell. Kontrollera samma rulläge och fokus.
+4. Besök Inställningar och välj Tillbaka till kartan. Kontrollera samma
+   tabelläge och synligt, åtkomligt fokus.
+5. Rulla till Visa Provobjekt 045 i kartan, fokusera kontrollen och
+   anteckna rulläget. Välj den och återvänd med Tabell.
+6. Visa Karta och öppna Sök i kartan. Kontrollera fokus i sökfältet.
 
 **Förväntat resultat:**
 
-- Listan återgår till samma rulläge efter varje besök.
-- Fokus återgår till den använda träffkontrollen, synligt och åtkomligt
-  utan att verktygen täcker den. Ett uttryckligt sök- eller detaljval
-  behåller sitt eget fokusmål.
-- Vanliga paneler och kartans särskilda visning behåller sina fokusregler.
-  Inga fördröjda fokusbyten får flytta ett senare valt fält.
+- Återbesök bevarar tabellens inre och yttre rulläge när kontrollen är
+  synlig. Ett ändrat utrymme efter Inställningar rullar bara så mycket
+  som behövs för att visa samma fokuserade kontroll.
+- Fokus återgår till använd kontroll; den är synlig och går att peka på.
+- Sökfältet får fokus vid uttryckligt sökval. Hushållets data är oförändrade.
 
-### LISTA-06: en synlig inaktiv lista öppnar uppgifter vid första klicket
+### LISTA-06: utgånget fall för inaktiv listpanel
 
-**Syfte:** Kunna använda en listträff direkt när ett annat fönster är aktivt.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** Testhushållet med 500 objekt på en datorskärm där
-Lista och en objektpanel kan visas samtidigt.
-
-**Integrationstest:**
-[object-list-flow.spec.ts](../../tests/integration/object-list-flow.spec.ts),
-“LISTA-06: an inactive visible list opens details on the first pointer click
-without moving the result”.
-
-**Steg:**
-
-1. Öppna Lista och välj **Uppgifter** vid **Provobjekt 000**. Låt
-   objektpanelen vara aktiv medan listan syns bredvid.
-2. Rulla listan till **Provobjekt 045** utan att först klicka i listan.
-3. Tryck ned musknappen på träffens **Uppgifter**. Kontrollera att träffen
-   stannar under pekaren när listan blir aktiv. Släpp musknappen.
-4. Kontrollera rätt objektpanel och rubrikfokus utan ett extra klick.
-5. Öppna **Lista** från verktygen och kontrollera samma rulläge.
-
-**Förväntat resultat:**
-
-- Det första klicket öppnar rätt uppgifter. Listans rulläge och träffens
-  position ändras inte medan musknappen hålls nere. En uttrycklig återgång
-  till listan behåller rulläget.
-- Hushållets objekt, samband och utkast ändras inte av att uppgifterna öppnas.
+Fallet gäller första klicket i en fri listpanel bredvid en aktiv
+objektpanel. De panelerna är avvecklade. ID:t återanvänds inte.
+Vanlig tabelläsning och återgång provas i LISTA-02 och LISTA-05.
 
 ## Läsa och återfinna objekt
 

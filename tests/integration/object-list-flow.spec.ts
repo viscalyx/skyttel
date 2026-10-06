@@ -1,19 +1,18 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import {
-  activatePanel,
+  closeSupportDialog,
   createHousehold,
+  openMap,
   openSettings,
-  openWorkspace,
+  openTable,
   signIn,
+  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
-import { includeEndedInMap } from '../support/object-search.js';
 
-test('LISTA-05: short-screen list returns preserve the visible result and keyboard focus', async ({
+test('LISTA-05: short-screen table returns preserve the visible result and keyboard focus', async ({
   page,
 }) => {
-  // The large map is rendered across several transitions; allow the whole
-  // keyboard flow to finish when other browser workers share the machine.
   test.setTimeout(120_000);
   const installation = await createInstallation();
   try {
@@ -21,127 +20,114 @@ test('LISTA-05: short-screen list returns preserve the visible result and keyboa
     const { user } = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     installation.seedLargeMap(user.id, household.id);
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const before = await (await page.request.get(path)).json();
     await page.setViewportSize({ width: 320, height: 250 });
     await page.goto(installation.origin);
-    await includeEndedInMap(page);
-    await openWorkspace(page);
-    const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
-    const result = work.getByRole('button', {
-      name: 'Uppgifter för Provobjekt 045',
+    await openTable(page);
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await table.getByRole('button', { name: 'Filter', exact: true }).click();
+    const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+    await filters.getByLabel('Ta med upphörda', { exact: true }).check();
+    await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+    await table.getByRole('button', { name: 'Provobjekt 045', exact: true }).click();
+    const result = table.getByRole('button', {
+      name: 'Läs alla uppgifter för Provobjekt 045',
       exact: true,
     });
-    await result.click({ trial: true });
+    await result.scrollIntoViewIfNeeded();
     await result.focus();
-    const flow = page.locator('.household-map');
-    const remembered = await flow.evaluate((element) => element.scrollTop);
-    expect(remembered).toBeGreaterThan(500);
+    const body = table.getByRole('region', { name: 'Rullbar objekttabell', exact: true });
+    const position = async () => ({
+      inner: await body.evaluate((element) => ({
+        top: element.scrollTop,
+        left: element.scrollLeft,
+      })),
+      outer: await table.evaluate((element) => element.scrollTop),
+    });
+    const remembered = await position();
+    expect(remembered.inner.top).toBeGreaterThan(500);
     await result.click();
-    const detail = page.getByRole('region', { name: 'Provobjekt 045', exact: true });
+    const detail = page.getByRole('dialog', { name: 'Uppgifter för Provobjekt 045', exact: true });
     await expect(
-      detail.getByRole('heading', { name: 'Provobjekt 045', exact: true }),
+      detail.getByRole('heading', { name: 'Uppgifter för Provobjekt 045', exact: true }),
     ).toBeFocused();
-    await activatePanel(page, 'Lista och utkast');
-    expect(await flow.evaluate((element) => element.scrollTop)).toBe(remembered);
+    await closeSupportDialog(page, 'Uppgifter för Provobjekt 045');
     await expect(result).toBeFocused();
-    expect(
-      await result.evaluate((element) => {
-        const box = element.getBoundingClientRect();
-        return (
-          box.top >= 0 &&
-          box.bottom <= innerHeight &&
-          element.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
-        );
-      }),
-    ).toBe(true);
+    expect(await position()).toEqual(remembered);
+    await expectUncovered(result);
+    await openMap(page);
+    await openTable(page);
+    await expect(result).toBeFocused();
+    expect(await position()).toEqual(remembered);
+    await expectUncovered(result);
     await openSettings(page);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    // The return is a router transition, and the list restores its place and
-    // focus in an effect after it. The click does not wait for either, and
-    // the large map can take longer than the default wait on a busy machine.
-    await expect
-      .poll(() => flow.evaluate((element) => element.scrollTop), { timeout: 30_000 })
-      .toBe(remembered);
-    expect(
-      await page.evaluate(() => {
-        const element = document.activeElement;
-        if (!element || element === document.body) return false;
-        const box = element.getBoundingClientRect();
-        return (
-          box.top >= 0 &&
-          box.bottom <= innerHeight &&
-          element.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
-        );
-      }),
-    ).toBe(true);
-    const mapResult = work.getByRole('button', {
+    await expect(table).toBeVisible();
+    await expect(result).toBeFocused();
+    await expectUncovered(result);
+    const returned = await position();
+    // The full-page toolbar can change height. Keep the same row accessible;
+    // reveal only the offscreen control instead of restoring an unusable offset.
+    expect(Math.abs(returned.inner.top - remembered.inner.top)).toBeLessThanOrEqual(250);
+    expect(Math.abs(returned.outer - remembered.outer)).toBeLessThanOrEqual(250);
+    const mapResult = table.getByRole('button', {
       name: 'Visa Provobjekt 045 i kartan',
       exact: true,
     });
-    await mapResult.click({ trial: true });
+    await mapResult.scrollIntoViewIfNeeded();
     await mapResult.focus();
-    const mapScroll = await flow.evaluate((element) => element.scrollTop);
+    const mapScroll = await position();
     await mapResult.click();
-    await expect(work).not.toBeVisible();
-    await openWorkspace(page);
-    expect(await flow.evaluate((element) => element.scrollTop)).toBe(mapScroll);
+    await expect(table).not.toBeVisible();
+    await openTable(page);
+    expect(await position()).toEqual(mapScroll);
     await expect(mapResult).toBeFocused();
-    const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-    await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-    await tools.getByRole('button', { name: 'Sök i kartan · aktiv', exact: true }).click();
+    await expectUncovered(mapResult);
+    await openMap(page);
+    await (await utilityButton(page, 'Sök i kartan')).click();
     await expect(page.getByLabel('Sök objekt i kartan', { exact: true })).toBeFocused();
+    expect(await (await page.request.get(path)).json()).toEqual(before);
   } finally {
     await installation.close();
   }
 });
 
-test('LISTA-06: an inactive visible list opens details on the first pointer click without moving the result', async ({
-  page,
-}) => {
-  const installation = await createInstallation();
-  try {
-    await signIn(page.request, installation.origin);
-    const { user } = await (await page.request.get(`${installation.origin}/api/bootstrap`)).json();
-    const { household } = await (await createHousehold(page.request, installation.origin)).json();
-    installation.seedLargeMap(user.id, household.id);
-    const path = `${installation.origin}/api/households/${household.id}/map`;
-    const saved = await (await page.request.get(path)).json();
-    await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto(installation.origin);
-    await includeEndedInMap(page);
-    await openWorkspace(page);
-    const work = page.getByRole('region', { name: 'Lista och utkast', exact: true });
-    const body = work.locator('.workspace-panel-body');
-    // Another panel takes the turn, and the list stays visible beside it.
-    await work.getByRole('button', { name: 'Uppgifter för Provobjekt 000', exact: true }).click();
-    await expect(work).toBeVisible();
-    await expect(work).toHaveAttribute('data-active', 'false');
-    const result = work.getByRole('button', {
-      name: 'Uppgifter för Provobjekt 045',
-      exact: true,
+async function expectUncovered(target: Locator) {
+  const geometry = await target.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+    return {
+      top: box.top,
+      bottom: box.bottom,
+      height: innerHeight,
+      focused: document.activeElement === element,
+      hit: hit?.outerHTML.slice(0, 400),
+    };
+  });
+  await test
+    .info()
+    .attach('Focused table control geometry', {
+      body: JSON.stringify(geometry),
+      contentType: 'application/json',
     });
-    await result.scrollIntoViewIfNeeded();
-    const remembered = await body.evaluate((element) => element.scrollTop);
-    expect(remembered).toBeGreaterThan(500);
-    await expect(result).not.toBeFocused();
-    const bounds = await result.boundingBox();
-    if (!bounds) throw new Error('The visible result must have a pointer target');
-    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-    await page.mouse.down();
-    await expect(work).toHaveAttribute('data-active', 'true');
-    expect(await body.evaluate((element) => element.scrollTop)).toBe(remembered);
-    expect(await result.boundingBox()).toEqual(bounds);
-    await page.mouse.up();
-    const detail = page.getByRole('region', { name: 'Provobjekt 045', exact: true });
-    await expect(
-      detail.getByRole('heading', { name: 'Provobjekt 045', exact: true }),
-    ).toBeFocused();
-    await activatePanel(page, 'Lista och utkast');
-    expect(await body.evaluate((element) => element.scrollTop)).toBe(remembered);
-    const after = await (await page.request.get(path)).json();
-    expect(after.objects).toEqual(saved.objects);
-    expect(after.relationships).toEqual(saved.relationships);
-    expect(after.draft).toEqual(saved.draft);
-  } finally {
-    await installation.close();
-  }
-});
+  await expect
+    .poll(() =>
+      target.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+        return {
+          top: box.top,
+          bottom: box.bottom,
+          left: box.left,
+          right: box.right,
+          height: innerHeight,
+          width: innerWidth,
+          hit: hit?.tagName,
+          hitName: hit?.getAttribute('aria-label'),
+          uncovered: box.top >= 0 && box.bottom <= innerHeight && element.contains(hit),
+        };
+      }),
+    )
+    .toMatchObject({ uncovered: true });
+}
