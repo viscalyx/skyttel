@@ -2,12 +2,14 @@ import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import {
-  activatePanel,
+  closeTextView,
   createHousehold,
   openMap,
-  openWorkspace,
+  openNewObject,
   signIn,
 } from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 test('IKON-01: icon choice survives type and image changes, save and restart before explicit reset', async ({
@@ -20,22 +22,14 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     const path = `${installation.origin}/api/households/${household.id}/map`;
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openNewObject(page);
     const form = page.locator('dialog.object-dialog');
     const stage = () =>
       form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     const appearance = () =>
       form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     const edit = async () => {
-      await activatePanel(page, 'Min cykel');
-      await page
-        .getByRole('region', { name: 'Min cykel', exact: true })
-        .getByRole('button', { name: 'Redigera valt objekt', exact: true })
-        .click();
+      await editTableObject(page, 'Min cykel');
     };
     await form.getByLabel('Namn', { exact: true }).fill('Min cykel');
     await form.getByLabel('Beskrivning', { exact: true }).fill('Bevara texten');
@@ -78,11 +72,8 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     await edit();
     await form.getByLabel('Beskrivning', { exact: true }).fill('Bevara mer text');
     await stage();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat:');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     await page.reload();
     expect((await read()).objects[0]).toMatchObject({
@@ -94,11 +85,8 @@ test('IKON-01: icon choice survives type and image changes, save and restart bef
     await picker.getByRole('button', { name: 'Typens standardikon', exact: true }).click();
     expect((await read()).draft.changes).toEqual([]);
     await stage();
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat:');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     expect((await read()).objects[0]).not.toHaveProperty('iconId');
   } finally {
     await installation.close();
@@ -124,9 +112,7 @@ test('IKON-02: full catalog search, empty results and keyboard pagination work i
       },
     });
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page.getByRole('button', { name: 'Uppgifter för Lo', exact: true }).click();
-    await page.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+    await editTableObject(page, 'Lo');
     await page.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
     const picker = page.getByRole('region', { name: 'Ikon', exact: true });
     const search = picker.getByRole('searchbox', { name: 'Sök ikon' });
@@ -175,11 +161,7 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openNewObject(page);
     const details = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
     const picker = details.getByRole('region', { name: 'Ikon', exact: true });
     await details.getByLabel('Namn', { exact: true }).fill('Lilla cykeln');
@@ -204,10 +186,8 @@ test('IKON-03: a short viewport keeps icon controls, unsent text and shared save
       'Min oskickade text',
     );
     await details.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat:');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     const saved: MapState = await (await page.request.get(path)).json();
     expect(saved.objects[0]).toMatchObject({
       name: 'Lilla cykeln',

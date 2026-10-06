@@ -1,8 +1,12 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
+import {
+  editTableObjectForm,
+  openNewObjectForm,
+  renderHouseholdWork,
+} from '../../support/native-household-unit.js';
 import { applicationFixture } from '../server/fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -44,11 +48,8 @@ afterEach(() => {
   fixture.close();
 });
 async function open() {
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: 'Uppgifter för Lo Exempel' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
-  const form = within(screen.getByRole('dialog', { name: 'Redigera Lo Exempel' }));
+  renderHouseholdWork(householdId);
+  const form = await editTableObjectForm('Lo Exempel');
   await userEvent.click(form.getByRole('button', { name: 'Livscykel och utseende' }));
   return form;
 }
@@ -109,15 +110,9 @@ test.each([401, 403, 409, 503])(
 );
 
 test('an icon cannot create a partial proposal when the complete new object lacks a name', async () => {
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(
-    within(await screen.findByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
-      name: 'Nytt objekt',
-    }),
-  );
+  renderHouseholdWork(householdId);
+  const form = await openNewObjectForm();
   const before = await read();
-  const form = within(screen.getByRole('dialog', { name: 'Nytt objekt' }));
   await userEvent.click(form.getByRole('button', { name: 'Livscykel och utseende' }));
   await userEvent.type(form.getByRole('searchbox', { name: 'Sök ikon' }), 'bike');
   await userEvent.click(form.getByRole('button', { name: 'Välj Cykel' }));

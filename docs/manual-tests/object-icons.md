@@ -15,6 +15,9 @@ underkänt resultat vid körning.
    giltig PNG-bild enligt [bildfallen](profile-images.md#allmän-förberedelse).
 2. Börja varje fall med ett nytt hushåll eller motsvarande återställt läge.
    Behåll inloggning och databas vid normal serveromstart.
+3. Redigera genom **Tabell → Redigera [objektnamn]**. För separat sparande,
+   öppna **Skriv till Skyttel → Visa utkastet**, välj utkastets sparikon och
+   läs **Utkastet är sparat**. Stäng textvyn innan nästa tabell- eller kartsteg.
 
 ## Ikonval och visning
 

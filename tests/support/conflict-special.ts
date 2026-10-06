@@ -1,14 +1,11 @@
 import { type APIRequestContext, expect, type Page } from '@playwright/test';
+import { openDraftReview } from './client.js';
 import { conflictCollaborators } from './conflict-properties.js';
 
 export async function saveReviewedConflictDraft(page: Page) {
   const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
   if (await conflict.isVisible()) await page.keyboard.press('Escape');
-  const text = page.getByRole('button', { name: /^Skriv till Skyttel/ });
-  if ((await text.getAttribute('aria-expanded')) !== 'true') await text.click();
-  const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
-  if (!(await draft.isVisible()))
-    await page.getByRole('button', { name: /^Visa utkastet/ }).click();
+  const draft = await openDraftReview(page);
   await Promise.all([
     page.waitForResponse(
       (response) =>
