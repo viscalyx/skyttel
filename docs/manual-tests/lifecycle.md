@@ -19,7 +19,7 @@ För samband, öppna **Tabell**, välj **Samband för** objektet och
 **Redigera samband** vid kopplingen. **Lägg i utkastet** skickar hela
 formuläret. Välj **Stäng samband** innan du sparar eller fortsätter med
 annat arbete. Objekt öppnas för redigering från Tabell eller objektets
-uppgifter. Vid kontroll i kartan, öppna **Sök i kartan → Filter** och
+uppgifter. Vid kontroll i kartan, öppna **Filter** bredvid sökfältet och
 välj **Ta med upphörda**, även efter omladdning, för att se upphörda
 objekt och samband. För kontroll i Tabell, öppna dess **Filter**, välj
 **Ta med upphörda** och stäng filterdialogen med krysset.

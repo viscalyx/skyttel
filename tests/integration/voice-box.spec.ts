@@ -743,7 +743,7 @@ test('TAL-16: hjälpmedel får röstrutans namn, knappens läge och uppläsninga
     await expect(
       page
         .getByRole('navigation', { name: 'Kartans verktyg' })
-        .getByRole('button', { name: 'Sök i kartan', exact: true }),
+        .getByRole('button', { name: 'Utkast', exact: true }),
     ).toBeFocused();
 
     // The microphone is turned off with the focus elsewhere: it is read when the box goes.

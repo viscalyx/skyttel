@@ -14,6 +14,7 @@ import {
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
+import { focusMapSearch, mapFilters } from '../support/object-search.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 async function arrange(page: Page, origin: string) {
@@ -219,19 +220,23 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
         exact: true,
       }),
     ).toBeVisible();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
-    await search.getByRole('checkbox', { name: 'Person', exact: true }).check();
-    await expect(search).toContainText('1 sökträffar');
-    await expect(search).toContainText('1 objekt visas som sammanhang');
+    await (await mapFilters(page)).getByRole('checkbox', { name: 'Person', exact: true }).check();
+    await expect(space.locator('.spatial-node')).toHaveCount(2);
+    await expect(page.getByRole('complementary', { name: 'Kartans sökresultat' })).toContainText(
+      '1 objekt visas som sammanhang',
+    );
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true }),
     ).toBeVisible();
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');
-    await search.getByRole('button', { name: 'Återställ sökning och filter', exact: true }).click();
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await (await mapFilters(page))
+      .getByRole('button', { name: 'Återställ filter', exact: true })
+      .click();
+    await search.getByRole('searchbox').press('Escape');
     await space
       .getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true })
       .click({ button: 'right' });
@@ -273,19 +278,22 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
       return { x: (label?.x ?? 0) - (surface?.x ?? 0), y: (label?.y ?? 0) - (surface?.y ?? 0) };
     };
     const beforeClear = await position();
-    await (await utilityButton(page, 'Sök i kartan')).click();
-    await search.getByRole('button', { name: 'Återställ sökning och filter', exact: true }).click();
+    await focusMapSearch(page);
+    await (await mapFilters(page))
+      .getByRole('button', { name: 'Återställ filter', exact: true })
+      .click();
     expect(await position()).toEqual(beforeClear);
     const query = search.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true });
     await query.fill('Lo');
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await search.getByRole('searchbox').press('Escape');
     await page.getByRole('button', { name: 'Zooma in', exact: true }).focus();
     await page.keyboard.press('Escape');
-    await space.locator('canvas').press('Escape');
-    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
     await expect(query).toHaveValue('Lo');
+    await space.locator('canvas').press('Escape');
+    await focusMapSearch(page);
+    await expect(query).toHaveValue('');
     await search.getByRole('button', { name: 'Rensa sökning', exact: true }).click();
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await search.getByRole('searchbox').press('Escape');
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true }),
     ).toBeVisible();
@@ -296,18 +304,20 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
       .getByRole('dialog')
       .getByRole('button', { name: 'Visa samband i kartan', exact: true })
       .click();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     await query.fill('Lo');
-    await search.getByRole('checkbox', { name: 'Person', exact: true }).check();
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await (await mapFilters(page)).getByRole('checkbox', { name: 'Person', exact: true }).check();
+    await search.getByRole('searchbox').press('Escape');
     await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     await expect(query).toHaveValue('');
-    await expect(search.getByRole('checkbox', { name: 'Person', exact: true })).not.toBeChecked();
     await expect(
-      search.getByRole('button', { name: 'Tillbaka till sökträffarna', exact: true }),
+      (await mapFilters(page)).getByRole('checkbox', { name: 'Person', exact: true }),
+    ).not.toBeChecked();
+    await expect(
+      page.getByRole('button', { name: 'Tillbaka till sökträffarna', exact: true }),
     ).toHaveCount(0);
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await search.getByRole('searchbox').press('Escape');
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     await space
       .getByRole('button', { name: 'Välj samband: Lo Exempel → Använder → Molnmusik', exact: true })
@@ -847,10 +857,12 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await openMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await space.getByLabel('Alla etiketter', { exact: true }).check();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
-    await search.getByRole('checkbox', { name: 'Ta med upphörda', exact: true }).check();
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await (await mapFilters(page))
+      .getByRole('checkbox', { name: 'Ta med upphörda', exact: true })
+      .check();
+    await search.getByRole('searchbox').press('Escape');
     const musicNode = space.getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true });
     const music = space.locator('[data-object-label="music"]');
     const lo = space.locator('[data-object-label="lo"]');
@@ -883,9 +895,11 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await installation.restart();
     await page.reload();
     await openMap(page);
-    await (await utilityButton(page, 'Sök i kartan')).click();
-    await search.getByRole('checkbox', { name: 'Ta med upphörda', exact: true }).check();
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await focusMapSearch(page);
+    await (await mapFilters(page))
+      .getByRole('checkbox', { name: 'Ta med upphörda', exact: true })
+      .check();
+    await search.getByRole('searchbox').press('Escape');
     await expect(music.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(musicNode).toHaveAccessibleDescription(/Upphört/);
     await expect(edge.getByText('Upphört', { exact: true })).toBeVisible();
@@ -983,12 +997,12 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
     const inspector = page.getByRole('region', { name: 'Valt samband', exact: true });
     await expect(inspector).toContainText('Lo Exempel → Betalar → Molnmusik');
     await expect(inspector.locator('input, select, textarea')).toHaveCount(0);
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
     await expect(
-      search.getByRole('button', { name: 'Tillbaka till sökträffarna', exact: true }),
+      page.getByRole('button', { name: 'Tillbaka till sökträffarna', exact: true }),
     ).toBeVisible();
-    await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await search.getByRole('searchbox').press('Escape');
     await inspector.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
     await space
       .getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true })

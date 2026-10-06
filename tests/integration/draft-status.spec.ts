@@ -24,6 +24,7 @@ import { openObjectRelationships } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
+import { focusMapSearch } from '../support/object-search.js';
 import { modelMessage, modelTool, textModel } from '../support/text-model.js';
 
 function saveToast(page: Page) {
@@ -123,7 +124,7 @@ for (const theme of ['light', 'dark'])
       await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
       await page.getByRole('button', { name: /^Välj samband: Molnmusik/ }).click();
       await expect(legend).not.toContainText('markerat objekt');
-      await (await utilityButton(page, 'Sök i kartan')).click();
+      await focusMapSearch(page);
       const mapSearch = page.getByRole('region', {
         name: 'Kartans sökning och filter',
         exact: true,
@@ -131,17 +132,17 @@ for (const theme of ['light', 'dark'])
       await mapSearch
         .getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true })
         .fill('Kim Exempel');
-      await mapSearch.getByRole('button', { name: 'Stäng', exact: true }).click();
+      await mapSearch.getByRole('searchbox').press('Escape');
       await expect(legend).not.toContainText('föreslås');
       await expect(legend).not.toContainText('tidigare samband');
       await expect(legend).toContainText('Punkter');
       await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
       await expect(legend).toContainText('Ring: markerat objekt');
-      await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
+      await focusMapSearch(page);
       await mapSearch
         .getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true })
         .fill('Inga träffar');
-      await mapSearch.getByRole('button', { name: 'Stäng', exact: true }).click();
+      await mapSearch.getByRole('searchbox').press('Escape');
       await expect(legend).toHaveCount(0);
       expect((await read()).draft.relationships?.[0].id).toBe(edge.id);
       expect((await read()).draft.relationships?.[0].before?.sourceId).toBe('lo');

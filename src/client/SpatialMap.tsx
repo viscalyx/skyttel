@@ -75,6 +75,7 @@ export function SpatialMap({
   onClear,
   onReset,
   onSearchStart,
+  onSearchClear,
   onRemove,
   onObjectActions,
   personal,
@@ -111,6 +112,7 @@ export function SpatialMap({
   onClear: () => void;
   onReset: () => void;
   onSearchStart?: (text: string) => void;
+  onSearchClear?: () => void;
   onRemove: (object: MapObject) => void;
   onObjectActions?: (entry: ObjectActionsEntry) => void;
   personal?: ReturnType<typeof usePersonalView>;
@@ -194,7 +196,7 @@ export function SpatialMap({
     if (!bounds || !root) return;
     const boxes = [
       ...root.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .map-filter-dialog, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -413,13 +415,15 @@ export function SpatialMap({
     const element = canvas.current;
     if (!element) return false;
     const bounds = element.getBoundingClientRect();
+    // Short screens need every available pixel for the full 44px targets.
+    const clearance = (window.visualViewport?.height ?? window.innerHeight) <= 450 ? 0 : 12;
     // Reserve actual fixed tools, including expanded controls and live status.
     // Reading details stay open; focus reserves their actual visible area.
     let areas = [{ left: 0, top: 0, right: bounds.width, bottom: bounds.height }];
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-search-summary, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .map-filter-dialog, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
@@ -441,10 +445,10 @@ export function SpatialMap({
         )
           return [area];
         return [
-          { ...area, left: Math.max(area.left, obstacle.right + 12) },
-          { ...area, right: Math.min(area.right, obstacle.left - 12) },
-          { ...area, top: Math.max(area.top, obstacle.bottom + 12) },
-          { ...area, bottom: Math.min(area.bottom, obstacle.top - 12) },
+          { ...area, left: Math.max(area.left, obstacle.right + clearance) },
+          { ...area, right: Math.min(area.right, obstacle.left - clearance) },
+          { ...area, top: Math.max(area.top, obstacle.bottom + clearance) },
+          { ...area, bottom: Math.min(area.bottom, obstacle.top - clearance) },
         ].filter((value) => value.right - value.left >= 44 && value.bottom - value.top >= 44);
       });
       // Keep alternative free rectangles until every overlay is considered.
@@ -507,11 +511,13 @@ export function SpatialMap({
         onNavigationChange?.(false);
         return;
       }
-      // Panel placement commits in layout effects. Measure its final rectangle
-      // on the next frame before reserving clearance for the assistant's target.
-      const frame = requestAnimationFrame(() => {
-        if (focusObjects(revealRequest.objectIds, revealRequest))
-          setCompletedRevealId(revealRequest.id);
+      // Let panel layout and ResizeObserver measurements settle before
+      // reserving clearance for the assistant's target.
+      let frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => {
+          if (focusObjects(revealRequest.objectIds, revealRequest))
+            setCompletedRevealId(revealRequest.id);
+        });
       });
       return () => cancelAnimationFrame(frame);
     }
@@ -536,10 +542,15 @@ export function SpatialMap({
       personalReady &&
       !contextLost &&
       !unavailable &&
-      focusRequest.objectIds.every((id) => objects.has(id)) &&
-      focusObjects(focusRequest.objectIds)
-    )
-      setCompletedFocusId(focusRequest.id);
+      focusRequest.objectIds.every((id) => objects.has(id))
+    ) {
+      // Expanded tools close with the request. Wait for their final layout,
+      // including the search row that follows them on small screens.
+      const frame = requestAnimationFrame(() => {
+        if (focusObjects(focusRequest.objectIds)) setCompletedFocusId(focusRequest.id);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
   }, [
     focusRequest,
     completedFocusId,
@@ -1092,7 +1103,11 @@ export function SpatialMap({
               event.altKey
             )
               return;
-            if (/^[\p{L}\p{N}]$/u.test(event.key) && onSearchStart) {
+            if (event.key === 'Escape' && onSearchClear) {
+              event.preventDefault();
+              event.stopPropagation();
+              onSearchClear();
+            } else if (/^[\p{L}\p{N}]$/u.test(event.key) && onSearchStart) {
               event.preventDefault();
               event.stopPropagation();
               onSearchStart(event.key);

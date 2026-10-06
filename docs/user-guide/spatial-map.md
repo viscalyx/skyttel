@@ -16,23 +16,28 @@ Välj **Redigera** vid objektet eller **Redigera valt samband** för att
 
 ## Hitta innehåll
 
-Utgångsläget omfattar alla objekt och samband. **Sök i kartan** eller
-**Tabell** i verktygen öppnar sökningen. **Sök objekt** i kartan och
-**Sök objekt i tabellen** hittar namn, typ
-och beskrivning utan att flytta kameran. Träffarna grupperas efter typ
-med antal för varje grupp.
+Utgångsläget visar aktuella objekt och samband. Kartans kapselformade
+sökfält är alltid synligt högst upp. Sök i namn, typ, beskrivning, egna
+fält och ekonomi utan att flytta kameran. Klicka i sökfältet för att skriva.
+När kartbakgrunden har fokus kan du också börja skriva en bokstav eller siffra.
 
-Öppna **Filter** och välj en eller flera objekttyper. Objekt av någon
-vald typ visas. Utan typval visas alla typer; **Alla typer** tar bort
-bara typfiltret och behåller objektmarkeringarna. **Bara markerade** och
-sökningen begränsar resultatet ytterligare. Antalen i typkatalogen följer
-sökningen och markeringarna. Filter ligger öppet medan du väljer.
-**Visa … objekt** stänger filtret och flyttar fokus till träffarna.
-Den stängda filterraden visar dina typval.
+**Filter** bredvid sökfältet öppnar en liten dialog med avsnitt för
+objekttyp, status och eventuella förslag i ditt utkast. Välj en eller
+flera objekttyper; utan typval visas alla typer. **Bara markerade** och
+söktexten begränsar resultatet ytterligare. **Ta med upphörda** visar även
+upphörda objekt och samband. Valen gäller direkt, och en punkt vid
+**Filter** visar aktiva filter. Krysset, Escape i dialogen eller ett klick
+utanför stänger dialogen med valen kvar.
 
-**Sortering** väljer namnordning eller typ följt av namn. Samma objekt
-finns kvar i resultatet. Namnordningen fördelar träffarna över sidorna;
-varje sida visar sedan sina träffar i typgrupper.
+Krysset i sökfältet tömmer bara texten. **Återställ filter** i dialogen
+behåller söktexten. Escape i sökfältet återför fokus till kartan utan att
+rensa. Escape på kartbakgrunden rensar både söktext och filter med en enda
+tryckning och behåller markeringen och kameran. Inga träffantal eller
+särskilda besked för tomma resultat visas.
+
+**Tabell** har egen sökning och egna filter. **Sortering** väljer namn-
+eller typordning. Varje sida visar högst 50 objekt. Läs mer om
+[sökning och filter](map.md#sök-och-filtrera-separat).
 
 Klicka på ett objekts runda symbol för att markera det utan att flytta
 kameran eller öppna detaljer. Ett omarkerat objekt ersätter urvalet.
@@ -58,10 +63,11 @@ objekt och samband. Kamera, sökning och filter finns kvar.
 Små rörelser vid klick flyttar inte kameran. Rotation, panorering och
 avbrutna gester behåller urvalet.
 
-Använd **Visa objektets kopplingar** för att begränsa kartan till ett
-objekts direkta samband. Fokus och träffantal visas vid sökningen.
-Escape utanför formuläret eller **Visa hela rymden** lämnar fokus och
-rensar sökning och typfilter. Kamerans vinkel, zoom och panorering behålls.
+Använd **Visa samband i kartan** för att utforska ett objekts direkta
+samband med tidigare innehåll kvar. **Tillbaka till sökträffarna** återgår
+till sökningens direkta sammanhang. **Visa hela kartan** visar en överblick.
+Escape på kartbakgrunden rensar sökning och filter; kamerans vinkel,
+zoom och panorering behålls.
 
 ## Öppna detaljer
 
@@ -82,8 +88,8 @@ alla objekt, oavsett sida. Objektets utökade rad ger tillgång till alla
 dess samband. Ändrad sökning, filtrering eller sortering börjar på första
 sidan igen. Sökning, filter, sortering, sida och rulläge finns kvar när
 du lämnar tabellen för uppgifter, samtal, Inställningar eller en kartträff.
-Om inga objekt matchar kan du välja **Rensa sökning och filter** utan
-att förlora objektmarkeringarna.
+Om inga objekt matchar i tabellen, öppna **Filter** och välj
+**Återställ sökning och filter**. Objektmarkeringarna finns kvar.
 
 ## Navigera rymden
 

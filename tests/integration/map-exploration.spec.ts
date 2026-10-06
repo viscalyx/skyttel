@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { utilityButton } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 import { prepareMapExploration } from '../support/map-exploration.js';
+import { focusMapSearch, mapFilters } from '../support/object-search.js';
 
 async function prepare(page: Page, origin: string, variant: 'base' | 'ended' | 'removed' = 'base') {
   const data = await prepareMapExploration(page.request, origin, variant);
@@ -18,11 +19,13 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
     const before = await data.read();
     const historyPath = `${installation.origin}/api/households/${data.household.id}/map/history`;
     const historyBefore = await (await page.request.get(historyPath)).json();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     await panel.getByRole('searchbox').fill('Alex');
-    await expect(panel.getByText('1 sökträffar', { exact: true })).toBeVisible();
-    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Välj objekt: Alex Exempel', exact: true }),
+    ).toHaveAccessibleDescription(/Sökträff/);
+    await panel.getByRole('searchbox').press('Escape');
     const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     const node = (name: string) =>
       map.getByRole('button', { name: `Välj objekt: ${name}`, exact: true });
@@ -50,15 +53,15 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
     await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
     await expect(node('Bostaden')).toBeVisible();
-    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
-    await panel.getByLabel(data.initial.types[0].name, { exact: true }).check();
+    await focusMapSearch(page);
+    await (await mapFilters(page)).getByLabel(data.initial.types[0].name, { exact: true }).check();
     await expect(node('Garaget')).toHaveCount(0);
     await expect(node('Bostaden')).toHaveCount(0);
     await panel.getByRole('searchbox').fill('Blå');
     await expect(node('Garaget')).toBeVisible();
     await expect(node('Bostaden')).toHaveCount(0);
     await panel.getByRole('searchbox').fill('Alex');
-    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await panel.getByRole('searchbox').press('Escape');
     await node('Blå cykel').focus();
     await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
@@ -69,7 +72,7 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
     await expect(node('Garaget')).toHaveCount(0);
     await expect(node('Blå cykel')).toBeVisible();
     await expect(page.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
-    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
+    await focusMapSearch(page);
     await expect(panel.getByRole('searchbox')).toHaveValue('Alex');
     expect(await data.read()).toEqual(before);
     expect(await (await page.request.get(historyPath)).json()).toEqual(historyBefore);
@@ -93,10 +96,10 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       value: { ...edge, targetId: 'garage' },
     });
     await page.reload();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     await panel.getByRole('searchbox').fill('Alex');
-    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await panel.getByRole('searchbox').press('Escape');
     const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
     await expect(
       map.getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true }),
@@ -111,7 +114,7 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
     await expect(
       page
         .getByRole('complementary', { name: 'Kartans sökresultat' })
-        .getByText('1 sökträffar', { exact: true }),
+        .getByText('2 objekt visas som sammanhang, utöver sökträffarna.', { exact: true }),
     ).toBeVisible();
     await data.post('discard', {});
     await data.post('relationship', {
@@ -128,9 +131,9 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
       value: { ...ended, lifecycle: 'active', targetId: 'garage' },
     });
     await page.reload();
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     await panel.getByRole('searchbox').fill('Alex');
-    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await panel.getByRole('searchbox').press('Escape');
     await expect(
       map.getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true }),
     ).toHaveCount(0);
@@ -157,7 +160,7 @@ for (const width of [1280, 390, 320]) {
       await page.setViewportSize({ width, height: 950 });
       const data = await prepare(page, installation.origin, 'removed');
       const before = await data.read();
-      await (await utilityButton(page, 'Sök i kartan')).click();
+      await focusMapSearch(page);
       const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
       await panel.getByRole('searchbox').fill('Alex');
       if (width <= 700) {
@@ -165,15 +168,9 @@ for (const width of [1280, 390, 320]) {
         const searchBounds = await panel.boundingBox();
         expect(searchBounds?.y).toBeGreaterThan((tools?.y ?? 0) + (tools?.height ?? 0));
       }
-      await panel.getByLabel('Bara markerade').check();
-      await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
-      if (width <= 700) {
-        const tools = await page.getByRole('navigation', { name: 'Kartans verktyg' }).boundingBox();
-        const summary = await page
-          .getByRole('complementary', { name: 'Kartans sökresultat' })
-          .boundingBox();
-        expect(summary?.y).toBeGreaterThan((tools?.y ?? 0) + (tools?.height ?? 0));
-      }
+      await (await mapFilters(page)).getByLabel('Bara markerade').check();
+      await panel.getByRole('searchbox').press('Escape');
+
       await (await utilityButton(page, 'Tabell')).click();
       const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
       const search = table.getByRole('searchbox');
@@ -191,11 +188,11 @@ for (const width of [1280, 390, 320]) {
       await expect(node('Garaget')).toBeInViewport();
       await expect(node('Bostaden')).toBeVisible();
       await expect(page.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
-      await (await utilityButton(page, 'Sök i kartan')).click();
+      await focusMapSearch(page);
       await expect(panel.getByRole('searchbox')).toHaveValue('');
-      await expect(panel.getByLabel('Bara markerade')).not.toBeChecked();
-      await expect(panel.getByText('4 sökträffar', { exact: true })).toBeVisible();
-      await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+      await expect((await mapFilters(page)).getByLabel('Bara markerade')).not.toBeChecked();
+      await expect(map.locator('.spatial-node')).toHaveCount(4);
+      await panel.getByRole('searchbox').press('Escape');
       await (await utilityButton(page, 'Tabell')).click();
       await expect(reveal).toBeFocused();
       await expect(search).toHaveValue('Blå');
@@ -235,14 +232,16 @@ test('SÖK-07: direct context ignores hit filters while ended objects and edges 
       map.getByRole('button', { name: `Välj objekt: ${name}`, exact: true });
     await node('Alex Exempel').focus();
     await page.keyboard.press('Enter');
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     await panel.getByRole('searchbox').fill('Alex');
-    await panel.getByLabel(state.types[0].name, { exact: true }).check();
-    await panel.getByLabel('Ändrat', { exact: true }).check();
-    await panel.getByLabel('Bara markerade').check();
-    await expect(panel.getByText('1 sökträffar', { exact: true })).toBeVisible();
-    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await (await mapFilters(page)).getByLabel(state.types[0].name, { exact: true }).check();
+    await (await mapFilters(page)).getByLabel('Ändrat', { exact: true }).check();
+    await (await mapFilters(page)).getByLabel('Bara markerade').check();
+    await expect(
+      page.getByRole('button', { name: 'Välj objekt: Alex Exempel', exact: true }),
+    ).toHaveAccessibleDescription(/Sökträff/);
+    await panel.getByRole('searchbox').press('Escape');
     await expect(node('Blå cykel')).toBeVisible();
     await expect(node('Upphörd granne')).toHaveCount(0);
     await expect(node('Oberoende objekt')).toHaveCount(0);
@@ -251,12 +250,12 @@ test('SÖK-07: direct context ignores hit filters while ended objects and edges 
     await summary.getByRole('button', { name: 'Ta med upphörda', exact: true }).click();
     await expect(node('Upphörd granne')).toBeVisible();
     await expect(node('Oberoende objekt')).toBeVisible();
-    await expect(summary.getByText('1 sökträffar', { exact: true })).toBeVisible();
+    await expect(node('Alex Exempel')).toHaveAccessibleDescription(/Sökträff/);
     expect(await data.read()).toEqual(before);
-    await (await utilityButton(page, 'Sök i kartan · aktiv')).click();
-    await panel.getByLabel('Bara markerade').uncheck();
-    await panel.getByLabel('Ta med upphörda', { exact: true }).uncheck();
-    await panel.getByRole('button', { name: 'Stäng', exact: true }).click();
+    await focusMapSearch(page);
+    await (await mapFilters(page)).getByLabel('Bara markerade').uncheck();
+    await (await mapFilters(page)).getByLabel('Ta med upphörda', { exact: true }).uncheck();
+    await panel.getByRole('searchbox').press('Escape');
     await node('Blå cykel').focus();
     await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();

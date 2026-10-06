@@ -54,16 +54,20 @@ sortering, sida, öppna rader och rullning finns kvar.
 
 ## Sök och filtrera separat
 
-**Sök i kartan** öppnar ett sökfält med filter. När själva kartytan har
-fokus kan du också börja med en bokstav eller siffra. Första färdiga
+Kartans kapselformade sökfält är alltid synligt högst upp, centrerat på
+dator och under verktygen på telefon. I ett mycket kort fönster ligger
+sökfältet bredvid verktygen när objektets uppgifter är öppna, så att
+kartans innehåll också ryms. Klicka i sökfältet för att skriva.
+När själva kartytan har fokus kan du också börja med en bokstav eller siffra.
+Första färdiga
 tecknet ersätter tidigare söktext och flyttar fokus till sökfältet;
 filtervalen finns kvar. I Tabell finns ett eget synligt sökfält och
 **Filter** öppnar en separat dialog. Vyernas sökning och filter är separata.
 
 Sök i namn, typ, beskrivning, egna fält och ekonomi. Alla sökord måste
 finnas, men ordning och skiftläge spelar ingen roll och delord fungerar.
-Å, ä och ö behåller sina betydelser. Detaljträffar anger vilket fält som
-matchar. Både visade sparade värden och förslag kan ge träff; samband och
+Å, ä och ö behåller sina betydelser. Tabellen anger vilket detaljfält
+som matchar. Både visade sparade värden och förslag kan ge träff; samband och
 andra objekts uppgifter ingår inte.
 
 Välj flera objekttyper, **Bara markerade** eller **Ta med upphörda**.
@@ -72,11 +76,23 @@ valen Nytt, Ändrat och Föreslagen borttagning när något förslag finns,
 även ett typförslag. När sista förslaget försvinner återställs bara detta
 filter. Flera val inom ett filter förenas; olika filter begränsar varandra.
 
-**Stäng** och Escape behåller text, filter och markering. Aktiva
-begränsningar visas även med stängd sökyta. **Rensa sökning** tömmer bara
-texten; **Återställ sökning och filter** visar startläget med aktuella
-objekt. Träffantal uppdateras automatiskt och noll träffar ger en
-förklaring och möjlighet att återställa.
+**Filter** till höger om kartans sökfält öppnar en liten dialog med
+avsnitt för objekttyp, status och ditt utkast. Valen gäller direkt.
+En punkt vid **Filter** visar att något filter är aktivt.
+**Återställ filter** återställer filtervalen och behåller söktexten.
+Krysset, Escape i dialogen eller ett klick utanför stänger med valen kvar.
+
+Krysset i kartans sökfält tömmer bara texten. Escape i sökfältet flyttar
+fokus till kartan och behåller sökningen. Escape när själva kartytan har
+fokus tömmer både text och filter med en enda tryckning. Markeringen och
+kameran finns kvar. Dialoger och andra kontroller har sina egna
+Escape-funktioner.
+
+Tabellens **Rensa sökning** tömmer texten. **Återställ sökning och filter**
+i tabellens filterdialog visar startläget med aktuella objekt.
+**Visa objekt** stänger dialogen med valen kvar.
+Kartan och tabellen visar inga träffantal eller särskilda besked när
+resultatet är tomt.
 
 ### Utforska sökträffarnas sammanhang
 
@@ -92,7 +108,7 @@ behåller tidigare innehåll och flyttar kameran. En markering i sig visar
 inga fler objekt. Upprepa för att följa en längre kedja.
 **Tillbaka till sökträffarna** återgår till träffarnas direkta sammanhang.
 Ändrad sökning eller ändrade filter börjar också om där. Att stänga
-sökytan eller besöka tabellen behåller utforskningen.
+filterdialogen eller besöka tabellen behåller utforskningen.
 
 **Visa i kartan** på en tabellrad markerar bara det valda objektet och
 zoomar till dess direkta grannar. Kartans sökning och filter återställs

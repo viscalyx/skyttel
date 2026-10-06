@@ -75,9 +75,9 @@ cancellation retain selection”.
 
 **Steg:**
 
-1. Markera Lo. Välj **Sök i kartan**, skriv Exempel i **Sök objekt i kartan**
-   och välj **Stäng**. Avmarkera och markera Lo med Control-klick.
-   Kontrollera söksammanfattning, kamera och att inga detaljer öppnas.
+1. Markera Lo. Klicka i kartans sökfält, skriv Exempel i **Sök objekt i kartan**
+   och tryck Escape i sökfältet. Avmarkera och markera Lo med Control-klick.
+   Kontrollera bevarad söktext, kamera och att inga detaljer öppnas.
 2. Klicka fri bakgrund med en mycket liten rörelse. Kontrollera att
    markeringarna släcks medan söktext och kamera finns kvar.
 3. Markera Lo, dra bakgrunden och kontrollera att Lo förblir markerad.
@@ -90,7 +90,7 @@ cancellation retain selection”.
 
 - Ett enda tomrumsklick släcker all framhävning, även efter en dragning.
 - Små rörelser flyttar inte kameran. Verklig eller avbruten navigering
-  behåller markeringarna. Söktext och söksammanfattning består.
+  behåller markeringarna. Söktext och kamera består.
 
 ## Textalternativ och vanliga formulär
 

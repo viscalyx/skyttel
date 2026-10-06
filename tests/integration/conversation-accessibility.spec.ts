@@ -105,7 +105,7 @@ for (const width of [1280, 390])
             '.workspace-text',
             '.voice-stop',
             '.conversation-notice-close',
-            '.workspace-tools [aria-label="Sök i kartan"]',
+            '.workspace-tools [aria-label="Navigera"]',
           ].map((selector) => document.querySelector(selector));
           return controls.every(
             (node, index) =>
@@ -126,11 +126,7 @@ for (const width of [1280, 390])
         await page.keyboard.press('Tab');
         await expect(close).toBeFocused();
         await page.keyboard.press('Tab');
-        await expect(
-          width <= 700
-            ? page.getByRole('button', { name: 'Navigera', exact: true })
-            : await utilityButton(page, 'Sök i kartan'),
-        ).toBeFocused();
+        await expect(page.getByRole('button', { name: 'Navigera', exact: true })).toBeFocused();
       };
       await checkOrder();
       const card = await notice(page).boundingBox();

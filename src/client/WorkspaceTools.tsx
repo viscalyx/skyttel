@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import logo from '../../docs/images/shuttle-logo-transparent-small.png';
 import { ConversationHelp } from './ConversationHelp.js';
+import { ObjectIconGlyph } from './ObjectIconGlyph.js';
 import { microphoneShortcut, useMicrophonePress } from './use-microphone-press.js';
 import { type TextButtonStatus, textButtonStatusWords } from './use-text-button-status.js';
 import type { Voice } from './use-voice.js';
@@ -26,7 +27,6 @@ const paths = {
   new: 'M12 4v16M4 12h16',
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   text: 'M4 5h16M12 5v15M8 20h8',
-  search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
   settings: 'M4 7h16M4 17h16M8 4v6M16 14v6',
   profile: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M4 21v-2a8 8 0 0 1 16 0v2',
   info: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20M12 11v6M12 7h.01',
@@ -65,7 +65,6 @@ export type WorkspaceTarget =
   | 'new'
   | 'conversation'
   | 'voice'
-  | 'search'
   | 'draft';
 
 /** The name of the toolbar button that opens and closes the text view. */
@@ -74,7 +73,6 @@ export const textViewButtonName = 'Skriv till Skyttel';
 export function WorkspaceTools({
   onOpen,
   surface = 'map',
-  searchActive = false,
   workDisabled = false,
   account,
   onSettings,
@@ -97,7 +95,6 @@ export function WorkspaceTools({
   hasDraft = false,
 }: {
   surface?: 'map' | 'table' | 'reports';
-  searchActive?: boolean;
   workDisabled?: boolean;
   conversationUnavailable?: boolean;
   conversationOngoing?: boolean;
@@ -214,20 +211,16 @@ export function WorkspaceTools({
         </a>
         {(
           [
-            ['overview', 'Karta', 'map'],
+            ['galaxy', 'Karta', 'map'],
             ['list', 'Tabell', 'table'],
             ['new', 'Nytt objekt', 'new'],
             ['detail', 'Rapporter', 'reports'],
             ['mic', 'Prata med Skyttel', 'voice'],
             ['text', textViewButtonName, 'conversation'],
-            ['search', searchActive ? 'Sök i kartan · aktiv' : 'Sök i kartan', 'search'],
             ...(hasDraft ? [['draft', 'Utkast', 'draft'] as const] : []),
           ] as const
         ).map(([icon, label, target]) => (
           <Fragment key={target}>
-            {target === 'draft' && (
-              <hr className="workspace-draft-separator" aria-orientation="vertical" />
-            )}
             <button
               ref={target === 'voice' ? microphoneButton : undefined}
               type="button"
@@ -255,7 +248,6 @@ export function WorkspaceTools({
                     : undefined
               }
               data-held={(target === 'voice' && microphonePress.held) || undefined}
-              data-secondary={target === 'search' || undefined}
               className={
                 target === 'voice'
                   ? 'workspace-talk'
@@ -314,7 +306,11 @@ export function WorkspaceTools({
               }
               onContextMenu={target === 'voice' ? microphonePress.onContextMenu : undefined}
             >
-              <WorkspaceIcon name={icon} />
+              {icon === 'galaxy' ? (
+                <ObjectIconGlyph iconId="galaxy" />
+              ) : (
+                <WorkspaceIcon name={icon} />
+              )}
               <span>{label}</span>
               {target === 'conversation' && textButton?.status && (
                 <i

@@ -6,9 +6,9 @@ import {
   openSettings,
   openTable,
   signIn,
-  utilityButton,
 } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
+import { focusMapSearch } from '../support/object-search.js';
 
 test('LISTA-05: short-screen table returns preserve the visible result and keyboard focus', async ({
   page,
@@ -85,7 +85,7 @@ test('LISTA-05: short-screen table returns preserve the visible result and keybo
     await expect(mapResult).toBeFocused();
     await expectUncovered(mapResult);
     await openMap(page);
-    await (await utilityButton(page, 'Sök i kartan')).click();
+    await focusMapSearch(page);
     await expect(page.getByLabel('Sök objekt i kartan', { exact: true })).toBeFocused();
     expect(await (await page.request.get(path)).json()).toEqual(before);
   } finally {

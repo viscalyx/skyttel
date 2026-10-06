@@ -118,7 +118,7 @@ without graphics”.
 2. Välj **Tabell**, **Nytt objekt** och skriv **Min cykel**. Kontrollera att
    fält och knappen för att lägga i utkastet går att nå.
 3. Välj krysset och **Kasta ändringarna och fortsätt**. Välj **Karta**,
-   öppna **Sök i kartan**, kontrollera sökfältets fokus och tryck Escape.
+   klicka i kartans sökfält, kontrollera sökfältets fokus och tryck Escape.
 4. Öppna **Skriv till Skyttel** och **Visa utkastet**. Läs det tomma utkastet
    utan samtyckesfråga. Stäng texten, välj **Karta**, öppna texten igen och
    välj uttryckligen **Nytt samtal** före medgivande och samtalsstart.

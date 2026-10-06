@@ -6,7 +6,6 @@ import {
   openMap,
   openNewObject,
   signIn,
-  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import {
@@ -17,6 +16,7 @@ import {
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
+import { focusMapSearch } from '../support/object-search.js';
 import { modelMessage, textModel } from '../support/text-model.js';
 
 test('YTA-05: save results remain readable beside tablet work', async ({ page }) => {
@@ -166,7 +166,7 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
         .click();
       await openMap(page);
       await expect(tools.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeEnabled();
-      await (await utilityButton(page, 'Sök i kartan')).click();
+      await focusMapSearch(page);
       await expect(
         page.getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true }),
       ).toBeFocused();

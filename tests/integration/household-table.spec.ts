@@ -98,9 +98,7 @@ for (const [caseId, action, title] of [
         ).toBe('ended');
       }
       expect((await read()).draft.changes).toHaveLength(3);
-      await expect(
-        table.getByRole('heading', { name: 'Inga objekt matchar', exact: true }),
-      ).toBeVisible();
+      await expect(table.getByRole('rowheader')).toHaveCount(0);
       await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
       await page
         .getByRole('dialog', { name: 'Tabellens filter', exact: true })

@@ -244,8 +244,8 @@ profile tools reachable at 320px”.
 2. Välj **Visa verktygens namn** och **Din profil**.
 3. Från profilrubriken: tryck Shift+Tab till **Dölj verktygens namn**.
 4. Kontrollera att profilen stängs och att verktygets fokus syns.
-   Vid 390 pixlar är knappen redan fri från profilen och profilen kan
-   ligga kvar. Tryck Enter på **Dölj verktygens namn**. Fortsätt med Tab
+   Om knappen redan är fri från profilen kan profilen ligga kvar.
+   Tryck Enter på **Dölj verktygens namn**. Fortsätt med Tab
    till **Behåll mobiltexten** i tabellen; profilen ska då stängas.
 
 **Förväntat resultat:**

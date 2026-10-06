@@ -14,7 +14,6 @@ import {
   openNewObject,
   openTable,
   signIn,
-  utilityButton,
 } from '../support/client.js';
 import {
   applyConflictPropertyChoices,
@@ -31,6 +30,7 @@ import {
   readTableObject,
 } from '../support/domain-work.js';
 import { alex, createInstallation, robin } from '../support/installation.js';
+import { focusMapSearch } from '../support/object-search.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 test('UTKAST-17: canceled form loss and staged independent work survive concurrent conflict review', async ({
@@ -238,12 +238,12 @@ for (const { width, height } of [
       await page.goto(app.installation.origin);
       await openMap(page);
       const status = page.getByRole('region', { name: 'Kartans status', exact: true });
-      await (await utilityButton(page, 'Sök i kartan')).click();
+      await focusMapSearch(page);
       const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
       await search
         .getByRole('searchbox', { name: 'Sök objekt i kartan', exact: true })
         .fill('Finns inte i kartan');
-      await search.getByRole('button', { name: 'Stäng', exact: true }).click();
+      await search.getByRole('searchbox').press('Escape');
       await expect(
         page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true }),
       ).toHaveCount(0);

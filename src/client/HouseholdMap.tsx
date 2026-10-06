@@ -52,10 +52,11 @@ import { ObjectDialog } from './ObjectDialog.js';
 import {
   initialObjectSearch,
   MapSearch,
+  MapSearchContext,
   type ObjectSearchState,
-  objectSearchMatch,
   objectSearchResults,
   searchRestricted,
+  useDraftFilterReset,
 } from './ObjectSearch.js';
 import { ObjectTypeEditor } from './ObjectTypes.js';
 import type { ObjectEditor } from './object-editor.js';
@@ -210,14 +211,9 @@ export function HouseholdMap({
   const reportReturnSurface = useRef<'map' | 'table'>('map');
   const reportReturnFocus = useRef<HTMLElement | null>(null);
   const [readEntry, setReadEntry] = useState<HouseholdReadEntry | null>(null);
-  const [mapSearchOpen, setMapSearchOpen] = useState(false);
   const [exploredIds, setExploredIds] = useState<string[]>([]);
-  const [mapSearchFilters, setMapSearchFilters] = useState(false);
   const [mapSearchEntryRequestId, setMapSearchEntryRequestId] = useState(0);
-  const mapSearchTrigger = useRef<HTMLElement | null>(null);
-  function requestMapSearch(filtersOpen: boolean) {
-    setMapSearchFilters(filtersOpen);
-    setMapSearchOpen(true);
+  function requestMapSearch() {
     setMapSearchEntryRequestId((previous) => previous + 1);
   }
   function changeMapSearch(next: ObjectSearchState) {
@@ -326,13 +322,6 @@ export function HouseholdMap({
     if (target === 'map' || target === 'table') {
       setWorkspaceSurface(target);
       setWorkspaceView('map');
-      return;
-    }
-    if (target === 'search') {
-      mapSearchTrigger.current =
-        chosen ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-      setWorkspaceSurface('map');
-      requestMapSearch(true);
       return;
     }
     if (target === 'new') {
@@ -457,11 +446,11 @@ export function HouseholdMap({
         '.workspace-tools:not(.expanded)',
       );
       if (tools) workspace.current?.style.setProperty('--tools-height', `${tools.offsetHeight}px`);
-      const searchSummary = workspace.current?.querySelector<HTMLElement>('.map-search-summary');
-      if (searchSummary) {
+      const searchRow = workspace.current?.querySelector<HTMLElement>('.map-object-search');
+      if (searchRow) {
         workspace.current?.style.setProperty(
-          '--map-search-summary-bottom',
-          `${searchSummary.getBoundingClientRect().bottom - viewport.offset}px`,
+          '--map-search-bottom',
+          `${searchRow.getBoundingClientRect().bottom - viewport.offset}px`,
         );
       }
       const context = workspace.current?.querySelector<HTMLElement>('.workspace-context');
@@ -536,7 +525,7 @@ export function HouseholdMap({
       hasMap && '.spatial-bottom-bar',
       active && '.workspace-tools',
       active && '.workspace-context',
-      active && '.map-search-summary',
+      active && '.map-object-search',
       hasMap && '.workspace-voice-controls',
       textViewOpen && '.text-view-message',
       textViewOpen && '.text-view',
@@ -786,7 +775,6 @@ export function HouseholdMap({
     displayedEdges,
     visibleObjects,
     visibleEdges,
-    listResults,
     contextSource,
     searchHitIds,
     hiddenEnded,
@@ -819,7 +807,6 @@ export function HouseholdMap({
       selectedIds,
     );
     const hits = objectSearchResults(mapRows, browsing, selectedIds);
-    const listResults = { items: hits.map((row) => row.object) };
     const listIds = new Set(hits.map((row) => row.object.id));
     const previousEdges = state
       ? mapConnections(state.draft, displayed, spatialEdges)
@@ -842,7 +829,6 @@ export function HouseholdMap({
       displayedEdges,
       visibleObjects: context.objects,
       visibleEdges: context.relationships,
-      listResults,
       contextSource,
       searchHitIds: listIds,
       hiddenEnded: context.hiddenEnded,
@@ -940,6 +926,7 @@ export function HouseholdMap({
         state.draft.objectTypes?.length ||
         state.draft.relationshipTypes?.length),
   );
+  const mapSearchNotice = useDraftFilterReset(hasChanges, browsing, changeMapSearch);
   const pendingOperation = operations.find((operation) => operation.status === 'pending');
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   useEffect(() => {
@@ -1296,7 +1283,6 @@ export function HouseholdMap({
             onExpandedChange={setToolsExpanded}
             onOpen={openWork}
             surface={workspaceSurface}
-            searchActive={searchRestricted(browsing)}
             workDisabled={!state || pending || blocked}
             account={account}
             profileRequested={profileRequested}
@@ -1414,6 +1400,31 @@ export function HouseholdMap({
                 </button>
               )}
             </section>
+            {state && workspaceSurface === 'map' && (
+              <MapSearchContext
+                search={browsing}
+                onChange={changeMapSearch}
+                notice={mapSearchNotice}
+                contextCount={Math.max(0, visibleObjects.size - searchHitIds.size)}
+                hiddenEnded={hiddenEnded}
+                explored={exploredIds.length > 0}
+                onReturnToHits={() => {
+                  setFocusId(null);
+                  setExploredIds([]);
+                  const context = mapSearchContext(
+                    contextSource,
+                    searchHitIds,
+                    [],
+                    Boolean(browsing.includeEnded),
+                  );
+                  setCameraFocusRequest({
+                    id: crypto.randomUUID(),
+                    objectIds: [...context.objects.keys()],
+                  });
+                  workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus();
+                }}
+              />
+            )}
             {state && (
               <MapLegend
                 draft={state.draft}
@@ -1523,55 +1534,18 @@ export function HouseholdMap({
         hidden={!active || workspaceSurface !== 'map'}
       />
       {state && (
-        <div hidden={!active || workspaceSurface !== 'map'}>
+        <div hidden={!active || workspaceSurface !== 'map' || mapCovered}>
           <MapSearch
-            open={mapSearchOpen && workspaceSurface === 'map'}
-            filtersOpen={mapSearchFilters}
+            active={active && workspaceSurface === 'map' && !mapCovered}
             entryRequestId={mapSearchEntryRequestId}
             search={browsing}
             onChange={changeMapSearch}
-            onClose={() => {
-              setMapSearchOpen(false);
-              const trigger = mapSearchTrigger.current;
-              if (trigger?.offsetHeight) trigger.focus();
-              else
-                workspace.current
-                  ?.querySelector<HTMLElement>('[aria-label="Visa verktygens namn"]')
-                  ?.focus();
-            }}
+            onReturnToMap={() =>
+              workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus()
+            }
             types={effectiveTypes}
             selectedIds={selectedIds}
             hasProposals={hasChanges}
-            count={listResults.items.length}
-            reasons={listResults.items.flatMap((object) => {
-              const change = state.draft.changes.find((change) => change.id === object.id);
-              const fields = objectSearchMatch(
-                object,
-                change?.type ?? effectiveTypes.find((type) => type.id === object.typeId),
-                query,
-                change?.before,
-                change?.beforeType ?? change?.type,
-              ).reasons;
-              return fields.length ? [{ id: object.id, name: object.name, fields }] : [];
-            })}
-            contextCount={Math.max(0, visibleObjects.size - searchHitIds.size)}
-            hiddenEnded={hiddenEnded}
-            explored={exploredIds.length > 0}
-            onReturnToHits={() => {
-              setFocusId(null);
-              setExploredIds([]);
-              const context = mapSearchContext(
-                contextSource,
-                searchHitIds,
-                [],
-                Boolean(browsing.includeEnded),
-              );
-              setCameraFocusRequest({
-                id: crypto.randomUUID(),
-                objectIds: [...context.objects.keys()],
-              });
-              workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus();
-            }}
           />
         </div>
       )}
@@ -1585,11 +1559,10 @@ export function HouseholdMap({
           <SpatialMap
             previousIds={previousIds}
             searchHitIds={searchRestricted(browsing) ? searchHitIds : undefined}
+            onSearchClear={() => changeMapSearch(initialObjectSearch)}
             onSearchStart={(text) => {
-              mapSearchTrigger.current =
-                document.activeElement instanceof HTMLElement ? document.activeElement : null;
               changeMapSearch({ ...browsing, query: text });
-              requestMapSearch(false);
+              requestMapSearch();
             }}
             cameraMount={cameraMount}
             navigationMount={navigationMount}
@@ -1729,7 +1702,6 @@ export function HouseholdMap({
             });
             setSelection({ kind: 'object', id: object.id });
             setWorkspaceSurface('map');
-            setMapSearchOpen(false);
             setCameraFocusRequest({
               id: crypto.randomUUID(),
               objectIds: [...context.objects.keys()],

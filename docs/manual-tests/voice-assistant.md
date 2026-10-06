@@ -878,7 +878,7 @@ uppläsningarna i tur”.
 - Steg 4: **Skyttel arbetar** läses upp. **Skyttel talar** läses inte upp.
   Stoppikonen heter **Avbryt**.
 - Steg 5: ordningen är **Prata med Skyttel**, **Skriv till Skyttel**,
-  **Avbryt**, **Sök i kartan**.
+  **Avbryt**, **Utkast** när utkastet innehåller förslag.
 - Steg 6: **Mikrofonen är av** läses upp när röstrutan försvinner.
 - Röstrutan är gruppen **Röstruta**, och vågformen läses inte. Alla
   uppläsningar väntar på sin tur, och inga ljudsignaler hörs.
