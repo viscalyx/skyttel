@@ -1,6 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 import { cdp, page, userEvent } from 'vitest/browser';
+import { FormLeaveProvider } from '../../src/client/FormLeave.js';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
 import { activatePanel, closePanels } from '../support/workspace-browser.js';
 import '../../src/client/styles.css';
@@ -79,11 +80,13 @@ async function open(width: number, mapState = state, positions: PersonalView['po
     throw new Error(`Unexpected request: ${url}`);
   });
   render(
-    <main>
-      <section className="panel household-panel">
-        <HouseholdMap householdId="home" />
-      </section>
-    </main>,
+    <FormLeaveProvider>
+      <main>
+        <section className="panel household-panel">
+          <HouseholdMap householdId="home" />
+        </section>
+      </main>
+    </FormLeaveProvider>,
   );
   await expect.element(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
 }
@@ -889,7 +892,7 @@ test.each([390, 900])(
   },
 );
 
-test('selecting a map relationship preserves unsent relationship and type forms', async () => {
+test('native relationship loss is guarded and map relationship selection preserves unsent type forms', async () => {
   await open(1440, {
     ...state,
     relationshipTypes: [
@@ -917,13 +920,21 @@ test('selecting a map relationship preserves unsent relationship and type forms'
   });
   await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();
   const listButton = page.getByRole('button', { name: 'Lista', exact: true });
+  await listButton.click();
+  await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Samband för Alex', exact: true });
+  const query = dialog.getByLabelText('Sök det andra objektet', { exact: true });
+  await query.fill('Tonmoln');
+  await dialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+  await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
+  await expect.element(query).toHaveValue('Tonmoln');
+  await expect.element(dialog).toBeVisible();
+  expect(dialog.element().matches(':modal')).toBe(true);
+  await dialog.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+  await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+  await closePanels();
+  await page.getByRole('button', { name: /^Välj samband:/ }).click();
   for (const scenario of [
-    {
-      action: 'Nytt samband',
-      label: 'Från objekt',
-      value: 'alex',
-      close: 'Stäng sambandet utan att skicka',
-    },
     {
       action: 'Ny objekttyp',
       label: 'Typens namn',
@@ -940,9 +951,7 @@ test('selecting a map relationship preserves unsent relationship and type forms'
     await listButton.click();
     await page.getByRole('button', { name: scenario.action, exact: true }).click();
     const field = page.getByLabelText(scenario.label, { exact: true });
-    if (scenario.label === 'Från objekt')
-      await field.selectOptions(field.getByRole('option', { name: 'Alex (Person)', exact: true }));
-    else await field.fill(scenario.value);
+    await field.fill(scenario.value);
     await closePanels();
     await page.getByRole('button', { name: /^Välj samband:/ }).click();
     await listButton.click();

@@ -6,6 +6,20 @@ before upgrading Skyttel. For routine deployment steps, use the
 
 ## Unreleased
 
+### Relationship form recovery
+
+The upgraded database retains private evidence of complete relationship form
+attempts so a lost response can be checked before retrying. Keep the database
+and matching application image together for rollback. This evidence is scoped
+to its household and owner; recovery reads current content alongside the earlier
+outcome and does not restore an earlier draft over later work.
+
+Full household files omit this temporary recovery evidence. New exports require
+an upgraded reader; supported older household files and drafts remain readable.
+Import, content replacement, permanent erasure and owner removal invalidate
+the corresponding evidence. After those operations, preserve unsent text and
+review current content before starting another attempt.
+
 ### Assistant tool removal
 
 Refresh connected assistants' tool catalogs after rollout. Historical undo

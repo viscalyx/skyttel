@@ -115,6 +115,12 @@ async function add(name = 'Lo Exempel') {
     ),
   );
 }
+async function stageRelationship() {
+  const dialog = within(screen.getByRole('dialog', { name: /^Samband för / }));
+  await userEvent.click(dialog.getByRole('button', { name: 'Lägg i utkastet' }));
+  await dialog.findByText('Sambandet lades i ditt utkast. Du kan hantera nästa samband.');
+  await userEvent.click(dialog.getByRole('button', { name: 'Stäng samband' }));
+}
 async function save() {
   await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
   await waitFor(() =>
@@ -446,7 +452,7 @@ test('relationship type forms review both labels and show one edge from either o
     screen.getByLabelText('Sambandstyp'),
     screen.getByRole('option', { name: 'Förvaring' }),
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+  await stageRelationship();
   await waitFor(() =>
     expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
       'Cykeln → förvaras i → Garaget',
@@ -466,7 +472,7 @@ test('relationship type forms review both labels and show one edge from either o
   );
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
   expect((screen.getByLabelText('Från objekt') as HTMLSelectElement).value).toBe('bike');
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng sambandet utan att skicka' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng samband' }));
   await userEvent.click(screen.getByText('Sambandstyper och riktning'));
   await userEvent.click(screen.getByRole('button', { name: 'Ändra sambandstyp: Förvaring' }));
   await userEvent.clear(screen.getByLabelText('Sambandstypens namn'));
@@ -908,7 +914,7 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
   const type = screen.getByLabelText('Sambandstyp') as HTMLSelectElement;
   await userEvent.selectOptions(type, type.options[1].value);
   await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), 'unresolved');
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+  await stageRelationship();
   await screen.findByRole('button', { name: /^Lo → .* → Obesvarad identitetsfråga/ });
   expect(
     (screen.getByRole('button', { name: 'Spara hela utkastet' }) as HTMLButtonElement).disabled,
@@ -919,7 +925,7 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
   await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), 'uncertain');
   await userEvent.selectOptions(screen.getByLabelText('Till objekt'), choices[1].value);
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+  await stageRelationship();
   await screen.findByRole('button', { name: /^Lo → .* → Lo \(Osäkert uppgivet\)/ });
   await save();
   for (const [knowledge, label] of [
@@ -933,7 +939,7 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
     );
     await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
     await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), knowledge);
-    await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+    await stageRelationship();
     await screen.findByRole('button', { name: new RegExp(`^Lo → .* → ${label}`) });
     await save();
   }
@@ -943,7 +949,9 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
     }),
   );
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ta bort sambandet' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Föreslå borttagning' }));
+  await screen.findByText('Föreslagen borttagning lades i ditt utkast.');
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng samband' }));
   await waitFor(() =>
     expect(screen.getByRole('region', { name: 'Hela mitt utkast' }).textContent).toContain(
       'Borttagning av samband',
@@ -954,54 +962,56 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
 });
 
 test('a duplicate displays its existing relationship and stale relationship text cannot overwrite a draft', async () => {
-  await open();
+  const view = await open();
   await add('Alex');
   await add('Kim');
-  async function proposeLink() {
+  async function fillLink() {
     await userEvent.click(screen.getByRole('button', { name: 'Nytt samband' }));
+    const dialog = within(screen.getByRole('dialog', { name: /^Samband för / }));
     for (const label of ['Från objekt', 'Sambandstyp', 'Till objekt']) {
-      const select = screen.getByLabelText(label) as HTMLSelectElement;
+      const select = dialog.getByLabelText(label) as HTMLSelectElement;
       await userEvent.selectOptions(select, select.options[label === 'Till objekt' ? 2 : 1].value);
     }
-    await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
-    await waitFor(() => expect(screen.queryByLabelText('Från objekt')).toBeNull());
+    return dialog;
   }
-  await proposeLink();
-  await proposeLink();
-  expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toContain(
-    'Sambandet finns redan',
-  );
-  await userEvent.click(
-    within(screen.getByRole('list', { name: 'Samband' })).getByRole('button', {
-      name: /^(?!Redigera).*→/,
-    }),
-  );
-  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
+  await fillLink();
+  await stageRelationship();
+  const before = await (await client.request(path)).json();
+  const duplicate = await fillLink();
+  await userEvent.click(duplicate.getByRole('button', { name: 'Lägg i utkastet' }));
+  await duplicate.findByText('Sambandet finns redan');
+  expect((await (await client.request(path)).json()).draft).toEqual(before.draft);
+  await userEvent.click(duplicate.getByRole('button', { name: 'Redigera befintligt samband' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }));
   const state = await (await client.request(path)).json();
-  await client.json(`${path}/draft`, {
-    version: state.draft.version,
-    id: 'concurrent',
-    baseRevision: null,
-    value: { typeId: state.types[0].id, name: 'Robin', description: '' },
-  });
-  await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), 'unknown');
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
-  await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Inget sparades'));
-  await userEvent.click(screen.getByRole('button', { name: 'Hämta aktuellt underlag' }));
-  await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('äldre utkast'));
   expect(
-    (screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }) as HTMLButtonElement)
-      .disabled ||
-      (screen.getByLabelText('Från objekt').closest('fieldset') as HTMLFieldSetElement).disabled,
-  ).toBe(true);
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng sambandet utan att skicka' }));
+    (
+      await client.json(`${path}/draft`, {
+        version: state.draft.version,
+        id: 'concurrent',
+        baseRevision: null,
+        value: { typeId: state.types[0].id, name: 'Robin', description: '' },
+      })
+    ).status,
+  ).toBe(200);
+  const latest = await (await client.request(path)).json();
+  await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), 'unknown');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i utkastet' }));
+  await screen.findByText('Ändringen kunde inte bekräftas. Dina uppgifter finns kvar.');
+  expect(screen.getByLabelText('Uppgiftens säkerhet')).toHaveProperty('value', 'unknown');
+  expect((await (await client.request(path)).json()).draft).toEqual(latest.draft);
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng samband' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }));
+  view.unmount();
+  await open();
   await userEvent.click(
     within(screen.getByRole('list', { name: 'Samband' })).getByRole('button', {
       name: /^(?!Redigera).*→/,
     }),
   );
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
-  expect((screen.getByLabelText('Uppgiftens säkerhet') as HTMLSelectElement).value).toBe('known');
+  expect(screen.getByLabelText('Uppgiftens säkerhet')).toHaveProperty('value', 'known');
+  expect((await (await client.request(path)).json()).draft).toEqual(latest.draft);
 });
 
 test('object identity can be explicitly unspecified and later identified', async () => {
@@ -1602,15 +1612,16 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
   expect(details.getByText('Slutdatum: 2000-01-01')).toBeTruthy();
   expect(details.getByText('Upphört', { exact: true })).toBeTruthy();
   await user.click(details.getByRole('button', { name: 'Redigera valt samband' }));
-  await user.selectOptions(details.getByLabelText('Sambandets status'), 'active');
+  let editor = within(screen.getByRole('dialog', { name: /^Samband för / }));
+  await user.selectOptions(editor.getByLabelText('Sambandets status'), 'active');
   await user.selectOptions(
-    details.getByLabelText('Sambandets slutdatum: uppgiftens säkerhet'),
+    editor.getByLabelText('Sambandets slutdatum: uppgiftens säkerhet'),
     'uncertain',
   );
   expect(
-    (details.getByLabelText('Sambandets slutdatum', { exact: true }) as HTMLInputElement).value,
+    (editor.getByLabelText('Sambandets slutdatum', { exact: true }) as HTMLInputElement).value,
   ).toBe('2000-01-01');
-  await user.click(details.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+  await stageRelationship();
   const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
   await review.findByText('Status: Gäller fortfarande');
   expect(review.getByText('Status: Manuellt upphört')).toBeTruthy();
@@ -1657,15 +1668,15 @@ test('relationship lifecycle corrections preserve uncertain dates through privat
   expect(details.getByText('Status: Gäller fortfarande')).toBeTruthy();
   expect(details.queryByText('Upphört', { exact: true })).toBeNull();
   await user.click(details.getByRole('button', { name: 'Redigera valt samband' }));
-  await user.selectOptions(details.getByLabelText('Sambandets status'), '');
+  editor = within(screen.getByRole('dialog', { name: /^Samband för / }));
+  await user.selectOptions(editor.getByLabelText('Sambandets status'), '');
   expect(
-    (details.getByLabelText('Sambandets slutdatum', { exact: true }) as HTMLInputElement).value,
+    (editor.getByLabelText('Sambandets slutdatum', { exact: true }) as HTMLInputElement).value,
   ).toBe('2000-01-01');
   expect(
-    (details.getByLabelText('Sambandets slutdatum: uppgiftens säkerhet') as HTMLSelectElement)
-      .value,
+    (editor.getByLabelText('Sambandets slutdatum: uppgiftens säkerhet') as HTMLSelectElement).value,
   ).toBe('uncertain');
-  await user.click(details.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+  await stageRelationship();
   await review.findByText('Status: Följ slutdatum');
   const following = await read();
   expect(following.relationships).toEqual(active.relationships);

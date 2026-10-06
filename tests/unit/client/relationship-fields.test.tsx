@@ -160,11 +160,12 @@ test('a draft-only relationship definition supplies four answer kinds and saves 
   await userEvent.type(relationship.getByLabelText('Belopp', { exact: true }), '0');
   await userEvent.type(relationship.getByLabelText('Datum', { exact: true }), '2026-09-27');
   await userEvent.selectOptions(relationship.getByLabelText('Bekräftat', { exact: true }), 'false');
-  await userEvent.click(relationship.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
+  await userEvent.click(relationship.getByRole('button', { name: 'Lägg i utkastet' }));
   const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
   await review.findByText('Anteckning: Låst');
   expect(review.getByText('Belopp: 0')).toBeTruthy();
   expect(review.getByText('Bekräftat: Nej')).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Stäng samband' }));
   await userEvent.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
   await screen.findByText(/^Sparat:/, { selector: '[role="status"]' });
   const saved = await read();
@@ -224,19 +225,16 @@ test('relationship type changes keep previous answers visible until the user mak
   );
   await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
   await userEvent.selectOptions(screen.getByLabelText('Sambandstyp', { exact: true }), 'second');
-  const previous = within(screen.getByRole('region', { name: 'Tidigare egna sambandsvärden' }));
+  const previous = within(screen.getByRole('dialog', { name: 'Ta bort tidigare egna fält?' }));
   expect(previous.getByText('Anteckning: Tidigare svar')).toBeTruthy();
-  expect((screen.getByLabelText('Anteckning', { exact: true }) as HTMLInputElement).value).toBe('');
-  expect(
-    (screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }) as HTMLButtonElement)
-      .disabled,
-  ).toBe(true);
-  await userEvent.type(screen.getByLabelText('Anteckning', { exact: true }), 'Nytt svar');
-  await userEvent.click(
-    previous.getByRole('button', { name: 'Bekräfta borttagning av tidigare egna värden' }),
+  expect((screen.getByLabelText('Anteckning', { exact: true }) as HTMLInputElement).value).toBe(
+    'Tidigare svar',
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Lägg sambandet i mitt utkast' }));
-  await screen.findByText('Förslaget finns i ditt privata utkast. Kartan är inte ändrad.');
+  await userEvent.click(previous.getByRole('button', { name: 'Ta bort fältvärdena och byt typ' }));
+  expect((screen.getByLabelText('Anteckning', { exact: true }) as HTMLInputElement).value).toBe('');
+  await userEvent.type(screen.getByLabelText('Anteckning', { exact: true }), 'Nytt svar');
+  await userEvent.click(screen.getByRole('button', { name: 'Lägg i utkastet' }));
+  await screen.findByText('Sambandet lades i ditt utkast. Du kan hantera nästa samband.');
   expect((await read()).draft.relationships?.[0]).toMatchObject({
     beforeType: { id: 'first' },
     after: { typeId: 'second', customValues: { note: 'Nytt svar' } },

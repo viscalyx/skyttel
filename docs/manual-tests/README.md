@@ -410,6 +410,11 @@ paneler för att
   kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
   bild, ikon och samband samt läser historiska värden.
   Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
+- [Sambandsarbete](relationships.md): skapa objekt separat, koppla dem i den
+  gemensamma dialogen och rätta objekt och samband oberoende. Fullständiga
+  egna värden, typbyte, riktning och säkerhet behåller sin betydelse.
+  Validering, dubbletter, borttagning, oklara utfall och förlustvarning
+  bevarar tidigare förslag. Läsning, filter, återfokus och smal skärm provas.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
   noll och Nej, uttrycklig hantering vid typbyte, privata förslag,

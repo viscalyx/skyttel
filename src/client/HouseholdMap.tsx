@@ -2085,11 +2085,17 @@ export function HouseholdMap({
             }
           }}
           onCheckRelationship={async (stagingId, contentVersion) => {
-            const result = await request<RelationshipFormResult>(
-              `${path}/relationship-form/${encodeURIComponent(stagingId)}?contentVersion=${contentVersion}`,
-            );
-            if (isCurrent()) setState(result.state);
-            return result;
+            try {
+              const result = await request<RelationshipFormResult>(
+                `${path}/relationship-form/${encodeURIComponent(stagingId)}?contentVersion=${contentVersion}`,
+              );
+              if (isCurrent()) setState(result.state);
+              return result;
+            } catch (failure) {
+              if (failure instanceof MapRequestError && [401, 403].includes(failure.status))
+                loseAccess();
+              throw failure;
+            }
           }}
           onClose={() => setReadEntry(null)}
           onEdit={(id, restoreFocus) => {

@@ -94,16 +94,6 @@ test('SAMBAND-11: the household object selector ignores table filters and exclud
   try {
     const { read, post, household } = await arrange(page.request, installation.origin);
     const state = await read();
-    await post('object-type', {
-      id: 'new-type',
-      baseRevision: null,
-      value: { name: 'Egen föremålstyp', description: '', fields: [] },
-    });
-    await post('draft', {
-      id: 'new-object',
-      baseRevision: null,
-      value: { name: 'Ny sak', description: 'Särskild förklaring', typeId: 'new-type' },
-    });
     await post('draft', {
       id: 'retired',
       baseRevision: null,
@@ -121,6 +111,16 @@ test('SAMBAND-11: the household object selector ignores table filters and exclud
     });
     await post('save', { operationId: 'selector-baseline' });
     const saved = await read();
+    await post('object-type', {
+      id: 'new-type',
+      baseRevision: null,
+      value: { name: 'Egen föremålstyp', description: '', fields: [] },
+    });
+    await post('draft', {
+      id: 'new-object',
+      baseRevision: null,
+      value: { name: 'Ny sak', description: 'Särskild förklaring', typeId: 'new-type' },
+    });
     await post('draft', {
       id: 'removed',
       baseRevision: saved.objects.find((object) => object.id === 'removed')?.revision,
@@ -179,6 +179,9 @@ for (const [width, height] of [
       await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
       await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
       await dialog.getByLabel('Till objekt', { exact: true }).selectOption('bicycle');
+      await heading.focus();
+      await heading.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: info.outputPath('relationship-dialog-top.png') });
       const stage = dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true });
       await stage.focus();
       await stage.scrollIntoViewIfNeeded();

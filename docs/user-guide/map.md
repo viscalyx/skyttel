@@ -184,33 +184,52 @@ omfattas inte av objektformulärets förlustvarning.
 
 ## Koppla ihop objekt
 
-1. Välj **Nytt samband**.
-2. Välj **Från objekt**, **Sambandstyp** och **Till objekt**. Läs typens
-   förklaring så att riktningen blir rätt. Exempelvis kan
-   `Alex → Använder → Alex cykel` beskriva vem som använder cykeln.
+Skapa först båda objekten separat med **Nytt objekt** och
+**Lägg i utkastet och stäng**. Öppna sedan **Samband för** följt av det
+första objektets namn i tabellen eller dess uppgifter. Ett befintligt
+objekt kan också öppna sina samband med **Lägg i utkastet och öppna samband**.
+Saknas det andra objektet, skapa det separat och återvänd till sambandsdialogen.
+
+1. Välj **Nytt samband**. Ursprungsobjektet är förvalt som **Från objekt**.
+   Välj **Sambandstyp** och läs dess betydelse. Sök det andra objektet med
+   namn, typ eller beskrivning och välj **Till objekt**. Objektvalet gäller
+   hela hushållet, inklusive nya utkastobjekt, oberoende av vyns filter.
+2. Kontrollera båda ändpunkterna och välj vid behov **Byt riktning**.
+   Läs hela meningen före inskickning, till exempel Alex använder Blå cykeln.
 3. Välj **Uppgiftens säkerhet**. **Känt** och **Osäkert uppgivet** pekar
    ut ett objekt. **Okänt** anger att uppgiften inte är känd och
    **Uttryckligen inget** att något uttryckligen saknas; dessa val behöver
-   inget målobjekt.
-4. Ange vid behov status och slutdatum. Lägg sambandet i utkastet.
-5. Granska riktning, objekt och säkerhet i **Hela mitt utkast**. Välj
-   **Spara hela utkastet** för att göra alla förslagen gemensamma.
+   inget målobjekt. En **Obesvarad identitetsfråga** kan finnas i utkastet
+   men måste lösas före gemensamt sparande.
+4. Ange egna fält, status och slutdatum vid behov. Välj **Lägg i utkastet**
+   och invänta bekräftelsen. Dialogen stannar öppen för nästa samband.
+5. Välj **Redigera samband** för en rättelse. Vid typbyte visar appen
+   tidigare egna fält, även dolda värden, och kräver ett uttryckligt besked
+   innan de tas bort. Avbruten rättelse behåller tidigare färdiga förslag.
+6. Välj **Stäng samband** för att återgå till platsen där dialogen öppnades.
+   Granska **Ditt utkast** och välj **Spara hela utkastet** när alla
+   förslag ska bli gemensamma.
 
-En **Obesvarad identitetsfråga** kan finnas i utkastet men måste lösas
-innan det kan sparas. Den betyder inte samma sak som ett avsiktligt
-ospecificerat objekt eller en osäker uppgift.
+Ett försök med samma typ, frånobjekt och tillobjekt visar
+**Sambandet finns redan** och **Redigera befintligt samband**. Försökets
+värden behålls; ingen dubblett eller överskrivning sker. Byte från ett
+ändrat formulär kräver besked om oskickade värden.
 
-Välj **Red ut identiteter i utkastet** i kartans återkoppling även om
-objektets panel är stängd. Vid objektets förslag väljer du **Red ut
-identiteten för** följt av objektets namn. Formuläret behåller eventuell
-oskickad text. Besvara identitetsfrågan och lägg rättelsen i utkastet.
-Andra formulär behåller sin text; lägg också den i utkastet eller stäng
-utan att skicka innan du uttryckligen sparar hela utkastet.
+**Föreslå borttagning** är skilt från **Upphört**. Om du har oskickade
+ändringar visar appen först **Fortsätt redigera** och
+**Kasta ändringarna och fortsätt**. Bekräftelsen kastar endast dessa
+formulärvärden och lägger borttagningsförslaget i utkastet.
 
-Ett upprepat tillägg med samma typ, riktning och ändpunkter visar det
-befintliga sambandet. Olika betydelser mellan samma objekt går bra.
-Läs [sambandstyper och riktning](relationship-types.md) för egna typer
-och förklaringar som går att läsa från båda objekten.
+Fel behåller hela formuläret. Följ felsammanfattningens länkar till rätt
+fält. Under inskickning spärras redigering, dubbelinskickning och vanlig
+stängning. Vid oklart resultat väljer du
+**Kontrollera om ändringen lades i utkastet** innan nytt försök.
+Kontrollen återspelar aldrig ett äldre utkast över senare arbete.
+Förlustvarningen skyddar oskickade värden vid stängning, Escape och
+sidnavigation; redan färdiga förslag behålls.
+
+Läs också [sambandstyper och riktning](relationship-types.md) för egna
+benämningar och förklaringar som går att läsa från båda objekten.
 
 ## Hitta och rätta uppgifter
 
