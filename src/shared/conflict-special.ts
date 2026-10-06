@@ -66,13 +66,19 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
       action: 'Acceptera borttagningen och kasta ditt förslag',
     };
   }
-  if (conflict.kind === 'object' && conflict.current && change && !change.after) {
-    const actor = state.conflictActors?.[`object:${conflict.id}`]?.name ?? 'En annan användare';
+  if (
+    (conflict.kind === 'object' || conflict.kind === 'relationship') &&
+    conflict.current &&
+    change &&
+    !change.after
+  ) {
+    const actor =
+      state.conflictActors?.[`${conflict.kind}:${conflict.id}`]?.name ?? 'En annan användare';
     return {
       kind: 'own-removal',
       reason: conflict.connections?.length
         ? 'Du föreslår borttagning. Ytterligare ett sparat samband berör nu objektet.'
-        : `Du föreslår borttagning. ${actor} sparade ändringar i objektet innan du hann spara ditt förslag.`,
+        : `Du föreslår borttagning. ${actor} sparade ändringar i ${conflict.kind === 'object' ? 'objektet' : 'sambandet'} innan du hann spara ditt förslag.`,
       warning: '',
       action: 'Lägg valen i utkastet',
     };

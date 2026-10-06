@@ -21,8 +21,9 @@ import {
 import { specialConflict } from '../shared/conflict-special.js';
 import { removedConflictDefinition } from '../shared/definition-restoration.js';
 import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
-import type { MapState, ObjectType } from '../shared/map.js';
+import type { MapState, ObjectType, RelationshipValue } from '../shared/map.js';
 import { definitionPropertyValues } from './DraftProposalDetails.js';
+import { relationshipPropertyValues } from './RelationshipReadDetails.js';
 import {
   type AppliedConflictResolution,
   type ConflictResolution,
@@ -253,6 +254,29 @@ export function ConflictDialog({
     setChoices((previous) => ({ ...previous, [key]: { ...previous[key], [field]: side } }));
   }
   function propertyValue(field: ConflictProperty, value: unknown) {
+    if (field.key === 'relationship' && value && typeof value === 'object') {
+      const edge = value as RelationshipValue;
+      const type =
+        comparison.relationshipTypes.find((type) => type.id === edge.typeId) ??
+        (change && 'type' in change && change.type.id === edge.typeId ? change.type : undefined);
+      return (
+        <>
+          {[
+            ...relationshipPropertyValues(
+              edge,
+              type,
+              new Map(comparison.objects.map((object) => [object.id, object])),
+              change && 'objectNames' in change ? change.objectNames : undefined,
+            ),
+          ].map(([key, property]) => (
+            <span key={key} className="cp-definition-property">
+              <strong>{property.label}: </strong>
+              {property.value}
+            </span>
+          ))}
+        </>
+      );
+    }
     if (field.key === 'definition' && value)
       return (
         <>
@@ -592,7 +616,7 @@ export function ConflictDialog({
                           !same;
                         const picked = selected[field.key] === side;
                         const propertyActor =
-                          removal && field.key === 'object'
+                          removal && field.key === conflict.kind
                             ? actor
                             : comparison.conflictPropertyActors?.[key]?.[field.key];
                         return (

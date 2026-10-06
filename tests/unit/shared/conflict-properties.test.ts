@@ -7,6 +7,8 @@ import {
   conflictPropertyLabel,
   conflictValueText,
 } from '../../../src/shared/conflict-properties.js';
+import { conflictRemovalPlan } from '../../../src/shared/conflict-removal.js';
+import { specialConflict } from '../../../src/shared/conflict-special.js';
 import type { MapState } from '../../../src/shared/map.js';
 
 const state: MapState = {
@@ -126,5 +128,72 @@ test('concurrent type labels keep saved and proposed meanings on the same proper
   ).toMatchObject({
     customValues: { note: 'Mitt' },
     financialFacts: { debt: { knowledge: 'known', value: '2000' } },
+  });
+});
+
+test('a changed relationship removal requires an explicit choice and retains the actual saved definition', () => {
+  const originalType = {
+    id: 'uses',
+    householdId: 'household',
+    revision: 1,
+    name: 'Använder',
+    description: '',
+  };
+  const actualType = { ...originalType, id: 'used-by', revision: 3, name: 'Används av' };
+  const before = {
+    id: 'edge',
+    householdId: 'household',
+    revision: 1,
+    typeId: originalType.id,
+    sourceId: 'lo',
+    targetId: 'service',
+    knowledge: 'known' as const,
+  };
+  const current = {
+    ...before,
+    revision: 2,
+    typeId: actualType.id,
+    customValues: { note: 'Sparat' },
+  };
+  const comparison: MapState = {
+    ...state,
+    relationshipTypes: [originalType, actualType],
+    relationships: [current],
+    draft: {
+      version: 2,
+      changes: [],
+      relationships: [
+        { id: 'edge', before, after: null, type: originalType, removedWithObjects: ['lo'] },
+      ],
+    },
+  };
+  const conflict = { kind: 'relationship' as const, id: 'edge', current };
+  expect(specialConflict(comparison, conflict)?.kind).toBe('own-removal');
+  expect(conflictProperties(comparison, conflict)).toMatchObject([
+    { key: 'relationship', before, saved: current, proposed: 'Föreslagen borttagning' },
+  ]);
+  expect(conflictRemovalPlan(comparison, conflict, {})).toBeNull();
+  expect(
+    conflictRemovalPlan(comparison, conflict, { relationship: 'proposed', forged: 'saved' }),
+  ).toBeNull();
+  const retained = conflictRemovalPlan(comparison, conflict, { relationship: 'proposed' });
+  expect(retained?.draft.relationships?.[0]).toMatchObject({
+    before: current,
+    after: null,
+    type: actualType,
+    beforeType: actualType,
+  });
+  expect(retained?.draft.relationships?.[0]).not.toHaveProperty('removedWithObjects');
+  expect(retained?.effects).toEqual([
+    { target: conflict, kind: 'retain', before: current, after: null },
+  ]);
+  const discarded = conflictRemovalPlan(comparison, conflict, { relationship: 'saved' });
+  expect(discarded?.draft.relationships).toEqual([]);
+  expect(discarded?.effects).toEqual([{ target: conflict, kind: 'discard' }]);
+  expect(comparison.draft.relationships?.[0]).toMatchObject({
+    before,
+    after: null,
+    type: originalType,
+    removedWithObjects: ['lo'],
   });
 });

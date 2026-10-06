@@ -5,6 +5,7 @@ import type { MapState, ObjectType, ObjectValue, RelationshipValue } from './map
 import { proposedObjectTypes, proposedRelationshipTypes } from './map.js';
 import { objectIconLabel } from './object-icons.js';
 import { objectProperties } from './object-properties.js';
+import { relationshipLabel } from './relationship-label.js';
 
 export type ConflictSide = 'saved' | 'proposed';
 export type ConflictChoices = Record<string, ConflictSide>;
@@ -64,7 +65,12 @@ export function conflictProperties(state: MapState, conflict: DraftConflict): Co
         proposed: change.after,
       },
     ];
-  if (change && !change.after && conflict.kind === 'object' && conflict.current)
+  if (
+    change &&
+    !change.after &&
+    (conflict.kind === 'object' || conflict.kind === 'relationship') &&
+    conflict.current
+  )
     return conflictRemovalProperties(state, conflict);
   if (!change?.after || !conflict.current) return [];
   const entries: [string, string][] =
@@ -321,6 +327,12 @@ export function conflictValueText(
   field: ConflictProperty,
   value: unknown,
 ): string {
+  if (field.key === 'relationship' && value && typeof value === 'object')
+    return relationshipLabel(
+      value as RelationshipValue,
+      state,
+      new Map(state.objects.map((object) => [object.id, object])),
+    );
   if (field.key === 'definition') {
     if (!value) return 'Borttaget';
     const type = value as ObjectType;
