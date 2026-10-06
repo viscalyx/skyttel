@@ -80,7 +80,8 @@ in both opening orders”.
    aktivera **Prata med Skyttel** före öppningen och låt den verkliga
    otillgänglighetsnotisen vara öppen under samma steg.
    Läs uppgiftsytans sista värde och nå **Samband för Lo Exempel** med
-   notisen kvar. Rulla tillbaka för att läsa rubriken.
+   notisen kvar. Läs hela knapptexten även om den står på flera rader.
+   Rulla tillbaka för att läsa rubriken.
 2. På dator: flytta navigationen åt vänster med Skift+pil. Ändra fönstrets
    bredd lite och återställ den. Navigationens möjliga placering och
    uppgiftsytans placering ska bestå. Flytta åt vänster igen.
@@ -109,6 +110,9 @@ in both opening orders”.
   navigationens kontroller eller uppgiftsytans läsbara innehåll. Zoom,
   panorering, sista värdet och uppgiftsytans åtgärder går att nå utan
   att först stänga notisen.
+- Hela knapptexten och knappen går att visa inom uppgiftsytans rullade
+  område, även med text på flera rader. Notisens fullständiga text och
+  stängknapp är fortfarande åtkomliga.
 - Navigation kan flyttas med tangentbord och pekare inom användbart
   utrymme, utan att täcka den fasta läsytan. Ingen ny flyttbar
   redigeringspanel eller återupptagningsingång införs.

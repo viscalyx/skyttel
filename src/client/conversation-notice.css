@@ -293,3 +293,20 @@
     touch-action: pan-y;
   }
 }
+
+/* Keep wrapped action labels readable in the shortest shared work area.
+   The notice keeps its text and targets; its measured height still reserves
+   the reader's space above it. */
+@media (max-width: 700px) and (max-height: 320px) {
+  .household-map.workspace-shell[data-workspace-surface="map"].map-details-open
+    .conversation-notice:not([data-inline="true"]) {
+    gap: 1px;
+    padding: 6px 0;
+  }
+  .household-map.workspace-shell[data-workspace-surface="map"].map-details-open:has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    .map-selection-details {
+    padding-block: 4px;
+  }
+}

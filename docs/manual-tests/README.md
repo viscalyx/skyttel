@@ -120,7 +120,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   pensionerad utan återanvänt ID; första aktiveringens läsning finns kvar.
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
-  fönsterflytt, samtidiga läsbara detaljer med öppen samtalsnotis, sex
+  fönsterflytt, samtidiga läsbara detaljer och knapptext på flera rader
+  med öppen samtalsnotis, sex
   beständiga personliga riktningar och nypzoom med styrplatta.
 
 - [Inställningar och profil](settings-profile.md): helsida, mobilnavigation,

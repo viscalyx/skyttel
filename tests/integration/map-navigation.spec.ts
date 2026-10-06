@@ -49,28 +49,77 @@ async function center(node: Locator) {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-async function exposed(node: Locator) {
-  await expect
-    .poll(async () => {
-      // Re-scroll if viewport measurement changes the reader's available height.
-      await node.scrollIntoViewIfNeeded();
-      return node.evaluate((element) => {
-        const box = element.getBoundingClientRect();
-        if (box.left < 0 || box.top < 0 || box.right > innerWidth || box.bottom > innerHeight)
-          return false;
-        return [
-          [box.left + 8, box.top + 8],
-          [box.right - 8, box.top + 8],
-          [box.left + 8, box.bottom - 8],
-          [box.right - 8, box.bottom - 8],
-          [box.left + box.width / 2, box.top + box.height / 2],
-        ].every(([x, y]) => {
-          const hit = document.elementFromPoint(x, y);
-          return hit !== null && element.contains(hit);
-        });
-      });
-    })
-    .toBe(true);
+async function exposed(node: Locator, context = 'The native target must be exposed') {
+  let observation: unknown;
+  try {
+    await expect
+      .poll(
+        async () => {
+          // Re-scroll if viewport measurement changes the reader's available height.
+          await node.scrollIntoViewIfNeeded();
+          const measured = await node.evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            const points = [
+              [box.left + 8, box.top + 8],
+              [box.right - 8, box.top + 8],
+              [box.left + 8, box.bottom - 8],
+              [box.right - 8, box.bottom - 8],
+              [box.left + box.width / 2, box.top + box.height / 2],
+            ].map(([x, y]) => {
+              const hit = document.elementFromPoint(x, y);
+              return {
+                x,
+                y,
+                owned: hit !== null && element.contains(hit),
+                hit: hit?.tagName,
+                hitClass: hit?.getAttribute('class'),
+              };
+            });
+            const style = getComputedStyle(element);
+            const scrollport = element.closest('.map-selection-details, .map-navigation');
+            const clippingBounds = scrollport?.getBoundingClientRect();
+            const clippingStyle = scrollport && getComputedStyle(scrollport);
+            const insideScrollport =
+              !clippingBounds ||
+              !clippingStyle ||
+              (box.top >= clippingBounds.top + Number.parseFloat(clippingStyle.borderTopWidth) &&
+                box.bottom <=
+                  clippingBounds.bottom - Number.parseFloat(clippingStyle.borderBottomWidth) &&
+                box.left >=
+                  clippingBounds.left + Number.parseFloat(clippingStyle.borderLeftWidth) &&
+                box.right <=
+                  clippingBounds.right - Number.parseFloat(clippingStyle.borderRightWidth));
+            return {
+              exposed:
+                box.left >= 0 &&
+                box.top >= 0 &&
+                box.right <= innerWidth &&
+                box.bottom <= innerHeight &&
+                points.every((point) => point.owned) &&
+                insideScrollport,
+              viewport: [innerWidth, innerHeight],
+              bounds: box.toJSON(),
+              font: style.font,
+              insideScrollport,
+              scrollport: scrollport && {
+                bounds: scrollport.getBoundingClientRect().toJSON(),
+                clientHeight: scrollport.clientHeight,
+                scrollHeight: scrollport.scrollHeight,
+                scrollTop: scrollport.scrollTop,
+              },
+              points,
+            };
+          });
+          observation = measured;
+          return measured.exposed;
+        },
+        { message: context },
+      )
+      .toBe(true);
+  } catch (error) {
+    console.error('Native target exposure:', context, JSON.stringify(observation, null, 2));
+    throw error;
+  }
 }
 
 async function separate(first: Locator, second: Locator) {
@@ -323,7 +372,10 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
             exact: true,
           });
           await relationships.scrollIntoViewIfNeeded();
-          await exposed(relationships);
+          await exposed(
+            relationships,
+            `Relationships at ${width}×${height}, navigation first: ${navigationFirst}`,
+          );
           await relationships.click({ trial: true });
           await panel
             .getByRole('heading', { name: 'Lo Exempel', exact: true })
@@ -429,6 +481,10 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           });
           const unchangedAfterMoves = await read();
           const closeNotice = notice.getByRole('button', { name: 'Stäng notisen', exact: true });
+          await exposed(
+            closeNotice,
+            `Notice close at ${width}×${height}, navigation first: ${navigationFirst}`,
+          );
           await closeNotice.click({ trial: true, timeout: 5000 });
           await closeNotice.focus();
           await closeNotice.press('Space');
