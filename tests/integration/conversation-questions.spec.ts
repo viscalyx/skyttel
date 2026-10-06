@@ -270,7 +270,18 @@ function saveModel() {
 test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fyra sekunder börjar', async ({
   page,
 }) => {
+  await page.clock.install();
   const { app, live, path, responses } = await fixture(page, saveModel());
+  const advanceUntilStatus = async (status: string) => {
+    // AudioContext uses real time; step the paused activity sampler until the
+    // actual playback transition is observed, then measure its timeout exactly.
+    await expect
+      .poll(async () => {
+        await page.clock.runFor(50);
+        return (await voiceBox(page).innerText()).includes(status);
+      })
+      .toBe(true);
+  };
   try {
     await startConversationWithVoice(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
@@ -296,20 +307,25 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
     await expect(voiceBox(page)).toHaveText('Lyssnar');
     // The final transcript arrives before its audio starts. No four-second timeout yet.
     await output(page, 'at.');
-    await page.waitForTimeout(4500);
+    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 60_000));
+    await page.clock.runFor(4500);
     await expect(voiceBox(page)).not.toContainText('Sparat');
     await sound(page, true);
+    await advanceUntilStatus('Skyttel talar');
     await expect(voiceBox(page)).toContainText('Skyttel talar');
-    await page.waitForTimeout(4500);
+    await page.clock.runFor(4500);
     await expect(voiceBox(page)).toContainText('Skyttel talar');
     await sound(page, false);
+    await advanceUntilStatus('Sparat');
     await expect(voiceBox(page)).toHaveText('Sparat');
     await expect(voiceAnnouncement(page)).not.toHaveText('Sparat');
     await expect(voiceBox(page).locator('.voice-saved')).toHaveAttribute('aria-hidden', 'true');
     await expect(textView(page)).toHaveCount(0);
-    await page.waitForTimeout(3000);
+    await page.clock.runFor(3000);
     await expect(voiceBox(page)).toHaveText('Sparat');
-    await expect(voiceBox(page)).toHaveText('Lyssnar', { timeout: 2000 });
+    await page.clock.runFor(1000);
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
+    await page.clock.resume();
     await openConversationText(page);
     await expect(textView(page)).toContainText('Sparat.');
     const history = await openSavedHistory(page);
@@ -324,6 +340,7 @@ test('FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fy
 test('FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunderna från avbrottet', async ({
   page,
 }) => {
+  await page.clock.install();
   const { app, live, responses } = await fixture(page, saveModel());
   try {
     await startConversationWithVoice(page);
@@ -337,14 +354,17 @@ test('FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunde
     await sound(page, true);
     await expect(voiceBox(page)).toContainText('Skyttel talar');
     await output(page, 'Spar');
-    await page.waitForTimeout(700);
+    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 60_000));
+    await page.clock.runFor(700);
     await voiceBox(page).getByRole('button', { name: 'Avbryt', exact: true }).click();
     await expect(voiceBox(page)).toHaveText('Sparat');
     await expect(voiceAnnouncement(page)).not.toHaveText('Sparat');
     await expect(textView(page)).toHaveCount(0);
-    await page.waitForTimeout(3000);
+    await page.clock.runFor(3000);
     await expect(voiceBox(page)).toHaveText('Sparat');
-    await expect(voiceBox(page)).toHaveText('Lyssnar', { timeout: 2000 });
+    await page.clock.runFor(1000);
+    await expect(voiceBox(page)).toHaveText('Lyssnar');
+    await page.clock.resume();
   } finally {
     await app.close();
   }
