@@ -1962,7 +1962,7 @@ export function HouseholdMap({
           )}
           active={active}
           textViewOpen={textViewOpen}
-          textViewHidden={!textViewVisible || workspaceSurface === 'reports'}
+          textViewHidden={!textViewVisible}
           textFocusRequest={textFocusRequest}
           textOpeningFocus={textOpeningFocus}
           onDraftOpenChange={setDraftViewOpen}
