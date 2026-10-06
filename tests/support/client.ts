@@ -32,6 +32,17 @@ export async function openNewObject(page: Page) {
   return dialog;
 }
 
+/** Read the ordinary draft summary without starting a conversation. */
+export async function openDraftReview(page: Page) {
+  const text = await utilityButton(page, 'Skriv till Skyttel');
+  if ((await text.getAttribute('aria-expanded')) !== 'true') await text.click();
+  const show = page.getByRole('button', { name: /^Visa utkastet \(\d+\)$/ });
+  if (await show.isVisible()) await show.click();
+  const draft = page.getByRole('region', { name: 'Utkastet', exact: true });
+  await expect(draft).toBeVisible();
+  return draft;
+}
+
 /** Close only this named surface. A loss or outcome guard must remain observable. */
 export async function closeSupportDialog(
   page: Page,
