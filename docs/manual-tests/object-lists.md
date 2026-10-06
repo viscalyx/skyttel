@@ -555,7 +555,17 @@ survive map visits”.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** En ny provinstallation är öppen.
+**Förutsättningar:** Hushållet från Förbered hushållets tabell är öppet.
+Öppna **Inställningar → Typer och egna fält** och redigera **Typ 2**.
+Byt fältnamnet **Egen anteckning** till **Föreslagen anteckning**, utan
+att ta bort fältet eller ändra dess datatyp. Lägg till ett synligt avsnitt
+**Cykeluppgifter** med **Ramnummer** (text), **Antal** (tal) och **Reserv**
+(ja/nej). Lägg typändringen i utkastet och gå tillbaka till kartan.
+Öppna **Tabell → Redigera A 2**, fyll i Ramnummer `RAM-2026-42`, Antal `0`
+och Reserv **Nej**. Välj **Lägg i utkastet och stäng**. Redigera sedan
+Typ 2 igen i inställningarna och välj **Dold, behåll värden** som avsnitt
+för de tre nya fälten.
+Lägg ändringen i utkastet och återgå till Tabell. Spara inte utkastet.
 
 **Integrationstest:**
 [household-table.spec.ts](../../tests/integration/household-table.spec.ts),
@@ -570,6 +580,10 @@ lifecycle and proposal status”.
    skilda profilbilder märkta sparat och föreslaget.
 2. Läs **Okänt**, **Uttryckligen inget**, **Osäkert uppgivet** och
    datumet för kredituppgiften. Ett obesvarat fält visar **Ej uppgivet**.
+   Läs de nya dolda fälten: sparat **Ej uppgivet** och föreslaget
+   Ramnummer `RAM-2026-42`, Antal `0` respektive Reserv **Nej**.
+   Läs också **Föreslagen anteckning** med det tidigare fältnamnet
+   **Egen anteckning** vid den sparade långa texten.
 3. Öppna **Filter** och ta med upphörda och borttagna objekt.
    Stäng med Escape och kontrollera återfokus på Filter.
 4. Läs **Borttaget prov**, **Upphört prov**, **Nytt prov** och **Tas bort
@@ -584,6 +598,9 @@ prov**.
   finns kvar att läsa tills borttagningsförslaget sparas.
 - Fullständiga detaljer omfattar även dolda egna fält och ekonomi.
 - Ett saknat värde blir inte Okänt eller Uttryckligen inget.
+- Nya fält visar **Sparat: Ej uppgivet** utan ett påhittat tidigare
+  fältnamn eller texten `undefined`. Ett faktiskt tidigare fältnamn och
+  dess svar behålls vid en namnändring. Noll och Nej visas uttryckligen.
 - Ett redan borttaget objekt går att läsa och saknar redigeringsknapp.
 
 ### TABELL-03: mobil läsning bevarar markering, utkast och oskickat meddelande

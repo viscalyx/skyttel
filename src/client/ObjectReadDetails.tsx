@@ -115,7 +115,7 @@ export function ObjectReadDetails({
                 <dd>
                   {changed && (
                     <div className="household-table-before">
-                      Sparat{before?.label !== after?.label ? ` (${before?.label})` : ''}:{' '}
+                      Sparat{before && before.label !== after?.label ? ` (${before.label})` : ''}:{' '}
                       {before?.value ?? 'Ej uppgivet'}
                       {key === 'profileImage' && row.before?.profileImageId && (
                         <ProfileImage

@@ -76,7 +76,37 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
 }) => {
   const installation = await createInstallation();
   try {
-    const { read } = await prepareHouseholdTable(page.request, installation.origin);
+    const { read, post } = await prepareHouseholdTable(page.request, installation.origin);
+    const prepared = await read();
+    const type = prepared.types.find((value) => value.id === 'table-type-2');
+    const proposal = prepared.draft.changes.find((change) => change.id === 'table-0');
+    if (!type || !proposal?.after) throw new Error('Missing prepared type or object proposal');
+    await post('object-type', {
+      id: type.id,
+      baseRevision: type.revision,
+      value: {
+        ...type,
+        fields: [
+          { ...type.fields?.[0], name: 'Föreslagen anteckning' },
+          { id: 'frame', name: 'Ramnummer', description: '', kind: 'text', sectionId: '' },
+          { id: 'count', name: 'Antal', description: '', kind: 'number', sectionId: '' },
+          { id: 'reserve', name: 'Reserv', description: '', kind: 'boolean', sectionId: '' },
+        ],
+      },
+    });
+    await post('draft', {
+      id: proposal.id,
+      baseRevision: proposal.before?.revision ?? null,
+      value: {
+        ...proposal.after,
+        customValues: {
+          ...proposal.after.customValues,
+          frame: 'RAM-2026-42',
+          count: 0,
+          reserve: false,
+        },
+      },
+    });
     const before = await read();
     await page.addInitScript(() => {
       const original = HTMLCanvasElement.prototype.getContext;
@@ -98,9 +128,22 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
         exact: true,
       }),
     ).toBeVisible();
-    await expect(
-      table.getByText('Lång egen uppgift '.repeat(30).trim(), { exact: true }),
-    ).toBeVisible();
+    const details = table.locator('.household-table-details').first();
+    const field = (name: string) =>
+      details.locator('dl > div').filter({ has: page.getByText(name, { exact: true }) });
+    await expect(field('Ramnummer')).toHaveText(
+      'RamnummerSparat: Ej uppgivet◇ Ditt förslag: RAM-2026-42',
+    );
+    await expect(field('Antal')).toHaveText('AntalSparat: Ej uppgivet◇ Ditt förslag: 0');
+    await expect(field('Reserv')).toHaveText('ReservSparat: Ej uppgivet◇ Ditt förslag: Nej');
+    await expect(field('Föreslagen anteckning')).toContainText('Sparat (Egen anteckning):');
+    await expect(field('Föreslagen anteckning')).toContainText(
+      `Sparat (Egen anteckning): ${'Lång egen uppgift '.repeat(30).trim()}`,
+    );
+    await expect(field('Föreslagen anteckning')).toContainText(
+      `◇ Ditt förslag: ${'Lång egen uppgift '.repeat(30).trim()}`,
+    );
+    await expect(details).not.toContainText('undefined');
     await expect(table.getByText('◇ Ändrat', { exact: true })).toBeVisible();
     await expect(table.getByText('Sparat: Cykel', { exact: true })).toBeVisible();
     const images = table.getByRole('img', { name: 'Profilbild för A 2', exact: true });
