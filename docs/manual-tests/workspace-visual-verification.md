@@ -8,8 +8,8 @@ offentliga funktionsprov eller fysisk tillgänglighetsverifiering.
 ## Källa och metod
 
 Produktionsbilderna gäller den rena versionen
-[`5ce3c08036024c841540715af02f2b0a9c5c7c70`](https://github.com/viscalyx/skyttel/tree/5ce3c08036024c841540715af02f2b0a9c5c7c70),
-med `src`-trädet `7726e8b50985835ff315d8eae8d9456c71f51771`.
+[`d3474ed3302505b393038c432d933b211aaa7004`](https://github.com/viscalyx/skyttel/tree/d3474ed3302505b393038c432d933b211aaa7004),
+med `src`-trädet `0030b9882bc1bca1361801d4380a8e7930913e88`.
 Källversionen kontrolleras före och efter bilderna. Dokumentationen ändrar
 inte den källan. Bildtagningen använder Playwrights Chromium på Linux,
 verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
@@ -29,7 +29,7 @@ verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
   52 observationer och bilder; produktionen visar rubrikikoner separat.
 
 Den angivna versionen är byggd och samtliga bilder tagna på nytt efter
-rättelserna av samtalskontext och beroendets säkerhet. Oberoende genomgång
+rättelsen av läsytans utrymme i korta fönster. Oberoende genomgång
 av samtliga 142 nya produktionsobservationer, 137 faktiska
 referensobservationer och 216 uppmätta radattribut är utförd.
 Alla 439 förväntade bildfiler finns. Upprepade vybredder grupperas utan
@@ -38,10 +38,11 @@ kritiska faktiska bilder öppnas och jämförs direkt. Inga kvarvarande
 åtgärdbara visuella fynd finns i de granskade tillstånden.
 Text, radmarkering, valram, riktning, läsläge och resultat jämförs.
 215 av 222 produktionsbilder är identiska med föregående källversions
-bilder. De sju ändrade bilderna öppnas tillsammans med sina faktiska
-referenser; inga nya text- eller layoutfel fastställs i dessa tillstånd.
+bilder. De sju ändrade bilderna öppnas med både föregående faktiska bilder och
+sina låsta referenser; inga nya text- eller layoutfel fastställs i dessa tillstånd.
 Samtliga uppmätta texter är oförändrade förutom källversionens metadata.
-Tjugo kritiska eller ändrade bilder öppnas direkt, inklusive referenser.
+Tjugosju bilder öppnas direkt: sju före och efter, deras sju referenser
+samt tre kritiska referenspar.
 Övriga bildfilers existens och PNG-format kontrolleras; varje bildpixel
 bedöms inte separat. De tre visade produktionsbilderna nedan är identiska
 med både de nya råbilderna och den föregående bildtagningen.
@@ -49,12 +50,26 @@ Bilderna visar ibland en avsiktligt rullad del av dialogen; en rubrik
 utanför den bilden är inte bevis för att rubriken eller krysset saknas.
 Fler fullständiga verkliga uppgifter kräver mer rullning än korta exempel.
 
-En bild av fall A01:s mobilåtgärder visar en tom färgad knapp trots att
-uppmätt knapptext är **Lägg valen i utkastet**. En separat bild efter två
-bildrutor visar texten med samma DOM, tillstånd, mått och stilar.
-Det avgränsade provet visar en övergående bildtagningsskillnad; dess
-underliggande orsak är inte fastställd. Ursprungliga bilden bevaras.
-Underlaget bevisar därför inte läsbarheten hos varje kontroll.
+Den nya mobilbilden av A01:s åtgärder visar knappens hela etikett.
+A02:s nya motsvarande bild visar däremot en tom färgad knapp trots att
+uppmätt knapptext är **Lägg valen i utkastet**. Dess föregående bild visar
+texten; även den låsta referensens A02-bild saknar synlig etikett.
+Det är en avgränsad bildtagningsskillnad med okänd underliggande orsak,
+inte bevis för att kontrollens text saknas i applikationen.
+En separat bild efter två bildrutor gäller A01 och förklarar inte den nya
+A02-bilden. Ursprungliga bilder bevaras. Underlaget bevisar därför inte
+läsbarheten hos varje kontroll.
+
+De vanliga A/C/D-storlekarna använder inte läsytans nya regel för fönster
+högst 700 × 320 CSS-pixlar. Bildskillnaderna tillskrivs inte den regeln.
+Ett separat verkligt systemtypsnitt DejaVu Sans vid 320 × 250 visar
+den ursprungligen klippta Samband-knappen och hela knappen efter rättelsen.
+De två faktiska diagnosbilderna öppnas också direkt, totalt 29 bilder.
+Det fullständiga navigationsprovet kontrollerar hela knappens plats inom
+läsytans rullningsgränser, fönstret och fem faktiska pekträffar.
+Notisens text och kryss samt navigationen behålls.
+Det ursprungliga GitHub-felets typsnitt och exakta orsak är inte fastställda.
+Pekprovet använder emulering och är inte fysisk telefonverifiering.
 
 ## A:s 14 obligatoriska fall
 

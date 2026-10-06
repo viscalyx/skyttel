@@ -7,33 +7,26 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: lokala slutkontroller GODKÄNDA; förnyad verifiering PÅGÅR.**
+**Status: lokala slutkontroller GODKÄNDA; slutgranskning PÅGÅR.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 
-Slutliga Standards- och Spec-granskningar gäller
-[`f89e809cafa45c5378455d65e1d3b555b8caedf1`](https://github.com/viscalyx/skyttel/tree/f89e809cafa45c5378455d65e1d3b555b8caedf1)
-mot startpunkten
+Förnyade Standards- och Spec-granskningar gäller hela ändringen mot
+startpunkten
 [`4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123`](https://github.com/viscalyx/skyttel/tree/4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123).
-Båda axlarna har noll kvarstående åtgärdbara fynd inom det granskade
-underlaget. Alla verifierade rättelser ingår i den hela körningen nedan.
-GitHubs efterföljande applikationskontroll är underkänd och utreds.
-Fokus- och vägledningsrättelserna nedan är granskade och omprovade.
+Slutligt granskningsresultat inväntas. GitHubs kontroll av den nya versionen
+redovisas separat från de godkända lokala kommandona.
 Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 
 ## Provdata, miljö och metod
 
-- Slutlig kod, bygge och hela automatiska kontrollkörningen gäller
-  [`7c06bc6c5d43df99247e857ffbcf2f96134bd5a5`](https://github.com/viscalyx/skyttel/tree/7c06bc6c5d43df99247e857ffbcf2f96134bd5a5).
-  Nya visuella observationer och mätning använder den rena versionen
-  [`5ce3c08036024c841540715af02f2b0a9c5c7c70`](https://github.com/viscalyx/skyttel/tree/5ce3c08036024c841540715af02f2b0a9c5c7c70)
+- Slutlig kod, bygge, hela automatiska kontrollkörningen, nya visuella
+  observationer och mätning gäller den rena versionen
+  [`d3474ed3302505b393038c432d933b211aaa7004`](https://github.com/viscalyx/skyttel/tree/d3474ed3302505b393038c432d933b211aaa7004)
   med produktionskatalogen `src`:
-  `7726e8b50985835ff315d8eae8d9456c71f51771`.
-  Samma produktionskatalog gäller den hela slutkörningen. Senare
-  ändringar gäller prov, containerkontroller och dokumentation.
-  Slutkörningen innehåller även den rättade manuella provtransporten och
-  kompletterande prov. Dokumentationsändringen som publicerar rapporten
-  är separat; den ändrar varken kod, testfall eller mätningen.
+  `0030b9882bc1bca1361801d4380a8e7930913e88`.
+  Dokumentationsändringen som publicerar rapporten är separat; den ändrar
+  varken kod, testfall eller mätningen.
 - Filernas existens och de 33 primärhänvisningarnas exakta titlar
   kontrolleras mot testupptäckt och områdesmanualer på rapportens angivna
   version. Titlarna ändras inte för att passa ett resultat.
@@ -54,17 +47,16 @@ Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
   140 testfiler med 1 576 enhets- och webbläsarprov samt 719
   integrationstestfall i 106 filer. Inga testfall är underkända eller
   överhoppade. Integrationskörningen använder två arbetare och tar
-  13,8 minuter.
+  13,9 minuter.
   Resultaten gäller de lokala kommandona på angivna versioner.
-- Global täckning är 93,58 procent för satser, **90,22 procent för
+- Global täckning är 93,57 procent för satser, **90,23 procent för
   grenar**, 93,10 procent för funktioner och 95,47 procent för rader.
   Kraven är oförändrade: 90 procent för grenar och 85 procent för de
   övriga måtten.
-- Alla nio `npm run test:container`-steg är **GODKÄNDA** på
-  [`3a9afef128271d25e3c759cce9d1565ebb9f40ba`](https://github.com/viscalyx/skyttel/tree/3a9afef128271d25e3c759cce9d1565ebb9f40ba).
-  Relevanta produktions- och containerindata är identiska med
-  slutkörningens. Kontrollen bygger riktiga images och prövar isolerade
-  volymer, åtkomst, sparande, omstart, radering och återimport.
+- Alla nio `npm run test:container`-steg är **GODKÄNDA** på samma
+  rena version `d3474ed3302505b393038c432d933b211aaa7004`.
+  Kontrollen bygger riktiga images och prövar isolerade volymer,
+  åtkomst, sparande, omstart, radering och återimport.
 - Använd [testguiden](../development/testing.md) för körning och rapporter.
   Följ områdesfallens användare, förberedelser och återställning;
   [utvecklingsguiden](../development/devcontainer.md) ger provinstallationen.
@@ -176,6 +168,17 @@ Slutgranskningens rättelser följer samma bindande beslut:
   genom Chromium:s riktiga tillgänglighetsträd per tabellsida.
   Alla arbetsflöden och tidsgränsen på 60 sekunder bevaras.
 
+- [`d3474ed`](https://github.com/viscalyx/skyttel/commit/d3474ed):
+  läsytan rymmer hela Samband-knappen även när dess text har flera rader
+  och navigation samt samtalsnotis är öppna i ett kort fönster.
+  Notisens hela text och kryss behålls utan minskad textstorlek.
+  Exponering prövas mot både hela fönstret och läsytans rullningsgränser,
+  med oförändrade träffkontroller och fullständiga arbetsflöden.
+  Verkligt systemtypsnitt DejaVu Sans ger 24 godkända navigations- och
+  markeringsprov vid upprepning.
+  Grundtypsnittets 15 navigationsprov är också godkända. Det ursprungliga
+  GitHub-felets typsnitt är inte fastställt; fysisk touch ingår inte.
+
 - [`eb13279`](https://github.com/viscalyx/skyttel/commit/eb13279):
   Tabellens Redigera och Visa i kartan behåller motsvarande radkontroll.
   TABELL-04/05 prövar samma öppnare, nästa rad, föregående rad och rubriken
@@ -275,19 +278,19 @@ Slutligt automatiskt resultat redovisas med hela kontrollkörningen.
 
 Den rena versionens [mätdata](workspace-measurement.json) bevarar samtliga
 sex observationer och fullständig miljöinformation. Mätningen är utförd
-2026-10-06 09:00 UTC med 500 objekt och 1 500 samband, 1440 × 1000
+2026-10-06 11:23 UTC med 500 objekt och 1 500 samband, 1440 × 1000
 CSS-pixlar, 40 ms latens, 20 Mbit/s ned och 5 Mbit/s upp. Övriga testjobb
 körs separat från denna mätning.
 
 <!-- markdownlint-disable MD013 -->
 | Prov | Cache | Öppning, ms | Sökning, ms | Sparande, ms | Etiketter | Överlapp |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Kall | 3598,45 | 30,07 | 212,37 | 23 | 0 |
-| 1 | Varm | 3526,40 | 30,12 | 223,05 | 23 | 0 |
-| 2 | Kall | 3602,80 | 29,56 | 206,65 | 23 | 0 |
-| 2 | Varm | 3542,38 | 32,07 | 229,17 | 23 | 0 |
-| 3 | Kall | 3545,01 | 29,89 | 218,63 | 23 | 0 |
-| 3 | Varm | 3552,80 | 29,54 | 224,49 | 23 | 0 |
+| 1 | Kall | 3639,89 | 29,87 | 211,81 | 23 | 0 |
+| 1 | Varm | 3765,84 | 34,39 | 384,67 | 23 | 0 |
+| 2 | Kall | 3592,46 | 30,12 | 212,04 | 23 | 0 |
+| 2 | Varm | 3501,71 | 26,75 | 232,02 | 23 | 0 |
+| 3 | Kall | 3426,07 | 31,01 | 210,76 | 23 | 0 |
+| 3 | Varm | 3550,95 | 28,12 | 222,56 | 23 | 0 |
 <!-- markdownlint-enable MD013 -->
 
 Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,
@@ -295,7 +298,7 @@ Alla sex observationer når mätplanens gränser: högst 5 sekunders öppning,
 Efter varje verkligt sparande matchar innehåll, historik och kvitto.
 Efter serverns återstart matchar också det beständiga försöket och dess
 kvitto; utkastet är tomt. JSON-fältet `sourceTree` anger hela repots träd
-`0a608b4b65be9226f4b375202d33c7151f5563e6`, inte bara `src`-trädet ovan.
+`94ae8c279237dcadc24dd0e967f446ba855d51e5`, inte bara `src`-trädet ovan.
 
 [Mätplanen](large-map-performance.md) definierar provdata och gränser.
 Kall cache betyder ett nytt webbläsarsammanhang; serverns och systemets
@@ -331,13 +334,13 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 <!-- markdownlint-disable MD013 -->
 | Fält | Status |
 | --- | --- |
-| Slutlig kod- och byggversion, webbläsare och provmiljö | `7c06bc6c5d43df99247e857ffbcf2f96134bd5a5`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd `7726e8b50985835ff315d8eae8d9456c71f51771` som A/C/D och mätningen på `5ce3c08` |
-| Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `7c06bc6`; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,22 procent mot kravet 90 |
+| Slutlig kod- och byggversion, webbläsare och provmiljö | `d3474ed3302505b393038c432d933b211aaa7004`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd `0030b9882bc1bca1361801d4380a8e7930913e88` som nya A/C/D-bilder och mätningen på `d3474ed` |
+| Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `d3474ed`; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,23 procent mot kravet 90 |
 | Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
-| Containerkontroll | GODKÄND; 9 av 9 steg på `3a9afef`; relevanta produktions- och containerindata är identiska med `7c06bc6` |
-| Standards- och Spec-granskningar samt omprov av deras rättelser | 0 kvarstående åtgärdbara fynd på båda axlarna vid `f89e809`; förnyad verifiering PÅGÅR efter underkänd GitHub-körning |
-| A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN på `5ce3c08` utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
-| Prestanda för 500 objekt och 1 500 samband | GODKÄND på `5ce3c08` enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
+| Containerkontroll | GODKÄND; 9 av 9 steg på `d3474ed`, samma rena version som hela kontrollkörningen |
+| Standards- och Spec-granskningar samt omprov av deras rättelser | PÅGÅR; förnyad granskning av hela ändringen med rättelsen för läsytans rullningsgränser |
+| A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN på `d3474ed` utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
+| Prestanda för 500 objekt och 1 500 samband | GODKÄND på `d3474ed` enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
 | Fysiska hjälpmedels-, telefon- och förstoringstester | INTE UTFÖRDA |
 <!-- markdownlint-enable MD013 -->
 
