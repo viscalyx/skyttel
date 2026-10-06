@@ -499,6 +499,10 @@ export function HouseholdMap({
       const corner = workspace.current?.querySelector<HTMLElement>('.conversation-corner');
       const visibleTools = workspace.current?.querySelector<HTMLElement>('.workspace-tools');
       const cornerHeight = corner?.offsetHeight ?? 0;
+      workspace.current?.style.setProperty(
+        '--conversation-corner-width',
+        `${corner?.offsetWidth ?? 0}px`,
+      );
       const minimumFloor = (visibleTools?.getBoundingClientRect().bottom ?? 0) + cornerHeight + 12;
       workspace.current?.style.setProperty(
         '--conversation-controls-bottom',
@@ -1306,7 +1310,8 @@ export function HouseholdMap({
             detailsVisible={detailsOpen && Boolean(selectedObject || selectedEdge)}
           />
           <ConversationConsent conversation={conversation} chosen={conversationChoice} />
-          <div className="workspace-context">
+          {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to scroll the map's status and legend. */}
+          <section className="workspace-context" aria-label="Kartans sammanhang" tabIndex={0}>
             {householdName}
             <span>Gemensam karta</span>
             {selectedObject && (
@@ -1409,7 +1414,7 @@ export function HouseholdMap({
                 previousIds={previousIds}
               />
             )}
-          </div>
+          </section>
         </>
       )}
       {/* Outside the map, where its tools are not shown, the voice box still says what the voice does. */}
