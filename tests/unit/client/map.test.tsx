@@ -150,7 +150,15 @@ async function openSavedHistory() {
   return within(await screen.findByRole('region', { name: 'Ändringshistorik' }));
 }
 
-async function openTypeEditor(name: string) {
+async function openTypeEditor(name: string, deadline: number) {
+  // A durable receipt can precede the refreshed map and its type controls.
+  await waitFor(
+    () =>
+      expect(
+        (screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled,
+      ).toBe(false),
+    { timeout: Math.max(1, Math.floor(deadline - performance.now())) },
+  );
   const button = await screen.findByRole('button', { name });
   await waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
   await userEvent.click(button);
@@ -511,16 +519,7 @@ test('relationship type forms review both labels and show one edge from either o
     ).toBe(true);
     expect(screen.queryByRole('button', { name: 'Ändra sambandstyp: Plats' })).toBeNull();
     release();
-    // The receipt confirms durable saving before the map refresh finishes.
-    // Editing resumes only when the public work controls are available again.
-    await waitFor(
-      () =>
-        expect(
-          (screen.getByRole('button', { name: 'Nytt objekt' }) as HTMLButtonElement).disabled,
-        ).toBe(false),
-      { timeout: Math.max(1, Math.floor(deadline - performance.now())) },
-    );
-    await openTypeEditor('Ändra sambandstyp: Plats');
+    await openTypeEditor('Ändra sambandstyp: Plats', deadline);
     expect((screen.getByLabelText('Sambandstypens namn') as HTMLInputElement).value).toBe('Plats');
     expect((screen.getByLabelText('Benämning från startobjektet') as HTMLInputElement).value).toBe(
       'förvaras i',
@@ -1444,6 +1443,7 @@ test.each(['lo', 'new'])(
 );
 
 test('custom type forms use four optional field kinds and keep errors editable without saving', async () => {
+  const deadline = performance.now() + 30_000;
   await open();
   await userEvent.click(screen.getByRole('button', { name: 'Ny objekttyp' }));
   await userEvent.type(screen.getByLabelText('Typens namn'), 'Solcellsanläggning');
@@ -1520,7 +1520,7 @@ test('custom type forms use four optional field kinds and keep errors editable w
     ),
   );
   await save();
-  await openTypeEditor('Ändra typ: Solcellsanläggning');
+  await openTypeEditor('Ändra typ: Solcellsanläggning', deadline);
   await userEvent.selectOptions(screen.getAllByLabelText('Värdeslag')[2], 'number');
   await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
   await screen.findByText(/Fältets värdeslag används redan/);
@@ -1537,7 +1537,7 @@ test('custom type forms use four optional field kinds and keep errors editable w
       'utkast',
     ),
   );
-  await openTypeEditor('Ändra typ: Solkraft');
+  await openTypeEditor('Ändra typ: Solkraft', deadline);
   await userEvent.click(
     screen.getByRole('button', { name: 'Stäng typformuläret utan att skicka' }),
   );
@@ -1545,6 +1545,7 @@ test('custom type forms use four optional field kinds and keep errors editable w
 });
 
 test('a conflicting type offers both current choices and never grants an implicit save', async () => {
+  const deadline = performance.now() + 30_000;
   const state = (await (await client.request(path)).json()) as MapState;
   const type = state.types[0];
   await client.json(`${path}/object-type`, {
@@ -1579,7 +1580,7 @@ test('a conflicting type offers both current choices and never grants an implici
     ).name,
   ).toBe('Annans namn');
   await save();
-  await openTypeEditor('Ändra typ: Mitt namn');
+  await openTypeEditor('Ändra typ: Mitt namn', deadline);
   await userEvent.type(screen.getByLabelText('Typens namn'), ' igen');
   await userEvent.click(screen.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }));
   await waitFor(() =>
