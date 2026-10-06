@@ -93,8 +93,11 @@ Blockera `*text-assistant/*/recover` innan registreringen släpps.
    **Kontrollera om utkastet sparades** som återförsök.
 4. Ta bort blockeringen, tabba till knappen och tryck Retur. Kontrollnotisen
    ersätter felnotisen och knappen försvinner medan kontrollen pågår.
-5. Öppna textsamtalet och godkänn det vanliga medgivandet om det behövs.
-   Läs förklaringen och kontrollera kvittot i **Tidigare sparförsök**.
+5. Kräv att kontrollnotisen och dess återförsöksknapp försvinner. Öppna
+   **Rapporter → Ändringshistorik** och kontrollera samma ID med
+   **Identifiera sparandet och användaren** på den enda ändringsgruppen.
+   Välj **Tillbaka till arbetet**, öppna textsamtalet och godkänn det
+   vanliga medgivandet om det behövs. Läs kontrollens förklaring.
 
 **Förväntat resultat:**
 
@@ -258,10 +261,12 @@ Använd nätblockering för `/text-assistant/*/recover` så att den första
 kontrollen misslyckas. Behåll terminalen för modellens `held`-anrop.
 
 **Integrationstest:**
-[save-check.spec.ts](../../tests/integration/save-check.spec.ts), testfallen
-“SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat
-medgivande utan nytt sparande” och samma titel med tillägget
-“även när återkallandets svar tappas”.
+[save-check.spec.ts](../../tests/integration/save-check.spec.ts), testfallen:
+
+- “SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat
+  medgivande utan nytt sparande”.
+- “SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat
+  medgivande utan nytt sparande även när återkallandets svar tappas”.
 
 **Steg:**
 
@@ -287,7 +292,8 @@ medgivande utan nytt sparande” och samma titel med tillägget
    går före andra notiser och blockerar nytt arbete utan att fråga efter
    medgivande. Släpp kontrollen genom att ta bort eventuell nätblockering.
 6. Kräv ett genomfört försök med samma ID, ägare och versioner samt ett
-   enda historikkvitto. Lo finns i kartan; inget nytt försök har skapats.
+   enda historikkvitto. Kontrollnotisen och återförsöksknappen försvinner.
+   Lo finns i kartan; inget nytt försök har skapats.
 7. Öppna textsamtalet och ge medgivandet för det nya samtalet. Den
    oskickade texten finns kvar. Efter ett tappat återkallandesvar står
    kontrollens förklaring en gång i samtalstexten. Efter ett normalt svar

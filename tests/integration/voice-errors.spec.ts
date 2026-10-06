@@ -69,9 +69,12 @@ for (const [failure, expected] of browserFailures)
       await page.keyboard.press('Enter');
       await expect(notice(page)).toHaveCount(0);
       await expect(microphoneButton(page)).toBeFocused();
-      await expect(page.getByText(expected, { exact: true }).filter({ visible: true })).toHaveCount(
-        0,
-      );
+      await expect(voiceBox(page)).toHaveCount(0);
+      expect(
+        await page.evaluate(() =>
+          window.skyttelVoiceFixture.stats().microphoneTracks.every((track) => !track.enabled),
+        ),
+      ).toBe(true);
       // The same failure on a second attempt is a new event, not the dismissed one.
       await microphoneButton(page).click();
       await expect(notice(page)).toContainText(expected);
@@ -88,6 +91,11 @@ for (const [failure, expected] of browserFailures)
       await expect(voiceBox(page)).toHaveText('Rösten startar');
       await page.evaluate(() => window.skyttelVoiceFixture.releaseMicrophone());
       await expect(voiceBox(page)).toHaveText('Lyssnar');
+      expect(
+        await page.evaluate(() =>
+          window.skyttelVoiceFixture.stats().microphoneTracks.some((track) => track.enabled),
+        ),
+      ).toBe(true);
     } finally {
       await app.close();
     }

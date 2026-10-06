@@ -51,6 +51,7 @@ serverloggar; inga administrativa rättigheter behövs för samtalsflödet.
    **Prata med Skyttel** och läs samtalsnotisen.
 2. Fokusera **Stäng notisen** med tangentbordet och tryck Retur. Kontrollera
    att notisen försvinner och fokus återgår till mikrofonknappen.
+   Mikrofonen är fortsatt av och ingen röstruta visas.
 3. Tryck på mikrofonknappen igen. Samma hinder ska ge en ny notis.
 4. Kör `window.skyttelVoiceFixture.setMicrophone('hold')` och tryck igen.
    Notisen ska försvinna medan starten väntar. Kör
