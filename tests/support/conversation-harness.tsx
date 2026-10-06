@@ -8,6 +8,7 @@ import {
 import {
   type ConversationPresentation,
   ConversationWorkspace,
+  conversationFeedback,
 } from '../../src/client/TextAssistant.js';
 import {
   type ConversationMode,
@@ -51,6 +52,7 @@ export function StandaloneConversation({
     onSelectItem,
   });
   const { voice } = conversation;
+  const feedback = conversationFeedback(conversation);
   const noticeState = useConversationNotice({
     conditions: {
       saveChecking: Boolean(conversation.saveChecking),
@@ -126,6 +128,7 @@ export function StandaloneConversation({
       />
       <ConversationNoticeAnnouncements announcement={noticeState.announcement} />
       <ConversationConsent conversation={conversation} chosen={chosen} />
+      {presentation.active !== false && feedback && <p role="status">{feedback}</p>}
       <ConversationWorkspace
         conversation={conversation}
         notice={notice}

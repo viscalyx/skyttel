@@ -2,12 +2,14 @@ import { act, cleanup, render, screen, waitFor, within } from '@testing-library/
 import { userEvent } from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
+import { defaultConversationPreferences } from '../../../src/shared/conversation-preferences.js';
 import type {
   MapObject,
   ObjectType,
   RelationshipType,
   SaveReceipt,
 } from '../../../src/shared/map.js';
+import { defaultViewSettings } from '../../../src/shared/personal-view.js';
 import type { TextAssistantView } from '../../../src/shared/text-assistant.js';
 import {
   closeConversationText,
@@ -18,6 +20,7 @@ import {
   startConversationWithVoice,
 } from '../../support/conversation-dom.js';
 import { StandaloneConversation } from '../../support/conversation-harness.js';
+import { openNewObjectForm, renderHouseholdWork } from '../../support/native-household-unit.js';
 
 const path = '/api/households/linden/text-assistant';
 function session(): TextAssistantView {
@@ -82,24 +85,36 @@ test('the shared workspace keeps the map available before consent', async () => 
   const requests: string[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     requests.push(`${init?.method ?? 'GET'} ${url}`);
+    if (url.includes('/map?'))
+      return Response.json({
+        userId: 'alex',
+        contentVersion: 1,
+        types: [],
+        objects: [],
+        relationshipTypes: [],
+        relationships: [],
+        draft: { version: 0, changes: [] },
+      });
+    if (url.endsWith('/map/view'))
+      return Response.json({
+        contentVersion: 1,
+        positions: [],
+        settings: { ...defaultViewSettings, version: 0 },
+      });
+    if (url.endsWith('/map/conversation-preferences'))
+      return Response.json(defaultConversationPreferences);
+    if (url.endsWith('/map/operations')) return Response.json({ operations: [] });
     return Response.json({ available: true });
   });
-  render(
-    <StandaloneConversation
-      householdId="linden"
-      onMapChange={vi.fn()}
-      onAccessLost={vi.fn()}
-      onSelectItem={async () => false}
-    >
-      <section aria-label="Hushållets karta">Kartan är tillgänglig</section>
-    </StandaloneConversation>,
-  );
+  renderHouseholdWork('linden');
   expect(await screen.findByRole('button', { name: 'Prata med Skyttel' })).toBeTruthy();
   expect(screen.queryByRole('region', { name: 'Aktuell status' })).toBeNull();
-  expect(screen.getByRole('region', { name: 'Hushållets karta' }).textContent).toContain(
-    'Kartan är tillgänglig',
-  );
+  expect(screen.getByRole('region', { name: 'Hushållskarta' })).toBeDefined();
   expect(screen.queryByRole('region', { name: 'Skriv till Skyttel' })).toBeNull();
+  const form = await openNewObjectForm();
+  expect(form.getByLabelText('Namn', { exact: true })).toBeDefined();
+  expect(queryConsentBox()).toBeNull();
+  await userEvent.click(form.getByRole('button', { name: 'Avbryt', exact: true }));
   // Opening the text view starts nothing; actual use asks for consent.
   await openConversationText();
   expect(queryConsentBox()).toBeNull();
