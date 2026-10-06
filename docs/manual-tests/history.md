@@ -187,9 +187,14 @@ konfigurerad samtalsleverantör för att kontrollera återgången med en
 synlig samtalsnotis.
 
 **Integrationstest:**
-[history.spec.ts](../../tests/integration/history.spec.ts), testfallet
-“HISTORIK-12: following save links preserves table search and unsent conversation
-text”.
+[history.spec.ts](../../tests/integration/history.spec.ts), testfallen:
+
+- “HISTORIK-12: following save links preserves table search and unsent
+  conversation text”.
+- “HISTORIK-12: following save links preserves table search and unsent
+  conversation text at 390px”.
+- “HISTORIK-12: following save links preserves table search and unsent
+  conversation text at 320px”.
 
 **Steg:**
 
@@ -202,6 +207,8 @@ text”.
    adressfältet och att rätt sparandes uppgifter öppnas.
 5. Välj **Tillbaka till arbetet** med pekaren utan att först stänga
    samtalsnotisen. Öppna sedan textvyn igen.
+6. Upprepa med en vy på 390 × 844 och 320 × 640 CSS-pixlar. Kontrollera
+   samma återgång med pekaren och att notisen fortfarande går att läsa.
 
 **Förväntat resultat:**
 

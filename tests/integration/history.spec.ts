@@ -242,73 +242,79 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
   }
 });
 
-test('HISTORIK-12: following save links preserves table search and unsent conversation text', async ({
-  page,
-}) => {
-  const installation = await createInstallation();
-  try {
-    const data = await setup(page.request, installation.origin);
-    await data.object('person', 'Lo Exempel');
-    await data.save('initial');
-    await data.object('person', 'Lo Lind');
-    await data.save('rename');
-    await data.object('private', 'Privat person');
-    const before = await data.read();
-    await page.goto(`${installation.origin}/households/${data.household.id}`);
-    const conversationWrites: string[] = [];
-    page.on('request', (request) => {
-      if (
-        request.method() === 'POST' &&
-        /\/(text-assistant|conversation-consent)(\/|$)/.test(new URL(request.url()).pathname)
-      )
-        conversationWrites.push(request.url());
-    });
-    await (await utilityButton(page, 'Skriv till Skyttel')).click();
-    const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
-    await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
-    const message = page.getByLabel('Meddelande till Skyttel', { exact: true });
-    await message.fill('Bevara mitt oskickade meddelande');
-    await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
-    await (await utilityButton(page, 'Tabell')).click();
-    const search = page.getByRole('searchbox', { name: 'Sök objekt i tabellen' });
-    await search.fill('Lo Lind');
-    await (await utilityButton(page, 'Rapporter')).click();
-    const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
-    for (const id of ['initial', 'rename']) {
-      const card = history.getByRole('article').filter({ hasText: `Sparande: ${id}` });
-      await card.getByRole('link', { name: 'Länk till sparandet', exact: true }).click();
-      await expect(page).toHaveURL(new RegExp(`save=${id}`));
-      await expect(card.getByRole('heading', { level: 3 })).toBeFocused();
-      await expect(card.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();
+for (const viewport of [
+  { width: 1280, height: 720 },
+  { width: 390, height: 844 },
+  { width: 320, height: 640 },
+])
+  test(`HISTORIK-12: following save links preserves table search and unsent conversation text${viewport.width === 1280 ? '' : ` at ${viewport.width}px`}`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    try {
+      await page.setViewportSize(viewport);
+      const data = await setup(page.request, installation.origin);
+      await data.object('person', 'Lo Exempel');
+      await data.save('initial');
+      await data.object('person', 'Lo Lind');
+      await data.save('rename');
+      await data.object('private', 'Privat person');
+      const before = await data.read();
+      await page.goto(`${installation.origin}/households/${data.household.id}`);
+      const conversationWrites: string[] = [];
+      page.on('request', (request) => {
+        if (
+          request.method() === 'POST' &&
+          /\/(text-assistant|conversation-consent)(\/|$)/.test(new URL(request.url()).pathname)
+        )
+          conversationWrites.push(request.url());
+      });
+      await (await utilityButton(page, 'Skriv till Skyttel')).click();
+      const notice = page.getByRole('region', { name: 'Samtalsnotis', exact: true });
+      await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
+      const message = page.getByLabel('Meddelande till Skyttel', { exact: true });
+      await message.fill('Bevara mitt oskickade meddelande');
+      await page.getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
+      await (await utilityButton(page, 'Tabell')).click();
+      const search = page.getByRole('searchbox', { name: 'Sök objekt i tabellen' });
+      await search.fill('Lo Lind');
+      await (await utilityButton(page, 'Rapporter')).click();
+      const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
+      for (const id of ['initial', 'rename']) {
+        const card = history.getByRole('article').filter({ hasText: `Sparande: ${id}` });
+        await card.getByRole('link', { name: 'Länk till sparandet', exact: true }).click();
+        await expect(page).toHaveURL(new RegExp(`save=${id}`));
+        await expect(card.getByRole('heading', { level: 3 })).toBeFocused();
+        await expect(card.getByText('Namn: Lo Exempel.', { exact: true })).toBeVisible();
+      }
+      const back = page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true });
+      await expect(notice).toBeVisible();
+      await expect
+        .poll(() =>
+          back.evaluate((button) => {
+            const bounds = button.getBoundingClientRect();
+            const hit = document.elementFromPoint(
+              bounds.x + bounds.width / 2,
+              bounds.y + bounds.height / 2,
+            );
+            return hit !== null && button.contains(hit);
+          }),
+        )
+        .toBe(true);
+      await back.click();
+      await expect(search).toHaveValue('Lo Lind');
+      await expect(search).toBeFocused();
+      await (await utilityButton(page, 'Skriv till Skyttel')).click();
+      await expect(message).toHaveValue('Bevara mitt oskickade meddelande');
+      await expect(
+        page.getByRole('dialog', { name: 'Samtal med Skyttel', exact: true }),
+      ).toHaveCount(0);
+      expect(conversationWrites).toEqual([]);
+      expect(await data.read()).toEqual(before);
+    } finally {
+      await installation.close();
     }
-    const back = page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true });
-    await expect(notice).toBeVisible();
-    await expect
-      .poll(() =>
-        back.evaluate((button) => {
-          const bounds = button.getBoundingClientRect();
-          const hit = document.elementFromPoint(
-            bounds.x + bounds.width / 2,
-            bounds.y + bounds.height / 2,
-          );
-          return hit !== null && button.contains(hit);
-        }),
-      )
-      .toBe(true);
-    await back.click();
-    await expect(search).toHaveValue('Lo Lind');
-    await expect(search).toBeFocused();
-    await (await utilityButton(page, 'Skriv till Skyttel')).click();
-    await expect(message).toHaveValue('Bevara mitt oskickade meddelande');
-    await expect(page.getByRole('dialog', { name: 'Samtal med Skyttel', exact: true })).toHaveCount(
-      0,
-    );
-    expect(conversationWrites).toEqual([]);
-    expect(await data.read()).toEqual(before);
-  } finally {
-    await installation.close();
-  }
-});
+  });
 
 test('HISTORIK-13: historical icon changes remain readable beside an unchanged profile image', async ({
   page,
