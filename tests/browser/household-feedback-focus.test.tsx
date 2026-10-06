@@ -1,7 +1,10 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { FormLeaveProvider } from '../../src/client/FormLeave.js';
 import { HouseholdMap } from '../../src/client/HouseholdMap.js';
+import { openConversationText } from '../support/conversation-browser.js';
+import { openNewObject, openTable } from '../support/workspace-browser.js';
 import '../../src/client/styles.css';
 import { defaultConversationPreferences } from '../../src/shared/conversation-preferences.js';
 import type { MapState } from '../../src/shared/map.js';
@@ -12,7 +15,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** The browser renders the real map and panels against the public HTTP boundary.
+/** The browser renders the real map and native forms against the public HTTP boundary.
  * Persistence and authorization of these same forms have real-SQLite unit cases. */
 async function open(withDraft = true) {
   await page.viewport(1440, 900);
@@ -75,9 +78,11 @@ async function open(withDraft = true) {
     throw new Error(`Unexpected request: ${url}`);
   });
   render(
-    <main>
-      <HouseholdMap householdId="home" />
-    </main>,
+    <FormLeaveProvider>
+      <main>
+        <HouseholdMap householdId="home" />
+      </main>
+    </FormLeaveProvider>,
   );
   await expect.element(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
   return {
@@ -90,42 +95,35 @@ async function open(withDraft = true) {
 
 test('leaving an edited object protects unsent text and discards only that text, keeping saved and draft values', async () => {
   const home = await open();
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page.getByRole('button', { name: 'Uppgifter för Lo Exempel', exact: true }).click();
-  const object = page.getByRole('region', { name: 'Lo Exempel', exact: true });
-  await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+  await openTable();
+  await page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
   const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
   const field = form.getByLabelText('Beskrivning', { exact: true });
   await field.fill('Fortfarande oskickat');
-  await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+  await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
   await page.getByRole('button', { name: 'Fortsätt redigera', exact: true }).click();
   await expect.element(field).toHaveValue('Fortfarande oskickat');
-  await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+  await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
   await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
   await expect.element(form).not.toBeInTheDocument();
   expect(home.writes).toEqual([]);
-  await object.getByRole('button', { name: 'Redigera valt objekt', exact: true }).click();
+  await page.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
   await expect
     .element(form.getByLabelText('Beskrivning', { exact: true }))
     .toHaveValue('Privat förslag');
-  await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  const review = page.getByRole('region', { name: 'Hela mitt utkast', exact: true });
-  await expect
-    .element(review.getByText('Beskrivning: Privat förslag', { exact: true }))
-    .toBeVisible();
-  await expect
-    .element(review.getByText('Beskrivning: Sparad beskrivning', { exact: true }))
-    .toBeVisible();
+  await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
+  await openConversationText();
+  const draftEntry = page.getByRole('button', { name: /^Visa utkastet \(\d+\)$/ });
+  if (draftEntry.query()) await draftEntry.click();
+  await page.getByRole('button', { name: 'Visa förslaget: Lo Exempel', exact: true }).click();
+  const review = page.getByRole('dialog', { name: 'Lo Exempel', exact: true });
+  await expect.element(review.getByText('Privat förslag', { exact: true })).toBeVisible();
+  await expect.element(review.getByText('Sparad beskrivning', { exact: true })).toBeVisible();
 });
 
 test('unknown complete object staging requires checking before retry and retains all form text without another send', async () => {
   const home = await open(false);
-  await page.getByRole('button', { name: 'Lista', exact: true }).click();
-  await page
-    .getByRole('region', { name: 'Lista och utkast', exact: true })
-    .getByRole('button', { name: 'Nytt objekt', exact: true })
-    .click();
+  await openNewObject();
   const name = page.getByLabelText('Namn', { exact: true });
   await name.fill('Privat oskickat objekt');
   home.failProposal();
@@ -147,13 +145,10 @@ test('unknown complete object staging requires checking before retry and retains
     contentVersion: 1,
     value: { name: 'Privat oskickat objekt' },
   });
-  await page.getByRole('button', { name: 'Avbryt', exact: true }).click();
+  await page.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
   await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
   await expect.element(name).not.toBeInTheDocument();
-  await page
-    .getByRole('region', { name: 'Lista och utkast', exact: true })
-    .getByRole('button', { name: 'Nytt objekt', exact: true })
-    .click();
+  await openNewObject();
   await expect.element(name).toHaveValue('');
   expect(home.writes).toHaveLength(1);
 });

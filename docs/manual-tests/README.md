@@ -344,17 +344,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   nå återkoppling och alla sex personliga flyttar utan täckta kontroller,
   återfå fokus efter flytt och bevara senare fokus eller stängd navigering
   när ett verkligt svar hålls och släpps.
-- [Rymdkarta](spatial-map.md): gemensam redigering och navigering,
-  stabil etikettinformation vid växling mellan kompakt karta och lista,
-  täta mobilutsnitt med prioriterade objekt- och sambandsetiketter samt
-  alternativ utan grafik,
-  fokus på tidigare och föreslagna samband med läsbara tidigare värden,
-  fokus, filter, namn vid runda symboler, sambandsetiketter vid val,
-  bevarat etikettläge vid återställning, pekmenyer, uttrycklig redigering
-  med bevarat listfokus, sambandens antal vid direkt borttagning, upphörd
-  status,
-  ändringssymboler och bevarad oskickad text vid vybyte, orientering och
-  grafikavbrott samt fungerande navigation när tillgången återkallas i helskärm.
+- [Rymdkarta](spatial-map.md): gemensam redigering genom Tabell, kompletta
+  formulär och utkastets läsning med bevarad kamera och markering;
+  sökning och direkta samband, läsbara tidigare sparade samband,
+  täta etiketter, publicerat medlemsbortfall och återhämtning av grafik.
+
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
   genom sidvisning, sökning och fokus, med bevarad text och placering.
 - [Personliga placeringar](personal-view.md): stjärnval i Rymdkartans
@@ -402,7 +396,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   inkompatibla egna fält i den vanliga objektdialogen, rätta saknade typer
   genom faktiska definitioner och läsa historiska fältnamn före typbytesförlust;
   bevara oberoende
-  utkast och sparad historik; granska borttagna typdefinitioner som hela
+  utkast och sparad historik; behålla ett ändrat samband och öppna
+  objektborttagningens verkliga beroende igen; granska borttagna
+  typdefinitioner som hela
   aktiva val, återställa endast deras historiska identitet med fortsatt
   revisionsföljd, avvisa inaktuellt sparande atomiskt, ompröva privat
   återställning efter import och kontrollera dess fullständiga privata
@@ -417,7 +413,7 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   borttagningar före ett gemensamt sparande. Bevara oberoende status
   och slutdatum i samband vid konfliktval samt rätt typdefinitioner
   vid borttagning efter typbyten. Följ status och legend med stängda
-  paneler, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
+  dialoger, samma kvitto vid okänt utfall, bevarat tangentbordsfokus och
   ett samlat utkast från formulär, text och tal efter omstart. Besvara
   nödvändiga frågor före ett nytt uttryckligt sparbesked. Använd Navigation
   och kartans status och teckenförklaring tillsammans utan att tappa åtkomst
@@ -441,6 +437,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   ändringar i namngivna avsnitt, flytt och döljning utan värdeförlust,
   gemensamma egenskaper med bevarad säkerhet och datum, tangentbord
   och bevarat arbete på mobil, dator och korta fönster med synlig status.
+  Konfigurerad läsordning följer formuläret genom utkast och tabell,
+  med uttryckliga nollvärden och **Nej** bevarade.
   Samtidiga
   ändringar med bevarade oberoende uppgifter och samma atomiska kvitto
   som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,

@@ -27,7 +27,8 @@ fallen anger formulär, samtal, profil eller administration.
    kör `identity robin`, logga in med Microsoft i en separat profil och
    bjud in Robins ID från Alex profil. Acceptera som Robin; behåll rollen
    medlem. Befintliga sessioner påverkas inte av identitetsvalet.
-   Välj **Skriv till Skyttel** och **Godkänn och starta** i medgivanderutan,
+   Välj **Skriv till Skyttel**, därefter **Nytt samtal** och
+   **Godkänn och starta** i medgivanderutan,
    sedan **Prata med Skyttel** när ett fall kräver samtal. Miljön ersätter
    taltransporten och provar inte fysiskt ljud.
 3. Börja varje fall med en ny provinstallation eller ett tomt utkast utan
@@ -60,20 +61,24 @@ Följande testfall:
 
 **Steg:**
 
-1. Öppna Lista och skriv **cykel** i **Sök objekt**. Välj **Nytt objekt**,
+1. Öppna **Tabell** och skriv **cykel** i **Sök objekt i tabellen**. Välj
+   **Nytt objekt**,
    skriv **Oskickad cykel** och beskrivningen **Behåll denna text**.
-2. Välj **Avbryt**. Kontrollera att **Fortsätt redigera** är förvalt.
+2. Stäng objektdialogen med krysset **Stäng objektdialogen**. Kontrollera att
+   **Fortsätt redigera** är förvalt.
    Tryck Escape. Namn och beskrivning ska finnas kvar, fokus ska återgå
-   till Avbryt och utkastet ska fortfarande vara tomt.
+   till stängningskrysset och utkastet ska fortfarande vara tomt.
 3. Välj **Lägg i utkastet och stäng**. Besök **Inloggningssätt** med
    tangentbord. Kontrollera rubrikfokus och att kartans kontroller är dolda.
-4. Välj **Till startsidan** och öppna Lista. Kontrollera sökningen **cykel**,
-   öppna **Uppgifter för Oskickad cykel** och läs beskrivningen.
+4. Välj **Till startsidan** och öppna **Tabell**. Kontrollera sökningen
+   **cykel**,
+   expandera raden **Oskickad cykel**, välj **Läs alla uppgifter för
+   Oskickad cykel** och läs beskrivningen.
 
 **Förväntat resultat:**
 
 - Avbruten förlust ändrar varken formulärtext eller utkast.
-- Det kompletta förslaget och listans sökning finns kvar efter återgång.
+- Det kompletta förslaget och tabellens sökning finns kvar efter återgång.
   Objektets lästa rubrik får fokus; dolda kontroller stör inte navigationen.
 - Inget sparas i den gemensamma kartan och ingen historikpost skapas.
 
@@ -198,7 +203,8 @@ an admitted save before reloading”.
 
 1. I flik A, öppna textvyn och slå på mikrofonen. Skicka en fråga, invänta det
    kontrollerade svaret och skriv **Gammalt oskickat svar** utan att skicka
-   det. Öppna **Lista**. Öppna samma installation i en andra vanlig flik B
+   det. Öppna **Visa utkastet** i textvyn. Öppna samma installation i en andra
+   vanlig flik B
    med samma inloggning. Där öppnar du **Nytt objekt** och skriver
    **Gammal oskickad cykel** utan att lägga det i utkastet. Behåll
    objektdialogen öppen i flik B utan omladdning.
@@ -234,7 +240,8 @@ an admitted save before reloading”.
    })();
    ```
 
-3. Välj **Spara hela utkastet**. Invänta konsolens **ARBETE-07: sparandet
+3. I **Utkastet**, välj **Spara hela utkastet**. Invänta konsolens **ARBETE-07:
+   sparandet
    väntar**. I **Network** ska registreringen under `map/operations`
    ha HTTP 200 och status `pending`. Anteckna dess `operationId`.
    Stäng utvecklarverktygen. Stäng **Spara utkastet** med krysset; försöket
@@ -283,8 +290,11 @@ an admitted save before reloading”.
 7. Tryck Enter i läsarens terminal. Välj uttryckligen **Försök slutföra
    raderingen**. Samma identifierare ska slutföras med ett objekt och noll
    samband, typer och bildversioner.
-8. Välj **Läs in kartan på nytt**. **Skriv till Skyttel** ska kräva en ny start
-   och sakna tidigare dialog och oskickat svar. Det gamla objektformuläret
+8. Välj **Läs in kartan på nytt**. Öppna **Skriv till Skyttel** utan att
+   starta ett samtal: tidigare dialog och oskickat svar ska saknas.
+   Välj uttryckligen **Nytt samtal** och kontrollera ett nytt medgivande.
+   Avböj, öppna **Visa utkastet** och läs stolens fullständiga privata förslag.
+   Det gamla objektformuläret
    och sparförsökets återförsök ska saknas. Stolen, dess privata förslag och
    placering är kvar; lampan är borta och Alex är fortfarande administratör.
 
@@ -309,9 +319,9 @@ provmiljön avslutas enligt kostnadsfallets stoppanvisningar.
 
 **Användare:** Alex.
 
-**Förutsättningar:** Chrome med utvecklarverktyg. Läs
-[SPAR-02](operations.md#spar-02-återförsöka-ett-väntande-sparande-från-en-annan-klient)
-för hur endast begäran till `*/map/save` blockeras.
+**Förutsättningar:** Separat HTTPS-testinstallation och den styrda
+transporten i [SPAR-05](operations.md), med samma vanliga autentisering.
+Förbered ett tomt hushåll och styr endast dess leverans; ersätt inga svar.
 
 **Integrationstest:**
 [household-work.spec.ts](../../tests/integration/household-work.spec.ts),
@@ -320,24 +330,29 @@ response disappears”.
 
 **Steg:**
 
-1. Skapa **Sparad cykel** och lägg objektet i utkastet. Blockera
-   `*/map/save` och välj **Spara hela utkastet**.
-2. Kontrollera beskedet om okänt utfall. Stäng **Spara utkastet** med
-   krysset och besök **Inloggningssätt**; försöket fortsätter.
-   Återgå och kontrollera att beskedet och **Visa sparandet** finns kvar.
-3. Ta bort nätblockeringen. Välj **Visa sparandet** och därefter
-   **Kontrollera sparandet igen**. Kontrollera
-   kvittot. Ladda om och kontrollera att cykeln finns en gång i kartan.
+1. Välj **Nytt objekt**, skriv **Sparad cykel** och välj **Lägg i utkastet
+   och stäng**. Skriv `arm save:after` i operatörens transportterminal.
+   Öppna **Visa utkastet** och välj **Spara hela utkastet**. Vänta på
+   `application-completed` med status 200 och `held-after`.
+2. Stäng **Spara utkastet** med krysset och besök **Inloggningssätt**.
+   Kontrollera att återkopplingen fortfarande visar ett väntande sparande.
+   Skriv `drop` i transportterminalen. Kontrollera okänt sparutfall även
+   utanför kartan; starta inget nytt försök.
+3. Återgå med **Till startsidan**. Välj **Visa sparandet**, därefter
+   **Kontrollera sparandet igen**. Kontrollera **Utkastet är sparat** och
+   att sparmodalen stängs. Läs den enda sparhändelsen i **Rapporter →
+   Ändringshistorik**. Ladda om och kontrollera att **Sparad cykel** finns
+   exakt en gång i **Tabell**.
 
 **Förväntat resultat:**
 
-- Okänt utfall visas även utanför kartan. Återförsöket gäller samma sparande.
-- Verifierat sparande visas först efter serverns kvitto.
-
-Det automatiserade provet fördröjer och tappar svaret efter att den riktiga
-servern sparar, medan de manuella stegen stoppar själva begäran. Endast
-automationen verifierar avbrottet efter transaktionen, pågående status
-under vybytet och exakt en historikhändelse via det publika API:et.
+- Väntande och okänt utfall finns kvar även utanför kartan. Kontrollen
+  gäller samma sparförsök; den skickar inte ett nytt sparande.
+- Verifierat sparande visas först efter serverns kvitto. Den verkliga
+  transaktionen skapar exakt ett objekt och en historikhändelse.
+- Automationen använder riktig HTTP och SQLite med styrd svarleverans.
+  Fysisk enhet och skärmläsare redovisas separat; vanliga nätverksavbrott
+  kan inte bevisa att svaret tappades efter transaktionen.
 
 ### ARBETE-06: urval och personlig vy består vid storleksbyte
 
@@ -354,18 +369,19 @@ and resizing”.
 
 **Steg:**
 
-1. Skapa och spara **Min cykel**. Välj cykeln i listan och öppna Lista igen.
+1. Skapa **Min cykel** med **Nytt objekt**, lägg objektet i utkastet och
+   spara genom **Visa utkastet → Spara hela utkastet**. Invänta sparbeskedet,
+   stäng textvyn och välj cykelns namngivna kartetikett.
 2. Öppna **Navigera**. Välj **Flytta [objektets namn]: höger**, invänta sparad
    personlig vy och markera **Visa höjdhjälp**.
 3. Besök **Inloggningssätt**, minska fönstret till mobilstorlek och
    återgå med **Till startsidan**.
-4. Öppna Lista och välj **Uppgifter för Min cykel** och kontrollera uppgifterna.
-   Välj **Stäng panelerna med kryssen** för att kontrollera kartans urval,
-   höjdhjälp och personliga placering.
+4. Välj **Visa detaljer** och läs **Min cykel**. Välj **Stäng uppgifterna**
+   och kontrollera kartans urval, **Visa höjdhjälp** och personlig placering.
 
 **Förväntat resultat:**
 
-- De öppna panelerna, cykelns urval och **Visa höjdhjälp** består.
+- Urvalet av cykeln, Navigation och **Visa höjdhjälp** består.
 - Den personliga placeringen är densamma efter återgång.
 
 ## Sammanhängande familjearbete

@@ -4,12 +4,14 @@ import Database from 'better-sqlite3';
 import type { ErasureStatus } from '../../src/shared/household-erasure.js';
 import type { MapState } from '../../src/shared/map.js';
 import {
-  activatePanel,
-  closePanels,
+  closeTextView,
   createHousehold,
+  openDraftReview,
+  openMap,
+  openNewObject,
   openProfile,
   openSettings,
-  openWorkspace,
+  openTable,
   signIn,
 } from '../support/client.js';
 import {
@@ -20,6 +22,7 @@ import {
   turnMicrophoneOn,
   voiceBox,
 } from '../support/conversation-page.js';
+import { readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -114,13 +117,10 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
       'Vem använder cykeln?',
     );
     await page.getByLabel('Meddelande till Skyttel').fill('Gammalt oskickat svar');
-    await openWorkspace(page);
+    await openMap(page);
     await otherPage.goto(installation.origin);
-    await openWorkspace(otherPage);
-    await otherPage
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openMap(otherPage);
+    await openNewObject(otherPage);
     await otherPage.getByLabel('Namn', { exact: true }).fill('Gammal oskickad cykel');
     await expect(otherPage.getByLabel('Namn', { exact: true })).toHaveValue(
       'Gammal oskickad cykel',
@@ -160,7 +160,9 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
       },
       { times: 1 },
     );
+    await openDraftReview(page);
     const pendingRequest = page.waitForRequest(`${path}/map/save`);
+    await openDraftReview(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     const oldSave = await pendingRequest;
     await saveWaiting;
@@ -295,10 +297,8 @@ test('ARBETE-07: pending erasure retires microphone, unsent forms and an admitte
     await expect(
       page.getByRole('button', { name: 'Hämta samma kvitto igen', exact: true }),
     ).toHaveCount(0);
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Oberoende privat förslag',
-    );
+    const retainedProposal = await readDraftProposal(page, 'Stolen att bevara');
+    await expect(retainedProposal).toContainText('Oberoende privat förslag');
     expect(await read()).toEqual(retained);
     expect((await (await page.request.get(path)).json()).household.role).toBe('administrator');
     expect(saveCount).toBe(1);
@@ -328,21 +328,22 @@ for (const width of [1280, 390, 320]) {
       const { household } = await (await createHousehold(page.request, installation.origin)).json();
       const path = `${installation.origin}/api/households/${household.id}/map`;
       await page.goto(`${installation.origin}/households/${household.id}/`);
-      await openWorkspace(page);
-      await page.getByLabel('Sök objekt', { exact: true }).fill('cykel');
+      await openTable(page);
       await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+        .getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true })
+        .fill('cykel');
+      await openNewObject(page);
       const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
       await form.getByLabel('Namn', { exact: true }).fill('Oskickad cykel');
       await form.getByLabel('Beskrivning', { exact: true }).fill('Behåll denna text');
-      await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
+      await form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
       await expect(
         page.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
       ).toBeFocused();
       await page.keyboard.press('Escape');
-      await expect(form.getByRole('button', { name: 'Avbryt', exact: true })).toBeFocused();
+      await expect(
+        form.getByRole('button', { name: 'Stäng objektdialogen', exact: true }),
+      ).toBeFocused();
       await expect(form.getByLabel('Namn', { exact: true })).toHaveValue('Oskickad cykel');
       await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
         'Behåll denna text',
@@ -356,20 +357,21 @@ for (const width of [1280, 390, 320]) {
         page.getByRole('heading', { name: 'Inloggningssätt', exact: true }),
       ).toBeFocused();
       await expect(page.getByLabel('Namn', { exact: true })).not.toBeVisible();
-      await expect(page.getByLabel('Sök objekt', { exact: true })).not.toBeVisible();
+      await expect(
+        page.getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true }),
+      ).not.toBeVisible();
       await expect(page.getByText('Administratör', { exact: true })).not.toBeVisible();
       await page.getByRole('link', { name: 'Till startsidan', exact: true }).focus();
       await page.keyboard.press('Enter');
-      await openWorkspace(page);
-      await expect(page.getByLabel('Sök objekt', { exact: true })).toHaveValue('cykel');
-      await page.getByRole('button', { name: 'Uppgifter för Oskickad cykel', exact: true }).click();
-      const reading = page.getByRole('region', { name: 'Oskickad cykel', exact: true });
+      await openTable(page);
       await expect(
-        reading.getByRole('heading', { name: 'Oskickad cykel', exact: true }),
+        page.getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true }),
+      ).toHaveValue('cykel');
+      const reading = await readTableObject(page, 'Oskickad cykel');
+      await expect(
+        reading.getByRole('heading', { name: 'Uppgifter för Oskickad cykel', exact: true }),
       ).toBeFocused();
-      await expect(
-        reading.getByText('Beskrivning: Behåll denna text', { exact: true }),
-      ).toBeVisible();
+      await expect(reading).toContainText('Behåll denna text');
       const state = await (await page.request.get(path)).json();
       expect(state.objects).toEqual([]);
       expect(state.draft.changes).toHaveLength(1);
@@ -453,11 +455,8 @@ test('ARBETE-03: revoked household access retires hidden forms and microphone', 
     ).toBe(true);
     const memberPage = await member.newPage();
     await startConversation(memberPage, installation.origin);
-    await openWorkspace(memberPage);
-    await memberPage
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openMap(memberPage);
+    await openNewObject(memberPage);
     await memberPage.getByLabel('Namn', { exact: true }).fill('Privat oskickad cykel');
     await expect(
       memberPage.getByRole('dialog', { name: 'Nytt objekt', exact: true }),
@@ -500,11 +499,8 @@ test('ARBETE-04: replaced household content retires hidden work and microphone',
     ).json();
     const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
     await startConversation(page, installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openMap(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Gammal oskickad cykel');
     await importPage.goto(`${installation.origin}/households/${household.id}`);
     await openSettings(importPage);
@@ -539,10 +535,8 @@ test('ARBETE-04: replaced household content retires hidden work and microphone',
     await page.getByRole('button', { name: 'Nytt samtal', exact: true }).click();
     await expect(consentBox(page)).toBeVisible();
     await consentBoxFor(page).decline.click();
-    await openWorkspace(page);
-    await expect(page.getByRole('region', { name: 'Hela mitt utkast' })).toContainText(
-      'Inga förslag',
-    );
+    const draft = await openDraftReview(page);
+    await expect(draft).toContainText('Utkastet är tomt.');
   } finally {
     await importPage.close();
     await installation.close();
@@ -559,11 +553,8 @@ test('ARBETE-05: navigation preserves a save attempt after its response disappea
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}/map`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openMap(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Sparad cykel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     let saved = false;
@@ -576,6 +567,7 @@ test('ARBETE-05: navigation preserves a save attempt after its response disappea
       await held;
       await route.abort();
     });
+    await openDraftReview(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
     await expect.poll(() => saved).toBe(true);
     await page
@@ -590,23 +582,23 @@ test('ARBETE-05: navigation preserves a save attempt after its response disappea
         .getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
     ).toContainText('Väntande: kontrollerar sparandet');
     release();
-    await expect(page.getByRole('alert')).toContainText('Utfallet är okänt');
+    await expect(
+      page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
+    ).toContainText('Utfallet är okänt');
     await page.getByRole('link', { name: 'Till startsidan', exact: true }).click();
     await page.getByRole('button', { name: 'Visa sparandet', exact: true }).click();
     await page
       .getByRole('dialog', { name: 'Spara utkastet', exact: true })
       .getByRole('button', { name: 'Kontrollera sparandet igen', exact: true })
       .click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat: Sparad cykel');
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+      'Utkastet är sparat',
+    );
     const history = await (await page.request.get(`${path}/history`)).json();
     expect(history.history).toHaveLength(1);
     await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('list', { name: 'Objekt', exact: true })).toContainText(
-      'Sparad cykel',
-    );
+    await openTable(page);
+    await expect(page.getByRole('table')).toContainText('Sparad cykel');
   } finally {
     release();
     await installation.close();
@@ -623,24 +615,19 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}/map/view`;
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    await page
-      .getByRole('region', { name: 'Lista och utkast', exact: true })
-      .getByRole('button', { name: 'Nytt objekt', exact: true })
-      .click();
+    await openMap(page);
+    await openNewObject(page);
     await page.getByLabel('Namn', { exact: true }).fill('Min cykel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await openDraftReview(page);
     await page.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(
-      page.getByRole('status', { name: 'Hushållsarbetets status', exact: true }),
-    ).toContainText('Sparat: Min cykel');
-    await page
-      .getByRole('list', { name: 'Objekt', exact: true })
-      .getByRole('button', { name: 'Uppgifter för Min cykel', exact: true })
-      .click();
-    await openWorkspace(page);
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+      'Utkastet är sparat',
+    );
+    await closeTextView(page);
+    await openMap(page);
+    await page.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true }).click();
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-    await expect(page.getByRole('region', { name: 'Lista och utkast', exact: true })).toBeVisible();
     await expect(space).toBeVisible();
     await page.getByRole('button', { name: 'Navigera', exact: true }).click();
     await page.getByRole('button', { name: /^Flytta .+: höger$/ }).click();
@@ -654,12 +641,11 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('link', { name: 'Till startsidan', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Lista och utkast', exact: true })).toBeVisible();
-    await activatePanel(page, 'Min cykel');
+    await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Min cykel', exact: true })).toContainText(
       'Min cykel',
     );
-    await closePanels(page);
+    await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
     await expect(
       space.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true }),
     ).toHaveAttribute('aria-pressed', 'true');

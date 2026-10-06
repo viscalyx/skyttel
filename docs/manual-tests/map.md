@@ -432,8 +432,12 @@ behåller separata identiteter när hela utkastet sparas.
 testinstallationen med samma databas.
 
 **Integrationstest:** [family.spec.ts](../../tests/integration/family.spec.ts),
-testfallet “KARTA-07: family objects and directed relationships save
-together and keep their identities”.
+följande testfall:
+
+- “KARTA-07: family objects and directed relationships save together and
+  keep their identities”.
+- “KARTA-07: a concurrent duplicate refreshes the saved relationship and
+  allows explicit editing”.
 
 **Steg:**
 
@@ -456,6 +460,28 @@ together and keep their identities”.
   Sambandet går från abonnemanget till tjänstekontot och behåller sin typ.
 - Integrationstestet kontrollerar dessutom att sparandet och historiken
   bevarar samma ändringsgrupp och objektens identiteter.
+
+**Samtidig dubblett:** Förbered ett separat provhushåll med demodata enligt
+[DEMO-01](operations.md). Alex är administratör och Robin medlem i en
+separat profil. Kasta Alex tidigare privata utkast genom **Visa utkastet →
+Kasta hela utkastet** och den uttryckliga bekräftelsen. Bevara sparade fakta.
+
+1. Som Alex, öppna **Tabell → Samband för Kim Exempel → Nytt samband**.
+   Välj **Från objekt: Kim Exempel**, typen **Använder** och
+   **Till objekt: Molnmusik**. Behåll formuläret öppet utan att skicka.
+2. Som Robin, öppna samma vanliga sambandsformulär och lägg det identiska
+   kända sambandet i Robins utkast. Spara uttryckligen genom **Visa
+   utkastet → Spara hela utkastet** och invänta bekräftat sparande.
+3. Som Alex, välj **Lägg i utkastet**. Läs **Sambandet finns redan**,
+   meningen **Kim Exempel använder Molnmusik** och det befintliga
+   sambandet **Kim Exempel → Använder → Molnmusik**. Ingen dubblett ska
+   ligga i Alex utkast och kartan ska innehålla exakt ett sådant samband.
+4. Välj **Redigera befintligt samband**. Bekräfta den verkliga förlusten
+   av det oskickade tillägget med **Kasta ändringarna och fortsätt**.
+   Formuläret visar **Redigera samband** för det befintliga sambandet.
+   Att öppna redigeringen ska inte ändra det sparade sambandet eller
+   skapa något privat förslag. Automationen kontrollerar samma faktiska
+   sambands-ID och hela oförändrade publika kartsvaret.
 
 ## Gemensamt objektformulär
 

@@ -118,7 +118,7 @@ narrow focus controls survive unavailable graphics”.
 - Mus och pekskärm ger inget hopp och roterar kring samma personliga läge.
 - Knapparna har begripliga namn, synligt tangentbordsfokus och pekmål som
   ryms i vyn. Kartgrafik som döljs eller avbryts kan inte fokuseras.
-- Urval och pågående arbete finns kvar efter panelbyte och grafikavbrott.
+- Urval och pågående arbete finns kvar efter vybyte och grafikavbrott.
 
 ### KAMERA-04: Fokusera i en kort vy med åtkomliga verktyg
 
