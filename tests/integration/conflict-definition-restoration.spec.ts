@@ -10,6 +10,73 @@ import { applyProposedConflictChanges } from '../support/conflict-properties.js'
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 
 for (const kind of ['object', 'relationship'] as const)
+  test(`UTKAST-76: a retained ${kind} definition without an actual removed revision can be explicitly discarded without granting restoration`, async ({
+    page,
+    browser,
+  }) => {
+    const administrator = await browser.newContext();
+    const app = await prepareArchiveConflict(
+      administrator.request,
+      page.request,
+      kind === 'object' ? 'missing-object-definition' : 'missing-relationship-definition',
+    );
+    try {
+      const before = await app.read();
+      const history = await (await page.request.get(`${app.path}/history`)).json();
+      const conflict = draftConflicts(before).find(
+        (conflict) => conflict.kind === (kind === 'object' ? 'objectType' : 'relationshipType'),
+      );
+      if (!conflict) throw new Error('Missing retained definition');
+      expect(before.removedDefinitions).toBeUndefined();
+      expect(
+        (
+          await app.post(page.request, 'resolve', {
+            conflict,
+            command: 'definition-choice',
+            definitionChoice: 'proposed',
+            basis: conflictBasis(before, conflict),
+            version: before.draft.version,
+            contentVersion: before.contentVersion,
+          })
+        ).status(),
+      ).toBe(409);
+      expect((await app.read()).draft).toEqual(before.draft);
+      await page.goto(app.installation.origin);
+      await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+      const proposed = dialog
+        .getByRole('region', { name: 'Ditt förslag', exact: true })
+        .getByRole('button');
+      await expect(proposed).toContainText('Min privata typbenämning');
+      await expect(proposed).toBeDisabled();
+      await expect(dialog).toContainText(
+        'Typdefinitionen kan inte återställas med det aktuella underlaget.',
+      );
+      await dialog
+        .getByRole('region', { name: 'Sparat i kartan nu', exact: true })
+        .getByRole('button', { name: 'Typdefinition: Sparat i kartan nu – Borttaget', exact: true })
+        .click();
+      await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
+      await expect(dialog.getByRole('status')).toContainText(
+        'Förslaget har tagits bort ur ditt utkast',
+      );
+      const after = await app.read();
+      expect(after.draft.version).toBe(before.draft.version + 1);
+      expect(after.draft[kind === 'object' ? 'objectTypes' : 'relationshipTypes'] ?? []).toEqual(
+        [],
+      );
+      expect(after.draft.changes).toEqual(before.draft.changes);
+      expect(after.objects).toEqual(before.objects);
+      expect(after.types).toEqual(before.types);
+      expect(after.relationshipTypes).toEqual(before.relationshipTypes);
+      expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    } finally {
+      await administrator.close();
+      await app.installation.close();
+    }
+  });
+
+for (const kind of ['object', 'relationship'] as const)
   test(`UTKAST-67: an explicitly reviewed removed ${kind} definition restores its historical identity only on a separate save`, async ({
     page,
     browser,

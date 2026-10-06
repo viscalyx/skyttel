@@ -9,6 +9,10 @@ export type ArchiveConflictKind =
   | 'missing-object-type'
   | 'missing-relationship-type'
   | 'invalid-datatype'
+  | 'replaced-object-field'
+  | 'replaced-relationship-field'
+  | 'missing-object-definition'
+  | 'missing-relationship-definition'
   | 'removed-object-definition'
   | 'removed-relationship-definition';
 type ConflictApp = Awaited<ReturnType<typeof conflictCollaborators>>;
@@ -74,11 +78,25 @@ export async function prepareArchiveConflict(
   administrator: APIRequestContext,
   member: APIRequestContext,
   kind: ArchiveConflictKind,
-  options: { administratorDefinitionProposal?: boolean } = {},
+  options: { administratorDefinitionProposal?: boolean; missingEndpoint?: boolean } = {},
 ) {
   const app = await conflictCollaborators(administrator, member);
   const relationship =
-    kind === 'missing-relationship-type' || kind === 'removed-relationship-definition';
+    kind === 'missing-relationship-type' ||
+    kind === 'removed-relationship-definition' ||
+    kind === 'missing-relationship-definition' ||
+    kind === 'replaced-relationship-field';
+  const noRemovedDefinition =
+    kind === 'missing-object-definition' || kind === 'missing-relationship-definition';
+  let baseline: Awaited<ReturnType<typeof downloadConflictArchive>> | undefined;
+  if (noRemovedDefinition) {
+    await app.propose(member, 'draft', 'independent', {
+      typeId: (await app.read(member)).types[0].id,
+      name: 'Oberoende förslag',
+      description: '',
+    });
+    baseline = await downloadConflictArchive(app, administrator);
+  }
   const definitionRoute = relationship ? 'relationship-type' : 'object-type';
   const typeId = 'historical-type';
   const definition = relationship
@@ -88,7 +106,7 @@ export async function prepareArchiveConflict(
         forwardLabel: 'förvaras i',
         reverseLabel: 'förvarar',
         fields:
-          kind === 'missing-relationship-type'
+          kind === 'missing-relationship-type' || kind === 'replaced-relationship-field'
             ? [{ id: 'storage-year', name: 'Installationsår', description: '', kind: 'text' }]
             : [],
       }
@@ -113,7 +131,7 @@ export async function prepareArchiveConflict(
     (type) => type.id === typeId,
   );
   if (!type) throw new Error('Missing fixture definition');
-  if (kind.startsWith('removed-'))
+  if (kind.startsWith('removed-') || noRemovedDefinition)
     expect(
       (
         await app.post(member, definitionRoute, {
@@ -148,11 +166,12 @@ export async function prepareArchiveConflict(
             customValues: { year: 'Våren 2021' },
           },
     );
-  await app.propose(member, 'draft', 'independent', {
-    typeId: current.types[0].id,
-    name: 'Oberoende förslag',
-    description: '',
-  });
+  if (!baseline)
+    await app.propose(member, 'draft', 'independent', {
+      typeId: current.types[0].id,
+      name: 'Oberoende förslag',
+      description: '',
+    });
   if (options.administratorDefinitionProposal)
     expect(
       (
@@ -168,29 +187,48 @@ export async function prepareArchiveConflict(
   const administratorId = (await app.read(administrator)).userId;
   const privateDraft = earlier.content.drafts.find((draft) => draft.userId === current.userId);
   if (!privateDraft) throw new Error('Missing owned fixture draft');
-  expect(
-    (
-      await app.post(member, 'discard', { version: (await app.read(member)).draft.version })
-    ).status(),
-  ).toBe(200);
-  const newer =
-    kind === 'invalid-datatype'
-      ? {
-          ...definition,
-          fields: [{ id: 'year', name: 'Installationsår', description: '', kind: 'number' }],
-        }
-      : null;
-  expect(
-    (
-      await app.post(administrator, definitionRoute, {
-        version: (await app.read()).draft.version,
-        id: typeId,
-        baseRevision: type.revision,
-        value: newer,
-      })
-    ).status(),
-  ).toBe(200);
-  expect((await app.save(administrator, 'newer-definition')).status()).toBe(200);
+  if (baseline) await importConflictArchive(app, administrator, baseline);
+  else {
+    expect(
+      (
+        await app.post(member, 'discard', { version: (await app.read(member)).draft.version })
+      ).status(),
+    ).toBe(200);
+    const newer =
+      kind === 'invalid-datatype'
+        ? {
+            ...definition,
+            fields: [{ id: 'year', name: 'Installationsår', description: '', kind: 'number' }],
+          }
+        : kind.startsWith('replaced-')
+          ? {
+              ...definition,
+              fields: [
+                {
+                  id: 'replacement-year',
+                  name: 'Installationsår',
+                  description: '',
+                  kind: 'number',
+                },
+              ],
+            }
+          : null;
+    expect(
+      (
+        await app.post(administrator, definitionRoute, {
+          version: (await app.read()).draft.version,
+          id: typeId,
+          baseRevision: type.revision,
+          value: newer,
+        })
+      ).status(),
+    ).toBe(200);
+    expect((await app.save(administrator, 'newer-definition')).status()).toBe(200);
+  }
+  if (options.missingEndpoint) {
+    await app.propose(administrator, 'draft', 'service', null);
+    expect((await app.save(administrator, 'removed-endpoint')).status()).toBe(200);
+  }
   const archive = await downloadConflictArchive(app, administrator);
   archive.content.drafts = [
     ...archive.content.drafts.filter((draft) => draft.userId !== current.userId),
@@ -209,7 +247,7 @@ export async function prepareArchiveConflict(
   await importConflictArchive(app, administrator, archive);
   const restored = await app.read(member);
   expect(restored.userId).toBe(current.userId);
-  expect(restored.contentVersion).toBe(current.contentVersion + 1);
+  expect(restored.contentVersion).toBe(current.contentVersion + (baseline ? 2 : 1));
   return {
     ...app,
     read: () => app.read(member),

@@ -44,13 +44,27 @@ const preparations = {
   'new-missing-endpoint': () =>
     prepareRelationshipSpecialConflict(page.request, other.request, 'missing-endpoint'),
   'new-own-removal': () => prepareOwnRemovalConflict(page.request, other.request),
-  'new-connections': () => prepareOwnRemovalConflict(page.request, other.request, true),
+  'new-connections': () => prepareOwnRemovalConflict(page.request, other.request, 'connections'),
+  'new-combined-removal': () =>
+    prepareOwnRemovalConflict(page.request, other.request, 'facts-and-connections'),
   'new-missing-object-type': () =>
     prepareArchiveConflict(other.request, page.request, 'missing-object-type'),
   'new-missing-relationship-type': () =>
     prepareArchiveConflict(other.request, page.request, 'missing-relationship-type'),
   'new-invalid-datatype': () =>
     prepareArchiveConflict(other.request, page.request, 'invalid-datatype'),
+  'new-replaced-object-field': () =>
+    prepareArchiveConflict(other.request, page.request, 'replaced-object-field'),
+  'new-replaced-relationship-field': () =>
+    prepareArchiveConflict(other.request, page.request, 'replaced-relationship-field'),
+  'new-multiple-blockers': () =>
+    prepareArchiveConflict(other.request, page.request, 'missing-relationship-type', {
+      missingEndpoint: true,
+    }),
+  'new-no-removed-object-definition': () =>
+    prepareArchiveConflict(other.request, page.request, 'missing-object-definition'),
+  'new-no-removed-relationship-definition': () =>
+    prepareArchiveConflict(other.request, page.request, 'missing-relationship-definition'),
   'new-object-restoration': () =>
     prepareArchiveConflict(other.request, page.request, 'removed-object-definition'),
   'new-relationship-restoration': () =>
@@ -129,7 +143,7 @@ try {
   });
   await fresh('new-base');
   console.log(
-    `Commands: ${Object.keys(preparations).join(', ')}, newer-name, newer-type, newer-reference, newer-private, newer-definition, reimport-restoration, probe-definition-guards, probe-reused-definition, forge-restoration, try-restoration-save, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, result, quit`,
+    `Commands: ${Object.keys(preparations).join(', ')}, remove-new-connection, probe-unavailable-restoration, newer-name, newer-type, newer-reference, newer-private, newer-definition, reimport-restoration, probe-definition-guards, probe-reused-definition, forge-restoration, try-restoration-save, resolve-elsewhere, save-elsewhere, hold, release, lose-applied, lose-unsent, check-error, network-ok, result, quit`,
   );
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const command of input) {
@@ -145,6 +159,36 @@ try {
     else if (command === 'network-ok') {
       delivery = 'normal';
       await page.unroute('**/map');
+    } else if (app && command === 'remove-new-connection' && kind === 'new-combined-removal') {
+      await app.propose(other.request, 'relationship', 'new-edge', null);
+      assert.equal((await app.save(other.request, 'remove-only-connection')).status(), 200);
+      console.log('Only the new connection was removed; changed saved object facts remain.');
+    } else if (
+      app &&
+      command === 'probe-unavailable-restoration' &&
+      kind.startsWith('new-no-removed-')
+    ) {
+      const state = await app.read();
+      const conflict = draftConflicts(state).find(
+        (conflict) =>
+          conflict.kind === (kind.includes('relationship') ? 'relationshipType' : 'objectType'),
+      );
+      if (!conflict) throw new Error('Missing retained definition conflict');
+      assert.equal(state.removedDefinitions, undefined);
+      await rejectedWithoutChanges(
+        app,
+        page.request,
+        'resolve',
+        {
+          conflict,
+          command: 'definition-choice',
+          definitionChoice: 'proposed',
+          basis: conflictBasis(state, conflict),
+          version: state.draft.version,
+          contentVersion: state.contentVersion,
+        },
+        'Restoration without an actual removed definition',
+      );
     } else if (
       app &&
       historicalDefinition &&

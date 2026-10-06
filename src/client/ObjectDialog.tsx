@@ -647,9 +647,12 @@ export function ObjectDialog({
         <ObjectTypeLossDialog
           fields={typeChange.lost.map((id) => ({
             name:
-              (
-                type ?? (historicalType?.id === editor.value.typeId ? historicalType : undefined)
-              )?.fields?.find((field) => field.id === id)?.name ?? id,
+              type?.fields?.find((field) => field.id === id)?.name ??
+              (historicalType?.id === editor.value.typeId
+                ? historicalType
+                : undefined
+              )?.fields?.find((field) => field.id === id)?.name ??
+              id,
             value: editor.value.customValues?.[id],
           }))}
           onCancel={() => setTypeChange(null)}

@@ -443,7 +443,10 @@ export function RelationshipForm({
       {nextType !== undefined && (
         <ObjectTypeLossDialog
           fields={Object.entries(value.customValues ?? {}).map(([id, answer]) => ({
-            name: (type ?? historicalType)?.fields?.find((field) => field.id === id)?.name ?? id,
+            name:
+              type?.fields?.find((field) => field.id === id)?.name ??
+              historicalType?.fields?.find((field) => field.id === id)?.name ??
+              id,
             value: answer,
           }))}
           onCancel={() => setNextType(undefined)}

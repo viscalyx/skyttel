@@ -1980,13 +1980,13 @@ usable in both opening orders at 1440px”, samma titel med “640px” och “3
 
 ## Bevarade konfliktval och kontrollerat utfall
 
-UTKAST-49–72 använder en tillfällig installation med riktig
+UTKAST-49–77 använder en tillfällig installation med riktig
 SQLite och två
 syntetiska användare: administratören Alex och medlemmen Robin. Starta från
 repo-roten med `npm run build` och
 `npx tsx scripts/manual-conflict-continuity.ts`. Öppna adressen som skrivs ut.
-För UTKAST-49–63 är Alex inloggad i det synliga fönstret; konsolkommandon
-för Robin använder hans separata session. Arkivfallen UTKAST-64–72 visar
+För UTKAST-49–63, 73 och 77 är Alex inloggad i det synliga fönstret; konsolkommandon
+för Robin använder hans separata session. Arkivfallen UTKAST-64–72 och 74–76 visar
 i stället medlemmen Robin; administratören Alex använder en separat
 session för export, typändring och import. Inga externa AI-anrop eller
 medgivanden behövs.
@@ -2889,3 +2889,199 @@ historical field labels until explicitly confirmed loss”.
   **Installationsår** förblir obesvarat; det gamla svaret kopieras inte.
 - Det oberoende förslaget, sparade objekt och historik består under rättningen.
   Först det separata sparandet gör den rättade typen gemensam för objektet.
+
+### UTKAST-73: behåll ändrade fakta när en ny förbindelse försvinner
+
+**Syfte:** Ompröva bara det borttagna sambandet utan att förlora återstående
+konflikt om objektets sparade fakta eller ett redan gjort objektval.
+
+**Användare:** Alex i fönstret; Robin sparar i sin separata session.
+
+**Förutsättningar:** Kör `new-combined-removal`. Alex föreslår borttagning
+av Lo. Robin har sparat **Nya sparade fakta** och ett nytt samband för Lo.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallet “UTKAST-73: removing one new connection leaves changed saved facts
+subject to explicit conflict review”.
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast**. Läs det sparade objektets nya fakta
+   och taggen **Robin** samt det nya sambandet.
+2. Välj objektets **Föreslagen borttagning** och den sparade sidans samband.
+   Läs varför kombinationen är ogiltig. Kör `result`.
+3. Kör `remove-new-connection`. Stäng med Escape, öppna igen och välj
+   **Visa aktuell jämförelse**.
+4. Läs att Robin sparade ändringar i objektet. Kontrollera att objektets
+   borttagningsval finns kvar men att sambandsraden försvunnit.
+5. Välj **Lägg valen i utkastet** och kör `result`.
+6. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+
+**Förväntat resultat:**
+
+- Den ogiltiga kombinationen spärrar bekräftelsen utan utkaständring.
+- Robins borttagning berör bara det nya sambandet. De sparade fakta och
+  deras faktiska sparare finns kvar i jämförelsen. Borttagningen av
+  sambandet löser inte automatiskt objektets återstående konflikt.
+- Granskningen lägger objektets val mot det faktiska aktuella underlaget
+  i utkastet. Det oberoende förslaget, sparade objekt och historik består.
+- Först separat sparande tar bort Lo ur den gemensamma kartan.
+
+### UTKAST-74: läs ett förlorat fälts historiska namn från ägt förslag
+
+**Syfte:** Använda aktuell fältbenämning när den finns och annars den ägda
+historiska benämningen, även när själva typdefinitionen fortfarande finns.
+
+**Användare:** Robin i fönstret; administratören Alex förbereder arkivet.
+
+**Förutsättningar:** Kör `new-replaced-object-field` eller
+`new-replaced-relationship-field`. Förberedaren exporterar ett tidigare
+ägt förslag, kastar det offentligt, ersätter det gamla textfältet med ett
+nytt talfält med samma namn och återimporterar det tidigare privata förslaget
+med kontrollerade arkivdelar. Det nya fältet har en annan identitet.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+testfallen “UTKAST-74: an object type with a replaced field preserves the
+owned historical answer label during explicit type-loss review” och
+“UTKAST-74: a relationship type with a replaced field preserves the owned
+historical answer label during explicit type-loss review”.
+
+**Steg:**
+
+1. Öppna konflikten och läs **Installationsår: Våren 2021** i förslaget.
+   Stäng med Escape.
+2. Välj **Tabell** och **Redigera Solcellsanläggningen** för objektfallet.
+   För sambandsfallet, öppna **Samband för Lo Exempel → Redigera samband**.
+3. Byt till den första vanliga typen. Läs **Ta bort tidigare egna fält?**.
+   Kontrollera den historiska benämningen och svaret. Tryck Escape och
+   kör `result`. Upprepa typbytet.
+4. Bekräfta **Ta bort fältvärdena och byt typ**. Lägg ändringen i utkastet
+   och stäng den vanliga dialogen. Kör `result`.
+5. Spara separat från **Skriv till Skyttel → Visa utkastet**. Upprepa
+   hela fallet i en ny installation med den andra förberedelsen.
+
+**Förväntat resultat:**
+
+- Den befintliga aktuella typen innehåller ett nytt talfält med samma namn,
+  men den gamla svarade fältidentiteten saknas där. Bekräftelsen visar ändå
+  **Installationsår: Våren 2021**, inte den gamla fältidentiteten.
+- Escape bevarar hela det privata utkastet. Ett uttryckligt bekräftat byte
+  tar bort gamla svar utan att kopiera dem till en annan fältidentitet.
+- Det oberoende förslaget och gemensamma uppgifter består under rättningen.
+  Endast ett separat sparande gör det rättade förslaget gemensamt.
+
+### UTKAST-75: visa saknad ändpunkt och saknad typ samtidigt
+
+**Syfte:** Bevara alla samtidiga hinder och kasta endast det uttryckligen
+valda sambandsförslaget.
+
+**Användare:** Robin i fönstret; administratören Alex förbereder arkivet.
+
+**Förutsättningar:** Kör `new-multiple-blockers`. Förberedaren använder
+validerad offentlig export och import av ett tidigare ägt sambandsförslag
+efter verklig borttagning av både dess typdefinition och målobjekt.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+testfallet “UTKAST-75: a missing endpoint and missing relationship type remain
+visible until only the explicit target proposal is discarded”.
+
+**Steg:**
+
+1. Öppna **1 konflikt i ditt utkast**. Läs både den saknade ändpunkten och
+   den saknade sambandstypen samt anvisningen för vanlig typrättning.
+2. Läs **Molnmusik** från den historiska ändpunkten i förslaget. Kontrollera
+   att förslaget är läsbart och inte ger några egenskapsval.
+3. Tryck Escape, kör `result` och öppna konflikten igen.
+4. Välj **Ta bort sambandet ur ditt utkast** och kör `result`.
+
+**Förväntat resultat:**
+
+- Båda hindren finns i samma konflikt. En primär orsak döljer inte den andra.
+- Historiska ändpunktsnamn är läsbara. Stängning ändrar inget privat förslag.
+- Bekräftelsen kastar bara det berörda sambandsförslaget. Det oberoende
+  objektförslaget, gemensamma uppgifter, typer och historik är oförändrade.
+
+### UTKAST-76: kasta ägt definitionsförslag utan faktisk borttagningsrevision
+
+**Syfte:** Tillåta ett uttryckligt privat kastval när en validerad import
+saknar definitionen utan att ge obestyrkt återställningsbehörighet.
+
+**Användare:** Robin i fönstret; administratören Alex förbereder arkiven.
+
+**Förutsättningar:** Kör `new-no-removed-object-definition` eller
+`new-no-removed-relationship-definition`. Förberedaren exporterar en faktisk
+utgångspunkt före typens tillkomst med Robins oberoende privata förslag,
+skapar och sparar typen samt exporterar Robins ägda definitionsändring.
+Den offentliga återimporten av utgångspunkten följd av det ägda privata
+förslaget bevarar ägaren, men ingen faktisk borttagningsrevision finns.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+testfallen “UTKAST-76: a retained object definition without an actual removed
+revision can be explicitly discarded without granting restoration” och
+“UTKAST-76: a retained relationship definition without an actual removed
+revision can be explicitly discarded without granting restoration”.
+
+**Steg:**
+
+1. Kör `probe-unavailable-restoration` och `result`. Läs HTTP 409 och
+   kontrollen av oförändrade privata utkast, gemensamma uppgifter och historik.
+2. Öppna **1 konflikt i ditt utkast**. Läs **Min privata typbenämning**
+   från det bevarade förslaget och beskedet att det inte kan återställas
+   med det aktuella underlaget. Förslagets återställningsval är spärrat.
+3. Välj den sparade sidans **Borttaget** för **Typdefinition** och
+   **Lägg valen i utkastet**. Kör `result`.
+4. Upprepa med en ny installation för den andra definitionstypen.
+
+**Förväntat resultat:**
+
+- En föreslagen återställning utan faktisk borttagningsrevision avvisas
+  med HTTP 409 utan ändring. Ingen ny återställningsbehörighet tilldelas.
+- Det uttryckliga sparade valet kastar bara det egna definitionsförslaget
+  och ökar det privata utkastets version en gång.
+- Det oberoende förslaget, gemensamma objekt, typer och historik består.
+
+### UTKAST-77: kontrollera ett oklart kastval utan upprepad bekräftelse
+
+**Syfte:** Bevara åtkomst och faktiskt utfall för ett fast kastval även
+när dess sista konfliktrad försvinner efter att svaret tappats.
+
+**Användare:** Alex i fönstret; Robin har sparat det redan befintliga sambandet.
+
+**Förutsättningar:** Kör `new-duplicate` i ett smalt fönster. Använd Karta
+eller Tabell. `lose-applied` skickar bekräftelsen till den riktiga servern
+men tappar svaret; `lose-unsent` hindrar leveransen före servern.
+
+**Integrationstest:**
+[conflict-special.spec.ts](../../tests/integration/conflict-special.spec.ts),
+testfallen “UTKAST-77: an applied duplicate-discard reply is explicitly checked
+without replay in Karta”, “UTKAST-77: an unsent duplicate-discard reply is
+explicitly checked without replay in Karta”, “UTKAST-77: an applied
+duplicate-discard reply is explicitly checked without replay in Tabell” och
+“UTKAST-77: an unsent duplicate-discard reply is explicitly checked without
+replay in Tabell”.
+
+**Steg:**
+
+1. Öppna konflikten. Kör `lose-applied` och välj **Ta bort sambandet ur ditt
+   utkast**. Läs det oklara beskedet. Stäng med Escape och öppna igen.
+2. När konfliktraden försvinner, stäng och välj **Visa konfliktvalet**.
+   Kontrollera att ny bekräftelse fortfarande är spärrad.
+3. Välj **Kontrollera om valet lades i utkastet** och kör `result`.
+4. Stäng med Escape och kontrollera synligt användbart fokus.
+5. Upprepa i en ny installation med `lose-unsent`. Efter återöppning
+   finns konflikten kvar. Gör den uttryckliga kontrollen och läs beskedet
+   att valet inte lades i utkastet. Upprepa båda förloppen i den andra vyn.
+
+**Förväntat resultat:**
+
+- Återöppning och kontroll upprepar ingen mutation. Ny bekräftelse är
+  spärrad tills faktiskt utfall har kontrollerats genom offentlig hämtning.
+- Genomfört kastval ger **Sambandet har tagits bort ur ditt utkast**;
+  uteblivet kastval bevarar hela utkastet och gör bekräftelsen möjlig igen.
+- Det oberoende förslaget, sparade samband, objekt och historik består.
+  Både Karta och Tabell behåller åtkomst även när sista konflikten försvinner.
+- Stängning ger synligt användbart fokus utan att välja en dold kontroll.

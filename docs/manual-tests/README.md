@@ -386,7 +386,11 @@ paneler för att
   aktiva val, återställa endast deras historiska identitet med fortsatt
   revisionsföljd, avvisa inaktuellt sparande atomiskt, ompröva privat
   återställning efter import och kontrollera dess fullständiga privata
-  utfall utan dubblerad mutation
+  utfall utan dubblerad mutation; behålla ändrade fakta när nya samband
+  försvinner, visa samtidiga typ- och ändpunktshinder, läsa historiska
+  fältnamn även när en aktuell definition saknar fältet, kasta ägda
+  definitionsförslag utan faktisk borttagningsrevision och kontrollera
+  oklara fasta kastval från både Karta och Tabell
   med en beständig status utan fokusstöld
   samt granska samtidiga ändringar, dubbletter och
   borttagningar före ett gemensamt sparande. Bevara oberoende status

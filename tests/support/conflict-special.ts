@@ -18,9 +18,7 @@ export async function saveReviewedConflictDraft(page: Page) {
     ),
     draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click(),
   ]);
-  await expect(
-    page.getByRole('dialog', { name: 'Sparbekräftelse', exact: true }),
-  ).not.toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Spara utkastet', exact: true })).not.toBeVisible();
   await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
     'Utkastet är sparat',
   );
@@ -81,7 +79,7 @@ export async function prepareRelationshipSpecialConflict(
 export async function prepareOwnRemovalConflict(
   first: APIRequestContext,
   second: APIRequestContext,
-  connections = false,
+  scenario: 'facts' | 'connections' | 'facts-and-connections' = 'facts',
 ) {
   const app = await conflictCollaborators(first, second);
   const initial = await app.read();
@@ -93,14 +91,14 @@ export async function prepareOwnRemovalConflict(
     name: 'Oberoende förslag',
     description: '',
   });
-  if (connections)
+  if (scenario !== 'facts')
     await app.propose(second, 'relationship', 'new-edge', {
       typeId: initial.relationshipTypes[0].id,
       sourceId: 'lo',
       targetId: 'service',
       knowledge: 'known',
     });
-  else
+  if (scenario !== 'connections')
     await app.propose(second, 'draft', 'lo', {
       ...original,
       name: 'Lo Berg',

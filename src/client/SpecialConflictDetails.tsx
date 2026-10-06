@@ -83,6 +83,11 @@ export function SpecialConflictDetails({
           {special.action && <span aria-hidden="true">⚠ </span>}
           <span>{special.warning}</span>
         </p>
+        {special.additionalBlockers?.map((blocker) => (
+          <p key={blocker.reason}>
+            {blocker.reason} {blocker.warning}
+          </p>
+        ))}
       </div>
       <p>
         {special.instruction ??
@@ -90,6 +95,9 @@ export function SpecialConflictDetails({
             ? `${conflict.kind === 'object' ? 'Objektet' : 'Sambandet'} förblir borttaget. Det är förvalt. När du accepterar kastas ditt ändringsförslag för denna post.`
             : 'Det är förvalt att ta bort sambandet ur ditt utkast. Bekräfta nedan.')}
       </p>
+      {special.additionalBlockers?.map(
+        (blocker) => blocker.instruction && <p key={blocker.reason}>{blocker.instruction}</p>,
+      )}
       <div className="cp-comparison">
         <section aria-label="Sparat i kartan nu">
           <h3>Sparat i kartan nu</h3>

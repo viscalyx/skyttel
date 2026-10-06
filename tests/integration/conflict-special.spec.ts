@@ -213,7 +213,7 @@ test('UTKAST-62: object and new connection removal choices remain independent an
   browser,
 }) => {
   const other = await browser.newContext();
-  const app = await prepareOwnRemovalConflict(page.request, other.request, true);
+  const app = await prepareOwnRemovalConflict(page.request, other.request, 'connections');
   try {
     const before = await app.read();
     await page.goto(app.installation.origin);
@@ -268,13 +268,156 @@ test('UTKAST-62: object and new connection removal choices remain independent an
   }
 });
 
+test('UTKAST-73: removing one new connection leaves changed saved facts subject to explicit conflict review', async ({
+  page,
+  browser,
+}) => {
+  const other = await browser.newContext();
+  const app = await prepareOwnRemovalConflict(page.request, other.request, 'facts-and-connections');
+  try {
+    const before = await app.read();
+    await page.goto(app.installation.origin);
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    const saved = dialog.getByRole('region', { name: 'Sparat i kartan nu', exact: true });
+    await expect(saved.getByRole('button', { name: /^Objekt:/ })).toContainText(
+      'Nya sparade fakta',
+    );
+    await expect(saved.getByRole('button', { name: /^Objekt:/ })).toContainText('Robin');
+    await expect(saved.getByRole('button', { name: /^Samband:/ })).toBeVisible();
+    await dialog
+      .getByRole('button', { name: 'Objekt: Ditt förslag – Föreslagen borttagning', exact: true })
+      .click();
+    await saved.getByRole('button', { name: /^Samband:/ }).click();
+    await expect(dialog.getByRole('alert')).toContainText(
+      'Objektet kan inte tas bort medan sambandet till det finns kvar',
+    );
+    await expect(
+      dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
+    ).toBeDisabled();
+    expect((await app.read()).draft).toEqual(before.draft);
+    await app.propose(other.request, 'relationship', 'new-edge', null);
+    expect((await app.save(other.request, 'remove-only-connection')).status()).toBe(200);
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
+    await expect(dialog).toContainText(
+      'Du föreslår borttagning. Robin sparade ändringar i objektet innan du hann spara ditt förslag.',
+    );
+    await expect(saved.getByRole('button', { name: /^Samband:/ })).toHaveCount(0);
+    const proposed = dialog.getByRole('button', {
+      name: 'Objekt: Ditt förslag – Föreslagen borttagning',
+      exact: true,
+    });
+    await expect(proposed).toHaveAttribute('aria-pressed', 'true');
+    await expect(saved.getByRole('button', { name: /^Objekt:/ })).toContainText(
+      'Nya sparade fakta',
+    );
+    const current = await app.read();
+    expect(current.draft).toEqual(before.draft);
+    const history = await (await page.request.get(`${app.path}/history`)).json();
+    await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
+    await expect(dialog.getByRole('status')).toContainText('Valen finns i ditt utkast');
+    const reviewed = await app.read();
+    expect(reviewed.draft.changes.find((change) => change.id === 'lo')).toMatchObject({
+      before: current.objects.find((object) => object.id === 'lo'),
+      after: null,
+    });
+    expect(reviewed.draft.changes.find((change) => change.id === 'independent')).toEqual(
+      before.draft.changes.find((change) => change.id === 'independent'),
+    );
+    expect(reviewed.objects).toEqual(current.objects);
+    expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+    await saveReviewedConflictDraft(page);
+    expect((await app.read()).objects.some((object) => object.id === 'lo')).toBe(false);
+  } finally {
+    await other.close();
+    await app.installation.close();
+  }
+});
+
+for (const surface of ['Karta', 'Tabell'] as const)
+  for (const delivered of [true, false])
+    test(`UTKAST-77: an ${delivered ? 'applied' : 'unsent'} duplicate-discard reply is explicitly checked without replay in ${surface}`, async ({
+      page,
+      browser,
+    }) => {
+      const other = await browser.newContext();
+      const app = await prepareRelationshipSpecialConflict(
+        page.request,
+        other.request,
+        'duplicate',
+      );
+      try {
+        await page.setViewportSize({ width: 320, height: 900 });
+        const before = await app.read();
+        const history = await (await page.request.get(`${app.path}/history`)).json();
+        let submitted = 0;
+        await page.route('**/map/resolve', async (route) => {
+          submitted++;
+          if (delivered) await route.fetch();
+          await route.abort();
+        });
+        await page.goto(app.installation.origin);
+        if (surface === 'Tabell')
+          await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+        const opener = page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true });
+        await opener.click();
+        const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+        const discard = dialog.getByRole('button', {
+          name: 'Ta bort sambandet ur ditt utkast',
+          exact: true,
+        });
+        await discard.click();
+        await expect(dialog.getByRole('status')).toContainText('Det är oklart');
+        await page.keyboard.press('Escape');
+        await opener.click();
+        if (delivered) {
+          await expect(opener).toHaveCount(0);
+          await page.keyboard.press('Escape');
+          await page.getByRole('button', { name: 'Visa konfliktvalet', exact: true }).click();
+        }
+        await expect(discard).toBeDisabled();
+        await dialog
+          .getByRole('button', { name: 'Kontrollera om valet lades i utkastet', exact: true })
+          .click();
+        await expect(dialog.getByRole('status')).toContainText(
+          delivered ? 'Förslaget har tagits bort ur ditt utkast' : 'valet inte lades i utkastet',
+        );
+        expect(submitted).toBe(1);
+        const after = await app.read();
+        if (delivered) {
+          expect(after.draft.version).toBe(before.draft.version + 1);
+          expect(after.draft.relationships ?? []).toEqual([]);
+          await expect(
+            dialog.getByRole('heading', {
+              name: '✓ Sambandet har tagits bort ur ditt utkast',
+              exact: true,
+            }),
+          ).toBeVisible();
+        } else {
+          expect(after.draft).toEqual(before.draft);
+          await expect(discard).toBeEnabled();
+        }
+        expect(after.draft.changes).toEqual(before.draft.changes);
+        expect(after.relationships).toEqual(before.relationships);
+        expect(after.objects).toEqual(before.objects);
+        expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
+        await page.keyboard.press('Escape');
+        expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
+      } finally {
+        await other.close();
+        await app.installation.close();
+      }
+    });
+
 for (const surface of ['Karta', 'Tabell'] as const) {
   test(`UTKAST-63: a lost reply verifies retained object and connection removals without replay in ${surface}`, async ({
     page,
     browser,
   }) => {
     const other = await browser.newContext();
-    const app = await prepareOwnRemovalConflict(page.request, other.request, true);
+    const app = await prepareOwnRemovalConflict(page.request, other.request, 'connections');
     try {
       await page.setViewportSize({ width: 320, height: 900 });
       const before = await app.read();

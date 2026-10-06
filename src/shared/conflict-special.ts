@@ -14,11 +14,19 @@ export type SpecialConflict = {
   reason: string;
   warning: string;
   instruction?: string;
+  additionalBlockers?: { reason: string; warning: string; instruction?: string }[];
   action?:
     | 'Acceptera borttagningen och kasta ditt förslag'
     | 'Ta bort sambandet ur ditt utkast'
     | 'Ta bort objektet ur ditt utkast'
     | 'Lägg valen i utkastet';
+};
+
+const missingRelationshipType = {
+  reason: 'Den föreslagna sambandstypen saknas i det aktuella underlaget.',
+  warning: 'Sambandet kan inte läggas till eftersom sambandstypen saknas.',
+  instruction:
+    'Stäng konfliktfönstret och lägg till sambandstypen under Inställningar → Typer och egna fält. Justera sedan sambandet i den vanliga sambandsdialogen så att det använder rätt typ och lägg ändringen i ditt utkast. När du kommer tillbaka kontrolleras konflikten på nytt.',
 };
 
 /** A missing saved record differs from a proposal that has never been saved. */
@@ -87,6 +95,7 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
         ? 'Sambandet finns redan. Ta bort det föreslagna sambandet ur ditt utkast.'
         : 'Sambandet kan inte läggas till eftersom ett objekt som det pekar på saknas.',
       action: 'Ta bort sambandet ur ditt utkast',
+      ...(conflict.type === null ? { additionalBlockers: [missingRelationshipType] } : {}),
     };
   }
   if ((conflict.kind === 'object' || conflict.kind === 'relationship') && conflict.type === null) {
@@ -95,13 +104,13 @@ export function specialConflict(state: MapState, conflict: DraftConflict): Speci
       kind: object ? 'missing-object-type' : 'outside-correction',
       reason: object
         ? 'Den föreslagna objekttypen saknas i det aktuella underlaget.'
-        : 'Den föreslagna sambandstypen saknas i det aktuella underlaget.',
+        : missingRelationshipType.reason,
       warning: object
         ? 'Objektet kan inte läggas till eftersom objekttypen saknas.'
-        : 'Sambandet kan inte läggas till eftersom sambandstypen saknas.',
+        : missingRelationshipType.warning,
       instruction: object
         ? 'Stäng konfliktfönstret och lägg till objekttypen under Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt kan du ta bort objektet ur ditt utkast nedan.'
-        : 'Stäng konfliktfönstret och lägg till sambandstypen under Inställningar → Typer och egna fält. Justera sedan sambandet i den vanliga sambandsdialogen så att det använder rätt typ och lägg ändringen i ditt utkast. När du kommer tillbaka kontrolleras konflikten på nytt.',
+        : missingRelationshipType.instruction,
       ...(object ? { action: 'Ta bort objektet ur ditt utkast' as const } : {}),
     };
   }

@@ -200,6 +200,9 @@ export function ConflictDialog({
   const special = specialConflict(comparison, conflict);
   const removal = special?.kind === 'own-removal';
   const restoration = special?.kind === 'removed-definition';
+  const removedDefinition = restoration
+    ? removedConflictDefinition(comparison, conflict)
+    : undefined;
   const fields = removal
     ? conflictRemovalProperties(comparison, conflict)
     : conflictProperties(comparison, conflict);
@@ -291,15 +294,19 @@ export function ConflictDialog({
       return;
     caseHeading.current?.focus({ preventScroll: true });
     if (restoration) {
-      const removed = removedConflictDefinition(comparison, conflict);
-      if (!removed || !change?.after) return;
-      const after = { ...change.after, revision: removed.revision + 1 };
-      const authority = { contentVersion: comparison.contentVersion, definition: removed };
+      const discarded = selected.definition === 'saved';
+      if (!change?.after || (!discarded && !removedDefinition)) return;
+      const after = removedDefinition
+        ? { ...change.after, revision: removedDefinition.revision + 1 }
+        : change.after;
+      const authority = removedDefinition
+        ? { contentVersion: comparison.contentVersion, definition: removedDefinition }
+        : undefined;
       void resolution.apply({
         key,
         comparison,
-        discard: selected.definition === 'saved',
-        value: selected.definition === 'saved' ? {} : { definition: after },
+        discard: discarded,
+        value: discarded ? {} : { definition: after },
         resolution: {
           conflict,
           command: 'definition-choice',
@@ -309,7 +316,7 @@ export function ConflictDialog({
         effects: [
           {
             target: conflict,
-            ...(selected.definition === 'saved'
+            ...(discarded
               ? { kind: 'discard' as const }
               : { kind: 'retain' as const, before: null, after, restoration: authority }),
           },
@@ -549,6 +556,12 @@ export function ConflictDialog({
                   höger sida.
                 </p>
               )}
+              {restoration && !removedDefinition && (
+                <p>
+                  Typdefinitionen kan inte återställas med det aktuella underlaget. Välj den sparade
+                  sidans Borttaget för att kasta ditt förslag.
+                </p>
+              )}
               <div className="cp-comparison">
                 {(['saved', 'proposed'] as const).map((side) => (
                   <section key={side} aria-label={sideNames[side]}>
@@ -572,7 +585,15 @@ export function ConflictDialog({
                             type="button"
                             aria-label={`${field.label}: ${sideNames[side]} – ${conflictValueText(comparison, field, field[side])}`}
                             aria-pressed={same ? undefined : picked}
-                            disabled={same || blocked || pending || stale || unknown || disabled}
+                            disabled={
+                              same ||
+                              blocked ||
+                              pending ||
+                              stale ||
+                              unknown ||
+                              disabled ||
+                              (restoration && side === 'proposed' && !removedDefinition)
+                            }
                             onClick={() => choose(field.key, side)}
                           >
                             <span className="cp-field-name">

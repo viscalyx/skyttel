@@ -211,8 +211,8 @@ and used field kinds stay protected”.
 - En använd fälttyp ändras inte. Ett nytt fält med liknande namn får eget
   värde; Kommentar behåller Privat värde utan automatisk koppling.
 - Paneler har ingen tidigare sparad sida och beskrivs inte som borttaget.
-  Det tidigare textfältets ID `note` och värde består efter uttrycklig
-  granskning av aktuell definition. Det nya talfältet `numeric-note`
+  Det tidigare textfältets identitet och värde består efter uttrycklig
+  granskning av aktuell definition. Det nya talfältet har en annan identitet och
   förblir obesvarat. Öppning och stängning löser inget; den bekräftade
   tilläggshandlingen uppdaterar bara utkastet innan separat sparande.
 - Vanliga medlemmar kan använda gemensamma fält och rätta förifyllda typer.
