@@ -435,6 +435,7 @@ test('KARTA-12: identity, custom fields, lifecycle and icon stay together when s
     const dialog = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
     await expect(dialog.getByLabel('Identitet', { exact: true })).toBeVisible({ timeout: 1000 });
     await dialog.getByLabel('Namn', { exact: true }).fill('Pendlarcykeln');
+    await dialog.getByLabel('Beskrivning', { exact: true }).fill('Hela cykelns beskrivning.');
     await dialog.getByLabel('Objekttyp', { exact: true }).selectOption('bicycle');
     await dialog.getByLabel('Identitet', { exact: true }).selectOption('unspecified');
     await dialog.getByRole('button', { name: 'Egna fält', exact: true }).click();
@@ -443,26 +444,62 @@ test('KARTA-12: identity, custom fields, lifecycle and icon stay together when s
     await dialog.getByLabel('Inköpsdatum', { exact: true }).fill('2026-04-03');
     await dialog.getByLabel('Elcykel', { exact: true }).selectOption('false');
     await dialog.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
-    await dialog.getByLabel('Objektets status', { exact: true }).selectOption('active');
+    await dialog.getByLabel('Objektets status', { exact: true }).selectOption('ended');
     await dialog.getByLabel('Sök ikon', { exact: true }).fill('bike');
     await dialog.getByRole('button', { name: 'Välj Cykel', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await dialog
+      .getByLabel('Slutdatum: uppgiftens säkerhet', { exact: true })
+      .selectOption('known');
+    await dialog.getByLabel('Slutdatum', { exact: true }).fill('2026-04-04');
     await dialog.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(dialog).not.toBeVisible();
     const read = async (): Promise<MapState> => (await page.request.get(path)).json();
     const proposal = (await read()).draft.changes[0];
     expect(proposal.after).toMatchObject({
       name: 'Pendlarcykeln',
+      description: 'Hela cykelns beskrivning.',
       typeId: 'bicycle',
       identity: 'unspecified',
-      lifecycle: 'active',
+      lifecycle: 'ended',
+      financialFacts: { endDate: { knowledge: 'known', value: '2026-04-04' } },
       iconId: 'bike',
       customValues: { brand: 'Exempelcykel', gears: 8, bought: '2026-04-03', electric: false },
     });
     expect((await read()).objects).toHaveLength(0);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name: 'Filter', exact: true }).click();
+    const filters = page.getByRole('dialog', { name: 'Filter i tabellen', exact: true });
+    await filters.getByLabel('Ta med upphörda').check();
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Redigera Pendlarcykeln', exact: true }).click();
     const edit = page.getByRole('dialog', { name: 'Redigera Pendlarcykeln', exact: true });
+    await expect(edit.getByRole('button', { name: 'Grunduppgifter', exact: true })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     await expect(edit.getByLabel('Identitet', { exact: true })).toHaveValue('unspecified');
+    await expect(edit.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+      'Hela cykelns beskrivning.',
+    );
+    await edit.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await expect(edit.getByLabel('Tillverkare', { exact: true })).toHaveValue('Exempelcykel');
+    await expect(edit.getByLabel('Antal växlar', { exact: true })).toHaveValue('8');
+    await expect(edit.getByLabel('Inköpsdatum', { exact: true })).toHaveValue('2026-04-03');
+    await expect(edit.getByLabel('Elcykel', { exact: true })).toHaveValue('false');
+    await edit.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
+    await expect(edit.getByLabel('Objektets status', { exact: true })).toHaveValue('ended');
+    await edit.getByLabel('Sök ikon', { exact: true }).fill('bike');
+    await expect(edit.getByRole('button', { name: 'Välj Cykel', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await edit.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+    await expect(edit.getByLabel('Slutdatum: uppgiftens säkerhet', { exact: true })).toHaveValue(
+      'known',
+    );
+    await expect(edit.getByLabel('Slutdatum', { exact: true })).toHaveValue('2026-04-04');
+    await edit.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
     await edit.getByLabel('Namn', { exact: true }).fill('Pendlarcykeln i garaget');
     await edit.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
     await expect(edit).not.toBeVisible();
@@ -470,6 +507,7 @@ test('KARTA-12: identity, custom fields, lifecycle and icon stay together when s
       ...proposal.after,
       name: 'Pendlarcykeln i garaget',
     });
+    expect((await read()).objects).toHaveLength(0);
   } finally {
     await installation.close();
   }
@@ -533,11 +571,14 @@ test('KARTA-13: changing type requires explicit confirmation before custom value
     await expect(
       confirmation.getByRole('button', { name: 'Fortsätt redigera', exact: true }),
     ).toBeFocused({ timeout: 1000 });
-    await expect(confirmation).toContainText('Ramnummer');
+    await expect(confirmation).toContainText('Ramnummer: ABC123');
     await page.keyboard.press('Escape');
     await expect(confirmation).not.toBeVisible();
     await expect(dialog.getByLabel('Objekttyp', { exact: true })).toHaveValue('cycle-fields');
     await expect(dialog.getByLabel('Objekttyp', { exact: true })).toBeFocused();
+    await dialog.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await expect(dialog.getByLabel('Ramnummer', { exact: true })).toHaveValue('ABC123');
+    await dialog.getByRole('button', { name: 'Grunduppgifter', exact: true }).click();
     await dialog.getByLabel('Objekttyp', { exact: true }).selectOption(nextType.id);
     await confirmation
       .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })

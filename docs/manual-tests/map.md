@@ -511,8 +511,11 @@ when staging and editing”.
 
 1. Skapa Alex cykel med Ospecificerat objekt, beskrivning och värden i alla fyra
    egna fält.
-2. Ange Upphört med slutdatum och välj ikonen Cykel. Lägg hela formuläret i
-   utkastet och öppna dess redigering igen.
+2. Öppna Livscykel och utseende, välj Upphört och ikonen Cykel. Öppna
+   Ekonomiska uppgifter, välj Känt för Slutdatum och ange datumet. Lägg hela
+   formuläret i utkastet.
+3. Öppna Tabell → Filter, välj Ta med upphörda och stäng filtret
+   med Escape. Välj objektets Redigera och kontrollera uppgifterna igen.
 
 **Förväntat resultat:**
 

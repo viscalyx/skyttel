@@ -224,7 +224,7 @@ export function ObjectDialog({
     });
     setTypeChange(null);
   }
-  function accordion(title: string, key: string, body: ReactNode) {
+  function accordion(title: string, key: string, body: ReactNode, regionKey = key) {
     return (
       <section
         key={key}
@@ -236,13 +236,13 @@ export function ObjectDialog({
           <button
             type="button"
             aria-expanded={section === key}
-            aria-controls={`${prefix}-${key}`}
+            aria-controls={`${prefix}-${regionKey}`}
             onClick={() => toggle(key)}
           >
             <span aria-hidden="true">{section === key ? '▾' : '▸'}</span> {title}
           </button>
         </h3>
-        <div className="object-form-grid" id={`${prefix}-${key}`} hidden={section !== key}>
+        <div className="object-form-grid" id={`${prefix}-${regionKey}`} hidden={section !== key}>
           {body}
         </div>
       </section>
@@ -468,27 +468,10 @@ export function ObjectDialog({
             </button>
           )}
           <fieldset disabled={busy} className="object-field-container">
-            <section
-              className="object-form-section"
-              data-open={section === 'Grunduppgifter'}
-              data-section="Grunduppgifter"
-            >
-              <h3>
-                <button
-                  type="button"
-                  aria-expanded={section === 'Grunduppgifter'}
-                  aria-controls={`${prefix}-basic`}
-                  onClick={() => toggle('Grunduppgifter')}
-                >
-                  <span aria-hidden="true">{section === 'Grunduppgifter' ? '▾' : '▸'}</span>{' '}
-                  Grunduppgifter
-                </button>
-              </h3>
-              <div
-                className="object-form-grid"
-                id={`${prefix}-basic`}
-                hidden={section !== 'Grunduppgifter'}
-              >
+            {accordion(
+              'Grunduppgifter',
+              'Grunduppgifter',
+              <>
                 <label>
                   Namn
                   <input
@@ -537,8 +520,9 @@ export function ObjectDialog({
                   </select>
                 </label>
                 {!placedBuiltins.has('builtin:description') && description('Beskrivning')}
-              </div>
-            </section>
+              </>,
+              'basic',
+            )}
             {presentation.sections.flatMap((customSection) => {
               const entries = properties.filter(
                 (property) => property.sectionId === customSection.id,
@@ -555,42 +539,24 @@ export function ObjectDialog({
                   ]
                 : [];
             })}
-            <section
-              className="object-form-section"
-              data-open={section === 'Ekonomiska uppgifter'}
-              data-section="Ekonomiska uppgifter"
-            >
-              <h3>
-                <button
-                  type="button"
-                  aria-expanded={section === 'Ekonomiska uppgifter'}
-                  aria-controls={`${prefix}-economy`}
-                  onClick={() => toggle('Ekonomiska uppgifter')}
-                >
-                  <span aria-hidden="true">{section === 'Ekonomiska uppgifter' ? '▾' : '▸'}</span>{' '}
-                  Ekonomiska uppgifter
-                </button>
-              </h3>
-              <div
-                className="object-form-grid"
-                id={`${prefix}-economy`}
-                hidden={section !== 'Ekonomiska uppgifter'}
-              >
-                {financialFields
-                  .filter((field) => !placedBuiltins.has(`builtin:${field.key}`))
-                  .map((field) => (
-                    <FinancialFactEditor
-                      key={field.key}
-                      field={field}
-                      label={
-                        properties.find((property) => property.ref === `builtin:${field.key}`)?.name
-                      }
-                      fact={editor.value.financialFacts?.[field.key]}
-                      onChange={(fact) => changeFinancialFact(field.key, fact)}
-                    />
-                  ))}
-              </div>
-            </section>
+            {accordion(
+              'Ekonomiska uppgifter',
+              'Ekonomiska uppgifter',
+              financialFields
+                .filter((field) => !placedBuiltins.has(`builtin:${field.key}`))
+                .map((field) => (
+                  <FinancialFactEditor
+                    key={field.key}
+                    field={field}
+                    label={
+                      properties.find((property) => property.ref === `builtin:${field.key}`)?.name
+                    }
+                    fact={editor.value.financialFacts?.[field.key]}
+                    onChange={(fact) => changeFinancialFact(field.key, fact)}
+                  />
+                )),
+              'economy',
+            )}
             {accordion(
               'Livscykel och utseende',
               'appearance',
