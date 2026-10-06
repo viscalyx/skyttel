@@ -42,7 +42,8 @@ editable in the shared dialog”.
 1. Skapa Alex som Person med beskrivningen Personen som använder cykeln och
    Blå cykeln som Fordon med beskrivningen Cykeln i garaget. Lägg varje
    fullständigt objekt i utkastet med **Lägg i utkastet och stäng**.
-2. Öppna tabellen och **Samband för Alex**. Kontrollera fokus på rubriken.
+2. Öppna tabellen och **Samband för Alex**. Kontrollera fokus på rubriken
+   och texten Ändringar läggs i ditt utkast. Kartan sparas separat.
    Välj **Nytt samband**. Kontrollera att **Från objekt** är Alex.
 3. Välj typen **Använder**. Sök det andra objektet med `garaget` och välj
    Blå cykeln. Kontrollera namn, typ och beskrivning i objektvalet och läs
@@ -500,10 +501,12 @@ focus without stealing later reading focus”.
 4. Redigera igen till Känd. Kör `relationshipProbe('lost-applied')` och
    skicka. Kör förberedelsen för det väntande kontrollsvaret ovan. Välj
    Kontrollera om ändringen lades i utkastet och följ därefter Blå cykeln
-   i läsningen medan kontrollen väntar. Kontrollera objektets rubrikfokus.
+   i läsningen medan kontrollen väntar. Kontrollera objektets rubrikfokus
+   och texten Sparade uppgifter och ditt utkast.
 5. Kör `relationshipCheckRelease()` i konsolen. Kontrollera att objektets
    rubrik fortfarande har fokus och läs bekräftelsen. Välj Tillbaka och
-   kontrollera sambandsdialogens rubrikfokus.
+   kontrollera sambandsdialogens rubrikfokus och texten Ändringar läggs
+   i ditt utkast. Kartan sparas separat.
 
 **Förväntat resultat:**
 
