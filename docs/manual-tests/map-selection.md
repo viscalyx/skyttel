@@ -135,6 +135,10 @@ och
    Välj **Tabell** igen. Kontrollera att samma redigeringsknapp kan nås
    utan att textvyn täcker den. På dator ryms tabellen bredvid textvyn;
    på smal skärm visas den valda tabellen.
+9. Välj **Rapporter**. Kontrollera att utkastets läsning inte visas och att
+   **Skriv till Skyttel** är stängd. Öppna **Skriv till Skyttel** och
+   **Visa utkastet** igen. Kontrollera att Kims tidigare förslag kan läsas
+   utan fråga om samtycke. Välj **Tabell** och nå samma redigeringsknapp igen.
 
 **Förväntat resultat:**
 
@@ -143,6 +147,8 @@ och
   tar bort formulärtexten. Återöppning använder aktuellt underlag.
 - Fokus och kontroller är åtkomliga på varje bredd. Text i mörkt tema har
   tillräcklig kontrast. Sparade fakta och hela tidigare utkastet är oförändrade.
+- Rapporter bevarar utkastet. När texten öppnas igen återgår den till den
+  tidigare kartan eller tabellen med åtkomliga kontroller.
 
 ### MARKERING-04: pensionerat fall för fria fönster
 

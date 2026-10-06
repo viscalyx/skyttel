@@ -337,7 +337,7 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon och en fast läsyta med fullständiga
   uppgifter, vanliga formulär, återfokus och oförändrat utkast även i
-  smala och korta fönster.
+  smala och korta fönster samt återgång från Rapporter till text och utkast.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta
   grannar, återgångsvy, mus, tangentbord och pekskärm i smala och korta vyer;
   nå återkoppling och alla sex personliga flyttar utan täckta kontroller,

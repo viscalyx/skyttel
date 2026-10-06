@@ -288,7 +288,10 @@ export function HouseholdMap({
       : widths.textWidth + (draftViewOpen ? widths.draftWidth : 0);
   const exclusiveViews = narrow || viewport.width - textViewWidth < 350;
   const textViewVisible =
-    textViewOpen && (!exclusiveViews || workspaceView === 'text') && !(narrow && revealRequest);
+    workspaceSurface !== 'reports' &&
+    textViewOpen &&
+    (!exclusiveViews || workspaceView === 'text') &&
+    !(narrow && revealRequest);
   // Limited space switches complete views; it never narrows a work window.
   const navigationCovered = exclusiveViews && textViewVisible;
   const mapCovered =
@@ -1057,6 +1060,7 @@ export function HouseholdMap({
   // The household work owns the conversation. Views only choose where to
   // show its text, voice, notice and controls.
   function showConversation() {
+    if (workspaceSurface === 'reports') setWorkspaceSurface(reportReturnSurface.current);
     setRevealRequest(undefined);
     setTextOpeningFocus('text');
     setTextViewOpen(true);

@@ -264,6 +264,19 @@ for (const width of [1440, 390, 320]) {
         expect((action?.x ?? 0) + (action?.width ?? 0)).toBeLessThanOrEqual(text?.x ?? 0);
       }
       await page.screenshot({ path: test.info().outputPath('table-draft-dark.png') });
+      await (await utilityButton(page, 'Rapporter')).click();
+      await expect(page.getByRole('region', { name: 'Utkastet', exact: true })).not.toBeVisible();
+      const textEntry = await utilityButton(page, 'Skriv till Skyttel');
+      await expect(textEntry).toHaveAttribute('aria-expanded', 'false');
+      const resumedDraft = await openDraftReview(page);
+      await expect(
+        resumedDraft.getByRole('button', { name: 'Visa förslaget: Kim Exempel', exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('dialog', { name: 'Samtalsmedgivande', exact: true }),
+      ).toHaveCount(0);
+      await openTable(page);
+      await mark.click({ trial: true });
       expect(await app.read()).toEqual(original);
     } finally {
       await installation.close();
