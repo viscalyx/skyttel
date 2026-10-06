@@ -282,45 +282,74 @@ test('explicit audio recovery after releasing a blocked held start never resumes
   expect(media.outgoing.enabled).toBe(true);
 });
 
-test('a second held press reuses the authorized connection, and a system blur releases input while preserving output', async () => {
-  const media = voiceMedia();
-  vi.stubGlobal('fetch', async (url: string) =>
-    Response.json({
-      voice: {
-        id: 'reused-voice',
-        phase: url.endsWith('/stop') ? 'closed' : 'listening',
-        seconds: null,
-        usageFinal: false,
-      },
-      assistant: view,
-      sdp: 'synthetic-answer',
-    }),
-  );
-  render(
-    <HeldVoice
-      householdId="linden"
-      assistant={view}
-      onAssistant={() => {}}
-      onAccessLost={() => {}}
-    />,
-  );
-  press();
-  await waitFor(() => expect(media.peers[0]?.channel.readyState).toBe('open'));
-  await act(async () =>
-    media.peers[0].channel.emit({ type: 'session.started', session: { id: 'reused-provider' } }),
-  );
-  release();
-  expect(media.microphone.enabled).toBe(false);
-  press();
-  await waitFor(() => expect(button().getAttribute('aria-pressed')).toBe('true'));
-  fireEvent.blur(window);
-  expect(button().getAttribute('aria-pressed')).toBe('false');
-  expect(media.microphone.enabled).toBe(false);
-  expect(media.microphone.stopped).toBe(false);
-  expect(media.peers).toHaveLength(1);
-  expect(media.peers[0].remote.stopped).toBe(false);
-  expect(media.getUserMedia).toHaveBeenCalledOnce();
-});
+test.each(['after input is ready', 'as its indicator turns on'] as const)(
+  'a second held press reuses the authorized connection, and a system blur releases input while preserving output (%s)',
+  async (timing) => {
+    const media = voiceMedia();
+    vi.stubGlobal('fetch', async (url: string) =>
+      Response.json({
+        voice: {
+          id: 'reused-voice',
+          phase: url.endsWith('/stop') ? 'closed' : 'listening',
+          seconds: null,
+          usageFinal: false,
+        },
+        assistant: view,
+        sdp: 'synthetic-answer',
+      }),
+    );
+    render(
+      <HeldVoice
+        householdId="linden"
+        assistant={view}
+        onAssistant={() => {}}
+        onAccessLost={() => {}}
+      />,
+    );
+    press();
+    await waitFor(() => expect(media.peers[0]?.channel.readyState).toBe('open'));
+    await act(async () =>
+      media.peers[0].channel.emit({ type: 'session.started', session: { id: 'reused-provider' } }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('group', { name: 'Röstruta' }).textContent).toContain('Lyssnar'),
+    );
+    release();
+    expect(media.microphone.enabled).toBe(false);
+    expect(button().getAttribute('aria-pressed')).toBe('false');
+    if (timing === 'after input is ready') {
+      press();
+      await waitFor(() => expect(button().getAttribute('aria-pressed')).toBe('true'));
+      expect(media.microphone.enabled).toBe(true);
+      fireEvent.blur(window);
+    } else {
+      let blurred = false;
+      let captureBeforeBlur = false;
+      const observer = new MutationObserver(() => {
+        if (button().getAttribute('aria-pressed') !== 'true') return;
+        observer.disconnect();
+        captureBeforeBlur = media.microphone.enabled;
+        blurred = true;
+        fireEvent.blur(window);
+      });
+      observer.observe(button(), { attributes: true, attributeFilter: ['aria-pressed'] });
+      try {
+        press();
+        await waitFor(() => expect(blurred).toBe(true));
+        expect(captureBeforeBlur).toBe(true);
+      } finally {
+        observer.disconnect();
+      }
+    }
+    expect(button().getAttribute('aria-pressed')).toBe('false');
+    expect(media.microphone.enabled).toBe(false);
+    expect(media.microphone.stopped).toBe(false);
+    expect(media.peers).toHaveLength(1);
+    expect(media.peers[0].remote.stopped).toBe(false);
+    expect(media.peers[0].remote.enabled).toBe(true);
+    expect(media.getUserMedia).toHaveBeenCalledOnce();
+  },
+);
 
 test.each(['inputBlocked', 'contextFailed', 'saveChecking'] as const)(
   '%s during held speech stops recording, and releasing while blocked prevents automatic capture after recovery',
