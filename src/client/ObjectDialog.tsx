@@ -15,6 +15,7 @@ import {
 import { type ObjectProperty, objectProperties } from '../shared/object-properties.js';
 import { FinancialFactEditor } from './FinancialFacts.js';
 import { type FormLeaveGuard, useFormLeave } from './FormLeave.js';
+import { validateFormControls } from './form-validation.js';
 import { LifecycleEditor } from './Lifecycle.js';
 import { MapRequestError } from './map-request.js';
 import { trapDialogTab } from './modal-focus.js';
@@ -250,31 +251,10 @@ export function ObjectDialog({
   }
   function validate() {
     name.current?.setCustomValidity(editor.value.name.trim() ? '' : 'Ange objektets namn.');
-    const problems = [...(form.current?.elements ?? [])].flatMap((element) => {
-      if (
-        !(
-          element instanceof HTMLInputElement ||
-          element instanceof HTMLSelectElement ||
-          element instanceof HTMLTextAreaElement
-        )
-      )
-        return [];
-      element.removeAttribute('aria-invalid');
-      if (element.checkValidity()) return [];
-      element.setAttribute('aria-invalid', 'true');
-      return [
-        {
-          id: element.id,
-          label: [...(element.labels ?? [])]
-            .map((label) => label.textContent)
-            .join(' ')
-            .trim(),
-          message: element.validationMessage,
-          section:
-            element.closest<HTMLElement>('[data-section]')?.dataset.section ?? 'Grunduppgifter',
-        },
-      ];
-    });
+    const problems = validateFormControls(form.current).map((problem) => ({
+      ...problem,
+      section: problem.section ?? 'Grunduppgifter',
+    }));
     setErrors(problems);
     return !problems.length;
   }

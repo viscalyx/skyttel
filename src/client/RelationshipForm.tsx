@@ -5,6 +5,7 @@ import { proposedRelationships } from '../shared/map.js';
 import type { RelationshipFormResult } from '../shared/relationship-form.js';
 import { useFormLeave } from './FormLeave.js';
 import { FormLossGuard } from './FormLossGuard.js';
+import { validateFormControls } from './form-validation.js';
 import { LifecycleEditor, RelationshipEndDate } from './Lifecycle.js';
 import { MapRequestError } from './map-request.js';
 import { ObjectTypeLossDialog } from './ObjectDialog.js';
@@ -82,29 +83,7 @@ export function RelationshipForm({
     if (errors.length) summary.current?.focus();
   }, [errors]);
   function validate() {
-    const problems = [...(form.current?.elements ?? [])].flatMap((element) => {
-      if (
-        !(
-          element instanceof HTMLInputElement ||
-          element instanceof HTMLSelectElement ||
-          element instanceof HTMLTextAreaElement
-        )
-      )
-        return [];
-      element.removeAttribute('aria-invalid');
-      if (element.checkValidity()) return [];
-      element.setAttribute('aria-invalid', 'true');
-      return [
-        {
-          id: element.id,
-          label: [...(element.labels ?? [])]
-            .map((label) => label.textContent)
-            .join(' ')
-            .trim(),
-          message: element.validationMessage,
-        },
-      ];
-    });
+    const problems = validateFormControls(form.current);
     setErrors(problems);
     return !problems.length;
   }

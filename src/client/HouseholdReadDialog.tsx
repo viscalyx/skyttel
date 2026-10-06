@@ -122,6 +122,9 @@ export function HouseholdReadDialog({
   const started = useRef(false);
   const viewport = useConversationViewport();
   const editingFocus = useRef<HTMLElement | null>(null);
+  const formPane = useRef<HTMLDivElement>(null);
+  const editorOwnsFocus = useRef(false);
+  const restoreEditorFocus = useRef(false);
   const current = chain[chain.length - 1] ?? entry;
   const row = rows.find((row) => row.object.id === current.id);
   const objects = new Map(rows.map((row) => [row.object.id, row.object]));
@@ -164,6 +167,22 @@ export function HouseholdReadDialog({
     heading.current?.focus({ preventScroll: true });
     if (body.current) body.current.scrollTop = 0;
   }, [current]);
+  useLayoutEffect(() => {
+    if (editor || !restoreEditorFocus.current) return;
+    restoreEditorFocus.current = false;
+    if (
+      active &&
+      (document.activeElement === document.body || document.activeElement === dialog.current)
+    )
+      heading.current?.focus({ preventScroll: true });
+  }, [editor, active]);
+  function finishEditing() {
+    restoreEditorFocus.current = Boolean(
+      formPane.current?.contains(document.activeElement) ||
+        (document.activeElement === document.body && editorOwnsFocus.current),
+    );
+    setEditor(null);
+  }
   function visit(next: HouseholdReadEntry) {
     setChain((old) => [...old, next]);
   }
@@ -204,6 +223,9 @@ export function HouseholdReadDialog({
       }
       className="household-read-dialog"
       aria-labelledby={`${prefix}-title`}
+      onFocusCapture={(event) => {
+        editorOwnsFocus.current = Boolean(formPane.current?.contains(event.target));
+      }}
       onCancel={(event) => {
         event.preventDefault();
         requestLeave(onClose);
@@ -342,7 +364,10 @@ export function HouseholdReadDialog({
               </section>
             )}
           </div>
-          <div hidden={current.kind !== 'relationships' || current.id !== editorOrigin}>
+          <div
+            ref={formPane}
+            hidden={current.kind !== 'relationships' || current.id !== editorOrigin}
+          >
             {editor && onStageRelationship && onCheckRelationship && (
               <RelationshipForm
                 key={editor.id}
@@ -364,19 +389,19 @@ export function HouseholdReadDialog({
                   if (edge && edge.proposal !== 'Föreslagen borttagning')
                     editRelationship(edge.value);
                   else {
-                    setEditor(null);
+                    finishEditing();
                     setNotice('Det befintliga sambandet har ändrats. Granska aktuellt underlag.');
                   }
                 }}
                 onComplete={(result) => {
-                  setEditor(null);
+                  finishEditing();
                   setNotice(
                     result.outcome?.status === 'staged' && result.outcome.value === null
                       ? 'Föreslagen borttagning lades i ditt utkast.'
                       : 'Sambandet lades i ditt utkast. Du kan hantera nästa samband.',
                   );
                 }}
-                onCancel={() => setEditor(null)}
+                onCancel={finishEditing}
               />
             )}
           </div>

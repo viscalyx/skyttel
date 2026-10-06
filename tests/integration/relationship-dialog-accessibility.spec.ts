@@ -1,0 +1,194 @@
+import { type APIRequestContext, expect, test } from '@playwright/test';
+import type { MapState } from '../../src/shared/map.js';
+import { createHousehold, signIn } from '../support/client.js';
+import { createInstallation } from '../support/installation.js';
+
+async function arrange(client: APIRequestContext, origin: string, targetName = 'Blå cykeln') {
+  await signIn(client, origin);
+  const { household } = await (await createHousehold(client, origin)).json();
+  const path = `${origin}/api/households/${household.id}/map`;
+  const read = async (): Promise<MapState> => (await client.get(path)).json();
+  const post = async (route: string, data: object) => {
+    const state = await read();
+    const response = await client.post(`${path}/${route}`, {
+      headers: { origin },
+      data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
+    });
+    expect(response.status(), await response.text()).toBe(200);
+    return response.json();
+  };
+  const state = await read();
+  for (const [id, name, typeName] of [
+    ['alex', 'Alex', 'Person'],
+    ['bicycle', targetName, 'Fordon'],
+  ])
+    await post('draft', {
+      id,
+      baseRevision: null,
+      value: {
+        name,
+        description: 'Syntetiskt provobjekt',
+        typeId: state.types.find((type) => type.name === typeName)?.id,
+      },
+    });
+  return { path, read, post, household };
+}
+
+test('SAMBAND-12: long relationship names and field labels reflow without horizontal overflow at 320 CSS pixels', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    const targetName = 'C'.repeat(180);
+    const fieldName = 'F'.repeat(180);
+    const label = 'L'.repeat(180);
+    const { post, read, household } = await arrange(page.request, installation.origin, targetName);
+    await post('relationship-type', {
+      id: 'long-labels',
+      baseRevision: null,
+      value: {
+        name: 'Långa provuppgifter',
+        description: '',
+        forwardLabel: label,
+        reverseLabel: 'gäller för',
+        fields: [{ id: 'note', name: fieldName, description: '', kind: 'text' }],
+      },
+    });
+    const before = await read();
+    await page.setViewportSize({ width: 320, height: 700 });
+    await page.goto(`${installation.origin}/households/${household.id}`);
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name: 'Samband för Alex', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Samband för Alex', exact: true });
+    await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+    await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption('long-labels');
+    await dialog.getByLabel('Till objekt', { exact: true }).selectOption('bicycle');
+    await dialog.getByLabel(fieldName, { exact: true }).fill('Bevara uppgiften');
+    await expect(dialog.getByRole('group', { name: 'Sambandets detaljer' })).toHaveCSS(
+      'border-top-width',
+      '0px',
+    );
+    await expect(dialog.getByRole('group', { name: 'Sambandets detaljer' })).toHaveCSS(
+      'padding-top',
+      '0px',
+    );
+    const sentence = dialog.getByRole('region', { name: 'Sambandet före inskickning' });
+    await expect(sentence).toHaveCSS('font-weight', '650');
+    await expect(sentence).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(sentence).toContainText(targetName);
+    await expect(sentence).toContainText(`l${'L'.repeat(179)}`);
+    await expect
+      .poll(() => sentence.evaluate((element) => element.scrollWidth <= element.clientWidth))
+      .toBe(true);
+    await expect
+      .poll(() =>
+        dialog
+          .locator('.household-read-body')
+          .evaluate((element) => element.scrollWidth <= element.clientWidth),
+      )
+      .toBe(true);
+    await expect(dialog.getByLabel(fieldName, { exact: true })).toHaveValue('Bevara uppgiften');
+    expect(await read()).toEqual(before);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('SAMBAND-13: staging cancel and explicit outcome checks retain meaningful focus without stealing later reading focus', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  let releaseCheck = () => {};
+  try {
+    const { path, read, household } = await arrange(page.request, installation.origin);
+    await page.goto(`${installation.origin}/households/${household.id}`);
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name: 'Samband för Alex', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Samband för Alex', exact: true });
+    const heading = dialog.getByRole('heading', { name: 'Samband för Alex', exact: true });
+    await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+    await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
+    await dialog.getByLabel('Till objekt', { exact: true }).selectOption('bicycle');
+    await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    await expect(dialog.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+    await expect(heading).toBeFocused();
+    let state = await read();
+    expect(state.relationships).toEqual([]);
+    expect(state.draft.relationships).toHaveLength(1);
+    expect(state.draft.relationships?.[0].after).toMatchObject({
+      sourceId: 'alex',
+      targetId: 'bicycle',
+      knowledge: 'known',
+    });
+    const completed = state.draft;
+    await dialog.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+    await dialog.getByLabel('Sök det andra objektet', { exact: true }).fill('cykel');
+    await dialog.getByRole('button', { name: 'Avbryt redigeringen', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Lämna ändrade uppgifter?', exact: true })
+      .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
+      .click();
+    await expect(dialog.getByLabel('Sambandstyp', { exact: true })).toHaveCount(0);
+    await expect(heading).toBeFocused();
+    expect((await read()).draft).toEqual(completed);
+
+    await page.route(`${path}/relationship-form`, async (route) => {
+      await route.fetch();
+      await route.abort();
+    });
+    await dialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
+    await dialog.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
+    await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    const check = dialog.getByRole('button', {
+      name: 'Kontrollera om ändringen lades i utkastet',
+      exact: true,
+    });
+    await expect(check).toBeVisible();
+    await check.focus();
+    await page.keyboard.press('Enter');
+    await expect(dialog.getByLabel('Sambandstyp', { exact: true })).toHaveCount(0);
+    await expect(heading).toBeFocused();
+    expect((await read()).draft.relationships?.[0].after?.knowledge).toBe('uncertain');
+
+    await dialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
+    await dialog.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('known');
+    await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(check).toBeVisible();
+    let checkArrived = () => {};
+    const arrived = new Promise<void>((resolve) => {
+      checkArrived = resolve;
+    });
+    const delivery = new Promise<void>((resolve) => {
+      releaseCheck = resolve;
+    });
+    await page.route(`${path}/relationship-form/*`, async (route) => {
+      const response = await route.fetch();
+      checkArrived();
+      await delivery;
+      await route.fulfill({ response });
+    });
+    await check.click();
+    await arrived;
+    await dialog.getByRole('button', { name: 'Blå cykeln', exact: true }).click();
+    const later = page.getByRole('dialog', { name: 'Uppgifter för Blå cykeln', exact: true });
+    const laterHeading = later.getByRole('heading', {
+      name: 'Uppgifter för Blå cykeln',
+      exact: true,
+    });
+    await expect(laterHeading).toBeFocused();
+    releaseCheck();
+    await expect(later.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+    await expect(laterHeading).toBeFocused();
+    state = await read();
+    expect(state.relationships).toEqual([]);
+    expect(state.draft.relationships).toHaveLength(1);
+    expect(state.draft.relationships?.[0].after?.knowledge).toBe('known');
+    await later.getByRole('button', { name: 'Tillbaka', exact: true }).click();
+    await expect(heading).toBeFocused();
+    await expect(dialog.getByLabel('Sambandstyp', { exact: true })).toHaveCount(0);
+  } finally {
+    releaseCheck();
+    await installation.close();
+  }
+});
