@@ -111,7 +111,8 @@ test('empty sections and unused fields can be removed while hidden definitions r
     sections: [],
     fields: [{ name: 'Bevarat dolt', sectionId: '' }],
   });
-});
+  // Allow the complete HTTP/SQLite form and draft-reader workflow under coverage.
+}, 10_000);
 
 test('editing visible values preserves hidden zero and no answers in the same object', async () => {
   await client.json(`${path}/object-type`, {

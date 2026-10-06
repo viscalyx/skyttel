@@ -32,6 +32,7 @@ let deny = false;
 let preventSave = false;
 let wrongReceipt: Record<string, unknown> | null = null;
 let beforeOperationsRead: (() => Promise<void>) | null = null;
+let beforeHistoryRead: (() => Promise<void>) | null = null;
 let runningIdentity: { commit: string; version: string };
 const dialogMethods = ['showModal', 'close'] as const;
 const originalDialogMethods = dialogMethods.map((name) =>
@@ -60,6 +61,7 @@ beforeEach(async () => {
   preventSave = false;
   wrongReceipt = null;
   beforeOperationsRead = null;
+  beforeHistoryRead = null;
   // Connect the rendered browser UI to the real HTTP app and SQLite. Only
   // the external identity provider is substituted by applicationFixture.
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
@@ -71,6 +73,11 @@ beforeEach(async () => {
     if (beforeOperationsRead && init?.method === 'GET' && url.endsWith('/operations')) {
       const callback = beforeOperationsRead;
       beforeOperationsRead = null;
+      await callback();
+    }
+    if (beforeHistoryRead && init?.method === 'GET' && url.startsWith(`${path}/history?`)) {
+      const callback = beforeHistoryRead;
+      beforeHistoryRead = null;
       await callback();
     }
     const response = await client.request(url, {
@@ -862,11 +869,36 @@ test('refresh recovery confirms an unknown save before a failed map read and ret
   failMapRead = false;
   await userEvent.click(within(status).getByRole('button', { name: 'Hämta aktuellt underlag' }));
   await waitFor(() => expect(within(status).queryByRole('alert')).toBeNull());
+  let releaseHistory!: () => void;
+  const historyResponse = new Promise<void>((resolve) => {
+    releaseHistory = resolve;
+  });
+  let historyRequested!: () => void;
+  const historyRequest = new Promise<void>((resolve) => {
+    historyRequested = resolve;
+  });
+  beforeHistoryRead = () => {
+    historyRequested();
+    return historyResponse;
+  };
   const history = await openSavedHistory();
-  expect(history.getAllByRole('article')).toHaveLength(1);
+  try {
+    await historyRequest;
+    expect(history.getByText('Hämtar historik…')).toBeTruthy();
+    expect(history.queryAllByRole('article')).toHaveLength(0);
+  } finally {
+    releaseHistory();
+  }
+  await waitFor(() => {
+    expect(history.queryByText('Hämtar historik…')).toBeNull();
+    expect(history.getAllByRole('article')).toHaveLength(1);
+  });
   const operations = await (await client.request(`${path}/operations`)).json();
   expect(operations.operations).toHaveLength(1);
   expect(operations.operations[0].status).toBe('succeeded');
+  expect(history.getByRole('article').getAttribute('data-save')).toBe(
+    operations.operations[0].operationId,
+  );
 });
 
 test('Settings retains same-operation recovery and persistent refresh errors for a map save', async () => {
