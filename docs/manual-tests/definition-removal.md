@@ -1,7 +1,7 @@
 # Manuella testfall för borttagning av typer och fält
 
 Prova granskad katalogborttagning, användningsspärrar utan privat
-informationsläckage och återställning av innehåll med saknade definitioner.
+informationsläckage och läsning av historiska definitioner.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -14,6 +14,13 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 
 Följ [ingångarna till arbetsytorna](README.md#öppna-arbetsytor) när
 fallen anger formulär, samtal, profil eller administration.
+
+Öppna **Inställningar → Typer och egna fält** för typformulären.
+Välj **Tillbaka till kartan** före granskning. Öppna **Skriv till Skyttel →
+Visa utkastet** och välj radens **Visa förslaget: [namn]** för fullständiga
+tidigare och föreslagna definitioner. Stäng läsningen med krysset.
+Utkastets sparikon öppnar **Spara utkastet**. Vänta på **Utkastet är sparat**
+och stäng textvyn före fortsatt arbete i Inställningar eller Tabell.
 
 1. Använd en isolerad provinstallation med påhittade uppgifter. Skapa
    hushållet som Alex och bjud in Robin.
@@ -45,10 +52,14 @@ reviewed, discarded or saved without automatic cleanup”.
    fält: Serienummer**. Lägg typförslaget i utkastet.
 2. Ändra Solcellsanläggning och välj **Ta bort objekttypen**.
 3. Öppna **Sambandstyper och riktning**, ändra Använder och välj **Ta bort
-   sambandstypen**. Granska alla tidigare definitioner och förslag.
-4. Välj **Kasta hela utkastet**. Kontrollera att definitionerna finns kvar.
+   sambandstypen**. Återgå till kartan och granska alla tidigare
+   definitioner och förslag genom utkastets fullständiga läsning.
+4. Välj **Kasta hela utkastet**, läs **Ta bort hela utkastet?** och
+   bekräfta **Ta bort hela utkastet**. Stäng textvyn och återvänd till
+   Inställningar. Kontrollera att definitionerna finns kvar.
 5. Upprepa borttagningarna och välj **Spara hela utkastet**. Starta om
-   appservern med samma databas, ladda om och läs katalogerna och historiken.
+   appservern med samma databas, ladda om och läs katalogerna. Välj
+   **Rapporter** i kartans verktyg för historiken.
    Välj **Visa ändringarna** vid borttagningen för att läsa definitionerna.
 
 **Förväntat resultat:**

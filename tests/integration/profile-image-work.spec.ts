@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
-import { closePanels, createHousehold, openWorkspace, signIn } from '../support/client.js';
+import { createHousehold, openNewObject, signIn } from '../support/client.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 for (const [width, height] of [
@@ -50,12 +51,7 @@ for (const [width, height] of [
         await page.goto(installation.origin);
         const form = page.locator('dialog.object-dialog');
         const edit = async (name: string) => {
-          await openWorkspace(page);
-          await page.getByRole('button', { name: `Uppgifter för ${name}`, exact: true }).click();
-          await page
-            .getByRole('region', { name, exact: true })
-            .getByRole('button', { name: 'Redigera valt objekt', exact: true })
-            .click();
+          await editTableObject(page, name);
         };
         const stage = () =>
           form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
@@ -113,7 +109,7 @@ for (const [width, height] of [
         await expect(form.getByRole('button', { name: 'Avbryt', exact: true })).toBeDisabled();
         await page.keyboard.press('Escape');
         await expect(form).toBeVisible();
-        const search = page.getByLabel('Sök objekt', { exact: true });
+        const search = page.getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true });
         await search.evaluate((element) => (element as HTMLElement).focus());
         await expect(search).not.toBeFocused();
         releaseResponse();
@@ -176,7 +172,6 @@ for (const [width, height] of [
           new RegExp(`/profile-images/${images[1]}$`),
         );
         await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
-        await closePanels(page);
         await edit('Garaget');
         await expect(form.getByLabel('Beskrivning', { exact: true })).toHaveValue(
           'Separat förslag om Garaget',
@@ -207,11 +202,7 @@ for (const width of [1440, 390, 320]) {
       const settings = `${installation.origin}/households/${household.id}/settings`;
       await page.goto(settings);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await openWorkspace(page);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openNewObject(page);
       const form = page.locator('dialog.object-dialog');
       await form.getByLabel('Namn', { exact: true }).fill('Bildarbete');
       await form.getByLabel('Beskrivning', { exact: true }).fill('Behåll bildens text');
@@ -265,11 +256,7 @@ for (const width of [1440, 390, 320]) {
         .click();
       await expect(page).toHaveURL(settings);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await openWorkspace(page);
-      await page
-        .getByRole('region', { name: 'Lista och utkast', exact: true })
-        .getByRole('button', { name: 'Nytt objekt', exact: true })
-        .click();
+      await openNewObject(page);
       await form.getByLabel('Namn', { exact: true }).fill('Bildarbete');
       await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat efter bildfelet');
       await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();

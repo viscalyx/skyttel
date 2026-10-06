@@ -1,8 +1,8 @@
 # Manuella testfall för profilbilder
 
 Testfallen omfattar privata bildförslag, visning i rymdkartan, historik,
-historikläsning, fel, åtkomst och återgång till ett objekt efter att dess panel
-stängts.
+historikläsning, fel, åtkomst och återgång till ett objekt efter att dess
+formulär stängts.
 Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning.
 
 ## Konfigurerade användare
@@ -296,8 +296,8 @@ Följande testfall:
 6. Tryck Escape i varningen. Kontrollera text och fokus på Avbryt.
    Välj Avbryt igen och **Kasta ändringarna och fortsätt**.
 7. Redigera Cykeln igen. Kontrollera ursprunglig utkastbeskrivning och
-   andra giltiga bilden. Avbryt det oförändrade formuläret, stäng
-   läspanelerna och öppna Garaget igen. Kontrollera dess lagda förslag.
+   andra giltiga bilden. Avbryt det oförändrade formuläret och öppna
+   Garaget igen. Kontrollera dess lagda förslag.
 
 Kör före steg 3 i utvecklarkonsolen. Koden håller det verkliga svaret från
 hela formulärets tillägg. Återställ `window.fetch = originalImageFetch`

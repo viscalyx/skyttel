@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { openDraftReview, openTable } from './client.js';
+import { openDraftReview, openSettings, openTable } from './client.js';
 
 /** Read a complete object through its actual expanded table row. */
 export async function readTableObject(page: Page, name: string) {
@@ -46,7 +46,9 @@ export async function editObjectRelationship(
   const dialog = await openObjectRelationships(page, objectName);
   const item = dialog.getByRole('heading', { name: relationshipName, exact: true }).locator('..');
   await item.getByRole('button', { name: 'Redigera samband', exact: true }).click();
-  await expect(dialog.getByRole('region', { name: 'Redigera samband', exact: true })).toBeVisible();
+  await expect(
+    dialog.getByRole('heading', { name: 'Redigera samband', exact: true }),
+  ).toBeVisible();
   return dialog;
 }
 
@@ -57,4 +59,13 @@ export async function readDraftProposal(page: Page, name: string) {
   const dialog = page.getByRole('dialog', { name, exact: true });
   await expect(dialog).toBeVisible();
   return dialog;
+}
+
+/** Open the administrator's actual catalogue entry in Settings. */
+export async function openTypeDefinitions(page: Page) {
+  await openSettings(page);
+  await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+  const definitions = page.getByRole('heading', { name: 'Typer och egna fält', exact: true });
+  await expect(definitions).toBeVisible();
+  return definitions;
 }

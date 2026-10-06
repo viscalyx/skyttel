@@ -1,7 +1,19 @@
 import { expect, test } from '@playwright/test';
-import { createHousehold, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openTable,
+  signIn,
+} from '../support/client.js';
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import {
+  openObjectRelationships,
+  openTypeDefinitions,
+  readDraftProposal,
+} from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
@@ -179,7 +191,7 @@ test('STY-03: members share editable prefills while private definitions and hous
     ).toBe(200);
     const memberPage = await member.newPage();
     await memberPage.goto(installation.origin);
-    await openWorkspace(memberPage);
+    await openObjectRelationships(memberPage, 'Medlemmens cykel');
     await memberPage.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await expect(
       memberPage
@@ -188,7 +200,7 @@ test('STY-03: members share editable prefills while private definitions and hous
     ).toHaveCount(1);
     await memberPage
       .getByRole('dialog', { name: /^Samband för / })
-      .getByRole('button', { name: 'Stäng samband', exact: true })
+      .getByRole('button', { name: 'Stäng dialogen', exact: true })
       .click();
     // Equal names still create separate definitions with their own identities.
     expect(
@@ -358,15 +370,14 @@ test('STY-04: stale definitions stop the whole save and explicit resolution pres
     expect((await read()).objects).toEqual([]);
     expect((await read()).draft).toEqual(before.draft);
     await page.goto(installation.origin);
-    await openWorkspace(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
+    await openTable(page);
     await applyProposedConflictChanges(page, 'Los nya förklaring');
-    await expect(review).toContainText('Los nya förklaring');
+    const proposal = await readDraftProposal(page, 'Plats');
+    await expect(proposal).toContainText('Los nya förklaring');
+    await closeSupportDialog(page, 'Plats');
     expect((await read()).objects).toEqual([]);
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await installation.restart();
     const current = await read();
     expect(
@@ -423,13 +434,15 @@ test('STY-02: forms show the same directed relationship from both objects and ed
       ).toBe(200);
     }
     await page.goto(installation.origin);
-    await openWorkspace(page);
+    await openTypeDefinitions(page);
     await page.getByRole('button', { name: 'Ny sambandstyp', exact: true }).click();
     await page.getByLabel('Sambandstypens namn').fill('Förvaring');
     await page.getByLabel('Sambandstypens beskrivning').fill('Var hushållets saker finns');
     await page.getByLabel('Benämning från startobjektet').fill('förvaras i');
     await page.getByLabel('Benämning från målobjektet').fill('innehåller');
     await page.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openObjectRelationships(page, 'Alex blå cykel');
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await expect(page.getByLabel('Sambandstyp', { exact: true })).toHaveValue('');
     await page.getByLabel('Från objekt').selectOption('bike');
@@ -441,9 +454,18 @@ test('STY-02: forms show the same directed relationship from both objects and ed
     expect((await (await page.request.get(path)).json()).draft.relationships).toBeUndefined();
     await page.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Förvaring' });
     await stageRelationshipAndClose(page);
-    const review = page.getByRole('region', { name: 'Hela mitt utkast' });
-    await expect(review).toContainText('Benämning från målobjektet: innehåller');
+    const definition = await readDraftProposal(page, 'Förvaring');
+    await expect(
+      definition
+        .locator('dt')
+        .filter({ hasText: /^Omvänd riktning/ })
+        .locator('..'),
+    ).toContainText('innehåller');
+    await closeSupportDialog(page, 'Förvaring');
+    const review = await openDraftReview(page);
     await expect(review).toContainText('Alex blå cykel → förvaras i → Garaget');
+    await closeTextView(page);
+    await openObjectRelationships(page, 'Alex blå cykel');
     await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
     await page.getByLabel('Från objekt').selectOption('bike');
     await page.getByLabel('Till objekt').selectOption('garage');
@@ -460,41 +482,43 @@ test('STY-02: forms show the same directed relationship from both objects and ed
       .getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true })
       .click();
     await duplicate.getByRole('button', { name: 'Stäng samband', exact: true }).click();
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Förvaring (sambandstyp)',
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    expect((await (await page.request.get(path)).json()).relationshipTypes).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Förvaring' })]),
     );
     const originalRelationship = (await (await page.request.get(path)).json()).relationships[0];
     await page.reload();
-    await openWorkspace(page);
+    await openTable(page);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     await page.getByRole('button', { name: 'Samband för Alex blå cykel', exact: true }).click();
     const relationships = page.getByRole('dialog', { name: /^Samband för / });
     await expect(relationships).toContainText('Alex blå cykel → förvaras i → Garaget');
-    await relationships.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+    await closeSupportDialog(page, 'Samband för Alex blå cykel');
     await page.getByRole('button', { name: 'Samband för Garaget', exact: true }).click();
     await expect(relationships).toContainText('Garaget → innehåller → Alex blå cykel');
     await relationships.getByRole('button', { name: 'Redigera samband', exact: true }).click();
     await expect(page.getByLabel('Från objekt')).toHaveValue('bike');
     await expect(page.getByLabel('Till objekt')).toHaveValue('garage');
     await relationships.getByRole('button', { name: 'Avbryt redigeringen', exact: true }).click();
-    await relationships.getByRole('button', { name: 'Stäng samband', exact: true }).click();
-    await openWorkspace(page);
+    await closeSupportDialog(page, 'Samband för Garaget');
+    await openTypeDefinitions(page);
     await page.getByText('Sambandstyper och riktning', { exact: true }).click();
     await page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }).click();
     await page.getByLabel('Sambandstypens namn').fill('Plats');
     await page.getByLabel('Sambandstypens beskrivning').fill('Hushållets förvaringsplatser');
     await page.getByLabel('Benämning från startobjektet').fill('finns i');
     await page.getByRole('button', { name: 'Lägg sambandstypen i mitt utkast' }).click();
-    await expect(review).toContainText('Var hushållets saker finns');
-    await expect(review).toContainText('Hushållets förvaringsplatser');
-    await page.getByRole('button', { name: 'Spara hela utkastet' }).click();
-    await expect(page.getByRole('status', { name: 'Hushållsarbetets status' })).toContainText(
-      'Sparat',
-    );
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    const changedDefinition = await readDraftProposal(page, 'Plats');
+    await expect(changedDefinition).toContainText('Var hushållets saker finns');
+    await expect(changedDefinition).toContainText('Hushållets förvaringsplatser');
+    await closeSupportDialog(page, 'Plats');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
     await page.reload();
-    await openWorkspace(page);
-    await expect(page.getByRole('list', { name: 'Samband', exact: true })).toContainText(
+    await openTable(page);
+    await expect(await openObjectRelationships(page, 'Alex blå cykel')).toContainText(
       'Alex blå cykel → finns i → Garaget',
     );
     const saved = await (await page.request.get(path)).json();

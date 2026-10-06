@@ -24,6 +24,15 @@ i samma dialog för ett tillägg. Objekt som saknas skapas separat med
 lämnar dialogen öppen. Välj **Stäng samband** innan du sparar utkastet
 eller fortsätter med annat arbete.
 
+Definitioner öppnas genom **Inställningar → Typer och egna fält**.
+Välj **Tillbaka till kartan** före sambandsarbete och granskning.
+Granska hela utkastet genom **Skriv till Skyttel → Visa utkastet** och
+öppna **Visa förslaget: [namn]** för kompletta definitioner och värden.
+Stäng läsningen med krysset. Spara separat med utkastets sparikon och vänta
+på **Utkastet är sparat**. Stäng textvyn före fortsatt arbete i Tabell.
+En läsande sambandsöversikt stängs med krysset; **Stäng samband** hör till
+sambandsarbetet efter tillägg och redigering.
+
 1. Starta appen enligt
    [provförberedelsen](../development/devcontainer.md#disposable-local-database)
    med riktig SQLite. Börja varje fall i ett nytt hushåll utan privata förslag.
@@ -86,7 +95,8 @@ objects and edit the shared definition”.
 1. Skapa Förvaring med benämningarna och beskrivningen i STY-01.
 2. Öppna cykelns sambandsdialog, välj Nytt samband och garaget. Prova att lägga
    kopplingen i utkastet utan typ. Välj sedan Förvaring och lägg till.
-3. Granska definition och koppling tillsammans. Prova ett identiskt
+3. Öppna utkastets fullständiga definitionsläsning och läs båda
+   benämningarna. Stäng läsningen och textvyn. Prova ett identiskt
    tillägg i samma utkast och läs beskedet med cykelns och garagets namn.
    Välj **Avbryt redigeringen** och bekräfta att bara den oskickade
    dubblettinmatningen kastas. Stäng sambandsdialogen, spara hela utkastet
@@ -94,7 +104,7 @@ objects and edit the shared definition”.
    cykelns benämning, stäng dialogen och öppna **Samband för Garaget**.
 4. Läs garagets benämning och välj **Redigera samband**.
    Kontrollera att startobjektet fortfarande är cykeln och målobjektet
-   garaget. Välj **Avbryt redigeringen** och **Stäng samband**.
+   garaget. Välj **Avbryt redigeringen** och stäng översikten med krysset.
 5. Ändra typens namn till Plats, beskrivningen till Hushållets
    förvaringsplatser och startbenämningen till finns i. Granska skillnaden,
    spara och ladda om. Läs kartans samband via HTTP.
