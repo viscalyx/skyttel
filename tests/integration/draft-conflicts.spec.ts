@@ -396,6 +396,7 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
 }) => {
   const other = await browser.newContext();
   const app = await collaborators(page.request, other.request);
+  let cleanup: PromiseSettledResult<void>[] = [];
   try {
     const { types } = await app.read();
     const value = { typeId: types[0].id, name: 'Lo Lind', description: '' };
@@ -421,10 +422,16 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
     );
     expect((await app.read()).draft.changes).toHaveLength(1);
     await unsent.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(unsent).not.toBeVisible();
     await openMap(page);
     const status = page.getByRole('region', { name: 'Kartans status', exact: true });
     await status.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(
+      dialog.getByRole('button', { name: 'Stäng konfliktdialogen', exact: true }),
+    ).toBeEnabled();
     await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
     await openTable(page);
     await editTableObject(page, 'Lo Lind');
     const correction = page.locator('dialog.object-dialog-C');
@@ -435,18 +442,19 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
     await correction
       .getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true })
       .click();
+    await expect(correction).not.toBeVisible();
     const correctionProposal = await readDraftProposal(page, 'Lo Alm');
     await expect(correctionProposal).toContainText('Lo Alm');
     await closeSupportDialog(page, 'Lo Alm');
     await closeTextView(page);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: 'Granska konflikter' });
     const refresh = dialog.getByRole('button', { name: 'Visa aktuell jämförelse' });
     if (await refresh.isVisible()) await refresh.click();
     await expect(
       dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Alm', exact: true }),
     ).toBeEnabled();
     await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
     await openTable(page);
     const independent = await readTableObject(page, 'Oskickad cykel');
     await expect(independent).toContainText('Behåll den här texten');
@@ -472,8 +480,10 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
     });
     expect((await (await page.request.get(`${app.path}/history`)).json()).history).toHaveLength(3);
   } finally {
-    await other.close();
-    await app.installation.close();
+    cleanup = await Promise.allSettled([other.close(), app.installation.close()]);
+  }
+  for (const result of cleanup) {
+    if (result.status === 'rejected') throw result.reason;
   }
 });
 
