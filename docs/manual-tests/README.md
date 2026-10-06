@@ -414,7 +414,9 @@ paneler för att
   gemensamma dialogen och rätta objekt och samband oberoende. Fullständiga
   egna värden, typbyte, riktning och säkerhet behåller sin betydelse.
   Validering, dubbletter, borttagning, oklara utfall och förlustvarning
-  bevarar tidigare förslag. Läsning, filter, återfokus och smal skärm provas.
+  bevarar tidigare förslag. Ett gammalt obekräftat försök efter en senare
+  ändring kräver granskning av aktuellt underlag före nytt förslag.
+  Läsning, filter, återfokus och smal skärm provas.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
   noll och Nej, uttrycklig hantering vid typbyte, privata förslag,

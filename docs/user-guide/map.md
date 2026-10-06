@@ -225,6 +225,12 @@ fält. Under inskickning spärras redigering, dubbelinskickning och vanlig
 stängning. Vid oklart resultat väljer du
 **Kontrollera om ändringen lades i utkastet** innan nytt försök.
 Kontrollen återspelar aldrig ett äldre utkast över senare arbete.
+Om utkastet har ändrats och kontrollen saknar en bevarad bekräftelse,
+behålls inmatningen och du kan lämna formuläret med förlustvarningen.
+Anteckna de uppgifter du vill använda, stäng formuläret och välj Nytt samband
+eller Redigera samband igen för att granska aktuellt underlag. Först därefter
+gör du ett nytt förslag. Appen uppdaterar inte ett gammalt formulärs underlag
+automatiskt.
 Förlustvarningen skyddar oskickade värden vid stängning, Escape och
 sidnavigation; redan färdiga förslag behålls.
 

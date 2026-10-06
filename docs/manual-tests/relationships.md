@@ -517,3 +517,97 @@ focus without stealing later reading focus”.
   och den gemensamma kartan är oförändrad.
 - Avbrotten är kontrollerade provvillkor. Automatiseringen använder verkliga
   inskickningar och HTTP-kontroller; fysisk manuell körning antecknas separat.
+
+### SAMBAND-14: gammalt försök lämnas utan att skriva över senare arbete
+
+**Syfte:** Kontrollera att ett försök utan bevarad bekräftelse kan lämnas
+när ett senare förslag har ändrat utkastet, med bevarade värden och nytt
+aktuellt underlag före fortsatt inskickning.
+
+**Användare:** Alex i två fönster med samma hushåll och användare.
+
+**Förutsättningar:** Två objekt enligt allmän förberedelse och inga samband.
+Öppna samma hushåll i ett andra fönster. Förbered `relationshipProbe` enligt
+Styrda avbrott ovan. Använd en separat provinstallation med påhittade uppgifter.
+
+**Integrationstest:**
+[relationship-outcome-absence.spec.ts](../../tests/integration/relationship-outcome-absence.spec.ts),
+testfallet “SAMBAND-14: an absent old-version attempt unlocks retained input and
+requires current-basis review before retry”.
+
+**Steg:**
+
+1. I första fönstret, öppna tabellen och Samband för Alex. Välj Nytt samband,
+   Använder, Blå cykeln och Osäkert uppgivet. Kör
+   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
+2. I andra fönstret, skapa Lo som Person med Nytt objekt. Välj Lägg i
+   utkastet och stäng. Kontrollera att Lo finns i ditt utkast.
+3. I första fönstret, välj Kontrollera om ändringen lades i utkastet.
+   Läs beskedet om saknad bevarad bekräftelse och ändrat utkast. Kontrollera
+   att säkerhet och objektval finns kvar och går att läsa eller ändra.
+   Lägg i utkastet är spärrat tills formuläret öppnas med aktuellt underlag.
+4. Välj Stäng samband och sedan Fortsätt redigera. Kontrollera att värdena
+   finns kvar. Anteckna de värden du vill använda. Välj Stäng samband igen
+   och Kasta ändringarna och fortsätt. Kontrollera fokus på öppningsknappen.
+5. Öppna Samband för Alex igen, välj Nytt samband och ange samma typ,
+   ändpunkter och Osäkert uppgivet efter granskning av aktuella uppgifter.
+   Välj Lägg i utkastet och kontrollera bekräftelsen.
+
+**Förväntat resultat:**
+
+- Kontrollsvaret låser inte formuläret för alltid. Det gamla försöket kan
+  inte längre ändra det aktuella utkastet. Ingen bekräftelse eller tidigare
+  framgång uppfinns och formulärets underlag byts inte automatiskt.
+- Avbruten förlust behåller inmatningen. Bekräftad stängning kastar endast
+  oskickade formulärvärden. Lo och båda tidigare objektförslagen behålls.
+- Det nya förslaget blir ett enda osäkert samband på aktuellt underlag.
+  Den gemensamma kartan är fortfarande tom. Automatiseringen kontrollerar
+  även att den försenade ursprungliga HTTP-begäran avvisas med 409, att dess
+  utfall saknas och att ingen del av utkastet ändras av det gamla försöket.
+
+### SAMBAND-15: gammal redigering skriver inte över en senare sambandsändring
+
+**Syfte:** Kontrollera att uppföljning av ett gammalt försök inte ersätter
+eller tar bort ett senare förslag till samma samband från samma användare.
+
+**Användare:** Alex i två fönster med samma hushåll och användare.
+
+**Förutsättningar:** Två objekt enligt allmän förberedelse. Lägg ett känt
+Använder-samband från Alex till Blå cykeln i utkastet; spara inte gemensamt.
+Öppna hushållet i ett andra fönster. Förbered `relationshipProbe` enligt
+Styrda avbrott ovan i det första fönstret.
+
+**Integrationstest:**
+[relationship-outcome-absence.spec.ts](../../tests/integration/relationship-outcome-absence.spec.ts),
+testfallet “SAMBAND-15: absent stale editing cannot overwrite or remove a later
+same-owner relationship proposal”.
+
+**Steg:**
+
+1. I första fönstret, öppna tabellen, Samband för Alex och Redigera samband.
+   Ändra säkerheten till Osäkert uppgivet. Kör
+   `relationshipProbe('lost-before')` och välj Lägg i utkastet.
+2. I andra fönstret, redigera samma samband till Ospecificerat objekt och
+   lägg i utkastet. Kontrollera att inget identifierat målobjekt anges.
+   Stäng sambandsdialogen, skapa Lo som Person och lägg även det i utkastet.
+3. I första fönstret, välj Kontrollera om ändringen lades i utkastet.
+   Kontrollera beskedet om saknad bevarad bekräftelse och ändrat utkast.
+   Det försökta formuläret visar fortfarande Osäkert uppgivet och Blå cykeln.
+   Lägg i utkastet och Föreslå borttagning är spärrade.
+4. Välj Stäng samband och Fortsätt redigera. Kontrollera att de försökta
+   värdena finns kvar. Välj Stäng samband igen och bekräfta Kasta ändringarna
+   och fortsätt. Öppna Samband för Alex och Redigera samband igen.
+5. Läs det aktuella formuläret: säkerheten är Ospecificerat objekt och
+   ingen väljare för Till objekt visas. Skicka eller ta inte bort något.
+
+**Förväntat resultat:**
+
+- Kontrollen behåller både oskickade värden och det aktuella privata
+  utkastet. Den överför inte ett gammalt formulär till nyare underlag utan
+  granskning och ger inga påhittade framgångsbesked.
+- Stängning skyddas av förlustvarningen. Avbruten förlust behåller de
+  försökta värdena. Bekräftad stängning påverkar inte senare förslag.
+- Det befintliga sambandet är fortfarande Ospecificerat objekt utan mål,
+  Lo och båda tidigare objektförslagen finns kvar och den gemensamma kartan
+  är tom. Automatiseringen provar även den försenade gamla HTTP-begärans
+  avvisning och oförändrat aktuellt utkast.

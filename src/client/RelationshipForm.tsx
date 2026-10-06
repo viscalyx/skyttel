@@ -61,6 +61,7 @@ export function RelationshipForm({
   const [query, setQuery] = useState('');
   const [pending, setPending] = useState(false);
   const [unknown, setUnknown] = useState(false);
+  const [stale, setStale] = useState(false);
   const [duplicateId, setDuplicateId] = useState<string>();
   const attempt = useRef<{ stagingId: string; editor: RelationshipFormSubmission } | null>(null);
   const busy = pending || unknown;
@@ -108,7 +109,7 @@ export function RelationshipForm({
     : knowledgeLabels[value.knowledge];
   const label = type?.forwardLabel || type?.name || 'välj sambandstyp';
   async function submit(remove = false) {
-    if (lock.current || (!remove && !validate())) return;
+    if (lock.current || stale || (!remove && !validate())) return;
     lock.current = true;
     setPending(true);
     setError('');
@@ -195,6 +196,11 @@ export function RelationshipForm({
     setPending(true);
     try {
       const result = await onCheck(current.stagingId, current.editor.contentVersion);
+      if (
+        result.state.userId !== state.userId ||
+        result.state.contentVersion !== current.editor.contentVersion
+      )
+        throw new Error('invalid_form_outcome');
       if (result.outcome) confirm(result);
       else if (
         result.state.draft.version === current.editor.version &&
@@ -205,6 +211,16 @@ export function RelationshipForm({
         setUnknown(false);
         setError(
           'Kontrollen visar att ändringen inte lades i utkastet. Alla uppgifter finns kvar. Du kan försöka igen.',
+        );
+      } else if (result.state.draft.version > current.editor.version) {
+        // The serialized version guard rejects any delayed original request. Keep
+        // the old editing basis: a newer private edit could otherwise be overwritten.
+        lock.current = false;
+        attempt.current = null;
+        setUnknown(false);
+        setStale(true);
+        setError(
+          'Kontrollen saknar en bevarad bekräftelse och utkastet har ändrats. Det gamla försöket kan inte ändra det aktuella utkastet. Dina uppgifter finns kvar. Stäng formuläret och öppna det igen för att granska aktuellt underlag innan du försöker igen.',
         );
       } else
         setError(
@@ -402,7 +418,7 @@ export function RelationshipForm({
             {value.knowledge === 'uncertain' ? ' (Osäkert uppgivet)' : ''}
           </section>
           <div className="relationship-form-actions relationship-form-wide">
-            <button type="submit" className="primary">
+            <button type="submit" className="primary" disabled={stale}>
               Lägg i utkastet
             </button>
             <button type="button" onClick={() => requestLeave(onCancel)}>
@@ -410,7 +426,11 @@ export function RelationshipForm({
             </button>{' '}
             {(initial.baseRevision !== null ||
               state.draft.relationships?.some((change) => change.id === initial.id)) && (
-              <button type="button" onClick={() => requestLeave(() => void submit(true))}>
+              <button
+                type="button"
+                disabled={stale}
+                onClick={() => requestLeave(() => void submit(true))}
+              >
                 Föreslå borttagning
               </button>
             )}
