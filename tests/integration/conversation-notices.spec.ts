@@ -467,7 +467,8 @@ for (const viewport of [
       await expect(voiceBox(page)).toBeVisible();
       // Keep the temporary disconnection stable during the geometry checks.
       // Its transport grace period is covered by the voice tests.
-      if (viewport.height <= 450) await page.clock.pauseAt(new Date());
+      if (viewport.height <= 450)
+        await page.clock.pauseAt(await page.evaluate(() => Date.now() + 60_000));
       if (viewport.height <= 450) await page.getByText('Visningsval', { exact: true }).click();
       // A real browser can lose its provider connection independently of HTTP.
       await page.evaluate(() => window.skyttelVoiceFixture.disconnect());

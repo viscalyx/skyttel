@@ -1057,6 +1057,9 @@ export function HouseholdMap({
       return await waitForMapDisplay(workspace.current, request, target, abort.signal);
     } finally {
       signal.removeEventListener('abort', cancel);
+      setRevealRequest((current) =>
+        current?.id === request.id ? { ...current, complete: true } : current,
+      );
     }
   }
   // The household work owns the conversation. Views only choose where to

@@ -497,7 +497,7 @@ export function SpatialMap({
   useEffect(() => {
     if (
       revealRequest &&
-      revealRequest.id !== completedRevealId &&
+      !revealRequest.complete &&
       active &&
       activated &&
       personalReady &&
@@ -506,20 +506,39 @@ export function SpatialMap({
       (!revealRequest.relationshipId || relationships.has(revealRequest.relationshipId))
     ) {
       if (navigationOpen) {
-        // Framing uses the committed canvas dimensions after navigation closes.
-        setNavigationOpen(false);
-        onNavigationChange?.(false);
+        // Close navigation for the initial reveal, then respect any navigation
+        // the user opens while the acknowledgement is still pending.
+        if (revealRequest.id !== completedRevealId) {
+          setNavigationOpen(false);
+          onNavigationChange?.(false);
+        }
         return;
       }
-      // Let panel layout and ResizeObserver measurements settle before
-      // reserving clearance for the assistant's target.
-      let frame = requestAnimationFrame(() => {
+      // Keep framing against the actual layout until display is acknowledged.
+      // A later toolbar, search or inspector resize can invalidate the first fit.
+      let frame = 0;
+      const schedule = () => {
+        cancelAnimationFrame(frame);
         frame = requestAnimationFrame(() => {
           if (focusObjects(revealRequest.objectIds, revealRequest))
             setCompletedRevealId(revealRequest.id);
         });
-      });
-      return () => cancelAnimationFrame(frame);
+      };
+      const observer = new ResizeObserver(schedule);
+      if (canvas.current) {
+        observer.observe(canvas.current);
+        for (const overlay of canvas.current
+          .closest('.household-map')
+          ?.querySelectorAll(
+            '.workspace-tools, .workspace-context, .map-object-search, .map-selection-details, .map-navigation, .conversation-corner',
+          ) ?? [])
+          observer.observe(overlay);
+      }
+      schedule();
+      return () => {
+        observer.disconnect();
+        cancelAnimationFrame(frame);
+      };
     }
   }, [
     revealRequest,

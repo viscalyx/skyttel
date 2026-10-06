@@ -309,6 +309,11 @@
     .conversation-notice-symbol {
     display: none;
   }
+  .household-map.workspace-shell[data-workspace-surface="map"]:not(.map-details-open)
+    .conversation-notice:not([data-inline="true"]):not(:has(.conversation-notice-close))
+    .conversation-notice-content {
+    grid-column: 1 / -1;
+  }
   .household-map.workspace-shell[data-workspace-surface="map"].map-details-open
     .conversation-notice:not([data-inline="true"]) {
     gap: 1px;

@@ -4,6 +4,7 @@ export type MapRevealRequest = {
   id: string;
   objectIds: string[];
   relationshipId?: string;
+  complete?: boolean;
 };
 
 function rendered(element: Element | null): element is HTMLElement {
