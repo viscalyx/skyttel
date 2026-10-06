@@ -1,7 +1,7 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
-import { createHousehold, signIn } from '../../support/client.js';
+import { createHousehold, restartWithSession, signIn } from '../../support/client.js';
 import { createInstallation, robin } from '../../support/installation.js';
 
 let installation: Awaited<ReturnType<typeof createInstallation>>;
@@ -83,7 +83,7 @@ test('relationship sections retain field identity and hidden answers through ato
   const { receipt } = await response.json();
   expect(receipt.relationshipTypes[0].after).toMatchObject(definition);
   expect(receipt.relationships[0].type).toMatchObject(definition);
-  await installation.restart();
+  client = await restartWithSession(client, () => installation.restart());
   expect((await read()).relationshipTypes.find(({ id }) => id === 'storage')).toMatchObject(
     definition,
   );
