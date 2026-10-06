@@ -393,7 +393,11 @@ test('a working task can be cancelled and an expired session clears private text
     'Skyttel arbetar…',
   );
   await userEvent.type(screen.getByLabelText('Meddelande till Skyttel'), '{Escape}');
-  expect(cancelled).toHaveBeenCalledExactlyOnceWith({ revision: 3, all: true });
+  expect(cancelled).toHaveBeenCalledExactlyOnceWith({
+    revision: 3,
+    contextRevision: 0,
+    all: true,
+  });
   expect(screen.getByRole('log', { name: 'Samtalstext' }).textContent).not.toContain(
     'Skyttel arbetar…',
   );
