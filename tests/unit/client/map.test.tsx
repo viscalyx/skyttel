@@ -946,16 +946,45 @@ test('relationship forms distinguish equal names, preserve meanings, correct and
   expect(
     (draft.getByRole('button', { name: 'Spara hela utkastet' }) as HTMLButtonElement).disabled,
   ).toBe(true);
+  let releaseMapRefresh: (() => void) | undefined;
   async function editCurrent() {
     await userEvent.click(screen.getByRole('button', { name: 'Tabell' }));
-    await userEvent.click(table.getAllByRole('button', { name: 'Samband för Lo' })[0]);
+    const currentTable = within(await screen.findByRole('region', { name: 'Hushållets tabell' }));
+    const buttons = currentTable.findAllByRole('button', { name: 'Samband för Lo' });
+    releaseMapRefresh?.();
+    await userEvent.click((await buttons)[0]);
     await userEvent.click(screen.getByRole('button', { name: 'Redigera samband' }));
   }
   await editCurrent();
   await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), 'uncertain');
   await userEvent.selectOptions(screen.getByLabelText('Till objekt'), targetId);
   await stageRelationship();
+  // The receipt confirms a durable save before the follow-up map response.
+  // Withhold that real HTTP response until the next edit waits for its rows.
+  const immediateFetch = globalThis.fetch;
+  const mapRefresh = new Promise<void>((resolve) => {
+    releaseMapRefresh = resolve;
+  });
+  let confirmMapRequested: () => void;
+  const mapRequested = new Promise<void>((resolve) => {
+    confirmMapRequested = resolve;
+  });
+  let holdRefresh = true;
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    const response = await immediateFetch(url, init);
+    if (holdRefresh && url === path && init?.method === 'GET') {
+      holdRefresh = false;
+      confirmMapRequested();
+      await mapRefresh;
+    }
+    return response;
+  });
   await save();
+  await mapRequested;
+  const saved = await (await client.request(path)).json();
+  expect(saved.objects).toHaveLength(2);
+  expect(saved.relationships[0]).toMatchObject({ knowledge: 'uncertain', targetId });
+  expect(table.queryAllByRole('button', { name: 'Samband för Lo', hidden: true })).toHaveLength(0);
   for (const knowledge of ['unknown', 'none']) {
     await editCurrent();
     await userEvent.selectOptions(screen.getByLabelText('Uppgiftens säkerhet'), knowledge);
