@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openMap, utilityButton } from '../support/client.js';
+import { openMap, openTable, utilityButton } from '../support/client.js';
 import { prepareHouseholdReading } from '../support/household-reading.js';
 import { createInstallation } from '../support/installation.js';
 
@@ -44,6 +44,27 @@ for (const viewport of [
         element.scrollTop = 0;
       });
       await page.screenshot({ path: testInfo.outputPath('selected-information.png') });
+      await openTable(page);
+      const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+      const tableEdit = table.getByRole('button', { name: 'Redigera Cykel', exact: true });
+      await tableEdit.click();
+      await editor.getByLabel('Beskrivning', { exact: true }).fill('Mitt privata läsförslag');
+      await editor.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(editor).not.toBeVisible();
+      await expect(tableEdit).toBeFocused();
+      const status = page.getByRole('status', { name: 'Hushållsarbetets status', exact: true });
+      await expect(status).toHaveCount(1);
+      await expect(status).toHaveText('Ändringen finns i ditt utkast. Kartan sparas separat.');
+      const after = await app.read();
+      expect(after.objects).toEqual(before.objects);
+      expect(after.relationships).toEqual(before.relationships);
+      expect(after.draft.changes.find((change) => change.id === 'bike')?.after).toEqual({
+        ...before.draft.changes.find((change) => change.id === 'bike')?.after,
+        description: 'Mitt privata läsförslag',
+      });
+      await (await utilityButton(page, 'Karta')).click();
+      await expect(status).toHaveCount(1);
+      await expect(status).toHaveText('Ändringen finns i ditt utkast. Kartan sparas separat.');
     } finally {
       await installation.close();
     }

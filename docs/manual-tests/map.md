@@ -186,16 +186,21 @@ unanswered identity question”.
 
 **Steg:**
 
-1. Skapa ett samband från Familjemusik med typen **Betalas med**.
-   Välj **Obesvarad identitetsfråga** under **Uppgiftens säkerhet** och
-   lägg sambandet i utkastet. Ladda om sidan.
-2. Kontrollera utkastet och **Spara hela utkastet**. Öppna sambandet,
-   välj **Osäkert uppgivet** och välj Betalkonto som **Till objekt**.
-   Lägg sambandet i utkastet, spara och ladda om sidan.
-3. Kontrollera sambandets säkerhet. Öppna Betalkonto, kontrollera
-   **Identitet** och stäng det oförändrade formuläret med **Avbryt**.
-4. Öppna sambandet och välj **Okänt**. Lägg i utkastet, spara och
-   ladda om sidan. Kontrollera sambandets betydelse.
+1. Välj **Tabell**, **Samband för Familjemusik** och **Nytt samband**.
+   Välj typen **Betalas med** och **Obesvarad identitetsfråga** under
+   **Uppgiftens säkerhet**. Välj **Lägg i utkastet** och **Stäng samband**.
+   Ladda om sidan.
+2. Välj **Skriv till Skyttel** och **Visa utkastet**. Läs **Olöst identitet**
+   och **Målet är oklart**. Kontrollera att **Spara hela utkastet** är inaktivt.
+   Stäng textvyn och öppna samma samband från tabellen. Välj **Redigera samband**,
+   **Osäkert uppgivet** och Betalkonto som **Till objekt**. Lägg hela sambandet
+   i utkastet och stäng samband. Öppna utkastvyn igen och spara uttryckligen.
+   Invänta **Utkastet är sparat**, stäng textvyn och ladda om sidan.
+3. Läs sambandet från **Samband för Familjemusik** och kontrollera säkerheten.
+   Stäng samband. Välj **Redigera Betalkonto**, kontrollera **Identitet** och
+   stäng det oförändrade formuläret med **Stäng objektdialogen**.
+4. Redigera samma samband från Familjemusik och välj **Okänt**. Lägg i utkastet,
+   stäng samband och spara separat via utkastvyn. Ladda om och läs betydelsen.
 5. Upprepa föregående steg med **Uttryckligen inget**.
 
 **Förväntat resultat:**
@@ -322,24 +327,32 @@ Följande testfall:
 
 **Steg:**
 
-1. Öppna Inställningar → Typer och egna fält. Skapa Solutrustning med
+1. Öppna **Inställningar → Typer och egna fält**. Skapa Solutrustning med
    beskrivningen Hushållets elproduktion och avsnittet Uppgifter. Lägg till
    Placering som text och Reserv som ja/nej. Lägg typförslaget i utkastet.
-2. Återgå till kartan och välj Nytt objekt. Försök lägga det i utkastet utan
-   namn. Kontrollera felsammanfattningens fokus och välj fellänken Namn.
-3. Ange Paneler på taket och Beskrivning till den nya typen. Välj
-   Solutrustning och öppna Uppgifter. Ange Placering Södertak och Reserv Nej.
-   Lägg objektet i utkastet med Identifierat objekt.
-4. Skapa **Batteriet** av samma nya typ. Välj **Ospecificerat objekt**,
-   lämna de egna fälten obesvarade och lägg objektet i utkastet.
-5. Skapa sambandstypen **Komplettering**, beskrivningen **Delar som används
-   ihop**, benämningen **kompletteras av** från startobjektet och
-   **kompletterar** från målobjektet. Lägg definitionen i utkastet.
-6. Skapa ett samband av den nya typen från Paneler på taket till Batteriet.
-   Välj **Osäkert uppgivet** och lägg sambandet i utkastet. Granska alla
-   fem förslag utan att spara dem.
-7. Starta om installationen och ladda om. Granska samma utkast och välj
-   **Spara hela utkastet**. Invänta kvittot. Starta om och ladda om igen.
+2. Välj **Tillbaka till kartan** och verktygens **Nytt objekt**. Försök lägga
+   det i utkastet utan namn. Kontrollera felsammanfattningens fokus och välj
+   fellänken Namn.
+3. Ange Paneler på taket och Beskrivning till den nya typen. Välj Solutrustning,
+   öppna Uppgifter och ange Placering Södertak och Reserv Nej. Behåll Identifierat
+   objekt och välj **Lägg i utkastet och stäng**.
+4. Skapa **Batteriet** av samma nya typ. Välj **Ospecificerat objekt**, lämna
+   de egna fälten obesvarade och välj **Lägg i utkastet och stäng**.
+5. Öppna **Inställningar → Typer och egna fält** igen. Skapa sambandstypen
+   **Komplettering**, beskrivningen **Delar som används ihop**, benämningen
+   **kompletteras av** från startobjektet och **kompletterar** från målobjektet.
+   Lägg definitionen i utkastet och välj **Tillbaka till kartan**.
+6. Välj **Tabell**, **Samband för Paneler på taket** och **Nytt samband**.
+   Välj Komplettering, Batteriet i målvalet med namn, typ och beskrivning samt
+   **Osäkert uppgivet**. Lägg i utkastet och stäng samband.
+7. Välj **Skriv till Skyttel** och **Visa utkastet**. Öppna båda objektförslagen
+   med **Visa förslaget** och läs fullständiga uppgifter. Skilj Reserv **Nej**
+   från **Ej uppgivet** och stäng varje läsdialog med krysset. Granska alla fem
+   förslag utan att spara.
+8. Starta om installationen och ladda om. Öppna och granska samma utkast.
+   Välj **Spara hela utkastet** och invänta **Utkastet är sparat**.
+   Stäng textvyn. Starta om och ladda om igen. Läs båda objektens fullständiga
+   uppgifter via tabellen och sambandet från **Samband för Paneler på taket**.
 
 **Förväntat resultat:**
 

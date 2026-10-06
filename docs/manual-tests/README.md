@@ -463,7 +463,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Sparutfall, återhämtning och gemensamma demodata](operations.md):
   kontrollera samma väntande eller obekräftade försök efter omstart,
   läsa genomförda sparanden i Rapporter och kontrollera privat tillgång;
-  SPAR-01–04 och DEMO-01 provar även färdigt TestHousehold med den
+  SPAR-05 provar styrd leverans av verkliga formulärförslag, avvisat inaktuellt
+  sparande och återhämtning av ett tappat lyckat sparkvitto.
+  DEMO-01 provar även färdigt TestHousehold med den
   konfigurerade Google- eller Microsoft-administratören.
 - [Ändringshistorik](history.md): Rapporter visar genomförda sparanden
   senaste först, fullständiga historiska värden, direktlänkar och återgång

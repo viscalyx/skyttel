@@ -1149,6 +1149,17 @@ export function HouseholdMap({
     );
   }
 
+  const workStatus = status && !pending && !error && (
+    <p
+      role="status"
+      aria-label="Hushållsarbetets status"
+      aria-live={status.startsWith('Sparat:') ? 'off' : 'polite'}
+      aria-atomic="true"
+    >
+      {status}
+    </p>
+  );
+
   return (
     <section
       ref={workspace}
@@ -1294,6 +1305,7 @@ export function HouseholdMap({
               {selectedIds.length} markerade
             </span>
             <section aria-label="Kartans status" className="map-status">
+              {workspaceSurface === 'map' && workStatus}
               {conflictFollowUp}
               <DraftSaveFollowUp
                 progress={saveProgress}
@@ -1688,6 +1700,7 @@ export function HouseholdMap({
           }}
           statusContent={
             <>
+              {active && workspaceSurface === 'table' && workStatus}
               {conflictFollowUp}
               <DraftSaveFollowUp
                 progress={saveProgress}

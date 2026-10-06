@@ -183,8 +183,13 @@ reachable at 320x250”.
    fullständiga objektformuläret öppnas med Cykels aktuella uppgifter.
 4. Välj **Stäng objektdialogen** utan att ändra något. Kontrollera att fokus
    återgår till **Redigera Cykel** och att samma uppgifter finns kvar.
-5. Rulla hela läsytan och upprepa vid varje angiven fönsterstorlek.
-   Kontrollera att knapparna kan nås med tangentbord utan sidrullning.
+5. Rulla hela läsytan. Välj **Tabell** och **Redigera Cykel**. Ange
+   **Mitt privata läsförslag** i Beskrivning och välj **Lägg i utkastet och stäng**.
+   Kontrollera fokus på samma redigeringsknapp och läs **Ändringen finns i ditt
+   utkast. Kartan sparas separat.** ovanför tabellen.
+6. Välj **Karta** och läs samma återkoppling en gång på den aktiva ytan.
+   Upprepa vid varje angiven fönsterstorlek och kontrollera att knapparna
+   kan nås med tangentbord utan sidrullning.
 
 **Förväntat resultat:**
 
@@ -192,4 +197,8 @@ reachable at 320x250”.
   redigeringsfält, flytthandtag eller återupptagningsknappar för gamla fönster.
 - Redigering öppnar samma vanliga objektformulär; oförändrad stängning
   återför fokus utan förslag eller ändrade värden.
-- Sparade uppgifter och hela tidigare privata utkastet är oförändrade.
+- Läsning och oförändrad stängning bevarar sparade uppgifter och hela tidigare
+  privata utkastet. Det uttryckliga tillägget ändrar endast Cykels privata
+  beskrivning. Kartans sparade objekt och samband är oförändrade.
+- Bekräftat tillägg återför fokus och visar samma återkoppling en gång på den
+  aktiva ytan, utan ett extra sparkvitto.
