@@ -28,13 +28,12 @@ verklig offentlig HTTP och SQLite med endast påhittade hushållsuppgifter.
   54 observationer och bilder. Referensen har 26 punkter vid samma storlekar,
   52 observationer och bilder; produktionen visar rubrikikoner separat.
 
-Oberoende genomgång av samtliga 142 produktionsobservationer och
-de faktiska referensobservationerna är utförd på föregående `d39a5fa`.
-Därefter avvecklas oanvända äldre redigerare och befintliga
-sambandsetiketter hämtas direkt från den gemensamma modulen.
-Den angivna nya versionen byggs och samtliga bilder tas om.
-Dess oberoende slutgenomgång **VÄNTAR**. Alla 439 förväntade
-bildfiler finns. Upprepade vybredder grupperas utan att utelämna tillstånd;
+Den angivna versionen är byggd och samtliga bilder tagna på nytt efter
+avvecklingen av oanvända äldre redigerare. Oberoende slutgenomgång
+av samtliga 142 nya produktionsobservationer, 137 faktiska
+referensobservationer och 216 uppmätta radattribut är utförd.
+Alla 439 förväntade bildfiler finns. Upprepade vybredder grupperas utan
+att utelämna tillstånd;
 kritiska faktiska bilder öppnas och jämförs direkt. Inga kvarvarande
 åtgärdbara visuella fynd finns i de granskade tillstånden.
 Text, radmarkering, valram, riktning, läsläge och resultat jämförs.
