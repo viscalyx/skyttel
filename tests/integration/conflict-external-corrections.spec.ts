@@ -1,7 +1,15 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { openSettings } from '../support/client.js';
 import { prepareArchiveConflict } from '../support/conflict-archive.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+
+async function closeConflictWithEscape(page: Page, dialog: Locator) {
+  await expect(
+    dialog.getByRole('button', { name: 'Stäng konfliktdialogen', exact: true }),
+  ).toBeEnabled();
+  await page.keyboard.press('Escape');
+  await expect(dialog).not.toBeVisible();
+}
 
 async function addReplacementField(page: Page) {
   await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
@@ -40,7 +48,7 @@ test('UTKAST-75: a missing endpoint and missing relationship type remain visible
     await expect(
       dialog.getByRole('region', { name: 'Ditt förslag', exact: true }).getByRole('button'),
     ).toHaveCount(0);
-    await page.keyboard.press('Escape');
+    await closeConflictWithEscape(page, dialog);
     expect((await app.read()).draft).toEqual(before.draft);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     await dialog
@@ -93,7 +101,7 @@ for (const kind of ['object', 'relationship'] as const)
       await expect(
         conflict.getByRole('region', { name: 'Ditt förslag', exact: true }),
       ).toContainText('Våren 2021');
-      await page.keyboard.press('Escape');
+      await closeConflictWithEscape(page, conflict);
       await page.getByRole('button', { name: 'Tabell', exact: true }).click();
       await page
         .getByRole('button', {
@@ -116,6 +124,7 @@ for (const kind of ['object', 'relationship'] as const)
       await expect(loss).toContainText('Installationsår: Våren 2021');
       await expect(loss).not.toContainText(kind === 'object' ? 'year:' : 'storage-year:');
       await page.keyboard.press('Escape');
+      await expect(loss).not.toBeVisible();
       expect((await app.read()).draft).toEqual(before.draft);
       await type.selectOption(selectedType);
       await loss
@@ -181,7 +190,7 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     await expect(
       conflict.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
     ).toHaveCount(0);
-    await page.keyboard.press('Escape');
+    await closeConflictWithEscape(page, conflict);
     expect((await app.read()).draft).toEqual(before.draft);
     await openSettings(page);
     await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
@@ -206,7 +215,7 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     await expect(conflict).toContainText('Den föreslagna sambandstypen saknas');
-    await page.keyboard.press('Escape');
+    await closeConflictWithEscape(page, conflict);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     await page.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Samband för Lo Exempel', exact: true });
@@ -216,6 +225,7 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     await expect(loss).toContainText('Installationsår: Våren 2021');
     await expect(loss).not.toContainText('storage-year:');
     await page.keyboard.press('Escape');
+    await expect(loss).not.toBeVisible();
     expect((await app.read()).draft).toEqual(named.draft);
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption(definition?.id ?? '');
     await loss
@@ -290,7 +300,7 @@ test('UTKAST-64: a missing object type keeps its proposal readable and discards 
     await expect(preview.locator('dd')).toHaveText('Tas bort ur ditt utkast');
     await expect(preview).toContainText('Övriga objekt och samband i kartan påverkas inte.');
     await expect(preview).not.toContainText('✓ Förvalt');
-    await page.keyboard.press('Escape');
+    await closeConflictWithEscape(page, dialog);
     expect((await app.read()).draft).toEqual(before.draft);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     await dialog
@@ -351,10 +361,9 @@ test('UTKAST-72: ordinary correction of a missing object type preserves historic
     expect(named.draft.changes).toEqual(before.draft.changes);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
-    await expect(
-      page.getByRole('dialog', { name: 'Granska konflikter', exact: true }),
-    ).toContainText('Den föreslagna objekttypen saknas');
-    await page.keyboard.press('Escape');
+    const conflict = page.getByRole('dialog', { name: 'Granska konflikter', exact: true });
+    await expect(conflict).toContainText('Den föreslagna objekttypen saknas');
+    await closeConflictWithEscape(page, conflict);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     await page.getByRole('button', { name: 'Redigera Solcellsanläggningen', exact: true }).click();
     const form = page.getByRole('dialog', { name: 'Redigera Solcellsanläggningen', exact: true });
@@ -363,6 +372,7 @@ test('UTKAST-72: ordinary correction of a missing object type preserves historic
     await expect(loss).toContainText('Installationsår: Våren 2021');
     await expect(loss).not.toContainText('year:');
     await page.keyboard.press('Escape');
+    await expect(loss).not.toBeVisible();
     expect((await app.read()).draft).toEqual(named.draft);
     await form.getByLabel('Objekttyp', { exact: true }).selectOption(definition?.id ?? '');
     await loss
