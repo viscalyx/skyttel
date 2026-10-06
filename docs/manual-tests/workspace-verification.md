@@ -7,9 +7,17 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: automatiska slutkontroller GODKÄNDA; granskning VÄNTAR.**
+**Status: automatiska slutkontroller och slutgranskningar GODKÄNDA.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
+
+Standards- och Spec-granskningarna gäller
+[`62a9b748e2c8bbc148144660ec9a52e536e4f318`](https://github.com/viscalyx/skyttel/tree/62a9b748e2c8bbc148144660ec9a52e536e4f318)
+mot startpunkten
+[`4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123`](https://github.com/viscalyx/skyttel/tree/4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123).
+Båda axlarna har noll kvarstående åtgärdbara fynd i det granskade underlaget.
+Fokus- och vägledningsrättelserna nedan är granskade och omprovade.
+Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 
 ## Provdata, miljö och metod
 
@@ -271,7 +279,7 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 | Slutlig kod- och byggversion, webbläsare och provmiljö | `a53edf8`; Linux, Chromium 153.0.8010.12, Node 24.21.0, npm 12.0.2, Playwright 1.63.0; samma `src`-träd som A/C/D och mätningen |
 | Hela `npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND; 140 grindprov, 1 576 enhets- och webbläsarprov; grentäckning 90,22 procent mot kravet 90 |
 | Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
-| Standards- och Spec-granskningar samt omprov av deras rättelser | VÄNTAR |
+| Standards- och Spec-granskningar samt omprov av deras rättelser | GENOMGÅNGNA; 0 kvarstående åtgärdbara fynd på `62a9b74`; fokus och vägledning rättade och omprovade |
 | A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN utan kvarstående visuella fynd i angivna tillstånd; fysisk verifiering ingår inte |
 | Prestanda för 500 objekt och 1 500 samband | GODKÄND enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
 | Fysiska hjälpmedels-, telefon- och förstoringstester | INTE UTFÖRDA |
