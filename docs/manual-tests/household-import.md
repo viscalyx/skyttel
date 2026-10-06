@@ -488,8 +488,8 @@ cleanup after the original administrator loses authority”.
 
 ### IMPORT-12: egna inställningssidor och skyddat kartarbete
 
-**Syfte:** Bevara oskickat kartarbete vid vanlig navigering och stoppa
-det gamla arbetet när hushållets innehåll ersätts.
+**Syfte:** Skydda oskickade formulärändringar och bevara privata förslag
+vid administrativ läsning och uttrycklig innehållsersättning.
 
 **Användare:** Alex som administratör.
 
@@ -505,24 +505,30 @@ work and retire it after replacement”.
 
 1. Öppna formuläret för ett nytt objekt. Skriv ett namn men lägg inte
    förslaget i utkastet. Låt fokus vara i namnfältet.
-2. Öppna **Inställningar → Återimportera hushållet**. På mobil fäller
+2. Tryck Escape och välj **Fortsätt redigera**. Kontrollera att namnet
+   och fokus finns kvar. Tryck Escape igen och välj **Kasta ändringarna
+   och fortsätt**. Öppna **Inställningar → Återimportera hushållet**.
+   På mobil fäller
    du först ut **Välj inställning**. Kontrollera att sidrubriken får
    synligt fokus och att kartan inte kan användas bakom sidan.
 3. Välj exportfilen. Aktivera **Kontrollera importfil** med tangentbordet.
    Läs **Ersätts** och **Behålls**; ersättning kräver fortfarande bekräftelse.
 4. Besök **Koppla historiskt innehåll** genom inställningarnas navigation.
    Hämta aktuell metadata och läs identitetsvarningen, utan att ändra något.
-5. Välj **Tillbaka till kartan**. Kontrollera samma oskickade namn och fokus.
+5. Välj **Tillbaka till kartan**. Öppna **Nytt objekt** och kontrollera
+   ett tomt namnfält. Stäng utan ändringar. Det tidigare privata utkastet
+   ska vara oförändrat.
 6. Gå tillbaka till importen och välj **Hämta importens status**. Granska
    samma förberedelse, markera bekräftelsen och genomför ersättningen.
 7. Kontrollera slutfört resultat och fokus på återinläsningen. Återgå till
-   kartan. Det gamla oskickade formuläret ska försvinna; inget gammalt
-   förslag får följa med till det ersatta innehållet.
+   kartan. Inget kastat formulär ska komma tillbaka; endast det privata
+   innehåll som finns i den bekräftade exporten får följa med.
 
 **Förväntat resultat:**
 
 - Import och historisk identitetsgranskning har egna sidor i Inställningar.
-  Vanlig navigering behåller oskickad text och dess fokus utan att spara den.
+  Avbruten formulärstängning behåller oskickad text och fokus utan att
+  spara den. Bekräftad stängning kastar endast dessa oskickade ändringar.
 - Ersättning kräver uttryckligt beslut. Därefter kan det gamla kartarbetet
   inte fortsätta mot det återställda innehållet.
 
@@ -681,12 +687,15 @@ unconfirmed preparation and removes its staged archive”.
 **Steg:**
 
 1. Börja ett nytt objekt med namnet **Oskickat arbete under avbrottet**
-   utan att skicka förslaget. Öppna importsidan, välj exporten och
+   utan att skicka förslaget. Tryck Escape och **Fortsätt redigera**;
+   kontrollera namnet. Tryck Escape igen och bekräfta **Kasta ändringarna
+   och fortsätt**. Öppna importsidan, välj exporten och
    **Kontrollera importfil**. Läs granskningen utan att markera bekräftelsen.
 2. Använd Tab till **Avbryt förberedelsen** och tryck Enter.
 3. Kontrollera beskedet att förberedelsen är avbruten. Granskningen ska
    försvinna och fokus återgå till filvalet.
-4. Återgå till kartan. Det oskickade formuläret ska finnas kvar. Kontrollera
+4. Återgå till kartan. Det uttryckligen kastade formuläret ska vara stängt.
+   Kontrollera
    att den senare ändringen **Senare namn**, privata utkast och aktuell
    tillgång är oförändrade.
 5. Öppna importen och ladda om sidan. Ingen granskning av den avbrutna filen
