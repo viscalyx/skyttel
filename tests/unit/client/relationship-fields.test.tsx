@@ -1,8 +1,13 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState, SaveReceipt } from '../../../src/shared/map.js';
+import {
+  openObjectRelationships,
+  readDraftProposal,
+  renderHouseholdWork,
+  saveHouseholdDraft,
+} from '../../support/native-household-unit.js';
 import { applicationFixture } from '../server/fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -39,16 +44,13 @@ afterEach(() => {
   fixture.close();
 });
 async function open() {
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  const work = within(await screen.findByRole('region', { name: 'Lista och utkast' }));
-  await work.findByRole('button', { name: 'Nytt samband' });
-  return work;
+  renderHouseholdWork(householdId);
+  return within(await screen.findByRole('region', { name: 'Typer och egna fält' }));
 }
 
 test('removing a relationship field returns focus to the add-field button', async () => {
   const work = await open();
-  await userEvent.click(work.getByRole('button', { name: 'Ny sambandstyp' }));
+  await userEvent.click(await work.findByRole('button', { name: 'Ny sambandstyp' }));
   const editor = within(screen.getByRole('group', { name: 'Sambandstypens definition' }));
   await userEvent.click(editor.getByRole('button', { name: 'Lägg till fält' }));
   expect(document.activeElement).toBe(editor.getByLabelText('Fältets namn'));
@@ -60,7 +62,7 @@ test('relationship field definitions enter the private draft with all four kinds
   const user = userEvent.setup();
   const before = await read();
   const work = await open();
-  await userEvent.click(work.getByRole('button', { name: 'Ny sambandstyp' }));
+  await userEvent.click(await work.findByRole('button', { name: 'Ny sambandstyp' }));
   const editor = within(screen.getByRole('group', { name: 'Sambandstypens definition' }));
   for (const [label, text] of [
     ['Sambandstypens namn', 'Förvaring'],
@@ -147,8 +149,9 @@ test('a draft-only relationship definition supplies four answer kinds and saves 
     before: null,
     after: definition,
   });
-  const work = await open();
-  await userEvent.click(work.getByRole('button', { name: 'Nytt samband' }));
+  await open();
+  const dialog = await openObjectRelationships('bike');
+  await userEvent.click(dialog.getByRole('button', { name: 'Nytt samband' }));
   const relationship = within(screen.getByRole('group', { name: 'Sambandets detaljer' }));
   await userEvent.selectOptions(relationship.getByLabelText('Från objekt'), 'bike');
   await userEvent.selectOptions(relationship.getByLabelText('Till objekt'), 'garage');
@@ -161,13 +164,18 @@ test('a draft-only relationship definition supplies four answer kinds and saves 
   await userEvent.type(relationship.getByLabelText('Datum', { exact: true }), '2026-09-27');
   await userEvent.selectOptions(relationship.getByLabelText('Bekräftat', { exact: true }), 'false');
   await userEvent.click(relationship.getByRole('button', { name: 'Lägg i utkastet' }));
-  const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
-  await review.findByText('Anteckning: Låst');
-  expect(review.getByText('Belopp: 0')).toBeTruthy();
-  expect(review.getByText('Bekräftat: Nej')).toBeTruthy();
-  await userEvent.click(screen.getByRole('button', { name: 'Stäng samband' }));
-  await userEvent.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
-  await screen.findByText(/^Sparat:/, { selector: '[role="status"]' });
+  await dialog.findByText('Sambandet lades i ditt utkast. Du kan hantera nästa samband.');
+  await userEvent.click(dialog.getByRole('button', { name: 'Stäng samband' }));
+  const review = await readDraftProposal('bike → förvaras i → garage');
+  expect(review.getByText('Anteckning', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
+    'Låst',
+  );
+  expect(review.getByText('Belopp', { selector: 'dt' }).nextElementSibling?.textContent).toBe('0');
+  expect(review.getByText('Bekräftat', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
+    'Nej',
+  );
+  await userEvent.click(review.getByRole('button', { name: 'Stäng dialogen' }));
+  await saveHouseholdDraft();
   const saved = await read();
   expect(Object.values(saved.relationships[0].customValues ?? {})).toEqual([
     'Låst',
@@ -218,12 +226,10 @@ test('relationship type changes keep previous answers visible until the user mak
   });
   await post('save', { version: (await read()).draft.version, operationId: 'initial' });
   await open();
-  await userEvent.click(
-    within(screen.getByRole('list', { name: 'Samband' })).getByRole('button', {
-      name: 'bike → hör till → garage',
-    }),
-  );
-  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt samband' }));
+  const dialog = await openObjectRelationships('bike');
+  const entry = dialog.getByRole('heading', { name: 'bike → hör till → garage' }).closest('li');
+  if (!entry) throw new Error('Missing relationship entry');
+  await userEvent.click(within(entry).getByRole('button', { name: 'Redigera samband' }));
   await userEvent.selectOptions(screen.getByLabelText('Sambandstyp', { exact: true }), 'second');
   const previous = within(screen.getByRole('dialog', { name: 'Ta bort tidigare egna fält?' }));
   expect(previous.getByText('Anteckning: Tidigare svar')).toBeTruthy();

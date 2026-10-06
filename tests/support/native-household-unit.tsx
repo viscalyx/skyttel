@@ -33,6 +33,38 @@ export async function editTableObjectForm(name: string) {
   return within(await screen.findByRole('dialog', { name: `Redigera ${name}` }));
 }
 
+export async function readTableObject(name: string) {
+  const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
+  await userEvent.click(tools.getByRole('button', { name: 'Tabell' }));
+  const table = within(await screen.findByRole('region', { name: 'Hushållets tabell' }));
+  const expand = await table.findByRole('button', { name });
+  if (expand.getAttribute('aria-expanded') !== 'true') await userEvent.click(expand);
+  await userEvent.click(table.getByRole('button', { name: `Läs alla uppgifter för ${name}` }));
+  return within(await screen.findByRole('dialog', { name: `Uppgifter för ${name}` }));
+}
+
+export async function openObjectRelationships(name: string) {
+  const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
+  await userEvent.click(tools.getByRole('button', { name: 'Tabell' }));
+  const table = within(await screen.findByRole('region', { name: 'Hushållets tabell' }));
+  await userEvent.click(await table.findByRole('button', { name: `Samband för ${name}` }));
+  return within(await screen.findByRole('dialog', { name: `Samband för ${name}` }));
+}
+
+export async function openConflictReview() {
+  await userEvent.click(
+    await screen.findByRole('button', { name: /^\d+ konflikt(?:er)? i ditt utkast$/ }),
+  );
+  const dialog = within(await screen.findByRole('dialog', { name: 'Granska konflikter' }));
+  await waitFor(() =>
+    expect(
+      (dialog.getByRole('button', { name: 'Stäng konfliktdialogen' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false),
+  );
+  return dialog;
+}
+
 export async function openDraftReview() {
   const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
   const text = tools.getByRole('button', { name: /^Skriv till Skyttel/ });

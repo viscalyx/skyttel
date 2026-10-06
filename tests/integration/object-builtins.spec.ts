@@ -1,6 +1,17 @@
 import { expect, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
-import { createHousehold, openSettings, openWorkspace, signIn } from '../support/client.js';
+import {
+  closeSupportDialog,
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openNewObject,
+  openSettings,
+  openTable,
+  signIn,
+} from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 for (const { width, height } of [
@@ -44,10 +55,10 @@ for (const { width, height } of [
       };
       const returnToWork = async () => {
         await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-        await openWorkspace(page);
+        await openTable(page);
       };
       const save = async (): Promise<SaveReceipt> => {
-        await openWorkspace(page);
+        await openTable(page);
         const response = page.waitForResponse(
           (response) => response.url() === `${path}/save` && response.request().method() === 'POST',
         );
@@ -213,3 +224,113 @@ for (const { width, height } of [
     }
   });
 }
+
+test('TYP-12: explicit field order preserves zero and false through the native form, draft and table readers', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const initial: MapState = await (await page.request.get(path)).json();
+    const headers = { origin: installation.origin };
+    const definition = {
+      name: 'Sorterad typ',
+      description: '',
+      fields: [
+        { id: 'first', name: 'Första fältet', description: '', kind: 'number' },
+        { id: 'second', name: 'Andra fältet', description: '', kind: 'boolean' },
+      ],
+      propertyOrder: ['field:second', 'field:first'],
+    };
+    expect(
+      (
+        await page.request.post(`${path}/object-type`, {
+          headers,
+          data: {
+            version: initial.draft.version,
+            contentVersion: initial.contentVersion,
+            id: 'ordered-read-type',
+            baseRevision: null,
+            value: definition,
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    const staged: MapState = await (await page.request.get(path)).json();
+    expect(
+      (
+        await page.request.post(`${path}/save`, {
+          headers,
+          data: {
+            version: staged.draft.version,
+            contentVersion: staged.contentVersion,
+            operationId: 'ordered-read-type-setup',
+          },
+        })
+      ).status(),
+    ).toBe(200);
+    await page.goto(installation.origin);
+    const form = await openNewObject(page);
+    await form.getByLabel('Namn', { exact: true }).fill('Ordningsprov');
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption('ordered-read-type');
+    await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    const orderedLabels = /^(Andra fältet|Första fältet)$/;
+    await expect(form.locator('label').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    await form.getByLabel('Andra fältet', { exact: true }).selectOption('false');
+    await form.getByLabel('Första fältet', { exact: true }).fill('0');
+    expect((await (await page.request.get(path)).json()).draft.changes).toEqual([]);
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await expect(form).not.toBeVisible();
+    const proposed: MapState = await (await page.request.get(path)).json();
+    expect(proposed.objects).toEqual([]);
+    expect(proposed.draft.changes[0].after?.customValues).toEqual({ first: 0, second: false });
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Visa förslaget: Ordningsprov', exact: true }).click();
+    const proposal = page.getByRole('dialog', { name: 'Ordningsprov', exact: true });
+    await expect(proposal.locator('dt').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    await expect(
+      proposal.locator('dt').filter({ hasText: 'Andra fältet' }).locator('..'),
+    ).toContainText('Nej');
+    await expect(
+      proposal.locator('dt').filter({ hasText: 'Första fältet' }).locator('..'),
+    ).toContainText('0');
+    await closeSupportDialog(page, 'Ordningsprov');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    const details = await readTableObject(page, 'Ordningsprov');
+    await expect(details.locator('dt').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    await expect(
+      details.locator('dt').filter({ hasText: 'Andra fältet' }).locator('..'),
+    ).toContainText('Nej');
+    await expect(
+      details.locator('dt').filter({ hasText: 'Första fältet' }).locator('..'),
+    ).toContainText('0');
+    await closeSupportDialog(page, 'Uppgifter för Ordningsprov');
+    const tableDetails = page
+      .getByRole('region', { name: 'Hushållets tabell', exact: true })
+      .locator('.household-table-detail-row');
+    await expect(tableDetails.locator('dt').filter({ hasText: orderedLabels })).toHaveText([
+      'Andra fältet',
+      'Första fältet',
+    ]);
+    const saved: MapState = await (await page.request.get(path)).json();
+    expect(saved.draft.changes).toEqual([]);
+    expect(saved.objects[0].customValues).toEqual({ first: 0, second: false });
+    const type = saved.types.find(({ id }) => id === 'ordered-read-type');
+    expect(type?.fields?.map(({ id }) => id)).toEqual(['first', 'second']);
+    expect(type?.propertyOrder).toEqual(['field:second', 'field:first']);
+  } finally {
+    await installation.close();
+  }
+});

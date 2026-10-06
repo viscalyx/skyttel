@@ -602,3 +602,106 @@ saves until fresh choices and preserve later private fields”.
   Konfliktvalet kräver ett nytt sparbesked för det aktuella utkastet.
 - Nummer 43 finns kvar i ditt utkast efter omstart. Den sparade kartan
   behåller Motorfordon och Nummer 42, och tidigare sparanden är oförändrade.
+
+### TYP-12: Konfigurerad fältordning i formulär och fullständig läsning
+
+**Syfte:** Kontrollera samma uttryckliga ordning i formuläret, utkastets
+läsning och tabellen, med bevarade svar som är noll och Nej.
+
+**Användare:** Alex.
+
+**Förutsättningar:** Ett nytt testhushåll utan privata förslag. Ingen
+AI-leverantör eller samtalsstart behövs. Förbered följande syntetiska typ
+genom publika HTTP-anrop i den inloggade profilens Console. Ange hushållets
+faktiska ID från nätverkspanelen. Kör bara på den separata testinstallationen;
+koden lägger typdefinitionen i utkastet och sparar den gemensamt.
+
+```js
+await (async () => {
+  const householdId = prompt('Hushållets ID');
+  const path = `/api/households/${encodeURIComponent(householdId)}/map`;
+  const read = async () => {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error('Kartan kunde inte läsas');
+    return response.json();
+  };
+  const identity = await (await fetch('/api/version')).json();
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Skyttel-Build': `${identity.commit}:${identity.version}`,
+  };
+  const before = await read();
+  if (before.draft.changes.length || before.draft.objectTypes.length ||
+      before.draft.relationships.length ||
+      before.draft.relationshipTypes.length) {
+    throw new Error('Börja med ett tomt utkast');
+  }
+  const staged = await fetch(`${path}/object-type`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      version: before.draft.version,
+      contentVersion: before.contentVersion,
+      id: 'ordered-read-type', baseRevision: null,
+      value: {
+        name: 'Sorterad typ', description: '',
+        fields: [
+          { id: 'first', name: 'Första fältet',
+            description: '', kind: 'number' },
+          { id: 'second', name: 'Andra fältet',
+            description: '', kind: 'boolean' },
+        ],
+        propertyOrder: ['field:second', 'field:first'],
+      },
+    }),
+  });
+  if (staged.status !== 200) throw new Error('Typförberedelsen avvisades');
+  const proposed = await read();
+  const saved = await fetch(`${path}/save`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      version: proposed.draft.version,
+      contentVersion: proposed.contentVersion,
+      operationId: 'ordered-read-type-setup',
+    }),
+  });
+  console.log({ staged: staged.status, saved: saved.status });
+})();
+```
+
+Resultatet ska visa `staged: 200` och `saved: 200`. Ladda därefter om sidan.
+Typens lagrade fältlista är Första fältet följt av Andra fältet; dess
+uttryckliga presentationsordning är Andra fältet följt av Första fältet.
+
+**Integrationstest:**
+[object-builtins.spec.ts](../../tests/integration/object-builtins.spec.ts),
+testfallet “TYP-12: explicit field order preserves zero and false through
+the native form, draft and table readers”.
+
+**Steg:**
+
+1. Välj Nytt objekt i kartans verktyg. Ange namnet Ordningsprov och välj
+   Sorterad typ. Öppna Egna fält: Andra fältet ska stå före Första fältet.
+   Välj Nej i Andra fältet och ange `0` i Första fältet.
+2. Kontrollera i nätverkspanelens aktuella kartläsning att det privata
+   objektutkastet fortfarande är tomt. Välj Lägg i utkastet och stäng.
+   Läs kartan igen: inget gemensamt objekt har skapats, medan det privata
+   förslaget innehåller noll och Nej under de två förberedda fältidentiteterna.
+3. Välj Skriv till Skyttel och Visa utkastet. Öppna Visa förslaget:
+   Ordningsprov. Kontrollera ordning och fullständiga värden och stäng
+   läsningen med krysset.
+4. Välj utkastets sparikon. Vänta på Utkastet är sparat och stäng textvyn.
+   Välj Tabell och fäll ut Ordningsprov. Kontrollera samma ordning i raden.
+   Öppna Läs alla uppgifter för Ordningsprov och kontrollera ordning och
+   fullständiga värden igen. Stäng läsningen med krysset.
+5. Läs den aktuella kartan i nätverkspanelen. Kontrollera att objektutkastet
+   är tomt, det gemensamma objektet innehåller `first: 0` och `second: false`,
+   och typens fältidentiteter och uttryckliga ordning är oförändrade.
+
+**Förväntat resultat:**
+
+- Formuläret, utkastets fullständiga läsning, tabellraden och tabellens
+  fullständiga läsning visar Andra fältet före Första fältet.
+- Nej och noll visas som svar, inte som obesvarade fält. Placering i
+  utkastet skapar inget gemensamt objekt; uttryckligt sparande skapar det.
+- Sparandet bevarar båda svaren och fältidentiteterna. Den ursprungliga
+  fältlistan och den separata presentationsordningen ändras inte.

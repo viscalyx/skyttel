@@ -5,8 +5,12 @@ import { MemoryRouter } from 'react-router';
 import sharp from 'sharp';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { App } from '../../../src/client/App.js';
-import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
+import {
+  editTableObjectForm,
+  openDraftReview,
+  renderHouseholdWork,
+} from '../../support/native-household-unit.js';
 import { applicationFixture } from '../server/fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -114,26 +118,11 @@ afterEach(() => {
   fixture.close();
 });
 async function open() {
-  render(<HouseholdMap householdId={householdId} />);
-  const tools = within(await screen.findByLabelText('Kartans verktyg', { selector: 'nav' }));
-  await userEvent.click(tools.getByLabelText('Lista', { selector: 'button' }));
-  const list = within(
-    await screen.findByLabelText('Lista och utkast', { selector: 'section:not([hidden])' }),
-  );
-  await userEvent.click(
-    await list.findByLabelText('Uppgifter för Lo Exempel', { selector: 'button' }),
-  );
-  const panel = within(
-    await screen.findByLabelText('Lo Exempel', { selector: 'section:not([hidden])' }),
-  );
-  await userEvent.click(panel.getByRole('button', { name: 'Redigera valt objekt' }));
-  const form = within(screen.getByRole('dialog', { name: 'Redigera Lo Exempel' }));
-  await userEvent.click(form.getByRole('button', { name: 'Livscykel och utseende' }));
-  return form;
+  renderHouseholdWork(householdId);
+  return reopen();
 }
 async function reopen() {
-  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
-  const form = within(screen.getByRole('dialog', { name: 'Redigera Lo Exempel' }));
+  const form = await editTableObjectForm('Lo Exempel');
   await userEvent.click(form.getByRole('button', { name: 'Livscykel och utseende' }));
   return form;
 }
@@ -250,10 +239,7 @@ async function openInApp() {
       <App />
     </MemoryRouter>,
   );
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: 'Uppgifter för Lo Exempel' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Redigera valt objekt' }));
-  return within(screen.getByRole('dialog', { name: 'Redigera Lo Exempel' }));
+  return editTableObjectForm('Lo Exempel');
 }
 
 // The real image upload and held save round trip share the loaded coverage run.
@@ -299,7 +285,7 @@ test('the whole image and description proposal saves once with an exact expanded
     return response;
   });
   try {
-    const review = within(screen.getByRole('region', { name: 'Hela mitt utkast' }));
+    const review = await openDraftReview();
     await user.click(review.getByRole('button', { name: 'Spara hela utkastet' }));
     const response = await saved;
     expect(response.status).toBe(200);
@@ -312,24 +298,29 @@ test('the whole image and description proposal saves once with an exact expanded
     expect(receipt.changes).toHaveLength(1);
     expect(receipt.changes[0]).not.toHaveProperty('stagingId');
     expect(receipt.changes[0]).not.toHaveProperty('proposedAt');
-    const status = within(screen.getByRole('region', { name: 'Kartans status' }));
-    expect(await status.findByText('Väntar på sparkvitto')).toBeTruthy();
+    const progress = within(screen.getByRole('dialog', { name: 'Spara utkastet' }));
+    expect(await progress.findByText('Sparar utkastet…')).toBeTruthy();
     expect(screen.queryByText(`Sparat: Lo Exempel. Kvitto: ${receipt.operationId}.`)).toBeNull();
-    expect(status.queryByText(/^Sparat:/)).toBeNull();
-    expect(status.queryByText('Sparat · kvitto bekräftat')).toBeNull();
+    expect(screen.getByRole('status', { name: 'Sparbekräftelse' }).textContent).toBe('');
+    expect(progress.queryByText('Sparat · kvitto bekräftat')).toBeNull();
     release();
     await waitFor(() =>
       expect(screen.getByRole('status', { name: 'Sparbekräftelse' }).textContent).toBe(
         'Utkastet är sparat',
       ),
     );
-    await user.click(screen.getByText('Tidigare sparförsök', { selector: 'summary' }));
-    await user.click(screen.getByText('Visa kvittot', { selector: 'summary' }));
-    expect(
-      within(screen.getByRole('region', { name: 'Mina sparförsök' })).getByText(
-        `Sparat: Lo Exempel. Kvitto: ${receipt.operationId}.`,
-      ),
-    ).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Stäng textvyn' }));
+    await user.click(screen.getByRole('button', { name: 'Rapporter' }));
+    const history = within(await screen.findByRole('region', { name: 'Ändringshistorik' }));
+    const article = (await history.findByText(`Sparande: ${receipt.operationId}`)).closest(
+      'article',
+    );
+    if (!article) throw new Error('Missing exact receipt entry');
+    const savedEntry = within(article);
+    await user.click(savedEntry.getByText('Visa ändringarna', { selector: 'summary' }));
+    expect(article.textContent).toContain('Lo Exempel');
+    expect(article.textContent).toContain('Text och bild i samma förslag');
+    expect(savedEntry.getByRole('img').getAttribute('src')).toContain(image);
     const shared = await read();
     expect(shared.objects).toHaveLength(1);
     expect(shared.objects[0]).toMatchObject(proposed.draft.changes[0].after ?? {});

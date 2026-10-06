@@ -47,7 +47,10 @@ export function objectPropertyValues(value: ObjectValue, type?: ObjectType) {
           ? 'Identiteten behöver redas ut'
           : 'Identifierat objekt',
   });
-  for (const [key, field] of customReadFields(type?.fields, value.customValues))
+  const orderedFields = properties.flatMap((property) =>
+    property.kind === 'custom' ? [property.field] : [],
+  );
+  for (const [key, field] of customReadFields(orderedFields, value.customValues))
     fields.set(key, field);
   for (const field of financialFields) {
     const property = properties.find((property) => property.ref === `builtin:${field.key}`);

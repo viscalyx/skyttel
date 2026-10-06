@@ -1,8 +1,12 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { HouseholdMap } from '../../../src/client/HouseholdMap.js';
 import type { MapState } from '../../../src/shared/map.js';
+import {
+  openConflictReview,
+  renderHouseholdWork,
+  saveHouseholdDraft,
+} from '../../support/native-household-unit.js';
 import { applicationFixture } from '../server/fixture.js';
 
 let fixture: Awaited<ReturnType<typeof applicationFixture>>;
@@ -44,8 +48,7 @@ afterEach(() => {
   fixture.close();
 });
 async function open() {
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
+  renderHouseholdWork(householdId);
   await userEvent.click(await screen.findByRole('button', { name: 'Ny sambandstyp' }));
   const editor = within(screen.getByRole('group', { name: 'Sambandstypens definition' }));
   await userEvent.type(editor.getByLabelText('Sambandstypens namn'), 'Förvaring');
@@ -142,10 +145,8 @@ test('the visible relationship conflict preview matches saved independent sectio
     },
   });
   await other.json(`${path}/save`, { version: 1, operationId: 'other' });
-  render(<HouseholdMap householdId={householdId} />);
-  await userEvent.click(await screen.findByRole('button', { name: 'Lista' }));
-  await userEvent.click(await screen.findByRole('button', { name: '1 konflikt i ditt utkast' }));
-  const dialog = within(screen.getByRole('dialog', { name: 'Granska konflikter' }));
+  renderHouseholdWork(householdId);
+  const dialog = await openConflictReview();
   await userEvent.click(dialog.getByRole('button', { name: /^Egna fält: Ditt förslag/ }));
   await userEvent.click(dialog.getByRole('button', { name: /^Avsnitt: Sparat i kartan nu/ }));
   const preview = dialog.getByRole('region', { name: 'Resultat av valen' });
@@ -158,12 +159,7 @@ test('the visible relationship conflict preview matches saved independent sectio
     sections: [definition.sections[0], { id: 'service', name: 'Underhåll' }],
     fields: [{ ...definition.fields[0], sectionId: 'service' }],
   });
-  await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
-  await waitFor(() =>
-    expect(screen.getByRole('status', { name: 'Hushållsarbetets status' }).textContent).toMatch(
-      /^Sparat:/,
-    ),
-  );
+  await saveHouseholdDraft();
   expect((await read()).relationshipTypes.find(({ id }) => id === 'storage')).toMatchObject({
     sections: [definition.sections[0], { id: 'service', name: 'Underhåll' }],
     fields: [{ ...definition.fields[0], sectionId: 'service' }],
