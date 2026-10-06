@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import { conflictBasis } from '../../src/shared/conflict-properties.js';
 import { draftConflicts } from '../../src/shared/draft-conflicts.js';
 import {
@@ -8,6 +8,39 @@ import {
 } from '../support/conflict-archive.js';
 import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+
+async function expectSeparateDefinitionProperties(
+  container: Locator,
+  kind: 'object' | 'relationship',
+) {
+  const properties = container.locator('.cp-definition-property');
+  await expect(properties).toHaveText(
+    kind === 'object'
+      ? [
+          'Namn: Min privata typbenämning',
+          'Beskrivning: Min tidigare definition',
+          'Avsnitt: Egna fält',
+          'Eget fält: Installationsår: Text · Egna fält',
+        ]
+      : [
+          'Namn: Min privata typbenämning',
+          'Beskrivning: Min tidigare definition',
+          'Framåtriktning: förvaras i',
+          'Omvänd riktning: förvarar',
+          'Avsnitt: Egna fält',
+        ],
+  );
+  const bounds = await properties.evaluateAll((elements) =>
+    elements.map((element) => {
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, height: rect.height };
+    }),
+  );
+  for (const [index, boundsForProperty] of bounds.entries()) {
+    expect(boundsForProperty.height).toBeGreaterThan(0);
+    if (index) expect(boundsForProperty.top).toBeGreaterThanOrEqual(bounds[index - 1].bottom);
+  }
+}
 
 for (const kind of ['object', 'relationship'] as const)
   test(`UTKAST-76: a retained ${kind} definition without an actual removed revision can be explicitly discarded without granting restoration`, async ({
@@ -80,7 +113,7 @@ for (const kind of ['object', 'relationship'] as const)
   test(`UTKAST-67: an explicitly reviewed removed ${kind} definition restores its historical identity only on a separate save`, async ({
     page,
     browser,
-  }) => {
+  }, testInfo) => {
     const administrator = await browser.newContext();
     const app = await prepareArchiveConflict(
       administrator.request,
@@ -124,13 +157,14 @@ for (const kind of ['object', 'relationship'] as const)
         expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
           true,
         );
+        await expectSeparateDefinitionProperties(proposed, kind);
         await page.screenshot({
-          path: `/tmp/skyttel-244/256-${kind}-definition-default-${width}.png`,
+          path: testInfo.outputPath(`${kind}-definition-default-${width}.png`),
           fullPage: true,
         });
       }
       await page.keyboard.press('Escape');
-      expect((await app.read()).draft).toEqual(before.draft);
+      expect(await app.read()).toEqual(before);
       await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
       await proposed.getByRole('button', { name: /^Typdefinition: Ditt förslag/ }).click();
       await expect(
@@ -138,13 +172,34 @@ for (const kind of ['object', 'relationship'] as const)
       ).toContainText('Typdefinitionen föreslås återställas med din ändring.');
       for (const width of [1280, 320]) {
         await page.setViewportSize({ width, height: 900 });
+        await expectSeparateDefinitionProperties(proposed, kind);
+        await expectSeparateDefinitionProperties(
+          dialog.getByRole('region', { name: 'Resultat av valen', exact: true }),
+          kind,
+        );
+        expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+          true,
+        );
         await page.screenshot({
-          path: `/tmp/skyttel-244/256-${kind}-definition-selected-${width}.png`,
+          path: testInfo.outputPath(`${kind}-definition-selected-${width}.png`),
           fullPage: true,
         });
       }
+      expect(await app.read()).toEqual(before);
       await apply.click();
       await expect(dialog.getByRole('status')).toContainText('Valen finns i ditt utkast');
+      for (const width of [1280, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expectSeparateDefinitionProperties(dialog.locator('.cp-preview'), kind);
+        await expect(dialog.locator('.cp-preview dd')).toHaveCSS('box-shadow', 'none');
+        expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+          true,
+        );
+        await page.screenshot({
+          path: testInfo.outputPath(`${kind}-definition-resolved-${width}.png`),
+          fullPage: true,
+        });
+      }
       const after = await app.read();
       const change = (
         kind === 'object' ? after.draft.objectTypes : after.draft.relationshipTypes
@@ -157,6 +212,11 @@ for (const kind of ['object', 'relationship'] as const)
         kind === 'object' ? before.types : before.relationshipTypes,
       );
       expect(after.draft.changes).toEqual(before.draft.changes);
+      expect(after.draft.version).toBe(before.draft.version + 1);
+      expect(after.conflictActors).toBeUndefined();
+      expect({ ...after, draft: before.draft, conflictActors: before.conflictActors }).toEqual(
+        before,
+      );
       expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
       await saveReviewedConflictDraft(page);
       const savedState = await app.read();

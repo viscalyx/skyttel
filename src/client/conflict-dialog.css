@@ -262,10 +262,10 @@
   font-size: 13px;
   font-weight: 650;
 }
+.household-map .cp-product .cp-definition-property {
+  display: block;
+}
 .household-map .cp-product .cp-field-value {
-  .cp-definition-property {
-    display: block;
-  }
   display: block;
   margin-top: 4px;
 }

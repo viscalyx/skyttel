@@ -2779,14 +2779,20 @@ its historical identity only on a separate save”.
 2. Kontrollera **Borttaget** på den sparade sidan och att bekräftelsen är
    spärrad utan ett aktivt val. Stäng med Escape och kör `result`.
 3. Öppna igen och välj hela den föreslagna **Typdefinition**. Läs resultatet.
-4. Välj **Lägg valen i utkastet** och kör `result`. Stäng dialogen och öppna
-   **Skriv till Skyttel → Visa utkastet**. Spara hela utkastet separat.
+4. Välj **Lägg valen i utkastet** och kör `result`. Läs hela definitionen i
+   det bekräftade resultatet innan du stänger dialogen. Öppna
+   **Skriv till Skyttel → Visa utkastet** och spara hela utkastet separat.
+5. Upprepa i ett smalt mobilfönster för båda typdefinitionerna. Läs namn,
+   beskrivning, fält och riktningar före val, efter val och efter bekräftelse.
 
 **Förväntat resultat:**
 
 - Förklaringen lyder **Typdefinitionen saknas nu i kartan. Ditt förslag
   innehåller ändringar i den.** Fullständiga privata namn, beskrivningar,
   fält och riktningar är läsbara i ett aktivt val för hela definitionen.
+  Varje uppgift börjar på en egen rad i jämförelsen och i det valda och
+  bekräftade resultatet, även i mobilfönstret. Inga fullständiga värden
+  försvinner eller flyter ihop med nästa egenskaps namn.
 - Förhandsresultatet lyder **Typdefinitionen föreslås återställas med din
   ändring.** Stängning ändrar inget. Bekräftelsen ändrar bara Robins utkast,
   behåller det oberoende förslaget och skapar inget gemensamt historikpost.
