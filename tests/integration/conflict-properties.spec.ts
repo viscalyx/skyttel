@@ -220,7 +220,7 @@ test('UTKAST-30: a concurrent save rejects an outdated property comparison witho
     await app.propose(other.request, 'draft', 'lo', { ...value, name: 'Lo Ek' });
     await app.save(other.request, 'second');
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet' }).click();
-    await expect(dialog.getByRole('alert')).toContainText('Underlaget har ändrats.');
+    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
     expect((await app.read()).draft).toEqual(before.draft);
     await expect(
       dialog.getByRole('button', { name: 'Namn: Ditt förslag – Lo Lind' }),

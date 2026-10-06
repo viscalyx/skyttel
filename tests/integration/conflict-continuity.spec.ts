@@ -34,7 +34,13 @@ test('UTKAST-55: reopening discovers new saved data before stale choices can be 
     expect((await app.save(other.request, 'saved-while-closed')).status()).toBe(200);
     const before = await app.read();
     await opener.click();
-    await expect(dialog.getByRole('alert')).toContainText('Underlaget har ändrats.');
+    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('status')).toContainText('Underlaget har ändrats.');
+    await expect(
+      dialog
+        .locator('[role="alert"], [role="status"]:not([aria-live="off"])')
+        .filter({ hasText: 'Underlaget har ändrats.' }),
+    ).toHaveCount(1);
     await expect(
       dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
     ).toBeDisabled();
@@ -171,13 +177,13 @@ test('UTKAST-49: switching conflicts and reopening preserves choices and never c
     const before = await app.read();
     const confirm = dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true });
     await confirm.click();
-    await expect(dialog.getByRole('alert')).toContainText('Underlaget har ändrats.');
+    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
     await cases.getByRole('button', { name: 'Objekt Min musiktjänst', exact: true }).click();
     await expect(confirm).toBeEnabled();
     await expect(serviceName).toHaveAttribute('aria-pressed', 'true');
     await cases.getByRole('button', { name: 'Objekt Lo Lind', exact: true }).click();
     await expect(confirm).toBeDisabled();
-    await expect(dialog.getByRole('alert')).toContainText('Underlaget har ändrats.');
+    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
     const after = await app.read();
     expect(after.draft).toEqual(before.draft);
     expect(after.objects).toEqual(before.objects);
@@ -216,7 +222,7 @@ test('UTKAST-50: refreshed conflict data clears only choices for properties that
     });
     expect((await app.save(other.request, 'newer-name')).status()).toBe(200);
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
-    await expect(dialog.getByRole('alert')).toContainText('Underlaget har ändrats.');
+    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
     expect((await app.read()).draft).toEqual(before.draft);
     await page.route('**/map', (route) => route.abort());
     await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
@@ -410,7 +416,7 @@ test('UTKAST-51: a changed object type revalidates mixed values while unaffected
     await saveNewerConflictType(app, other.request);
     const before = await app.read();
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
-    await expect(dialog.getByRole('alert')).toContainText('Underlaget har ändrats.');
+    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
     await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
     await expect(
       dialog.getByRole('button', {
@@ -467,6 +473,11 @@ test('UTKAST-52: a known version rejection retains choices and retries only afte
     const confirm = dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true });
     await confirm.click();
     await expect(dialog.getByRole('status')).toContainText('Dina val finns kvar');
+    await expect(
+      dialog
+        .locator('[role="alert"], [role="status"]:not([aria-live="off"])')
+        .filter({ hasText: 'Underlaget har ändrats.' }),
+    ).toHaveCount(1);
     await expect(confirm).toBeDisabled();
     expect((await app.read()).draft).toEqual(before.draft);
     await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
@@ -519,7 +530,7 @@ test('UTKAST-51: a changed relationship reference refreshes its meaning without 
     expect((await app.save(other.request, 'newer-reference')).status()).toBe(200);
     const before = await app.read();
     await dialog.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }).click();
-    await expect(dialog.getByRole('alert')).toContainText('Underlaget har ändrats.');
+    await expect(dialog.getByText('Underlaget har ändrats.', { exact: true })).toBeVisible();
     await dialog.getByRole('button', { name: 'Visa aktuell jämförelse', exact: true }).click();
     await expect(
       dialog.getByRole('button', {

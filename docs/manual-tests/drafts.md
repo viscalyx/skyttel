@@ -2123,13 +2123,15 @@ only after a current comparison”.
 1. Välj Alex namn och beskrivning i konflikten.
 2. Kör `newer-private`: en annan klient för Alex lägger Privat stol i utkastet.
 3. Försök lägga konfliktvalen i utkastet. Läs avvisningen och kontrollera
-   spärren.
+   spärren. Kontrollera med skärmläsare att beskedet om nytt underlag bara
+   annonseras en gång.
 4. Visa aktuell jämförelse. Båda valen finns kvar. Bekräfta och kör `result`.
 
 **Förväntat resultat:**
 
 - Ett gammalt versionsförsök avvisas utan ändring; orsaken förklaras och valen
   består.
+- Beskedet om nytt underlag har en enda aktiv kanal för annonsering.
 - Efter aktuell jämförelse kan samma val bekräftas utan att göras om.
 - Privat stol finns kvar. Bekräftelsen gör en enda privat ändring och skapar
   ingen historikgrupp.
@@ -2243,6 +2245,7 @@ read-only after reopening”.
 
 1. Välj Alex namn och beskrivning. Stäng med Escape.
 2. Kör `newer-name`. Öppna konflikten igen och läs beskedet om nytt underlag.
+   Kontrollera med skärmläsare att beskedet bara annonseras en gång.
 3. Visa aktuell jämförelse och granska kvarvarande val. Kör `result`.
 4. Börja om med `new-base`. Välj Alex två värden och stäng. Kör
    `resolve-elsewhere`: en annan klient för Alex väljer de sparade värdena.
@@ -2251,6 +2254,7 @@ read-only after reopening”.
 **Förväntat resultat:**
 
 - Aktuellt underlag hämtas innan någon gammal lösning kan bekräftas.
+- Beskedet om nytt underlag har en enda aktiv kanal för annonsering.
 - Bara namnvalet behöver göras om. Beskrivningen behålls.
 - Om en annan klient redan har löst konflikten visas aktuellt besked med
   fokus kvar på dialogens rubrik. Ingen gammal bekräftelse erbjuds.

@@ -521,7 +521,7 @@ export function ConflictDialog({
             </>
           )}
           {stale && !noLongerConflicted && !resolved[key] && (
-            <div className="cp-warning" role="alert">
+            <div className="cp-warning">
               <strong>Underlaget har ändrats.</strong>
               <button
                 type="button"
