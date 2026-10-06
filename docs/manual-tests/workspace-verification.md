@@ -7,16 +7,17 @@ kravområdena och de åtta fullständiga arbetskedjorna i
 Den länkar faktisk kod, offentliga provgränser och befintliga manuella fall.
 Den ersätter inte de bindande besluten eller områdesfallens körbara steg.
 
-**Status: automatiska slutkontroller GODKÄNDA; slutgranskningar pågår.**
+**Status: slutkontroller och slutgranskningar GODKÄNDA.**
 Den rena produktionskällans visuella jämförelse och mätning redovisas nedan.
 Fysiska hjälpmedels-, telefon- och förstoringstester är **INTE UTFÖRDA**.
 
-Standards- och Spec-granskningarna gäller den sammanfogade rapporten mot
-startpunkten
+Slutliga Standards- och Spec-granskningar gäller
+[`942267232b0644444a6904e1478871ea38b84342`](https://github.com/viscalyx/skyttel/tree/942267232b0644444a6904e1478871ea38b84342)
+mot startpunkten
 [`4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123`](https://github.com/viscalyx/skyttel/tree/4fc7f88079d8e3dc4ef9f97171da1e1bcb1ec123).
-Deras nya slutresultat återstår. Alla verifierade rättelser ingår i den
-hela körningen nedan. Granskningen innebär inte att varje rad, test eller
-bildpixel bedöms separat.
+Båda axlarna har noll kvarstående åtgärdbara fynd inom det granskade
+underlaget. Alla verifierade rättelser ingår i den hela körningen nedan.
+Granskningen innebär inte att varje rad, test eller bildpixel bedöms separat.
 
 ## Provdata, miljö och metod
 
@@ -374,7 +375,7 @@ begränsade miljöobservationer; äldre bilder ommärks inte som slutbevis.
 | Hela `CI=1 npm run check`: typkontroll, lint, dokumentation, grindar, bygge, täckning och integration | GODKÄND på `aa8af52`; 140 grindprov, 1 582 enhets- och webbläsarprov; grentäckning 90,21 procent mot kravet 90 |
 | Slutlig primärkörning, antal godkända/underkända och verifierade rättelser | 719 GODKÄNDA, 0 underkända och 0 överhoppade; 33 primärhänvisningar med 29 skilda exakta titlar och 246 lokala hänvisningar verifierade |
 | Containerkontroll | GODKÄND; 9 av 9 steg på `07f31e9`, samma produktionskälla som hela kontrollkörningen; provversionen ommärks inte |
-| Standards- och Spec-granskningar samt omprov av deras rättelser | Slutgranskningar pågår; alla verifierade rättelser ingår i den godkända hela körningen |
+| Standards- och Spec-granskningar samt omprov av deras rättelser | 0 kvarstående åtgärdbara fynd på båda axlarna vid `9422672`; alla rättelser ingår i den godkända hela körningen |
 | A/C/D-jämförelse på dator och mobil | GENOMGÅNGEN på `07f31e9` inom angivna tillstånd; A01/A02:s knappbilder begränsar påståenden om varje kontrolls läsbarhet; fysisk verifiering ingår inte |
 | Prestanda för 500 objekt och 1 500 samband | GODKÄND på `07f31e9` enligt mätplanen i sex observationer; fysisk och samtidig last ingår inte |
 | Fysiska hjälpmedels-, telefon- och förstoringstester | INTE UTFÖRDA |
