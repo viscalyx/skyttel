@@ -187,12 +187,20 @@ export function combineConflictProperties(fields: ConflictProperty[], choices: C
 /** The type and reference meanings are part of the comparison, not just record revisions. */
 export function conflictBasis(state: MapState, conflict: DraftConflict) {
   const fields = conflictProperties(state, conflict);
+  const removedRelationship =
+    conflict.kind === 'relationship' && !conflictChange(state, conflict)?.after
+      ? conflict.current
+      : null;
   const typeIds = fields
     .filter((field) => field.key === 'typeId')
     .flatMap((field) => [field.saved, field.proposed]);
   const endpointIds = fields
     .filter((field) => ['sourceId', 'targetId'].includes(field.key))
     .flatMap((field) => [field.saved, field.proposed]);
+  if (removedRelationship) {
+    typeIds.push(removedRelationship.typeId);
+    endpointIds.push(removedRelationship.sourceId, removedRelationship.targetId);
+  }
   const basis = {
     fields,
     ...((conflict.kind === 'objectType' || conflict.kind === 'relationshipType') &&
@@ -207,13 +215,15 @@ export function conflictBasis(state: MapState, conflict: DraftConflict) {
           },
         }
       : {}),
-    // Null-side cases have no selectable properties; their proposal and blockers still
-    // constitute a real comparison that must be revalidated before any explicit action.
+    // Fixed outcomes and removal choices still revalidate their full private proposal
+    // and blockers before any explicit action.
     ...(!fields.length || !conflictChange(state, conflict)?.after
       ? { special: { conflict, change: conflictChange(state, conflict) } }
       : {}),
     types: (conflict.kind === 'relationship'
-      ? proposedRelationshipTypes(state.relationshipTypes, state.draft.relationshipTypes)
+      ? removedRelationship
+        ? state.relationshipTypes
+        : proposedRelationshipTypes(state.relationshipTypes, state.draft.relationshipTypes)
       : proposedObjectTypes(state.types, state.draft.objectTypes)
     ).filter((type) => typeIds.includes(type.id)),
     endpoints: state.objects

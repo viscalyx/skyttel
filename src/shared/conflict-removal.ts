@@ -95,6 +95,14 @@ export function conflictRemovalPlan(
       change.before = conflict.current;
       change.type = type;
       change.beforeType = type;
+      change.objectNames = Object.fromEntries(
+        [conflict.current.sourceId, conflict.current.targetId].flatMap((id) => {
+          if (!id) return [];
+          const name =
+            state.objects.find((object) => object.id === id)?.name ?? change.objectNames?.[id];
+          return name === undefined ? [] : [[id, name]];
+        }),
+      );
       delete change.removedWithObjects;
       effects.push({ target: conflict, kind: 'retain', before: change.before, after: null });
     }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { MapObject, MapState, RelationshipValue } from '../shared/map.js';
+import type { Knowledge, MapObject, MapState, RelationshipValue } from '../shared/map.js';
 import { knowledgeLabels } from '../shared/relationship-label.js';
 import { LifecycleEditor, RelationshipEndDate } from './Lifecycle.js';
 import { CustomFieldsDetails, CustomFieldsEditor } from './ObjectTypes.js';
