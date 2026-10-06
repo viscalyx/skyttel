@@ -647,7 +647,6 @@ test('the microphone and the voice connection outlive every presentation of the 
         householdId="linden"
         active={shown !== 'settings'}
         textViewOpen={shown === 'text view'}
-        renderWorkspace={(work) => work}
       />
     );
   }

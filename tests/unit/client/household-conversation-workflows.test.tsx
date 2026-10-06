@@ -25,6 +25,7 @@ import {
 } from '../../support/conversation-dom.js';
 import { createInstallation } from '../../support/installation.js';
 import { liveProvider } from '../../support/live-provider.js';
+import { openDraftReview, openNewObjectForm } from '../../support/native-household-unit.js';
 import { lastToolResult, modelMessage, modelTool, textModel } from '../../support/text-model.js';
 import { voiceMedia } from '../../support/voice-media.js';
 
@@ -215,12 +216,7 @@ async function household({
 test('unsent object text requires confirmation before unavailable conversation navigation', async () => {
   const home = await household({ unavailable: true });
   await home.open();
-  await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(
-    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
-      name: 'Nytt objekt',
-    }),
-  );
+  await openNewObjectForm();
   await userEvent.type(screen.getByLabelText('Namn'), 'Oskickad cykel');
   await userEvent.click(home.microphone());
   const loss = within(screen.getByRole('dialog', { name: 'Lämna ändrade uppgifter?' }));
@@ -632,12 +628,7 @@ test('the context failure notice resets the conversation without submitting unse
 test('pending or unknown object staging must be checked before navigating to Settings', async () => {
   const home = await household();
   await home.open();
-  await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(
-    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
-      name: 'Nytt objekt',
-    }),
-  );
+  await openNewObjectForm();
   await userEvent.type(screen.getByLabelText('Namn'), 'Ett privat provobjekt');
   let finish!: () => void;
   let delivered = false;
@@ -691,12 +682,7 @@ test('an assistant map request cannot replace unsent object work or acknowledge 
   const field = await screen.findByLabelText('Meddelande till Skyttel');
   await userEvent.type(field, 'Visa Lo i kartan');
   await userEvent.click(screen.getByRole('button', { name: 'Skicka' }));
-  await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(
-    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
-      name: 'Nytt objekt',
-    }),
-  );
+  await openNewObjectForm();
   await userEvent.type(screen.getByLabelText('Namn'), 'Oskickad och privat');
   const original = await home.read();
   const acknowledgements: unknown[] = [];
@@ -808,8 +794,8 @@ test('a known live manual save is not replayed by the conversation poll and keep
     }
     return response;
   };
-  await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Spara hela utkastet' }));
+  const draft = await openDraftReview();
+  await userEvent.click(draft.getByRole('button', { name: 'Spara hela utkastet' }));
   await waitFor(() => expect(operationId).not.toBe(''));
   await waitFor(() => expect(seenLiveOperation).toBe(true));
   expect(home.commands.some((url) => url.endsWith('/recover'))).toBe(false);
@@ -834,15 +820,10 @@ test('typing and unsent conversation text survive confirmed loss of only the obj
   await startConversationWithText();
   const field = screen.getByLabelText('Meddelande till Skyttel');
   await userEvent.type(field, 'Oskickat till Skyttel');
-  await userEvent.click(home.tools().getByRole('button', { name: 'Lista' }));
-  await userEvent.click(
-    within(screen.getByRole('region', { name: 'Lista och utkast' })).getByRole('button', {
-      name: 'Nytt objekt',
-    }),
-  );
+  await openNewObjectForm();
   const form = within(screen.getByRole('dialog', { name: 'Nytt objekt' }));
   await userEvent.type(form.getByLabelText('Namn'), 'Privat oskickat namn');
-  await userEvent.click(form.getByRole('button', { name: 'Avbryt' }));
+  await userEvent.click(form.getByRole('button', { name: 'Stäng objektdialogen' }));
   await userEvent.click(screen.getByRole('button', { name: 'Kasta ändringarna och fortsätt' }));
   expect((field as HTMLTextAreaElement).value).toBe('Oskickat till Skyttel');
   expect(home.media.getUserMedia).not.toHaveBeenCalled();

@@ -49,7 +49,6 @@ function feedback(): ComponentProps<typeof DraftStatus> {
     onSave: vi.fn(),
     onDraft: vi.fn(),
     onConflict: vi.fn(),
-    onContinue: vi.fn(),
   };
 }
 
@@ -124,9 +123,7 @@ test('text feedback preserves unsent editing and identity resolution before offe
   ).toBeDefined();
   expect(screen.queryByRole('button', { name: 'Spara hela utkastet' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Red ut identiteter i utkastet' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Fortsätt redigera' }));
   expect(props.onDraft).toHaveBeenCalledOnce();
-  expect(props.onContinue).toHaveBeenCalledOnce();
   view.rerender(<DraftStatus {...props} unresolved showSave />);
   await userEvent.click(screen.getByRole('button', { name: 'Red ut identiteter i utkastet' }));
   expect(props.onDraft).toHaveBeenCalledTimes(2);
