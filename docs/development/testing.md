@@ -151,6 +151,56 @@ assistive technology or physical devices. These disposable loopback fixtures
 use synthetic authentication. Physical phones require an ordinary test
 installation with configured HTTPS, provider sign-in and household membership.
 
+### Delivery controls for an ordinary HTTPS test installation
+
+Use `scripts/manual-transport.ts` to control delivery to a fictional test
+household in an ordinary installation. Run it on the application host with
+Node and the repository dependencies available. The application must already
+use the public HTTPS origin, real provider callbacks and ordinary membership.
+Keep its configured origin unchanged. Start the built application first.
+
+```sh
+npx tsx scripts/manual-transport.ts \
+  --origin https://skyttel-test.example.com \
+  --upstream http://127.0.0.1:3300 \
+  --household TEST_HOUSEHOLD_ID --port 4318
+```
+
+Replace the origin, application port and household ID with this test
+installation's values. In the existing HTTPS ingress, temporarily route this
+test origin to `127.0.0.1:4318`. Preserve the original `Host`, `Origin`, cookies
+and WebSocket upgrade headers. Keep both application and transport listeners
+private. The browser continues to use the same HTTPS origin; the transport
+does not provide certificates, authentication or membership. Verify fresh
+provider sign-in, HTTP reads and conversation WebSocket connectivity before
+arming a rule. A wrong `Host` produces HTTP 421.
+
+The terminal accepts one rule at a time:
+
+```text
+arm stage:before
+status
+release
+arm save:drop-after
+```
+
+Routes are `stage`, `save`, `resolve`, `discard`, `read` and `recover`.
+Only the configured household's matching requests consume a rule. `before`
+holds a request before forwarding; `after` holds its actual completed
+response. `drop-before` drops without forwarding; `drop-after` forwards and
+drops the completed response. `release` delivers held traffic; `drop` loses
+it. `clear` cancels an unconsumed rule. A held or active delivery must finish
+before another rule can be armed. `status` reports only control state.
+Events contain the route, phase and actual response status, without request
+bodies, credentials or household values. Other traffic passes through.
+
+Restore the ingress to the original application listener before entering
+`quit` or sending Ctrl+C. Closing the transport terminates held deliveries;
+recover their outcomes through the ordinary application afterward. The
+transport never deletes application data. Remove this temporary route after
+testing. Loopback Playwright checks verify real HTTP and SQLite effects;
+they do not verify a hosted certificate, physical devices or screen readers.
+
 ### Offline map fixtures
 
 For interactive upgrade or household-isolation debugging, the helper

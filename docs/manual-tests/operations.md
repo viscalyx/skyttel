@@ -12,8 +12,8 @@ Använd samma inloggning i två separata webbläsarprofiler. En annan
 webbläsare går också bra. Den andra profilen får inte ärva den första
 profilens flikar eller lokala webbläsardata.
 
-SPAR-04 behöver dessutom en separat testidentitet med aktuell tillgång
-till hushållet och rollen medlem. Följ
+SPAR-04 och SPAR-05 behöver dessutom en separat testidentitet med aktuell
+tillgång till hushållet och rollen medlem. Följ
 [inbjudan av en användare](../user-guide/access.md#bjud-in-en-skyttel-användare)
 för att ge identiteten tillgång. Kartans påhittade personer och Robin Demo
 saknar inloggning;
@@ -306,3 +306,78 @@ Det automatiserade testet kontrollerar dessutom direkta API-anrop:
 administratören får inget resultat för medlemmens operations-ID.
 Medlemmen nekas både listning, uppslagning och återförsök efter
 återkallelsen. Dessa API-kontroller utförs inte av de manuella stegen.
+
+## Kontrollerad leverans på den vanliga testinstallationen
+
+### SPAR-05: fördröjd utkaständring, tappat sparkvitto och avvisat sparande
+
+**Syfte:** Skilja leveransens vänteläge och okända utfall från verkligt
+sparande och känd avvisning, med bevarade uppgifter och samma beständiga kvitto.
+
+**Användare:** Administratören Alex och medlemmen Robin med vanliga
+inloggningar. Alex använder också en andra, separat webbläsarprofil.
+
+**Förutsättningar:** Använd ett nytt, tomt provhushåll med påhittade
+uppgifter på en separat HTTPS-testinstallation. En operatör placerar
+`scripts/manual-transport.ts` mellan dess befintliga HTTPS-ingång och
+applikationen, med samma publika adress och hushållets ID. Behåll vanliga
+inloggningar, medgivanden och medlemskap. Transporten styr bara leveransen.
+Kontrollera att vanlig inloggning och läsning fungerar innan något hålls.
+Använd inte utvecklarverktygens nätverksblockering samtidigt.
+
+**Integrationstest:**
+[transport-controls.spec.ts](../../tests/integration/transport-controls.spec.ts),
+testfallet “SPAR-05: scoped transport holds real staging, rejects stale saves
+and recovers a lost committed receipt”.
+
+**Steg:**
+
+1. Skriv `arm stage:before` i operatörens transportterminal. Som Alex,
+   välj **Nytt objekt**, skriv **Lo Exempel** och välj **Lägg i utkastet
+   och stäng**. Vänta på terminalens `held-before`. Formuläret väntar;
+   ändringen finns ännu inte i utkastet. Skriv `release`. Formuläret
+   stängs och exakt ett privat förslag visas. Ingen gemensam ändring eller
+   historikhändelse har skapats.
+2. Skriv `arm stage:after`. Skapa **Kim Exempel** på samma sätt. Vänta på
+   `application-completed` med status 200 och `held-after`. Formuläret
+   väntar trots att servern har lagt ändringen i utkastet. Skriv `drop`.
+   Läs beskedet om oklart utfall och kontrollera att namnet ligger kvar.
+   Välj **Kontrollera om ändringen lades i utkastet**. Formuläret stängs;
+   utkastet har exakt Lo och Kim, utan dubbletter eller sparhändelser.
+3. Skriv `arm save:drop-after`. Öppna **Visa utkastet** och välj
+   **Spara hela utkastet**. Terminalen visar verklig status 200 innan
+   svaret tappas. Läs **Sparandet kunde inte bekräftas.** i sparmodalen.
+   Spara inte igen. Nytt objekt, sparande och kastande är blockerade.
+4. Stäng Alex första profil. Starta om applikationen med samma databas,
+   utan återställning. Logga in som Alex i den andra profilen. Läs det
+   enda sparandet i **Rapporter → Ändringshistorik** och öppna
+   **Identifiera sparandet och användaren**. Anteckna dess identitet.
+   Kontrollera att Lo och Kim finns en gång i Tabell och att utkastet är
+   tomt. Ladda om och kontrollera samma enda sparande med samma identitet.
+5. Som Alex, ändra Lo till beskrivningen **Alex privata beskrivning**
+   och lägg hela formuläret i utkastet. Skriv `arm save:before`. Välj
+   **Spara hela utkastet** som Alex och invänta `held-before`.
+6. Som Robin, öppna Lo i Tabell, ändra beskrivningen till **Robins sparade
+   beskrivning**, lägg den i Robins utkast och spara hela hans utkast.
+   Kontrollera hans bekräftade sparande. Skriv sedan `release`.
+7. Läs Alex kända avvisning **Utkastet kunde inte sparas**. Stäng
+   sparmodalen och granska Alex hela förslag. Läs Robins sparade värde
+   genom konflikten. Historiken har bara det ursprungliga sparandet och
+   Robins sparande; Alex avvisade försök skapar ingen historikhändelse.
+8. Låt operatören återställa HTTPS-ingången till applikationen och
+   avsluta transporten med `quit`. Behåll provdatabasen tills alla
+   okända utfall har kontrollerats.
+
+**Förväntat resultat:**
+
+- Väntande leverans visar verkligt vänteläge utan förtida bekräftelse.
+  Tappat svar behåller uppgifterna och kräver kontroll av samma ändring.
+- Kontroll av utkaständringen ger två privata förslag utan dubbletter.
+  Ett tappat svar efter sparande ändrar inte det beständiga kvittot.
+  Samma enda händelse och tomma utkast återfinns efter klientbyte och omstart.
+- Robins sparande behålls. Alex gamla underlag avvisas atomärt; hans
+  privata förslag och alla dess värden finns kvar för granskning.
+- Transporten tillför ingen identitet eller tillgång. Automationen
+  kontrollerar dessutom nekad oinloggad läsning, felaktig värdadress,
+  idempotent återförsök med samma kvitto samt oförändrade fulla privata
+  och gemensamma uppgifter vid avvisningen genom det publika API:et.
