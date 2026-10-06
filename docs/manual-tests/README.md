@@ -39,6 +39,10 @@ För [stora kartor](large-map-performance.md) finns en separat mätplan och
 Den samlade kartupplevelsens
 [verifieringsrapport](connected-experience-verification.md) redovisar hela
 familjeflöden, verklig webbläsarzoom, granskade bilder och miljöbegränsningar.
+De nya arbetsytornas [verifieringsrapport](workspace-verification.md)
+kopplar 25 beslutade kravområden och åtta arbetskedjor till faktiska
+prov och manualer. Den skiljer avgränsade automatiska resultat från
+väntande slutprov och fysiska tillgänglighetsprov.
 
 ## Öppna arbetsytor
 
