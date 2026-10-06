@@ -83,17 +83,40 @@ afterEach(() => {
 });
 
 test('the consent box opens next to the chosen button, on the side that has room', async () => {
-  const starts = await open(1280, 800);
+  const starts = await open(1280, 1000);
   for (const name of ['Prata med Skyttel']) {
     await tool(name).click();
     await expect.element(box()).toBeVisible();
     const chosen = rect(tool(name));
+    // Font metrics differ by platform; alignment requires enough vertical room.
+    expect(window.innerHeight - chosen.top).toBeGreaterThanOrEqual(rect(box()).height + 16);
     expect(rect(box()).left, name).toBeGreaterThanOrEqual(rect(tools()).right);
     expect(rect(box()).left - chosen.right, name).toBeLessThanOrEqual(32);
     expect(Math.abs(rect(box()).top - chosen.top), name).toBeLessThanOrEqual(1);
+    const crampedHeight = Math.round(chosen.top + rect(box()).height + 16 - 20);
     await userEvent.keyboard('{Escape}');
     await expect.element(box()).not.toBeInTheDocument();
     await expect.element(tool(name)).toHaveFocus();
+
+    // Reopen with exactly 20 px too little room for button-top alignment.
+    // The full dialog must move up rather than extend below the viewport.
+    await page.viewport(1280, crampedHeight);
+    await expect.poll(() => window.innerHeight).toBe(crampedHeight);
+    await tool(name).click();
+    await expect.element(box()).toBeVisible();
+    const constrained = rect(box());
+    expect(constrained.left, name).toBeGreaterThanOrEqual(rect(tools()).right);
+    expect(constrained.left - rect(tool(name)).right, name).toBeLessThanOrEqual(32);
+    expect(constrained.top, name).toBe(rect(tool(name)).top - 20);
+    expect(constrained.top).toBeGreaterThanOrEqual(16);
+    expect(window.innerHeight - constrained.bottom).toBeGreaterThanOrEqual(16);
+    expect(window.innerHeight - constrained.bottom).toBeLessThan(17);
+    expect(constrained.right).toBeLessThanOrEqual(window.innerWidth - 16);
+    await userEvent.keyboard('{Escape}');
+    await expect.element(box()).not.toBeInTheDocument();
+    await expect.element(tool(name)).toHaveFocus();
+    await page.viewport(1280, 1000);
+    await expect.poll(() => window.innerHeight).toBe(1000);
   }
 
   expect(starts).toEqual([]);
