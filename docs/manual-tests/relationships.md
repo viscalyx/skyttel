@@ -498,7 +498,7 @@ focus without stealing later reading focus”.
 3. Redigera sambandet till Osäkert uppgivet. Kör
    `relationshipProbe('lost-applied')`, skicka och välj sedan Kontrollera om
    ändringen lades i utkastet. Kontrollera rubrikfokus och bekräftat förslag.
-4. Redigera igen till Känd. Kör `relationshipProbe('lost-applied')` och
+4. Redigera igen till Känt. Kör `relationshipProbe('lost-applied')` och
    skicka. Kör förberedelsen för det väntande kontrollsvaret ovan. Välj
    Kontrollera om ändringen lades i utkastet och följ därefter Blå cykeln
    i läsningen medan kontrollen väntar. Kontrollera objektets rubrikfokus

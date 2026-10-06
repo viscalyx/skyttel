@@ -1,38 +1,6 @@
-import { type APIRequestContext, expect, test } from '@playwright/test';
-import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, signIn } from '../support/client.js';
+import { expect, test } from '@playwright/test';
 import { createInstallation } from '../support/installation.js';
-
-async function arrange(client: APIRequestContext, origin: string, targetName = 'Blå cykeln') {
-  await signIn(client, origin);
-  const { household } = await (await createHousehold(client, origin)).json();
-  const path = `${origin}/api/households/${household.id}/map`;
-  const read = async (): Promise<MapState> => (await client.get(path)).json();
-  const post = async (route: string, data: object) => {
-    const state = await read();
-    const response = await client.post(`${path}/${route}`, {
-      headers: { origin },
-      data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
-    });
-    expect(response.status(), await response.text()).toBe(200);
-    return response.json();
-  };
-  const state = await read();
-  for (const [id, name, typeName] of [
-    ['alex', 'Alex', 'Person'],
-    ['bicycle', targetName, 'Fordon'],
-  ])
-    await post('draft', {
-      id,
-      baseRevision: null,
-      value: {
-        name,
-        description: 'Syntetiskt provobjekt',
-        typeId: state.types.find((type) => type.name === typeName)?.id,
-      },
-    });
-  return { path, read, post, household };
-}
+import { createRelationshipFixture } from '../support/relationship-fixture.js';
 
 test('SAMBAND-12: long relationship names and field labels reflow without horizontal overflow at 320 CSS pixels', async ({
   page,
@@ -42,7 +10,14 @@ test('SAMBAND-12: long relationship names and field labels reflow without horizo
     const targetName = 'C'.repeat(180);
     const fieldName = 'F'.repeat(180);
     const label = 'L'.repeat(180);
-    const { post, read, household } = await arrange(page.request, installation.origin, targetName);
+    const { post, read, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+      {
+        targetName,
+        objectDescription: 'Syntetiskt provobjekt',
+      },
+    );
     await post('relationship-type', {
       id: 'long-labels',
       baseRevision: null,
@@ -100,7 +75,13 @@ test('SAMBAND-13: staging cancel and explicit outcome checks retain meaningful f
   const installation = await createInstallation();
   let releaseCheck = () => {};
   try {
-    const { path, read, household } = await arrange(page.request, installation.origin);
+    const { path, read, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+      {
+        objectDescription: 'Syntetiskt provobjekt',
+      },
+    );
     await page.goto(`${installation.origin}/households/${household.id}`);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     await page.getByRole('button', { name: 'Samband för Alex', exact: true }).click();

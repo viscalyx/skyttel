@@ -1,41 +1,18 @@
-import { type APIRequestContext, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
-
-async function arrange(client: APIRequestContext, origin: string) {
-  await signIn(client, origin);
-  const { household } = await (await createHousehold(client, origin)).json();
-  const path = `${origin}/api/households/${household.id}/map`;
-  const read = async (): Promise<MapState> => (await client.get(path)).json();
-  const post = async (route: string, data: object) => {
-    const state = await read();
-    const response = await client.post(`${path}/${route}`, {
-      headers: { origin },
-      data: { version: state.draft.version, contentVersion: state.contentVersion, ...data },
-    });
-    expect(response.status(), await response.text()).toBe(200);
-    return response.json();
-  };
-  const initial = await read();
-  for (const [id, name, type, description] of [
-    ['alex', 'Alex', 'Person', 'Personen i hushållet'],
-    ['bicycle', 'Blå cykeln', 'Fordon', 'Cykeln i garaget'],
-  ])
-    await post('draft', {
-      id,
-      baseRevision: null,
-      value: { name, typeId: initial.types.find((value) => value.name === type)?.id, description },
-    });
-  return { path, read, post, household };
-}
+import { createRelationshipFixture } from '../support/relationship-fixture.js';
 
 test('SAMBAND-10: a request that never reached the server is checked before safe retry and later duplicate removal is reported truthfully', async ({
   page,
 }) => {
   const installation = await createInstallation();
   try {
-    const { path, read, post, household } = await arrange(page.request, installation.origin);
+    const { path, read, post, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     const before = (await read()).draft;
     await page.goto(`${installation.origin}/households/${household.id}`);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
@@ -92,7 +69,10 @@ test('SAMBAND-11: the household object selector ignores table filters and exclud
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, household } = await arrange(page.request, installation.origin);
+    const { read, post, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     const state = await read();
     await post('draft', {
       id: 'retired',
@@ -165,7 +145,10 @@ for (const [width, height] of [
   }, info) => {
     const installation = await createInstallation();
     try {
-      const { read, household } = await arrange(page.request, installation.origin);
+      const { read, household } = await createRelationshipFixture(
+        page.request,
+        installation.origin,
+      );
       const before = (await read()).draft;
       await page.setViewportSize({ width, height });
       const settings = `${installation.origin}/households/${household.id}/settings`;
@@ -230,7 +213,10 @@ test('SAMBAND-07: pending requests block duplicate sends and a rejected whole re
     release = resolve;
   });
   try {
-    const { path, read, household } = await arrange(page.request, installation.origin);
+    const { path, read, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     const before = (await read()).draft;
     let sends = 0;
     await page.route(`${path}/relationship-form`, async (route) => {
@@ -278,7 +264,10 @@ test('SAMBAND-08: recovery returns the current draft without replaying an earlie
 }) => {
   const installation = await createInstallation();
   try {
-    const { path, read, post, household } = await arrange(page.request, installation.origin);
+    const { path, read, post, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     let submitted: Record<string, unknown> | undefined;
     await page.route(`${path}/relationship-form`, async (route) => {
       submitted = route.request().postDataJSON();
@@ -335,7 +324,10 @@ test('SAMBAND-06: read-chain navigation retains an uncertain staging outcome and
 }) => {
   const installation = await createInstallation();
   try {
-    const { path, read, post, household } = await arrange(page.request, installation.origin);
+    const { path, read, post, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     const typeId = (await read()).relationshipTypes.find((type) => type.name === 'Använder')?.id;
     await post('relationship', {
       id: 'existing',
@@ -393,7 +385,10 @@ test('SAMBAND-05: full relationship values survive canceled type loss and absent
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, household } = await arrange(page.request, installation.origin);
+    const { read, post, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     await post('relationship-type', {
       id: 'custom',
       baseRevision: null,
@@ -503,7 +498,10 @@ test('SAMBAND-03: a lost duplicate result retains the attempted form and offers 
 }) => {
   const installation = await createInstallation();
   try {
-    const { path, read, post, household } = await arrange(page.request, installation.origin);
+    const { path, read, post, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     const typeId = (await read()).relationshipTypes.find((type) => type.name === 'Använder')?.id;
     await post('relationship', {
       id: 'existing',
@@ -559,7 +557,10 @@ test('SAMBAND-04: proposed relationship removal discards only confirmed unsent c
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, post, household } = await arrange(page.request, installation.origin);
+    const { read, post, household } = await createRelationshipFixture(
+      page.request,
+      installation.origin,
+    );
     const typeId = (await read()).relationshipTypes.find((type) => type.name === 'Använder')?.id;
     await post('relationship', {
       id: 'existing',
@@ -603,7 +604,7 @@ test('SAMBAND-02: invalid next input and canceled form loss retain previous comp
 }) => {
   const installation = await createInstallation();
   try {
-    const { read, household } = await arrange(page.request, installation.origin);
+    const { read, household } = await createRelationshipFixture(page.request, installation.origin);
     await page.goto(`${installation.origin}/households/${household.id}`);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     const opener = page.getByRole('button', { name: 'Samband för Alex', exact: true });
