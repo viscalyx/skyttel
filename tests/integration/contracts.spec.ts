@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import type { MapState } from '../../src/shared/map.js';
+import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 
@@ -78,10 +78,12 @@ test('AVTAL-04: dated debt and credit facts survive draft recovery, correction a
     ).toBe(200);
     await installation.restart();
     expect((await read()).objects[0]).toMatchObject({ ...corrected, id: 'credit', revision: 2 });
-    const { history } = await (await page.request.get(`${path}/history`)).json();
+    const { history }: { history: SaveReceipt[] } = await (
+      await page.request.get(`${path}/history`)
+    ).json();
     expect(history).toHaveLength(2);
-    expect(history[0]).toEqual(receipt);
-    expect(history[1]).toMatchObject({
+    expect(history[1]).toEqual(receipt);
+    expect(history[0]).toMatchObject({
       userId: initial.userId,
       changes: [{ before: saved.objects[0], after: corrected }],
     });
@@ -221,11 +223,16 @@ test('AVTAL-08: resolving financial conflicts preserves independent facts and re
     expect(saved.objects.find((object) => object.id === 'loan')?.financialFacts).toEqual(
       expectedFacts,
     );
-    const { history } = await (await page.request.get(`${path}/history`)).json();
+    const { history }: { history: SaveReceipt[] } = await (
+      await page.request.get(`${path}/history`)
+    ).json();
     expect(history).toHaveLength(3);
     expect(history[1].userId).toBe(user.id);
-    expect(history[2].userId).toBe(state.userId);
-    expect(history[2].changes[0].before.financialFacts).toEqual(otherFacts);
+    expect(history[0].userId).toBe(state.userId);
+    expect(history[2]).toMatchObject({ userId: state.userId, operationId: 'initial' });
+    expect(
+      history[0].changes.find((change) => change.after?.id === 'loan')?.before?.financialFacts,
+    ).toEqual(otherFacts);
   } finally {
     await other.close();
     await installation.close();

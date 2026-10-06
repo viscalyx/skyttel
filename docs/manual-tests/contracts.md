@@ -179,7 +179,8 @@ correction and history”.
 - Noll är ett känt värde, skilt från okänt och uttryckligen inget.
 - Integrationstestet kontrollerar även historikens båda sparanden via
   den publika HTTP-ingången: ursprungliga värden, rättelsen, stabil
-  objektidentitet, sparande användare och tidpunkt bevaras.
+  objektidentitet, sparande användare och tidpunkt bevaras. Historiken
+  visar rättelsen först och det ursprungliga sparandet därefter.
 
 ### AVTAL-05: Avtalens roller och identiteter bevaras vid rättelse
 
