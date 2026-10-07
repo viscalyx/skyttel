@@ -20,6 +20,7 @@
     "dev:client": "vite --host 127.0.0.1",
     "dev:all": "node scripts/develop.mjs",
     "dev:prodlike": "node scripts/develop-prodlike.mjs",
+    "prototype:filters": "tsx scripts/prototype-filters.ts",
     "db:setup": "tsx scripts/setup-database.ts",
     "db:migrate": "tsx scripts/migrate-development-database.ts",
     "build": "tsc -p tsconfig.server.json && vite build",

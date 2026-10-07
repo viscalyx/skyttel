@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { type ComponentProps, lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, ObjectType } from '../shared/map.js';
 import { objectPropertyValues } from './ObjectReadDetails.js';
@@ -246,7 +246,21 @@ export function ObjectSearchFilters({
     </div>
   );
 }
-export function MapSearch({
+// Throwaway filter designs are available only in development with ?variant=A–E.
+const FilterPrototype = import.meta.env.DEV ? lazy(() => import('./FilterPrototype.js')) : null;
+
+export function MapSearch(props: ComponentProps<typeof ProductionMapSearch>) {
+  if (FilterPrototype && new URLSearchParams(window.location.search).has('variant')) {
+    return (
+      <Suspense fallback={null}>
+        <FilterPrototype {...props} />
+      </Suspense>
+    );
+  }
+  return <ProductionMapSearch {...props} />;
+}
+
+function ProductionMapSearch({
   active,
   entryRequestId,
   search,
@@ -264,6 +278,7 @@ export function MapSearch({
   types: ObjectType[];
   selectedIds: string[];
   hasProposals: boolean;
+  matchingCount?: number;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const filterButton = useRef<HTMLButtonElement>(null);
