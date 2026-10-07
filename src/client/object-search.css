@@ -28,9 +28,12 @@
   gap: 0.5rem;
   min-height: 44px;
 }
-.object-search-filters > button {
+.object-search-filter-footer {
   grid-column: 1 / -1;
   justify-self: start;
+}
+.object-search-filters:not(.map-quick-filters) fieldset:not(:first-child) > div {
+  display: block;
 }
 .object-search-filters fieldset:first-child {
   grid-row: span 2;
@@ -81,9 +84,17 @@
   position: absolute;
   top: 0;
   left: calc(100% + 8px);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   width: max-content;
+  max-width: calc(50vw - 172px);
 }
-.household-map .map-search-filter > button {
+.map-filter-trigger {
+  position: relative;
+  flex: none;
+}
+.household-map .map-filter-trigger > button {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -94,20 +105,17 @@
   border-radius: 999px;
   font-size: 14px;
 }
-.map-filter-dot {
-  font-size: 10px;
-}
 .map-filter-dialog {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: min(360px, calc(100vw - 28px));
-  max-height: min(480px, calc(var(--work-height, 100dvh) - var(--map-search-bottom, 86px) - 20px));
+  width: min(440px, calc(100vw - 28px));
+  max-height: min(600px, calc(var(--work-height, 100dvh) - var(--map-search-bottom, 86px) - 20px));
   overflow: auto;
   overscroll-behavior: contain;
-  padding: 16px;
+  padding: 0;
   border: 1px solid var(--space-control);
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--space-surface);
   box-shadow: var(--space-shadow);
 }
@@ -119,17 +127,28 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--space-line);
+}
+.map-filter-dialog header small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  color: var(--space-muted);
 }
 .map-filter-dialog h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 20px;
+  line-height: 1.4;
 }
 .household-map .map-filter-dialog header button {
-  width: 44px;
-  min-height: 44px;
+  width: 32px;
+  min-height: 32px;
   padding: 0;
   font-size: 22px;
+  border: 0;
+  border-radius: 8px;
 }
 .household-map.workspace-shell .map-search-input button {
   position: absolute;
@@ -163,13 +182,15 @@
   outline: 3px solid var(--space-accent);
   outline-offset: 2px;
 }
-.household-map .map-filter-dialog .object-search-filters {
+.household-map .map-filter-dialog .map-quick-filters {
   grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 14px 16px 0;
 }
-.map-filter-dialog .object-search-filters fieldset > div {
-  max-height: 176px;
-  overflow: auto;
-  overscroll-behavior: contain;
+.household-map .map-filter-dialog .map-quick-filters fieldset > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 .map-filter-dialog .object-search-filters fieldset:first-child {
   grid-row: auto;
@@ -206,19 +227,165 @@
   font-size: 14px;
   margin-bottom: 0;
 }
+.household-map .map-filter-dialog .map-filter-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--space-muted);
+}
+.household-map .map-filter-dialog .map-quick-filters legend {
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+.household-map .map-filter-dialog .map-filter-choice {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  gap: 6px;
+  padding: 4px 9px;
+  margin: 0;
+  border: 1px solid var(--space-control);
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  max-width: 100%;
+}
+.map-filter-choice > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.household-map .map-filter-dialog .map-filter-choice input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.map-filter-choice-mark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  text-align: center;
+  color: var(--space-accent);
+}
+.household-map .map-filter-dialog .map-filter-choice:has(input:checked) {
+  border-color: var(--space-accent);
+  background: color-mix(in srgb, var(--space-accent) 13%, var(--space-surface));
+}
+.household-map .map-filter-dialog .map-filter-choice:hover {
+  background: color-mix(in srgb, var(--space-accent) 8%, var(--space-surface));
+}
+.household-map .map-filter-dialog .map-filter-choice:has(input:focus-visible) {
+  outline: 3px solid var(--space-accent);
+  outline-offset: 2px;
+}
+.map-filter-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  justify-self: stretch;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--space-line);
+  font-size: 12px;
+}
+.map-filter-footer [role="status"] {
+  font-weight: 650;
+}
+.map-filter-result-note {
+  font-weight: normal;
+  color: var(--space-muted);
+}
+.household-map .map-filter-dialog .map-filter-footer button {
+  min-height: 28px;
+  border: 0;
+  border-radius: 4px;
+  padding: 3px 4px;
+  font-size: 12px;
+  color: var(--space-accent);
+  text-decoration: underline;
+}
+.household-map .map-active-filters {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: max-content;
+  max-width: 390px;
+  max-height: 110px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+}
+.household-map.workspace-shell .map-active-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  margin: 0;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--space-accent) 14%, var(--space-surface));
+  color: var(--space-text);
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.map-active-filters button span {
+  font-size: 17px;
+  line-height: 1;
+}
+.household-map.workspace-shell .map-active-filters button:hover {
+  background: color-mix(in srgb, var(--space-accent) 22%, var(--space-surface));
+}
+.household-map.workspace-shell .map-active-filters button:focus-visible {
+  outline-offset: -3px;
+}
 
 @media (max-width: 700px) {
   .map-object-search {
     top: calc(var(--work-offset, 0px) + var(--tools-bottom, 76px) + 12px);
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     width: calc(100% - 28px);
     max-width: 380px;
   }
   .map-search-filter {
-    position: static;
-    flex: none;
+    display: contents;
+  }
+  .household-map .map-filter-dialog .map-filter-choice {
+    min-height: 44px;
+  }
+  .household-map .map-filter-dialog header button {
+    width: 44px;
+    min-height: 44px;
+  }
+  .household-map .map-filter-dialog .map-filter-footer button {
+    min-height: 44px;
+  }
+  .map-filter-result-note {
+    display: none;
+  }
+  .household-map .map-active-filters {
+    flex-basis: 100%;
+    width: 100%;
+    padding: 0;
+  }
+  .household-map.workspace-shell .map-active-filters button {
+    min-height: 44px;
   }
   .object-search-filters {
     grid-template-columns: 1fr;

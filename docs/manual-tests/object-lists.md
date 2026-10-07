@@ -817,8 +817,13 @@ and Escape restrictions”.
 1. Kontrollera att sökfältet och Filter syns direkt, utan träffantal.
    Klicka i kartans sökfält och kontrollera sökfältets fokus. Sök efter 299 EGEN.
    Kontrollera A 2 i kartan, utan lista över matchande detaljfält.
-2. Öppna Filter, välj Typ 10 och tryck Escape. Kontrollera fokus på Filter,
-   en punkt för aktivt filter och bevarad söktext. Fokusera kartbakgrunden
+2. Öppna Filter och kontrollera en träff. Välj Typ 10 och kontrollera noll
+   träffar i dialogen. Tryck Escape. Kontrollera fokus på Filter,
+   en badge för Typ 10 efter knappen och bevarad söktext. Knappen visar
+   Filter utan antal. Tryck på **Typ 10** för att ta bort filtret.
+   Kontrollera A 2, samma söktext och
+   återfokus på **Filter**. Välj Typ 10 i dialogen igen och stäng med Escape.
+   Fokusera kartbakgrunden
    och skriv b följt av mellanslag och 12. Kontrollera b 12 i sökfältet,
    sökfältets fokus och stängd filterdialog.
 3. Sök efter A 10. Tryck Escape i sökfältet och kontrollera fokus på
@@ -853,9 +858,13 @@ and Escape restrictions”.
   Escape på kartbakgrunden rensar båda i en tryckning och behåller urvalet.
 - Escape i sökfältet återför fokus till kartan med sökningen kvar.
   Escape i dialogen stänger den med valen kvar och återfokus på Filter.
+- Aktiva val visas som badges efter Filter utan en gemensam ram och
+  kan tas bort utan att söktexten ändras.
+  När sista valet tas bort återgår fokus till Filter.
 - Kortkommandon, formulär och samtal behåller sin vanliga inmatning.
   Vyernas sökningar, markeringen och oskickat meddelande finns kvar.
-- Inga träffantal eller särskilda tomhetsbesked visas eller läses upp.
+- Utanför filterdialogen visas eller läses inga träffantal eller
+  särskilda tomhetsbesked upp.
   Kontrollera fokus och reglagens namn med NVDA och VoiceOver;
   automatprovet ersätter inte hjälpmedelsprovet.
 
@@ -909,8 +918,9 @@ preserve restrictions”.
 
 1. Visa verktygens namn och klicka i kartans sökfält. Kontrollera sökfältets
    fokus. Skriv prov, öppna Filter och välj Ta med upphörda.
-2. Stäng filterdialogen. Kontrollera samma text och punkten vid Filter,
-   utan träffantal.
+2. Stäng filterdialogen. Kontrollera samma söktext och en badge för
+   Ta med upphörda efter Filter. På smal skärm visas det på nästa rad.
+   Filter visar inget antal.
 3. Välj Tabell, sök efter 399 egen och öppna Filter. Kontrollera fokus på
    Tabellens filter och förklaringen om vilka objekt tabellen visar.
    Kontrollera att rutorna står före sina texter på samma rad.
@@ -956,6 +966,12 @@ screens”.
    och Filter till höger. Ingen del ska täcka verktygens knappar.
 2. Öppna Filter. Kontrollera liten dialog under knappen och avsnitten
    Objekttyp, Status och Förslag i ditt utkast. Fokus går till rubriken.
+   Nå Person med Tab och använd mellanslag för att slå på valet.
+   Kontrollera bocken och att fokus stannar på valet.
+   En badge för Person visas efter Filter på dator och på nästa rad
+   på smal skärm. Knappen visar Filter utan antal.
+   Använd mellanslag igen för att slå av Person och kontrollera att
+   dess badge försvinner.
 3. Använd Tab för att nå de sista filtervalen och Återställ filter.
    Kontrollera att innehållet går att rulla utan rullning i sidled.
 4. Tryck Escape och kontrollera stängd dialog och fokus tillbaka på Filter.
@@ -971,8 +987,73 @@ screens”.
 
 - Sökfält, kryss och Filter är synliga och går att använda på alla skärmar.
 - Dialogen ryms på skärmen och långa filterlistor går att rulla.
+- Snabbvalen visar en bock när de är på och går att slå av igen med
+  mellanslag utan fokusflytt. Dialogen visar antalet träffar.
 - Krysset och filtervalen har begripliga namn för skärmläsaren.
   Verklig förstoring, touch och hjälpmedel behöver manuellt prov.
+
+### SÖK-11: filterdialogen ligger ovanpå kartan utan att flytta etiketter
+
+**Syfte:** Öppna och stänga filter utan att kartans layout ändras.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning är öppen i Karta.
+Prova dator och telefon med flera objekt och synliga etiketter.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+testfallen “SÖK-11: opening filters overlays the map without moving markers
+or labels at 1280px” och “SÖK-11: opening filters overlays the map without
+moving markers or labels at 390px”.
+
+**Steg:**
+
+1. Vänta tills kartan är stilla. Notera objektens och etiketternas lägen.
+2. Öppna Filter utan att göra något val. Vänta flera sekunder och
+   kontrollera även etiketter utanför dialogen.
+3. Stäng med Escape och vänta igen. Kontrollera lägena och fokus på Filter.
+4. Öppna Filter, välj Ta med upphörda och stäng med Escape.
+   Vänta tills kartan är stilla och notera dess nya innehåll och lägen.
+5. Upprepa steg 2 och 3 utan att ändra något val. Kontrollera att raden
+   med aktiva filter finns kvar och att hushållets utkast är oförändrat.
+
+**Förväntat resultat:**
+
+- Dialogen täcker kartan utan att flytta objekt, samband eller etiketter,
+  vare sig direkt eller efter en fördröjning. Stängning ger inget hopp.
+- Samma beteende gäller med och utan aktiva filter. Endast ändrade
+  filterval påverkar vilka objekt som visas.
+- Fokus går till dialogrubriken vid öppning och till Filter vid Escape.
+  Hushållets sparade uppgifter och utkast ändras inte.
+
+### SÖK-12: streckade linjer till etiketter syns i båda teman
+
+**Syfte:** Kunna följa linjerna från kartobjekt till deras etiketter.
+
+**Användare:** Alex Exempel.
+
+**Förutsättningar:** En ny provinstallation för sökning är öppen i Karta
+med synliga etiketter. Prova dator och telefon.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+testfallet “SÖK-12: dashed label leaders are readable against the map in
+both themes”.
+
+**Steg:**
+
+1. Välj Tema → Mörkt. Följ de streckade linjerna mellan flera objekt
+   och deras etiketter. Kontrollera att linjerna syns mot bakgrunden
+   och har samma färg som punkterna i teckenförklaringen.
+2. Välj Tema → Ljust och upprepa kontrollen.
+
+**Förväntat resultat:**
+
+- Linjerna är synliga i båda teman och det går att följa vilken etikett
+  som hör till vilket objekt. Streckningen skiljer dem från samband.
+- Automatprovet mäter färgkontrast med linjens genomskinlighet mot
+  kartans bakgrund. Läsbarhet på verkliga skärmar behöver manuellt prov.
 
 ### SÖK-06: direkta grannar och fortsatt utforskning bevarar sökträffarna
 

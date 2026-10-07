@@ -480,9 +480,10 @@
   color: #493c00;
 }
 .label-leader {
-  stroke: #8dbba5;
-  stroke-width: 1;
-  opacity: 0.32;
+  stroke: var(--space-accent, #8dbba5);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.8;
 }
 .spatial-bottom-bar {
   display: flex;

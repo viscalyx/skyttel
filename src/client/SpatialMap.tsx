@@ -194,9 +194,10 @@ export function SpatialMap({
     const root =
       surface.current?.closest('.household-map') ?? surface.current?.closest('.spatial-map');
     if (!bounds || !root) return;
+    // The filter dialog overlays the map without reserving label space.
     const boxes = [
       ...root.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .map-filter-dialog, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -418,12 +419,13 @@ export function SpatialMap({
     // Short screens need every available pixel for the full 44px targets.
     const clearance = (window.visualViewport?.height ?? window.innerHeight) <= 450 ? 0 : 12;
     // Reserve actual fixed tools, including expanded controls and live status.
+    // The filter dialog is an overlay and must not change camera framing.
     // Reading details stay open; focus reserves their actual visible area.
     let areas = [{ left: 0, top: 0, right: bounds.width, bottom: bounds.height }];
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .map-filter-dialog, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
