@@ -4,10 +4,10 @@ process.env.PLAYWRIGHT_HTML_PORT ??= '9324';
 
 export default defineConfig({
   testDir: './tests/integration',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
-  workers: process.env.CI ? 2 : undefined,
+  workers: 1,
   reporter: 'list',
   use: {
     browserName: 'chromium',

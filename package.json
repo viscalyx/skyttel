@@ -31,7 +31,7 @@
     "test": "npm run build && npm run test:unit && playwright test",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
-    "test:gates": "node --test scripts/__tests__/*.test.mjs scripts/release/__tests__/*.test.mjs scripts/security/__tests__/*.test.mjs",
+    "test:gates": "node --test --test-concurrency=1 scripts/__tests__/*.test.mjs scripts/release/__tests__/*.test.mjs scripts/security/__tests__/*.test.mjs",
     "test:integration": "playwright test",
     "test:real-model": "playwright test --config playwright.real-model.config.ts",
     "test:real-voice": "playwright test --config playwright.real-voice.config.ts",

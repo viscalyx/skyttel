@@ -6,6 +6,12 @@ the repository root. Automated tests create temporary databases and
 synthetic identities; they need no provider credentials or running
 `npm run dev:all` process.
 
+Test runners use one worker locally and in CI to limit peak CPU and memory
+usage. Playwright runs tests sequentially. Vitest runs files sequentially
+and runs its graphics, server and client projects one after another. Node
+workflow gate tests run one file at a time. This reduces resource contention
+at the cost of longer test runs.
+
 ## Unit tests
 
 Run the complete Vitest suite:

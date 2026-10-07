@@ -3,12 +3,15 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    maxWorkers: 1,
+    fileParallelism: false,
     projects: [
       {
         // Discover these browser imports before tests start to avoid a Vite reload.
         optimizeDeps: { include: ['react-dom/client', 'react-router'] },
         test: {
           name: 'graphics',
+          sequence: { groupOrder: 0 },
           include: ['tests/browser/**/*.test.tsx'],
           browser: {
             enabled: true,
@@ -21,6 +24,7 @@ export default defineConfig({
       {
         test: {
           name: 'server',
+          sequence: { groupOrder: 1 },
           environment: 'node',
           include: ['tests/unit/server/**/*.test.ts', 'tests/unit/shared/**/*.test.ts'],
         },
@@ -28,6 +32,7 @@ export default defineConfig({
       {
         test: {
           name: 'client',
+          sequence: { groupOrder: 2 },
           environment: 'jsdom',
           setupFiles: ['./tests/support/client-dom.ts'],
           include: ['tests/unit/client/**/*.test.tsx'],
