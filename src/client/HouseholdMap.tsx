@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { conversationWidths } from '../shared/conversation-preferences.js';
 import { type DraftConflict, draftConflicts } from '../shared/draft-conflicts.js';
@@ -81,6 +81,12 @@ import { type ConversationMode, conversationOngoing } from './use-conversation.j
 import { useConversationViewport } from './use-conversation-viewport.js';
 import { useTextButtonStatus } from './use-text-button-status.js';
 import { useWorkspaceTheme, WorkspaceTheme } from './WorkspaceTheme.js';
+
+// Throwaway UI study, available only through an explicit development URL.
+const ConflictChoicePrototype =
+  import.meta.env.DEV && import.meta.env.MODE !== 'production'
+    ? lazy(() => import('./ConflictChoicePrototype.js'))
+    : null;
 
 function draftEntryId(kind: DraftConflict['kind'], id: string) {
   return `draft-entry-${kind}-${id}`;
@@ -1758,29 +1764,37 @@ export function HouseholdMap({
           onRemove={(object) => remove('draft', object)}
         />
       )}
-      {state && (
-        <ConflictDialog
-          state={state}
-          open={conflictDialogOpen}
-          initialKey={conflictDialogKey}
-          disabled={pending || blocked || dirty}
-          onClose={() => setConflictDialogOpen(false)}
-          onStatus={setConflictResolutionStatus}
-          onUnknownChange={setConflictRecovery}
-          onRefresh={async () => {
-            const latest = await request<MapState>(path);
-            if (isCurrent()) setState(latest);
-            return latest;
-          }}
-          onResolve={async (resolution) => {
-            const draft = await request<MapDraft>(`${path}/resolve`, {
-              version: state.draft.version,
-              contentVersion: state.contentVersion,
-              ...resolution,
-            });
-            if (isCurrent()) setState({ ...state, draft });
-          }}
-        />
+      {state &&
+      ConflictChoicePrototype &&
+      new URLSearchParams(window.location.search).get('prototype') === 'conflict-choices' ? (
+        <Suspense fallback={null}>
+          <ConflictChoicePrototype state={state} theme={theme.theme} />
+        </Suspense>
+      ) : (
+        state && (
+          <ConflictDialog
+            state={state}
+            open={conflictDialogOpen}
+            initialKey={conflictDialogKey}
+            disabled={pending || blocked || dirty}
+            onClose={() => setConflictDialogOpen(false)}
+            onStatus={setConflictResolutionStatus}
+            onUnknownChange={setConflictRecovery}
+            onRefresh={async () => {
+              const latest = await request<MapState>(path);
+              if (isCurrent()) setState(latest);
+              return latest;
+            }}
+            onResolve={async (resolution) => {
+              const draft = await request<MapDraft>(`${path}/resolve`, {
+                version: state.draft.version,
+                contentVersion: state.contentVersion,
+                ...resolution,
+              });
+              if (isCurrent()) setState({ ...state, draft });
+            }}
+          />
+        )
       )}
       <DraftSaveDialog
         open={saveDialogOpen}
