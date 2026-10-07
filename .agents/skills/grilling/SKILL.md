@@ -9,15 +9,7 @@ Work the tree in **rounds**. The **frontier** is every decision whose prerequisi
 
 Write every round in ASD-STE100 Simplified Technical English.
 
-Start every round with these fields in this order:
-
-```
-**Conversation recap:** <In one or two complete sentences, restate the conversation so far.>
-
-**Round focus:** <In one sentence, state what the questions in this round will resolve.>
-```
-
-Then format each question as follows:
+Format a round like so:
 
 ```
 ❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
@@ -30,6 +22,8 @@ Then format each question as follows:
 
 ➡️ <your recommended answer>
 ```
+
+Word each question so "yes" accepts your recommended answer.
 
 Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
 
