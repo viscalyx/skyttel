@@ -1,7 +1,7 @@
 ---
 name: fix-integration-tests
 description: >-
-  Run and repair Playwright integration tests in focused phases with spec-only
+  Run and repair Playwright integration tests in focused phases with test-only
   edits. Use when asked to run, triage, or fix
   `npm run test:integration`, `npm run test:integration:prodlike`, or
   specific `tests/integration/**/*.spec.ts` failures.
@@ -16,7 +16,9 @@ description: >-
   the project defines it.
 - Treat user-provided spec paths as the initial phase list.
 - Keep each failing spec file as one phase.
-- Edit only `tests/integration/**/*.spec.ts` files.
+- Edit failing specs and the shared helpers they use under `tests/support/`.
+  Keep helper changes limited to test setup, assertions or measurements;
+  run affected helper consumers. Preserve production contracts and assertions.
 - Do not run a full suite while fixing a phase.
 - Do not abort or restart a slow test only because it exceeds an arbitrary
   duration; passing completion matters. Abort only when the test is not
@@ -43,7 +45,8 @@ description: >-
 3. Re-run that spec with the selected suite's spec command.
 4. Inspect Playwright output, traces, screenshots, console errors, app-server
    logs, and available memory diagnostics.
-5. Fix the smallest spec defect that explains the failure.
+5. Fix the smallest test defect that explains the failure. Repair a shared
+   helper once instead of copying a corrected implementation into a spec.
 6. Re-run the same spec until it passes.
 7. Repeat steps 3-6 for each failing spec file.
 8. Run the selected suite after all known phases pass.
@@ -68,6 +71,6 @@ description: >-
   - Group the report by failing spec file.
   - For each spec group, include the command, failure evidence, suspected
     production files or symbols, required behavior change, and blocked tests.
-- Continue with remaining spec-only phases after writing the report.
+- Continue with remaining test-only phases after writing the report.
 - Respect Playwright config differences between dev and prodlike runs.
 - Report final pass/fail status and the exact commands run.

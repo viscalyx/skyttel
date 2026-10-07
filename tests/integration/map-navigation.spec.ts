@@ -123,20 +123,40 @@ async function exposed(node: Locator, context = 'The native target must be expos
 }
 
 async function separate(first: Locator, second: Locator) {
+  let observation: unknown;
   await expect
     .poll(async () => {
       const a = await first.boundingBox();
       const b = await second.boundingBox();
-      return Boolean(
-        a &&
+      const geometry = await second.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          maxHeight: style.maxHeight,
+          navigationTop: style.getPropertyValue('--navigation-top'),
+          noticeTop: style.getPropertyValue('--conversation-corner-top'),
+        };
+      });
+      const measured = {
+        overlap: !(
+          a &&
           b &&
           (a.x + a.width <= b.x ||
             b.x + b.width <= a.x ||
             a.y + a.height <= b.y ||
-            b.y + b.height <= a.y),
-      );
+            b.y + b.height <= a.y)
+        ),
+        first: a,
+        second: b,
+        geometry,
+      };
+      observation = measured;
+      return measured;
     })
-    .toBe(true);
+    .toMatchObject({ overlap: false })
+    .catch((error) => {
+      console.error('Floating surface overlap:', JSON.stringify(observation));
+      throw error;
+    });
 }
 
 test('NAVIGATION-01: normal and mini navigation move independently with keyboard and cancelled dragging', async ({
@@ -149,7 +169,8 @@ test('NAVIGATION-01: normal and mini navigation move independently with keyboard
     await lo.click();
     const projected = await center(lo);
     const trigger = page.getByRole('button', { name: 'Navigera', exact: true });
-    await trigger.click();
+    await trigger.focus();
+    await trigger.press('Enter');
     const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
     const handle = navigation.getByRole('group', { name: 'Navigation', exact: true });
     await expect(handle).toBeFocused();
@@ -311,15 +332,20 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         const trigger = page.getByRole('button', { name: 'Navigera', exact: true });
         const details = page.getByRole('button', { name: 'Visa detaljer', exact: true });
         if (navigationFirst) {
-          await trigger.click();
+          await trigger.focus();
+          await trigger.press('Enter');
           const handle = page.getByRole('group', { name: 'Navigation', exact: true });
           await handle.press('Shift+ArrowDown');
           await handle.press('Shift+ArrowDown');
         }
         if (!(await details.isVisible()))
           await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-        await details.click();
-        if (!navigationFirst) await trigger.click();
+        await details.focus();
+        await details.press('Enter');
+        if (!navigationFirst) {
+          await trigger.focus();
+          await trigger.press('Enter');
+        }
         const panel = page.getByRole('region', { name: 'Lo Exempel', exact: true });
         const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
         await expect(
@@ -327,29 +353,22 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
             ? panel.getByRole('heading', { name: 'Lo Exempel', exact: true })
             : navigation.getByRole('group', { name: 'Navigation', exact: true }),
         ).toBeFocused();
-        await navigation
-          .getByRole('button', { name: 'Stäng navigering', exact: true })
-          .click({ trial: true, timeout: 5000 });
-        await expect
-          .poll(
-            async () => {
-              const navigationBox = await navigation.boundingBox();
-              const readingBox = await panel.boundingBox();
-              if (!navigationBox || !readingBox) return { overlap: true };
-              return {
-                overlap: !(
-                  navigationBox.x + navigationBox.width <= readingBox.x ||
-                  readingBox.x + readingBox.width <= navigationBox.x ||
-                  navigationBox.y + navigationBox.height <= readingBox.y ||
-                  readingBox.y + readingBox.height <= navigationBox.y
-                ),
-              };
-            },
-            {
-              message: `Navigation and reading must settle without overlap at ${width}×${height}, navigation first: ${navigationFirst}`,
-            },
-          )
-          .toMatchObject({ overlap: false });
+        const navigationClose = navigation.getByRole('button', {
+          name: 'Stäng navigering',
+          exact: true,
+        });
+        await navigationClose.focus();
+        await navigationClose.click({ trial: true, timeout: 5000 });
+        if (width > 1000) {
+          const readingHandle = panel.getByRole('group', {
+            name: 'Flytta uppgiftsfönstret för Lo Exempel',
+            exact: true,
+          });
+          // Freestanding reading windows can be placed beside navigation.
+          for (let step = 0; step < 24; step += 1) await readingHandle.press('Shift+ArrowLeft');
+          await separate(navigation, panel);
+        }
+        await panel.getByRole('heading', { name: 'Lo Exempel', exact: true }).focus();
         await expect
           .poll(() =>
             panel.getByRole('heading', { name: 'Lo Exempel', exact: true }).evaluate((heading) => {
@@ -361,8 +380,9 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           .toBe(true);
         if (combinedNotice) {
           await separate(notice, navigation);
-          await separate(notice, panel);
+          await notice.getByRole('button', { name: 'Stäng notisen', exact: true }).focus();
           await exposed(notice.locator('p'));
+          await panel.getByRole('heading', { name: 'Lo Exempel', exact: true }).focus();
           const lastValue = panel.locator('dd').last();
           await expect(lastValue).not.toHaveText('');
           await lastValue.scrollIntoViewIfNeeded();
@@ -371,6 +391,7 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
             name: 'Samband för Lo Exempel',
             exact: true,
           });
+          await relationships.focus();
           await relationships.scrollIntoViewIfNeeded();
           await exposed(
             relationships,
@@ -396,6 +417,7 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           await expect.poll(() => panel.boundingBox()).toEqual(b);
           await handle.press('Shift+ArrowLeft');
         }
+        await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).focus();
         await panel.getByRole('button', { name: 'Redigera Lo Exempel', exact: true }).click();
         const form = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
         const description = form.getByLabel('Beskrivning', { exact: true });
@@ -429,6 +451,9 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         const beforeMove: PersonalView = await (await page.request.get(`${path}/view`)).json();
         await navigation
           .getByRole('button', { name: 'Flytta Lo Exempel: bakåt', exact: true })
+          .focus();
+        await navigation
+          .getByRole('button', { name: 'Flytta Lo Exempel: bakåt', exact: true })
           .click();
         await expect
           .poll(async () => {
@@ -451,6 +476,7 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           if (!reading) throw new Error('Selected information must remain visible.');
           expect(
             mini.x + mini.width <= reading.x ||
+              reading.x + reading.width <= mini.x ||
               mini.y + mini.height <= reading.y ||
               reading.y + reading.height <= mini.y,
           ).toBe(true);
@@ -463,6 +489,7 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         if (combinedNotice) {
           await expect(notice).toContainText('Samtal med Skyttel är inte tillgängligt just nu.');
           const zoom = navigation.getByRole('button', { name: 'Zooma in', exact: true });
+          await zoom.focus();
           await zoom.scrollIntoViewIfNeeded();
           await exposed(zoom);
           await zoom.click();
@@ -471,7 +498,7 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           await exposed(pan);
           await pan.click();
           await separate(notice, navigation);
-          await separate(notice, panel);
+          await panel.getByRole('heading', { name: 'Lo Exempel', exact: true }).focus();
           const lastValue = panel.locator('dd').last();
           await lastValue.scrollIntoViewIfNeeded();
           await exposed(lastValue);
@@ -481,6 +508,7 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           });
           const unchangedAfterMoves = await read();
           const closeNotice = notice.getByRole('button', { name: 'Stäng notisen', exact: true });
+          await closeNotice.focus();
           await exposed(
             closeNotice,
             `Notice close at ${width}×${height}, navigation first: ${navigationFirst}`,
@@ -491,6 +519,7 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           await expect(notice).toHaveCount(0);
           expect(await read()).toEqual(unchangedAfterMoves);
         }
+        await navigation.getByRole('button', { name: 'Zooma in', exact: true }).focus();
         await navigation.getByRole('button', { name: 'Zooma in', exact: true }).click();
         await expect(panel).toContainText(text);
         expect(

@@ -57,9 +57,49 @@
 }
 .household-table-search {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: start;
   gap: 20px;
   margin-bottom: 18px;
+}
+.table-object-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  flex: 1 1 320px;
+  max-width: 520px;
+  min-width: 0;
+}
+.table-object-search .map-search-filter {
+  display: contents;
+}
+.table-object-search .map-filter-dialog {
+  position: fixed;
+  right: auto;
+  z-index: 31;
+  width: min(440px, calc(100vw - 24px));
+  max-height: min(600px, calc(100dvh - 280px));
+}
+.household-table .map-filter-dialog h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.household-map .table-object-search .map-active-filters {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+.household-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
+  margin-left: auto;
+}
+.household-table-actions button {
+  margin: 0;
 }
 .household-table-results {
   border: 1px solid var(--space-line);
@@ -78,14 +118,8 @@
 .household-table-result-heading p {
   margin: 0;
 }
-.household-table-result-heading label {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  white-space: nowrap;
-  font-weight: 400;
+.household-table-result-heading:has(p:empty) {
+  display: none;
 }
 .household-table-scroll {
   overflow: auto;
@@ -136,14 +170,28 @@
   letter-spacing: 0.03em;
   z-index: 1;
 }
+.household-map.workspace-shell .household-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  margin: -8px 0 -8px -8px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.household-table-sort svg {
+  width: 20px;
+  height: 20px;
+}
 .household-table tbody tr[data-selected="true"] > :is(td, th) {
   background: color-mix(in srgb, var(--space-accent), var(--space-surface) 94%);
 }
 .household-table tbody th {
   width: 30%;
   min-width: 190px;
-  font-weight: 600;
-  font-size: 17px;
+  font: inherit;
 }
 .household-map.workspace-shell .household-table .household-table-row-toggle {
   display: flex;
@@ -153,7 +201,7 @@
   border: none;
   padding: 0;
   background: transparent;
-  line-height: 1.4;
+  font: inherit;
   overflow-wrap: anywhere;
 }
 .household-table-truncate {
@@ -188,6 +236,7 @@
 }
 .household-table-row-actions {
   display: flex;
+  width: max-content;
   gap: 5px;
 }
 .household-table-row-actions button {
@@ -199,6 +248,14 @@
 .household-table-row-actions svg {
   width: 22px;
   height: 22px;
+}
+.household-map.workspace-shell .household-table-remove {
+  color: var(--proposal-removed);
+  border-color: var(--proposal-removed);
+}
+.household-map.workspace-shell .household-table-remove:hover:enabled {
+  background: color-mix(in srgb, var(--proposal-removed), var(--space-surface) 90%);
+  border-color: var(--proposal-removed);
 }
 .household-table .household-table-detail-row td {
   background: color-mix(in srgb, var(--space-bg), var(--space-surface) 65%);
@@ -252,30 +309,6 @@
 .household-table-empty {
   padding: 20px;
 }
-.household-table > .household-table-filter-dialog {
-  max-width: 800px;
-}
-.household-table-filter-dialog .object-search-filters {
-  grid-template-columns: 2fr 1fr 1.5fr;
-}
-.household-table-filter-dialog .object-search-filters fieldset:first-child {
-  grid-row: auto;
-}
-.household-table-filter-dialog fieldset {
-  border: 0;
-  padding: 0;
-}
-.household-map .household-table-filter-dialog .object-search-filters label {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-}
-.household-table-filter-dialog input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-}
 .household-map[data-workspace-surface="table"] > .workspace-context {
   display: none;
 }
@@ -286,17 +319,8 @@
   .household-table-details dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .household-table-filter-dialog .object-search-filters {
-    grid-template-columns: 1fr 1fr;
-  }
-  .household-table-filter-dialog .object-search-filters fieldset:first-child {
-    grid-column: 1 / -1;
-  }
 }
 @media (max-width: 700px) {
-  .household-table-filter-dialog .object-search-filters {
-    grid-template-columns: 1fr;
-  }
   .household-table {
     padding: calc(var(--tools-bottom, 76px) + 24px) 12px 90px;
     font-size: 14px;
@@ -307,12 +331,11 @@
     flex-wrap: wrap;
   }
   .household-table-search {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
+    gap: 12px;
   }
-  .household-table-search > button {
-    align-self: start;
+  .table-object-search {
+    flex-basis: 100%;
+    max-width: none;
   }
   .household-table-result-heading {
     flex-wrap: wrap;
@@ -327,7 +350,8 @@
   .household-table .household-table-detail-row td {
     padding: 14px;
   }
-  .household-table-details {
+  .household-table-details,
+  .household-table-inline-details {
     max-width: min(300px, calc(100vw - 54px));
   }
   .household-table-details dl {

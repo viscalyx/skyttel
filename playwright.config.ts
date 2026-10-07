@@ -8,10 +8,11 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   workers: 1,
-  reporter: 'list',
+  reporter: [['list'], ['./tests/support/diagnostics-reporter.ts']],
   use: {
     browserName: 'chromium',
     headless: true,
     trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
 });

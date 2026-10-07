@@ -369,8 +369,8 @@ for (const width of [1280, 390, 320]) {
       ).toHaveValue('cykel');
       const reading = await readTableObject(page, 'Oskickad cykel');
       await expect(
-        reading.getByRole('heading', { name: 'Uppgifter för Oskickad cykel', exact: true }),
-      ).toBeFocused();
+        reading.getByRole('heading', { name: 'Oskickad cykel · alla uppgifter', exact: true }),
+      ).toBeVisible();
       await expect(reading).toContainText('Behåll denna text');
       const state = await (await page.request.get(path)).json();
       expect(state.objects).toEqual([]);

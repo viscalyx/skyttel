@@ -26,15 +26,39 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
-      - run: npm run test:gates
+      - run: npx playwright install --with-deps chromium
+      - name: Workflow gate tests
+        run: |
+          mkdir -p logs/tests
+          npm run test:gates 2>&1 | tee logs/tests/gates.log
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run lint:docs
-      - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - run: npm run test:unit:coverage
-      - run: npm run test:integration -- --reporter=line
-      - run: npm run test:container
+      - name: Unit coverage with CI fonts
+        run: |
+          mkdir -p logs/tests
+          npm run test:unit:ci -- --coverage 2>&1 | tee logs/tests/unit.log
+      - name: Integration tests with CI fonts
+        run: |
+          npm run test:integration:ci -- --reporter=line,./tests/support/diagnostics-reporter.ts 2>&1 | tee logs/tests/integration.log
+      - name: Container checks
+        run: |
+          npm run test:container 2>&1 | tee logs/tests/container.log
+      - name: Retain failed test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: application-test-diagnostics-${{ github.run_attempt }}
+          path: |
+            test-results/
+            playwright-report*/
+            tests/browser/__screenshots__/
+            .vitest/attachments/
+            logs/tests/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
 
   devcontainer:
     runs-on: ubuntu-latest

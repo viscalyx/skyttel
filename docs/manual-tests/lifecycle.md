@@ -269,14 +269,14 @@ connected edge and preserves history”.
 1. Öppna **Lo Exempel → Använder → Familjemusik**, välj **Betalar** som
    sambandstyp och lägg sambandet i utkastet utan att spara. Välj
    **Stäng samband**.
-2. Öppna **Åtgärder för Familjemusik** i den expanderade
-   Tabellraden och välj **Ta bort objekt**. Granska **Visa utkastet**
+2. Välj den röda papperskorgen **Ta bort Familjemusik** på tabellraden.
+   Granska **Visa utkastet**
    utan något ytterligare förslagssteg.
 3. Ladda om sidan och granska förslaget igen. Öppna **Skriv till Skyttel**,
    välj **Visa utkastet** och **Kasta hela utkastet**. Läs
    **Ta bort hela utkastet?** och bekräfta **Ta bort hela utkastet**.
    Stäng textvyn och kontrollera att de sparade sambanden finns kvar.
-4. Upprepa typbytet och **Ta bort objekt** i Tabell. Välj **Spara hela utkastet**.
+4. Upprepa typbytet och **Ta bort Familjemusik** i Tabell. Välj **Spara hela utkastet**.
 5. Starta om appen med samma databas och ladda om sidan.
 
 **Förväntat resultat:**

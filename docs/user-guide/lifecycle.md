@@ -36,8 +36,8 @@ sparas med resten av utkastet. Tidigare värden finns kvar i historiken.
 
 ## Ta bort från den aktuella kartan
 
-Öppna **Åtgärder för** objektet i den utökade tabellraden och välj
-**Ta bort objekt**, eller välj **Ta bort sambandet** för sambandet.
+Välj den röda papperskorgsikonen **Ta bort [objektnamn]** längst till höger
+på tabellraden, eller välj **Ta bort sambandet** för sambandet.
 Borttagningen läggs direkt i ditt privata utkast. Du kan också välja
 **Ta bort** i objektets formulär eller **Ta bort sambandet** i sambandets
 formulär. Hela skillnaden visas under **Visa utkastet**.

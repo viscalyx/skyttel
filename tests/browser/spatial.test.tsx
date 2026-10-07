@@ -174,6 +174,12 @@ function MapView({
           setSelection({ kind: 'object', id });
           setMessage(`Kopplingar för ${id}`);
         }}
+        onReveal={(object) => {
+          setSelection({ kind: 'object', id: object.id });
+          setMessage(`Visar ${object.name} i kartan`);
+        }}
+        onRead={(object) => setMessage(`Uppgifter för ${object.name}`)}
+        onRelationships={(object) => setMessage(`Samband för ${object.name}`)}
         onClear={() => {
           setSelection(null);
           setMessage('Hela rymden');
@@ -1472,24 +1478,68 @@ test('direction rendering retains selectable self references and explicitly abse
   await expect.element(page.getByRole('status')).toHaveTextContent('Samband: none');
 });
 
-test('context menu edits, focuses, cancels and removes only the chosen object', async () => {
+test('context icons edit, focus, dismiss and remove only the chosen object', async () => {
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await lo.click({ button: 'right', modifiers: ['Control'] });
   await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
   expect(document.querySelector('dialog[open]')).toBeNull();
   await lo.click({ button: 'right' });
+  const actions = page.getByRole('toolbar', { name: 'Åtgärder för Lo Exempel', exact: true });
+  await expect.element(actions).toBeVisible();
+  expect(actions.element().closest('dialog, form')).toBeNull();
+  expect(actions.element().querySelector('h3')).toBeNull();
+  expect(
+    [...actions.element().querySelectorAll('button')].map((button) => button.textContent),
+  ).toEqual(['', '', '', '', '', '']);
+  const anchorBox = lo.element().getBoundingClientRect();
+  const actionsBox = actions.element().getBoundingClientRect();
+  expect(actionsBox.left).toBeCloseTo(anchorBox.right + 8, 0);
+  expect(actionsBox.top + actionsBox.height / 2).toBeCloseTo(
+    anchorBox.top + anchorBox.height / 2,
+    0,
+  );
+  await expect
+    .element(page.getByRole('button', { name: 'Redigera objekt', exact: true }))
+    .toHaveFocus();
   await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Lo Exempel');
+  await lo.click({ button: 'right' });
+  await page.getByRole('button', { name: 'Visa uppgifter för Lo Exempel', exact: true }).click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Uppgifter för Lo Exempel');
+  await lo.click({ button: 'right' });
+  await page.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Samband för Lo Exempel');
+  await lo.click({ button: 'right' });
+  await page.getByRole('button', { name: 'Visa i kartan', exact: true }).click();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Visar Lo Exempel i kartan');
   await lo.click({ button: 'right' });
   await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
   await expect.element(page.getByRole('status')).toHaveTextContent('Kopplingar för lo');
   await lo.click({ button: 'right' });
   await userEvent.keyboard('{Escape}');
   await expect.element(lo).toHaveFocus();
-  await lo.click({ button: 'right' });
-  await page.getByRole('button', { name: 'Avbryt', exact: true }).click();
+  await userEvent.keyboard('{Shift>}{F10}{/Shift}');
+  await expect.element(actions).toBeVisible();
+  await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
+  await expect
+    .element(page.getByRole('button', { name: 'Visa i kartan', exact: true }))
+    .toHaveFocus();
+  await userEvent.keyboard('{ArrowRight}');
+  await expect
+    .element(page.getByRole('button', { name: 'Visa samband i kartan', exact: true }))
+    .toHaveFocus();
+  await userEvent.keyboard('{End}');
+  await expect
+    .element(page.getByRole('button', { name: 'Ta bort objekt', exact: true }))
+    .toHaveFocus();
+  await userEvent.keyboard('{Home}{Escape}');
+  await expect.element(actions).not.toBeInTheDocument();
   await expect.element(lo).toHaveFocus();
+  await lo.click({ button: 'right' });
+  await page.getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true }).click();
+  await expect.element(actions).not.toBeInTheDocument();
+  await expect.element(page.getByRole('status')).toHaveTextContent('Kim Exempel');
   await lo.click({ button: 'right' });
   await expect
     .element(page.getByRole('button', { name: 'Ta bort objekt', exact: true }))

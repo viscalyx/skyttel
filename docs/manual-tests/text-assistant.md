@@ -387,7 +387,8 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    Detaljpanelen ska samtidigt synas med Lo och beskrivningen
    **Påhittad uppgift**, utan att du behöver rulla sidan för att hitta den.
    Nästa `held` ska innehålla `displayed: true`. Släpp det svaret med
-   `reply NUMMER Här är urvalet.`, öppna textvyn med **Skriv till Skyttel**
+   `reply NUMMER Här är urvalet.`, stäng Los uppgiftsfönster med krysset
+   och öppna textvyn med **Skriv till Skyttel**
    om den är stängd och kontrollera att Lo fortfarande är markerad i kartan.
    **Markerat i kartan.** står under hushållets namn, utanför textvyn.
 3. Öppna **Navigera** och panorera tills objekten inte syns.
@@ -410,8 +411,9 @@ före bekräftelsen”, dator-, telefon- och korta vyer, inklusive
    något i kartan. Valda uppgifter och karta syns samtidigt; längre
    uppgifter rullas inuti sin läsvy. Markering öppnar inget formulär.
 7. Prova också faktisk webbläsarzoom 200 och 400 procent. I ett kort
-   fönster visas kartan och detaljpanelen bredvid varandra. Rulla ned
-   för samtalsstatus och mikrofonkontroller. De ska gå att
+   fönster kan objektets uppgiftsfönster överlappa verktygen; stäng det
+   med krysset efter läsningen. Sambandets läsyta visas bredvid kartan.
+   Rulla ned för samtalsstatus och mikrofonkontroller. De ska gå att
    nå med tangentbord utan horisontell sidrullning. **Visa verktygens namn**
    visar textingången när verktygsraden är hopfälld.
 

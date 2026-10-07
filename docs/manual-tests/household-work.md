@@ -72,14 +72,13 @@ Följande testfall:
    tangentbord. Kontrollera rubrikfokus och att kartans kontroller är dolda.
 4. Välj **Till startsidan** och öppna **Tabell**. Kontrollera sökningen
    **cykel**,
-   expandera raden **Oskickad cykel**, välj **Läs alla uppgifter för
-   Oskickad cykel** och läs beskrivningen.
+   expandera raden **Oskickad cykel** och läs beskrivningen direkt i raden.
 
 **Förväntat resultat:**
 
 - Avbruten förlust ändrar varken formulärtext eller utkast.
 - Det kompletta förslaget och tabellens sökning finns kvar efter återgång.
-  Objektets lästa rubrik får fokus; dolda kontroller stör inte navigationen.
+  Objektets uppgifter går att läsa i raden; dolda kontroller stör inte navigationen.
 - Inget sparas i den gemensamma kartan och ingen historikpost skapas.
 
 ### ARBETE-02: samtal och mikrofon består och avslutas vid utloggning
@@ -465,16 +464,16 @@ till gemensamt kvitto och privat fortsatt arbete”.
    **Grunduppgifter**, rätta beskrivningen till **Rättad för hand** och
    välj **Lägg i utkastet och stäng**. Invänta avslutat formulär och
    beskedet **Ändringen finns i ditt utkast. Kartan sparas separat.**
-   Fäll ut abonnemangets rad och välj **Läs alla uppgifter för Familjens
-   Molnmusik**. Kontrollera rättelsen och stäng med krysset. Läs Kims
-   fullständiga uppgifter på samma sätt och kontrollera rubrikfokus.
-   Stäng läsdialogen och välj **Redigera Kim Exempel**. Skriv
+   Fäll ut abonnemangets rad och läs alla uppgifter direkt i raden.
+   Kontrollera rättelsen och fäll ihop raden. Läs Kims fullständiga uppgifter
+   på samma sätt och kontrollera rubriken. Fäll ihop raden och välj
+   **Redigera Kim Exempel**. Skriv
    **Oskickat om Kim** som beskrivning utan att lägga i utkastet.
    Välj **Avbryt**, kontrollera förvalt **Fortsätt redigera** och tryck
    Escape. Kontrollera kvarvarande text. Välj **Avbryt** igen och
    **Kasta ändringarna och fortsätt**. Läs Kims uppgifter på nytt:
-   bara en läsdialog ska finnas och den kastade texten ska saknas.
-   Stäng den. Öppna textvyn och visa utkastet. Öppna **Visa förslaget**
+   bara en detaljvy för Kim ska finnas och den kastade texten ska saknas.
+   Fäll ihop raden. Öppna textvyn och visa utkastet. Öppna **Visa förslaget**
    för båda objekten och Betalar-sambandet i tur och ordning. Kontrollera
    fullständiga värden, inklusive **189 / SEK / månad** och **Rättad för
    hand**, och stäng varje läsmodal med krysset. Ingen granskning ändrar
@@ -486,10 +485,10 @@ till gemensamt kvitto och privat fortsatt arbete”.
    kontrollera att röstrutan visar **Lyssnar**. Ingen knapp **Aktuell
    status** eller **Visa samtals- och utkastdetaljer** finns.
    Välj **Tillbaka till kartan** och välj
-   abonnemanget och Kim genom **Tabell → Läs alla uppgifter**. Stäng
-   varje läsdialog med krysset innan nästa öppnas. Öppna även
+   abonnemanget och Kim genom att expandera deras rader i **Tabell**.
+   Fäll ihop varje rad med namnet innan nästa öppnas. Öppna även
    **Skriv till Skyttel**. Kontrollera
-   rubrikfokus, den rättade abonnemangsbeskrivningen, samma dialog och
+   rubriken, den rättade abonnemangsbeskrivningen, samma detaljvy och
    samtalets oskickade text. Kims uttryckligen kastade text återkommer inte.
    Robins notering ska fortfarande vara privat. Automationen kontrollerar
    att samma levande mediespår och anslutning används efter Inställningar.
@@ -505,8 +504,8 @@ till gemensamt kvitto och privat fortsatt arbete”.
    Kontrollera ett kvitto för båda objekten och sambandet, tomt Alex-utkast
    och välj **Tillbaka till arbetet** i Rapporter. Stäng textvyn och läs
    Kims fullständiga uppgifter genom **Tabell**. Kontrollera att
-   **Oskickat om Kim** saknas både i läsdialogen och sparad beskrivning.
-   Stäng läsdialogen och återgå till textvyn. Kvittot
+   **Oskickat om Kim** saknas både i detaljvyn och sparad beskrivning.
+   Fäll ihop raden och återgå till textvyn. Kvittot
    finns kvar i **Rapporter → Ändringshistorik**, och
    mikrofonknappen finns kvar i verktygsraden. Robins privata notering
    ingår inte i kvittot.

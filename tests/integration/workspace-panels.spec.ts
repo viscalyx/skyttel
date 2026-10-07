@@ -1,7 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
 import {
-  closeSupportDialog,
   closeTextView,
   createHousehold,
   openMap,
@@ -20,7 +19,7 @@ import {
   turnMicrophoneOn,
   voiceBox,
 } from '../support/conversation-page.js';
-import { editTableObject, readTableObject } from '../support/domain-work.js';
+import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -62,10 +61,10 @@ test('PANEL-08: limited space switches between full-width work and text while vo
     await expect(conversation).not.toBeVisible();
     const reading = await readTableObject(page, 'Cykeln');
     await expect(
-      reading.getByRole('heading', { name: 'Uppgifter för Cykeln', exact: true }),
-    ).toBeFocused();
+      reading.getByRole('heading', { name: 'Cykeln · alla uppgifter', exact: true }),
+    ).toBeVisible();
     await expect(reading.getByText('Bevarad cykeltext')).toBeVisible();
-    await closeSupportDialog(page, 'Uppgifter för Cykeln', 'Stäng dialogen');
+    await closeTableObject(page, 'Cykeln');
     await openConversationText(page);
     await expect(conversation.getByLabel('Meddelande till Skyttel')).toHaveValue(
       'Bevarat meddelande',
@@ -85,7 +84,7 @@ test('PANEL-08: limited space switches between full-width work and text while vo
     await navigation.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
     await closeConversationText(page);
     await readTableObject(page, 'Cykeln');
-    await closeSupportDialog(page, 'Uppgifter för Cykeln', 'Stäng dialogen');
+    await closeTableObject(page, 'Cykeln');
     await openConversationText(page);
     await expect(conversation.getByLabel('Meddelande till Skyttel')).toHaveValue(
       'Bevarat meddelande',
@@ -199,9 +198,9 @@ test('PANEL-01: complete object dialogs stage separate proposals and native read
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
       const reader = await readTableObject(page, name);
       await expect(
-        reader.getByRole('heading', { name: `Uppgifter för ${name}`, exact: true }),
-      ).toBeFocused();
-      await closeSupportDialog(page, `Uppgifter för ${name}`, 'Stäng dialogen');
+        reader.getByRole('heading', { name: `${name} · alla uppgifter`, exact: true }),
+      ).toBeVisible();
+      await closeTableObject(page, name);
       const form = await editTableObject(page, name);
       await form.getByLabel('Beskrivning', { exact: true }).fill(`Lagt i utkastet om ${name}`);
       await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
@@ -216,9 +215,9 @@ test('PANEL-01: complete object dialogs stage separate proposals and native read
       await expect(reader).toHaveCount(1);
       await expect(reader.getByText('Lagt i utkastet om Cykeln')).toBeVisible();
       await expect(
-        reader.getByRole('heading', { name: 'Uppgifter för Cykeln', exact: true }),
-      ).toBeFocused();
-      await closeSupportDialog(page, 'Uppgifter för Cykeln', 'Stäng dialogen');
+        reader.getByRole('heading', { name: 'Cykeln · alla uppgifter', exact: true }),
+      ).toBeVisible();
+      await closeTableObject(page, 'Cykeln');
     }
     await openConversationText(page);
     await expect(conversation.getByLabel('Meddelande till Skyttel')).toHaveValue(
@@ -230,7 +229,7 @@ test('PANEL-01: complete object dialogs stage separate proposals and native read
     for (const name of ['Cykeln', 'Bilen', 'Garaget']) {
       const reader = await readTableObject(page, name);
       await expect(reader.getByText(`Lagt i utkastet om ${name}`, { exact: true })).toBeVisible();
-      await closeSupportDialog(page, `Uppgifter för ${name}`, 'Stäng dialogen');
+      await closeTableObject(page, name);
     }
     const state: MapState = await (await page.request.get(path)).json();
     expect(state.objects).toHaveLength(3);
@@ -264,14 +263,12 @@ test('PANEL-02: mobile reading navigation retains conversation and staged object
       await page.setViewportSize({ width, height: 844 });
       await closeConversationText(page);
       const reader = await readTableObject(page, 'Cykeln');
-      const heading = reader.getByRole('heading', { name: 'Uppgifter för Cykeln', exact: true });
-      await expect(heading).toBeFocused();
+      const heading = reader.getByRole('heading', { name: 'Cykeln · alla uppgifter', exact: true });
+      await expect(heading).toBeVisible();
       await expect(reader.getByText('Bevarad cykeltext')).toBeVisible();
       await expect(reader).toHaveCount(1);
-      await closeSupportDialog(page, 'Uppgifter för Cykeln', 'Stäng dialogen');
-      await expect(
-        page.getByRole('button', { name: 'Läs alla uppgifter för Cykeln', exact: true }),
-      ).toBeFocused();
+      await closeTableObject(page, 'Cykeln');
+      await expect(page.getByRole('button', { name: 'Cykeln', exact: true })).toBeFocused();
       await openConversationText(page);
       await expect(conversation.getByLabel('Meddelande till Skyttel')).toHaveValue(
         'Oskickad samtalstext',

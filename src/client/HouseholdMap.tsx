@@ -49,10 +49,11 @@ import { MapRequestError, request } from './map-request.js';
 import { mapSearchContext } from './map-search-context.js';
 import { ObjectActions, type ObjectActionsEntry } from './ObjectActions.js';
 import { ObjectDialog } from './ObjectDialog.js';
+import { ObjectRemovalNotice } from './ObjectRemovalNotice.js';
 import {
   initialObjectSearch,
-  MapSearch,
   MapSearchContext,
+  ObjectSearch,
   type ObjectSearchState,
   objectSearchResults,
   searchRestricted,
@@ -159,6 +160,7 @@ export function HouseholdMap({
     onAccessLost: () => {
       revealAbort.current?.abort();
       setDetailsOpen(false);
+      setObjectWindows([]);
       setObjectActions(null);
       setTypeEditor(null);
       setEdgeTypeEditor(null);
@@ -270,6 +272,16 @@ export function HouseholdMap({
   const [draftOpenRequest, setDraftOpenRequest] = useState(0);
   const [textOpeningFocus, setTextOpeningFocus] = useState<TextOpeningFocus>('text');
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [objectWindows, setObjectWindows] = useState<
+    {
+      id: string;
+      order: number;
+      focus: number;
+      offset: number;
+      restoreFocus: () => void;
+    }[]
+  >([]);
+  const nextWindowOrder = useRef(0);
   const viewport = useConversationViewport();
   const { narrow } = viewport;
   const widths = conversationWidths(
@@ -720,6 +732,13 @@ export function HouseholdMap({
     ? { ...state, types: effectiveTypes, relationshipTypes: effectiveEdgeTypes }
     : null;
   const readRows = state ? householdTableRows(state, effectiveTypes) : [];
+  useEffect(() => {
+    const ids = new Set(readRows.map((row) => row.object.id));
+    setObjectWindows((previous) => {
+      const remaining = previous.filter((window) => ids.has(window.id));
+      return remaining.length === previous.length ? previous : remaining;
+    });
+  }, [readRows]);
   const readRelationships = state ? householdReadRelationships(state, effectiveEdgeTypes) : [];
   const relationshipCounts = new Map<string, number>();
   for (const { value } of readRelationships) {
@@ -754,11 +773,16 @@ export function HouseholdMap({
         object ?? { typeId: effectiveTypes[0]?.id ?? '', name: '', description: '' },
     };
   }
-  function edit(object?: MapObject, editing = true) {
-    requestLeave(() => editConfirmed(object, editing));
+  function edit(object?: MapObject, editing = true, restoreFocus?: () => void) {
+    requestLeave(() => editConfirmed(object, editing, restoreFocus));
   }
   function editConfirmed(object?: MapObject, editing = true, restoreFocus?: () => void) {
     if (!state) return;
+    if (!editing && object) {
+      selectObject(object, 'include');
+      openObjectWindow(object, restoreFocus);
+      return;
+    }
     setRevealRequest(undefined);
     const initial = objectEditor(object);
     if (editing) {
@@ -767,8 +791,38 @@ export function HouseholdMap({
       setObjectDialog(initial);
       return;
     }
-    if (object) selectObject(object, 'include');
-    setDetailsOpen(true);
+  }
+  function openObjectWindow(object: MapObject, restoreFocus?: () => void) {
+    setDetailsOpen(false);
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const order = ++nextWindowOrder.current;
+    setObjectWindows((previous) => {
+      const existing = previous.find((window) => window.id === object.id);
+      if (existing)
+        return previous.map((window) =>
+          window.id === object.id ? { ...window, order, focus: order } : window,
+        );
+      return [
+        ...previous,
+        {
+          id: object.id,
+          order,
+          focus: order,
+          offset: previous.length,
+          restoreFocus:
+            restoreFocus ??
+            (() => {
+              if (
+                opener?.isConnected &&
+                opener.getClientRects().length &&
+                !opener.closest('[hidden], [inert]')
+              )
+                opener.focus({ preventScroll: true });
+              else workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus();
+            }),
+        },
+      ];
+    });
   }
   const {
     displayed,
@@ -866,6 +920,30 @@ export function HouseholdMap({
       id: crypto.randomUUID(),
       objectIds: [...neighbors].filter((id) => displayed.has(id)),
     });
+  }
+  function revealObject(object: MapObject) {
+    if (!mapAvailable) return;
+    const context = mapSearchContext(contextSource, [object.id], [], true);
+    const includeEnded =
+      [...context.objects.values()].some((value) => hasEnded(value)) ||
+      [...context.relationships.values()].some((value) => hasEnded(value)) ||
+      previousEdges.some((value) => context.previousIds.has(value.id) && hasEnded(value));
+    changeMapSearch({
+      query: '',
+      types: [],
+      proposals: [],
+      onlySelected: false,
+      includeEnded,
+    });
+    setSelection({ kind: 'object', id: object.id });
+    setWorkspaceSurface('map');
+    setCameraFocusRequest({
+      id: crypto.randomUUID(),
+      objectIds: [...context.objects.keys()],
+    });
+    requestAnimationFrame(() =>
+      workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus(),
+    );
   }
   function focusObject(id: string) {
     setFocusId(id);
@@ -1047,7 +1125,7 @@ export function HouseholdMap({
     setWorkspaceSurface('map');
     if (object) {
       selectObject(object, 'include');
-      setDetailsOpen(true);
+      openObjectWindow(object);
     } else if (edge) {
       selectRelationship(edge);
       setDetailsOpen(true);
@@ -1181,7 +1259,7 @@ export function HouseholdMap({
     <section
       ref={workspace}
       tabIndex={-1}
-      className={`household-map${active ? ' workspace-shell' : ''}${textViewVisible ? ' text-view-open' : ''}${revealRequest && !navigationOpen ? ' workspace-revealing' : ''}${detailsOpen ? ' map-details-open' : ''}`}
+      className={`household-map${active ? ' workspace-shell' : ''}${textViewVisible ? ' text-view-open' : ''}${revealRequest && !navigationOpen ? ' workspace-revealing' : ''}${detailsOpen && selectedEdge ? ' map-details-open' : ''}`}
       onFocusCapture={(event) => {
         if (
           !active ||
@@ -1305,22 +1383,17 @@ export function HouseholdMap({
               else if (selectedEdge) setDetailsOpen(true);
             }}
             detailsAvailable={Boolean(selectedObject || selectedEdge) && !pending && !blocked}
-            detailsVisible={detailsOpen && Boolean(selectedObject || selectedEdge)}
+            detailsVisible={Boolean(
+              selectedObject
+                ? objectWindows.some((window) => window.id === selectedObject.id)
+                : detailsOpen && selectedEdge,
+            )}
           />
           <ConversationConsent conversation={conversation} chosen={conversationChoice} />
           {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to scroll the map's status and legend. */}
           <section className="workspace-context" aria-label="Kartans sammanhang" tabIndex={0}>
             {householdName}
             <span>Gemensam karta</span>
-            {selectedObject && (
-              <button
-                type="button"
-                disabled={pending || !mapAvailable}
-                onClick={() => focusObject(selectedObject.id)}
-              >
-                Visa samband i kartan
-              </button>
-            )}
             <span
               className="workspace-selection-count"
               data-multiple={selectedIds.length > 1}
@@ -1538,7 +1611,7 @@ export function HouseholdMap({
       />
       {state && (
         <div hidden={!active || workspaceSurface !== 'map' || mapCovered}>
-          <MapSearch
+          <ObjectSearch
             active={active && workspaceSurface === 'map' && !mapCovered}
             entryRequestId={mapSearchEntryRequestId}
             search={browsing}
@@ -1611,17 +1684,62 @@ export function HouseholdMap({
           />
         </div>
       )}
+      <div
+        className="object-property-layer"
+        hidden={!active || workspaceSurface !== 'map' || (navigationCovered && !revealRequest)}
+      >
+        {state &&
+          objectWindows.map((window) => {
+            const row = readRows.find((row) => row.object.id === window.id);
+            if (!row) return null;
+            return (
+              <MapSelectionDetails
+                key={window.id}
+                object={row}
+                state={effectiveState ?? state}
+                objects={displayed}
+                active={
+                  active &&
+                  workspaceSurface === 'map' &&
+                  (!navigationCovered || Boolean(revealRequest))
+                }
+                order={window.order}
+                focusRequest={window.focus}
+                offset={window.offset}
+                disabled={pending || blocked || dirty}
+                mapAvailable={mapAvailable}
+                onActivate={() =>
+                  setObjectWindows((previous) => {
+                    if (window.order === Math.max(...previous.map((item) => item.order)))
+                      return previous;
+                    const order = ++nextWindowOrder.current;
+                    return previous.map((item) =>
+                      item.id === window.id ? { ...item, order } : item,
+                    );
+                  })
+                }
+                onClose={() => {
+                  setObjectWindows((previous) => previous.filter((item) => item.id !== window.id));
+                  window.restoreFocus();
+                }}
+                onRead={(entry) => requestLeave(() => setReadEntry(entry))}
+                onOpenObject={openObjectWindow}
+                onRevealObject={revealObject}
+                onFocusObject={focusObject}
+                onRemoveObject={(object) => remove('draft', object)}
+                onEditObject={(object, restoreFocus) => edit(object, true, restoreFocus)}
+                onEditRelationship={() => {}}
+              />
+            );
+          })}
+      </div>
       {state &&
         active &&
         workspaceSurface === 'map' &&
         detailsOpen &&
+        selection?.kind === 'relationship' &&
         (!navigationCovered || Boolean(revealRequest)) && (
           <MapSelectionDetails
-            object={
-              selectedObject
-                ? readRows.find((row) => row.object.id === selectedObject.id)
-                : undefined
-            }
             relationship={
               selection?.kind === 'relationship'
                 ? (() => {
@@ -1668,6 +1786,7 @@ export function HouseholdMap({
       )}
       {state && (
         <HouseholdTable
+          householdName={householdName}
           active={active && workspaceSurface === 'table'}
           rows={readRows}
           hasProposals={hasChanges}
@@ -1680,49 +1799,35 @@ export function HouseholdMap({
           onEdit={(object, restoreFocus) =>
             requestLeave(() => editConfirmed(object, true, restoreFocus))
           }
-          onRead={(object, restoreFocus) =>
-            setReadEntry({ kind: 'object', id: object.id, restoreFocus })
-          }
           onRelationships={(object, restoreFocus) =>
             setReadEntry({ kind: 'relationships', id: object.id, restoreFocus })
           }
           relationshipCounts={relationshipCounts}
-          onActions={(object, restoreFocus) =>
-            requestLeave(() => setObjectActions({ object, restoreFocus }))
-          }
-          onReveal={(object) => {
-            if (!mapAvailable) return;
-            const context = mapSearchContext(contextSource, [object.id], [], true);
-            const includeEnded =
-              [...context.objects.values()].some((value) => hasEnded(value)) ||
-              [...context.relationships.values()].some((value) => hasEnded(value)) ||
-              previousEdges.some((value) => context.previousIds.has(value.id) && hasEnded(value));
-            changeMapSearch({
-              query: '',
-              types: [],
-              proposals: [],
-              onlySelected: false,
-              includeEnded,
-            });
-            setSelection({ kind: 'object', id: object.id });
+          onFocusRelationships={(object) => {
             setWorkspaceSurface('map');
-            setCameraFocusRequest({
-              id: crypto.randomUUID(),
-              objectIds: [...context.objects.keys()],
-            });
+            focusObject(object.id);
             requestAnimationFrame(() =>
               workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus(),
             );
           }}
+          onRemove={(object) => remove('draft', object)}
+          removalNotice={(object, id) => (
+            <ObjectRemovalNotice state={state} objectId={object.id} id={id} />
+          )}
+          onReveal={revealObject}
           statusContent={
             <>
               {active && workspaceSurface === 'table' && workStatus}
-              {conflictFollowUp}
               <DraftSaveFollowUp
                 progress={saveProgress}
                 hidden={saveDialogOpen}
                 onOpen={() => setSaveDialogOpen(true)}
               />
+            </>
+          }
+          actionContent={
+            <>
+              {conflictFollowUp}
               {conflicts.length > 0 && (
                 <button
                   type="button"
@@ -1755,6 +1860,15 @@ export function HouseholdMap({
               workspace.current?.querySelector<HTMLElement>('canvas[tabindex]')?.focus(),
             );
           }}
+          onReveal={revealObject}
+          onRead={openObjectWindow}
+          onRelationships={(object) =>
+            setReadEntry({
+              kind: 'relationships',
+              id: object.id,
+              restoreFocus: objectActions.restoreFocus,
+            })
+          }
           onRemove={(object) => remove('draft', object)}
         />
       )}

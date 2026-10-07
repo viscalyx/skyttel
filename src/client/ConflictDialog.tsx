@@ -593,8 +593,8 @@ export function ConflictDialog({
                 </div>
               ) : (
                 <p>
-                  Klicka på det värde du vill använda för varje egenskap. Du kan blanda vänster och
-                  höger sida.
+                  Välj ett värde för varje egenskap. Du kan klicka på hela rutan och blanda vänster
+                  och höger sida.
                 </p>
               )}
               {restoration && !removedDefinition && (
@@ -610,10 +610,21 @@ export function ConflictDialog({
                     <div className="cp-pick-fields">
                       {fields.map((field) => {
                         const same = sameConflictValue(field.saved, field.proposed);
+                        if (same)
+                          return (
+                            <div key={field.key} className="cp-field-same">
+                              <span className="cp-field-name">
+                                {conflictPropertyLabel(field, side)}
+                              </span>
+                              <span className="cp-field-value">
+                                {propertyValue(field, field[side])}
+                              </span>
+                              <span className="cp-tag">Samma värde · inget val behövs</span>
+                            </div>
+                          );
                         const overlap =
                           !sameConflictValue(field.saved, field.before) &&
-                          !sameConflictValue(field.proposed, field.before) &&
-                          !same;
+                          !sameConflictValue(field.proposed, field.before);
                         const picked = selected[field.key] === side;
                         const propertyActor =
                           removal && field.key === conflict.kind
@@ -625,9 +636,8 @@ export function ConflictDialog({
                             className={`cp-field-choice${overlap ? ' cp-overlap' : !sameConflictValue(field[side], field.before) ? ' cp-change' : ''}`}
                             type="button"
                             aria-label={`${conflictPropertyLabel(field, side)}: ${sideNames[side]} – ${conflictValueText(comparison, field, field[side])}`}
-                            aria-pressed={same ? undefined : picked}
+                            aria-pressed={picked}
                             disabled={
-                              same ||
                               blocked ||
                               pending ||
                               stale ||
@@ -639,26 +649,31 @@ export function ConflictDialog({
                           >
                             <span className="cp-field-name">
                               {conflictPropertyLabel(field, side)}
-                              {picked && <span className="cp-picked">✓ Vald</span>}
                             </span>
-                            {side === 'saved' &&
-                              !sameConflictValue(field.saved, field.before) &&
-                              propertyActor && (
-                                <span className="cp-tag">
-                                  {propertyActor.name} sparade ett nytt värde
-                                  {overlap && savedAfterProposal(propertyActor.savedAt)
-                                    ? ' efter att du började ändra den här uppgiften.'
-                                    : '.'}
-                                </span>
-                              )}
+                            {side === 'saved' && !sameConflictValue(field.saved, field.before) && (
+                              <span className="cp-tag">
+                                {propertyActor ? (
+                                  <>
+                                    {propertyActor.name} sparade ett nytt värde
+                                    {overlap && savedAfterProposal(propertyActor.savedAt)
+                                      ? ' efter att du började ändra den här uppgiften.'
+                                      : '.'}
+                                  </>
+                                ) : (
+                                  'Ett nytt värde har sparats'
+                                )}
+                              </span>
+                            )}
                             {side === 'proposed' &&
                               !sameConflictValue(field.proposed, field.before) && (
                                 <span className="cp-tag">Ditt föreslagna värde</span>
                               )}
+                            {sameConflictValue(field[side], field.before) && (
+                              <span className="cp-tag">Oförändrat från tidigare</span>
+                            )}
                             <span className="cp-field-value">
                               {propertyValue(field, field[side])}
                             </span>
-                            {same && <span className="cp-tag">Samma värde</span>}
                           </button>
                         );
                       })}
@@ -694,6 +709,10 @@ export function ConflictDialog({
                               : selected[field.key]
                                 ? propertyValue(field, field[selected[field.key]])
                                 : 'Välj ett värde'}
+                            {!sameConflictValue(field.saved, field.proposed) &&
+                              selected[field.key] && (
+                                <small> · {sideNames[selected[field.key]]}</small>
+                              )}
                           </dd>
                         </div>
                       ))}

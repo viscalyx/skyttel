@@ -72,6 +72,9 @@ export function SpatialMap({
   onOpenDetails = onEdit,
   onSelectRelationship,
   onFocus,
+  onReveal,
+  onRead,
+  onRelationships,
   onClear,
   onReset,
   onSearchStart,
@@ -109,6 +112,9 @@ export function SpatialMap({
   onOpenDetails?: (object: MapObject) => void;
   onSelectRelationship: (edge: MapRelationship, previous?: boolean) => void;
   onFocus: (id: string) => void;
+  onReveal?: (object: MapObject) => void;
+  onRead?: (object: MapObject) => void;
+  onRelationships?: (object: MapObject) => void;
   onClear: () => void;
   onReset: () => void;
   onSearchStart?: (text: string) => void;
@@ -142,8 +148,7 @@ export function SpatialMap({
   useEffect(() => {
     if (active) setActivated(true);
   }, [active]);
-  const [menuObject, setMenuObject] = useState<MapObject | null>(null);
-  const returnFocus = useRef<HTMLElement | null>(null);
+  const [menuEntry, setMenuEntry] = useState<ObjectActionsEntry | null>(null);
   const hold = useRef<{ timer: number; x: number; y: number } | null>(null);
   const held = useRef(false);
   const contextClick = useRef<string | null>(null);
@@ -151,32 +156,33 @@ export function SpatialMap({
     if (hold.current) window.clearTimeout(hold.current.timer);
     hold.current = null;
   }, []);
-  function openMenu(object: MapObject, target: HTMLElement) {
+  function openMenu(object: MapObject, target: HTMLElement, focusActions = true) {
     cancelHold();
     movement.cancel();
-    returnFocus.current = target;
-    if (onObjectActions) {
-      onObjectActions({
-        object,
-        restoreFocus: () => {
-          if (
-            target.isConnected &&
-            target.getClientRects().length &&
-            !target.closest('[hidden], [inert]')
-          )
-            target.focus();
-          else canvas.current?.focus();
-        },
-        consumeHeldClick: () => {
-          const consumed = held.current;
-          held.current = false;
-          return consumed;
-        },
-      });
-    } else setMenuObject(object);
+    const entry: ObjectActionsEntry = {
+      object,
+      anchor: target,
+      focusActions,
+      restoreFocus: () => {
+        if (
+          target.isConnected &&
+          target.getClientRects().length &&
+          !target.closest('[hidden], [inert]')
+        )
+          target.focus();
+        else canvas.current?.focus();
+      },
+      consumeHeldClick: () => {
+        const consumed = held.current;
+        held.current = false;
+        return consumed;
+      },
+    };
+    if (onObjectActions) onObjectActions(entry);
+    else setMenuEntry(entry);
   }
   function closeMenu() {
-    setMenuObject(null);
+    setMenuEntry(null);
   }
   useEffect(() => () => cancelHold(), [cancelHold]);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -425,7 +431,7 @@ export function SpatialMap({
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions${reveal ? ', .map-selection-details' : ''}`,
+        '.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions, .map-selection-details',
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
@@ -606,7 +612,7 @@ export function SpatialMap({
           contextClick.current = object.id;
           if (event.altKey) onOpenDetails(object);
           else onSelect(object, true);
-        } else openMenu(object, event.currentTarget);
+        } else openMenu(object, event.currentTarget, !held.current);
       },
       onPointerDown: (event) => {
         contextClick.current = null;
@@ -620,7 +626,7 @@ export function SpatialMap({
             y: event.clientY,
             timer: window.setTimeout(() => {
               held.current = true;
-              openMenu(object, target);
+              openMenu(object, target, false);
             }, 550),
           };
         }
@@ -648,6 +654,13 @@ export function SpatialMap({
         else onSelect(object, event.ctrlKey || event.metaKey);
       },
       onDoubleClick: () => onOpenDetails(object),
+      onKeyDown: (event) => {
+        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+          event.preventDefault();
+          event.stopPropagation();
+          openMenu(object, event.currentTarget);
+        }
+      },
     };
   }
   const locations = new Map(
@@ -1063,26 +1076,18 @@ export function SpatialMap({
         )}
       {cameraMount ? createPortal(cameraTools, cameraMount) : cameraTools}
       {navigationMount ? createPortal(navigation, navigationMount) : navigation}
-      {menuObject && active && !onObjectActions && (
+      {menuEntry && active && !onObjectActions && (
         <ObjectActions
-          entry={{
-            object: menuObject,
-            restoreFocus: () => {
-              if (returnFocus.current?.isConnected) returnFocus.current.focus();
-              else canvas.current?.focus();
-            },
-            consumeHeldClick: () => {
-              const consumed = held.current;
-              held.current = false;
-              return consumed;
-            },
-          }}
+          entry={menuEntry}
           state={state}
           disabled={disabled}
           mapAvailable={!unavailable && !contextLost}
           onClose={closeMenu}
           onEdit={onEdit}
           onFocus={onFocus}
+          onReveal={onReveal}
+          onRead={onRead}
+          onRelationships={onRelationships}
           onRemove={async (object) => {
             onRemove(object);
             return true;

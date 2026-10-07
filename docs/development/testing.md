@@ -12,6 +12,31 @@ and runs its graphics, server and client projects one after another. Node
 workflow gate tests run one file at a time. This reduces resource contention
 at the cost of longer test runs.
 
+Builds and test commands also share an operating-system lock across the
+user's worktrees. A second command exits with status 75 and identifies the
+active command; rerun it after that command finishes. The lock is released
+when the process exits, including after interruption. Use the npm scripts
+instead of launching test runners directly. These commands require Python 3
+on Linux or macOS; Python is included in the devcontainer.
+
+## CI font profile
+
+CI uses the bundled DejaVu Sans regular and bold fonts for system-font
+matching. The same profile runs locally on Linux, including the
+devcontainer, without installing fonts or changing application styles:
+
+```sh
+npm run test:unit:ci -- --project graphics
+npm run test:unit:ci -- --coverage
+npm run build
+npm run test:integration:ci -- tests/integration/assistant-map.spec.ts
+```
+
+The profile checks that Fontconfig selects the bundled font before running
+tests. It controls font selection, not differences in GPU, architecture or
+operating-system scheduling. Use the devcontainer for this profile on
+macOS. Ordinary test commands retain the local environment's fonts.
+
 ## Unit tests
 
 Run the complete Vitest suite:
@@ -30,7 +55,7 @@ npm run test:unit -- tests/unit/server/config.test.ts -t 'default listener'
 For repeated edits, start watch mode and leave the terminal running:
 
 ```sh
-npx vitest watch tests/unit/server/config.test.ts
+npm run test:env -- vitest watch tests/unit/server/config.test.ts
 ```
 
 Vitest reruns affected tests after changes. Press Ctrl+C to stop watching.
@@ -91,9 +116,21 @@ npm run test:report
 ```
 
 In the devcontainer, open the forwarded port from VS Code's **Ports** panel.
-The report contains the failed assertion, error context and retained trace.
-Stop the report server with Ctrl+C when finished. Keep reports and traces
-local; fixture inputs must contain only synthetic data.
+The report contains the failed assertion, error context, retained trace and
+failure screenshot. The default diagnostics reporter also writes runner
+output, including fixture-server console output, to
+`test-results/diagnostics/runner.log`. A custom `--reporter` overrides the
+default reporters; include `./tests/support/diagnostics-reporter.ts` to
+retain this log. Stop the report server with Ctrl+C when finished. Fixture
+inputs must contain only synthetic data.
+
+On a failed application CI job, download the
+`application-test-diagnostics-<attempt>` artifact from that workflow run.
+It retains browser failure artifacts and test command logs for seven days.
+Unit and container logs live separately from Playwright output so a browser
+run cannot delete them. Vitest failure screenshots under
+`.vitest/attachments/` are included. Logs include fixture-server output; no live
+provider or household data belongs in these ordinary checks.
 
 For interactive reruns in a host browser, start Playwright's UI on the same
 forwarded port after stopping any report server:

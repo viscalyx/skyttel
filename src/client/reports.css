@@ -10,6 +10,9 @@
 .household-reports[hidden] {
   display: none;
 }
+.household-map[data-workspace-surface="reports"] > .workspace-context {
+  display: none;
+}
 
 .household-reports > header {
   display: flex;

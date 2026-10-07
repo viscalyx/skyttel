@@ -45,8 +45,8 @@ details separately”.
    objekt och båda direkta sambanden.
 2. Klicka Lo igen: Alex finns kvar. Cmd-klicka Alex för att ta bort Alex.
    Klicka det omarkerade Kim och kontrollera att Kim ersätter Lo.
-3. Ctrl-klicka Lo, dubbelklicka Kim och läs Kims fasta uppgifter.
-   Välj **Stäng uppgifterna**. Kontrollera att de två markeringarna finns kvar.
+3. Ctrl-klicka Lo, dubbelklicka Kim och läs Kims flyttbara uppgiftsfönster.
+   Stäng med krysset i titelraden. Kontrollera att de två markeringarna finns kvar.
 4. Ctrl+Alt-klicka Lo, läs Lo och stäng uppgifterna. Cmd+Alt-klicka Alex,
    läs Alex och stäng igen. Kontrollera tre markeringar och samma kamera.
 5. Klicka fri bakgrund. Dubbelklicka Alex och kontrollera en markering.
@@ -57,7 +57,7 @@ details separately”.
 
 - Vanligt klick, Ctrl/Cmd-flerval och detaljöppning följer stegen.
 - Alla markerade objekts direkta samband framhävs. Grannar blir inte markerade.
-- En fast läsyta återger det valda objektet. När den stängs återkommer samma
+- Ett uppgiftsfönster återger det valda objektet. När den stängs återkommer samma
   kartläge; ingen handling ändrar hushållets uppgifter.
 
 ### MARKERING-02: tomrumsklick och avbrutna gester
@@ -142,7 +142,7 @@ och
 
 **Förväntat resultat:**
 
-- Markering, fast läsning och det fullständiga formuläret är skilda handlingar.
+- Markering, uppgiftsläsning och det fullständiga formuläret är skilda handlingar.
 - Escape avbryter förlusten och bevarar text; endast uttryckligt kastande
   tar bort formulärtexten. Återöppning använder aktuellt underlag.
 - Fokus och kontroller är åtkomliga på varje bredd. Text i mörkt tema har
@@ -152,14 +152,14 @@ och
 
 ### MARKERING-04: pensionerat fall för fria fönster
 
-Fallet pensionerades när fria objektfönster och manuell fönsterflytt togs bort.
-ID:t återanvänds inte. Läsning, återgång och åtkomliga kontroller prövas i
-MARKERING-01, MARKERING-03 och MARKERING-05.
+ID:t är pensionerat och återanvänds inte. Läsning, återgång och åtkomliga
+kontroller prövas i MARKERING-01, MARKERING-03 och MARKERING-05. Flera
+flyttbara uppgiftsfönster prövas i MARKERING-06.
 
 ### MARKERING-05: läs markerade uppgifter och återgå från vanligt formulär
 
 **Syfte:** Läsa ett valt objekt och nå samma fullständiga objektformulär
-utan fria fönster eller ändring av hushållets sparade och privata uppgifter.
+utan ändring av hushållets sparade och privata uppgifter.
 
 **Användare:** Alex Exempel med tillgång till provhushållet.
 
@@ -189,7 +189,8 @@ reachable at 320x250”.
    fullständiga objektformuläret öppnas med Cykels aktuella uppgifter.
 4. Välj **Stäng objektdialogen** utan att ändra något. Kontrollera att fokus
    återgår till **Redigera Cykel** och att samma uppgifter finns kvar.
-5. Rulla hela läsytan. Välj **Tabell** och **Redigera Cykel**. Ange
+5. Rulla uppgiftsfönstrets innehåll och stäng det med krysset.
+   Välj **Tabell** och **Redigera Cykel**. Ange
    **Mitt privata läsförslag** i Beskrivning och välj **Lägg i utkastet och stäng**.
    Kontrollera fokus på samma redigeringsknapp och läs **Ändringen finns i ditt
    utkast. Kartan sparas separat.** ovanför tabellen.
@@ -199,8 +200,9 @@ reachable at 320x250”.
 
 **Förväntat resultat:**
 
-- En fast läsyta visar det markerade objektets uppgifter. Den har inga
-  redigeringsfält, flytthandtag eller återupptagningsknappar för gamla fönster.
+- Ett flyttbart uppgiftsfönster visar det markerade objektets uppgifter.
+  Titelraden och stängkrysset består när innehållet rullas. Uppgifterna
+  saknar redigeringsfält; pennan öppnar det fullständiga formuläret.
 - Redigering öppnar samma vanliga objektformulär; oförändrad stängning
   återför fokus utan förslag eller ändrade värden.
 - Läsning och oförändrad stängning bevarar sparade uppgifter och hela tidigare
@@ -208,3 +210,62 @@ reachable at 320x250”.
   beskrivning. Kartans sparade objekt och samband är oförändrade.
 - Bekräftat tillägg återför fokus och visar samma återkoppling en gång på den
   aktiva ytan, utan ett extra sparkvitto.
+
+### MARKERING-06: flera flyttbara uppgiftsfönster med gemensamma ikoner
+
+**Syfte:** Läsa flera objekts uppgifter och flytta fönstren oberoende av
+varandra utan ändrad kamera, personlig vy eller hushållsuppgifter.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Förbered läskedjan enligt
+[Förbered läskedjan](object-lists.md#förbered-läskedjan). Cykel har sparade
+uppgifter, ett privat prisförslag och samband till Garage. Prova på dator
+samt vid 390 och 320 CSS-pixlars bredd. Prova dragning på fysisk pekskärm
+separat och anteckna enheten.
+
+**Integrationstest:**
+[map-selection-details.spec.ts](../../tests/integration/map-selection-details.spec.ts),
+testfallet “MARKERING-06: independent property windows share context actions
+and move without moving the map”.
+
+**Steg:**
+
+1. Öppna kartan och högerklicka Cykel. Läs de sex ikonernas verktygstips:
+   redigering, uppgifter, samband, visa objektet i kartan, visa dess direkta
+   samband i kartan och borttagning. Välj **Samband för Cykel**, läs Garage
+   i befintliga samband och stäng sambandsdialogen.
+2. Högerklicka Cykel igen och välj **Visa uppgifter för Cykel**. Läs egna
+   fält och prisets sparade och föreslagna värden. Kontrollera samma sex
+   ikoner som vid högerklick och ett stängkryss uppe till höger.
+3. Dra Cykels titelrad. Kontrollera att kartan står kvar. Dubbelklicka
+   Garage. Kontrollera att båda uppgiftsfönstren finns kvar. Dra Garages
+   titelrad utan att flytta Cykels fönster eller kameran.
+4. Fokusera Garages titelrad och använd piltangenter samt Skift med
+   piltangent. Stäng Garage med dess kryss. Cykels fönster ska finnas kvar
+   på samma plats. Välj Cykels uppgiftsikon: samma fönster visas igen.
+5. Välj pennan i Cykels fönster. Stäng det vanliga redigeringsformuläret
+   utan ändring och kontrollera fokus tillbaka på pennan. Rulla uppgifterna
+   och kontrollera att kartan inte panoreras eller zoomas.
+6. Börja dra Cykels titelrad, tryck Escape före pekarsläppet och släpp.
+   Kontrollera att fönstret återgår till sin placering och förblir öppet.
+7. Ändra fönstrets bredd till 390 och 320 CSS-pixlar. Kontrollera att
+   uppgifter och ikoner går att rulla till, att titelraden kan flyttas med
+   tangentbord och att krysset går att nå.
+8. Välj den röda papperskorgen i Cykels fönster. Kontrollera fokus på
+   fönstrets rubrik och borttagningen i utkastet. Stäng det sista fönstret
+   med krysset; spara inte utkastet.
+
+**Förväntat resultat:**
+
+- Sambandsikonen öppnar den befintliga sambandsdialogen. Uppgiftsikonen
+  och dubbelklick öppnar samma fullständiga, flyttbara uppgiftsfönster.
+- Varje objekt har ett eget fönster med egen placering. Ny markering eller
+  öppning av ett annat objekt stänger inte tidigare uppgiftsfönster.
+- Fönstren delar högerklickets ikoner och tillgängliga namn. Titelraden
+  kan dras eller flyttas med piltangenter; Escape avbryter dragning.
+- Varje kryss stänger bara sitt fönster. Kartans kamera och personliga vy,
+  sparade uppgifter och hela utkastet är oförändrade under läsningen.
+- Den uttryckliga borttagningen återför fokus till fönstret och lägger
+  bara objektet och dess samband som borttagningar i utkastet. Den sparade
+  hushållskartan är oförändrad.

@@ -168,11 +168,7 @@ test('KARTA-06: objects move from a persistent private proposal to the shared ma
       await openTable(reopened);
       const table = reopened.getByRole('region', { name: 'Hushållets tabell', exact: true });
       await table.getByRole('button', { name: 'Lo Exempel', exact: true }).click();
-      await table.getByRole('button', { name: 'Åtgärder för Lo Exempel', exact: true }).click();
-      await reopened
-        .getByRole('dialog', { name: 'Åtgärder för Lo Exempel', exact: true })
-        .getByRole('button', { name: 'Ta bort objekt', exact: true })
-        .click();
+      await table.getByRole('button', { name: 'Ta bort Lo Exempel', exact: true }).click();
       await openDraftReview(reopened);
       await expect(review).toContainText('Tas bort');
       await saveReviewedConflictDraft(reopened);

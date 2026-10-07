@@ -149,7 +149,7 @@ test('section editors keep complete financial facts and shared description throu
   expect(details.getByText('Pris', { selector: 'dt' }).nextElementSibling?.textContent).toBe(
     'Okänt',
   );
-  await userEvent.click(details.getByRole('button', { name: 'Redigera Mitt lån' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Redigera Mitt lån' }));
   const editor = within(screen.getByRole('dialog', { name: 'Redigera Mitt lån' }));
   await userEvent.click(editor.getByRole('button', { name: 'Avtalets uppgifter' }));
   const section = editor;

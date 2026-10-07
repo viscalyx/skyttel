@@ -24,7 +24,8 @@ inte ångras i Skyttel. Kör inte testfallen mot ett verkligt hushåll.
 
 När ett befintligt objekt ska ändras, öppna **Tabell** och välj
 **Redigera [objektets namn]**. Objektets namn öppnar i stället dess uppgifter
-och samband. Där kan du öppna hela läsdialogen eller redigera ett samband.
+och samband. Alla uppgifter visas direkt i raden. Använd **Samband för
+[objektets namn]** för att läsa eller redigera ett samband.
 Lägg hela formulärets ändring i utkastet innan du öppnar nästa arbetsyta.
 
 1. Starta en ny provdatabas enligt nästa avsnitt inför varje fall. Öppna
@@ -38,9 +39,9 @@ Lägg hela formulärets ändring i utkastet innan du öppnar nästa arbetsyta.
 3. Stäng textvyn, öppna **Tabell** och välj **Redigera Lampan att radera**.
    Öppna **Livscykel och utseende** och välj en liten påhittad PNG-bild genom
    **Välj profilbild**. Välj **Lägg i utkastet och stäng** och spara sedan
-   hela utkastet. Öppna lampans hela läsdialog från tabellen. Högerklicka på bilden,
+   hela utkastet. Expandera lampans rad i tabellen. Högerklicka på bilden,
    välj att kopiera bildens adress och spara adressen för senare kontroll.
-4. Stäng läsdialogen och textvyn. Välj **Visa Lampan att radera i kartan**
+4. Stäng textvyn. Välj **Visa Lampan att radera i kartan**
    i tabellen och öppna **Navigera**.
    Välj **Flytta [objektets namn]: höger** en gång. Välj stolen och flytta den
    åt vänster med **Flytta [objektets namn]: vänster**. Ladda om och kontrollera
@@ -490,9 +491,9 @@ stället för allmän förberedelse steg 2–5:
 3. Välj **Redigera Lampan att radera** i tabellen, öppna
    **Livscykel och utseende**, välj den blå bilden med **Välj profilbild**
    och välj **Lägg i utkastet och stäng**. Spara hela utkastet. Öppna
-   lampans läsdialog, kopiera bildens adress och anteckna
+   lampans detaljvy genom att expandera raden, kopiera bildens adress och anteckna
    dess bild-ID, den sista delen efter `/profile-images/` i adressen.
-4. Stäng läsdialogen och välj **Redigera Lampan att radera**. Byt lampans
+4. Välj **Redigera Lampan att radera**. Byt lampans
    **Objekttyp** till **Fordon**. Bekräfta borttagningen av tidigare egna
    fältvärden om valet visas. Öppna **Livscykel och utseende**, välj den
    orange profilbilden och välj **Lägg i utkastet och stäng**.

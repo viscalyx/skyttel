@@ -100,7 +100,7 @@ test('table filters compose actual type, selected, ended, removed and proposal s
   expect(fixture.table.queryByRole('button', { name: 'A 2' })).toBeNull();
   const proposals = await filterDialog(fixture.table);
   await userEvent.click(proposals.getByLabelText('Föreslagen borttagning'));
-  await userEvent.click(proposals.getByRole('button', { name: 'Alla typer' }));
+  await userEvent.click(proposals.getByLabelText('Typ 2'));
   await userEvent.click(proposals.getByRole('button', { name: 'Stäng filter' }));
   await userEvent.type(query, 'Borttaget prov');
   await userEvent.click(fixture.table.getByRole('button', { name: 'Borttaget prov' }));
@@ -127,12 +127,12 @@ test('sorting and pagination preserve numeric Swedish order and resetting a no-m
   expect(
     rows.slice(0, 2).map((row) => within(row).getByRole('button', { name: /^A / }).textContent),
   ).toEqual(['▸A 2', '▸A 10']);
-  await userEvent.selectOptions(fixture.table.getByLabelText('Sortering'), 'name-desc');
+  await userEvent.click(fixture.table.getByRole('button', { name: 'Namn' }));
   expect(
     fixture.table.getAllByRole('row').find((row) => row.hasAttribute('data-selected'))?.textContent,
   ).toContain('Övrigt Élan');
-  await userEvent.selectOptions(fixture.table.getByLabelText('Sortering'), 'type-asc');
-  await userEvent.selectOptions(fixture.table.getByLabelText('Sortering'), 'type-desc');
+  await userEvent.click(fixture.table.getByRole('button', { name: 'Typ' }));
+  await userEvent.click(fixture.table.getByRole('button', { name: 'Typ' }));
   await userEvent.type(fixture.table.getByLabelText('Sök objekt i tabellen'), 'hittas aldrig');
   expect(fixture.table.queryAllByRole('rowheader')).toHaveLength(0);
   const filters = await filterDialog(fixture.table);
@@ -154,26 +154,23 @@ async function readingFixture() {
   return { ...fixture, householdId, tools, table };
 }
 
-async function actions(table: ReturnType<typeof within>, name: string) {
-  const toggle = table.getByRole('button', { name });
-  if (toggle.getAttribute('aria-expanded') !== 'true') await userEvent.click(toggle);
-  await userEvent.click(table.getByRole('button', { name: `Åtgärder för ${name}` }));
-  return within(await screen.findByRole('dialog', { name: `Åtgärder för ${name}` }));
-}
-
 test('textual object removal works without graphics and stages every incident saved or proposed relationship without changing shared facts', async () => {
   const fixture = await readingFixture();
   const before = await fixture.read();
   const history = await (await client.get(`${fixture.path}/history`)).json();
-  let menu = await actions(fixture.table, 'Cykel');
+  const removal = fixture.table.getByRole('button', { name: 'Ta bort Cykel' });
   expect(
-    (menu.getByRole('button', { name: 'Visa samband i kartan' }) as HTMLButtonElement).disabled,
+    (
+      fixture.table.getByRole('button', {
+        name: 'Visa samband för Cykel i kartan',
+      }) as HTMLButtonElement
+    ).disabled,
   ).toBe(true);
-  expect(menu.getByText(/Objektet och dess 4 samband/)).toBeTruthy();
-  await userEvent.click(menu.getByRole('button', { name: 'Avbryt' }));
+  expect(
+    document.getElementById(removal.getAttribute('aria-describedby') ?? '')?.textContent,
+  ).toContain('Objektet och dess 4 samband');
   expect(await fixture.read()).toEqual(before);
-  menu = await actions(fixture.table, 'Cykel');
-  await userEvent.click(menu.getByRole('button', { name: 'Ta bort objekt' }));
+  await userEvent.click(removal);
   await waitFor(async () =>
     expect((await fixture.read()).draft.changes.find(({ id }) => id === 'bike')?.after).toBeNull(),
   );
@@ -187,11 +184,7 @@ test('textual object removal works without graphics and stages every incident sa
     ['bike-unknown', null],
   ]);
   expect(await (await client.get(`${fixture.path}/history`)).json()).toEqual(history);
-  menu = await actions(fixture.table, 'Cykel');
-  expect((menu.getByRole('button', { name: 'Ta bort objekt' }) as HTMLButtonElement).disabled).toBe(
-    true,
-  );
-  await userEvent.click(menu.getByRole('button', { name: 'Avbryt' }));
+  expect((removal as HTMLButtonElement).disabled).toBe(true);
   const draft = await openDraftReview();
   expect(draft.getByRole('button', { name: 'Visa förslaget: Cykel' })).toBeTruthy();
   await saveHouseholdDraft();
@@ -202,8 +195,7 @@ test('textual object removal works without graphics and stages every incident sa
 test('textual actions edit the same native object form and a dirty form blocks abandoning work until an explicit discard', async () => {
   const fixture = await readingFixture();
   const before = await fixture.read();
-  const menu = await actions(fixture.table, 'Alex');
-  await userEvent.click(menu.getByRole('button', { name: 'Redigera objekt' }));
+  await editTableObjectForm('Alex');
   const form = within(await screen.findByRole('dialog', { name: 'Redigera Alex' }));
   await userEvent.type(form.getByLabelText('Namn'), ' förslag');
   await userEvent.click(form.getByRole('button', { name: 'Avbryt' }));

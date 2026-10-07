@@ -180,11 +180,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     await proposeTypeChange();
     const expand = page.getByRole('button', { name: 'Familjemusik', exact: true });
     if ((await expand.getAttribute('aria-expanded')) !== 'true') await expand.click();
-    await page.getByRole('button', { name: 'Åtgärder för Familjemusik', exact: true }).click();
-    await page
-      .getByRole('dialog', { name: 'Åtgärder för Familjemusik' })
-      .getByRole('button', { name: 'Ta bort objekt', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Ta bort Familjemusik', exact: true }).click();
     await openDraftReview(page);
     await expect(review.getByRole('row').filter({ hasText: 'Familjemusik' })).toHaveCount(3);
     await expect(
@@ -228,11 +224,7 @@ test('LIVSCYKEL-03: removing from the list immediately proposes every connected 
     expect((await read()).relationships).toEqual(initial.relationships);
     await proposeTypeChange();
     if ((await expand.getAttribute('aria-expanded')) !== 'true') await expand.click();
-    await page.getByRole('button', { name: 'Åtgärder för Familjemusik', exact: true }).click();
-    await page
-      .getByRole('dialog', { name: 'Åtgärder för Familjemusik' })
-      .getByRole('button', { name: 'Ta bort objekt', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Ta bort Familjemusik', exact: true }).click();
     await openDraftReview(page);
     await saveReviewedConflictDraft(page);
     await closeTextView(page);

@@ -37,6 +37,10 @@ const paths = {
   trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
   warning: 'm12 3 10 18H2zM12 9v5M12 17h.01',
   detail: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
+  edit: 'm16 3 5 5-12 12-6 1 1-6L16 3M13 6l5 5',
+  relationships: 'M4 8h16m-4-4 4 4-4 4M20 16H4m4-4-4 4 4 4',
+  connections:
+    'M7 7l3 3M17 7l-3 3M12 15v2M8 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M22 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0M15 20a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
   focus: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   overview: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 12h8M12 8v8',
   returnView: 'm9 4-5 5 5 5M4 9h10a6 6 0 0 1 0 12h-4',
@@ -326,6 +330,7 @@ export function WorkspaceTools({
                 </i>
               )}
             </button>
+            {target === 'table' && <hr className="workspace-tools-divider" />}
             {target === 'conversation' && voiceBox}
           </Fragment>
         ))}

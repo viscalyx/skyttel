@@ -18,6 +18,47 @@
 .map-selection-details h2 {
   margin: 0 0 8px;
 }
+.object-property-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.object-property-header button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+}
+.object-property-header svg,
+.object-property-actions svg {
+  width: 22px;
+  height: 22px;
+}
+.object-property-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 31;
+  pointer-events: none;
+}
+.object-property-layer[hidden] {
+  display: none;
+}
+.object-property-layer:focus-within {
+  z-index: 34;
+}
+.household-map.workspace-shell .map-navigation:focus-within {
+  z-index: 34;
+}
+.household-map.workspace-shell
+  :is(.text-view, .map-selection-details:not(.object-property-window)):focus-within {
+  z-index: 34;
+}
+.household-map.workspace-shell :is(.workspace-tools, .conversation-corner):focus-within {
+  z-index: 35;
+}
 .map-selection-summary {
   margin: 0 0 12px;
 }
@@ -70,6 +111,81 @@
   }
   .household-map.workspace-shell.map-details-open .spatial-display-tools {
     display: none;
+  }
+}
+.household-map.workspace-shell .object-property-window {
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 16px));
+  max-height: min(560px, max(180px, 48dvh), calc(100dvh - 16px));
+  padding: 12px;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.household-map.workspace-shell .object-property-window[hidden] {
+  display: none;
+}
+.object-property-window .object-property-header {
+  flex: none;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.object-property-window[data-dragging="true"] .object-property-header {
+  cursor: grabbing;
+}
+.object-property-window h2 {
+  font-size: 17px;
+  margin: 0;
+}
+.object-property-window .map-selection-summary {
+  flex: none;
+  font-size: 13px;
+  margin: 4px 0 8px;
+}
+.object-property-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: none;
+}
+.object-property-window > .object-property-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--space-line);
+}
+.object-property-actions button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+}
+.object-property-body {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.object-property-window .object-property-body {
+  margin-top: 8px;
+}
+.object-property-window .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.household-map.workspace-shell .object-property-actions .spatial-object-remove {
+  color: var(--proposal-removed);
+  border-color: var(--proposal-removed);
+}
+@media (max-width: 700px) {
+  .object-property-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
   }
 }
 @media (max-width: 700px) and (max-height: 600px) {

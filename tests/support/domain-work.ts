@@ -7,10 +7,17 @@ export async function readTableObject(page: Page, name: string) {
   const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
   const expansion = table.getByRole('button', { name, exact: true });
   if ((await expansion.getAttribute('aria-expanded')) !== 'true') await expansion.click();
-  await table.getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: `Uppgifter för ${name}`, exact: true });
-  await expect(dialog).toBeVisible();
-  return dialog;
+  const details = table.getByRole('region', { name: `Uppgifter för ${name}`, exact: true });
+  await expect(details).toBeVisible();
+  return details;
+}
+
+export async function closeTableObject(page: Page, name: string) {
+  const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+  await table.getByRole('button', { name, exact: true }).click();
+  await expect(
+    table.getByRole('region', { name: `Uppgifter för ${name}`, exact: true }),
+  ).not.toBeVisible();
 }
 
 /** Open the ordinary full object form from the table's named edit action. */

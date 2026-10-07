@@ -66,9 +66,13 @@ export function objectPropertyValues(value: ObjectValue, type?: ObjectType) {
 export function ObjectReadDetails({
   row,
   full = false,
+  showHeading = true,
+  status,
 }: {
   row: HouseholdTableRow;
   full?: boolean;
+  showHeading?: boolean;
+  status?: string;
 }) {
   const proposed = objectPropertyValues(row.object, row.type);
   const saved = row.before
@@ -79,7 +83,7 @@ export function ObjectReadDetails({
     row.proposal === 'Ändrat' && row.object.description !== row.before?.description;
   return (
     <div className="household-table-details">
-      <h3>{row.object.name} · alla uppgifter</h3>
+      {showHeading && <h3>{row.object.name} · alla uppgifter</h3>}
       <p className="household-table-description">
         {descriptionChanged && (
           <span className="household-table-before">
@@ -91,6 +95,7 @@ export function ObjectReadDetails({
         )}
         {row.object.description || 'Ej uppgivet'}
       </p>
+      {status && <p className="map-selection-summary">Objektstatus: {status}</p>}
       <dl>
         {keys
           .filter(

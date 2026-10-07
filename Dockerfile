@@ -8,6 +8,7 @@ RUN node scripts/install-repository-npm.mjs
 RUN npm ci
 
 FROM dependencies AS build
+COPY scripts/testing/run-with-test-environment.py ./scripts/testing/run-with-test-environment.py
 COPY tsconfig.json tsconfig.server.json vite.config.ts index.html ./
 COPY src ./src
 COPY docs/images/shuttle-logo-transparent-small.png ./docs/images/

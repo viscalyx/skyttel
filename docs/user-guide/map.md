@@ -24,10 +24,16 @@ för hela beskrivningen, egna fält och ekonomi. Flera rader kan vara öppna
 samtidigt. Ändrade uppgifter visar **Sparat** och **Ditt förslag** intill
 varandra; symbolen ◇ märker Nytt, Ändrat och Föreslagen borttagning.
 
-Namn sorteras från A till Ö från början. **Sortering** ger både riktningarna
-för namn och typ med svensk bokstavsordning och naturlig sifferordning.
+Namn sorteras från A till Ö från början. Klicka på kolumnrubriken **Namn**
+eller **Typ** för att sortera; klicka igen för att växla riktning. Pilen
+visar riktningen. Svensk bokstavsordning och naturlig sifferordning gäller.
 Varje sida visar högst 50 objekt. **Filter** kan ta med upphörda och
 borttagna objekt; dessa statusar är skilda från en föreslagen borttagning.
+
+**Nytt objekt** ligger till höger på sökraden. Om ditt utkast har konflikter
+visas knappen för att granska dem till vänster om **Nytt objekt**.
+På smala skärmar får knapparna egna rader, med konflikter före
+**Nytt objekt**. Båda ligger till höger.
 
 **Karta** och **Tabell** växlar arbetsyta med markeringen gemensam.
 Tabellens sortering, sida, öppna rader, rullning och möjligt fokus finns
@@ -36,8 +42,10 @@ tabellen i sidled; fullständiga detaljtexter bryts inom skärmbredden.
 
 ### Läs objekt och följ samband
 
-Expandera raden och välj **Läs alla uppgifter** för objektets fullständiga
-läsläge. **Samband för [objektnamn]** är en separat åtgärd med antal
+Expandera raden genom att välja objektets namn. Alla uppgifter visas direkt
+i raden, även dolda fält och ekonomiska uppgifter. Pennikonen bland radens
+åtgärder öppnar objektets redigeringsformulär. **Samband för [objektnamn]**
+är en separat åtgärd med antal
 samband. Samma sambandsdialog kan öppnas från objektets uppgifter.
 Dialogen visar riktning, båda ändpunkterna, säkerhet, egna fält och
 slutdatum, även för upphörda samband och föreslagna borttagningar.
@@ -47,10 +55,22 @@ samband. **Tillbaka** går ett steg i läskedjan. Du behöver inte visa
 objektet i kartan. Okänt och Uttryckligen inget har inga objektlänkar;
 Osäkert uppgivet och Ospecificerat objekt behåller sina betydelser.
 
-Krysset eller Escape stänger läsningen och återför fokus till
+Välj objektets namn igen för att fälla ihop radens uppgifter. I läskedjan
+stänger krysset eller Escape dialogen och återför fokus till
 öppningsknappen. Om raden försvinner går fokus till motsvarande kontroll
 på nästa rad, sedan föregående rad eller tabellens rubrik. Sökning,
 sortering, sida, öppna rader och rullning finns kvar.
+
+Radens två kartikoner fokuserar objektet med dess direkta samband.
+**Visa i kartan** rensar kartans sökning och filter och tar med upphörda
+vid behov. **Visa samband i kartan** behåller sökning och filter, inklusive
+valet för upphörda. Tooltips förklarar skillnaden. Den röda papperskorgen
+längst till höger lägger objektet och dess samband som borttagningar i
+utkastet; den sparade kartan ändras först när hela utkastet sparas.
+
+På kartan öppnar högerklick, Shift+F10 eller långtryck på objektet en rad
+med åtgärdsikoner bredvid det. Om raden inte ryms på någon sida visas den
+under eller över objektet, så att objektet förblir synligt.
 
 ## Sök och filtrera separat
 
@@ -62,7 +82,8 @@ När själva kartytan har fokus kan du också börja med en bokstav eller siffra
 Första färdiga
 tecknet ersätter tidigare söktext och flyttar fokus till sökfältet;
 filtervalen finns kvar. I Tabell finns ett eget synligt sökfält och
-**Filter** öppnar en separat dialog. Vyernas sökning och filter är separata.
+**Filter** till höger om fältet öppnar samma kompakta snabbval som i kartan.
+Vyernas sökning och filter är separata.
 
 Sök i namn, typ, beskrivning, egna fält och ekonomi. Alla sökord måste
 finnas, men ordning och skiftläge spelar ingen roll och delord fungerar.
@@ -93,11 +114,13 @@ fokus tömmer både text och filter med en enda tryckning. Markeringen och
 kameran finns kvar. Dialoger och andra kontroller har sina egna
 Escape-funktioner.
 
-Tabellens **Rensa sökning** tömmer texten. **Återställ sökning och filter**
-i tabellens filterdialog visar startläget med aktuella objekt.
-**Visa objekt** stänger dialogen med valen kvar.
-Kartan och tabellen visar inga träffantal eller särskilda besked när
-resultatet är tomt.
+Krysset i tabellens sökfält tömmer bara texten och återför fokus till
+sökfältet. Aktiva filter kan tas bort var för sig. Tabellens filterdialog
+visar antalet träffar och uppdaterar tabellen direkt. Krysset, Escape eller
+ett klick utanför stänger dialogen med valen kvar.
+**Återställ sökning och filter** visar startläget med aktuella objekt.
+Utanför filterdialogerna visar kartan och tabellen inga träffantal eller
+särskilda besked när resultatet är tomt.
 
 ### Utforska sökträffarnas sammanhang
 
@@ -107,15 +130,16 @@ Grannarna får ligga utanför söktext, typval, utkastfilter och
 **Bara markerade**. Upphörda objekt och samband döljs fortfarande;
 en upplysning erbjuder **Ta med upphörda** när sådant sammanhang finns.
 
-Markera ett objekt och välj **Visa samband i kartan**, eller använd
-objektets högerklicksmeny. Åtgärden lägger till dess direkta grannar,
+Högerklicka ett objekt och välj sambandsikonen **Visa samband i kartan**,
+eller använd samma ikon i listan. Åtgärden lägger till dess direkta grannar,
 behåller tidigare innehåll och flyttar kameran. En markering i sig visar
 inga fler objekt. Upprepa för att följa en längre kedja.
 **Tillbaka till sökträffarna** återgår till träffarnas direkta sammanhang.
 Ändrad sökning eller ändrade filter börjar också om där. Att stänga
 filterdialogen eller besöka tabellen behåller utforskningen.
 
-**Visa i kartan** på en tabellrad markerar bara det valda objektet och
+Riktmärkesikonen **Visa i kartan** vid högerklick eller på en tabellrad
+markerar bara det valda objektet och
 zoomar till dess direkta grannar. Kartans sökning och filter återställs
 så att de går att se; övrig karta finns kvar. Tabellens läge bevaras och
 återfås via **Tabell**, med fokus på den använda kartknappen.
@@ -265,7 +289,9 @@ Sökningen gäller hela kartan, även objekt som finns på andra sidor.
 Objektets namn öppnar uppgifter och samband i den utökade raden.
 Längre tabeller har sidval samt **Föregående** och **Nästa**.
 I kartan ändrar **Markera** urvalet och **Visa detaljer** visar de valda
-uppgifterna. **Avmarkera alla** behåller sökningen.
+uppgifterna i ett flyttbart fönster för varje objekt. Flera fönster kan
+vara öppna samtidigt och dras var för sig utan att kartan flyttas.
+**Avmarkera alla** behåller sökningen.
 
 Välj objektets **Redigera** eller sambandets **Redigera samband** i
 tabellen. Rätta uppgifterna och lägg förslaget i utkastet. Du kan

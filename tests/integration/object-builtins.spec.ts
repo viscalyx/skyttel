@@ -11,7 +11,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { editTableObject, readTableObject } from '../support/domain-work.js';
+import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 for (const { width, height } of [
@@ -171,7 +171,7 @@ for (const { width, height } of [
       await expect(debtRead).toContainText(
         '12 300 (Osäkert uppgivet) · datum för uppgiften: 2026-09-01',
       );
-      await closeSupportDialog(page, 'Uppgifter för Husets lån');
+      await closeTableObject(page, 'Husets lån');
       await save();
       await editTableObject(page, 'Husets lån');
       await form.getByLabel('Objekttyp', { exact: true }).selectOption('other');
@@ -304,7 +304,8 @@ test('TYP-12: explicit field order preserves zero and false through the native f
     await expect(
       details.locator('dt').filter({ hasText: 'Första fältet' }).locator('..'),
     ).toContainText('0');
-    await closeSupportDialog(page, 'Uppgifter för Ordningsprov');
+    await closeTableObject(page, 'Ordningsprov');
+    await readTableObject(page, 'Ordningsprov');
     const tableDetails = page
       .getByRole('region', { name: 'Hushållets tabell', exact: true })
       .locator('.household-table-detail-row');

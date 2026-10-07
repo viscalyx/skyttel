@@ -182,7 +182,9 @@ test('UTKAST-38: a lost save response keeps proposals until the same durable att
       page.locator('p[aria-hidden="true"]').filter({ hasText: /^Utkastet är sparat$/ }),
     ).toHaveCount(1);
     await expect(
-      page.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+      page
+        .getByRole('region', { name: 'Hushållets tabell', exact: true })
+        .getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
     expect(submitted).toHaveLength(1);
     const { operations } = await (await page.request.get(`${path}/operations`)).json();
@@ -409,7 +411,9 @@ test('UTKAST-37: a closed pending save restores the table heading when its focus
     release?.();
     await expect(followUp).toHaveCount(0);
     await expect(
-      page.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+      page
+        .getByRole('region', { name: 'Hushållets tabell', exact: true })
+        .getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
   } finally {
     release?.();

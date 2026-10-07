@@ -32,7 +32,7 @@ test('LISTA-05: short-screen table returns preserve the visible result and keybo
     await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
     await table.getByRole('button', { name: 'Provobjekt 045', exact: true }).click();
     const result = table.getByRole('button', {
-      name: 'Läs alla uppgifter för Provobjekt 045',
+      name: 'Redigera Provobjekt 045',
       exact: true,
     });
     await result.scrollIntoViewIfNeeded();
@@ -48,11 +48,9 @@ test('LISTA-05: short-screen table returns preserve the visible result and keybo
     const remembered = await position();
     expect(remembered.inner.top).toBeGreaterThan(500);
     await result.click();
-    const detail = page.getByRole('dialog', { name: 'Uppgifter för Provobjekt 045', exact: true });
-    await expect(
-      detail.getByRole('heading', { name: 'Uppgifter för Provobjekt 045', exact: true }),
-    ).toBeFocused();
-    await closeSupportDialog(page, 'Uppgifter för Provobjekt 045');
+    const detail = page.getByRole('dialog', { name: 'Redigera Provobjekt 045', exact: true });
+    await expect(detail.getByLabel('Namn', { exact: true })).toBeFocused();
+    await closeSupportDialog(page, 'Redigera Provobjekt 045', 'Stäng objektdialogen');
     await expect(result).toBeFocused();
     expect(await position()).toEqual(remembered);
     await expectUncovered(result);

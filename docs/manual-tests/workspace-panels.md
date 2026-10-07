@@ -1,7 +1,8 @@
 # Manuella testfall för objektarbete och samtal
 
-Fallen omfattar vanliga objekt- och sambandsformulär, läsdialoger, samtal och
-byte av skärmstorlek. Anteckna commit, webbläsare och godkänt eller underkänt
+Fallen omfattar vanliga objekt- och sambandsformulär, fullständig läsning,
+samtal och byte av skärmstorlek. Anteckna commit, webbläsare och
+godkänt eller underkänt
 resultat vid körning. Fysiska hjälpmedelsprov antecknas separat från Chromium.
 
 ## Konfigurerade användare
@@ -16,8 +17,9 @@ providentitet och påhittade uppgifter.
    och logga in. Börja med ett tomt hushåll för PANEL-01. Övriga fall använder
    Cykeln, Bilen och Garaget enligt respektive steg.
 2. Skapa objekt med **Nytt objekt** och **Lägg i utkastet och stäng**.
-   Läs via **Tabell**, objektets namn och **Läs alla uppgifter**.
-   Redigera med radens **Redigera**. Stäng läsdialogen med krysset.
+   Läs via **Tabell** och objektets namn. Alla uppgifter visas direkt i raden.
+   Redigera med radens pennikon **Redigera [objektets namn]**.
+   Fäll ihop uppgifterna genom att välja namnet igen.
 3. Spara via **Skriv till Skyttel**, **Visa utkastet** och **Spara hela utkastet**.
    Vänta på **Utkastet är sparat**. Stäng sedan textvyn när vanliga formulär
    ska användas.
@@ -49,19 +51,19 @@ native readers reuse each object”.
 1. Öppna **Nytt objekt** för Cykeln, Bilen och Garaget i tur och ordning.
    Skriv namnet, välj krysset och **Fortsätt redigera**. Kontrollera namnet.
    Välj **Lägg i utkastet och stäng** och spara sedan hela utkastet.
-2. Läs varje objekt via tabellen. Kontrollera rubrikfokus, stäng läsningen
+2. Läs varje objekt via tabellen. Kontrollera rubriken, fäll ihop raden
    och välj radens **Redigera**. Skriv Lagt i utkastet om följt av namnet i
    **Beskrivning**. Lägg hela förslaget i utkastet och stäng.
 3. Starta textsamtalet och skriv Bevarat meddelande utan att skicka.
-   Stäng textvyn. Läs Cykeln två gånger med stängning mellan öppningarna.
-   Kontrollera beskrivningen, rubrikfokus och en enda läsdialog.
+   Stäng textvyn. Läs Cykeln två gånger och fäll ihop raden mellan öppningarna.
+   Kontrollera beskrivningen, rubriken och en enda detaljvy för objektet.
 4. Öppna texten igen. Kontrollera meddelandet. Spara hela utkastet och
    ladda om sidan. Läs samtliga tre objekt igen.
 
 **Förväntat resultat:**
 
 - Varje objekt har rätt fullständiga beskrivning efter omstart.
-- Återöppning visar samma objekt med rubrikfokus i en enda dialog.
+- Återöppning visar samma objekt i en enda detaljvy direkt i raden.
 - Samtalstexten bevaras. Tre objekt finns sparade och utkastet är tomt.
 - Ändringshistoriken innehåller de två uttryckliga sparandena.
 
@@ -84,8 +86,8 @@ object details across resizing”.
 
 1. Starta textsamtalet på dator. Skriv Oskickad samtalstext utan att skicka.
 2. Byt till varje angiven bredd. Stäng textvyn och läs Cykeln via tabellen.
-   Kontrollera rubrikfokus, beskrivningen och en enda läsdialog.
-3. Stäng läsningen. Kontrollera fokus på **Läs alla uppgifter för Cykeln**.
+   Kontrollera rubriken, beskrivningen och en enda detaljvy för objektet.
+3. Fäll ihop raden. Kontrollera fokus på **Cykeln**.
    Öppna texten igen och läs det oskickade meddelandet.
 4. Kontrollera att sidan ryms utan horisontell rullning och att hela
    hushållets sparade uppgifter och privata utkast är oförändrade.
@@ -93,7 +95,7 @@ object details across resizing”.
 **Förväntat resultat:**
 
 - Lästa uppgifter och samtalstext finns kvar vid varje skärmbyte.
-- Läsningens rubrik och tidigare öppningsknapp får logiskt fokus.
+- Fokus stannar på objektets namn när raden fälls ihop.
 - Ingen läsning, navigering eller storleksändring skapar ett förslag.
 
 ### PANEL-03: ett nyare förslag får inte skrivas över
@@ -216,8 +218,8 @@ while voice continues”.
 
 1. Starta textsamtalet, slå på mikrofonen och skriv Bevarat meddelande
    utan att skicka. Byt till 640 pixlars bredd.
-2. Välj **Tabell**. Textvyn döljs. Läs Cykeln, kontrollera rubrikfokus
-   och Bevarad cykeltext. Stäng läsningen och öppna texten igen.
+2. Välj **Tabell**. Textvyn döljs. Läs Cykeln, kontrollera rubriken
+   och Bevarad cykeltext. Fäll ihop raden och öppna texten igen.
 3. Kontrollera meddelandet. Stäng texten, välj **Karta** och **Navigera**.
    Öppna texten igen och kontrollera att Navigation inte täcker textvyn.
 4. Byt till 1440 pixlars bredd. Kontrollera att text och Navigation syns

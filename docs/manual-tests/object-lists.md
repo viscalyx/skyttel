@@ -180,7 +180,7 @@ next row remains”.
 **Förväntat resultat:**
 
 - Utan nästa rad går fokus till samma kontroll på föregående rad.
-- Utan kvarvarande rader går fokus till Hushållets tabell. Filtren ändras
+- Utan kvarvarande rader går fokus till rubriken med hushållets namn. Filtren ändras
   inte och inga extra ändringar läggs i utkastet.
 
 ### LÄS-05: läs identitet före och efter ett förslag
@@ -202,10 +202,11 @@ and a proposal replacing unspecified identity”.
 
 **Steg:**
 
-1. Öppna Tabell, expandera Alex och välj Läs alla uppgifter.
-2. Läs Identitet och stäng med Escape. Läs Oklart objekt på samma sätt.
+1. Öppna Tabell och expandera Alex genom att välja namnet.
+2. Läs Identitet direkt i raden och fäll ihop med namnet igen.
+   Läs Oklart objekt på samma sätt.
 3. Läs Garage och jämför Sparat med Ditt förslag för Identitet.
-4. Stäng och kontrollera att förslagen ligger kvar i utkastet.
+4. Fäll ihop raden och kontrollera att förslagen ligger kvar i utkastet.
 
 **Förväntat resultat:**
 
@@ -213,7 +214,8 @@ and a proposal replacing unspecified identity”.
   redas ut. Identitet presenteras alltid som en uttrycklig uppgift.
 - Garage visar Sparat: Ospecificerat objekt och Ditt förslag: Identifierat
   objekt. Ingen del av identitetsjämförelsen visar Ej uppgivet.
-- Läsningen sparar ingenting och Escape återför fokus till läskontrollen.
+- Läsningen sparar ingenting. Fokus stannar på objektets namn när raden
+  fälls ihop.
 
 ### LÄS-06: återgå när den sista tabellsidan försvinner
 
@@ -261,15 +263,15 @@ testfallet “LÄS-07: a long unbroken object name wraps in full reading at
 
 **Steg:**
 
-1. Öppna Tabell, expandera objektet och välj Läs alla uppgifter.
-2. Läs dialogens rubrik och rubriken för alla uppgifter. Rulla genom
-   uppgifterna och stäng med krysset.
+1. Öppna Tabell och expandera objektet genom att välja namnet.
+2. Läs rubriken för alla uppgifter direkt i raden. Rulla genom
+   uppgifterna och fäll ihop genom att välja namnet igen.
 
 **Förväntat resultat:**
 
-- Hela namnet bryts och går att läsa inom dialogen utan sidledsrullning.
-- Uppgifterna och stängkontrollen går att nå. Fokus återgår till
-  läskontrollen när dialogen stängs.
+- Hela namnet bryts och går att läsa i radens detaljvy utan sidledsrullning.
+- Uppgifterna och radens namn går att nå. Fokus stannar på namnet
+  när raden fälls ihop.
 
 ## Sökning och filtrering
 
@@ -295,7 +297,8 @@ across 500 objects”.
    Kontrollera fyra sidor med femtio objekt per sida. Sök sammanhang 0.
    och kontrollera tjugo objekt på en sida.
 3. Öppna Filter, välj Bara markerade och stäng. Kontrollera Provobjekt 001
-   som enda träff. Välj Alla typer i Filter och kontrollera samma träff.
+   som enda träff. Avmarkera Person och Tjänst i Filter och kontrollera
+   samma träff.
 4. Stäng av Bara markerade och stäng filtret: femtio träffar. Välj Person
    och stäng filtret: tio träffar och fokus tillbaka på Filter.
 5. Sök finns inte. Kontrollera tom tabell utan särskilt besked. Öppna
@@ -330,8 +333,9 @@ map-result navigation”.
 1. Sök Provobjekt och välj Person och Tjänst i Filter. Stäng filtret.
 2. Bläddra genom fyra sidor med Namn A–Ö och sedan Typ A–Ö. Kontrollera
    samma 200 objekt. Lämna Typ A–Ö och sida fyra valda.
-3. Expandera Provobjekt 496, rulla till Läs alla uppgifter och öppna den
-   läsningen. Stäng med krysset. Kontrollera samma rulläge och öppningsfokus.
+3. Expandera Provobjekt 496, rulla till radens redigeringsknapp med pennikon och
+   öppna redigeringsformuläret. Stäng med krysset utan ändring.
+   Kontrollera samma rulläge och fokus på pennikonen.
 4. Redigera Provobjekt 496 och skriv Oskickat under listbesöket i
    Beskrivning. Välj Avbryt och tryck Escape i förlustvarningen.
    Kontrollera texten. Välj Avbryt igen och kasta endast formulärändringen.
@@ -344,7 +348,7 @@ map-result navigation”.
 **Förväntat resultat:**
 
 - Sortering ändrar ordningen, men inte resultatmängden eller antalet objekt.
-- Läsdialogen återför fokus och rulläge. Kart- och inställningsbesök
+- Redigeringsformuläret återför fokus och rulläge. Kart- och inställningsbesök
   bevarar sökning, filter, sortering, sida och expansion.
 - Avbruten förlustvarning behåller oskickad text. Uttrycklig förlust
   påverkar bara formuläret; hushållets data och utkast är oförändrade.
@@ -408,8 +412,8 @@ after graphics loss at 320px”.
 2. Välj Visa Lo Exempel i kartan. Kontrollera markeringen.
 3. Återvänd med Tabell och framkalla grafikavbrottet. Kontrollera samma
    sökning och att knappen för kartvisning blir inaktiv.
-4. Expandera Lo och välj Läs alla uppgifter. Kontrollera rubrikfokus och
-   stäng läsningen. Redigera Beskrivning till Utan grafik.
+4. Expandera Lo och läs alla uppgifter direkt i raden. Fäll ihop raden
+   med namnet igen. Redigera Beskrivning till Utan grafik.
 5. Välj Avbryt och Escape i förlustvarningen. Kontrollera samma text och
    oförändrat utkast. Avbryt igen och kasta endast formulärändringen.
 6. Öppna Filter och kontrollera Person. Stäng filtret och läs sökningen.
@@ -439,8 +443,10 @@ and keyboard focus”.
 **Steg:**
 
 1. Öppna Tabell och välj Ta med upphörda i Filter. Expandera Provobjekt 045
-   och rulla till Läs alla uppgifter. Fokusera knappen och anteckna rulläget.
-2. Öppna läsningen. Kontrollera rubrikfokus och stäng med krysset.
+   och rulla till radens redigeringsknapp med pennikon. Fokusera den och
+   anteckna rulläget.
+2. Öppna redigeringsformuläret. Kontrollera namnfokus och stäng med krysset
+   utan att ändra något.
 3. Besök Karta och återvänd med Tabell. Kontrollera samma rulläge och fokus.
 4. Besök Inställningar och välj Tillbaka till kartan. Kontrollera samma
    tabelläge och synligt, åtkomligt fokus.
@@ -486,241 +492,39 @@ only the chosen removal without map graphics”.
 
 **Steg:**
 
-1. Öppna **Tabell**, sök efter **Cykel** och expandera dess rad.
-2. Fokusera **Åtgärder för Cykel** med tangentbordet och tryck Enter.
-   Läs att objektet och dess fyra samband läggs som borttagningar i ditt
-   utkast, medan den sparade kartan ändras först vid separat sparande.
-3. Tryck Escape. Kontrollera återfokus på **Åtgärder för Cykel** och
-   att de befintliga förslagen är kvar oförändrade.
-4. Öppna åtgärderna igen och välj **Redigera objekt**. Ändra
-   beskrivningen till **Behåll mina oskickade uppgifter** och välj krysset.
-5. Kontrollera fokus på **Fortsätt redigera** i förlustvarningen. Tryck
+1. Öppna **Tabell** och hitta **Cykel** utan att expandera raden.
+   Kontrollera att den röda papperskorgsikonen **Ta bort Cykel** ligger
+   längst till höger bland radens åtgärder. Läs dess hjälptext: objektet
+   och dess fyra samband läggs som borttagningar i ditt utkast, medan
+   den sparade kartan ändras först vid separat sparande.
+2. Kontrollera att båda kartikonerna är inaktiva utan kartgrafik och att
+   raden saknar en separat **Åtgärder för**-knapp.
+3. Öppna **Redigera Cykel** med tangentbord. Ändra beskrivningen till
+   **Behåll mina oskickade uppgifter** och välj krysset.
+4. Kontrollera fokus på **Fortsätt redigera** i förlustvarningen. Tryck
    Escape och kontrollera att beskrivningen består i samma stora formulär.
-6. Välj krysset igen och **Kasta ändringarna och fortsätt**. Fokus återgår
-   till textåtgärden; redan lagda förslag är kvar.
-7. Öppna åtgärderna igen och välj **Ta bort objekt**.
-8. Läs **Föreslagen borttagning** i raden. Öppna **Utkast** och granska
-   objektets och de fyra sambandens borttagningsförslag samt **Behåll mig**.
-   Läs **Rapporter → Ändringshistorik** och kontrollera att inget nytt
-   gemensamt sparande finns.
+5. Välj krysset igen och **Kasta ändringarna och fortsätt**. Fokus återgår
+   till redigeringsikonen; redan lagda förslag är kvar.
+6. Fokusera **Ta bort Cykel** och tryck Enter. Läs **Föreslagen borttagning**
+   i raden och kontrollera att papperskorgen nu är inaktiv. Fokus går till
+   nästa tillgängliga borttagningsknapp, **Ta bort Garage**.
+7. Öppna **Utkast** och granska objektets och de fyra sambandens
+   borttagningsförslag samt **Behåll mig**. Läs **Rapporter → Ändringshistorik**
+   och kontrollera att inget nytt gemensamt sparande finns.
 
 **Förväntat resultat:**
 
-- Åtgärderna är tillgängliga utan kartgrafik; tabellens tre radåtgärder
-  och de gemensamma objektformulärens två inskickningsknappar är kvar.
-- Escape stänger bara menyn och återställer användbart fokus. Det ändrar
-  inget förslag eller sparad uppgift.
+- Radens åtgärder går att nå med tangentbord utan kartgrafik och utan
+  att först öppna detaljvyn. Borttagning ligger längst till höger och
+  förklaras både i tooltip och för skärmläsare.
 - Redigeringen använder samma stora formulär. Escape avbryter förlusten;
   uttryckligt kastande tar bara bort den oskickade beskrivningen.
 - Borttagningen läggs bara i ditt utkast. Den gäller Cykel och dess fyra
   verkliga samband; det oberoende förslaget **Behåll mig** består.
-- Fokus återgår till samma textåtgärd. Sparade objekt, samband och
-  ändringshistorik är oförändrade tills hela utkastet sparas separat.
-
-### TABELL-01: svensk sortering och återbesök med tabelläget kvar
-
-**Syfte:** Läsa fler än 50 objekt och fortsätta i samma tabell efter kartbesök.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** Provinstallationen är öppen på dator.
-
-**Integrationstest:**
-[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
-testfallet “TABELL-01: Swedish natural sorting, pagination and expanded rows
-survive map visits”.
-
-**Steg:**
-
-1. Välj **Tabell** med tangentbord. Kontrollera fokus på tabellrubriken
-   och 50 grundrader på första sidan. Öppna både **A 2** och **A 10**.
-2. Välj **Namn Ö–A**. Kontrollera ordningen Örn, Älg och Åke.
-   Välj **Typ A–Ö** och **Typ Ö–A**. Kontrollera Typ 2 före Typ 10
-   respektive Typ 10 före Typ 2 utan separata typgrupper.
-3. Välj **Namn A–Ö** och **Nästa**. Expandera en rad och rulla tabellen.
-   Fokusera radens öppningsknapp. Välj **Karta**, sedan **Tabell**.
-4. Kontrollera samma sida, rulläge, öppna rad och återfokus.
-   Välj **Föregående** och kontrollera att A 2 och A 10 fortfarande är öppna.
-
-**Förväntat resultat:**
-
-- Första besöket börjar på rubriken. Återbesök återger möjligt tidigare fokus.
-- Svensk bokstavsordning och naturlig sifferordning gäller i båda riktningarna.
-- Flera detaljer, sortering, sida och rullning består under vybytet.
-- Träffantal, aktuell sida och 50 objekt per sida går att läsa utan kartgrafik.
-  Sidbyte fokuserar resultatets början och meddelar den nya sidan.
-- Läsning och vybyte ändrar inga hushållsuppgifter eller utkastförslag.
-
-### TABELL-02: sparade och föreslagna värden har tydliga skilda statusar
-
-**Syfte:** Läsa fullständiga uppgifter och skilja förslag från sparade värden.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** Hushållet från Förbered hushållets tabell är öppet.
-Öppna **Inställningar → Typer och egna fält** och redigera **Typ 2**.
-Byt fältnamnet **Egen anteckning** till **Föreslagen anteckning**, utan
-att ta bort fältet eller ändra dess datatyp. Lägg till ett synligt avsnitt
-**Cykeluppgifter** med **Ramnummer** (text), **Antal** (tal) och **Reserv**
-(ja/nej). Lägg typändringen i utkastet och gå tillbaka till kartan.
-Öppna **Tabell → Redigera A 2**, fyll i Ramnummer `RAM-2026-42`, Antal `0`
-och Reserv **Nej**. Välj **Lägg i utkastet och stäng**. Redigera sedan
-Typ 2 igen i inställningarna och välj **Dold, behåll värden** som avsnitt
-för de tre nya fälten.
-Lägg ändringen i utkastet och återgå till Tabell. Spara inte utkastet.
-
-**Integrationstest:**
-[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
-testfallet “TABELL-02: full saved and proposed details distinguish every
-lifecycle and proposal status”.
-
-**Steg:**
-
-1. Expandera A 2. Läs hela beskrivningen och den långa egna anteckningen.
-   Kontrollera sparat pris 299 SEK och föreslaget pris 399 SEK intill varandra.
-   Kontrollera också sparad ikon Cykel, föreslagen ikon Bil och två
-   skilda profilbilder märkta sparat och föreslaget.
-2. Läs **Okänt**, **Uttryckligen inget**, **Osäkert uppgivet** och
-   datumet för kredituppgiften. Ett obesvarat fält visar **Ej uppgivet**.
-   Läs de nya dolda fälten: sparat **Ej uppgivet** och föreslaget
-   Ramnummer `RAM-2026-42`, Antal `0` respektive Reserv **Nej**.
-   Läs också **Föreslagen anteckning** med det tidigare fältnamnet
-   **Egen anteckning** vid den sparade långa texten.
-3. Öppna **Filter** och ta med upphörda och borttagna objekt.
-   Stäng med Escape och kontrollera återfokus på Filter.
-4. Läs **Borttaget prov**, **Upphört prov**, **Nytt prov** och **Tas bort
-prov**.
-   Använd nästa sida vid behov. Expandera också Borttaget prov.
-
-**Förväntat resultat:**
-
-- Nytt, Ändrat, Föreslagen borttagning, Upphört och Borttaget skiljs åt
-  med text. Förslag har dessutom symbolen ◇.
-- Föreslagen borttagning ersätter inte Upphört. Det sparade objektet
-  finns kvar att läsa tills borttagningsförslaget sparas.
-- Fullständiga detaljer omfattar även dolda egna fält och ekonomi.
-- Ett saknat värde blir inte Okänt eller Uttryckligen inget.
-- Nya fält visar **Sparat: Ej uppgivet** utan ett påhittat tidigare
-  fältnamn eller texten `undefined`. Ett faktiskt tidigare fältnamn och
-  dess svar behålls vid en namnändring. Noll och Nej visas uttryckligen.
-- Ett redan borttaget objekt går att läsa och saknar redigeringsknapp.
-
-### TABELL-03: mobil läsning bevarar markering, utkast och oskickat meddelande
-
-**Syfte:** Använda samma hushållsarbete på en smal skärm.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** En ny provinstallation är öppen på mobil.
-Provleverantören ger kontrollerade svar utan externa modellkostnader.
-
-**Integrationstest:**
-[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
-testfallet “TABELL-03: mobile horizontal reading preserves shared selection,
-draft and unsent conversation”.
-
-**Steg:**
-
-1. Öppna **Skriv till Skyttel**, ge medgivande och skriv ett meddelande
-   utan att skicka det. Stäng textvyn.
-2. Välj **Tabell**, expandera A 2 och läs dess fullständiga uppgifter.
-   Rulla tabellen i sidled, även med piltangenter från den rullbara ytan.
-3. Välj **Karta** och kontrollera att A 2 är markerat. Återvänd till
-   Tabell och kontrollera öppna detaljer och sidledsrullning.
-4. Öppna textvyn igen och kontrollera det oskickade meddelandet.
-
-**Förväntat resultat:**
-
-- Tabellen behåller sina kolumner och kan rullas i sidled.
-- Detaljtexter bryts inom skärmbredden och kräver inte sidledsrullning
-  för att läsa varje textstycke.
-- Markering visas med ✓ Markerad och delas mellan karta och tabell.
-  Utkastet, pågående samtal
-  och oskickat meddelande består under vanliga vybyten.
-- Kvarstående mänskliga prov omfattar NVDA, VoiceOver, touch,
-  skärmtangentbord, 200/400 procents förstoring och kontrastbedömning.
-
-### TABELL-04: försvunnen redigerad rad ger fokus till motsvarande knapp
-
-**Syfte:** Bevara användbart fokus när redigering döljer en filtrerad rad.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** Starta om provinstallationen enligt Förbered hushållets
-tabell. Skapa **Fokus Alpha**, **Fokus Beta** och **Fokus Gamma** med
-**Nytt objekt**, samma objekttyp och **Lägg i utkastet och stäng**.
-Lämna objektens status på **Följ slutdatum** när de skapas.
-Öppna **Utkast**, välj **Spara hela utkastet** och invänta bekräftelsen.
-Stäng textvyn. Öppna Tabell, sök på **Fokus**, välj stigande namnsortering
-och lämna **Ta med upphörda** omarkerad. Endast de tre aktuella objekten
-ska visas. Prova med tangentbord och anteckna webbläsare och hjälpmedel.
-
-**Integrationstest:**
-[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
-testfallet “TABELL-04: disappearing edited rows restore the next Edit control
-then previous then heading”.
-
-**Steg:**
-
-1. Öppna **Redigera Fokus Beta** med tangentbordet. Välj **Avbryt**.
-   Kontrollera att fokus återgår till samma redigeringsknapp.
-2. Öppna samma formulär igen. Öppna **Livscykel och utseende**, ändra
-   **Objektets status** till **Upphört** och välj **Lägg i utkastet och stäng**.
-   Kontrollera att Beta försvinner och fokus går till **Redigera Fokus Gamma**.
-3. Gör samma statusändring för Gamma. Kontrollera att Gamma försvinner
-   och fokus går till **Redigera Fokus Alpha** på föregående rad.
-4. Gör samma statusändring för Alpha. Kontrollera att tabellen är tom
-   utan särskilt besked och fokus går till rubriken **Hushållets tabell**.
-5. Kontrollera att sökningen fortfarande är Fokus. Öppna Filter och markera
-   **Ta med upphörda**. Expandera varje objekts rad och läs Status:
-   **Sparat: Följ slutdatum** och **Ditt förslag: Manuellt upphört**.
-   Öppna Utkast och läs
-   de tre statusförslagen. Spara dem inte.
-
-**Förväntat resultat:**
-
-- Avbryt återställer samma knapp. När raden försvinner väljs nästa rads
-  redigeringsknapp, sedan föregående rads och slutligen tabellrubriken.
-- Fokusramen går att följa och knappen går att använda med tangentbord.
-  Sökningen består och de tre statusändringarna ligger endast i ditt utkast.
-
-### TABELL-05: återgång från kartan ersätter en försvunnen kartknapp
-
-**Syfte:** Återgå till motsvarande tabellåtgärd efter ändringar i kartan.
-
-**Användare:** Alex Exempel.
-
-**Förutsättningar:** En ny provinstallation med de tre sparade objekten,
-sökningen och filtret enligt TABELL-04. Kartgrafiken ska fungera.
-
-**Integrationstest:**
-[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
-testfallet “TABELL-05: map visits restore the corresponding table control
-after its row disappears”.
-
-**Steg:**
-
-1. Välj **Visa Fokus Beta i kartan**. Återgå med **Tabell** och kontrollera
-   att samma kartknapp har fokus.
-2. Välj kartknappen igen. Öppna Betas uppgifter genom att dubbelklicka
-   objektet, eller håll Ctrl+Alt och klicka på objektets kontroll.
-   Välj **Redigera Fokus Beta**, öppna **Livscykel och utseende** och välj
-   **Upphört** som objektets status. Välj **Lägg i utkastet och stäng**.
-3. Återgå med Tabell. Kontrollera att Beta försvinner och fokus går till
-   **Visa Fokus Gamma i kartan**. Upprepa kartbesöket och statusändringen
-   för Gamma; fokus ska därefter gå till **Visa Fokus Alpha i kartan**.
-4. Upprepa för Alpha. Återgå till Tabell och kontrollera fokus på rubriken
-   **Hushållets tabell**, tomt resultat och sökningen Fokus.
-5. Markera **Ta med upphörda** i tabellens Filter och expandera varje rad.
-   Kontrollera Status: **Sparat: Följ slutdatum** och
-   **Ditt förslag: Manuellt upphört**.
-   Läs även de tre statusförslagen i Utkast utan att spara.
-
-**Förväntat resultat:**
-
-- Kartbesöket bevarar tabelläget. Återgång ger samma kartknapp när den finns
-  kvar, annars nästa rads kartknapp, sedan föregående och sist tabellrubriken.
-- Redigering ändrar endast ditt utkast; sökningen och sparade objekt består.
+- En redan föreslagen borttagning kan inte skickas igen från raden.
+  Fokus återgår till nästa tillgängliga motsvarande radkontroll.
+- Sparade objekt, samband och ändringshistorik är oförändrade tills hela
+  utkastet sparas separat.
 
 ## Separat sökning i karta och tabell
 
@@ -911,37 +715,47 @@ type-only proposals expose them”.
 
 **Integrationstest:**
 [object-search.spec.ts](../../tests/integration/object-search.spec.ts),
-“SÖK-05: mobile search and native filter dialog provide touch entry and
-preserve restrictions”.
+“SÖK-05: shared compact search and filter dialogs preserve restrictions on
+mobile and desktop”.
 
 **Steg:**
 
-1. Visa verktygens namn och klicka i kartans sökfält. Kontrollera sökfältets
-   fokus. Skriv prov, öppna Filter och välj Ta med upphörda.
-2. Stäng filterdialogen. Kontrollera samma söktext och en badge för
-   Ta med upphörda efter Filter. På smal skärm visas det på nästa rad.
-   Filter visar inget antal.
-3. Välj Tabell, sök efter 399 egen och öppna Filter. Kontrollera fokus på
-   Tabellens filter och förklaringen om vilka objekt tabellen visar.
-   Kontrollera att rutorna står före sina texter på samma rad.
-   Välj Typ 2 och välj Visa objekt. Knappen visar inget träffantal.
-4. Kontrollera samma söktext och en träff. Prova samma flöde med touch,
-   skärmtangentbord och förstoring på iPhone och iPad.
-5. Öppna Filter igen. Kontrollera Typ 2 och samma objekt. Nå knappen
-   Visa objekt med tangentbord även när skärmen är kort. Stäng
-   med knappen och öppna igen; prova också krysset och Escape.
-   Upprepa på dator, vid 320 pixlars bredd och i ett kort fönster.
-   Kontrollera att både krysset och knappen Visa objekt är synliga, nåbara
-   och fungerar utan att ändra söktext eller filter.
+1. Klicka i kartans sökfält, skriv prov och välj **Ta med upphörda** i
+   **Filter**. Stäng med Escape och kontrollera samma söktext.
+2. Välj **Tabell**, sök efter 399 egen och öppna **Filter** till höger om
+   sökfältet. Kontrollera fokus på **Tabellens filter**. Välj **Typ 2**.
+   Kontrollera en träff i dialogen och att tabellen uppdateras direkt.
+3. Stäng med krysset. Kontrollera samma söktext, en rad och ett aktivt
+   filter för Typ 2. Välj krysset i sökfältet och kontrollera tom söktext,
+   sökfokus och kvarvarande typfilter. Skriv 399 egen igen.
+4. Öppna Filter igen. Kontrollera kvarvarande Typ 2. Nå varje snabbval och
+   **Återställ sökning och filter** med tangentbord, även när innehållet
+   behöver rullas. Stäng med Escape och kontrollera återfokus på Filter.
+   Upprepa med dialogens kryss och genom att klicka utanför dialogen.
+5. Prova på dator, vid 320 pixlars bredd och i ett kort fönster. Kontrollera
+   att dialogens val går att nå utan att söktext eller filter ändras av
+   stängningen. Prova touch, skärmtangentbord och förstoring på iPhone
+   och iPad.
+6. Ta bort Typ 2 via dess kryss och kontrollera oförändrad söktext samt
+   återfokus på Filter. Välj **Ta med borttagna** i dialogen, stäng och
+   ta bort det aktiva filtret via dess kryss. Öppna dialogen och kontrollera
+   att valet är återställt.
+7. Välj Typ 10 och **Återställ sökning och filter**. Kontrollera tom text
+   och inga valda filter. Återgå till kartan och kontrollera prov samt
+   kvarvarande **Ta med upphörda**.
 
 **Förväntat resultat:**
 
-- Kartan har en ingång utan tangentbord och tabellen ett eget synligt fält.
-- Tabellens filterdialog håller fokus inom dialogen och återgår till Filter.
-- Visa objekt stänger tabellens dialog med valen kvar, utan träffantal.
-- Rutorna står bredvid sin text på dator och mobil. Krysset och
-  knappen Visa objekt förblir nåbara även när filterinnehållet behöver rullas.
-- Sökingången ryms inom skärmen. Söktext och filter bevaras vid stängning.
+- Båda vyerna har sökfält med kryss och Filter till höger. Söktext ensam
+  markerar inga filter som aktiva. Krysset rensar bara texten och ger sökfokus.
+- Tabellens kompakta dialog visar snabbval och ett direkt uppdaterat
+  träffantal. Filtervalen kan nås med tangentbord och har läsbara namn.
+- Krysset och Escape stänger dialogen och återför fokus till Filter.
+  Klick i sökfältet stänger dialogen och ger sökfokus. Valen finns kvar.
+- Aktiva filter kan tas bort var för sig med söktexten kvar. Sista
+  borttagna filtret ger återfokus på Filter.
+- Återställ sökning och filter tömmer båda i tabellen. Kartans sökning
+  och filter samt hushållets uppgifter och utkast är oförändrade.
 - Verklig touch, skärmtangentbord och VoiceOver behöver manuellt prov;
   automatprovet kontrollerar mobil layout och offentlig UI.
 
@@ -1073,13 +887,17 @@ hits through return and table visits”.
 1. Klicka i kartans sökfält, skriv **Alex** och tryck Escape i sökfältet.
 2. Läs Alex som sökträff och Blå cykel som sammanhang. Markera cykeln
    med tangentbord. Kontrollera att Garaget inte visas ännu.
-3. Välj **Visa samband i kartan**. Kontrollera Garaget, tidigare innehåll
+3. Tryck Shift+F10 på cykeln och välj sambandsikonen
+   **Visa samband i kartan**. Kontrollera Garaget, tidigare innehåll
    och kamerans förflyttning. Markera Garaget och upprepa för Bostaden.
 4. Öppna Filter och välj Alex objekttyp. Kontrollera återgång till
    Alex och cykeln. Skriv **Blå** och kontrollera dess direkta grannar;
    Bostaden visas inte. Skriv **Alex** igen och tryck Escape i sökfältet.
 5. Markera cykeln och följ dess samband igen. Besök **Tabell** och
    återgå via **Karta**. Välj **Tillbaka till sökträffarna**.
+6. Kontrollera att sökningen **Alex** finns kvar. Tryck Shift+F10 på cykeln
+   och välj riktmärkesikonen **Visa i kartan**. Kontrollera cykelns markering,
+   Bostaden i kartan, fokus på kartan samt tom sökning och återställda filter.
 
 **Förväntat resultat:**
 
@@ -1090,6 +908,8 @@ hits through return and table visits”.
   bevarar däremot utforskningen. Återgången behåller söktext och filter,
   visar Alex och cykeln och ger användbart fokus i kartan.
 - Karta, utkast och gemensam historik ändras inte.
+- Riktmärkesikonen återställer sökning och filter; sambandsikonen behåller
+  dem. Ingen av åtgärderna ändrar hushållets information.
 
 ### SÖK-07: sammanhang går utanför träfffilter men följer upphört
 
@@ -1115,13 +935,14 @@ edges require inclusion”.
 3. Välj upplysningens **Ta med upphörda**. Kontrollera båda ytterligare
    grannarna och att Alex fortfarande är sökträff.
 4. Öppna Filter och avmarkera **Bara markerade** och **Ta med upphörda**.
-   Stäng filterdialogen, markera cykeln och välj **Visa samband i kartan**.
+   Stäng filterdialogen, markera cykeln och tryck Shift+F10.
+   Välj sambandsikonen **Visa samband i kartan**.
 5. Öppna **Tabell**, välj **Redigera Blå cykel** och öppna
    **Livscykel och utseende**. Ändra objektets status till **Upphört**
    och välj **Lägg i utkastet och stäng**.
 6. Återgå till **Karta**. Kontrollera att den utforskade cykeln döljs.
    Välj **Ta med upphörda** från upplysningen och kontrollera cykeln.
-   Markera cykeln och välj **Visa samband i kartan** igen för att
+   Markera cykeln, tryck Shift+F10 och välj **Visa samband i kartan** igen för att
    kontrollera Garaget.
 
 **Förväntat resultat:**
@@ -1159,8 +980,15 @@ work at 320px”.
 
 1. Sök efter **Alex** i kartan och välj **Bara markerade** utan markering.
 2. Välj **Tabell**, sök **Blå**, sortera namn Ö–A och expandera cykeln.
-3. Välj **Visa Blå cykel i kartan**. Kontrollera markering och direkt
-   sammanhang. Kontrollera även att Bostaden finns kvar i kartan.
+3. Läs kartikonernas tooltips. Välj **Visa samband för Blå cykel i kartan**.
+   Kontrollera cykelns markering och Garaget. Bostaden visas inte som
+   direkt sammanhang. Tryck Shift+F10 på cykeln och kontrollera sex ikoner,
+   med samma kartikoner som listans motsvarande åtgärder. Välj
+   **Visa samband i kartan**.
+   Kartans sökning **Alex** och **Bara markerade** består.
+   Återvänd med **Tabell** och kontrollera fokus på samma kartikon samt
+   sökningen **Blå**. Välj sedan **Visa Blå cykel i kartan**. Kontrollera
+   markering och direkt sammanhang. Bostaden finns nu kvar i kartan.
 4. Kontrollera tom text i kartans synliga sökfält. Öppna Filter och
    kontrollera återställda filter. De fyra objekten ska finnas i kartan.
    Stäng filterdialogen och återgå via **Tabell**.
@@ -1171,7 +999,9 @@ work at 320px”.
 
 - Endast cykeln markeras. Kameran visar dess direkta grannar; övrig
   karta filtreras inte bort och fokus går till kartan.
-- Kartans begränsningar återställs. Tabellens sökning, sortering och
+- Sambandsikonen behåller kartans begränsningar. **Visa i kartan**
+  återställer dem. Tooltips förklarar skillnaden även för skärmläsare.
+- Tabellens sökning, sortering och
   expanderade rad finns kvar; fokus återgår till kartknappen.
 - Föreslagen borttagning har kartknapp. Redan borttaget objekt saknar den.
 - Besöket ändrar ingen sparad information och inget förslag.
