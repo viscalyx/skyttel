@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { hasEnded } from '../shared/lifecycle.js';
 import type { MapObject, ObjectType } from '../shared/map.js';
 import { objectPropertyValues } from './ObjectReadDetails.js';
@@ -148,6 +148,41 @@ export function ObjectSearchInput({
     </div>
   );
 }
+function ObjectFilterChoice({
+  checked,
+  onChange,
+  compact,
+  children,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  compact: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label className={compact ? 'map-filter-choice' : undefined}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      {compact && (
+        <svg
+          className="map-filter-choice-mark"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          aria-hidden="true"
+        >
+          <path d={checked ? 'M3 8l3 3 7-7' : 'M8 3v10M3 8h10'} />
+        </svg>
+      )}
+      {compact ? <span>{children}</span> : children}
+    </label>
+  );
+}
+
 export function ObjectSearchFilters({
   search,
   onChange,
@@ -155,6 +190,8 @@ export function ObjectSearchFilters({
   selectedIds,
   hasProposals,
   table = false,
+  compact = false,
+  matchingCount,
 }: {
   search: ObjectSearchState;
   onChange: (next: ObjectSearchState) => void;
@@ -162,87 +199,103 @@ export function ObjectSearchFilters({
   selectedIds: string[];
   hasProposals: boolean;
   table?: boolean;
+  compact?: boolean;
+  matchingCount?: number;
 }) {
   function toggle<T extends string>(values: T[], value: T) {
     return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
   }
   return (
-    <div className="object-search-filters">
+    <div className={`object-search-filters${compact ? ' map-quick-filters' : ''}`}>
+      {compact && <p className="map-filter-hint">Välj flera typer. Utan val visas alla typer.</p>}
       <fieldset>
         <legend>Objekttyp</legend>
-        <p>Välj en eller flera typer. Utan val visas alla typer.</p>
-        <button type="button" onClick={() => onChange({ ...search, types: [] })}>
-          Alla typer
-        </button>
+        {!compact && (
+          <>
+            <p>Välj en eller flera typer. Utan val visas alla typer.</p>
+            <button type="button" onClick={() => onChange({ ...search, types: [] })}>
+              Alla typer
+            </button>
+          </>
+        )}
         <div>
           {[...types]
             .sort((a, b) => a.name.localeCompare(b.name, 'sv'))
             .map((type) => (
-              <label key={type.id}>
-                <input
-                  type="checkbox"
-                  checked={search.types.includes(type.id)}
-                  onChange={() => onChange({ ...search, types: toggle(search.types, type.id) })}
-                />
+              <ObjectFilterChoice
+                key={type.id}
+                compact={compact}
+                checked={search.types.includes(type.id)}
+                onChange={() => onChange({ ...search, types: toggle(search.types, type.id) })}
+              >
                 {type.name}
-              </label>
+              </ObjectFilterChoice>
             ))}
         </div>
       </fieldset>
       <fieldset>
         <legend>Status</legend>
-        <label>
-          <input
-            type="checkbox"
+        <div>
+          <ObjectFilterChoice
+            compact={compact}
             checked={Boolean(search.includeEnded)}
-            onChange={(event) => onChange({ ...search, includeEnded: event.target.checked })}
-          />
-          Ta med upphörda
-        </label>
-        {table && (
-          <label>
-            <input
-              type="checkbox"
+            onChange={(checked) => onChange({ ...search, includeEnded: checked })}
+          >
+            Ta med upphörda
+          </ObjectFilterChoice>
+          {table && (
+            <ObjectFilterChoice
+              compact={compact}
               checked={Boolean(search.includeRemoved)}
-              onChange={(event) => onChange({ ...search, includeRemoved: event.target.checked })}
-            />
-            Ta med borttagna
-          </label>
-        )}
-        <label>
-          <input
-            type="checkbox"
+              onChange={(checked) => onChange({ ...search, includeRemoved: checked })}
+            >
+              Ta med borttagna
+            </ObjectFilterChoice>
+          )}
+          <ObjectFilterChoice
+            compact={compact}
             checked={search.onlySelected}
-            onChange={(event) => onChange({ ...search, onlySelected: event.target.checked })}
-          />
-          Bara markerade ({selectedIds.length})
-        </label>
+            onChange={(checked) => onChange({ ...search, onlySelected: checked })}
+          >
+            Bara markerade ({selectedIds.length})
+          </ObjectFilterChoice>
+        </div>
       </fieldset>
       {hasProposals && (
         <fieldset>
           <legend>Förslag i ditt utkast</legend>
-          {proposalLabels.map((proposal) => (
-            <label key={proposal}>
-              <input
-                type="checkbox"
+          <div>
+            {proposalLabels.map((proposal) => (
+              <ObjectFilterChoice
+                key={proposal}
+                compact={compact}
                 checked={search.proposals?.includes(proposal) ?? false}
                 onChange={() =>
                   onChange({ ...search, proposals: toggle(search.proposals ?? [], proposal) })
                 }
-              />
-              {proposal}
-            </label>
-          ))}
+              >
+                {proposal}
+              </ObjectFilterChoice>
+            ))}
+          </div>
         </fieldset>
       )}
-      <button
-        type="button"
-        onClick={() =>
-          onChange(table ? initialObjectSearch : { ...initialObjectSearch, query: search.query })
-        }
-      >
-        {table ? 'Återställ sökning och filter' : 'Återställ filter'}
-      </button>
+      <div className={`object-search-filter-footer${compact ? ' map-filter-footer' : ''}`}>
+        {compact && matchingCount !== undefined && (
+          <span role="status">
+            {matchingCount} {matchingCount === 1 ? 'träff' : 'träffar'}
+            <span className="map-filter-result-note"> · uppdateras direkt</span>
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() =>
+            onChange(table ? initialObjectSearch : { ...initialObjectSearch, query: search.query })
+          }
+        >
+          {table ? 'Återställ sökning och filter' : 'Återställ filter'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -255,6 +308,7 @@ export function MapSearch({
   types,
   selectedIds,
   hasProposals,
+  matchingCount,
 }: {
   active: boolean;
   entryRequestId: number;
@@ -264,15 +318,52 @@ export function MapSearch({
   types: ObjectType[];
   selectedIds: string[];
   hasProposals: boolean;
+  matchingCount?: number;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const filterButton = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
+  const activeChoices = useRef<HTMLFieldSetElement>(null);
   const dialogId = useId();
   const previousEntryRequestId = useRef(entryRequestId);
   const [expanded, setExpanded] = useState(false);
-  const filtersActive = searchRestricted({ ...search, query: '' });
+  const selectedFilters = [
+    ...types
+      .filter((type) => search.types.includes(type.id))
+      .map((type) => ({
+        key: `type-${type.id}`,
+        label: type.name,
+        clear: () => onChange({ ...search, types: search.types.filter((id) => id !== type.id) }),
+      })),
+    ...(search.includeEnded
+      ? [
+          {
+            key: 'ended',
+            label: 'Ta med upphörda',
+            clear: () => onChange({ ...search, includeEnded: false }),
+          },
+        ]
+      : []),
+    ...(search.onlySelected
+      ? [
+          {
+            key: 'selected',
+            label: `Bara markerade (${selectedIds.length})`,
+            clear: () => onChange({ ...search, onlySelected: false }),
+          },
+        ]
+      : []),
+    ...(search.proposals ?? []).map((proposal) => ({
+      key: `proposal-${proposal}`,
+      label: proposal,
+      clear: () =>
+        onChange({ ...search, proposals: search.proposals?.filter((value) => value !== proposal) }),
+    })),
+  ];
+  const filtersActive = Boolean(
+    search.types.length || search.includeEnded || search.onlySelected || search.proposals?.length,
+  );
   function closeFilters() {
     setExpanded(false);
     filterButton.current?.focus();
@@ -324,49 +415,76 @@ export function MapSearch({
         compact
       />
       <div className="map-search-filter">
-        <button
-          ref={filterButton}
-          type="button"
-          aria-label={filtersActive ? 'Filter · aktiva' : 'Filter'}
-          aria-expanded={expanded}
-          aria-controls={dialogId}
-          aria-haspopup="dialog"
-          onClick={() => {
-            if (expanded) closeFilters();
-            else setExpanded(true);
-          }}
-        >
-          Filter
-          {filtersActive && (
-            <span className="map-filter-dot" aria-hidden="true">
-              ●
-            </span>
-          )}
-        </button>
-        <div
-          ref={dialog}
-          id={dialogId}
-          role="dialog"
-          aria-labelledby={`${dialogId}-title`}
-          className="map-filter-dialog"
-          hidden={!expanded}
-        >
-          <header>
-            <h2 ref={title} id={`${dialogId}-title`} tabIndex={-1}>
-              Kartans filter
-            </h2>
-            <button type="button" aria-label="Stäng filter" onClick={closeFilters}>
-              ×
-            </button>
-          </header>
-          <ObjectSearchFilters
-            search={search}
-            onChange={onChange}
-            types={types}
-            selectedIds={selectedIds}
-            hasProposals={hasProposals}
-          />
+        <div className="map-filter-trigger">
+          <button
+            ref={filterButton}
+            type="button"
+            aria-label={filtersActive ? 'Filter · aktiva' : 'Filter'}
+            aria-expanded={expanded}
+            aria-controls={dialogId}
+            aria-haspopup="dialog"
+            onClick={() => {
+              if (expanded) closeFilters();
+              else setExpanded(true);
+            }}
+          >
+            Filter
+          </button>
+          <div
+            ref={dialog}
+            id={dialogId}
+            role="dialog"
+            aria-labelledby={`${dialogId}-title`}
+            className="map-filter-dialog"
+            hidden={!expanded}
+          >
+            <header>
+              <div>
+                <small aria-hidden="true">SNABBVAL</small>
+                <h2 ref={title} id={`${dialogId}-title`} tabIndex={-1}>
+                  Kartans filter
+                </h2>
+              </div>
+              <button type="button" aria-label="Stäng filter" onClick={closeFilters}>
+                ×
+              </button>
+            </header>
+            <ObjectSearchFilters
+              search={search}
+              onChange={onChange}
+              types={types}
+              selectedIds={selectedIds}
+              hasProposals={hasProposals}
+              compact
+              matchingCount={expanded ? matchingCount : undefined}
+            />
+          </div>
         </div>
+        {/* Keep the search area's geometry stable beneath the filter overlay. */}
+        {selectedFilters.length > 0 && (
+          <fieldset ref={activeChoices} className="map-active-filters" aria-label="Aktiva filter">
+            {selectedFilters.map((filter, index) => (
+              <button
+                key={filter.key}
+                type="button"
+                aria-label={`Ta bort filter: ${filter.label}`}
+                onClick={() => {
+                  filter.clear();
+                  requestAnimationFrame(() => {
+                    const buttons =
+                      activeChoices.current?.querySelectorAll<HTMLButtonElement>('button');
+                    (
+                      buttons?.[Math.min(index, buttons.length - 1)] ?? filterButton.current
+                    )?.focus();
+                  });
+                }}
+              >
+                {filter.label}
+                <span aria-hidden="true">×</span>
+              </button>
+            ))}
+          </fieldset>
+        )}
       </div>
     </section>
   );

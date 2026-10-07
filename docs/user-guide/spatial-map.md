@@ -25,15 +25,20 @@ När kartbakgrunden har fokus kan du också börja skriva en bokstav eller siffr
 objekttyp, status och eventuella förslag i ditt utkast. Välj en eller
 flera objekttyper; utan typval visas alla typer. **Bara markerade** och
 söktexten begränsar resultatet ytterligare. **Ta med upphörda** visar även
-upphörda objekt och samband. Valen gäller direkt, och en punkt vid
-**Filter** visar aktiva filter. Krysset, Escape i dialogen eller ett klick
-utanför stänger dialogen med valen kvar.
+upphörda objekt och samband. Tryck på ett snabbval för att slå på eller av
+det; en bock visar ett aktivt val. Med tangentbord använder du Tab och
+mellanslag. Valen gäller direkt och dialogen visar antalet träffar.
+Aktiva val visas som badges efter **Filter**. På smala skärmar fortsätter
+de på nästa rad. Krysset, Escape i dialogen eller ett klick utanför
+stänger dialogen med valen kvar.
+Dialogen ligger ovanpå kartan utan att flytta objekt eller etiketter.
+Tryck på en badge för att ta bort bara det filtret.
 
 Krysset i sökfältet tömmer bara texten. **Återställ filter** i dialogen
 behåller söktexten. Escape i sökfältet återför fokus till kartan utan att
 rensa. Escape på kartbakgrunden rensar både söktext och filter med en enda
-tryckning och behåller markeringen och kameran. Inga träffantal eller
-särskilda besked för tomma resultat visas.
+tryckning och behåller markeringen och kameran. Träffantalet visas i
+filterdialogen; själva kartan visar inga särskilda besked för tomma resultat.
 
 **Tabell** har egen sökning och egna filter. **Sortering** väljer namn-
 eller typordning. Varje sida visar högst 50 objekt. Läs mer om

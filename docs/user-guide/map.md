@@ -77,10 +77,15 @@ valen Nytt, Ändrat och Föreslagen borttagning när något förslag finns,
 filter. Flera val inom ett filter förenas; olika filter begränsar varandra.
 
 **Filter** till höger om kartans sökfält öppnar en liten dialog med
-avsnitt för objekttyp, status och ditt utkast. Valen gäller direkt.
-En punkt vid **Filter** visar att något filter är aktivt.
+avsnitt för objekttyp, status och ditt utkast. De kompakta snabbvalen
+slås på eller av med ett klick eller mellanslag när valet har fokus.
+En bock visar ett aktivt val. Valen gäller direkt och dialogen visar
+antalet träffar. Aktiva val visas som badges efter **Filter**, utan en
+gemensam ram. På smala skärmar fortsätter badgesen på nästa rad.
 **Återställ filter** återställer filtervalen och behåller söktexten.
 Krysset, Escape i dialogen eller ett klick utanför stänger med valen kvar.
+Dialogen ligger ovanpå kartan utan att flytta objekt eller etiketter.
+Tryck på en badge för att ta bort just det filtret och behålla söktexten.
 
 Krysset i kartans sökfält tömmer bara texten. Escape i sökfältet flyttar
 fokus till kartan och behåller sökningen. Escape när själva kartytan har

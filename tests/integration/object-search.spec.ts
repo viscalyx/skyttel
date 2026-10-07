@@ -3,6 +3,120 @@ import { prepareHouseholdTable } from '../support/household-table.js';
 import { createInstallation } from '../support/installation.js';
 import { focusMapSearch, mapFilters, prepareObjectSearch } from '../support/object-search.js';
 
+for (const width of [1280, 390])
+  test(`SÖK-11: opening filters overlays the map without moving markers or labels at ${width}px`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    try {
+      const { read } = await prepareHouseholdTable(page.request, installation.origin);
+      const before = await read();
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(installation.origin);
+      const geometry = () =>
+        page
+          .locator('.spatial-node, [data-layout-id], .label-leader, .connection')
+          .evaluateAll((elements) =>
+            elements.map((element) => {
+              const box = element.getBoundingClientRect();
+              return {
+                id:
+                  element.getAttribute('data-layout-id') ?? element.getAttribute('data-object-id'),
+                name: element.getAttribute('aria-label'),
+                box: [box.x, box.y, box.width, box.height].map((value) => Math.round(value * 100)),
+              };
+            }),
+          );
+      const labels = page.locator('[data-layout-id]');
+      await expect(labels.first()).toBeVisible();
+      const unchangedFor = async (expected: Awaited<ReturnType<typeof geometry>>) => {
+        // Sample throughout the delay: a final-only assertion misses labels that jump back.
+        for (let sample = 0; sample < 30; sample++) {
+          expect(await geometry()).toEqual(expected);
+          await page.waitForTimeout(100);
+        }
+      };
+      for (const withActiveFilter of [false, true]) {
+        if (withActiveFilter) {
+          await (await mapFilters(page)).getByLabel('Ta med upphörda').check();
+          await page.keyboard.press('Escape');
+          await expect(
+            page.getByRole('button', { name: 'Ta bort filter: Ta med upphörda' }),
+          ).toBeVisible();
+        }
+        // Wait for initial framing and label measurement, independently of opening the dialog.
+        await expect
+          .poll(async () => {
+            const current = await geometry();
+            await page.waitForTimeout(1700);
+            return JSON.stringify(current) === JSON.stringify(await geometry());
+          })
+          .toBe(true);
+        const current = await geometry();
+        const filters = await mapFilters(page);
+        await expect(filters.getByRole('heading')).toBeFocused();
+        await unchangedFor(current);
+        await page.keyboard.press('Escape');
+        await expect(filters).not.toBeVisible();
+        await expect(page.getByRole('button', { name: /^Filter/ })).toBeFocused();
+        await unchangedFor(current);
+      }
+      expect(await read()).toEqual(before);
+    } finally {
+      await installation.close();
+    }
+  });
+
+test('SÖK-12: dashed label leaders are readable against the map in both themes', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await prepareHouseholdTable(page.request, installation.origin);
+    await page.goto(installation.origin);
+    const map = page.getByRole('region', { name: 'Hushållskarta', exact: true });
+    for (const theme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: theme });
+      await expect(map).toHaveAttribute('data-theme', theme);
+      const leader = page.locator('.label-leader').first();
+      await expect(leader).toBeAttached();
+      const contrast = await leader.evaluate((line) => {
+        const style = getComputedStyle(line);
+        const root = line.closest('.household-map');
+        if (!root) throw new Error('The leader must be part of the map.');
+        const background = getComputedStyle(root).getPropertyValue('--space-bg');
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Colour measurement requires a canvas.');
+        const luminance = (pixel: Uint8ClampedArray) => {
+          const [red, green, blue] = [...pixel].slice(0, 3).map((value) => {
+            const unit = value / 255;
+            return unit <= 0.04045 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4;
+          });
+          return red * 0.2126 + green * 0.7152 + blue * 0.0722;
+        };
+        context.fillStyle = background;
+        context.fillRect(0, 0, 1, 1);
+        const surface = luminance(context.getImageData(0, 0, 1, 1).data);
+        context.globalAlpha = Number(style.opacity);
+        context.fillStyle = style.stroke;
+        context.fillRect(0, 0, 1, 1);
+        const foreground = luminance(context.getImageData(0, 0, 1, 1).data);
+        return (Math.max(foreground, surface) + 0.05) / (Math.min(foreground, surface) + 0.05);
+      });
+      expect(contrast, `Dashed label leader contrast in ${theme} theme`).toBeGreaterThanOrEqual(3);
+      await expect(page.locator('.workspace-context .map-legend-symbol.connector')).toHaveCSS(
+        'color',
+        await leader.evaluate((line) => getComputedStyle(line).stroke),
+      );
+      await page.screenshot({ path: test.info().outputPath(`label-leaders-${theme}.png`) });
+    }
+  } finally {
+    await installation.close();
+  }
+});
+
 test('SÖK-01: own detail fields, every word and Swedish normalization find objects', async ({
   page,
 }) => {
@@ -364,11 +478,31 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeVisible();
     const filters = await mapFilters(page);
     await expect(filters.getByRole('heading', { name: 'Kartans filter' })).toBeFocused();
+    await expect(filters.getByRole('status')).toHaveText('1 träff · uppdateras direkt');
     await filters.getByLabel('Typ 10', { exact: true }).check();
+    await expect(filters.getByRole('status')).toHaveText('0 träffar · uppdateras direkt');
     await page.keyboard.press('Escape');
     await expect(filters).not.toBeVisible();
     await expect(panel.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
     await expect(mapSearch).toHaveValue('299 EGEN');
+    const activeType = panel.getByRole('button', { name: 'Ta bort filter: Typ 10', exact: true });
+    await expect(activeType).toBeVisible();
+    const filterButton = panel.getByRole('button', { name: 'Filter · aktiva', exact: true });
+    await expect(filterButton).toHaveText('Filter');
+    const filterBox = await filterButton.boundingBox();
+    const badgeBox = await activeType.boundingBox();
+    if (!filterBox || !badgeBox) throw new Error('Filter and its active badge must be visible.');
+    expect(badgeBox.x).toBeGreaterThanOrEqual(filterBox.x + filterBox.width);
+    await expect(panel.getByRole('group', { name: 'Aktiva filter' })).toHaveCSS(
+      'border-width',
+      '0px',
+    );
+    await activeType.click();
+    await expect(mapSearch).toHaveValue('299 EGEN');
+    await expect(nodes).toHaveCount(1);
+    await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeFocused();
+    await (await mapFilters(page)).getByLabel('Typ 10', { exact: true }).check();
+    await page.keyboard.press('Escape');
     await canvas.focus();
     await page.keyboard.press('b');
     await expect(mapSearch).toBeFocused();
@@ -548,13 +682,36 @@ test('SÖK-10: capsule search and attached filters fit desktop and narrow short 
       expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
-      expect(box.width).toBeLessThanOrEqual(360);
+      expect(box.width).toBeLessThanOrEqual(440);
       expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
         true,
       );
       await expect(dialog.getByRole('group', { name: 'Objekttyp' })).toBeVisible();
       await expect(dialog.getByRole('group', { name: 'Status' })).toBeVisible();
       await expect(dialog.getByRole('group', { name: 'Förslag i ditt utkast' })).toBeVisible();
+      const person = dialog.getByRole('checkbox', { name: 'Person', exact: true });
+      await person.focus();
+      await person.press('Space');
+      await expect(person).toBeChecked();
+      await expect(person).toBeFocused();
+      const badge = panel.getByRole('button', { name: 'Ta bort filter: Person', exact: true });
+      const badgeBox = await badge.boundingBox();
+      if (!badgeBox) throw new Error('The selected type must have an active badge.');
+      await expect(panel.getByRole('button', { name: /^Filter/ })).toHaveText('Filter');
+      expect(badgeBox.x).toBeGreaterThanOrEqual(0);
+      expect(badgeBox.x + badgeBox.width).toBeLessThanOrEqual(viewport.width);
+      if (viewport.width > 700) {
+        expect(badgeBox.x).toBeGreaterThanOrEqual(f.x + f.width);
+      } else {
+        expect(badgeBox.y).toBeGreaterThanOrEqual(f.y + f.height);
+        expect(badgeBox.height).toBeGreaterThanOrEqual(44);
+      }
+      const personTargetHeight = await person.evaluate(
+        (control) => control.closest('label')?.getBoundingClientRect().height ?? 0,
+      );
+      expect(personTargetHeight).toBeGreaterThanOrEqual(viewport.width > 700 ? 32 : 44);
+      await person.press('Space');
+      await expect(person).not.toBeChecked();
       await page.screenshot({
         path: `/tmp/skyttel-search/filters-${viewport.width}x${viewport.height}.png`,
       });

@@ -1549,6 +1549,7 @@ export function HouseholdMap({
             types={effectiveTypes}
             selectedIds={selectedIds}
             hasProposals={hasChanges}
+            matchingCount={searchHitIds.size}
           />
         </div>
       )}

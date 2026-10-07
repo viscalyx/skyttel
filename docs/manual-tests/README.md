@@ -108,7 +108,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   sambandskedjor utan kartgrafik, uttrycklig identitet och
   sparade/föreslagna preciseringar,
   långa namn, modalernas fokus och återgång även när en sida försvinner;
-  separat sökning, synligt kapselfält och liten filterdialog i kartan,
+  separat sökning, synligt kapselfält, kompakta snabbval och borttagning
+  av aktiva filter med badges efter Filter, filterdialog utan
+  förflyttning av etiketter
+  och synliga streckade etikettlinjer i båda teman,
   Escape som rensar kartans text och filter, tabellens filterdialog utan
   träffantal, egna detaljträffar, aktuell rad, teckensammansättning,
   utkastfiltrets återställning,
