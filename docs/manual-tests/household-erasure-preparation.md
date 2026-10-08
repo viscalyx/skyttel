@@ -141,7 +141,7 @@ function release() {
 process.stdin.resume();
 process.stdin.once("data", release);
 process.once("SIGINT", release);
-console.log("Läsningen är öppen. Tryck Enter när steg 5 säger till.");
+console.log("Läsningen är öppen. Tryck Enter när ditt raderingsfall säger till.");
 '
 ```
 

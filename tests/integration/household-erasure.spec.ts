@@ -861,9 +861,26 @@ test('RADERING-05: erasing a former type removes its historical image from a fre
     await page.waitForURL(fixture.administration.replace(/\/administration$/, ''));
     const form = await editTableObject(page, 'Lampan att radera');
     await form.getByRole('button', { name: 'Livscykel och utseende', exact: true }).click();
-    await expect(
-      form.getByRole('img', { name: 'Profilbild för Lampan att radera' }),
-    ).toHaveAttribute('src', new RegExp(`/profile-images/${currentImage}$`));
+    const retainedImage = form.getByRole('img', { name: 'Profilbild för Lampan att radera' });
+    await expect(retainedImage).toHaveAttribute(
+      'src',
+      new RegExp(`/profile-images/${currentImage}$`),
+    );
+    await expect(retainedImage).toBeVisible();
+    await expect
+      .poll(() =>
+        retainedImage.evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    const { data: pixels, info } = await sharp(await retainedImage.screenshot())
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const center =
+      (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels;
+    for (const [channel, expected] of [238, 136, 0].entries())
+      expect(Math.abs(pixels[center + channel] - expected)).toBeLessThan(15);
     await expect(form.getByLabel('Objekttyp', { exact: true })).not.toHaveValue(
       'former-image-type',
     );
