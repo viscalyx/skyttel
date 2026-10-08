@@ -639,7 +639,15 @@
     "Armning",
     "kvittoreplay",
     "loopbackport",
-    "talsteget"
+    "talsteget",
+    "taldefinitionen",
+    "återhämtningsvyer",
+    "breddvarianterna",
+    "Begäransfångst",
+    "borttappning",
+    "begäransblockering",
+    "begäransblockeringen",
+    "läsförsöken"
   ],
   "overrides": [
     {

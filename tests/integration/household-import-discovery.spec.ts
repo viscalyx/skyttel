@@ -2,7 +2,7 @@ import { chmodSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { createHousehold, signIn } from '../support/client.js';
-import { createInstallation, robin } from '../support/installation.js';
+import { alex, createInstallation, robin } from '../support/installation.js';
 
 test('IMPORT-09: another administrator discovers the same committed import after a lost response and restart', async ({
   page,
@@ -265,10 +265,39 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
 }) => {
   const installation = await createInstallation();
   const other = await browser.newContext();
+  const administrator = await browser.newContext();
   try {
     await signIn(page.request, installation.origin);
     const { household } = await (await createHousehold(page.request, installation.origin)).json();
     const path = `${installation.origin}/api/households/${household.id}`;
+    const headers = { origin: installation.origin };
+    installation.setIdentity(robin);
+    await signIn(administrator.request, installation.origin, 'microsoft');
+    const { user } = await (
+      await administrator.request.get(`${installation.origin}/api/bootstrap`)
+    ).json();
+    const { code } = await (
+      await page.request.post(`${path}/invitations`, {
+        headers,
+        data: { userId: user.id },
+      })
+    ).json();
+    expect(
+      (
+        await administrator.request.post(`${installation.origin}/api/invitations/accept`, {
+          headers,
+          data: { code },
+        })
+      ).status(),
+    ).toBe(200);
+    expect(
+      (
+        await page.request.post(`${path}/members/${user.id}/role`, {
+          headers,
+          data: { role: 'administrator' },
+        })
+      ).status(),
+    ).toBe(200);
     const exported = await (
       await page.request.post(`${path}/exports`, {
         headers: { origin: installation.origin },
@@ -305,6 +334,21 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
     await page.getByRole('button', { name: 'Kontrollera importfil' }).click();
     await expect(page.getByRole('alert')).toBeVisible();
     expect(readyId).not.toBe('');
+    const foreign = await administrator.newPage();
+    await foreign.goto(administration);
+    await expect(foreign.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
+    await expect(foreign.getByText(readyId, { exact: true })).toHaveCount(0);
+    await expect(foreign.getByRole('group', { name: 'Granska ersättningen' })).toHaveCount(0);
+    expect((await administrator.request.get(`${path}/imports/${readyId}`)).status()).toBe(404);
+    expect(
+      (
+        await administrator.request.post(`${path}/imports/${readyId}/confirm`, {
+          headers,
+          data: { confirmed: true, contentVersion: 2 },
+        })
+      ).status(),
+    ).toBe(404);
+    installation.setIdentity(alex);
     await signIn(other.request, installation.origin);
     const fresh = await other.newPage();
     await fresh.goto(administration);
@@ -320,6 +364,7 @@ test('IMPORT-10: the current administrator recovers a lost preparation before an
     expect(confirmations).toBe(1);
     expect((await (await page.request.get(`${path}/map`)).json()).contentVersion).toBe(3);
   } finally {
+    await administrator.close();
     await other.close();
     await installation.close();
   }

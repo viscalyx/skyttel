@@ -185,7 +185,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   fullständiga valda identiteter utanför vallistorna och förnyad bekräftelse,
   tappat svar vid identitetskoppling, oberoende privata tillstånd,
   gamla sessioner och sparförsök, omstart och fortsatt export till en tredje
-  installation utan gammal databas eller inloggningsbehörighet.
+  installation utan gammal databas eller inloggningsbehörighet. Separata
+  [svarsförberedelser](household-recovery-faults.md) tappar verkligt slutförda
+  svar; [konsolunderlag](household-recovery-console.md) skiljer sparbegäranden
+  och arkivjämförelser från UI-stegen.
 
 - [Typer, historik och rättelser genom MCP](assistant-advanced.md):
   egna typer och fält, daterade avtal, riktning och typbyte, skyddade
@@ -309,6 +312,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   och fördröjda avbrotts- och statussvar efter navigering. Ersättning och
   innehållskoppling följs i båda teman. Fel i webbläsarens återhämtningsminne
   bevarar vald fil, faktisk granskning och bekräftat serverresultat.
+  IMPORT-07 använder typ- och objektformulär samt Rapporter med separat
+  request-underlag. IMPORT-15 och IMPORT-22–24 har varsin automatiserad
+  motsvarighet vid 1280, 390, 320 respektive 640 CSS-pixlar; fysisk zoom
+  och skärmläsaruppläsning ingår inte i dessa syntetiska kontroller.
+  IMPORT-25 bevarar verklig webbläsarzoom som separat mänsklig observation.
 
 - [Fullständig export](household-export.md): egen sida i Inställningar,
   privata uppgifter före export, tangentbord, fokus, bevarat kartarbete,

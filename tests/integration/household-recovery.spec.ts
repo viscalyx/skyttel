@@ -3,7 +3,8 @@ import { unzipSync } from 'fflate';
 import sharp from 'sharp';
 import type { MapState } from '../../src/shared/map.js';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
-import { createHousehold, signIn } from '../support/client.js';
+import { createHousehold, openDraftReview, signIn } from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('FLYTT-01: a fresh installation restores an archive, explicitly assigns private ownership and remains portable after restart', async ({
@@ -22,6 +23,7 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
   const destinationPage = await destinationContext.newPage();
   const destinationClient = destinationContext.request;
   const thirdClient = thirdContext.request;
+  const thirdPage = await thirdContext.newPage();
   try {
     await signIn(sourceClient, source.origin);
     const { household } = await (await createHousehold(sourceClient, source.origin)).json();
@@ -259,38 +261,48 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
       await createHousehold(thirdClient, third.origin)
     ).json();
     const thirdPath = `${third.origin}/api/households/${thirdHousehold.id}`;
-    const prepared = await thirdClient.post(`${thirdPath}/imports`, {
-      headers: {
-        origin: third.origin,
-        'content-type': 'application/zip',
-        'x-skyttel-content-version': '1',
-      },
-      data: secondArchive,
+    await thirdPage.goto(`${third.origin}/households/${thirdHousehold.id}/settings/import`);
+    await thirdPage.getByLabel('Skyttel-export (ZIP)').setInputFiles({
+      name: 'destination.zip',
+      mimeType: 'application/zip',
+      buffer: secondArchive,
     });
+    const preparingThird = thirdPage.waitForResponse(
+      (response) =>
+        response.url() === `${thirdPath}/imports` && response.request().method() === 'POST',
+    );
+    await thirdPage.getByRole('button', { name: 'Kontrollera importfil' }).click();
+    const prepared = await preparingThird;
     expect(prepared.status(), await prepared.text()).toBe(201);
-    expect(
-      (
-        await thirdClient.post(`${thirdPath}/imports/${(await prepared.json()).id}/confirm`, {
-          headers: { origin: third.origin },
-          data: { contentVersion: 1, confirmed: true },
-        })
-      ).status(),
-    ).toBe(200);
+    const confirmingThird = thirdPage.waitForResponse(
+      `${thirdPath}/imports/${(await prepared.json()).id}/confirm`,
+    );
+    await thirdPage
+      .getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' })
+      .check();
+    await thirdPage.getByRole('button', { name: 'Ersätt hushållets innehåll' }).click();
+    expect((await confirmingThird).status()).toBe(200);
+    await expect(thirdPage.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
     const thirdUserId = (await (await thirdClient.get(`${third.origin}/api/bootstrap`)).json()).user
       .id;
-    expect(
-      (
-        await thirdClient.post(`${thirdPath}/content-owners/assign`, {
-          headers: { origin: third.origin },
-          data: {
-            contentVersion: 2,
-            identityId: historicalId,
-            userId: thirdUserId,
-            confirmed: true,
-          },
-        })
-      ).status(),
-    ).toBe(200);
+    await thirdPage.route('**/text-assistant/recover', (route) => route.abort());
+    await thirdPage.goto(`${third.origin}/households/${thirdHousehold.id}/settings/content-owners`);
+    await thirdPage.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }).click();
+    const assignThird = async (identityId: string) => {
+      await thirdPage.getByLabel('Historisk innehållsidentitet').selectOption(identityId);
+      await thirdPage.getByLabel('Aktuell verifierad medlem').selectOption(thirdUserId);
+      await expect(
+        thirdPage.getByRole('button', { name: 'Bekräfta innehållskopplingen' }),
+      ).toBeDisabled();
+      await thirdPage.getByRole('checkbox', { name: 'Jag har identifierat rätt person' }).check();
+      const assignment = thirdPage.waitForResponse(`${thirdPath}/content-owners/assign`);
+      await thirdPage.getByRole('button', { name: 'Bekräfta innehållskopplingen' }).click();
+      expect((await assignment).status()).toBe(200);
+      await expect(
+        thirdPage.getByText('Innehållskopplingen är sparad.', { exact: true }),
+      ).toBeVisible();
+    };
+    await assignThird(historicalId);
     await third.restart();
     const thirdState = await read(thirdClient, thirdPath);
     for (const old of [pending, destinationPending])
@@ -318,40 +330,40 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
     );
     expect(Buffer.from(thirdParts['images.bin'])).toEqual(Buffer.from(sourceParts['images.bin']));
     // Displacement preserves usable private work, not merely an archived row.
+    await thirdPage.reload();
+    await thirdPage.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }).click();
     for (const identityId of [displacedId, historicalId]) {
-      const state = await read(thirdClient, thirdPath);
-      expect(
-        (
-          await thirdClient.post(`${thirdPath}/content-owners/assign`, {
-            headers: { origin: third.origin },
-            data: {
-              identityId,
-              userId: thirdUserId,
-              contentVersion: state.contentVersion,
-              confirmed: true,
-            },
-          })
-        ).status(),
-      ).toBe(200);
+      await assignThird(identityId);
       const selected = await read(thirdClient, thirdPath);
       expect(selected.userId).toBe(identityId);
       expect(selected.draft.changes.map((row) => row.id)).toEqual(
         identityId === displacedId ? ['destination-private'] : ['shared'],
       );
+      await thirdPage.goto(`${third.origin}/households/${thirdHousehold.id}`);
+      const selectedDraft = await openDraftReview(thirdPage);
+      await expect(selectedDraft).toContainText(
+        identityId === displacedId ? 'Nytt privat arbete' : 'shared',
+      );
+      await expect(selectedDraft).not.toContainText(
+        identityId === displacedId ? 'shared' : 'Nytt privat arbete',
+      );
+      await thirdPage.goto(
+        `${third.origin}/households/${thirdHousehold.id}/settings/content-owners`,
+      );
+      await thirdPage.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }).click();
     }
     const fresh = await read(thirdClient, thirdPath);
-    expect(
-      (
-        await thirdClient.post(`${thirdPath}/map/save`, {
-          headers: { origin: third.origin },
-          data: {
-            version: fresh.draft.version,
-            contentVersion: fresh.contentVersion,
-            operationId: 'fresh-after-move',
-          },
-        })
-      ).status(),
-    ).toBe(200);
+    await thirdPage.unroute('**/text-assistant/recover');
+    await thirdPage.goto(`${third.origin}/households/${thirdHousehold.id}`);
+    await expect(await openDraftReview(thirdPage)).toContainText('shared');
+    const finalSave = thirdPage.waitForResponse(`${thirdPath}/map/save`);
+    await saveReviewedConflictDraft(thirdPage);
+    const savedResponse = await finalSave;
+    expect(savedResponse.status()).toBe(200);
+    expect(savedResponse.request().postDataJSON()).toMatchObject({
+      version: fresh.draft.version,
+      contentVersion: fresh.contentVersion,
+    });
     await third.restart();
     expect(
       (await read(thirdClient, thirdPath)).objects.find((row) => row.id === 'shared'),

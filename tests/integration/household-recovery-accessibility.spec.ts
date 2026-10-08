@@ -62,13 +62,13 @@ async function expectReadableNavigation(navigation: Locator, name: string, width
   }
 }
 
-for (const { width, height } of [
-  { width: 1280, height: 900 },
-  { width: 390, height: 900 },
-  { width: 320, height: 900 },
-  { width: 640, height: 500 },
+for (const { caseId, width, height } of [
+  { caseId: 'IMPORT-15', width: 1280, height: 900 },
+  { caseId: 'IMPORT-22', width: 390, height: 900 },
+  { caseId: 'IMPORT-23', width: 320, height: 900 },
+  { caseId: 'IMPORT-24', width: 640, height: 500 },
 ]) {
-  test(`IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at ${width}px`, async ({
+  test(`${caseId}: keyboard recovery controls remain visible through review, errors and assignment at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
