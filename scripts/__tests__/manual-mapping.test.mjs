@@ -43,16 +43,20 @@ function fixture(t, definitions) {
   };
 }
 
-function ordinary(id, spec, selector = { caseId: id }) {
+function manualCase(id, metadata) {
   return `### ${id}: workflow\n\n\`\`\`manual-mapping\n${JSON.stringify(
-    {
-      counterpart: { spec, ...selector },
-      reference: '1280px, light',
-      outcomes: ['Saved data survives restart'],
-    },
+    metadata,
     null,
     2,
   )}\n\`\`\`\n`;
+}
+
+function ordinary(id, spec, selector = { caseId: id }) {
+  return manualCase(id, {
+    counterpart: { spec, ...selector },
+    reference: '1280px, light',
+    outcomes: ['Saved data survives restart'],
+  });
 }
 
 test('the command accepts one ordinary counterpart discovered by Playwright', (t) => {
@@ -186,11 +190,7 @@ test('exceptions name a real human observation and retain reference and outcomes
     reference: 'External provider',
     outcomes: ['Provider replies'],
   };
-  const write = () =>
-    f.write(
-      'observations.md',
-      `### AUDIO-01: observation\n\n\`\`\`manual-mapping\n${JSON.stringify(metadata)}\n\`\`\`\n`,
-    );
+  const write = () => f.write('observations.md', manualCase('AUDIO-01', metadata));
   write();
   let result = f.run();
   assert.equal(result.status, 1);
@@ -249,11 +249,7 @@ test('additional evidence resolves separately and real-provider references are n
       },
     ],
   };
-  const write = () =>
-    f.write(
-      'workflows.md',
-      `### CASE-01: workflow\n\n\`\`\`manual-mapping\n${JSON.stringify(metadata)}\n\`\`\`\n`,
-    );
+  const write = () => f.write('workflows.md', manualCase('CASE-01', metadata));
   write();
   // Exclude the separate provider suite from the integration fixture config.
   writeFileSync(
@@ -282,10 +278,7 @@ test('metadata syntax, exclusive branches and selectors fail without stack trace
     reference: 'Desktop',
     outcomes: ['Saved'],
   };
-  f.write(
-    'workflows.md',
-    `### CASE-01: workflow\n\n\`\`\`manual-mapping\n${JSON.stringify(metadata)}\n\`\`\`\n`,
-  );
+  f.write('workflows.md', manualCase('CASE-01', metadata));
   result = f.run();
   assert.equal(result.status, 1);
   assert.match(result.stderr, /CASE-01.*exactly one counterpart or humanObservation/);

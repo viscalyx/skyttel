@@ -52,8 +52,7 @@ For index-only or testing-guide-only work, use steps 5 and 6.
    a request-only check cannot establish browser-form behavior. Isolated
    fixtures may differ from manual data when they exercise equivalent roles,
    state, and access boundaries. Mark actual human observations explicitly.
-   Preserve stable IDs when renaming or moving cases, update affected links
-   and title references together, and retire removed IDs without reuse.
+   Apply the identity lifecycle rules in the metadata reference below.
 5. Group cases by application area, independent of demo fixtures or individual
    pages. Maintain `docs/manual-tests/README.md` as the area index; update its
    links and summaries whenever area files or their documented coverage
@@ -87,7 +86,7 @@ human-observation branch. Supply:
   `describe title > test title` when a describe path disambiguates it.
   A `caseId` selects the stable ID prefix. Both must resolve to one test
   after generated definitions expand. Functional title IDs must be unique
-  and agree with their manual case; renames and moves preserve IDs.
+  and agree with their manual case.
 - A `humanObservation`: `kind` and a concrete `observation` the human must
   perform. Kinds are `screen-reader`, `physical-microphone-audio`,
   `os-permission`, `physical-input`, `visual-symbol-recognition` and
@@ -109,8 +108,9 @@ second ordinary counterpart. Human-observation cases may cite nearby
 automation as evidence without claiming it performs the human observation.
 
 Keep one stable identity per ordinary scenario and discovered functional
-test. Split distinct surviving workflows into new IDs, update index and
-links together, and record retired IDs and their survivor or accepted
+test. Preserve IDs across renames and moves. Split distinct surviving workflows
+into new IDs, update index and links together, and record retired IDs and their
+survivor or accepted
 coverage loss in the affected area. Retired IDs remain unavailable for reuse.
 The structural command resolves identities and references; assess functional
 equivalence by comparing the actual actions and assertions.

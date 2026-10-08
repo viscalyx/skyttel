@@ -27,13 +27,15 @@ Anteckna commit, webbläsare och godkänt eller underkänt resultat vid körning
 1. {{Ange körbart kommando eller länk till förberedelsen, nödvändiga indata
    och det förväntade utgångsläget. Ange återställning efter felet.}}
 
+{{Välj antingen Integrationstest med counterpart eller Kräver mänsklig
+observation med humanObservation. Ta bort hela den andra grenen, inklusive
+dess textfält och metadata. Fyll i vald referens och skyddade resultat.
+Använd title i stället för caseId om namnet behövs för att entydigt välja
+ett upptäckt test.}}
+
 **Integrationstest:**
 [{{filnamn}}.spec.ts](../../tests/integration/{{filnamn}}.spec.ts),
 {{identifierande namn eller stabilt ID för exakt ett motsvarande test}}.
-
-{{Välj en av följande två grenar och ta bort den andra. Fyll i vald
-referens och skyddade resultat. Använd title i stället för caseId om namnet
-behövs för att entydigt välja ett upptäckt test.}}
 
 ```manual-mapping
 {
