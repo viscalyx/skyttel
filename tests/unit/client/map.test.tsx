@@ -235,7 +235,7 @@ test('table browsing combines type identities, description search and the shared
   await userEvent.click(filters.getByLabelText(/^Bara markerade/));
   await userEvent.click(filters.getByRole('button', { name: 'Stäng filter' }));
   expect(table.getAllByRole('rowheader')).toHaveLength(1);
-  await userEvent.selectOptions(table.getByRole('combobox', { name: 'Sortering' }), 'type-asc');
+  await userEvent.click(table.getByRole('button', { name: 'Typ' }));
   expect(table.getAllByRole('rowheader')).toHaveLength(1);
   await userEvent.click(table.getByRole('button', { name: /^Filter/ }));
   await userEvent.click(filters.getByRole('button', { name: 'Återställ sökning och filter' }));
@@ -260,17 +260,17 @@ test('object pages retain sorting and the selected row through ordinary map and 
   await userEvent.click(pages.getByRole('button', { name: 'Nästa' }));
   expect(pages.getByText('Sida 2 av 10 · 50 objekt per sida')).toBeTruthy();
   await userEvent.click(table.getByRole('button', { name: 'Provobjekt 050' }));
-  await userEvent.selectOptions(table.getByRole('combobox', { name: 'Sortering' }), 'type-asc');
+  await userEvent.click(table.getByRole('button', { name: 'Typ' }));
   for (let index = 0; index < 5; index++)
     await userEvent.click(pages.getByRole('button', { name: 'Nästa' }));
   expect(pages.getByText('Sida 7 av 10 · 50 objekt per sida')).toBeTruthy();
   await userEvent.click(tools.getByRole('button', { name: 'Karta' }));
   await userEvent.click(tools.getByRole('button', { name: 'Tabell' }));
   expect(pages.getByText('Sida 7 av 10 · 50 objekt per sida')).toBeTruthy();
-  expect((table.getByRole('combobox', { name: 'Sortering' }) as HTMLSelectElement).value).toBe(
-    'type-asc',
+  expect(table.getByRole('columnheader', { name: 'Typ' }).getAttribute('aria-sort')).toBe(
+    'ascending',
   );
-  await userEvent.selectOptions(table.getByRole('combobox', { name: 'Sortering' }), 'name-asc');
+  await userEvent.click(table.getByRole('button', { name: 'Namn' }));
   expect(pages.getByText('Sida 7 av 10 · 50 objekt per sida')).toBeTruthy();
   await userEvent.type(table.getByLabelText('Sök objekt i tabellen'), 'Provobjekt 050');
   expect(pages.getByText('Sida 1 av 1 · 50 objekt per sida')).toBeTruthy();
@@ -666,11 +666,7 @@ test('review, search, correction, discard and deletion use the real persistent m
   await waitFor(() => expect(draft.getByText('Utkastet är tomt.', { exact: true })).toBeTruthy());
   await userEvent.click(screen.getByRole('button', { name: 'Tabell' }));
   await userEvent.click(table.getByRole('button', { name: 'Lo Lind' }));
-  await userEvent.click(table.getByRole('button', { name: 'Åtgärder för Lo Lind' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ta bort objekt' }));
-  await waitFor(() =>
-    expect(screen.queryByRole('dialog', { name: 'Åtgärder för Lo Lind' })).toBeNull(),
-  );
+  await userEvent.click(table.getByRole('button', { name: 'Ta bort Lo Lind' }));
   await waitFor(async () =>
     expect((await (await client.request(path)).json()).draft.changes[0].after).toBeNull(),
   );
@@ -1702,7 +1698,7 @@ test('text-only table selection and confirmed form loss preserve household data 
   const lo = table.getByRole('button', { name: 'Lo Urval' });
   if (lo.getAttribute('aria-expanded') !== 'true') await userEvent.click(lo);
   expect(table.getAllByText('✓ Markerad')).toHaveLength(1);
-  expect(table.getByRole('button', { name: 'Åtgärder för Lo Urval' })).toBeTruthy();
+  expect(table.getByRole('button', { name: 'Ta bort Lo Urval' })).toBeTruthy();
   expect(await (await client.request(path)).json()).toEqual(original);
 });
 

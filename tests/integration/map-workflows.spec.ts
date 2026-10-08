@@ -63,13 +63,7 @@ async function save(page: Page) {
 async function removeObject(page: Page, name: string) {
   await openTable(page);
   const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
-  const row = table.getByRole('button', { name, exact: true });
-  if ((await row.getAttribute('aria-expanded')) !== 'true') await row.click();
-  await table.getByRole('button', { name: `Åtgärder för ${name}`, exact: true }).click();
-  await page
-    .getByRole('dialog', { name: `Åtgärder för ${name}`, exact: true })
-    .getByRole('button', { name: 'Ta bort objekt', exact: true })
-    .click();
+  await table.getByRole('button', { name: `Ta bort ${name}`, exact: true }).click();
 }
 
 async function expectUncoveredFocus(page: Page) {

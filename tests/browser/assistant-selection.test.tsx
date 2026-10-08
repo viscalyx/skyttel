@@ -234,6 +234,44 @@ test('a panel covering the actual inspector prevents a successful display acknow
   }
 });
 
+test('a visible object title cannot confirm display when the details scroller is collapsed', async () => {
+  const app = await open();
+  const collapse = document.createElement('style');
+  collapse.textContent = '.object-property-body { max-height: 0 !important; }';
+  document.head.append(collapse);
+  try {
+    await app.show({ kind: 'object', id: 'lo' });
+    const panel = page.getByRole('region', { name: 'Lo', exact: true });
+    await expect.element(panel.getByRole('heading', { name: 'Lo', exact: true })).toBeVisible();
+    expect(panel.element().querySelector('.object-property-body')?.clientHeight).toBe(0);
+    await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
+    expect(app.acknowledgements[0].displayed).toBe(false);
+  } finally {
+    collapse.remove();
+  }
+});
+
+test.each([
+  ['display: none', false],
+  ['line-height: normal', true],
+] as const)('object details styled with %s report displayed=%s', async (declaration, displayed) => {
+  const app = await open();
+  const style = document.createElement('style');
+  style.textContent = `.object-property-window .household-table-description { ${declaration}; }`;
+  document.head.append(style);
+  try {
+    await app.show({ kind: 'object', id: 'lo' });
+    const panel = page.getByRole('region', { name: 'Lo', exact: true });
+    await expect.element(panel.getByRole('heading', { name: 'Lo', exact: true })).toBeVisible();
+    const description = panel.element().querySelector('.household-table-description');
+    expect(description?.checkVisibility()).toBe(displayed);
+    await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
+    expect(app.acknowledgements[0].displayed).toBe(displayed);
+  } finally {
+    style.remove();
+  }
+});
+
 test.each([
   [390, 844],
   [640, 500],
@@ -253,7 +291,10 @@ test.each([
     expect(app.acknowledgements[0].displayed).toBe(true);
     const objectPanel = page.getByRole('region', { name: 'Lo', exact: true });
     const inspector = objectPanel.element();
-    const scroller = inspector;
+    const scroller = inspector.querySelector('.object-property-body') as HTMLElement;
+    expect(scroller.clientHeight).toBeGreaterThanOrEqual(
+      Number.parseFloat(getComputedStyle(scroller).lineHeight),
+    );
     expect(scroller.scrollHeight).toBeGreaterThan(scroller.clientHeight);
     expect(scroller.getBoundingClientRect().bottom).toBeLessThanOrEqual(innerHeight);
     expect(inspector.querySelector('form')).toBeNull();

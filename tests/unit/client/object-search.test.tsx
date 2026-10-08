@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { afterEach, expect, test } from 'vitest';
 import {
   initialObjectSearch,
-  MapSearch,
+  ObjectSearch,
   type ObjectSearchState,
 } from '../../../src/client/ObjectSearch.js';
 
@@ -21,7 +21,7 @@ function Search({
   return (
     <>
       <button type="button">Outside</button>
-      <MapSearch
+      <ObjectSearch
         active={active}
         entryRequestId={entryRequestId}
         search={search}

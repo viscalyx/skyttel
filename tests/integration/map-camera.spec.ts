@@ -335,10 +335,11 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
           );
         })
         .toBe(true);
-      const reveal = context.getByRole('button', { name: 'Visa samband i kartan', exact: true });
-      await reveal.focus();
-      await reveal.click({ trial: true });
-      await expect(reveal).toBeFocused();
+      await context.focus();
+      await expect(context).toBeFocused();
+      await expect(
+        context.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
+      ).toHaveCount(0);
       await page.screenshot({
         path: test.info().outputPath(`navigation-status-${viewport.width}.png`),
       });

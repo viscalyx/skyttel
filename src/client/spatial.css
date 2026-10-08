@@ -386,22 +386,35 @@
   color: #174137;
   margin-right: 0.3rem;
 }
-.spatial-menu {
-  width: min(24rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 2rem);
-  overflow: auto;
-  border: 1px solid #52776c;
-  border-radius: 1rem;
-  background: #f5f7f5;
-  color: #183a36;
+.spatial-object-actions {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  width: max-content;
+  visibility: hidden;
+  border: 1px solid var(--space-line, #52776c);
+  border-radius: 12px;
+  background: var(--space-surface, #f5f7f5);
+  color: var(--space-text, #183a36);
+  box-shadow: 0 4px 16px #0003;
 }
-.spatial-menu::backdrop {
-  background: #06272499;
+.spatial-object-actions button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  margin: 0;
+  border: 1px solid var(--space-line, #52776c);
+  border-radius: 8px;
+  background: var(--space-surface, #f5f7f5);
+  color: var(--space-text, #183a36);
 }
-.spatial-menu button {
-  display: block;
-  margin: 0.5rem 0;
-  width: 100%;
+.spatial-object-actions svg {
+  width: 22px;
+  height: 22px;
 }
 .household-map.presentation-map {
   margin: 0;
@@ -624,4 +637,22 @@
   display: block;
   font-size: 12px;
   color: var(--space-text);
+}
+.spatial-object-actions button:hover:enabled,
+.household-map.workspace-shell .spatial-object-actions button:hover:enabled,
+.household-map.workspace-shell
+  :is(.object-property-actions, .object-property-header)
+  button:hover:enabled {
+  background: color-mix(in srgb, var(--space-accent, #185d50), var(--space-surface, #f5f7f5) 90%);
+}
+.spatial-object-actions .spatial-object-remove,
+.household-map.workspace-shell .spatial-object-actions .spatial-object-remove {
+  color: var(--proposal-removed, #c83346);
+  border-color: var(--proposal-removed, #c83346);
+}
+@media (max-width: 700px) {
+  .spatial-object-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
+  }
 }

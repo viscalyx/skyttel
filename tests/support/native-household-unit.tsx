@@ -39,8 +39,7 @@ export async function readTableObject(name: string) {
   const table = within(await screen.findByRole('region', { name: 'Hushållets tabell' }));
   const expand = await table.findByRole('button', { name });
   if (expand.getAttribute('aria-expanded') !== 'true') await userEvent.click(expand);
-  await userEvent.click(table.getByRole('button', { name: `Läs alla uppgifter för ${name}` }));
-  return within(await screen.findByRole('dialog', { name: `Uppgifter för ${name}` }));
+  return within(await table.findByRole('region', { name: `Uppgifter för ${name}` }));
 }
 
 export async function openObjectRelationships(name: string) {

@@ -48,8 +48,8 @@ tillgänglighetsprov.
 ## Öppna arbetsytor
 
 Hushållet öppnar **Karta**. Välj **Tabell** i **Kartans verktyg** för sökning,
-filter, sortering och alla objekt. Namnet expanderar radens läsuppgifter.
-**Läs alla uppgifter för [namn]** öppnar fullständig läsning; **Samband för
+filter, sortering och alla objekt. Namnet expanderar radens fullständiga
+uppgifter och pennikonen öppnar objektets redigeringsformulär. **Samband för
 [namn]** öppnar objektets samband och följbara objektlänkar. Läsning ändrar
 inte uppgifter och behöver varken samtal eller medgivande.
 
@@ -69,7 +69,8 @@ För att starta ett nytt samtal väljer du uttryckligen **Nytt samtal**; om
 medgivande behövs väljer du därefter **Godkänn och starta**.
 
 På telefon öppnar **Visa verktygens namn** de kompletterande verktygen.
-**Visa detaljer** läser den aktuella kartmarkeringen i en fast läsyta.
+**Visa detaljer** läser markerade objekt i flyttbara uppgiftsfönster.
+Flera objekts fönster kan vara öppna samtidigt med egna placeringar.
 Stäng den med **Stäng uppgifterna** före kartgester om den tar plats.
 Stäng text med **Stäng textvyn** när ett fall behöver själva kartan.
 
@@ -102,9 +103,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   med avstängd mikrofon fram till fungerande uppspelning.
 
 - [Objektlistor](object-lists.md): tabell med fullständiga uppgifter, skilda
-  statusar, svenska sorteringsriktningar, 50 objekt per sida och bevarat
+  statusar, sortering via kolumnrubriker, 50 objekt per sida och bevarat
   läge på dator och mobil; nästa och föregående motsvarande radknapp när
-  redigering eller kartbesök döljer en rad; fullständig läsning och
+  redigering eller kartbesök döljer en rad; fullständiga uppgifter direkt
+  i raden med pennikon för redigering och
   sambandskedjor utan kartgrafik, uttrycklig identitet och
   sparade/föreslagna preciseringar,
   långa namn, modalernas fokus och återgång även när en sida försvinner;
@@ -112,12 +114,15 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   av aktiva filter med badges efter Filter, filterdialog utan
   förflyttning av etiketter
   och synliga streckade etikettlinjer i båda teman,
-  Escape som rensar kartans text och filter, tabellens filterdialog utan
-  träffantal, egna detaljträffar, aktuell rad, teckensammansättning,
+  Escape som rensar kartans text och filter, gemensamma kompakta
+  filterdialoger med träffantal och sökfält med kryss,
+  egna detaljträffar, aktuell rad, teckensammansättning,
   utkastfiltrets återställning,
   markeringar, direkta sammanhang, utforskning utan indirekt expansion,
   upphört även i sammanhang och tabellens kartknapp med bevarat läge;
-  textåtgärder med återfokus och verkliga borttagningsberoenden utan
+  kartikoner med tooltips för skillnaden mellan bevarade och återställda
+  kartfilter; röda papperskorgar på raden med återfokus och verkliga
+  borttagningsberoenden utan
   kartgrafik, med oberoende förslag och sparade uppgifter kvar.
   Kartknappen är inaktiv vid grafikavbrott, medan vanlig läsning och
   redigering fungerar. Återgång från inställningarna behåller användbart
@@ -134,7 +139,7 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   teman och typdefinitioner i kartans samlade utkast.
 
 - [Objektarbete och samtal](workspace-panels.md): kompletta objektförslag,
-  läsdialoger med återfokus genom dator- och mobilbyte, bevarat samtal,
+  fullständiga uppgifter direkt i raden genom dator- och mobilbyte, bevarat samtal,
   skyddad formulärförlust, väntande
   objektdialog och åtkomliga samband och typer genom vanliga ingångar.
   Gamla fria fönsters placeringsfall är pensionerade utan återanvända ID:n.
@@ -354,9 +359,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   bild och ikon, förlustvarning, återfokus samt väntande, avvisat och oklart
   tillägg till utkastet på dator och mobil.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
-  textkontroller, aktiv detaljikon och en fast läsyta med fullständiga
-  uppgifter, vanliga formulär, återfokus och oförändrat utkast även i
-  smala och korta fönster samt återgång från Rapporter till text och utkast.
+  textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
+  högerklickets gemensamma ikoner. Oberoende fönsterflytt med pekare och
+  tangentbord bevarar kameran och den personliga vyn. Vanliga formulär,
+  återfokus och oförändrat utkast provas även i smala och korta fönster,
+  liksom återgång från Rapporter till text och utkast.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta
   grannar, återgångsvy, mus, tangentbord och pekskärm i smala och korta vyer;
   nå återkoppling och alla sex personliga flyttar utan täckta kontroller,
@@ -364,6 +371,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   när ett verkligt svar hålls och släpps.
 - [Rymdkarta](spatial-map.md): gemensam redigering genom Tabell, kompletta
   formulär och utkastets läsning med bevarad kamera och markering;
+  samma kartikoner i listan och vid högerklick eller långtryck,
+  skillnaden mellan återställda och bevarade filter samt tangentbord och stängning;
   sökning och direkta samband, läsbara tidigare sparade samband,
   täta etiketter, publicerat medlemsbortfall och återhämtning av grafik.
 

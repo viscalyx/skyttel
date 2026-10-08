@@ -84,7 +84,7 @@ for (const [caseId, action, title] of [
           remaining
             ? control(remaining)
             : table.getByRole('heading', {
-                name: 'Hushållets tabell',
+                name: 'Hushållet Linden',
                 exact: true,
               }),
         ).toBeFocused();
@@ -99,7 +99,7 @@ for (const [caseId, action, title] of [
       }
       expect((await read()).draft.changes).toHaveLength(3);
       await expect(table.getByRole('rowheader')).toHaveCount(0);
-      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+      await table.getByRole('button', { name: /^Filter/ }).click();
       await page
         .getByRole('dialog', { name: 'Tabellens filter', exact: true })
         .getByLabel('Ta med upphörda')
@@ -142,7 +142,7 @@ test('TABELL-01: Swedish natural sorting, pagination and expanded rows survive m
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await expect(
-      table.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+      table.getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
     await expect(table.getByRole('table')).toBeVisible();
     await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).not.toBeVisible();
@@ -153,7 +153,10 @@ test('TABELL-01: Swedish natural sorting, pagination and expanded rows survive m
     await table.getByRole('button', { name: 'A 10', exact: true }).click();
     await expect(table.getByRole('heading', { name: 'A 2 · alla uppgifter' })).toBeVisible();
     await expect(table.getByRole('heading', { name: 'A 10 · alla uppgifter' })).toBeVisible();
-    await table.getByLabel('Sortering', { exact: true }).selectOption('name-desc');
+    const nameSort = table.getByRole('button', { name: 'Namn', exact: true });
+    await nameSort.focus();
+    await page.keyboard.press('Enter');
+    await expect(nameSort).toBeFocused();
     await expect(table.getByRole('columnheader', { name: 'Namn', exact: true })).toHaveAttribute(
       'aria-sort',
       'descending',
@@ -161,11 +164,19 @@ test('TABELL-01: Swedish natural sorting, pagination and expanded rows survive m
     await expect(table.getByRole('rowheader').nth(0)).toHaveText('▸Örn');
     await expect(table.getByRole('rowheader').nth(1)).toHaveText('▸Älg');
     await expect(table.getByRole('rowheader').nth(2)).toHaveText('▸Åke');
-    await table.getByLabel('Sortering', { exact: true }).selectOption('type-asc');
+    await table.getByRole('button', { name: 'Typ', exact: true }).click();
+    await expect(table.getByRole('columnheader', { name: 'Typ', exact: true })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    );
+    await expect(table.getByRole('columnheader', { name: 'Namn', exact: true })).toHaveAttribute(
+      'aria-sort',
+      'none',
+    );
     await expect(table.getByRole('row').nth(1).getByRole('cell').nth(0)).toHaveText('Typ 2');
-    await table.getByLabel('Sortering', { exact: true }).selectOption('type-desc');
+    await table.getByRole('button', { name: 'Typ', exact: true }).click();
     await expect(table.getByRole('row').nth(1).getByRole('cell').nth(0)).toHaveText('Typ 10');
-    await table.getByLabel('Sortering', { exact: true }).selectOption('name-asc');
+    await table.getByRole('button', { name: 'Namn', exact: true }).click();
     await table.getByRole('button', { name: 'Nästa', exact: true }).click();
     await expect(
       table.getByRole('region', { name: 'Objekt i läsläge', exact: true }),
@@ -185,7 +196,10 @@ test('TABELL-01: Swedish natural sorting, pagination and expanded rows survive m
     await expect(focus).toBeFocused();
     expect(await scroller.evaluate((element) => element.scrollTop)).toBe(scroll);
     await expect(focus).toHaveAttribute('aria-expanded', 'true');
-    await expect(table.getByLabel('Sortering', { exact: true })).toHaveValue('name-asc');
+    await expect(table.getByRole('columnheader', { name: 'Namn', exact: true })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    );
     await table.getByRole('button', { name: 'Föregående', exact: true }).click();
     await expect(table.getByRole('button', { name: 'A 2', exact: true })).toHaveAttribute(
       'aria-expanded',
@@ -254,9 +268,26 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
         exact: true,
       }),
     ).toBeVisible();
-    const details = table.locator('.household-table-details').first();
+    const inline = table.getByRole('region', { name: 'Uppgifter för A 2', exact: true });
+    const details = inline.locator('.household-table-details');
     const field = (name: string) =>
       details.locator('dl > div').filter({ has: page.getByText(name, { exact: true }) });
+    await expect(field('Namn')).toHaveText('NamnA 2');
+    await expect(field('Typ')).toHaveText('TypTyp 2');
+    await expect(table.getByRole('button', { name: /Läs alla uppgifter/ })).toHaveCount(0);
+    await expect(inline.getByRole('button', { name: /^Redigera/ })).toHaveCount(0);
+    const rowEdit = table.getByRole('button', {
+      name: 'Redigera A 2',
+      exact: true,
+    });
+    await expect(rowEdit).toHaveCount(1);
+    await rowEdit.click();
+    const editor = page.getByRole('dialog', { name: 'Redigera A 2', exact: true });
+    await expect(editor.getByLabel('Namn', { exact: true })).toHaveValue('A 2');
+    await expect(editor.getByLabel('Namn', { exact: true })).toBeFocused();
+    await editor.getByRole('button', { name: 'Avbryt', exact: true }).click();
+    await expect(rowEdit).toBeFocused();
+    await expect(inline).toBeVisible();
     await expect(field('Ramnummer')).toHaveText(
       'RamnummerSparat: Ej uppgivet◇ Ditt förslag: RAM-2026-42',
     );
@@ -301,6 +332,11 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
     ).toBeVisible();
     await expect(
       table.getByRole('row', { name: /Borttaget prov/ }).getByRole('button', { name: /^Redigera/ }),
+    ).toHaveCount(0);
+    await expect(
+      table
+        .getByRole('region', { name: 'Uppgifter för Borttaget prov', exact: true })
+        .getByRole('button', { name: /^Redigera/ }),
     ).toHaveCount(0);
     expect(await read()).toEqual(before);
   } finally {

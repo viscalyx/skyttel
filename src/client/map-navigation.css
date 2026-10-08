@@ -18,6 +18,28 @@
 .map-navigation[hidden] {
   display: none;
 }
+@media (max-width: 700px) and (max-height: 600px) {
+  .household-map.workspace-shell:not(.map-details-open):has(.object-property-window):has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    .map-navigation:not([hidden]) {
+    position: fixed;
+    max-height: max(
+      64px,
+      calc(var(--conversation-corner-top, 100dvh) - var(--navigation-top, 142px) - 8px)
+    );
+    display: block;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding: 6px;
+  }
+  .household-map.workspace-shell:not(.map-details-open):has(.object-property-window):has(
+      .conversation-notice:not([data-inline="true"])
+    )
+    .map-navigation-body {
+    overflow: visible;
+  }
+}
 .map-navigation .visually-hidden {
   position: absolute;
   width: 1px;

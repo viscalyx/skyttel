@@ -219,6 +219,10 @@ for (const viewport of [
         await expect(page.getByRole('region', { name: 'Lo Exempel', exact: true })).toContainText(
           'Påhittad uppgift',
         );
+        await page
+          .getByRole('region', { name: 'Lo Exempel', exact: true })
+          .getByRole('button', { name: 'Stäng uppgifterna', exact: true })
+          .click();
         await openConversationText(page);
         await expect(textFeedback).toHaveCount(0);
         const mapStatus = page.getByRole('region', { name: 'Kartans status', exact: true });

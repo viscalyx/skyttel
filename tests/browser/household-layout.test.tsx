@@ -117,8 +117,13 @@ async function readObject(name: string) {
   await openTable();
   const expand = page.getByRole('button', { name, exact: true });
   if (expand.element().getAttribute('aria-expanded') !== 'true') await expand.click();
-  await page.getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true }).click();
-  return page.getByRole('dialog', { name: `Uppgifter för ${name}`, exact: true });
+  return page.getByRole('region', { name: `Uppgifter för ${name}`, exact: true });
+}
+async function closeObject(name: string) {
+  await page.getByRole('button', { name, exact: true }).click();
+  await expect
+    .element(page.getByRole('region', { name: `Uppgifter för ${name}`, exact: true }))
+    .not.toBeInTheDocument();
 }
 async function editObject(name: string) {
   await openTable();
@@ -189,6 +194,8 @@ test('camera focus includes previous direct neighbors and preserves work through
   await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Alex', exact: true });
   const reading = panel.getByRole('heading', { name: 'Alex', exact: true });
+  await panel.getByRole('group', { name: 'Flytta uppgiftsfönstret för Alex', exact: true }).click();
+  await userEvent.keyboard(`{Shift>}${'{ArrowLeft}'.repeat(24)}{/Shift}`);
   const panelBox = panel.element().getBoundingClientRect().toJSON();
   await focus.click();
   await expect.poll(separation).toBeGreaterThan(initialSeparation * 2);
@@ -326,6 +333,65 @@ test('map selection gestures preserve membership and open retained details only 
   await expect.poll(positions).toEqual(before);
 });
 
+test.each([320, 390, 1440])(
+  'table toolbar groups search with Filter and conflicts before New at %i pixels',
+  async (width) => {
+    await open(width, {
+      ...state,
+      draft: {
+        version: 1,
+        changes: [
+          {
+            id: 'alex',
+            before: { ...state.objects[0], revision: 0 },
+            after: { ...state.objects[0], name: 'Alex utkast' },
+            type: state.types[0],
+          },
+        ],
+      },
+    });
+    await openTable();
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    const workspace = document.querySelector('.household-map')?.getBoundingClientRect();
+    expect(workspace?.top).toBe(0);
+    expect(workspace?.bottom).toBe(window.innerHeight);
+    expect(document.elementFromPoint(width / 2, 1)?.closest('.household-map')).not.toBeNull();
+    const search = table.getByRole('searchbox').element().getBoundingClientRect();
+    const filter = table
+      .getByRole('button', { name: 'Filter', exact: true })
+      .element()
+      .getBoundingClientRect();
+    const conflict = table
+      .getByRole('button', { name: '1 konflikt i ditt utkast', exact: true })
+      .element()
+      .getBoundingClientRect();
+    const create = table
+      .getByRole('button', { name: /Nytt objekt/ })
+      .element()
+      .getBoundingClientRect();
+    expect(filter.left).toBeGreaterThanOrEqual(search.right);
+    expect(filter.top).toBe(search.top);
+    const actionGroup = document.querySelector('.household-table-actions')?.getBoundingClientRect();
+    const buttonsFit = conflict.width + 8 + create.width <= (actionGroup?.width ?? 0);
+    if (buttonsFit) {
+      expect(conflict.right).toBeLessThanOrEqual(create.left);
+      expect(conflict.top).toBe(create.top);
+    } else {
+      expect(conflict.bottom).toBeLessThanOrEqual(create.top);
+      expect(conflict.right).toBe(create.right);
+    }
+    expect(create.right).toBeLessThanOrEqual(width);
+    const toolbar = document.querySelector('.household-table-search')?.getBoundingClientRect();
+    expect(create.right).toBe(toolbar?.right);
+    if (width === 1440) expect(create.top).toBe(search.top);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
+    await table.getByRole('button', { name: /Nytt objekt/ }).click();
+    await expect
+      .element(page.getByRole('dialog', { name: 'Nytt objekt', exact: true }))
+      .toBeVisible();
+  },
+);
+
 test('desktop retains the mounted map, bounded text view and complete table reading', async () => {
   await open(1440);
   const surface = document.querySelector('.spatial-surface');
@@ -340,8 +406,8 @@ test('desktop retains the mounted map, bounded text view and complete table read
   await closeConversationText();
   const object = await readObject('Alex');
   await expect
-    .element(object.getByRole('heading', { name: 'Uppgifter för Alex', exact: true }))
-    .toHaveFocus();
+    .element(object.getByRole('heading', { name: 'Alex · alla uppgifter', exact: true }))
+    .toBeVisible();
   await expect.element(object.getByText('Alex', { exact: true })).toBeVisible();
   expect(document.querySelector('.spatial-surface')).toBe(surface);
   const box = object.element().getBoundingClientRect();
@@ -353,19 +419,19 @@ test('desktop retains the mounted map, bounded text view and complete table read
 });
 
 test.each([320, 390, 1440])(
-  'reopening a table object reader focuses its heading at %i pixels',
+  'reopening table details retains disclosure focus at %i pixels',
   async (width) => {
     await open(width);
     const object = await readObject('Alex');
     await expect.element(object.getByText('Alex', { exact: true })).toBeVisible();
-    await closeSupportDialog('Uppgifter för Alex');
-    const entry = page.getByRole('button', { name: 'Läs alla uppgifter för Alex', exact: true });
+    await closeObject('Alex');
+    const entry = page.getByRole('button', { name: 'Alex', exact: true });
     await expect.element(entry).toHaveFocus();
-    entry.element().focus();
     await userEvent.keyboard('{Enter}');
+    await expect.element(entry).toHaveFocus();
     await expect
-      .element(object.getByRole('heading', { name: 'Uppgifter för Alex', exact: true }))
-      .toHaveFocus();
+      .element(object.getByRole('heading', { name: 'Alex · alla uppgifter', exact: true }))
+      .toBeVisible();
     await expect.element(object.getByText('Alex', { exact: true })).toBeVisible();
   },
 );
@@ -396,21 +462,26 @@ test('opening an editor does not redirect typing after the user chooses another 
   await expect.element(page.getByLabelText('Beskrivning', { exact: true })).toHaveFocus();
 });
 
-test.each(['reader-close', 'form-close'] as const)(
+test.each(['details-collapse', 'form-close'] as const)(
   '%s transition preserves a newer choice to type in table search',
   async (transition) => {
     await open(390);
-    if (transition === 'reader-close') await readObject('Alex');
+    if (transition === 'details-collapse') await readObject('Alex');
     else await editObject('Alex');
     const search = page.getByRole('searchbox', { name: 'Sök objekt i tabellen', exact: true });
     const observer = new MutationObserver(() => {
-      if (document.querySelector('dialog[open]')) return;
+      if (
+        document.querySelector(
+          transition === 'details-collapse' ? '.household-table-inline-details' : 'dialog[open]',
+        )
+      )
+        return;
       observer.disconnect();
       search.element().focus();
     });
     observer.observe(document.body, { attributes: true, childList: true, subtree: true });
     onTestFinished(() => observer.disconnect());
-    if (transition === 'reader-close') await closeSupportDialog('Uppgifter för Alex');
+    if (transition === 'details-collapse') await closeObject('Alex');
     else await closeSupportDialog('Redigera Alex', 'Stäng objektdialogen');
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     await userEvent.keyboard('Min sökning');
@@ -430,11 +501,12 @@ test('short table flow restores the used result and yields to an explicit map se
   });
   await page.viewport(320, 250);
   await readObject('Objekt 45');
-  await closeSupportDialog('Uppgifter för Objekt 45');
   const details = page.getByRole('button', {
-    name: 'Läs alla uppgifter för Objekt 45',
+    name: 'Redigera Objekt 45',
     exact: true,
   });
+  await details.click();
+  await closeSupportDialog('Redigera Objekt 45', 'Stäng objektdialogen');
   await expect.element(details).toHaveFocus();
   await expect.element(details).toBeInViewport();
   const bounds = details.element().getBoundingClientRect();
@@ -455,7 +527,7 @@ test('short table flow restores the used result and yields to an explicit map se
 test('complete view switching retains object reading, unsent conversation text and resize focus', async () => {
   await open(1440);
   await readObject('Alex');
-  await closeSupportDialog('Uppgifter för Alex');
+  await closeObject('Alex');
   await openConversationText();
   const conversation = page.getByRole('region', {
     name: 'Skriv till Skyttel',
@@ -469,7 +541,7 @@ test('complete view switching retains object reading, unsent conversation text a
   await closeConversationText();
   const object = await readObject('Alex');
   await expect.element(object.getByText('Alex', { exact: true })).toBeVisible();
-  await closeSupportDialog('Uppgifter för Alex');
+  await closeObject('Alex');
   await openMap();
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   const navigation = page.getByRole('region', { name: 'Navigation', exact: true });
@@ -504,26 +576,22 @@ test.each([390, 250])(
 );
 
 test.each([390, 900])(
-  'closing native readers preserves other object data and returns focus at %i pixels',
+  'collapsing table details preserves other object data and disclosure focus at %i pixels',
   async (width) => {
     await open(width);
     await readObject('Alex');
-    await closeSupportDialog('Uppgifter för Alex');
-    await expect
-      .element(page.getByRole('button', { name: 'Läs alla uppgifter för Alex', exact: true }))
-      .toHaveFocus();
+    await closeObject('Alex');
+    await expect.element(page.getByRole('button', { name: 'Alex', exact: true })).toHaveFocus();
     const other = await readObject('Tonmoln');
     await expect
-      .element(other.getByRole('heading', { name: 'Uppgifter för Tonmoln', exact: true }))
-      .toHaveFocus();
+      .element(other.getByRole('heading', { name: 'Tonmoln · alla uppgifter', exact: true }))
+      .toBeVisible();
     await expect.element(other.getByText('Tonmoln', { exact: true })).toBeVisible();
     await expect
-      .element(page.getByRole('dialog', { name: 'Uppgifter för Alex', exact: true }))
+      .element(page.getByRole('region', { name: 'Uppgifter för Alex', exact: true }))
       .not.toBeInTheDocument();
-    await closeSupportDialog('Uppgifter för Tonmoln');
-    await expect
-      .element(page.getByRole('button', { name: 'Läs alla uppgifter för Tonmoln', exact: true }))
-      .toHaveFocus();
+    await closeObject('Tonmoln');
+    await expect.element(page.getByRole('button', { name: 'Tonmoln', exact: true })).toHaveFocus();
     await openMap();
     await expect
       .element(page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }))

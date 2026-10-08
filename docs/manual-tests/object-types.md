@@ -346,9 +346,9 @@ Följande testfall:
 5. Öppna Utkastet via Skriv till Skyttel och spara med sparikonen.
    Starta om installationen och ladda
    om. Dölj Skuld i typdefinitionen och lägg förslaget i utkastet. Öppna
-   Tabell, fäll ut Husets lån och välj Läs alla uppgifter för Husets lån.
+   Tabell och fäll ut Husets lån för att läsa alla uppgifter direkt i raden.
    Läs den dolda skulden med säkerhet och datum.
-   Stäng läsningen, öppna Utkastet och spara med sparikonen.
+   Fäll ihop raden, öppna Utkastet och spara med sparikonen.
 6. Redigera Husets lån och välj Annan typ. Kontrollera beskrivning och
    ekonomiska uppgifter. Granska det tidigare egna värdet och bekräfta
    **Ta bort fältvärdena och byt typ** i förlustdialogen. Lägg i utkastet
@@ -703,8 +703,8 @@ the native form, draft and table readers”.
    läsningen med krysset.
 4. Välj utkastets sparikon. Vänta på Utkastet är sparat och stäng textvyn.
    Välj Tabell och fäll ut Ordningsprov. Kontrollera samma ordning i raden.
-   Öppna Läs alla uppgifter för Ordningsprov och kontrollera ordning och
-   fullständiga värden igen. Stäng läsningen med krysset.
+   Läs fullständiga värden direkt i raden, fäll ihop med namnet och öppna igen.
+   Kontrollera att fältens ordning och värden finns kvar.
 5. Läs den aktuella kartan i nätverkspanelen. Kontrollera att objektutkastet
    är tomt, det gemensamma objektet innehåller `first: 0` och `second: false`,
    och typens fältidentiteter och uttryckliga ordning är oförändrade.

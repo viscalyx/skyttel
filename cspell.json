@@ -4,6 +4,8 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "detaljvy",
+    "detaljvyn",
     "badgesen",
     "Arbetsytebyten",
     "absmiddle",
@@ -582,7 +584,12 @@
     "flerkonfliktsnavigationens",
     "vybredderna",
     "vybredd",
-    "läsutseende"
+    "läsutseende",
+    "unwired",
+    "Fontconfig",
+    "stängikon",
+    "stängkryss",
+    "stängkrysset"
   ],
   "overrides": [
     {

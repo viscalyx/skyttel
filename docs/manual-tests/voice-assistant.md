@@ -255,8 +255,11 @@ databasens sparande; redovisa inte det som ett prov av förlorat sådant svar.
    från `held`. Släpp med `tool REQUEST show_map_object {"objectId":"LO-ID"}`.
    Nästa `held` ska visa `displayed:true`. Avsluta med
    `reply REQUEST Objektet visas.`. Kräv synlig markering i kartan.
-   Öppna **Navigera**, panorera och välj **Stäng navigering** även i de
-   korta vyerna. Stängknappen ska gå att klicka på och lämna fokus på
+   Efter ändrad fönsterstorlek: nå **Fokusera markering** med tangentbordet
+   och välj den för att visa Lo bredvid det öppna uppgiftsfönstret.
+   Öppna **Navigera**, panorera och välj
+   **Stäng navigering** även i de korta vyerna.
+   Stängknappen ska gå att klicka på och lämna fokus på
    **Navigera**. Lo ska fortfarande vara vald, synlig och åtkomlig i kartan.
 2. Öppna webbläsarens utvecklarverktyg, **Network request blocking**.
    Lägg till mönstret `*text-assistant/*/recover` och aktivera blockeringen.

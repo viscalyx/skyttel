@@ -14,8 +14,8 @@ function rendered(element: Element | null): element is HTMLElement {
   );
 }
 
-function contained(element: HTMLElement, bounds: DOMRect) {
-  const box = element.getBoundingClientRect();
+function contained(element: HTMLElement | DOMRect, bounds: DOMRect) {
+  const box = element instanceof HTMLElement ? element.getBoundingClientRect() : element;
   return (
     box.width > 0 &&
     box.height > 0 &&
@@ -26,10 +26,27 @@ function contained(element: HTMLElement, bounds: DOMRect) {
   );
 }
 
-function uncovered(element: HTMLElement) {
-  const box = element.getBoundingClientRect();
+function uncovered(element: HTMLElement, box = element.getBoundingClientRect()) {
   return element.contains(
     document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2),
+  );
+}
+
+function readableObjectDetails(inspector: HTMLElement, viewport: DOMRect) {
+  const body = inspector.querySelector('.object-property-body');
+  const description = inspector.querySelector('.household-table-description');
+  if (!rendered(body) || !rendered(description)) return false;
+  const box = description.getBoundingClientRect();
+  const firstLine = new DOMRect(
+    box.x,
+    box.y,
+    box.width,
+    Math.min(box.height, Number.parseFloat(getComputedStyle(description).lineHeight) || box.height),
+  );
+  return (
+    contained(firstLine, body.getBoundingClientRect()) &&
+    contained(firstLine, viewport) &&
+    uncovered(description, firstLine)
   );
 }
 
@@ -86,6 +103,8 @@ export function waitForMapDisplay(
         );
         if (!scrolled && nodes.every(rendered) && rendered(selected)) {
           inspector.scrollTop = 0;
+          const body = inspector.querySelector('.object-property-body');
+          if (body instanceof HTMLElement) body.scrollTop = 0;
           const mapBox = surface.getBoundingClientRect();
           const detailsBox = inspector.getBoundingClientRect();
           let top = Math.min(mapBox.top, detailsBox.top);
@@ -112,7 +131,11 @@ export function waitForMapDisplay(
             uncovered(node)
           );
         });
-        const summary = inspector.querySelector('p');
+        // Object descriptions scroll inside the property window and may exceed
+        // the viewport. Its fixed title identifies the displayed object.
+        const summary = inspector.querySelector(
+          target.kind === 'object' ? 'h2' : '.map-selection-summary',
+        );
         const detailsBounds = inspector.getBoundingClientRect();
         if (
           nodesVisible &&
@@ -123,7 +146,8 @@ export function waitForMapDisplay(
           rendered(summary) &&
           contained(summary, viewport) &&
           contained(summary, detailsBounds) &&
-          uncovered(summary)
+          uncovered(summary) &&
+          (target.kind !== 'object' || readableObjectDetails(inspector, viewport))
         ) {
           finish(true);
           return;

@@ -116,11 +116,13 @@ och tabell, även när sökningen döljer det berörda objektet.
 
 Välj posten i **Alla konflikter**. Jämförelsen visar **Sparat i kartan nu**
 och **Ditt förslag**. Varje egenskap som skiljer sig behöver ett aktivt
-val. Klicka på raden på den sida du vill använda, eller välj den med
-Tab och Enter. Du kan kombinera egenskaper från båda sidorna. Identiska
-värden behöver inget val. Egna fältnamn visas som sina vanliga etiketter.
+val. Rader med ram går att välja. Klicka på raden på den sida du vill
+använda, eller välj den med Tab och Enter. Valda värden har starkare ramar.
+Du kan kombinera egenskaper från båda sidorna. Identiska värden visas som
+vanlig text och behöver inget val. Egna fältnamn visas som sina vanliga etiketter.
 
-**Efter dina val** visar den exakta kombinationen. **Lägg valen i utkastet**
+**Efter dina val** visar den exakta kombinationen och vilken sida varje
+valt värde kommer från. **Lägg valen i utkastet**
 blir tillgänglig först när alla nödvändiga val är gjorda och kombinationen
 är giltig. Om exempelvis **Uttryckligen inget** kombineras med ett
 målobjekt för ett samband förklaras felet och dina val finns kvar. Välj en

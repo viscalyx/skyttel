@@ -36,10 +36,7 @@ test('LÄS-05: identity reading distinguishes identified, unresolved and a propo
       ['Garage', 'Identifierat objekt'],
     ]) {
       await page.getByRole('button', { name, exact: true }).click();
-      await page
-        .getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true })
-        .click();
-      const dialog = page.getByRole('dialog', { name: `Uppgifter för ${name}`, exact: true });
+      const dialog = page.getByRole('region', { name: `Uppgifter för ${name}`, exact: true });
       const identity = dialog.locator('dl > div').filter({
         has: page.getByText('Identitet', { exact: true }),
       });
@@ -49,10 +46,8 @@ test('LÄS-05: identity reading distinguishes identified, unresolved and a propo
         await expect(identity).toContainText('Sparat: Ospecificerat objekt');
         await expect(identity).toContainText('◇ Ditt förslag: Identifierat objekt');
       }
-      await page.keyboard.press('Escape');
-      await expect(
-        page.getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true }),
-      ).toBeFocused();
+      await page.getByRole('button', { name, exact: true }).click();
+      await expect(page.getByRole('button', { name, exact: true })).toBeFocused();
     }
     const unchanged = (await read()).objects.find((object) => object.id === garage.id);
     expect(unchanged?.identity).toBe('unspecified');
@@ -129,11 +124,10 @@ test('LÄS-07: a long unbroken object name wraps in full reading at 320 CSS pixe
     await page.goto(installation.origin);
     await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     await page.getByRole('button', { name, exact: true }).click();
-    await page.getByRole('button', { name: `Läs alla uppgifter för ${name}`, exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: `Uppgifter för ${name}`, exact: true });
+    const dialog = page.getByRole('region', { name: `Uppgifter för ${name}`, exact: true });
     const heading = dialog.getByRole('heading', { name: `${name} · alla uppgifter`, exact: true });
     await expect(heading).toBeVisible();
-    for (const area of [dialog, dialog.locator('.household-read-body')])
+    for (const area of [dialog, dialog.locator('.household-table-details')])
       expect(await area.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
         true,
       );
@@ -188,7 +182,7 @@ for (const fallback of ['previous', 'heading'] as const) {
       await expect(
         fallback === 'previous'
           ? table.getByRole('button', { name: 'Samband för A', exact: true })
-          : table.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+          : table.getByRole('heading', { name: 'Hushållet Linden', exact: true }),
       ).toBeFocused();
     } finally {
       await installation.close();

@@ -12,10 +12,48 @@ import {
   utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { editTableObject, readTableObject } from '../support/domain-work.js';
+import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { focusMapSearch, mapFilters } from '../support/object-search.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
+
+async function expectContextIcons(page: Page, anchor: Locator) {
+  const actions = page.getByRole('toolbar', { name: 'Åtgärder för Molnmusik', exact: true });
+  await expect(actions).toBeVisible();
+  await expect(actions.getByRole('button')).toHaveCount(6);
+  expect(await actions.locator('button').allTextContents()).toEqual(['', '', '', '', '', '']);
+  await expect(actions.locator('h1, h2, h3, form')).toHaveCount(0);
+  await expect(
+    page.getByRole('dialog', { name: 'Åtgärder för Molnmusik', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    actions.getByRole('button', { name: 'Redigera objekt', exact: true }),
+  ).toHaveAttribute('title', /redigeringsformulär/);
+  await expect(
+    actions.getByRole('button', { name: 'Visa i kartan', exact: true }),
+  ).toHaveAccessibleDescription(/Rensar kartans sökning och filter/);
+  await expect(
+    page
+      .locator('.workspace-context')
+      .getByRole('button', { name: 'Visa samband i kartan', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    actions.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
+  ).toHaveAccessibleDescription(/Behåller kartans sökning och filter/);
+  const bounds = await actions.boundingBox();
+  const target = await anchor.boundingBox();
+  const viewport = page.viewportSize();
+  expect(bounds).not.toBeNull();
+  expect(target).not.toBeNull();
+  if (!bounds || !target || !viewport) throw new Error('Context actions need visible bounds');
+  expect(bounds.x).toBeGreaterThanOrEqual(8);
+  expect(bounds.y).toBeGreaterThanOrEqual(8);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width - 8);
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height - 8);
+  if (target.x + target.width + 8 + bounds.width <= viewport.width - 8)
+    expect(bounds.x).toBeCloseTo(target.x + target.width + 8, 0);
+  return actions;
+}
 
 async function arrange(page: Page, origin: string) {
   await signIn(page.request, origin);
@@ -241,7 +279,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
       .getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true })
       .click({ button: 'right' });
     await page
-      .getByRole('dialog')
+      .getByRole('toolbar', { name: /^Åtgärder för/ })
       .getByRole('button', { name: 'Visa samband i kartan', exact: true })
       .click();
     await expect(
@@ -250,7 +288,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
         { exact: true },
       ),
     ).toBeVisible();
-    await expect(space.getByRole('dialog')).not.toBeVisible();
+    await expect(page.getByRole('toolbar', { name: /^Åtgärder för/ })).toHaveCount(0);
     const loIcon = space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
     for (const hit of [
       space.locator('canvas'),
@@ -301,7 +339,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
       .getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true })
       .click({ button: 'right' });
     await page
-      .getByRole('dialog')
+      .getByRole('toolbar', { name: /^Åtgärder för/ })
       .getByRole('button', { name: 'Visa samband i kartan', exact: true })
       .click();
     await focusMapSearch(page);
@@ -364,6 +402,32 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
     await closeTextView(page);
     await openMap(page);
     await music.click({ button: 'right' });
+    const actions = await expectContextIcons(page, music);
+    await expect(
+      actions.getByRole('button', { name: 'Redigera objekt', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      actions.getByRole('button', { name: 'Visa uppgifter för Molnmusik', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      actions.getByRole('button', { name: 'Samband för Molnmusik', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(actions.getByRole('button', { name: 'Visa i kartan', exact: true })).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      actions.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(actions).toHaveCount(0);
+    await expect(music).toBeFocused();
+    await page.keyboard.press('Shift+F10');
+    await expect(actions).toBeVisible();
+    await space.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
+    await expect(actions).toHaveCount(0);
+    await music.click({ button: 'right' });
     await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
     await page.getByLabel('Beskrivning', { exact: true }).fill('Syntetiskt musikexempel');
     await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
@@ -380,6 +444,7 @@ test('RYMD-03: context actions and draft symbols distinguish proposals from save
       }),
     ).toBe(true);
     await musicName.click({ button: 'right' });
+    await expectContextIcons(page, musicName);
     await expect(
       page.getByRole('button', { name: 'Ta bort objekt', exact: true }),
     ).toHaveAccessibleDescription(
@@ -467,7 +532,10 @@ test('RYMD-04: touch menus, viewport changes and graphics recovery retain unsent
       ],
     });
     await expect(page.getByRole('button', { name: 'Redigera objekt', exact: true })).toBeVisible();
+    const actions = await expectContextIcons(page, music);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect(actions).toBeVisible();
+    await expect(page.locator('dialog.object-dialog-C')).toHaveCount(0);
     await page.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
     const form = page.locator('dialog.object-dialog-C');
     await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickad mobiltext');
@@ -664,25 +732,28 @@ test('RYMD-05: labels, keyboard editing and relationship text survive view chang
     await expect(
       table.getByRole('button', { name: 'Visa Lo Exempel i kartan', exact: true }),
     ).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(
+      table.getByRole('button', { name: 'Visa samband för Lo Exempel i kartan', exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(
+      table.getByRole('button', { name: 'Ta bort Lo Exempel', exact: true }),
+    ).toBeFocused();
     const readAll = table.getByRole('button', {
-      name: 'Läs alla uppgifter för Lo Exempel',
+      name: 'Redigera Lo Exempel',
       exact: true,
     });
     await readAll.focus();
     await page.keyboard.press('Enter');
-    const reader = page.getByRole('dialog', { name: 'Uppgifter för Lo Exempel', exact: true });
+    const reader = page.getByRole('dialog', { name: 'Redigera Lo Exempel', exact: true });
+    await expect(reader.getByLabel('Namn', { exact: true })).toBeFocused();
+    await closeSupportDialog(page, 'Redigera Lo Exempel', 'Stäng objektdialogen');
     await expect(
-      reader.getByRole('heading', { name: 'Uppgifter för Lo Exempel', exact: true }),
-    ).toBeFocused();
-    await closeSupportDialog(page, 'Uppgifter för Lo Exempel');
-    await table.getByRole('button', { name: 'Åtgärder för Lo Exempel', exact: true }).click();
-    const actions = page.getByRole('dialog', { name: 'Åtgärder för Lo Exempel', exact: true });
-    await expect(
-      actions.getByRole('button', { name: 'Ta bort objekt', exact: true }),
+      table.getByRole('button', { name: 'Ta bort Lo Exempel', exact: true }),
     ).toHaveAccessibleDescription(
       /Objektet och dess 1 samband läggs som borttagningar i ditt utkast/,
     );
-    await page.keyboard.press('Escape');
     await edit.focus();
     await page.keyboard.press('Enter');
     await expect(page.getByLabel('Namn', { exact: true })).toBeFocused();
@@ -980,7 +1051,7 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
       .getByRole('button', { name: 'Välj objekt: Molnmusik', exact: true })
       .click({ button: 'right' });
     await page
-      .getByRole('dialog')
+      .getByRole('toolbar', { name: /^Åtgärder för/ })
       .getByRole('button', { name: 'Visa samband i kartan', exact: true })
       .click();
     for (const name of ['Lo Exempel', 'Kim Exempel'])
@@ -1008,7 +1079,7 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
       .getByRole('button', { name: 'Välj objekt: Kim Exempel', exact: true })
       .click({ button: 'right' });
     await page
-      .getByRole('dialog')
+      .getByRole('toolbar', { name: /^Åtgärder för/ })
       .getByRole('button', { name: 'Visa samband i kartan', exact: true })
       .click();
     await space
@@ -1292,7 +1363,7 @@ test('RYMD-10: label notices remain stable while a compact map opens its saved a
     await expect(await readTableObject(page, 'Familjens Molnmusik')).toContainText(
       'Rättad för hand',
     );
-    await closeSupportDialog(page, 'Uppgifter för Familjens Molnmusik');
+    await closeTableObject(page, 'Familjens Molnmusik');
     await openTable(page);
     const objects = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await expect(objects).toContainText('Robins notering');

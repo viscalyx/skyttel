@@ -74,14 +74,19 @@ in both opening orders”.
 **Steg:**
 
 1. Markera Lo. Öppna **Navigera**, flytta titelraden med Skift+pil nedåt
-   och öppna sedan **Visa detaljer**. Läs Lo i den fasta uppgiftsytan.
-   Kontrollera att navigationens stängknapp är nåbar utan att täcka läsningen.
+   och öppna sedan **Visa detaljer**. Läs Lo i det flyttbara uppgiftsfönstret.
+   På dator: flytta dess
+   titelrad åt vänster med Skift+pil tills fönstren ligger bredvid varandra.
+   Fokusera navigationens stängikon och kontrollera att den kan nås.
+   Fokusera sedan Los rubrik och kontrollera att uppgifterna visas framför
+   navigationen om fönstren överlappar på en liten skärm.
    Vid 844 × 390 och 320 × 250: använd en provinstallation utan samtalstjänst,
    aktivera **Prata med Skyttel** före öppningen och låt den verkliga
    otillgänglighetsnotisen vara öppen under samma steg.
    Läs uppgiftsytans sista värde och nå **Samband för Lo Exempel** med
-   notisen kvar. Läs hela knapptexten även om den står på flera rader.
-   Rulla tillbaka för att läsa rubriken.
+   notisen kvar. Fokusera först notisens stängikon för att läsa notisen och sedan
+   uppgiftsfönstrets rubrik för att läsa uppgifterna. Sambandsikonen
+   ska kunna nås även när innehållet behöver rullas.
 2. På dator: flytta navigationen åt vänster med Skift+pil. Ändra fönstrets
    bredd lite och återställ den. Navigationens möjliga placering och
    uppgiftsytans placering ska bestå. Flytta åt vänster igen.
@@ -104,18 +109,18 @@ in both opening orders”.
 
 **Förväntat resultat:**
 
-- Navigation och fasta uppgifter täcker inte varandra. Innehållet går
-  att rulla när utrymmet är litet, med nåbara kontroller och synligt fokus.
-- Den öppna samtalsnotisen har en egen plats. Den täcker varken
-  navigationens kontroller eller uppgiftsytans läsbara innehåll. Zoom,
-  panorering, sista värdet och uppgiftsytans åtgärder går att nå utan
-  att först stänga notisen.
-- Hela knapptexten och knappen går att visa inom uppgiftsytans rullade
-  område, även med text på flera rader. Notisens fullständiga text och
-  stängknapp är fortfarande åtkomliga.
-- Navigation kan flyttas med tangentbord och pekare inom användbart
-  utrymme, utan att täcka den fasta läsytan. Ingen ny flyttbar
-  redigeringspanel eller återupptagningsingång införs.
+- På dator kan uppgiftsfönstret placeras bredvid navigationen. I små
+  fönster kan de överlappa; den fokuserade ytan visas framför den andra.
+  Innehållet går att rulla med nåbara kontroller och synligt fokus.
+- Den öppna samtalsnotisen har en egen plats utanför navigationen.
+  Fokusera dess stängikon för att läsa notisen framför överlappande
+  uppgiftsfönster. Zoom, panorering, sista värdet och uppgiftsfönstrets
+  åtgärder går att nå utan att först stänga notisen.
+- Åtgärdsikonerna går att visa inom uppgiftsfönstrets rullade område.
+  Notisens fullständiga text och stängknapp är fortfarande åtkomliga.
+- Navigation och uppgiftsfönster kan flyttas med tangentbord och pekare
+  inom synligt utrymme. Redigering använder det vanliga fullständiga
+  formuläret med förlustskydd.
 - Byte till mininavigering bevarar uppgiftsytans placering och lämnar
   de läsbara uppgifterna åtkomliga. Längre uppgifter kan kräva rullning.
 - Avbruten formulärförlust behåller alla oskickade värden. Ingen personlig
@@ -176,7 +181,7 @@ access and editing through the list”.
 **Steg:**
 
 1. Markera Lo och välj **Visa detaljer**.
-2. Välj **Samband för Lo Exempel** i den fasta uppgiftsytan.
+2. Välj **Samband för Lo Exempel** i det flyttbara uppgiftsfönstret.
 3. Läs **Lo Exempel → Använder → Kim Exempel**, båda ändpunkterna och
    riktningen. Välj **Kim Exempel**, läs dess fullständiga uppgifter och
    kontrollera fokus på rubriken **Uppgifter för Kim Exempel**.

@@ -288,8 +288,8 @@ and can be discarded”.
 
 **Steg:**
 
-1. Öppna Musikkontos utökade tabellrad, välj **Åtgärder för Musikkonto**
-   och **Ta bort objekt**. Öppna utkastvyn och läs hela objektförslaget
+1. Välj radens röda papperskorg **Ta bort Musikkonto** i tabellen.
+   Öppna utkastvyn och läs hela objektförslaget
    samt båda sambandsförslagen. Stäng läsdialogerna med Escape.
 2. Stäng textvyn, öppna **Samband för Kim → Nytt samband** och kontrollera
    alternativen i **Från objekt** och **Till objekt**. Välj
@@ -407,8 +407,8 @@ shared map after review”.
    utkastet. Öppna utkastvyn och läs hela sparade underlaget och förslaget.
 5. Stäng läsdialogen, välj **Kasta hela utkastet** och bekräfta
    **Ta bort hela utkastet**. Stäng textvyn och öppna Lo Exempels formulär
-   utan ändring. Välj **Avbryt** och sedan **Åtgärder för Lo Exempel →
-   Ta bort objekt** i den utökade tabellraden. Granska utkastet och spara det.
+   utan ändring. Välj **Avbryt** och sedan den röda papperskorgen
+   **Ta bort Lo Exempel** på tabellraden. Granska utkastet och spara det.
 
 **Förväntat resultat:**
 
@@ -802,15 +802,15 @@ every reading entry uses the same object dialog”.
 1. Välj tabellens Redigera Sparad cykel. Ändra namnet och ändra tillbaka.
    Rensa och återställ ett redan uppgivet Pris i Ekonomiska uppgifter. Välj Lägg
    i utkastet och öppna samband.
-2. Stäng samband. Expandera tabellraden, välj Läs alla uppgifter och därefter
-   Redigera Sparad cykel. Avbryt utan ändring.
+2. Stäng samband. Expandera tabellraden och välj pennikonen
+   Redigera Sparad cykel bland radens åtgärder. Avbryt utan ändring.
 
 **Förväntat resultat:**
 
 - Oförändrade uppgifter skapar inget förslag eller versionsbyte.
   Sambandsrubriken får fokus och stängning återför det till den ursprungliga
-  redigeringsknappen. Läsingången öppnar samma dialog och återgår till
-  läsknappen.
+  redigeringsknappen. Pennikonen öppnar samma objektformulär och får
+  tillbaka fokus när det stängs utan ändring.
 
 ### KARTA-20: bevara typens ordning och dolda värden
 

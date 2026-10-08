@@ -4,6 +4,9 @@ For terminology, read [./CONTEXT.md](./CONTEXT.md).
 
 Follow the rules in @.github/copilot-instructions.md and the instructions in `.github/instructions/*.md`
 
+Run builds and tests through the repository's npm scripts to use the
+shared process lock.
+
 - Never use `git stash` to see if you caused the error when linting or testing, help fix the error regardless.
 - Never use `git checkout`, `git revert` or other Git commands to undo your changes unless you are confident that you won't lose uncommitted work. If you need to undo changes, use `git diff` to compare with the last committed version then use edit tools to implement the necessary fixes.
 

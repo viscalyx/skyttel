@@ -1,4 +1,4 @@
-import { expect, type Locator, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { prepareHouseholdTable } from '../support/household-table.js';
 import { createInstallation } from '../support/installation.js';
 import { focusMapSearch, mapFilters, prepareObjectSearch } from '../support/object-search.js';
@@ -182,7 +182,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
     await table.getByRole('searchbox').fill('prov');
-    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+    await table.getByRole('button', { name: /^Filter/ }).click();
     const filters = page.getByRole('dialog', { name: 'Tabellens filter' });
     await filters.getByLabel('Typ 2', { exact: true }).check();
     await filters.getByLabel('Nytt', { exact: true }).check();
@@ -202,7 +202,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
         exact: true,
       }),
     ).toBeVisible();
-    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+    await table.getByRole('button', { name: /^Filter/ }).click();
     await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
     await expect(filters.getByRole('group', { name: 'Förslag i ditt utkast' })).toHaveCount(0);
     await page.keyboard.press('Escape');
@@ -228,7 +228,7 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
   }
 });
 
-test('SÖK-05: mobile search and native filter dialog provide touch entry and preserve restrictions', async ({
+test('SÖK-05: shared compact search and filter dialogs preserve restrictions on mobile and desktop', async ({
   page,
 }) => {
   const installation = await createInstallation();
@@ -237,165 +237,127 @@ test('SÖK-05: mobile search and native filter dialog provide touch entry and pr
     const before = await read();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(installation.origin);
-    const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-    await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
     await focusMapSearch(page);
     const panel = page.getByRole('region', { name: 'Kartans sökning och filter' });
     await expect(panel.getByRole('searchbox')).toBeFocused();
-    await expect((await mapFilters(page)).getByLabel('Ta med upphörda')).toBeVisible();
     await panel.getByRole('searchbox').fill('prov');
     await (await mapFilters(page)).getByLabel('Ta med upphörda').check();
-    await page
-      .getByRole('dialog', { name: 'Kartans filter' })
-      .getByRole('button', { name: 'Stäng filter', exact: true })
-      .click();
+    await page.keyboard.press('Escape');
     await expect(panel.getByRole('searchbox')).toHaveValue('prov');
-    await expect(panel.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeVisible();
-    await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
-    await expect(tools.getByRole('button', { name: /^Sök i kartan/ })).toHaveCount(0);
-    await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await page.getByRole('button', { name: 'Tabell', exact: true }).click();
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
-    await table.getByRole('searchbox').fill('399 egen');
-    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+    const search = table.getByRole('searchbox');
+    const trigger = table.getByRole('button', { name: /^Filter/ });
     const filters = page.getByRole('dialog', { name: 'Tabellens filter' });
+    await search.fill('399 egen');
+    // Search text alone does not activate filters in either view.
+    await expect(trigger).toHaveAccessibleName('Filter');
+    const searchBox = await search.boundingBox();
+    const triggerBox = await trigger.boundingBox();
+    if (!searchBox || !triggerBox) throw new Error('Search and Filter must be visible.');
+    expect(triggerBox.x).toBeGreaterThanOrEqual(searchBox.x + searchBox.width);
+    expect(triggerBox.y).toBe(searchBox.y);
+    await trigger.click();
     await expect(filters.getByRole('heading')).toBeFocused();
-    const checkButtonHits = async (button: Locator) => {
-      expect(
-        await button.evaluate((button) => {
-          const box = button.getBoundingClientRect();
-          return [
-            [box.left + 8, box.top + 8],
-            [box.right - 8, box.top + 8],
-            [box.left + 8, box.bottom - 8],
-            [box.right - 8, box.bottom - 8],
-            [box.left + box.width / 2, box.top + box.height / 2],
-          ].every(([x, y]) => button.contains(document.elementFromPoint(x, y)));
-        }),
-      ).toBe(true);
-      await button.click({ trial: true });
-    };
-    const checkFilterLayout = async () => {
-      const close = filters.getByRole('button', { name: 'Stäng filter', exact: true });
-      await expect(close).toHaveText('×');
-      const frame = await filters.boundingBox();
-      const closeBox = await close.boundingBox();
-      if (!frame || !closeBox) throw new Error('Filterramen och krysset ska vara synliga.');
-      expect(closeBox.width).toBeGreaterThanOrEqual(44);
-      expect(closeBox.height).toBeGreaterThanOrEqual(44);
-      expect(closeBox.x).toBeGreaterThanOrEqual(frame.x);
-      expect(closeBox.y).toBeGreaterThanOrEqual(frame.y);
-      expect(closeBox.x + closeBox.width).toBeLessThanOrEqual(frame.x + frame.width);
-      expect(closeBox.y + closeBox.height).toBeLessThanOrEqual(frame.y + frame.height);
-      await checkButtonHits(close);
-      for (const checkbox of await filters.getByRole('checkbox').all()) {
-        await checkbox.scrollIntoViewIfNeeded();
-        const geometry = await checkbox.evaluate((input) => {
-          const label = input.closest('label');
-          const text = [...(label?.childNodes ?? [])].find(
-            (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
-          );
-          if (!text) throw new Error('Filtervalet behöver sin läsbara etikett.');
-          const range = document.createRange();
-          range.selectNodeContents(text);
-          const firstLine = range.getClientRects()[0];
-          const box = input.getBoundingClientRect();
-          return {
-            name: label?.textContent?.trim(),
-            inline:
-              box.right <= firstLine.left &&
-              box.top < firstLine.bottom &&
-              firstLine.top < box.bottom,
-          };
-        });
-        expect
-          .soft(
-            geometry.inline,
-            `Checkbox must precede its text on the same line: ${geometry.name}`,
-          )
-          .toBe(true);
-      }
-    };
-    await checkFilterLayout();
     await filters.getByLabel('Typ 2', { exact: true }).check();
-    await expect(filters.getByText('Filter ändrar vilka objekt tabellen visar.')).toBeVisible();
-    const showResults = filters.getByRole('button', { name: 'Visa objekt', exact: true });
-    await expect(showResults).toBeVisible();
-    await showResults.click();
-    await expect(table.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
-    await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
+    await expect(filters.getByRole('status')).toContainText('1 träff');
+    await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+    await expect(trigger).toBeFocused();
+    await expect(search).toHaveValue('399 egen');
     await expect(table.getByRole('rowheader')).toHaveCount(1);
-    const box = await table.getByRole('searchbox').boundingBox();
-    expect(box?.x).toBeGreaterThanOrEqual(0);
-    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
+    const clear = table.getByRole('button', { name: 'Rensa sökning', exact: true });
+    await expect(clear).toHaveText('×');
+    await clear.click();
+    await expect(search).toHaveValue('');
+    await expect(search).toBeFocused();
+    const badge = table.getByRole('button', { name: 'Ta bort filter: Typ 2', exact: true });
+    await expect(badge).toBeVisible();
+    await expect(table.getByRole('rowheader')).toHaveCount(30);
+    await search.fill('399 egen');
     for (const viewport of [
       { width: 320, height: 640 },
       { width: 320, height: 250 },
       { width: 1280, height: 900 },
     ]) {
       await page.setViewportSize(viewport);
-      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+      await trigger.click();
       await expect(filters.getByRole('heading')).toBeFocused();
-      await checkFilterLayout();
       await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
-      await expect(showResults).toBeVisible();
       const frame = await filters.boundingBox();
-      expect(frame).not.toBeNull();
-      if (!frame) throw new Error('Filterdialogens ram saknas');
-      if (viewport.width === 320) {
-        expect(frame.x).toBe(0);
-        expect(frame.y).toBe(0);
-        expect(frame.width).toBe(viewport.width);
-        expect(frame.height).toBe(viewport.height);
-      } else {
-        expect(frame.width).toBe(800);
-      }
+      if (!frame) throw new Error('The compact filter dialog must be visible.');
+      expect(frame.x).toBeGreaterThanOrEqual(0);
+      expect(frame.y).toBeGreaterThanOrEqual(0);
+      expect(frame.x + frame.width).toBeLessThanOrEqual(viewport.width);
+      expect(frame.y + frame.height).toBeLessThanOrEqual(viewport.height);
+      expect(frame.width).toBeLessThanOrEqual(440);
       expect(await filters.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
         true,
       );
-      await showResults.focus();
-      const action = await showResults.boundingBox();
-      expect(action).not.toBeNull();
-      if (!action) throw new Error('Knappen för att visa träffar saknas');
-      expect(action.y + action.height).toBeLessThanOrEqual(viewport.height);
-      await checkButtonHits(showResults);
-      await filters.getByRole('checkbox').first().scrollIntoViewIfNeeded();
-      await page.screenshot({
-        path: `/tmp/skyttel-244/259-filter-layout-${viewport.width}x${viewport.height}.png`,
+      for (const checkbox of await filters.getByRole('checkbox').all()) {
+        await checkbox.scrollIntoViewIfNeeded();
+        expect(
+          await checkbox.evaluate((input) => {
+            const box = input.getBoundingClientRect();
+            return (
+              box.width >= 24 &&
+              box.height >= 24 &&
+              input.contains(
+                document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2),
+              )
+            );
+          }),
+        ).toBe(true);
+      }
+      const reset = filters.getByRole('button', {
+        name: 'Återställ sökning och filter',
+        exact: true,
       });
-      await showResults.click();
+      await reset.focus();
+      await expect(reset).toBeInViewport();
+      await page.keyboard.press('Escape');
       await expect(filters).not.toBeVisible();
-      await expect(
-        table.getByRole('button', { name: 'Filter · aktiva', exact: true }),
-      ).toBeFocused();
-      await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
+      await expect(trigger).toBeFocused();
+      await expect(search).toHaveValue('399 egen');
       await expect(table.getByRole('rowheader')).toHaveCount(1);
-      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
-      await filters.getByRole('button', { name: 'Stäng filter', exact: true }).click();
+      await trigger.click();
+      await filters.getByRole('button', { name: 'Stäng filter' }).click();
       await expect(filters).not.toBeVisible();
-      await expect(
-        table.getByRole('button', { name: 'Filter · aktiva', exact: true }),
-      ).toBeFocused();
-      await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
-      await expect(table.getByRole('rowheader')).toHaveCount(1);
-      await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
-      await showResults.focus();
-      await showResults.press('Enter');
+      await expect(trigger).toBeFocused();
+      await trigger.click();
+      if (viewport.height === 250) {
+        // The short-screen overlay uses most of the viewport; dismiss it
+        // through the exposed edge before returning to the search field.
+        await page.mouse.click(1, 1);
+        await expect(filters).not.toBeVisible();
+      }
+      await search.click();
       await expect(filters).not.toBeVisible();
-      await expect(
-        table.getByRole('button', { name: 'Filter · aktiva', exact: true }),
-      ).toBeFocused();
-      await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
-      await expect(table.getByRole('rowheader')).toHaveCount(1);
-      expect(await read()).toEqual(before);
+      await expect(search).toBeFocused();
+      await expect(badge).toBeVisible();
     }
-    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
-    await expect(filters.getByLabel('Typ 2', { exact: true })).toBeChecked();
-    await showResults.focus();
-    await showResults.press('Enter');
-    await expect(filters).not.toBeVisible();
-    await expect(table.getByRole('button', { name: 'Filter · aktiva', exact: true })).toBeFocused();
-    await expect(table.getByRole('searchbox')).toHaveValue('399 egen');
-    await expect(table.getByRole('rowheader')).toHaveCount(1);
+    await badge.click();
+    await expect(trigger).toBeFocused();
+    await expect(trigger).toHaveAccessibleName('Filter');
+    await expect(search).toHaveValue('399 egen');
+    await trigger.click();
+    await filters.getByLabel('Ta med borttagna').check();
+    await page.keyboard.press('Escape');
+    await table.getByRole('button', { name: 'Ta bort filter: Ta med borttagna' }).click();
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await expect(filters.getByLabel('Ta med borttagna')).not.toBeChecked();
+    await filters.getByLabel('Typ 10', { exact: true }).check();
+    await filters
+      .getByRole('button', { name: 'Återställ sökning och filter', exact: true })
+      .click();
+    await expect(search).toHaveValue('');
+    await expect(filters.getByRole('checkbox', { checked: true })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Karta', exact: true }).click();
+    await expect(panel.getByRole('searchbox')).toHaveValue('prov');
+    await expect(
+      panel.getByRole('button', { name: 'Ta bort filter: Ta med upphörda' }),
+    ).toBeVisible();
     expect(await read()).toEqual(before);
   } finally {
     await installation.close();
@@ -422,11 +384,11 @@ test('SÖK-02: multiple filters combine independently and keep proposals distinc
     await expect(table.getByRole('button', { name: 'A 2', exact: true })).toBeVisible();
     await expect(table.getByRole('button', { name: 'Nytt prov', exact: true })).toBeVisible();
     await table.getByRole('button', { name: 'A 2', exact: true }).click();
-    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+    await table.getByRole('button', { name: /^Filter/ }).click();
     await filters.getByLabel('Bara markerade').check();
     await page.keyboard.press('Escape');
     await expect(table.getByRole('rowheader')).toHaveCount(1);
-    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+    await table.getByRole('button', { name: /^Filter/ }).click();
     await filters.getByRole('button', { name: 'Återställ sökning och filter' }).click();
     await filters.getByLabel('Föreslagen borttagning', { exact: true }).check();
     await expect(table.getByRole('rowheader')).toHaveCount(0);
@@ -435,7 +397,7 @@ test('SÖK-02: multiple filters combine independently and keep proposals distinc
     await page.keyboard.press('Escape');
     await expect(table.getByRole('rowheader')).toHaveCount(1);
     await expect(table.getByRole('button', { name: 'Tas bort prov', exact: true })).toBeVisible();
-    await table.getByRole('button', { name: 'Filter · aktiva', exact: true }).click();
+    await table.getByRole('button', { name: /^Filter/ }).click();
     await filters.getByLabel('Föreslagen borttagning', { exact: true }).uncheck();
     await filters.getByLabel('Ta med borttagna').check();
     await page.keyboard.press('Escape');

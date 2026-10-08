@@ -22,6 +22,7 @@ import {
 } from '../support/conflict-properties.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import {
+  closeTableObject,
   editObjectRelationship,
   editTableObject,
   openObjectRelationships,
@@ -458,7 +459,7 @@ test('UTKAST-19: an own object correction preserves staged independent work and 
     await openTable(page);
     const independent = await readTableObject(page, 'Oskickad cykel');
     await expect(independent).toContainText('Behåll den här texten');
-    await closeSupportDialog(page, 'Uppgifter för Oskickad cykel');
+    await closeTableObject(page, 'Oskickad cykel');
     const corrected = await app.read();
     expect(corrected.objects).toEqual(saved.objects);
     expect(corrected.draft.changes).toHaveLength(2);

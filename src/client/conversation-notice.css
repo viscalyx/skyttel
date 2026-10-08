@@ -115,6 +115,11 @@
   flex: none;
   height: var(--notice-height, 0px);
 }
+/* The inline notice stays mounted in the toolbar. Its parent must remain
+   above the focused text view that reserves its visual slot. */
+.household-map.workspace-shell .workspace-tools:has(.conversation-notice[data-inline="true"]) {
+  z-index: 35;
+}
 /* Keep the card fixed to its visual slot, outside the toolbar's scroll area.
    Translate only the voice box; a transformed ancestor would instead make
    fixed notice coordinates relative to the corner on a narrow screen. */

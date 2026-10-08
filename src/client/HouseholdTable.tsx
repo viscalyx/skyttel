@@ -5,11 +5,9 @@ import { usableFocusTarget } from './modal-focus.js';
 import { ObjectReadDetails } from './ObjectReadDetails.js';
 import {
   initialObjectSearch,
-  ObjectSearchFilters,
-  ObjectSearchInput,
+  ObjectSearch,
   objectSearchMatch,
   objectSearchResults,
-  searchRestricted,
   useDraftFilterReset,
 } from './ObjectSearch.js';
 import { WorkspaceIcon } from './WorkspaceTools.js';
@@ -58,6 +56,7 @@ export function householdTableRows(state: MapState, types: ObjectType[]): Househ
 
 export function HouseholdTable({
   active,
+  householdName,
   workDisabled = false,
   mapAvailable = true,
   rows,
@@ -67,15 +66,18 @@ export function HouseholdTable({
   onEdit,
   onRelationships,
   relationshipCounts,
-  onRead,
   onReveal,
-  onActions,
+  onFocusRelationships,
+  onRemove,
+  removalNotice,
   searchContent,
   hasProposals = false,
   objectTypes = [],
   statusContent,
+  actionContent,
 }: {
   active: boolean;
+  householdName: string;
   workDisabled?: boolean;
   mapAvailable?: boolean;
   rows: HouseholdTableRow[];
@@ -85,23 +87,22 @@ export function HouseholdTable({
   onEdit?: (object: MapObject, restoreFocus: () => void) => void;
   onRelationships?: (object: MapObject, restoreFocus: () => void) => void;
   relationshipCounts?: Map<string, number>;
-  onRead?: (object: MapObject, restoreFocus: () => void) => void;
   onReveal?: (object: MapObject) => void;
-  onActions?: (object: MapObject, restoreFocus: () => void) => void;
+  onFocusRelationships?: (object: MapObject) => void;
+  onRemove?: (object: MapObject) => Promise<boolean> | undefined;
+  removalNotice?: (object: MapObject, id: string) => ReactNode;
   searchContent?: ReactNode;
   hasProposals?: boolean;
   objectTypes?: ObjectType[];
   statusContent?: ReactNode;
+  actionContent?: ReactNode;
 }) {
   const prefix = useId();
-  const [sort, setSort] = useState('name-asc');
+  const [sort, setSort] = useState<'name-asc' | 'name-desc' | 'type-asc' | 'type-desc'>('name-asc');
   const [page, setPage] = useState(0);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [search, setSearch] = useState(initialObjectSearch);
   const notice = useDraftFilterReset(hasProposals, search, setSearch);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterDialog = useRef<HTMLDialogElement>(null);
-  const filterButton = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const tableRegion = useRef<HTMLElement>(null);
   const resultRegion = useRef<HTMLElement>(null);
@@ -203,6 +204,7 @@ export function HouseholdTable({
       });
     } else if (
       active &&
+      !workDisabled &&
       lastFocus.current &&
       !usableFocusTarget(lastFocus.current) &&
       document.activeElement === document.body
@@ -217,13 +219,9 @@ export function HouseholdTable({
       if (returnFrame.current !== undefined) cancelAnimationFrame(returnFrame.current);
     };
   }, [active]);
-  useLayoutEffect(() => {
-    const dialog = filterDialog.current;
-    if (filtersOpen && dialog && !dialog.open) {
-      dialog.showModal();
-      dialog.querySelector<HTMLElement>('h2')?.focus();
-    } else if (!filtersOpen && dialog?.open) dialog.close();
-  }, [filtersOpen]);
+  function changeSort(column: 'name' | 'type') {
+    setSort(sort === `${column}-asc` ? `${column}-desc` : `${column}-asc`);
+  }
   function changePage(next: number) {
     pageFocusRequested.current = true;
     setPage(next);
@@ -255,15 +253,10 @@ export function HouseholdTable({
       <header className="household-table-heading">
         <div>
           <h1 ref={heading} tabIndex={-1}>
-            Hushållets tabell
+            {householdName}
           </h1>
           <span>Sparade uppgifter och ditt utkast</span>
         </div>
-        {onNew && (
-          <button type="button" className="primary" disabled={workDisabled} onClick={onNew}>
-            ＋ Nytt objekt
-          </button>
-        )}
       </header>
       {statusContent}
       {!mapAvailable && (
@@ -272,25 +265,30 @@ export function HouseholdTable({
           tabellen.
         </p>
       )}
-      <section className="household-table-search" aria-label="Tabellens sökning och filter">
+      <div className="household-table-search">
         {searchContent}
-        <ObjectSearchInput
+        <ObjectSearch
+          active={active}
           search={search}
           onChange={(next) => {
             setSearch(next);
             setPage(0);
           }}
-          label="Sök objekt i tabellen"
+          types={types}
+          selectedIds={selectedIds}
+          hasProposals={hasProposals}
+          matchingCount={found.length}
+          table
         />
-        <button
-          ref={filterButton}
-          type="button"
-          aria-expanded={filtersOpen}
-          onClick={() => setFiltersOpen(true)}
-        >
-          Filter{searchRestricted(search) ? ' · aktiva' : ''}
-        </button>
-      </section>
+        <div className="household-table-actions">
+          {actionContent}
+          {onNew && (
+            <button type="button" className="primary" disabled={workDisabled} onClick={onNew}>
+              ＋ Nytt objekt
+            </button>
+          )}
+        </div>
+      </div>
       <section
         ref={resultRegion}
         tabIndex={-1}
@@ -299,19 +297,6 @@ export function HouseholdTable({
       >
         <div className="household-table-result-heading">
           <p role="status">{active ? notice : ''}</p>
-          <label>
-            Sortering
-            <select
-              aria-label="Sortering"
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-            >
-              <option value="name-asc">Namn A–Ö</option>
-              <option value="name-desc">Namn Ö–A</option>
-              <option value="type-asc">Typ A–Ö</option>
-              <option value="type-desc">Typ Ö–A</option>
-            </select>
-          </label>
         </div>
         <section
           className="household-table-scroll"
@@ -339,7 +324,15 @@ export function HouseholdTable({
                     sort.startsWith('name') ? (descending ? 'descending' : 'ascending') : 'none'
                   }
                 >
-                  Namn
+                  <button
+                    type="button"
+                    className="household-table-sort"
+                    title={`Sortera namn ${sort === 'name-asc' ? 'fallande' : 'stigande'}`}
+                    onClick={() => changeSort('name')}
+                  >
+                    Namn
+                    <SortIcon active={sort.startsWith('name')} descending={descending} />
+                  </button>
                 </th>
                 <th
                   scope="col"
@@ -347,7 +340,15 @@ export function HouseholdTable({
                     sort.startsWith('type') ? (descending ? 'descending' : 'ascending') : 'none'
                   }
                 >
-                  Typ
+                  <button
+                    type="button"
+                    className="household-table-sort"
+                    title={`Sortera typ ${sort === 'type-asc' ? 'fallande' : 'stigande'}`}
+                    onClick={() => changeSort('type')}
+                  >
+                    Typ
+                    <SortIcon active={sort.startsWith('type')} descending={descending} />
+                  </button>
                 </th>
                 <th scope="col">Beskrivning</th>
                 <th scope="col">Status</th>
@@ -423,7 +424,7 @@ export function HouseholdTable({
                                 onEdit(object, captureReturnFocus(event.currentTarget))
                               }
                             >
-                              <WorkspaceIcon name="detail" />
+                              <WorkspaceIcon name="edit" />
                             </button>
                           )}
                           {onRelationships && (
@@ -438,7 +439,7 @@ export function HouseholdTable({
                                 onRelationships(object, captureReturnFocus(event.currentTarget))
                               }
                             >
-                              <span aria-hidden="true">↔</span>
+                              <WorkspaceIcon name="relationships" />
                               <span id={`${prefix}-relationship-count-${object.id}`}>
                                 {relationshipCounts?.get(object.id) ?? 0} samband
                               </span>
@@ -448,7 +449,8 @@ export function HouseholdTable({
                             <button
                               type="button"
                               aria-label={`Visa ${object.name} i kartan`}
-                              title="Visa i kartan"
+                              title="Visa objektet och dess direkta samband i kartan. Rensar kartans sökning och filter och tar med upphörda vid behov."
+                              aria-describedby={`${prefix}-reveal-help`}
                               data-table-object={object.id}
                               data-table-action="reveal"
                               disabled={!mapAvailable || workDisabled}
@@ -457,7 +459,54 @@ export function HouseholdTable({
                               <WorkspaceIcon name="focus" />
                             </button>
                           )}
+                          {onFocusRelationships && !row.removed && (
+                            <button
+                              type="button"
+                              aria-label={`Visa samband för ${object.name} i kartan`}
+                              title="Visa objektets direkta samband i kartan. Behåller kartans sökning och filter, inklusive valet för upphörda."
+                              aria-describedby={`${prefix}-context-help`}
+                              data-table-object={object.id}
+                              data-table-action="context"
+                              disabled={!mapAvailable || workDisabled}
+                              onClick={() => onFocusRelationships(object)}
+                            >
+                              <WorkspaceIcon name="connections" />
+                            </button>
+                          )}
+                          {onRemove && !row.removed && (
+                            <button
+                              type="button"
+                              className="household-table-remove"
+                              aria-label={`Ta bort ${object.name}`}
+                              title="Lägg objektet och dess samband som borttagningar i ditt utkast. Sparad karta ändras först när du sparar hela utkastet."
+                              aria-describedby={
+                                removalNotice ? `${prefix}-removal-${object.id}` : undefined
+                              }
+                              data-table-object={object.id}
+                              data-table-action="remove"
+                              disabled={workDisabled || row.proposal === 'Föreslagen borttagning'}
+                              onClick={async (event) => {
+                                const origin = event.currentTarget;
+                                const restoreFocus = captureReturnFocus(origin);
+                                await onRemove(object);
+                                requestAnimationFrame(() => {
+                                  if (
+                                    document.activeElement === origin ||
+                                    document.activeElement === document.body
+                                  )
+                                    restoreFocus();
+                                });
+                              }}
+                            >
+                              <WorkspaceIcon name="trash" />
+                            </button>
+                          )}
                         </div>
+                        {onRemove && !row.removed && (
+                          <div className="visually-hidden">
+                            {removalNotice?.(object, `${prefix}-removal-${object.id}`)}
+                          </div>
+                        )}
                       </td>
                     </tr>
                     <tr
@@ -466,31 +515,13 @@ export function HouseholdTable({
                       hidden={!opened}
                     >
                       <td colSpan={5}>
-                        {opened && <ObjectReadDetails row={row} />}
-                        {opened && onRead && (
-                          <button
-                            type="button"
-                            data-table-object={object.id}
-                            data-table-action="read"
-                            onClick={(event) =>
-                              onRead(object, captureReturnFocus(event.currentTarget))
-                            }
-                            aria-label={`Läs alla uppgifter för ${object.name}`}
+                        {opened && (
+                          <section
+                            className="household-table-inline-details"
+                            aria-label={`Uppgifter för ${object.name}`}
                           >
-                            Läs alla uppgifter
-                          </button>
-                        )}
-                        {opened && !row.removed && onActions && (
-                          <button
-                            type="button"
-                            data-table-object={object.id}
-                            data-table-action="actions"
-                            onClick={(event) =>
-                              onActions(object, captureReturnFocus(event.currentTarget))
-                            }
-                          >
-                            Åtgärder för {object.name}
-                          </button>
+                            <ObjectReadDetails row={row} full />
+                          </section>
                         )}
                       </td>
                     </tr>
@@ -520,46 +551,34 @@ export function HouseholdTable({
           </button>
         </nav>
       </section>
-      <dialog
-        ref={filterDialog}
-        className="object-dialog household-table-filter-dialog"
-        aria-labelledby={`${prefix}-filters-title`}
-        onCancel={() => setFiltersOpen(false)}
-        onClose={() => {
-          setFiltersOpen(false);
-          if (active) filterButton.current?.focus();
-        }}
-      >
-        <header>
-          <div>
-            <h2 id={`${prefix}-filters-title`} tabIndex={-1}>
-              Tabellens filter
-            </h2>
-            <p>Filter ändrar vilka objekt tabellen visar.</p>
-          </div>
-          <button type="button" aria-label="Stäng filter" onClick={() => setFiltersOpen(false)}>
-            ×
-          </button>
-        </header>
-        <div className="object-dialog-body">
-          <ObjectSearchFilters
-            search={search}
-            onChange={(next) => {
-              setSearch(next);
-              setPage(0);
-            }}
-            types={types}
-            selectedIds={selectedIds}
-            hasProposals={hasProposals}
-            table
-          />
-        </div>
-        <footer>
-          <button type="button" className="primary" onClick={() => setFiltersOpen(false)}>
-            Visa objekt
-          </button>
-        </footer>
-      </dialog>
+      <p id={`${prefix}-reveal-help`} className="visually-hidden">
+        Visar objektet och dess direkta samband i kartan. Rensar kartans sökning och filter och tar
+        med upphörda vid behov.
+      </p>
+      <p id={`${prefix}-context-help`} className="visually-hidden">
+        Visar objektets direkta samband i kartan. Behåller kartans sökning och filter, inklusive
+        valet för upphörda.
+      </p>
     </section>
+  );
+}
+
+function SortIcon({ active, descending }: { active: boolean; descending: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {active ? (
+        <path d={descending ? 'M10 4v12m-4-4 4 4 4-4' : 'M10 16V4m-4 4 4-4 4 4'} />
+      ) : (
+        <path d="M6 16V4m-3 3 3-3 3 3m5-3v12m-3-3 3 3 3-3" />
+      )}
+    </svg>
   );
 }

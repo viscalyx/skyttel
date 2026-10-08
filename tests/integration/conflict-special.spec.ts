@@ -52,7 +52,15 @@ test('UTKAST-57: accepting a removed object discards only its proposal and prese
       'rgb(29, 112, 107) 0px 0px 0px 2px inset',
     );
     await expect(saved.locator('.cp-default')).toHaveClass(/cp-overlap/);
-    await expect(saved.locator('.cp-default')).toHaveCSS('background-color', 'rgb(255, 242, 214)');
+    expect(
+      await saved.locator('.cp-default').evaluate((element) => {
+        const context = new OffscreenCanvas(1, 1).getContext('2d');
+        if (!context) throw new Error('The background measurement needs a canvas');
+        context.fillStyle = getComputedStyle(element).backgroundColor;
+        context.fillRect(0, 0, 1, 1);
+        return Array.from(context.getImageData(0, 0, 1, 1).data);
+      }),
+    ).toEqual([243, 236, 224, 255]);
     await expect(proposed.getByText('Mitt förslag', { exact: true }).locator('..')).toHaveClass(
       /cp-overlap/,
     );

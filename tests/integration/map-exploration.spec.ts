@@ -39,6 +39,7 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
     await expect(node('Blå cykel')).toHaveAttribute('aria-pressed', 'true');
     await expect(node('Garaget')).toHaveCount(0);
     const cameraBefore = await node('Alex Exempel').boundingBox();
+    await node('Blå cykel').press('Shift+F10');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
     await expect(node('Garaget')).toBeVisible();
     await expect(node('Alex Exempel')).toBeVisible();
@@ -51,6 +52,7 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
       .toBe(true);
     await node('Garaget').focus();
     await page.keyboard.press('Enter');
+    await node('Garaget').press('Shift+F10');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
     await expect(node('Bostaden')).toBeVisible();
     await focusMapSearch(page);
@@ -64,6 +66,7 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
     await panel.getByRole('searchbox').press('Escape');
     await node('Blå cykel').focus();
     await page.keyboard.press('Enter');
+    await node('Blå cykel').press('Shift+F10');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
     await (await utilityButton(page, 'Tabell')).click();
     await (await utilityButton(page, 'Karta')).click();
@@ -74,6 +77,23 @@ test('SÖK-06: map search shows direct context and exploration preserves hits th
     await expect(page.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
     await focusMapSearch(page);
     await expect(panel.getByRole('searchbox')).toHaveValue('Alex');
+    await panel.getByRole('searchbox').press('Escape');
+    await node('Blå cykel').press('Shift+F10');
+    const actions = page.getByRole('toolbar', { name: 'Åtgärder för Blå cykel', exact: true });
+    await expect(
+      actions.getByRole('button', { name: 'Visa i kartan', exact: true }),
+    ).toHaveAccessibleDescription(/Rensar kartans sökning och filter/);
+    await actions.getByRole('button', { name: 'Visa i kartan', exact: true }).click();
+    await expect(actions).toHaveCount(0);
+    await expect(node('Blå cykel')).toHaveAttribute('aria-pressed', 'true');
+    await expect(node('Bostaden')).toBeVisible();
+    await expect(page.getByRole('img', { name: /Rymdens bakgrund/ })).toBeFocused();
+    await focusMapSearch(page);
+    await expect(panel.getByRole('searchbox')).toHaveValue('');
+    await expect(
+      (await mapFilters(page)).getByLabel(data.initial.types[0].name, { exact: true }),
+    ).not.toBeChecked();
+    await panel.getByRole('searchbox').press('Escape');
     expect(await data.read()).toEqual(before);
     expect(await (await page.request.get(historyPath)).json()).toEqual(historyBefore);
   } finally {
@@ -175,10 +195,58 @@ for (const width of [1280, 390, 320]) {
       const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
       const search = table.getByRole('searchbox');
       await search.fill('Blå');
-      await table.getByLabel('Sortering', { exact: true }).selectOption('name-desc');
+      await table.getByRole('button', { name: 'Namn', exact: true }).click();
       await table.getByRole('button', { name: 'Blå cykel', exact: true }).click();
       const reveal = table.getByRole('button', { name: 'Visa Blå cykel i kartan', exact: true });
       await expect(reveal).toBeVisible();
+      await expect(reveal).toHaveAttribute('title', /Rensar kartans sökning och filter/);
+      await expect(reveal).toHaveAccessibleDescription(/Rensar kartans sökning och filter/);
+      const context = table.getByRole('button', {
+        name: 'Visa samband för Blå cykel i kartan',
+        exact: true,
+      });
+      await expect(context).toHaveAttribute('title', /Behåller kartans sökning och filter/);
+      await expect(context).toHaveAccessibleDescription(/Behåller kartans sökning och filter/);
+      const tableMapIcons = await Promise.all([
+        reveal.locator('svg path').getAttribute('d'),
+        context.locator('svg path').getAttribute('d'),
+      ]);
+      await context.click();
+      const focusedMap = page.getByRole('region', { name: 'Rymdkarta', exact: true });
+      await expect(
+        focusedMap.getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true }),
+      ).toHaveAttribute('aria-pressed', 'true');
+      await expect(
+        focusedMap.getByRole('button', { name: 'Välj objekt: Garaget', exact: true }),
+      ).toBeVisible();
+      await expect(
+        focusedMap.getByRole('button', { name: 'Välj objekt: Bostaden', exact: true }),
+      ).toHaveCount(0);
+      await focusedMap
+        .getByRole('button', { name: 'Välj objekt: Blå cykel', exact: true })
+        .press('Shift+F10');
+      const actions = page.getByRole('toolbar', { name: 'Åtgärder för Blå cykel', exact: true });
+      await expect(actions.getByRole('button')).toHaveCount(6);
+      expect(
+        await actions
+          .getByRole('button', { name: 'Visa i kartan', exact: true })
+          .locator('svg path')
+          .getAttribute('d'),
+      ).toBe(tableMapIcons[0]);
+      expect(
+        await actions
+          .getByRole('button', { name: 'Visa samband i kartan', exact: true })
+          .locator('svg path')
+          .getAttribute('d'),
+      ).toBe(tableMapIcons[1]);
+      await actions.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
+      await focusMapSearch(page);
+      await expect(panel.getByRole('searchbox')).toHaveValue('Alex');
+      await expect((await mapFilters(page)).getByLabel('Bara markerade')).toBeChecked();
+      await panel.getByRole('searchbox').press('Escape');
+      await (await utilityButton(page, 'Tabell')).click();
+      await expect(context).toBeFocused();
+      await expect(search).toHaveValue('Blå');
       await reveal.click();
       const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
       const node = (name: string) =>
@@ -196,7 +264,10 @@ for (const width of [1280, 390, 320]) {
       await (await utilityButton(page, 'Tabell')).click();
       await expect(reveal).toBeFocused();
       await expect(search).toHaveValue('Blå');
-      await expect(table.getByLabel('Sortering', { exact: true })).toHaveValue('name-desc');
+      await expect(table.getByRole('columnheader', { name: 'Namn', exact: true })).toHaveAttribute(
+        'aria-sort',
+        'descending',
+      );
       await expect(table.getByRole('button', { name: 'Blå cykel', exact: true })).toHaveAttribute(
         'aria-expanded',
         'true',
@@ -211,6 +282,15 @@ for (const width of [1280, 390, 320]) {
       ).toBeVisible();
       await expect(
         table.getByRole('button', { name: 'Visa Oberoende objekt i kartan', exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        table.getByRole('button', {
+          name: 'Visa samband för Oberoende objekt i kartan',
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await expect(
+        table.getByRole('button', { name: 'Ta bort Oberoende objekt', exact: true }),
       ).toHaveCount(0);
       expect(await data.read()).toEqual(before);
     } finally {
@@ -258,6 +338,7 @@ test('SÖK-07: direct context ignores hit filters while ended objects and edges 
     await panel.getByRole('searchbox').press('Escape');
     await node('Blå cykel').focus();
     await page.keyboard.press('Enter');
+    await node('Blå cykel').press('Shift+F10');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
     await expect(node('Garaget')).toBeVisible();
     await (await utilityButton(page, 'Tabell')).click();
@@ -274,6 +355,7 @@ test('SÖK-07: direct context ignores hit filters while ended objects and edges 
     await expect(node('Garaget')).toHaveCount(0);
     await node('Blå cykel').focus();
     await page.keyboard.press('Enter');
+    await node('Blå cykel').press('Shift+F10');
     await page.getByRole('button', { name: 'Visa samband i kartan', exact: true }).click();
     await expect(node('Garaget')).toBeVisible();
     expect((await data.read()).objects).toEqual(before.objects);

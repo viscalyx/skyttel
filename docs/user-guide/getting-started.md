@@ -77,8 +77,9 @@ ett [familjeabonnemang](family-subscription.md). Du kan också öppna
 
 **Tabell** ger tillgång till alla objekt och deras samband, även när
 kartgrafiken inte kan visas. Välj ett objekts namn för att läsa uppgifterna
-och sambanden. **Läs alla uppgifter för** öppnar en fullständig läsdialog.
-Radens knappar öppnar redigering, ett nytt samband eller objektet i kartan.
+och sambanden. Alla fält visas direkt i den expanderade raden. Pennikonen
+öppnar objektets redigeringsformulär. Radens knappar öppnar även
+sambandsdialogen eller visar objektet i kartan.
 
 Objekt och samband redigeras i ett formulär åt gången. Om du stänger ett
 ändrat formulär eller försöker lämna det frågar Skyttel hur du vill göra.

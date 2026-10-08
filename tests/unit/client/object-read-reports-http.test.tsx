@@ -174,8 +174,8 @@ test('full object reading preserves hidden zero and false, image and every econo
   );
   expect(image.status()).toBe(200);
   expect(image.headers()['content-type']).toBe('image/webp');
-  await userEvent.click(dialog.getByRole('button', { name: 'Stäng dialogen' }));
-  expect(screen.queryByRole('dialog')).toBeNull();
+  await userEvent.click(table.getByRole('button', { name: 'Cykel' }));
+  expect(table.queryByRole('region', { name: 'Uppgifter för Cykel' })).toBeNull();
   expect(await fixture.read()).toEqual(before);
 }, 30_000);
 
@@ -389,7 +389,7 @@ test('reports show historical types and full saved values then return to table a
   await userEvent.click(screen.getByRole('button', { name: 'Stäng samband' }));
   const table = within(screen.getByRole('region', { name: 'Hushållets tabell' }));
   await userEvent.type(table.getByLabelText('Sök objekt i tabellen'), 'Hela');
-  await userEvent.selectOptions(table.getByLabelText('Sortering'), 'name-desc');
+  await userEvent.click(table.getByRole('button', { name: 'Namn' }));
   await userEvent.click(table.getByRole('button', { name: 'Nästa' }));
   await userEvent.click(table.getByRole('button', { name: 'A 1' }));
   const focus = table.getByRole('button', { name: 'Samband för A 1' });
@@ -432,7 +432,9 @@ test('reports show historical types and full saved values then return to table a
   await userEvent.click(link);
   await userEvent.click(reports.getByRole('button', { name: 'Tillbaka till arbetet' }));
   expect((table.getByLabelText('Sök objekt i tabellen') as HTMLInputElement).value).toBe('Hela');
-  expect((table.getByLabelText('Sortering') as HTMLSelectElement).value).toBe('name-desc');
+  expect(table.getByRole('columnheader', { name: 'Namn' }).getAttribute('aria-sort')).toBe(
+    'descending',
+  );
   expect(table.getByText('Sida 2 av 2 · 50 objekt per sida')).toBeTruthy();
   expect(table.getByRole('button', { name: 'A 1' }).getAttribute('aria-expanded')).toBe('true');
   expect((screen.getByLabelText('Meddelande till Skyttel') as HTMLTextAreaElement).value).toBe(

@@ -10,6 +10,8 @@
 !.devcontainer/install-codex.sh
 !scripts/
 !scripts/install-repository-npm.mjs
+!scripts/testing/
+!scripts/testing/run-with-test-environment.py
 !tsconfig.json
 !tsconfig.server.json
 !vite.config.ts

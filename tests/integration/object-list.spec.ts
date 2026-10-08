@@ -10,7 +10,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { openConversationText, startConversationWithText } from '../support/conversation-page.js';
-import { editTableObject, readTableObject } from '../support/domain-work.js';
+import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
 async function arrangeNeighbors(page: Page, origin: string) {
@@ -101,7 +101,8 @@ test('LISTA-01: multiple type filters combine with search and the current row ac
     await expect(table.getByRole('rowheader')).toHaveCount(1);
     await expect(table.getByRole('button', { name: 'Provobjekt 001', exact: true })).toBeVisible();
     await tableFilters(page);
-    await filters.getByRole('button', { name: 'Alla typer', exact: true }).click();
+    await filters.getByLabel('Person', { exact: true }).uncheck();
+    await filters.getByLabel('Tjänst', { exact: true }).uncheck();
     await expect(
       filters
         .getByRole('group', { name: 'Objekttyp', exact: true })
@@ -226,7 +227,8 @@ test('LISTA-02: sorting, pages and scroll survive native details, settings and m
     const pages = table.getByRole('navigation', { name: 'Tabellsidor', exact: true });
     const namesBySort: string[][] = [];
     for (const sort of ['name-asc', 'type-asc']) {
-      await table.getByLabel('Sortering', { exact: true }).selectOption(sort);
+      if (sort === 'type-asc')
+        await table.getByRole('button', { name: 'Typ', exact: true }).click();
       while (await pages.getByRole('button', { name: 'Föregående', exact: true }).isEnabled())
         await pages.getByRole('button', { name: 'Föregående', exact: true }).click();
       const names: string[] = [];
@@ -246,7 +248,7 @@ test('LISTA-02: sorting, pages and scroll survive native details, settings and m
     const result = table.getByRole('button', { name: 'Provobjekt 496', exact: true });
     await result.click();
     const details = table.getByRole('button', {
-      name: 'Läs alla uppgifter för Provobjekt 496',
+      name: 'Redigera Provobjekt 496',
       exact: true,
     });
     await details.scrollIntoViewIfNeeded();
@@ -256,10 +258,10 @@ test('LISTA-02: sorting, pages and scroll survive native details, settings and m
     await details.click();
     await expect(
       page
-        .getByRole('dialog', { name: 'Uppgifter för Provobjekt 496', exact: true })
-        .getByRole('heading', { name: 'Uppgifter för Provobjekt 496', exact: true }),
+        .getByRole('dialog', { name: 'Redigera Provobjekt 496', exact: true })
+        .getByLabel('Namn', { exact: true }),
     ).toBeFocused();
-    await closeSupportDialog(page, 'Uppgifter för Provobjekt 496');
+    await closeSupportDialog(page, 'Redigera Provobjekt 496', 'Stäng objektdialogen');
     await expect(details).toBeFocused();
     expect(await body.evaluate((element) => element.scrollTop)).toBe(remembered);
     const editor = await editTableObject(page, 'Provobjekt 496');
@@ -277,7 +279,10 @@ test('LISTA-02: sorting, pages and scroll survive native details, settings and m
     await expect(table.getByLabel('Sök objekt i tabellen', { exact: true })).toHaveValue(
       'Provobjekt',
     );
-    await expect(table.getByLabel('Sortering', { exact: true })).toHaveValue('type-asc');
+    await expect(table.getByRole('columnheader', { name: 'Typ', exact: true })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    );
     await expect(pages.getByRole('status')).toHaveText('Sida 4 av 4 · 50 objekt per sida');
     await expect(result).toHaveAttribute('aria-expanded', 'true');
     const mapResult = table.getByRole('button', {
@@ -366,9 +371,9 @@ for (const width of [390, 320]) {
       );
       const details = await readTableObject(page, 'Lo Exempel');
       await expect(
-        details.getByRole('heading', { name: 'Uppgifter för Lo Exempel', exact: true }),
-      ).toBeFocused();
-      await closeSupportDialog(page, 'Uppgifter för Lo Exempel');
+        details.getByRole('heading', { name: 'Lo Exempel · alla uppgifter', exact: true }),
+      ).toBeVisible();
+      await closeTableObject(page, 'Lo Exempel');
       const editor = await editTableObject(page, 'Lo Exempel');
       await editor.getByLabel('Beskrivning', { exact: true }).fill('Utan grafik');
       await editor.getByRole('button', { name: 'Avbryt', exact: true }).click();

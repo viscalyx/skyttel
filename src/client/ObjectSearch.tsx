@@ -299,7 +299,7 @@ export function ObjectSearchFilters({
     </div>
   );
 }
-export function MapSearch({
+export function ObjectSearch({
   active,
   entryRequestId,
   search,
@@ -309,16 +309,18 @@ export function MapSearch({
   selectedIds,
   hasProposals,
   matchingCount,
+  table = false,
 }: {
   active: boolean;
-  entryRequestId: number;
+  entryRequestId?: number;
   search: ObjectSearchState;
   onChange: (next: ObjectSearchState) => void;
-  onReturnToMap: () => void;
+  onReturnToMap?: () => void;
   types: ObjectType[];
   selectedIds: string[];
   hasProposals: boolean;
   matchingCount?: number;
+  table?: boolean;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const filterButton = useRef<HTMLButtonElement>(null);
@@ -345,6 +347,15 @@ export function MapSearch({
           },
         ]
       : []),
+    ...(table && search.includeRemoved
+      ? [
+          {
+            key: 'removed',
+            label: 'Ta med borttagna',
+            clear: () => onChange({ ...search, includeRemoved: false }),
+          },
+        ]
+      : []),
     ...(search.onlySelected
       ? [
           {
@@ -362,7 +373,11 @@ export function MapSearch({
     })),
   ];
   const filtersActive = Boolean(
-    search.types.length || search.includeEnded || search.onlySelected || search.proposals?.length,
+    search.types.length ||
+      search.includeEnded ||
+      search.includeRemoved ||
+      search.onlySelected ||
+      search.proposals?.length,
   );
   function closeFilters() {
     setExpanded(false);
@@ -380,6 +395,21 @@ export function MapSearch({
   }, [active]);
   useEffect(() => {
     if (!expanded || !active) return;
+    const positionFilters = () => {
+      if (!table || !dialog.current || !filterButton.current) return;
+      const trigger = filterButton.current.getBoundingClientRect();
+      const width = Math.min(440, window.innerWidth - 24);
+      const below = window.innerHeight - trigger.bottom - 20;
+      const top =
+        below >= Math.min(240, window.innerHeight - 24) ? Math.max(12, trigger.bottom + 8) : 12;
+      Object.assign(dialog.current.style, {
+        width: `${width}px`,
+        left: `${Math.max(12, Math.min(trigger.right - width, window.innerWidth - width - 12))}px`,
+        top: `${top}px`,
+        maxHeight: `${Math.min(600, window.innerHeight - top - 12)}px`,
+      });
+    };
+    positionFilters();
     title.current?.focus();
     const dismiss = (event: PointerEvent) => {
       if (
@@ -392,18 +422,26 @@ export function MapSearch({
       }
     };
     document.addEventListener('pointerdown', dismiss, true);
-    return () => document.removeEventListener('pointerdown', dismiss, true);
-  }, [expanded, active]);
+    if (table) {
+      window.addEventListener('resize', positionFilters);
+      document.addEventListener('scroll', positionFilters, true);
+    }
+    return () => {
+      document.removeEventListener('pointerdown', dismiss, true);
+      window.removeEventListener('resize', positionFilters);
+      document.removeEventListener('scroll', positionFilters, true);
+    };
+  }, [expanded, active, table]);
   return (
     <section
-      className="map-object-search"
-      aria-label="Kartans sökning och filter"
+      className={table ? 'table-object-search' : 'map-object-search'}
+      aria-label={table ? 'Tabellens sökning och filter' : 'Kartans sökning och filter'}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && !event.nativeEvent.isComposing) {
           event.preventDefault();
           event.stopPropagation();
           if (expanded) closeFilters();
-          else onReturnToMap();
+          else onReturnToMap?.();
         }
       }}
     >
@@ -411,7 +449,7 @@ export function MapSearch({
         search={search}
         onChange={onChange}
         inputRef={input}
-        label="Sök objekt i kartan"
+        label={table ? 'Sök objekt i tabellen' : 'Sök objekt i kartan'}
         compact
       />
       <div className="map-search-filter">
@@ -442,7 +480,7 @@ export function MapSearch({
               <div>
                 <small aria-hidden="true">SNABBVAL</small>
                 <h2 ref={title} id={`${dialogId}-title`} tabIndex={-1}>
-                  Kartans filter
+                  {table ? 'Tabellens filter' : 'Kartans filter'}
                 </h2>
               </div>
               <button type="button" aria-label="Stäng filter" onClick={closeFilters}>
@@ -455,6 +493,7 @@ export function MapSearch({
               types={types}
               selectedIds={selectedIds}
               hasProposals={hasProposals}
+              table={table}
               compact
               matchingCount={expanded ? matchingCount : undefined}
             />

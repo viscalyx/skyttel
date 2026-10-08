@@ -125,11 +125,21 @@ from saved content”.
    sambandsetiketter utan att välja Alla etiketter.
    Öppna **Skriv till Skyttel**, visa utkastet och spara med sparikonen.
    Stäng textvyn efter sparbekräftelsen.
-2. Högerklicka Molnmusik och välj Redigera objekt. Lägg en ändrad
-   beskrivning i utkastet. Gå tillbaka till kartan.
-3. Kontrollera bärnstensfärgad penna och öppna menyn via objektets namnetikett.
-   Läs att objektet och ett samband läggs som borttagningar i utkastet.
-   Välj Ta bort objekt.
+2. Markera Molnmusik och kontrollera att legenden saknar knappen
+   **Visa samband i kartan**. Högerklicka Molnmusik. Kontrollera sex ikoner
+   utan rubrik eller dialog: penna, uppgifter, samband, riktmärke, direkta
+   samband i kartan och röd papperskorg.
+   Läs deras tooltips. Kontrollera fokus på pennan och flytta med högerpil
+   förbi uppgifter och samband till **Visa i kartan** och sedan
+   **Visa samband i kartan**.
+   Tryck Escape och kontrollera fokus tillbaka på objektet. Öppna med
+   Shift+F10 och klicka sedan Lo Exempel; ikonerna ska stängas.
+   Högerklicka Molnmusik igen och välj pennan, **Redigera objekt**.
+   Lägg en ändrad beskrivning i utkastet. Gå tillbaka till kartan.
+3. Kontrollera bärnstensfärgad penna och högerklicka objektets namnetikett.
+   Kontrollera samma ikoner vid namnet. Läs papperskorgens tooltip och
+   beskrivningen med hjälpmedel: objektet och ett samband läggs som
+   borttagningar i utkastet. Välj **Ta bort objekt**.
 4. Kontrollera objektet, sambandet och hela ändringslistan i **Utkastet**.
    Välj **Kasta hela utkastet**, läs **Ta bort hela utkastet?** och bekräfta
    **Ta bort hela utkastet**. Kontrollera åtgärdsbeskedet.
@@ -138,6 +148,11 @@ from saved content”.
 
 - Nytt innehåll har grönt plus, ändringar bärnstensfärgad penna och
   borttagningar rött kryss. Objektens namn visas bredvid de runda symbolerna.
+- Åtgärderna visas som ikoner vid objektet eller namnet utan dialogrubrik.
+  Pennan öppnar redigering. Nätverksikonen visar direkta samband och behåller
+  sökning och filter. Escape återför fokus, och klick utanför stänger raden.
+  Riktmärket **Visa i kartan** rensar sökning och filter. Ikonerna motsvarar
+  samma åtgärder i hushållets lista, och legenden har ingen åtgärdsknapp.
 - Samband som föreslås tas bort visas med en böjd, streckad linje.
 - Borttagningen omfattar det anslutna sambandet direkt i utkastet.
   Sparad karta och det andra objektet ändras inte.
@@ -162,7 +177,9 @@ unsent editing”.
 **Steg:**
 
 1. Kontrollera att rymdkartan är startläge. Håll
-   på Molnmusik tills menyn visas. Släpp och välj Redigera objekt.
+   på Molnmusik tills de sex ikonerna visas, utan dialogrubrik.
+   Släpp och kontrollera att ikonerna finns kvar och inget formulär öppnas.
+   Välj pennan, **Redigera objekt**.
 2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten och kontrollera
    texten i det fortfarande öppna formuläret.
 3. Behåll formuläret öppet. Använd webbläsarens verktyg för att simulera förlust
@@ -182,7 +199,8 @@ setTimeout(() => skyttelGraphics.restoreContext(), 4000);
 
 **Förväntat resultat:**
 
-- Fingersläppet väljer inte någon menyåtgärd. Kartan ryms i tillgänglig
+- Fingersläppet väljer inte någon åtgärd; ikonerna finns kvar.
+  Kartan ryms i tillgänglig
   webbyta i båda orienteringarna och tabellen kan nås.
 - Avbrottsbeskedet förklarar att utkastet finns kvar. Detaljerna behåller
   oskickad text. Texten är inte sparad förrän utkastet sparas med kvitto.
@@ -207,11 +225,13 @@ changes”.
    kontrollera att kameran står kvar. Panorera och välj **Återställ vy**.
 2. Öppna **Tabell**. Fokusera Lo Exempels namn och tryck Enter för att
    fälla ut raden. Prova tabbordningen namn, **Redigera Lo Exempel**,
-   **Samband för Lo Exempel** och **Visa Lo Exempel i kartan**, samt bakåt.
-3. Öppna **Läs alla uppgifter för Lo Exempel** med Enter och kontrollera
-   rubrikfokus. Stäng med krysset. Öppna **Åtgärder för Lo Exempel** och
-   läs att **Ta bort objekt** lägger objektet och ett samband som
-   borttagningar i utkastet. Stäng med Escape utan att ta bort något.
+   **Samband för Lo Exempel**, **Visa Lo Exempel i kartan**,
+   **Visa samband för Lo Exempel i kartan** och **Ta bort Lo Exempel**,
+   samt bakåt.
+3. Öppna radens pennikon **Redigera Lo Exempel** med Enter och
+   kontrollera namnfokus. Stäng formuläret med krysset utan ändring.
+   Läs papperskorgens hjälptext: **Ta bort Lo Exempel** lägger objektet och
+   ett samband som borttagningar i utkastet. Föreslå ingen borttagning.
 4. Öppna **Redigera Lo Exempel** med Enter, kontrollera namnfokus och
    välj **Avbryt** utan ändring.
 5. Öppna **Samband för Lo Exempel** med Enter och sedan **Redigera samband**.
@@ -413,9 +433,8 @@ its saved and private list”.
 **Steg:**
 
 1. Öppna kartan och ladda om sidan. Öppna
-   **Tabell**, fäll ut Familjens Molnmusik och välj
-   **Läs alla uppgifter för Familjens Molnmusik**. Läs beskrivningen.
-2. Stäng läsdialogen med krysset. Kontrollera Robins notering i tabellen.
+   **Tabell** och fäll ut Familjens Molnmusik. Läs beskrivningen direkt i raden.
+2. Fäll ihop raden med namnet igen. Kontrollera Robins notering i tabellen.
 3. Öppna **Karta** och välj Kim Exempel med tangentbord. Kontrollera att
    namnet går att läsa och välja. Om information om dolda etiketter visas får
    den inte täcka namnens träffytor.

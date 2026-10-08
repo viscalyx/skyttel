@@ -709,9 +709,11 @@ shared map at 1440px” och motsvarande scenario vid 390px.
 **Förväntat resultat:**
 
 - Rubriken får fokus vid öppning. Tangentbordsfokus stannar i dialogen.
-  Bakgrunden är inaktiv. Varje val markeras med ram och ✓ Vald.
+  Bakgrunden är inaktiv. Valbara värden har ramar och valda värden har
+  starkare ramar. Inga valcirklar eller upprepade uppmaningar visas.
 - Alla skiljande egenskaper kräver aktiva val. Identiska värden behöver
-  inget val. Resultatet visar Lo Lind och Robins anteckning tillsammans.
+  inget val och visas som vanlig text. Resultatet visar Lo Lind och Robins
+  anteckning tillsammans, med uppgift om vilken sida valda värden kommer från.
 - Bara utkastet ändras. Kartan visar fortfarande Lo Berg och samma
   beskrivning som medlemmen sparar. Historiken får ingen ny sparad ändring.
 - Konfliktlistan behåller typ och namn med bock till höger och en enda

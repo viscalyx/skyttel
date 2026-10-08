@@ -10,7 +10,8 @@ Välj **Tabell** i verktygen för att läsa och redigera alla uppgifter.
 
 När Skyttel visar ett objekt eller samband visas kartan och det valda
 innehållets uppgifter samtidigt innan markeringsbeskedet. På en smal skärm
-ligger uppgifterna direkt under kartan och går att rulla separat.
+öppnas objektets uppgifter i ett flyttbart fönster med eget rulläge.
+Sambandets uppgifter visas under kartan.
 Välj **Redigera** vid objektet eller **Redigera valt samband** för att
 öppna det vanliga formuläret.
 
@@ -40,8 +41,9 @@ rensa. Escape på kartbakgrunden rensar både söktext och filter med en enda
 tryckning och behåller markeringen och kameran. Träffantalet visas i
 filterdialogen; själva kartan visar inga särskilda besked för tomma resultat.
 
-**Tabell** har egen sökning och egna filter. **Sortering** väljer namn-
-eller typordning. Varje sida visar högst 50 objekt. Läs mer om
+**Tabell** har egen sökning och egna filter. Pilarna i kolumnrubrikerna
+**Namn** och **Typ** växlar mellan stigande
+och fallande ordning. Varje sida visar högst 50 objekt. Läs mer om
 [sökning och filter](map.md#sök-och-filtrera-separat).
 
 Klicka på ett objekts runda symbol för att markera det utan att flytta
@@ -60,7 +62,6 @@ Pilen går från det första objektet till det andra. Okänt och uttryckligen
 inget är uppgifter om ett samband, inte nya objekt.
 
 I **Tabell** öppnar objektets namn uppgifter och samband i samma rad.
-**Läs alla uppgifter för** öppnar hela objektets läsdialog.
 **Visa [objektets namn] i kartan** markerar objektet och fokuserar kameran
 på det och dess direkta grannar. Grannarna blir inte markerade.
 **Avmarkera alla** och ett klick på tom rymd släcker markeringar för
@@ -68,7 +69,8 @@ objekt och samband. Kamera, sökning och filter finns kvar.
 Små rörelser vid klick flyttar inte kameran. Rotation, panorering och
 avbrutna gester behåller urvalet.
 
-Använd **Visa samband i kartan** för att utforska ett objekts direkta
+Använd sambandsikonen **Visa samband i kartan** vid högerklick eller i listan
+för att utforska ett objekts direkta
 samband med tidigare innehåll kvar. **Tillbaka till sökträffarna** återgår
 till sökningens direkta sammanhang. **Visa hela kartan** visar en överblick.
 Escape på kartbakgrunden rensar sökning och filter; kamerans vinkel,
@@ -76,16 +78,30 @@ zoom och panorering behålls.
 
 ## Öppna detaljer
 
-Dubbelklick öppnar objektets fullständiga läsdialog. Det första klickets
-urval gäller:
-ett redan markerat objekt behåller flervalet, medan ett omarkerat objekt
-ersätter det. Ctrl+Alt-klick öppnar detaljer och lägger till objektet
-utan att avmarkera andra. På Mac fungerar Control+Option och Cmd+Option.
-**Visa detaljer** i verktygen visar det valda innehållets uppgifter bredvid
-eller under kartan. Därifrån kan du öppna den fullständiga läsdialogen.
-Tabellens läsdialoger fungerar även utan kartgrafik och med tangentbord.
-När grafiken inte kan visas består tabellen och kartknapparna är inaktiva.
-Stäng läsdialogen med krysset eller Escape för att återgå till dess öppnare.
+Dubbelklick öppnar objektets fullständiga uppgifter i ett flyttbart fönster.
+Du kan ha flera objekts uppgiftsfönster öppna samtidigt. Dra ett fönsters
+titelrad för att flytta just det fönstret; kartan står kvar. Med tangentbord
+fokuserar du titelraden och använder piltangenterna. Skift med piltangent
+flyttar ett större steg. Escape under dragning avbryter flyttningen.
+Titelraden och krysset uppe till höger ligger kvar när uppgifterna rullas.
+Krysset eller Escape utan dragning stänger bara det aktuella fönstret.
+Fönster kan överlappa andra ytor. Flytta eller stäng dem för att nå det
+som ligger bakom. Med tangentbord visas den fokuserade textvyn eller
+navigationen framför överlappande uppgiftsfönster.
+
+Det första klickets urval gäller: ett redan markerat objekt behåller
+flervalet, medan ett omarkerat objekt ersätter det. Ctrl+Alt-klick öppnar
+uppgifter och lägger till objektet utan att avmarkera andra. På Mac
+fungerar Control+Option och Cmd+Option. **Visa detaljer** i verktygen öppnar
+samma uppgiftsfönster för det valda objektet. För ett valt samband visas
+uppgifterna bredvid eller under kartan.
+
+Uppgiftsfönstret har samma ikoner som vid högerklick. Pennan öppnar det
+vanliga redigeringsformuläret, och **Samband** öppnar sambandsdialogen.
+Tabellens fullständiga uppgifter visas direkt i expanderade rader och
+fungerar även utan kartgrafik och med tangentbord. Pennikonen i raden öppnar
+objektets redigeringsformulär. När grafiken inte kan visas består tabellen
+och kartknapparna är inaktiva.
 
 Längre tabeller visar 50 objekt per sida. Använd sidvalet eller
 **Föregående** och **Nästa** för att nå resten. Sökning gäller
@@ -172,17 +188,31 @@ i sidled för att nå alla val utan att minska kartytan.
 
 ## Ändra och granska
 
-Välj **Visa samband i kartan** för att se objektets direkta grannar och
+Välj sambandsikonen **Visa samband i kartan** vid högerklick eller i listan
+för att se objektets direkta grannar och
 flytta kameran dit. Tidigare visat innehåll och sökning finns kvar.
 Vid ändrade samband visas både tidigare och föreslagna ändpunkter;
 **Ta med upphörda** gäller även det tidigare sambandet.
 Välj den tidigare, böjda linjen eller dess etikett med × för att läsa det
 sparade sambandet utan att ändra det.
 
-Högerklick eller långtryck på ett objekt ger **Redigera objekt**,
-**Visa samband i kartan** och **Ta bort objekt**. Samma meny finns under
-**Åtgärder för** i objektets utökade tabellrad. Radens **Redigera** öppnar
-objektformuläret och **Samband** öppnar ett nytt samband från objektet.
+Högerklick eller långtryck på ett objekt eller dess namn visar sex ikoner
+bredvid det: en penna för **Redigera objekt**, ett dokument för
+**Visa uppgifter**, pilar för **Samband**, ett riktmärke för **Visa i kartan**,
+en nätverksikon för **Visa samband i kartan** och en röd papperskorg för
+**Ta bort objekt**. Uppgiftsikonen öppnar ett flyttbart uppgiftsfönster.
+**Samband** öppnar objektets sambandsdialog för läsning och redigering.
+De använder samma ikoner och åtgärder som hushållets lista.
+Riktmärket rensar kartans sökning och filter och tar med upphörda vid behov.
+Nätverksikonen behåller sökning och filter. Legenden visar inga åtgärdsknappar.
+Ikonerna visas till höger när de ryms och flyttas inåt vid skärmkanten.
+Tooltips förklarar åtgärderna. Escape eller ett klick utanför stänger raden.
+Med tangentbord kan du öppna den med Shift+F10 på ett fokuserat objekt
+eller namn och flytta mellan ikonerna med piltangenterna.
+I tabellen ligger dessa
+åtgärder direkt på raden. Papperskorgen längst till höger lägger objektet
+och dess samband som borttagningar i utkastet. Radens **Redigera** öppnar
+objektformuläret och **Samband** öppnar objektets sambandsdialog.
 Sambanden i den utökade raden har egna läs- och redigeringsknappar.
 
 Formulärtext skickas först när du lägger den i utkastet. Texten finns kvar

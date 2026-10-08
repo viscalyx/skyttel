@@ -38,20 +38,25 @@ test('LISTA-07: text object actions preserve cancellation and stage only the cho
     ).toBeVisible();
     await openTable(page);
     const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
-    await table.getByRole('button', { name: 'Cykel', exact: true }).click();
-    const actions = table.getByRole('button', { name: 'Åtgärder för Cykel', exact: true });
-    await actions.focus();
-    await page.keyboard.press('Enter');
-    const menu = page.getByRole('dialog', { name: 'Åtgärder för Cykel', exact: true });
-    await expect(menu).toContainText(
-      'Objektet och dess 4 samband läggs som borttagningar i ditt utkast.',
+    const removal = table.getByRole('button', { name: 'Ta bort Cykel', exact: true });
+    await expect(removal).toBeEnabled();
+    await expect(removal).toHaveAccessibleDescription(
+      /Objektet och dess 4 samband läggs som borttagningar i ditt utkast/,
     );
-    await page.keyboard.press('Escape');
-    await expect(menu).not.toBeVisible();
-    await expect(actions).toBeFocused();
+    const row = table.getByRole('row').filter({
+      has: page.getByRole('button', { name: 'Ta bort Cykel', exact: true }),
+    });
+    await expect(row.getByRole('button').last()).toHaveAccessibleName('Ta bort Cykel');
+    await expect(table.getByRole('button', { name: /^Åtgärder för/ })).toHaveCount(0);
+    await expect(
+      page.getByRole('dialog', { name: /^Åtgärder för/, includeHidden: true }),
+    ).toHaveCount(0);
+    for (const name of ['Visa Cykel i kartan', 'Visa samband för Cykel i kartan'])
+      await expect(table.getByRole('button', { name, exact: true })).toBeDisabled();
     expect(await app.read()).toEqual(before);
-    await actions.click();
-    await menu.getByRole('button', { name: 'Redigera objekt', exact: true }).click();
+    const edit = table.getByRole('button', { name: 'Redigera Cykel', exact: true });
+    await edit.focus();
+    await page.keyboard.press('Enter');
     const editor = page.getByRole('dialog', { name: 'Redigera Cykel', exact: true });
     const description = editor.getByLabel('Beskrivning', { exact: true });
     await description.fill('Behåll mina oskickade uppgifter');
@@ -66,12 +71,12 @@ test('LISTA-07: text object actions preserve cancellation and stage only the cho
     await editor.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
     await loss.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
     await expect(editor).not.toBeVisible();
-    await expect(actions).toBeFocused();
+    await expect(edit).toBeFocused();
     expect(await app.read()).toEqual(before);
-    await actions.click();
+    await removal.focus();
     await page.screenshot({ path: test.info().outputPath('text-object-actions.png') });
-    await menu.getByRole('button', { name: 'Ta bort objekt', exact: true }).click();
-    await expect(menu).not.toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(removal).toBeDisabled();
     const after = await app.read();
     expect(after.draft.changes.find((change) => change.id === 'bike')?.after).toBeNull();
     expect(after.draft.changes.find((change) => change.id === 'independent')).toEqual(
@@ -87,7 +92,7 @@ test('LISTA-07: text object actions preserve cancellation and stage only the cho
     expect(after.objects).toEqual(before.objects);
     expect(after.relationships).toEqual(before.relationships);
     expect(await (await page.request.get(`${app.path}/history`)).json()).toEqual(history);
-    await expect(actions).toBeFocused();
+    await expect(table.getByRole('button', { name: 'Ta bort Garage', exact: true })).toBeFocused();
     await expect(table.getByRole('row', { name: /Cykel/ }).first()).toContainText(
       'Föreslagen borttagning',
     );

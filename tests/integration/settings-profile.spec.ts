@@ -193,12 +193,16 @@ test('INST-03: the separate profile protects native form input and groups person
     await expect(profile.getByRole('heading', { name: 'Din profil', exact: true })).toBeFocused();
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await expect(
-      page.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+      page
+        .getByRole('region', { name: 'Hushållets tabell', exact: true })
+        .getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
     await openProfile(page);
     await profile.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     await expect(
-      page.getByRole('heading', { name: 'Hushållets tabell', exact: true }),
+      page
+        .getByRole('region', { name: 'Hushållets tabell', exact: true })
+        .getByRole('heading', { name: 'Hushållet Linden', exact: true }),
     ).toBeFocused();
     await expect(page.getByLabel('Beskrivning', { exact: true })).not.toBeVisible();
   } finally {

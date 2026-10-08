@@ -20,6 +20,7 @@ import {
   voiceBox,
 } from '../support/conversation-page.js';
 import {
+  closeTableObject,
   editTableObject,
   openObjectRelationships,
   readDraftProposal,
@@ -346,12 +347,12 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(form).not.toBeVisible();
       const subscription = await readTableObject(page, 'Familjens Molnmusik');
       await expect(subscription).toContainText('Rättad för hand');
-      await closeSupportDialog(page, 'Uppgifter för Familjens Molnmusik');
+      await closeTableObject(page, 'Familjens Molnmusik');
       const person = await readTableObject(page, 'Kim Exempel');
       await expect(
-        person.getByRole('heading', { name: 'Uppgifter för Kim Exempel', exact: true }),
-      ).toBeFocused();
-      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
+        person.getByRole('heading', { name: 'Kim Exempel · alla uppgifter', exact: true }),
+      ).toBeVisible();
+      await closeTableObject(page, 'Kim Exempel');
       await editTableObject(page, 'Kim Exempel');
       await form.getByLabel('Beskrivning', { exact: true }).fill('Oskickat om Kim');
       await form.getByRole('button', { name: 'Avbryt', exact: true }).click();
@@ -369,7 +370,7 @@ for (const mode of ['voice', 'text'] as const) {
       await readTableObject(page, 'Kim Exempel');
       await expect(person).toHaveCount(1);
       await expect(person).not.toContainText('Oskickat om Kim');
-      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
+      await closeTableObject(page, 'Kim Exempel');
       const corrected = await read();
       const expectedFacts = {
         price: { knowledge: 'known', value: '189' },
@@ -470,18 +471,18 @@ for (const mode of ['voice', 'text'] as const) {
       await readTableObject(page, 'Familjens Molnmusik');
       await expect(
         subscription.getByRole('heading', {
-          name: 'Uppgifter för Familjens Molnmusik',
+          name: 'Familjens Molnmusik · alla uppgifter',
           exact: true,
         }),
-      ).toBeFocused();
+      ).toBeVisible();
       await expect(subscription).toContainText('Rättad för hand');
-      await closeSupportDialog(page, 'Uppgifter för Familjens Molnmusik');
+      await closeTableObject(page, 'Familjens Molnmusik');
       await readTableObject(page, 'Kim Exempel');
       await expect(
-        person.getByRole('heading', { name: 'Uppgifter för Kim Exempel', exact: true }),
-      ).toBeFocused();
+        person.getByRole('heading', { name: 'Kim Exempel · alla uppgifter', exact: true }),
+      ).toBeVisible();
       await expect(person).not.toContainText('Oskickat om Kim');
-      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
+      await closeTableObject(page, 'Kim Exempel');
       await openConversationText(page);
       await expect(message).toBeVisible();
       await expect(message).toHaveValue('Oskickat i samtalet');
@@ -521,7 +522,7 @@ for (const mode of ['voice', 'text'] as const) {
       await closeTextView(page);
       await readTableObject(page, 'Kim Exempel');
       await expect(person).not.toContainText('Oskickat om Kim');
-      await closeSupportDialog(page, 'Uppgifter för Kim Exempel');
+      await closeTableObject(page, 'Kim Exempel');
       await openConversationText(page);
       expect(receipt).toMatchObject({
         operationId,
@@ -630,7 +631,7 @@ for (const mode of ['voice', 'text'] as const) {
       for (const value of ['189', 'SEK', 'månad'])
         await expect(memberSubscription).toContainText(value);
       await expect(memberSubscription).not.toContainText('Alex privat efteråt');
-      await closeSupportDialog(member, 'Uppgifter för Familjens Molnmusik');
+      await closeTableObject(member, 'Familjens Molnmusik');
       const memberRelationships = await openObjectRelationships(member, 'Kim Exempel');
       await expect(
         memberRelationships.getByRole('heading', {
