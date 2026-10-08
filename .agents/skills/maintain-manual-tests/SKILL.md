@@ -32,6 +32,13 @@ For index-only or testing-guide-only work, use steps 5 and 6.
    Keep cases focused on functional workflows and user-observable
    accessibility; cover pixel measurements, target geometry, and visual
    layout with automated checks.
+   In manual cases and matching specs, verify current controls, content,
+   and observable outcomes. Exclude checks whose only purpose is to confirm
+   that a removed or nonexistent UI element is absent, such as looking for
+   an old button or panel. When retiring UI, remove those checks from both
+   the manual cases and specs; describe and assert the resulting workflow.
+   Preserve functional absence checks for filtering, permissions, and
+   state transitions such as closing a dialog.
 4. Complete the mapping for each affected functional scenario. Link each
    manual case to its spec and exact scenario title; include the case ID in
    each matching Playwright title. Verify that automated assertions cover

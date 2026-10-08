@@ -97,8 +97,7 @@ Avbryt startar inget”.
 **Förväntat resultat:**
 
 - Varje explicit samtalsstart visar samma ruta. Kryssrutan är omarkerad, och
-  raden om återkallande är ren text utan länk. Rutan hänvisar inte till
-  **Information och hjälp**.
+  raden om återkallande säger **Du kan återkalla det i Inställningar.**
 - Rutan är en dialog med namnet **Samtal med Skyttel**. Resten av sidan
   går inte att använda medan den visas.
 - **Avbryt** och Escape startar ingenting och sparar inget medgivande.
@@ -257,8 +256,7 @@ alla medlemmar”.
   **Ett sparat medgivande gäller alla dina samtal i hushållet
   Medgivandeprov tills du återkallar det.**, statusraden
   **Inget medgivande är sparat.** och knappen **Spara medgivandet**.
-- Sidan har ingen knapp som sparar hela sidan. Robin ser samma sida som
-  Alex, utan gruppen **Administration**.
+- Robin ser samma samtalsinställningar som Alex, utan gruppen **Administration**.
 
 ### MEDGIVANDE-06: Spara medgivandet sparar direkt utan att starta ett samtal
 

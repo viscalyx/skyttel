@@ -28,7 +28,6 @@ export function MapSelectionDetails({
   onRevealObject,
   onFocusObject,
   onRemoveObject,
-  onOpenObject,
   mapAvailable = true,
   active = true,
   order = 0,
@@ -49,7 +48,6 @@ export function MapSelectionDetails({
   onRevealObject?: (object: MapObject) => void;
   onFocusObject?: (id: string) => void;
   onRemoveObject?: (object: MapObject) => Promise<boolean> | undefined;
-  onOpenObject?: (object: MapObject) => void;
   mapAvailable?: boolean;
   active?: boolean;
   order?: number;
@@ -180,10 +178,6 @@ export function MapSelectionDetails({
             removed={object.removed}
             mapAvailable={mapAvailable}
             onEdit={(value) => onEditObject(value, restoreFocus())}
-            onRead={
-              onOpenObject ??
-              ((value) => onRead({ kind: 'object', id: value.id, restoreFocus: restoreFocus() }))
-            }
             onRelationships={(value) =>
               onRead({ kind: 'relationships', id: value.id, restoreFocus: restoreFocus() })
             }

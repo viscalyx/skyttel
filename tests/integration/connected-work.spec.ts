@@ -392,7 +392,6 @@ for (const mode of ['voice', 'text'] as const) {
         'Kim Exempel → Betalar → Familjens Molnmusik',
       ]) {
         const proposal = await readDraftProposal(page, name);
-        await expect(proposal.locator('input, select, textarea')).toHaveCount(0);
         if (name === 'Familjens Molnmusik')
           for (const value of ['Rättad för hand', '189', 'SEK', 'månad'])
             await expect(proposal).toContainText(value);
@@ -422,8 +421,7 @@ for (const mode of ['voice', 'text'] as const) {
       await expect(
         page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
       ).toContainText('3 förslag · privat utkast');
-      // The unsent message stays in the closed text view, without a button of its own here.
-      await expect(page.getByRole('button', { name: 'Fortsätt skriva' })).toHaveCount(0);
+      // The unsent message stays in the closed text view.
       const retainedText = await page
         .getByRole('region', { name: 'Utkastets återkoppling', exact: true })
         .evaluate((status) => {

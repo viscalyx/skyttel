@@ -92,11 +92,13 @@ navigationen framför överlappande uppgiftsfönster.
 Det första klickets urval gäller: ett redan markerat objekt behåller
 flervalet, medan ett omarkerat objekt ersätter det. Ctrl+Alt-klick öppnar
 uppgifter och lägger till objektet utan att avmarkera andra. På Mac
-fungerar Control+Option och Cmd+Option. **Visa detaljer** i verktygen öppnar
-samma uppgiftsfönster för det valda objektet. För ett valt samband visas
-uppgifterna bredvid eller under kartan.
+fungerar Control+Option och Cmd+Option. Med tangentbord öppnar Skift+F10
+objektets åtgärder, där **Visa uppgifter** öppnar uppgiftsfönstret.
+Dubbelklicka ett samband eller tryck Alt+Enter på dess etikett för att
+läsa uppgifterna bredvid eller under kartan.
 
-Uppgiftsfönstret har samma ikoner som vid högerklick. Pennan öppnar det
+Uppgiftsfönstret har samma åtgärdsikoner som vid högerklick, förutom
+**Visa uppgifter** eftersom alla uppgifter redan visas. Pennan öppnar det
 vanliga redigeringsformuläret, och **Samband** öppnar sambandsdialogen.
 Tabellens fullständiga uppgifter visas direkt i expanderade rader och
 fungerar även utan kartgrafik och med tangentbord. Pennikonen i raden öppnar

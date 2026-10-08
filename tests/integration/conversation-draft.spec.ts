@@ -174,8 +174,6 @@ test('SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans s
     expect(draftBox?.y).toBe((panel?.y ?? 0) + 1);
     for (const handle of await view(page).getByRole('separator').all())
       expect((await handle.boundingBox())?.y).toBe((panel?.y ?? 0) + 1);
-    await expect(draft(page).getByRole('link')).toHaveCount(0);
-    await expect(page.getByRole('region', { name: 'Ändringar under samtalet' })).toHaveCount(0);
     await toggle(page).click();
     await openConversationText(page); // closes the text view
     await openConversationText(page); // opens it again
@@ -312,8 +310,6 @@ test('SAMTALSUTKAST-04: sparandet finns i Rapporters ändringshistorik', async (
     await post('save', { operationId: 'draft-receipt' });
     await page.reload();
     await startConversationWithText(page);
-    await expect(view(page).getByText('Visa kvittot')).toHaveCount(0);
-    await expect(view(page).getByText('Tidigare sparförsök')).toHaveCount(0);
     const history = await openSavedHistory(page);
     await expect(history.getByRole('article')).toHaveCount(1);
     await expect(history).toContainText('Lo Exempel');

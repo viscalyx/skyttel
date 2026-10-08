@@ -1378,16 +1378,6 @@ export function HouseholdMap({
                 : undefined
             }
             theme={<WorkspaceTheme mode={theme.mode} onChange={theme.changeMode} />}
-            onDetails={() => {
-              if (selectedObject) edit(selectedObject, false);
-              else if (selectedEdge) setDetailsOpen(true);
-            }}
-            detailsAvailable={Boolean(selectedObject || selectedEdge) && !pending && !blocked}
-            detailsVisible={Boolean(
-              selectedObject
-                ? objectWindows.some((window) => window.id === selectedObject.id)
-                : detailsOpen && selectedEdge,
-            )}
           />
           <ConversationConsent conversation={conversation} chosen={conversationChoice} />
           {/* biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to scroll the map's status and legend. */}
@@ -1673,6 +1663,10 @@ export function HouseholdMap({
             onEdit={edit}
             onOpenDetails={(object) => edit(object, false)}
             onSelectRelationship={selectRelationship}
+            onOpenRelationshipDetails={(edge, previous) => {
+              selectRelationship(edge, previous);
+              setDetailsOpen(true);
+            }}
             onFocus={focusObject}
             onClear={clearSelection}
             onReset={() => {
@@ -1723,7 +1717,6 @@ export function HouseholdMap({
                   window.restoreFocus();
                 }}
                 onRead={(entry) => requestLeave(() => setReadEntry(entry))}
-                onOpenObject={openObjectWindow}
                 onRevealObject={revealObject}
                 onFocusObject={focusObject}
                 onRemoveObject={(object) => remove('draft', object)}

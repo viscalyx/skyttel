@@ -288,8 +288,9 @@ benämningar och förklaringar som går att läsa från båda objekten.
 Sökningen gäller hela kartan, även objekt som finns på andra sidor.
 Objektets namn öppnar uppgifter och samband i den utökade raden.
 Längre tabeller har sidval samt **Föregående** och **Nästa**.
-I kartan ändrar **Markera** urvalet och **Visa detaljer** visar de valda
-uppgifterna i ett flyttbart fönster för varje objekt. Flera fönster kan
+I kartan ändrar **Markera** urvalet. Dubbelklicka ett objekt eller högerklicka
+och välj **Visa uppgifter** för att läsa det i ett flyttbart fönster.
+Med tangentbord öppnar Skift+F10 objektets åtgärder. Flera fönster kan
 vara öppna samtidigt och dras var för sig utan att kartan flyttas.
 **Avmarkera alla** behåller sökningen.
 

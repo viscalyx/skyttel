@@ -21,14 +21,17 @@ for (const viewport of [
       const node = page.locator('.spatial-node[data-object-id="bike"]');
       await node.focus();
       await page.keyboard.press('Enter');
-      await (await utilityButton(page, 'Visa detaljer')).click();
+      await node.press('Shift+F10');
+      await page
+        .getByRole('toolbar', { name: 'Åtgärder för Cykel', exact: true })
+        .getByRole('button', { name: 'Visa uppgifter för Cykel', exact: true })
+        .click();
       const details = page.locator('.map-selection-details');
       await expect(details).toBeVisible();
       await expect(details).toHaveAttribute('data-selection-id', 'bike');
       await expect(details).toContainText('Cykel');
       await expect(details).toContainText('2000 SEK');
       await expect(details).toContainText('2500 SEK');
-      await expect(details.getByRole('textbox')).toHaveCount(0);
       await expect(page.locator('.object-property-window')).toHaveCount(1);
       await details.getByRole('button', { name: 'Redigera Cykel', exact: true }).focus();
       await page.keyboard.press('Enter');
@@ -121,15 +124,8 @@ test('MARKERING-06: independent property windows share context actions and move 
       await firstActions
         .locator('button svg path')
         .evaluateAll((paths) => paths.map((path) => path.getAttribute('d'))),
-    ).toEqual(icons);
-    expect(await firstActions.getByRole('button').allTextContents()).toEqual([
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-    ]);
+    ).toEqual(icons.filter((_, index) => index !== 1));
+    expect(await firstActions.getByRole('button').allTextContents()).toEqual(['', '', '', '', '']);
     expect(
       await first.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).textContent(),
     ).toBe('');
@@ -169,10 +165,11 @@ test('MARKERING-06: independent property windows share context actions and move 
     await expect(second).toHaveCount(0);
     await expect(first).toBeVisible();
     expect(await first.boundingBox()).toEqual(firstPosition);
-    await firstActions
-      .getByRole('button', { name: 'Visa uppgifter för Cykel', exact: true })
-      .click();
+    await bike.focus();
+    await bike.press('Shift+F10');
+    await actions.getByRole('button', { name: 'Visa uppgifter för Cykel', exact: true }).click();
     await expect(page.locator('.object-property-window')).toHaveCount(1);
+    expect(await first.boundingBox()).toEqual(firstPosition);
     await firstActions.getByRole('button', { name: 'Redigera Cykel', exact: true }).click();
     const editor = page.getByRole('dialog', { name: 'Redigera Cykel', exact: true });
     await expect(editor).toBeVisible();

@@ -641,7 +641,13 @@ test('ARBETE-06: selection and personal map view survive navigation and resizing
     await page.getByRole('link', { name: 'Inloggningssätt', exact: true }).click();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('link', { name: 'Till startsidan', exact: true }).click();
-    await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+    const bike = page.getByRole('button', { name: 'Välj objekt: Min cykel', exact: true });
+    await bike.focus();
+    await bike.press('Shift+F10');
+    await page
+      .getByRole('toolbar', { name: 'Åtgärder för Min cykel', exact: true })
+      .getByRole('button', { name: 'Visa uppgifter för Min cykel', exact: true })
+      .click();
     await expect(page.getByRole('region', { name: 'Min cykel', exact: true })).toContainText(
       'Min cykel',
     );

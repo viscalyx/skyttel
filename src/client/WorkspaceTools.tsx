@@ -83,9 +83,6 @@ export function WorkspaceTools({
   profileRequested = false,
   onReturnWork,
   theme,
-  onDetails,
-  detailsAvailable = false,
-  detailsVisible = false,
   voiceControl,
   voiceBox,
   holdVoice,
@@ -110,9 +107,6 @@ export function WorkspaceTools({
   profileRequested?: boolean;
   onReturnWork?: () => boolean;
   theme?: ReactNode;
-  onDetails?: () => void;
-  detailsAvailable?: boolean;
-  detailsVisible?: boolean;
   /** The microphone of the conversation that is going on. Null when none is. */
   voiceControl?: Pick<Voice, 'microphone' | 'starting' | 'disabled' | 'activate'> | null;
   holdVoice?: { canHold: boolean; prepare: () => void; start: () => void; release: () => void };
@@ -334,23 +328,6 @@ export function WorkspaceTools({
             {target === 'conversation' && voiceBox}
           </Fragment>
         ))}
-        {onDetails && (
-          <button
-            type="button"
-            title="Visa detaljer"
-            aria-label="Visa detaljer"
-            aria-pressed={detailsVisible}
-            disabled={!detailsAvailable}
-            onClick={() => {
-              onExpandedChange(false);
-              setUtility(null);
-              onDetails();
-            }}
-          >
-            <WorkspaceIcon name="detail" />
-            <span>Visa detaljer</span>
-          </button>
-        )}
         <div className="workspace-camera-tools" ref={cameraMount} />
         <div className="workspace-tools-footer">
           {(

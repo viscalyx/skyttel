@@ -66,8 +66,7 @@ avsluta samtalet”.
 **Förväntat resultat:**
 
 - Textvyn står vid högerkanten, och kartan syns bredvid.
-- Kontextmätaren står under samtalsrubriken. Ingen separat utkaststatus,
-  kvittoruta eller lista över senaste ändringar ligger i samtalskolumnen.
+- Kontextmätaren står under samtalsrubriken.
   Sparandet nås genom **Rapporter → Ändringshistorik**.
 - **Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.**
   står under hushållets namn, utanför textvyn.
@@ -75,9 +74,6 @@ avsluta samtalet”.
   ett klick på **Skicka**, har meddelandefältet kvar fokus.
 - Meddelandefältet **Meddelande till Skyttel** har fokus när textvyn
   öppnas och platshållaren **Berätta vad du vill göra…**.
-- Textvyn har inga **Samtalskontroller**, **Öppna samtalet**,
-  **Tala eller skriv**, **Fortsätt skriva** eller **Avsluta samtalet**,
-  och inget förbehåll om att samtalstexten kan innehålla fel.
 - **Stäng textvyn** ger fokus till **Skriv till Skyttel**. Kartan får hela
   bredden igen. Samtalet fortsätter, och **Oskickat** står kvar när
   textvyn öppnas igen. Det andra trycket stänger textvyn.
@@ -85,7 +81,7 @@ avsluta samtalet”.
 
 ### TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar sist
 
-**Syfte:** Läsa samtalet utan namn och se när Skyttel arbetar.
+**Syfte:** Skilja din text från Skyttels text och se när Skyttel arbetar.
 
 **Användare:** Alex.
 
@@ -113,11 +109,11 @@ Skyttel arbetar sist”.
 - Den tomma samtalstexten visar
   **Här visas det du och Skyttel säger och skriver.**
 - Fältet behåller fokus efter klicket på **Skicka** och efter Retur.
-- Raden **Skyttel arbetar…** står sist medan Skyttel arbetar. Ingen
-  tidräknare visas. Raden visar **0 meddelanden väntar. Tryck på Escape
+- Raden **Skyttel arbetar…** står sist medan Skyttel arbetar.
+  Raden visar **0 meddelanden väntar. Tryck på Escape
   för att avbryta.** på dator.
-- Samtalstexten visar inga namn. Din text och Skyttels text går att
-  skilja åt utan namn. Skift+Retur ger en ny rad i samma meddelande.
+- Din text och Skyttels text går att skilja åt genom radens utseende.
+  Skift+Retur ger en ny rad i samma meddelande.
 - Skärmläsaren läser **Du:** före dina rader och **Skyttel:** före
   Skyttels rader.
 

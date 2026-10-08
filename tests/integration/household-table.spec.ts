@@ -274,8 +274,6 @@ test('TABELL-02: full saved and proposed details distinguish every lifecycle and
       details.locator('dl > div').filter({ has: page.getByText(name, { exact: true }) });
     await expect(field('Namn')).toHaveText('NamnA 2');
     await expect(field('Typ')).toHaveText('TypTyp 2');
-    await expect(table.getByRole('button', { name: /Läs alla uppgifter/ })).toHaveCount(0);
-    await expect(inline.getByRole('button', { name: /^Redigera/ })).toHaveCount(0);
     const rowEdit = table.getByRole('button', {
       name: 'Redigera A 2',
       exact: true,

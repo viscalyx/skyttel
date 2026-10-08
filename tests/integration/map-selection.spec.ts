@@ -155,8 +155,6 @@ for (const width of [1440, 390, 320]) {
       const original = await app.read();
       const map = page.getByRole('region', { name: 'Rymdkarta', exact: true });
       const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
-      const details = await utilityButton(page, 'Visa detaljer');
-      await expect(details).toBeDisabled();
       for (const button of await tools.locator('button:visible').all()) {
         const bounds = await button.boundingBox();
         expect(bounds?.width).toBeGreaterThanOrEqual(44);
@@ -172,10 +170,13 @@ for (const width of [1440, 390, 320]) {
       await kim.click({ modifiers: ['Control'] });
       await expect(kim).toHaveAttribute('aria-pressed', 'true');
       await expect(map.locator('.spatial-node[aria-pressed="true"]')).toHaveCount(2);
-      await details.click();
+      await kim.press('Shift+F10');
+      await page
+        .getByRole('toolbar', { name: 'Åtgärder för Kim Exempel', exact: true })
+        .getByRole('button', { name: 'Visa uppgifter för Kim Exempel', exact: true })
+        .click();
       const reader = page.getByRole('region', { name: 'Kim Exempel', exact: true });
       await expect(reader.getByRole('heading', { name: 'Kim Exempel', exact: true })).toBeFocused();
-      await expect(details).toHaveAttribute('aria-pressed', 'true');
       await reader.getByRole('button', { name: 'Redigera Kim Exempel', exact: true }).click();
       const form = page.getByRole('dialog', { name: 'Redigera Kim Exempel', exact: true });
       await form.getByLabel('Beskrivning', { exact: true }).fill(`Oskickat ${width}`);

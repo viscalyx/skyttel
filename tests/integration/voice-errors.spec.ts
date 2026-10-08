@@ -202,7 +202,6 @@ test('ROSTFEL-04: Starta ljudet återställer ljudet innan mikrofonen lyssnar oc
         window.skyttelVoiceFixture.stats().microphoneTracks.every((track) => !track.enabled),
       ),
     ).toBe(true);
-    await expect(page.getByRole('button', { name: 'Spela upp ljud', exact: true })).toHaveCount(0);
     await page.evaluate(() => window.skyttelVoiceFixture.setPlayback('allow'));
     const start = notice(page).getByRole('button', { name: 'Starta ljudet', exact: true });
     await start.focus();

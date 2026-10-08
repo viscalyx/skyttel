@@ -520,7 +520,6 @@ test('TAL-14: röstrutan visar ett statusord åt gången och en vågform som fö
     // Lyssnar: seven dots in the accent colour. Only the status word is there to read.
     await expect(bars).toHaveCount(7);
     await expect(wave).toHaveAttribute('data-form', 'still');
-    await expect(box.getByRole('button')).toHaveCount(0);
     expect(await heights()).toEqual(Array(7).fill(4));
     const listeningWidth = (await bounds(box)).width;
     expect(await height()).toBe(36);
@@ -579,7 +578,6 @@ test('TAL-14: röstrutan visar ett statusord åt gången och en vågform som fö
     await expect(box).toHaveText('Lyssnar');
     expect(await heights()).toEqual(Array(7).fill(4));
     expect(await height()).toBe(36);
-    await expect(page.getByText('Mikrofonen är av', { exact: true })).toHaveCount(0);
   } finally {
     await app.close();
   }

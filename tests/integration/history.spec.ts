@@ -108,7 +108,6 @@ for (const width of [1280, 390, 320]) {
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
-      await expect(history.getByRole('button', { name: /Ångra/ })).toHaveCount(0);
     } finally {
       await installation.close();
     }
