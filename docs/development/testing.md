@@ -100,6 +100,19 @@ List selected tests without executing them:
 npm run test:integration -- tests/integration/bootstrap.spec.ts --list
 ```
 
+Validate manual-case references against discovered integration tests:
+
+```sh
+npm run test:manual-mapping
+npm run test:manual-mapping -- --area docs/manual-tests/map.md
+```
+
+Repeat `--area` to validate several files during a coordinated migration.
+The full command also checks every functional test has one manual counterpart.
+Discovery lists tests without executing browser workflows or provider suites.
+This checks structure; compare the actions and outcomes to assess whether a
+manual case and its counterpart protect the same scenario.
+
 `npm test` builds the application, then runs all unit and integration tests.
 The ordinary suites do not make billable provider calls. Keep their inputs
 synthetic and do not point fixtures at an existing household database.
