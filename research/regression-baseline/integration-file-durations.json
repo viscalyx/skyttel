@@ -1,0 +1,47 @@
+[
+  {
+    "file": "access-onboarding.spec.ts",
+    "cases": 5,
+    "sum_case_s": 10.061
+  },
+  {
+    "file": "connected-work.spec.ts",
+    "cases": 2,
+    "sum_case_s": 20.552
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "cases": 11,
+    "sum_case_s": 16.847
+  },
+  {
+    "file": "household-export-content.spec.ts",
+    "cases": 2,
+    "sum_case_s": 0.622
+  },
+  {
+    "file": "household-recovery.spec.ts",
+    "cases": 1,
+    "sum_case_s": 2.085
+  },
+  {
+    "file": "large-map.spec.ts",
+    "cases": 1,
+    "sum_case_s": 10.496
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "cases": 5,
+    "sum_case_s": 7.683
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "cases": 19,
+    "sum_case_s": 41.312
+  },
+  {
+    "file": "spatial.spec.ts",
+    "cases": 10,
+    "sum_case_s": 24.244
+  }
+]

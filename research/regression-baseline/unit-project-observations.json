@@ -1,0 +1,44 @@
+{
+  "method": "Map samples to JSON first/last-case timestamps, approximate wallclock alignment from sampler completion; excludes import/setup before first case. Observed order is server/client/graphics, despite configured groupOrder intent.",
+  "projects": [
+    {
+      "project": "server",
+      "files": 75,
+      "tests": 854,
+      "failed": 0,
+      "start_offset_s": 2.883352041244507,
+      "end_offset_s": 194.6654851436615,
+      "case_window_s": 191.782133102417,
+      "sum_case_duration_s": 154.65531335199998,
+      "sampled_peak_rss_bytes": 1978318848,
+      "sampled_peak_pss_bytes": 1620262912,
+      "sampled_peak_cpu_cores": 1.4711860432621868
+    },
+    {
+      "project": "client",
+      "files": 61,
+      "tests": 661,
+      "failed": 0,
+      "start_offset_s": 196.4183521270752,
+      "end_offset_s": 481.59454345703125,
+      "case_window_s": 285.17619132995605,
+      "sum_case_duration_s": 251.23978482700002,
+      "sampled_peak_rss_bytes": 2531934208,
+      "sampled_peak_pss_bytes": 2170032128,
+      "sampled_peak_cpu_cores": 1.4257435144050388
+    },
+    {
+      "project": "graphics",
+      "files": 8,
+      "tests": 97,
+      "failed": 9,
+      "start_offset_s": 482.93035221099854,
+      "end_offset_s": 654.4826521873474,
+      "case_window_s": 171.55229997634888,
+      "sum_case_duration_s": 170.06759999996424,
+      "sampled_peak_rss_bytes": 2931126272,
+      "sampled_peak_pss_bytes": 2457733120,
+      "sampled_peak_cpu_cores": 1.8799228934694547
+    }
+  ]
+}

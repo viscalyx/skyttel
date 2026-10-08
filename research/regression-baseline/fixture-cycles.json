@@ -1,0 +1,65 @@
+{
+  "method": "10 sequential warm-dependency createInstallation/seedDemo/close cycles; no browser, login, network emulation or restart; not per-test total fixture cost",
+  "rows": [
+    {
+      "iteration": 1,
+      "start_ms": 60.41416600000002,
+      "seed_ms": 65.63233400000001,
+      "close_ms": 5.397915999999896
+    },
+    {
+      "iteration": 2,
+      "start_ms": 23.912083000000052,
+      "seed_ms": 58.985374999999976,
+      "close_ms": 4.784249999999929
+    },
+    {
+      "iteration": 3,
+      "start_ms": 24.85287500000004,
+      "seed_ms": 67.74595799999997,
+      "close_ms": 8.159999999999968
+    },
+    {
+      "iteration": 4,
+      "start_ms": 23.858041999999955,
+      "seed_ms": 59.724875,
+      "close_ms": 4.46387500000003
+    },
+    {
+      "iteration": 5,
+      "start_ms": 24.865542000000005,
+      "seed_ms": 57.185249999999996,
+      "close_ms": 6.732457999999951
+    },
+    {
+      "iteration": 6,
+      "start_ms": 30.97129199999995,
+      "seed_ms": 62.231291000000056,
+      "close_ms": 9.932999999999993
+    },
+    {
+      "iteration": 7,
+      "start_ms": 25.09108399999991,
+      "seed_ms": 58.85958300000016,
+      "close_ms": 4.89754199999993
+    },
+    {
+      "iteration": 8,
+      "start_ms": 24.251791999999796,
+      "seed_ms": 55.22579200000018,
+      "close_ms": 6.613458000000037
+    },
+    {
+      "iteration": 9,
+      "start_ms": 29.263541000000032,
+      "seed_ms": 61.0194590000001,
+      "close_ms": 12.71225000000004
+    },
+    {
+      "iteration": 10,
+      "start_ms": 26.183540999999877,
+      "seed_ms": 59.47629200000006,
+      "close_ms": 5.285499999999956
+    }
+  ]
+}

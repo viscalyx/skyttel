@@ -1,0 +1,730 @@
+[
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 16,
+    "title": "ACCESS-14: external sign-in explains the return and can be cancelled before leaving",
+    "ancestry": [
+      "",
+      "access-onboarding.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 658,
+    "startTime": "2026-10-08T16:36:01.615Z",
+    "errors": []
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 48,
+    "title": "ACCESS-16: expired provider verification returns to login and a fresh attempt succeeds",
+    "ancestry": [
+      "",
+      "access-onboarding.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 904,
+    "startTime": "2026-10-08T16:36:02.326Z",
+    "errors": []
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 85,
+    "title": "ACCESS-17: revoked access retires protected work while the operator can open costs",
+    "ancestry": [
+      "",
+      "access-onboarding.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 5634,
+    "startTime": "2026-10-08T16:36:03.237Z",
+    "errors": []
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 110,
+    "title": "ACCESS-15: first visits use toolbar entries and optional help",
+    "ancestry": [
+      "",
+      "access-onboarding.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1859,
+    "startTime": "2026-10-08T16:36:08.877Z",
+    "errors": []
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 189,
+    "title": "ACCESS-18: the chosen map theme also applies when returning to login",
+    "ancestry": [
+      "",
+      "access-onboarding.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1006,
+    "startTime": "2026-10-08T16:36:10.748Z",
+    "errors": []
+  },
+  {
+    "file": "connected-work.spec.ts",
+    "line": 62,
+    "title": "ARBETE-08: familjeabonnemanget g\u00e5r fr\u00e5n inloggning och samtal till gemensamt kvitto och privat fortsatt arbete",
+    "ancestry": [
+      "",
+      "connected-work.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 8624,
+    "startTime": "2026-10-08T16:36:11.772Z",
+    "errors": []
+  },
+  {
+    "file": "connected-work.spec.ts",
+    "line": 62,
+    "title": "ARBETE-09: samma familjearbete fungerar med text och listor utan grafik eller ljud",
+    "ancestry": [
+      "",
+      "connected-work.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 11928,
+    "startTime": "2026-10-08T16:36:20.400Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 7,
+    "title": "UTKAST-36: draft save opens immediately and confirms one persistent save without AI",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 4099,
+    "startTime": "2026-10-08T16:36:32.341Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 62,
+    "title": "UTKAST-37: closing a pending mobile save preserves its follow-up across map and table without stealing later focus at 390px",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 934,
+    "startTime": "2026-10-08T16:36:36.445Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 62,
+    "title": "UTKAST-37: closing a pending mobile save preserves its follow-up across map and table without stealing later focus at 320px",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 948,
+    "startTime": "2026-10-08T16:36:37.383Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 121,
+    "title": "UTKAST-38: a lost save response keeps proposals until the same durable attempt is checked from the table",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 938,
+    "startTime": "2026-10-08T16:36:38.335Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 201,
+    "title": "UTKAST-39: a durable save attempt remains reachable after reload without a draft icon or conversation and reports a confirmed rejection",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1242,
+    "startTime": "2026-10-08T16:36:39.277Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 248,
+    "title": "UTKAST-40: a verified receipt closes the save dialog despite a failed map refresh and never repeats its announcement",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 4211,
+    "startTime": "2026-10-08T16:36:40.524Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 290,
+    "title": "UTKAST-39: recovery after reload completes the existing attempt and retires its unknown follow-up without AI",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1033,
+    "startTime": "2026-10-08T16:36:44.739Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 326,
+    "title": "UTKAST-40: a rejected stale version retains every proposal until fresh reading and creates no saved history",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 813,
+    "startTime": "2026-10-08T16:36:45.775Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 381,
+    "title": "UTKAST-37: a closed pending save restores the table heading when its focused follow-up disappears",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 844,
+    "startTime": "2026-10-08T16:36:46.592Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 422,
+    "title": "UTKAST-38: Map receipt recovery restores visible draft context after its follow-up disappears at 1280px",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 921,
+    "startTime": "2026-10-08T16:36:47.441Z",
+    "errors": []
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 422,
+    "title": "UTKAST-38: Map receipt recovery restores visible draft context after its follow-up disappears at 390px",
+    "ancestry": [
+      "",
+      "draft-save.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 864,
+    "startTime": "2026-10-08T16:36:48.366Z",
+    "errors": []
+  },
+  {
+    "file": "household-export-content.spec.ts",
+    "line": 13,
+    "title": "EXPORT-07: revocation or demotion interrupts an active download and removes its private copy",
+    "ancestry": [
+      "",
+      "household-export-content.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 445,
+    "startTime": "2026-10-08T16:36:49.242Z",
+    "errors": []
+  },
+  {
+    "file": "household-export-content.spec.ts",
+    "line": 108,
+    "title": "EXPORT-06: a full archive preserves object identities and saved, historical and private image versions",
+    "ancestry": [
+      "",
+      "household-export-content.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 177,
+    "startTime": "2026-10-08T16:36:49.692Z",
+    "errors": []
+  },
+  {
+    "file": "household-recovery.spec.ts",
+    "line": 9,
+    "title": "FLYTT-01: a fresh installation restores an archive, explicitly assigns private ownership and remains portable after restart",
+    "ancestry": [
+      "",
+      "household-recovery.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2085,
+    "startTime": "2026-10-08T16:36:49.879Z",
+    "errors": []
+  },
+  {
+    "file": "large-map.spec.ts",
+    "line": 15,
+    "title": "STORKARTA-01: dense overview keeps readable labels and every object and relationship reachable",
+    "ancestry": [
+      "",
+      "large-map.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 10496,
+    "startTime": "2026-10-08T16:36:51.976Z",
+    "errors": []
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 15,
+    "title": "IKON-01: icon choice survives type and image changes, save and restart before explicit reset",
+    "ancestry": [
+      "",
+      "object-icons.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2571,
+    "startTime": "2026-10-08T16:37:02.483Z",
+    "errors": []
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 96,
+    "title": "IKON-02: full catalog search, empty results and keyboard pagination work in narrow themes",
+    "ancestry": [
+      "",
+      "object-icons.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2119,
+    "startTime": "2026-10-08T16:37:05.058Z",
+    "errors": []
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 155,
+    "title": "IKON-03: a short viewport keeps icon controls, unsent text and shared save reachable",
+    "ancestry": [
+      "",
+      "object-icons.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1443,
+    "startTime": "2026-10-08T16:37:07.182Z",
+    "errors": []
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 205,
+    "title": "IKON-04: local keyboard icon choice and reset preserve the chosen focus until complete staging",
+    "ancestry": [
+      "",
+      "object-icons.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 724,
+    "startTime": "2026-10-08T16:37:08.630Z",
+    "errors": []
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 243,
+    "title": "IKON-05: rejected and lost complete icon staging preserve the local choice and recover one proposal",
+    "ancestry": [
+      "",
+      "object-icons.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 826,
+    "startTime": "2026-10-08T16:37:09.358Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Person shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2025,
+    "startTime": "2026-10-08T16:37:10.198Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Tj\u00e4nst shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1994,
+    "startTime": "2026-10-08T16:37:12.227Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Tj\u00e4nstekonto shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2497,
+    "startTime": "2026-10-08T16:37:14.226Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Abonnemang shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2191,
+    "startTime": "2026-10-08T16:37:16.730Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: E-postadress shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2411,
+    "startTime": "2026-10-08T16:37:18.927Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Bankkonto shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2843,
+    "startTime": "2026-10-08T16:37:21.345Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Kort shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2460,
+    "startTime": "2026-10-08T16:37:24.195Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: F\u00f6retag shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2107,
+    "startTime": "2026-10-08T16:37:26.660Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: F\u00f6rening shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2097,
+    "startTime": "2026-10-08T16:37:28.774Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Bostad shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2096,
+    "startTime": "2026-10-08T16:37:30.876Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Garage shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2078,
+    "startTime": "2026-10-08T16:37:32.976Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Fordon shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2026,
+    "startTime": "2026-10-08T16:37:35.058Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Avtal shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2048,
+    "startTime": "2026-10-08T16:37:37.089Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Hyresavtal shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2028,
+    "startTime": "2026-10-08T16:37:39.141Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: L\u00e5neavtal shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2046,
+    "startTime": "2026-10-08T16:37:41.174Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Kreditavtal shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1994,
+    "startTime": "2026-10-08T16:37:43.224Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Avbetalningsavtal shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1979,
+    "startTime": "2026-10-08T16:37:45.222Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: F\u00f6rs\u00e4kringsavtal shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2031,
+    "startTime": "2026-10-08T16:37:47.205Z",
+    "errors": []
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Egen bildtyp shares text, icon and image in one proposal and removes the latest image",
+    "ancestry": [
+      "",
+      "profile-image-types.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2361,
+    "startTime": "2026-10-08T16:37:49.240Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 166,
+    "title": "RYMD-01: spatial and list editing share private proposals and one durable save",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1698,
+    "startTime": "2026-10-08T16:37:51.621Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 213,
+    "title": "RYMD-02: focus, filters and camera navigation preserve the shared selection",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2838,
+    "startTime": "2026-10-08T16:37:53.323Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 367,
+    "title": "RYMD-03: context actions and draft symbols distinguish proposals from saved content",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2054,
+    "startTime": "2026-10-08T16:37:56.166Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 500,
+    "title": "RYMD-04: touch menus, viewport changes and graphics recovery retain unsent editing",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 3141,
+    "startTime": "2026-10-08T16:37:58.225Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 576,
+    "title": "RYMD-05: labels, keyboard editing and relationship text survive view changes",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1996,
+    "startTime": "2026-10-08T16:38:01.370Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 808,
+    "title": "RYMD-06: losing household access in fullscreen restores login navigation",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 5746,
+    "startTime": "2026-10-08T16:38:03.370Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 887,
+    "title": "RYMD-07: ended objects and relationships retain status beside draft symbols",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 2330,
+    "startTime": "2026-10-08T16:38:09.123Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 996,
+    "title": "RYMD-08: focus retains old and proposed relationship endpoints and opens the saved route read-only",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1202,
+    "startTime": "2026-10-08T16:38:11.457Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 1097,
+    "title": "RYMD-09: dense mobile maps offer separate pointer and keyboard targets with selected label priority and text alternatives",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1745,
+    "startTime": "2026-10-08T16:38:12.663Z",
+    "errors": []
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 1282,
+    "title": "RYMD-10: label notices remain stable while a compact map opens its saved and private list",
+    "ancestry": [
+      "",
+      "spatial.spec.ts"
+    ],
+    "status": "passed",
+    "duration_ms": 1494,
+    "startTime": "2026-10-08T16:38:14.413Z",
+    "errors": []
+  }
+]

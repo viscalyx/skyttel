@@ -1,0 +1,12 @@
+npm notice run skyttel@0.1.0 test:unit:ci
+npm notice run npm run test:env -- --ci-fonts vitest run --coverage --reporter=json --outputFile=/tmp/wayfinder-265/unit-results.json
+npm notice run skyttel@0.1.0 test:env
+npm notice run python3 scripts/testing/run-with-test-environment.py --ci-fonts vitest run --coverage --reporter=json --outputFile=/tmp/wayfinder-265/unit-results.json
+CI font profile: /workspace/scripts/testing/fonts/DejaVuSans.ttf
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+Not implemented: HTMLMediaElement's pause() method
+JSON report written to /tmp/wayfinder-265/unit-results.json

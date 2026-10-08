@@ -1,0 +1,5936 @@
+[
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 16,
+    "title": "ACCESS-14: external sign-in explains the return and can be cancelled before leaving",
+    "path": [
+      "access-onboarding.spec.ts"
+    ]
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 48,
+    "title": "ACCESS-16: expired provider verification returns to login and a fresh attempt succeeds",
+    "path": [
+      "access-onboarding.spec.ts"
+    ]
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 85,
+    "title": "ACCESS-17: revoked access retires protected work while the operator can open costs",
+    "path": [
+      "access-onboarding.spec.ts"
+    ]
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 110,
+    "title": "ACCESS-15: first visits use toolbar entries and optional help",
+    "path": [
+      "access-onboarding.spec.ts"
+    ]
+  },
+  {
+    "file": "access-onboarding.spec.ts",
+    "line": 189,
+    "title": "ACCESS-18: the chosen map theme also applies when returning to login",
+    "path": [
+      "access-onboarding.spec.ts"
+    ]
+  },
+  {
+    "file": "access.spec.ts",
+    "line": 5,
+    "title": "two installations honor different administrators and deny another identity the bootstrap",
+    "path": [
+      "access.spec.ts"
+    ]
+  },
+  {
+    "file": "access.spec.ts",
+    "line": 38,
+    "title": "a second identity with the same email cannot acquire the first identity or its membership",
+    "path": [
+      "access.spec.ts"
+    ]
+  },
+  {
+    "file": "access.spec.ts",
+    "line": 65,
+    "title": "an earlier same-email identity cannot block the configured first administrator",
+    "path": [
+      "access.spec.ts"
+    ]
+  },
+  {
+    "file": "access.spec.ts",
+    "line": 88,
+    "title": "bootstrap is atomic and rejects cross-origin and malformed submissions",
+    "path": [
+      "access.spec.ts"
+    ]
+  },
+  {
+    "file": "access.spec.ts",
+    "line": 122,
+    "title": "current membership isolates households and revocation defeats an existing session",
+    "path": [
+      "access.spec.ts"
+    ]
+  },
+  {
+    "file": "access.spec.ts",
+    "line": 167,
+    "title": "forged OAuth callbacks and unavailable authentication routes do not grant access",
+    "path": [
+      "access.spec.ts"
+    ]
+  },
+  {
+    "file": "accessibility-measurements.spec.ts",
+    "line": 6,
+    "title": "contrast measures black on white expressed as rgb(0, 0, 0)",
+    "path": [
+      "accessibility-measurements.spec.ts"
+    ]
+  },
+  {
+    "file": "accessibility-measurements.spec.ts",
+    "line": 6,
+    "title": "contrast measures black on white expressed as color(srgb 0 0 0)",
+    "path": [
+      "accessibility-measurements.spec.ts"
+    ]
+  },
+  {
+    "file": "accessibility-measurements.spec.ts",
+    "line": 6,
+    "title": "contrast measures black on white expressed as oklch(0% 0 0)",
+    "path": [
+      "accessibility-measurements.spec.ts"
+    ]
+  },
+  {
+    "file": "accessibility-measurements.spec.ts",
+    "line": 12,
+    "title": "contrast measures an opaque color mix through a transparent descendant",
+    "path": [
+      "accessibility-measurements.spec.ts"
+    ]
+  },
+  {
+    "file": "accessibility-measurements.spec.ts",
+    "line": 20,
+    "title": "contrast rejects translucent colors instead of reporting an opaque contrast",
+    "path": [
+      "accessibility-measurements.spec.ts"
+    ]
+  },
+  {
+    "file": "accessibility-measurements.spec.ts",
+    "line": 27,
+    "title": "contrast rejects text without an opaque surface",
+    "path": [
+      "accessibility-measurements.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-advanced.spec.ts",
+    "line": 61,
+    "title": "MCP-06: importerad historik läses och vanliga rättelser använder färskt underlag",
+    "path": [
+      "assistant-advanced.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-advanced.spec.ts",
+    "line": 141,
+    "title": "MCP-03: typbyte bevarar riktade samband och äldre typers läsbara historik",
+    "path": [
+      "assistant-advanced.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-advanced.spec.ts",
+    "line": 244,
+    "title": "MCP-04: upphört innehåll och privata utkast skyddar typer",
+    "path": [
+      "assistant-advanced.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-advanced.spec.ts",
+    "line": 336,
+    "title": "MCP-01: egna typer och frivilliga fält bevarar obesvarat och nej",
+    "path": [
+      "assistant-advanced.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-advanced.spec.ts",
+    "line": 438,
+    "title": "MCP-02: daterade avtal kan rättas utan påhittade uppgifter",
+    "path": [
+      "assistant-advanced.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-advanced.spec.ts",
+    "line": 590,
+    "title": "MCP-07: historik är läsbar och historisk ångring och sammanslagning saknar verktyg",
+    "path": [
+      "assistant-advanced.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-map.spec.ts",
+    "line": 17,
+    "title": "TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen",
+    "path": [
+      "assistant-map.spec.ts",
+      "1440 × 1000"
+    ]
+  },
+  {
+    "file": "assistant-map.spec.ts",
+    "line": 17,
+    "title": "TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen",
+    "path": [
+      "assistant-map.spec.ts",
+      "1280 × 720"
+    ]
+  },
+  {
+    "file": "assistant-map.spec.ts",
+    "line": 17,
+    "title": "TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen",
+    "path": [
+      "assistant-map.spec.ts",
+      "390 × 844"
+    ]
+  },
+  {
+    "file": "assistant-map.spec.ts",
+    "line": 17,
+    "title": "TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen",
+    "path": [
+      "assistant-map.spec.ts",
+      "640 × 500"
+    ]
+  },
+  {
+    "file": "assistant-map.spec.ts",
+    "line": 17,
+    "title": "TEXT-08: markering öppnar och centrerar objekt och samband före bekräftelsen",
+    "path": [
+      "assistant-map.spec.ts",
+      "320 × 250"
+    ]
+  },
+  {
+    "file": "assistant-work.spec.ts",
+    "line": 32,
+    "title": "AI-08: kartmedgivande fortsätter webbutkast och sparar hela familjeärendet",
+    "path": [
+      "assistant-work.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-work.spec.ts",
+    "line": 137,
+    "title": "AI-09: ett nytt webbförslag stoppar gammalt MCP-sparbesked utan delsparande",
+    "path": [
+      "assistant-work.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-work.spec.ts",
+    "line": 197,
+    "title": "AI-10: förlorat MCP-kvittosvar återfinns efter omstart utan dubbelt sparande",
+    "path": [
+      "assistant-work.spec.ts"
+    ]
+  },
+  {
+    "file": "assistant-work.spec.ts",
+    "line": 282,
+    "title": "AI-11: identitetsfrågor blockerar och kastade MCP-förslag förblir kastade",
+    "path": [
+      "assistant-work.spec.ts"
+    ]
+  },
+  {
+    "file": "assistants.spec.ts",
+    "line": 15,
+    "title": "AI-03: medgivandet kräver val av hushåll och AI-behandling",
+    "path": [
+      "assistants.spec.ts"
+    ]
+  },
+  {
+    "file": "assistants.spec.ts",
+    "line": 53,
+    "title": "AI-13: profile navigation focuses assistant connections and preserves unsent and private work",
+    "path": [
+      "assistants.spec.ts"
+    ]
+  },
+  {
+    "file": "assistants.spec.ts",
+    "line": 169,
+    "title": "AI-02: uttryckligt AI-val ger läsning och återkallelse stoppar gamla token",
+    "path": [
+      "assistants.spec.ts"
+    ]
+  },
+  {
+    "file": "assistants.spec.ts",
+    "line": 235,
+    "title": "AI-01: OAuth krävs innan assistenten kan läsa kartan",
+    "path": [
+      "assistants.spec.ts"
+    ]
+  },
+  {
+    "file": "assistants.spec.ts",
+    "line": 270,
+    "title": "AI-06: avgränsad läsning visar direkta samband utan orelaterade uppgifter",
+    "path": [
+      "assistants.spec.ts"
+    ]
+  },
+  {
+    "file": "assistants.spec.ts",
+    "line": 423,
+    "title": "AI-04: inloggning följs av medgivande och ett nej bevarar kartarbete",
+    "path": [
+      "assistants.spec.ts"
+    ]
+  },
+  {
+    "file": "assistants.spec.ts",
+    "line": 452,
+    "title": "AI-05: eget utkast förblir privat och återkallad åtkomst stoppar klienten",
+    "path": [
+      "assistants.spec.ts"
+    ]
+  },
+  {
+    "file": "bootstrap.spec.ts",
+    "line": 5,
+    "title": "a new installation offers login and protects direct household requests",
+    "path": [
+      "bootstrap.spec.ts"
+    ]
+  },
+  {
+    "file": "bootstrap.spec.ts",
+    "line": 22,
+    "title": "ACCESS-01: the configured administrator creates a private household and returns after restart",
+    "path": [
+      "bootstrap.spec.ts"
+    ]
+  },
+  {
+    "file": "bootstrap.spec.ts",
+    "line": 56,
+    "title": "ACCESS-02: an invalid household name receives focus and can be corrected",
+    "path": [
+      "bootstrap.spec.ts"
+    ]
+  },
+  {
+    "file": "bootstrap.spec.ts",
+    "line": 85,
+    "title": "ACCESS-03: checking an uncertain creation recovers the committed household",
+    "path": [
+      "bootstrap.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 11,
+    "title": "UTKAST-55: reopening discovers new saved data before stale choices can be confirmed",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 61,
+    "title": "UTKAST-56: pending and unknown conflict outcomes have one accessible status without stealing later focus",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 125,
+    "title": "UTKAST-49: switching conflicts and reopening preserves choices and never clears another conflict’s stale guard",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 196,
+    "title": "UTKAST-50: refreshed conflict data clears only choices for properties that actually changed",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 255,
+    "title": "UTKAST-54: an unsent resolution is verified before retrying with the retained choices at 1280px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 255,
+    "title": "UTKAST-54: an unsent resolution is verified before retrying with the retained choices at 320px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Karta (proposed) at 1280px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Karta (proposed) at 320px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Karta (saved) at 1280px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Karta (saved) at 320px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Tabell (proposed) at 1280px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Tabell (proposed) at 320px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Tabell (saved) at 1280px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 314,
+    "title": "UTKAST-53: a lost resolution reply stays reachable after the last conflict disappears in Tabell (saved) at 320px",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 400,
+    "title": "UTKAST-51: a changed object type revalidates mixed values while unaffected choices remain",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 456,
+    "title": "UTKAST-52: a known version rejection retains choices and retries only after a current comparison",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 508,
+    "title": "UTKAST-51: a changed relationship reference refreshes its meaning without clearing unchanged property choices",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 558,
+    "title": "UTKAST-55: a conflict resolved by another client becomes read-only after reopening",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 595,
+    "title": "UTKAST-53: another client consuming the draft cannot turn an unknown saved choice into private success",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 595,
+    "title": "UTKAST-53: another client consuming the draft cannot turn an unknown proposed choice into private success",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-continuity.spec.ts",
+    "line": 662,
+    "title": "UTKAST-50: a later save after a lost applied reply retains unchanged choices when reviewing the new conflict",
+    "path": [
+      "conflict-continuity.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 46,
+    "title": "UTKAST-76: a retained object definition without an actual removed revision can be explicitly discarded without granting restoration",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 46,
+    "title": "UTKAST-76: a retained relationship definition without an actual removed revision can be explicitly discarded without granting restoration",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 113,
+    "title": "UTKAST-67: an explicitly reviewed removed object definition restores its historical identity only on a separate save",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 113,
+    "title": "UTKAST-67: an explicitly reviewed removed relationship definition restores its historical identity only on a separate save",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 244,
+    "title": "UTKAST-68: a newer saved definition rejects stale restoration atomically and preserves independent proposals",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 342,
+    "title": "UTKAST-69: importing a private restoration requires a fresh explicit review in the replacement generation",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 394,
+    "title": "UTKAST-70: a lost definition restoration reply verifies its private authority without replay in Karta",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 394,
+    "title": "UTKAST-70: a lost definition restoration reply verifies its private authority without replay in Tabell",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-definition-restoration.spec.ts",
+    "line": 461,
+    "title": "UTKAST-71: ordinary definition creation cannot reuse a removed identity or grant forged restoration authority",
+    "path": [
+      "conflict-definition-restoration.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-external-corrections.spec.ts",
+    "line": 21,
+    "title": "UTKAST-75: a missing endpoint and missing relationship type remain visible until only the explicit target proposal is discarded",
+    "path": [
+      "conflict-external-corrections.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-external-corrections.spec.ts",
+    "line": 70,
+    "title": "UTKAST-74: an object type with a replaced field preserves the owned historical answer label during explicit type-loss review",
+    "path": [
+      "conflict-external-corrections.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-external-corrections.spec.ts",
+    "line": 70,
+    "title": "UTKAST-74: a relationship type with a replaced field preserves the owned historical answer label during explicit type-loss review",
+    "path": [
+      "conflict-external-corrections.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-external-corrections.spec.ts",
+    "line": 159,
+    "title": "UTKAST-66: a missing relationship type needs an actual new definition and explicit ordinary correction with readable historical field loss",
+    "path": [
+      "conflict-external-corrections.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-external-corrections.spec.ts",
+    "line": 262,
+    "title": "UTKAST-64: a missing object type keeps its proposal readable and discards only the explicitly confirmed object",
+    "path": [
+      "conflict-external-corrections.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-external-corrections.spec.ts",
+    "line": 322,
+    "title": "UTKAST-72: ordinary correction of a missing object type preserves historical field labels until explicitly confirmed loss",
+    "path": [
+      "conflict-external-corrections.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-external-corrections.spec.ts",
+    "line": 403,
+    "title": "UTKAST-65: an incompatible historical field is corrected in the ordinary object form before fresh conflict assessment",
+    "path": [
+      "conflict-external-corrections.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 9,
+    "title": "UTKAST-28: mix explicit property choices without saving the shared map at 1440px",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 9,
+    "title": "UTKAST-28: mix explicit property choices without saving the shared map at 390px",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 136,
+    "title": "UTKAST-29: invalid relationship property combinations keep every choice until corrected",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 203,
+    "title": "UTKAST-30: a concurrent save rejects an outdated property comparison without changing the draft",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 242,
+    "title": "UTKAST-33: long unbroken object names wrap in the conflict heading and list at 320 CSS pixels",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 242,
+    "title": "UTKAST-33: long unbroken relationship names wrap in the conflict heading and list at 320 CSS pixels",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 309,
+    "title": "UTKAST-34: configured builtin labels remain unchanged on both conflict sides and the result",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-properties.spec.ts",
+    "line": 385,
+    "title": "UTKAST-35: saved property attribution identifies each actual saver after independent later changes",
+    "path": [
+      "conflict-properties.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 11,
+    "title": "UTKAST-57: accepting a removed object discards only its proposal and preserves the saved removal",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 130,
+    "title": "UTKAST-58: accepting a removed relationship discards only its proposal without restoring the saved edge",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 130,
+    "title": "UTKAST-59: a duplicate relationship has a readonly comparison and discards only the proposed duplicate",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 130,
+    "title": "UTKAST-60: a missing endpoint has a readonly comparison and removes only the unusable relationship proposal",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 209,
+    "title": "UTKAST-61: an own removal is explicitly rebased against changed saved facts before a separate save",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 256,
+    "title": "UTKAST-62: object and new connection removal choices remain independent and reject an invalid combination",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 316,
+    "title": "UTKAST-73: removing one new connection leaves changed saved facts subject to explicit conflict review",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 386,
+    "title": "UTKAST-77: an applied duplicate-discard reply is explicitly checked without replay in Karta",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 386,
+    "title": "UTKAST-77: an unsent duplicate-discard reply is explicitly checked without replay in Karta",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 386,
+    "title": "UTKAST-77: an applied duplicate-discard reply is explicitly checked without replay in Tabell",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 386,
+    "title": "UTKAST-77: an unsent duplicate-discard reply is explicitly checked without replay in Tabell",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 460,
+    "title": "UTKAST-63: a lost reply verifies retained object and connection removals without replay in Karta",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 460,
+    "title": "UTKAST-63: a lost reply verifies retained object and connection removals without replay in Tabell",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "conflict-special.spec.ts",
+    "line": 532,
+    "title": "UTKAST-78: next conflict preserves retained choices and focuses the next real heading without another private mutation",
+    "path": [
+      "conflict-special.spec.ts"
+    ]
+  },
+  {
+    "file": "connected-work.spec.ts",
+    "line": 62,
+    "title": "ARBETE-08: familjeabonnemanget går från inloggning och samtal till gemensamt kvitto och privat fortsatt arbete",
+    "path": [
+      "connected-work.spec.ts"
+    ]
+  },
+  {
+    "file": "connected-work.spec.ts",
+    "line": 62,
+    "title": "ARBETE-09: samma familjearbete fungerar med text och listor utan grafik eller ljud",
+    "path": [
+      "connected-work.spec.ts"
+    ]
+  },
+  {
+    "file": "contract-forms.spec.ts",
+    "line": 15,
+    "title": "AVTAL-01: optional rent facts can be reviewed, found and corrected after reload",
+    "path": [
+      "contract-forms.spec.ts"
+    ]
+  },
+  {
+    "file": "contract-forms.spec.ts",
+    "line": 138,
+    "title": "AVTAL-02: dated debt and credit keep distinct values and incomplete meanings in forms and drafts",
+    "path": [
+      "contract-forms.spec.ts"
+    ]
+  },
+  {
+    "file": "contract-relationships.spec.ts",
+    "line": 49,
+    "title": "AVTAL-05: contract relationships preserve separate roles and identities through a blocked save and correction",
+    "path": [
+      "contract-relationships.spec.ts"
+    ]
+  },
+  {
+    "file": "contract-relationships.spec.ts",
+    "line": 296,
+    "title": "AVTAL-06: upgrading preserves household definitions and an older private draft",
+    "path": [
+      "contract-relationships.spec.ts"
+    ]
+  },
+  {
+    "file": "contracts.spec.ts",
+    "line": 6,
+    "title": "AVTAL-04: dated debt and credit facts survive draft recovery, correction and history",
+    "path": [
+      "contracts.spec.ts"
+    ]
+  },
+  {
+    "file": "contracts.spec.ts",
+    "line": 95,
+    "title": "AVTAL-08: resolving financial conflicts preserves independent facts and requires a whole new save",
+    "path": [
+      "contracts.spec.ts"
+    ]
+  },
+  {
+    "file": "contracts.spec.ts",
+    "line": 242,
+    "title": "AVTAL-07: invalid financial facts preserve the entire current draft and saved map",
+    "path": [
+      "contracts.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 39,
+    "title": "HJALP-01: en blockerad mikrofon i ett pågående samtal går att aktivera med hjälpmedel på dator",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 39,
+    "title": "HJALP-01: en blockerad mikrofon i ett pågående samtal går att aktivera med hjälpmedel på pekskärm",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 82,
+    "title": "HJALP-02: röstruta och notis behåller läs- och tabbordning när textvyn öppnas vid 1280px",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 82,
+    "title": "HJALP-02: röstruta och notis behåller läs- och tabbordning när textvyn öppnas vid 390px",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 155,
+    "title": "HJALP-06: systemets minskade rörelse ger fasta former och omedelbara ytor vid 1280px",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 155,
+    "title": "HJALP-06: systemets minskade rörelse ger fasta former och omedelbara ytor vid 390px",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 233,
+    "title": "HJALP-03: samma arbete och kontexttröskel läses en gång över textvy, röstruta och inställningar",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 302,
+    "title": "HJALP-04: kontakt-notisen avbryter en gång utan extra mikrofonstatus och flyttas med samma identitet",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 336,
+    "title": "HJALP-05: notisens ljudknapp följer samtalsknapparna och återför fokus utan extra uppläsning vid 1280px",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-accessibility.spec.ts",
+    "line": 336,
+    "title": "HJALP-05: notisens ljudknapp följer samtalsknapparna och återför fokus utan extra uppläsning vid 390px",
+    "path": [
+      "conversation-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-audit.spec.ts",
+    "line": 113,
+    "title": "NOT-09: symbolfärg och läsbarhet skiljer hinder från händelse i light tema",
+    "path": [
+      "conversation-audit.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-audit.spec.ts",
+    "line": 113,
+    "title": "NOT-09: symbolfärg och läsbarhet skiljer hinder från händelse i dark tema",
+    "path": [
+      "conversation-audit.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-audit.spec.ts",
+    "line": 163,
+    "title": "NOT-10: ett verkligt väntande sparförsök visar frågesymbol och kontrollknapp under texten",
+    "path": [
+      "conversation-audit.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-audit.spec.ts",
+    "line": 220,
+    "title": "TEXTMOBIL-05: vald röstruta och kompakt textvy använder det riktiga samtalet",
+    "path": [
+      "conversation-audit.spec.ts",
+      "valt mobilt samtalsflöde"
+    ]
+  },
+  {
+    "file": "conversation-capacity.spec.ts",
+    "line": 67,
+    "title": "KONTEXT-04: textmätaren följer modellens mätning och nytt samtal tömmer den",
+    "path": [
+      "conversation-capacity.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-capacity.spec.ts",
+    "line": 108,
+    "title": "KONTEXT-05: rösten visar procent från 85 och läser tröskeln en gång",
+    "path": [
+      "conversation-capacity.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-capacity.spec.ts",
+    "line": 177,
+    "title": "KONTEXT-06: ogiltig mätning och gamla rösthändelser ändrar inte den nya kontexten",
+    "path": [
+      "conversation-capacity.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-capacity.spec.ts",
+    "line": 222,
+    "title": "KONTEXT-07: mätaren och röstrutans procent går att läsa på pekskärm",
+    "path": [
+      "conversation-capacity.spec.ts",
+      "pekskärm 390"
+    ]
+  },
+  {
+    "file": "conversation-capacity.spec.ts",
+    "line": 222,
+    "title": "KONTEXT-07: mätaren och röstrutans procent går att läsa på pekskärm",
+    "path": [
+      "conversation-capacity.spec.ts",
+      "pekskärm 820"
+    ]
+  },
+  {
+    "file": "conversation-consent.spec.ts",
+    "line": 73,
+    "title": "MEDGIVANDE-01: samtalsknapparna visar medgivanderutan och Avbryt startar inget",
+    "path": [
+      "conversation-consent.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-consent.spec.ts",
+    "line": 146,
+    "title": "MEDGIVANDE-02: vald knapp avgör röst eller text och medgivandet gäller besöket",
+    "path": [
+      "conversation-consent.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-consent.spec.ts",
+    "line": 205,
+    "title": "MEDGIVANDE-03: sparat medgivande följer användaren men inte andra medlemmar",
+    "path": [
+      "conversation-consent.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-consent.spec.ts",
+    "line": 278,
+    "title": "MEDGIVANDE-04: medgivanderutan fungerar med tangentbord och pekskärm",
+    "path": [
+      "conversation-consent.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-context.spec.ts",
+    "line": 107,
+    "title": "KONTEXT-01: kontexten består efter utkast, sparande, avbrott och fel",
+    "path": [
+      "conversation-context.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-context.spec.ts",
+    "line": 185,
+    "title": "KONTEXT-02: röst och text delar kontext över avstängning och ny röstanslutning",
+    "path": [
+      "conversation-context.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-context.spec.ts",
+    "line": 244,
+    "title": "KONTEXT-03: skrivna och talade kommandon börjar om samtalet och kastar utkastet",
+    "path": [
+      "conversation-context.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-draft.spec.ts",
+    "line": 79,
+    "title": "SAMTALSUTKAST-01: utkasttabellen visar alla slags ändringar med kartans symboler",
+    "path": [
+      "conversation-draft.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-draft.spec.ts",
+    "line": 190,
+    "title": "SAMTALSUTKAST-02: valet följer användaren mellan hushåll och enheter",
+    "path": [
+      "conversation-draft.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-draft.spec.ts",
+    "line": 307,
+    "title": "SAMTALSUTKAST-04: sparandet finns i Rapporters ändringshistorik",
+    "path": [
+      "conversation-draft.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-draft.spec.ts",
+    "line": 323,
+    "title": "SAMTALSUTKAST-05: utkastvalet fungerar utan tillgängligt samtal",
+    "path": [
+      "conversation-draft.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-draft.spec.ts",
+    "line": 277,
+    "title": "SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil enhet",
+    "path": [
+      "conversation-draft.spec.ts",
+      "smal skärm"
+    ]
+  },
+  {
+    "file": "conversation-draft.spec.ts",
+    "line": 277,
+    "title": "SAMTALSUTKAST-03: första förslaget öppnar utkastet på mobil enhet",
+    "path": [
+      "conversation-draft.spec.ts",
+      "bred pekskärm"
+    ]
+  },
+  {
+    "file": "conversation-help.spec.ts",
+    "line": 237,
+    "title": "YTA-08: hjälpens långa text går att läsa och stänga på smal skärm",
+    "path": [
+      "conversation-help.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-help.spec.ts",
+    "line": 67,
+    "title": "YTA-07: hjälpen förklarar samtalet och leder till rätt kontroller",
+    "path": [
+      "conversation-help.spec.ts",
+      "Windows och Linux"
+    ]
+  },
+  {
+    "file": "conversation-help.spec.ts",
+    "line": 67,
+    "title": "YTA-07: hjälpen förklarar samtalet och leder till rätt kontroller",
+    "path": [
+      "conversation-help.spec.ts",
+      "macOS"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 172,
+    "title": "NOT-01: utan samtal visar avstängda samtalsknappar en stängbar notis utan att öppna textvyn",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 235,
+    "title": "NOT-02: bruten kontakt stoppar mikrofon och sändning medan texten går att skriva och läsa",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 289,
+    "title": "NOT-03: en notis flyttas till textvyn utan ny uppläsning och försvinner när kontakten återkommer",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 339,
+    "title": "NOT-04: bruten kontakt går före otillgängligt samtal och uppdragsfel",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 370,
+    "title": "NOT-05: uppdragsfelet kan stängas eller försvinna vid nästa försök och fokus stannar logiskt",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 410,
+    "title": "NOT-06: en stängbar kontakt-notis försvinner automatiskt och nästa avbrott väntar på ett nytt tryck",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 453,
+    "title": "NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid 1280 × 900",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 453,
+    "title": "NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid 700 × 900",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 453,
+    "title": "NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid 390 × 844",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 453,
+    "title": "NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid 667 × 375",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 453,
+    "title": "NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid 320 × 640",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 453,
+    "title": "NOT-07: notisen har sin plats och täcker inte kartans återkoppling vid 320 × 250",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 549,
+    "title": "NOT-08: en uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid 1280 × 900",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 549,
+    "title": "NOT-08: en uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid 820 × 1180",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 549,
+    "title": "NOT-08: en uppdragsnotis står bredvid röstrutan utan att täcka återkoppling vid 390 × 844",
+    "path": [
+      "conversation-notices.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 138,
+    "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+    "path": [
+      "conversation-notices.spec.ts",
+      "notisens innehåll på dator"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 138,
+    "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+    "path": [
+      "conversation-notices.spec.ts",
+      "notisens innehåll på telefon"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 138,
+    "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+    "path": [
+      "conversation-notices.spec.ts",
+      "notisens innehåll på bred pekskärm"
+    ]
+  },
+  {
+    "file": "conversation-notices.spec.ts",
+    "line": 138,
+    "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+    "path": [
+      "conversation-notices.spec.ts",
+      "notisens innehåll på kort fönster"
+    ]
+  },
+  {
+    "file": "conversation-questions.spec.ts",
+    "line": 106,
+    "title": "FRAGA-01: en nödvändig identitetsfråga finns i samtalstexten med serverns väntesignal",
+    "path": [
+      "conversation-questions.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-questions.spec.ts",
+    "line": 129,
+    "title": "FRAGA-02: Skyttel frågar om en verklig konflikt i samtalet utan en genererad frågeruta",
+    "path": [
+      "conversation-questions.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-questions.spec.ts",
+    "line": 205,
+    "title": "FRAGA-03: en fråga från tal som sagts med rösten väntar kvar med mikrofonen av",
+    "path": [
+      "conversation-questions.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-questions.spec.ts",
+    "line": 205,
+    "title": "FRAGA-03: en fråga från text som sagts med rösten väntar kvar med mikrofonen av",
+    "path": [
+      "conversation-questions.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-questions.spec.ts",
+    "line": 263,
+    "title": "FRAGA-04: ett verifierat Sparat väntar på hela ordet och ljudet innan fyra sekunder börjar",
+    "path": [
+      "conversation-questions.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-questions.spec.ts",
+    "line": 333,
+    "title": "FRAGA-05: stopp under det verifierade sparbeskedet startar de fyra sekunderna från avbrottet",
+    "path": [
+      "conversation-questions.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-questions.spec.ts",
+    "line": 366,
+    "title": "FRAGA-06: providertext som säger Sparat utan beständigt kvitto ger inget grönt sparbesked",
+    "path": [
+      "conversation-questions.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-queue.spec.ts",
+    "line": 86,
+    "title": "KÖ-01: datorn besvarar serverns kö i ordning och Escape avbryter bara i textvyn",
+    "path": [
+      "conversation-queue.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-queue.spec.ts",
+    "line": 183,
+    "title": "KÖ-02: smal dator visar stopp, behåller oskickad text och tillåter Escape",
+    "path": [
+      "conversation-queue.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-queue.spec.ts",
+    "line": 255,
+    "title": "KÖ-03: röstrutans stopp avbryter talat arbete och textkön utan att ändra utkastet",
+    "path": [
+      "conversation-queue.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-queue.spec.ts",
+    "line": 305,
+    "title": "KÖ-04: mobilens stopp skickar inte oskickad text och köar inget meddelande",
+    "path": [
+      "conversation-queue.spec.ts",
+      "Pekskärm"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 153,
+    "title": "MEDGIVANDE-05: sidan Samtal med Skyttel visar medgivandet för alla medlemmar",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 219,
+    "title": "MEDGIVANDE-06: Spara medgivandet sparar direkt utan att starta ett samtal",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 268,
+    "title": "MEDGIVANDE-07: Återkalla medgivandet gäller genast och Skyttel frågar igen",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 318,
+    "title": "MEDGIVANDE-08: medgivande för besöket går att återkalla och att spara",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 373,
+    "title": "MEDGIVANDE-09: sidan visas och återkallar när samtalet inte är tillgängligt",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 407,
+    "title": "MEDGIVANDE-10: ett misslyckat sparande sägs och knappen behåller sitt läge",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 450,
+    "title": "MEDGIVANDE-11: sidan sköts med tangentbord och pekskärm i båda teman",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 534,
+    "title": "MEDGIVANDE-12: en medlem som bjuds in igen har inget sparat medgivande",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 576,
+    "title": "MEDGIVANDE-14: ändrad medgivandetext kräver ett nytt sparat medgivande",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 615,
+    "title": "MEDGIVANDE-13: ett återkallande på en annan enhet avslutar samtalet",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 685,
+    "title": "MEDGIVANDE-15: återkallandet behåller utkast och oskickad text",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 755,
+    "title": "MEDGIVANDE-16: registrerat sparande slutförs vid återkallandet",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 830,
+    "title": "MEDGIVANDE-17: återkallanderutan med tangentbord och pekskärm",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-settings.spec.ts",
+    "line": 877,
+    "title": "MEDGIVANDE-18: nästa textförsök visar återkallandet på en annan enhet",
+    "path": [
+      "conversation-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-summary.spec.ts",
+    "line": 137,
+    "title": "KONTEXT-08: full textkontext sammanfattas och senaste utkastet kan rättas",
+    "path": [
+      "conversation-summary.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-summary.spec.ts",
+    "line": 171,
+    "title": "KONTEXT-09: full röstkontext sammanfattas med mikrofonen på",
+    "path": [
+      "conversation-summary.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-summary.spec.ts",
+    "line": 171,
+    "title": "KONTEXT-09: full röstkontext sammanfattas med mikrofonen av",
+    "path": [
+      "conversation-summary.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-summary.spec.ts",
+    "line": 233,
+    "title": "KONTEXT-10: misslyckad sammanfattning blockerar text tills nytt samtal",
+    "path": [
+      "conversation-summary.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-summary.spec.ts",
+    "line": 233,
+    "title": "KONTEXT-10: misslyckad sammanfattning blockerar röst tills nytt samtal",
+    "path": [
+      "conversation-summary.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-summary.spec.ts",
+    "line": 275,
+    "title": "KONTEXT-11: sammanfattning väntar på talat sparande och dess hörda kvitto",
+    "path": [
+      "conversation-summary.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-summary.spec.ts",
+    "line": 358,
+    "title": "KONTEXT-12: sammanfattning bevarar tal som spelades in före släpp",
+    "path": [
+      "conversation-summary.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-voice-text.spec.ts",
+    "line": 69,
+    "title": "RÖSTTEXT-01: skrivet uppdrag med mikrofonen på får röst och text utan att öppna textvyn",
+    "path": [
+      "conversation-voice-text.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-voice-text.spec.ts",
+    "line": 116,
+    "title": "RÖSTTEXT-04: ett skrivet obekräftat sparpåstående blir inget verifierat talat sparbesked",
+    "path": [
+      "conversation-voice-text.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-voice-text.spec.ts",
+    "line": 146,
+    "title": "RÖSTTEXT-02: mikrofonen av ger bara text och gamla svar spelas inte upp när den slås på",
+    "path": [
+      "conversation-voice-text.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-voice-text.spec.ts",
+    "line": 195,
+    "title": "RÖSTTEXT-03: köns skrivna svar överlämnas till rösten en gång och samtalstexten läser aldrig egna eller talade rader",
+    "path": [
+      "conversation-voice-text.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-widths.spec.ts",
+    "line": 91,
+    "title": "TEXTBREDD-01: handtagen ändrar bredderna var för sig utan att avbryta samtalet",
+    "path": [
+      "conversation-widths.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-widths.spec.ts",
+    "line": 191,
+    "title": "TEXTBREDD-02: bredderna följer användaren och skärmens begränsning sparas inte",
+    "path": [
+      "conversation-widths.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-widths.spec.ts",
+    "line": 272,
+    "title": "TEXTBREDD-03: bredderna återställs i Inställningar även utan tillgängligt samtal",
+    "path": [
+      "conversation-widths.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-widths.spec.ts",
+    "line": 352,
+    "title": "TEXTBREDD-05: äldre hushållsarkiv lämnar personliga samtalsval kvar",
+    "path": [
+      "conversation-widths.spec.ts"
+    ]
+  },
+  {
+    "file": "conversation-widths.spec.ts",
+    "line": 325,
+    "title": "TEXTBREDD-04: mobil enhet och smal skärm har inga breddhandtag",
+    "path": [
+      "conversation-widths.spec.ts",
+      "smal dator"
+    ]
+  },
+  {
+    "file": "conversation-widths.spec.ts",
+    "line": 325,
+    "title": "TEXTBREDD-04: mobil enhet och smal skärm har inga breddhandtag",
+    "path": [
+      "conversation-widths.spec.ts",
+      "telefon"
+    ]
+  },
+  {
+    "file": "conversation-widths.spec.ts",
+    "line": 325,
+    "title": "TEXTBREDD-04: mobil enhet och smal skärm har inga breddhandtag",
+    "path": [
+      "conversation-widths.spec.ts",
+      "bred pekskärm"
+    ]
+  },
+  {
+    "file": "costs.spec.ts",
+    "line": 46,
+    "title": "KOST-01: separata kostnader och månadens antaganden återläses efter omstart",
+    "path": [
+      "costs.spec.ts"
+    ]
+  },
+  {
+    "file": "costs.spec.ts",
+    "line": 138,
+    "title": "KOST-02: saknade slutvärden och hämtningsfel bevarar känt underlag utan dubbelräkning",
+    "path": [
+      "costs.spec.ts"
+    ]
+  },
+  {
+    "file": "costs.spec.ts",
+    "line": 183,
+    "title": "KOST-03: endast driftansvarig har åtkomst oberoende av hushållets roller",
+    "path": [
+      "costs.spec.ts"
+    ]
+  },
+  {
+    "file": "costs.spec.ts",
+    "line": 267,
+    "title": "KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer (1280px)",
+    "path": [
+      "costs.spec.ts"
+    ]
+  },
+  {
+    "file": "costs.spec.ts",
+    "line": 267,
+    "title": "KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer (390px)",
+    "path": [
+      "costs.spec.ts"
+    ]
+  },
+  {
+    "file": "costs.spec.ts",
+    "line": 267,
+    "title": "KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer (320px)",
+    "path": [
+      "costs.spec.ts"
+    ]
+  },
+  {
+    "file": "database-setup.spec.ts",
+    "line": 59,
+    "title": "DEMO-01: database setup gives only the configured google administrator a ready TestHousehold",
+    "path": [
+      "database-setup.spec.ts"
+    ]
+  },
+  {
+    "file": "database-setup.spec.ts",
+    "line": 59,
+    "title": "DEMO-01: database setup gives only the configured microsoft administrator a ready TestHousehold",
+    "path": [
+      "database-setup.spec.ts"
+    ]
+  },
+  {
+    "file": "database-setup.spec.ts",
+    "line": 223,
+    "title": "repeated setup clears households, members, invitations, sessions and future fixture tables",
+    "path": [
+      "database-setup.spec.ts"
+    ]
+  },
+  {
+    "file": "database-setup.spec.ts",
+    "line": 302,
+    "title": "setup rejects unsafe or incomplete configuration before touching existing data",
+    "path": [
+      "database-setup.spec.ts"
+    ]
+  },
+  {
+    "file": "database-setup.spec.ts",
+    "line": 337,
+    "title": "a failed seed rolls back the reset and keeps existing sessions usable",
+    "path": [
+      "database-setup.spec.ts"
+    ]
+  },
+  {
+    "file": "definition-removal.spec.ts",
+    "line": 15,
+    "title": "KATALOG-01: unused fields and custom and prefilled types are reviewed, discarded or saved without automatic cleanup",
+    "path": [
+      "definition-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "definition-removal.spec.ts",
+    "line": 126,
+    "title": "KATALOG-02: private drafts and ended content block removal with a useful explanation and no private disclosure",
+    "path": [
+      "definition-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "definition-removal.spec.ts",
+    "line": 264,
+    "title": "KATALOG-03: history reads removed definitions and content without changing independent work",
+    "path": [
+      "definition-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 37,
+    "title": "UTKAST-17: canceled form loss and staged independent work survive concurrent conflict review",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 133,
+    "title": "UTKAST-18: status reaches all conflict kinds and preserves complete snapshot values at 1440px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 133,
+    "title": "UTKAST-18: status reaches all conflict kinds and preserves complete snapshot values at 390px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 133,
+    "title": "UTKAST-18: status reaches all conflict kinds and preserves complete snapshot values at 320px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 133,
+    "title": "UTKAST-18: status reaches all conflict kinds and preserves complete snapshot values at 640px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 394,
+    "title": "UTKAST-19: an own object correction preserves staged independent work and saved facts until a fresh save",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 492,
+    "title": "UTKAST-20: a relationship correction replaces a deleted endpoint and still requires a fresh save at 1440px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 492,
+    "title": "UTKAST-20: a relationship correction replaces a deleted endpoint and still requires a fresh save at 390px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 582,
+    "title": "UTKAST-21: object-type correction opens retained settings and preserves independent edits until a fresh save at 1440px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 582,
+    "title": "UTKAST-21: object-type correction opens retained settings and preserves independent edits until a fresh save at 390px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 582,
+    "title": "UTKAST-21: relationship-type correction opens retained settings and preserves independent edits until a fresh save at 1440px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 582,
+    "title": "UTKAST-21: relationship-type correction opens retained settings and preserves independent edits until a fresh save at 390px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 717,
+    "title": "UTKAST-22: a saved conflict choice keeps the review heading focused and restores usable toolbar focus without saving",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 717,
+    "title": "UTKAST-22: a proposed conflict choice keeps the review heading focused and restores usable toolbar focus without saving",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 767,
+    "title": "UTKAST-23: delayed conflict resolution protects pending focus and allows explicit table continuation",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 832,
+    "title": "UTKAST-24: lost resolution and save responses recover the private choice and one fresh receipt at 1440px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 832,
+    "title": "UTKAST-24: lost resolution and save responses recover the private choice and one fresh receipt at 390px",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 967,
+    "title": "UTKAST-05: a conflict choice preserves independent proposals and requires a new save",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1098,
+    "title": "UTKAST-06: deleting an object requires reviewing newly saved relationships",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1161,
+    "title": "UTKAST-07: overlapping relationship proposals show meanings and can accept the saved value",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1200,
+    "title": "UTKAST-10: relationship choices preserve independent status and keep date certainty with its value",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1282,
+    "title": "UTKAST-11: deletion after concurrent type changes retains the matching historical definitions",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1282,
+    "title": "UTKAST-11: keeping a changed relationship preserves it and reopens the object removal dependency",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1407,
+    "title": "UTKAST-08: a saved duplicate can be selected without losing another proposal",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1460,
+    "title": "UTKAST-09: a deleted relationship endpoint has an explicit recovery choice",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1508,
+    "title": "HTTP clients reject stale conflict choices and enforce private drafts and revoked membership",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1599,
+    "title": "resolving an object preserves fields changed only by the other user",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1630,
+    "title": "independent users save unrelated objects without a meaningless conflict",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1662,
+    "title": "UTKAST-02: a stale discard preserves newer object and relationship proposals",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1725,
+    "title": "UTKAST-03: a stale conflict choice requires refreshed review before saving",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-conflicts.spec.ts",
+    "line": 1772,
+    "title": "UTKAST-04: accepting a deleted object preserves an independent proposal",
+    "path": [
+      "draft-conflicts.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-creation.spec.ts",
+    "line": 23,
+    "title": "KARTA-09: complete forms use new draft types and objects in one durable relationship save at 1280px in light",
+    "path": [
+      "draft-creation.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-creation.spec.ts",
+    "line": 23,
+    "title": "KARTA-09: complete forms use new draft types and objects in one durable relationship save at 1280px in dark",
+    "path": [
+      "draft-creation.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-creation.spec.ts",
+    "line": 23,
+    "title": "KARTA-09: complete forms use new draft types and objects in one durable relationship save at 390px in light",
+    "path": [
+      "draft-creation.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-creation.spec.ts",
+    "line": 23,
+    "title": "KARTA-09: complete forms use new draft types and objects in one durable relationship save at 390px in dark",
+    "path": [
+      "draft-creation.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-creation.spec.ts",
+    "line": 23,
+    "title": "KARTA-09: complete forms use new draft types and objects in one durable relationship save at 320px in light",
+    "path": [
+      "draft-creation.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-creation.spec.ts",
+    "line": 23,
+    "title": "KARTA-09: complete forms use new draft types and objects in one durable relationship save at 320px in dark",
+    "path": [
+      "draft-creation.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 7,
+    "title": "UTKAST-46: removal of the final rows focuses the previous control and then the draft heading",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 31,
+    "title": "UTKAST-46: delayed removal restores a disappearing draft tool and preserves later focus (draft tool)",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 31,
+    "title": "UTKAST-46: delayed removal restores a disappearing draft tool and preserves later focus (later control)",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 80,
+    "title": "UTKAST-48: authoritative discard rejects forged or unauthorized requests and recovers an applied removal after a lost reply",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 147,
+    "title": "UTKAST-47: discarding an edited objectType retains incompatible values and displays the remaining type conflict",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 147,
+    "title": "UTKAST-47: discarding an edited relationshipType retains incompatible values and displays the remaining type conflict",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 200,
+    "title": "UTKAST-48: lost independent removal checks actual draft before offering another removal",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 245,
+    "title": "UTKAST-48: a delayed independent removal failure preserves later composer focus and exposes persistent recovery",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 308,
+    "title": "UTKAST-41: independent removal preserves other proposals and history and focuses the next control",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 351,
+    "title": "UTKAST-42: dependent object removal shows its actual edge proposals and cancellation changes nothing at 1280px",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 351,
+    "title": "UTKAST-42: dependent object removal shows its actual edge proposals and cancellation changes nothing at 320px",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 409,
+    "title": "UTKAST-44: whole draft discard requires confirmation and preserves unsent conversation and shared history at 1280px",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 409,
+    "title": "UTKAST-44: whole draft discard requires confirmation and preserves unsent conversation and shared history at 320px",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 458,
+    "title": "UTKAST-45: a stale discard confirmation preserves newer proposals and refreshes its actual plan",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 508,
+    "title": "UTKAST-43: removing a new objectType preserves dependent proposals with a truthful type warning",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-removal.spec.ts",
+    "line": 508,
+    "title": "UTKAST-43: removing a new relationshipType preserves dependent proposals with a truthful type warning",
+    "path": [
+      "draft-removal.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-review.spec.ts",
+    "line": 12,
+    "title": "UTKAST-31: long unbroken field labels wrap in full draft reading at 320 CSS pixels",
+    "path": [
+      "draft-review.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-review.spec.ts",
+    "line": 49,
+    "title": "UTKAST-32: lifecycle-only object and relationship proposals distinguish effective changes and explicit modes",
+    "path": [
+      "draft-review.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-review.spec.ts",
+    "line": 115,
+    "title": "UTKAST-90: desktop complete draft review works without AI or consent",
+    "path": [
+      "draft-review.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-review.spec.ts",
+    "line": 115,
+    "title": "UTKAST-90: mobile complete draft review works without AI or consent",
+    "path": [
+      "draft-review.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-review.spec.ts",
+    "line": 214,
+    "title": "UTKAST-91: empty and type-only drafts preserve unsent text and first send asks consent once",
+    "path": [
+      "draft-review.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-review.spec.ts",
+    "line": 270,
+    "title": "UTKAST-27: desktop draft reading preserves lifecycle, images and configured field meanings",
+    "path": [
+      "draft-review.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-review.spec.ts",
+    "line": 270,
+    "title": "UTKAST-27: mobile draft reading preserves lifecycle, images and configured field meanings",
+    "path": [
+      "draft-review.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 7,
+    "title": "UTKAST-36: draft save opens immediately and confirms one persistent save without AI",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 62,
+    "title": "UTKAST-37: closing a pending mobile save preserves its follow-up across map and table without stealing later focus at 390px",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 62,
+    "title": "UTKAST-37: closing a pending mobile save preserves its follow-up across map and table without stealing later focus at 320px",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 121,
+    "title": "UTKAST-38: a lost save response keeps proposals until the same durable attempt is checked from the table",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 201,
+    "title": "UTKAST-39: a durable save attempt remains reachable after reload without a draft icon or conversation and reports a confirmed rejection",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 248,
+    "title": "UTKAST-40: a verified receipt closes the save dialog despite a failed map refresh and never repeats its announcement",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 290,
+    "title": "UTKAST-39: recovery after reload completes the existing attempt and retires its unknown follow-up without AI",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 326,
+    "title": "UTKAST-40: a rejected stale version retains every proposal until fresh reading and creates no saved history",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 381,
+    "title": "UTKAST-37: a closed pending save restores the table heading when its focused follow-up disappears",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 422,
+    "title": "UTKAST-38: Map receipt recovery restores visible draft context after its follow-up disappears at 1280px",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-save.spec.ts",
+    "line": 422,
+    "title": "UTKAST-38: Map receipt recovery restores visible draft context after its follow-up disappears at 390px",
+    "path": [
+      "draft-save.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 40,
+    "title": "UTKAST-25: filtered legend matches map colours and retains only displayed categories in light",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 40,
+    "title": "UTKAST-25: filtered legend matches map colours and retains only displayed categories in dark",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 155,
+    "title": "UTKAST-26: confirmed save toast expires while failed refresh remains recoverable without a conversation",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 155,
+    "title": "UTKAST-26: confirmed save toast expires while failed refresh remains recoverable without a conversation after an unknown result",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 207,
+    "title": "UTKAST-12: closed work views retain private proposals through an unknown save at 1440px and verify the same receipt",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 207,
+    "title": "UTKAST-12: closed work views retain private proposals through an unknown save at 390px and verify the same receipt",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 207,
+    "title": "UTKAST-12: closed work views retain private proposals through an unknown save at 320px and verify the same receipt",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 276,
+    "title": "UTKAST-14: manual text and voice proposals share one durable private draft and an atomic household save",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 502,
+    "title": "UTKAST-13: a verified save keeps a newer field focused",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 550,
+    "title": "UTKAST-15: a necessary answer gates the native draft save until a fresh explicit save",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 648,
+    "title": "UTKAST-16: navigation and native draft review keep controls usable through both opening orders at 1440px",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 648,
+    "title": "UTKAST-16: navigation and native draft review keep controls usable through both opening orders at 640px",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "draft-status.spec.ts",
+    "line": 648,
+    "title": "UTKAST-16: navigation and native draft review keep controls usable through both opening orders at 320px",
+    "path": [
+      "draft-status.spec.ts"
+    ]
+  },
+  {
+    "file": "family.spec.ts",
+    "line": 32,
+    "title": "KARTA-07: family objects and directed relationships save together and keep their identities",
+    "path": [
+      "family.spec.ts"
+    ]
+  },
+  {
+    "file": "family.spec.ts",
+    "line": 107,
+    "title": "KARTA-05: manual forms preserve incomplete meanings and block an unanswered identity question",
+    "path": [
+      "family.spec.ts"
+    ]
+  },
+  {
+    "file": "family.spec.ts",
+    "line": 183,
+    "title": "UTKAST-01: demo seed resumes a conflict and preserves independent proposals without granting access to map people",
+    "path": [
+      "family.spec.ts"
+    ]
+  },
+  {
+    "file": "family.spec.ts",
+    "line": 271,
+    "title": "KARTA-07: a concurrent duplicate refreshes the saved relationship and allows explicit editing",
+    "path": [
+      "family.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 36,
+    "title": "HISTORIK-01: Reports preserves table work and lists only completed saves latest first",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 74,
+    "title": "HISTORIK-06: Reports exposes complete historical values with keyboard at 1280px",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 74,
+    "title": "HISTORIK-06: Reports exposes complete historical values with keyboard at 390px",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 74,
+    "title": "HISTORIK-06: Reports exposes complete historical values with keyboard at 320px",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 117,
+    "title": "HISTORIK-07: failed and delayed Reports reads preserve newer focus and retry real saves",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 156,
+    "title": "HISTORIK-10: a direct save link reads historical types after their definitions change",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 202,
+    "title": "HISTORIK-11: private rejected and pending save attempts never enter shared Reports",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 249,
+    "title": "HISTORIK-12: following save links preserves table search and unsent conversation text",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 249,
+    "title": "HISTORIK-12: following save links preserves table search and unsent conversation text at 390px",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 249,
+    "title": "HISTORIK-12: following save links preserves table search and unsent conversation text at 320px",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "history.spec.ts",
+    "line": 319,
+    "title": "HISTORIK-13: historical icon changes remain readable beside an unchanged profile image",
+    "path": [
+      "history.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 1280x900px light",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 1280x900px dark",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 390x900px light",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 390x900px dark",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x900px light",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x900px dark",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 640x500px light",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 640x500px dark",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x250px light",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 218,
+    "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x250px dark",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 423,
+    "title": "RADERING-01: keyboard review erases selected content and preserves unrelated work after restart",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 487,
+    "title": "RADERING-02: a lost completion reply is recovered from durable status without another erasure",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 531,
+    "title": "RADERING-03: a changed scope requires a new review and confirmation before erasure",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 574,
+    "title": "RADERING-04: pending cleanup survives application restart and completes only after the reader releases",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 632,
+    "title": "RADERING-05: erasing a former type removes its historical image from a fresh export while preserving the current object after restart",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 768,
+    "title": "RADERING-07: a known erasure survives Settings navigation and reload despite a newer result",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 943,
+    "title": "RADERING-08: a current administrator continues the same cleanup after role loss, restart and a lost resume reply",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 1153,
+    "title": "RADERING-09: an unavailable exact attempt stays explicitly unknown after navigation and a newer result",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 1292,
+    "title": "RADERING-10: a retired status reply cannot replace a newer reviewed erasure after Settings navigation",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-erasure.spec.ts",
+    "line": 1453,
+    "title": "RADERING-11: unavailable recovery storage preserves review and the exact pending cleanup without another erasure",
+    "path": [
+      "household-erasure.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-content.spec.ts",
+    "line": 13,
+    "title": "EXPORT-07: revocation or demotion interrupts an active download and removes its private copy",
+    "path": [
+      "household-export-content.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-content.spec.ts",
+    "line": 108,
+    "title": "EXPORT-06: a full archive preserves object identities and saved, historical and private image versions",
+    "path": [
+      "household-export-content.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 110,
+    "title": "EXPORT-01: an administrator downloads the complete household archive by keyboard",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 273,
+    "title": "EXPORT-02: an administrator cancels an export and prepares another",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 327,
+    "title": "EXPORT-03: an interrupted download offers a new export without reporting success",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 360,
+    "title": "EXPORT-04: a changed administrator role blocks export and clears the ready download",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 426,
+    "title": "EXPORT-05: an expired export requires a new preparation",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 461,
+    "title": "EXPORT-08: canceling preparation with an unseen ready response explains cleanup uncertainty",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 528,
+    "title": "EXPORT-09: keyboard export controls retain focus and protect native form input at 1280px",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 528,
+    "title": "EXPORT-09: keyboard export controls retain focus and protect native form input at 390px",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 528,
+    "title": "EXPORT-09: keyboard export controls retain focus and protect native form input at 320px",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 528,
+    "title": "EXPORT-09: keyboard export controls retain focus and protect native form input at 640px",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 640,
+    "title": "EXPORT-10: the downloaded current-format archive restores shared, private and historical content after restart",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 887,
+    "title": "EXPORT-11: leaving a ready export retires the copy and preserves private proposals after guarded form departure",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-export-ui.spec.ts",
+    "line": 887,
+    "title": "EXPORT-11: leaving a downloading export retires the copy and preserves private proposals after guarded form departure",
+    "path": [
+      "household-export-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-cancel.spec.ts",
+    "line": 25,
+    "title": "IMPORT-16: an administrator explicitly cancels only an unconfirmed preparation and removes its staged archive",
+    "path": [
+      "household-import-cancel.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-cancel.spec.ts",
+    "line": 164,
+    "title": "IMPORT-18: a fresh administrator client can find cancelled files even when another review is ready",
+    "path": [
+      "household-import-cancel.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-cancel.spec.ts",
+    "line": 224,
+    "title": "IMPORT-19: a retired cancellation response cannot forget a newer preparation after Settings navigation",
+    "path": [
+      "household-import-cancel.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-cancel.spec.ts",
+    "line": 303,
+    "title": "IMPORT-20: a retired unavailable status response cannot forget a newer preparation after Settings navigation",
+    "path": [
+      "household-import-cancel.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-cancel.spec.ts",
+    "line": 391,
+    "title": "IMPORT-17: failed cancellation cleanup and a lost success remain bound to the same unconfirmed preparation",
+    "path": [
+      "household-import-cancel.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-definitions.spec.ts",
+    "line": 6,
+    "title": "IMPORT-07: historical field meanings survive replacement and ordinary corrections",
+    "path": [
+      "household-import-definitions.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-discovery.spec.ts",
+    "line": 7,
+    "title": "IMPORT-09: another administrator discovers the same committed import after a lost response and restart",
+    "path": [
+      "household-import-discovery.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-discovery.spec.ts",
+    "line": 123,
+    "title": "IMPORT-11: another administrator finishes the same gated cleanup after the original administrator loses authority",
+    "path": [
+      "household-import-discovery.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-discovery.spec.ts",
+    "line": 262,
+    "title": "IMPORT-10: the current administrator recovers a lost preparation before an older completed import",
+    "path": [
+      "household-import-discovery.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-discovery.spec.ts",
+    "line": 328,
+    "title": "IMPORT-14: a locally known uncertain import keeps its exact identity after a newer replacement and a lost status response",
+    "path": [
+      "household-import-discovery.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-history.spec.ts",
+    "line": 7,
+    "title": "IMPORT-06: replacement preserves image history and private work, rejects old save attempts and permits ordinary corrections after restart",
+    "path": [
+      "household-import-history.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-recovery.spec.ts",
+    "line": 5,
+    "title": "IMPORT-08: an unavailable prepared archive allows fresh review after restart without changing content",
+    "path": [
+      "household-import-recovery.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-settings.spec.ts",
+    "line": 5,
+    "title": "IMPORT-12: protected Settings recovery pages preserve ordinary work and retire it after replacement",
+    "path": [
+      "household-import-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-settings.spec.ts",
+    "line": 114,
+    "title": "IMPORT-13: import and identity Settings destinations enforce current household administrator access",
+    "path": [
+      "household-import-settings.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-ui.spec.ts",
+    "line": 6,
+    "title": "IMPORT-01: an administrator reviews and explicitly replaces household content with the keyboard",
+    "path": [
+      "household-import-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-import-ui.spec.ts",
+    "line": 82,
+    "title": "IMPORT-21: unavailable recovery storage preserves the file, exact review and confirmed server result",
+    "path": [
+      "household-import-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-owners-ui.spec.ts",
+    "line": 6,
+    "title": "FLYTT-02: an uncertain explicit identity assignment is read back while both private states and historical receipts remain intact",
+    "path": [
+      "household-owners-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 8,
+    "title": "LÄS-05: identity reading distinguishes identified, unresolved and a proposal replacing unspecified identity",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 62,
+    "title": "LÄS-06: a vanished sole second-page row restores the preceding control after page collapse",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 111,
+    "title": "LÄS-07: a long unbroken object name wraps in full reading at 320 CSS pixels",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 143,
+    "title": "LÄS-04: vanished read openers return to previous when no next row remains",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 143,
+    "title": "LÄS-04: vanished read openers return to heading when no next row remains",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 193,
+    "title": "LÄS-01: keyboard follows Alex to bicycle to garage and back without graphics or lost table state",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 300,
+    "title": "LÄS-02: mobile full relationship reading separates absent targets, uncertainty and proposed removal",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-reading.spec.ts",
+    "line": 357,
+    "title": "LÄS-03: a vanished table opener returns to the next equivalent control after a real background update",
+    "path": [
+      "household-reading.spec.ts"
+    ]
+  },
+  {
+    "file": "household-recovery-accessibility.spec.ts",
+    "line": 71,
+    "title": "IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at 1280px",
+    "path": [
+      "household-recovery-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "household-recovery-accessibility.spec.ts",
+    "line": 71,
+    "title": "IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at 390px",
+    "path": [
+      "household-recovery-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "household-recovery-accessibility.spec.ts",
+    "line": 71,
+    "title": "IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at 320px",
+    "path": [
+      "household-recovery-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "household-recovery-accessibility.spec.ts",
+    "line": 71,
+    "title": "IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at 640px",
+    "path": [
+      "household-recovery-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "household-recovery.spec.ts",
+    "line": 9,
+    "title": "FLYTT-01: a fresh installation restores an archive, explicitly assigns private ownership and remains portable after restart",
+    "path": [
+      "household-recovery.spec.ts"
+    ]
+  },
+  {
+    "file": "household-table.spec.ts",
+    "line": 20,
+    "title": "TABELL-04: disappearing edited rows restore the next Edit control then previous then heading",
+    "path": [
+      "household-table.spec.ts"
+    ]
+  },
+  {
+    "file": "household-table.spec.ts",
+    "line": 20,
+    "title": "TABELL-05: map visits restore the corresponding table control after its row disappears",
+    "path": [
+      "household-table.spec.ts"
+    ]
+  },
+  {
+    "file": "household-table.spec.ts",
+    "line": 132,
+    "title": "TABELL-01: Swedish natural sorting, pagination and expanded rows survive map visits",
+    "path": [
+      "household-table.spec.ts"
+    ]
+  },
+  {
+    "file": "household-table.spec.ts",
+    "line": 214,
+    "title": "TABELL-02: full saved and proposed details distinguish every lifecycle and proposal status",
+    "path": [
+      "household-table.spec.ts"
+    ]
+  },
+  {
+    "file": "household-table.spec.ts",
+    "line": 345,
+    "title": "TABELL-03: mobile horizontal reading preserves shared selection, draft and unsent conversation",
+    "path": [
+      "household-table.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 49,
+    "title": "ARBETE-07: pending erasure retires microphone, unsent forms and an admitted save before reloading",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 321,
+    "title": "ARBETE-01: canceled form loss and staged household work survive ordinary navigation at 1280px",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 321,
+    "title": "ARBETE-01: canceled form loss and staged household work survive ordinary navigation at 390px",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 321,
+    "title": "ARBETE-01: canceled form loss and staged household work survive ordinary navigation at 320px",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 389,
+    "title": "ARBETE-02: conversation and microphone survive navigation and end on logout",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 429,
+    "title": "ARBETE-03: revoked household access retires hidden forms and microphone",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 487,
+    "title": "ARBETE-04: replaced household content retires hidden work and microphone",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 546,
+    "title": "ARBETE-05: navigation preserves a save attempt after its response disappears",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "household-work.spec.ts",
+    "line": 608,
+    "title": "ARBETE-06: selection and personal map view survive navigation and resizing",
+    "path": [
+      "household-work.spec.ts"
+    ]
+  },
+  {
+    "file": "invitations.spec.ts",
+    "line": 9,
+    "title": "upgrading an existing household preserves its membership and enables invitations",
+    "path": [
+      "invitations.spec.ts"
+    ]
+  },
+  {
+    "file": "invitations.spec.ts",
+    "line": 133,
+    "title": "an invitation admits only its authenticated recipient and remains consumed after restart",
+    "path": [
+      "invitations.spec.ts"
+    ]
+  },
+  {
+    "file": "invitations.spec.ts",
+    "line": 198,
+    "title": "administrators cannot cross household boundaries and members can accept access to another household",
+    "path": [
+      "invitations.spec.ts"
+    ]
+  },
+  {
+    "file": "invitations.spec.ts",
+    "line": 301,
+    "title": "invitation replacement, cancellation, and membership revocation invalidate old codes",
+    "path": [
+      "invitations.spec.ts"
+    ]
+  },
+  {
+    "file": "invitations.spec.ts",
+    "line": 351,
+    "title": "concurrent role changes cannot remove the last administrator",
+    "path": [
+      "invitations.spec.ts"
+    ]
+  },
+  {
+    "file": "invitations.spec.ts",
+    "line": 389,
+    "title": "members cannot administer access, two administrators can share it, and revocation defeats old sessions",
+    "path": [
+      "invitations.spec.ts"
+    ]
+  },
+  {
+    "file": "large-map.spec.ts",
+    "line": 15,
+    "title": "STORKARTA-01: dense overview keeps readable labels and every object and relationship reachable",
+    "path": [
+      "large-map.spec.ts"
+    ]
+  },
+  {
+    "file": "lifecycle.spec.ts",
+    "line": 89,
+    "title": "LIVSCYKEL-01: ended objects and relationships stay visible and independently correctable",
+    "path": [
+      "lifecycle.spec.ts"
+    ]
+  },
+  {
+    "file": "lifecycle.spec.ts",
+    "line": 162,
+    "title": "LIVSCYKEL-03: removing from the list immediately proposes every connected edge and preserves history",
+    "path": [
+      "lifecycle.spec.ts"
+    ]
+  },
+  {
+    "file": "lifecycle.spec.ts",
+    "line": 271,
+    "title": "LIVSCYKEL-02: only a known elapsed end date ends content and dates or status can correct it",
+    "path": [
+      "lifecycle.spec.ts"
+    ]
+  },
+  {
+    "file": "lifecycle.spec.ts",
+    "line": 380,
+    "title": "LIVSCYKEL-04: keyboard relationship targets expose ended status without changing saved facts",
+    "path": [
+      "lifecycle.spec.ts"
+    ]
+  },
+  {
+    "file": "lifecycle.spec.ts",
+    "line": 478,
+    "title": "LIVSCYKEL-05: object and relationship descriptions remain distinct for valid overlapping identities",
+    "path": [
+      "lifecycle.spec.ts"
+    ]
+  },
+  {
+    "file": "lifecycle.spec.ts",
+    "line": 549,
+    "title": "LIVSCYKEL-06: current and previous relationships retain their own accessible status",
+    "path": [
+      "lifecycle.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 20,
+    "title": "ACCESS-09: both proven providers return to the same user and household",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 61,
+    "title": "existing identity proof preserves access after wrong identity",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 61,
+    "title": "existing identity proof preserves access after denied consent",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 61,
+    "title": "existing identity proof preserves access after provider failure",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 61,
+    "title": "existing identity proof preserves access after cancelled",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 99,
+    "title": "new identity proof preserves both users after occupied identity",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 99,
+    "title": "new identity proof preserves both users after denied consent",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 99,
+    "title": "new identity proof preserves both users after provider failure",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 99,
+    "title": "new identity proof preserves both users after cancelled",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 138,
+    "title": "linking requires the original session, explicit proof and same-origin requests",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 193,
+    "title": "ACCESS-09: the interface verifies the result and lists both login methods",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 242,
+    "title": "ACCESS-10: cancelling a verified link requires fresh proof and preserves household access",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 287,
+    "title": "ACCESS-11: the wrong existing identity leaves linking retryable without changing access",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 318,
+    "title": "ACCESS-19: expired linking explains fresh proof and preserves identity and private work",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "linking.spec.ts",
+    "line": 402,
+    "title": "ACCESS-20: an expired link on an open page explains fresh proof after the real rejection",
+    "path": [
+      "linking.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 93,
+    "title": "KAMERA-01: rotation keeps the selected personal position fixed on screen without a selection jump",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 127,
+    "title": "KAMERA-02: focus fits only selection and direct neighbors while camera history preserves work",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 212,
+    "title": "KAMERA-03: mouse and touch rotation preserve the pivot and narrow focus controls survive unavailable graphics",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 287,
+    "title": "KAMERA-04: short viewports retain a usable focus rectangle and reachable camera and display controls",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 454,
+    "title": "KAMERA-05: context focus preserves multiple selections and filters with distinct described actions",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 516,
+    "title": "KAMERA-06: toolbar label mode toggles with pointer and keyboard and survives reload",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 557,
+    "title": "KAMERA-07: toolbar reset clears map search and selection while preserving label mode and personal positions",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 629,
+    "title": "KAMERA-08: previous view walks each camera change back to the initial view and reset clears history",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-camera.spec.ts",
+    "line": 689,
+    "title": "KAMERA-09: mouse drags, wheel bursts and touch pinch create complete previous views",
+    "path": [
+      "map-camera.spec.ts"
+    ]
+  },
+  {
+    "file": "map-exploration.spec.ts",
+    "line": 13,
+    "title": "SÖK-06: map search shows direct context and exploration preserves hits through return and table visits",
+    "path": [
+      "map-exploration.spec.ts"
+    ]
+  },
+  {
+    "file": "map-exploration.spec.ts",
+    "line": 104,
+    "title": "SÖK-09: a changed connection shows direct saved and proposed endpoints without expanding their chains",
+    "path": [
+      "map-exploration.spec.ts"
+    ]
+  },
+  {
+    "file": "map-exploration.spec.ts",
+    "line": 175,
+    "title": "SÖK-08: table map actions reset only map filters and retain table work at 1280px",
+    "path": [
+      "map-exploration.spec.ts"
+    ]
+  },
+  {
+    "file": "map-exploration.spec.ts",
+    "line": 175,
+    "title": "SÖK-08: table map actions reset only map filters and retain table work at 390px",
+    "path": [
+      "map-exploration.spec.ts"
+    ]
+  },
+  {
+    "file": "map-exploration.spec.ts",
+    "line": 175,
+    "title": "SÖK-08: table map actions reset only map filters and retain table work at 320px",
+    "path": [
+      "map-exploration.spec.ts"
+    ]
+  },
+  {
+    "file": "map-exploration.spec.ts",
+    "line": 302,
+    "title": "SÖK-07: direct context ignores hit filters while ended objects and edges require inclusion",
+    "path": [
+      "map-exploration.spec.ts"
+    ]
+  },
+  {
+    "file": "map-navigation.spec.ts",
+    "line": 162,
+    "title": "NAVIGATION-01: normal and mini navigation move independently with keyboard and cancelled dragging",
+    "path": [
+      "map-navigation.spec.ts"
+    ]
+  },
+  {
+    "file": "map-navigation.spec.ts",
+    "line": 221,
+    "title": "NAVIGATION-04: object details retain directed relationship access and editing through the list",
+    "path": [
+      "map-navigation.spec.ts"
+    ]
+  },
+  {
+    "file": "map-navigation.spec.ts",
+    "line": 293,
+    "title": "NAVIGATION-02: navigation and unsent details retain usable work in both opening orders",
+    "path": [
+      "map-navigation.spec.ts"
+    ]
+  },
+  {
+    "file": "map-navigation.spec.ts",
+    "line": 540,
+    "title": "NAVIGATION-03: six personal directions persist after restart while empty and multiple selections retain camera controls",
+    "path": [
+      "map-navigation.spec.ts"
+    ]
+  },
+  {
+    "file": "map-navigation.spec.ts",
+    "line": 590,
+    "title": "NAVIGATION-05: trackpad pinch zoom follows pinch speed while a Ctrl mouse-wheel notch stays limited",
+    "path": [
+      "map-navigation.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection-details.spec.ts",
+    "line": 11,
+    "title": "MARKERING-05: selected information is read only and ordinary work remains reachable at 1280x900",
+    "path": [
+      "map-selection-details.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection-details.spec.ts",
+    "line": 11,
+    "title": "MARKERING-05: selected information is read only and ordinary work remains reachable at 320x640",
+    "path": [
+      "map-selection-details.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection-details.spec.ts",
+    "line": 11,
+    "title": "MARKERING-05: selected information is read only and ordinary work remains reachable at 320x250",
+    "path": [
+      "map-selection-details.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection-details.spec.ts",
+    "line": 78,
+    "title": "MARKERING-06: independent property windows share context actions and move without moving the map",
+    "path": [
+      "map-selection-details.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection.spec.ts",
+    "line": 71,
+    "title": "MARKERING-01: ordinary and modified clicks select objects and open details separately",
+    "path": [
+      "map-selection.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection.spec.ts",
+    "line": 148,
+    "title": "MARKERING-03: text selection and native details protect unsent work at 1440px",
+    "path": [
+      "map-selection.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection.spec.ts",
+    "line": 148,
+    "title": "MARKERING-03: text selection and native details protect unsent work at 390px",
+    "path": [
+      "map-selection.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection.spec.ts",
+    "line": 148,
+    "title": "MARKERING-03: text selection and native details protect unsent work at 320px",
+    "path": [
+      "map-selection.spec.ts"
+    ]
+  },
+  {
+    "file": "map-selection.spec.ts",
+    "line": 306,
+    "title": "MARKERING-02: empty clicks clear highlighting while navigation and cancellation retain selection",
+    "path": [
+      "map-selection.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 91,
+    "title": "KARTA-01: Swedish object search and closing unsent forms preserve the saved map",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 143,
+    "title": "KARTA-02: an unresolved object can become unspecified and later identified without changing its links",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 209,
+    "title": "KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at 1280px in light",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 209,
+    "title": "KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at 1280px in dark",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 209,
+    "title": "KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at 390px in light",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 209,
+    "title": "KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at 390px in dark",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 209,
+    "title": "KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at 320px in light",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 209,
+    "title": "KARTA-08: discarding unsent object text preserves proposals before correcting an unresolved identity at 320px in dark",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 295,
+    "title": "KARTA-03: equal object names stay distinct when correcting and deleting a relationship",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map-workflows.spec.ts",
+    "line": 394,
+    "title": "KARTA-04: object deletion reviews incoming and outgoing links and can be discarded",
+    "path": [
+      "map-workflows.spec.ts"
+    ]
+  },
+  {
+    "file": "map.spec.ts",
+    "line": 14,
+    "title": "refreshing after a conflict preserves text without authorizing a stale form",
+    "path": [
+      "map.spec.ts"
+    ]
+  },
+  {
+    "file": "map.spec.ts",
+    "line": 60,
+    "title": "an uncertain save recovers its receipt and stale tabs cannot save newer drafts",
+    "path": [
+      "map.spec.ts"
+    ]
+  },
+  {
+    "file": "map.spec.ts",
+    "line": 108,
+    "title": "KARTA-06: objects move from a persistent private proposal to the shared map after review",
+    "path": [
+      "map.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 17,
+    "title": "MEDLEM-04: replacing an invitation invalidates the old code and cancellation keeps the new code usable",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 78,
+    "title": "MEDLEM-05: an expired invitation is visibly unusable and a fresh invitation restores the join flow",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 142,
+    "title": "MEDLEM-06: revocation preserves shared objects and only a new invitation restores membership",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 232,
+    "title": "MEDLEM-01: an administrator invites an authenticated user who joins by keyboard on a phone",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 282,
+    "title": "MEDLEM-07: a recipient can check access when the acceptance response is lost",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 330,
+    "title": "MEDLEM-02: invitation errors are recoverable and a revoked code cannot grant access",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 375,
+    "title": "MEDLEM-03: administrators share responsibility and open clients lose revoked access without disrupting input",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 466,
+    "title": "MEDLEM-08: staged invitation copies its one-time code and revocation retires an open recipient workspace",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "membership-ui.spec.ts",
+    "line": 634,
+    "title": "MEDLEM-09: failed clipboard writing keeps the real code usable by manual copy and acceptance",
+    "path": [
+      "membership-ui.spec.ts"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 42,
+    "title": "MIKROFONTRYCK-05: tal under starten förs över efter släpp utan ny inspelning",
+    "path": [
+      "microphone-press.spec.ts"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 115,
+    "title": "MIKROFONTRYCK-01: kort och långt tryck styr samma mikrofon och släpp behåller svaret",
+    "path": [
+      "microphone-press.spec.ts"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 145,
+    "title": "MIKROFONTRYCK-06: avbruten start kasserar inspelningen inför nästa start",
+    "path": [
+      "microphone-press.spec.ts"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 200,
+    "title": "MIKROFONTRYCK-07: spärrat ljud ger ingen inspelning och ljudstart efter släpp lämnar mikrofonen av",
+    "path": [
+      "microphone-press.spec.ts"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 224,
+    "title": "MIKROFONTRYCK-08: nytt samtal behåller mikrofonen efter att väntande tal spelats klart",
+    "path": [
+      "microphone-press.spec.ts"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 265,
+    "title": "MIKROFONTRYCK-02: ett långt tryck utan medgivande gör som ett kort och startar inget i förväg",
+    "path": [
+      "microphone-press.spec.ts"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 291,
+    "title": "MIKROFONTRYCK-03: tangentkombinationen har samma korta och långa tryck",
+    "path": [
+      "microphone-press.spec.ts",
+      "Windows och Linux"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 291,
+    "title": "MIKROFONTRYCK-03: tangentkombinationen har samma korta och långa tryck",
+    "path": [
+      "microphone-press.spec.ts",
+      "macOS"
+    ]
+  },
+  {
+    "file": "microphone-press.spec.ts",
+    "line": 333,
+    "title": "MIKROFONTRYCK-04: pektryck har ring utan meny och systemavbrott släpper mikrofonen",
+    "path": [
+      "microphone-press.spec.ts",
+      "bred pekskärm med minskad rörelse"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "390×844 pekare finger"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "375×667 pekare finger"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "844×390 pekare finger"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "820×1180 pekare finger"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "1180×820 pekare finger"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "320×250 pekare mus"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "700×500 pekare mus"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 68,
+    "title": "TEXTMOBIL-01: samma lägesregel ger rätt bredd och kompakt rad",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "1280×900 pekare mus"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 139,
+    "title": "TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "synlig höjd 508"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 139,
+    "title": "TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "synlig höjd 407"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 139,
+    "title": "TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "synlig höjd 420"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 139,
+    "title": "TEXTMOBIL-02: synlig höjd följs utan att fält eller fokus byts",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "synlig höjd 190"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 190,
+    "title": "TEXTMOBIL-03: röstrutan och notisen lämnar kartans nederkant fri",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "smal mobil med återkoppling"
+    ]
+  },
+  {
+    "file": "mobile-conversation.spec.ts",
+    "line": 264,
+    "title": "TEXTMOBIL-04: en lång notis rullar och kan stängas i kort fönster",
+    "path": [
+      "mobile-conversation.spec.ts",
+      "kort mobil med lång notis"
+    ]
+  },
+  {
+    "file": "object-actions.spec.ts",
+    "line": 6,
+    "title": "LISTA-07: text object actions preserve cancellation and stage only the chosen removal without map graphics",
+    "path": [
+      "object-actions.spec.ts"
+    ]
+  },
+  {
+    "file": "object-builtins.spec.ts",
+    "line": 23,
+    "title": "TYP-10: canonical properties retain meaning through sections, hiding, type changes, historical reading at 1280px",
+    "path": [
+      "object-builtins.spec.ts"
+    ]
+  },
+  {
+    "file": "object-builtins.spec.ts",
+    "line": 23,
+    "title": "TYP-10: canonical properties retain meaning through sections, hiding, type changes, historical reading at 390px",
+    "path": [
+      "object-builtins.spec.ts"
+    ]
+  },
+  {
+    "file": "object-builtins.spec.ts",
+    "line": 23,
+    "title": "TYP-10: canonical properties retain meaning through sections, hiding, type changes, historical reading at 320px",
+    "path": [
+      "object-builtins.spec.ts"
+    ]
+  },
+  {
+    "file": "object-builtins.spec.ts",
+    "line": 23,
+    "title": "TYP-10: canonical properties retain meaning through sections, hiding, type changes, historical reading at 640px",
+    "path": [
+      "object-builtins.spec.ts"
+    ]
+  },
+  {
+    "file": "object-builtins.spec.ts",
+    "line": 216,
+    "title": "TYP-12: explicit field order preserves zero and false through the native form, draft and table readers",
+    "path": [
+      "object-builtins.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 7,
+    "title": "KARTA-19: unchanged edits open relationships without staging and every reading entry uses the same object dialog",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 80,
+    "title": "KARTA-17: pending staging blocks duplicate sends and known rejection keeps all values",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 133,
+    "title": "KARTA-18: lost staging response is checked before confirmed relationship transition",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 133,
+    "title": "KARTA-18: lost staging response is checked before safe retry",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 226,
+    "title": "KARTA-16: browser back protects unsent work and confirms navigation",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 258,
+    "title": "KARTA-10: create a complete object in the shared dialog and return without saving",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 298,
+    "title": "KARTA-14: image and full form stage atomically and invalid image preserves the unsent form",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 359,
+    "title": "KARTA-11: closed-section errors preserve all fields and focus the linked correction",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 397,
+    "title": "KARTA-12: identity, custom fields, lifecycle and icon stay together when staging and editing",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 512,
+    "title": "KARTA-13: changing type requires explicit confirmation before custom values are lost",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 599,
+    "title": "KARTA-15: close and Escape protect only unsent form changes and restore the editing focus",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 646,
+    "title": "KARTA-20: configured properties keep their order and hidden values in the single-section dialog at 1440px",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-dialog.spec.ts",
+    "line": 646,
+    "title": "KARTA-20: configured properties keep their order and hidden values in the single-section dialog at 320px",
+    "path": [
+      "object-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 15,
+    "title": "IKON-01: icon choice survives type and image changes, save and restart before explicit reset",
+    "path": [
+      "object-icons.spec.ts"
+    ]
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 96,
+    "title": "IKON-02: full catalog search, empty results and keyboard pagination work in narrow themes",
+    "path": [
+      "object-icons.spec.ts"
+    ]
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 155,
+    "title": "IKON-03: a short viewport keeps icon controls, unsent text and shared save reachable",
+    "path": [
+      "object-icons.spec.ts"
+    ]
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 205,
+    "title": "IKON-04: local keyboard icon choice and reset preserve the chosen focus until complete staging",
+    "path": [
+      "object-icons.spec.ts"
+    ]
+  },
+  {
+    "file": "object-icons.spec.ts",
+    "line": 243,
+    "title": "IKON-05: rejected and lost complete icon staging preserve the local choice and recover one proposal",
+    "path": [
+      "object-icons.spec.ts"
+    ]
+  },
+  {
+    "file": "object-list-flow.spec.ts",
+    "line": 13,
+    "title": "LISTA-05: short-screen table returns preserve the visible result and keyboard focus",
+    "path": [
+      "object-list-flow.spec.ts"
+    ]
+  },
+  {
+    "file": "object-list.spec.ts",
+    "line": 77,
+    "title": "LISTA-01: multiple type filters combine with search and the current row across 500 objects",
+    "path": [
+      "object-list.spec.ts"
+    ]
+  },
+  {
+    "file": "object-list.spec.ts",
+    "line": 140,
+    "title": "LISTA-03: a table map result focuses direct neighbors and preserves unsent conversation",
+    "path": [
+      "object-list.spec.ts"
+    ]
+  },
+  {
+    "file": "object-list.spec.ts",
+    "line": 211,
+    "title": "LISTA-02: sorting, pages and scroll survive native details, settings and map-result navigation",
+    "path": [
+      "object-list.spec.ts"
+    ]
+  },
+  {
+    "file": "object-list.spec.ts",
+    "line": 313,
+    "title": "LISTA-04: narrow tables retain search and native details after graphics loss at 390px",
+    "path": [
+      "object-list.spec.ts"
+    ]
+  },
+  {
+    "file": "object-list.spec.ts",
+    "line": 313,
+    "title": "LISTA-04: narrow tables retain search and native details after graphics loss at 320px",
+    "path": [
+      "object-list.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 7,
+    "title": "SÖK-11: opening filters overlays the map without moving markers or labels at 1280px",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 7,
+    "title": "SÖK-11: opening filters overlays the map without moving markers or labels at 390px",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 70,
+    "title": "SÖK-12: dashed label leaders are readable against the map in both themes",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 120,
+    "title": "SÖK-01: own detail fields, every word and Swedish normalization find objects",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 167,
+    "title": "SÖK-04: the last proposal resets only draft filters in both views and type-only proposals expose them",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 229,
+    "title": "SÖK-05: shared compact search and filter dialogs preserve restrictions on mobile and desktop",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 365,
+    "title": "SÖK-02: multiple filters combine independently and keep proposals distinct from lifecycle",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 409,
+    "title": "SÖK-03: map-only character and composition entry preserve separate searches and Escape restrictions",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-search.spec.ts",
+    "line": 576,
+    "title": "SÖK-10: capsule search and attached filters fit desktop and narrow short screens",
+    "path": [
+      "object-search.spec.ts"
+    ]
+  },
+  {
+    "file": "object-sections.spec.ts",
+    "line": 13,
+    "title": "TYP-08: sections move and hide fields in the shared draft without losing values after restart",
+    "path": [
+      "object-sections.spec.ts"
+    ]
+  },
+  {
+    "file": "object-sections.spec.ts",
+    "line": 114,
+    "title": "TYP-09: ordinary members retain prefilled section work and keyboard controls at 1280px",
+    "path": [
+      "object-sections.spec.ts"
+    ]
+  },
+  {
+    "file": "object-sections.spec.ts",
+    "line": 114,
+    "title": "TYP-09: ordinary members retain prefilled section work and keyboard controls at 390px",
+    "path": [
+      "object-sections.spec.ts"
+    ]
+  },
+  {
+    "file": "object-sections.spec.ts",
+    "line": 114,
+    "title": "TYP-09: ordinary members retain prefilled section work and keyboard controls at 320px",
+    "path": [
+      "object-sections.spec.ts"
+    ]
+  },
+  {
+    "file": "object-types.spec.ts",
+    "line": 17,
+    "title": "TYP-01: custom definitions and four optional fields share one durable save and history",
+    "path": [
+      "object-types.spec.ts"
+    ]
+  },
+  {
+    "file": "object-types.spec.ts",
+    "line": 78,
+    "title": "TYP-02: forms create, review and correct optional custom fields without confusing unanswered and no",
+    "path": [
+      "object-types.spec.ts"
+    ]
+  },
+  {
+    "file": "object-types.spec.ts",
+    "line": 202,
+    "title": "TYP-03: members share editable definitions while private proposals and used field kinds stay protected",
+    "path": [
+      "object-types.spec.ts"
+    ]
+  },
+  {
+    "file": "object-types.spec.ts",
+    "line": 404,
+    "title": "TYP-04: concurrent definition changes reject the whole draft until an explicit current choice",
+    "path": [
+      "object-types.spec.ts"
+    ]
+  },
+  {
+    "file": "object-types.spec.ts",
+    "line": 516,
+    "title": "TYP-05: invalid values and newly used field kinds preserve the entire draft and map",
+    "path": [
+      "object-types.spec.ts"
+    ]
+  },
+  {
+    "file": "operations.spec.ts",
+    "line": 14,
+    "title": "SPAR-01: find a committed save after losing its response and reopening on another client",
+    "path": [
+      "operations.spec.ts"
+    ]
+  },
+  {
+    "file": "operations.spec.ts",
+    "line": 78,
+    "title": "SPAR-02: automatically recover the same pending save on another client after interruption before commit",
+    "path": [
+      "operations.spec.ts"
+    ]
+  },
+  {
+    "file": "operations.spec.ts",
+    "line": 186,
+    "title": "SPAR-03: a rejected stale save survives restart without consuming newer proposals",
+    "path": [
+      "operations.spec.ts"
+    ]
+  },
+  {
+    "file": "operations.spec.ts",
+    "line": 268,
+    "title": "SPAR-04: private pending saves stay hidden from administrators and revoked members",
+    "path": [
+      "operations.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 99,
+    "title": "PLACERING-09: personal save toasts expire while preserving focus and saved choices at 1440px",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 99,
+    "title": "PLACERING-09: personal save toasts expire while preserving focus and saved choices at 390px",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 143,
+    "title": "PLACERING-01: mouse, height and keyboard movement persist across reload, clients and server restart",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 210,
+    "title": "PLACERING-08: height help keeps its preview stable and manual choice across navigation modes and selection",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 262,
+    "title": "PLACERING-02: concurrent clients retain independent moves and visibly reject stale placement and settings",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 307,
+    "title": "PLACERING-03: synthetic touch gestures handle height, interruption, finger changes and empty-space navigation",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 484,
+    "title": "PLACERING-04: personal display settings, new proposals and viewport changes preserve existing placement and unsent text",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 610,
+    "title": "PLACERING-06: delayed initial personal positions frame once and later refreshes preserve the camera",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 692,
+    "title": "PLACERING-05: personal views stay private and revocation denies further reads and both mutations",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "personal-view.spec.ts",
+    "line": 801,
+    "title": "PLACERING-07: map settings retain the personal star choice through navigation, reduced motion and restart",
+    "path": [
+      "personal-view.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Person shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Tjänst shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Tjänstekonto shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Abonnemang shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: E-postadress shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Bankkonto shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Kort shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Företag shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Förening shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Bostad shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Garage shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Fordon shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Avtal shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Hyresavtal shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Låneavtal shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Kreditavtal shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Avbetalningsavtal shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Försäkringsavtal shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-types.spec.ts",
+    "line": 35,
+    "title": "BILD-06: Egen bildtyp shares text, icon and image in one proposal and removes the latest image",
+    "path": [
+      "profile-image-types.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 1440x1000px light",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 1440x1000px dark",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 1440x500px light",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 1440x500px dark",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 320x1000px light",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 320x1000px dark",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 320x250px light",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 15,
+    "title": "BILD-04: delayed whole-form image rejection retains local values and earlier proposals at 320x250px dark",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 191,
+    "title": "BILD-05: pending image staging blocks navigation and stale rejection preserves the complete form at 1440px",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 191,
+    "title": "BILD-05: pending image staging blocks navigation and stale rejection preserves the complete form at 390px",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-image-work.spec.ts",
+    "line": 191,
+    "title": "BILD-05: pending image staging blocks navigation and stale rejection preserves the complete form at 320px",
+    "path": [
+      "profile-image-work.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-images.spec.ts",
+    "line": 40,
+    "title": "BILD-01: profile image proposals preserve text, survive restart and expose historical replacements",
+    "path": [
+      "profile-images.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-images.spec.ts",
+    "line": 138,
+    "title": "BILD-02: invalid images retain proposals and interrupted removal recovers its durable receipt",
+    "path": [
+      "profile-images.spec.ts"
+    ]
+  },
+  {
+    "file": "profile-images.spec.ts",
+    "line": 252,
+    "title": "BILD-03: private, historical and known image addresses enforce current household access",
+    "path": [
+      "profile-images.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog-accessibility.spec.ts",
+    "line": 5,
+    "title": "SAMBAND-12: long relationship names and field labels reflow without horizontal overflow at 320 CSS pixels",
+    "path": [
+      "relationship-dialog-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog-accessibility.spec.ts",
+    "line": 73,
+    "title": "SAMBAND-13: staging cancel and explicit outcome checks retain meaningful focus without stealing later reading focus",
+    "path": [
+      "relationship-dialog-accessibility.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 7,
+    "title": "SAMBAND-10: a request that never reached the server is checked before safe retry and later duplicate removal is reported truthfully",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 67,
+    "title": "SAMBAND-11: the household object selector ignores table filters and excludes removed proposals while retaining effective type names",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 143,
+    "title": "SAMBAND-09: keyboard form actions and confirmed route loss remain reachable at 1280x900",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 143,
+    "title": "SAMBAND-09: keyboard form actions and confirmed route loss remain reachable at 320x640",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 143,
+    "title": "SAMBAND-09: keyboard form actions and confirmed route loss remain reachable at 320x240",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 207,
+    "title": "SAMBAND-07: pending requests block duplicate sends and a rejected whole relationship retains editable values",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 262,
+    "title": "SAMBAND-08: recovery returns the current draft without replaying an earlier successful relationship over later changes",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 322,
+    "title": "SAMBAND-06: read-chain navigation retains an uncertain staging outcome and restores the originating table control",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 383,
+    "title": "SAMBAND-05: full relationship values survive canceled type loss and absent targets keep their distinct meanings",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 496,
+    "title": "SAMBAND-03: a lost duplicate result retains the attempted form and offers guarded editing without overwrite",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 555,
+    "title": "SAMBAND-04: proposed relationship removal discards only confirmed unsent changes and keeps saved lifecycle facts",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 602,
+    "title": "SAMBAND-02: invalid next input and canceled form loss retain previous complete relationship proposals",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-dialog.spec.ts",
+    "line": 647,
+    "title": "SAMBAND-01: separate complete objects connect and remain independently editable in the shared dialog",
+    "path": [
+      "relationship-dialog.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-fields.spec.ts",
+    "line": 19,
+    "title": "STY-06: optional relationship fields share definitions, editing and durable save at 1440px",
+    "path": [
+      "relationship-fields.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-fields.spec.ts",
+    "line": 19,
+    "title": "STY-06: optional relationship fields share definitions, editing and durable save at 390px",
+    "path": [
+      "relationship-fields.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-fields.spec.ts",
+    "line": 111,
+    "title": "STY-07: relationship type changes require an explicit decision about earlier custom answers",
+    "path": [
+      "relationship-fields.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-outcome-absence.spec.ts",
+    "line": 5,
+    "title": "SAMBAND-14: an absent old-version attempt unlocks retained input and requires current-basis review before retry",
+    "path": [
+      "relationship-outcome-absence.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-outcome-absence.spec.ts",
+    "line": 100,
+    "title": "SAMBAND-15: absent stale editing cannot overwrite or remove a later same-owner relationship proposal",
+    "path": [
+      "relationship-outcome-absence.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-sections.spec.ts",
+    "line": 15,
+    "title": "STY-08: relationship sections preserve hidden answers and private presentation after restart at 1440px",
+    "path": [
+      "relationship-sections.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-sections.spec.ts",
+    "line": 15,
+    "title": "STY-08: relationship sections preserve hidden answers and private presentation after restart at 390px",
+    "path": [
+      "relationship-sections.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-sections.spec.ts",
+    "line": 15,
+    "title": "STY-08: relationship sections preserve hidden answers and private presentation after restart at 320px",
+    "path": [
+      "relationship-sections.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-types.spec.ts",
+    "line": 20,
+    "title": "STY-01: a directed definition and arbitrary endpoints share a durable draft, save and history",
+    "path": [
+      "relationship-types.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-types.spec.ts",
+    "line": 102,
+    "title": "STY-03: members share editable prefills while private definitions and household boundaries stay protected",
+    "path": [
+      "relationship-types.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-types.spec.ts",
+    "line": 264,
+    "title": "STY-04: stale definitions stop the whole save and explicit resolution preserves independent edits",
+    "path": [
+      "relationship-types.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-types.spec.ts",
+    "line": 410,
+    "title": "STY-02: forms show the same directed relationship from both objects and edit the shared definition",
+    "path": [
+      "relationship-types.spec.ts"
+    ]
+  },
+  {
+    "file": "relationship-types.spec.ts",
+    "line": 537,
+    "title": "STY-05: duplicate adds, edits and concurrent saves preserve identity and reject every partial write",
+    "path": [
+      "relationship-types.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 30,
+    "title": "SPARKONTROLL-01: ett tappat sparbesked kontrolleras automatiskt före nytt arbete och förklaras en gång",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 123,
+    "title": "SPARKONTROLL-02: omstart kontrollerar samma väntande försök utan medgivande",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 123,
+    "title": "SPARKONTROLL-02: omstart kontrollerar samma väntande försök utan medgivande och bara en misslyckad kontroll kräver återförsök",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 227,
+    "title": "SPARKONTROLL-03: ett oregistrerat sparande förklaras en gång med mikrofonen av",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 227,
+    "title": "SPARKONTROLL-03: ett oregistrerat sparande förklaras en gång med mikrofonen på",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 299,
+    "title": "SPARKONTROLL-04: verifierad sparåterhämtning stoppar fångst under kontrollen och visar Sparat först efter svaret",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 390,
+    "title": "SPARKONTROLL-05: ett avvisat väntande försök förklaras som osparat och behåller samma privata utkast",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 449,
+    "title": "SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat medgivande utan nytt sparande",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "save-check.spec.ts",
+    "line": 449,
+    "title": "SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat medgivande utan nytt sparande även när återkallandets svar tappas",
+    "path": [
+      "save-check.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 16,
+    "title": "INST-01: full-page settings protect native form input and retain draft feedback at 1280px",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 16,
+    "title": "INST-01: full-page settings protect native form input and retain draft feedback at 390px",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 16,
+    "title": "INST-01: full-page settings protect native form input and retain draft feedback at 320px",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 97,
+    "title": "INST-02: type settings retain unsent definitions and save with the same map draft",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 158,
+    "title": "INST-03: the separate profile protects native form input and groups personal entries",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 213,
+    "title": "INST-04: settings and profile restore map and toolbar focus without opening panels",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 246,
+    "title": "INST-05: leaving the compact profile exposes keyboard focus in the retained work",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 284,
+    "title": "INST-06: settings form buttons retain readable contrast when hovered in both themes",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 343,
+    "title": "INST-07: reverse keyboard navigation keeps profile tools reachable at 390px",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "settings-profile.spec.ts",
+    "line": 343,
+    "title": "INST-07: reverse keyboard navigation keeps profile tools reachable at 320px",
+    "path": [
+      "settings-profile.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 166,
+    "title": "RYMD-01: spatial and list editing share private proposals and one durable save",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 213,
+    "title": "RYMD-02: focus, filters and camera navigation preserve the shared selection",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 367,
+    "title": "RYMD-03: context actions and draft symbols distinguish proposals from saved content",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 500,
+    "title": "RYMD-04: touch menus, viewport changes and graphics recovery retain unsent editing",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 576,
+    "title": "RYMD-05: labels, keyboard editing and relationship text survive view changes",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 808,
+    "title": "RYMD-06: losing household access in fullscreen restores login navigation",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 887,
+    "title": "RYMD-07: ended objects and relationships retain status beside draft symbols",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 996,
+    "title": "RYMD-08: focus retains old and proposed relationship endpoints and opens the saved route read-only",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 1097,
+    "title": "RYMD-09: dense mobile maps offer separate pointer and keyboard targets with selected label priority and text alternatives",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "spatial.spec.ts",
+    "line": 1282,
+    "title": "RYMD-10: label notices remain stable while a compact map opens its saved and private list",
+    "path": [
+      "spatial.spec.ts"
+    ]
+  },
+  {
+    "file": "startup.spec.ts",
+    "line": 65,
+    "title": "invalid configuration exits with only a redacted diagnostic",
+    "path": [
+      "startup.spec.ts"
+    ]
+  },
+  {
+    "file": "startup.spec.ts",
+    "line": 81,
+    "title": "an occupied listener exits without readiness or private diagnostics",
+    "path": [
+      "startup.spec.ts"
+    ]
+  },
+  {
+    "file": "startup.spec.ts",
+    "line": 96,
+    "title": "the compiled server closes cleanly on SIGTERM and can reopen its SQLite storage",
+    "path": [
+      "startup.spec.ts"
+    ]
+  },
+  {
+    "file": "startup.spec.ts",
+    "line": 96,
+    "title": "the compiled server closes cleanly on SIGINT and can reopen its SQLite storage",
+    "path": [
+      "startup.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 57,
+    "title": "TEXT-07: hela ändringslistan visar samband, typer och verkliga före- och eftervärden",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 159,
+    "title": "TEXT-01: familjeärendet sparas samlat med bevarad oskickad formulärtext",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 261,
+    "title": "TEXT-02: sena svar efter kastat utkast och avbrott ändrar inte nytt arbete",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 324,
+    "title": "TEXT-03: nekade sparbesked och modellfel lämnar formulärarbetet tillgängligt",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 375,
+    "title": "TEXT-04: ett tappat sparbesked återfinns efter omstart utan dubbelt sparande",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 430,
+    "title": "TEXT-05: markering kräver visning och skyddar oskickad text",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 473,
+    "title": "TEXT-06: obekräftad samtalstext skiljs från sparande och markering",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-assistant.spec.ts",
+    "line": 529,
+    "title": "TEXT-09: samtalet beskriver verkliga ändringar i utkast och kvitto",
+    "path": [
+      "text-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 17,
+    "title": "TEXTBRICKA-01: stängd textvy visar arbete och ett oläst svar utan att flytta verktygen",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 79,
+    "title": "TEXTBRICKA-02: en oläst nödvändig fråga får frågebricka och samma fråga ligger kvar med mikrofonen av",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 136,
+    "title": "TEXTBRICKA-03: röstrutan ersätter brickan och samma olästa svar annonseras inte på nytt",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 219,
+    "title": "TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 390px i light tema",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 219,
+    "title": "TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 390px i dark tema",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 219,
+    "title": "TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 1280px i light tema",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 219,
+    "title": "TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 1280px i dark tema",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-button-status.spec.ts",
+    "line": 275,
+    "title": "TEXTBRICKA-05: köat textarbete behåller arbetsmarkeringen före ett oläst svar och avbrott tar bort den",
+    "path": [
+      "text-button-status.spec.ts"
+    ]
+  },
+  {
+    "file": "text-view.spec.ts",
+    "line": 63,
+    "title": "TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avsluta samtalet",
+    "path": [
+      "text-view.spec.ts"
+    ]
+  },
+  {
+    "file": "text-view.spec.ts",
+    "line": 127,
+    "title": "TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar sist",
+    "path": [
+      "text-view.spec.ts"
+    ]
+  },
+  {
+    "file": "text-view.spec.ts",
+    "line": 205,
+    "title": "TEXTVY-03: Nytt samtal tömmer samtalet och behåller utkast och mikrofon",
+    "path": [
+      "text-view.spec.ts"
+    ]
+  },
+  {
+    "file": "text-view.spec.ts",
+    "line": 321,
+    "title": "TEXTVY-04: textvyn går att använda på mobil enhet och smal skärm",
+    "path": [
+      "text-view.spec.ts",
+      "a wide touch screen"
+    ]
+  },
+  {
+    "file": "transport-controls.spec.ts",
+    "line": 15,
+    "title": "SPAR-05: scoped transport holds real staging, rejects stale saves and recovers a lost committed receipt",
+    "path": [
+      "transport-controls.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 97,
+    "title": "TYP-06: type changes review displaced values and preserve identity, edges and historical reading through restart",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 226,
+    "title": "TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at 1280px in light",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 226,
+    "title": "TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at 1280px in dark",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 226,
+    "title": "TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at 390px in light",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 226,
+    "title": "TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at 390px in dark",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 226,
+    "title": "TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at 320px in light",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 226,
+    "title": "TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at 320px in dark",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "type-change.spec.ts",
+    "line": 440,
+    "title": "TYP-07: invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields",
+    "path": [
+      "type-change.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 5,
+    "title": "ACCESS-04: setup works by keyboard within a narrow phone viewport",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 37,
+    "title": "ACCESS-05: failed startup read offers a working retry",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 51,
+    "title": "ACCESS-12: provider outage gives a readable error and allows another login attempt",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 75,
+    "title": "ACCESS-13: denied Google consent leaves access closed and allows a successful retry",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 75,
+    "title": "ACCESS-13: denied Microsoft consent leaves access closed and allows a successful retry",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 122,
+    "title": "ACCESS-06: a signed-in outsider sees an access explanation without setup controls",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 142,
+    "title": "ACCESS-07: failed logout preserves the session and a retry closes household access",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "usability.spec.ts",
+    "line": 178,
+    "title": "ACCESS-08: logout in another tab closes an already open household",
+    "path": [
+      "usability.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 79,
+    "title": "TAL-06: avbryt uppdrag från kartan och behåll samtalet och tidigare förslag",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 142,
+    "title": "TAL-07: uppmätt ljudaktivitet skiljs från avstängd mikrofon och består i Inställningar",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 205,
+    "title": "TAL-08: nödvändiga frågor finns i samtalet och fel visas i en samtalsnotis",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 290,
+    "title": "TAL-09: starten kräver medgivande och återhämtar mikrofonavbrott",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 362,
+    "title": "TAL-05: dialog, avstängd mikrofon och arbetsraden finns kvar under samtalet",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 458,
+    "title": "TAL-04: samtalstext hålls isär från verifierade röstresultat",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 547,
+    "title": "TAL-01: familjeärendet sparas med röst och bevarad oskickad formulärtext",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 698,
+    "title": "TAL-02: negativa besked och förlorad anslutning stoppar sena röständringar",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-assistant.spec.ts",
+    "line": 812,
+    "title": "TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röstomstart",
+    "path": [
+      "voice-assistant.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 116,
+    "title": "TAL-10: Prata med Skyttel slår på och av mikrofonen utan att någon panel öppnas",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 193,
+    "title": "TAL-11: Skyttel arbetar färdigt och talar klart när mikrofonen stängs av",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 260,
+    "title": "TAL-12: Avbryt i röstrutan stoppar arbetet och tystar Skyttel men behåller förslagen",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 342,
+    "title": "TAL-18: Avbryt bevarar ett långt samtal med mikrofonen på",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 342,
+    "title": "TAL-18: Avbryt bevarar ett långt samtal med mikrofonen av",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 456,
+    "title": "TAL-13: ett skrivet meddelande visar aldrig röstrutan och stänger av mikrofonknappen",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 504,
+    "title": "TAL-14: röstrutan visar ett statusord åt gången och en vågform som följer rösten",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 591,
+    "title": "röstrutan står på sin plats på dator och täcker aldrig kartans rad eller återkoppling",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 591,
+    "title": "röstrutan står på sin plats på bred pekskärm och täcker aldrig kartans rad eller återkoppling",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 591,
+    "title": "röstrutan står på sin plats på smal skärm och täcker aldrig kartans rad eller återkoppling",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-box.spec.ts",
+    "line": 678,
+    "title": "TAL-16: hjälpmedel får röstrutans namn, knappens läge och uppläsningarna i tur",
+    "path": [
+      "voice-box.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 42,
+    "title": "ROSTFEL-01: deny ger en stängbar mikrofonnotis och återförsöket tar bort den",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 42,
+    "title": "ROSTFEL-01: error ger en stängbar mikrofonnotis och återförsöket tar bort den",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 42,
+    "title": "ROSTFEL-01: busy ger en stängbar mikrofonnotis och återförsöket tar bort den",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 42,
+    "title": "ROSTFEL-01: unsupported ger en stängbar mikrofonnotis och återförsöket tar bort den",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 108,
+    "title": "ROSTFEL-02: serverns startup visar ett kort besked med felreferens",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 108,
+    "title": "ROSTFEL-02: serverns administration visar ett kort besked med felreferens",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 145,
+    "title": "ROSTFEL-03: serverns avbrott stoppar mikrofonen och visar samma diagnostiska referens",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "voice-errors.spec.ts",
+    "line": 186,
+    "title": "ROSTFEL-04: Starta ljudet återställer ljudet innan mikrofonen lyssnar och försvinner med logiskt fokus",
+    "path": [
+      "voice-errors.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-panels.spec.ts",
+    "line": 37,
+    "title": "PANEL-08: limited space switches between full-width work and text while voice continues",
+    "path": [
+      "workspace-panels.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-panels.spec.ts",
+    "line": 105,
+    "title": "PANEL-05: pending object staging keeps the modal and returns to reading before a new search",
+    "path": [
+      "workspace-panels.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-panels.spec.ts",
+    "line": 176,
+    "title": "PANEL-01: complete object dialogs stage separate proposals and native readers reuse each object",
+    "path": [
+      "workspace-panels.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-panels.spec.ts",
+    "line": 244,
+    "title": "PANEL-02: mobile reading navigation retains conversation and staged object details across resizing",
+    "path": [
+      "workspace-panels.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-panels.spec.ts",
+    "line": 287,
+    "title": "PANEL-03: an intervening proposal preserves local text and rejects stale complete staging",
+    "path": [
+      "workspace-panels.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-panels.spec.ts",
+    "line": 335,
+    "title": "PANEL-04: map selection preserves unsent relationship and type forms",
+    "path": [
+      "workspace-panels.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 22,
+    "title": "YTA-05: save results remain readable beside tablet work",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 53,
+    "title": "YTA-01: map tools protect unsent object loss and preserve staged work when closed",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 99,
+    "title": "YTA-03: narrow screens keep tools, help and text work reachable without graphics",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 181,
+    "title": "YTA-04: loading and a failed map read offer a working next action",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 210,
+    "title": "YTA-02: theme choice returns focus and System follows the device",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 295,
+    "title": "YTA-06: empty mobile maps keep focused display choices readable and operable in light",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 295,
+    "title": "YTA-06: empty mobile maps keep focused display choices readable and operable in dark",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  },
+  {
+    "file": "workspace-shell.spec.ts",
+    "line": 390,
+    "title": "YTA-09: voice and notices leave the empty map entry and lower controls reachable",
+    "path": [
+      "workspace-shell.spec.ts"
+    ]
+  }
+]

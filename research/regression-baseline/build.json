@@ -1,0 +1,35 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "CI": "1",
+  "utc": "2026-10-08T16:23:29.950318+00:00",
+  "exit_code": 0,
+  "elapsed_s": 2.0173023339593783,
+  "peaks": {
+    "rss_bytes": 874766336,
+    "pss_bytes": 777492480,
+    "processes": 7,
+    "cpu_cores": 3.0030544214135415
+  },
+  "sampled_cpu_seconds": 3.05,
+  "wait4_user_s": 3.653707,
+  "wait4_system_s": 0.630412,
+  "before": {
+    "memory.current": "11603865600\n",
+    "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n",
+    "cpu.stat": "usage_usec 15481905235\nuser_usec 12508445002\nsystem_usec 2973460233\nnice_usec 55000\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "memory.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=207\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=163\n",
+    "cpu.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=86965304\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=46166256\n"
+  },
+  "after": {
+    "memory.current": "11603779584\n",
+    "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n",
+    "cpu.stat": "usage_usec 15488697589\nuser_usec 12514496893\nsystem_usec 2974200696\nnice_usec 55000\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n",
+    "memory.pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=207\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=163\n",
+    "cpu.pressure": "some avg10=0.54 avg60=0.09 avg300=0.02 total=87029264\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=46171527\n"
+  },
+  "method": "1s /proc descendant samples; summed RSS double-counts shared pages; PSS read when permitted; short-lived processes may escape samples; cgroup includes unrelated VM work; wait4 child CPU includes reaped descendants on Linux"
+}

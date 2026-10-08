@@ -1,0 +1,88 @@
+[
+  {
+    "file": "ci-unit-success.log",
+    "excerpts": [
+      "unit\tUNKNOWN STEP\t2026-10-08T13:36:48.8459344Z ##[group]Operating System",
+      "unit\tUNKNOWN STEP\t2026-10-08T13:36:48.8462560Z Image: ubuntu-24.04",
+      "unit\tUNKNOWN STEP\t2026-10-08T13:55:37.5663396Z ^[[2m Test Files ^[[22m ^[[1m^[[32m143 passed^[[39m^[[22m^[[90m (143)^[[39m",
+      "unit\tUNKNOWN STEP\t2026-10-08T13:55:37.5677100Z ^[[2m      Tests ^[[22m ^[[1m^[[32m1607 passed^[[39m^[[22m^[[90m (1607)^[[39m",
+      "unit\tUNKNOWN STEP\t2026-10-08T13:55:37.5685066Z ^[[2m   Duration ^[[22m 1079.47s^[[2m (tests 61%, worker 30%, import 7%, environment 2%)^[[22m",
+      "unit\tUNKNOWN STEP\t2026-10-08T13:55:37.5917599Z All files          |   93.45 |     90.1 |   92.61 |   95.32 |                   "
+    ]
+  },
+  {
+    "file": "ci-integration-success.log",
+    "excerpts": [
+      "integration\tUNKNOWN STEP\t2026-10-08T13:36:48.9944529Z ##[group]Operating System",
+      "integration\tUNKNOWN STEP\t2026-10-08T13:36:48.9948340Z Image: ubuntu-24.04",
+      "integration\tUNKNOWN STEP\t2026-10-08T13:37:43.5382243Z Running 730 tests using 1 worker",
+      "integration\tUNKNOWN STEP\t2026-10-08T14:08:38.2120302Z   730 passed (31.0m)"
+    ]
+  },
+  {
+    "file": "ci-failure-better-auth.log",
+    "excerpts": [
+      "integration\tUNKNOWN STEP\t2026-10-08T09:49:59.4393038Z ##[group]Operating System",
+      "integration\tUNKNOWN STEP\t2026-10-08T09:49:59.4397195Z Image: ubuntu-24.04",
+      "integration\tUNKNOWN STEP\t2026-10-08T09:50:58.9278824Z Running 730 tests using 1 worker",
+      "integration\tUNKNOWN STEP\t2026-10-08T09:51:08.6469888Z   1) tests/integration/access-onboarding.spec.ts:48:1 \u203a ACCESS-16: expired provider verification returns to login and a fresh attempt succeeds ",
+      "application\tUNKNOWN STEP\t2026-10-08T10:22:31.7404273Z ##[group]Operating System",
+      "application\tUNKNOWN STEP\t2026-10-08T10:22:31.7408257Z Image: ubuntu-24.04",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T10:25:27.0201277Z ##[group]Operating System",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T10:25:27.0204240Z Image: ubuntu-24.04"
+    ]
+  },
+  {
+    "file": "ci-failure-dependency-update.log",
+    "excerpts": [
+      "unit\tUNKNOWN STEP\t2026-10-08T11:16:22.5686276Z ##[group]Operating System",
+      "unit\tUNKNOWN STEP\t2026-10-08T11:16:22.5688977Z Image: ubuntu-24.04",
+      "unit\tUNKNOWN STEP\t2026-10-08T11:29:09.8887819Z ^[[2m Test Files ^[[22m ^[[1m^[[32m143 passed^[[39m^[[22m^[[90m (143)^[[39m",
+      "unit\tUNKNOWN STEP\t2026-10-08T11:29:09.8898256Z ^[[2m      Tests ^[[22m ^[[1m^[[32m1606 passed^[[39m^[[22m^[[90m (1606)^[[39m",
+      "unit\tUNKNOWN STEP\t2026-10-08T11:29:09.8903587Z ^[[2m   Duration ^[[22m 727.70s^[[2m (tests 57%, worker 34%, import 6%, environment 2%)^[[22m",
+      "unit\tUNKNOWN STEP\t2026-10-08T11:29:09.9091833Z All files          |   93.36 |    89.99 |   92.46 |   95.24 |                   ",
+      "unit\tUNKNOWN STEP\t2026-10-08T11:29:10.1078805Z ERROR: Coverage for branches (89.99%) does not meet global threshold (90%)",
+      "application\tUNKNOWN STEP\t2026-10-08T11:49:49.2586127Z ##[group]Operating System",
+      "application\tUNKNOWN STEP\t2026-10-08T11:49:49.2589357Z Image: ubuntu-24.04",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T11:52:20.9977286Z ##[group]Operating System",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T11:52:20.9980450Z Image: ubuntu-24.04"
+    ]
+  },
+  {
+    "file": "ci-failure-37764012910.log",
+    "excerpts": [
+      "integration\tUNKNOWN STEP\t2026-10-08T10:31:23.0230018Z ##[group]Operating System",
+      "integration\tUNKNOWN STEP\t2026-10-08T10:31:23.0233615Z Image: ubuntu-24.04",
+      "integration\tUNKNOWN STEP\t2026-10-08T10:32:15.4994294Z Running 730 tests using 1 worker",
+      "integration\tUNKNOWN STEP\t2026-10-08T10:32:23.4598880Z   1) tests/integration/access-onboarding.spec.ts:48:1 \u203a ACCESS-16: expired provider verification returns to login and a fresh attempt succeeds ",
+      "application\tUNKNOWN STEP\t2026-10-08T11:02:43.2796857Z ##[group]Operating System",
+      "application\tUNKNOWN STEP\t2026-10-08T11:02:43.2800649Z Image: ubuntu-24.04",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T11:05:29.8310408Z ##[group]Operating System",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T11:05:29.8315993Z Image: ubuntu-24.04"
+    ]
+  },
+  {
+    "file": "ci-failure-37744618942.log",
+    "excerpts": [
+      "unit\tUNKNOWN STEP\t2026-10-08T07:37:56.0416529Z ##[group]Operating System",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:37:56.0420305Z Image: ubuntu-24.04",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7653430Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/manual-voice.test.ts^[[2m > ^[[22mmanual voice controls drive real delegation and MCP, preserve provisional usage and remove their disposable app",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7731393Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 400 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7734218Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 401 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7737440Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 403 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7740213Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 404 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7743301Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 408 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7746308Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 422 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7757628Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 429 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7777965Z ^[[41m^[[1m FAIL ^[[22m^[[49m ^[[30m^[[42m server ^[[49m^[[39m tests/unit/server/voice-assistant.test.ts^[[2m > ^[[22mprovider startup status 500 exposes a safe cause and a matching log reference",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7937310Z ^[[2m Test Files ^[[22m ^[[1m^[[31m2 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m140 passed^[[39m^[[22m^[[90m (142)^[[39m",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7947978Z ^[[2m      Tests ^[[22m ^[[1m^[[31m9 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m1584 passed^[[39m^[[22m^[[90m (1593)^[[39m",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.7956514Z ^[[2m   Duration ^[[22m 1014.37s^[[2m (tests 61%, worker 28%, import 8%, environment 3%)^[[22m",
+      "unit\tUNKNOWN STEP\t2026-10-08T07:55:41.8033209Z ##[error]AssertionError: expected '404 Not Found' to contain '/assets/manual-voice-provider.js'",
+      "application\tUNKNOWN STEP\t2026-10-08T08:04:50.6948244Z ##[group]Operating System",
+      "application\tUNKNOWN STEP\t2026-10-08T08:04:50.6952114Z Image: ubuntu-24.04",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T08:05:29.0335442Z ##[group]Operating System",
+      "security-gate\tUNKNOWN STEP\t2026-10-08T08:05:29.0339001Z Image: ubuntu-24.04"
+    ]
+  }
+]

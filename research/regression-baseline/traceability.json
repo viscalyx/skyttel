@@ -1,0 +1,1511 @@
+{
+  "tests": 737,
+  "ids": {
+    "ACCESS-14": 1,
+    "ACCESS-16": 1,
+    "ACCESS-17": 1,
+    "ACCESS-15": 1,
+    "ACCESS-18": 1,
+    "MCP-06": 1,
+    "MCP-03": 1,
+    "MCP-04": 1,
+    "MCP-01": 1,
+    "MCP-02": 1,
+    "MCP-07": 1,
+    "TEXT-08": 5,
+    "AI-08": 1,
+    "AI-09": 1,
+    "AI-10": 1,
+    "AI-11": 1,
+    "AI-03": 1,
+    "AI-13": 1,
+    "AI-02": 1,
+    "AI-01": 1,
+    "AI-06": 1,
+    "AI-04": 1,
+    "AI-05": 1,
+    "ACCESS-01": 1,
+    "ACCESS-02": 1,
+    "ACCESS-03": 1,
+    "UTKAST-55": 2,
+    "UTKAST-56": 1,
+    "UTKAST-49": 1,
+    "UTKAST-50": 2,
+    "UTKAST-54": 2,
+    "UTKAST-53": 10,
+    "UTKAST-51": 2,
+    "UTKAST-52": 1,
+    "UTKAST-76": 2,
+    "UTKAST-67": 2,
+    "UTKAST-68": 1,
+    "UTKAST-69": 1,
+    "UTKAST-70": 2,
+    "UTKAST-71": 1,
+    "UTKAST-75": 1,
+    "UTKAST-74": 2,
+    "UTKAST-66": 1,
+    "UTKAST-64": 1,
+    "UTKAST-72": 1,
+    "UTKAST-65": 1,
+    "UTKAST-28": 2,
+    "UTKAST-29": 1,
+    "UTKAST-30": 1,
+    "UTKAST-33": 2,
+    "UTKAST-34": 1,
+    "UTKAST-35": 1,
+    "UTKAST-57": 1,
+    "UTKAST-58": 1,
+    "UTKAST-59": 1,
+    "UTKAST-60": 1,
+    "UTKAST-61": 1,
+    "UTKAST-62": 1,
+    "UTKAST-73": 1,
+    "UTKAST-77": 4,
+    "UTKAST-63": 2,
+    "UTKAST-78": 1,
+    "ARBETE-08": 1,
+    "ARBETE-09": 1,
+    "AVTAL-01": 1,
+    "AVTAL-02": 1,
+    "AVTAL-05": 1,
+    "AVTAL-06": 1,
+    "AVTAL-04": 1,
+    "AVTAL-08": 1,
+    "AVTAL-07": 1,
+    "HJALP-01": 2,
+    "HJALP-02": 2,
+    "HJALP-06": 2,
+    "HJALP-03": 1,
+    "HJALP-04": 1,
+    "HJALP-05": 2,
+    "NOT-09": 2,
+    "NOT-10": 1,
+    "TEXTMOBIL-05": 1,
+    "KONTEXT-04": 1,
+    "KONTEXT-05": 1,
+    "KONTEXT-06": 1,
+    "KONTEXT-07": 2,
+    "MEDGIVANDE-01": 1,
+    "MEDGIVANDE-02": 1,
+    "MEDGIVANDE-03": 1,
+    "MEDGIVANDE-04": 1,
+    "KONTEXT-01": 1,
+    "KONTEXT-02": 1,
+    "KONTEXT-03": 1,
+    "SAMTALSUTKAST-01": 1,
+    "SAMTALSUTKAST-02": 1,
+    "SAMTALSUTKAST-04": 1,
+    "SAMTALSUTKAST-05": 1,
+    "SAMTALSUTKAST-03": 2,
+    "YTA-08": 1,
+    "YTA-07": 2,
+    "NOT-01": 1,
+    "NOT-02": 1,
+    "NOT-03": 1,
+    "NOT-04": 1,
+    "NOT-05": 1,
+    "NOT-06": 1,
+    "NOT-07": 6,
+    "NOT-08": 3,
+    "FRAGA-01": 1,
+    "FRAGA-02": 1,
+    "FRAGA-03": 2,
+    "FRAGA-04": 1,
+    "FRAGA-05": 1,
+    "FRAGA-06": 1,
+    "KÖ-01": 1,
+    "KÖ-02": 1,
+    "KÖ-03": 1,
+    "KÖ-04": 1,
+    "MEDGIVANDE-05": 1,
+    "MEDGIVANDE-06": 1,
+    "MEDGIVANDE-07": 1,
+    "MEDGIVANDE-08": 1,
+    "MEDGIVANDE-09": 1,
+    "MEDGIVANDE-10": 1,
+    "MEDGIVANDE-11": 1,
+    "MEDGIVANDE-12": 1,
+    "MEDGIVANDE-14": 1,
+    "MEDGIVANDE-13": 1,
+    "MEDGIVANDE-15": 1,
+    "MEDGIVANDE-16": 1,
+    "MEDGIVANDE-17": 1,
+    "MEDGIVANDE-18": 1,
+    "KONTEXT-08": 1,
+    "KONTEXT-09": 2,
+    "KONTEXT-10": 2,
+    "KONTEXT-11": 1,
+    "KONTEXT-12": 1,
+    "RÖSTTEXT-01": 1,
+    "RÖSTTEXT-04": 1,
+    "RÖSTTEXT-02": 1,
+    "RÖSTTEXT-03": 1,
+    "TEXTBREDD-01": 1,
+    "TEXTBREDD-02": 1,
+    "TEXTBREDD-03": 1,
+    "TEXTBREDD-05": 1,
+    "TEXTBREDD-04": 3,
+    "KOST-01": 1,
+    "KOST-02": 1,
+    "KOST-03": 1,
+    "KOST-04": 3,
+    "DEMO-01": 2,
+    "KATALOG-01": 1,
+    "KATALOG-02": 1,
+    "KATALOG-03": 1,
+    "UTKAST-17": 1,
+    "UTKAST-18": 4,
+    "UTKAST-19": 1,
+    "UTKAST-20": 2,
+    "UTKAST-21": 4,
+    "UTKAST-22": 2,
+    "UTKAST-23": 1,
+    "UTKAST-24": 2,
+    "UTKAST-05": 1,
+    "UTKAST-06": 1,
+    "UTKAST-07": 1,
+    "UTKAST-10": 1,
+    "UTKAST-11": 2,
+    "UTKAST-08": 1,
+    "UTKAST-09": 1,
+    "UTKAST-02": 1,
+    "UTKAST-03": 1,
+    "UTKAST-04": 1,
+    "KARTA-09": 6,
+    "UTKAST-46": 3,
+    "UTKAST-48": 3,
+    "UTKAST-47": 2,
+    "UTKAST-41": 1,
+    "UTKAST-42": 2,
+    "UTKAST-44": 2,
+    "UTKAST-45": 1,
+    "UTKAST-43": 2,
+    "UTKAST-31": 1,
+    "UTKAST-32": 1,
+    "UTKAST-90": 2,
+    "UTKAST-91": 1,
+    "UTKAST-27": 2,
+    "UTKAST-36": 1,
+    "UTKAST-37": 3,
+    "UTKAST-38": 3,
+    "UTKAST-39": 2,
+    "UTKAST-40": 2,
+    "UTKAST-25": 2,
+    "UTKAST-26": 2,
+    "UTKAST-12": 3,
+    "UTKAST-14": 1,
+    "UTKAST-13": 1,
+    "UTKAST-15": 1,
+    "UTKAST-16": 3,
+    "KARTA-07": 2,
+    "KARTA-05": 1,
+    "UTKAST-01": 1,
+    "HISTORIK-01": 1,
+    "HISTORIK-06": 3,
+    "HISTORIK-07": 1,
+    "HISTORIK-10": 1,
+    "HISTORIK-11": 1,
+    "HISTORIK-12": 3,
+    "HISTORIK-13": 1,
+    "RADERING-06": 10,
+    "RADERING-01": 1,
+    "RADERING-02": 1,
+    "RADERING-03": 1,
+    "RADERING-04": 1,
+    "RADERING-05": 1,
+    "RADERING-07": 1,
+    "RADERING-08": 1,
+    "RADERING-09": 1,
+    "RADERING-10": 1,
+    "RADERING-11": 1,
+    "EXPORT-07": 1,
+    "EXPORT-06": 1,
+    "EXPORT-01": 1,
+    "EXPORT-02": 1,
+    "EXPORT-03": 1,
+    "EXPORT-04": 1,
+    "EXPORT-05": 1,
+    "EXPORT-08": 1,
+    "EXPORT-09": 4,
+    "EXPORT-10": 1,
+    "EXPORT-11": 2,
+    "IMPORT-16": 1,
+    "IMPORT-18": 1,
+    "IMPORT-19": 1,
+    "IMPORT-20": 1,
+    "IMPORT-17": 1,
+    "IMPORT-07": 1,
+    "IMPORT-09": 1,
+    "IMPORT-11": 1,
+    "IMPORT-10": 1,
+    "IMPORT-14": 1,
+    "IMPORT-06": 1,
+    "IMPORT-08": 1,
+    "IMPORT-12": 1,
+    "IMPORT-13": 1,
+    "IMPORT-01": 1,
+    "IMPORT-21": 1,
+    "FLYTT-02": 1,
+    "LÄS-05": 1,
+    "LÄS-06": 1,
+    "LÄS-07": 1,
+    "LÄS-04": 2,
+    "LÄS-01": 1,
+    "LÄS-02": 1,
+    "LÄS-03": 1,
+    "IMPORT-15": 4,
+    "FLYTT-01": 1,
+    "TABELL-04": 1,
+    "TABELL-05": 1,
+    "TABELL-01": 1,
+    "TABELL-02": 1,
+    "TABELL-03": 1,
+    "ARBETE-07": 1,
+    "ARBETE-01": 3,
+    "ARBETE-02": 1,
+    "ARBETE-03": 1,
+    "ARBETE-04": 1,
+    "ARBETE-05": 1,
+    "ARBETE-06": 1,
+    "STORKARTA-01": 1,
+    "LIVSCYKEL-01": 1,
+    "LIVSCYKEL-03": 1,
+    "LIVSCYKEL-02": 1,
+    "LIVSCYKEL-04": 1,
+    "LIVSCYKEL-05": 1,
+    "LIVSCYKEL-06": 1,
+    "ACCESS-09": 2,
+    "ACCESS-10": 1,
+    "ACCESS-11": 1,
+    "ACCESS-19": 1,
+    "ACCESS-20": 1,
+    "KAMERA-01": 1,
+    "KAMERA-02": 1,
+    "KAMERA-03": 1,
+    "KAMERA-04": 1,
+    "KAMERA-05": 1,
+    "KAMERA-06": 1,
+    "KAMERA-07": 1,
+    "KAMERA-08": 1,
+    "KAMERA-09": 1,
+    "SÖK-06": 1,
+    "SÖK-09": 1,
+    "SÖK-08": 3,
+    "SÖK-07": 1,
+    "NAVIGATION-01": 1,
+    "NAVIGATION-04": 1,
+    "NAVIGATION-02": 1,
+    "NAVIGATION-03": 1,
+    "NAVIGATION-05": 1,
+    "MARKERING-05": 3,
+    "MARKERING-06": 1,
+    "MARKERING-01": 1,
+    "MARKERING-03": 3,
+    "MARKERING-02": 1,
+    "KARTA-01": 1,
+    "KARTA-02": 1,
+    "KARTA-08": 6,
+    "KARTA-03": 1,
+    "KARTA-04": 1,
+    "KARTA-06": 1,
+    "MEDLEM-04": 1,
+    "MEDLEM-05": 1,
+    "MEDLEM-06": 1,
+    "MEDLEM-01": 1,
+    "MEDLEM-07": 1,
+    "MEDLEM-02": 1,
+    "MEDLEM-03": 1,
+    "MEDLEM-08": 1,
+    "MEDLEM-09": 1,
+    "MIKROFONTRYCK-05": 1,
+    "MIKROFONTRYCK-01": 1,
+    "MIKROFONTRYCK-06": 1,
+    "MIKROFONTRYCK-07": 1,
+    "MIKROFONTRYCK-08": 1,
+    "MIKROFONTRYCK-02": 1,
+    "MIKROFONTRYCK-03": 2,
+    "MIKROFONTRYCK-04": 1,
+    "TEXTMOBIL-01": 8,
+    "TEXTMOBIL-02": 4,
+    "TEXTMOBIL-03": 1,
+    "TEXTMOBIL-04": 1,
+    "LISTA-07": 1,
+    "TYP-10": 4,
+    "TYP-12": 1,
+    "KARTA-19": 1,
+    "KARTA-17": 1,
+    "KARTA-18": 2,
+    "KARTA-16": 1,
+    "KARTA-10": 1,
+    "KARTA-14": 1,
+    "KARTA-11": 1,
+    "KARTA-12": 1,
+    "KARTA-13": 1,
+    "KARTA-15": 1,
+    "KARTA-20": 2,
+    "IKON-01": 1,
+    "IKON-02": 1,
+    "IKON-03": 1,
+    "IKON-04": 1,
+    "IKON-05": 1,
+    "LISTA-05": 1,
+    "LISTA-01": 1,
+    "LISTA-03": 1,
+    "LISTA-02": 1,
+    "LISTA-04": 2,
+    "SÖK-11": 2,
+    "SÖK-12": 1,
+    "SÖK-01": 1,
+    "SÖK-04": 1,
+    "SÖK-05": 1,
+    "SÖK-02": 1,
+    "SÖK-03": 1,
+    "SÖK-10": 1,
+    "TYP-08": 1,
+    "TYP-09": 3,
+    "TYP-01": 1,
+    "TYP-02": 1,
+    "TYP-03": 1,
+    "TYP-04": 1,
+    "TYP-05": 1,
+    "SPAR-01": 1,
+    "SPAR-02": 1,
+    "SPAR-03": 1,
+    "SPAR-04": 1,
+    "PLACERING-09": 2,
+    "PLACERING-01": 1,
+    "PLACERING-08": 1,
+    "PLACERING-02": 1,
+    "PLACERING-03": 1,
+    "PLACERING-04": 1,
+    "PLACERING-06": 1,
+    "PLACERING-05": 1,
+    "PLACERING-07": 1,
+    "BILD-06": 19,
+    "BILD-04": 8,
+    "BILD-05": 3,
+    "BILD-01": 1,
+    "BILD-02": 1,
+    "BILD-03": 1,
+    "SAMBAND-12": 1,
+    "SAMBAND-13": 1,
+    "SAMBAND-10": 1,
+    "SAMBAND-11": 1,
+    "SAMBAND-09": 3,
+    "SAMBAND-07": 1,
+    "SAMBAND-08": 1,
+    "SAMBAND-06": 1,
+    "SAMBAND-05": 1,
+    "SAMBAND-03": 1,
+    "SAMBAND-04": 1,
+    "SAMBAND-02": 1,
+    "SAMBAND-01": 1,
+    "STY-06": 2,
+    "STY-07": 1,
+    "SAMBAND-14": 1,
+    "SAMBAND-15": 1,
+    "STY-08": 3,
+    "STY-01": 1,
+    "STY-03": 1,
+    "STY-04": 1,
+    "STY-02": 1,
+    "STY-05": 1,
+    "SPARKONTROLL-01": 1,
+    "SPARKONTROLL-02": 2,
+    "SPARKONTROLL-03": 2,
+    "SPARKONTROLL-04": 1,
+    "SPARKONTROLL-05": 1,
+    "SPARKONTROLL-06": 2,
+    "INST-01": 3,
+    "INST-02": 1,
+    "INST-03": 1,
+    "INST-04": 1,
+    "INST-05": 1,
+    "INST-06": 1,
+    "INST-07": 2,
+    "RYMD-01": 1,
+    "RYMD-02": 1,
+    "RYMD-03": 1,
+    "RYMD-04": 1,
+    "RYMD-05": 1,
+    "RYMD-06": 1,
+    "RYMD-07": 1,
+    "RYMD-08": 1,
+    "RYMD-09": 1,
+    "RYMD-10": 1,
+    "TEXT-07": 1,
+    "TEXT-01": 1,
+    "TEXT-02": 1,
+    "TEXT-03": 1,
+    "TEXT-04": 1,
+    "TEXT-05": 1,
+    "TEXT-06": 1,
+    "TEXT-09": 1,
+    "TEXTBRICKA-01": 1,
+    "TEXTBRICKA-02": 1,
+    "TEXTBRICKA-03": 1,
+    "TEXTBRICKA-04": 4,
+    "TEXTBRICKA-05": 1,
+    "TEXTVY-01": 1,
+    "TEXTVY-02": 1,
+    "TEXTVY-03": 1,
+    "TEXTVY-04": 1,
+    "SPAR-05": 1,
+    "TYP-06": 1,
+    "TYP-11": 6,
+    "TYP-07": 1,
+    "ACCESS-04": 1,
+    "ACCESS-05": 1,
+    "ACCESS-12": 1,
+    "ACCESS-13": 2,
+    "ACCESS-06": 1,
+    "ACCESS-07": 1,
+    "ACCESS-08": 1,
+    "TAL-06": 1,
+    "TAL-07": 1,
+    "TAL-08": 1,
+    "TAL-09": 1,
+    "TAL-05": 1,
+    "TAL-04": 1,
+    "TAL-01": 1,
+    "TAL-02": 1,
+    "TAL-03": 1,
+    "TAL-10": 1,
+    "TAL-11": 1,
+    "TAL-12": 1,
+    "TAL-18": 2,
+    "TAL-13": 1,
+    "TAL-14": 1,
+    "TAL-16": 1,
+    "ROSTFEL-01": 4,
+    "ROSTFEL-02": 2,
+    "ROSTFEL-03": 1,
+    "ROSTFEL-04": 1,
+    "PANEL-08": 1,
+    "PANEL-05": 1,
+    "PANEL-01": 1,
+    "PANEL-02": 1,
+    "PANEL-03": 1,
+    "PANEL-04": 1,
+    "YTA-05": 1,
+    "YTA-01": 1,
+    "YTA-03": 1,
+    "YTA-04": 1,
+    "YTA-02": 1,
+    "YTA-06": 2,
+    "YTA-09": 1
+  },
+  "noid": [
+    {
+      "file": "access.spec.ts",
+      "line": 5,
+      "title": "two installations honor different administrators and deny another identity the bootstrap",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 38,
+      "title": "a second identity with the same email cannot acquire the first identity or its membership",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 65,
+      "title": "an earlier same-email identity cannot block the configured first administrator",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 88,
+      "title": "bootstrap is atomic and rejects cross-origin and malformed submissions",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 122,
+      "title": "current membership isolates households and revocation defeats an existing session",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 167,
+      "title": "forged OAuth callbacks and unavailable authentication routes do not grant access",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 6,
+      "title": "contrast measures black on white expressed as rgb(0, 0, 0)",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 6,
+      "title": "contrast measures black on white expressed as color(srgb 0 0 0)",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 6,
+      "title": "contrast measures black on white expressed as oklch(0% 0 0)",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 12,
+      "title": "contrast measures an opaque color mix through a transparent descendant",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 20,
+      "title": "contrast rejects translucent colors instead of reporting an opaque contrast",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 27,
+      "title": "contrast rejects text without an opaque surface",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "bootstrap.spec.ts",
+      "line": 5,
+      "title": "a new installation offers login and protects direct household requests",
+      "path": [
+        "bootstrap.spec.ts"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på dator"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på telefon"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på bred pekskärm"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på kort fönster"
+      ]
+    },
+    {
+      "file": "database-setup.spec.ts",
+      "line": 223,
+      "title": "repeated setup clears households, members, invitations, sessions and future fixture tables",
+      "path": [
+        "database-setup.spec.ts"
+      ]
+    },
+    {
+      "file": "database-setup.spec.ts",
+      "line": 302,
+      "title": "setup rejects unsafe or incomplete configuration before touching existing data",
+      "path": [
+        "database-setup.spec.ts"
+      ]
+    },
+    {
+      "file": "database-setup.spec.ts",
+      "line": 337,
+      "title": "a failed seed rolls back the reset and keeps existing sessions usable",
+      "path": [
+        "database-setup.spec.ts"
+      ]
+    },
+    {
+      "file": "draft-conflicts.spec.ts",
+      "line": 1508,
+      "title": "HTTP clients reject stale conflict choices and enforce private drafts and revoked membership",
+      "path": [
+        "draft-conflicts.spec.ts"
+      ]
+    },
+    {
+      "file": "draft-conflicts.spec.ts",
+      "line": 1599,
+      "title": "resolving an object preserves fields changed only by the other user",
+      "path": [
+        "draft-conflicts.spec.ts"
+      ]
+    },
+    {
+      "file": "draft-conflicts.spec.ts",
+      "line": 1630,
+      "title": "independent users save unrelated objects without a meaningless conflict",
+      "path": [
+        "draft-conflicts.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 9,
+      "title": "upgrading an existing household preserves its membership and enables invitations",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 133,
+      "title": "an invitation admits only its authenticated recipient and remains consumed after restart",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 198,
+      "title": "administrators cannot cross household boundaries and members can accept access to another household",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 301,
+      "title": "invitation replacement, cancellation, and membership revocation invalidate old codes",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 351,
+      "title": "concurrent role changes cannot remove the last administrator",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 389,
+      "title": "members cannot administer access, two administrators can share it, and revocation defeats old sessions",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after wrong identity",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after denied consent",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after provider failure",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after cancelled",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after occupied identity",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after denied consent",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after provider failure",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after cancelled",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 138,
+      "title": "linking requires the original session, explicit proof and same-origin requests",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "map.spec.ts",
+      "line": 14,
+      "title": "refreshing after a conflict preserves text without authorizing a stale form",
+      "path": [
+        "map.spec.ts"
+      ]
+    },
+    {
+      "file": "map.spec.ts",
+      "line": 60,
+      "title": "an uncertain save recovers its receipt and stale tabs cannot save newer drafts",
+      "path": [
+        "map.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 65,
+      "title": "invalid configuration exits with only a redacted diagnostic",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 81,
+      "title": "an occupied listener exits without readiness or private diagnostics",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 96,
+      "title": "the compiled server closes cleanly on SIGTERM and can reopen its SQLite storage",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 96,
+      "title": "the compiled server closes cleanly on SIGINT and can reopen its SQLite storage",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "voice-box.spec.ts",
+      "line": 591,
+      "title": "röstrutan står på sin plats på dator och täcker aldrig kartans rad eller återkoppling",
+      "path": [
+        "voice-box.spec.ts"
+      ]
+    },
+    {
+      "file": "voice-box.spec.ts",
+      "line": 591,
+      "title": "röstrutan står på sin plats på bred pekskärm och täcker aldrig kartans rad eller återkoppling",
+      "path": [
+        "voice-box.spec.ts"
+      ]
+    },
+    {
+      "file": "voice-box.spec.ts",
+      "line": 591,
+      "title": "röstrutan står på sin plats på smal skärm och täcker aldrig kartans rad eller återkoppling",
+      "path": [
+        "voice-box.spec.ts"
+      ]
+    }
+  ],
+  "id_missing": [
+    [
+      "TABELL-05",
+      {
+        "file": "household-table.spec.ts",
+        "line": 20,
+        "title": "TABELL-05: map visits restore the corresponding table control after its row disappears",
+        "path": [
+          "household-table.spec.ts"
+        ]
+      }
+    ],
+    [
+      "TABELL-03",
+      {
+        "file": "household-table.spec.ts",
+        "line": 345,
+        "title": "TABELL-03: mobile horizontal reading preserves shared selection, draft and unsent conversation",
+        "path": [
+          "household-table.spec.ts"
+        ]
+      }
+    ]
+  ],
+  "literal_title_matches": 662,
+  "literal_title_missing": [
+    {
+      "file": "access.spec.ts",
+      "line": 5,
+      "title": "two installations honor different administrators and deny another identity the bootstrap",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 38,
+      "title": "a second identity with the same email cannot acquire the first identity or its membership",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 65,
+      "title": "an earlier same-email identity cannot block the configured first administrator",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 88,
+      "title": "bootstrap is atomic and rejects cross-origin and malformed submissions",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 122,
+      "title": "current membership isolates households and revocation defeats an existing session",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "access.spec.ts",
+      "line": 167,
+      "title": "forged OAuth callbacks and unavailable authentication routes do not grant access",
+      "path": [
+        "access.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 6,
+      "title": "contrast measures black on white expressed as rgb(0, 0, 0)",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 6,
+      "title": "contrast measures black on white expressed as color(srgb 0 0 0)",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 6,
+      "title": "contrast measures black on white expressed as oklch(0% 0 0)",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 12,
+      "title": "contrast measures an opaque color mix through a transparent descendant",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 20,
+      "title": "contrast rejects translucent colors instead of reporting an opaque contrast",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "accessibility-measurements.spec.ts",
+      "line": 27,
+      "title": "contrast rejects text without an opaque surface",
+      "path": [
+        "accessibility-measurements.spec.ts"
+      ]
+    },
+    {
+      "file": "bootstrap.spec.ts",
+      "line": 5,
+      "title": "a new installation offers login and protects direct household requests",
+      "path": [
+        "bootstrap.spec.ts"
+      ]
+    },
+    {
+      "file": "conflict-properties.spec.ts",
+      "line": 9,
+      "title": "UTKAST-28: mix explicit property choices without saving the shared map at 390px",
+      "path": [
+        "conflict-properties.spec.ts"
+      ]
+    },
+    {
+      "file": "conversation-audit.spec.ts",
+      "line": 113,
+      "title": "NOT-09: symbolfärg och läsbarhet skiljer hinder från händelse i dark tema",
+      "path": [
+        "conversation-audit.spec.ts"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på dator"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på telefon"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på bred pekskärm"
+      ]
+    },
+    {
+      "file": "conversation-notices.spec.ts",
+      "line": 138,
+      "title": "text och kontroller ryms i en händelse och ett hinder, även i textvyn",
+      "path": [
+        "conversation-notices.spec.ts",
+        "notisens innehåll på kort fönster"
+      ]
+    },
+    {
+      "file": "conversation-questions.spec.ts",
+      "line": 205,
+      "title": "FRAGA-03: en fråga från text som sagts med rösten väntar kvar med mikrofonen av",
+      "path": [
+        "conversation-questions.spec.ts"
+      ]
+    },
+    {
+      "file": "costs.spec.ts",
+      "line": 267,
+      "title": "KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer (1280px)",
+      "path": [
+        "costs.spec.ts"
+      ]
+    },
+    {
+      "file": "costs.spec.ts",
+      "line": 267,
+      "title": "KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer (390px)",
+      "path": [
+        "costs.spec.ts"
+      ]
+    },
+    {
+      "file": "costs.spec.ts",
+      "line": 267,
+      "title": "KOST-04: okänt sparresultat återläses med fokus och fullständiga detaljer (320px)",
+      "path": [
+        "costs.spec.ts"
+      ]
+    },
+    {
+      "file": "database-setup.spec.ts",
+      "line": 223,
+      "title": "repeated setup clears households, members, invitations, sessions and future fixture tables",
+      "path": [
+        "database-setup.spec.ts"
+      ]
+    },
+    {
+      "file": "database-setup.spec.ts",
+      "line": 302,
+      "title": "setup rejects unsafe or incomplete configuration before touching existing data",
+      "path": [
+        "database-setup.spec.ts"
+      ]
+    },
+    {
+      "file": "database-setup.spec.ts",
+      "line": 337,
+      "title": "a failed seed rolls back the reset and keeps existing sessions usable",
+      "path": [
+        "database-setup.spec.ts"
+      ]
+    },
+    {
+      "file": "draft-conflicts.spec.ts",
+      "line": 1508,
+      "title": "HTTP clients reject stale conflict choices and enforce private drafts and revoked membership",
+      "path": [
+        "draft-conflicts.spec.ts"
+      ]
+    },
+    {
+      "file": "draft-conflicts.spec.ts",
+      "line": 1599,
+      "title": "resolving an object preserves fields changed only by the other user",
+      "path": [
+        "draft-conflicts.spec.ts"
+      ]
+    },
+    {
+      "file": "draft-conflicts.spec.ts",
+      "line": 1630,
+      "title": "independent users save unrelated objects without a meaningless conflict",
+      "path": [
+        "draft-conflicts.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 1280x900px light",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 1280x900px dark",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 390x900px light",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 390x900px dark",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x900px light",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x900px dark",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 640x500px light",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 640x500px dark",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x250px light",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-erasure.spec.ts",
+      "line": 218,
+      "title": "RADERING-06: dedicated Settings review can be cancelled before explicit erasure and a fresh map at 320x250px dark",
+      "path": [
+        "household-erasure.spec.ts"
+      ]
+    },
+    {
+      "file": "household-export-ui.spec.ts",
+      "line": 528,
+      "title": "EXPORT-09: keyboard export controls retain focus and protect native form input at 390px",
+      "path": [
+        "household-export-ui.spec.ts"
+      ]
+    },
+    {
+      "file": "household-export-ui.spec.ts",
+      "line": 528,
+      "title": "EXPORT-09: keyboard export controls retain focus and protect native form input at 320px",
+      "path": [
+        "household-export-ui.spec.ts"
+      ]
+    },
+    {
+      "file": "household-export-ui.spec.ts",
+      "line": 528,
+      "title": "EXPORT-09: keyboard export controls retain focus and protect native form input at 640px",
+      "path": [
+        "household-export-ui.spec.ts"
+      ]
+    },
+    {
+      "file": "household-recovery-accessibility.spec.ts",
+      "line": 71,
+      "title": "IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at 390px",
+      "path": [
+        "household-recovery-accessibility.spec.ts"
+      ]
+    },
+    {
+      "file": "household-recovery-accessibility.spec.ts",
+      "line": 71,
+      "title": "IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at 320px",
+      "path": [
+        "household-recovery-accessibility.spec.ts"
+      ]
+    },
+    {
+      "file": "household-recovery-accessibility.spec.ts",
+      "line": 71,
+      "title": "IMPORT-15: keyboard recovery controls remain visible through review, errors and assignment at 640px",
+      "path": [
+        "household-recovery-accessibility.spec.ts"
+      ]
+    },
+    {
+      "file": "household-table.spec.ts",
+      "line": 20,
+      "title": "TABELL-04: disappearing edited rows restore the next Edit control then previous then heading",
+      "path": [
+        "household-table.spec.ts"
+      ]
+    },
+    {
+      "file": "household-table.spec.ts",
+      "line": 20,
+      "title": "TABELL-05: map visits restore the corresponding table control after its row disappears",
+      "path": [
+        "household-table.spec.ts"
+      ]
+    },
+    {
+      "file": "household-table.spec.ts",
+      "line": 345,
+      "title": "TABELL-03: mobile horizontal reading preserves shared selection, draft and unsent conversation",
+      "path": [
+        "household-table.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 9,
+      "title": "upgrading an existing household preserves its membership and enables invitations",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 133,
+      "title": "an invitation admits only its authenticated recipient and remains consumed after restart",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 198,
+      "title": "administrators cannot cross household boundaries and members can accept access to another household",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 301,
+      "title": "invitation replacement, cancellation, and membership revocation invalidate old codes",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 351,
+      "title": "concurrent role changes cannot remove the last administrator",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "invitations.spec.ts",
+      "line": 389,
+      "title": "members cannot administer access, two administrators can share it, and revocation defeats old sessions",
+      "path": [
+        "invitations.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after wrong identity",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after denied consent",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after provider failure",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 61,
+      "title": "existing identity proof preserves access after cancelled",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after occupied identity",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after denied consent",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after provider failure",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 99,
+      "title": "new identity proof preserves both users after cancelled",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "linking.spec.ts",
+      "line": 138,
+      "title": "linking requires the original session, explicit proof and same-origin requests",
+      "path": [
+        "linking.spec.ts"
+      ]
+    },
+    {
+      "file": "map.spec.ts",
+      "line": 14,
+      "title": "refreshing after a conflict preserves text without authorizing a stale form",
+      "path": [
+        "map.spec.ts"
+      ]
+    },
+    {
+      "file": "map.spec.ts",
+      "line": 60,
+      "title": "an uncertain save recovers its receipt and stale tabs cannot save newer drafts",
+      "path": [
+        "map.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 65,
+      "title": "invalid configuration exits with only a redacted diagnostic",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 81,
+      "title": "an occupied listener exits without readiness or private diagnostics",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 96,
+      "title": "the compiled server closes cleanly on SIGTERM and can reopen its SQLite storage",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "startup.spec.ts",
+      "line": 96,
+      "title": "the compiled server closes cleanly on SIGINT and can reopen its SQLite storage",
+      "path": [
+        "startup.spec.ts"
+      ]
+    },
+    {
+      "file": "text-button-status.spec.ts",
+      "line": 219,
+      "title": "TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 390px i dark tema",
+      "path": [
+        "text-button-status.spec.ts"
+      ]
+    },
+    {
+      "file": "text-button-status.spec.ts",
+      "line": 219,
+      "title": "TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 1280px i light tema",
+      "path": [
+        "text-button-status.spec.ts"
+      ]
+    },
+    {
+      "file": "text-button-status.spec.ts",
+      "line": 219,
+      "title": "TEXTBRICKA-04: minskad rörelse och fasta knappmått vid 1280px i dark tema",
+      "path": [
+        "text-button-status.spec.ts"
+      ]
+    },
+    {
+      "file": "voice-box.spec.ts",
+      "line": 591,
+      "title": "röstrutan står på sin plats på dator och täcker aldrig kartans rad eller återkoppling",
+      "path": [
+        "voice-box.spec.ts"
+      ]
+    },
+    {
+      "file": "voice-box.spec.ts",
+      "line": 591,
+      "title": "röstrutan står på sin plats på bred pekskärm och täcker aldrig kartans rad eller återkoppling",
+      "path": [
+        "voice-box.spec.ts"
+      ]
+    },
+    {
+      "file": "voice-box.spec.ts",
+      "line": 591,
+      "title": "röstrutan står på sin plats på smal skärm och täcker aldrig kartans rad eller återkoppling",
+      "path": [
+        "voice-box.spec.ts"
+      ]
+    }
+  ]
+}

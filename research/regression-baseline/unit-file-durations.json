@@ -1,0 +1,1442 @@
+[
+  {
+    "file": "tests/browser/spatial.test.tsx",
+    "start_utc_ms": 1791477138138,
+    "end_utc_ms": 1791477255661.2,
+    "file_elapsed_s": 117.52319995117188,
+    "summed_case_duration_s": 117.52269999998808,
+    "tests": 34,
+    "failed": 7,
+    "status": "failed"
+  },
+  {
+    "file": "tests/unit/client/map.test.tsx",
+    "start_utc_ms": 1791476831049,
+    "end_utc_ms": 1791476909283.25,
+    "file_elapsed_s": 78.23425,
+    "summed_case_duration_s": 78.23329536899999,
+    "tests": 41,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/voice-assistant.test.ts",
+    "start_utc_ms": 1791476637514,
+    "end_utc_ms": 1791476664466.5847,
+    "file_elapsed_s": 26.952584716796874,
+    "summed_case_duration_s": 26.951171591999994,
+    "tests": 53,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/text-assistant.test.ts",
+    "start_utc_ms": 1791476665214,
+    "end_utc_ms": 1791476691584.3809,
+    "file_elapsed_s": 26.370380859375,
+    "summed_case_duration_s": 26.366452636999988,
+    "tests": 135,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/household-conversation-workflows.test.tsx",
+    "start_utc_ms": 1791476910850,
+    "end_utc_ms": 1791476936770.5276,
+    "file_elapsed_s": 25.920527587890625,
+    "summed_case_duration_s": 25.920568803000002,
+    "tests": 21,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/browser/household-layout.test.tsx",
+    "start_utc_ms": 1791477255930,
+    "end_utc_ms": 1791477281535.4,
+    "file_elapsed_s": 25.60539990234375,
+    "summed_case_duration_s": 25.605399999976157,
+    "tests": 24,
+    "failed": 1,
+    "status": "failed"
+  },
+  {
+    "file": "tests/unit/client/native-workflows-http.test.tsx",
+    "start_utc_ms": 1791476938195,
+    "end_utc_ms": 1791476960867.2654,
+    "file_elapsed_s": 22.672265380859375,
+    "summed_case_duration_s": 22.671855550000007,
+    "tests": 25,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/household-boundaries-http.test.tsx",
+    "start_utc_ms": 1791476962170,
+    "end_utc_ms": 1791476984643.7527,
+    "file_elapsed_s": 22.473752685546874,
+    "summed_case_duration_s": 22.473224888000008,
+    "tests": 22,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/browser/assistant-selection.test.tsx",
+    "start_utc_ms": 1791477117561,
+    "end_utc_ms": 1791477137887.4,
+    "file_elapsed_s": 20.32639990234375,
+    "summed_case_duration_s": 20.32730000001192,
+    "tests": 11,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/voice-assistant.test.tsx",
+    "start_utc_ms": 1791476985335,
+    "end_utc_ms": 1791476998098.3594,
+    "file_elapsed_s": 12.763359375,
+    "summed_case_duration_s": 12.763184051000009,
+    "tests": 64,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-message-admission.test.ts",
+    "start_utc_ms": 1791476692333,
+    "end_utc_ms": 1791476704492.253,
+    "file_elapsed_s": 12.1592529296875,
+    "summed_case_duration_s": 12.159823505,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/object-read-reports-http.test.tsx",
+    "start_utc_ms": 1791476999323,
+    "end_utc_ms": 1791477010145.3503,
+    "file_elapsed_s": 10.822350341796875,
+    "summed_case_duration_s": 10.822272504999999,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/app-shell-http.test.tsx",
+    "start_utc_ms": 1791477011475,
+    "end_utc_ms": 1791477021496.7324,
+    "file_elapsed_s": 10.021732421875,
+    "summed_case_duration_s": 10.021484503000002,
+    "tests": 26,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/voice-lifecycle.test.ts",
+    "start_utc_ms": 1791476705227,
+    "end_utc_ms": 1791476714865.7068,
+    "file_elapsed_s": 9.638706787109374,
+    "summed_case_duration_s": 9.639453586000002,
+    "tests": 17,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/relationship-form-http.test.tsx",
+    "start_utc_ms": 1791477022711,
+    "end_utc_ms": 1791477031680.208,
+    "file_elapsed_s": 8.9692080078125,
+    "summed_case_duration_s": 8.969258091,
+    "tests": 13,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/voice-held-lifecycle.test.tsx",
+    "start_utc_ms": 1791477032207,
+    "end_utc_ms": 1791477040678.3208,
+    "file_elapsed_s": 8.47132080078125,
+    "summed_case_duration_s": 8.472725501,
+    "tests": 14,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/profile-images.test.tsx",
+    "start_utc_ms": 1791477041417,
+    "end_utc_ms": 1791477046955.3845,
+    "file_elapsed_s": 5.538384521484375,
+    "summed_case_duration_s": 5.537674670000002,
+    "tests": 8,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/costs.test.ts",
+    "start_utc_ms": 1791476715548,
+    "end_utc_ms": 1791476721075.609,
+    "file_elapsed_s": 5.52760888671875,
+    "summed_case_duration_s": 5.526848128000001,
+    "tests": 26,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-boundaries-http.test.ts",
+    "start_utc_ms": 1791476721765,
+    "end_utc_ms": 1791476727283.5088,
+    "file_elapsed_s": 5.5185087890625,
+    "summed_case_duration_s": 5.518135917000001,
+    "tests": 32,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/voice-boundaries-http.test.ts",
+    "start_utc_ms": 1791476727952,
+    "end_utc_ms": 1791476733356.5564,
+    "file_elapsed_s": 5.404556396484375,
+    "summed_case_duration_s": 5.404857463999998,
+    "tests": 24,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/manual-voice.test.ts",
+    "start_utc_ms": 1791476733674,
+    "end_utc_ms": 1791476738575.92,
+    "file_elapsed_s": 4.901919921875,
+    "summed_case_duration_s": 4.90235046,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/text-assistant.test.tsx",
+    "start_utc_ms": 1791477047556,
+    "end_utc_ms": 1791477052290.128,
+    "file_elapsed_s": 4.7341279296875,
+    "summed_case_duration_s": 4.734319335000001,
+    "tests": 24,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/object-builtins.test.tsx",
+    "start_utc_ms": 1791477053037,
+    "end_utc_ms": 1791477056826.1882,
+    "file_elapsed_s": 3.789188232421875,
+    "summed_case_duration_s": 3.7892812110000005,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/administration.test.tsx",
+    "start_utc_ms": 1791477076233,
+    "end_utc_ms": 1791477079587.3782,
+    "file_elapsed_s": 3.354378173828125,
+    "summed_case_duration_s": 3.354662502,
+    "tests": 31,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/browser/personal-view.test.tsx",
+    "start_utc_ms": 1791477281805,
+    "end_utc_ms": 1791477285134.5,
+    "file_elapsed_s": 3.3295,
+    "summed_case_duration_s": 3.3293999999165536,
+    "tests": 8,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/object-icons.test.tsx",
+    "start_utc_ms": 1791477057604,
+    "end_utc_ms": 1791477060841.7356,
+    "file_elapsed_s": 3.237735595703125,
+    "summed_case_duration_s": 3.2373022510000005,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/object-sections.test.tsx",
+    "start_utc_ms": 1791477061634,
+    "end_utc_ms": 1791477064736.3716,
+    "file_elapsed_s": 3.10237158203125,
+    "summed_case_duration_s": 3.101772001,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/relationship-fields.test.tsx",
+    "start_utc_ms": 1791477069361,
+    "end_utc_ms": 1791477072384.664,
+    "file_elapsed_s": 3.0236640625,
+    "summed_case_duration_s": 3.022984417,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/relationship-form-navigation.test.tsx",
+    "start_utc_ms": 1791477065523,
+    "end_utc_ms": 1791477068531.5693,
+    "file_elapsed_s": 3.0085693359375,
+    "summed_case_duration_s": 3.008170334,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/household-export.test.ts",
+    "start_utc_ms": 1791476739068,
+    "end_utc_ms": 1791476741972.1838,
+    "file_elapsed_s": 2.904183837890625,
+    "summed_case_duration_s": 2.9037173759999995,
+    "tests": 14,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationships.test.ts",
+    "start_utc_ms": 1791476742419,
+    "end_utc_ms": 1791476745209.0554,
+    "file_elapsed_s": 2.790055419921875,
+    "summed_case_duration_s": 2.7903215410000013,
+    "tests": 32,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/manual-mcp-client.test.ts",
+    "start_utc_ms": 1791476745823,
+    "end_utc_ms": 1791476748349.0686,
+    "file_elapsed_s": 2.526068603515625,
+    "summed_case_duration_s": 2.526068543,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/object-form-navigation.test.tsx",
+    "start_utc_ms": 1791477073181,
+    "end_utc_ms": 1791477075677.7178,
+    "file_elapsed_s": 2.4967177734375,
+    "summed_case_duration_s": 2.497033794,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/household-erasure.test.ts",
+    "start_utc_ms": 1791476748871,
+    "end_utc_ms": 1791476751168.898,
+    "file_elapsed_s": 2.29789794921875,
+    "summed_case_duration_s": 2.298392876,
+    "tests": 23,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/new-conversation.test.ts",
+    "start_utc_ms": 1791476754541,
+    "end_utc_ms": 1791476756822.5627,
+    "file_elapsed_s": 2.281562744140625,
+    "summed_case_duration_s": 2.281418001,
+    "tests": 8,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/household-import.test.ts",
+    "start_utc_ms": 1791476760060,
+    "end_utc_ms": 1791476762257.5664,
+    "file_elapsed_s": 2.19756640625,
+    "summed_case_duration_s": 2.197135705999999,
+    "tests": 28,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/draft-boundaries-http.test.ts",
+    "start_utc_ms": 1791476751718,
+    "end_utc_ms": 1791476753906.1338,
+    "file_elapsed_s": 2.1881337890625,
+    "summed_case_duration_s": 2.187618208,
+    "tests": 18,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/manual-transport-http.test.ts",
+    "start_utc_ms": 1791476757491,
+    "end_utc_ms": 1791476759591.6714,
+    "file_elapsed_s": 2.10067138671875,
+    "summed_case_duration_s": 2.1003652940000004,
+    "tests": 13,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/App.test.tsx",
+    "start_utc_ms": 1791477080116,
+    "end_utc_ms": 1791477082192.478,
+    "file_elapsed_s": 2.07647802734375,
+    "summed_case_duration_s": 2.076204374,
+    "tests": 36,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/context-summary-boundary.test.ts",
+    "start_utc_ms": 1791476762879,
+    "end_utc_ms": 1791476764947.5745,
+    "file_elapsed_s": 2.068574462890625,
+    "summed_case_duration_s": 2.068846416999999,
+    "tests": 11,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/manual-export.test.ts",
+    "start_utc_ms": 1791476765282,
+    "end_utc_ms": 1791476767250.9534,
+    "file_elapsed_s": 1.968953369140625,
+    "summed_case_duration_s": 1.9689533330000002,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/relationship-sections.test.tsx",
+    "start_utc_ms": 1791477082944,
+    "end_utc_ms": 1791477084903.0886,
+    "file_elapsed_s": 1.959088623046875,
+    "summed_case_duration_s": 1.9591384180000002,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/assistant-work.test.ts",
+    "start_utc_ms": 1791476767930,
+    "end_utc_ms": 1791476769755.524,
+    "file_elapsed_s": 1.82552392578125,
+    "summed_case_duration_s": 1.8253308770000005,
+    "tests": 17,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/assistant-ownership.test.ts",
+    "start_utc_ms": 1791476770438,
+    "end_utc_ms": 1791476772183.8,
+    "file_elapsed_s": 1.745800048828125,
+    "summed_case_duration_s": 1.745554459,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/definition-removal.test.ts",
+    "start_utc_ms": 1791476779268,
+    "end_utc_ms": 1791476780838.5933,
+    "file_elapsed_s": 1.57059326171875,
+    "summed_case_duration_s": 1.570569291,
+    "tests": 18,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-types-http.test.ts",
+    "start_utc_ms": 1791476775049,
+    "end_utc_ms": 1791476776614.4014,
+    "file_elapsed_s": 1.5654013671875,
+    "summed_case_duration_s": 1.5660085830000003,
+    "tests": 12,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-provider-contracts.test.ts",
+    "start_utc_ms": 1791476777238,
+    "end_utc_ms": 1791476778790.9395,
+    "file_elapsed_s": 1.552939453125,
+    "summed_case_duration_s": 1.5520757099999998,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationship-fields-boundaries.test.ts",
+    "start_utc_ms": 1791476781335,
+    "end_utc_ms": 1791476782870.0635,
+    "file_elapsed_s": 1.5350634765625,
+    "summed_case_duration_s": 1.5348674589999995,
+    "tests": 9,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/assistant-advanced.test.ts",
+    "start_utc_ms": 1791476772821,
+    "end_utc_ms": 1791476774346.5796,
+    "file_elapsed_s": 1.52557958984375,
+    "summed_case_duration_s": 1.5263227079999997,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation.test.tsx",
+    "start_utc_ms": 1791477085363,
+    "end_utc_ms": 1791477086878.194,
+    "file_elapsed_s": 1.515194091796875,
+    "summed_case_duration_s": 1.5142102950000005,
+    "tests": 26,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-sections-boundaries.test.ts",
+    "start_utc_ms": 1791476783482,
+    "end_utc_ms": 1791476784981.2256,
+    "file_elapsed_s": 1.4992255859375,
+    "summed_case_duration_s": 1.4990840830000003,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conflict-restoration-http.test.ts",
+    "start_utc_ms": 1791476785454,
+    "end_utc_ms": 1791476786920.1213,
+    "file_elapsed_s": 1.466121337890625,
+    "summed_case_duration_s": 1.4661849189999998,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-consent.test.ts",
+    "start_utc_ms": 1791476787544,
+    "end_utc_ms": 1791476788963.2542,
+    "file_elapsed_s": 1.419254150390625,
+    "summed_case_duration_s": 1.4189864580000007,
+    "tests": 12,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/household-erasure.test.tsx",
+    "start_utc_ms": 1791477087235,
+    "end_utc_ms": 1791477088587.436,
+    "file_elapsed_s": 1.35243603515625,
+    "summed_case_duration_s": 1.3521701670000001,
+    "tests": 21,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/manual-text-assistant.test.ts",
+    "start_utc_ms": 1791476789334,
+    "end_utc_ms": 1791476790666.2808,
+    "file_elapsed_s": 1.33228076171875,
+    "summed_case_duration_s": 1.3322808339999999,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/profile-images.test.ts",
+    "start_utc_ms": 1791476791114,
+    "end_utc_ms": 1791476792355.17,
+    "file_elapsed_s": 1.241169921875,
+    "summed_case_duration_s": 1.2404404999999996,
+    "tests": 14,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/household-import.test.tsx",
+    "start_utc_ms": 1791477089249,
+    "end_utc_ms": 1791477090423.33,
+    "file_elapsed_s": 1.174330078125,
+    "summed_case_duration_s": 1.1737168330000007,
+    "tests": 22,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/browser/household-feedback-focus.test.tsx",
+    "start_utc_ms": 1791477285300,
+    "end_utc_ms": 1791477286455.6,
+    "file_elapsed_s": 1.15560009765625,
+    "summed_case_duration_s": 1.1558000000119208,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-settings.test.tsx",
+    "start_utc_ms": 1791477092484,
+    "end_utc_ms": 1791477093589.2788,
+    "file_elapsed_s": 1.10527880859375,
+    "summed_case_duration_s": 1.1049870859999995,
+    "tests": 15,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/costs.test.tsx",
+    "start_utc_ms": 1791477090966,
+    "end_utc_ms": 1791477092033.8782,
+    "file_elapsed_s": 1.067878173828125,
+    "summed_case_duration_s": 1.0675551649999995,
+    "tests": 20,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/voice-typed-delivery.test.ts",
+    "start_utc_ms": 1791476792959,
+    "end_utc_ms": 1791476793991.5076,
+    "file_elapsed_s": 1.032507568359375,
+    "summed_case_duration_s": 1.0331821239999999,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-summary-lifecycle.test.ts",
+    "start_utc_ms": 1791476794667,
+    "end_utc_ms": 1791476795662.0835,
+    "file_elapsed_s": 0.99508349609375,
+    "summed_case_duration_s": 0.9953357909999998,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/app.test.ts",
+    "start_utc_ms": 1791476797709,
+    "end_utc_ms": 1791476798677.8367,
+    "file_elapsed_s": 0.968836669921875,
+    "summed_case_duration_s": 0.9686052910000003,
+    "tests": 24,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationship-sections-http.test.ts",
+    "start_utc_ms": 1791476796285,
+    "end_utc_ms": 1791476797237.0583,
+    "file_elapsed_s": 0.952058349609375,
+    "summed_case_duration_s": 0.9525956270000001,
+    "tests": 7,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/browser/spatial-scene.test.tsx",
+    "start_utc_ms": 1791477287493,
+    "end_utc_ms": 1791477288411.2,
+    "file_elapsed_s": 0.918199951171875,
+    "summed_case_duration_s": 0.9183000000715256,
+    "tests": 11,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/history.test.tsx",
+    "start_utc_ms": 1791477097109,
+    "end_utc_ms": 1791477098022.67,
+    "file_elapsed_s": 0.913669921875,
+    "summed_case_duration_s": 0.9131369160000002,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/login-methods.test.tsx",
+    "start_utc_ms": 1791477094385,
+    "end_utc_ms": 1791477095235.1936,
+    "file_elapsed_s": 0.850193603515625,
+    "summed_case_duration_s": 0.8504281670000001,
+    "tests": 14,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/map.test.ts",
+    "start_utc_ms": 1791476799124,
+    "end_utc_ms": 1791476799970.615,
+    "file_elapsed_s": 0.846614990234375,
+    "summed_case_duration_s": 0.8462977919999999,
+    "tests": 11,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-builtins-http.test.ts",
+    "start_utc_ms": 1791476800632,
+    "end_utc_ms": 1791476801440.9336,
+    "file_elapsed_s": 0.80893359375,
+    "summed_case_duration_s": 0.8094565429999998,
+    "tests": 7,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/assistants.test.ts",
+    "start_utc_ms": 1791476802123,
+    "end_utc_ms": 1791476802930.5525,
+    "file_elapsed_s": 0.807552490234375,
+    "summed_case_duration_s": 0.807318709,
+    "tests": 7,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/content-owners.test.tsx",
+    "start_utc_ms": 1791477095641,
+    "end_utc_ms": 1791477096382.7288,
+    "file_elapsed_s": 0.741728759765625,
+    "summed_case_duration_s": 0.74086554,
+    "tests": 9,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/operations.test.ts",
+    "start_utc_ms": 1791476804581,
+    "end_utc_ms": 1791476805281.7427,
+    "file_elapsed_s": 0.70074267578125,
+    "summed_case_duration_s": 0.7003386660000002,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/browser/conversation-consent.test.tsx",
+    "start_utc_ms": 1791477286689,
+    "end_utc_ms": 1791477287380.1,
+    "file_elapsed_s": 0.69110009765625,
+    "summed_case_duration_s": 0.6913000000119209,
+    "tests": 4,
+    "failed": 1,
+    "status": "failed"
+  },
+  {
+    "file": "tests/unit/client/conversation-consent.test.tsx",
+    "start_utc_ms": 1791477098492,
+    "end_utc_ms": 1791477099149.1184,
+    "file_elapsed_s": 0.657118408203125,
+    "summed_case_duration_s": 0.657145499,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationship-fields-http.test.ts",
+    "start_utc_ms": 1791476803469,
+    "end_utc_ms": 1791476804124.9639,
+    "file_elapsed_s": 0.6559638671875,
+    "summed_case_duration_s": 0.6549259190000003,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/login-methods.test.ts",
+    "start_utc_ms": 1791476807936,
+    "end_utc_ms": 1791476808533.9656,
+    "file_elapsed_s": 0.597965576171875,
+    "summed_case_duration_s": 0.5972934610000002,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/type-change.test.ts",
+    "start_utc_ms": 1791476805737,
+    "end_utc_ms": 1791476806317.5776,
+    "file_elapsed_s": 0.58057763671875,
+    "summed_case_duration_s": 0.5806223770000002,
+    "tests": 5,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/history.test.ts",
+    "start_utc_ms": 1791476815918,
+    "end_utc_ms": 1791476816494.8772,
+    "file_elapsed_s": 0.576877197265625,
+    "summed_case_duration_s": 0.5768269990000001,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/household-export.test.tsx",
+    "start_utc_ms": 1791477099501,
+    "end_utc_ms": 1791477100071.298,
+    "file_elapsed_s": 0.570298095703125,
+    "summed_case_duration_s": 0.5699855810000001,
+    "tests": 20,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-sections-http.test.ts",
+    "start_utc_ms": 1791476806939,
+    "end_utc_ms": 1791476807479.0002,
+    "file_elapsed_s": 0.540000244140625,
+    "summed_case_duration_s": 0.5397412500000001,
+    "tests": 5,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/administration.test.ts",
+    "start_utc_ms": 1791476811133,
+    "end_utc_ms": 1791476811669.3228,
+    "file_elapsed_s": 0.53632275390625,
+    "summed_case_duration_s": 0.5366839170000001,
+    "tests": 7,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-icons.test.ts",
+    "start_utc_ms": 1791476810156,
+    "end_utc_ms": 1791476810682.5735,
+    "file_elapsed_s": 0.526573486328125,
+    "summed_case_duration_s": 0.526355833,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/browser/object-actions.test.tsx",
+    "start_utc_ms": 1791477288596,
+    "end_utc_ms": 1791477289113.3,
+    "file_elapsed_s": 0.517300048828125,
+    "summed_case_duration_s": 0.5173999999761582,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/manual-map-fixtures.test.ts",
+    "start_utc_ms": 1791476809151,
+    "end_utc_ms": 1791476809658.2637,
+    "file_elapsed_s": 0.507263671875,
+    "summed_case_duration_s": 0.5079712909999999,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-completions.test.tsx",
+    "start_utc_ms": 1791477100505,
+    "end_utc_ms": 1791477101012.0933,
+    "file_elapsed_s": 0.50709326171875,
+    "summed_case_duration_s": 0.5068664160000002,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/object-search.test.tsx",
+    "start_utc_ms": 1791477101431,
+    "end_utc_ms": 1791477101904.6572,
+    "file_elapsed_s": 0.4736572265625,
+    "summed_case_duration_s": 0.47371175,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/import-archive-content.test.ts",
+    "start_utc_ms": 1791476812116,
+    "end_utc_ms": 1791476812583.2415,
+    "file_elapsed_s": 0.467241455078125,
+    "summed_case_duration_s": 0.467004666,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationship-types-http.test.ts",
+    "start_utc_ms": 1791476813097,
+    "end_utc_ms": 1791476813552.6482,
+    "file_elapsed_s": 0.455648193359375,
+    "summed_case_duration_s": 0.4556632909999999,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/content-owners.test.ts",
+    "start_utc_ms": 1791476814002,
+    "end_utc_ms": 1791476814407.8203,
+    "file_elapsed_s": 0.4058203125,
+    "summed_case_duration_s": 0.4049698749999999,
+    "tests": 5,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-section-results.test.ts",
+    "start_utc_ms": 1791476815050,
+    "end_utc_ms": 1791476815443.6677,
+    "file_elapsed_s": 0.393667724609375,
+    "summed_case_duration_s": 0.39410133299999994,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/contracts-http.test.ts",
+    "start_utc_ms": 1791476817204,
+    "end_utc_ms": 1791476817571.591,
+    "file_elapsed_s": 0.367591064453125,
+    "summed_case_duration_s": 0.36744616699999993,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-preference-lifecycle.test.tsx",
+    "start_utc_ms": 1791477103231,
+    "end_utc_ms": 1791477103591.8064,
+    "file_elapsed_s": 0.360806396484375,
+    "summed_case_duration_s": 0.36023979300000003,
+    "tests": 5,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/paged-list.test.tsx",
+    "start_utc_ms": 1791477103954,
+    "end_utc_ms": 1791477104296.001,
+    "file_elapsed_s": 0.3420009765625,
+    "summed_case_duration_s": 0.34200108399999996,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/assistants.test.tsx",
+    "start_utc_ms": 1791477102394,
+    "end_utc_ms": 1791477102735.1802,
+    "file_elapsed_s": 0.34118017578125,
+    "summed_case_duration_s": 0.34116366699999995,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/voice-dispatch-race.test.ts",
+    "start_utc_ms": 1791476818291,
+    "end_utc_ms": 1791476818620.9082,
+    "file_elapsed_s": 0.329908203125,
+    "summed_case_duration_s": 0.3299082079999999,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/household-cost-boundary.test.ts",
+    "start_utc_ms": 1791476820021,
+    "end_utc_ms": 1791476820331.982,
+    "file_elapsed_s": 0.31098193359375,
+    "summed_case_duration_s": 0.310982,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationship-form.test.ts",
+    "start_utc_ms": 1791476819091,
+    "end_utc_ms": 1791476819392.54,
+    "file_elapsed_s": 0.3015400390625,
+    "summed_case_duration_s": 0.3016454170000001,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/personal-view.test.ts",
+    "start_utc_ms": 1791476820815,
+    "end_utc_ms": 1791476821114.3845,
+    "file_elapsed_s": 0.299384521484375,
+    "summed_case_duration_s": 0.298900042,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-preferences.test.tsx",
+    "start_utc_ms": 1791477104733,
+    "end_utc_ms": 1791477105015.4636,
+    "file_elapsed_s": 0.282463623046875,
+    "summed_case_duration_s": 0.2823744600000001,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/main.test.tsx",
+    "start_utc_ms": 1791477106350,
+    "end_utc_ms": 1791477106617.845,
+    "file_elapsed_s": 0.267844970703125,
+    "summed_case_duration_s": 0.267845,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/household-read-mode.test.tsx",
+    "start_utc_ms": 1791477105720,
+    "end_utc_ms": 1791477105984.9941,
+    "file_elapsed_s": 0.264994140625,
+    "summed_case_duration_s": 0.2649941249999999,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/model-mcp-harness.test.ts",
+    "start_utc_ms": 1791476821750,
+    "end_utc_ms": 1791476821991.1995,
+    "file_elapsed_s": 0.241199462890625,
+    "summed_case_duration_s": 0.24064166699999998,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-unread-status.test.tsx",
+    "start_utc_ms": 1791477107033,
+    "end_utc_ms": 1791477107252.3535,
+    "file_elapsed_s": 0.219353515625,
+    "summed_case_duration_s": 0.21920770900000003,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/voice-replies.test.tsx",
+    "start_utc_ms": 1791477107589,
+    "end_utc_ms": 1791477107800.986,
+    "file_elapsed_s": 0.211986083984375,
+    "summed_case_duration_s": 0.21121937499999996,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/households.test.ts",
+    "start_utc_ms": 1791476822465,
+    "end_utc_ms": 1791476822668.6194,
+    "file_elapsed_s": 0.203619384765625,
+    "summed_case_duration_s": 0.20295191700000004,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/draft-status.test.tsx",
+    "start_utc_ms": 1791477108149,
+    "end_utc_ms": 1791477108343.1892,
+    "file_elapsed_s": 0.194189208984375,
+    "summed_case_duration_s": 0.19392154300000003,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-preferences.test.ts",
+    "start_utc_ms": 1791476823180,
+    "end_utc_ms": 1791476823372.047,
+    "file_elapsed_s": 0.192047119140625,
+    "summed_case_duration_s": 0.1923207510000001,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/voice-context-lifecycle.test.tsx",
+    "start_utc_ms": 1791477108676,
+    "end_utc_ms": 1791477108851.7334,
+    "file_elapsed_s": 0.1757333984375,
+    "summed_case_duration_s": 0.17552020899999995,
+    "tests": 7,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/movable-window.test.tsx",
+    "start_utc_ms": 1791477109199,
+    "end_utc_ms": 1791477109371.0632,
+    "file_elapsed_s": 0.172063232421875,
+    "summed_case_duration_s": 0.171541292,
+    "tests": 11,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/content-generation.test.ts",
+    "start_utc_ms": 1791476823806,
+    "end_utc_ms": 1791476823967.4482,
+    "file_elapsed_s": 0.1614482421875,
+    "summed_case_duration_s": 0.16084649999999995,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationship-fields-migration.test.ts",
+    "start_utc_ms": 1791476824411,
+    "end_utc_ms": 1791476824545.8618,
+    "file_elapsed_s": 0.13486181640625,
+    "summed_case_duration_s": 0.13486191699999994,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-sections-migration.test.ts",
+    "start_utc_ms": 1791476826237,
+    "end_utc_ms": 1791476826363.7625,
+    "file_elapsed_s": 0.126762451171875,
+    "summed_case_duration_s": 0.126762375,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/household-export-failures.test.ts",
+    "start_utc_ms": 1791476827423,
+    "end_utc_ms": 1791476827537.8738,
+    "file_elapsed_s": 0.114873779296875,
+    "summed_case_duration_s": 0.114873875,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/relationship-sections-migration.test.ts",
+    "start_utc_ms": 1791476825583,
+    "end_utc_ms": 1791476825696.933,
+    "file_elapsed_s": 0.11393310546875,
+    "summed_case_duration_s": 0.113933084,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-notice.test.tsx",
+    "start_utc_ms": 1791477111685,
+    "end_utc_ms": 1791477111798.5464,
+    "file_elapsed_s": 0.11354638671875,
+    "summed_case_duration_s": 0.11349000000000006,
+    "tests": 18,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-draft-details.test.tsx",
+    "start_utc_ms": 1791477110743,
+    "end_utc_ms": 1791477110855.726,
+    "file_elapsed_s": 0.11272607421875,
+    "summed_case_duration_s": 0.11281616600000001,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-width-handle.test.tsx",
+    "start_utc_ms": 1791477109710,
+    "end_utc_ms": 1791477109822.6716,
+    "file_elapsed_s": 0.112671630859375,
+    "summed_case_duration_s": 0.113143168,
+    "tests": 5,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/object-builtins-migration.test.ts",
+    "start_utc_ms": 1791476825006,
+    "end_utc_ms": 1791476825117.6223,
+    "file_elapsed_s": 0.111622314453125,
+    "summed_case_duration_s": 0.11162241699999993,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/microphone-press.test.tsx",
+    "start_utc_ms": 1791477110226,
+    "end_utc_ms": 1791477110337.2002,
+    "file_elapsed_s": 0.1112001953125,
+    "summed_case_duration_s": 0.11149491700000004,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-width-upgrade.test.ts",
+    "start_utc_ms": 1791476826809,
+    "end_utc_ms": 1791476826917.7903,
+    "file_elapsed_s": 0.108790283203125,
+    "summed_case_duration_s": 0.10879037499999998,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/draft-toolbar-focus.test.tsx",
+    "start_utc_ms": 1791477111255,
+    "end_utc_ms": 1791477111349.4104,
+    "file_elapsed_s": 0.094410400390625,
+    "summed_case_duration_s": 0.094410416,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-transcript.test.tsx",
+    "start_utc_ms": 1791477112129,
+    "end_utc_ms": 1791477112202.103,
+    "file_elapsed_s": 0.07310302734375,
+    "summed_case_duration_s": 0.07231579200000005,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/database.test.ts",
+    "start_utc_ms": 1791476827652,
+    "end_utc_ms": 1791476827709.9402,
+    "file_elapsed_s": 0.057940185546875,
+    "summed_case_duration_s": 0.05734825199999999,
+    "tests": 12,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-request-lifecycle.test.tsx",
+    "start_utc_ms": 1791477112543,
+    "end_utc_ms": 1791477112592.3394,
+    "file_elapsed_s": 0.04933935546875,
+    "summed_case_duration_s": 0.048868000999999994,
+    "tests": 14,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-recovery.test.tsx",
+    "start_utc_ms": 1791477113302,
+    "end_utc_ms": 1791477113341.787,
+    "file_elapsed_s": 0.039787109375,
+    "summed_case_duration_s": 0.039949625000000086,
+    "tests": 9,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-network-lifecycle.test.tsx",
+    "start_utc_ms": 1791477112935,
+    "end_utc_ms": 1791477112966.5298,
+    "file_elapsed_s": 0.03152978515625,
+    "summed_case_duration_s": 0.03192679300000003,
+    "tests": 7,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/use-personal-view.test.tsx",
+    "start_utc_ms": 1791477114357,
+    "end_utc_ms": 1791477114373.9373,
+    "file_elapsed_s": 0.016937255859375,
+    "summed_case_duration_s": 0.016765083999999944,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-manual-save-ownership.test.tsx",
+    "start_utc_ms": 1791477113669,
+    "end_utc_ms": 1791477113685.8938,
+    "file_elapsed_s": 0.016893798828125,
+    "summed_case_duration_s": 0.016893916999999987,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/conversation-save-confirmation.test.tsx",
+    "start_utc_ms": 1791477114016,
+    "end_utc_ms": 1791477114032.1672,
+    "file_elapsed_s": 0.016167236328125,
+    "summed_case_duration_s": 0.016167124999999997,
+    "tests": 1,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/shared/conflict-boundaries.test.ts",
+    "start_utc_ms": 1791476828167,
+    "end_utc_ms": 1791476828182.9917,
+    "file_elapsed_s": 0.01599169921875,
+    "summed_case_duration_s": 0.014978373999999973,
+    "tests": 10,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-summary.test.ts",
+    "start_utc_ms": 1791476827981,
+    "end_utc_ms": 1791476827992.875,
+    "file_elapsed_s": 0.011875,
+    "summed_case_duration_s": 0.012029251000000045,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/config.test.ts",
+    "start_utc_ms": 1791476828607,
+    "end_utc_ms": 1791476828618.0874,
+    "file_elapsed_s": 0.01108740234375,
+    "summed_case_duration_s": 0.011080126999999891,
+    "tests": 31,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/use-save-toast.test.tsx",
+    "start_utc_ms": 1791477114698,
+    "end_utc_ms": 1791477114709.066,
+    "file_elapsed_s": 0.01106591796875,
+    "summed_case_duration_s": 0.010886459000000003,
+    "tests": 2,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/voice-input-worklet.test.tsx",
+    "start_utc_ms": 1791477115647,
+    "end_utc_ms": 1791477115652.2178,
+    "file_elapsed_s": 0.0052177734375,
+    "summed_case_duration_s": 0.004846457999999984,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/text-assistant-results.test.ts",
+    "start_utc_ms": 1791476828791,
+    "end_utc_ms": 1791476828796.1934,
+    "file_elapsed_s": 0.005193359375,
+    "summed_case_duration_s": 0.0052290399999999695,
+    "tests": 26,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/voice-held-input.test.tsx",
+    "start_utc_ms": 1791477115358,
+    "end_utc_ms": 1791477115362.76,
+    "file_elapsed_s": 0.004760009765625,
+    "summed_case_duration_s": 0.004881957999999997,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/shared/conflict-properties.test.ts",
+    "start_utc_ms": 1791476828949,
+    "end_utc_ms": 1791476828953.359,
+    "file_elapsed_s": 0.00435888671875,
+    "summed_case_duration_s": 0.004702500999999984,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/read-field-values.test.tsx",
+    "start_utc_ms": 1791477115065,
+    "end_utc_ms": 1791477115069.233,
+    "file_elapsed_s": 0.00423291015625,
+    "summed_case_duration_s": 0.0040908330000000315,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/spatial-navigation.test.tsx",
+    "start_utc_ms": 1791477115935,
+    "end_utc_ms": 1791477115938.3286,
+    "file_elapsed_s": 0.00332861328125,
+    "summed_case_duration_s": 0.0035782500000000254,
+    "tests": 3,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/shared/type-definition.test.ts",
+    "start_utc_ms": 1791476829081,
+    "end_utc_ms": 1791476829084.255,
+    "file_elapsed_s": 0.0032548828125,
+    "summed_case_duration_s": 0.003395623999999984,
+    "tests": 6,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/shared/household-name.test.ts",
+    "start_utc_ms": 1791476829155,
+    "end_utc_ms": 1791476829157.3965,
+    "file_elapsed_s": 0.002396484375,
+    "summed_case_duration_s": 0.0018730410000000006,
+    "tests": 12,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/client/floating-window-boundaries.test.tsx",
+    "start_utc_ms": 1791477116223,
+    "end_utc_ms": 1791477116225.1914,
+    "file_elapsed_s": 0.00219140625,
+    "summed_case_duration_s": 0.0020396249999999443,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/shared/conversation-command.test.ts",
+    "start_utc_ms": 1791476829225,
+    "end_utc_ms": 1791476829227.1606,
+    "file_elapsed_s": 0.00216064453125,
+    "summed_case_duration_s": 0.0018968350000000242,
+    "tests": 13,
+    "failed": 0,
+    "status": "passed"
+  },
+  {
+    "file": "tests/unit/server/conversation-capacity.test.ts",
+    "start_utc_ms": 1791476829294,
+    "end_utc_ms": 1791476829296.133,
+    "file_elapsed_s": 0.002133056640625,
+    "summed_case_duration_s": 0.0013663749999999978,
+    "tests": 4,
+    "failed": 0,
+    "status": "passed"
+  }
+]
