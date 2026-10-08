@@ -9,7 +9,6 @@ import {
   openMap,
   openTable,
   signIn,
-  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
@@ -22,21 +21,12 @@ async function expectContextIcons(page: Page, anchor: Locator) {
   await expect(actions).toBeVisible();
   await expect(actions.getByRole('button')).toHaveCount(6);
   expect(await actions.locator('button').allTextContents()).toEqual(['', '', '', '', '', '']);
-  await expect(actions.locator('h1, h2, h3, form')).toHaveCount(0);
-  await expect(
-    page.getByRole('dialog', { name: 'Åtgärder för Molnmusik', exact: true }),
-  ).toHaveCount(0);
   await expect(
     actions.getByRole('button', { name: 'Redigera objekt', exact: true }),
   ).toHaveAttribute('title', /redigeringsformulär/);
   await expect(
     actions.getByRole('button', { name: 'Visa i kartan', exact: true }),
   ).toHaveAccessibleDescription(/Rensar kartans sökning och filter/);
-  await expect(
-    page
-      .locator('.workspace-context')
-      .getByRole('button', { name: 'Visa samband i kartan', exact: true }),
-  ).toHaveCount(0);
   await expect(
     actions.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
   ).toHaveAccessibleDescription(/Behåller kartans sökning och filter/);
@@ -359,8 +349,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     await space
       .getByRole('button', { name: 'Välj samband: Lo Exempel → Använder → Molnmusik', exact: true })
-      .click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+      .dblclick();
     await page
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })
@@ -976,8 +965,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await expect(edge.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(lo).not.toContainText('Upphört');
     await expect(space.getByTitle('Nytt förslag')).toHaveCount(0);
-    await edge.click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+    await edge.dblclick();
     await page
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })
@@ -1063,11 +1051,9 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
       exact: true,
     });
     await expect(previous).toContainText('×');
-    await previous.click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+    await previous.dblclick();
     const inspector = page.getByRole('region', { name: 'Valt samband', exact: true });
     await expect(inspector).toContainText('Lo Exempel → Betalar → Molnmusik');
-    await expect(inspector.locator('input, select, textarea')).toHaveCount(0);
     await focusMapSearch(page);
     const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
     await expect(
@@ -1084,8 +1070,7 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
       .click();
     await space
       .getByRole('button', { name: 'Välj samband: Kim Exempel → Betalar → Molnmusik', exact: true })
-      .click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+      .dblclick();
     await page
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })

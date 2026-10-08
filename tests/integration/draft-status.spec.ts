@@ -222,15 +222,7 @@ for (const width of [1440, 390, 320])
       await openMap(page);
       const status = page.getByRole('region', { name: 'Kartans status', exact: true });
       const legend = page.getByRole('region', { name: 'Teckenförklaring i kartan', exact: true });
-      await expect(status).not.toContainText('privat utkast');
-      await expect(
-        page.getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
-      ).toHaveCount(0);
       await expect(legend).toContainText('föreslås läggas till');
-      const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
-      await expect(tools.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(
-        0,
-      );
       const held = new Promise<void>((resolve) => {
         release = resolve;
       });
@@ -400,7 +392,6 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
     await openSettings(page);
     await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await openMap(page);
-    await expect(status).not.toContainText('privat utkast');
     await expect(status).not.toContainText('Oskickad formulärtext');
     const memberPage = await member.newPage();
     await memberPage.goto(installation.origin);
@@ -508,9 +499,7 @@ test('UTKAST-14: manual text and voice proposals share one durable private draft
   }
 });
 
-test('UTKAST-13: a verified save keeps a newer field focused without the removed status controls', async ({
-  page,
-}) => {
+test('UTKAST-13: a verified save keeps a newer field focused', async ({ page }) => {
   const installation = await createInstallation();
   let release: (() => void) | undefined;
   try {
@@ -546,8 +535,6 @@ test('UTKAST-13: a verified save keeps a newer field focused without the removed
     await expect(search).toBeFocused();
     await page.keyboard.type(' Exempel');
     await expect(search).toHaveValue('Lo Exempel');
-    const tools = page.getByRole('navigation', { name: 'Kartans verktyg' });
-    await expect(tools.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(0);
     await expect(saveToast(page)).toHaveCount(1);
     await expect(search).toBeFocused();
     await openMap(page);

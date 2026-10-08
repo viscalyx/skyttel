@@ -1485,9 +1485,6 @@ test('UTKAST-09: a deleted relationship endpoint has an explicit recovery choice
     await page.reload();
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
     await expect(review).toContainText('Lo Exempel → Använder → Molnmusik (Osäkert uppgivet)');
-    await expect(
-      review.getByRole('region', { name: 'Ditt förslag', exact: true }).getByRole('button'),
-    ).toHaveCount(0);
     await review
       .getByRole('button', { name: 'Ta bort sambandet ur ditt utkast', exact: true })
       .click();

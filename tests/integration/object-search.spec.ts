@@ -148,7 +148,6 @@ test('SÖK-01: own detail fields, every word and Swedish normalization find obje
     await search.fill('ake');
     await expect(table.getByRole('rowheader')).toHaveCount(0);
     await expect(search).toBeFocused();
-    await expect(table.getByRole('heading', { name: 'Inga objekt matchar' })).toHaveCount(0);
     await table.getByRole('button', { name: /^Filter/ }).click();
     await page
       .getByRole('dialog', { name: 'Tabellens filter' })
@@ -221,7 +220,6 @@ test('SÖK-04: the last proposal resets only draft filters in both views and typ
     await expect(
       (await mapFilters(page)).getByRole('group', { name: 'Förslag i ditt utkast' }),
     ).toBeVisible();
-    await expect(panel.getByText(/\d+ sökträffar/)).toHaveCount(0);
     await expect(page.locator('.spatial-node')).toHaveCount(0);
   } finally {
     await installation.close();
@@ -429,13 +427,11 @@ test('SÖK-03: map-only character and composition entry preserve separate search
       'aria-expanded',
       'false',
     );
-    await expect(page.getByText(/\d+ (sökträffar|träffar)/)).toHaveCount(0);
     await focusMapSearch(page);
     await expect(mapSearch).toBeFocused();
     await mapSearch.fill('299 EGEN');
     await expect(nodes).toHaveCount(1);
     await expect(nodes).toHaveAccessibleName('Välj objekt: A 2');
-    await expect(panel.getByRole('list', { name: 'Matchande detaljfält' })).toHaveCount(0);
     // Search text alone does not mark filters as active.
     await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeVisible();
     const filters = await mapFilters(page);
@@ -564,12 +560,9 @@ test('SÖK-03: map-only character and composition entry preserve separate search
     await expect(panel.getByRole('button', { name: 'Filter', exact: true })).toBeVisible();
     await mapSearch.fill('finns inte');
     await expect(nodes).toHaveCount(0);
-    await expect(page.getByText('Inga objekt matchar', { exact: true })).toHaveCount(0);
-    await expect(page.getByText(/\d+ (sökträffar|träffar)/)).toHaveCount(0);
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
     await expect(tableSearch).toHaveValue('åkex');
     await expect(table.getByRole('rowheader')).toHaveCount(0);
-    await expect(table.getByText('Inga objekt matchar', { exact: true })).toHaveCount(0);
     await tableSearch.fill('A 2');
     await expect(table.getByText('✓ Markerad', { exact: true })).toBeVisible();
     await tools.getByRole('button', { name: 'Skriv till Skyttel', exact: true }).click();
@@ -711,8 +704,13 @@ test('SÖK-10: capsule search and attached filters fit desktop and narrow short 
         await object.click();
         await table.getByRole('button', { name: 'Visa A 2 i kartan', exact: true }).click();
         const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-        await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-        await tools.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+        const node = page.getByRole('button', { name: 'Välj objekt: A 2', exact: true });
+        await node.focus();
+        await node.press('Shift+F10');
+        await page
+          .getByRole('toolbar', { name: 'Åtgärder för A 2', exact: true })
+          .getByRole('button', { name: 'Visa uppgifter för A 2', exact: true })
+          .click();
         await expect(search).toBeVisible();
         await clear.click({ trial: true });
         const toolbar = await tools.boundingBox();

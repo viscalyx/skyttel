@@ -151,6 +151,9 @@
   height: 24px;
   flex: none;
 }
+.workspace-tools button[aria-pressed="true"]:is([aria-label="Karta"], [aria-label="Tabell"]) svg {
+  opacity: 0.6;
+}
 .workspace-context span {
   margin-left: 12px;
   color: var(--space-muted);

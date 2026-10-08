@@ -65,7 +65,7 @@ overview retains its return view”.
 **Steg:**
 
 1. Kontrollera att **Fokusera markering** är inaktiv med tomt urval.
-2. Markera Lo och välj **Visa detaljer**. Läs Los fasta uppgifter.
+2. Dubbelklicka Lo. Läs Los fasta uppgifter.
 3. Välj **Fokusera markering**. Kontrollera Lo och Kim i det närmare
    utsnittet, med marginal till verktygen och oförändrad kamerariktning.
 4. Välj **Visa hela kartan**. Panorera, fokusera markeringen igen och
@@ -170,14 +170,13 @@ eller uppgift om faktiskt utförd fysisk provning.
 3. Öppna **Visningsval**, slå på och av **Alla etiketter** och stäng valet.
 4. Öppna **Navigera**. Läs söksammanfattningen och hushållets återkoppling
    bredvid navigeringen. Fokusera sammanhangsytan med tangentbord; rulla
-   vid behov hela arbetsytan för att läsa den. Kontrollera att den saknar
-   knappen **Visa samband i kartan**.
+   vid behov hela arbetsytan för att läsa den.
    Nå var och en av de sex **Flytta Lo Exempel**-knapparna med tangentbord och
    aktivera dem: vänster, höger, uppåt, nedåt, framåt och bakåt. Kontrollera
    fokus och att enbart din personliga placering ändras. Rotera och stäng
    navigeringen. Upprepa detta steg vid 640 × 500 CSS-pixlar.
 5. Välj **Visa verktygens namn** och kontrollera att **Skriv till Skyttel**
-   samt **Visa detaljer** går att nå.
+   går att nå.
 6. Aktivera kamerafokus med tangentbord från det utökade verktygsfältet.
    Upprepa med översikt och återgång efter att verktygsnamnen öppnats igen.
 7. Förbered det kontrollerade svaret och öppna Navigera. Flytta Lo med

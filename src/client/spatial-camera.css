@@ -50,8 +50,7 @@
   .workspace-tools:has(.workspace-camera-tools):not(.expanded) {
     flex-wrap: nowrap;
   }
-  .workspace-tools:not(.expanded)
-    button:is([aria-label="Skriv till Skyttel"], [aria-label="Visa detaljer"]) {
+  .workspace-tools:not(.expanded) button[aria-label="Skriv till Skyttel"] {
     display: none;
   }
   .workspace-shell:has(.workspace-camera-tools) .workspace-context {

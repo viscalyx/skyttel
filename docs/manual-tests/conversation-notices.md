@@ -71,7 +71,6 @@ notis utan att öppna textvyn”.
 - Fokus stannar på mikrofonknappen när den visar notisen. Stängning
   återför fokus till **Prata med Skyttel** och läser inte upp ett
   återkomstbesked. När textvyn stängs återgår fokus till textknappen.
-- **Aktuell status** och **Visa samtals- och utkastdetaljer** finns inte.
   Teckenförklaringens gröna plus finns kvar. Kartan visar inget privat
   förslagsantal.
 

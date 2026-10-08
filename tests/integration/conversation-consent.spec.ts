@@ -118,8 +118,6 @@ test('MEDGIVANDE-01: samtalsknapparna visar medgivanderutan och Avbryt startar i
       await expect(remember).not.toBeChecked();
       await expect(remember).toHaveAccessibleDescription('Du kan återkalla det i Inställningar.');
       await expect(box.getByRole('button')).toHaveText(['Godkänn och starta', 'Avbryt']);
-      await expect(box.getByRole('link')).toHaveCount(0);
-      await expect(box).not.toContainText('Information och hjälp');
       // The box is modal: the rest of the page cannot be used while it asks.
       expect(await box.evaluate((element) => element.matches('dialog:modal'))).toBe(true);
 

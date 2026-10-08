@@ -106,7 +106,7 @@ persistent save without AI”.
   kvar medan kvittot saknas.
 - Bekräftat sparande tömmer utkastet, stänger modalen och återger fokus till
   utkastets rubrik när sparikonen är inaktiv.
-- **Utkastet är sparat** visas i tre sekunder utan **Visa ändringarna**.
+- **Utkastet är sparat** visas i tre sekunder.
   En enda artig statusregion behåller beskedet när den visuella toasten försvinner.
   Faktisk uppläsning kontrolleras separat med mänsklig skärmläsarprovning.
 - Exakt ett genomfört sparförsök och ett motsvarande historikkvitto finns.
@@ -590,8 +590,8 @@ consent”.
 **Förväntat resultat:**
 
 - Utkastet öppnas utan samtal eller medgivandedialog trots att AI saknas.
-- Alla fyra förslagsslag kan läsas fullständigt utan redigeringsfält eller
-  konfliktval. Förslagen och den sparade kartan ändras inte av läsning.
+- Alla fyra förslagsslag kan läsas fullständigt.
+  Förslagen och den sparade kartan ändras inte av läsning.
 - Läsdialogen börjar på rubriken. Tab stannar i dialogen; bakomliggande
   innehåll är inaktivt. Krysset är dess enda synliga stängkontroll.
   Escape och krysset återför fokus till radens öppningsknapp.
@@ -710,7 +710,7 @@ shared map at 1440px” och motsvarande scenario vid 390px.
 
 - Rubriken får fokus vid öppning. Tangentbordsfokus stannar i dialogen.
   Bakgrunden är inaktiv. Valbara värden har ramar och valda värden har
-  starkare ramar. Inga valcirklar eller upprepade uppmaningar visas.
+  starkare ramar.
 - Alla skiljande egenskaper kräver aktiva val. Identiska värden behöver
   inget val och visas som vanlig text. Resultatet visar Lo Lind och Robins
   anteckning tillsammans, med uppgift om vilken sida valda värden kommer från.
@@ -1391,7 +1391,7 @@ recovery choice”.
 **Förväntat resultat:**
 
 - Konflikten säger **Ett objekt som sambandet pekar på saknas.**
-  Förslaget går att läsa utan valbara egenskaper.
+  Förslaget går att läsa.
 - Efter omstart visas fortfarande **Lo Exempel → Använder → Molnmusik**
   med **Osäkert uppgivet**, även om målobjektet saknas i kartan.
 - Valet tar bort förslaget och visar **Sambandet har tagits bort ur ditt
@@ -1510,8 +1510,7 @@ through an unknown save at 320px and verify the same receipt”.
    och visa Karta.
 2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
    Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
-3. Kontrollera att **Aktuell status** inte längre finns i verktygen.
-   Kartans status och teckenförklaring finns under hushållets namn.
+3. Läs kartans status och teckenförklaring under hushållets namn.
 4. Blockera sparadressen. Öppna **Utkast** och välj **Spara hela utkastet**.
    Stäng **Spara utkastet** med Escape och stäng textvyn.
    Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
@@ -1524,7 +1523,6 @@ through an unknown save at 320px and verify the same receipt”.
   Ett obekräftat försök
   visas aldrig som säkert lyckat eller säkert misslyckat.
 - Återkopplingens knappar kan användas utan att verktygen täcker dem.
-  Ingen separat statuspanel behöver öppnas eller stängas.
 - Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns
   en gång i kartan. Förslagsraden försvinner efter uppdateringen, men
   markeringsringen och etikettkopplingarnas rad kan finnas kvar.
@@ -1548,8 +1546,7 @@ nätverksläge så att det går att välja ett annat fält under sparandet.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-13: a verified save keeps a newer field focused without the
-removed status controls”.
+testfallet “UTKAST-13: a verified save keeps a newer field focused”.
 
 **Steg:**
 
@@ -1558,8 +1555,7 @@ removed status controls”.
    textvyn. I Tabell, skriv **Lo** i **Sök objekt i tabellen**.
 3. Invänta sparkvittot och fortsätt skriva ett blanksteg och **Exempel**
    utan att klicka igen.
-4. Läs Utkastet är sparat under hushållets namn. Kontrollera att
-   **Aktuell status** inte längre finns i verktygen.
+4. Läs Utkastet är sparat under hushållets namn.
 5. Fortsätt skriva i sökfältet utan att klicka på det igen.
 
 **Förväntat resultat:**
@@ -1651,9 +1647,7 @@ fresh explicit save”.
 1. Lägg **Lo Exempel** i utkastet via formuläret. Välj **Skriv till Skyttel**
    och be Skyttel förbereda uppgiften och fråga vilket kort som avses.
    Skicka och godkänn samtalsmedgivandet när det efterfrågas.
-2. Läs frågan i samtalstexten och stäng textvyn. Kontrollera att
-   kartan inte erbjuder sparande. Ingen separat **Nödvändigt
-   svar**-ruta eller **Svara i samtalet**-knapp ska finnas.
+2. Läs frågan i samtalstexten och stäng textvyn.
 3. Öppna **Utkast**. Kontrollera att **Spara hela utkastet** är
    inaktiverad. Kartan har ännu inga sparade objekt eller sparförsök.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
@@ -2056,7 +2050,7 @@ usable through both opening orders at 320px”.
 
 1. Markera Lo Exempel i kartan. Öppna **Navigera** från verktygen.
    Expandera verktygens namn om det behövs. Teckenförklaringen är synlig
-   under hushållets namn och **Aktuell status** finns inte i verktygen.
+   under hushållets namn.
 2. Använd tangentbord och pekare för att flytta Lo i alla sex riktningar
    i Navigation.
    Rulla vid behov till de nedre kontrollerna.
@@ -2418,7 +2412,7 @@ and preserves the saved removal”.
 1. Öppna **1 konflikt i ditt utkast**. Läs förklaringen om den genomförda
    borttagningen och varningen att förslaget inte kan återställa objektet.
 2. Läs **Borttaget** och **✓ Förvalt** på den sparade sidan och hela ditt
-   förslag på den andra. Kontrollera att förslaget saknar valbara egenskaper.
+   förslag på den andra.
    Under **Efter bekräftelsen** anges **Objekt: Borttaget**.
 3. Stäng med Escape och kör `result`. Öppna konflikten igen.
 4. Välj **Acceptera borttagningen och kasta ditt förslag**. Läs statusen och
@@ -2493,7 +2487,7 @@ discards only the proposed duplicate”.
 - Förklaringen lyder **Ett sparat samband har redan samma typ, riktning
   och objekt.** Varningen lyder **Sambandet finns redan. Ta bort det
   föreslagna sambandet ur ditt utkast.**
-- Jämförelsen är i läsläge, utan egenskapsval eller redigering. Utfallet
+- Jämförelsen visar sambandet i läsläge. Utfallet
   **Sambandet i ditt utkast: Tas bort ur ditt utkast** är markerat
   **✓ Förvalt**. Det redan sparade sambandet och dess uppgifter behålls.
   Efter bekräftelsen visas **Borttaget ur ditt utkast**.
@@ -2526,7 +2520,6 @@ removes only the unusable relationship proposal”.
 - Förklaringen lyder **Ett objekt som sambandet pekar på saknas.**
   Varningen lyder **Sambandet kan inte läggas till eftersom ett objekt
   som det pekar på saknas.**
-- Ingen objektväljare, redigering eller egenskapslösning erbjuds i dialogen.
   Utfallet **Sambandet i ditt utkast: Tas bort ur ditt utkast** är förvalt
   och hela förslaget går att läsa. Ett nytt samband läggs till den vanliga
   vägen. Efter bekräftelsen visas **Borttaget ur ditt utkast**.
@@ -2654,7 +2647,7 @@ discards only the explicitly confirmed object”.
 
 1. Öppna konflikten och läs varningen, hänvisningen till Inställningar och
    hela objektförslaget med **Våren 2021**.
-2. Kontrollera att inga egenskapsval eller typväljare finns. Stäng och kör `result`.
+2. Stäng och kör `result`. Läs det bevarade förslaget.
 3. Öppna igen och välj **Ta bort objektet ur ditt utkast**. Kör `result`.
 
 **Förväntat resultat:**
@@ -2697,8 +2690,7 @@ ordinary object form before fresh conflict assessment”.
 
 **Förväntat resultat:**
 
-- Ingen egenskapslösning eller redigering erbjuds i konfliktfönstret.
-  Stängning bevarar utkastet.
+- Stängning bevarar utkastet.
 - Instruktionen lyder **Stäng konfliktfönstret och rätta uppgiften i den vanliga
   objektdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit.
   Ditt förslag ligger kvar under tiden.**
@@ -2743,8 +2735,7 @@ definition and explicit ordinary correction with readable historical field loss�
 
 **Förväntat resultat:**
 
-- Den borttagna typen och **Installationsår: Våren 2021** är läsbara;
-  konfliktfönstret erbjuder inga egenskapsval eller automatisk rättning.
+- Den borttagna typen och **Installationsår: Våren 2021** är läsbara.
 - En ny typ med samma namn har ett annat ID. Konflikten består tills
   sambandet uttryckligen använder den faktiska nya definitionen.
 - Typbytesbekräftelsen visar **Installationsår**, inte `storage-year`.

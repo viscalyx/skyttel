@@ -46,14 +46,13 @@ closed”.
 
 **Steg:**
 
-1. Öppna hushållet. Kontrollera att den tomma kartan öppnas utan startdialoger.
+1. Öppna hushållet. Kontrollera att den tomma kartan och verktygen visas.
 2. Välj **Visa verktygens namn**, **Tabell** och **Nytt objekt**.
    Ange namnet **Cykeln**.
 3. Välj krysset i objektdialogen. Kontrollera förvalt **Fortsätt redigera**
    och tryck Escape. Namnet ska finnas kvar.
 4. Välj **Lägg i utkastet och stäng**. Välj **Karta**, sedan **Tabell**.
-   Kontrollera Cykeln och att ingen ingång för att återuppta ett stängt
-   objektformulär finns. Öppna **Skriv till Skyttel**, **Visa utkastet** och
+   Kontrollera Cykeln. Öppna **Skriv till Skyttel**, **Visa utkastet** och
    välj **Spara hela utkastet**.
 5. Läs **Utkastet är sparat** och ladda om sidan.
 
@@ -63,7 +62,6 @@ closed”.
 - Avbruten förlust behåller texten. Bekräftat tillägg bevarar hela förslaget
   genom kart- och tabellbyte utan automatiskt gemensamt sparande.
 - Cykeln finns i kartan efter uttryckligt sparande och omladdning.
-  Ingen startdialog visas på kartan med det sparade objektet.
 
 ### YTA-02: temaval och enhetens inställning
 
@@ -301,7 +299,7 @@ action”.
 
 - Verktygen och laddningsbeskedet finns medan kartan hämtas.
 - Felet erbjuder en nästa handling. Efter nytt försök visas den tomma
-  kartan utan startdialoger.
+  kartan.
 
 Förlorad tillgång och avslutad mikrofon verifieras i
 [bevarat hushållsarbete](household-work.md#arbete-03-återkallad-tillgång-avvecklar-dolt-arbete).

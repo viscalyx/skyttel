@@ -69,7 +69,10 @@ För att starta ett nytt samtal väljer du uttryckligen **Nytt samtal**; om
 medgivande behövs väljer du därefter **Godkänn och starta**.
 
 På telefon öppnar **Visa verktygens namn** de kompletterande verktygen.
-**Visa detaljer** läser markerade objekt i flyttbara uppgiftsfönster.
+Dubbelklicka ett objekt eller högerklicka och välj **Visa uppgifter** för
+att läsa det i ett flyttbart uppgiftsfönster. Med tangentbord öppnar
+Skift+F10 objektets åtgärder. Dubbelklicka ett samband eller tryck Alt+Enter
+på dess etikett för att läsa sambandets uppgifter.
 Flera objekts fönster kan vara öppna samtidigt med egna placeringar.
 Stäng den med **Stäng uppgifterna** före kartgester om den tar plats.
 Stäng text med **Stäng textvyn** när ett fall behöver själva kartan.
@@ -360,8 +363,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   tillägg till utkastet på dator och mobil.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
-  högerklickets gemensamma ikoner. Oberoende fönsterflytt med pekare och
-  tangentbord bevarar kameran och den personliga vyn. Vanliga formulär,
+  högerklickets sex ikoner och uppgiftsfönstrens fem åtgärdsikoner.
+  Oberoende fönsterflytt med pekare och tangentbord bevarar kameran och
+  den personliga vyn. Vanliga formulär,
   återfokus och oförändrat utkast provas även i smala och korta fönster,
   liksom återgång från Rapporter till text och utkast.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta

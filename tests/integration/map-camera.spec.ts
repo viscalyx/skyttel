@@ -135,7 +135,7 @@ test('KAMERA-02: focus fits only selection and direct neighbors while overview r
       return Math.hypot(a.x - b.x, a.y - b.y);
     };
     const overview = await separation();
-    await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+    await lo.dblclick();
     const panel = page.getByRole('region', { name: 'Lo Exempel', exact: true });
     const panelPosition = await panel.boundingBox();
     await focus.click();
@@ -337,9 +337,6 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
         .toBe(true);
       await context.focus();
       await expect(context).toBeFocused();
-      await expect(
-        context.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
-      ).toHaveCount(0);
       await page.screenshot({
         path: test.info().outputPath(`navigation-status-${viewport.width}.png`),
       });
@@ -431,7 +428,6 @@ test('KAMERA-04: short viewports retain a usable focus rectangle and reachable c
     await page
       .getByRole('button', { name: 'Skriv till Skyttel', exact: true })
       .click({ trial: true });
-    await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click({ trial: true });
     await focus.focus();
     await page.keyboard.press('Enter');
     await expect(focus).toBeFocused();

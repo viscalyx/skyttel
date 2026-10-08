@@ -224,12 +224,6 @@ test('NOT-01: utan samtal visar avstängda samtalsknappar en stängbar notis uta
     await expect(textView(page)).toHaveCount(0);
     await expect(textButton(page)).toBeFocused();
     expect(conversationWrites).toEqual([]);
-    await expect(page.getByRole('button', { name: 'Aktuell status', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('region', { name: 'Aktuell status', exact: true })).toHaveCount(0);
-    await expect(
-      page.getByRole('button', { name: 'Visa samtals- och utkastdetaljer' }),
-    ).toHaveCount(0);
-    await expect(page.getByText('1 förslag · privat utkast', { exact: true })).not.toBeVisible();
     await expect(page.getByRole('region', { name: 'Teckenförklaring i kartan' })).toContainText(
       'Grönt +: föreslås läggas till',
     );

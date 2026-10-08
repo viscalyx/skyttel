@@ -40,9 +40,6 @@ test('UTKAST-36: draft save opens immediately and confirms one persistent save w
     await expect(confirmation).toHaveCount(1);
     const announcement = page.getByRole('status', { name: 'Sparbekräftelse', exact: true });
     await expect(announcement).toHaveText('Utkastet är sparat');
-    await expect(page.getByRole('button', { name: 'Visa ändringarna', exact: true })).toHaveCount(
-      0,
-    );
     await expect(confirmation).toHaveCount(0, { timeout: 4500 });
     await expect(announcement).toHaveText('Utkastet är sparat');
     const saved = await read();

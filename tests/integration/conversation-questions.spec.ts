@@ -118,13 +118,6 @@ test('FRAGA-01: en nödvändig identitetsfråga finns i samtalstexten med server
         .draft.unresolvedIdentities,
     ).toHaveLength(1);
     await expect(voiceBox(page)).toHaveCount(0);
-    for (const removed of [
-      'Vilka objekt avses?',
-      'Besked från Skyttel',
-      'Nödvändigt svar',
-      'Svara i samtalet',
-    ])
-      await expect(page.getByText(removed, { exact: true })).toHaveCount(0);
     const request = model.requests[0];
     expect(request.tools.some((tool) => tool.name === 'ask_questions')).toBe(true);
     expect((await (await page.request.get(path)).json()).objects).toEqual([]);

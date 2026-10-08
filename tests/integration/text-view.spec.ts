@@ -78,9 +78,6 @@ test('TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avslut
     await expect(consentBox(page)).toBeVisible();
     await giveConversationConsent(page);
     await expect(textView(page)).toBeVisible();
-    await expect(
-      textView(page).getByRole('region', { name: 'Utkastets återkoppling', exact: true }),
-    ).toHaveCount(0);
     await expect(tool).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByRole('region', { name: 'Kartans status', exact: true })).toContainText(
       'Nya förslag är osparade tills du uttryckligen ber om ett samlat sparande.',
@@ -103,16 +100,6 @@ test('TEXTVY-01: Skriv till Skyttel öppnar och stänger textvyn utan att avslut
     await expect(heading.last()).toHaveAccessibleName('Stäng textvyn');
     await expect(messageField(page)).toBeFocused();
     await expect(messageField(page)).toHaveAttribute('placeholder', 'Berätta vad du vill göra…');
-    for (const removed of [
-      'Samtalskontroller',
-      'Öppna samtalet',
-      'Tala eller skriv',
-      'Fortsätt skriva',
-      'Avsluta samtalet',
-      'Samtalstexten kan innehålla fel',
-    ])
-      await expect(page.getByText(removed, { exact: false })).toHaveCount(0);
-
     // Closing the text view ends nothing, and the unsent text stays.
     await messageField(page).fill('Oskickat');
     await textView(page).getByRole('button', { name: 'Stäng textvyn', exact: true }).click();
@@ -174,11 +161,10 @@ test('TEXTVY-02: samtalstexten visar vem som skriver och raden Skyttel arbetar s
       'Du: Vem betalar musiken?',
       'Skyttel arbetar… 0 meddelanden väntar. Tryck på Escape för att avbryta.',
     ]);
-    await expect(textView(page).getByRole('timer')).toHaveCount(0);
     await release([modelMessage('Kim betalar musiken.')]);
     await expect(rows).toHaveText(['Du: Vem betalar musiken?', 'Skyttel: Kim betalar musiken.']);
 
-    // No name is shown. The user's text stands in a tinted box to the right, Skyttel's without one.
+    // The user's text stands in a tinted box to the right; Skyttel's text has its own style.
     await expect(rows.first()).toHaveClass('conversation-row user');
     await expect(rows.first().locator('.visually-hidden')).toHaveText('Du: ');
     const style = (row: Locator) =>

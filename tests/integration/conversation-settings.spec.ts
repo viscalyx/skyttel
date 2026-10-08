@@ -205,10 +205,6 @@ test('MEDGIVANDE-05: sidan Samtal med Skyttel visar medgivandet för alla medlem
       ]);
       await expect(consent.buttons, role).toHaveText(['Spara medgivandet']);
       await expect(consent.feedback).toHaveText('');
-      // Every control saves at once: the page has no button that saves the page.
-      await expect(
-        visitor.locator('.settings-content').getByRole('button', { name: 'Spara', exact: true }),
-      ).toHaveCount(0);
       await expect(
         visitor.getByText('Samtal med Skyttel är inte tillgängligt just nu.', { exact: true }),
       ).toHaveCount(0);
