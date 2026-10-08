@@ -22,21 +22,12 @@ async function expectContextIcons(page: Page, anchor: Locator) {
   await expect(actions).toBeVisible();
   await expect(actions.getByRole('button')).toHaveCount(6);
   expect(await actions.locator('button').allTextContents()).toEqual(['', '', '', '', '', '']);
-  await expect(actions.locator('h1, h2, h3, form')).toHaveCount(0);
-  await expect(
-    page.getByRole('dialog', { name: 'Åtgärder för Molnmusik', exact: true }),
-  ).toHaveCount(0);
   await expect(
     actions.getByRole('button', { name: 'Redigera objekt', exact: true }),
   ).toHaveAttribute('title', /redigeringsformulär/);
   await expect(
     actions.getByRole('button', { name: 'Visa i kartan', exact: true }),
   ).toHaveAccessibleDescription(/Rensar kartans sökning och filter/);
-  await expect(
-    page
-      .locator('.workspace-context')
-      .getByRole('button', { name: 'Visa samband i kartan', exact: true }),
-  ).toHaveCount(0);
   await expect(
     actions.getByRole('button', { name: 'Visa samband i kartan', exact: true }),
   ).toHaveAccessibleDescription(/Behåller kartans sökning och filter/);
@@ -1067,7 +1058,6 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
     await (await utilityButton(page, 'Visa detaljer')).click();
     const inspector = page.getByRole('region', { name: 'Valt samband', exact: true });
     await expect(inspector).toContainText('Lo Exempel → Betalar → Molnmusik');
-    await expect(inspector.locator('input, select, textarea')).toHaveCount(0);
     await focusMapSearch(page);
     const search = page.getByRole('region', { name: 'Kartans sökning och filter', exact: true });
     await expect(

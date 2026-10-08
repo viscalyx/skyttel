@@ -125,9 +125,8 @@ from saved content”.
    sambandsetiketter utan att välja Alla etiketter.
    Öppna **Skriv till Skyttel**, visa utkastet och spara med sparikonen.
    Stäng textvyn efter sparbekräftelsen.
-2. Markera Molnmusik och kontrollera att legenden saknar knappen
-   **Visa samband i kartan**. Högerklicka Molnmusik. Kontrollera sex ikoner
-   utan rubrik eller dialog: penna, uppgifter, samband, riktmärke, direkta
+2. Markera Molnmusik och läs legenden. Högerklicka Molnmusik. Kontrollera sex
+   ikoner: penna, uppgifter, samband, riktmärke, direkta
    samband i kartan och röd papperskorg.
    Läs deras tooltips. Kontrollera fokus på pennan och flytta med högerpil
    förbi uppgifter och samband till **Visa i kartan** och sedan
@@ -148,11 +147,11 @@ from saved content”.
 
 - Nytt innehåll har grönt plus, ändringar bärnstensfärgad penna och
   borttagningar rött kryss. Objektens namn visas bredvid de runda symbolerna.
-- Åtgärderna visas som ikoner vid objektet eller namnet utan dialogrubrik.
+- Åtgärderna visas som ikoner vid objektet eller namnet.
   Pennan öppnar redigering. Nätverksikonen visar direkta samband och behåller
   sökning och filter. Escape återför fokus, och klick utanför stänger raden.
   Riktmärket **Visa i kartan** rensar sökning och filter. Ikonerna motsvarar
-  samma åtgärder i hushållets lista, och legenden har ingen åtgärdsknapp.
+  samma åtgärder i hushållets lista.
 - Samband som föreslås tas bort visas med en böjd, streckad linje.
 - Borttagningen omfattar det anslutna sambandet direkt i utkastet.
   Sparad karta och det andra objektet ändras inte.
@@ -177,7 +176,7 @@ unsent editing”.
 **Steg:**
 
 1. Kontrollera att rymdkartan är startläge. Håll
-   på Molnmusik tills de sex ikonerna visas, utan dialogrubrik.
+   på Molnmusik tills de sex ikonerna visas.
    Släpp och kontrollera att ikonerna finns kvar och inget formulär öppnas.
    Välj pennan, **Redigera objekt**.
 2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten och kontrollera
@@ -353,7 +352,7 @@ and opens the saved route read-only”.
 2. Kontrollera Lo Exempel och Kim Exempel med båda betalningssambanden.
 3. Välj den tidigare etiketten Lo Exempel → Betalar → Molnmusik med ×.
 4. Välj **Visa detaljer** och läs **Valt samband**. Kontrollera att
-   sparade tidigare värden saknar redigeringsfält. Klicka i kartans sökfält,
+   sparade tidigare värden går att läsa. Klicka i kartans sökfält,
    kontrollera att **Tillbaka till sökträffarna** fortfarande finns och
    tryck Escape i sökfältet. Stäng uppgifterna. Högerklicka Kim Exempel, välj
    **Visa samband i kartan** och det föreslagna betalningssambandet.
@@ -366,7 +365,7 @@ and opens the saved route read-only”.
   grönt plus och heldragen linje. Punktade etikettkopplingar
   går att skilja från riktade samband.
 - Den böjda tidigare linjen och etiketten leder till läsbara tidigare
-  värden utan redigeringsfält. Utforskningen av Molnmusiks samband behålls vid
+  värden. Utforskningen av Molnmusiks samband behålls vid
 valet.
 - Det föreslagna sambandet visar Kim som betalare. Redigera valt samband
   öppnar formuläret med Kim som Från objekt. Granskningen ändrar inga

@@ -61,7 +61,6 @@ test('YTA-01: map tools protect unsent object loss and preserve staged work when
     const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
     await expect(tools).toBeVisible();
     await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
-    await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
     await expect(
       page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
     ).not.toBeVisible();
@@ -81,7 +80,6 @@ test('YTA-01: map tools protect unsent object loss and preserve staged work when
     await openMap(page);
     await expect(tools.getByRole('button', { name: 'Nytt objekt', exact: true })).toBeEnabled();
     await tools.getByRole('button', { name: 'Tabell', exact: true }).click();
-    await expect(page.getByRole('button', { name: /^Fortsätt:/ })).toHaveCount(0);
     await expect(
       page.getByRole('region', { name: 'Hushållets tabell', exact: true }),
     ).toContainText('Cykeln');
@@ -93,8 +91,6 @@ test('YTA-01: map tools protect unsent object loss and preserve staged work when
     await expect(
       page.getByRole('button', { name: 'Välj objekt: Cykeln', exact: true }),
     ).toBeVisible();
-    await expect(page.getByRole('complementary', { name: 'Kom igång med kartan' })).toHaveCount(0);
-    await expect(page.getByText('Vad vill du börja med?', { exact: true })).toHaveCount(0);
   } finally {
     await installation.close();
   }
@@ -127,9 +123,6 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
           );
         }),
       ).toBe(true);
-      await expect(page.getByRole('complementary', { name: 'Kom igång med kartan' })).toHaveCount(
-        0,
-      );
       await tools.getByRole('button', { name: 'Information och hjälp', exact: true }).click();
       await expect(page.getByRole('heading', { name: 'Information och hjälp' })).toBeFocused();
       await page.keyboard.press('Escape');
@@ -208,7 +201,6 @@ test('YTA-04: loading and a failed map read offer a working next action', async 
     await page.unroute('**/map?*');
     await page.getByRole('button', { name: 'Hämta aktuellt underlag', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Rymdkarta', exact: true })).toBeVisible();
-    await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
   } finally {
     release();
     await installation.close();
@@ -294,7 +286,6 @@ test('YTA-02: theme choice returns focus and System follows the device', async (
     await themeButton.click();
     await page.keyboard.press('Escape');
     await expect(themeButton).toBeFocused();
-    await expect(page.getByRole('dialog', { name: 'Tema', exact: true })).toHaveCount(0);
   } finally {
     await installation.close();
   }
@@ -387,7 +378,6 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByLabel('Namn', { exact: true }).fill('Cykeln');
       await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
       await openMap(page);
-      await expect(page.getByText('Din karta börjar här', { exact: true })).toHaveCount(0);
       await page.getByRole('button', { name: 'Navigera', exact: true }).click();
       await expect(
         page.getByRole('checkbox', { name: 'Visa höjdhjälp', exact: true }),

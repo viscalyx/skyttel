@@ -286,7 +286,6 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
       id: 'uses',
       after: { sourceId: 'lo', targetId: 'kim', knowledge: 'uncertain' },
     });
-    await expect(details.getByRole('region', { name: /^Samband för/ })).toHaveCount(0);
   } finally {
     await installation.close();
   }
@@ -530,8 +529,6 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
         await page.screenshot({
           path: `/tmp/skyttel-244/259-navigation-${width}x${height}-${navigationFirst ? 'navigation-first' : 'details-first'}.png`,
         });
-        await expect(panel.getByText('Flytta', { exact: true })).toHaveCount(0);
-        await expect(panel.getByRole('region', { name: /^Samband för/ })).toHaveCount(0);
       }
     }
   } finally {

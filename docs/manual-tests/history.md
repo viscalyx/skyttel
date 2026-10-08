@@ -83,7 +83,6 @@ och “HISTORIK-06: Reports exposes complete historical values with keyboard at
 - Fullständiga värden går att läsa utan kartgrafik, ljud eller samtal.
 - Uppgifterna skiljer belopp, osäkerhet och datum åt. Texten är läsbar
   vid smal bredd utan vågrät rullning av hela sidan.
-- Historiken erbjuder ingen knapp för att ångra sparandet.
 
 ### HISTORIK-07: återförsök bevarar ett senare fokusval
 

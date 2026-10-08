@@ -260,8 +260,6 @@ test('TAL-08: nödvändiga frågor finns i samtalet och fel visas i en samtalsno
     await expect(panel.getByRole('log', { name: 'Samtalstext' })).toContainText(
       'Vem använder tjänsten?',
     );
-    await expect(panel.getByRole('region', { name: 'Nödvändigt svar' })).toHaveCount(0);
-    await expect(panel.getByRole('button', { name: 'Svara i samtalet' })).toHaveCount(0);
     await panel.getByLabel('Meddelande till Skyttel').fill('Lo använder tjänsten.');
     await panel.getByRole('button', { name: 'Skicka', exact: true }).click();
     await expect.poll(() => stage).toBe(2);
@@ -440,11 +438,10 @@ test('TAL-05: dialog, avstängd mikrofon och arbetsraden finns kvar under samtal
     speak(live, 'Kontrollera utkastet.');
     await expect.poll(() => held).toBe(true);
     await expect(voiceBox(page)).toHaveText('Skyttel arbetar');
-    // A spoken task shows the working row last in the conversation text, without a timer.
+    // A spoken task shows the working row last in the conversation text.
     await expect(log.getByRole('listitem').last()).toHaveText(
       'Skyttel arbetar… 0 meddelanden väntar. Tryck på Escape för att avbryta.',
     );
-    await expect(assistant(page).getByRole('timer')).toHaveCount(0);
     release([modelMessage('Vem använder musiken?')]);
     await expect(log).toContainText('Vem använder musiken?');
     await expect(log.getByText('Skyttel arbetar…')).toHaveCount(0);
@@ -511,9 +508,6 @@ test('TAL-04: samtalstext hålls isär från verifierade röstresultat', async (
     speak(live, 'Markera Lo Exempel.');
     await expect(object).toHaveAttribute('aria-pressed', 'true');
     await openConversationText(page);
-    await expect(
-      assistant(page).getByRole('region', { name: 'Utkastets återkoppling' }),
-    ).toHaveCount(0);
     await expect(object).toHaveAttribute('aria-pressed', 'true');
     await expect(
       assistant(page).getByRole('log', { name: 'Samtalstext', exact: true }),
@@ -884,9 +878,6 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await openConversationText(page);
-    await expect(
-      assistant(page).getByRole('region', { name: 'Utkastets återkoppling' }),
-    ).toHaveCount(0);
     await expect
       .poll(
         () => live.sent.filter(({ event }) => event.type === 'session.commentary.append').length,

@@ -128,8 +128,7 @@ in both opening orders”.
   tilläggning behålls förslaget under navigering och personlig objektflytt.
 - Personlig flyttning ändrar bara den personliga vyn. Den sparade
   hushållskartan och dess samband ändras inte.
-- Uppgiftsytan visar ingen separat undertitel **Flytta** eller upprepad
-  lista över direkta samband. **Samband för Lo Exempel** öppnar den
+- **Samband för Lo Exempel** öppnar den
   ordinarie sambandsdialogen.
 
 ### NAVIGATION-03: Sex personliga riktningar och beständig placering

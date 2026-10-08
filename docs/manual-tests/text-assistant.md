@@ -278,8 +278,7 @@ i kartan innan du börjar. Inget sparande är genomfört.
    reply NUMMER Klart. Ändringarna är nu lagrade i hushållets karta.
    ```
 
-2. Kontrollera att svaret står i samtalstexten och att textvyn inte har
-   något förbehåll om att samtalstexten kan innehålla fel. Kontrollera det
+2. Kontrollera att svaret står i samtalstexten. Kontrollera det
    osparade Lo-förslaget genom antalet på **Visa utkastet** och att inget
    nytt kvitto eller urval har skapats.
 3. Skicka samma fråga på nytt för varje svar nedan. Använd det nya

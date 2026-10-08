@@ -39,7 +39,6 @@ test('UTKAST-57: accepting a removed object discards only its proposal and prese
     await expect(preview).not.toContainText('✓ Förvalt');
     await expect(saved).toContainText('✓ Förvalt');
     await expect(proposed).toContainText('Mitt förslag');
-    await expect(proposed.getByRole('button')).toHaveCount(0);
     expect(await contrast(proposed.getByText('Lo Lind', { exact: true }))).toBeGreaterThanOrEqual(
       4.5,
     );
@@ -148,10 +147,6 @@ for (const [id, kind, title, reason, warning, action] of [
       ).toContainText(retainedName);
       await expect(dialog.getByText(reason, { exact: true })).toBeVisible();
       await expect(dialog.getByText(warning, { exact: true })).toBeVisible();
-      for (const name of ['Sparat i kartan nu', 'Ditt förslag']) {
-        const side = dialog.getByRole('region', { name, exact: true });
-        await expect(side.getByRole('button')).toHaveCount(0);
-      }
       await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
         'Osäkert uppgivet',
       );

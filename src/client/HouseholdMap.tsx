@@ -232,13 +232,13 @@ export function HouseholdMap({
     const element =
       typeof target === 'string'
         ? [
-            ...(workspace.current?.querySelectorAll<HTMLButtonElement>('.workspace-tools button') ??
-              []),
-          ].find((button) =>
-            target === textViewButtonName
-              ? button.classList.contains('workspace-text')
-              : button.getAttribute('aria-label') === target,
-          )
+          ...(workspace.current?.querySelectorAll<HTMLButtonElement>('.workspace-tools button') ??
+            []),
+        ].find((button) =>
+          target === textViewButtonName
+            ? button.classList.contains('workspace-text')
+            : button.getAttribute('aria-label') === target,
+        )
         : target;
     if (!element?.isConnected || !element.offsetHeight || element.closest('[hidden], [inert]'))
       return false;
@@ -864,8 +864,8 @@ export function HouseholdMap({
     const listIds = new Set(hits.map((row) => row.object.id));
     const previousEdges = state
       ? mapConnections(state.draft, displayed, spatialEdges)
-          .filter((connection) => connection.previous)
-          .map((connection) => connection.edge)
+        .filter((connection) => connection.previous)
+        .map((connection) => connection.edge)
       : [];
     const contextSource = {
       objects: displayed,
@@ -960,20 +960,19 @@ export function HouseholdMap({
     if (conflict.kind === 'relationship') {
       const change = state?.draft.relationships?.find((item) => item.id === conflict.id);
       const value = change?.after ?? change?.before;
-      label = `Samband: ${
-        value && change
-          ? relationshipLabel(
-              value,
-              { relationshipTypes: [change.type] },
-              new Map([
-                ...Object.entries(change.objectNames ?? {}).map(
-                  ([id, name]) => [id, { name }] as const,
-                ),
-                ...displayed,
-              ]),
-            )
-          : conflict.id
-      }`;
+      label = `Samband: ${value && change
+        ? relationshipLabel(
+          value,
+          { relationshipTypes: [change.type] },
+          new Map([
+            ...Object.entries(change.objectNames ?? {}).map(
+              ([id, name]) => [id, { name }] as const,
+            ),
+            ...displayed,
+          ]),
+        )
+        : conflict.id
+        }`;
     } else {
       const changes =
         conflict.kind === 'object'
@@ -999,10 +998,10 @@ export function HouseholdMap({
   });
   const hasChanges = Boolean(
     state &&
-      (state.draft.changes.length ||
-        state.draft.relationships?.length ||
-        state.draft.objectTypes?.length ||
-        state.draft.relationshipTypes?.length),
+    (state.draft.changes.length ||
+      state.draft.relationships?.length ||
+      state.draft.objectTypes?.length ||
+      state.draft.relationshipTypes?.length),
   );
   const mapSearchNotice = useDraftFilterReset(hasChanges, browsing, changeMapSearch);
   const pendingOperation = operations.find((operation) => operation.status === 'pending');
@@ -1183,9 +1182,9 @@ export function HouseholdMap({
     eventKey: `${conversation.session?.id}:${conversation.session?.revision}:${conversation.voice.failure?.occurrence ?? 0}`,
     diagnostic: conversation.voice.failure
       ? {
-          noticeId: conversation.voice.failure.noticeId,
-          reference: conversation.voice.failure.diagnosticId,
-        }
+        noticeId: conversation.voice.failure.noticeId,
+        reference: conversation.voice.failure.diagnosticId,
+      }
       : undefined,
   });
   const notice = noticeState.notice && (
@@ -1240,7 +1239,7 @@ export function HouseholdMap({
         baseRevision: proposal ? (proposal.before?.revision ?? null) : item.revision,
         value: null,
       },
-      () => {},
+      () => { },
     );
   }
 
@@ -1337,8 +1336,8 @@ export function HouseholdMap({
             conversationOngoing={ongoing}
             voiceControl={
               conversation.session ||
-              conversation.voice.microphone === 'on' ||
-              conversation.voice.starting
+                conversation.voice.microphone === 'on' ||
+                conversation.voice.starting
                 ? conversation.voice
                 : null
             }
@@ -1371,10 +1370,10 @@ export function HouseholdMap({
             onSettings={
               onSettings
                 ? () =>
-                    requestLeave(() => {
-                      setToolsExpanded(false);
-                      onSettings();
-                    })
+                  requestLeave(() => {
+                    setToolsExpanded(false);
+                    onSettings();
+                  })
                 : undefined
             }
             theme={<WorkspaceTheme mode={theme.mode} onChange={theme.changeMode} />}
@@ -1723,12 +1722,11 @@ export function HouseholdMap({
                   window.restoreFocus();
                 }}
                 onRead={(entry) => requestLeave(() => setReadEntry(entry))}
-                onOpenObject={openObjectWindow}
                 onRevealObject={revealObject}
                 onFocusObject={focusObject}
                 onRemoveObject={(object) => remove('draft', object)}
                 onEditObject={(object, restoreFocus) => edit(object, true, restoreFocus)}
-                onEditRelationship={() => {}}
+                onEditRelationship={() => { }}
               />
             );
           })}
@@ -1743,11 +1741,11 @@ export function HouseholdMap({
             relationship={
               selection?.kind === 'relationship'
                 ? (() => {
-                    const row = readRelationships.find((row) => row.value.id === selection.id);
-                    return selection.previous && row?.before
-                      ? { ...row, value: row.before, type: row.beforeType }
-                      : row;
-                  })()
+                  const row = readRelationships.find((row) => row.value.id === selection.id);
+                  return selection.previous && row?.before
+                    ? { ...row, value: row.before, type: row.beforeType }
+                    : row;
+                })()
                 : undefined
             }
             previous={selection?.kind === 'relationship' && selection.previous}
@@ -2040,9 +2038,9 @@ export function HouseholdMap({
                 imageError={
                   errorDetails.imageObjectId
                     ? {
-                        name: displayed.get(errorDetails.imageObjectId)?.name ?? 'objektet',
-                        onReturn: () => returnToImage(errorDetails.imageObjectId),
-                      }
+                      name: displayed.get(errorDetails.imageObjectId)?.name ?? 'objektet',
+                      onReturn: () => returnToImage(errorDetails.imageObjectId),
+                    }
                     : undefined
                 }
                 working={pending && !saveAttempt.current}
@@ -2050,9 +2048,9 @@ export function HouseholdMap({
                 onRecover={
                   (saveAttempt.current || pendingOperation) && blocked
                     ? () => {
-                        if (saveAttempt.current) void save(saveAttempt.current, true);
-                        else if (pendingOperation) retrySave(pendingOperation);
-                      }
+                      if (saveAttempt.current) void save(saveAttempt.current, true);
+                      else if (pendingOperation) retrySave(pendingOperation);
+                    }
                     : undefined
                 }
                 pending={pending}

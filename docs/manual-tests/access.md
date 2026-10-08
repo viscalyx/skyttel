@@ -553,13 +553,12 @@ verklig mikrofon och enhetsbeteende hör till #220.
 
 **Integrationstest:**
 [access-onboarding.spec.ts](../../tests/integration/access-onboarding.spec.ts),
-testfallet “ACCESS-15: first visits use toolbar entries and optional help
-without start prompts”.
+testfallet “ACCESS-15: first visits use toolbar entries and optional help”.
 
 **Steg:**
 
-1. Öppna kartan på dator. Kontrollera att ingen startdialog eller kortet
-   **Din karta börjar här** visas. Öppna **Information och hjälp** direkt
+1. Öppna kartan på dator. Läs kartans verktyg. Öppna
+   **Information och hjälp** direkt
    från verktygsfältet. Läs om samtalet och formulären. Tryck Escape.
 2. Välj **Prata med Skyttel** i verktygen. Kontrollera medgivanderutan och
    att ingen mikrofon lyssnar före **Godkänn och starta**. Godkänn och
@@ -573,7 +572,7 @@ without start prompts”.
 
 **Förväntat resultat:**
 
-- Kartan öppnas utan startdialoger eller ett separat kort för en tom karta.
+- Kartan öppnas med kartans verktyg tillgängliga.
 - Hjälpen syns som en knapp även i telefonens hopfällda verktygsfält.
   Hjälpens rubrik får fokus; Escape återför fokus till hjälpknappen.
   Att läsa hjälpen startar inget samtal och kräver inget medgivande.

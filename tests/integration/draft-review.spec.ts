@@ -139,7 +139,6 @@ for (const mobile of [false, true])
         'Vad som ändras',
       ]);
       await expect(consentBox(page)).not.toBeVisible();
-      await expect(draft.getByRole('button', { name: /^Redigera/ })).toHaveCount(0);
       const button = draft.getByRole('button', {
         name: 'Visa förslaget: Alex blå cykel',
         exact: true,

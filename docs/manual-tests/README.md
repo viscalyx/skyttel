@@ -360,8 +360,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   tillägg till utkastet på dator och mobil.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
-  högerklickets gemensamma ikoner. Oberoende fönsterflytt med pekare och
-  tangentbord bevarar kameran och den personliga vyn. Vanliga formulär,
+  högerklickets sex ikoner och uppgiftsfönstrens fem åtgärdsikoner.
+  Oberoende fönsterflytt med pekare och tangentbord bevarar kameran och
+  den personliga vyn. Vanliga formulär,
   återfokus och oförändrat utkast provas även i smala och korta fönster,
   liksom återgång från Rapporter till text och utkast.
 - [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta

@@ -301,7 +301,7 @@ across 500 objects”.
    samma träff.
 4. Stäng av Bara markerade och stäng filtret: femtio träffar. Välj Person
    och stäng filtret: tio träffar och fokus tillbaka på Filter.
-5. Sök finns inte. Kontrollera tom tabell utan särskilt besked. Öppna
+5. Sök finns inte. Kontrollera tom tabell. Öppna
    Filter och välj Återställ sökning och filter. Stäng dialogen.
    Välj Ta med upphörda igen och kontrollera tio sidor med objekt.
 
@@ -497,8 +497,7 @@ only the chosen removal without map graphics”.
    längst till höger bland radens åtgärder. Läs dess hjälptext: objektet
    och dess fyra samband läggs som borttagningar i ditt utkast, medan
    den sparade kartan ändras först vid separat sparande.
-2. Kontrollera att båda kartikonerna är inaktiva utan kartgrafik och att
-   raden saknar en separat **Åtgärder för**-knapp.
+2. Kontrollera att båda kartikonerna är inaktiva utan kartgrafik.
 3. Öppna **Redigera Cykel** med tangentbord. Ändra beskrivningen till
    **Behåll mina oskickade uppgifter** och välj krysset.
 4. Kontrollera fokus på **Fortsätt redigera** i förlustvarningen. Tryck
@@ -559,7 +558,7 @@ samband till objektet med typen **Endast i sambandet**.
 3. Sök efter **Endast i sambandet** och kontrollera noll träffar.
    Sök efter **Övrigt Élan** och kontrollera en träff, utan A 2.
    Sök efter **ake**. Kontrollera noll träffar och att fokus stannar i
-   sökfältet. Kontrollera att inget träffantal eller tomhetsbesked visas.
+   sökfältet.
    Öppna **Filter**, välj **Återställ sökning och filter** och stäng dialogen.
 4. Sök efter **åke beskrivning**. Kontrollera en träff på Åke.
 
@@ -618,13 +617,13 @@ and Escape restrictions”.
 
 **Steg:**
 
-1. Kontrollera att sökfältet och Filter syns direkt, utan träffantal.
+1. Kontrollera att sökfältet och Filter syns direkt.
    Klicka i kartans sökfält och kontrollera sökfältets fokus. Sök efter 299 EGEN.
-   Kontrollera A 2 i kartan, utan lista över matchande detaljfält.
+   Kontrollera A 2 i kartan.
 2. Öppna Filter och kontrollera en träff. Välj Typ 10 och kontrollera noll
    träffar i dialogen. Tryck Escape. Kontrollera fokus på Filter,
    en badge för Typ 10 efter knappen och bevarad söktext. Knappen visar
-   Filter utan antal. Tryck på **Typ 10** för att ta bort filtret.
+   Filter. Tryck på **Typ 10** för att ta bort filtret.
    Kontrollera A 2, samma söktext och
    återfokus på **Filter**. Välj Typ 10 i dialogen igen och stäng med Escape.
    Fokusera kartbakgrunden
@@ -649,8 +648,8 @@ and Escape restrictions”.
 8. Välj Typ 2 och Bara markerade. Stäng dialogen, fokusera kartbakgrunden
    och tryck Escape en gång. Kontrollera tom söktext, återställda filter
    och bevarad markering. Upprepa med bara Typ 10 och redan tom söktext.
-9. Sök efter finns inte. Kontrollera tom karta utan tomhetsbesked eller
-   träffantal. Återgå till Tabell och kontrollera dess separata söktext.
+9. Sök efter finns inte. Kontrollera tom karta.
+   Återgå till Tabell och kontrollera dess separata söktext.
    Sök efter A 2 och kontrollera markeringen. Öppna textvyn och kontrollera
    det oskickade meddelandet.
 
@@ -667,9 +666,7 @@ and Escape restrictions”.
   När sista valet tas bort återgår fokus till Filter.
 - Kortkommandon, formulär och samtal behåller sin vanliga inmatning.
   Vyernas sökningar, markeringen och oskickat meddelande finns kvar.
-- Utanför filterdialogen visas eller läses inga träffantal eller
-  särskilda tomhetsbesked upp.
-  Kontrollera fokus och reglagens namn med NVDA och VoiceOver;
+- Kontrollera fokus och reglagens namn med NVDA och VoiceOver;
   automatprovet ersätter inte hjälpmedelsprovet.
 
 ### SÖK-04: sista förslaget återställer bara båda vyernas utkastfilter
@@ -696,7 +693,7 @@ type-only proposals expose them”.
    söktext och Typ 2, återställt utkastfilter och besked om återställningen.
 5. Skapa enbart ett typförslag under Inställningar. Återgå till kartan
    och sök efter finns inte. Öppna Filter och kontrollera att
-   utkastfiltret finns trots tom karta och utan träffantal.
+   utkastfiltret finns trots tom karta.
 
 **Förväntat resultat:**
 
@@ -931,7 +928,7 @@ edges require inclusion”.
 1. Markera Alex. Skriv **Alex** i sökfältet. Öppna Filter och välj Alex
    objekttyp, **Ändrat** och **Bara markerade**. Stäng filterdialogen.
 2. Kontrollera Alex som sökträff och cykeln som sammanhang. Läs
-   upplysningen om dolt upphört innehåll. Inget träffantal ska visas.
+   upplysningen om dolt upphört innehåll.
 3. Välj upplysningens **Ta med upphörda**. Kontrollera båda ytterligare
    grannarna och att Alex fortfarande är sökträff.
 4. Öppna Filter och avmarkera **Bara markerade** och **Ta med upphörda**.

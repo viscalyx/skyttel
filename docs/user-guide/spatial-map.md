@@ -96,7 +96,8 @@ fungerar Control+Option och Cmd+Option. **Visa detaljer** i verktygen öppnar
 samma uppgiftsfönster för det valda objektet. För ett valt samband visas
 uppgifterna bredvid eller under kartan.
 
-Uppgiftsfönstret har samma ikoner som vid högerklick. Pennan öppnar det
+Uppgiftsfönstret har samma åtgärdsikoner som vid högerklick, förutom
+**Visa uppgifter** eftersom alla uppgifter redan visas. Pennan öppnar det
 vanliga redigeringsformuläret, och **Samband** öppnar sambandsdialogen.
 Tabellens fullständiga uppgifter visas direkt i expanderade rader och
 fungerar även utan kartgrafik och med tangentbord. Pennikonen i raden öppnar

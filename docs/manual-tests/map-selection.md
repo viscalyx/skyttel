@@ -183,8 +183,7 @@ reachable at 320x250”.
 
 1. Välj **Karta**. Nå **Välj objekt: Cykel** med tangentbord och tryck Enter.
 2. Välj **Visa detaljer**. Läs Cykels namn och fullständiga uppgifter.
-   Skilj sparade värden från det privata prisförslaget. Kontrollera att
-   uppgifterna går att läsa men saknar redigeringsfält.
+   Skilj sparade värden från det privata prisförslaget.
 3. Nå **Redigera Cykel** med Tab och tryck Enter. Kontrollera att det vanliga
    fullständiga objektformuläret öppnas med Cykels aktuella uppgifter.
 4. Välj **Stäng objektdialogen** utan att ändra något. Kontrollera att fokus
@@ -201,8 +200,8 @@ reachable at 320x250”.
 **Förväntat resultat:**
 
 - Ett flyttbart uppgiftsfönster visar det markerade objektets uppgifter.
-  Titelraden och stängkrysset består när innehållet rullas. Uppgifterna
-  saknar redigeringsfält; pennan öppnar det fullständiga formuläret.
+  Titelraden och stängkrysset består när innehållet rullas.
+  Pennan öppnar det fullständiga formuläret.
 - Redigering öppnar samma vanliga objektformulär; oförändrad stängning
   återför fokus utan förslag eller ändrade värden.
 - Läsning och oförändrad stängning bevarar sparade uppgifter och hela tidigare
@@ -236,14 +235,18 @@ and move without moving the map”.
    samband i kartan och borttagning. Välj **Samband för Cykel**, läs Garage
    i befintliga samband och stäng sambandsdialogen.
 2. Högerklicka Cykel igen och välj **Visa uppgifter för Cykel**. Läs egna
-   fält och prisets sparade och föreslagna värden. Kontrollera samma sex
-   ikoner som vid högerklick och ett stängkryss uppe till höger.
+   fält och prisets sparade och föreslagna värden. Kontrollera att fönstret
+   har fem åtgärdsikoner: redigering, samband, visa objektet i kartan,
+   visa dess direkta samband i kartan och borttagning. Kontrollera även
+   ett stängkryss uppe till höger.
 3. Dra Cykels titelrad. Kontrollera att kartan står kvar. Dubbelklicka
    Garage. Kontrollera att båda uppgiftsfönstren finns kvar. Dra Garages
    titelrad utan att flytta Cykels fönster eller kameran.
 4. Fokusera Garages titelrad och använd piltangenter samt Skift med
    piltangent. Stäng Garage med dess kryss. Cykels fönster ska finnas kvar
-   på samma plats. Välj Cykels uppgiftsikon: samma fönster visas igen.
+   på samma plats. Fokusera Cykel i kartan och tryck Skift+F10. Välj
+   **Visa uppgifter för Cykel**: Cykels enda fönster får fokus och står
+   kvar på samma plats.
 5. Välj pennan i Cykels fönster. Stäng det vanliga redigeringsformuläret
    utan ändring och kontrollera fokus tillbaka på pennan. Rulla uppgifterna
    och kontrollera att kartan inte panoreras eller zoomas.
@@ -262,8 +265,10 @@ and move without moving the map”.
   och dubbelklick öppnar samma fullständiga, flyttbara uppgiftsfönster.
 - Varje objekt har ett eget fönster med egen placering. Ny markering eller
   öppning av ett annat objekt stänger inte tidigare uppgiftsfönster.
-- Fönstren delar högerklickets ikoner och tillgängliga namn. Titelraden
-  kan dras eller flyttas med piltangenter; Escape avbryter dragning.
+- Fönstren har fem åtgärdsikoner med samma tillgängliga namn som vid
+  högerklick: redigering, samband, visa objektet i kartan, visa dess
+  direkta samband i kartan och borttagning. Titelraden kan dras eller
+  flyttas med piltangenter; Escape avbryter dragning.
 - Varje kryss stänger bara sitt fönster. Kartans kamera och personliga vy,
   sparade uppgifter och hela utkastet är oförändrade under läsningen.
 - Den uttryckliga borttagningen återför fokus till fönstret och lägger

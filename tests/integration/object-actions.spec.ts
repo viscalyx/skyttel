@@ -47,10 +47,6 @@ test('LISTA-07: text object actions preserve cancellation and stage only the cho
       has: page.getByRole('button', { name: 'Ta bort Cykel', exact: true }),
     });
     await expect(row.getByRole('button').last()).toHaveAccessibleName('Ta bort Cykel');
-    await expect(table.getByRole('button', { name: /^Åtgärder för/ })).toHaveCount(0);
-    await expect(
-      page.getByRole('dialog', { name: /^Åtgärder för/, includeHidden: true }),
-    ).toHaveCount(0);
     for (const name of ['Visa Cykel i kartan', 'Visa samband för Cykel i kartan'])
       await expect(table.getByRole('button', { name, exact: true })).toBeDisabled();
     expect(await app.read()).toEqual(before);

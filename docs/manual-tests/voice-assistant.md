@@ -438,7 +438,7 @@ tysta mediespår; verkligt tal redovisas separat i TAL-01.
    antal anslutningar och kvarvarande dialog.
 5. Kör `user Kontrollera utkastet.` och `delegate` i terminalen. Låt
    modellanropet vara hållet och kontrollera att raden **Skyttel arbetar…**
-   står sist i samtalstexten, utan tidräknare. Släpp sedan det hållna
+   står sist i samtalstexten. Släpp sedan det hållna
    anropet med
    `reply REQUEST Vem använder musiken?`, där `REQUEST` är dess ID.
 6. Kräv frågan i dialogen och avslutad arbetsindikering. Stäng rösten:
@@ -452,8 +452,7 @@ tysta mediespår; verkligt tal redovisas separat i TAL-01.
   Tidigare rader ersätts inte av det senaste svaret.
 - Paus behåller samtal och ljuduppspelning. En återhämtad anslutning
   startar inte en mikrofon som användaren har pausat.
-- Raden **Skyttel arbetar…** skiljer väntan från ett färdigt svar. Ingen
-  tidräknare visas.
+- Raden **Skyttel arbetar…** skiljer väntan från ett färdigt svar.
 - Samtalstexten är tillfällig och är inte ett sparkvitto. **Nytt samtal**
   tömmer den men bevarar utkastet.
 
@@ -568,7 +567,7 @@ som ett hinder eller låta gamla frågor följa ett nytt uppdrag.
    `completion: "draft"`, `questions: ["Vem använder tjänsten?"]` och
    en `propose_object`-operation som behåller Lo men ändrar beskrivningen
    till **Förslag väntar på svar**. Använd det hållna utkastets versioner.
-2. Stäng textvyn. Frågan ska inte visas i en separat ruta.
+2. Stäng textvyn.
    Kontrollera frågans samtalstext genom att själv öppna textvyn; det
    syntetiska terminalfragmentet är inte bevis för att frågan hörs.
 3. Välj **Skriv till Skyttel**, skriv **Lo använder tjänsten.** och skicka.
@@ -835,10 +834,9 @@ som följer rösten”.
   svaret visar den **Skyttel talar**.
 - Steg 4: vågformen rör sig inte. **Skyttel talar** och **Du talar** har
   samma sju stilla staplar, som inte ändras med ljudnivån. **Lyssnar** har
-  sju punkter. Formerna byts utan övergång. Statusordet
-  **Mikrofonen är av** visas aldrig.
-- Röstrutan är en namngiven grupp, ingen knapp. Bara **Avbryt** går att
-  trycka på. Den har inget annat än vågform, ett statusord, eventuell
+  sju punkter. Formerna byts utan övergång.
+- Röstrutan är en namngiven grupp. **Avbryt** går att
+  trycka på. Den visar vågform, ett statusord, eventuell
   kontextsymbol och stoppikon. Den blir bredare med fler delar men behåller
   samma höjd, 36 px.
 

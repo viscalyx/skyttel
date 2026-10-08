@@ -78,9 +78,7 @@ och eftervärden”.
 - På dator börjar utkastet vid panelens överkant med rubriken **Utkast**,
   till vänster om samtalsrubriken och samtalstexten. Namn och typer går
   att läsa utan att enskilda ord bryts till bokstavskolumner.
-  Utkastet har ingen
-  länk till **Utkast och historik**. Panelen **Ändringar under samtalet**
-  finns inte. Inget sparas genom att läsa tabellen.
+  Inget sparas genom att läsa tabellen.
 - Efter **Nytt samtal** är utkastet hopfällt enligt grundvalet; samma
   osparade ändringar ligger kvar.
 

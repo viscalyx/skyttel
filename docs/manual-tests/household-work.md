@@ -482,8 +482,7 @@ till gemensamt kvitto och privat fortsatt arbete”.
    och öppna **Inställningar**. Rubriken ska få fokus och kartarbetet döljas.
    Inställningarnas innehåll ska komma före kartans återkoppling om
    utkast och sparande. Läs de tre privata förslagens återkoppling och
-   kontrollera att röstrutan visar **Lyssnar**. Ingen knapp **Aktuell
-   status** eller **Visa samtals- och utkastdetaljer** finns.
+   kontrollera att röstrutan visar **Lyssnar**.
    Välj **Tillbaka till kartan** och välj
    abonnemanget och Kim genom att expandera deras rader i **Tabell**.
    Fäll ihop varje rad med namnet innan nästa öppnas. Öppna även

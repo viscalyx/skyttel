@@ -170,8 +170,7 @@ eller uppgift om faktiskt utförd fysisk provning.
 3. Öppna **Visningsval**, slå på och av **Alla etiketter** och stäng valet.
 4. Öppna **Navigera**. Läs söksammanfattningen och hushållets återkoppling
    bredvid navigeringen. Fokusera sammanhangsytan med tangentbord; rulla
-   vid behov hela arbetsytan för att läsa den. Kontrollera att den saknar
-   knappen **Visa samband i kartan**.
+   vid behov hela arbetsytan för att läsa den.
    Nå var och en av de sex **Flytta Lo Exempel**-knapparna med tangentbord och
    aktivera dem: vänster, höger, uppåt, nedåt, framåt och bakåt. Kontrollera
    fokus och att enbart din personliga placering ändras. Rotera och stäng

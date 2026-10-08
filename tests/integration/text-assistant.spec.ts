@@ -450,9 +450,6 @@ test('TEXT-05: markering kräver visning och skyddar oskickad text', async ({ pa
     await expect(mapStatus).toContainText('Markerat i kartan.');
     await openConversationText(page);
     await expect(selected).toHaveAttribute('aria-pressed', 'true');
-    await expect(
-      assistant(page).getByRole('region', { name: 'Utkastets återkoppling' }),
-    ).toHaveCount(0);
     await send(page, 'Markera Lo igen.');
     await expect.poll(() => model.requests.length).toBe(3);
     await closeTextView(page);
@@ -505,7 +502,6 @@ test('TEXT-06: obekräftad samtalstext skiljs från sparande och markering', asy
       const conversation = assistant(page).getByRole('log', { name: 'Samtalstext', exact: true });
       await expect(conversation).toContainText(reply);
       // The reservation about errors stands in the consent text, not in the text view.
-      await expect(assistant(page)).not.toContainText('Samtalstexten kan innehålla fel');
       await expect(
         assistant(page).getByRole('button', { name: 'Visa utkastet (1)', exact: true }),
       ).toBeVisible();

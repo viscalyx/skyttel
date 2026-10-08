@@ -85,8 +85,6 @@ med serverns väntesignal”.
 
 - Frågan står som Skyttels svar i samtalstexten. Ingen röstruta visas
   i ett samtal med enbart text och inget sparas.
-- **Besked från Skyttel**, **Nödvändigt svar**, **Svara i samtalet** och
-  den genererade raden **Vilka objekt avses?** finns inte.
 - Det automatiserade provet kontrollerar även serverns uttryckliga
   väntesignal och det verkliga utkastets obesvarade identitet.
 

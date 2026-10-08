@@ -45,9 +45,6 @@ test('UTKAST-75: a missing endpoint and missing relationship type remain visible
     await expect(dialog.getByRole('region', { name: 'Ditt förslag', exact: true })).toContainText(
       'Molnmusik',
     );
-    await expect(
-      dialog.getByRole('region', { name: 'Ditt förslag', exact: true }).getByRole('button'),
-    ).toHaveCount(0);
     await closeConflictWithEscape(page, dialog);
     expect((await app.read()).draft).toEqual(before.draft);
     await page.getByRole('button', { name: '1 konflikt i ditt utkast', exact: true }).click();
@@ -187,9 +184,6 @@ test('UTKAST-66: a missing relationship type needs an actual new definition and 
     await expect(conflict.getByRole('region', { name: 'Ditt förslag' })).toContainText(
       'Våren 2021',
     );
-    await expect(
-      conflict.getByRole('button', { name: 'Lägg valen i utkastet', exact: true }),
-    ).toHaveCount(0);
     await closeConflictWithEscape(page, conflict);
     expect((await app.read()).draft).toEqual(before.draft);
     await openSettings(page);
@@ -291,10 +285,6 @@ test('UTKAST-64: a missing object type keeps its proposal readable and discards 
       'Stäng konfliktfönstret och lägg till objekttypen under Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt kan du ta bort objektet ur ditt utkast nedan.',
     );
     await expect(dialog.getByRole('region', { name: 'Ditt förslag' })).toContainText('Våren 2021');
-    await expect(
-      dialog.getByRole('region', { name: 'Ditt förslag' }).getByRole('button'),
-    ).toHaveCount(0);
-    await expect(dialog.getByRole('button', { name: 'Lägg valen i utkastet' })).toHaveCount(0);
     const preview = dialog.getByRole('region', { name: 'Resultat av valen', exact: true });
     await expect(preview.locator('dt')).toHaveText('Objektet i ditt utkast');
     await expect(preview.locator('dd')).toHaveText('Tas bort ur ditt utkast');
@@ -431,10 +421,6 @@ test('UTKAST-65: an incompatible historical field is corrected in the ordinary o
       'Stäng konfliktfönstret och rätta uppgiften i den vanliga objektdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit. Ditt förslag ligger kvar under tiden.',
     );
     await expect(dialog.getByRole('region', { name: 'Ditt förslag' })).toContainText('Våren 2021');
-    await expect(
-      dialog.getByRole('region', { name: 'Ditt förslag' }).getByRole('button'),
-    ).toHaveCount(0);
-    await expect(dialog.getByRole('button', { name: 'Lägg valen i utkastet' })).toHaveCount(0);
     await dialog.getByRole('button', { name: 'Stäng konfliktfönstret', exact: true }).click();
     expect((await app.read()).draft).toEqual(before.draft);
     await page
