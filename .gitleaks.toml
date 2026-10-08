@@ -18,3 +18,12 @@ condition = "AND"
 regexTarget = "secret"
 regexes = ['''^synthetic-ci-secret-at-least-32-characters$''']
 paths = ['''^(\.github/workflows/security\.yml|scripts/security/scan-running-image\.sh)$''']
+
+# Verified SHA-256 of docs/manual-tests/access.md at 020273b1. The history
+# scan includes the regression baseline branch, which records this checksum.
+[[rules.allowlists]]
+description = "Verified manual access guide checksum in the regression baseline"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^517c3e38ff302eb51a2bda795f72bf525eece3578193b71a352d9bc934c1cc32$''']
+paths = ['''^research/regression-baseline/environment\.json$''']
