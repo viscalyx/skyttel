@@ -5,6 +5,7 @@ import type { MapState } from '../../src/shared/map.js';
 import { beginAssistant, callAssistant } from '../support/assistant.js';
 import { createHousehold, openDraftReview, signIn } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation, robin } from '../support/installation.js';
 
 test('FLYTT-01: a fresh installation restores an archive, explicitly assigns private ownership and remains portable after restart', async ({
@@ -20,11 +21,17 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
   ]);
   const [sourceContext, destinationContext, thirdContext] = contexts;
   const sourceClient = sourceContext.request;
+  const sourcePage = await sourceContext.newPage();
   const destinationPage = await destinationContext.newPage();
   const destinationClient = destinationContext.request;
   const thirdClient = thirdContext.request;
   const thirdPage = await thirdContext.newPage();
   try {
+    // These persistent holds cover every navigation and server restart after
+    // pending attempts are registered, including each browser export handoff.
+    for (const page of [sourcePage, destinationPage, thirdPage]) {
+      await page.route('**/text-assistant/recover', (route) => route.abort());
+    }
     await signIn(sourceClient, source.origin);
     const { household } = await (await createHousehold(sourceClient, source.origin)).json();
     const sourcePath = `${source.origin}/api/households/${household.id}`;
@@ -111,13 +118,9 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
     const token = await oauth.exchange((await consent.json()).url);
     const { access_token } = await token.json();
     expect((await callAssistant(source.origin, access_token, 'read_map')).status).toBe(200);
-    const exportArchive = async (client: APIRequestContext, path: string, origin: string) => {
-      const response = await client.post(`${path}/exports`, { headers: { origin }, data: {} });
-      expect(response.status()).toBe(201);
-      return (await client.get(`${path}/exports/${(await response.json()).id}`)).body();
-    };
     // No source writes follow the final archive. Only these bytes cross installations.
-    const archive = await exportArchive(sourceClient, sourcePath, source.origin);
+    await sourcePage.goto(source.origin);
+    const archive = await downloadHouseholdExport(sourcePage, sourcePath);
     const sourceParts = unzipSync(archive);
     const sourceContent = JSON.parse(Buffer.from(sourceParts['content.json']).toString());
     destination.setIdentity({ ...robin, name: 'Alex Exempel', email: 'alex@example.test' });
@@ -193,7 +196,6 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
     ).toBe(200);
     // Keep the registered save unfinished while testing ownership transfer.
     // Otherwise the mounted map can recover and complete it before assignment.
-    await destinationPage.route('**/text-assistant/recover', (route) => route.abort());
     const recoveryAttempt = destinationPage.waitForEvent('requestfailed', {
       predicate: (request) => request.url().endsWith('/text-assistant/recover'),
     });
@@ -232,11 +234,8 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
     expect(
       (await (await destinationClient.get(`${destinationPath}/map/view`)).json()).settings,
     ).toEqual(sourceView.settings);
-    const secondArchive = await exportArchive(
-      destinationClient,
-      destinationPath,
-      destination.origin,
-    );
+    await destinationPage.goto(`${destination.origin}/households/${restoredHousehold.id}`);
+    const secondArchive = await downloadHouseholdExport(destinationPage, destinationPath);
     const secondParts = unzipSync(secondArchive);
     const secondContent = JSON.parse(Buffer.from(secondParts['content.json']).toString());
     expect(secondContent.drafts).toContainEqual(
@@ -285,7 +284,6 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
     await expect(thirdPage.getByText(/Hushållets innehåll är ersatt/)).toBeVisible();
     const thirdUserId = (await (await thirdClient.get(`${third.origin}/api/bootstrap`)).json()).user
       .id;
-    await thirdPage.route('**/text-assistant/recover', (route) => route.abort());
     await thirdPage.goto(`${third.origin}/households/${thirdHousehold.id}/settings/content-owners`);
     await thirdPage.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }).click();
     const assignThird = async (identityId: string) => {
@@ -317,7 +315,8 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
     expect((await (await thirdClient.get(`${thirdPath}/map/history`)).json()).history).toEqual(
       sourceHistory,
     );
-    const thirdArchive = await exportArchive(thirdClient, thirdPath, third.origin);
+    await thirdPage.goto(`${third.origin}/households/${thirdHousehold.id}`);
+    const thirdArchive = await downloadHouseholdExport(thirdPage, thirdPath);
     const thirdParts = unzipSync(thirdArchive);
     const thirdContent = JSON.parse(Buffer.from(thirdParts['content.json']).toString());
     expect(thirdContent.drafts.map((row: { userId: string }) => row.userId)).toEqual(
@@ -330,7 +329,7 @@ test('FLYTT-01: a fresh installation restores an archive, explicitly assigns pri
     );
     expect(Buffer.from(thirdParts['images.bin'])).toEqual(Buffer.from(sourceParts['images.bin']));
     // Displacement preserves usable private work, not merely an archived row.
-    await thirdPage.reload();
+    await thirdPage.goto(`${third.origin}/households/${thirdHousehold.id}/settings/content-owners`);
     await thirdPage.getByRole('button', { name: 'Hämta aktuella innehållskopplingar' }).click();
     for (const identityId of [displacedId, historicalId]) {
       await assignThird(identityId);

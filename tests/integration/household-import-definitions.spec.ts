@@ -11,6 +11,7 @@ import {
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject } from '../support/domain-work.js';
+import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation } from '../support/installation.js';
 
 test('historical field kinds and exact receipts survive replacement and request corrections', {
@@ -161,13 +162,7 @@ test('IMPORT-07: browser field editing, replacement and historical reading prese
     await editDefinition('text');
     await save();
     const before = (await (await page.request.get(`${path}/map/history`)).json()).history;
-    const exported = await (
-      await page.request.post(`${path}/exports`, {
-        headers: { origin: installation.origin },
-        data: {},
-      })
-    ).json();
-    const archive = await (await page.request.get(`${path}/exports/${exported.id}`)).body();
+    const archive = await downloadHouseholdExport(page, path);
     await page.goto(`${installation.origin}/households/${household.id}/settings/import`);
     await page.getByLabel('Skyttel-export (ZIP)').setInputFiles({
       name: 'skyttel.zip',

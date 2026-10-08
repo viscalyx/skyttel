@@ -9,6 +9,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { downloadHouseholdExport } from '../support/household-export-download.js';
 import { createInstallation } from '../support/installation.js';
 
 test('IMPORT-06: replacement preserves image history and private work, rejects old save attempts and permits ordinary corrections after restart', async ({
@@ -112,13 +113,8 @@ test('IMPORT-06: replacement preserves image history and private work, rejects o
     const privateBytes = await imageBytes(privateImage);
     const archivedState = await read();
     const archivedHistory = (await (await page.request.get(`${path}/history`)).json()).history;
-    const prepared = await page.request.post(`${householdPath}/exports`, { headers, data: {} });
-    expect(prepared.status()).toBe(201);
-    const download = await page.request.get(
-      `${householdPath}/exports/${(await prepared.json()).id}`,
-    );
-    expect(download.status()).toBe(200);
-    const archive = await download.body();
+    await page.goto(installation.origin);
+    const archive = await downloadHouseholdExport(page, householdPath);
 
     expect(
       (
