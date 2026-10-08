@@ -46,6 +46,22 @@ Behåll den förifyllda sambandstypen Använder oanvänd.
 testfallet “KATALOG-01: unused fields and custom and prefilled types are
 reviewed, discarded or saved without automatic cleanup”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/definition-removal.spec.ts",
+    "caseId": "KATALOG-01"
+  },
+  "reference": "1280 × 720; Chromium och separata testinloggningar; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Fält och båda typerna granskas i fullständiga privata förslag; kastning behåller definitionerna.",
+    "Separat sparande tar bara bort valda definitioner. Katalog och läsbara historiska betydelser består efter omstart."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna **Objekttyper och egna fält**, ändra Person och välj **Ta bort
@@ -87,6 +103,22 @@ också sambandet Använder från personen till garaget. Båda är Upphört.
 testfallet “KATALOG-02: private drafts and ended content block removal
 with a useful explanation and no private disclosure”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/definition-removal.spec.ts",
+    "caseId": "KATALOG-02"
+  },
+  "reference": "1280 × 720; Chromium och separata testinloggningar; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Privat och upphört sparat innehåll hindrar borttagning av typ, fält och sambandstyp.",
+    "Felbeskeden avslöjar inga privata namn eller värden. Bådas arbete bevaras; Robin kan läsa hela sitt utkast och spara det separat."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Starta om appservern med samma databas. Som Alex, försök ta bort Person.
@@ -96,7 +128,10 @@ with a useful explanation and no private disclosure”.
 3. Försök ta bort sambandstypen Använder. Kontrollera beskedet om samband
    och deras ändpunkter. Kontrollera att Robins privata uppgifter saknas
    i Alex karta och i felbeskeden.
-4. Som Robin, spara hela utkastet. Som Alex, ladda om och upprepa alla
+4. Som Robin, läs hela objekt- och sambandsförslaget i utkastet och spara
+   hela utkastet. Välj Tabellens **Filter → Ta med upphörda** och läs de
+   sparade upphörda uppgifterna. Som Alex,
+   ladda om och upprepa alla
    tre borttagningsförsöken för det nu sparade upphörda innehållet.
 
 **Förväntat resultat:**
@@ -123,12 +158,30 @@ Lägg ett oberoende objekt med en annan typ i utkastet utan att spara.
 testfallet “KATALOG-03: history reads removed definitions and content without
 changing independent work”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/definition-removal.spec.ts",
+    "caseId": "KATALOG-03"
+  },
+  "reference": "1280 × 720; Chromium och separata testinloggningar; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Historiken läser borttagna objekt, samband och deras tidigare typer utan att återställa dem.",
+    "Garaget och det oberoende fullständiga förslaget består före och efter omstart; samma historiska betydelser går fortfarande att läsa."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Välj **Rapporter** och hitta borttagningen av Lo och sambandet.
 2. Välj **Visa ändringarna** och läs tidigare namn och typbetydelser.
 3. Kontrollera att aktuell karta, katalog och eget utkast är oförändrade.
-4. Starta om med samma databas och kontrollera samma värden och historik.
+4. Starta om med samma databas, ladda om och läs Garaget genom Tabell,
+   hela det oberoende förslaget genom utkastläsningen och samma historiska
+   namn och typbetydelser i Rapporter.
 
 **Förväntat resultat:**
 

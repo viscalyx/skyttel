@@ -25,10 +25,16 @@ import {
 } from '../tests/support/conflict-special.js';
 
 // Only transport delivery is controlled. All data and results use public HTTP and real SQLite.
-const browser = await chromium.launch({
-  channel: process.argv.includes('--chrome') ? 'chrome' : undefined,
-  headless: process.argv.includes('--headless'),
-});
+const endpointIndex = process.argv.indexOf('--browser-ws');
+const browserEndpoint = endpointIndex === -1 ? undefined : process.argv[endpointIndex + 1];
+if (endpointIndex !== -1 && (!browserEndpoint || !/^wss?:\/\//.test(browserEndpoint)))
+  throw new Error('--browser-ws requires the supplied Chromium DevTools WebSocket endpoint.');
+const browser = browserEndpoint
+  ? await chromium.connectOverCDP(browserEndpoint)
+  : await chromium.launch({
+      channel: process.argv.includes('--chrome') ? 'chrome' : undefined,
+      headless: process.argv.includes('--headless'),
+    });
 console.log(
   `Browser: ${process.argv.includes('--chrome') ? 'Chrome' : 'Chromium'} ${browser.version()}`,
 );

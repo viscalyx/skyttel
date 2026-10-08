@@ -475,6 +475,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   utkast, hantera gamla kastförsök
   och konfliktval, kombinera egenskaper i Granska konflikter,
   separata Karta- och Tabellvägar för genomförda och uteblivna konfliktval,
+  historisk fältförlust, skilda objekt- och sambandstypsåterställningar och
+  avvisad gammal behörighet med
+  [separat historisk förberedelse](historical-definition-preparation.md),
   nyare jämförelser, andra klienters sparande och oberoende formulärarbete;
   UTKAST-30 är pensionerat med skydd överfört till UTKAST-03;
   [styrd konfliktleverans](current-conflict-preparation.md), egna identiteter
@@ -567,7 +570,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   1440px; 390/320px behåller eget formulärarbete, teman och fokus.
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
-  utkast samt läsning av historiska definitioner som saknas i katalogen.
+  utkast utan privat läckage, fullständig förslagsläsning och läsning av
+  historiska definitioner som saknas i katalogen även efter omstart.
 - [Sparutfall, återhämtning och gemensamma demodata](operations.md):
   kontrollera samma väntande eller obekräftade försök efter omstart,
   läsa genomförda sparanden i Rapporter och kontrollera privat tillgång;

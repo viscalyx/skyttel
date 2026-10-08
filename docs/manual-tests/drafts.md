@@ -3534,375 +3534,505 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
 - Uppföljningen förblir nåbar från Karta och Tabell när sista konflikten
   försvinner. Sparade objekt, samband och historik är oförändrade.
 
-### UTKAST-64: saknad objekttyp och uttryckligt kastande
+### UTKAST-64: läs saknad objekttyp och kasta bara objektförslaget
 
-**Syfte:** Ge en tydlig rättelseväg eller kasta endast det berörda objektförslaget.
+**Syfte:** Typen saknas men de äldre uppgifterna och den vanliga rättelsevägen
+är läsbara.
 
-**Användare:** Medlemmen Robin arbetar i det synliga fönstret. Administratören
-Alex förbereder den isolerade installationen genom offentliga HTTP-anrop.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-missing-object-type`. Förberedelsen exporterar
-Robins giltiga äldre utkast, kastar det offentligt och tar sedan bort den
-oanvända typen med vanligt sparande. Alex återimporterar aktuell giltig export
-med endast Robins tidigare utkast och uppdaterade arkivkontrollsummor. Robins
-ägarkoppling bevaras; inga databasändringar eller externa AI-anrop används.
-
-**Integrationstest:**
-[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-testfallet “UTKAST-64: a missing object type keeps its proposal readable and
-discards only the explicitly confirmed object”.
-
-**Steg:**
-
-1. Öppna konflikten och läs varningen, hänvisningen till Inställningar och
-   hela objektförslaget med **Våren 2021**.
-2. Stäng och kör `result`. Läs det bevarade förslaget.
-3. Öppna igen och välj **Ta bort objektet ur ditt utkast**. Kör `result`.
-
-**Förväntat resultat:**
-
-- Jämförelsen är i läsläge. Typen visas som **Saknas**; det egna förslaget
-  finns kvar när dialogen stängs. Förhandsvisningen anger **Objektet i ditt
-  utkast: Tas bort ur ditt utkast** och att övriga objekt och samband inte
-  påverkas. Efter bekräftelsen visas **Borttaget ur ditt utkast**.
-- Instruktionen lyder **Stäng konfliktfönstret och lägg till objekttypen under
-  Inställningar → Typer och egna fält. Ditt förslag ligger kvar. Alternativt
-  kan du ta bort objektet ur ditt utkast nedan.**
-- Bekräftelsen kastar endast det berörda objektförslaget. Oberoende utkast,
-  sparade objekt och historik består. Medlemmen behöver ingen administrativ
-  behörighet för själva konfliktåtgärden.
-
-### UTKAST-65: rätta ändrad datatyp i den vanliga objektdialogen
-
-**Syfte:** Rätta värdet uttryckligen i ordinarie flöde före en faktisk ny bedömning.
-
-**Användare:** Robin i det synliga fönstret och Alex som administrativ förberedare.
-
-**Förutsättningar:** Kör `new-invalid-datatype`. Den offentliga förberedelsen
-följer UTKAST-64 men ändrar lagligen Installationsår från Text till Tal medan
-utkastet är tomt. Robins tidigare textvärde återimporteras mot aktuell definition.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-missing-object-type`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-testfallet “UTKAST-65: an incompatible historical field is corrected in the
-ordinary object form before fresh conflict assessment”.
+UTKAST-64.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-external-corrections.spec.ts",
+    "caseId": "UTKAST-64"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Typen saknas men de äldre uppgifterna och den vanliga rättelsevägen är läsbara.",
+    "Escape ändrar inget. Bekräftelsen kastar bara det valda privata objektförslaget; oberoende arbete, sparade objekt och historik består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna konflikten och läs det tidigare värdet **Våren 2021** i läsläge.
-2. Läs hänvisningen till den vanliga objektdialogen och välj **Stäng konfliktfönstret**.
-3. Välj Tabell och **Redigera Solcellsanläggningen**. Öppna Egna fält,
-   fyll Installationsår med `2021` och välj **Lägg i utkastet och stäng**.
-4. Kontrollera att den enda konflikten försvinner. Kör `result`, öppna
-   **Skriv till Skyttel → Visa utkastet** och spara utkastet separat från
-   sparikonen.
+1. Öppna **1 konflikt i ditt utkast**. Läs det saknade typunderlaget,
+hänvisningen till Inställningar och förslaget **Solcellsanläggningen**,
+**Tidigare privat förslag**, **Installationsår: Våren 2021**.
+2. Läs resultatet **Objektet i ditt utkast: Tas bort ur ditt utkast**. Stäng
+med Escape och öppna igen; förslaget finns kvar.
+3. Välj **Ta bort objektet ur ditt utkast**. Läs bekräftelsen och stäng. Öppna
+**Skriv till Skyttel → Visa utkastet**, läs hela **Oberoende förslag** och
+kontrollera att Solcellsanläggningen saknar förslagsrad.
 
 **Förväntat resultat:**
 
-- Stängning bevarar utkastet.
-- Instruktionen lyder **Stäng konfliktfönstret och rätta uppgiften i den vanliga
-  objektdialogen. Lägg ändringen i ditt utkast och kom sedan tillbaka hit.
-  Ditt förslag ligger kvar under tiden.**
-- Den vanliga dialogen lägger talvärdet och den aktuella typdefinitionen i
-  utkastet. Faktisk ny bedömning tar bort det lösta hindret; oberoende förslag
-  och sparade fakta består tills utkastet sparas separat.
-- Det genomförda atomiska sparandet innehåller Installationsår `2021` som Tal.
+- Typen saknas men de äldre uppgifterna och den vanliga rättelsevägen är
+läsbara.
+- Escape ändrar inget. Bekräftelsen kastar bara det valda privata
+objektförslaget; oberoende arbete, sparade objekt och historik består.
 
-### UTKAST-66: rätta ett samband med borttagen typ genom en faktisk ny definition
+### UTKAST-65: rätta det äldre textsvaret till ett tal i objektdialogen
 
-**Syfte:** Bevara läsbara historiska uppgifter och kräva ett uttryckligt
-typbyte innan ett kvarvarande sambandsförslag kan sparas.
+**Syfte:** Stängning bevarar det äldre förslaget tills den vanliga dialogen
+rättar det.
 
-**Användare:** Robin i fönstret; Alex förbereder arkivet i sin separata session.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-missing-relationship-type`. Sambandet från
-**Lo Exempel** till **Molnmusik** har den borttagna typen **Förvaras i**
-och ett eget fält **Installationsår: Våren 2021**. Fältets ID är
-`storage-year`. Ett oberoende objektförslag finns kvar.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-invalid-datatype`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-testfallet “UTKAST-66: a missing relationship type needs an actual new
-definition and explicit ordinary correction with readable historical field loss”.
+UTKAST-65.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-external-corrections.spec.ts",
+    "caseId": "UTKAST-65"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Stängning bevarar det äldre förslaget tills den vanliga dialogen rättar det.",
+    "Den nya bedömningen godtar talet utan att ändra gemensamma fakta eller oberoende arbete före separat sparande.",
+    "Det sparade talvärdet och övriga giltiga förslag finns kvar efter omstart."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna konflikten och läs anvisningen samt förslagets historiska fältnamn
-   och värde. Stäng med Escape och kör `result`.
-2. Öppna **Inställningar → Typer och egna fält → Ny sambandstyp**.
-   Ange namn **Förvaras i**, beskrivning **Ny faktisk definition**,
-   framåtriktning **förvaras i** och bakåtriktning **förvarar**.
-   Lägg till ett eget talfält med namnet **Installationsår**.
-   Lägg typen i utkastet och återgå till kartan.
-3. Öppna konflikten igen. Kontrollera att den fortfarande gäller trots
-   samma typnamn. Stäng och välj **Tabell → Samband för Lo Exempel**.
-4. Välj **Redigera samband**, byt till den nya typen och läs bekräftelsen
-   **Ta bort tidigare egna fält?**. Tryck Escape och kör `result`.
-5. Byt typ igen och välj **Ta bort fältvärdena och byt typ**.
-   Välj **Lägg i utkastet**, stäng samband och kör `result`.
-6. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+1. Öppna konflikten, läs **Våren 2021**, att uppgiften måste vara ett tal och
+hänvisningen till den vanliga objektdialogen. Välj **Stäng konfliktfönstret**.
+2. Välj **Tabell → Redigera Solcellsanläggningen → Egna fält**. Fyll
+**Installationsår** med `2021` och välj **Lägg i utkastet och stäng**.
+3. Kontrollera att konflikten försvinner. Öppna hela utkastläsningen och läs
+objektets namn, beskrivning, typ och **Installationsår: 2021** samt det
+oberoende förslaget.
+4. Spara hela utkastet separat. Starta om med samma databas, ladda om och läs
+samma objektuppgifter och det oberoende objektet i Tabell.
 
 **Förväntat resultat:**
 
-- Den borttagna typen och **Installationsår: Våren 2021** är läsbara.
-- En ny typ med samma namn har ett annat ID. Konflikten består tills
-  sambandet uttryckligen använder den faktiska nya definitionen.
-- Typbytesbekräftelsen visar **Installationsår**, inte `storage-year`.
-  Escape bevarar alla privata förslag. Det uttryckligt bekräftade bytet
-  tar bort det gamla fältvärdet utan att kopiera det till den nya typen.
-- Det nya talfältet har ett annat ID och förblir obesvarat trots samma
-  fältnamn. Dess formulärfält är tomt före inskickning.
-- Det oberoende förslaget, kartan och historiken består under rättningen.
-  Konflikten försvinner efter ny granskning; först det separata sparandet
-  gör definitionen, sambandet och övriga giltiga förslag gemensamma.
+- Stängning bevarar det äldre förslaget tills den vanliga dialogen rättar det.
+- Den nya bedömningen godtar talet utan att ändra gemensamma fakta eller
+oberoende arbete före separat sparande.
+- Det sparade talvärdet och övriga giltiga förslag finns kvar efter omstart.
 
-### UTKAST-67: återställ en borttagen typdefinition efter uttrycklig granskning
+### UTKAST-66: rätta saknad sambandstyp efter uttrycklig fältförlust
 
-**Syfte:** Bevara typens identitet och revisionsföljd utan att spara kartan
-eller återställa objekt när konfliktvalet bekräftas.
+**Syfte:** Historiska namn och svar består fram till ett uttryckligt bekräftat
+typbyte.
 
-**Användare:** Medlemmen Robin i fönstret; Alex förbereder arkivet som
-administratör i en separat session.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Använd förberedaren ovan. Kör `new-object-restoration`
-för objekttyp eller `new-relationship-restoration` för sambandstyp. Den
-förbereder en faktiskt sparad definition, ett äldre privat ändringsförslag
-och en senare laglig gemensam borttagning. Alex återimporterar det äldre
-ägda utkastet i en aktuell, validerad export med nya kontrollsummor. Inga
-databasrader ändras direkt. Ett oberoende objektförslag finns i Robins utkast.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-missing-relationship-type`. Börja i en ny installation och behåll samma
+databas vid omstart inom fallet.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+UTKAST-66.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-external-corrections.spec.ts",
+    "caseId": "UTKAST-66"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Historiska namn och svar består fram till ett uttryckligt bekräftat typbyte.",
+    "Samma typ- eller fältnamn överför inte det gamla svaret. Det nya talfältet förblir obesvarat.",
+    "Rättningen lämnar sparade fakta och historik oförändrade före separat sparande; det nya sambandet består efter omstart."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten och läs sambandet **Lo Exempel → Förvaras i → Molnmusik**
+med **Installationsår: Våren 2021** och rättelsevägen. Stäng med Escape.
+2. Öppna **Inställningar → Typer och egna fält → Ny sambandstyp**. Ange
+**Förvaras i**, beskrivningen **Ny faktisk definition**, riktningarna
+**förvaras i** och **förvarar**. Lägg till talfältet **Installationsår**, lägg
+typen i utkastet och återgå till kartan. Konflikten består trots samma namn.
+3. Öppna **Tabell → Samband för Lo Exempel → Redigera samband**. Välj den nya
+typen. Läs **Ta bort tidigare egna fält?** med det gamla fältnamnet och
+textsvaret. Tryck Escape; byt sedan igen och bekräfta **Ta bort fältvärdena
+och byt typ**.
+4. Kontrollera att det nya talfältet är tomt. Välj **Lägg i utkastet** och
+stäng samband. Läs hela sambandsförslaget med start, mål, typ, säkerhet och
+obesvarat Installationsår, samt det oberoende förslaget.
+5. Spara hela utkastet separat. Starta om, ladda om och läs det sparade
+sambandet och det oberoende objektet genom Tabell.
+
+**Förväntat resultat:**
+
+- Historiska namn och svar består fram till ett uttryckligt bekräftat typbyte.
+- Samma typ- eller fältnamn överför inte det gamla svaret. Det nya talfältet
+förblir obesvarat.
+- Rättningen lämnar sparade fakta och historik oförändrade före separat
+sparande; det nya sambandet består efter omstart.
+
+### UTKAST-67: återställ en borttagen objekttyp genom privat granskning och sparande
+
+**Syfte:** Varje uppgift börjar på egen rad och är läsbar före val, efter val
+och efter bekräftelse, även i det smala fönstret.
+
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
+
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-object-restoration`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
-testfallen “UTKAST-67: an explicitly reviewed removed object definition
-restores its historical identity only on a separate save” och
-“UTKAST-67: an explicitly reviewed removed relationship definition restores
-its historical identity only on a separate save”.
+UTKAST-67.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-67"
+  },
+  "reference": "Objekttyp; 1280 och 320 × 900. Samma fullständiga definition läses vid varje fas för att skydda smal läsning och separat sparande.",
+  "outcomes": [
+    "Varje uppgift börjar på egen rad och är läsbar före val, efter val och efter bekräftelse, även i det smala fönstret.",
+    "Escape ändrar inget. Bekräftelsen föreslår återställning enbart i Robins utkast och bevarar oberoende arbete.",
+    "Först separat sparande gör definitionen gemensam. Båda medlemmarna kan läsa den efter omstart; borttaget innehåll återställs inte automatiskt."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **1 konflikt i ditt utkast** och läs hela typdefinitionen.
-2. Kontrollera **Borttaget** på den sparade sidan och att bekräftelsen är
-   spärrad utan ett aktivt val. Stäng med Escape och kör `result`.
-3. Öppna igen och välj hela den föreslagna **Typdefinition**. Läs resultatet.
-4. Välj **Lägg valen i utkastet** och kör `result`. Läs hela definitionen i
-   det bekräftade resultatet innan du stänger dialogen. Öppna
-   **Skriv till Skyttel → Visa utkastet** och spara hela utkastet separat.
-5. Upprepa i ett smalt mobilfönster för båda typdefinitionerna. Läs namn,
-   beskrivning, fält och riktningar före val, efter val och efter bekräftelse.
+1. Öppna konflikten. Läs **Borttaget** på den sparade sidan och **Min privata
+typbenämning**, **Min tidigare definition**, **Egna fält** och
+**Installationsår: Text** i förslaget. Utan aktivt val är bekräftelsen
+spärrad. Läs uppgifterna vid 1280 och 320 pixlars fönsterbredd innan du går
+vidare.
+2. Stäng med Escape och öppna igen. Välj hela den föreslagna
+**Typdefinition**. Läs samma uppgifter och resultatet vid båda bredderna före
+bekräftelsen.
+3. Välj **Lägg valen i utkastet**. Läs hela det bekräftade resultatet vid båda
+bredderna och stäng. Läs hela definitionen och **Oberoende förslag** genom
+utkastets fullständiga läsning.
+4. Spara hela utkastet separat och starta om med samma databas. Som Robin och
+Alex, ladda om och läs det oberoende objektet i Tabell och definitionens namn,
+beskrivning och textfält i Inställningar.
 
 **Förväntat resultat:**
 
-- Förklaringen lyder **Typdefinitionen saknas nu i kartan. Ditt förslag
-  innehåller ändringar i den.** Fullständiga privata namn, beskrivningar,
-  fält och riktningar är läsbara i ett aktivt val för hela definitionen.
-  Varje uppgift börjar på en egen rad i jämförelsen och i det valda och
-  bekräftade resultatet, även i mobilfönstret. Inga fullständiga värden
-  försvinner eller flyter ihop med nästa egenskaps namn.
-- Förhandsresultatet lyder **Typdefinitionen föreslås återställas med din
-  ändring.** Stängning ändrar inget. Bekräftelsen ändrar bara Robins utkast,
-  behåller det oberoende förslaget och skapar inget gemensamt historikpost.
-- Förslaget behåller den ursprungliga typens ID och går från den faktiskt
-  borttagna revisionen 2 till revision 3. Kartan saknar typen fram till
-  det separata sparandet. Inget borttaget objekt eller samband återställs.
-- Sparandet gör definitionen och det oberoende objektet gemensamma.
-  Den privata återställningsbehörigheten finns inte i kvittot eller historiken.
+- Varje uppgift börjar på egen rad och är läsbar före val, efter val och efter
+bekräftelse, även i det smala fönstret.
+- Escape ändrar inget. Bekräftelsen föreslår återställning enbart i Robins
+utkast och bevarar oberoende arbete.
+- Först separat sparande gör definitionen gemensam. Båda medlemmarna kan läsa
+den efter omstart; borttaget innehåll återställs inte automatiskt.
 
 ### UTKAST-68: avvisa inaktuell återställning utan delvis sparande
 
-**Syfte:** Kräva aktuell granskning när en annan användare hunnit återställa
-och ändra samma definition och bevara oberoende förslag vid avvisning.
+**Syfte:** Ett gammalt återställningsförslag kan inte spara någon del av
+utkastet mot en nyare gemensam definition.
 
-**Användare:** Robin i fönstret; Alex i förberedarens separata session.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-restoration-two`. Båda har var sitt verkligt
-ägt tidigare definitionsförslag. Robin har också ett oberoende objektförslag.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-restoration-two`. Börja i en ny installation och behåll samma databas vid
+omstart inom fallet.
 
 **Integrationstest:**
 [conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
-testfallet “UTKAST-68: a newer saved definition rejects stale restoration
-atomically and preserves independent proposals”.
+UTKAST-68.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-68"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Ett gammalt återställningsförslag kan inte spara någon del av utkastet mot en nyare gemensam definition.",
+    "Det egna fullständiga förslaget och det oberoende arbetet består vid avvisning.",
+    "Ny aktuell granskning följd av separat sparande bevarar båda ändringarna efter omstart. Borttagning blockeras medan den beständiga privata definitionen används."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Kör `probe-definition-guards` före granskningen och därefter `result`.
-2. Öppna Robins konflikt, välj den föreslagna definitionen och lägg valet i
-   utkastet. Stäng dialogen. Kör `probe-reused-definition` för att försöka
-   använda samma tidigare jämförelse igen.
-3. Kör `newer-definition`. Alex granskar sitt eget förslag och sparar
-   definitionen. Förberedaren försöker därefter ta bort definitionen medan
-   Robins privata återställningsförslag finns kvar och kontrollerar HTTP 409
-   samt oförändrade privata utkast, gemensamma uppgifter och historik.
-   Alex sparar sedan **Ny gemensam typbenämning** som nästa revision.
-4. Kör `try-restoration-save` och `result`.
-5. Öppna den aktuella konflikten. Välj Robins föreslagna namn och beskrivning;
-   samma egna fält behöver inget nytt val. Lägg valen i utkastet.
-6. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+1. Öppna Robins konflikt, välj den föreslagna definitionen och lägg valet i
+utkastet. Stäng och läs hela definitionen och det oberoende förslaget. Meddela
+förberedaren att första granskningen är klar.
+2. Invänta förberedarens nyare gemensamma definition enligt den separata
+tidsordningen. Ladda om Robin och läs fortfarande det egna fullständiga
+förslaget och det oberoende arbetet.
+3. Välj **Spara hela utkastet** och läs **Inget sparades**. Stäng sparbeskedet
+och textvyn. Välj **Hämta aktuellt underlag**. Öppna aktuell konflikt och
+granska Robins föreslagna namn och beskrivning mot den nya sparade
+definitionen. Välj Robins namn och beskrivning men den sparade sidans
+**Egna fält** och **Avsnitt** tillsammans; Installationsår är fortfarande
+Text i Egna fält.
+4. Lägg valen i utkastet och spara separat. Starta om. Som Robin och Alex, läs
+det sparade oberoende objektet och den slutliga definitionen **Min privata
+typbenämning**, **Min tidigare definition**, **Installationsår: Text**.
 
 **Förväntat resultat:**
 
-- Felaktig jämförelse och den andra privata ägarens jämförelse avvisas med
-  HTTP 409 utan utkaständring. `probe-reused-definition` avvisas också med
-  HTTP 409. Förberedaren kontrollerar att båda privata utkasten, gemensamma
-  uppgifter och historik är oförändrade vid varje avvisning.
-- Typens användningsskydd gäller även för privata återställningsförslag;
-  en annan användare får inte ta bort definitionen medan förslaget finns.
-- Det gamla sparandet avvisas med HTTP 409. Robins hela utkast, sparade
-  objekt, Alex revision 4 och historik består. Det oberoende objektet
-  blir inte gemensamt genom det avvisade försöket.
-- Ny aktuell granskning använder den faktiskt sparade definitionen. Robins
-  förslag blir en vanlig ändring mot revision 4, utan gammal
-  återställningsbehörighet. Separat sparande ger revision 5 och sparar
-  det oberoende objektet tillsammans med definitionen.
+- Ett gammalt återställningsförslag kan inte spara någon del av utkastet mot
+en nyare gemensam definition.
+- Det egna fullständiga förslaget och det oberoende arbetet består vid
+avvisning.
+- Ny aktuell granskning följd av separat sparande bevarar båda ändringarna
+efter omstart. Borttagning blockeras medan den beständiga privata definitionen
+används.
 
-### UTKAST-69: ompröva återställningsförslag efter import
+### UTKAST-69: ompröva ett ägt återställningsförslag efter import
 
-**Syfte:** Läsa och rätta ett importerat privat förslag utan att arkivet
-överför behörighet från en tidigare innehållsgeneration.
+**Syfte:** Importen behåller ägare och fullständiga privata uppgifter men
+godkänner inte återställningen tyst.
 
-**Användare:** Robin i fönstret; administratören Alex utför export och import.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-relationship-restoration`. Förberedelsen
-använder verklig offentlig export, kontrollsummor och validerad import
-inom samma hushåll med oförändrad betrodd privat ägare.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-relationship-restoration`. Börja i en ny installation och behåll samma
+databas vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
-testfallet “UTKAST-69: importing a private restoration requires a fresh
-explicit review in the replacement generation”.
+UTKAST-69.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-69"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Importen behåller ägare och fullständiga privata uppgifter men godkänner inte återställningen tyst.",
+    "Ny uttrycklig granskning krävs. Separat sparande och omstart gör rätt definition gemensam utan att kasta oberoende arbete."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Granska definitionen och lägg det föreslagna återställningsvalet i utkastet.
-2. Kör `result`, därefter `reimport-restoration`. Alex exporterar och
-   återimporterar aktuellt innehåll genom den offentliga HTTP-gränsen.
-3. Kör `try-restoration-save` och kontrollera avvisningen. Ladda om fönstret.
-   Öppna konflikten på nytt och kontrollera definitionen.
-4. Välj och bekräfta den föreslagna definitionen på aktuellt underlag.
-5. Spara hela utkastet separat från Utkastets sparikon.
+1. Öppna konflikten och bekräfta den föreslagna definitionen. Stäng och läs
+hela förslaget med namn, beskrivning och båda riktningarna samt det oberoende
+förslaget.
+2. Invänta förberedarens återimport och tekniska försök till sparande före ny
+granskning. Ladda om och läs samma fullständiga privata förslag och oberoende
+arbete.
+3. Öppna konflikten på nytt. Välj och bekräfta hela den föreslagna
+definitionen på aktuellt underlag. Läs åter hela definitionen i utkastet.
+4. Spara separat och starta om. Läs den sparade sambandstypens namn,
+beskrivning och riktningar samt det oberoende objektet.
 
 **Förväntat resultat:**
 
-- Exporten bevarar det privata förslaget. Importen behåller dess ägare,
-  värden och oberoende förslag men överför ingen gammal
-  återställningsbehörighet. Innehållsgenerationen ökar.
-- Förslaget är fortfarande läsbart och uttryckligen granskningsbart, inte
-  tyst godkänt eller permanent spärrat. Sparande före den nya granskningen
-  avvisas utan utkaständring; integrationstestet kontrollerar detta via HTTP.
-- Ny bekräftelse gäller den faktiska borttagna definitionen och den nya
-  generationen. Separat sparande behåller typens ID och ger revision 3.
+- Importen behåller ägare och fullständiga privata uppgifter men godkänner
+inte återställningen tyst.
+- Ny uttrycklig granskning krävs. Separat sparande och omstart gör rätt
+definition gemensam utan att kasta oberoende arbete.
 
-### UTKAST-70: kontrollera återställning efter tappat svar
+### UTKAST-70: kontrollera tappat återställningssvar i Karta
 
-**Syfte:** Verifiera faktisk privat återställning med en uttrycklig hämtning
-utan att upprepa bekräftelsen eller tappa åtkomst från Karta eller Tabell.
+**Syfte:** Återöppning upprepar inte bekräftelsen och uppföljningen består när
+den olösta raden försvinner.
 
-**Användare:** Robin i fönstret; Alex förbereder arkivet separat.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-object-restoration`, välj Karta eller Tabell
-och använd ett smalt fönster. `lose-applied` tappar bara ett verkligt svar
-efter att servern behandlat bekräftelsen; det ersätter inte servern.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-object-restoration`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
-testfallen “UTKAST-70: a lost definition restoration reply verifies its
-private authority without replay in Karta” och
-“UTKAST-70: a lost definition restoration reply verifies its private
-authority without replay in Tabell”.
+UTKAST-70.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-70"
+  },
+  "reference": "Karta; 320 × 900; faktiskt genomfört konfliktval med tappat svar och native återgångsfokus.",
+  "outcomes": [
+    "Återöppning upprepar inte bekräftelsen och uppföljningen består när den olösta raden försvinner.",
+    "Explicit hämtning verifierar ett genomfört privat resultat. Typen är fortfarande borttagen gemensamt och historiken är oförändrad.",
+    "Återgångsfokus är användbart och hela det privata arbetet består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna konflikten och välj den föreslagna definitionen. Kör `lose-applied`
-   och bekräfta valet. Läs det oklara beskedet och stäng med Escape.
-2. Öppna igen för en aktuell hämtning. Stäng när konfliktlänken försvunnit
-   och välj **Visa konfliktvalet**. Kontrollera att ny bekräftelse är spärrad.
-3. Välj **Kontrollera om valet lades i utkastet** och kör `result`.
-4. Stäng med Escape och kontrollera synligt användbart återgångsfokus.
-   Upprepa med en ny installation i den andra vyn.
+1. Använd **Karta** vid 320 × 900. Öppna konflikten och välj den föreslagna
+definitionen. Meddela förberedaren att tappa det genomförda svaret, och välj
+sedan **Lägg valen i utkastet**. Läs det oklara beskedet och stäng med Escape.
+2. Öppna igen för aktuell hämtning. Stäng när konfliktlänken försvunnit och
+välj **Visa konfliktvalet**. Ny bekräftelse är spärrad.
+3. Välj **Kontrollera om valet lades i utkastet**. Läs att valen finns i
+utkastet. Stäng med Escape och kontrollera synligt användbart återgångsfokus.
+4. Läs hela definitionen **Min privata typbenämning**, **Min tidigare
+definition**, **Installationsår: Text** och det oberoende förslaget genom
+utkastets fullständiga läsning. Spara inte i detta fall.
 
 **Förväntat resultat:**
 
-- Bara en bekräftelse skickas. Återöppning upprepar ingen mutation.
-  Uppföljningen består även när den sista olösta raden försvinner.
-- Den uttryckliga hämtningen jämför hela faktiska privata resultatet:
-  förslaget, dess underlag och dess aktuella återställningsbehörighet.
-  Beskedet lyder att valen finns i utkastet och kartan sparas separat.
-- Typen är fortfarande borttagen ur kartan, historiken är oförändrad och
-  det oberoende objektförslaget består. Stängning återför fokus till en
-  synlig användbar kontroll även när öppningsknappen har försvunnit.
+- Återöppning upprepar inte bekräftelsen och uppföljningen består när den
+olösta raden försvinner.
+- Explicit hämtning verifierar ett genomfört privat resultat. Typen är
+fortfarande borttagen gemensamt och historiken är oförändrad.
+- Återgångsfokus är användbart och hela det privata arbetet består.
 
-### UTKAST-71: avvisa vanligt nyskapande med borttagen typidentitet
+### UTKAST-71: skapa en ny vanlig definition utan historisk återställningsbehörighet
 
-**Syfte:** Hindra att en vanlig definitionsbegäran återanvänder en borttagen
-identitet eller själv tilldelar återställningsbehörighet.
+**Syfte:** Kastvalet påverkar bara det gamla privata definitionsförslaget och
+lämnar oberoende arbete kvar.
 
-**Användare:** Medlemmen Robin; administratören Alex förbereder arkivet.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-object-restoration`. Terminalkommandot nedan
-skickar en vanlig offentlig definitionsbegäran med det verkliga gamla ID:t
-och påstådd återställningsbehörighet. Ingen databas eller server ersätts.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-object-restoration`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
-testfallet “UTKAST-71: ordinary definition creation cannot reuse a removed
-identity or grant forged restoration authority”.
+UTKAST-71.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-71"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Kastvalet påverkar bara det gamla privata definitionsförslaget och lämnar oberoende arbete kvar.",
+    "Samma namn i ett nytt vanligt formulär återställer inte den borttagna historiska identiteten eller ger gammal behörighet.",
+    "Den nya vanliga definitionen och det oberoende objektet finns kvar efter sparande och omstart."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Öppna konflikten och välj den sparade sidans **Borttaget** för
-   **Typdefinition**. Bekräfta med **Lägg valen i utkastet**.
-2. Kontrollera **Typdefinitionen förblir borttagen**. Kör `result`.
-3. Kör `forge-restoration` och därefter `result` igen.
+Typdefinition. Bekräfta och läs **Typdefinitionen förblir borttagen**. Stäng
+och läs det oberoende förslaget; definitionsförslaget saknar förslagsrad.
+2. Invänta förberedarens separata försök med förfalskad
+återställningsbehörighet. Öppna **Inställningar → Typer och egna fält → Ny
+objekttyp**.
+3. Ange **Solcellsanläggning**, **Ny vanlig definition**, utan egna fält. Lägg
+typförslaget i utkastet, återgå till kartan och läs den fullständiga nya
+definitionen.
+4. Spara separat och starta om. Läs den nya definitionens namn och beskrivning
+i Inställningar samt det oberoende objektet i Tabell.
 
 **Förväntat resultat:**
 
-- Det uttryckliga valet kastar bara det privata definitionsförslaget.
-  Det oberoende objektförslaget består och typen förblir borttagen.
-- Den vanliga definitionsbegäran avvisas med HTTP 409. Dess påstådda
-  behörighet tillåter varken återanvänt ID eller återställning.
-- Robins utkast, gemensamma typer, objekt och historik är oförändrade
-  efter den avvisade begäran.
+- Kastvalet påverkar bara det gamla privata definitionsförslaget och lämnar
+oberoende arbete kvar.
+- Samma namn i ett nytt vanligt formulär återställer inte den borttagna
+historiska identiteten eller ger gammal behörighet.
+- Den nya vanliga definitionen och det oberoende objektet finns kvar efter
+sparande och omstart.
 
-### UTKAST-72: läs historiska fältnamn före bekräftat objektbyte till giltig typ
+### UTKAST-72: bekräfta förlust av historiska objektfält vid typrättning
 
-**Syfte:** Bevara namn och värden från en borttagen objekttyp när en vanlig
-rättning kräver att tidigare egna fält tas bort.
+**Syfte:** Escape bevarar det historiska svaret; först uttrycklig bekräftelse
+tar bort det.
 
-**Användare:** Robin i fönstret; Alex förbereder arkivet i sin separata session.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-missing-object-type`. Det privata objektet
-**Solcellsanläggningen** har **Installationsår: Våren 2021** från en borttagen
-typ. Ett oberoende objektförslag finns i samma utkast.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-missing-object-type`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-testfallet “UTKAST-72: ordinary correction of a missing object type preserves
-historical field labels until explicitly confirmed loss”.
+UTKAST-72.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-external-corrections.spec.ts",
+    "caseId": "UTKAST-72"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Escape bevarar det historiska svaret; först uttrycklig bekräftelse tar bort det.",
+    "Samma typ- och fältnamn kopierar inte det gamla textsvaret till den nya betydelsen.",
+    "Konflikten upphör efter faktisk rättning; separat sparande och omstart bevarar det rättade innehållet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **Inställningar → Typer och egna fält → Ny objekttyp**.
-   Ange namn **Solcellsanläggning**, beskrivning **Ny faktisk definition**
-   och lägg till ett talfält med namnet **Installationsår**.
-   Lägg typen i utkastet och återgå till kartan. Kontrollera att konflikten
-   fortfarande gäller trots samma typnamn.
-2. Öppna **Tabell → Redigera Solcellsanläggningen**. Byt till den nya
-   typen och läs **Ta bort tidigare egna fält?**. Tryck Escape och kör
-   `result`. Byt till samma nya typ igen.
-3. Välj **Ta bort fältvärdena och byt typ**. Öppna **Egna fält** och läs
-   det tomma nya talfältet **Installationsår**. Välj **Lägg i utkastet och stäng**.
-   Kör `result` och kontrollera att konflikten inte längre visas.
-4. Öppna **Skriv till Skyttel → Visa utkastet** och spara separat.
+1. Öppna **Inställningar → Typer och egna fält → Ny objekttyp**. Ange
+**Solcellsanläggning**, **Ny faktisk definition** och ett talfält
+**Installationsår**. Lägg typen i utkastet och återgå till kartan; konflikten
+består trots samma namn.
+2. Öppna **Tabell → Redigera Solcellsanläggningen** och välj den nya typen.
+Läs **Ta bort tidigare egna fält?** med **Installationsår: Våren 2021**. Tryck
+Escape och välj samma nya typ igen.
+3. Bekräfta **Ta bort fältvärdena och byt typ**. Öppna **Egna fält** och läs
+det tomma nya Installationsår. Välj **Lägg i utkastet och stäng**. Läs hela
+objektförslaget och det oberoende förslaget i utkastet.
+4. Spara separat, starta om med samma databas och läs namn, beskrivning, ny
+typ och obesvarat Installationsår samt det oberoende objektet genom Tabell.
 
 **Förväntat resultat:**
 
-- Bekräftelsen anger **Installationsår: Våren 2021**, inte fältets ID `year`.
-  Escape bevarar hela utkastet och fältvärdet.
-- Det uttryckliga bytet tar bort det tidigare egna värdet och lägger
-  objektet i utkastet mot den faktiskt valda definitionen.
-- Typen och det nya talfältet har andra ID:n trots samma namn. Det nya
-  **Installationsår** förblir obesvarat; det gamla svaret kopieras inte.
-- Det oberoende förslaget, sparade objekt och historik består under rättningen.
-  Först det separata sparandet gör den rättade typen gemensam för objektet.
+- Escape bevarar det historiska svaret; först uttrycklig bekräftelse tar bort
+det.
+- Samma typ- och fältnamn kopierar inte det gamla textsvaret till den nya
+betydelsen.
+- Konflikten upphör efter faktisk rättning; separat sparande och omstart
+bevarar det rättade innehållet.
 
 ### UTKAST-73: behåll ändrade fakta när en ny förbindelse försvinner
 
@@ -3963,121 +4093,158 @@ och eventuell versions- eller anropsräkning; de är inga vanliga UI-steg.
   i utkastet. Det oberoende förslaget, sparade objekt och historik består.
 - Först separat sparande tar bort Lo ur den gemensamma kartan.
 
-### UTKAST-74: läs ett förlorat fälts historiska namn från ägt förslag
+### UTKAST-74: läs historiskt objektfält när aktuell fältbetydelse ersätts
 
-**Syfte:** Använda aktuell fältbenämning när den finns och annars den ägda
-historiska benämningen, även när själva typdefinitionen fortfarande finns.
+**Syfte:** Det äldre ägda svaret är läsbart även när den aktuella typen
+innehåller ett annat fält med samma namn.
 
-**Användare:** Robin i fönstret; administratören Alex förbereder arkivet.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-replaced-object-field` eller
-`new-replaced-relationship-field`. Förberedaren exporterar ett tidigare
-ägt förslag, kastar det offentligt, ersätter det gamla textfältet med ett
-nytt talfält med samma namn och återimporterar det tidigare privata förslaget
-med kontrollerade arkivdelar. Det nya fältet har en annan identitet.
-
-**Integrationstest:**
-[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-testfallen “UTKAST-74: an object type with a replaced field preserves the
-owned historical answer label during explicit type-loss review” och
-“UTKAST-74: a relationship type with a replaced field preserves the owned
-historical answer label during explicit type-loss review”.
-
-**Steg:**
-
-1. Öppna konflikten och läs **Installationsår: Våren 2021** i förslaget.
-   Stäng med Escape.
-2. Välj **Tabell** och **Redigera Solcellsanläggningen** för objektfallet.
-   För sambandsfallet, öppna **Samband för Lo Exempel → Redigera samband**.
-3. Byt till den första vanliga typen. Läs **Ta bort tidigare egna fält?**.
-   Kontrollera den historiska benämningen och svaret. Tryck Escape och
-   kör `result`. Upprepa typbytet.
-4. Bekräfta **Ta bort fältvärdena och byt typ**. Lägg ändringen i utkastet
-   och stäng den vanliga dialogen. Kör `result`.
-5. Spara separat från **Skriv till Skyttel → Visa utkastet**. Upprepa
-   hela fallet i en ny installation med den andra förberedelsen.
-
-**Förväntat resultat:**
-
-- Den befintliga aktuella typen innehåller ett nytt talfält med samma namn,
-  men den gamla svarade fältidentiteten saknas där. Bekräftelsen visar ändå
-  **Installationsår: Våren 2021**, inte den gamla fältidentiteten.
-- Escape bevarar hela det privata utkastet. Ett uttryckligt bekräftat byte
-  tar bort gamla svar utan att kopiera dem till en annan fältidentitet.
-- Det oberoende förslaget och gemensamma uppgifter består under rättningen.
-  Endast ett separat sparande gör det rättade förslaget gemensamt.
-
-### UTKAST-75: visa saknad ändpunkt och saknad typ samtidigt
-
-**Syfte:** Bevara alla samtidiga hinder och kasta endast det uttryckligen
-valda sambandsförslaget.
-
-**Användare:** Robin i fönstret; administratören Alex förbereder arkivet.
-
-**Förutsättningar:** Kör `new-multiple-blockers`. Förberedaren använder
-validerad offentlig export och import av ett tidigare ägt sambandsförslag
-efter verklig borttagning av både dess typdefinition och målobjekt.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-replaced-object-field`. Börja i en ny installation och behåll samma
+databas vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
-testfallet “UTKAST-75: a missing endpoint and missing relationship type remain
-visible until only the explicit target proposal is discarded”.
+UTKAST-74.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-external-corrections.spec.ts",
+    "caseId": "UTKAST-74"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Det äldre ägda svaret är läsbart även när den aktuella typen innehåller ett annat fält med samma namn.",
+    "Escape ändrar inget; ett uttryckligt typbyte tar bort det gamla svaret utan att kopiera det.",
+    "Gemensamma fakta och oberoende arbete bevaras; rättningen består efter separat sparande och omstart."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **1 konflikt i ditt utkast**. Läs både den saknade ändpunkten och
-   den saknade sambandstypen samt anvisningen för vanlig typrättning.
-2. Läs **Molnmusik** från den historiska ändpunkten i förslaget. Kontrollera
-   att förslaget är läsbart och inte ger några egenskapsval.
-3. Tryck Escape, kör `result` och öppna konflikten igen.
-4. Välj **Ta bort sambandet ur ditt utkast** och kör `result`.
+1. Öppna konflikten och läs **Installationsår: Våren 2021**. Stäng med Escape.
+2. Välj **Tabell → Redigera Solcellsanläggningen**. Byt till den första
+vanliga typen, **Person**. Läs det historiska fältnamnet och svaret i **Ta
+bort tidigare egna fält?**. Tryck Escape och välj Person igen.
+3. Bekräfta **Ta bort fältvärdena och byt typ** och lägg ändringen i utkastet.
+Läs hela objektförslaget med namn, beskrivning och Person samt det oberoende
+förslaget.
+4. Spara separat, starta om och läs objektet som Person och det oberoende
+objektet genom Tabell.
 
 **Förväntat resultat:**
 
-- Båda hindren finns i samma konflikt. En primär orsak döljer inte den andra.
-- Historiska ändpunktsnamn är läsbara. Stängning ändrar inget privat förslag.
-- Bekräftelsen kastar bara det berörda sambandsförslaget. Det oberoende
-  objektförslaget, gemensamma uppgifter, typer och historik är oförändrade.
+- Det äldre ägda svaret är läsbart även när den aktuella typen innehåller ett
+annat fält med samma namn.
+- Escape ändrar inget; ett uttryckligt typbyte tar bort det gamla svaret utan
+att kopiera det.
+- Gemensamma fakta och oberoende arbete bevaras; rättningen består efter
+separat sparande och omstart.
 
-### UTKAST-76: kasta ägt definitionsförslag utan faktisk borttagningsrevision
+### UTKAST-75: visa saknad ändpunkt och sambandstyp samtidigt
 
-**Syfte:** Tillåta ett uttryckligt privat kastval när en validerad import
-saknar definitionen utan att ge obestyrkt återställningsbehörighet.
+**Syfte:** En primär orsak döljer inte det andra hindret eller de historiska
+uppgifterna.
 
-**Användare:** Robin i fönstret; administratören Alex förbereder arkiven.
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
 
-**Förutsättningar:** Kör `new-no-removed-object-definition` eller
-`new-no-removed-relationship-definition`. Förberedaren exporterar en faktisk
-utgångspunkt före typens tillkomst med Robins oberoende privata förslag,
-skapar och sparar typen samt exporterar Robins ägda definitionsändring.
-Den offentliga återimporten av utgångspunkten följd av det ägda privata
-förslaget bevarar ägaren, men ingen faktisk borttagningsrevision finns.
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-multiple-blockers`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+UTKAST-75.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-external-corrections.spec.ts",
+    "caseId": "UTKAST-75"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "En primär orsak döljer inte det andra hindret eller de historiska uppgifterna.",
+    "Stängning ändrar inget. Bekräftelsen kastar bara det berörda sambandsförslaget och bevarar gemensamma fakta, typer och historik."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten och läs både den saknade ändpunkten och den saknade
+sambandstypen samt anvisningen för vanlig typrättning.
+2. Läs **Lo Exempel**, **Molnmusik** och **Installationsår: Våren 2021** från
+det bevarade förslaget. Tryck Escape och öppna igen.
+3. Välj **Ta bort sambandet ur ditt utkast** och läs bekräftelsen. Stäng och
+läs hela det kvarvarande **Oberoende förslag** i utkastet; sambandsförslaget
+saknar förslagsrad.
+
+**Förväntat resultat:**
+
+- En primär orsak döljer inte det andra hindret eller de historiska
+uppgifterna.
+- Stängning ändrar inget. Bekräftelsen kastar bara det berörda
+sambandsförslaget och bevarar gemensamma fakta, typer och historik.
+
+### UTKAST-76: kasta objekttypsförslag utan faktisk borttagningsrevision
+
+**Syfte:** En saknad faktisk borttagningsrevision ger ingen
+återställningsbehörighet.
+
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
+
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-no-removed-object-definition`. Börja i en ny installation och behåll
+samma databas vid omstart inom fallet.
 
 **Integrationstest:**
 [conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
-testfallen “UTKAST-76: a retained object definition without an actual removed
-revision can be explicitly discarded without granting restoration” och
-“UTKAST-76: a retained relationship definition without an actual removed
-revision can be explicitly discarded without granting restoration”.
+UTKAST-76.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-76"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "En saknad faktisk borttagningsrevision ger ingen återställningsbehörighet.",
+    "Ett uttryckligt kastval är ändå tillgängligt och påverkar bara det egna definitionsförslaget; oberoende arbete och gemensamma fakta består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Kör `probe-unavailable-restoration` och `result`. Läs HTTP 409 och
-   kontrollen av oförändrade privata utkast, gemensamma uppgifter och historik.
-2. Öppna **1 konflikt i ditt utkast**. Läs **Min privata typbenämning**
-   från det bevarade förslaget och beskedet att det inte kan återställas
-   med det aktuella underlaget. Förslagets återställningsval är spärrat.
-3. Välj den sparade sidans **Borttaget** för **Typdefinition** och
-   **Lägg valen i utkastet**. Kör `result`.
-4. Upprepa med en ny installation för den andra definitionstypen.
+1. Invänta förberedarens separata avvisade återställningsprov. Öppna
+konflikten och läs hela **Min privata typbenämning**, **Min tidigare
+definition**, **Egna fält** och **Installationsår: Text**. Läs att
+definitionen inte kan återställas med aktuellt underlag; förslagets val är
+spärrat.
+2. Välj den sparade sidans **Borttaget** för Typdefinition och **Lägg valen i
+utkastet**. Läs bekräftelsen och stäng.
+3. Läs hela **Oberoende förslag** i utkastet och kontrollera att
+definitionsförslaget saknar förslagsrad.
 
 **Förväntat resultat:**
 
-- En föreslagen återställning utan faktisk borttagningsrevision avvisas
-  med HTTP 409 utan ändring. Ingen ny återställningsbehörighet tilldelas.
-- Det uttryckliga sparade valet kastar bara det egna definitionsförslaget
-  och ökar det privata utkastets version en gång.
-- Det oberoende förslaget, gemensamma objekt, typer och historik består.
+- En saknad faktisk borttagningsrevision ger ingen återställningsbehörighet.
+- Ett uttryckligt kastval är ändå tillgängligt och påverkar bara det egna
+definitionsförslaget; oberoende arbete och gemensamma fakta består.
 
 ### UTKAST-77: kontrollera ett oklart kastval utan upprepad bekräftelse
 
@@ -6346,6 +6513,198 @@ Anteckna program, version och webbläsare.
 
 - Beskeden hörs begripligt en gång vid sina tillståndsövergångar.
 - Senare fokus består. Anteckna faktiskt hörda ord och eventuella fel.
+
+### UTKAST-138: läs historiskt sambandsfält när aktuell fältbetydelse ersätts
+
+**Syfte:** Sambandsdialogen använder den ägda historiska fältbetydelsen, även
+när den aktuella definitionen ersätter fältet.
+
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
+
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-replaced-relationship-field`. Börja i en ny installation och behåll samma
+databas vid omstart inom fallet.
+
+**Integrationstest:**
+[conflict-external-corrections.spec.ts](../../tests/integration/conflict-external-corrections.spec.ts),
+UTKAST-138.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-external-corrections.spec.ts",
+    "caseId": "UTKAST-138"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Sambandsdialogen använder den ägda historiska fältbetydelsen, även när den aktuella definitionen ersätter fältet.",
+    "Avbrutet typbyte bevarar alla förslag; bekräftat byte tar bara bort de gamla svaren.",
+    "Separat sparande och omstart bevarar rättningen utan att sammanblanda objekt- och sambandsflöden."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna konflikten, läs **Installationsår: Våren 2021** och stäng med Escape.
+2. Välj **Tabell → Samband för Lo Exempel → Redigera samband**. Byt till den
+första vanliga sambandstypen, **Använder**. Läs det historiska fältnamnet och
+svaret i fältförlustbekräftelsen, tryck Escape och byt igen.
+3. Bekräfta fältförlusten, välj **Lägg i utkastet** och stäng samband. Läs
+hela förslaget med Lo Exempel, Molnmusik, Använder och bekräftad säkerhet samt
+det oberoende förslaget.
+4. Spara separat, starta om och läs samma samband och det oberoende objektet
+genom Tabell.
+
+**Förväntat resultat:**
+
+- Sambandsdialogen använder den ägda historiska fältbetydelsen, även när den
+aktuella definitionen ersätter fältet.
+- Avbrutet typbyte bevarar alla förslag; bekräftat byte tar bara bort de gamla
+svaren.
+- Separat sparande och omstart bevarar rättningen utan att sammanblanda
+objekt- och sambandsflöden.
+
+### UTKAST-139: kasta sambandstypsförslag utan faktisk borttagningsrevision
+
+**Syfte:** Sambandstypens hela historiska betydelse är läsbar trots spärrad
+återställning.
+
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
+
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-no-removed-relationship-definition`. Börja i en ny installation och
+behåll samma databas vid omstart inom fallet.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+UTKAST-139.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-139"
+  },
+  "reference": "1280 × 720; Chromium och styrda testidentiteter; verklig HTTP och SQLite.",
+  "outcomes": [
+    "Sambandstypens hela historiska betydelse är läsbar trots spärrad återställning.",
+    "Kastvalet påverkar enbart det egna sambandstypsförslaget; oberoende arbete, gemensamma typer och historik består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-76:s tre steg en gång med denna förberedelse. I steg 1 läser
+du sambandstypens **Min privata typbenämning**, **Min tidigare definition**,
+**Egna fält** samt riktningarna **förvaras i** och **förvarar**. Den har inget
+eget fält.
+
+**Förväntat resultat:**
+
+- Sambandstypens hela historiska betydelse är läsbar trots spärrad
+återställning.
+- Kastvalet påverkar enbart det egna sambandstypsförslaget; oberoende arbete,
+gemensamma typer och historik består.
+
+### UTKAST-140: återställ en borttagen sambandstyp med läsbara riktningar
+
+**Syfte:** Hela sambandstypen med båda riktningarna är läsbar vid 1280 och 320
+pixlar i varje granskningsfas.
+
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
+
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-relationship-restoration`. Börja i en ny installation och behåll samma
+databas vid omstart inom fallet.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+UTKAST-140.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-140"
+  },
+  "reference": "Sambandstyp; 1280 och 320 × 900. Riktningarnas historiska betydelser har en egen counterpart och blandas inte med objekttypens fält.",
+  "outcomes": [
+    "Hela sambandstypen med båda riktningarna är läsbar vid 1280 och 320 pixlar i varje granskningsfas.",
+    "Privat bekräftelse ändrar inte den gemensamma kartan. Separat sparande och omstart gör den återställda definitionen läsbar för båda användarna."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-67:s fyra steg en gång med denna förberedelse. I steg 1–3
+läser du sambandstypen, inte objekttypen: **Min privata typbenämning**, **Min
+tidigare definition**, **Egna fält**, **Framåtriktning: förvaras i** och
+**Omvänd riktning: förvarar**. Definitionen saknar eget fält.
+2. I steg 4 läser både Robin och Alex dessa namn, beskrivning och riktningar i
+sambandstypens ordinarie formulär samt det sparade oberoende objektet.
+
+**Förväntat resultat:**
+
+- Hela sambandstypen med båda riktningarna är läsbar vid 1280 och 320 pixlar i
+varje granskningsfas.
+- Privat bekräftelse ändrar inte den gemensamma kartan. Separat sparande och
+omstart gör den återställda definitionen läsbar för båda användarna.
+
+### UTKAST-141: kontrollera samma tappade återställningssvar från Tabell
+
+**Syfte:** Tabellens uppföljning är nåbar även när den sista konflikten
+försvinner.
+
+**Användare:** Robin; Alex utför separat teknisk förberedelse.
+
+**Förutsättningar:** Följ [historisk
+förberedelse](historical-definition-preparation.md) och välj
+`new-object-restoration`. Börja i en ny installation och behåll samma databas
+vid omstart inom fallet.
+
+**Integrationstest:**
+[conflict-definition-restoration.spec.ts](../../tests/integration/conflict-definition-restoration.spec.ts),
+UTKAST-141.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/conflict-definition-restoration.spec.ts",
+    "caseId": "UTKAST-141"
+  },
+  "reference": "Tabell; 320 × 900; separat native återgångsväg efter tappat genomfört svar.",
+  "outcomes": [
+    "Tabellens uppföljning är nåbar även när den sista konflikten försvinner.",
+    "Ett genomfört privat val verifieras utan upprepning och utan gemensamt sparande. Hela definitionen och det oberoende förslaget består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför UTKAST-70:s fyra steg en gång i **Tabell** vid 320 × 900 med en ny
+installation. Välj Tabell innan konflikten öppnas och kontrollera
+återgångsfokus i denna arbetsyta.
+
+**Förväntat resultat:**
+
+- Tabellens uppföljning är nåbar även när den sista konflikten försvinner.
+- Ett genomfört privat val verifieras utan upprepning och utan gemensamt
+sparande. Hela definitionen och det oberoende förslaget består.
 
 ### UTKAST-137: spara oberoende objektändringar från två webbläsare
 
