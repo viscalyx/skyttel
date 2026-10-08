@@ -16,8 +16,9 @@ inloggningen innehåller enbart påhittade uppgifter.
 1. Starta provkartan enligt [stora kartor](large-map.md#allmän-förberedelse).
    Den innehåller 500 objekt fördelade på fem typer och 1 500 samband.
 2. Öppna **Tabell → Filter**, välj **Ta med upphörda** och stäng filtret.
-   Prova dator och telefon, tangentbord och pekning, ljust och mörkt tema
-   samt webbläsarens förstoring.
+   Prova CSS-bredder, tangentbord, pekning och teman enligt respektive fall.
+   Faktisk förstoring och uppläsning provas i LISTA-09; fysisk mobilinmatning
+   och förstoring i SÖK-16.
 3. Starta om provkartan mellan fallen. För kartfokus använder du ett litet
    testhushåll enligt förutsättningarna i LISTA-03.
 
@@ -28,7 +29,8 @@ inloggningen innehåller enbart påhittade uppgifter.
 2. Öppna den utskrivna adressen och logga in med Google. Välj **Tabell**.
    Installationen har fler än 50 objekt, svenska namn med siffror,
    långa värden, dolda egna fält, ekonomiska uppgifter och alla statusar.
-3. Prova dator och mobil, tangentbord, pekning och förstoring.
+3. Använd respektive falls CSS-bredd och vanliga kontroller. Faktisk
+   förstoring och uppläsning provas i LISTA-09 och mobilinmatning i SÖK-16.
    Skriv `quit` i terminalen och starta om kommandot mellan fallen.
    Provdatabasen raderas när processen avslutas.
 
@@ -190,8 +192,9 @@ control after a real background update”.
 
 1. Lägg B Tillfälligt objekt i utkastet utan samband. Öppna dess
    sambandsdialog från tabellen i första fliken.
-2. Ta bort bara detta nya förslag i andra fliken. Vänta tills den första
-   fliken visar att objektet inte längre finns.
+2. Välj **Tabell** i andra fliken, sök B Tillfälligt objekt och välj
+   **Ta bort B Tillfälligt objekt**. Vänta tills den första fliken visar
+   att objektet inte längre finns.
 3. Stäng med Escape och kontrollera fokus.
 
 **Förväntat resultat:**
@@ -231,8 +234,8 @@ LÄS-04.
 
 **Steg:**
 
-1. Öppna **Samband för B** från tabellen. Ta bort bara förslaget B i
-   andra fliken. Vänta på **Objektet finns inte längre**.
+1. Öppna **Samband för B** från tabellen. Välj **Tabell** i andra fliken,
+   sök B och välj **Ta bort B**. Vänta på **Objektet finns inte längre**.
 2. Stäng med Escape och kontrollera fokus på **Samband för A**.
 
 **Förväntat resultat:**
@@ -325,8 +328,9 @@ control after page collapse”.
 
 1. Öppna Tabell och välj Nästa. Kontrollera att endast Objekt 51 finns på
    sida två. Öppna Samband för Objekt 51.
-2. Ta bort bara förslaget Objekt 51 i andra fliken. Vänta tills dialogen
-   visar att objektet inte längre finns.
+2. Välj **Tabell** i andra fliken, sök Objekt 51 och välj
+   **Ta bort Objekt 51**. Vänta tills första flikens dialog visar att
+   objektet inte längre finns.
 3. Stäng med Escape och kontrollera tabellens sida och fokus.
 
 **Förväntat resultat:**
@@ -912,8 +916,9 @@ and Escape restrictions”.
   När sista valet tas bort återgår fokus till Filter.
 - Kortkommandon, formulär och samtal behåller sin vanliga inmatning.
   Vyernas sökningar, markeringen och oskickat meddelande finns kvar.
-- Kontrollera fokus och reglagens namn med NVDA och VoiceOver;
-  automatprovet ersätter inte hjälpmedelsprovet.
+- Reglagens tillgängliga namn och fokus provas i den vanliga webbytan.
+  Faktisk NVDA- och VoiceOver-uppläsning provas i
+  [LISTA-09](#lista-09-verklig-zoom-och-uppläsning-ger-hela-läsalternativet).
 
 ### SÖK-04: sista förslaget återställer bara båda vyernas utkastfilter
 
@@ -954,9 +959,11 @@ type-only proposals expose them”.
 4. Stäng textvyn. Återvänd till Tabell och sedan kartans sökyta. Kontrollera
    bevarad
    söktext och Typ 2, återställt utkastfilter och besked om återställningen.
-5. Skapa enbart ett typförslag under Inställningar. Återgå till kartan
-   och sök efter finns inte. Öppna Filter och kontrollera att
-   utkastfiltret finns trots tom karta.
+5. Välj **Inställningar → Typer och egna fält → Ny objekttyp**. Ange
+   **Enbart typförslag**, lämna beskrivning och fält tomma och välj
+   **Lägg typförslaget i mitt utkast**. Läs beskedet och välj
+   **Tillbaka till kartan**. Sök efter finns inte. Öppna Filter och
+   kontrollera att utkastfiltret finns trots tom karta.
 
 **Förväntat resultat:**
 
@@ -975,18 +982,20 @@ type-only proposals expose them”.
   },
   "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
   "outcomes": [
-    "Använda sökning utan ett fysiskt tangentbord."
+    "Sökning och filter behåller text, val och fokus i smala CSS-vyer."
   ]
 }
 ```
 <!-- markdownlint-enable MD013 -->
 
-**Syfte:** Använda sökning utan ett fysiskt tangentbord.
+**Syfte:** Sökning och filter behåller text, val och fokus i smala CSS-vyer.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** En ny provinstallation för sökning på telefon,
-390 pixlars bredd.
+**Förutsättningar:** En ny provinstallation för sökning i Chromium med
+390 CSS-pixlars bredd. Verklig pekning, skärmtangentbord och förstoring på
+iPhone och iPad provas i [SÖK-16](#sök-16-fysisk-mobilsökning-bevarar-text-filter-och-fokus).
+VoiceOver provas i [LISTA-09](#lista-09-verklig-zoom-och-uppläsning-ger-hela-läsalternativet).
 
 **Integrationstest:**
 [object-search.spec.ts](../../tests/integration/object-search.spec.ts),
@@ -1009,8 +1018,8 @@ mobile and desktop”.
    Upprepa med dialogens kryss och genom att klicka utanför dialogen.
 5. Prova på dator, vid 320 pixlars bredd och i ett kort fönster. Kontrollera
    att dialogens val går att nå utan att söktext eller filter ändras av
-   stängningen. Prova touch, skärmtangentbord och förstoring på iPhone
-   och iPad.
+   stängningen. Dessa vyer använder CSS-storlek; de fysiska
+   enhetsobservationerna har separata fall enligt förutsättningarna.
 6. Ta bort Typ 2 via dess kryss och kontrollera oförändrad söktext samt
    återfokus på Filter. Välj **Ta med borttagna** i dialogen, stäng och
    ta bort det aktiva filtret via dess kryss. Öppna dialogen och kontrollera
@@ -1031,8 +1040,7 @@ mobile and desktop”.
   borttagna filtret ger återfokus på Filter.
 - Återställ sökning och filter tömmer båda i tabellen. Kartans sökning
   och filter samt hushållets uppgifter och utkast är oförändrade.
-- Verklig touch, skärmtangentbord och VoiceOver behöver manuellt prov;
-  automatprovet kontrollerar mobil layout och offentlig UI.
+- CSS-vyerna behåller söktext, filter och återfokus med vanlig inmatning.
 
 ### SÖK-10: synlig kapselsökning och liten filterdialog på olika skärmar
 
@@ -1056,7 +1064,10 @@ mobile and desktop”.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** En ny provinstallation för sökning är öppen i Karta.
-Prova dator, telefon, förstoring och ett kort fönster med tangentbord.
+Använd CSS-vyerna 1280 × 900, 800 × 900, 390 × 844, 320 × 640 och
+320 × 250 med tangentbord. Verklig förstoring och pekning provas i
+[SÖK-16](#sök-16-fysisk-mobilsökning-bevarar-text-filter-och-fokus) och
+uppläsning i [LISTA-09](#lista-09-verklig-zoom-och-uppläsning-ger-hela-läsalternativet).
 
 **Integrationstest:**
 [object-search.spec.ts](../../tests/integration/object-search.spec.ts),
@@ -1079,7 +1090,7 @@ screens”.
 3. Använd Tab för att nå de sista filtervalen och Återställ filter.
    Kontrollera att innehållet går att rulla utan rullning i sidled.
 4. Tryck Escape och kontrollera stängd dialog och fokus tillbaka på Filter.
-   Upprepa i ett kort fönster och med förstoring.
+   Upprepa vid de återstående CSS-storlekarna, inklusive det korta fönstret.
 5. Öppna Utkast på dator och skriv ett oskickat meddelande. Öppna Filter,
    välj Återställ filter och tryck Escape. Kontrollera att dialogen går
    att använda över textvyn och att meddelandet finns kvar.
@@ -1095,8 +1106,8 @@ screens”.
 - Dialogen ryms på skärmen och långa filterlistor går att rulla.
 - Snabbvalen visar en bock när de är på och går att slå av igen med
   mellanslag utan fokusflytt. Dialogen visar antalet träffar.
-- Krysset och filtervalen har begripliga namn för skärmläsaren.
-  Verklig förstoring, touch och hjälpmedel behöver manuellt prov.
+- Krysset och filtervalen har tillgängliga namn; Tab och Escape
+  behåller en användbar fokusordning.
 
 ### SÖK-11: filterdialogen ligger ovanpå kartan utan att flytta etiketter
 
@@ -1583,6 +1594,75 @@ SÖK-15.
 - Samma handlingar ger de skyddade resultaten under angivna steg.
 - Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
 
+### SÖK-16: fysisk mobilsökning bevarar text, filter och fokus
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "physical-input",
+    "observation": "Prova verklig pekning, skärmtangentbord och förstoring på både iPhone och iPad. Kontrollera söktext, filter, kontrollers nåbarhet och återfokus."
+  },
+  "reference": "Fysiska iPhone och iPad med skärmtangentbord och verklig zoom 200 och 400 procent.",
+  "outcomes": [
+    "Skärmtangentbordet skriver i rätt sökfält utan att ändra den andra vyns sökning.",
+    "Pekning och verklig förstoring lämnar sökfält, kryss och samtliga filterval nåbara.",
+    "Filterstängning bevarar text och val och återför fokus till rätt kontroll."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/object-search.spec.ts",
+      "caseId": "SÖK-05",
+      "purpose": "CSS-vy, DOM-fokus och syntetisk inmatning; inga verkliga enhetsgester, skärmtangentbord eller zoom."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/object-search.spec.ts",
+      "caseId": "SÖK-10",
+      "purpose": "CSS-vy, DOM-fokus och syntetisk inmatning; inga verkliga enhetsgester, skärmtangentbord eller zoom."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** Prova faktisk mobilinmatning och förstoring i sökning och filter.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Fysiska iPhone och iPad. Förbered
+[hushållets tabell](#förbered-hushållets-tabell) på nytt mellan varje fall
+och enhet. Anteckna enhet, operativsystem, webbläsare och verklig zoomnivå.
+
+**Kräver mänsklig observation:** Använd faktisk pekning, enhetens
+skärmtangentbord och webbläsarens förstoring på både iPhone och iPad.
+
+**Steg:**
+
+1. Utför SÖK-05 en gång på iPhone och en gång på iPad, med ny förberedelse
+   mellan enheterna. Öppna sökfälten med pekning och skriv med
+   skärmtangentbordet. Kontrollera text och filter vid varje vybyte.
+2. Under SÖK-05 steg 4–5 öppnar du filterdialogen direkt efter inmatning
+   med skärmtangentbordet. Rulla och nå samtliga val och dess kryss med
+   pekning. När tangentbordet visas eller stängs kontrollerar du söktext,
+   filter och återfokus.
+3. Utför SÖK-10 en gång på vardera enheten från ny förberedelse.
+   Under steg 2–4 provar du verklig förstoring 200 och 400 procent och
+   pekar på filterval och kryss. Rulla vid behov och kontrollera att alla
+   val kan nås utan att text, filter eller markering ändras oavsiktligt.
+4. Kontrollera SÖK-10 steg 5–6 med fysisk pekning och skärmtangentbord.
+   Det oskickade meddelandet, sökfältet och objektets uppgifter ska vara kvar.
+   Faktisk uppläsning utförs i LISTA-09 från dess separata förberedelser.
+
+**Förväntat resultat:**
+
+- Skärmtangentbordet skriver i rätt sökfält utan att ändra den andra
+  vyns sökning.
+- Pekning och verklig förstoring lämnar sökfält, kryss och samtliga
+  filterval nåbara.
+- Filterstängning bevarar text och val och återför fokus till rätt kontroll.
+
 ### LÄS-08: försvunnen sista läsrad återför fokus till rubriken
 
 <!-- markdownlint-disable MD013 -->
@@ -1615,7 +1695,8 @@ LÄS-08.
 **Steg:**
 
 1. Öppna **Tabell → Samband för B** i första fliken.
-2. Ta bort förslagen B och A i andra fliken. Vänta på
+2. Välj **Tabell** i andra fliken. Sök B och välj **Ta bort B**.
+   Sök sedan A och välj **Ta bort A**. Vänta på
    **Objektet finns inte längre** i första fliken.
 3. Stäng med Escape. Kontrollera fokus på rubriken **Hushållet Linden**.
 
@@ -1631,12 +1712,13 @@ LÄS-08.
 {
   "humanObservation": {
     "kind": "screen-reader",
-    "observation": "Lyssna med namngiven skärmläsare vid 200 och 400 procent\nverklig zoom: rubrik, fullständiga värden, riktning, status och fokus."
+    "observation": "Lyssna med NVDA och VoiceOver på hela värden, riktning och status samt sökfältets, kryssens och filtervalens namn, fokus och återfokus. Prova verklig zoom 200 och 400 procent."
   },
-  "reference": "Namngiven skärmläsare och webbläsare; verklig zoom 200 och 400 procent.",
+  "reference": "NVDA på dator och VoiceOver på dator, iPhone och iPad; verklig zoom 200 och 400 procent.",
   "outcomes": [
     "Skärmläsaren läser hela namn, värden, riktning och skilda statusar.",
-    "Rubrik och återfokus är begripliga och kontroller kan nås vid båda zoomnivåerna."
+    "Rubrik och återfokus är begripliga och kontroller kan nås vid båda zoomnivåerna.",
+    "NVDA och VoiceOver läser sökning, kryss och filterval begripligt och anger rätt fokus vid öppning och återgång."
   ],
   "evidence": [
     {
@@ -1644,6 +1726,24 @@ LÄS-08.
       "spec": "tests/integration/household-reading.spec.ts",
       "caseId": "LÄS-01",
       "purpose": "Avgränsad automatiserad DOM-, CSS- och syntetisk inmatning; inte faktisk enhetsobservation."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/object-search.spec.ts",
+      "caseId": "SÖK-03",
+      "purpose": "Tillgängliga namn, DOM-fokus och syntetisk inmatning; ingen faktisk NVDA- eller VoiceOver-uppläsning."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/object-search.spec.ts",
+      "caseId": "SÖK-05",
+      "purpose": "Tillgängliga namn, DOM-fokus och syntetisk inmatning; ingen faktisk NVDA- eller VoiceOver-uppläsning."
+    },
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/object-search.spec.ts",
+      "caseId": "SÖK-10",
+      "purpose": "Tillgängliga namn, DOM-fokus och syntetisk inmatning; ingen faktisk NVDA- eller VoiceOver-uppläsning."
     }
   ]
 }
@@ -1654,11 +1754,14 @@ LÄS-08.
 
 **Användare:** Alex Exempel med tillgång till provhushållet.
 
-**Förutsättningar:** Ny förberedelse enligt LÄS-01.
+**Förutsättningar:** Ny förberedelse för varje delegerat fall. Ha tillgång
+till NVDA på dator och VoiceOver på dator, iPhone och iPad. Anteckna
+operativsystem, webbläsare, hjälpmedelsversion och faktisk zoomnivå.
 
-**Kräver mänsklig observation:** Lyssna med namngiven skärmläsare vid 200 och
-400 procent
-verklig zoom: rubrik, fullständiga värden, riktning, status och fokus.
+**Kräver mänsklig observation:** Lyssna med NVDA och VoiceOver vid
+200 och 400 procent verklig zoom. Skilj rubrik, fullständiga värden,
+riktning och status samt sökfältets, kryssens och filtervalens namn
+och upplevt fokus från enbart DOM-namn.
 
 **Steg:**
 
@@ -1666,11 +1769,24 @@ verklig zoom: rubrik, fullständiga värden, riktning, status och fokus.
    webbläsarens verkliga förstoring. Anteckna utrustning.
 2. Utför LÄS-02, LÄS-07 och LISTA-05 från respektive ny
    förberedelse. Lyssna på hela namn och betydelser samt återfokus.
+3. Utför SÖK-03 en gång med NVDA och en gång med VoiceOver, från ny
+   förberedelse för varje hjälpmedel. Lyssna på reglagens namn och följ
+   fokus genom inmatning i sökfältet, filterdialog, Escape och vybyten.
+4. Utför SÖK-05 och SÖK-10 en gång vardera med VoiceOver på både iPhone
+   och iPad, från ny förberedelse varje gång. Lyssna på sökfält,
+   Rensa sökning, Filter och varje filterval. Kontrollera rubrikfokus,
+   valens namn, kvarvarande söktext och återfokus när dialogen stängs.
+5. Vid SÖK-10 provar du även NVDA från ny förberedelse. Upprepa dess
+   relevanta sök- och filtersteg vid verklig zoom 200 och 400 procent
+   och kontrollera begriplig uppläsning och nåbara kontroller.
 
 **Förväntat resultat:**
 
 - Skärmläsaren läser hela namn, värden, riktning och skilda statusar.
 - Rubrik och återfokus är begripliga och kontroller kan nås vid båda zoomnivåerna.
+
+- NVDA och VoiceOver läser sökning, kryss och filterval begripligt och
+  anger rätt fokus vid öppning och återgång.
 
 ### TABELL-01: svensk sortering och öppna rader består vid kartbesök
 

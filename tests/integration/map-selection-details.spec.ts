@@ -43,6 +43,26 @@ for (const viewport of [
       await page.keyboard.press('Enter');
       const editor = page.getByRole('dialog', { name: 'Redigera Cykel', exact: true });
       await expect(editor).toBeVisible();
+      const current = before.draft.changes.find((change) => change.id === 'bike')?.after;
+      if (!current) throw new Error('The current bicycle proposal must exist');
+      await expect(editor.getByLabel('Namn', { exact: true })).toHaveValue(current.name);
+      await expect(editor.getByLabel('Objekttyp', { exact: true })).toHaveValue(current.typeId);
+      await expect(editor.getByLabel('Identitet', { exact: true })).toHaveValue('identified');
+      await expect(editor.getByLabel('Beskrivning', { exact: true })).toHaveValue(
+        current.description,
+      );
+      await editor.getByRole('button', { name: 'Ekonomiska uppgifter', exact: true }).click();
+      await expect(editor.getByLabel('Pris: uppgiftens säkerhet', { exact: true })).toHaveValue(
+        'known',
+      );
+      await expect(editor.getByLabel('Pris', { exact: true })).toHaveValue('2500 SEK');
+      await expect(
+        editor.getByLabel('Senast uppgiven skuld: uppgiftens säkerhet', { exact: true }),
+      ).toHaveValue('none');
+      await expect(
+        editor.getByLabel('Slutdatum: uppgiftens säkerhet', { exact: true }),
+      ).toHaveValue('unknown');
+
       await editor.getByRole('button', { name: 'Stäng objektdialogen', exact: true }).click();
       await expect(editor).not.toBeVisible();
       await expect(
@@ -121,6 +141,7 @@ test('MARKERING-06: independent property windows share context actions and move 
     const first = page.getByRole('region', { name: 'Cykel', exact: true });
     await expect(first).toBeVisible();
     await expect(first).toContainText('Ramens märkning är ett påhittat exempel');
+    await expect(first).toContainText('2000 SEK');
     await expect(first).toContainText('2500 SEK');
     const firstActions = first.getByRole('toolbar', {
       name: 'Objektåtgärder för Cykel',

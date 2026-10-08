@@ -134,7 +134,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   pensionerad utan återanvänt ID; första aktiveringens läsning finns kvar.
   TABELL-01–05 har egna vanliga fall, liksom varje smal LISTA- och
   SÖK-variant. LISTA-09 skiljer faktisk uppläsning och förstoring från
-  Chromium-proven. Grafikavbrott har separat
+  Chromium-proven, även för sökning med NVDA och VoiceOver. SÖK-16 har
+  fysisk pekning, skärmtangentbord och förstoring på iPhone och iPad.
+  Grafikavbrott har separat
   [körbar förberedelse](map-graphics-preparation.md).
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende

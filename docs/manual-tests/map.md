@@ -1799,7 +1799,8 @@ Förbered transport enligt
 `arm save:drop-after` i transportens terminal före UI-handlingen.
 Kräv `application-completed` med status 200 före `dropped`.
 Använd samma databas, adress och sparförsök vid kontrollen. Efter fallet
-avslutar du transporten med `quit` och återställer HTTPS-ingången.
+återställer du HTTPS-ingången till applikationen innan du avslutar
+transporten med `quit`.
 
 **Integrationstest:**
 [map.spec.ts](../../tests/integration/map.spec.ts), KARTA-24.

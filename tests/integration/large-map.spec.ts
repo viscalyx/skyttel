@@ -197,6 +197,15 @@ test('STORKARTA-01: dense overview keeps readable labels and every object and re
     await reports.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
     const anonymous = await browser.newContext();
     try {
+      const anonymousPage = await anonymous.newPage();
+      await anonymousPage.goto(installation.origin);
+      await expect(
+        anonymousPage.getByRole('heading', { name: 'Välkommen till Skyttel', exact: true }),
+      ).toBeVisible();
+      await expect(
+        anonymousPage.getByRole('region', { name: 'Hushållets tabell', exact: true }),
+      ).not.toBeVisible();
+      await expect(anonymousPage.getByText('Provobjekt 499', { exact: true })).toHaveCount(0);
       expect((await anonymous.request.get(path)).status()).toBe(401);
       expect((await anonymous.request.get(`${path}/view`)).status()).toBe(401);
     } finally {

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import type { MapState, SaveReceipt } from '../../src/shared/map.js';
 import {
   closeSupportDialog,
@@ -17,6 +17,31 @@ import {
 } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
+
+async function expectSolarObject(details: Locator, name: string, table = false) {
+  const description = table
+    ? details.locator('.household-table-description')
+    : details
+        .locator('dt')
+        .filter({ hasText: /^Beskrivning$/ })
+        .locator('..');
+  await expect(description).toContainText(
+    name === 'Batteriet' ? 'Ej uppgivet' : 'Beskrivning till den nya typen',
+  );
+  for (const [label, value] of [
+    ['Namn', name],
+    ['Typ', 'Solutrustning'],
+    ['Identitet', name === 'Batteriet' ? 'Ospecificerat objekt' : 'Identifierat objekt'],
+    ['Placering', name === 'Batteriet' ? 'Ej uppgivet' : 'Södertak'],
+  ]) {
+    await expect(
+      details
+        .locator('dt')
+        .filter({ hasText: new RegExp(`^${label}$`) })
+        .locator('..'),
+    ).toContainText(value);
+  }
+}
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
@@ -178,6 +203,7 @@ for (const width of [1280, 390, 320]) {
           ['Batteriet', 'Ej uppgivet'],
         ]) {
           const proposal = await readDraftProposal(page, name);
+          await expectSolarObject(proposal, name);
           await expect(
             proposal
               .locator('dt')
@@ -194,6 +220,7 @@ for (const width of [1280, 390, 320]) {
         await expect(draft).toContainText('Solutrustning');
         await expect(draft).toContainText('Paneler på taket');
         const proposedPanels = await readDraftProposal(page, 'Paneler på taket');
+        await expectSolarObject(proposedPanels, 'Paneler på taket');
         await expect(
           proposedPanels
             .locator('dt')
@@ -202,6 +229,7 @@ for (const width of [1280, 390, 320]) {
         ).toContainText('Nej');
         await closeSupportDialog(page, 'Paneler på taket');
         const proposedBattery = await readDraftProposal(page, 'Batteriet');
+        await expectSolarObject(proposedBattery, 'Batteriet');
         await expect(
           proposedBattery
             .locator('dt')
@@ -253,6 +281,13 @@ for (const width of [1280, 390, 320]) {
         );
         await closeSupportDialog(page, 'Samband för Paneler på taket');
         const completePanels = await readTableObject(page, 'Paneler på taket');
+        await expectSolarObject(completePanels, 'Paneler på taket', true);
+        await expect(
+          completePanels
+            .locator('dt')
+            .filter({ hasText: /^Reserv$/ })
+            .locator('..'),
+        ).toContainText('Nej');
         await expect(
           completePanels
             .locator('dt')
@@ -260,6 +295,7 @@ for (const width of [1280, 390, 320]) {
             .locator('..'),
         ).toContainText('Södertak');
         const completeBattery = await readTableObject(page, 'Batteriet');
+        await expectSolarObject(completeBattery, 'Batteriet', true);
         await expect(completeBattery).toContainText('Ospecificerat objekt');
         await expect(
           completeBattery
