@@ -148,6 +148,62 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+test('relationship details open saved and proposed routes with pointer and keyboard gestures', async () => {
+  const type = {
+    id: 'uses',
+    householdId: 'home',
+    revision: 1,
+    name: 'Använder',
+    description: '',
+    forwardLabel: 'använder',
+    reverseLabel: 'används av',
+  };
+  const before = {
+    id: 'edge',
+    householdId: 'home',
+    revision: 1,
+    typeId: type.id,
+    sourceId: 'alex',
+    targetId: 'music',
+    knowledge: 'known' as const,
+  };
+  const after = { ...before, sourceId: 'kim' };
+  await open(1440, {
+    ...state,
+    objects: [...state.objects, { ...state.objects[0], id: 'kim', name: 'Kim' }],
+    relationshipTypes: [type],
+    relationships: [before],
+    draft: {
+      version: 1,
+      changes: [],
+      relationships: [{ id: before.id, before, after, type }],
+    },
+  });
+  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  const saved = page.getByRole('button', {
+    name: 'Välj tidigare samband: Alex → använder → Tonmoln',
+    exact: true,
+  });
+  await saved.dblClick();
+  const details = page.getByRole('region', { name: 'Valt samband', exact: true });
+  await expect
+    .element(details.getByText('Alex → använder → Tonmoln', { exact: true }))
+    .toBeVisible();
+  await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
+  const proposed = page.getByRole('button', {
+    name: 'Välj samband: Kim → använder → Tonmoln',
+    exact: true,
+  });
+  (proposed.element() as HTMLElement).focus();
+  await userEvent.keyboard('{Alt>}{Enter}{/Alt}');
+  await expect
+    .element(details.getByText('Kim → använder → Tonmoln', { exact: true }))
+    .toBeVisible();
+  await expect
+    .element(details.getByRole('button', { name: 'Redigera valt samband', exact: true }))
+    .toBeVisible();
+});
+
 test('camera focus includes previous direct neighbors and preserves work through overview and compact tool expansion', async () => {
   const mapState = structuredClone(state);
   const type = { ...state.types[0], id: 'uses', name: 'Använder' };
