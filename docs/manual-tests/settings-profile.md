@@ -34,7 +34,8 @@ kostnader krävs installationens särskilda driftbehörighet.
 testfallen “INST-01: full-page settings protect native form input and
 retain draft feedback at 1280px”, “INST-01: full-page settings protect
 native form input and retain draft feedback at 390px” samt “INST-01:
-full-page settings protect native form input and retain draft feedback at 320px”.
+full-page settings protect native form input and retain draft feedback at
+320px”.
 
 **Steg:**
 
@@ -69,20 +70,83 @@ full-page settings protect native form input and retain draft feedback at 320px�
 
 **Syfte:** Bevara oskickade typer och spara dem tillsammans med objekt.
 
-**Användare:** Alex. Upprepa typredigeringen som Robin.
+**Användare:** Alex, administratör. Robin utför det separata INST-08.
 
 **Förutsättningar:** Kartan är tom.
 
 **Integrationstest:**
 [settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
-testfallet “INST-02: type settings retain unsent definitions and save with
-the same map draft”.
+INST-02.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-02"
+  },
+  "reference": "1280 pixlar, administratör.",
+  "outcomes": [
+    "Oskickad definition bevaras vid sidbyte och sparas tillsammans med objektet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Lägg objektet Cykel i samma utkast i ditt utkast utan att spara.
+1. Öppna Nytt objekt, ange Cykel i samma utkast i Namn och välj
+   Lägg i utkastet och stäng. Spara inte.
 2. Öppna **Inställningar** → **Typer och egna fält** → **Ny objekttyp**.
-3. Skriv Oskickad typ och en beskrivning. Besök **Översikt** och gå tillbaka.
+3. Skriv Oskickad typ och beskrivningen Behåll även definitionens text. Besök
+   **Översikt** och gå tillbaka.
+4. Kontrollera båda texterna. Välj **Lägg typförslaget i mitt utkast**.
+5. Välj **Tillbaka till kartan** och **Visa utkastet**. Granska båda
+   förslagen och välj **Spara hela utkastet**.
+6. Läs sparbeskedet och ladda om. Öppna definitionerna igen och fäll ut
+   **Objekttyper och egna fält**. Kontrollera den nya typen och objektet.
+
+**Förväntat resultat:**
+
+- Oskickad definitionstext bevaras mellan inställningssidorna.
+- Typen och objektet ingår i samma privata utkast innan sparandet.
+- Ett uttryckligt samlat sparande sparar båda. De finns efter omladdning.
+- Administratörens hela definitions- och objektutkast sparas tillsammans.
+
+### INST-08: vanlig medlem bevarar och sparar typdefinitioner
+
+**Syfte:** Bevara oskickade typer och spara dem tillsammans med objekt.
+
+**Användare:** Robin, vanlig medlem i Alex provhushåll.
+
+**Förutsättningar:** Kartan är tom.
+
+**Integrationstest:**
+[settings-profile.spec.ts](../../tests/integration/settings-profile.spec.ts),
+INST-08.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/settings-profile.spec.ts",
+    "caseId": "INST-08"
+  },
+  "reference": "1280 pixlar, vanlig medlem.",
+  "outcomes": [
+    "Oskickad definition bevaras vid sidbyte och sparas tillsammans med objektet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Nytt objekt, ange Cykel i samma utkast i Namn och välj
+   Lägg i utkastet och stäng. Spara inte.
+2. Öppna **Inställningar** → **Typer och egna fält** → **Ny objekttyp**.
+3. Skriv Oskickad typ och beskrivningen Behåll även definitionens text. Besök
+   **Översikt** och gå tillbaka.
 4. Kontrollera båda texterna. Välj **Lägg typförslaget i mitt utkast**.
 5. Välj **Tillbaka till kartan** och **Visa utkastet**. Granska båda
    förslagen och välj **Spara hela utkastet**.

@@ -14,9 +14,9 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
-test('TYP-01: custom definitions and four optional fields share one durable save and history', async ({
-  page,
-}) => {
+test('custom definitions and four optional fields share one durable save and history', {
+  tag: '@technical',
+}, async ({ page }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
@@ -70,6 +70,83 @@ test('TYP-01: custom definitions and four optional fields share one durable save
     expect(await (await post('save', { version: 2, operationId: 'solar-save' })).json()).toEqual({
       receipt,
     });
+  } finally {
+    await installation.close();
+  }
+});
+
+test('TYP-01: native type and field forms share a durable object save and readable history', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    await createHousehold(page.request, installation.origin);
+    await page.goto(installation.origin);
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+    await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
+    const submit = page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' });
+    await submit.click();
+    await expect(page.getByLabel('Typens namn')).toBeFocused();
+    await page.getByLabel('Typens namn').fill('Solcellsanläggning');
+    await page.getByLabel('Typens beskrivning').fill('Hushållets elproduktion');
+    await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
+    await submit.click();
+    await expect(page.getByLabel('Fältets namn')).toBeFocused();
+    for (const [index, [name, kind]] of [
+      ['Leverantör', 'text'],
+      ['Effekt', 'number'],
+      ['Installationsdatum', 'date'],
+      ['Batteri', 'boolean'],
+    ].entries()) {
+      if (index) await page.getByRole('button', { name: 'Lägg till fält', exact: true }).click();
+      const field = page.getByRole('group', { name: /^Eget fält/ }).last();
+      await field.getByLabel('Fältets namn').fill(name);
+      await field.getByLabel('Värdeslag', { exact: true }).selectOption(kind);
+    }
+    await submit.click();
+    await expect(page.getByRole('status')).toContainText('Förslaget finns i ditt privata utkast');
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openNewObject(page);
+    await page.getByLabel('Namn', { exact: true }).fill('Paneler på taket');
+    await page
+      .getByLabel('Objekttyp', { exact: true })
+      .selectOption({ label: 'Solcellsanläggning' });
+    await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await page.getByLabel('Leverantör', { exact: true }).fill('Exempelsol');
+    await page.getByLabel('Effekt', { exact: true }).fill('12.5');
+    await page.getByLabel('Installationsdatum', { exact: true }).fill('2026-09-01');
+    await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('');
+    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await installation.restart();
+    await page.reload();
+    const draft = await openDraftReview(page);
+    await expect(draft).toContainText('Solcellsanläggning');
+    await expect(draft).toContainText('Paneler på taket');
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await installation.restart();
+    await page.reload();
+    await openTable(page);
+    await editTableObject(page, 'Paneler på taket');
+    await page.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Exempelsol');
+    await expect(page.getByLabel('Effekt', { exact: true })).toHaveValue('12.5');
+    await expect(page.getByLabel('Installationsdatum', { exact: true })).toHaveValue('2026-09-01');
+    await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('');
+    await page
+      .getByRole('dialog', { name: 'Redigera Paneler på taket', exact: true })
+      .getByRole('button', { name: 'Avbryt', exact: true })
+      .click();
+    await page.getByRole('button', { name: 'Rapporter', exact: true }).click();
+    const history = page.getByRole('region', { name: 'Ändringshistorik' });
+    await history.getByText('Visa ändringarna', { exact: true }).click();
+    await expect(history).toContainText('Solcellsanläggning');
+    await expect(history).toContainText('Leverantör');
+    await expect(history).toContainText('Exempelsol');
+    await expect(history).toContainText('Alex Exempel');
+    await expect(history.locator('time')).toHaveAttribute('datetime', /T/);
   } finally {
     await installation.close();
   }
@@ -247,6 +324,14 @@ test('TYP-03: members share editable definitions while private proposals and use
     ).toBe(200);
     expect((await read()).types.some((type: { id: string }) => type.id === 'solar')).toBe(false);
     expect((await read()).draft).toEqual({ version: 0, changes: [] });
+    await page.goto(installation.origin);
+    await openNewObject(page);
+    await expect(
+      page
+        .getByLabel('Objekttyp', { exact: true })
+        .getByRole('option', { name: 'Solcellsanläggning', exact: true }),
+    ).toHaveCount(0);
+    await page.keyboard.press('Escape');
     expect(
       (
         await post('draft', {
@@ -275,6 +360,17 @@ test('TYP-03: members share editable definitions while private proposals and use
         })
       ).status(),
     ).toBe(200);
+    const memberPage = await other.newPage();
+    await memberPage.goto(installation.origin);
+    await openSettings(memberPage);
+    await memberPage.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+    await memberPage.getByText('Objekttyper och egna fält', { exact: true }).click();
+    await memberPage
+      .getByRole('button', { name: 'Ändra typ: Solcellsanläggning', exact: true })
+      .click();
+    await memberPage.getByLabel('Värdeslag', { exact: true }).selectOption('number');
+    await memberPage.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
+    await expect(memberPage.getByRole('alert')).toContainText('Skapa ett nytt fält');
     const kindChange = await post(
       'object-type',
       {
@@ -355,7 +451,6 @@ test('TYP-03: members share editable definitions while private proposals and use
     expect(saved.types.find((type: { id: string }) => type.id === 'solar')).toMatchObject(renamed);
     await installation.restart();
     expect((await read()).objects[0].customValues).toEqual({ note: 'Privat värde' });
-    const memberPage = await other.newPage();
     await memberPage.goto(installation.origin);
     await memberPage.getByRole('button', { name: 'Nytt objekt', exact: true }).click();
     const memberForm = memberPage.getByRole('dialog', { name: 'Nytt objekt', exact: true });
@@ -632,6 +727,10 @@ test('TYP-05: invalid values and newly used field kinds preserve the entire draf
     expect((await read()).types.find((type: { id: string }) => type.id === 'solar').fields).toEqual(
       fields,
     );
+    await page.keyboard.press('Escape');
+    await expect(rejected).not.toBeVisible();
+    await expect(draft).toContainText('Oberoende förslag');
+    await expect(draft).toContainText('Solkraft');
   } finally {
     await other.close();
     await installation.close();

@@ -139,7 +139,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 
 - [Inställningar och profil](settings-profile.md): helsida, mobilnavigation,
   återgång med fokus, synligt tangentbordsfokus i båda riktningar, läsbara
-  teman och typdefinitioner i kartans samlade utkast.
+  teman och typdefinitioner i kartans samlade utkast. INST-02 bevarar
+  administratörens oskickade typtext; INST-08 utför samma hela flöde som
+  vanlig medlem.
 
 - [Objektarbete och samtal](workspace-panels.md): kompletta objektförslag,
   fullständiga uppgifter direkt i raden genom dator- och mobilbyte, bevarat samtal,
@@ -491,7 +493,12 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   som objektens innehåll. Upprepade typbyten granskar skilda gamla svar,
   kräver ny bekräftelse och bevarar identitet, ekonomiska uppgifter,
   bild, ikon och samband samt läser historiska värden.
-  Felaktiga värden provas med aktuella versioner i det publika gränssnittet.
+  TYP-09, TYP-10 och TYP-11 är kompletta referenser vid datorbredd;
+  TYP-13–22 skyddar angivna smala, korta och mörka browserflöden. Hela
+  sparande- och omstartskedjan upprepas inte i varje konfiguration.
+  TYP-23 kräver fysisk tangentbordsanvändning vid verklig förstoring.
+  Felaktiga värden och kvittots återspelning har separat tekniskt underlag;
+  typens och fältets formulärvalidering utförs genom riktiga kontroller.
   Konfigurerad fältordning följer med till formulär, utkast och tabellens
   fullständiga läsning, inklusive uttrycklig noll och Nej.
 - [Sambandsarbete](relationships.md): skapa objekt separat, koppla dem i den

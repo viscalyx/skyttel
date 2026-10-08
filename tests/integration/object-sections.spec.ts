@@ -111,7 +111,8 @@ test('TYP-08: sections move and hide fields in the shared draft without losing v
 });
 
 for (const width of [1280, 390, 320]) {
-  test(`TYP-09: ordinary members retain prefilled section work and keyboard controls at ${width}px`, async ({
+  const caseId = { 1280: 'TYP-09', 390: 'TYP-13', 320: 'TYP-14' }[width];
+  test(`${caseId}: ordinary members retain prefilled section work and keyboard controls at ${width}px`, async ({
     page,
     browser,
   }) => {
@@ -249,6 +250,31 @@ for (const width of [1280, 390, 320]) {
           (item: { id: string }) => item.id === type.id,
         ),
       ).not.toHaveProperty('sections');
+      await page.goto(installation.origin);
+      await openSettings(page);
+      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+      await page.getByText('Objekttyper och egna fält', { exact: true }).click();
+      await page.getByRole('button', { name: 'Ändra typ: Person', exact: true }).click();
+      await expect(page.getByLabel('Avsnitt 1', { exact: true })).toHaveValue('Egna fält');
+      await expect(page.getByLabel('Fältets beskrivning')).toHaveValue('Frivillig text');
+      if (width === 1280) {
+        await member.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+        await saveReviewedConflictDraft(member);
+        await closeTextView(member);
+        await installation.restart();
+        await member.reload();
+        await settings();
+        await member.getByText('Objekttyper och egna fält', { exact: true }).click();
+        await member.getByRole('button', { name: 'Ändra typ: Person', exact: true }).click();
+        await expect(member.getByLabel('Avsnitt 1', { exact: true })).toHaveValue('Kontakt');
+        await expect(member.getByLabel('Fältets beskrivning')).toHaveValue(
+          'Bevara även oskickad beskrivning',
+        );
+        await expect(member.getByLabel('Visa i avsnitt')).toHaveValue('');
+        expect((await (await context.request.get(path)).json()).draft.objectTypes ?? []).toEqual(
+          [],
+        );
+      }
     } finally {
       await context.close();
       await installation.close();

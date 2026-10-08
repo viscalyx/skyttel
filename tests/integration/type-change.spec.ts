@@ -6,9 +6,11 @@ import {
   closeSupportDialog,
   closeTextView,
   createHousehold,
+  openDraftReview,
   openTable,
   signIn,
 } from '../support/client.js';
+import { applyProposedConflictChanges } from '../support/conflict-properties.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readDraftProposal, readTableObject } from '../support/domain-work.js';
 import { createInstallation, robin } from '../support/installation.js';
@@ -223,7 +225,19 @@ test('TYP-06: type changes review displaced values and preserve identity, edges 
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`TYP-11: repeated type changes confirm loss of former answers and complete common values through save and restart at ${width}px in ${theme}`, async ({
+    const caseId =
+      width === 1280
+        ? theme === 'light'
+          ? 'TYP-11'
+          : 'TYP-18'
+        : width === 390
+          ? theme === 'light'
+            ? 'TYP-19'
+            : 'TYP-20'
+          : theme === 'light'
+            ? 'TYP-21'
+            : 'TYP-22';
+    test(`${caseId}: repeated type changes confirm loss and retain common values at ${width}px in ${theme}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
@@ -380,6 +394,10 @@ for (const width of [1280, 390, 320]) {
         });
         expect(staged.draft.changes[0].after?.customValues).toEqual({ serial: 'B-final' });
         expect(staged.draft.changes[0].after?.financialFacts).toEqual(common.financialFacts);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        if (width !== 1280 || theme !== 'light') return;
         await installation.restart();
         await page.reload();
         await openTable(page);
@@ -437,10 +455,9 @@ for (const width of [1280, 390, 320]) {
   }
 }
 
-test('TYP-07: invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields', async ({
-  page,
-  browser,
-}) => {
+test('invalid values and concurrent definitions block whole saves until fresh choices and preserve later private fields', {
+  tag: '@technical',
+}, async ({ page, browser }) => {
   const installation = await createInstallation();
   const other = await browser.newContext();
   try {
@@ -512,6 +529,96 @@ test('TYP-07: invalid values and concurrent definitions block whole saves until 
     expect((await (await page.request.get(`${path}/history`)).json()).history).toContainEqual(
       selected,
     );
+  } finally {
+    await other.close();
+    await installation.close();
+  }
+});
+
+test('TYP-07: a native type change requires fresh definition review and preserves later private fields', async ({
+  page,
+  browser,
+}) => {
+  const installation = await createInstallation();
+  const other = await browser.newContext();
+  try {
+    const { read, post, object, save, path } = await setup(page.request, installation.origin);
+    installation.setIdentity(robin);
+    await signIn(other.request, installation.origin);
+    const { user } = await (await other.request.get(`${installation.origin}/api/bootstrap`)).json();
+    const headers = { origin: installation.origin };
+    const { code } = await (
+      await page.request.post(`${path.replace('/map', '')}/invitations`, {
+        headers,
+        data: { userId: user.id },
+      })
+    ).json();
+    expect(
+      (
+        await other.request.post(`${installation.origin}/api/invitations/accept`, {
+          headers,
+          data: { code },
+        })
+      ).status(),
+    ).toBe(200);
+    await object('garage', { name: 'Eget namn' });
+    await page.goto(installation.origin);
+    await openTable(page);
+    await editTableObject(page, 'Alex blå cykel');
+    const form = page.getByRole('dialog', { name: 'Redigera Alex blå cykel', exact: true });
+    await form.getByLabel('Objekttyp', { exact: true }).selectOption('vehicle');
+    await page
+      .getByRole('dialog', { name: 'Ta bort tidigare egna fält?', exact: true })
+      .getByRole('button', { name: 'Ta bort fältvärdena och byt typ', exact: true })
+      .click();
+    await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await form.getByLabel('Nummer', { exact: true }).fill('42');
+    await form.getByLabel('Försäkrad', { exact: true }).selectOption('false');
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    const target = (await read(other.request)).types.find((type) => type.id === 'vehicle');
+    expect(
+      (
+        await post(
+          'object-type',
+          {
+            version: 0,
+            id: 'vehicle',
+            baseRevision: target?.revision,
+            value: { ...target, description: 'Uppdaterad definition' },
+          },
+          other.request,
+        )
+      ).status(),
+    ).toBe(200);
+    await save('definition', other.request);
+    const own = await read();
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    const rejected = page.getByRole('dialog', { name: 'Spara utkastet', exact: true });
+    await expect(rejected).toBeVisible();
+    expect((await read()).objects).toEqual(own.objects);
+    expect((await read()).draft).toEqual(own.draft);
+    await page.keyboard.press('Escape');
+    await closeTextView(page);
+    await page.reload();
+    await applyProposedConflictChanges(page, 'Cykel');
+    expect((await read()).objects).toEqual(own.objects);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await editTableObject(page, 'Alex blå cykel');
+    await form.getByRole('button', { name: 'Egna fält', exact: true }).click();
+    await form.getByLabel('Nummer', { exact: true }).fill('43');
+    await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    await installation.restart();
+    await page.reload();
+    await openTable(page);
+    const proposal = await readDraftProposal(page, 'Alex blå cykel');
+    await expect(proposal).toContainText('43');
+    expect((await read()).objects.find((item) => item.id === 'bike')).toMatchObject({
+      typeId: 'vehicle',
+      customValues: { serial: 42, insured: false },
+    });
+    expect((await read()).objects.find((item) => item.id === 'garage')?.name).toBe('Eget namn');
   } finally {
     await other.close();
     await installation.close();

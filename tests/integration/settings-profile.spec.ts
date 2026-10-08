@@ -9,7 +9,7 @@ import {
   openTable,
   signIn,
 } from '../support/client.js';
-import { createInstallation } from '../support/installation.js';
+import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
 
 for (const width of [1280, 390, 320]) {
@@ -94,66 +94,95 @@ for (const width of [1280, 390, 320]) {
   });
 }
 
-test('INST-02: type settings retain unsent definitions and save with the same map draft', async ({
-  page,
-}) => {
-  const installation = await createInstallation();
-  try {
-    await signIn(page.request, installation.origin);
-    const { household } = await (await createHousehold(page.request, installation.origin)).json();
-    await page.goto(installation.origin);
-    await openTable(page);
-    await openNewObject(page);
-    await page.getByLabel('Namn', { exact: true }).fill('Cykel i samma utkast');
-    await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
-    await page
-      .getByRole('region', { name: 'Hushållets tabell', exact: true })
-      .getByRole('button', { name: 'Cykel i samma utkast', exact: true })
-      .click();
-    await openSettings(page);
-    await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
-    await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
-    await page.getByLabel('Typens namn', { exact: true }).fill('Oskickad typ');
-    await page.getByLabel('Typens beskrivning').fill('Behåll även definitionens text');
-    await page.getByRole('link', { name: 'Översikt', exact: true }).click();
-    await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
-    await expect(page.getByLabel('Typens namn', { exact: true })).toHaveValue('Oskickad typ');
-    await expect(page.getByLabel('Typens beskrivning')).toHaveValue(
-      'Behåll även definitionens text',
-    );
-    await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
-    await expect(page.getByRole('status')).toContainText('Förslaget finns i ditt privata utkast');
-    const path = `${installation.origin}/api/households/${household.id}/map`;
-    const before = await (await page.request.get(path)).json();
-    expect(before.objects).toEqual([]);
-    expect(before.draft.changes).toHaveLength(1);
-    expect(before.draft.objectTypes).toHaveLength(1);
-    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-    await openTable(page);
-    const draft = await openDraftReview(page);
-    await expect(draft).toContainText('Oskickad typ');
-    await expect(draft).toContainText('Cykel i samma utkast');
-    await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
-    await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
-      'Utkastet är sparat',
-    );
-    await page.reload();
-    await openSettings(page);
-    await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
-    await page.getByText('Objekttyper och egna fält', { exact: true }).click();
-    await expect(
-      page.getByRole('button', { name: 'Ändra typ: Oskickad typ', exact: true }),
-    ).toBeVisible();
-    const after = await (await page.request.get(path)).json();
-    expect(after.objects.map((object: { name: string }) => object.name)).toEqual([
-      'Cykel i samma utkast',
-    ]);
-    expect(after.draft.changes).toEqual([]);
-    expect(after.draft.objectTypes ?? []).toEqual([]);
-  } finally {
-    await installation.close();
-  }
-});
+for (const role of ['administrator', 'member'] as const) {
+  const caseId = role === 'administrator' ? 'INST-02' : 'INST-08';
+  test(`${caseId}: type settings retain unsent definitions and save with the same map draft as ${role}`, async ({
+    page,
+    browser,
+  }) => {
+    const installation = await createInstallation();
+    const administrator = await browser.newContext();
+    try {
+      const owner = role === 'administrator' ? page.request : administrator.request;
+      await signIn(owner, installation.origin);
+      const { household } = await (await createHousehold(owner, installation.origin)).json();
+      if (role === 'member') {
+        installation.setIdentity(robin);
+        await signIn(page.request, installation.origin);
+        const { user } = await (
+          await page.request.get(`${installation.origin}/api/bootstrap`)
+        ).json();
+        const headers = { origin: installation.origin };
+        const { code } = await (
+          await owner.post(`${installation.origin}/api/households/${household.id}/invitations`, {
+            headers,
+            data: { userId: user.id },
+          })
+        ).json();
+        expect(
+          (
+            await page.request.post(`${installation.origin}/api/invitations/accept`, {
+              headers,
+              data: { code },
+            })
+          ).status(),
+        ).toBe(200);
+      }
+      await page.goto(installation.origin);
+      await openTable(page);
+      await openNewObject(page);
+      await page.getByLabel('Namn', { exact: true }).fill('Cykel i samma utkast');
+      await page.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await page
+        .getByRole('region', { name: 'Hushållets tabell', exact: true })
+        .getByRole('button', { name: 'Cykel i samma utkast', exact: true })
+        .click();
+      await openSettings(page);
+      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+      await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
+      await page.getByLabel('Typens namn', { exact: true }).fill('Oskickad typ');
+      await page.getByLabel('Typens beskrivning').fill('Behåll även definitionens text');
+      await page.getByRole('link', { name: 'Översikt', exact: true }).click();
+      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+      await expect(page.getByLabel('Typens namn', { exact: true })).toHaveValue('Oskickad typ');
+      await expect(page.getByLabel('Typens beskrivning')).toHaveValue(
+        'Behåll även definitionens text',
+      );
+      await page.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
+      await expect(page.getByRole('status')).toContainText('Förslaget finns i ditt privata utkast');
+      const path = `${installation.origin}/api/households/${household.id}/map`;
+      const before = await (await page.request.get(path)).json();
+      expect(before.objects).toEqual([]);
+      expect(before.draft.changes).toHaveLength(1);
+      expect(before.draft.objectTypes).toHaveLength(1);
+      await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+      await openTable(page);
+      const draft = await openDraftReview(page);
+      await expect(draft).toContainText('Oskickad typ');
+      await expect(draft).toContainText('Cykel i samma utkast');
+      await draft.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+      await expect(page.getByRole('status', { name: 'Sparbekräftelse' })).toContainText(
+        'Utkastet är sparat',
+      );
+      await page.reload();
+      await openSettings(page);
+      await page.getByRole('link', { name: 'Typer och egna fält', exact: true }).click();
+      await page.getByText('Objekttyper och egna fält', { exact: true }).click();
+      await expect(
+        page.getByRole('button', { name: 'Ändra typ: Oskickad typ', exact: true }),
+      ).toBeVisible();
+      const after = await (await page.request.get(path)).json();
+      expect(after.objects.map((object: { name: string }) => object.name)).toEqual([
+        'Cykel i samma utkast',
+      ]);
+      expect(after.draft.changes).toEqual([]);
+      expect(after.draft.objectTypes ?? []).toEqual([]);
+    } finally {
+      await administrator.close();
+      await installation.close();
+    }
+  });
+}
 
 test('INST-03: the separate profile protects native form input and groups personal entries', async ({
   page,

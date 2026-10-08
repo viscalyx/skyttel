@@ -21,7 +21,8 @@ for (const { width, height } of [
   { width: 320, height: 900 },
   { width: 640, height: 456 },
 ]) {
-  test(`TYP-10: canonical properties retain meaning through sections, hiding, type changes, historical reading at ${width}px`, async ({
+  const caseId = { 1280: 'TYP-10', 390: 'TYP-15', 320: 'TYP-16', 640: 'TYP-17' }[width];
+  test(`${caseId}: canonical properties retain meaning through sections and native controls at ${width}x${height}`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -153,6 +154,7 @@ for (const { width, height } of [
         price: { knowledge: 'unknown' },
         currency: { knowledge: 'none' },
       });
+      if (width !== 1280) return;
       const receipt = await save();
       expect(receipt.objectTypes).toHaveLength(1);
       expect(receipt.changes[0].after?.financialFacts).toEqual(original?.financialFacts);

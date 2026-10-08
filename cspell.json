@@ -609,7 +609,9 @@
     "överflöde",
     "fokusreferenser",
     "leverantörstoken",
-    "mätunderlaget"
+    "mätunderlaget",
+    "fältnåbarhet",
+    "skärmläsarutmatning"
   ],
   "overrides": [
     {
