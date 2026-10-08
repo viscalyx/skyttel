@@ -330,15 +330,20 @@ optional debugging tools; integration tests create their own fixtures.
 
 ## Complete the development checks
 
-After focused tests pass, run the full repository check:
+After focused tests pass, run the development checks:
 
 ```sh
 npm run check
 ```
 
 This runs typechecking, Biome, documentation checks, workflow gate tests,
-the build, unit-test coverage and Playwright integration tests. It does not
-run the optional container or real-provider checks below.
+the build and unit-test coverage. Run Playwright integration tests separately:
+
+```sh
+npm run test:integration
+```
+
+Neither command runs the optional container or real-provider checks below.
 
 Run an individual check while correcting its findings:
 

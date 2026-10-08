@@ -319,7 +319,8 @@ Keep the private environment file and authentication secret when rebuilding.
 
 ## Verify the environment
 
-Run `npm run check` to typecheck, lint, build, and run the automated suites.
+Run `npm run check` to typecheck, lint, build, and check unit-test coverage.
+Run `npm run test:integration` separately for Playwright integration tests.
 See [testing](testing.md) for focused commands and optional
 manual environments.
 
