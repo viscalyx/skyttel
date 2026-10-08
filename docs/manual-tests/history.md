@@ -221,7 +221,7 @@ change”.
     "spec": "tests/integration/history.spec.ts",
     "caseId": "HISTORIK-11"
   },
-  "reference": "1280×720; API-förberedda privata avvisade och väntande sparförsök.",
+  "reference": "1280×720; API-förberedda privata avvisade/väntande sparförsök, med automatisk återhämtning hållen före servern.",
   "outcomes": [
     "Bara genomförda sparanden visas; karta, utkast och sparförsök ändras inte av läsningen."
   ]
@@ -234,14 +234,27 @@ change”.
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Ett genomfört sparande för **Lo Exempel** och
-**Osparad person** i det egna utkastet. Rapporter är stängda.
+**Osparad person** i det egna utkastet. Skapa dem manuellt i ett nytt
+provhushåll utan att starta ett samtal. Rapporter är stängda.
 
-**Separat förberedelse:** Kör
-[privata sparförsök](#privata-sparförsök) på hushållets sida. Den skapar
-ett verkligt avvisat och ett väntande försök via API utan att genomföra
-sparande. Detta motsvarar integrationstestets utgångsläge; det är inte
-bevis för att en webbläsarproxy skapar dessa försök. Använd en ny databas
-för nästa fall och ta bort provdatabasen när läsningen är kontrollerad.
+**Separat förberedelse:** Förbered först
+[styrd objektleverans](map.md#styrd-objektleverans) för detta hushåll och
+skriv `arm recover:before` innan koden för sparförsöken körs. Den håller
+den automatiska kontrollen av det väntande försöket innan begäran når
+servern. Kör därefter [privata sparförsök](#privata-sparförsök) på
+hushållets sida. Koden skapar ett verkligt avvisat och ett väntande försök
+via API utan att genomföra sparande. När båda statusarna är utskrivna,
+ladda om hushållskartan så att arbetsytan upptäcker försöken. Vänta på
+`held-before` för `recover` och låt begäran vara hållen genom hela fallet.
+Att bara registrera ett väntande försök hindrar inte arbetsytans
+automatiska kontroll från att senare genomföra sparandet.
+
+Koden förbereder sparförsöken; transporten håller deras återhämtning.
+Läsningen av Rapporter och Tabell ska inte själv ändra dem. Efter fallet,
+stäng testprofilens flikar. Om transporten fortfarande visar `held-before`,
+skriv `drop` så att den hållna begäran inte skickas till servern. Återställ
+HTTPS-ingången innan `quit`. Använd en ny databas för nästa fall och ta
+bort provdatabasen när installationen är avstängd.
 
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-11.
@@ -254,12 +267,16 @@ för nästa fall och ta bort provdatabasen när läsningen är kontrollerad.
 3. Välj **Tillbaka till arbetet → Tabell**. Kontrollera att
    Osparad person finns kvar i ditt arbete utan att spara eller kasta
    förslaget.
+4. Avsluta enligt den separata förberedelsen medan återhämtningen
+   fortfarande är hållen. Släpp inte fram begäran under kontrollerna.
 
 **Förväntat resultat:**
 
 - Historiken visar bara det genomförda sparandet. Väntande och avvisade
   försök samt det osparade objektet är inte historikposter.
 - Historikläsningen ändrar varken karta, utkast eller sparförsök.
+- Osparad person finns kvar i ditt utkast vid återgången medan den
+  automatiska återhämtningen är hållen före servern.
 
 ### HISTORIK-12: följ sparlänkar och behåll pågående arbete
 
@@ -579,7 +596,9 @@ historikbegäranden. Ladda om sidan efter kontrollen.
 Kör en gång i HISTORIK-11:s isolerade hushåll med **Lo Exempel** sparad
 och **Osparad person** i utkastet. Kommandot avbryts om utgångsläget
 saknas. De två försöken använder provnamn; skapa ett nytt hushåll mellan
-körningarna. Koden sparar inga förslag i den gemensamma kartan.
+körningarna. Armera `recover:before` enligt fallet innan kommandot körs.
+Koden sparar inga förslag i den gemensamma kartan; efter registreringen
+behöver den automatiska återhämtningen fortsätta vara hållen.
 
 ```javascript
 await (async () => {

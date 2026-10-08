@@ -206,6 +206,7 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
   page,
 }) => {
   const installation = await createInstallation();
+  let releaseRecovery = () => {};
   try {
     const data = await setup(page.request, installation.origin);
     await data.object('person', 'Lo Exempel');
@@ -227,8 +228,29 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
     expect(pending.ok()).toBe(true);
     expect((await pending.json()).operation.status).toBe('pending');
     const operationsBefore = await (await page.request.get(`${data.path}/operations`)).json();
+    let recoveryStarted = () => {};
+    const started = new Promise<void>((resolve) => {
+      recoveryStarted = resolve;
+    });
+    const held = new Promise<void>((resolve) => {
+      releaseRecovery = resolve;
+    });
+    await page.route(
+      `${installation.origin}/api/households/${data.household.id}/text-assistant/recover`,
+      async (route) => {
+        expect(route.request().method()).toBe('POST');
+        expect(route.request().postDataJSON().operationIds).toContain('private-pending');
+        recoveryStarted();
+        await held;
+        await route.abort('failed');
+      },
+      { times: 1 },
+    );
     await page.goto(`${installation.origin}/households/${data.household.id}`);
     await (await utilityButton(page, 'Rapporter')).click();
+    // Recovery completes pending attempts. Hold before the transaction so the
+    // pending-history boundary and return reading cannot depend on its timer.
+    await started;
     const history = page.getByRole('region', { name: 'Ändringshistorik', exact: true });
     await expect(history.getByRole('article')).toHaveCount(1);
     await expect(history).toContainText('Lo Exempel');
@@ -249,6 +271,8 @@ test('HISTORIK-11: private rejected and pending save attempts never enter shared
       operationsBefore,
     );
   } finally {
+    releaseRecovery();
+    await page.unrouteAll({ behavior: 'wait' });
     await installation.close();
   }
 });
