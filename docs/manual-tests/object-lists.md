@@ -57,12 +57,28 @@ inloggningen innehåller enbart påhittade uppgifter.
 
 ### LÄS-01: följ Alex till cykel och garage med tabelläget kvar
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-01"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Läsa hela sambandskedjan utan kartgrafik och bevara tabelläget."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Läsa hela sambandskedjan utan kartgrafik och bevara tabelläget.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Hushållet från Förbered läskedjan. Prova med
-tangentbord och utan kartgrafik. Anteckna miljö, förstoring och hjälpmedel.
+tangentbord och utan kartgrafik. Faktisk förstoring och uppläsning
+provas separat i LISTA-09.
 
 **Integrationstest:**
 [household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
@@ -93,12 +109,28 @@ without graphics or lost table state”.
 
 ### LÄS-02: läs samband och olika betydelser på smal skärm
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-02"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Skilja okända mål, uttryckligen inga mål, osäkerhet och status."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Skilja okända mål, uttryckligen inga mål, osäkerhet och status.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Hushållet från Förbered läskedjan. Prova på telefon
-och vid 200/400 procent förstoring. Föreslå borttagning av Alex samband
+vid 390 × 844 CSS-pixlar. Förstoring och uppläsning provas i LISTA-09. Föreslå
+borttagning av Alex samband
 till Cykel genom sambandsredigeringen, utan att spara det gemensamt.
 
 **Integrationstest:**
@@ -126,6 +158,21 @@ targets, uncertainty and proposed removal”.
 - Sambandsdialogen har **Stäng samband** och kryss. Escape fungerar också.
 
 ### LÄS-03: stäng läsning när öppningsraden försvinner
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-03"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Återgå till en användbar radkontroll efter ett bakgrundsbesked."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Återgå till en användbar radkontroll efter ett bakgrundsbesked.
 
@@ -156,6 +203,21 @@ control after a real background update”.
 
 ### LÄS-04: återgå till föregående rad eller rubriken
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-04"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Behålla användbart fokus när det saknas en följande rad."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Behålla användbart fokus när det saknas en följande rad.
 
 **Användare:** Alex Exempel.
@@ -165,25 +227,36 @@ utkastet, ett aktivt textsamtal och en andra inloggad flik.
 
 **Integrationstest:**
 [household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
-testfallen “LÄS-04: vanished read openers return to previous when no next
-row remains” och “LÄS-04: vanished read openers return to heading when no
-next row remains”.
+LÄS-04.
 
 **Steg:**
 
-1. Öppna Samband för B från tabellen. Ta bort bara förslaget B i andra
-   fliken. Vänta på uppdateringen och stäng med Escape.
-2. Kontrollera fokus på Samband för A. Lägg B i utkastet igen och öppna
-   dess sambandsdialog.
-3. Ta bort båda förslagen i andra fliken. Vänta på uppdateringen och stäng.
+1. Öppna **Samband för B** från tabellen. Ta bort bara förslaget B i
+   andra fliken. Vänta på **Objektet finns inte längre**.
+2. Stäng med Escape och kontrollera fokus på **Samband för A**.
 
 **Förväntat resultat:**
 
 - Utan nästa rad går fokus till samma kontroll på föregående rad.
-- Utan kvarvarande rader går fokus till rubriken med hushållets namn. Filtren ändras
-  inte och inga extra ändringar läggs i utkastet.
+- A finns kvar; inga extra ändringar läggs i utkastet.
+  Fallet utan kvarvarande rader är LÄS-08.
 
 ### LÄS-05: läs identitet före och efter ett förslag
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-05"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Skilja ett identifierat objekt från ospecificerad eller oklar identitet och läsa en föreslagen precisering."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja ett identifierat objekt från ospecificerad eller oklar
 identitet och läsa en föreslagen precisering.
@@ -219,6 +292,21 @@ and a proposal replacing unspecified identity”.
 
 ### LÄS-06: återgå när den sista tabellsidan försvinner
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-06"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Återgå till föregående motsvarande radkontroll efter att sidantalet minskar under läsning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Återgå till föregående motsvarande radkontroll efter att
 sidantalet minskar under läsning.
 
@@ -248,13 +336,29 @@ control after page collapse”.
 
 ### LÄS-07: läs ett långt namn på smal skärm
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-07"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Läsa hela objektnamnet även när det saknar mellanslag."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Läsa hela objektnamnet även när det saknar mellanslag.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Hushållet från Förbered läskedjan. Lägg ett objekt i
 utkastet vars namn består av Långtobjektnamn upprepat tolv gånger utan
-mellanslag. Prova en smal skärm och 200/400 procent förstoring.
+mellanslag. Prova 320 × 740 CSS-pixlar. Verklig förstoring och
+uppläsning provas separat i LISTA-09.
 
 **Integrationstest:**
 [household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
@@ -276,6 +380,21 @@ testfallet “LÄS-07: a long unbroken object name wraps in full reading at
 ## Sökning och filtrering
 
 ### LISTA-01: flera typval kombineras med sökning och aktuell rad
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-list.spec.ts",
+    "caseId": "LISTA-01"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Begränsa en stor tabell utan att ändra hushållets uppgifter."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Begränsa en stor tabell utan att ändra hushållets uppgifter.
 
@@ -315,6 +434,21 @@ across 500 objects”.
 ## Återfinna tabellen
 
 ### LISTA-02: sortering, sida och rulläge består vid tillfälliga besök
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-list.spec.ts",
+    "caseId": "LISTA-02"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Behålla tabelläget och skydda oskickad formulärtext."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Behålla tabelläget och skydda oskickad formulärtext.
 
@@ -358,6 +492,21 @@ map-result navigation”.
 
 ### LISTA-03: kartträffen fokuserar direkta grannar och behåller samtalet
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-list.spec.ts",
+    "caseId": "LISTA-03"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Skilja tabellens aktuella rad från kartans fokuserade utsnitt."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Skilja tabellens aktuella rad från kartans fokuserade utsnitt.
 
 **Användare:** Alex Exempel.
@@ -391,19 +540,36 @@ conversation”.
 
 ### LISTA-04: smal tabell och uppgifter fungerar när grafiken avbryts
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-list.spec.ts",
+    "caseId": "LISTA-04"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Behålla tabellens arbete vid förlorad kartgrafik."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Behålla tabellens arbete vid förlorad kartgrafik.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** Hushållet från LISTA-03. Prova vid 390 och 320 pixlars
-bredd. Automatprovet framkallar verklig WebGL-förlust. För manuellt prov
+**Förutsättningar:** Hushållet från LISTA-03. Prova vid 320 CSS-pixlars bredd.
+Automatprovet framkallar verklig WebGL-förlust. För manuellt prov
 behövs en testmiljö där grafikavbrott kan framkallas.
 
+**Separat förberedelse:** Förbered och framkalla avbrottet vid steg 3 enligt
+[grafikförberedelsen](map-graphics-preparation.md#lista-04-och-lista-08).
+Återställ grafiken och avsluta provinstallationen efter fallet.
+
 **Integrationstest:**
-[object-list.spec.ts](../../tests/integration/object-list.spec.ts), testfallen
-“LISTA-04: narrow tables retain search and native details after graphics
-loss at 390px” och “LISTA-04: narrow tables retain search and native details
-after graphics loss at 320px”.
+[object-list.spec.ts](../../tests/integration/object-list.spec.ts),
+LISTA-04.
 
 **Steg:**
 
@@ -413,10 +579,14 @@ after graphics loss at 320px”.
 3. Återvänd med Tabell och framkalla grafikavbrottet. Kontrollera samma
    sökning och att knappen för kartvisning blir inaktiv.
 4. Expandera Lo och läs alla uppgifter direkt i raden. Fäll ihop raden
-   med namnet igen. Redigera Beskrivning till Utan grafik.
+   med namnet igen och kontrollera återfokus på Lo Exempel. Öppna
+   **Redigera Lo Exempel**, kontrollera namnfokus och ändra
+   Beskrivning till Utan grafik.
 5. Välj Avbryt och Escape i förlustvarningen. Kontrollera samma text och
    oförändrat utkast. Avbryt igen och kasta endast formulärändringen.
-6. Öppna Filter och kontrollera Person. Stäng filtret och läs sökningen.
+6. Öppna Filter och kontrollera Person. Fokusera typvalet och
+   kontrollera synligt fokus och att dess träffyta kan nås även efter
+   grafikförlusten. Stäng filtret och läs sökningen.
 
 **Förväntat resultat:**
 
@@ -428,12 +598,27 @@ after graphics loss at 320px”.
 
 ### LISTA-05: återgång på kort skärm bevarar synlig träff och fokus
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-list-flow.spec.ts",
+    "caseId": "LISTA-05"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Återgå till samma tabellarbete i ett kort fönster."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Återgå till samma tabellarbete i ett kort fönster.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Provkartan med 500 objekt. Prova 320 × 250 CSS-pixlar
-och verklig webbläsarzoom på 400 procent.
+i Chromium. Verklig förstoring och uppläsning provas i LISTA-09.
 
 **Integrationstest:**
 [object-list-flow.spec.ts](../../tests/integration/object-list-flow.spec.ts),
@@ -462,7 +647,7 @@ and keyboard focus”.
 - Fokus återgår till använd kontroll; den är synlig och går att peka på.
 - Sökfältet får fokus vid uttryckligt sökval. Hushållets data är oförändrade.
 
-### LISTA-06: utgånget fall för inaktiv listpanel
+### Pensionerat LISTA-06 — utgånget fall för inaktiv listpanel
 
 Fallet gäller första klicket i en fri listpanel bredvid en aktiv
 objektpanel. De panelerna är avvecklade. ID:t återanvänds inte.
@@ -551,6 +736,21 @@ samband till objektet med typen **Endast i sambandet**.
 
 ### SÖK-01: alla ord, egna detaljfält och svensk teckensammansättning
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-01"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Hitta objekt genom deras fullständiga egna uppgifter."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Hitta objekt genom deras fullständiga egna uppgifter.
 
 **Användare:** Alex Exempel.
@@ -588,6 +788,21 @@ samband till objektet med typen **Endast i sambandet**.
 
 ### SÖK-02: flerval skiljer utkastförslag från upphörda och borttagna
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-02"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kombinera filter utan att blanda samman olika statusar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Kombinera filter utan att blanda samman olika statusar.
 
 **Användare:** Alex Exempel.
@@ -619,6 +834,21 @@ from lifecycle”.
 
 ### SÖK-03: kartans eget fokus startar sökning med färdigt tecken
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-03"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Söka från kartan utan att fånga annan inmatning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Söka från kartan utan att fånga annan inmatning.
 
 **Användare:** Alex Exempel.
@@ -633,7 +863,8 @@ and Escape restrictions”.
 **Steg:**
 
 1. Kontrollera att sökfältet och Filter syns direkt.
-   Klicka i kartans sökfält och kontrollera sökfältets fokus. Sök efter 299 EGEN.
+   Klicka i kartans sökfält och kontrollera sökfältets fokus. Sök efter 299
+   EGEN.
    Kontrollera A 2 i kartan.
 2. Öppna Filter och kontrollera en träff. Välj Typ 10 och kontrollera noll
    träffar i dialogen. Tryck Escape. Kontrollera fokus på Filter,
@@ -686,11 +917,27 @@ and Escape restrictions”.
 
 ### SÖK-04: sista förslaget återställer bara båda vyernas utkastfilter
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-04"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Behålla sökning när det villkorliga filtret inte längre behövs."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Behålla sökning när det villkorliga filtret inte längre behövs.
 
 **Användare:** Alex Exempel.
 
-**Förutsättningar:** En ny provinstallation för sökning har sitt förberedda utkast.
+**Förutsättningar:** En ny provinstallation för sökning har sitt förberedda
+utkast.
 
 **Integrationstest:**
 [object-search.spec.ts](../../tests/integration/object-search.spec.ts),
@@ -704,7 +951,8 @@ type-only proposals expose them”.
 2. Sök efter prov i Tabell och välj Typ 2 och Nytt. Stäng filterdialogen.
 3. Öppna **Utkast**, välj **Kasta hela utkastet**, läs bekräftelsen och
    välj **Ta bort hela utkastet**. Kontrollera att utkastet är tomt.
-4. Stäng textvyn. Återvänd till Tabell och sedan kartans sökyta. Kontrollera bevarad
+4. Stäng textvyn. Återvänd till Tabell och sedan kartans sökyta. Kontrollera
+   bevarad
    söktext och Typ 2, återställt utkastfilter och besked om återställningen.
 5. Skapa enbart ett typförslag under Inställningar. Återgå till kartan
    och sök efter finns inte. Öppna Filter och kontrollera att
@@ -717,6 +965,21 @@ type-only proposals expose them”.
 - Typförslag och bortfiltrerade förslag räcker för att visa filtret.
 
 ### SÖK-05: mobil sökingång och filterdialog bevarar begränsningar
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-05"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Använda sökning utan ett fysiskt tangentbord."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Använda sökning utan ett fysiskt tangentbord.
 
@@ -773,6 +1036,21 @@ mobile and desktop”.
 
 ### SÖK-10: synlig kapselsökning och liten filterdialog på olika skärmar
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-10"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Nå kartans sökning och filter på dator och liten skärm."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Nå kartans sökning och filter på dator och liten skärm.
 
 **Användare:** Alex Exempel.
@@ -822,18 +1100,31 @@ screens”.
 
 ### SÖK-11: filterdialogen ligger ovanpå kartan utan att flytta etiketter
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-11"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Öppna och stänga filter utan att kartans layout ändras."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Öppna och stänga filter utan att kartans layout ändras.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** En ny provinstallation för sökning är öppen i Karta.
-Prova dator och telefon med flera objekt och synliga etiketter.
+Prova 1280 × 900 CSS-pixlar med flera objekt och synliga etiketter.
 
 **Integrationstest:**
 [object-search.spec.ts](../../tests/integration/object-search.spec.ts),
-testfallen “SÖK-11: opening filters overlays the map without moving markers
-or labels at 1280px” och “SÖK-11: opening filters overlays the map without
-moving markers or labels at 390px”.
+SÖK-11.
 
 **Steg:**
 
@@ -856,6 +1147,21 @@ moving markers or labels at 390px”.
   Hushållets sparade uppgifter och utkast ändras inte.
 
 ### SÖK-12: streckade linjer till etiketter syns i båda teman
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-12"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Kunna följa linjerna från kartobjekt till deras etiketter."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Kunna följa linjerna från kartobjekt till deras etiketter.
 
@@ -884,6 +1190,21 @@ both themes”.
   kartans bakgrund. Läsbarhet på verkliga skärmar behöver manuellt prov.
 
 ### SÖK-06: direkta grannar och fortsatt utforskning bevarar sökträffarna
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-exploration.spec.ts",
+    "caseId": "SÖK-06"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Följa en kedja i kartan utan automatisk indirekt expansion."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Följa en kedja i kartan utan automatisk indirekt expansion.
 
@@ -922,10 +1243,26 @@ hits through return and table visits”.
   bevarar däremot utforskningen. Återgången behåller söktext och filter,
   visar Alex och cykeln och ger användbart fokus i kartan.
 - Karta, utkast och gemensam historik ändras inte.
-- Kartikonen **Visa i kartan** återställer sökning och filter; sambandsikonen behåller
+- Kartikonen **Visa i kartan** återställer sökning och filter; sambandsikonen
+  behåller
   dem. Ingen av åtgärderna ändrar hushållets information.
 
 ### SÖK-07: sammanhang går utanför träfffilter men följer upphört
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-exploration.spec.ts",
+    "caseId": "SÖK-07"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Skilja träfffilter från livscykelregler för sammanhang."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Syfte:** Skilja träfffilter från livscykelregler för sammanhang.
 
@@ -956,7 +1293,8 @@ edges require inclusion”.
    och välj **Lägg i utkastet och stäng**.
 6. Återgå till **Karta**. Kontrollera att den utforskade cykeln döljs.
    Välj **Ta med upphörda** från upplysningen och kontrollera cykeln.
-   Markera cykeln, tryck Shift+F10 och välj **Visa samband i kartan** igen för att
+   Markera cykeln, tryck Shift+F10 och välj **Visa samband i kartan** igen för
+   att
    kontrollera Garaget.
 
 **Förväntat resultat:**
@@ -974,21 +1312,32 @@ edges require inclusion”.
 
 ### SÖK-08: tabellens kartknapp återställer kartfilter och bevarar tabelläget
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-exploration.spec.ts",
+    "caseId": "SÖK-08"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Visa ett valt tabellobjekt med direkt sammanhang i kartan."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Visa ett valt tabellobjekt med direkt sammanhang i kartan.
 
 **Användare:** Alex Exempel.
 
 **Förutsättningar:** Förbered utforskning med `--removed`. Cykeln har
-föreslagen borttagning och Oberoende objekt är redan borttaget. Prova
-1280, 390 och 320 pixlars bredd, tangentbord och pekning.
+föreslagen borttagning och Oberoende objekt är redan borttaget. Prova 1280
+CSS-pixlars bredd och 950 pixlars höjd.
 
 **Integrationstest:**
 [map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
-testfallen “SÖK-08: table map actions reset only map filters and retain table
-work at 1280px”,
-“SÖK-08: table map actions reset only map filters and retain table work at
-390px” och “SÖK-08: table map actions reset only map filters and retain table
-work at 320px”.
+SÖK-08.
 
 **Steg:**
 
@@ -1022,6 +1371,21 @@ work at 320px”.
 
 ### SÖK-09: ändrade samband visar tidigare och föreslagna direkta ändpunkter
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-exploration.spec.ts",
+    "caseId": "SÖK-09"
+  },
+  "reference": "Isolerad Chromium-installation med syntetiska hushållsdata; vald konfiguration enligt förutsättningarna.",
+  "outcomes": [
+    "Läsa en föreslagen kopplingsändring inom sökträffens sammanhang."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Syfte:** Läsa en föreslagen kopplingsändring inom sökträffens sammanhang.
 
 **Användare:** Alex Exempel.
@@ -1051,3 +1415,537 @@ endpoints without expanding their chains”.
 - Tidigare koppling skiljs från förslaget med geometri, symbol och text.
 - Ingen indirekt kedja öppnas automatiskt. Upphört gäller även tidigare
   samband, som åter syns efter uttrycklig inkludering.
+
+### LISTA-08: LISTA-04 vid 390 × 844
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-list.spec.ts",
+    "caseId": "LISTA-08"
+  },
+  "reference": "390 × 844",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** LISTA-04 vid 390 × 844.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Nytt hushåll enligt LISTA-03 och 390 CSS-pixlars bredd.
+Skyddet gäller filter, träffytor och samma vanliga läsning/redigering
+efter verklig grafikförlust.
+
+**Integrationstest:**
+[object-list.spec.ts](../../tests/integration/object-list.spec.ts),
+LISTA-08.
+
+**Steg:**
+
+1. Utför LISTA-04 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### SÖK-13: SÖK-08 vid 390 × 950
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-exploration.spec.ts",
+    "caseId": "SÖK-13"
+  },
+  "reference": "390 × 950",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** SÖK-08 vid 390 × 950.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Förbered utforskning med --removed vid 390 CSS-pixlars
+bredd.
+Skyddet gäller skilda kart- och tabellfilter samt återfokus.
+
+**Integrationstest:**
+[map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
+SÖK-13.
+
+**Steg:**
+
+1. Utför SÖK-08 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### SÖK-14: SÖK-08 vid 320 × 950
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/map-exploration.spec.ts",
+    "caseId": "SÖK-14"
+  },
+  "reference": "320 × 950",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** SÖK-08 vid 320 × 950.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Förbered utforskning med --removed vid 320 CSS-pixlars
+bredd.
+Skyddet gäller omflöde och åtkomliga kart-/tabellkontroller.
+
+**Integrationstest:**
+[map-exploration.spec.ts](../../tests/integration/map-exploration.spec.ts),
+SÖK-14.
+
+**Steg:**
+
+1. Utför SÖK-08 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### SÖK-15: SÖK-11 vid 390 CSS-pixlar
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/object-search.spec.ts",
+    "caseId": "SÖK-15"
+  },
+  "reference": "390 CSS-pixlar",
+  "outcomes": [
+    "Samma handlingar ger de skyddade resultaten under angivna steg.",
+    "Kontroller och fokus förblir åtkomliga i den valda konfigurationen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** SÖK-11 vid 390 CSS-pixlar.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Förbered sökning vid 390 CSS-pixlars bredd.
+Skyddet gäller att filterdialogen inte flyttar kartans etiketter.
+
+**Integrationstest:**
+[object-search.spec.ts](../../tests/integration/object-search.spec.ts),
+SÖK-15.
+
+**Steg:**
+
+1. Utför SÖK-11 en gång med denna konfiguration. Utför alla steg i samma
+   ordning.
+2. Under formulär- och vybytena kontrollerar du läsbart innehåll, synligt
+   fokus och att nästa angivna kontroll går att nå.
+
+**Förväntat resultat:**
+
+- Samma handlingar ger de skyddade resultaten under angivna steg.
+- Kontroller och fokus förblir åtkomliga i den valda konfigurationen.
+
+### LÄS-08: försvunnen sista läsrad återför fokus till rubriken
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-reading.spec.ts",
+    "caseId": "LÄS-08"
+  },
+  "reference": "Tom tabell efter verklig uppdatering",
+  "outcomes": [
+    "Utan nästa eller föregående rad återgår fokus till hushållets rubrik.",
+    "Dialogen kan stängas utan nya privata förslag."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** försvunnen sista läsrad återför fokus till rubriken.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll med nya A och B i samma användares utkast.
+Starta ett textsamtal och öppna andra fliken med samma inloggning.
+
+**Integrationstest:**
+[household-reading.spec.ts](../../tests/integration/household-reading.spec.ts),
+LÄS-08.
+
+**Steg:**
+
+1. Öppna **Tabell → Samband för B** i första fliken.
+2. Ta bort förslagen B och A i andra fliken. Vänta på
+   **Objektet finns inte längre** i första fliken.
+3. Stäng med Escape. Kontrollera fokus på rubriken **Hushållet Linden**.
+
+**Förväntat resultat:**
+
+- Utan nästa eller föregående rad återgår fokus till hushållets rubrik.
+- Dialogen kan stängas utan nya privata förslag.
+
+### LISTA-09: verklig zoom och uppläsning ger hela läsalternativet
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "humanObservation": {
+    "kind": "screen-reader",
+    "observation": "Lyssna med namngiven skärmläsare vid 200 och 400 procent\nverklig zoom: rubrik, fullständiga värden, riktning, status och fokus."
+  },
+  "reference": "Namngiven skärmläsare och webbläsare; verklig zoom 200 och 400 procent.",
+  "outcomes": [
+    "Skärmläsaren läser hela namn, värden, riktning och skilda statusar.",
+    "Rubrik och återfokus är begripliga och kontroller kan nås vid båda zoomnivåerna."
+  ],
+  "evidence": [
+    {
+      "kind": "overlap",
+      "spec": "tests/integration/household-reading.spec.ts",
+      "caseId": "LÄS-01",
+      "purpose": "Avgränsad automatiserad DOM-, CSS- och syntetisk inmatning; inte faktisk enhetsobservation."
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** verklig zoom och uppläsning ger hela läsalternativet.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Ny förberedelse enligt LÄS-01.
+
+**Kräver mänsklig observation:** Lyssna med namngiven skärmläsare vid 200 och
+400 procent
+verklig zoom: rubrik, fullständiga värden, riktning, status och fokus.
+
+**Steg:**
+
+1. Utför LÄS-01 en gång med namngiven skärmläsare och
+   webbläsarens verkliga förstoring. Anteckna utrustning.
+2. Utför LÄS-02, LÄS-07 och LISTA-05 från respektive ny
+   förberedelse. Lyssna på hela namn och betydelser samt återfokus.
+
+**Förväntat resultat:**
+
+- Skärmläsaren läser hela namn, värden, riktning och skilda statusar.
+- Rubrik och återfokus är begripliga och kontroller kan nås vid båda zoomnivåerna.
+
+### TABELL-01: svensk sortering och öppna rader består vid kartbesök
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-table.spec.ts",
+    "caseId": "TABELL-01"
+  },
+  "reference": "1440 × 1000, hushållets tabell",
+  "outcomes": [
+    "Naturlig svensk sortering skiljer A 2 från A 10 och å, ä, ö.",
+    "Vybytet bevarar sortering, sida, rulläge och flera öppna rader.",
+    "Läsningen ändrar inga hushållsuppgifter eller privata förslag."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** svensk sortering och öppna rader består vid kartbesök.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Starta [Förbered hushållets tabell](#förbered-hushållets-tabell).
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+TABELL-01.
+
+**Steg:**
+
+1. Välj **Tabell** och kontrollera fokus på **Hushållet Linden**,
+   femtio rader och A 2 före A 10. Expandera båda namnen.
+2. Fokusera **Namn** och tryck Enter. Läs fallande ordning
+   Örn, Älg, Åke och kontrollera fokus kvar på Namn.
+3. Välj **Typ**: Typ 2 visas först. Välj Typ igen: Typ 10 visas först.
+   Välj Namn för stigande ordning och sedan **Nästa**.
+4. Expandera första namnet på sida två, rulla tabellen och fokusera
+   samma namn. Besök **Karta**, återgå med **Tabell** och kontrollera
+   fokus, rulläge, öppen rad, sortering och sida.
+5. Välj **Föregående**. Kontrollera att A 2 fortfarande är öppen.
+
+**Förväntat resultat:**
+
+- Naturlig svensk sortering skiljer A 2 från A 10 och å, ä, ö.
+- Vybytet bevarar sortering, sida, rulläge och flera öppna rader.
+- Läsningen ändrar inga hushållsuppgifter eller privata förslag.
+
+### TABELL-02: sparade och föreslagna värden har tydliga skilda statusar
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-table.spec.ts",
+    "caseId": "TABELL-02"
+  },
+  "reference": "Fullständiga uppgifter utan WebGL",
+  "outcomes": [
+    "Sparat och privat förslag har skilda betydelser, bilder och fältnamn.",
+    "Noll, Nej, Ej uppgivet, osäker skuld och uttryckligen inget blandas inte.",
+    "Nytt, ändrat, föreslagen borttagning, upphört och borttaget är läsbara.",
+    "Läsning och oförändrad formulärstängning skapar inget förslag."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** sparade och föreslagna värden har tydliga skilda statusar.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Bygg med `npm run build` och starta
+`node --import tsx scripts/manual-household-table.ts --details`.
+Öppna adressen i en separat Chromium-profil med WebGL avstängt
+(`--disable-webgl`). Logga in med Google. Avsluta med `quit`;
+provdatabasen raderas. Förberedelsen skapar syntetiska bilder och förslag.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+TABELL-02.
+
+**Steg:**
+
+1. Välj **Tabell** och expandera **A 2**. Läs sparat pris 299 SEK,
+   föreslaget pris 399 SEK, **Uttryckligen inget** för skuld och
+   **100 000 SEK (Osäkert uppgivet)** med datum 2026-01-01.
+2. Läs namn, typ, beskrivning och båda profilbilderna. Skilj den
+   tidigare bilden och Cykel från det privata bild- och ikonförslaget.
+3. Välj **Redigera A 2**. Kontrollera namnfokus och A 2.
+   Välj **Avbryt** utan ändring och kontrollera återfokus på samma
+   knapp och fortfarande öppna uppgifter.
+4. Läs **Ramnummer**, **Antal** och **Reserv**: sparat **Ej uppgivet**,
+   föreslaget **RAM-2026-42**, **0** och **Nej**. Läs hela
+   **Föreslagen anteckning**, inklusive sparad benämning Egen anteckning.
+5. Öppna **Filter**. Kontrollera rubrikfokus, välj **Ta med upphörda**
+   och **Ta med borttagna**. Stäng med Escape och kontrollera fokus
+   tillbaka till **Filter · aktiva**. Välj **Nästa**.
+6. Läs **Nytt prov**, **Tas bort prov**, **Upphört prov** och
+   **Borttaget prov**. Expandera Borttaget prov och läs alla uppgifter.
+   Detta borttagna objekt kan läsas men saknar redigeringsåtgärd.
+
+**Förväntat resultat:**
+
+- Sparat och privat förslag har skilda betydelser, bilder och fältnamn.
+- Noll, Nej, Ej uppgivet, osäker skuld och uttryckligen inget blandas inte.
+- Nytt, ändrat, föreslagen borttagning, upphört och borttaget är läsbara.
+- Läsning och oförändrad formulärstängning skapar inget förslag.
+
+### TABELL-03: sidledsläsning bevarar markering och oskickat samtal
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-table.spec.ts",
+    "caseId": "TABELL-03"
+  },
+  "reference": "390 × 844, tangentbord i verklig rullbar tabell",
+  "outcomes": [
+    "Tangentbordet rullar tabellen och faktisk position återställs.",
+    "Markering, privat utkast och oskickad samtalstext består."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** sidledsläsning bevarar markering och oskickat samtal.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Förbered hushållets tabell. Starta ett textsamtal med
+testmiljöns ersättare för modelltjänsten.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+TABELL-03.
+
+**Steg:**
+
+1. Skriv **Oskickat meddelande vid tabellbesök** utan att skicka.
+   Stäng textvyn, välj **Tabell** och expandera A 2.
+2. Kontrollera att uppgifterna ryms inom skärmbredden. Fokusera
+   tabellens rullbara yta och tryck högerpil så att den rullar i sidled.
+   Vänta tills rullningen stannar och anteckna den uppnådda positionen
+   utan att kräva ett exakt steg.
+3. Besök **Karta**: A 2 är markerat. Återvänd med **Tabell** och
+   kontrollera samma faktiska sidledsposition, markerad rad och
+   **✓ Markerad**.
+4. Öppna **Skriv till Skyttel**. Kontrollera samma oskickade
+   meddelande och att tidigare utkast finns kvar.
+
+**Förväntat resultat:**
+
+- Tangentbordet rullar tabellen och faktisk position återställs.
+- Markering, privat utkast och oskickad samtalstext består.
+
+### TABELL-04: försvunnen rad återför fokus efter redigering
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-table.spec.ts",
+    "caseId": "TABELL-04"
+  },
+  "reference": "Ordinarie redigering, nästa rad, föregående rad, rubrik",
+  "outcomes": [
+    "Samma öppnare får fokus när raden finns kvar.",
+    "När raden försvinner går fokus till nästa, föregående och sist\n  hushållets rubrik utan att ändra filter.",
+    "Statusändringarna finns endast i eget utkast."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** försvunnen rad återför fokus efter redigering.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll. Upphörda objekt ingår inte i tabellens
+startfilter. Återställ med nytt hushåll mellan fallen.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+TABELL-04.
+
+**Steg:**
+
+1. Skapa och spara tre objekt: Fokus Alpha, Fokus Beta och Fokus Gamma.
+   Välj **Tabell** och sök **Fokus**.
+2. Öppna **Redigera Fokus Beta** och stäng med **Avbryt**.
+   Kontrollera fokus på samma ursprungliga kontroll.
+3. Öppna samma väg för Beta.
+   I formuläret öppnar du **Livscykel och utseende**, väljer
+   **Upphört** och **Lägg i utkastet och stäng**.
+   Kontrollera fokus på motsvarande kontroll för Gamma.
+4. Upprepa samma väg för Gamma: fokus återgår till Alpha.
+   Upprepa sedan för Alpha: fokus återgår till **Hushållet Linden**.
+5. Öppna **Filter**, välj **Ta med upphörda** och stäng.
+   Alla tre objekten finns kvar som upphörda privata förslag.
+   Öppna utkastet och läs deras ändringar; spara inte.
+
+**Förväntat resultat:**
+
+- Samma öppnare får fokus när raden finns kvar.
+- När raden försvinner går fokus till nästa, föregående och sist
+  hushållets rubrik utan att ändra filter.
+- Statusändringarna finns endast i eget utkast.
+
+### TABELL-05: försvunnen rad återför fokus efter kartbesök
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-table.spec.ts",
+    "caseId": "TABELL-05"
+  },
+  "reference": "Ordinarie kartbesök, nästa rad, föregående rad, rubrik",
+  "outcomes": [
+    "Samma öppnare får fokus när raden finns kvar.",
+    "När raden försvinner går fokus till nästa, föregående och sist\n  hushållets rubrik utan att ändra filter.",
+    "Statusändringarna finns endast i eget utkast."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Syfte:** försvunnen rad återför fokus efter kartbesök.
+
+**Användare:** Alex Exempel med tillgång till provhushållet.
+
+**Förutsättningar:** Tomt provhushåll. Upphörda objekt ingår inte i tabellens
+startfilter. Återställ med nytt hushåll mellan fallen.
+
+**Integrationstest:**
+[household-table.spec.ts](../../tests/integration/household-table.spec.ts),
+TABELL-05.
+
+**Steg:**
+
+1. Skapa och spara tre objekt: Fokus Alpha, Fokus Beta och Fokus Gamma.
+   Välj **Tabell** och sök **Fokus**.
+2. Välj **Visa Fokus Beta i kartan** och återvänd med **Tabell**.
+   Kontrollera fokus på samma ursprungliga kontroll.
+3. Öppna samma väg för Beta. Dubbelklicka Beta i kartan och välj redigering.
+   I formuläret öppnar du **Livscykel och utseende**, väljer
+   **Upphört** och **Lägg i utkastet och stäng**.
+   Återvänd med Tabell. Kontrollera fokus på motsvarande kontroll för Gamma.
+4. Upprepa samma väg för Gamma: fokus återgår till Alpha.
+   Upprepa sedan för Alpha: fokus återgår till **Hushållet Linden**.
+5. Öppna **Filter**, välj **Ta med upphörda** och stäng.
+   Alla tre objekten finns kvar som upphörda privata förslag.
+   Öppna utkastet och läs deras ändringar; spara inte.
+
+**Förväntat resultat:**
+
+- Samma öppnare får fokus när raden finns kvar.
+- När raden försvinner går fokus till nästa, föregående och sist
+  hushållets rubrik utan att ändra filter.
+- Statusändringarna finns endast i eget utkast.
+
+## Bevarad avgränsning
+
+LISTA-04 använder 320 CSS-pixlar med verklig grafikförlust. LISTA-08
+behåller hela dess ursprungliga 390-prov, inklusive filter, läsning,
+redigering, fokus och träffytor efter avbrottet. SÖK-08 är 1280-referensen;
+SÖK-13–14 behåller båda smala övergångarna, skilda filter och återfokus.
+Dessa ursprungliga prov har ingen separat slutlig spar-/omstartskedja
+att korta. Deras native arbete är kvar i sin helhet.
+
+TABELL-03 kräver tangentbordsrullning och exakt återställning av den
+faktiskt uppnådda positionen, men inget bestämt rullsteg på 40 pixlar.
+Detta avstår endast från skydd mot ändrad steglängd. Markering, utkast
+och oskickad samtalstext är kvar. LISTA-06 är fortsatt pensionerat och
+återanvänds inte. LÄS-08 skiljer tom tabell från LÄS-04:s föregående rad.

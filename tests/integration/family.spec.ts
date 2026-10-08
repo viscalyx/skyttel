@@ -23,15 +23,15 @@ async function chooseRelationshipObject(page: Page, label: string, name: string)
   const select = page.getByLabel(label, { exact: true });
   const id = await select
     .getByRole('option')
-    .filter({ hasText: `${name} ·` })
+    .filter({ hasText: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} ·`) })
     .getAttribute('value');
   expect(id).toEqual(expect.any(String));
   await select.selectOption(id ?? '');
 }
 
-test('KARTA-07: family objects and directed relationships save together and keep their identities', async ({
-  page,
-}) => {
+test('HTTP family objects and directed relationships save together and keep their identities', {
+  tag: '@technical',
+}, async ({ page }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
@@ -99,6 +99,90 @@ test('KARTA-07: family objects and directed relationships save together and keep
     expect(state.relationships).toEqual([receipt.relationships[0].after]);
     const history = await (await page.request.get(`${path}/history`)).json();
     expect(history.history[0]).toEqual(receipt);
+  } finally {
+    await installation.close();
+  }
+});
+
+test('KARTA-07: native family forms save eight separate objects and one directed relationship', async ({
+  page,
+}) => {
+  const installation = await createInstallation();
+  try {
+    await signIn(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
+    const read = async () => (await page.request.get(path)).json();
+    await page.goto(installation.origin);
+    await openTable(page);
+    for (const [type, name] of [
+      ['Tjänst', 'Molnmusik'],
+      ['Tjänstekonto', 'Familjens konto'],
+      ['Abonnemang', 'Familjemusik'],
+      ['Person', 'Lo'],
+      ['E-postadress', 'familj@example.test'],
+      ['Kort', 'Familjekort'],
+      ['Bankkonto', 'Hushållskonto'],
+      ['Företag', 'Moln AB'],
+    ]) {
+      await openNewObject(page);
+      const form = page.getByRole('dialog', { name: 'Nytt objekt', exact: true });
+      await form.getByLabel('Namn', { exact: true }).fill(name);
+      await form.getByLabel('Objekttyp', { exact: true }).selectOption({ label: type });
+      await form.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+      await expect(form).not.toBeVisible();
+    }
+    await openObjectRelationships(page, 'Familjemusik');
+    await page.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+    await chooseRelationshipObject(page, 'Från objekt', 'Familjemusik');
+    await page
+      .getByLabel('Sambandstyp', { exact: true })
+      .selectOption({ label: 'Gäller tjänstekontot' });
+    await chooseRelationshipObject(page, 'Till objekt', 'Familjens konto');
+    await stageRelationshipAndClose(page);
+    const proposed = await read();
+    expect(proposed.objects).toEqual([]);
+    expect(proposed.draft.changes).toHaveLength(8);
+    expect(proposed.draft.relationships).toHaveLength(1);
+    const duplicate = await openObjectRelationships(page, 'Familjemusik');
+    await duplicate.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+    await duplicate
+      .getByLabel('Sambandstyp', { exact: true })
+      .selectOption({ label: 'Gäller tjänstekontot' });
+    await chooseRelationshipObject(page, 'Till objekt', 'Familjens konto');
+    await duplicate.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(duplicate.getByRole('alert')).toContainText('Sambandet finns redan');
+    expect((await read()).draft.relationships).toEqual(proposed.draft.relationships);
+    await duplicate.getByRole('button', { name: 'Avbryt redigeringen', exact: true }).click();
+    await page.getByRole('button', { name: 'Kasta ändringarna och fortsätt', exact: true }).click();
+    await duplicate.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+    const review = await openDraftReview(page);
+    for (const change of proposed.draft.changes)
+      await expect(review).toContainText(change.after.name);
+    await saveReviewedConflictDraft(page);
+    await closeTextView(page);
+    await installation.restart();
+    await page.reload();
+    await openTable(page);
+    const table = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    for (const change of proposed.draft.changes) {
+      await expect(
+        table.getByRole('button', { name: change.after.name, exact: true }),
+      ).toBeVisible();
+    }
+    await expect(await openObjectRelationships(page, 'Familjemusik')).toContainText(
+      'Familjemusik → Gäller tjänstekontot → Familjens konto',
+    );
+    const saved = await read();
+    expect(saved.objects.map((object: { id: string }) => object.id).sort()).toEqual(
+      proposed.draft.changes.map((change: { id: string }) => change.id).sort(),
+    );
+    expect(saved.relationships).toEqual([
+      expect.objectContaining({
+        id: proposed.draft.relationships[0].id,
+        ...proposed.draft.relationships[0].after,
+      }),
+    ]);
   } finally {
     await installation.close();
   }
@@ -268,7 +352,7 @@ test('UTKAST-01: demo seed resumes a conflict and preserves independent proposal
   }
 });
 
-test('KARTA-07: a concurrent duplicate refreshes the saved relationship and allows explicit editing', async ({
+test('KARTA-25: a concurrent duplicate refreshes the saved relationship and allows explicit editing', async ({
   page,
   browser,
 }) => {
@@ -315,30 +399,27 @@ test('KARTA-07: a concurrent duplicate refreshes the saved relationship and allo
       data: { code },
     });
     state = await (await other.request.get(path)).json();
-    const draft = await (
-      await other.request.post(`${path}/relationship`, {
-        headers: { origin: installation.origin },
-        data: {
-          version: state.draft.version,
-          id: 'concurrent-edge',
-          baseRevision: null,
-          value: {
-            typeId: state.relationshipTypes.find(
-              (value: { name: string }) => value.name === 'Använder',
-            ).id,
-            sourceId: state.objects.find((value: { name: string }) => value.name === 'Kim Exempel')
-              .id,
-            targetId: state.objects.find((value: { name: string }) => value.name === 'Molnmusik')
-              .id,
-            knowledge: 'known',
-          },
-        },
-      })
-    ).json();
-    await other.request.post(`${path}/save`, {
-      headers: { origin: installation.origin },
-      data: { version: draft.version, operationId: 'concurrent-save' },
-    });
+    const robinPage = await other.newPage();
+    await robinPage.goto(installation.origin);
+    await openObjectRelationships(robinPage, 'Kim Exempel');
+    await robinPage.getByRole('button', { name: 'Nytt samband', exact: true }).click();
+    await chooseRelationshipObject(robinPage, 'Från objekt', 'Kim Exempel');
+    await robinPage.getByLabel('Sambandstyp', { exact: true }).selectOption({ label: 'Använder' });
+    await chooseRelationshipObject(robinPage, 'Till objekt', 'Molnmusik');
+    await stageRelationshipAndClose(robinPage);
+    await saveReviewedConflictDraft(robinPage);
+    await closeTextView(robinPage);
+    const concurrent = await (await other.request.get(path)).json();
+    const concurrentId = concurrent.relationships.find(
+      (edge: { sourceId: string; targetId: string; typeId: string }) =>
+        edge.sourceId ===
+          state.objects.find((object: { name: string }) => object.name === 'Kim Exempel').id &&
+        edge.targetId ===
+          state.objects.find((object: { name: string }) => object.name === 'Molnmusik').id &&
+        edge.typeId ===
+          state.relationshipTypes.find((type: { name: string }) => type.name === 'Använder').id,
+    )?.id;
+    expect(concurrentId).toEqual(expect.any(String));
     await page
       .getByRole('dialog', { name: 'Samband för Kim Exempel', exact: true })
       .getByRole('button', { name: 'Lägg i utkastet', exact: true })
@@ -353,7 +434,7 @@ test('KARTA-07: a concurrent duplicate refreshes the saved relationship and allo
     ).toBeVisible();
     const current = await (await page.request.get(path)).json();
     expect(
-      current.relationships.filter((edge: { id: string }) => edge.id === 'concurrent-edge'),
+      current.relationships.filter((edge: { id: string }) => edge.id === concurrentId),
     ).toHaveLength(1);
     expect(current.draft.relationships ?? []).toEqual([]);
     await form.getByRole('button', { name: 'Redigera befintligt samband', exact: true }).click();

@@ -11,7 +11,7 @@ import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 
-test('refreshing after a conflict preserves text without authorizing a stale form', async ({
+test('KARTA-23: refreshing after a conflict preserves text without authorizing a stale form', async ({
   page,
   browser,
 }) => {
@@ -57,7 +57,7 @@ test('refreshing after a conflict preserves text without authorizing a stale for
   }
 });
 
-test('an uncertain save recovers its receipt and stale tabs cannot save newer drafts', async ({
+test('KARTA-24: an uncertain save recovers its receipt and stale tabs cannot save newer drafts', async ({
   page,
   browser,
 }) => {

@@ -132,6 +132,10 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   redigering fungerar. Återgång från inställningarna behåller användbart
   läge och synligt, otäckt fokus. LISTA-06:s gamla fönstergeometri är
   pensionerad utan återanvänt ID; första aktiveringens läsning finns kvar.
+  TABELL-01–05 har egna vanliga fall, liksom varje smal LISTA- och
+  SÖK-variant. LISTA-09 skiljer faktisk uppläsning och förstoring från
+  Chromium-proven. Grafikavbrott har separat
+  [körbar förberedelse](map-graphics-preparation.md).
 
 - [Navigeringsfönstret](map-navigation.md): normal- och miniläge, oberoende
   fönsterflytt, samtidiga läsbara detaljer och knapptext på flera rader
@@ -397,6 +401,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   tillägg till utkastet på dator och mobil. KARTA-18 och KARTA-21 skiljer
   tillämpat och uteblivet tillägg; KARTA-20 och KARTA-22 har skilda
   ordnings- och fokusreferenser, med fullständigt sparande och omstart vid 1440px.
+  KARTA-07 använder verkliga familjeformulär med separat HTTP-underlag;
+  KARTA-25 skyddar den samtidiga dubblettdialogen. KARTA-08 har en komplett
+  1280px/ljus referens och fem egna native konfigurationsfall.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
   högerklickets sju ikoner och uppgiftsfönstrens fem åtgärdsikoner.
@@ -404,6 +411,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   den personliga vyn. Vanliga formulär,
   återfokus och oförändrat utkast provas även i smala och korta fönster,
   liksom återgång från Rapporter till text och utkast.
+  MARKERING-07–10 skiljer smala och korta konfigurationer; verkliga
+  modifierare och pekdragning provas separat i MARKERING-11–12.
 - [Kamerans urvalsfokus](map-camera.md): högerklickets tre kartåtgärder,
   bevarat urval och filter, etikettikonens växling och sparade val,
   återställning från verktygsfältet och bevarade personliga placeringar,
@@ -419,9 +428,12 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   skillnaden mellan återställda och bevarade filter samt tangentbord och stängning;
   sökning och direkta samband, läsbara tidigare sparade samband,
   täta etiketter, publicerat medlemsbortfall och återhämtning av grafik.
+  RYMD-11–12 skiljer fysisk pekning, orientering, zoom och faktisk
+  symboltolkning från syntetisk Chromium-inmatning.
 
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
   genom sidvisning, sökning och fokus, med bevarad text och placering.
+  Sparat resultat och historik läses genom webbläsaren efter omstart.
 - [Personliga placeringar](personal-view.md): stjärnval i Rymdkartans
   inställningar, sparbekräftelse som toast i tre sekunder med bevarat fokus,
   minskad rörelse, flyttning med mus, pekgester

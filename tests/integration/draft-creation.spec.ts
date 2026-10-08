@@ -20,7 +20,11 @@ import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 for (const width of [1280, 390, 320]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`KARTA-09: complete forms use new draft types and objects in one durable relationship save at ${width}px in ${theme}`, async ({
+    const caseId =
+      width === 1280 && theme === 'light'
+        ? 'KARTA-09'
+        : `KARTA-${31 + [1280, 390, 320].indexOf(width) * 2 + (theme === 'dark' ? 1 : 0) - 1}`;
+    test(`${caseId}: complete forms use new draft types and objects in one durable relationship save at ${width}px in ${theme}`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
@@ -166,6 +170,23 @@ for (const width of [1280, 390, 320]) {
           typeId: customRelationship?.id,
           knowledge: 'uncertain',
         });
+        const beforeRestart = await openDraftReview(page);
+        await expect(beforeRestart).toContainText('Solutrustning');
+        await expect(beforeRestart).toContainText('Komplettering');
+        for (const [name, expected] of [
+          ['Paneler på taket', 'Nej'],
+          ['Batteriet', 'Ej uppgivet'],
+        ]) {
+          const proposal = await readDraftProposal(page, name);
+          await expect(
+            proposal
+              .locator('dt')
+              .filter({ hasText: /^Reserv$/ })
+              .locator('..'),
+          ).toContainText(expected);
+          await closeSupportDialog(page, name);
+        }
+        await closeTextView(page);
         await installation.restart();
         await page.reload();
         await openTable(page);
@@ -238,6 +259,14 @@ for (const width of [1280, 390, 320]) {
             .filter({ hasText: /^Placering$/ })
             .locator('..'),
         ).toContainText('Södertak');
+        const completeBattery = await readTableObject(page, 'Batteriet');
+        await expect(completeBattery).toContainText('Ospecificerat objekt');
+        await expect(
+          completeBattery
+            .locator('dt')
+            .filter({ hasText: /^Reserv$/ })
+            .locator('..'),
+        ).toContainText('Ej uppgivet');
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );

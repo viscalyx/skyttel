@@ -8,7 +8,13 @@ for (const viewport of [
   { width: 320, height: 640 },
   { width: 320, height: 250 },
 ]) {
-  test(`MARKERING-05: selected information is read only and ordinary work remains reachable at ${viewport.width}x${viewport.height}`, async ({
+  const caseId =
+    viewport.width === 1280
+      ? 'MARKERING-05'
+      : viewport.height === 640
+        ? 'MARKERING-09'
+        : 'MARKERING-10';
+  test(`${caseId}: selected information is read only and ordinary work remains reachable at ${viewport.width}x${viewport.height}`, async ({
     page,
   }, testInfo) => {
     const installation = await createInstallation();

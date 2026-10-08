@@ -665,7 +665,12 @@
     "borttappning",
     "begäransblockering",
     "begäransblockeringen",
-    "läsförsöken"
+    "läsförsöken",
+    "vybytena",
+    "Desktopprovet",
+    "läsrad",
+    "läsalternativet",
+    "ikonförslaget"
   ],
   "overrides": [
     {

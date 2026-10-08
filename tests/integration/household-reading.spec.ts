@@ -140,7 +140,7 @@ test('LÄS-07: a long unbroken object name wraps in full reading at 320 CSS pixe
 });
 
 for (const fallback of ['previous', 'heading'] as const) {
-  test(`LÄS-04: vanished read openers return to ${fallback} when no next row remains`, async ({
+  test(`${fallback === 'previous' ? 'LÄS-04' : 'LÄS-08'}: vanished read openers return to ${fallback} when no next row remains`, async ({
     page,
   }) => {
     const installation = await createInstallation(undefined, {

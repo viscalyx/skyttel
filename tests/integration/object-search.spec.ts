@@ -4,7 +4,7 @@ import { createInstallation } from '../support/installation.js';
 import { focusMapSearch, mapFilters, prepareObjectSearch } from '../support/object-search.js';
 
 for (const width of [1280, 390])
-  test(`SÖK-11: opening filters overlays the map without moving markers or labels at ${width}px`, async ({
+  test(`${width === 1280 ? 'SÖK-11' : 'SÖK-15'}: opening filters overlays the map without moving markers or labels at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();

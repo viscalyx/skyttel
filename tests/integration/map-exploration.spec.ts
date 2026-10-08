@@ -1,8 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
-import { utilityButton } from '../support/client.js';
+import { closeTextView, openDraftReview, utilityButton } from '../support/client.js';
+import { saveReviewedConflictDraft } from '../support/conflict-special.js';
+import { editObjectRelationship } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { prepareMapExploration } from '../support/map-exploration.js';
 import { focusMapSearch, mapFilters } from '../support/object-search.js';
+import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
 async function prepare(page: Page, origin: string, variant: 'base' | 'ended' | 'removed' = 'base') {
   const data = await prepareMapExploration(page.request, origin, variant);
@@ -110,6 +113,21 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
     const state = await data.read();
     const edge = state.relationships.find((item) => item.id === 'uses');
     if (!edge) throw new Error('Expected connection');
+    let form = await editObjectRelationship(
+      page,
+      'Alex Exempel',
+      'Alex Exempel → Använder → Blå cykel',
+    );
+    await form.getByLabel('Till objekt', { exact: true }).selectOption('garage');
+    await stageRelationshipAndClose(page);
+    expect(
+      (await data.read()).draft.relationships?.find((change) => change.id === edge.id)?.after,
+    ).toMatchObject({
+      typeId: edge.typeId,
+      sourceId: edge.sourceId,
+      targetId: 'garage',
+      knowledge: edge.knowledge,
+    });
     await data.post('relationship', {
       id: edge.id,
       baseRevision: edge.revision,
@@ -136,15 +154,73 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
         .getByRole('complementary', { name: 'Kartans sökresultat' })
         .getByText('2 objekt visas som sammanhang, utöver sökträffarna.', { exact: true }),
     ).toBeVisible();
+    const draft = await openDraftReview(page);
+    await draft.getByRole('button', { name: 'Kasta hela utkastet', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Ta bort hela utkastet?', exact: true })
+      .getByRole('button', { name: 'Ta bort hela utkastet', exact: true })
+      .click();
+    await closeTextView(page);
     await data.post('discard', {});
+    await page.reload();
+    form = await editObjectRelationship(
+      page,
+      'Alex Exempel',
+      'Alex Exempel → Använder → Blå cykel',
+    );
+    await form.getByLabel('Sambandets status', { exact: true }).selectOption('ended');
+    await stageRelationshipAndClose(page);
+    expect(
+      (await data.read()).draft.relationships?.find((change) => change.id === edge.id)?.after,
+    ).toMatchObject({
+      typeId: edge.typeId,
+      sourceId: edge.sourceId,
+      targetId: edge.targetId,
+      knowledge: edge.knowledge,
+      lifecycle: 'ended',
+    });
     await data.post('relationship', {
       id: edge.id,
       baseRevision: edge.revision,
       value: { ...edge, lifecycle: 'ended' },
     });
-    await data.post('save', { operationId: 'ended-connection' });
+    await page.reload();
+    const completed = page.waitForResponse(
+      (response) =>
+        response.url() === `${installation.origin}/api/households/${data.household.id}/map/save` &&
+        response.request().method() === 'POST',
+    );
+    await saveReviewedConflictDraft(page);
+    expect((await completed).status()).toBe(200);
+    await closeTextView(page);
     const ended = (await data.read()).relationships.find((item) => item.id === edge.id);
     if (!ended) throw new Error('Expected ended connection');
+    const table = await utilityButton(page, 'Tabell');
+    await table.click();
+    const householdTable = page.getByRole('region', { name: 'Hushållets tabell', exact: true });
+    await householdTable.getByRole('button', { name: /^Filter/ }).click();
+    await page
+      .getByRole('dialog', { name: 'Tabellens filter', exact: true })
+      .getByLabel('Ta med upphörda', { exact: true })
+      .check();
+    await page.keyboard.press('Escape');
+    form = await editObjectRelationship(
+      page,
+      'Alex Exempel',
+      'Alex Exempel → Använder → Blå cykel',
+    );
+    await form.getByLabel('Sambandets status', { exact: true }).selectOption('active');
+    await form.getByLabel('Till objekt', { exact: true }).selectOption('garage');
+    await stageRelationshipAndClose(page);
+    expect(
+      (await data.read()).draft.relationships?.find((change) => change.id === ended.id)?.after,
+    ).toMatchObject({
+      typeId: ended.typeId,
+      sourceId: ended.sourceId,
+      targetId: 'garage',
+      knowledge: ended.knowledge,
+      lifecycle: 'active',
+    });
     await data.post('relationship', {
       id: ended.id,
       baseRevision: ended.revision,
@@ -172,7 +248,8 @@ test('SÖK-09: a changed connection shows direct saved and proposed endpoints wi
 });
 
 for (const width of [1280, 390, 320]) {
-  test(`SÖK-08: table map actions reset only map filters and retain table work at ${width}px`, async ({
+  const caseId = width === 1280 ? 'SÖK-08' : width === 390 ? 'SÖK-13' : 'SÖK-14';
+  test(`${caseId}: table map actions reset only map filters and retain table work at ${width}px`, async ({
     page,
   }) => {
     const installation = await createInstallation();
