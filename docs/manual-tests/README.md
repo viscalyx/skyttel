@@ -512,12 +512,17 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   Validering, dubbletter, borttagning, oklara utfall och förlustvarning
   bevarar tidigare förslag. Ett gammalt obekräftat försök efter en senare
   ändring kräver granskning av aktuellt underlag före nytt förslag.
-  Läsning, filter, återfokus och smal skärm provas.
+  Läsning, filter, återfokus och tre webbläsarvyer provas med egna
+  fallidentiteter. Faktisk skärmläsning och fysiskt skärmtangentbord har
+  separata mänskliga observationsfall. Exakta dekorativa värden i
+  SAMBAND-12 ingår inte i skyddet.
 - [Sambandstyper och riktning](relationship-types.md): benämningar från
   båda objekten, redigerbara definitioner, fyra egna fältslag, obesvarat,
   noll och Nej, uttrycklig hantering vid typbyte, privata förslag,
   ordnade avsnitt och återvisade dolda svar efter omstart, dubbletter
-  och samtidiga sparanden utan delsparande.
+  och samtidiga sparanden utan delsparande. Typ- och fältformulär provas
+  genom native kontroller. Hela spara- och omstartskedjan har referensen
+  1440px; 390/320px behåller eget formulärarbete, teman och fokus.
 - [Borttagning av typer och fält](definition-removal.md): granskad
   katalogborttagning, användningsspärrar för upphört innehåll och privata
   utkast samt läsning av historiska definitioner som saknas i katalogen.

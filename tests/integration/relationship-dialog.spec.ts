@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { MapState } from '../../src/shared/map.js';
-import { createHousehold, signIn } from '../support/client.js';
+import { createHousehold, openDraftReview, signIn } from '../support/client.js';
 import { createInstallation } from '../support/installation.js';
 import { createRelationshipFixture } from '../support/relationship-fixture.js';
 
@@ -50,8 +50,18 @@ test('SAMBAND-10: a request that never reached the server is checked before safe
     await dialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
     await expect(check).toBeVisible();
     const saved = (await read()).relationships[0];
+    const other = await page.context().newPage();
+    await other.goto(`${installation.origin}/households/${household.id}`);
+    await other.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await other.getByRole('button', { name: 'Samband för Alex', exact: true }).click();
+    const otherDialog = other.getByRole('dialog', { name: 'Samband för Alex', exact: true });
+    await otherDialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
+    await otherDialog.getByRole('button', { name: 'Föreslå borttagning', exact: true }).click();
+    await expect(otherDialog.getByRole('status')).toContainText('Föreslagen borttagning');
+    // Retain the original successful direct proposal assertion as protocol evidence.
     await post('relationship', { id: saved.id, baseRevision: saved.revision, value: null });
     const removed = (await read()).draft;
+    expect(removed.relationships?.[0]).toMatchObject({ id: saved.id, after: null });
     await check.click();
     await expect(dialog.getByRole('alert')).toContainText('ändrats eller tagits bort');
     await expect(
@@ -59,6 +69,7 @@ test('SAMBAND-10: a request that never reached the server is checked before safe
     ).toHaveCount(0);
     await expect(dialog.getByLabel('Till objekt', { exact: true })).toHaveValue('bicycle');
     expect((await read()).draft).toEqual(removed);
+    await other.close();
   } finally {
     await installation.close();
   }
@@ -135,12 +146,12 @@ test('SAMBAND-11: the household object selector ignores table filters and exclud
   }
 });
 
-for (const [width, height] of [
-  [1280, 900],
-  [320, 640],
-  [320, 240],
-]) {
-  test(`SAMBAND-09: keyboard form actions and confirmed route loss remain reachable at ${width}x${height}`, async ({
+for (const [caseId, width, height] of [
+  ['SAMBAND-09', 1280, 900],
+  ['SAMBAND-16', 320, 640],
+  ['SAMBAND-17', 320, 240],
+] as const) {
+  test(`${caseId}: keyboard form actions and confirmed route loss remain reachable at ${width}x${height}`, async ({
     page,
   }, info) => {
     const installation = await createInstallation();
@@ -288,12 +299,23 @@ test('SAMBAND-08: recovery returns the current draft without replaying an earlie
     });
     await expect(check).toBeVisible();
     const staged = (await read()).draft.relationships?.[0];
+    const other = await page.context().newPage();
+    await other.goto(`${installation.origin}/households/${household.id}`);
+    await other.getByRole('button', { name: 'Tabell', exact: true }).click();
+    await other.getByRole('button', { name: 'Samband för Alex', exact: true }).click();
+    const otherDialog = other.getByRole('dialog', { name: 'Samband för Alex', exact: true });
+    await otherDialog.getByRole('button', { name: 'Redigera samband', exact: true }).click();
+    await otherDialog.getByLabel('Uppgiftens säkerhet', { exact: true }).selectOption('uncertain');
+    await otherDialog.getByRole('button', { name: 'Lägg i utkastet', exact: true }).click();
+    await expect(otherDialog.getByRole('status')).toContainText('Sambandet lades i ditt utkast');
+    // Keep direct proposal success alongside the native same-owner correction.
     await post('relationship', {
       id: staged?.id,
       baseRevision: null,
       value: { ...staged?.after, knowledge: 'uncertain' },
     });
     const latest = await read();
+    expect(latest.draft.relationships?.[0].after?.knowledge).toBe('uncertain');
     const replay = await page.request.post(`${path}/relationship-form`, {
       headers: { origin: installation.origin },
       data: submitted,
@@ -314,6 +336,7 @@ test('SAMBAND-08: recovery returns the current draft without replaying an earlie
     expect(reused.status()).toBe(409);
     expect(await reused.json()).toEqual({ error: 'operation_reused' });
     expect((await read()).draft).toEqual(latest.draft);
+    await other.close();
   } finally {
     await installation.close();
   }
@@ -713,6 +736,10 @@ test('SAMBAND-01: separate complete objects connect and remain independently edi
     expect(final.draft.relationships?.[0].after?.knowledge).toBe('uncertain');
     await installation.restart();
     expect((await read()).draft).toEqual(final.draft);
+    await page.reload();
+    const review = await openDraftReview(page);
+    await expect(review).toContainText('Alex');
+    await expect(review).toContainText('Blå cykeln');
   } finally {
     await installation.close();
   }

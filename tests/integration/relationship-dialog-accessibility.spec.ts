@@ -39,17 +39,7 @@ test('SAMBAND-12: long relationship names and field labels reflow without horizo
     await dialog.getByLabel('Sambandstyp', { exact: true }).selectOption('long-labels');
     await dialog.getByLabel('Till objekt', { exact: true }).selectOption('bicycle');
     await dialog.getByLabel(fieldName, { exact: true }).fill('Bevara uppgiften');
-    await expect(dialog.getByRole('group', { name: 'Sambandets detaljer' })).toHaveCSS(
-      'border-top-width',
-      '0px',
-    );
-    await expect(dialog.getByRole('group', { name: 'Sambandets detaljer' })).toHaveCSS(
-      'padding-top',
-      '0px',
-    );
     const sentence = dialog.getByRole('region', { name: 'Sambandet före inskickning' });
-    await expect(sentence).toHaveCSS('font-weight', '650');
-    await expect(sentence).toHaveCSS('border-top-left-radius', '0px');
     await expect(sentence).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     await expect(sentence).toContainText(targetName);
     await expect(sentence).toContainText(`l${'L'.repeat(179)}`);

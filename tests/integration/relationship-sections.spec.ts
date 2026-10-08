@@ -11,8 +11,12 @@ import { editObjectRelationship, openObjectRelationships } from '../support/doma
 import { createInstallation } from '../support/installation.js';
 import { stageRelationshipAndClose } from '../support/relationship-dialog.js';
 
-for (const width of [1440, 390, 320])
-  test(`STY-08: relationship sections preserve hidden answers and private presentation after restart at ${width}px`, async ({
+for (const [caseId, width] of [
+  ['STY-08', 1440],
+  ['STY-10', 390],
+  ['STY-11', 320],
+] as const)
+  test(`${caseId}: relationship sections preserve hidden answers and private presentation at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 1000 });
@@ -101,7 +105,13 @@ for (const width of [1440, 390, 320])
       await page.getByLabel('Batteri', { exact: true }).selectOption('false');
       await stageRelationshipAndClose(page);
       await settings();
-      await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+      if (
+        (await page
+          .getByText('Sambandstyper och riktning', { exact: true })
+          .locator('..')
+          .getAttribute('open')) === null
+      )
+        await page.getByText('Sambandstyper och riktning', { exact: true }).click();
       await page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }).click();
       await page.getByRole('button', { name: 'Dölj Effekt, behåll värden', exact: true }).click();
       await page
@@ -116,18 +126,32 @@ for (const width of [1440, 390, 320])
       const originalFields = draft.draft.relationshipTypes[0].after.fields;
       expect(Object.values(originalValues)).toEqual(['Exempelsol', 0, '2026-09-01', false]);
       await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
-      await saveReviewedConflictDraft(page);
-      await closeTextView(page);
-      await installation.restart();
-      await page.reload();
+      if (width === 1440) {
+        await saveReviewedConflictDraft(page);
+        await closeTextView(page);
+        await installation.restart();
+        await page.reload();
+      }
       await editObjectRelationship(page, 'Cykeln', 'Cykeln → förvaras i → Garaget');
       await expect(page.getByLabel('Effekt', { exact: true })).toHaveCount(0);
       await expect(page.getByLabel('Batteri', { exact: true })).toHaveValue('false');
       await expect(page.getByLabel('Reserv', { exact: true })).toHaveValue('');
+      const cancel = page.getByRole('button', { name: 'Avbryt redigeringen', exact: true });
+      await cancel.focus();
+      await expect(cancel).toBeFocused();
+      const bounds = await cancel.boundingBox();
+      expect(bounds?.y).toBeGreaterThanOrEqual(0);
+      expect((bounds?.y ?? 1000) + (bounds?.height ?? 0)).toBeLessThanOrEqual(1000);
       await page.getByRole('button', { name: 'Avbryt redigeringen', exact: true }).click();
       await closeSupportDialog(page, 'Samband för Cykeln');
       await settings();
-      await page.getByText('Sambandstyper och riktning', { exact: true }).click();
+      if (
+        (await page
+          .getByText('Sambandstyper och riktning', { exact: true })
+          .locator('..')
+          .getAttribute('open')) === null
+      )
+        await page.getByText('Sambandstyper och riktning', { exact: true }).click();
       await page.getByRole('button', { name: 'Ändra sambandstyp: Förvaring', exact: true }).click();
       await page
         .getByRole('group', { name: 'Eget fält 2', exact: true })
@@ -140,7 +164,10 @@ for (const width of [1440, 390, 320])
       await expect(page.getByLabel('Leverantör', { exact: true })).toHaveValue('Exempelsol');
       await expect(page.getByLabel('Datum', { exact: true })).toHaveValue('2026-09-01');
       const current = await (await page.request.get(path)).json();
-      expect(current.relationships[0].customValues).toEqual(originalValues);
+      expect(
+        (width === 1440 ? current.relationships[0] : current.draft.relationships[0].after)
+          .customValues,
+      ).toEqual(originalValues);
       expect(
         current.draft.relationshipTypes[0].after.fields.map((field: { id: string }) => field.id),
       ).toEqual(originalFields.map((field: { id: string }) => field.id));
