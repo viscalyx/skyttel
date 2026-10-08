@@ -298,7 +298,8 @@ EXPORT-06.
   },
   "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
   "outcomes": [
-    "Bildförslag och historik går att läsa efter omstart och webbläsaren erbjuder exportfilen"
+    "Bildförslagets nya bild går att läsa efter omstart och webbläsaren erbjuder exportfilen",
+    "Bildsparandets historik går att läsa före nästa privata bildförslag"
   ],
   "evidence": [
     {
@@ -326,7 +327,9 @@ EXPORT-06.
 3. Stäng Rapporter. Redigera det första objektet och välj den andra bilden.
    Lägg i utkastet och lämna förslaget osparat.
 4. Låt den driftansvariga starta om samma installation och ladda om sidan.
-   Öppna **Visa utkastet** och kontrollera att bildförslaget finns kvar.
+   Öppna **Visa utkastet → Visa förslaget: Lo Exempel**. Kontrollera att
+   **Föreslagna värden** visar den andra provbilden från steg 3. Stäng
+   läsningen utan att spara förslaget.
 5. Öppna **Inställningar → Fullständig export**. Välj
    **Förbered fullständig export**, vänta på klarbeskedet och välj
    **Hämta ZIP-fil**. Spara den erbjudna filen i den privata testmappen.
@@ -417,6 +420,10 @@ borttagning av en färdig tillfällig kopia.
 
 **Användare:** Alex som administratör.
 
+**Förutsättningar:** Ett gemensamt objekt finns i kartan. Skapa dessutom
+**Privat förslag** med beskrivningen **Förslaget ska finnas kvar** genom
+**Nytt objekt → Lägg i utkastet och stäng**. Spara inte hela utkastet.
+
 **Separat förberedelse:** Använd
 [webbläsarförberedelsen](#styrd-export-i-webbläsaren) och skriv `arm-ready`.
 Vänta på terminalens `held` efter steg 1; servern har då skapat arkivet
@@ -436,7 +443,8 @@ explains cleanup uncertainty”.
   },
   "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
   "outcomes": [
-    "Avbruten förberedelse visar oklar rensning och sent svar återöppnar inte exporten"
+    "Avbruten förberedelse visar oklar rensning och sent svar återöppnar inte exporten",
+    "Gemensamt objekt och osparad beskrivning går att läsa genom browsern efter avbrott och ny export"
   ]
 }
 ```
@@ -449,7 +457,9 @@ explains cleanup uncertainty”.
 3. Läs beskedet och skriv `release` i terminalen. Kontrollera att ingen fil erbjuds
    från det avbrutna försöket.
 4. Förbered en ny export och hämta ZIP-filen. Kontrollera att hushållets
-   karta och privata utkast finns kvar oförändrade.
+   gemensamma objekt finns kvar i Tabell. Öppna **Visa utkastet →
+   Visa förslaget: Privat förslag** och kontrollera den osparade
+   beskrivningen. Stäng läsningen utan att spara eller kasta förslaget.
 
 **Förväntat resultat:**
 
@@ -507,9 +517,11 @@ EXPORT-09 vid 1280 × 900 CSS-pixlar.
    kontrollera fokus på Förbered fullständig export.
 4. Upprepa med det andra temat. Kontrollera läsbar text, synligt fokus,
    åtkomliga knappar och att sidan inte behöver rullas i sidled.
-5. Förbered igen och flytta under väntan fokus till Tillbaka till kartan.
-   Vänta på terminalens `held`, välj det nya fokuset och skriv `release`.
-   Kontrollera att svaret låter ditt nya fokus vara kvar.
+5. Förbered igen och vänta på terminalens `held`. Flytta med Tab fokus
+   till **Tillbaka till kartan** och låt länken vara fokuserad utan att
+   aktivera den. Tryck inte Enter och klicka inte på länken. Skriv
+   `release` i terminalen. Kontrollera att svaret låter fokus vara kvar
+   på länken och att exportsidan fortfarande är öppen.
 6. Hämta ZIP-filen med tangentbordet. Kontrollera fokus på knappen för
    ny förberedelse och återgå sedan till kartan.
 

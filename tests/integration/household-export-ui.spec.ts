@@ -22,7 +22,7 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { editTableObject } from '../support/domain-work.js';
+import { editTableObject, readDraftProposal } from '../support/domain-work.js';
 import { holdBrowserExport, seedLargeExport } from '../support/export-browser-stream.js';
 import { createInstallation, robin } from '../support/installation.js';
 import { verifyObjectDepartureAndDiscard } from '../support/object-form-departure.js';
@@ -541,6 +541,34 @@ test('EXPORT-06: browser image proposals, history and restart lead to a download
     await installation.restart();
     await page.reload();
     await expect(await openDraftReview(page)).toContainText('Lo Exempel');
+    const proposal = await readDraftProposal(page, 'Lo Exempel');
+    const proposed = proposal.locator('section').filter({
+      has: page.getByRole('heading', { name: 'Föreslagna värden', exact: true }),
+    });
+    const proposedImage = proposed.getByRole('img', { name: 'Profilbild för Lo Exempel' });
+    const privateImageId = before.draft.changes.find(({ id }) => id === first?.id)?.after
+      ?.profileImageId;
+    expect(privateImageId).toBeDefined();
+    await expect(proposedImage).toBeVisible();
+    await expect(proposedImage).toHaveAttribute(
+      'src',
+      new RegExp(`/profile-images/${privateImageId}$`),
+    );
+    await expect
+      .poll(() =>
+        proposedImage.evaluate(
+          (image: HTMLImageElement) => image.complete && image.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+    const { data, info } = await sharp(await proposedImage.screenshot())
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const offset =
+      (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels;
+    for (const [index, expected] of [170, 85, 34].entries())
+      expect(Math.abs(data[offset + index] - expected)).toBeLessThan(15);
+    await proposal.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
     expect((await read()).draft).toEqual(before.draft);
     await openSettings(page);
     await page
@@ -647,6 +675,12 @@ test('EXPORT-08: canceling preparation with an unseen ready response explains cl
     prepared = resolve;
   });
   try {
+    await page.goto(fixture.installation.origin);
+    await openTable(page);
+    const proposal = await openNewObject(page);
+    await proposal.getByLabel('Namn', { exact: true }).fill('Privat förslag');
+    await proposal.getByLabel('Beskrivning', { exact: true }).fill('Förslaget ska finnas kvar');
+    await proposal.getByRole('button', { name: 'Lägg i utkastet och stäng' }).click();
     const before = await fixture.read();
     const downloads: Download[] = [];
     page.on('download', (download) => downloads.push(download));
@@ -688,6 +722,14 @@ test('EXPORT-08: canceling preparation with an unseen ready response explains cl
     await section.getByRole('button', { name: 'Hämta ZIP-fil' }).click();
     await archive(await download);
     expect(downloads).toHaveLength(1);
+    expect(await fixture.read()).toEqual(before);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
+    await openTable(page);
+    await expect(page.getByRole('button', { name: 'Gemensam lampa', exact: true })).toBeVisible();
+    await expect(await openDraftReview(page)).toContainText('Privat förslag');
+    const retainedProposal = await readDraftProposal(page, 'Privat förslag');
+    await expect(retainedProposal).toContainText('Förslaget ska finnas kvar');
+    await retainedProposal.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
     expect(await fixture.read()).toEqual(before);
   } finally {
     release();
