@@ -54,12 +54,16 @@ test('ACCESS-16: expired provider verification returns to login and a fresh atte
     await page.route('**/api/auth/callback/google?*', async (route) => {
       // Arrange elapsed OAuth lifetime without changing production time or sessions.
       const database = new Database(join(installation.directory, 'skyttel.db'));
-      database
-        .prepare(
-          "UPDATE verification SET value = json_set(value, '$.expiresAt', 0) WHERE identifier = ?",
-        )
-        .run(new URL(route.request().url()).searchParams.get('state'));
-      database.close();
+      try {
+        const expired = database
+          .prepare(
+            "UPDATE verification SET value = json_set(value, '$.expiresAt', 0) WHERE json_valid(value) AND json_extract(value, '$.oauthState') = ?",
+          )
+          .run(new URL(route.request().url()).searchParams.get('state'));
+        expect(expired.changes).toBe(1);
+      } finally {
+        database.close();
+      }
       await route.continue();
     });
     await page.getByRole('button', { name: 'Fortsätt med Google' }).click();
