@@ -228,7 +228,7 @@ SPAR-01.
   },
   "reference": "Genomförd transaktion, tappat svar, annan klient och omstart.",
   "outcomes": [
-    "Sparandet visas i historiken i den andra profilen. Händelsen har samma identitet och beskriver **Återfunnet sparande**.",
+    "Sparandet visas i historiken i den andra profilen och beskriver **Återfunnet sparande**. Automationen jämför separat samma beständiga kvitto.",
     "Utkastet visar **Utkastet är tomt.** Objektet finns en gång i kartan.",
     "Ett genomfört sparande går att hitta även när den ursprungliga profilen är stängd och servern startar om."
   ]
@@ -248,13 +248,13 @@ SPAR-01.
 4. Öppna appen i den andra profilen och logga in som samma användare.
    Hitta sparandet i **Rapporter → Ändringshistorik** utan att skriva in
    kvittots identitet eller kopiera webbläsardata.
-5. Kontrollera händelsens identitet och uppgifter. Välj **Tillbaka till
+5. Läs händelsens uppgifter. Välj **Tillbaka till
    arbetet**, läs det tomma utkastet och objektet i **Tabell**.
 
 **Förväntat resultat:**
 
-- Sparandet visas i historiken i den andra profilen. Händelsen har
-  samma identitet och beskriver **Återfunnet sparande**.
+- Sparandet visas i historiken i den andra profilen och beskriver
+  **Återfunnet sparande**. Automationen jämför separat samma beständiga kvitto.
 - Utkastet visar **Utkastet är tomt.** Objektet finns en gång i kartan.
 - Ett genomfört sparande går att hitta även när den ursprungliga
   profilen är stängd och servern startar om.
@@ -275,7 +275,8 @@ begäran om sparande.
 [vanlig installation och annan klient](save-preparation.md#vanlig-installation-och-annan-klient).
 Operatören armar `save:drop-before` före sparandet, och `recover:before`
 inför den andra klientens besök efter omstarten. Registreringens ID
-antecknas separat i Network-svaret från `/map/operations`.
+antecknas som separat tekniskt underlag i Network-svaret från
+`/map/operations`; det jämförs inte i de vanliga UI-stegen.
 
 **Integrationstest:**
 [operations.spec.ts](../../tests/integration/operations.spec.ts),
@@ -292,7 +293,7 @@ SPAR-02.
   "outcomes": [
     "Avbrottet visar **Utfallet är okänt**. Ändringar och kastande blockeras.",
     "Före omstart visas okänt utfall, med förslaget kvar i det privata utkastet. Registreringen har inte ändrat den gemensamma kartan.",
-    "Efter omstart kontrollerar Skyttel det registrerade försöket utan nytt medgivande. Ändringar blockeras under kontrollen. Resultatet blir **Utkastet är sparat** med samma ID i historiken och tomt utkast. Objektet och sparhändelsen finns en gång, även efter omladdning.",
+    "Efter omstart kontrollerar Skyttel det registrerade försöket utan nytt medgivande. Ändringar blockeras under kontrollen. Resultatet blir **Utkastet är sparat**, ett enda synligt sparande i historiken och tomt utkast. Automationen jämför separat samma beständiga försöks-ID. Objektet och sparhändelsen finns en gång, även efter omladdning.",
     "**Nästa privata förslag** ligger kvar i utkastet och omfattas inte av det tidigare kvittot."
   ]
 }
@@ -313,8 +314,7 @@ SPAR-02.
    Nytt sparande och kastande förblir spärrade under kontrollen.
 5. Låt operatören släppa kontrollen. Läs Utkastet är sparat och att
    uppföljningen försvinner. Läs tomt utkast och det enda sparandet i
-   Rapporter → Ändringshistorik. Jämför tidigare antecknat ID under
-   Identifiera sparandet och användaren.
+   Rapporter → Ändringshistorik.
 6. Skapa Nästa privata förslag och lägg det i utkastet. Läs det kvarvarande
    nya förslaget; det tidigare kvittot beskriver bara Väntande sparande.
 7. Låt operatören återställa transporten efter känt utfall.
@@ -326,12 +326,14 @@ SPAR-02.
   utkastet. Registreringen har inte ändrat den gemensamma kartan.
 - Efter omstart kontrollerar Skyttel det registrerade försöket utan nytt
   medgivande. Ändringar blockeras under kontrollen. Resultatet blir
-  **Utkastet är sparat** med samma ID i historiken och tomt utkast.
+  **Utkastet är sparat**, ett enda synligt sparande i historiken och tomt
+  utkast. Automationen jämför separat samma beständiga försöks-ID.
   Objektet och sparhändelsen finns en gång, även efter omladdning.
 - **Nästa privata förslag** ligger kvar i utkastet och omfattas inte
   av det tidigare kvittot.
 
-**Separat tekniskt underlag:** Det automatiserade testet upprepar dessutom den
+**Separat tekniskt underlag:** Det automatiserade testet jämför samma
+registrerade försöks-ID efter omstart och kontroll och upprepar den
 genomförda begäran
 genom API:et medan nästa förslag ligger i utkastet. Samma kvitto ska
 returneras, nästa förslag ska bevaras och historiken får ingen dubblett.
@@ -536,9 +538,15 @@ SPAR-05.
    beskrivning**, lägg den i Robins utkast och spara hela hans utkast.
    Kontrollera hans bekräftade sparande. Skriv sedan `release`.
 7. Läs Alex kända avvisning **Utkastet kunde inte sparas**. Stäng
-   sparmodalen och granska Alex hela förslag. Läs Robins sparade värde
-   genom konflikten. Historiken har bara det ursprungliga sparandet och
-   Robins sparande; Alex avvisade försök skapar ingen historikhändelse.
+   sparmodalen med Escape. Öppna **Visa utkastet → Visa förslaget: Lo
+   Exempel** och läs Alex hela förslag med **Alex privata beskrivning**.
+   Stäng läsningen med Escape och textvyn med krysset. Välj **Hämta aktuellt
+   underlag** och öppna **1 konflikt i ditt utkast** i kartans status.
+   Läs **Robins sparade beskrivning**
+   under **Sparat i kartan nu** och Alex värde under **Ditt förslag**.
+   Stäng med Escape och öppna **Rapporter → Ändringshistorik**. Historiken
+   har bara det ursprungliga sparandet och Robins sparande; Alex avvisade
+   försök skapar ingen historikhändelse.
 8. Låt operatören återställa HTTPS-ingången till applikationen och
    avsluta transporten med `quit`. Behåll provdatabasen tills alla
    okända utfall har kontrollerats.

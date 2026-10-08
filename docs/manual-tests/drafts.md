@@ -82,11 +82,11 @@ konfiguration och de medgivanden som anges där.
 
 **Användare:** Den syntetiska administratören Alex Exempel.
 
-**Förutsättningar:** Kör `npm run build` och
-`node --import tsx scripts/manual-draft-save.ts --chrome` på en dator med
-grafisk
-webbläsare. Den öppnar en separat installation med riktig SQLite, inloggad
-administratör och förslaget Alex blå cykel. Ingen AI-leverantör är konfigurerad.
+**Förutsättningar:** Starta enligt
+[vanligt sparande](save-preparation.md#vanligt-sparande) på en dator med
+grafisk webbläsare. Den öppnar en separat installation med riktig SQLite,
+inloggad administratör och förslaget Alex blå cykel. Ingen AI-leverantör är
+konfigurerad.
 Terminalens kommandon styr bara leveransen av riktiga HTTP-svar. Skriv
 `new-draft` inför varje nytt fall och `quit` efter provningen.
 
@@ -106,7 +106,7 @@ UTKAST-36.
     "Modalen öppnas genast med fokus på rubriken **Spara utkastet** och texten **Sparar utkastet…**. Bara krysset och Escape stänger den. Förslaget ligger kvar medan kvittot saknas.",
     "Bekräftat sparande tömmer utkastet, stänger modalen och återger fokus till utkastets rubrik när sparikonen är inaktiv.",
     "**Utkastet är sparat** visas i tre sekunder. En enda artig statusregion behåller beskedet när den visuella toasten försvinner. Faktisk uppläsning kontrolleras separat med mänsklig skärmläsarprovning.",
-    "Exakt ett genomfört sparförsök och ett motsvarande historikkvitto finns. Inget samtal startas och inget medgivande efterfrågas."
+    "Automationen kontrollerar separat exakt ett genomfört sparförsök och ett motsvarande historikkvitto. Inget samtal startas och inget medgivande efterfrågas."
   ]
 }
 ```
@@ -115,10 +115,14 @@ UTKAST-36.
 **Steg:**
 
 1. Skriv `hold` i terminalen. Öppna **Utkast** och välj **Spara hela utkastet**.
-2. Läs sparmodalen och prova dess tangentbordsfokus. Skriv `result` i
-   terminalen.
+2. Läs sparmodalen och prova dess tangentbordsfokus.
 3. Skriv `release`. Läs bekräftelsen, vänta tre sekunder och läs tomt utkast.
-4. Skriv `result` igen och jämför förslagen, sparförsöket och historiken.
+
+**Separat tekniskt underlag:** Integrationstestet jämför utkastet före och
+efter leveransen, kräver ett enda genomfört försök och jämför hela kvittot
+med den enda historikposten. Operatören kan samla samma underlag med
+`result` före steg 3 och efter bekräftelsen. Råa identifierare och
+jämförelser av interna uppgifter ingår inte i de vanliga UI-stegen.
 
 **Förväntat resultat:**
 
@@ -131,7 +135,8 @@ UTKAST-36.
   En enda artig statusregion behåller beskedet när den visuella toasten
   försvinner.
   Faktisk uppläsning kontrolleras separat med mänsklig skärmläsarprovning.
-- Exakt ett genomfört sparförsök och ett motsvarande historikkvitto finns.
+- Automationen kontrollerar separat exakt ett genomfört sparförsök och ett
+  motsvarande historikkvitto.
   Inget samtal startas och inget medgivande efterfrågas.
 
 ### UTKAST-37: stäng ett väntande mobilt sparande och fortsätt annat arbete
@@ -157,7 +162,7 @@ UTKAST-37.
   "outcomes": [
     "Tangentbordet cirkulerar mellan modalens tillgängliga kontroller och lämnar inte den öppna modalen. Text och kontroller ryms i smal mobil visning.",
     "Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna; efter stängning återgår fokus till **Visa sparandet**.",
-    "Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus. Utkastet förbrukas med exakt ett sparande och en historikpost."
+    "Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus. Automationen kontrollerar separat tomt utkast, exakt ett sparande och en historikpost."
   ]
 }
 ```
@@ -169,7 +174,12 @@ UTKAST-37.
 2. Stäng textvyn. Öppna **Visa sparandet** i kartan och stäng med krysset.
 3. Öppna **Tabell**, välj **Visa sparandet** och stäng med Escape.
 4. Flytta fokus till **Sök objekt i tabellen** och skriv `release` i terminalen.
-5. Skriv `result` och kontrollera det avslutade försöket.
+5. Invänta bekräftelsen och fortsätt skriva i sökfältet utan att klicka på
+   det igen.
+
+**Separat tekniskt underlag:** Integrationstestet kräver tomt utkast, ett
+enda avslutat sparförsök och en historikpost. Operatören kan samla detta
+underlag med `result` efter bekräftelsen. Det är ingen vanlig UI-kontroll.
 
 **Förväntat resultat:**
 
@@ -178,7 +188,8 @@ UTKAST-37.
 - Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna;
   efter stängning återgår fokus till **Visa sparandet**.
 - Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus.
-  Utkastet förbrukas med exakt ett sparande och en historikpost.
+  Automationen kontrollerar separat tomt utkast, exakt ett sparande och en
+  historikpost.
 
 ### UTKAST-38: kontrollera samma försök efter ett tappat sparbesked
 
@@ -188,6 +199,9 @@ gånger.
 **Användare:** Alex Exempel i provinstallationen för UTKAST-36.
 
 **Förutsättningar:** Välj `new-draft` och `lost-response` i terminalen.
+Operatören använder den separat körbara
+[hållningen av kontrollsvaret](save-preparation.md#vanligt-sparande)
+med `hold-check` före steg 4 och `release-check` när vänteläget har lästs.
 
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
@@ -204,7 +218,7 @@ UTKAST-38.
   "outcomes": [
     "Okänt utfall behåller förslagen och gör inget påstående om framgång. Kastande verifieras även tillsammans med dess fullständiga flöde.",
     "Kontrollen visar **Kontrollerar sparandet…**. Fokus flyttas till krysset medan kontrollknappen saknas, och till tabellens rubrik när bekräftelsen tar bort uppföljningsknappen.",
-    "Samma beständiga försöks-ID återfinns. Bara ett sparanrop, ett genomfört försök och en historikpost behövs. Ingen AI eller samtalsstart krävs."
+    "Automationen kontrollerar separat samma beständiga försöks-ID, ett sparanrop, ett genomfört försök och en historikpost. Ingen AI eller samtalsstart krävs."
   ]
 }
 ```
@@ -215,11 +229,21 @@ UTKAST-38.
 1. Spara från Utkast och läs **Sparandet kunde inte bekräftas.** Stäng med
    Escape.
 2. Kontrollera att förslaget ligger kvar i klienten och att nytt sparande
-   och kastande är spärrade. Skriv `result` för att läsa serverns verkliga
-   utfall.
+   och kastande är spärrade.
 3. Stäng textvyn, öppna Tabell och välj **Visa sparandet**.
-4. Välj **Kontrollera sparandet igen** och läs bekräftelsen.
-5. Skriv `result` igen och jämför försöks-ID och historik.
+4. Låt operatören hålla kontrollsvaret enligt förberedelsen. Välj
+   **Kontrollera sparandet igen** och läs **Kontrollerar sparandet…**.
+   Kontrollknappen ska försvinna och fokus återgå till krysset.
+   Låt operatören släppa kontrollsvaret och läs bekräftelsen. Fokus ska
+   återgå till tabellens rubrik när uppföljningsknappen försvinner.
+
+**Separat tekniskt underlag:** Integrationstestet kontrollerar att servern
+redan har genomfört sparandet trots klientens okända utfall. Det jämför
+sedan samma beständiga försöks-ID och hela kvittot efter kontrollen och
+kräver ett enda sparanrop och en historikpost. Operatören kan samla
+serverunderlaget med `result` efter steg 2 och efter steg 4. De råa
+jämförelserna ingår inte i UI-stegen.
+
 **Förväntat resultat:**
 
 - Okänt utfall behåller förslagen och gör inget påstående om framgång.
@@ -227,8 +251,9 @@ UTKAST-38.
 - Kontrollen visar **Kontrollerar sparandet…**. Fokus flyttas till
   krysset medan kontrollknappen saknas, och till tabellens rubrik när
   bekräftelsen tar bort uppföljningsknappen.
-- Samma beständiga försöks-ID återfinns. Bara ett sparanrop, ett genomfört
-  försök och en historikpost behövs. Ingen AI eller samtalsstart krävs.
+- Automationen kontrollerar separat samma beständiga försöks-ID, ett
+  sparanrop, ett genomfört försök och en historikpost. Ingen AI eller
+  samtalsstart krävs.
 
 ### UTKAST-39: återuppta ett registrerat sparförsök efter omladdning
 
@@ -267,7 +292,13 @@ UTKAST-39.
 2. Kontrollera att Utkast-ikonen saknas men **Visa sparandet** finns.
    Öppna den och välj **Kontrollera sparandet igen**.
 3. Läs det avvisade utfallet. Stäng med Escape, ladda om sidan och öppna
-   uppföljningen igen. Skriv `result` i terminalen.
+   uppföljningen igen.
+
+**Separat tekniskt underlag:** Integrationstestet kontrollerar samma
+beständiga försök över omladdningen, dess avvisning och att varken gemensamt
+innehåll eller historikkvitto skapas. Operatören kan samla underlaget med
+`result` efter steg 3; det ingår inte i de vanliga UI-stegen.
+
 **Förväntat resultat:**
 
 - Uppföljningen överlever omladdning utan samtal, medgivande eller AI.
@@ -282,8 +313,8 @@ fel.
 
 **Användare:** Alex Exempel i provinstallationen för UTKAST-36.
 
-**Förutsättningar:** Välj `new-draft` inför varje del. För versionskonflikten
-behövs en andra flik med samma inloggning och hushåll.
+**Förutsättningar:** Välj `new-draft`. Versionskonflikten har ett separat
+fall, UTKAST-102.
 
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
@@ -309,7 +340,13 @@ UTKAST-40.
 1. Välj `refresh-failure` och spara från Utkast. Läs tomt utkast och
    bekräftelsen.
 2. Stäng textvyn och läs kartans hämtningsfel. Vänta tills toasten försvinner.
-3. Välj `network-ok` och **Hämta aktuellt underlag**. Skriv `result`.
+3. Välj `network-ok` och **Hämta aktuellt underlag**. Läs att felet
+   försvinner utan en ny sparbekräftelse.
+
+**Separat tekniskt underlag:** Integrationstestet kontrollerar tomt utkast
+och ett enda genomfört sparförsök efter karthämtningen. Operatören kan
+samla samma underlag med `result` efter steg 3. Det är ingen UI-kontroll.
+
 **Förväntat resultat:**
 
 - Ett bekräftat kvitto stänger modalen och tömmer det sparade utkastet även
@@ -703,7 +740,7 @@ UTKAST-91.
    besök Tabell och öppna textvyn igen.
 3. Välj **Skicka**, godkänn medgivandet och invänta **Ett provsvar.**
 4. Lägg en ny objekttyp i utkastet via Inställningar → Typer och egna
-   fält. Återgå till hushållsarbetet och öppna **Utkast**.
+   fält. Återgå till hushållsarbetet, ladda om och öppna **Utkast**.
 
 **Förväntat resultat:**
 
@@ -1672,7 +1709,7 @@ UTKAST-12.
 4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
    utkastet**.
    Stäng **Spara utkastet** med Escape och stäng textvyn.
-   Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
+   Läs **Väntar på sparkvitto**, det bevarade förslaget och legenden.
 5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
    efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
    **Hämta samma kvitto igen**. Läs resultatet.
@@ -1851,7 +1888,7 @@ UTKAST-15.
   "reference": "Kontrollerad nödvändig fråga; svar följt av nytt uttryckligt sparande.",
   "outcomes": [
     "Utkastets sparikon kringgår inte den nödvändiga frågan. Det privata förslaget finns kvar medan frågan besvaras.",
-    "Att svara skapar inget sparförsök. Först det nya uttryckliga sparbeskedet ger ett kvitto och gör uppgifterna till sparat kartinnehåll.",
+    "Att svara sparar inte utkastet. Först det nya uttryckliga sparbeskedet ger ett kvitto och gör uppgifterna till sparat kartinnehåll.",
     "Integrationstestet styr frågan vid modellgränsen men använder riktig server och SQLite. Det jämför tomma sparförsök före beskedet och ett enda lyckat försök med samma verkliga kvitto i historiken efteråt."
   ]
 }
@@ -1866,18 +1903,23 @@ UTKAST-15.
 2. Släpp modellens nödvändiga fråga enligt separat förberedelse. Läs frågan i
    samtalstexten och stäng textvyn.
 3. Öppna **Utkast**. Kontrollera att **Spara hela utkastet** är
-   inaktiverad. Kartan har ännu inga sparade objekt eller sparförsök.
+   inaktiverad. Kartan har ännu inga sparade objekt.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
    Avsluta det hållna anropet med förberedd svarstext. Vänta tills frågan är
    besvarad. Stäng textvyn med krysset igen.
 5. Öppna **Utkast**. Kontrollera att sparande erbjuds men inte har genomförts.
    Välj **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
 
+**Separat tekniskt underlag:** Integrationstestet jämför tomma privata
+sparförsök före det uttryckliga sparbeskedet och ett enda lyckat försök
+med exakt samma verkliga kvitto i historiken efteråt. Dessa API-jämförelser
+ingår inte i de vanliga UI-stegen.
+
 **Förväntat resultat:**
 
 - Utkastets sparikon kringgår inte den nödvändiga frågan.
   Det privata förslaget finns kvar medan frågan besvaras.
-- Att svara skapar inget sparförsök. Först det nya uttryckliga sparbeskedet
+- Att svara sparar inte utkastet. Först det nya uttryckliga sparbeskedet
   ger ett kvitto och gör uppgifterna till sparat kartinnehåll.
 - Integrationstestet styr frågan vid modellgränsen men använder riktig
   server och SQLite. Det jämför tomma sparförsök före beskedet och ett
@@ -2270,7 +2312,7 @@ UTKAST-16.
   "reference": "1440 × 1000; båda öppningsordningarna och sex riktningar.",
   "outcomes": [
     "Alla personliga flyttriktningar och hela utkastets sparknapp är åtkomliga i båda ordningarna, även när ytorna behöver rullas.",
-    "Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma innehåll och Blå cykelns privata förslag består utan sparförsök.",
+    "Flyttningarna ändrar bara den personliga vyn. Automationen jämför separat oförändrat gemensamt innehåll och privat förslag utan sparförsök.",
     "Fokus följer den uttryckliga handlingen och går tillbaka till verktygen vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll som används."
   ]
 }
@@ -2292,12 +2334,16 @@ UTKAST-16.
    därefter stängt textvyn och öppnat Navigera.
 5. Behåll 1440 × 1000 pixlar. Smal och kort vy har separata fall.
 
+**Separat tekniskt underlag:** Integrationstestet jämför hela privata
+utkastet och gemensamma kartinnehållet före och efter flyttningarna och
+kräver tomma sparförsök. Dessa API-jämförelser ingår inte i UI-stegen.
+
 **Förväntat resultat:**
 
 - Alla personliga flyttriktningar och hela utkastets sparknapp är
   åtkomliga i båda ordningarna, även när ytorna behöver rullas.
-- Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma
-  innehåll och Blå cykelns privata förslag består utan sparförsök.
+- Flyttningarna ändrar bara den personliga vyn. Automationen jämför separat
+  oförändrat gemensamt innehåll och privat förslag utan sparförsök.
 - Fokus följer den uttryckliga handlingen och går tillbaka till verktygen
   vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll
   som används.
@@ -3672,7 +3718,7 @@ UTKAST-96.
 4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
    utkastet**.
    Stäng **Spara utkastet** med Escape och stäng textvyn.
-   Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
+   Läs **Väntar på sparkvitto**, det bevarade förslaget och legenden.
 5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
    efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
    **Hämta samma kvitto igen**. Läs resultatet.
@@ -3732,7 +3778,7 @@ UTKAST-97.
 4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
    utkastet**.
    Stäng **Spara utkastet** med Escape och stäng textvyn.
-   Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
+   Läs **Väntar på sparkvitto**, det bevarade förslaget och legenden.
 5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
    efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
    **Hämta samma kvitto igen**. Läs resultatet.
@@ -3775,7 +3821,7 @@ UTKAST-98.
   "reference": "640 × 500; navigationens nedre riktningar måste nås med rullning.",
   "outcomes": [
     "Alla personliga flyttriktningar och hela utkastets sparknapp är åtkomliga i båda ordningarna, även när ytorna behöver rullas.",
-    "Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma innehåll och Blå cykelns privata förslag består utan sparförsök.",
+    "Flyttningarna ändrar bara den personliga vyn. Automationen jämför separat oförändrat gemensamt innehåll och privat förslag utan sparförsök.",
     "Fokus följer den uttryckliga handlingen och går tillbaka till verktygen vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll som används."
   ]
 }
@@ -3797,12 +3843,16 @@ UTKAST-98.
    därefter stängt textvyn och öppnat Navigera.
 5. Behåll 640 × 500 pixlar. Smal och kort vy har separata fall.
 
+**Separat tekniskt underlag:** Integrationstestet jämför hela privata
+utkastet och gemensamma kartinnehållet före och efter flyttningarna och
+kräver tomma sparförsök. Dessa API-jämförelser ingår inte i UI-stegen.
+
 **Förväntat resultat:**
 
 - Alla personliga flyttriktningar och hela utkastets sparknapp är
   åtkomliga i båda ordningarna, även när ytorna behöver rullas.
-- Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma
-  innehåll och Blå cykelns privata förslag består utan sparförsök.
+- Flyttningarna ändrar bara den personliga vyn. Automationen jämför separat
+  oförändrat gemensamt innehåll och privat förslag utan sparförsök.
 - Fokus följer den uttryckliga handlingen och går tillbaka till verktygen
   vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll
   som används.
@@ -3832,7 +3882,7 @@ UTKAST-99.
   "reference": "320 × 250; mycket kort smal arbetsyta måste behålla båda flödena.",
   "outcomes": [
     "Alla personliga flyttriktningar och hela utkastets sparknapp är åtkomliga i båda ordningarna, även när ytorna behöver rullas.",
-    "Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma innehåll och Blå cykelns privata förslag består utan sparförsök.",
+    "Flyttningarna ändrar bara den personliga vyn. Automationen jämför separat oförändrat gemensamt innehåll och privat förslag utan sparförsök.",
     "Fokus följer den uttryckliga handlingen och går tillbaka till verktygen vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll som används."
   ]
 }
@@ -3854,12 +3904,16 @@ UTKAST-99.
    därefter stängt textvyn och öppnat Navigera.
 5. Behåll 320 × 250 pixlar. Smal och kort vy har separata fall.
 
+**Separat tekniskt underlag:** Integrationstestet jämför hela privata
+utkastet och gemensamma kartinnehållet före och efter flyttningarna och
+kräver tomma sparförsök. Dessa API-jämförelser ingår inte i UI-stegen.
+
 **Förväntat resultat:**
 
 - Alla personliga flyttriktningar och hela utkastets sparknapp är
   åtkomliga i båda ordningarna, även när ytorna behöver rullas.
-- Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma
-  innehåll och Blå cykelns privata förslag består utan sparförsök.
+- Flyttningarna ändrar bara den personliga vyn. Automationen jämför separat
+  oförändrat gemensamt innehåll och privat förslag utan sparförsök.
 - Fokus följer den uttryckliga handlingen och går tillbaka till verktygen
   vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll
   som används.
@@ -3887,7 +3941,7 @@ UTKAST-100.
   "outcomes": [
     "Tangentbordet cirkulerar mellan modalens tillgängliga kontroller och lämnar inte den öppna modalen. Text och kontroller ryms i smal mobil visning.",
     "Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna; efter stängning återgår fokus till **Visa sparandet**.",
-    "Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus. Utkastet förbrukas med exakt ett sparande och en historikpost."
+    "Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus. Automationen kontrollerar separat tomt utkast, exakt ett sparande och en historikpost."
   ]
 }
 ```
@@ -3899,7 +3953,12 @@ UTKAST-100.
 2. Stäng textvyn. Öppna **Visa sparandet** i kartan och stäng med krysset.
 3. Öppna **Tabell**, välj **Visa sparandet** och stäng med Escape.
 4. Flytta fokus till **Sök objekt i tabellen** och skriv `release` i terminalen.
-5. Skriv `result` och kontrollera det avslutade försöket.
+5. Invänta bekräftelsen och fortsätt skriva i sökfältet utan att klicka på
+   det igen.
+
+**Separat tekniskt underlag:** Integrationstestet kräver tomt utkast, ett
+enda avslutat sparförsök och en historikpost. Operatören kan samla detta
+underlag med `result` efter bekräftelsen. Det är ingen vanlig UI-kontroll.
 
 **Förväntat resultat:**
 
@@ -3908,7 +3967,8 @@ UTKAST-100.
 - Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna;
   efter stängning återgår fokus till **Visa sparandet**.
 - Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus.
-  Utkastet förbrukas med exakt ett sparande och en historikpost.
+  Automationen kontrollerar separat tomt utkast, exakt ett sparande och en
+  historikpost.
 
 ### UTKAST-95: kontrollera okänt sparande före kvarstående hämtningsfel
 
@@ -4119,7 +4179,7 @@ UTKAST-104.
   "reference": "1280 × 850; kartans uppföljning saknas efter verifierat kvitto.",
   "outcomes": [
     "Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när modalens uppföljning försvinner.",
-    "Samma enda sparförsök bekräftas utan samtal eller medgivande."
+    "Bekräftelsen finns utan samtal eller medgivande. Automationen jämför separat samma enda sparförsök."
   ]
 }
 ```
@@ -4132,11 +4192,16 @@ UTKAST-104.
 2. Behåll Karta. Välj Visa sparandet och Kontrollera sparandet igen.
 3. Invänta bekräftelsen och kontrollera det synliga tomma utkastet och fokus.
 
+**Separat tekniskt underlag:** Integrationstestet jämför samma enda
+sparförsök före och efter kontrollen. Råa identifierare och försöksantal
+ingår inte i de vanliga UI-stegen.
+
 **Förväntat resultat:**
 
 - Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när
   modalens uppföljning försvinner.
-- Samma enda sparförsök bekräftas utan samtal eller medgivande.
+- Bekräftelsen finns utan samtal eller medgivande. Automationen jämför
+  separat samma enda sparförsök.
 
 ### UTKAST-105: återför synlig utkastkontext efter kontroll från Karta
 
@@ -4163,7 +4228,7 @@ UTKAST-105.
   "reference": "390 × 850; kartans uppföljning saknas efter verifierat kvitto.",
   "outcomes": [
     "Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när modalens uppföljning försvinner.",
-    "Samma enda sparförsök bekräftas utan samtal eller medgivande."
+    "Bekräftelsen finns utan samtal eller medgivande. Automationen jämför separat samma enda sparförsök."
   ]
 }
 ```
@@ -4176,8 +4241,13 @@ UTKAST-105.
 2. Behåll Karta. Välj Visa sparandet och Kontrollera sparandet igen.
 3. Invänta bekräftelsen och kontrollera det synliga tomma utkastet och fokus.
 
+**Separat tekniskt underlag:** Integrationstestet jämför samma enda
+sparförsök före och efter kontrollen. Råa identifierare och försöksantal
+ingår inte i de vanliga UI-stegen.
+
 **Förväntat resultat:**
 
 - Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när
   modalens uppföljning försvinner.
-- Samma enda sparförsök bekräftas utan samtal eller medgivande.
+- Bekräftelsen finns utan samtal eller medgivande. Automationen jämför
+  separat samma enda sparförsök.

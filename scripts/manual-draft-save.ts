@@ -30,10 +30,14 @@ let lostResponse = false;
 let refreshFailure = false;
 let recoveryFailure = false;
 let release: (() => void) | undefined;
+let holdCheck = false;
+let releaseCheck: (() => void) | undefined;
 let prepared = false;
 async function fresh(empty: boolean) {
   release?.();
+  releaseCheck?.();
   hold = holdAfter = lostResponse = refreshFailure = recoveryFailure = false;
+  holdCheck = false;
   if (prepared) {
     await page.goto('about:blank');
     await app.close();
@@ -78,9 +82,22 @@ try {
   await page.route('**/text-assistant/recover', (route) =>
     recoveryFailure ? route.abort() : route.continue(),
   );
+  await page.route('**/map/operations/*', async (route) => {
+    if (!holdCheck || route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch();
+    console.log(`Save lookup completed: ${response.status()}. Reply held. Use release-check.`);
+    await new Promise<void>((resolve) => {
+      releaseCheck = resolve;
+    });
+    releaseCheck = undefined;
+    await route.fulfill({ response });
+  });
   await fresh(false);
   console.log(
-    'Commands: new-draft, new-empty, hold, hold-after, release, drop, lost-response, refresh-failure, network-ok, pending-attempt, result, quit',
+    'Commands: new-draft, new-empty, hold, hold-after, release, drop, hold-check, release-check, lost-response, refresh-failure, network-ok, pending-attempt, result, quit',
   );
   input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const command of input) {
@@ -88,7 +105,11 @@ try {
     if (command === 'new-draft' || command === 'new-empty') await fresh(command === 'new-empty');
     else if (command === 'hold') hold = true;
     else if (command === 'hold-after') holdAfter = true;
-    else if (command === 'release') {
+    else if (command === 'hold-check') holdCheck = true;
+    else if (command === 'release-check') {
+      holdCheck = false;
+      releaseCheck?.();
+    } else if (command === 'release') {
       hold = holdAfter = false;
       release?.();
     } else if (command === 'drop') {
@@ -119,6 +140,7 @@ try {
   }
 } finally {
   release?.();
+  releaseCheck?.();
   input?.close();
   await browser.close();
   await app.close();

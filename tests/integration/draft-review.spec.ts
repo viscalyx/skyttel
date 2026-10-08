@@ -1,5 +1,7 @@
 import { expect, type Locator, test } from '@playwright/test';
+import { closeTextView } from '../support/client.js';
 import { consentBox, giveConversationConsent } from '../support/conversation-page.js';
+import { openTypeDefinitions } from '../support/domain-work.js';
 import {
   prepareDraftReview,
   prepareDraftReviewLifecycle,
@@ -249,11 +251,19 @@ test('UTKAST-91: empty and type-only drafts preserve unsent text and first send 
     expect(messages).toBe(1);
     expect(submitted).toEqual(['Behåll å, ä och ö i mitt meddelande']);
     await expect(message).toHaveValue('');
-    await post('object-type', {
-      id: 'only-type',
-      baseRevision: null,
-      value: { name: 'Endast typförslag', description: '', fields: [] },
-    });
+    await closeTextView(page);
+    await openTypeDefinitions(page);
+    await page.getByRole('button', { name: 'Ny objekttyp', exact: true }).click();
+    const definition = page.getByRole('group', { name: 'Objekttypens definition', exact: true });
+    await definition.getByLabel('Typens namn').fill('Endast typförslag');
+    const typeResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/map/object-type') && response.request().method() === 'POST',
+    );
+    await definition.getByRole('button', { name: 'Lägg typförslaget i mitt utkast' }).click();
+    const stagedType = await typeResponse;
+    expect(stagedType.status(), await stagedType.text()).toBe(200);
+    await page.getByRole('link', { name: 'Tillbaka till kartan', exact: true }).click();
     await page.reload();
     await expect(tools.getByRole('button', { name: 'Utkast', exact: true })).toBeVisible();
     await tools.getByRole('button', { name: 'Utkast', exact: true }).click();

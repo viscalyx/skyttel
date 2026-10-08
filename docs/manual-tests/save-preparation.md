@@ -28,6 +28,13 @@ inte för att återhämta ett okänt sparande.
 - `lost-response` genomför sparbegäran och tappar sedan dess svar.
   Kräv status 200 innan du behandlar det som genomfört sparande.
 - `refresh-failure` blockerar bara GET-hämtningen av kartan.
+- `hold-check` håller nästa GET-svar för ett beständigt sparförsök efter
+  serverns riktiga uppslagning. Skriv kommandot före **Kontrollera sparandet
+  igen**. Vänta på `Save lookup completed` med verklig status och håll
+  svaret medan du läser **Kontrollerar sparandet…** och provar fokus.
+  `release-check` levererar samma svar och stänger av kontrollens hållning.
+  `new-draft`, `new-empty`, `quit` och Ctrl+C släpper också ett hållet
+  kontrollsvar före återställning eller avstängning.
 - `pending-attempt` registrerar ett riktigt väntande försök och laddar om
   medan den automatiska kontrollen blockeras. `network-ok` tar bort fel;
   ladda om för att starta automatisk kontroll efter tidigare kontrollfel.

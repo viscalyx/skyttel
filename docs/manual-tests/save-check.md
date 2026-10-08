@@ -36,6 +36,8 @@ sparuppdragets modellanrop hålls, släpp det med
 `tool REQUEST save_draft
 {"version":VERSION,"contentVersion":CONTENT,"operationId":"checked-save"}`.
 Avsluta nästa hållna anrop med `reply REQUEST Sparat.`.
+Operatören kräver status 200 före det tappade svaret som separat
+leveransdiagnos.
 
 **Integrationstest:**
 [save-check.spec.ts](../../tests/integration/save-check.spec.ts),
@@ -60,7 +62,7 @@ SPARKONTROLL-01.
 **Steg:**
 
 1. Skriv Spara hela utkastet. och välj Skicka. Släpp modellresultatet enligt
-   förberedelsen och kräv status 200 före det tappade svaret.
+   förberedelsen.
 2. Läs Det är oklart om utkastet sparades. Skyttel kontrollerar det. Skriv Nästa
    uppdrag utan att skicka.
 3. Kontrollera spärrad Skicka. Aktivera den nåbara mikrofonknappen: den ska
@@ -87,6 +89,11 @@ eller modelluppdrag.
 [Registrerat väntande försök](save-preparation.md#registrerat-väntande-försök)
 med Lo Exempel. Ta bort nätblockeringen före besöket.
 
+**Separat tekniskt underlag:** Förberedelsen antecknar det registrerade
+försökets ID. Integrationstestet kräver samma beständiga försök efter
+omstarten och jämför hela kvittot med den enda historikposten. Råa
+försöksidentifierare jämförs inte i de vanliga UI-stegen.
+
 **Integrationstest:**
 [save-check.spec.ts](../../tests/integration/save-check.spec.ts),
 SPARKONTROLL-02.
@@ -109,12 +116,11 @@ SPARKONTROLL-02.
 
 **Steg:**
 
-1. Förbered ett registrerat försök enligt länken och anteckna ID. Kör restart
+1. Förbered ett registrerat försök enligt länken. Kör restart
    och ladda om utan nytt samtalsmedgivande.
 2. Tillåt den automatiska kontrollen vid besöket. Starta inget nytt samtal och
    lämna mikrofonen av.
-3. Läs det enda kvittot i Rapporter → Ändringshistorik och jämför ID under
-   Identifiera sparandet och användaren.
+3. Läs det enda kvittot för Lo Exempel i Rapporter → Ändringshistorik.
 4. Återgå till arbetet, öppna textsamtalet och godkänn vanligt medgivande om det
    behövs. Läs kontrollens enda förklaring.
 
@@ -134,7 +140,15 @@ eller modelluppdrag.
 
 **Förutsättningar:**
 [Registrerat väntande försök](save-preparation.md#registrerat-väntande-försök)
-med Lo Exempel. Behåll nätblockeringen för första kontrollen.
+med Lo Exempel. Före omstart och omladdning aktiverar operatören beständig
+Network request blocking för `*/text-assistant/recover` i
+utvecklarverktygen. Konsolkontrollen överlever inte omladdning och används
+inte för att blockera den första kontrollen.
+
+**Separat tekniskt underlag:** Förberedelsen antecknar det registrerade
+försökets ID. Integrationstestet kräver samma beständiga försök efter
+kontrollfelet och återförsöket och jämför hela kvittot med den enda
+historikposten. Råa försöksidentifierare jämförs inte i UI-stegen.
 
 **Integrationstest:**
 [save-check.spec.ts](../../tests/integration/save-check.spec.ts),
@@ -158,17 +172,16 @@ SPARKONTROLL-07.
 
 **Steg:**
 
-1. Förbered ett registrerat försök enligt länken och anteckna ID. Kör restart
-   och ladda om utan nytt samtalsmedgivande.
-2. Blockera `*/text-assistant/recover` före omladdningen. Vänta på Skyttel kunde
+1. Förbered ett registrerat försök och aktivera beständig nätblockering
+   enligt förberedelsen. Kör restart och ladda om utan nytt samtalsmedgivande.
+2. Vänta på Skyttel kunde
    inte kontrollera om utkastet sparades. Kontrollera den enda
    återförsöksknappen.
 3. Ta bort blockeringen. Installera konsolkontrollen igen och arma
    `recover:after`. Tabba till Kontrollera om utkastet sparades och tryck Enter.
    Läs kontrollnotisen utan återförsöksknapp och med mikrofon av. Släpp
    kontrollsvaret.
-4. Läs det enda kvittot i Rapporter → Ändringshistorik och jämför ID under
-   Identifiera sparandet och användaren.
+4. Läs det enda kvittot för Lo Exempel i Rapporter → Ändringshistorik.
 5. Återgå till arbetet, öppna textsamtalet och godkänn vanligt medgivande om det
    behövs. Läs kontrollens enda förklaring.
 
@@ -336,8 +349,8 @@ Detta underlag verifierar inte fysisk fångst eller hörbar uppläsning.
 
 1. Läs kontrollnotisen och kontrollera att mikrofonknappen visar av.
 2. Låt operatören släppa kontrollsvaret. Läs kontrollförklaringen i samtalet.
-3. Emittera motsvarande syntetisk svarstext och starta fjärrljud. Kräv Skyttel
-   talar och ingen Sparat-symbol.
+3. Låt operatören leverera syntetisk svarstext och starta fjärrljud enligt
+   separat förberedelse. Kräv Skyttel talar och ingen Sparat-symbol.
 4. Välj Avbryt i röstrutan. Kräv Sparat och bock, grundade i det verkliga
    kvittot. Läs det enda historiksteget.
 
@@ -431,13 +444,20 @@ SPARKONTROLL-05.
    Identitet och lägg hela formuläret i utkastet. Läs att inget nytt
    sparande har genomförts enbart genom rättelsen.
 5. Öppna Utkast och välj Spara hela utkastet uttryckligen. Läs bekräftat
-   sparande och tomt utkast. Det nya kvittot får en ny identitet; det gamla
-   avvisade försöket är inget genomfört sparande.
+   sparande och tomt utkast. Det gamla avvisade försöket är inget genomfört
+   sparande.
+
+**Separat tekniskt underlag:** Integrationstestet jämför hela det privata
+utkastet, det avvisade försökets ID och tom historik efter kontrollen.
+Rättelsen ensam skapar inget nytt försök. Testet kräver därefter ett nytt
+lyckat försöks-ID med eget kvitto och att det ursprungliga avvisade försöket
+finns kvar oförändrat. Dessa råa jämförelser är inga vanliga UI-steg.
 
 **Förväntat resultat:**
 
-- Utkastet är oförändrat och historiken har inget nytt kvitto. Den avvisade
-  identiteten är beständig och inget nytt försöks-ID har skapats.
+- Förslaget finns kvar och historiken har inget nytt kvitto efter
+  avvisningen. Automationen jämför separat hela utkastet och samma
+  beständiga avvisade försök utan nytt försöks-ID.
 - Förklaringen är det enda utfallsbeskedet i samtalet. En lyckad kontroll
   av ett osparat resultat visar ingen återförsöksknapp för själva kontrollen.
 - Identitetsrättelsen sparar inte själv. Först det nya uttryckliga
@@ -459,6 +479,8 @@ Släpp sparuppdragets modell med
 `tool REQUEST prepare_save {"version":VERSION,"contentVersion":CONTENT}`
 och nästa hållna anrop med `reply REQUEST Försöket är förberett.`.
 Anteckna ursprungligt ID som separat tekniskt underlag.
+Integrationstestet jämför det ursprungliga försöket och dess enda kvitto
+efter återkallelsen. De råa identifierarna ingår inte i UI-stegen.
 
 **Integrationstest:**
 [save-check.spec.ts](../../tests/integration/save-check.spec.ts),
@@ -489,8 +511,7 @@ SPARKONTROLL-06.
 3. Bekräfta Återkalla och avsluta samtalet. Läs Medgivandet är återkallat och
    direkt avstängd fångst. Gå tillbaka till kartan och kontrollera att gammal
    felnotis saknas.
-4. Läs det enda genomförda sparandet för Lo i Rapporter och jämför ursprungligt
-   ID.
+4. Läs det enda genomförda sparandet för Lo i Rapporter.
 5. Återgå, öppna textsamtalet och godkänn nytt medgivande. Läs kvarvarande
    oskickad text och tom gammal samtalstext.
 
@@ -515,6 +536,10 @@ Släpp sparuppdragets modell med
 `tool REQUEST prepare_save {"version":VERSION,"contentVersion":CONTENT}`
 och nästa hållna anrop med `reply REQUEST Försöket är förberett.`.
 Anteckna ursprungligt ID som separat tekniskt underlag.
+Integrationstestet jämför det ursprungliga försöket och dess enda kvitto
+efter återkallelsen. Operatören kräver status 200 före det tappade
+återkallandesvaret. Dessa leveransdiagnoser och råa jämförelser ingår inte
+i de vanliga UI-stegen.
 
 **Integrationstest:**
 [save-check.spec.ts](../../tests/integration/save-check.spec.ts),
@@ -543,13 +568,11 @@ SPARKONTROLL-09.
 2. Skriv Text som inte har skickats. Öppna Inställningar → Samtal med Skyttel
    och välj Återkalla medgivandet.
 3. Arma `revoke:drop-after` och `recover:after`. Bekräfta Återkalla och avsluta
-   samtalet. Kräv verklig status 200 före det tappade svaret och direkt avstängd
-   fångst.
+   samtalet. Kontrollera att mikrofonknappen visar av.
 4. Gå tillbaka till kartan. Läs kontrollnotisen och försök använda
    mikrofonknappen; ingen ny fångst eller medgivanderuta ska starta. Släpp
    kontrollsvaret.
-5. Läs det enda genomförda sparandet för Lo i Rapporter och jämför ursprungligt
-   ID.
+5. Läs det enda genomförda sparandet för Lo i Rapporter.
 6. Återgå, öppna textsamtalet och godkänn nytt medgivande. Läs kvarvarande
    oskickad text och kontrollens enda förklaring.
 
@@ -596,15 +619,19 @@ ingen extra uppläsning av samma samtalstext.
 
 **Steg:**
 
-1. Starta skärmläsaren och kör SPARKONTROLL-03 med mikrofon av. Skicka
-   Spara hela utkastet. med dess kontrollerade tappade uppdragssvar.
-2. Lyssna efter Kontrollen visar att utkastet inte sparades. Dina osparade
+1. Starta skärmläsaren. Utför SPARKONTROLL-03 en gång från dess förberedelse
+   i ett nytt provhushåll. Gör observationerna nedan under dess namngivna
+   steg, utan extra skickanden eller upprepning av basflödet.
+2. Under SPARKONTROLL-03 steg 2–3, medan mikrofonen fortfarande är av,
+   lyssna efter Kontrollen visar att utkastet inte sparades. Dina osparade
    ändringar ligger kvar. Kräv en enda automatisk artig uppläsning.
-3. Slå på mikrofonen. Det gamla beskedet ska inte annonseras på nytt.
-4. Kör SPARKONTROLL-08 i ett nytt provhushåll med syntetisk mikrofon på.
-   Samma kontrollförklaring står i samtalstexten; skärmläsaren ska inte
-   automatiskt läsa en extra kopia som ny samtalstext.
-5. Anteckna faktisk skärmläsare, operativsystem och hörda meddelanden.
+   Under dess steg 4, när mikrofonen slås på, ska det gamla beskedet inte
+   annonseras på nytt. Slutför sedan basfallets steg 5–6.
+3. Utför SPARKONTROLL-08 en gång från dess förberedelse i ett annat nytt
+   provhushåll. Under dess steg 2–4, med syntetisk mikrofon på, står samma
+   kontrollförklaring i samtalstexten. Skärmläsaren ska inte automatiskt
+   läsa en extra kopia som ny samtalstext. Slutför basfallets steg 5–6.
+4. Anteckna faktisk skärmläsare, operativsystem och hörda meddelanden.
 
 **Förväntat resultat:**
 
@@ -627,8 +654,11 @@ Använd inte den syntetiska startguiden eller dess tysta ljudspår. Extern
 körning kräver separat godkännande. Skapa ett tomt provhushåll, lägg Lo
 Exempel i utkastet och installera konsolkontrollen från
 [sparförberedelsen](save-preparation.md#samtals--och-kontrollsvar).
-Registrera ett väntande försök enligt den separata förberedelsen; låt
-kontrollsvaret hållas med `session-recover:after`.
+Förbered registreringen enligt
+[registrerat väntande försök](save-preparation.md#registrerat-väntande-försök)
+utan att skicka registreringsanropet ännu. Operatören armar
+`session-recover:after` före registreringen i steg 2; samma ordning används
+i det nya hushållet i steg 4.
 
 **Kräver mänsklig observation:** Använd fysisk mikrofon och högtalare med
 godkänd extern röstkonfiguration. Lyssna på kontrollförklaringen med mikrofon
@@ -653,12 +683,17 @@ på; avstängd mikrofon spelar inte upp den gamla förklaringen efter ny start.
 
 1. Öppna Skriv till Skyttel, godkänn medgivandet och slå på Prata med
    Skyttel före registreringen. Kontrollera faktisk mikrofonåtkomst.
-2. Registrera försöket enligt förberedelsen. Läs kontrollnotisen och
-   avstängd fångst. Låt operatören släppa det hållna kontrollsvaret.
+2. Låt operatören registrera försöket enligt förberedelsen. Läs
+   kontrollnotisen och att mikrofonknappen visar av. Låt operatören släppa
+   det hållna kontrollsvaret.
 3. Lyssna i högtalaren på Kontrollen visar att hela utkastet sparades.
    Ändringarna finns i hushållets karta. Läs samma förklaring i samtalet.
-4. I ett nytt provhushåll, upprepa registrering och kontroll med
-   mikrofonen av. Ingen röstförklaring ska spelas upp.
+4. Skapa ett annat nytt tomt provhushåll och lägg Lo Exempel i utkastet.
+   Öppna Skriv till Skyttel och godkänn medgivandet vid behov. Behåll
+   mikrofonen av. Operatören installerar konsolkontrollen igen, armar
+   `session-recover:after` och registrerar ett nytt väntande försök.
+   Läs kontrollnotisen och låt operatören släppa kontrollsvaret.
+   Ingen röstförklaring ska spelas upp.
 5. Slå på mikrofonen efter utfallet. Det gamla svaret ska inte spelas
    upp. Läs det enda kvittot och tomt utkast i varje hushåll.
 6. Anteckna faktisk mikrofon, högtalare, webbläsare och hörda svar.
