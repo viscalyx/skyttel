@@ -9,9 +9,9 @@ Det finns kvar i kartan, går att söka efter och kan redigeras. Texten
 osparade ändringar.
 
 Du kan nå kartans samband med tangentbordet. Markeringen **Upphört** ingår
-även i kontrollens beskrivning för hjälpmedel. Välj sambandet och öppna
-**Visa detaljer** för att läsa status och slutdatum. I **Tabell** finns
-samma uppgifter i objektets och sambandets läsdialoger.
+även i kontrollens beskrivning för hjälpmedel. Dubbelklicka sambandet eller
+tryck Alt+Enter på dess etikett för att läsa status och slutdatum.
+I **Tabell** finns samma uppgifter i objektets och sambandets läsdialoger.
 
 ## Ange och rätta status
 

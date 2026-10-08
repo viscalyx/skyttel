@@ -151,7 +151,7 @@ without changing saved facts”.
 2. Använd Tab och Skift+Tab för att nå sambandet från Lo till Familjemusik.
    Kontrollera synligt fokus och sambandets tillgängliga beskrivning med
    webbläsarens tillgänglighetsinspektör eller skärmläsare.
-3. Tryck Enter på sambandet och välj **Visa detaljer** i kartans verktyg.
+3. Tryck Alt+Enter på sambandet.
    Läs **Valt samband** utan att redigera eller spara något.
 4. Starta om appen med samma databas, ladda om sidan och öppna kartan igen.
    Kontrollera båda sambandens status och tillgängliga beskrivningar.

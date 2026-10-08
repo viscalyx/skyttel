@@ -191,7 +191,7 @@ test('camera focus includes previous direct neighbors and preserves work through
   await expect.element(focus).toBeDisabled();
   await alex.click();
   const initialSeparation = separation();
-  await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+  await alex.dblClick();
   const panel = page.getByRole('region', { name: 'Alex', exact: true });
   const reading = panel.getByRole('heading', { name: 'Alex', exact: true });
   await panel.getByRole('group', { name: 'Flytta uppgiftsfönstret för Alex', exact: true }).click();
@@ -237,8 +237,7 @@ test('camera focus includes previous direct neighbors and preserves work through
 
 test('compact profile returns to visible work and dismisses before keyboard focus enters the map', async () => {
   await open(1440);
-  await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();
-  await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+  await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).dblClick();
   const name = page
     .getByRole('region', { name: 'Alex', exact: true })
     .getByRole('heading', { name: 'Alex', exact: true });
@@ -280,9 +279,6 @@ test('map selection gestures preserve membership and open retained details only 
   await open(1440);
   const alex = page.getByRole('button', { name: 'Välj objekt: Alex', exact: true });
   const music = page.getByRole('button', { name: 'Välj objekt: Tonmoln', exact: true });
-  const details = page
-    .getByRole('navigation', { name: 'Kartans verktyg' })
-    .getByRole('button', { name: 'Visa detaljer', exact: true });
   const panel = page.getByRole('region', { name: 'Tonmoln', exact: true });
   const positions = () =>
     [alex, music].map((node) => {
@@ -301,7 +297,6 @@ test('map selection gestures preserve membership and open retained details only 
   await expect.element(alex).toHaveAttribute('aria-pressed', 'true');
   await expect.element(music).toHaveAttribute('aria-pressed', 'true');
   await expect.element(panel).not.toBeInTheDocument();
-  await expect.element(details).toHaveAttribute('aria-pressed', 'false');
   await music.click({ modifiers: ['Meta'] });
   await expect.element(music).toHaveAttribute('aria-pressed', 'false');
   await music.click();
@@ -319,7 +314,6 @@ test('map selection gestures preserve membership and open retained details only 
   await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
   await alex.click({ button: 'right', modifiers: ['Control'] });
   await expect.element(alex).toHaveAttribute('aria-pressed', 'false');
-  await expect.element(details).toHaveAttribute('aria-pressed', 'false');
   // Some platforms follow the context-menu gesture with a click from the same press.
   alex
     .element()

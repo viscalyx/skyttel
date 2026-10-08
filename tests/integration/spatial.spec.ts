@@ -9,7 +9,6 @@ import {
   openMap,
   openTable,
   signIn,
-  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { closeTableObject, editTableObject, readTableObject } from '../support/domain-work.js';
@@ -350,8 +349,7 @@ test('RYMD-02: focus, filters and camera navigation preserve the shared selectio
     await space.getByLabel('Alla etiketter', { exact: true }).check();
     await space
       .getByRole('button', { name: 'Välj samband: Lo Exempel → Använder → Molnmusik', exact: true })
-      .click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+      .dblclick();
     await page
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })
@@ -967,8 +965,7 @@ test('RYMD-07: ended objects and relationships retain status beside draft symbol
     await expect(edge.getByText('Upphört', { exact: true })).toBeVisible();
     await expect(lo).not.toContainText('Upphört');
     await expect(space.getByTitle('Nytt förslag')).toHaveCount(0);
-    await edge.click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+    await edge.dblclick();
     await page
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })
@@ -1054,8 +1051,7 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
       exact: true,
     });
     await expect(previous).toContainText('×');
-    await previous.click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+    await previous.dblclick();
     const inspector = page.getByRole('region', { name: 'Valt samband', exact: true });
     await expect(inspector).toContainText('Lo Exempel → Betalar → Molnmusik');
     await focusMapSearch(page);
@@ -1074,8 +1070,7 @@ test('RYMD-08: focus retains old and proposed relationship endpoints and opens t
       .click();
     await space
       .getByRole('button', { name: 'Välj samband: Kim Exempel → Betalar → Molnmusik', exact: true })
-      .click();
-    await (await utilityButton(page, 'Visa detaljer')).click();
+      .dblclick();
     await page
       .getByRole('region', { name: 'Valt samband', exact: true })
       .getByRole('button', { name: 'Redigera valt samband', exact: true })

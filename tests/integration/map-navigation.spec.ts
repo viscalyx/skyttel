@@ -244,8 +244,7 @@ test('NAVIGATION-04: object details retain directed relationship access and edit
       ).ok(),
     ).toBe(true);
     await page.reload();
-    await lo.click();
-    await page.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+    await lo.dblclick();
     const details = page.getByRole('region', { name: 'Lo Exempel', exact: true });
     await details.getByRole('button', { name: 'Samband för Lo Exempel', exact: true }).click();
     const relationships = page.getByRole('dialog', { name: 'Samband för Lo Exempel', exact: true });
@@ -329,7 +328,6 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           await expect(talk).toBeFocused();
         }
         const trigger = page.getByRole('button', { name: 'Navigera', exact: true });
-        const details = page.getByRole('button', { name: 'Visa detaljer', exact: true });
         if (navigationFirst) {
           await trigger.focus();
           await trigger.press('Enter');
@@ -337,8 +335,11 @@ test('NAVIGATION-02: navigation and unsent details retain usable work in both op
           await handle.press('Shift+ArrowDown');
           await handle.press('Shift+ArrowDown');
         }
-        if (!(await details.isVisible()))
-          await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+        await lo.focus();
+        await lo.press('Shift+F10');
+        const details = page
+          .getByRole('toolbar', { name: 'Åtgärder för Lo Exempel', exact: true })
+          .getByRole('button', { name: 'Visa uppgifter för Lo Exempel', exact: true });
         await details.focus();
         await details.press('Enter');
         if (!navigationFirst) {

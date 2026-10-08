@@ -69,7 +69,10 @@ För att starta ett nytt samtal väljer du uttryckligen **Nytt samtal**; om
 medgivande behövs väljer du därefter **Godkänn och starta**.
 
 På telefon öppnar **Visa verktygens namn** de kompletterande verktygen.
-**Visa detaljer** läser markerade objekt i flyttbara uppgiftsfönster.
+Dubbelklicka ett objekt eller högerklicka och välj **Visa uppgifter** för
+att läsa det i ett flyttbart uppgiftsfönster. Med tangentbord öppnar
+Skift+F10 objektets åtgärder. Dubbelklicka ett samband eller tryck Alt+Enter
+på dess etikett för att läsa sambandets uppgifter.
 Flera objekts fönster kan vara öppna samtidigt med egna placeringar.
 Stäng den med **Stäng uppgifterna** före kartgester om den tar plats.
 Stäng text med **Stäng textvyn** när ett fall behöver själva kartan.

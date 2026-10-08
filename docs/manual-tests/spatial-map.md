@@ -91,7 +91,7 @@ selection”.
    Stäng filterdialogen och välj **Återställ vy**. Öppna Filter igen och
    kontrollera tom sökning, avmarkerad Person och ingen knapp för att
    återgå till sökträffarna. Stäng filterdialogen och välj **Alla etiketter**.
-6. Välj användningssambandets etikett, **Visa detaljer** och
+6. Dubbelklicka användningssambandets etikett och välj
    **Redigera valt samband**. Kontrollera Molnmusik som **Till objekt**.
 
 **Förväntat resultat:**
@@ -315,7 +315,7 @@ draft symbols”.
 5. Öppna **Skriv till Skyttel**, visa utkastet och spara med sparikonen.
    Stäng textvyn, starta om appen och öppna kartan igen. Markera åter
    **Ta med upphörda** i kartans sökning.
-6. Välj sambandets etikett, **Visa detaljer** och **Redigera valt samband**.
+6. Dubbelklicka sambandets etikett och välj **Redigera valt samband**.
    Välj Gäller fortfarande
    och lägg sambandet
    i utkastet. Gå tillbaka till kartan.
@@ -350,13 +350,13 @@ and opens the saved route read-only”.
 
 1. Öppna kartan, högerklicka Molnmusik och välj Visa samband i kartan.
 2. Kontrollera Lo Exempel och Kim Exempel med båda betalningssambanden.
-3. Välj den tidigare etiketten Lo Exempel → Betalar → Molnmusik med ×.
-4. Välj **Visa detaljer** och läs **Valt samband**. Kontrollera att
+3. Dubbelklicka den tidigare etiketten Lo Exempel → Betalar → Molnmusik med ×.
+4. Läs **Valt samband**. Kontrollera att
    sparade tidigare värden går att läsa. Klicka i kartans sökfält,
    kontrollera att **Tillbaka till sökträffarna** fortfarande finns och
    tryck Escape i sökfältet. Stäng uppgifterna. Högerklicka Kim Exempel, välj
-   **Visa samband i kartan** och det föreslagna betalningssambandet.
-   Välj **Visa detaljer** och **Redigera valt samband**.
+   **Visa samband i kartan** och dubbelklicka det föreslagna betalningssambandet.
+   Välj **Redigera valt samband**.
 
 **Förväntat resultat:**
 

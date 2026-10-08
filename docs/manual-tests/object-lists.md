@@ -790,7 +790,9 @@ screens”.
 5. Öppna Utkast på dator och skriv ett oskickat meddelande. Öppna Filter,
    välj Återställ filter och tryck Escape. Kontrollera att dialogen går
    att använda över textvyn och att meddelandet finns kvar.
-6. Öppna ett objekts uppgifter i ett mycket kort telefonfönster.
+6. I ett mycket kort telefonfönster, öppna A 2 i Tabell och välj
+   **Visa A 2 i kartan**. Fokusera A 2, tryck Skift+F10 och välj
+   **Visa uppgifter för A 2**.
    Sökfältet ska synas bredvid de rullbara verktygen och uppgifterna
    ska gå att läsa. Stäng uppgifterna och kontrollera sökfältet under verktygen.
 

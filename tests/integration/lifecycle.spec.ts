@@ -8,7 +8,6 @@ import {
   openMap,
   openTable,
   signIn,
-  utilityButton,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import { closeConversationText, openConversationDraft } from '../support/conversation-page.js';
@@ -444,8 +443,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
         }),
       )
       .toBe(true);
-    await page.keyboard.press('Enter');
-    await (await utilityButton(page, 'Visa detaljer')).click();
+    await page.keyboard.press('Alt+Enter');
     const details = page.getByRole('region', { name: 'Valt samband', exact: true });
     await expect(details).toContainText('Lo Exempel → Använder → Familjemusik');
     await expect(

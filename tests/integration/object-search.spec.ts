@@ -704,8 +704,13 @@ test('SÖK-10: capsule search and attached filters fit desktop and narrow short 
         await object.click();
         await table.getByRole('button', { name: 'Visa A 2 i kartan', exact: true }).click();
         const tools = page.getByRole('navigation', { name: 'Kartans verktyg', exact: true });
-        await tools.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
-        await tools.getByRole('button', { name: 'Visa detaljer', exact: true }).click();
+        const node = page.getByRole('button', { name: 'Välj objekt: A 2', exact: true });
+        await node.focus();
+        await node.press('Shift+F10');
+        await page
+          .getByRole('toolbar', { name: 'Åtgärder för A 2', exact: true })
+          .getByRole('button', { name: 'Visa uppgifter för A 2', exact: true })
+          .click();
         await expect(search).toBeVisible();
         await clear.click({ trial: true });
         const toolbar = await tools.boundingBox();

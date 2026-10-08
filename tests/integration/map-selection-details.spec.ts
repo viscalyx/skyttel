@@ -21,7 +21,11 @@ for (const viewport of [
       const node = page.locator('.spatial-node[data-object-id="bike"]');
       await node.focus();
       await page.keyboard.press('Enter');
-      await (await utilityButton(page, 'Visa detaljer')).click();
+      await node.press('Shift+F10');
+      await page
+        .getByRole('toolbar', { name: 'Åtgärder för Cykel', exact: true })
+        .getByRole('button', { name: 'Visa uppgifter för Cykel', exact: true })
+        .click();
       const details = page.locator('.map-selection-details');
       await expect(details).toBeVisible();
       await expect(details).toHaveAttribute('data-selection-id', 'bike');

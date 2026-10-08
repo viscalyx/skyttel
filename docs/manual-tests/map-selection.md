@@ -114,11 +114,9 @@ och
 
 **Steg:**
 
-1. Kontrollera att **Visa detaljer** är inaktivt utan urval och att
-   verktygsknapparna ryms med minst 44 × 44 CSS-pixlars tryckyta.
-   Nå **Välj objekt: Lo Exempel** med Tab och tryck mellanslag.
-2. Ctrl-klicka Kim och välj **Visa detaljer**. Kontrollera två markerade
-   objekt, Kims rubrikfokus och aktiv detaljikon.
+1. Nå **Välj objekt: Lo Exempel** med Tab och tryck mellanslag.
+2. Ctrl-klicka Kim, tryck Skift+F10 och välj **Visa uppgifter för Kim Exempel**.
+   Kontrollera två markerade objekt och fokus på Kims rubrik.
 3. Välj **Redigera Kim Exempel** och skriv Oskickat samt aktuell bredd i
    **Beskrivning**. Välj **Stäng objektdialogen**. Kontrollera fokus på
    **Fortsätt redigera** och tryck Escape. Texten finns kvar, utan nytt förslag.
@@ -182,7 +180,8 @@ reachable at 320x250”.
 **Steg:**
 
 1. Välj **Karta**. Nå **Välj objekt: Cykel** med tangentbord och tryck Enter.
-2. Välj **Visa detaljer**. Läs Cykels namn och fullständiga uppgifter.
+2. Tryck Skift+F10 och välj **Visa uppgifter för Cykel**.
+   Läs Cykels namn och fullständiga uppgifter.
    Skilj sparade värden från det privata prisförslaget.
 3. Nå **Redigera Cykel** med Tab och tryck Enter. Kontrollera att det vanliga
    fullständiga objektformuläret öppnas med Cykels aktuella uppgifter.

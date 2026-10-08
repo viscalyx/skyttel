@@ -74,7 +74,8 @@ in both opening orders”.
 **Steg:**
 
 1. Markera Lo. Öppna **Navigera**, flytta titelraden med Skift+pil nedåt
-   och öppna sedan **Visa detaljer**. Läs Lo i det flyttbara uppgiftsfönstret.
+   och fokusera sedan Lo. Tryck Skift+F10 och välj
+   **Visa uppgifter för Lo Exempel**. Läs Lo i det flyttbara uppgiftsfönstret.
    På dator: flytta dess
    titelrad åt vänster med Skift+pil tills fönstren ligger bredvid varandra.
    Fokusera navigationens stängikon och kontrollera att den kan nås.
@@ -179,7 +180,7 @@ access and editing through the list”.
 
 **Steg:**
 
-1. Markera Lo och välj **Visa detaljer**.
+1. Dubbelklicka Lo för att öppna uppgiftsfönstret.
 2. Välj **Samband för Lo Exempel** i det flyttbara uppgiftsfönstret.
 3. Läs **Lo Exempel → Använder → Kim Exempel**, båda ändpunkterna och
    riktningen. Välj **Kim Exempel**, läs dess fullständiga uppgifter och

@@ -71,6 +71,7 @@ export function SpatialMap({
   onEdit = onSelect,
   onOpenDetails = onEdit,
   onSelectRelationship,
+  onOpenRelationshipDetails = onSelectRelationship,
   onFocus,
   onReveal,
   onRead,
@@ -111,6 +112,7 @@ export function SpatialMap({
   onEdit?: (object: MapObject) => void;
   onOpenDetails?: (object: MapObject) => void;
   onSelectRelationship: (edge: MapRelationship, previous?: boolean) => void;
+  onOpenRelationshipDetails?: (edge: MapRelationship, previous?: boolean) => void;
   onFocus: (id: string) => void;
   onReveal?: (object: MapObject) => void;
   onRead?: (object: MapObject) => void;
@@ -1262,11 +1264,16 @@ export function SpatialMap({
                 onKeyDown={(event) => {
                   if (!disabled && (event.key === 'Enter' || event.key === ' ')) {
                     event.preventDefault();
-                    onSelectRelationship(edge, previous);
+                    if (event.altKey && event.key === 'Enter')
+                      onOpenRelationshipDetails(edge, previous);
+                    else onSelectRelationship(edge, previous);
                   }
                 }}
                 onClick={() => {
                   if (!disabled) onSelectRelationship(edge, previous);
+                }}
+                onDoubleClick={() => {
+                  if (!disabled) onOpenRelationshipDetails(edge, previous);
                 }}
               >
                 <path d={geometry} className="connection-hit" />
@@ -1310,6 +1317,13 @@ export function SpatialMap({
               aria-describedby={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}
               style={{ left: x, top: y }}
               onClick={() => onSelectRelationship(edge, previous)}
+              onDoubleClick={() => onOpenRelationshipDetails(edge, previous)}
+              onKeyDown={(event) => {
+                if (!disabled && event.altKey && event.key === 'Enter') {
+                  event.preventDefault();
+                  onOpenRelationshipDetails(edge, previous);
+                }
+              }}
             >
               <span
                 id={`${relationshipLabelPrefix}-${previous ? 'previous' : 'current'}-${edge.id}`}

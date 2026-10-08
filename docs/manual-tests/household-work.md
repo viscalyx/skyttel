@@ -375,7 +375,8 @@ and resizing”.
    personlig vy och markera **Visa höjdhjälp**.
 3. Besök **Inloggningssätt**, minska fönstret till mobilstorlek och
    återgå med **Till startsidan**.
-4. Välj **Visa detaljer** och läs **Min cykel**. Välj **Stäng uppgifterna**
+4. Fokusera **Min cykel**, tryck Skift+F10 och välj **Visa uppgifter för Min cykel**.
+   Läs uppgifterna. Välj **Stäng uppgifterna**
    och kontrollera kartans urval, **Visa höjdhjälp** och personlig placering.
 
 **Förväntat resultat:**
