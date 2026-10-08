@@ -63,6 +63,8 @@ test('KARTA-19: unchanged edits open relationships without staging and every rea
     await relationships.getByRole('button', { name: 'Stäng dialogen', exact: true }).click();
     await expect(editButton).toBeFocused();
     await page.getByRole('button', { name: 'Sparad cykel', exact: true }).click();
+    const details = page.getByRole('region', { name: 'Uppgifter för Sparad cykel', exact: true });
+    await expect(details.getByRole('button', { name: /^Redigera/ })).toHaveCount(0);
     await editButton.click();
     await expect(form).toBeVisible({ timeout: 1000 });
     await expect(form.getByRole('button', { name: 'Grunduppgifter', exact: true })).toHaveAttribute(
