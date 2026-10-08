@@ -370,6 +370,9 @@ describe('Skyttel application interface', () => {
       mount();
       expect(await screen.findByRole('heading', { name: 'Hushållet Linden' })).toBeDefined();
       expect(screen.getByText(role === 'administrator' ? 'Administratör' : 'Medlem')).toBeDefined();
+      expect(
+        screen.queryByText('Rymdkartan kan inte visas. Använd Tabell för att fortsätta.'),
+      ).toBeNull();
       await userEvent.click(screen.getByRole('button', { name: 'Din profil' }));
       expect(screen.getByRole('heading', { name: 'Din Skyttel-användare' })).toBeDefined();
       const userId = screen.getByRole('textbox', { name: 'Ditt Skyttel-användar-ID' });

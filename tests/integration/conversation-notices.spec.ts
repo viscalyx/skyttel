@@ -215,6 +215,8 @@ test('NOT-01: utan samtal visar avstängda samtalsknappar en stängbar notis uta
       textView(page).getByRole('button', { name: 'Nytt samtal', exact: true }),
     ).toBeDisabled();
     await expect(notice(page)).toContainText(unavailable);
+    await expect(field(page)).toBeFocused();
+    await uncovered(notice(page));
     await notice(page).getByRole('button', { name: 'Stäng notisen' }).click();
     await expect(notice(page)).toHaveCount(0);
     await expect(microphoneButton(page)).toBeFocused();

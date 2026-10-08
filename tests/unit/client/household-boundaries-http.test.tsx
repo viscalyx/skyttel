@@ -1,6 +1,7 @@
 import { type APIRequestContext, request } from '@playwright/test';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
+import { WebGLRenderer } from 'three';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import type { MapState } from '../../../src/shared/map.js';
 import { authenticatedHttpFetch } from '../../support/authenticated-http-fetch.js';
@@ -145,6 +146,10 @@ test('sorting and pagination preserve numeric Swedish order and resetting a no-m
 async function readingFixture() {
   const fixture = await prepareHouseholdReading(client, installation.origin, false);
   const householdId = fixture.path.split('/households/')[1].split('/')[0];
+  // biome-ignore lint/complexity/useArrowFunction: The renderer mock must support new.
+  vi.mocked(WebGLRenderer).mockImplementationOnce(function () {
+    throw new Error('Synthetic WebGL unavailable');
+  });
   renderHouseholdWork(householdId);
   const tools = within(await screen.findByRole('navigation', { name: 'Kartans verktyg' }));
   await screen.findByText('Rymdkartan kan inte visas. Använd Tabell för att fortsätta.');

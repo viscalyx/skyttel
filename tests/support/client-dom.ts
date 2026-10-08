@@ -1,3 +1,29 @@
+import { vi } from 'vitest';
+
+// jsdom has no WebGL. Keep the real map and camera; Chromium tests verify rendering.
+vi.mock('three', async (importOriginal) => {
+  const three = await importOriginal<typeof import('three')>();
+  return {
+    ...three,
+    WebGLRenderer: vi.fn(
+      class {
+        autoClear = true;
+        private pixelRatio = 1;
+        setPixelRatio(value: number) {
+          this.pixelRatio = value;
+        }
+        getPixelRatio() {
+          return this.pixelRatio;
+        }
+        setSize = vi.fn();
+        clear = vi.fn();
+        render = vi.fn();
+        dispose = vi.fn();
+      },
+    ),
+  };
+});
+
 // jsdom has no layout. Keep real focus scrolling in Chromium and integration tests.
 if (typeof HTMLElement.prototype.scrollIntoView !== 'function') {
   Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {

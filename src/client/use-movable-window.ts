@@ -53,9 +53,17 @@ export function useMovableWindow(
       const right = textBounds?.width
         ? Math.min((viewport?.offsetLeft ?? 0) + width, textBounds.left)
         : (viewport?.offsetLeft ?? 0) + width;
+      const search = element.closest('.household-map')?.querySelector('.map-object-search');
+      const initialTop =
+        width <= 700 && height <= 450
+          ? Math.max(
+              (viewport?.offsetTop ?? 0) + 8,
+              (search?.getBoundingClientRect().bottom ?? 0) + 8,
+            )
+          : (viewport?.offsetTop ?? 0) + (height < 600 ? 8 : 100);
       const initial = {
         x: right - element.offsetWidth - 24 - (offset % 5) * 24,
-        y: (viewport?.offsetTop ?? 0) + (height < 600 ? 8 : 100) + (offset % 5) * 24,
+        y: initialTop + (offset % 5) * 24,
       };
       const next = clampWindow(
         preferred.current ?? initial,

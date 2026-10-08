@@ -124,13 +124,19 @@ default reporters; include `./tests/support/diagnostics-reporter.ts` to
 retain this log. Stop the report server with Ctrl+C when finished. Fixture
 inputs must contain only synthetic data.
 
-On a failed application CI job, download the
+CI runs unit coverage and the complete integration suite in separate,
+independent jobs. Workflow gates, lint, type checks, build validation and
+container checks remain in the `application` job. That required check
+also verifies that both test jobs succeeded.
+
+On a failed CI job, download its `unit-test-diagnostics-<attempt>`,
+`integration-test-diagnostics-<attempt>` or
 `application-test-diagnostics-<attempt>` artifact from that workflow run.
-It retains browser failure artifacts and test command logs for seven days.
-Unit and container logs live separately from Playwright output so a browser
-run cannot delete them. Vitest failure screenshots under
-`.vitest/attachments/` are included. Logs include fixture-server output; no live
-provider or household data belongs in these ordinary checks.
+These retain failure artifacts and test command logs for seven days. Unit
+and container logs live separately from Playwright output. Vitest failure
+screenshots under `.vitest/attachments/` are included. Logs include
+fixture-server output; no live provider or household data belongs in these
+ordinary checks.
 
 For interactive reruns in a host browser, start Playwright's UI on the same
 forwarded port after stopping any report server:

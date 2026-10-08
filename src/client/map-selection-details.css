@@ -189,6 +189,22 @@
   }
 }
 @media (max-width: 700px) and (max-height: 600px) {
+  .household-map.workspace-shell .object-property-window {
+    padding: 6px;
+  }
+  .object-property-window .object-property-body {
+    margin-top: 4px;
+  }
+  .object-property-window .household-table-description {
+    margin-top: 0;
+  }
+  .household-map.workspace-shell .object-property-window > .object-property-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-top: 6px;
+    padding-top: 6px;
+  }
   .household-map.workspace-shell.map-details-open {
     overflow-y: auto;
   }
@@ -198,5 +214,12 @@
     left: 12px;
     max-width: calc(100vw - 24px);
     max-height: none;
+  }
+}
+
+@media (max-width: 700px) and (max-height: 450px) {
+  .household-map.workspace-shell .object-property-window {
+    width: calc(60vw - 12px);
+    max-height: min(180px, calc(100dvh - var(--map-search-bottom, 56px) - 16px));
   }
 }

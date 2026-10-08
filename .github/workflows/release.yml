@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 # All channels share a publisher lock. Never cancel a partially published chain.
 concurrency:
   group: container-release
