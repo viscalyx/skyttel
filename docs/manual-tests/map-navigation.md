@@ -142,8 +142,13 @@ NAVIGATION-02.
 7. Stäng textvyn och starta om provservern med samma databas och ladda om.
    Öppna **Tabell**,
    välj **Lo Exempel** och läs den sparade typen och beskrivningen.
+   Välj också **Kim Exempel** och läs namnet, samma objekttyp och
+   beskrivningen **Ej uppgivet**. Öppna **Samband för Lo Exempel** respektive
+   **Samband för Kim Exempel** och läs att inga samband finns för objekten;
+   stäng varje dialog med **Stäng samband**. Den sparade förberedelsen har
+   inga samband, och de förblir oförändrade efter sparande och omstart.
    Återgå till **Karta** och kontrollera Los personliga placering.
-   Utkastet är tomt; Kim och de ursprungliga sambanden är oförändrade.
+   Utkastet är tomt.
 8. Markera Lo, öppna **Navigera** och välj **Flytta Lo Exempel: uppåt**.
    Kontrollera att flytten fortsätter från den sparade personliga placeringen
    med synlig förflyttning och bevarat fokus. Övriga objekt kan ha fått

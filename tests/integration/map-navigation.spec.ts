@@ -9,11 +9,11 @@ import {
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
-import { readTableObject } from '../support/domain-work.js';
+import { openObjectRelationships, readTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { verifyRestoredPersonalMove } from '../support/personal-view-reading.js';
 
-async function arrange(page: Page, origin: string) {
+async function arrange(page: Page, origin: string, selection: 'pointer' | 'keyboard' = 'pointer') {
   await signIn(page.request, origin);
   const { household } = await (await createHousehold(page.request, origin)).json();
   const path = `${origin}/api/households/${household.id}/map`;
@@ -48,7 +48,10 @@ async function arrange(page: Page, origin: string) {
   await page.goto(origin);
   await openMap(page);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
-  await lo.click({ trial: true });
+  if (selection === 'keyboard') {
+    await lo.focus();
+    await expect(lo).toBeFocused();
+  } else await lo.click({ trial: true });
   return { lo, path, read };
 }
 
@@ -334,7 +337,8 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
       test.setTimeout(90_000);
       const installation = await createInstallation();
       try {
-        const { lo, path, read } = await arrange(page, installation.origin);
+        await page.setViewportSize({ width, height });
+        const { lo, path, read } = await arrange(page, installation.origin, 'keyboard');
         const shared = await read();
         await page.reload();
         // Initial graph placement may sit behind the protected display row.
@@ -584,6 +588,19 @@ for (const [configuration, [width, height]] of navigationConfigurations.entries(
           await expect(saved).toContainText(shared.types[0].name);
           expect((await read()).draft.changes).toEqual([]);
           expect(await (await page.request.get(`${path}/view`)).json()).toEqual(personal);
+          const kim = await readTableObject(page, 'Kim Exempel');
+          await expect(kim.locator('dd').filter({ hasText: /^Kim Exempel$/ })).toBeVisible();
+          await expect(
+            kim.locator('dd').filter({ hasText: new RegExp(`^${shared.types[0].name}$`) }),
+          ).toBeVisible();
+          await expect(kim.locator('.household-table-description')).toHaveText('Ej uppgivet');
+          expect(shared.relationships).toEqual([]);
+          for (const name of ['Lo Exempel', 'Kim Exempel']) {
+            const relationships = await openObjectRelationships(page, name);
+            await expect(relationships).toContainText('Inga samband finns för objektet.');
+            await relationships.getByRole('button', { name: 'Stäng samband', exact: true }).click();
+          }
+          expect((await read()).relationships).toEqual(shared.relationships);
           await openMap(page);
           await expect(lo).toBeVisible();
           await verifyRestoredPersonalMove(

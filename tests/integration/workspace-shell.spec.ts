@@ -9,6 +9,7 @@ import {
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
 import {
+  openConversationText,
   startConversationWithText,
   startConversationWithVoice,
   voiceBox,
@@ -103,7 +104,8 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
   const installation = await createInstallation(undefined, { modelFetch: model.provider });
   try {
     await signIn(page.request, installation.origin);
-    await createHousehold(page.request, installation.origin);
+    const { household } = await (await createHousehold(page.request, installation.origin)).json();
+    const path = `${installation.origin}/api/households/${household.id}/map`;
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 568 });
       await page.goto(installation.origin);
@@ -172,6 +174,54 @@ test('YTA-03: narrow screens keep tools, help and text work reachable without gr
       await expect(
         page.getByRole('region', { name: 'Skriv till Skyttel', exact: true }),
       ).toBeVisible();
+      const conversation = page.getByRole('region', { name: 'Skriv till Skyttel', exact: true });
+      await conversation
+        .getByLabel('Meddelande till Skyttel', { exact: true })
+        .fill('Jag vill skriva här.');
+      await conversation.getByRole('button', { name: 'Skicka', exact: true }).click();
+      const transcript = conversation.getByRole('log', { name: 'Samtalstext', exact: true });
+      const sent = transcript.getByRole('listitem').filter({ hasText: 'Jag vill skriva här.' });
+      const reply = transcript.getByRole('listitem').filter({ hasText: 'Du kan skriva här.' });
+      await expect(sent).toHaveText('Du: Jag vill skriva här.');
+      await expect(sent).toBeVisible();
+      await expect(reply).toHaveText('Skyttel: Du kan skriva här.');
+      await expect(reply).toBeVisible();
+      const unsent = 'Oskickat meddelande medan hjälpen läses';
+      await conversation.getByLabel('Meddelande till Skyttel', { exact: true }).fill(unsent);
+      const retained = await (await page.request.get(path)).json();
+      await tools.getByRole('button', { name: 'Visa verktygens namn' }).click();
+      const help = tools.getByRole('button', { name: 'Information och hjälp', exact: true });
+      await help.click();
+      await expect(page.getByRole('heading', { name: 'Information och hjälp' })).toBeFocused();
+      await tools.getByRole('button', { name: 'Dölj verktygens namn', exact: true }).click();
+      await page.keyboard.press('Tab');
+      await expect(
+        page.getByRole('button', { name: 'Stäng verktyget', exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(help).toBeFocused();
+      expect(
+        await help.evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          return element.contains(
+            document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2),
+          );
+        }),
+      ).toBe(true);
+      await openConversationText(page);
+      await expect(sent).toHaveText('Du: Jag vill skriva här.');
+      await expect(sent).toBeVisible();
+      await expect(reply).toHaveText('Skyttel: Du kan skriva här.');
+      await expect(reply).toBeVisible();
+      await expect(conversation.getByLabel('Meddelande till Skyttel', { exact: true })).toHaveValue(
+        unsent,
+      );
+      const retainedDraft = await openDraftReview(page);
+      await expect(retainedDraft).toContainText('Utkastet är tomt.');
+      expect(await (await page.request.get(path)).json()).toEqual(retained);
+      await expect(conversation.getByLabel('Meddelande till Skyttel', { exact: true })).toHaveValue(
+        unsent,
+      );
     }
   } finally {
     await installation.close();

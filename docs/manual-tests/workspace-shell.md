@@ -31,6 +31,12 @@ när uppläsning eller fysisk pekning utförs på telefon eller surfplatta.
    Skapa ett tomt hushåll Hjälpprov; kör inte `seed-family`.
    Börja med stängda arbetsytor och utan sparat medgivande. Installationens
    ljudspår är tysta och bevisar inte hört tal. Avsluta med `quit`.
+   För YTA-03: efter samtalsstart och skickat meddelande i steg 4, läs
+   terminalens `held`-händelse, eller kör `pending`. Ersätt `REQUEST` med
+   den aktuella begärans ID och kör `reply REQUEST Du kan skriva här.`.
+   Gör detta vid varje bredd innan svaret läses och det oskickade
+   meddelandet skrivs. Detta släpper bara det kontrollerade textsvar som
+   webbläsaren väntar på; kör inget verktyg som ändrar utkastet.
 
 ## Verktyg och teman
 
@@ -166,11 +172,20 @@ YTA-03.
 4. Öppna **Skriv till Skyttel** och **Visa utkastet**. Läs det tomma utkastet
    utan samtyckesfråga. Stäng texten, välj **Karta**, öppna texten igen och
    välj uttryckligen **Nytt samtal** före medgivande och samtalsstart.
+   Skriv **Jag vill skriva här.** i **Meddelande till Skyttel** och välj
+   **Skicka**. Läs ditt meddelande och svaret **Du kan skriva här.** från
+   den kontrollerade förberedelsen.
+   Skriv **Oskickat meddelande medan hjälpen läses** i **Meddelande till
+   Skyttel** utan att skicka det.
 5. Upprepa vid 390 och 320 CSS-pixlars bredd med tangentbord.
    Använd hopplänkarna till tabell och samtal före kartgrafiken.
    Faktisk förstoring och fysisk inmatning provas i YTA-12.
 6. Öppna hjälpen igen och fäll ihop verktygen. Flytta fokus till hjälpen
-   och tryck Escape. Kontrollera att fokus är kvar på en synlig knapp.
+   och tryck Escape. Kontrollera att fokus är kvar på en synlig hjälpknapp.
+   Återgå till **Skriv till Skyttel** och läs ditt skickade meddelande,
+   det tidigare svaret och hela det oskickade meddelandet. Välj
+   **Visa utkastet** och läs att utkastet
+   fortfarande är tomt; meddelandet ska fortfarande vara oskickat och kvar.
 
 **Förväntat resultat:**
 
@@ -667,7 +682,9 @@ fortsatt arbete nåbara.
    Använd den vanliga HTTPS-provinstallationen från den fysiska förberedelsen
    i stället för grundfallets syntetiska röst-launcher. Under steg 4 öppnar
    du texten och det tomma utkastet; stanna före **Nytt samtal** och fortsätt
-   med steg 5–6. Faktisk samtalsstart hör till ett separat tjänsteprov.
+   med steg 5–6 fram till återfört fokus på hjälpknappen. Utelämna svaret,
+   det oskickade samtalsmeddelandet och återläsningen efter samtalsstart.
+   Faktisk samtalsstart hör till ett separat tjänsteprov.
 2. Återställ. Följ YTA-05 steg 1–3 på en faktisk surfplatta med fysisk
    pekning. Anteckna zoom, CSS-mått, enhet och fokus separat från
    automatiserad geometri.
