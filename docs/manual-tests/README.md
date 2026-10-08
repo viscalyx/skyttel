@@ -34,6 +34,12 @@ ger en separat lokal provdatabas. Förbered utvecklingsmiljön med
 till utvecklingsguidernas gemensamma miljöer. Särskilda provdata och
 kontroller beskrivs tillsammans med respektive områdesfall.
 
+[Objektlistornas enhetsförberedelse](object-list-device-preparation.md)
+ger LISTA-09 och SÖK-16 vanlig HTTPS, verklig leverantörsinloggning och
+separata påhittade läs-, storkarts- och sökuppgifter. Fullständiga provarkiv
+återställs inför varje delegerat fall; komplett privat provinnehåll kopplas
+uttryckligen till det verifierade kontot före de mänskliga observationerna.
+
 För [stora kartor](large-map-performance.md) finns en separat mätplan och
 [uppmätta resultat](large-map-results.md).
 Den samlade kartupplevelsens

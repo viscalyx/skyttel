@@ -1631,9 +1631,12 @@ SÖK-15.
 
 **Användare:** Alex Exempel med tillgång till provhushållet.
 
-**Förutsättningar:** Fysiska iPhone och iPad. Förbered
-[hushållets tabell](#förbered-hushållets-tabell) på nytt mellan varje fall
-och enhet. Anteckna enhet, operativsystem, webbläsare och verklig zoomnivå.
+**Förutsättningar:** Fysiska iPhone och iPad med vanlig HTTPS,
+leverantörsinloggning och medlemskap enligt
+[förberedelsen för verkliga enheter](object-list-device-preparation.md).
+Återställ sökarkivet från **--search** och koppla dess kompletta privata
+innehåll till det verifierade kontot inför varje fall och enhet. Anteckna
+enhet, operativsystem, webbläsare och verklig zoomnivå.
 
 **Kräver mänsklig observation:** Använd faktisk pekning, enhetens
 skärmtangentbord och webbläsarens förstoring på både iPhone och iPad.
@@ -1754,9 +1757,13 @@ LÄS-08.
 
 **Användare:** Alex Exempel med tillgång till provhushållet.
 
-**Förutsättningar:** Ny förberedelse för varje delegerat fall. Ha tillgång
-till NVDA på dator och VoiceOver på dator, iPhone och iPad. Anteckna
-operativsystem, webbläsare, hjälpmedelsversion och faktisk zoomnivå.
+**Förutsättningar:** Ha tillgång till NVDA på dator och VoiceOver på dator,
+iPhone och iPad. Använd vanlig HTTPS, leverantörsinloggning och medlemskap
+enligt [förberedelsen för verkliga enheter](object-list-device-preparation.md).
+Återställ rätt arkiv och koppla dess kompletta privata innehåll inför
+varje delegerat fall, enhet och hjälpmedelskörning: läskedjan för
+LÄS-01/02/07, hela storkartan för LISTA-05 och **--search** för SÖK-03/05/10.
+Anteckna operativsystem, webbläsare, hjälpmedelsversion och faktisk zoomnivå.
 
 **Kräver mänsklig observation:** Lyssna med NVDA och VoiceOver vid
 200 och 400 procent verklig zoom. Skilj rubrik, fullständiga värden,
@@ -1765,8 +1772,9 @@ och upplevt fokus från enbart DOM-namn.
 
 **Steg:**
 
-1. Utför LÄS-01 en gång med namngiven skärmläsare och
-   webbläsarens verkliga förstoring. Anteckna utrustning.
+1. Utför LÄS-01 på dator med NVDA respektive VoiceOver och webbläsarens
+   verkliga förstoring. Framkalla grafikförlusten på just HTTPS-sidan
+   enligt enhetsförberedelsen. Anteckna utrustning.
 2. Utför LÄS-02, LÄS-07 och LISTA-05 från respektive ny
    förberedelse. Lyssna på hela namn och betydelser samt återfokus.
 3. Utför SÖK-03 en gång med NVDA och en gång med VoiceOver, från ny
