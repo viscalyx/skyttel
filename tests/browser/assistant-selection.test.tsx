@@ -252,6 +252,27 @@ test('a visible object title cannot confirm display when the details scroller is
 });
 
 test.each([
+  ['display: none', false],
+  ['line-height: normal', true],
+] as const)('object details styled with %s report displayed=%s', async (declaration, displayed) => {
+  const app = await open();
+  const style = document.createElement('style');
+  style.textContent = `.object-property-window .household-table-description { ${declaration}; }`;
+  document.head.append(style);
+  try {
+    await app.show({ kind: 'object', id: 'lo' });
+    const panel = page.getByRole('region', { name: 'Lo', exact: true });
+    await expect.element(panel.getByRole('heading', { name: 'Lo', exact: true })).toBeVisible();
+    const description = panel.element().querySelector('.household-table-description');
+    expect(description?.checkVisibility()).toBe(displayed);
+    await expect.poll(() => app.acknowledgements.length, { timeout: 7_000 }).toBe(1);
+    expect(app.acknowledgements[0].displayed).toBe(displayed);
+  } finally {
+    style.remove();
+  }
+});
+
+test.each([
   [390, 844],
   [640, 500],
   [320, 250],

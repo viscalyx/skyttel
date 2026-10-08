@@ -103,9 +103,14 @@ test('independent unit and integration jobs feed an application check that rejec
     assert.match(body, new RegExp(`name: ${name}-test-diagnostics-`));
   }
   assert.match(job('unit'), /npm run test:unit:ci -- --coverage/);
+  assert.match(job('unit'), /- run: npm run build[\s\S]+- name: Unit coverage with CI fonts/);
   assert.match(job('integration'), /npm run build/);
   assert.match(job('integration'), /npm run test:integration:ci/);
   const application = job('application');
+  assert.match(
+    application,
+    /- run: npx playwright install --with-deps chromium[\s\S]+- name: Workflow gate tests/,
+  );
   assert.match(application, /^ {4}if: always\(\)$/mu);
   assert.match(application, /REQUIRED_RESULTS: \$\{\{ toJSON\(needs\) \}\}/);
   const required = application.match(/^ {4}needs: \[(.+)\]$/mu)?.[1].split(', ');
