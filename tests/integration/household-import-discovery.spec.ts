@@ -228,8 +228,42 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
     await page.getByRole('checkbox', { name: 'Jag vill ersätta allt hushållsinnehåll' }).check();
     await page.getByRole('button', { name: 'Ersätt hushållets innehåll' }).click();
     await expect(page.getByText(/Tillfälliga filer behöver rensas/)).toBeVisible();
+    const fresh = await other.newPage();
+    const blockedMap = fresh.waitForResponse(`${path}/map/view`);
+    await fresh.goto(`${installation.origin}/households/${household.id}`);
+    expect((await blockedMap).status()).toBe(409);
+    await expect(fresh.getByRole('alert')).toContainText('Hushållets innehåll ändras');
+    await expect(fresh.getByRole('region', { name: 'Rymdkarta', exact: true })).toHaveCount(0);
+    await fresh.goto(`${installation.origin}/households/${household.id}/settings/export`);
+    const exportSection = fresh.getByRole('region', { name: 'Fullständig export' });
+    const blockedExport = fresh.waitForResponse(
+      (response) => response.request().method() === 'POST' && response.url() === `${path}/exports`,
+    );
+    await exportSection.getByRole('button', { name: 'Förbered fullständig export' }).click();
+    expect((await blockedExport).status()).toBe(409);
+    await expect(exportSection.getByRole('alert')).toContainText('Exporten kunde inte förberedas');
+    await expect(exportSection.getByRole('button', { name: 'Hämta ZIP-fil' })).toHaveCount(0);
     expect((await other.request.get(`${path}/map`)).status()).toBe(409);
     expect((await other.request.post(`${path}/exports`, { headers, data: {} })).status()).toBe(409);
+    await fresh.goto(`${installation.origin}/households/${household.id}/administration`);
+    const alexMembership = fresh
+      .getByRole('list', { name: 'Medlemmar', exact: true })
+      .getByRole('listitem')
+      .filter({ has: fresh.getByRole('heading', { name: owner.name, exact: true }) });
+    await expect(alexMembership.getByText('Administratör', { exact: true })).toBeVisible();
+    const changingRole = fresh.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url() === `${path}/members/${owner.id}/role`,
+    );
+    await alexMembership.getByRole('button', { name: 'Gör till medlem', exact: true }).click();
+    const changedRole = await changingRole;
+    expect(changedRole.request().postDataJSON()).toEqual({ role: 'member' });
+    expect(changedRole.status()).toBe(200);
+    await expect(fresh.getByRole('status')).toHaveText('Rollen har ändrats.');
+    await expect(alexMembership.getByText('Medlem', { exact: true })).toBeVisible();
+    // Keep the original direct-route authority and status checks alongside
+    // the actual browser handoff; the same role remains a valid explicit request.
     expect(
       (
         await other.request.post(`${path}/members/${owner.id}/role`, {
@@ -240,7 +274,6 @@ test('IMPORT-11: another administrator finishes the same gated cleanup after the
     ).toBe(200);
     expect((await page.request.get(`${path}/imports`)).status()).toBe(403);
     expect((await page.request.get(`${path}/imports/${ready.id}`)).status()).toBe(403);
-    const fresh = await other.newPage();
     await fresh.goto(administration);
     await expect(fresh.getByText(ready.id, { exact: true })).toBeVisible();
     await expect(fresh.getByText(/Tillfälliga filer behöver rensas/)).toBeVisible();
