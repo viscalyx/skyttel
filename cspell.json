@@ -624,7 +624,16 @@
     "leverantörstoken",
     "mätunderlaget",
     "fältnåbarhet",
-    "skärmläsarutmatning"
+    "skärmläsarutmatning",
+    "talunderlag",
+    "återfokusfall",
+    "protokollreplay",
+    "tangentbordsåterförsök",
+    "historiksteget",
+    "Armning",
+    "kvittoreplay",
+    "loopbackport",
+    "talsteget"
   ],
   "overrides": [
     {

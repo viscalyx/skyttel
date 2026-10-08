@@ -1,11 +1,19 @@
 import { expect, type Page, test } from '@playwright/test';
-import { createHousehold, openSettings, signIn, utilityButton } from '../support/client.js';
+import {
+  closeTextView,
+  createHousehold,
+  openDraftReview,
+  openSettings,
+  signIn,
+  utilityButton,
+} from '../support/client.js';
 import {
   microphoneButton,
   startConversationWithText,
   turnMicrophoneOn,
   voiceBox,
 } from '../support/conversation-page.js';
+import { editTableObject } from '../support/domain-work.js';
 import { createInstallation } from '../support/installation.js';
 import { liveBrowserFixtureSource } from '../support/live-browser.js';
 import { liveProvider } from '../support/live-provider.js';
@@ -113,6 +121,7 @@ test('SPARKONTROLL-01: ett tappat sparbesked kontrolleras automatiskt före nytt
     expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
       operations[0].receipt,
     ]);
+    await expectOnlyHistoryReceipt(page, operations[0].operationId);
   } finally {
     release?.();
     await app.close();
@@ -120,7 +129,7 @@ test('SPARKONTROLL-01: ett tappat sparbesked kontrolleras automatiskt före nytt
 });
 
 for (const failCheck of [false, true])
-  test(`SPARKONTROLL-02: omstart kontrollerar samma väntande försök utan medgivande${failCheck ? ' och bara en misslyckad kontroll kräver återförsök' : ''}`, async ({
+  test(`${failCheck ? 'SPARKONTROLL-07' : 'SPARKONTROLL-02'}: omstart kontrollerar samma väntande försök utan medgivande${failCheck ? ' och bara en misslyckad kontroll kräver återförsök' : ''}`, async ({
     page,
   }) => {
     const app = await createInstallation(undefined, { modelFetch: textModel(() => []).provider });
@@ -224,7 +233,7 @@ for (const failCheck of [false, true])
   });
 
 for (const microphoneOn of [false, true])
-  test(`SPARKONTROLL-03: ett oregistrerat sparande förklaras en gång med mikrofonen ${microphoneOn ? 'på' : 'av'}`, async ({
+  test(`${microphoneOn ? 'SPARKONTROLL-08' : 'SPARKONTROLL-03'}: ett oregistrerat sparande förklaras en gång med mikrofonen ${microphoneOn ? 'på' : 'av'}`, async ({
     page,
   }) => {
     const live = liveProvider();
@@ -238,6 +247,22 @@ for (const microphoneOn of [false, true])
     try {
       await signIn(page.request, app.origin);
       const { household } = await (await createHousehold(page.request, app.origin)).json();
+      const path = `${app.origin}/api/households/${household.id}/map`;
+      const initial = await (await page.request.get(path)).json();
+      expect(
+        (
+          await page.request.post(`${path}/draft`, {
+            headers: { origin: app.origin },
+            data: {
+              version: initial.draft.version,
+              id: 'lo',
+              baseRevision: null,
+              value: { typeId: initial.types[0].id, name: 'Lo Exempel', description: '' },
+            },
+          })
+        ).status(),
+      ).toBe(200);
+      const originalDraft = (await (await page.request.get(path)).json()).draft;
       await page.addInitScript({ content: liveBrowserFixtureSource });
       await page.goto(app.origin);
       await startConversationWithText(page);
@@ -291,6 +316,14 @@ for (const microphoneOn of [false, true])
           ).json()
         ).operations,
       ).toEqual([]);
+      expect((await (await page.request.get(path)).json()).draft).toEqual(originalDraft);
+      expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([]);
+      await expect(await openDraftReview(page)).toContainText('Lo Exempel');
+      await closeTextView(page);
+      await (await utilityButton(page, 'Rapporter')).click();
+      await expect(
+        page.getByRole('region', { name: 'Ändringshistorik', exact: true }),
+      ).toContainText('Inga genomförda sparanden.');
     } finally {
       await app.close();
     }
@@ -381,6 +414,7 @@ test('SPARKONTROLL-04: verifierad sparåterhämtning stoppar fångst under kontr
     expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
       operations[0].receipt,
     ]);
+    await expectOnlyHistoryReceipt(page, operations[0].operationId);
   } finally {
     release?.();
     await app.close();
@@ -440,13 +474,44 @@ test('SPARKONTROLL-05: ett avvisat väntande försök förklaras som osparat och
     await expect(
       page.getByRole('button', { name: 'Kontrollera om utkastet sparades', exact: true }),
     ).toHaveCount(0);
+    await expect(await openDraftReview(page)).toContainText('Oklart Lo');
+    await closeTextView(page);
+    await (await utilityButton(page, 'Rapporter')).click();
+    await expect(page.getByRole('region', { name: 'Ändringshistorik', exact: true })).toContainText(
+      'Inga genomförda sparanden.',
+    );
+    await page.getByRole('button', { name: 'Tillbaka till arbetet', exact: true }).click();
+    const editor = await editTableObject(page, 'Oklart Lo');
+    await editor.getByLabel('Identitet', { exact: true }).selectOption('identified');
+    await editor.getByRole('button', { name: 'Lägg i utkastet och stäng', exact: true }).click();
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([]);
+    expect((await (await page.request.get(`${path}/operations`)).json()).operations).toEqual(
+      operations,
+    );
+    const corrected = await openDraftReview(page);
+    await corrected.getByRole('button', { name: 'Spara hela utkastet', exact: true }).click();
+    await expect(page.getByRole('status', { name: 'Sparbekräftelse', exact: true })).toHaveText(
+      'Utkastet är sparat',
+    );
+    const afterCorrection = (await (await page.request.get(`${path}/operations`)).json())
+      .operations;
+    expect(afterCorrection).toHaveLength(2);
+    expect(afterCorrection).toContainEqual(operations[0]);
+    const succeeded = afterCorrection.find(
+      (attempt: { status: string }) => attempt.status === 'succeeded',
+    );
+    expect(succeeded.operationId).not.toBe(operations[0].operationId);
+    expect((await (await page.request.get(`${path}/history`)).json()).history).toEqual([
+      succeeded.receipt,
+    ]);
+    await expect(await openDraftReview(page)).toContainText('Utkastet är tomt.');
   } finally {
     await app.close();
   }
 });
 
 for (const lostRevocationReply of [false, true])
-  test(`SPARKONTROLL-06: ett oklart sparförsök kontrolleras efter återkallat medgivande utan nytt sparande${lostRevocationReply ? ' även när återkallandets svar tappas' : ''}`, async ({
+  test(`${lostRevocationReply ? 'SPARKONTROLL-09' : 'SPARKONTROLL-06'}: ett oklart sparförsök kontrolleras efter återkallat medgivande utan nytt sparande${lostRevocationReply ? ' även när återkallandets svar tappas' : ''}`, async ({
     page,
   }) => {
     const live = liveProvider();
@@ -575,6 +640,7 @@ for (const lostRevocationReply of [false, true])
       ]);
       expect((await (await page.request.get(path)).json()).draft.changes).toHaveLength(0);
       expect(model.requests).toHaveLength(2);
+      if (lostRevocationReply) await expectOnlyHistoryReceipt(page, original.operationId);
       await startConversationWithText(page);
       await expect(page.getByLabel('Meddelande till Skyttel')).toHaveValue(
         'Text som inte har skickats.',

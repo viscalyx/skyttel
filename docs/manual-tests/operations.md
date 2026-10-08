@@ -211,21 +211,38 @@ omstart och byte av klient utan att användaren behöver ett operations-ID.
 **Användare:** Den konfigurerade administratören i båda profilerna.
 
 **Förutsättningar:** Allmän förberedelse ovan. Ingen profil har ett
-pågående sparförsök.
+pågående sparförsök. Operatören förbereder
+[vanlig installation och annan klient](save-preparation.md#vanlig-installation-och-annan-klient)
+och armar `save:drop-after` före steg 2.
 
 **Integrationstest:**
 [operations.spec.ts](../../tests/integration/operations.spec.ts),
-testfallet “SPAR-01: find a committed save after losing its response and
-reopening on another client”.
+SPAR-01.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/operations.spec.ts",
+    "caseId": "SPAR-01"
+  },
+  "reference": "Genomförd transaktion, tappat svar, annan klient och omstart.",
+  "outcomes": [
+    "Sparandet visas i historiken i den andra profilen. Händelsen har samma identitet och beskriver **Återfunnet sparande**.",
+    "Utkastet visar **Utkastet är tomt.** Objektet finns en gång i kartan.",
+    "Ett genomfört sparande går att hitta även när den ursprungliga profilen är stängd och servern startar om."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Välj **Nytt objekt**, skriv **Återfunnet sparande** som namn och välj
    **Lägg i utkastet och stäng**.
 2. Öppna **Visa utkastet**, välj **Spara hela utkastet** och läs
-   **Utkastet är sparat**. Öppna **Rapporter → Ändringshistorik**.
-   Läs händelsen och öppna **Identifiera sparandet och användaren**.
-   Anteckna sparandets identitet för jämförelse.
+   **Utfallet är okänt** efter transportens status 200. Kontrollera
+   spärrade **Nytt objekt** och **Kasta hela utkastet**. Spara inte igen.
 3. Stäng den första profilen. Stoppa och starta applikationen igen med
    samma databas.
 4. Öppna appen i den andra profilen och logga in som samma användare.
@@ -242,14 +259,9 @@ reopening on another client”.
 - Ett genomfört sparande går att hitta även när den ursprungliga
   profilen är stängd och servern startar om.
 
-Det kontrollerade tappade svaret efter genomförd transaktion provas
-endast automatiserat: testet låter den riktiga servern spara och bryter
-sedan svaret till webbläsaren. Då ska klienten visa **Utfallet är okänt**
-och blockera ändringar tills utfallet kontrolleras. Testet återfinner
-sedan kvittot efter omstart och verifierar genom det publika API:et att
-ett återförsök ger samma kvitto, objekt och enda historikhändelse.
-De manuella stegen ovan verifierar återfinnandet efter ett bekräftat
-sparande; de verifierar inte själva avbrottet efter transaktionen.
+**Separat tekniskt underlag:** Testet återförsöker samma sparbegäran
+genom API:et och kräver exakt samma kvitto, objekt och enda historikhändelse.
+De kontrollerna kompletterar den synliga återhämtningen.
 
 ### SPAR-02: automatiskt kontrollera ett väntande sparande från en annan klient
 
@@ -259,43 +271,53 @@ begäran om sparande.
 
 **Användare:** Den konfigurerade administratören i båda profilerna.
 
-**Förutsättningar:** Allmän förberedelse ovan. Använd Chromium eller
-Chrome med utvecklarverktyg i första profilen.
+**Förutsättningar:** Allmän förberedelse ovan och
+[vanlig installation och annan klient](save-preparation.md#vanlig-installation-och-annan-klient).
+Operatören armar `save:drop-before` före sparandet, och `recover:before`
+inför den andra klientens besök efter omstarten. Registreringens ID
+antecknas separat i Network-svaret från `/map/operations`.
 
 **Integrationstest:**
 [operations.spec.ts](../../tests/integration/operations.spec.ts),
-testfallet “SPAR-02: automatically recover the same pending save on another
-client after
-interruption before commit”.
+SPAR-02.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/operations.spec.ts",
+    "caseId": "SPAR-02"
+  },
+  "reference": "Avbrott före genomförandet, samma registrerade försök på annan klient.",
+  "outcomes": [
+    "Avbrottet visar **Utfallet är okänt**. Ändringar och kastande blockeras.",
+    "Före omstart visas okänt utfall, med förslaget kvar i det privata utkastet. Registreringen har inte ändrat den gemensamma kartan.",
+    "Efter omstart kontrollerar Skyttel det registrerade försöket utan nytt medgivande. Ändringar blockeras under kontrollen. Resultatet blir **Utkastet är sparat** med samma ID i historiken och tomt utkast. Objektet och sparhändelsen finns en gång, även efter omladdning.",
+    "**Nästa privata förslag** ligger kvar i utkastet och omfattas inte av det tidigare kvittot."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj **Nytt objekt**, skriv **Väntande sparande** som namn och välj
-   **Lägg i utkastet och stäng**. Öppna **Visa utkastet**.
-2. Öppna utvecklarverktygen. Öppna kommandomenyn med `Ctrl+Shift+P`
-   eller `Cmd+Shift+P`, sök efter **Show Network request blocking**
-   och öppna panelen. Aktivera **Enable network request blocking**.
-   Lägg till mönstret `*/map/save` och aktivera dess kryssruta.
-3. Välj **Spara hela utkastet**. Kontrollera meddelandet och knapparna
-   **Nytt objekt**, **Spara hela utkastet** och **Kasta hela utkastet**.
-   Under **Network** ska `/map/save` vara blockerad medan
-   registreringen till `/map/operations` lyckas.
-4. Stäng stöddialogen med Escape. Öppna **Visa sparandet** för att läsa
-   uppföljningen, och stäng igen. Anteckna den lyckade registreringens
-   `operationId` i utvecklarverktygens nätverkssvar från `/map/operations`.
-   Läs det privata förslaget i utkastet; ingen gemensam historikhändelse
-   finns ännu.
-5. Stäng den första profilen. Stoppa och starta applikationen igen med
-   samma databas. Öppna appen i den andra profilen utan nätverksblockering
-   och logga in som samma användare.
-6. Vänta på den automatiska kontrollen. Välj inte ett nytt sparande.
-   Granska **Visa sparandet** under kontrollen och därefter
-   **Rapporter → Ändringshistorik**, utkastet och **Tabell**.
-   Kontrollera att det ursprungliga försöks-ID:t används. Ladda om och
-   kontrollera igen.
-7. Skapa objektet **Nästa privata förslag** och lägg det i utkastet.
-   Kontrollera att kvittot bara beskriver det tidigare sparandet.
-8. Stäng av nätverksblockeringen i den första profilen före nästa fall.
+1. Skapa Väntande sparande och lägg hela formuläret i utkastet. Öppna
+   Visa utkastet och välj Spara hela utkastet.
+2. Läs Utfallet är okänt och spärrade Nytt objekt, Spara hela utkastet
+   och Kasta hela utkastet. Stäng med Escape. Öppna Visa sparandet,
+   läs uppföljningen och stäng igen. Läs förslaget i ditt privata utkast.
+3. Stäng första profilen och starta om applikationen med samma databas.
+   Låt operatören arma kontrollen före den andra profilens besök.
+4. Logga in som samma användare i andra profilen. Öppna Visa sparandet
+   medan kontrollen hålls. Stäng med Escape och läs förslaget i utkastet.
+   Nytt sparande och kastande förblir spärrade under kontrollen.
+5. Låt operatören släppa kontrollen. Läs Utkastet är sparat och att
+   uppföljningen försvinner. Läs tomt utkast och det enda sparandet i
+   Rapporter → Ändringshistorik. Jämför tidigare antecknat ID under
+   Identifiera sparandet och användaren.
+6. Skapa Nästa privata förslag och lägg det i utkastet. Läs det kvarvarande
+   nya förslaget; det tidigare kvittot beskriver bara Väntande sparande.
+7. Låt operatören återställa transporten efter känt utfall.
 
 **Förväntat resultat:**
 
@@ -309,18 +331,15 @@ interruption before commit”.
 - **Nästa privata förslag** ligger kvar i utkastet och omfattas inte
   av det tidigare kvittot.
 
-Det automatiserade testet upprepar dessutom den genomförda begäran
+**Separat tekniskt underlag:** Det automatiserade testet upprepar dessutom den
+genomförda begäran
 genom API:et medan nästa förslag ligger i utkastet. Samma kvitto ska
 returneras, nästa förslag ska bevaras och historiken får ingen dubblett.
 Den sista kontrollen utförs inte av de manuella stegen.
 
-Automationen håller också den andra klientens kontrollbegäran medan den
-granskar vänteläget. För ett separat manuellt kontrollfel kan du blockera
-`*/text-assistant/recover` före det andra besöket: utkastet ska då förbli
-privat och ändringar blockerade. Ta bort blockeringen och välj
-**Visa sparandet → Kontrollera sparandet igen** när kontrollfelet visas.
-Det återförsöket kontrollerar samma registrerade ID; det är ingen ny
-begäran om sparande. Se även [SPARKONTROLL-02](save-check.md).
+Automationen återspelar kvittot genom API:et medan nästa privata förslag
+finns kvar. Ett kontrollfel och tangentbordsåterförsök har ett separat
+fall, [SPARKONTROLL-07](save-check.md#sparkontroll-07-kontrollera-samma-försök-efter-omstart-och-kontrollfel).
 
 ### SPAR-03: återfinna ett avvisat försök utan att förbruka nyare förslag
 
@@ -333,8 +352,24 @@ att nyare förslag kan granskas och sparas med ett nytt försök.
 
 **Integrationstest:**
 [operations.spec.ts](../../tests/integration/operations.spec.ts),
-testfallet “SPAR-03: a rejected stale save survives restart without
-consuming newer proposals”.
+SPAR-03.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/operations.spec.ts",
+    "caseId": "SPAR-03"
+  },
+  "reference": "Äldre sparunderlag avvisas, nyare privat förslag består över omstart.",
+  "outcomes": [
+    "Det gamla försöket visar **Avvisat** och **Inget sparades**. Statuskortet visar avvisningen även med stängd stöddialog och legenden finns kvar för förslagen.",
+    "Efter omstart visar kartans status **Utkastet kunde inte sparas.** **Visa sparandet** förklarar avvisningen. Inget kvitto bekräftar det försöket. Utkastet innehåller **Lo Lind**.",
+    "Ett nytt sparande ger ett eget kvitto för **Lo Lind**. Historiken visar genomförda sparanden. Automationen kontrollerar separat att det gamla avvisade försöket finns kvar med samma identitet i det privata API:et."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -364,7 +399,8 @@ consuming newer proposals”.
   genomförda sparanden. Automationen kontrollerar separat att det gamla
   avvisade försöket finns kvar med samma identitet i det privata API:et.
 
-Det automatiserade testet återförsöker dessutom den avvisade begäran
+**Separat tekniskt underlag:** Det automatiserade testet återförsöker dessutom
+den avvisade begäran
 via API:et och kontrollerar samma fel, oförändrat utkast och tom historik
 innan det nya sparandet. Den kontrollen utförs inte av de manuella stegen.
 
@@ -380,23 +416,40 @@ väntande försök.
 rollen medlem.
 
 **Förutsättningar:** Allmän förberedelse och aktuell tillgång för
-testidentiteten. Använd skilda profiler för de två användarna.
+testidentiteten. Använd skilda profiler för de två användarna och
+[transportförberedelsen](save-preparation.md#vanlig-installation-och-annan-klient).
 
 **Integrationstest:**
 [operations.spec.ts](../../tests/integration/operations.spec.ts),
-testfallet “SPAR-04: private pending saves stay hidden from
-administrators and revoked members”.
+SPAR-04.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/operations.spec.ts",
+    "caseId": "SPAR-04"
+  },
+  "reference": "Administratör och medlem med separata privata utkast; återkallad tillgång.",
+  "outcomes": [
+    "Medlemmen har ett registrerat väntande försök. Administratören ser varken det försöket eller medlemmens privata förslag.",
+    "Efter återkallelsen ser medlemmen **Du har inte tillgång till hushållet** och kan inte öppna sparförsöket.",
+    "Det privata objektet ingår inte i den gemensamma kartan."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Logga in som medlemmen. Skapa **Privat förslag** och lägg det i
-   utkastet. Aktivera nätverksblockering av `*/map/save` enligt SPAR-02.
+   utkastet. Låt operatören arma `save:drop-before` enligt SPAR-02.
 2. Välj **Spara hela utkastet** och kontrollera **Utfallet är okänt**.
 3. Öppna appen som administratören. Läs kartans sparstatus och ditt eget
    utkast. Medlemmens uppföljning och privata förslag ska inte visas.
 4. Välj **Administrera tillgång** som administratören. Välj
    **Återkalla tillgång** för medlemmen och **Bekräfta återkallelse**.
-5. Stäng av medlemmens nätverksblockering och ladda om medlemmens app.
+5. Ladda om medlemmens app efter återkallelsen.
    Kontrollera tillgångsbeskedet och att sparförsöket inte visas.
 
 **Förväntat resultat:**
@@ -407,7 +460,7 @@ administrators and revoked members”.
   hushållet** och kan inte öppna sparförsöket.
 - Det privata objektet ingår inte i den gemensamma kartan.
 
-Det automatiserade testet kontrollerar dessutom direkta API-anrop:
+**Separat tekniskt underlag:** Testet kontrollerar direkta API-anrop:
 administratören får inget resultat för medlemmens operations-ID.
 Medlemmen nekas både listning, uppslagning och återförsök efter
 återkallelsen. Dessa API-kontroller utförs inte av de manuella stegen.
@@ -432,8 +485,25 @@ Använd inte utvecklarverktygens nätverksblockering samtidigt.
 
 **Integrationstest:**
 [transport-controls.spec.ts](../../tests/integration/transport-controls.spec.ts),
-testfallet “SPAR-05: scoped transport holds real staging, rejects stale saves
-and recovers a lost committed receipt”.
+SPAR-05.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/transport-controls.spec.ts",
+    "caseId": "SPAR-05"
+  },
+  "reference": "Vanlig autentisering med hushållsavgränsad transport före och efter riktiga transaktioner.",
+  "outcomes": [
+    "Väntande leverans visar verkligt vänteläge utan förtida bekräftelse. Tappat svar behåller uppgifterna och kräver kontroll av samma ändring.",
+    "Kontroll av utkaständringen ger två privata förslag utan dubbletter. Ett tappat svar efter sparande ändrar inte det beständiga kvittot. Samma enda händelse och tomma utkast återfinns efter klientbyte och omstart.",
+    "Robins sparande behålls. Alex gamla underlag avvisas atomärt; hans privata förslag och alla dess värden finns kvar för granskning.",
+    "Transporten tillför ingen identitet eller tillgång. Automationen kontrollerar dessutom nekad oinloggad läsning, felaktig värdadress, idempotent återförsök med samma kvitto, fördröjd autentiserad kontroll utan aktivt samtal samt oförändrade fulla privata och gemensamma uppgifter vid avvisningen genom det publika API:et."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 

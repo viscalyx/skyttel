@@ -99,7 +99,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Automatisk kontroll av sparande](save-check.md): återkomst efter nätfel,
   ursprungligt försöks-ID efter omstart utan nytt medgivande, ett enda
   utfallsbesked med röstval och kvitto, återkallat medgivande med tappat
-  svar samt återförsök bara vid kontrollfel.
+  svar samt återförsök bara vid kontrollfel. Genererade varianter har egna
+  ID; faktisk uppläsning och mikrofonljud har separata observationsfall.
 
 - [Röstfel och ljudåterhämtning](voice-errors.md): fyra mikrofonhinder, tre
   servergrupper, felreferenser, stängning, återförsök och **Starta ljudet**
@@ -420,6 +421,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   HTTP-validering, kvitton och historik anges som separat tekniskt underlag.
 - [Ditt utkast](drafts.md): fullständig läsning av objekt, samband och typer
   utan AI eller medgivande, giltighet, profilbilder och egna egenskapsnamn,
+  separata bredd-, tema- och återfokusfall med
+  [styrd sparleverans](save-preparation.md),
   långa fältnamn och sammanfattningar som skiljer giltighet från statusläge,
   direkt borttagning av oberoende förslag och bekräftad eller avbruten
   borttagning av nya objekt med deras verkliga sambandsberoenden,
@@ -530,7 +533,9 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   kontrollera samma väntande eller obekräftade försök efter omstart,
   läsa genomförda sparanden i Rapporter och kontrollera privat tillgång;
   SPAR-05 provar styrd leverans av verkliga formulärförslag, avvisat inaktuellt
-  sparande och återhämtning av ett tappat lyckat sparkvitto.
+  sparande och återhämtning av ett tappat lyckat sparkvitto. SPAR-01 tappar
+  också det verkliga svaret före omstart och återfinner samma kvitto från
+  en annan klient; protokollreplay redovisas separat.
   DEMO-01 och DEMO-02 provar färdigt TestHousehold med Google respektive
   Microsoft som konfigurerad administratör. Båda behåller den andra
   leverantörens åtkomstgräns, fulla värden och privata förslag efter omstart.

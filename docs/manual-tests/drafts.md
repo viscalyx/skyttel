@@ -55,7 +55,8 @@ För UTKAST-01 används demodata:
 omstart ska samma databas behållas; kör då inte `npm run db:setup`.
 
 För UTKAST-02–11 används en separat, tom testinstallation enligt
-[installationsguiden](../operations/installation.md), utan demodata:
+[installationsguiden](../operations/installation.md),
+utan demodata:
 
 1. Logga in som den konfigurerade administratören och skapa ett hushåll.
 2. Skapa personen **Lo Exempel** och tjänsten **Molnmusik** med
@@ -69,7 +70,8 @@ För UTKAST-02–11 används en separat, tom testinstallation enligt
 UTKAST-12–14 använder ett nytt tomt hushåll utan de två förberedda
 objekten. UTKAST-14 behöver även en inbjuden medlem i en separat
 webbläsarprofil och konfigurerat tal och text enligt
-[samtalsfallen](voice-assistant.md). Externa prov kräver den privata
+[samtalsfallen](voice-assistant.md).
+Externa prov kräver den privata
 konfiguration och de medgivanden som anges där.
 
 ## Privata utkast
@@ -81,7 +83,8 @@ konfiguration och de medgivanden som anges där.
 **Användare:** Den syntetiska administratören Alex Exempel.
 
 **Förutsättningar:** Kör `npm run build` och
-`node --import tsx scripts/manual-draft-save.ts --chrome` på en dator med grafisk
+`node --import tsx scripts/manual-draft-save.ts --chrome` på en dator med
+grafisk
 webbläsare. Den öppnar en separat installation med riktig SQLite, inloggad
 administratör och förslaget Alex blå cykel. Ingen AI-leverantör är konfigurerad.
 Terminalens kommandon styr bara leveransen av riktiga HTTP-svar. Skriv
@@ -89,13 +92,31 @@ Terminalens kommandon styr bara leveransen av riktiga HTTP-svar. Skriv
 
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
-testfallet “UTKAST-36: draft save opens immediately and confirms one
-persistent save without AI”.
+UTKAST-36.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-36"
+  },
+  "reference": "1440 × 1000; hållen leverans skyddar väntan före kvitto.",
+  "outcomes": [
+    "Modalen öppnas genast med fokus på rubriken **Spara utkastet** och texten **Sparar utkastet…**. Bara krysset och Escape stänger den. Förslaget ligger kvar medan kvittot saknas.",
+    "Bekräftat sparande tömmer utkastet, stänger modalen och återger fokus till utkastets rubrik när sparikonen är inaktiv.",
+    "**Utkastet är sparat** visas i tre sekunder. En enda artig statusregion behåller beskedet när den visuella toasten försvinner. Faktisk uppläsning kontrolleras separat med mänsklig skärmläsarprovning.",
+    "Exakt ett genomfört sparförsök och ett motsvarande historikkvitto finns. Inget samtal startas och inget medgivande efterfrågas."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Skriv `hold` i terminalen. Öppna **Utkast** och välj **Spara hela utkastet**.
-2. Läs sparmodalen och prova dess tangentbordsfokus. Skriv `result` i terminalen.
+2. Läs sparmodalen och prova dess tangentbordsfokus. Skriv `result` i
+   terminalen.
 3. Skriv `release`. Läs bekräftelsen, vänta tre sekunder och läs tomt utkast.
 4. Skriv `result` igen och jämför förslagen, sparförsöket och historiken.
 
@@ -107,7 +128,8 @@ persistent save without AI”.
 - Bekräftat sparande tömmer utkastet, stänger modalen och återger fokus till
   utkastets rubrik när sparikonen är inaktiv.
 - **Utkastet är sparat** visas i tre sekunder.
-  En enda artig statusregion behåller beskedet när den visuella toasten försvinner.
+  En enda artig statusregion behåller beskedet när den visuella toasten
+  försvinner.
   Faktisk uppläsning kontrolleras separat med mänsklig skärmläsarprovning.
 - Exakt ett genomfört sparförsök och ett motsvarande historikkvitto finns.
   Inget samtal startas och inget medgivande efterfrågas.
@@ -122,12 +144,24 @@ persistent save without AI”.
 
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
-testfallen “UTKAST-37: closing a pending mobile save preserves its follow-up
-across map and table without stealing later focus at 390px”, “UTKAST-37:
-closing a pending mobile save preserves its follow-up across map and table
-without stealing later focus at 320px” samt “UTKAST-37: a closed pending save
-restores the table
-heading when its focused follow-up disappears”.
+UTKAST-37.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-37"
+  },
+  "reference": "390 × 844; smal modal, båda vyerna och senare sökfokus.",
+  "outcomes": [
+    "Tangentbordet cirkulerar mellan modalens tillgängliga kontroller och lämnar inte den öppna modalen. Text och kontroller ryms i smal mobil visning.",
+    "Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna; efter stängning återgår fokus till **Visa sparandet**.",
+    "Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus. Utkastet förbrukas med exakt ett sparande och en historikpost."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -136,7 +170,6 @@ heading when its focused follow-up disappears”.
 3. Öppna **Tabell**, välj **Visa sparandet** och stäng med Escape.
 4. Flytta fokus till **Sök objekt i tabellen** och skriv `release` i terminalen.
 5. Skriv `result` och kontrollera det avslutade försöket.
-6. Upprepa utan att flytta fokus från **Visa sparandet** före `release`.
 
 **Förväntat resultat:**
 
@@ -146,12 +179,11 @@ heading when its focused follow-up disappears”.
   efter stängning återgår fokus till **Visa sparandet**.
 - Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus.
   Utkastet förbrukas med exakt ett sparande och en historikpost.
-  När uppföljningsknappen fortfarande äger fokus och försvinner efter
-  bekräftelsen återgår fokus till tabellens rubrik.
 
 ### UTKAST-38: kontrollera samma försök efter ett tappat sparbesked
 
-**Syfte:** Skilja okänt utfall från bekräftad framgång utan att spara två gånger.
+**Syfte:** Skilja okänt utfall från bekräftad framgång utan att spara två
+gånger.
 
 **Användare:** Alex Exempel i provinstallationen för UTKAST-36.
 
@@ -159,24 +191,35 @@ heading when its focused follow-up disappears”.
 
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
-testfallet “UTKAST-38: a lost save response keeps proposals until the same
-durable attempt is checked from the table” och testfallen “UTKAST-38: Map
-receipt recovery restores visible draft context after its follow-up disappears
-at 1280px” och “UTKAST-38: Map receipt recovery restores visible draft context
-after its follow-up disappears at 390px”.
+UTKAST-38.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-38"
+  },
+  "reference": "Tabell; tappat svar efter genomförd transaktion.",
+  "outcomes": [
+    "Okänt utfall behåller förslagen och gör inget påstående om framgång. Kastande verifieras även tillsammans med dess fullständiga flöde.",
+    "Kontrollen visar **Kontrollerar sparandet…**. Fokus flyttas till krysset medan kontrollknappen saknas, och till tabellens rubrik när bekräftelsen tar bort uppföljningsknappen.",
+    "Samma beständiga försöks-ID återfinns. Bara ett sparanrop, ett genomfört försök och en historikpost behövs. Ingen AI eller samtalsstart krävs."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Spara från Utkast och läs **Sparandet kunde inte bekräftas.** Stäng med Escape.
+1. Spara från Utkast och läs **Sparandet kunde inte bekräftas.** Stäng med
+   Escape.
 2. Kontrollera att förslaget ligger kvar i klienten och att nytt sparande
-   och kastande är spärrade. Skriv `result` för att läsa serverns verkliga utfall.
+   och kastande är spärrade. Skriv `result` för att läsa serverns verkliga
+   utfall.
 3. Stäng textvyn, öppna Tabell och välj **Visa sparandet**.
 4. Välj **Kontrollera sparandet igen** och läs bekräftelsen.
 5. Skriv `result` igen och jämför försöks-ID och historik.
-6. Upprepa från `new-draft` med `lost-response` på dator och mobil.
-   Efter det okända utfallet stänger du både sparmodalen och textvyn.
-   Välj **Visa sparandet** från Karta och **Kontrollera sparandet igen**.
-
 **Förväntat resultat:**
 
 - Okänt utfall behåller förslagen och gör inget påstående om framgång.
@@ -186,14 +229,11 @@ after its follow-up disappears at 390px”.
   bekräftelsen tar bort uppföljningsknappen.
 - Samma beständiga försöks-ID återfinns. Bara ett sparanrop, ett genomfört
   försök och en historikpost behövs. Ingen AI eller samtalsstart krävs.
-- När kontrollen från Karta bekräftas och uppföljningsknappen försvinner
-  öppnas det tomma Utkastet igen med fokus på dess synliga rubrik.
-  Detta återfokus gäller när modalen fortfarande äger fokus; tidigare
-  flyttat fokus till annat arbete ska bevaras.
 
 ### UTKAST-39: återuppta ett registrerat sparförsök efter omladdning
 
-**Syfte:** Nå resultatet utan utkastikon och avsluta en inaktuell oklar uppföljning.
+**Syfte:** Nå resultatet utan utkastikon och avsluta en inaktuell oklar
+uppföljning.
 
 **Användare:** Alex Exempel i provinstallationen för UTKAST-36.
 
@@ -203,10 +243,23 @@ nätkontroll blockeras tills du väljer `network-ok`.
 
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
-testfallen “UTKAST-39: a durable save attempt remains reachable after reload
-without a draft icon or conversation and reports a confirmed rejection” och
-“UTKAST-39: recovery after reload completes the existing attempt and retires
-its unknown follow-up without AI”.
+UTKAST-39.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-39"
+  },
+  "reference": "Tomt utkast; beständigt väntande försök avvisas efter omladdning.",
+  "outcomes": [
+    "Uppföljningen överlever omladdning utan samtal, medgivande eller AI.",
+    "Ett tomt utkast avvisas med **Utkastet kunde inte sparas.** Modalens enda knapp är krysset. Avvisningen förblir läsbar efter stängning och återöppning; inget gemensamt innehåll eller historikkvitto skapas."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -215,23 +268,17 @@ its unknown follow-up without AI”.
    Öppna den och välj **Kontrollera sparandet igen**.
 3. Läs det avvisade utfallet. Stäng med Escape, ladda om sidan och öppna
    uppföljningen igen. Skriv `result` i terminalen.
-4. Välj `new-draft` och `pending-attempt`. Ladda om och kontrollera uppföljningen.
-5. Välj `network-ok` och ladda om sidan för att börja om kontrollen efter
-   det tidigare nätfelet. Invänta automatisk kontroll och skriv `result` igen.
-
 **Förväntat resultat:**
 
 - Uppföljningen överlever omladdning utan samtal, medgivande eller AI.
 - Ett tomt utkast avvisas med **Utkastet kunde inte sparas.** Modalens enda
   knapp är krysset. Avvisningen förblir läsbar efter stängning och återöppning;
   inget gemensamt innehåll eller historikkvitto skapas.
-- Ett verkligt förslag sparas av samma väntande försök. Uppföljningen med
-  gammalt okänt utfall och Utkast-ikonen försvinner efter bekräftelsen.
-  Exakt ett genomfört försök och ett motsvarande historikkvitto finns.
 
 ### UTKAST-40: skilj avvisning från hämtningsfel efter ett bekräftat kvitto
 
-**Syfte:** Bevara både bekräftad framgång och osparade förslag vid rätt sorts fel.
+**Syfte:** Bevara både bekräftad framgång och osparade förslag vid rätt sorts
+fel.
 
 **Användare:** Alex Exempel i provinstallationen för UTKAST-36.
 
@@ -240,30 +287,34 @@ behövs en andra flik med samma inloggning och hushåll.
 
 **Integrationstest:**
 [draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
-testfallen “UTKAST-40: a verified receipt closes the save dialog despite a
-failed map refresh and never repeats its announcement” och “UTKAST-40: a
-rejected stale version retains every proposal until fresh reading and creates
-no saved history”.
+UTKAST-40.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-40"
+  },
+  "reference": "Verifierat kvitto följt av misslyckad karthämtning.",
+  "outcomes": [
+    "Ett bekräftat kvitto stänger modalen och tömmer det sparade utkastet även om kartan inte kan hämtas. Felet förblir nåbart. Senare hämtning varken startar ett nytt sparförsök eller spelar upp det gamla beskedet igen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj `refresh-failure` och spara från Utkast. Läs tomt utkast och bekräftelsen.
+1. Välj `refresh-failure` och spara från Utkast. Läs tomt utkast och
+   bekräftelsen.
 2. Stäng textvyn och läs kartans hämtningsfel. Vänta tills toasten försvinner.
 3. Välj `network-ok` och **Hämta aktuellt underlag**. Skriv `result`.
-4. Välj `new-draft` och öppna Utkast i första fliken. I andra fliken ändrar
-   du cykelns namn till **Alex nya cykelnamn** och lägger ändringen i utkastet.
-   Återvänd till första fliken och spara dess äldre version utan omladdning.
-5. Läs avvisningen och stäng. Kontrollera spärrat sparande. Stäng textvyn,
-   välj **Hämta aktuellt underlag**, öppna Utkast och läs det nya namnet.
-
 **Förväntat resultat:**
 
 - Ett bekräftat kvitto stänger modalen och tömmer det sparade utkastet även
   om kartan inte kan hämtas. Felet förblir nåbart. Senare hämtning varken
   startar ett nytt sparförsök eller spelar upp det gamla beskedet igen.
-- En äldre utkastversion avvisas tydligt; modalens enda knapp är krysset.
-  Alla aktuella privata förslag finns kvar och ingen historikpost skapas.
-  Efter hämtning läses det nya namnet och sparikonen blir tillgänglig igen.
 
 ### UTKAST-41: ta bort ett oberoende förslag och behåll resten
 
@@ -572,13 +623,29 @@ Skriv `quit` i terminalen efter provningen för att ta bort installationen.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
-testfallen “UTKAST-90: desktop complete draft review works without AI or
-consent” och “UTKAST-90: mobile complete draft review works without AI or
-consent”.
+UTKAST-90.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-review.spec.ts",
+    "caseId": "UTKAST-90"
+  },
+  "reference": "1440 × 1000; fullständig läsning utan AI eller medgivande.",
+  "outcomes": [
+    "Utkastet öppnas utan samtal eller medgivandedialog trots att AI saknas.",
+    "Alla fyra förslagsslag kan läsas fullständigt. Förslagen och den sparade kartan ändras inte av läsning.",
+    "Läsdialogen börjar på rubriken. Tab stannar i dialogen; bakomliggande innehåll är inaktivt. Krysset är dess enda synliga stängkontroll. Escape och krysset återför fokus till radens öppningsknapp.",
+    "Verklig olöst identitet eller obesvarad fråga har feltext och symbol. Giltiga okända, osäkra och ospecificerade uppgifter får ingen felvarning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **Utkast** i verktygsfältet på dator och mobil.
+1. Öppna **Utkast** i verktygsfältet vid 1440 × 1000 pixlar.
 2. Läs tabellens Symbol, Namn, Typ och Vad som ändras.
 3. Öppna **Alex blå cykel** med tangentbord. Läs sparade och föreslagna
    värden, hela beskrivningen, Ramnummer och ekonomiska uppgifter.
@@ -610,8 +677,24 @@ och börjar med ett tomt utkast.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
-testfallet “UTKAST-91: empty and type-only drafts preserve unsent text and
-first send asks consent once”.
+UTKAST-91.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-review.spec.ts",
+    "caseId": "UTKAST-91"
+  },
+  "reference": "Tomt och typbegränsat utkast, kontrollerad modell.",
+  "outcomes": [
+    "Tomt utkast är åtkomligt även när verktygsfältets Utkast-ikon saknas. Öppning startar inget samtal och begär inget medgivande.",
+    "Oskickad text finns kvar efter stängning och vybyte. Första Skicka kräver medgivande, skickar exakt meddelandet en gång och tömmer fältet efter bekräftat mottagande.",
+    "Ett förslag som endast gäller en typ visar den avskilda Utkast-ikonen. Den öppnar hela utkastet direkt även utan synliga kartförslag."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -648,13 +731,29 @@ Skriv `quit` i terminalen efter provningen.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
-testfallen “UTKAST-27: desktop draft reading preserves lifecycle, images and
-configured field meanings” och “UTKAST-27: mobile draft reading preserves
-lifecycle, images and configured field meanings”.
+UTKAST-27.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-review.spec.ts",
+    "caseId": "UTKAST-27"
+  },
+  "reference": "1440 × 1000; historiska statusar, bilder och egna fältnamn.",
+  "outcomes": [
+    "Sparade objektet och sambandet visar Upphört och Följ slutdatum. Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum. Giltighet och status är markerade som ändrade.",
+    "Båda verkliga profilbilderna visas och bildändringen markeras även när båda sidorna har en bild. Bilderna skiljer sig i färg.",
+    "Beskrivningen har respektive typs eget namn och markerad ändring. Föreslagen beskrivning och båda prisvärdena visar Ej uppgivet. Oförändrat saknat pris markeras inte som ändrat. Dolda egenskaper kan läsas.",
+    "Läsningen ändrar inget underlag och startar inget samtal eller medgivande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Öppna **Utkast** och **Blå cykel** på dator och mobil.
+1. Öppna **Utkast** och **Blå cykel** vid 1440 × 1000 pixlar.
 2. Läs **Gäller**, **Status** och **Sista giltighetsdag** på båda sidorna.
 3. Jämför de två profilbilderna. Läs **Fordonets berättelse** och
    **Cykelns berättelse**, samt **Avtalat pris** även fast pris saknas.
@@ -804,8 +903,21 @@ Skriv `quit` i terminalen efter provningen.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
-testfallet “UTKAST-31: long unbroken field labels wrap in full draft reading
-at 320 CSS pixels”.
+UTKAST-31.
+
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-review.spec.ts",
+    "caseId": "UTKAST-31"
+  },
+  "reference": "320 × 740; långa obrutna fältnamn får inte dölja värden.",
+  "outcomes": [
+    "Hela egenskapsnamnen bryts och kan läsas utan sidledsrullning i dialogen.",
+    "Escape återför fokus till radens läsknapp. Läsningen ändrar inga förslag."
+  ]
+}
+```
 
 **Steg:**
 
@@ -834,8 +946,24 @@ fortfarande; inga andra uppgifter ändras. Skriv `quit` efter provningen.
 
 **Integrationstest:**
 [draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
-testfallet “UTKAST-32: lifecycle-only object and relationship proposals
-distinguish effective changes and explicit modes”.
+UTKAST-32.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-review.spec.ts",
+    "caseId": "UTKAST-32"
+  },
+  "reference": "Utgånget och framtida objekt samt samband; faktisk giltighet mot uttrycklig status.",
+  "outcomes": [
+    "Alla fyra rader visar Status: Följ slutdatum → Gäller fortfarande.",
+    "Det utgångna objektet och dess samband visar dessutom Gäller: Upphört → Aktuellt. Framtida uppgifter får ingen falsk giltighetsändring; den uttryckliga statusändringen syns ändå.",
+    "Den fullständiga läsningen visar samma betydelser som sammanfattningen. De fyra kolumnerna är kvar. Läsningen ändrar inga förslag eller sparade uppgifter och Escape återför fokus till den använda läsknappen."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1409,13 +1537,27 @@ den filtrerade kartan, oberoende av kameran.
 
 **Förutsättningar:** Spara Lo Exempel, Molnmusik och Kim Exempel samt ett
 riktat samband från Lo till Molnmusik. Föreslå en ändrad beskrivning för Lo
-och vänd sambandets riktning utan att spara. Upprepa i ljust och mörkt tema.
+och vänd sambandets riktning utan att spara. Välj ljust tema.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallen “UTKAST-25: filtered legend matches map colours and retains only
-displayed categories in light” och “UTKAST-25: filtered legend matches map
-colours and retains only displayed categories in dark”.
+UTKAST-25.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-25"
+  },
+  "reference": "Ljust tema; filtrering styr legenden, inte kameran.",
+  "outcomes": [
+    "Symboler och linjeprov matchar kartans färger i ljust tema. Text och symbol gör innebörden begriplig även utan färg.",
+    "Sökningen styr kategorierna, medan kameran och en vald relation inte skapar en objektmarkering. Inga uppgifter sparas eller byter identitet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1435,7 +1577,7 @@ colours and retains only displayed categories in dark”.
 
 **Förväntat resultat:**
 
-- Symboler och linjeprov matchar kartans färger i båda teman. Text och
+- Symboler och linjeprov matchar kartans färger i ljust tema. Text och
   symbol gör innebörden begriplig även utan färg.
 - Sökningen styr kategorierna, medan kameran och en vald relation inte
   skapar en objektmarkering. Inga uppgifter sparas eller byter identitet.
@@ -1452,10 +1594,23 @@ inte sparadressen; om ordningen inte kan styras, anteckna begränsningen.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-26: confirmed save toast expires while failed refresh
-remains recoverable without a conversation” och “UTKAST-26: confirmed save
-toast expires while failed refresh remains recoverable without a
-conversation after an unknown result”.
+UTKAST-26.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-26"
+  },
+  "reference": "Bekräftat sparande; kvarstående hämtningsfel utan samtal.",
+  "outcomes": [
+    "Sparbeskedet och felet gäller olika resultat och kan visas samtidigt. Återhämtning finns utan samtal och kvittot förblir tillgängligt.",
+    "Integrationen styr den verkliga spartransaktionen och avbryter bara hämtningen efter kvittot; den kräver ingen verklig leverantör."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1468,18 +1623,10 @@ conversation after an unknown result”.
    försvinna och det tidigare sparbeskedet ska inte spelas upp igen.
 4. Öppna **Rapporter** och läs den enda genomförda ändringsgruppen
    för Lo Exempel i **Ändringshistorik**.
-5. Upprepa med ett nytt förslag och bryt sparsvaret efter genomförandet.
-   Läs Sparutfall okänt utan sparbesked. Blockera sedan kartans hämtning,
-   men tillåt hämtning av sparförsök. Välj Hämta aktuellt underlag.
-   Läs Utkastet är sparat och kartans hämtningsfel; Sparutfall okänt ska
-   försvinna. Upprepa steg 2–4.
-
 **Förväntat resultat:**
 
 - Sparbeskedet och felet gäller olika resultat och kan visas samtidigt.
   Återhämtning finns utan samtal och kvittot förblir tillgängligt.
-- Samma resultat gäller när återhämtning bekräftar ett tidigare okänt
-  sparförsök innan kartans hämtning misslyckas.
 - Integrationen styr den verkliga spartransaktionen och avbryter bara
   hämtningen efter kvittot; den kräver ingen verklig leverantör.
 
@@ -1490,19 +1637,30 @@ okänt resultat och verifierat sparande.
 
 **Användare:** Administratören.
 
-**Förutsättningar:** Ett tomt hushåll enligt förberedelsen. Upprepa med
-1440, 390 och 320 pixlars bredd. För ett okänt
-resultat före serverns sparande kan webbläsarens nätverksblockering användas
-för adressen som slutar med `/map/save`, enligt
-[SPAR-02](operations.md#spar-02-återförsöka-ett-väntande-sparande-från-en-annan-klient).
+**Förutsättningar:** Nytt tomt hushåll, 1440 × 844 pixlar. Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande) och välj
+`new-empty`.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallen “UTKAST-12: closed work views retain private proposals through an
-unknown save at 1440px and verify the same receipt”, “UTKAST-12: closed work
-views retain private proposals through an unknown save at 390px and verify
-the same receipt” och “UTKAST-12: closed work views retain private proposals
-through an unknown save at 320px and verify the same receipt”.
+UTKAST-12.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-12"
+  },
+  "reference": "1440 × 844; väntande och tappat svar efter genomförandet.",
+  "outcomes": [
+    "Sparmodalen öppnas direkt och kan stängas med krysset eller Escape. Ett obekräftat försök visas aldrig som säkert lyckat eller säkert misslyckat.",
+    "Återkopplingens knappar kan användas utan att verktygen täcker dem.",
+    "Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns en gång i kartan. Förslagsraden försvinner efter uppdateringen, men markeringsringen och etikettkopplingarnas rad kan finnas kvar. Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning. Ändringshistoriken innehåller ett enda genomfört sparande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1511,10 +1669,13 @@ through an unknown save at 320px and verify the same receipt”.
 2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
    Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
 3. Läs kartans status och teckenförklaring under hushållets namn.
-4. Blockera sparadressen. Öppna **Utkast** och välj **Spara hela utkastet**.
+4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
+   utkastet**.
    Stäng **Spara utkastet** med Escape och stäng textvyn.
    Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
-5. Ta bort blockeringen och välj **Hämta samma kvitto igen**. Läs resultatet.
+5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
+   efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
+   **Hämta samma kvitto igen**. Läs resultatet.
    Öppna **Rapporter → Ändringshistorik** och läs det genomförda sparandet.
 
 **Förväntat resultat:**
@@ -1528,11 +1689,6 @@ through an unknown save at 320px and verify the same receipt”.
   markeringsringen och etikettkopplingarnas rad kan finnas kvar.
   Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning.
   Ändringshistoriken innehåller ett enda genomfört sparande.
-- Det automatiserade provet håller dessutom det riktiga serversvaret
-  efter genomfört sparande. Det kontrollerar **Väntar på sparkvitto** och
-  kvarvarande legend, bryter svaret och jämför samma operations-ID och
-  enda historikkvitto genom det publika API:et. Nätverksblockeringen ovan
-  verifierar inte ett tappat svar efter transaktionen.
 
 ### UTKAST-13: sparresultat behåller ett nyare valt textfält
 
@@ -1541,19 +1697,38 @@ ska uppdateras utan att flytta fokus.
 
 **Användare:** Administratören.
 
-**Förutsättningar:** Ett tomt hushåll. Använd webbläsarens långsamma
-nätverksläge så att det går att välja ett annat fält under sparandet.
+**Förutsättningar:** Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande).
+Välj `new-empty` och `hold-after`.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-13: a verified save keeps a newer field focused”.
+UTKAST-13.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-13"
+  },
+  "reference": "Hållet sparbesked; senare valt sökfält behåller fokus.",
+  "outcomes": [
+    "Sökfältet behåller fokus och innehåller **Lo Exempel** efter sparandet.",
+    "Sparbeskedet visas i tre sekunder. Kvittot finns kvar i **Rapporter → Ändringshistorik**. Sökfältet behåller fokus även när återkopplingen uppdateras.",
+    "Det automatiserade provet håller ett verkligt lyckat serversvar för att säkerställa ordningen och kontrollerar att utkastet är tomt innan fortsatt skrivande. Ett manuellt prov där svaret hinner fram före fältbytet verifierar inte fokus under väntan."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Lägg **Lo Exempel** i utkastet och välj **Spara hela utkastet**.
 2. Medan svaret väntar, stäng **Spara utkastet** med Escape och stäng
    textvyn. I Tabell, skriv **Lo** i **Sök objekt i tabellen**.
-3. Invänta sparkvittot och fortsätt skriva ett blanksteg och **Exempel**
+3. Skriv `release` efter fältbytet och invänta sparkvittot och fortsätt skriva
+   ett blanksteg och **Exempel**
    utan att klicka igen.
 4. Läs Utkastet är sparat under hushållets namn.
 5. Fortsätt skriva i sökfältet utan att klicka på det igen.
@@ -1576,13 +1751,31 @@ kartan som en annan medlem efter omstart.
 
 **Användare:** Administratören och den inbjudna medlemmen.
 
-**Förutsättningar:** Tomt hushåll, separat medlemsprofil och samtalsstart
-med medgivande enligt förberedelsen.
+**Förutsättningar:** Följ
+[kontrollerat text- och talunderlag](save-preparation.md#kontrollerat-text--och-talunderlag).
+Starta ett nytt tomt provhushåll. Modell och media är syntetiska; riktig
+server, privata utkast och gemensamt sparande används.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-14: manual text and voice proposals share one durable
-private draft and an atomic household save”.
+UTKAST-14.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-14"
+  },
+  "reference": "Kontrollerad text och syntetiskt tal, två medlemmar, riktig SQLite.",
+  "outcomes": [
+    "Samma privata utkast innehåller tre objekt och ett samband från alla tre arbetssätten. Oskickad text räknas först när den läggs i utkastet.",
+    "Kvittot beskriver alla fyra ändringarna. Förslagsraderna i teckenförklaringen försvinner. Medlemmen ser alla tre objekten och **Lo Exempel → Använder → Molnmusik** efter omstart, men inga privata förslag från administratören.",
+    "Det automatiserade provet håller den riktiga sparbegäran före genomförandet och kontrollerar oförändrat utkast, tom sparad karta och därefter ett enda kvitto för alla ändringar. En samtidig uppdatering från samtalet får inte ändra ett pågående sparande till okänt utfall. Databasen och servern är riktiga; tal och modellresultat ersätts vid de externa tjänsternas gränser. Provet verifierar inte fysisk mikrofon eller verkligt svenskt tal."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -1590,9 +1783,12 @@ private draft and an atomic household save”.
    och stäng**.
 2. Välj **Skriv till Skyttel**, skriv **Lägg Molnmusik i utkastet** och
    välj **Skicka**. Godkänn samtalsmedgivandet när det efterfrågas.
+   Släpp det hållna textförslaget enligt separat förberedelse.
    Kontrollera två privata förslag på
    **Visa utkastet**.
-3. Välj **Prata med Skyttel** och säg **Lo använder Molnmusik**.
+3. Välj **Prata med Skyttel** och använd terminalens `user Lo använder
+   Molnmusik.` och `delegate`.
+   Släpp det hållna förslaget enligt separat förberedelse.
    Kontrollera att sambandet ingår och att **Visa utkastet** visar tre privata
    förslag.
 4. Skriv ett oskickat samtalsmeddelande. Besök Inställningar och återgå till
@@ -1605,9 +1801,12 @@ private draft and an atomic household save”.
    Escape i förlustdialogen. Kontrollera att namn och beskrivning finns
    kvar utan nytt förslag. Välj **Lägg i utkastet och stäng**.
    Granska fyra förslag i hela utkastet.
-   Välj **Spara hela utkastet** från Utkast, stäng sparmodalen med Escape
+   Arma `save:before` i konsolen. Välj **Spara hela utkastet** från Utkast,
+   stäng sparmodalen med Escape
    och stäng textvyn.
-6. Invänta bekräftat kvitto. Stäng klienterna, starta om servern med samma
+6. Kontrollera vänteläge, oförändrade fyra förslag och tom gemensam karta
+   i medlemsprofilen. Släpp sparandet i konsolen och invänta bekräftat kvitto.
+   Stäng klienterna, starta om servern med samma
    databas och öppna kartan som medlem.
 
 **Förväntat resultat:**
@@ -1633,25 +1832,44 @@ inte i sig spara utkastet.
 
 **Användare:** Administratören.
 
-**Förutsättningar:** Ett tomt hushåll och ett tillgängligt samtal med Skyttel.
-Provet kräver att samtalet visar en nödvändig fråga. Om tjänsten inte ger
-en sådan fråga, anteckna att den delen inte har verifierats.
+**Förutsättningar:** Följ
+[kontrollerat text- och talunderlag](save-preparation.md#kontrollerat-text--och-talunderlag).
+Starta ett nytt tomt provhushåll. Modell och media är syntetiska; riktig
+server, privata utkast och gemensamt sparande används.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallet “UTKAST-15: a necessary answer gates the native draft save until a
-fresh explicit save”.
+UTKAST-15.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-15"
+  },
+  "reference": "Kontrollerad nödvändig fråga; svar följt av nytt uttryckligt sparande.",
+  "outcomes": [
+    "Utkastets sparikon kringgår inte den nödvändiga frågan. Det privata förslaget finns kvar medan frågan besvaras.",
+    "Att svara skapar inget sparförsök. Först det nya uttryckliga sparbeskedet ger ett kvitto och gör uppgifterna till sparat kartinnehåll.",
+    "Integrationstestet styr frågan vid modellgränsen men använder riktig server och SQLite. Det jämför tomma sparförsök före beskedet och ett enda lyckat försök med samma verkliga kvitto i historiken efteråt."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
 1. Lägg **Lo Exempel** i utkastet via formuläret. Välj **Skriv till Skyttel**
    och be Skyttel förbereda uppgiften och fråga vilket kort som avses.
    Skicka och godkänn samtalsmedgivandet när det efterfrågas.
-2. Läs frågan i samtalstexten och stäng textvyn.
+2. Släpp modellens nödvändiga fråga enligt separat förberedelse. Läs frågan i
+   samtalstexten och stäng textvyn.
 3. Öppna **Utkast**. Kontrollera att **Spara hela utkastet** är
    inaktiverad. Kartan har ännu inga sparade objekt eller sparförsök.
 4. Välj **Skriv till Skyttel**, svara **Kortet Lo Exempel avses** och skicka.
-   Vänta tills frågan är besvarad. Stäng textvyn med krysset igen.
+   Avsluta det hållna anropet med förberedd svarstext. Vänta tills frågan är
+   besvarad. Stäng textvyn med krysset igen.
 5. Öppna **Utkast**. Kontrollera att sparande erbjuds men inte har genomförts.
    Välj **Spara hela utkastet** uttryckligen och läs det verifierade resultatet.
 
@@ -2040,11 +2258,24 @@ nytt privat förslag. Börja med stängd textvy och Navigation.
 
 **Integrationstest:**
 [draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
-testfallen “UTKAST-16: navigation and native draft review keep controls
-usable through both opening orders at 1440px”, “UTKAST-16: navigation and
-native draft review keep controls usable through both opening orders at
-640px” och “UTKAST-16: navigation and native draft review keep controls
-usable through both opening orders at 320px”.
+UTKAST-16.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-16"
+  },
+  "reference": "1440 × 1000; båda öppningsordningarna och sex riktningar.",
+  "outcomes": [
+    "Alla personliga flyttriktningar och hela utkastets sparknapp är åtkomliga i båda ordningarna, även när ytorna behöver rullas.",
+    "Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma innehåll och Blå cykelns privata förslag består utan sparförsök.",
+    "Fokus följer den uttryckliga handlingen och går tillbaka till verktygen vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll som används."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -2059,7 +2290,7 @@ usable through both opening orders at 320px”.
    knappen går att nå med pekare utan att spara. Stäng textvyn.
 4. Upprepa efter att först ha öppnat Utkast och fokuserat sparknappen,
    därefter stängt textvyn och öppnat Navigera.
-5. Upprepa på smal skärm och vid hög förstoring.
+5. Behåll 1440 × 1000 pixlar. Smal och kort vy har separata fall.
 
 **Förväntat resultat:**
 
@@ -3226,3 +3457,727 @@ the next real heading without another private mutation”.
   och flyttar fokus till nästa posts rubrik utan att ändra något förslag.
 - Musiktjänstens gjorda egenskapsval och den lösta Lo-postens resultat
   består. Gemensamma uppgifter och historik ändras inte av navigeringen.
+
+## Separata referenser för granskning, status och sparande
+
+Varje variant har ett eget ID. Ingen automatiserad körning tas bort.
+UTKAST-92–105 reserveras för dessa separata scenarier; inga äldre luckor används.
+
+### UTKAST-92: läs hela utkastet utan AI eller medgivande
+
+**Syfte:** Granska alla förslag, även dolda fält, utan att starta samtal.
+
+**Användare:** Alex Exempel i den separata provinstallationen nedan.
+
+**Förutsättningar:** Kör `npm run build` och sedan
+`node --import tsx scripts/manual-draft-review.ts` i en terminal.
+Öppna den utskrivna adressen och logga in med den syntetiska
+Google-identiteten Alex Exempel. Ingen extern leverantör används.
+Skriv `quit` i terminalen efter provningen för att ta bort installationen.
+
+**Integrationstest:**
+[draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
+UTKAST-92.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-review.spec.ts",
+    "caseId": "UTKAST-92"
+  },
+  "reference": "390 × 844; smal läsdialog och fokusfälla.",
+  "outcomes": [
+    "Utkastet öppnas utan samtal eller medgivandedialog trots att AI saknas.",
+    "Alla fyra förslagsslag kan läsas fullständigt. Förslagen och den sparade kartan ändras inte av läsning.",
+    "Läsdialogen börjar på rubriken. Tab stannar i dialogen; bakomliggande innehåll är inaktivt. Krysset är dess enda synliga stängkontroll. Escape och krysset återför fokus till radens öppningsknapp.",
+    "Verklig olöst identitet eller obesvarad fråga har feltext och symbol. Giltiga okända, osäkra och ospecificerade uppgifter får ingen felvarning."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Utkast** i verktygsfältet vid 390 × 844 pixlar.
+2. Läs tabellens Symbol, Namn, Typ och Vad som ändras.
+3. Öppna **Alex blå cykel** med tangentbord. Läs sparade och föreslagna
+   värden, hela beskrivningen, Ramnummer och ekonomiska uppgifter.
+4. Prova Tab, Skift+Tab, krysset och Escape. Öppna därefter ett samband,
+   **Utkastfordon** och **Granskar**. Läs deras dolda egna fält och riktning.
+5. Kontrollera fel vid **Olöst fordon** och det olösta sambandet. Läs även
+   Okänt, Uttryckligen inget, Osäkert uppgivet och Ospecificerat objekt.
+
+**Förväntat resultat:**
+
+- Utkastet öppnas utan samtal eller medgivandedialog trots att AI saknas.
+- Alla fyra förslagsslag kan läsas fullständigt.
+  Förslagen och den sparade kartan ändras inte av läsning.
+- Läsdialogen börjar på rubriken. Tab stannar i dialogen; bakomliggande
+  innehåll är inaktivt. Krysset är dess enda synliga stängkontroll.
+  Escape och krysset återför fokus till radens öppningsknapp.
+- Verklig olöst identitet eller obesvarad fråga har feltext och symbol.
+  Giltiga okända, osäkra och ospecificerade uppgifter får ingen felvarning.
+
+### UTKAST-93: läs faktisk giltighet, profilbilder och typens egenskapsnamn
+
+**Syfte:** Skilja slutdatum från uttrycklig status och läsa hela bildförslaget
+samt dolda gemensamma egenskaper med deras egna namn.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-90.
+
+**Förutsättningar:** Kör `npm run build` och
+`node --import tsx scripts/manual-draft-review.ts --meanings`.
+Logga in med den syntetiska Google-identiteten. Installationens sparade
+cykel och samband har slutdatum 2000-01-01. Förslagen anger uttryckligen
+att de fortfarande gäller. Cykeln har olika sparad och föreslagen profilbild.
+Skriv `quit` i terminalen efter provningen.
+
+**Integrationstest:**
+[draft-review.spec.ts](../../tests/integration/draft-review.spec.ts),
+UTKAST-93.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-review.spec.ts",
+    "caseId": "UTKAST-93"
+  },
+  "reference": "390 × 844; bilder och fullständiga fältnamn i smal läsdialog.",
+  "outcomes": [
+    "Sparade objektet och sambandet visar Upphört och Följ slutdatum. Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum. Giltighet och status är markerade som ändrade.",
+    "Båda verkliga profilbilderna visas och bildändringen markeras även när båda sidorna har en bild. Bilderna skiljer sig i färg.",
+    "Beskrivningen har respektive typs eget namn och markerad ändring. Föreslagen beskrivning och båda prisvärdena visar Ej uppgivet. Oförändrat saknat pris markeras inte som ändrat. Dolda egenskaper kan läsas.",
+    "Läsningen ändrar inget underlag och startar inget samtal eller medgivande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna **Utkast** och **Blå cykel** vid 390 × 844 pixlar.
+2. Läs **Gäller**, **Status** och **Sista giltighetsdag** på båda sidorna.
+3. Jämför de två profilbilderna. Läs **Fordonets berättelse** och
+   **Cykelns berättelse**, samt **Avtalat pris** även fast pris saknas.
+4. Stäng dialogen och läs sambandet **Blå cykel → granskar → Röd cykel**.
+   Jämför dess giltighet, status och slutdatum.
+
+**Förväntat resultat:**
+
+- Sparade objektet och sambandet visar Upphört och Följ slutdatum.
+  Förslagen visar Aktuellt och Gäller fortfarande trots samma gamla slutdatum.
+  Giltighet och status är markerade som ändrade.
+- Båda verkliga profilbilderna visas och bildändringen markeras även när
+  båda sidorna har en bild. Bilderna skiljer sig i färg.
+- Beskrivningen har respektive typs eget namn och markerad ändring.
+  Föreslagen beskrivning och båda prisvärdena visar Ej uppgivet.
+  Oförändrat saknat pris markeras inte som ändrat. Dolda egenskaper kan läsas.
+- Läsningen ändrar inget underlag och startar inget samtal eller medgivande.
+
+### UTKAST-94: filtrerad teckenförklaring följer kartans färger
+
+**Syfte:** Matcha symboler och linjer med kartan och visa kategorier från
+den filtrerade kartan, oberoende av kameran.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Spara Lo Exempel, Molnmusik och Kim Exempel samt ett
+riktat samband från Lo till Molnmusik. Föreslå en ändrad beskrivning för Lo
+och vänd sambandets riktning utan att spara. Välj mörkt tema.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+UTKAST-94.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-94"
+  },
+  "reference": "Mörkt tema; samma synliga kategori måste matcha kartans färg.",
+  "outcomes": [
+    "Symboler och linjeprov matchar kartans färger i mörkt tema. Text och symbol gör innebörden begriplig även utan färg.",
+    "Sökningen styr kategorierna, medan kameran och en vald relation inte skapar en objektmarkering. Inga uppgifter sparas eller byter identitet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Stäng textvyn och visa Karta. Läs grönt plus, gul penna och rött kryss under
+   hushållets namn. Jämför färgerna med förslagen i kartan. Läs gammalt
+   samband med rött kryss och streckad linje och nytt med grönt plus och
+   heldragen linje utan att markera dem eller välja Alla etiketter.
+2. Öppna Navigera och panorera. Teckenförklaringens rader ska bestå.
+3. Stäng Navigation och välj det nya sambandet. Ingen rad för markerat
+   objekt ska tillkomma.
+4. Klicka i kartans sökfält, sök Kim Exempel och tryck Escape i sökfältet.
+   Förslagsraderna ska försvinna. Raden för punktade etikettkopplingar ska
+   finnas kvar.
+5. Markera Kim. Kontrollera markeringsraden. Sök sedan Inga träffar via
+   kartans sökfält och tryck Escape i sökfältet. Hela teckenförklaringen ska
+   försvinna.
+
+**Förväntat resultat:**
+
+- Symboler och linjeprov matchar kartans färger i mörkt tema. Text och
+  symbol gör innebörden begriplig även utan färg.
+- Sökningen styr kategorierna, medan kameran och en vald relation inte
+  skapar en objektmarkering. Inga uppgifter sparas eller byter identitet.
+
+### UTKAST-96: behåll legend och förslag tills samma sparförsök bekräftas
+
+**Syfte:** Följa ett privat förslag med stängd textvy och skilja väntan,
+okänt resultat och verifierat sparande.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Nytt tomt hushåll, 390 × 844 pixlar. Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande) och välj
+`new-empty`.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+UTKAST-96.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-96"
+  },
+  "reference": "390 × 844; uppföljning och legend i smal arbetsyta.",
+  "outcomes": [
+    "Sparmodalen öppnas direkt och kan stängas med krysset eller Escape. Ett obekräftat försök visas aldrig som säkert lyckat eller säkert misslyckat.",
+    "Återkopplingens knappar kan användas utan att verktygen täcker dem.",
+    "Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns en gång i kartan. Förslagsraden försvinner efter uppdateringen, men markeringsringen och etikettkopplingarnas rad kan finnas kvar. Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning. Ändringshistoriken innehåller ett enda genomfört sparande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn
+   och visa Karta.
+2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
+   Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
+3. Läs kartans status och teckenförklaring under hushållets namn.
+4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
+   utkastet**.
+   Stäng **Spara utkastet** med Escape och stäng textvyn.
+   Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
+5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
+   efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
+   **Hämta samma kvitto igen**. Läs resultatet.
+   Öppna **Rapporter → Ändringshistorik** och läs det genomförda sparandet.
+
+**Förväntat resultat:**
+
+- Sparmodalen öppnas direkt och kan stängas med krysset eller Escape.
+  Ett obekräftat försök
+  visas aldrig som säkert lyckat eller säkert misslyckat.
+- Återkopplingens knappar kan användas utan att verktygen täcker dem.
+- Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns
+  en gång i kartan. Förslagsraden försvinner efter uppdateringen, men
+  markeringsringen och etikettkopplingarnas rad kan finnas kvar.
+  Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning.
+  Ändringshistoriken innehåller ett enda genomfört sparande.
+
+### UTKAST-97: behåll legend och förslag tills samma sparförsök bekräftas
+
+**Syfte:** Följa ett privat förslag med stängd textvy och skilja väntan,
+okänt resultat och verifierat sparande.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Nytt tomt hushåll, 320 × 844 pixlar. Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande) och välj
+`new-empty`.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+UTKAST-97.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-97"
+  },
+  "reference": "320 × 844; uppföljning vid minsta behållna bredd.",
+  "outcomes": [
+    "Sparmodalen öppnas direkt och kan stängas med krysset eller Escape. Ett obekräftat försök visas aldrig som säkert lyckat eller säkert misslyckat.",
+    "Återkopplingens knappar kan användas utan att verktygen täcker dem.",
+    "Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns en gång i kartan. Förslagsraden försvinner efter uppdateringen, men markeringsringen och etikettkopplingarnas rad kan finnas kvar. Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning. Ändringshistoriken innehåller ett enda genomfört sparande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Lägg objektet **Familjeabonnemanget** i utkastet. Stäng textvyn
+   och visa Karta.
+2. Kontrollera grönt plus i teckenförklaringen under hushållets namn.
+   Varken förslagsantal, gul penna eller rött kryss ska visas för detta förslag.
+3. Läs kartans status och teckenförklaring under hushållets namn.
+4. Skriv `hold-after` i terminalen. Öppna **Utkast** och välj **Spara hela
+   utkastet**.
+   Stäng **Spara utkastet** med Escape och stäng textvyn.
+   Läs **Sparutfall okänt**, det bevarade förslaget och legenden.
+5. Läs **Väntar på sparkvitto** och kvarvarande legend. Skriv `drop`
+   efter terminalens bekräftade status 200. Läs **Sparutfall okänt**. Välj
+   **Hämta samma kvitto igen**. Läs resultatet.
+   Öppna **Rapporter → Ändringshistorik** och läs det genomförda sparandet.
+
+**Förväntat resultat:**
+
+- Sparmodalen öppnas direkt och kan stängas med krysset eller Escape.
+  Ett obekräftat försök
+  visas aldrig som säkert lyckat eller säkert misslyckat.
+- Återkopplingens knappar kan användas utan att verktygen täcker dem.
+- Samma försök kontrolleras och får ett verifierat kvitto. Objektet finns
+  en gång i kartan. Förslagsraden försvinner efter uppdateringen, men
+  markeringsringen och etikettkopplingarnas rad kan finnas kvar.
+  Utkastet är sparat visas i tre sekunder och återkommer inte vid omladdning.
+  Ändringshistoriken innehåller ett enda genomfört sparande.
+
+### UTKAST-98: använd Navigation och utkastets återkoppling tillsammans
+
+**Syfte:** Behålla åtkomst till personlig placering och sparande genom växling
+mellan kartan
+och textvyn, även när förstoring kräver rullning.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Lo Exempel är sparad i kartan. Blå cykeln finns som
+nytt privat förslag. Börja med stängd textvy och Navigation.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+UTKAST-98.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-98"
+  },
+  "reference": "640 × 500; navigationens nedre riktningar måste nås med rullning.",
+  "outcomes": [
+    "Alla personliga flyttriktningar och hela utkastets sparknapp är åtkomliga i båda ordningarna, även när ytorna behöver rullas.",
+    "Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma innehåll och Blå cykelns privata förslag består utan sparförsök.",
+    "Fokus följer den uttryckliga handlingen och går tillbaka till verktygen vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll som används."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Markera Lo Exempel i kartan. Öppna **Navigera** från verktygen.
+   Expandera verktygens namn om det behövs. Teckenförklaringen är synlig
+   under hushållets namn.
+2. Använd tangentbord och pekare för att flytta Lo i alla sex riktningar
+   i Navigation.
+   Rulla vid behov till de nedre kontrollerna.
+3. Välj **Stäng navigering** och kontrollera fokus på **Navigera**.
+   Öppna **Utkast** och fokusera **Spara hela utkastet**. Kontrollera att
+   knappen går att nå med pekare utan att spara. Stäng textvyn.
+4. Upprepa efter att först ha öppnat Utkast och fokuserat sparknappen,
+   därefter stängt textvyn och öppnat Navigera.
+5. Behåll 640 × 500 pixlar. Smal och kort vy har separata fall.
+
+**Förväntat resultat:**
+
+- Alla personliga flyttriktningar och hela utkastets sparknapp är
+  åtkomliga i båda ordningarna, även när ytorna behöver rullas.
+- Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma
+  innehåll och Blå cykelns privata förslag består utan sparförsök.
+- Fokus följer den uttryckliga handlingen och går tillbaka till verktygen
+  vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll
+  som används.
+
+### UTKAST-99: använd Navigation och utkastets återkoppling tillsammans
+
+**Syfte:** Behålla åtkomst till personlig placering och sparande genom växling
+mellan kartan
+och textvyn, även när förstoring kräver rullning.
+
+**Användare:** Administratören.
+
+**Förutsättningar:** Lo Exempel är sparad i kartan. Blå cykeln finns som
+nytt privat förslag. Börja med stängd textvy och Navigation.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+UTKAST-99.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-99"
+  },
+  "reference": "320 × 250; mycket kort smal arbetsyta måste behålla båda flödena.",
+  "outcomes": [
+    "Alla personliga flyttriktningar och hela utkastets sparknapp är åtkomliga i båda ordningarna, även när ytorna behöver rullas.",
+    "Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma innehåll och Blå cykelns privata förslag består utan sparförsök.",
+    "Fokus följer den uttryckliga handlingen och går tillbaka till verktygen vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll som används."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Markera Lo Exempel i kartan. Öppna **Navigera** från verktygen.
+   Expandera verktygens namn om det behövs. Teckenförklaringen är synlig
+   under hushållets namn.
+2. Använd tangentbord och pekare för att flytta Lo i alla sex riktningar
+   i Navigation.
+   Rulla vid behov till de nedre kontrollerna.
+3. Välj **Stäng navigering** och kontrollera fokus på **Navigera**.
+   Öppna **Utkast** och fokusera **Spara hela utkastet**. Kontrollera att
+   knappen går att nå med pekare utan att spara. Stäng textvyn.
+4. Upprepa efter att först ha öppnat Utkast och fokuserat sparknappen,
+   därefter stängt textvyn och öppnat Navigera.
+5. Behåll 320 × 250 pixlar. Smal och kort vy har separata fall.
+
+**Förväntat resultat:**
+
+- Alla personliga flyttriktningar och hela utkastets sparknapp är
+  åtkomliga i båda ordningarna, även när ytorna behöver rullas.
+- Flyttningarna ändrar bara den personliga vyn. Kartans gemensamma
+  innehåll och Blå cykelns privata förslag består utan sparförsök.
+- Fokus följer den uttryckliga handlingen och går tillbaka till verktygen
+  vid stängning. Navigation, återkoppling och verktygen täcker inte den kontroll
+  som används.
+
+### UTKAST-100: stäng ett väntande mobilt sparande och fortsätt annat arbete
+
+**Syfte:** Behålla uppföljning och korrekt fokus mellan karta och tabell.
+
+**Användare:** Alex Exempel i provinstallationen för UTKAST-36.
+
+**Förutsättningar:** Välj `new-draft` och `hold`. Använd 320 × 844 pixlar.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+UTKAST-100.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-100"
+  },
+  "reference": "320 × 844; modalens omflöde och senare sökfokus.",
+  "outcomes": [
+    "Tangentbordet cirkulerar mellan modalens tillgängliga kontroller och lämnar inte den öppna modalen. Text och kontroller ryms i smal mobil visning.",
+    "Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna; efter stängning återgår fokus till **Visa sparandet**.",
+    "Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus. Utkastet förbrukas med exakt ett sparande och en historikpost."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna utkastet och spara. Prova Tab och Skift+Tab och stäng med Escape.
+2. Stäng textvyn. Öppna **Visa sparandet** i kartan och stäng med krysset.
+3. Öppna **Tabell**, välj **Visa sparandet** och stäng med Escape.
+4. Flytta fokus till **Sök objekt i tabellen** och skriv `release` i terminalen.
+5. Skriv `result` och kontrollera det avslutade försöket.
+
+**Förväntat resultat:**
+
+- Tangentbordet cirkulerar mellan modalens tillgängliga kontroller och
+  lämnar inte den öppna modalen. Text och kontroller ryms i smal mobil visning.
+- Stängning avbryter inte sparandet. Uppföljningen är nåbar i båda vyerna;
+  efter stängning återgår fokus till **Visa sparandet**.
+- Senare bekräftelse behåller fokus i tabellens sökfält. Toasten tar inte fokus.
+  Utkastet förbrukas med exakt ett sparande och en historikpost.
+
+### UTKAST-95: kontrollera okänt sparande före kvarstående hämtningsfel
+
+**Syfte:** Kvittot bekräftas innan karthämtningen; hämtningsfel ändrar inte
+utfallet.
+
+**Användare:** Alex Exempel i den separata provinstallationen.
+
+**Förutsättningar:** Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande).
+Välj `new-empty`. Aktivera `lost-response` och `refresh-failure` först
+efter att Lo ligger i utkastet, före sparandet.
+
+**Integrationstest:**
+[draft-status.spec.ts](../../tests/integration/draft-status.spec.ts),
+UTKAST-95.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-status.spec.ts",
+    "caseId": "UTKAST-95"
+  },
+  "reference": "Genomförd transaktion med tappat svar följd av blockerad karthämtning.",
+  "outcomes": [
+    "Kvittot bekräftas innan karthämtningen; hämtningsfel ändrar inte utfallet.",
+    "Hämtningsfelet består efter toasten. Ny hämtning tar bort felet och upprepar inte sparbeskedet."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Lägg Lo Exempel i utkastet och välj Spara hela utkastet. Stäng sparmodalen
+   och textvyn.
+2. Läs Sparutfall okänt utan sparbekräftelse. Välj Hämta aktuellt underlag.
+3. Läs Utkastet är sparat tillsammans med hämtningsfelet. Vänta tills
+   sparbeskedet försvinner.
+4. Välj `network-ok` och Hämta aktuellt underlag. Läs det enda sparandet för Lo
+   i Rapporter → Ändringshistorik.
+
+**Förväntat resultat:**
+
+- Kvittot bekräftas innan karthämtningen; hämtningsfel ändrar inte utfallet.
+- Hämtningsfelet består efter toasten. Ny hämtning tar bort felet och upprepar
+  inte sparbeskedet.
+
+### UTKAST-101: slutför ett befintligt försök efter omladdning
+
+**Syfte:** Samma väntande försök slutförs; den gamla okända uppföljningen och
+utkastikonen försvinner.
+
+**Användare:** Alex Exempel i den separata provinstallationen.
+
+**Förutsättningar:** Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande).
+Välj `new-draft` och `pending-attempt`.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+UTKAST-101.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-101"
+  },
+  "reference": "Verkligt förslag och registrerat väntande försök, ingen AI.",
+  "outcomes": [
+    "Samma väntande försök slutförs; den gamla okända uppföljningen och utkastikonen försvinner.",
+    "Ingen AI eller nytt medgivande behövs; ett enda kvitto och tomt utkast finns kvar."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Ladda om och läs Visa sparandet.
+2. Välj `network-ok` och ladda om för att tillåta automatisk kontroll.
+3. Invänta bekräftelsen. Läs det tomma utkastet genom Skriv till Skyttel → Visa
+   utkastet och det enda sparkvittot i Rapporter.
+
+**Förväntat resultat:**
+
+- Samma väntande försök slutförs; den gamla okända uppföljningen och
+  utkastikonen försvinner.
+- Ingen AI eller nytt medgivande behövs; ett enda kvitto och tomt utkast finns
+  kvar.
+
+### UTKAST-102: avvisa äldre utkastversion utan förlust
+
+**Syfte:** Avvisningen behåller hela det nyare privata utkastet och skapar inget
+historikkvitto.
+
+**Användare:** Alex Exempel i den separata provinstallationen.
+
+**Förutsättningar:** Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande).
+Välj `new-draft` och öppna samma adress i en andra flik.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+UTKAST-102.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-102"
+  },
+  "reference": "Två klienter för samma användare; gammalt sparunderlag mot nyare förslag.",
+  "outcomes": [
+    "Avvisningen behåller hela det nyare privata utkastet och skapar inget historikkvitto.",
+    "Ny läsning erbjuder sparande av det aktuella underlaget utan att själv spara."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Utkast i första fliken. Ändra cykelns namn till Alex nya cykelnamn i
+   andra fliken och lägg i utkastet.
+2. Spara från första flikens gamla granskning. Läs avvisningen och Inget
+   sparades av detta försök. Stäng med Escape.
+3. Kontrollera spärrat sparande. Stäng textvyn och välj Hämta aktuellt underlag.
+4. Öppna Utkast och läs det nya namnet och tillgängligt sparande. Kontrollera
+   tom historik.
+
+**Förväntat resultat:**
+
+- Avvisningen behåller hela det nyare privata utkastet och skapar inget
+  historikkvitto.
+- Ny läsning erbjuder sparande av det aktuella underlaget utan att själv spara.
+
+### UTKAST-103: återför fokus när tabellens uppföljning försvinner
+
+**Syfte:** När den fokuserade uppföljningen försvinner går fokus till tabellens
+synliga hushållsrubrik.
+
+**Användare:** Alex Exempel i den separata provinstallationen.
+
+**Förutsättningar:** Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande).
+Välj `new-draft` och `hold`.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+UTKAST-103.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-103"
+  },
+  "reference": "Tabell; uppföljningsknappen äger fokus vid sen bekräftelse.",
+  "outcomes": [
+    "När den fokuserade uppföljningen försvinner går fokus till tabellens synliga hushållsrubrik.",
+    "Sparandet avslutas utan att lämna fokus på en borttagen kontroll."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Utkast och spara. Stäng med Escape och stäng textvyn.
+2. Öppna Tabell och Visa sparandet. Stäng med Escape och behåll fokus på Visa
+   sparandet.
+3. Skriv `release` och kontrollera fokus när knappen försvinner.
+
+**Förväntat resultat:**
+
+- När den fokuserade uppföljningen försvinner går fokus till tabellens synliga
+  hushållsrubrik.
+- Sparandet avslutas utan att lämna fokus på en borttagen kontroll.
+
+### UTKAST-104: återför synlig utkastkontext efter kontroll från Karta
+
+**Syfte:** Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik
+när modalens uppföljning försvinner.
+
+**Användare:** Alex Exempel i den separata provinstallationen.
+
+**Förutsättningar:** Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande).
+Välj `new-draft`, `lost-response` och 1280 pixlars bredd.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+UTKAST-104.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-104"
+  },
+  "reference": "1280 × 850; kartans uppföljning saknas efter verifierat kvitto.",
+  "outcomes": [
+    "Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när modalens uppföljning försvinner.",
+    "Samma enda sparförsök bekräftas utan samtal eller medgivande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Utkast och spara. Läs Sparandet kunde inte bekräftas. Stäng med Escape
+   och stäng textvyn.
+2. Behåll Karta. Välj Visa sparandet och Kontrollera sparandet igen.
+3. Invänta bekräftelsen och kontrollera det synliga tomma utkastet och fokus.
+
+**Förväntat resultat:**
+
+- Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när
+  modalens uppföljning försvinner.
+- Samma enda sparförsök bekräftas utan samtal eller medgivande.
+
+### UTKAST-105: återför synlig utkastkontext efter kontroll från Karta
+
+**Syfte:** Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik
+när modalens uppföljning försvinner.
+
+**Användare:** Alex Exempel i den separata provinstallationen.
+
+**Förutsättningar:** Följ
+[styrd sparleverans](save-preparation.md#vanligt-sparande).
+Välj `new-draft`, `lost-response` och 390 pixlars bredd.
+
+**Integrationstest:**
+[draft-save.spec.ts](../../tests/integration/draft-save.spec.ts),
+UTKAST-105.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/draft-save.spec.ts",
+    "caseId": "UTKAST-105"
+  },
+  "reference": "390 × 850; kartans uppföljning saknas efter verifierat kvitto.",
+  "outcomes": [
+    "Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när modalens uppföljning försvinner.",
+    "Samma enda sparförsök bekräftas utan samtal eller medgivande."
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Öppna Utkast och spara. Läs Sparandet kunde inte bekräftas. Stäng med Escape
+   och stäng textvyn.
+2. Behåll Karta. Välj Visa sparandet och Kontrollera sparandet igen.
+3. Invänta bekräftelsen och kontrollera det synliga tomma utkastet och fokus.
+
+**Förväntat resultat:**
+
+- Kvittokontrollen öppnar tomt Utkast med fokus på dess synliga rubrik när
+  modalens uppföljning försvinner.
+- Samma enda sparförsök bekräftas utan samtal eller medgivande.

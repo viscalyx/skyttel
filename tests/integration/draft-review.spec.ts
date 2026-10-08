@@ -112,7 +112,7 @@ test('UTKAST-32: lifecycle-only object and relationship proposals distinguish ef
 });
 
 for (const mobile of [false, true])
-  test(`UTKAST-90: ${mobile ? 'mobile' : 'desktop'} complete draft review works without AI or consent`, async ({
+  test(`${mobile ? 'UTKAST-92' : 'UTKAST-90'}: ${mobile ? 'mobile' : 'desktop'} complete draft review works without AI or consent`, async ({
     page,
   }) => {
     const installation = await createInstallation();
@@ -267,7 +267,7 @@ test('UTKAST-91: empty and type-only drafts preserve unsent text and first send 
 });
 
 for (const mobile of [false, true])
-  test(`UTKAST-27: ${mobile ? 'mobile' : 'desktop'} draft reading preserves lifecycle, images and configured field meanings`, async ({
+  test(`${mobile ? 'UTKAST-93' : 'UTKAST-27'}: ${mobile ? 'mobile' : 'desktop'} draft reading preserves lifecycle, images and configured field meanings`, async ({
     page,
   }) => {
     const installation = await createInstallation();
