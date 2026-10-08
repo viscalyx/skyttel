@@ -352,16 +352,20 @@ fysisk touch eller skärmläsaruppläsning.
 **Förutsättningar:** Ett nytt hushåll med HISTORIK-06:s två sparanden för
 Familjeabonnemang, vid 390 × 850 CSS-bildpunkter.
 
+**Separat förberedelse:** Kör
+[fullständiga historiska värden](#fullständiga-historiska-värden) en gång
+i det nya hushållet. Ladda om sidan innan stegen.
+
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-14.
 
 **Steg:**
 
-1. Utför [HISTORIK-06](#historik-06-läs-fullständiga-historiska-värden-med-tangentbord),
-   steg 1–4 vid den angivna bredden.
-2. Fokusera **Visa ändringarna** med tangentbord och tryck Enter. Läs
+1. Välj **Rapporter** vid den angivna bredden. Hitta namnbytets kort först.
+2. Fokusera **Visa ändringarna** med tangentbord och tryck Enter en gång. Läs
    före- och eftervärdenas namn och beskrivning samt skuldens belopp,
    osäkerhet och datum.
+3. Kontrollera synligt fokus och textens omflöde medan detaljerna är öppna.
 
 **Förväntat resultat:**
 
@@ -392,16 +396,20 @@ Familjeabonnemang, vid 390 × 850 CSS-bildpunkter.
 **Förutsättningar:** Ett nytt hushåll med HISTORIK-06:s två sparanden för
 Familjeabonnemang, vid 320 × 850 CSS-bildpunkter.
 
+**Separat förberedelse:** Kör
+[fullständiga historiska värden](#fullständiga-historiska-värden) en gång
+i det nya hushållet. Ladda om sidan innan stegen.
+
 **Integrationstest:**
 [history.spec.ts](../../tests/integration/history.spec.ts), HISTORIK-15.
 
 **Steg:**
 
-1. Utför [HISTORIK-06](#historik-06-läs-fullständiga-historiska-värden-med-tangentbord),
-   steg 1–4 vid den angivna bredden.
-2. Fokusera **Visa ändringarna** med tangentbord och tryck Enter. Läs
+1. Välj **Rapporter** vid den angivna bredden. Hitta namnbytets kort först.
+2. Fokusera **Visa ändringarna** med tangentbord och tryck Enter en gång. Läs
    före- och eftervärdenas namn och beskrivning samt skuldens belopp,
    osäkerhet och datum.
+3. Kontrollera synligt fokus och textens omflöde medan detaljerna är öppna.
 
 **Förväntat resultat:**
 
@@ -438,10 +446,12 @@ Samtalsleverantör saknas. Använd 390 × 844 CSS-bildpunkter.
 **Steg:**
 
 1. Utför [HISTORIK-12](#historik-12-följ-sparlänkar-och-behåll-pågående-arbete),
-   steg 1–5 vid den angivna storleken.
-2. Följ båda sparlänkarna, läs rätt kort och kontrollera rubrikfokus.
-3. Rulla vid behov till **Tillbaka till arbetet** och aktivera knappen
-   med pekaren medan samtalsnotisen finns kvar. Öppna textvyn igen.
+   steg 1–5 en gång vid den angivna storleken. Under steg 3–4, medan
+   Rapporter är öppna, följ båda sparlänkarna och kontrollera rätt kort
+   och rubrikfokus. Under steg 5, innan återgången, kontrollera att
+   notisen är läsbar och att den inte täcker **Tillbaka till arbetet**.
+   Rulla vid behov, aktivera knappen med pekaren och öppna textvyn igen
+   enligt samma steg.
 
 **Förväntat resultat:**
 
@@ -479,10 +489,12 @@ Samtalsleverantör saknas. Använd 320 × 640 CSS-bildpunkter.
 **Steg:**
 
 1. Utför [HISTORIK-12](#historik-12-följ-sparlänkar-och-behåll-pågående-arbete),
-   steg 1–5 vid den angivna storleken.
-2. Följ båda sparlänkarna, läs rätt kort och kontrollera rubrikfokus.
-3. Rulla vid behov till **Tillbaka till arbetet** och aktivera knappen
-   med pekaren medan samtalsnotisen finns kvar. Öppna textvyn igen.
+   steg 1–5 en gång vid den angivna storleken. Under steg 3–4, medan
+   Rapporter är öppna, följ båda sparlänkarna och kontrollera rätt kort
+   och rubrikfokus. Under steg 5, innan återgången, kontrollera att
+   notisen är läsbar och att den inte täcker **Tillbaka till arbetet**.
+   Rulla vid behov, aktivera knappen med pekaren och öppna textvyn igen
+   enligt samma steg.
 
 **Förväntat resultat:**
 
@@ -638,7 +650,10 @@ denna observation.
    tabba till namnbytets **Visa ändringarna** och tryck Enter.
 2. Läs båda namnen, beskrivningen, skuldens belopp, osäkerhet och datum.
    Kontrollera synligt fokus och rullning till hela texten.
-3. Upprepa vid 400 procent och återställ därefter zoom till 100 procent.
+3. Stäng detaljerna med **Visa ändringarna**. Ställ in 400 procent och
+   fokusera samma reglage med tangentbord. Tryck Enter en gång för att
+   öppna detaljerna och läs värdena enligt steg 2 igen.
+4. Återställ zoom till 100 procent.
 
 **Förväntat resultat:**
 

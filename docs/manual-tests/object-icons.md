@@ -338,8 +338,8 @@ denna igenkänning.
 
 **Steg:**
 
-1. Utför IKON-01:s steg 1–3. Titta på det valda cykeltecknet i
-   ikonväljaren innan profilbilden läggs till.
+1. Utför IKON-01:s steg 1–3 en gång. Under steg 1, innan profilbilden
+   läggs till, titta på det valda cykeltecknet i ikonväljaren.
 2. Efter profilbildens borttagning, öppna kartan och hitta Min cykel.
    Jämför teckningen med ikonvalet och bedöm dess betydelse visuellt.
 

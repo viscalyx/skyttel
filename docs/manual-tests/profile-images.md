@@ -216,6 +216,10 @@ profilerna. Använd nya flikar för direkt bildläsning.
 Stäng det oförändrade formuläret med **Avbryt** efter att adressen
 kopierats, innan separat sparande eller nästa bildbyte.
 
+Inför åtkomstprovet efter återkallelsen förbereder testledaren tre
+Eken-adresser med [adressförberedelsen](#bildadresser-för-ekens-medlemskap).
+Använd endast de färdiga adresserna i de vanliga browserstegen.
+
 **Integrationstest:**
 [profile-images.spec.ts](../../tests/integration/profile-images.spec.ts),
 testfallet “BILD-03: private, historical and known image addresses enforce
@@ -232,13 +236,14 @@ current household access”.
    Den första WebP-bilden ska nu
    bara finnas i historiken. Robin ska kunna öppna både dess gamla adress
    och den aktuella PNG-bildens adress.
-3. Lägg JPEG-bilden som ett nytt privat bildförslag utan att spara.
+3. Välj **Tillbaka till arbetet → Tabell**. Lägg JPEG-bilden som ett nytt
+   privat bildförslag utan att spara.
    Kopiera den tredje bildadressen; den ska nekas som Robin. Prova alla
    tre bildadresserna i den utloggade profilen: samtliga ska nekas.
 4. Återkalla Robins tillgång som Alex. Prova alla tre bildadresserna igen.
    Öppna sedan Ekens antecknade adress som Robin och kontrollera att
-   Robin fortfarande har tillgång till det hushållet. Byt hushålls-ID i
-   alla tre bildadresserna till Ekens verkliga ID och öppna dem som Robin.
+   Robin fortfarande har tillgång till det hushållet. Öppna de tre
+   förberedda Eken-adresserna i Robins profil.
    De ska nekas även med giltigt medlemskap i Eken.
 5. Kontrollera att Alex fortfarande kan läsa det aktuella objektet och
    det tredje privata förslaget. Behåll provdatabasen för de tekniska
@@ -298,6 +303,36 @@ await (async () => {
 - Återkallad tillgång stoppar läsning av aktuell, historisk och privat bild samt
   bildändringar. API-proven ger 403 som Robin och 401 som utloggad.
   Giltigt medlemskap i Eken ger inte tillgång till Alex hushålls bilder.
+
+### Bildadresser för Ekens medlemskap
+
+Detta är separat teknisk förberedelse för BILD-03:s steg 4. Kör efter att
+Alex återkallar Robins tillgång och de tre ursprungliga bildadresserna
+är antecknade. Öppna Ekens hushållskarta som Robin. Ange adresserna en
+i taget i konsolens frågor. Koden använder Ekens verkliga medlemskap och
+konstruerar adresserna; browserstegen ändrar inga identifierare.
+Inga bilder eller hushåll ändras. Ladda om sidan efter förberedelsen.
+
+```javascript
+await (async () => {
+  const householdId = location.pathname.match(/households\/([^/]+)/)?.[1];
+  if (!householdId) throw new Error('Öppna Ekens hushållskarta');
+  const membership = await fetch(`/api/households/${householdId}/map`);
+  if (!membership.ok) throw new Error('Robin måste ha tillgång till Eken');
+  const prepared = [];
+  for (const label of ['Historisk bild', 'Aktuell bild', 'Privat bild']) {
+    const original = new URL(prompt(`${label}: ursprunglig bildadress`));
+    const match = original.pathname.match(
+      /^\/api\/households\/([^/]+)\/profile-images\/([^/]+)$/);
+    if (original.origin !== location.origin || !match || match[1] === householdId)
+      throw new Error('Använd en ursprunglig bildadress från Alex hushåll');
+    const address = `${location.origin}/api/households/${householdId}` +
+      `/profile-images/${match[2]}`;
+    prepared.push({ label, address });
+  }
+  console.table(prepared);
+})();
+```
 
 ### BILD-04: Behåll kompletta bildformulär vid fördröjt avvisande
 
@@ -534,12 +569,13 @@ BILD-07.
 
 **Steg:**
 
-1. Utför BILD-04:s steg 1–7 vid den angivna storleken och temat. Lägg först
-   Garagets förslag och båda giltiga bilderna i utkastet.
-2. Fördröj det ogiltiga tilläggets svar, prova Escape och bakgrundsfokus,
-   släpp svaret och kontrollera bevarad text.
-3. Prova Tab, Shift+Tab och Escape i förlustvarningen. Kasta sedan bara
-   lokala uppgifter och öppna Cykeln och Garaget igen.
+1. Utför BILD-04:s steg 1–7 en gång vid den angivna storleken och temat.
+   Under steg 4, medan svaret hålls, kontrollera Escape och bakgrundsfokus.
+   Släpp sedan svaret och kontrollera den bevarade texten enligt steg 5.
+   Under steg 5–6, medan förlustvarningen är öppen, kontrollera Tab,
+   Shift+Tab, Escape och fokusets läsbarhet.
+   Under steg 7, efter att bara lokala uppgifter kastats, kontrollera
+   Cykelns senaste bild och Garagets oberoende förslag.
 
 **Förväntat resultat:**
 
@@ -583,12 +619,13 @@ BILD-08.
 
 **Steg:**
 
-1. Utför BILD-04:s steg 1–7 vid den angivna storleken och temat. Lägg först
-   Garagets förslag och båda giltiga bilderna i utkastet.
-2. Fördröj det ogiltiga tilläggets svar, prova Escape och bakgrundsfokus,
-   släpp svaret och kontrollera bevarad text.
-3. Prova Tab, Shift+Tab och Escape i förlustvarningen. Kasta sedan bara
-   lokala uppgifter och öppna Cykeln och Garaget igen.
+1. Utför BILD-04:s steg 1–7 en gång vid den angivna storleken och temat.
+   Under steg 4, medan svaret hålls, kontrollera Escape och bakgrundsfokus.
+   Släpp sedan svaret och kontrollera den bevarade texten enligt steg 5.
+   Under steg 5–6, medan förlustvarningen är öppen, kontrollera Tab,
+   Shift+Tab, Escape och fokusets läsbarhet.
+   Under steg 7, efter att bara lokala uppgifter kastats, kontrollera
+   Cykelns senaste bild och Garagets oberoende förslag.
 
 **Förväntat resultat:**
 
@@ -632,12 +669,13 @@ BILD-09.
 
 **Steg:**
 
-1. Utför BILD-04:s steg 1–7 vid den angivna storleken och temat. Lägg först
-   Garagets förslag och båda giltiga bilderna i utkastet.
-2. Fördröj det ogiltiga tilläggets svar, prova Escape och bakgrundsfokus,
-   släpp svaret och kontrollera bevarad text.
-3. Prova Tab, Shift+Tab och Escape i förlustvarningen. Kasta sedan bara
-   lokala uppgifter och öppna Cykeln och Garaget igen.
+1. Utför BILD-04:s steg 1–7 en gång vid den angivna storleken och temat.
+   Under steg 4, medan svaret hålls, kontrollera Escape och bakgrundsfokus.
+   Släpp sedan svaret och kontrollera den bevarade texten enligt steg 5.
+   Under steg 5–6, medan förlustvarningen är öppen, kontrollera Tab,
+   Shift+Tab, Escape och fokusets läsbarhet.
+   Under steg 7, efter att bara lokala uppgifter kastats, kontrollera
+   Cykelns senaste bild och Garagets oberoende förslag.
 
 **Förväntat resultat:**
 
@@ -681,12 +719,13 @@ BILD-10.
 
 **Steg:**
 
-1. Utför BILD-04:s steg 1–7 vid den angivna storleken och temat. Lägg först
-   Garagets förslag och båda giltiga bilderna i utkastet.
-2. Fördröj det ogiltiga tilläggets svar, prova Escape och bakgrundsfokus,
-   släpp svaret och kontrollera bevarad text.
-3. Prova Tab, Shift+Tab och Escape i förlustvarningen. Kasta sedan bara
-   lokala uppgifter och öppna Cykeln och Garaget igen.
+1. Utför BILD-04:s steg 1–7 en gång vid den angivna storleken och temat.
+   Under steg 4, medan svaret hålls, kontrollera Escape och bakgrundsfokus.
+   Släpp sedan svaret och kontrollera den bevarade texten enligt steg 5.
+   Under steg 5–6, medan förlustvarningen är öppen, kontrollera Tab,
+   Shift+Tab, Escape och fokusets läsbarhet.
+   Under steg 7, efter att bara lokala uppgifter kastats, kontrollera
+   Cykelns senaste bild och Garagets oberoende förslag.
 
 **Förväntat resultat:**
 
@@ -730,12 +769,13 @@ BILD-11.
 
 **Steg:**
 
-1. Utför BILD-04:s steg 1–7 vid den angivna storleken och temat. Lägg först
-   Garagets förslag och båda giltiga bilderna i utkastet.
-2. Fördröj det ogiltiga tilläggets svar, prova Escape och bakgrundsfokus,
-   släpp svaret och kontrollera bevarad text.
-3. Prova Tab, Shift+Tab och Escape i förlustvarningen. Kasta sedan bara
-   lokala uppgifter och öppna Cykeln och Garaget igen.
+1. Utför BILD-04:s steg 1–7 en gång vid den angivna storleken och temat.
+   Under steg 4, medan svaret hålls, kontrollera Escape och bakgrundsfokus.
+   Släpp sedan svaret och kontrollera den bevarade texten enligt steg 5.
+   Under steg 5–6, medan förlustvarningen är öppen, kontrollera Tab,
+   Shift+Tab, Escape och fokusets läsbarhet.
+   Under steg 7, efter att bara lokala uppgifter kastats, kontrollera
+   Cykelns senaste bild och Garagets oberoende förslag.
 
 **Förväntat resultat:**
 
@@ -779,12 +819,13 @@ BILD-12.
 
 **Steg:**
 
-1. Utför BILD-04:s steg 1–7 vid den angivna storleken och temat. Lägg först
-   Garagets förslag och båda giltiga bilderna i utkastet.
-2. Fördröj det ogiltiga tilläggets svar, prova Escape och bakgrundsfokus,
-   släpp svaret och kontrollera bevarad text.
-3. Prova Tab, Shift+Tab och Escape i förlustvarningen. Kasta sedan bara
-   lokala uppgifter och öppna Cykeln och Garaget igen.
+1. Utför BILD-04:s steg 1–7 en gång vid den angivna storleken och temat.
+   Under steg 4, medan svaret hålls, kontrollera Escape och bakgrundsfokus.
+   Släpp sedan svaret och kontrollera den bevarade texten enligt steg 5.
+   Under steg 5–6, medan förlustvarningen är öppen, kontrollera Tab,
+   Shift+Tab, Escape och fokusets läsbarhet.
+   Under steg 7, efter att bara lokala uppgifter kastats, kontrollera
+   Cykelns senaste bild och Garagets oberoende förslag.
 
 **Förväntat resultat:**
 
@@ -828,12 +869,13 @@ BILD-13.
 
 **Steg:**
 
-1. Utför BILD-04:s steg 1–7 vid den angivna storleken och temat. Lägg först
-   Garagets förslag och båda giltiga bilderna i utkastet.
-2. Fördröj det ogiltiga tilläggets svar, prova Escape och bakgrundsfokus,
-   släpp svaret och kontrollera bevarad text.
-3. Prova Tab, Shift+Tab och Escape i förlustvarningen. Kasta sedan bara
-   lokala uppgifter och öppna Cykeln och Garaget igen.
+1. Utför BILD-04:s steg 1–7 en gång vid den angivna storleken och temat.
+   Under steg 4, medan svaret hålls, kontrollera Escape och bakgrundsfokus.
+   Släpp sedan svaret och kontrollera den bevarade texten enligt steg 5.
+   Under steg 5–6, medan förlustvarningen är öppen, kontrollera Tab,
+   Shift+Tab, Escape och fokusets läsbarhet.
+   Under steg 7, efter att bara lokala uppgifter kastats, kontrollera
+   Cykelns senaste bild och Garagets oberoende förslag.
 
 **Förväntat resultat:**
 
@@ -877,11 +919,12 @@ BILD-14.
 **Steg:**
 
 1. Utför [BILD-05](#bild-05-spärra-navigering-under-bildtillägg-och-behåll-inaktuellt-formulär),
-   steg 1–6 vid den angivna bredden.
-2. Prova Bakåt under väntan och efter synligt bildfel. Avbryt den första
-   förlustvarningen med Escape; bekräfta kastande vid nästa försök.
-3. Ändra utkastet från andra fliken medan första flikens nya bildformulär
-   är öppet. Läs avslaget och kontrollera både text och vald fil.
+   steg 1–6 en gång vid den angivna bredden. Under steg 2, medan svaret
+   hålls, kontrollera spärrad Bakåt. Under steg 3, efter synligt bildfel,
+   avbryt första förlustvarningen med Escape och bekräfta nästa kastande.
+   Under steg 5–6, medan första flikens nya formulär är öppet, ändra
+   utkastet från andra fliken och kontrollera både text och vald fil
+   efter det inaktuella tilläggets avslag.
 
 **Förväntat resultat:**
 
@@ -924,11 +967,12 @@ BILD-15.
 **Steg:**
 
 1. Utför [BILD-05](#bild-05-spärra-navigering-under-bildtillägg-och-behåll-inaktuellt-formulär),
-   steg 1–6 vid den angivna bredden.
-2. Prova Bakåt under väntan och efter synligt bildfel. Avbryt den första
-   förlustvarningen med Escape; bekräfta kastande vid nästa försök.
-3. Ändra utkastet från andra fliken medan första flikens nya bildformulär
-   är öppet. Läs avslaget och kontrollera både text och vald fil.
+   steg 1–6 en gång vid den angivna bredden. Under steg 2, medan svaret
+   hålls, kontrollera spärrad Bakåt. Under steg 3, efter synligt bildfel,
+   avbryt första förlustvarningen med Escape och bekräfta nästa kastande.
+   Under steg 5–6, medan första flikens nya formulär är öppet, ändra
+   utkastet från andra fliken och kontrollera både text och vald fil
+   efter det inaktuella tilläggets avslag.
 
 **Förväntat resultat:**
 
@@ -986,11 +1030,16 @@ De automatiska CSS-storlekarna utför inte denna observation.
 
 **Steg:**
 
-1. Ställ in 200 procents zoom och utför BILD-04:s steg 1–7. Rulla till
-   bildfält och knappar. Prova Tab, Shift+Tab och Escape i varningen.
-2. Återställ hushållet och upprepa vid 400 procent. Prova båda teman.
-3. Kontrollera Cykelns senaste giltiga bild och Garagets förslag.
-   Återställ därefter zoom till 100 procent och avsluta transporten.
+1. Börja med ett nytt hushåll för varje kombination av 200 eller 400
+   procents zoom och ljust eller mörkt tema. Ställ in kombinationen innan
+   bildarbetet börjar och förbered den styrda leveransen för hushållet.
+2. Utför BILD-04:s steg 1–7 en gång per kombination. Rulla till bildfält
+   och knappar under steg 2–4. Under steg 5–6, medan förlustvarningen
+   är öppen, prova Tab, Shift+Tab och Escape och läs fokus under pekaren.
+   Under steg 7, efter kastandet, kontrollera Cykelns senaste giltiga
+   bild och Garagets förslag.
+3. Återställ zoom till 100 procent och avsluta transporten efter sista
+   kombinationen.
 
 **Förväntat resultat:**
 
