@@ -465,7 +465,6 @@ for (const viewport of [
       // Its transport grace period is covered by the voice tests.
       if (viewport.height <= 450)
         await page.clock.pauseAt(await page.evaluate(() => Date.now() + 60_000));
-      if (viewport.height <= 450) await page.getByText('Visningsval', { exact: true }).click();
       // A real browser can lose its provider connection independently of HTTP.
       await page.evaluate(() => window.skyttelVoiceFixture.disconnect());
       await expect(notice(page)).toContainText(disconnectedActive);
@@ -518,7 +517,7 @@ for (const viewport of [
         await expect(reset).toBeFocused();
       } else await reset.scrollIntoViewIfNeeded();
       await uncovered(reset);
-      await reset.click({ trial: true });
+      await reset.hover();
       const camera = page
         .getByRole('navigation', { name: 'Kameravy', exact: true })
         .getByRole('button', { name: 'Navigera', exact: true });

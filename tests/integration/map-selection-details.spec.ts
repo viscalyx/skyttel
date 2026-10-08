@@ -100,7 +100,7 @@ test('MARKERING-06: independent property windows share context actions and move 
     const cameraBefore = await positions();
     await bike.click({ button: 'right' });
     const actions = page.getByRole('toolbar', { name: 'Åtgärder för Cykel', exact: true });
-    await expect(actions.getByRole('button')).toHaveCount(6);
+    await expect(actions.getByRole('button')).toHaveCount(7);
     await actions.getByRole('button', { name: 'Samband för Cykel', exact: true }).click();
     const relationships = page.getByRole('dialog', { name: 'Samband för Cykel', exact: true });
     await expect(
@@ -124,7 +124,7 @@ test('MARKERING-06: independent property windows share context actions and move 
       await firstActions
         .locator('button svg path')
         .evaluateAll((paths) => paths.map((path) => path.getAttribute('d'))),
-    ).toEqual(icons.filter((_, index) => index !== 1));
+    ).toEqual(icons.filter((_, index) => index !== 1 && index !== 5));
     expect(await firstActions.getByRole('button').allTextContents()).toEqual(['', '', '', '', '']);
     expect(
       await first.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).textContent(),

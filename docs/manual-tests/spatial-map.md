@@ -125,12 +125,12 @@ from saved content”.
    sambandsetiketter utan att välja Alla etiketter.
    Öppna **Skriv till Skyttel**, visa utkastet och spara med sparikonen.
    Stäng textvyn efter sparbekräftelsen.
-2. Markera Molnmusik och läs legenden. Högerklicka Molnmusik. Kontrollera sex
-   ikoner: penna, uppgifter, samband, riktmärke, direkta
-   samband i kartan och röd papperskorg.
+2. Markera Molnmusik och läs legenden. Högerklicka Molnmusik. Kontrollera sju
+   ikoner: penna, uppgifter, samband, karta, nätverk, fokusram
+   och röd papperskorg.
    Läs deras tooltips. Kontrollera fokus på pennan och flytta med högerpil
    förbi uppgifter och samband till **Visa i kartan** och sedan
-   **Visa samband i kartan**.
+   **Visa samband i kartan** och **Fokusera markering**.
    Tryck Escape och kontrollera fokus tillbaka på objektet. Öppna med
    Shift+F10 och klicka sedan Lo Exempel; ikonerna ska stängas.
    Högerklicka Molnmusik igen och välj pennan, **Redigera objekt**.
@@ -150,8 +150,9 @@ from saved content”.
 - Åtgärderna visas som ikoner vid objektet eller namnet.
   Pennan öppnar redigering. Nätverksikonen visar direkta samband och behåller
   sökning och filter. Escape återför fokus, och klick utanför stänger raden.
-  Riktmärket **Visa i kartan** rensar sökning och filter. Ikonerna motsvarar
-  samma åtgärder i hushållets lista.
+  Kartikonen **Visa i kartan** rensar sökning och filter. Fokusramen
+  **Fokusera markering** behåller urval, sökning och filter. Kart- och
+  nätverksikonerna motsvarar samma åtgärder i hushållets lista.
 - Samband som föreslås tas bort visas med en böjd, streckad linje.
 - Borttagningen omfattar det anslutna sambandet direkt i utkastet.
   Sparad karta och det andra objektet ändras inte.
@@ -176,7 +177,7 @@ unsent editing”.
 **Steg:**
 
 1. Kontrollera att rymdkartan är startläge. Håll
-   på Molnmusik tills de sex ikonerna visas.
+   på Molnmusik tills de sju ikonerna visas.
    Släpp och kontrollera att ikonerna finns kvar och inget formulär öppnas.
    Välj pennan, **Redigera objekt**.
 2. Skriv Oskickad mobiltext i beskrivningen. Vänd enheten och kontrollera
@@ -437,9 +438,9 @@ its saved and private list”.
 3. Öppna **Karta** och välj Kim Exempel med tangentbord. Kontrollera att
    namnet går att läsa och välja. Om information om dolda etiketter visas får
    den inte täcka namnens träffytor.
-4. Minska vyn till ungefär 320 × 250 CSS-pixlar. Öppna **Visningsval**,
-   slå på **Alla etiketter** och kontrollera att samtliga tre namn finns.
-   Slå av valet och stäng Visningsval. Återställ den större vyn och öppna
+4. Minska vyn till ungefär 320 × 250 CSS-pixlar. Slå på
+   **Alla etiketter** med etikettikonen i verktygsfältet och kontrollera att
+   samtliga tre namn finns. Slå av valet. Återställ den större vyn och öppna
    **Tabell** igen.
 
 **Förväntat resultat:**
@@ -448,7 +449,7 @@ its saved and private list”.
   växlande etikettinformation som hindrar arbetet.
 - Den synliga informationen anger antalet dolda etiketter. När ingen
   information behövs visas ingen tom informationsruta.
-- Visningsval går att öppna och stänga i den korta vyn. Vid återgång blir
-  visningskontrollerna åtkomliga igen.
+- Etikettikonen går att slå på och av i den korta vyn och är åtkomlig
+  även efter återgång till den större vyn.
 - De två sparade objekten och sambandet består. Robins notering förblir
   ett privat förslag och den sparade beskrivningen ändras inte.

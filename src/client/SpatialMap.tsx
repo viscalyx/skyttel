@@ -78,6 +78,7 @@ export function SpatialMap({
   onRelationships,
   onClear,
   onReset,
+  resetAvailable = Boolean(selection),
   onSearchStart,
   onSearchClear,
   onRemove,
@@ -86,8 +87,8 @@ export function SpatialMap({
   revealRequest,
   focusRequest,
   onFocusSelection,
-  onShowOverview,
   cameraMount,
+  labelMount,
   settingsMount,
   onCameraAction,
   navigationMount,
@@ -119,6 +120,7 @@ export function SpatialMap({
   onRelationships?: (object: MapObject) => void;
   onClear: () => void;
   onReset: () => void;
+  resetAvailable?: boolean;
   onSearchStart?: (text: string) => void;
   onSearchClear?: () => void;
   onRemove: (object: MapObject) => void;
@@ -127,8 +129,8 @@ export function SpatialMap({
   revealRequest?: MapRevealRequest;
   focusRequest?: { id: string; objectIds: string[] };
   onFocusSelection?: () => void;
-  onShowOverview?: () => void;
   cameraMount?: HTMLElement | null;
+  labelMount?: HTMLElement | null;
   settingsMount?: HTMLElement | null;
   onCameraAction?: () => void;
   navigationMount?: HTMLElement | null;
@@ -138,6 +140,14 @@ export function SpatialMap({
   navigationFocus?: boolean;
 }) {
   const labelPrefix = useId();
+  const showPersonalToast = useCallback(
+    (element: HTMLParagraphElement | null) => {
+      if (element?.popover !== 'manual') return;
+      if (active && !element.matches(':popover-open')) element.showPopover();
+      else if (!active && element.matches(':popover-open')) element.hidePopover();
+    },
+    [active],
+  );
   const relationshipLabelPrefix = useId();
   const [navigationOpen, setNavigationOpen] = useState(false);
   const navigationTrigger = useRef<HTMLButtonElement>(null);
@@ -205,7 +215,7 @@ export function SpatialMap({
     // The filter dialog overlays the map without reserving label space.
     const boxes = [
       ...root.querySelectorAll(
-        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .spatial-bottom-bar, .label-note, .spatial-display-tools > summary, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
+        `.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .conversation-notice, .map-navigation, .label-note, .spatial-view-actions${revealRequest ? ', .map-selection-details' : ''}`,
       ),
     ].flatMap((element) => {
       if (element.closest('details:not([open])') && !element.matches('summary')) return [];
@@ -272,17 +282,6 @@ export function SpatialMap({
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   );
-  const [shortViewport, setShortViewport] = useState(
-    () => window.matchMedia?.('(max-width: 700px) and (max-height: 450px)').matches ?? false,
-  );
-  useEffect(() => {
-    const viewport = window.matchMedia?.('(max-width: 700px) and (max-height: 450px)');
-    if (!viewport) return;
-    const update = () => setShortViewport(viewport.matches);
-    update();
-    viewport.addEventListener('change', update);
-    return () => viewport.removeEventListener('change', update);
-  }, []);
   useEffect(() => {
     const preference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     if (!preference) return;
@@ -304,8 +303,7 @@ export function SpatialMap({
   const [points, setPoints] = useState<ProjectedPoint[]>([]);
   const [completedRevealId, setCompletedRevealId] = useState<string>();
   const [completedFocusId, setCompletedFocusId] = useState<string>();
-  const [overviewShown, setOverviewShown] = useState(false);
-  const [overviewRequested, setOverviewRequested] = useState(false);
+  const [cameraHistory, setCameraHistory] = useState({ canGoBack: false, changed: false });
   const [unavailable, setUnavailable] = useState(false);
   const [contextLost, setContextLost] = useState(false);
   useEffect(() => {
@@ -313,6 +311,7 @@ export function SpatialMap({
   }, [unavailable, contextLost, onAvailabilityChange]);
   const allLabels = preferences.allLabels;
   const previousLabels = useRef(false);
+  const labelsInitialized = useRef(false);
   const [closerLabels, setCloserLabels] = useState(false);
   const [heightHelp, setHeightHelp] = useState(false);
   const [shiftHeld, setShiftHeld] = useState(false);
@@ -388,6 +387,7 @@ export function SpatialMap({
         setOrientation,
         motion,
         surface.current ?? element,
+        setCameraHistory,
       );
     } catch {
       setUnavailable(true);
@@ -412,14 +412,15 @@ export function SpatialMap({
     scene.current?.select(selectedIds);
   }, [activated, selectedIds]);
   useEffect(() => {
-    if (!activated) return;
+    if (!activated || !personalReady) return;
     scene.current?.configure({ ...preferences, stars: preferences.stars && !reducedMotion }, theme);
     if (!active) return;
     if (preferences.allLabels && !previousLabels.current) {
-      if (scene.current?.openLabelView()) setCloserLabels(true);
+      if (scene.current?.openLabelView(labelsInitialized.current)) setCloserLabels(true);
     }
+    labelsInitialized.current = true;
     previousLabels.current = preferences.allLabels;
-  }, [preferences, activated, active, reducedMotion, theme]);
+  }, [preferences, activated, active, personalReady, reducedMotion, theme]);
   const focusObjects = useCallback((ids: string[], reveal?: MapRevealRequest) => {
     const element = canvas.current;
     if (!element) return false;
@@ -433,7 +434,7 @@ export function SpatialMap({
     const overlays = element
       .closest('.household-map')
       ?.querySelectorAll(
-        '.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-bottom-bar, .spatial-display-tools, .spatial-view-actions, .map-selection-details',
+        '.workspace-tools, .workspace-context, .map-object-search, .map-search-filter, .workspace-feedback, .voice-box, .workspace-voice-controls, .spatial-tools, .map-navigation, .spatial-view-actions, .map-selection-details',
       );
     for (const overlay of overlays ?? []) {
       const closedTools = overlay.closest('details:not([open])');
@@ -593,11 +594,6 @@ export function SpatialMap({
     objects,
     focusObjects,
   ]);
-  useEffect(() => {
-    if (!overviewRequested) return;
-    setOverviewShown(scene.current?.toggleOverview() ?? false);
-    setOverviewRequested(false);
-  }, [overviewRequested]);
   useEffect(() => {
     if (!resetRequested) return;
     // Reframe after the shared view has revealed previously filtered objects.
@@ -908,6 +904,28 @@ export function SpatialMap({
         if (edge.targetId) adjacent.add(edge.targetId);
       }
   }
+  const labelFeedback = (
+    <>
+      {!allLabels && objects.size > 0 && (
+        <p className={`label-note label-note-reservation${hiddenLabels ? '' : ' inactive'}`}>
+          {/* Size the obstacle independently of the labels it displaces. */}
+          <span aria-hidden="true" className="label-note-size">
+            <span className="label-note-count">{objects.size + edges.length}</span> etiketter döljs
+            för läsbarhet.
+          </span>
+          {hiddenLabels > 0 && (
+            <span className="label-note-message">
+              <span className="label-note-count">{hiddenLabels}</span> etiketter döljs för
+              läsbarhet.
+            </span>
+          )}
+        </p>
+      )}
+      {allLabels && closerLabels && (
+        <p className="label-note">Närmare utsnitt. Panorera för att se fler etiketter.</p>
+      )}
+    </>
+  );
   const cameraTools = (
     <nav className="spatial-view-actions" aria-label="Kameravy">
       <button
@@ -926,43 +944,53 @@ export function SpatialMap({
       </button>
       <button
         type="button"
-        title="Fokusera markering"
-        aria-label="Fokusera markering"
-        disabled={!selectedIds.length || !active || !personalReady || unavailable || contextLost}
+        title="Gå tillbaka ett steg i kamerans vyhistorik. Behåller sökning, filter, markering och objektplaceringar."
+        aria-label="Föregående vy"
+        disabled={!active || !personalReady || unavailable || contextLost}
+        aria-disabled={!cameraHistory.canGoBack || undefined}
         onClick={() => {
+          if (!cameraHistory.canGoBack) return;
           onCameraAction?.();
-          if (onFocusSelection) onFocusSelection();
-          else {
-            const ids = new Set(selectedIds);
-            for (const edge of relationships.values()) {
-              if (
-                !selectedIds.includes(edge.sourceId) &&
-                (!edge.targetId || !selectedIds.includes(edge.targetId))
-              )
-                continue;
-              ids.add(edge.sourceId);
-              if (edge.targetId) ids.add(edge.targetId);
-            }
-            focusObjects([...ids]);
-          }
+          scene.current?.previousView();
         }}
       >
-        <WorkspaceIcon name="focus" />
-        <span>Fokusera markering</span>
+        <WorkspaceIcon name="returnView" />
+        <span>Föregående vy</span>
       </button>
       <button
         type="button"
-        title={overviewShown ? 'Återgå till föregående vy' : 'Visa hela kartan'}
-        aria-label={overviewShown ? 'Återgå till föregående vy' : 'Visa hela kartan'}
-        disabled={!active || !personalReady || unavailable || contextLost}
+        title="Visa alla objekt- och sambandsetiketter. Tryck igen för att återgå till automatiska etiketter. Valet sparas i din personliga vy."
+        aria-label="Alla etiketter"
+        aria-pressed={allLabels}
+        disabled={personal && !personal.view}
+        aria-disabled={personal?.pending || undefined}
         onClick={() => {
+          if (personal?.pending) return;
           onCameraAction?.();
-          if (!overviewShown) onShowOverview?.();
-          setOverviewRequested(true);
+          configure({ allLabels: !allLabels });
         }}
       >
-        <WorkspaceIcon name={overviewShown ? 'returnView' : 'overview'} />
-        <span>{overviewShown ? 'Återgå till föregående vy' : 'Visa hela kartan'}</span>
+        <WorkspaceIcon name="labels" />
+        <span>Alla etiketter</span>
+      </button>
+      <button
+        type="button"
+        title="Visa hela kartan och återställ sökning, filter, markering och kamerans vyhistorik. Behåller dina objektplaceringar och valet Alla etiketter."
+        aria-label="Återställ vy"
+        disabled={!active || !personalReady || unavailable || contextLost}
+        aria-disabled={
+          (!resetAvailable && !cameraHistory.changed && !cameraHistory.canGoBack) || undefined
+        }
+        onClick={() => {
+          if (!resetAvailable && !cameraHistory.changed && !cameraHistory.canGoBack) return;
+          onCameraAction?.();
+          setCloserLabels(false);
+          onReset();
+          setResetRequested(true);
+        }}
+      >
+        <WorkspaceIcon name="reset" />
+        <span>Återställ vy</span>
       </button>
     </nav>
   );
@@ -1063,7 +1091,16 @@ export function SpatialMap({
             </label>
             {reducedMotion && <span>Minskad rörelse: stjärnhimlen är avstängd.</span>}
             <p>Stjärnhimlen följer panorering, rotation och zoom. Ditt val sparas direkt.</p>
-            {personal?.message && <p role="status">{personal.message}</p>}
+            <div role="status" aria-atomic="true">
+              {personal?.message && (
+                <p
+                  key={personal.messageId}
+                  className={personal.toast ? 'personal-view-toast' : undefined}
+                >
+                  {personal.message}
+                </p>
+              )}
+            </div>
             {personal && (
               <button
                 type="button"
@@ -1083,7 +1120,26 @@ export function SpatialMap({
           entry={menuEntry}
           state={state}
           disabled={disabled}
-          mapAvailable={!unavailable && !contextLost}
+          mapAvailable={active && personalReady && !unavailable && !contextLost}
+          selectionAvailable={selectedIds.length > 0}
+          onFocusSelection={() => {
+            onCameraAction?.();
+            if (onFocusSelection) onFocusSelection();
+            else {
+              const ids = new Set(selectedIds);
+              for (const edge of relationships.values()) {
+                if (
+                  !selectedIds.includes(edge.sourceId) &&
+                  (!edge.targetId || !selectedIds.includes(edge.targetId))
+                )
+                  continue;
+                ids.add(edge.sourceId);
+                if (edge.targetId) ids.add(edge.targetId);
+              }
+              focusObjects([...ids]);
+            }
+            canvas.current?.focus();
+          }}
           onClose={closeMenu}
           onEdit={onEdit}
           onFocus={onFocus}
@@ -1435,61 +1491,19 @@ export function SpatialMap({
           <SpatialOrientation orientation={orientation} corner={preferences.axisCorner} />
         )}
       </div>
-      {personal?.message && (
-        <p aria-live="polite" className="personal-view-status">
-          {personal.message}
-        </p>
-      )}
-      <details
-        className="spatial-display-tools"
-        open={!shortViewport}
-        onToggle={measureReservedBoxes}
-      >
-        <summary>Visningsval</summary>
-        <div className="spatial-bottom-bar">
-          <button
-            type="button"
-            onClick={() => {
-              setCloserLabels(false);
-              onReset();
-              setResetRequested(true);
-            }}
+      <div aria-live="polite" aria-atomic="true">
+        {personal?.message && (
+          <p
+            key={personal.messageId}
+            ref={showPersonalToast}
+            popover={personal.toast ? 'manual' : undefined}
+            className={`personal-view-status${personal.toast ? ' personal-view-toast' : ''}`}
           >
-            Återställ vy
-          </button>
-          <label>
-            <input
-              type="checkbox"
-              checked={allLabels}
-              disabled={personal && (!personal.view || personal.pending)}
-              onChange={(event) => {
-                configure({ allLabels: event.target.checked });
-              }}
-            />{' '}
-            Alla etiketter
-          </label>
-        </div>
-        {!allLabels && objects.size > 0 && (
-          <p className={`label-note label-note-reservation${hiddenLabels ? '' : ' inactive'}`}>
-            {/* Size the obstacle independently of the labels it displaces. */}
-            <span aria-hidden="true" className="label-note-size">
-              <span className="label-note-count">{objects.size + edges.length}</span> etiketter
-              döljs för läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller
-              välj ett objekt och visa dess kopplingar.
-            </span>
-            {hiddenLabels > 0 && (
-              <span className="label-note-message">
-                <span className="label-note-count">{hiddenLabels}</span> etiketter döljs för
-                läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller välj ett
-                objekt och visa dess kopplingar.
-              </span>
-            )}
+            {personal.message}
           </p>
         )}
-        {allLabels && closerLabels && (
-          <p className="label-note">Närmare utsnitt. Panorera för att se fler etiketter.</p>
-        )}
-      </details>
+      </div>
+      {labelMount ? createPortal(labelFeedback, labelMount) : labelFeedback}
     </section>
   );
 }

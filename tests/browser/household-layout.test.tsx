@@ -179,7 +179,7 @@ test('relationship details open saved and proposed routes with pointer and keybo
       relationships: [{ id: before.id, before, after, type }],
     },
   });
-  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   const saved = page.getByRole('button', {
     name: 'Välj tidigare samband: Alex → använder → Tonmoln',
     exact: true,
@@ -204,7 +204,7 @@ test('relationship details open saved and proposed routes with pointer and keybo
     .toBeVisible();
 });
 
-test('camera focus includes previous direct neighbors and preserves work through overview and compact tool expansion', async () => {
+test('camera focus includes previous direct neighbors and preserves work through view history and compact tool expansion', async () => {
   const mapState = structuredClone(state);
   const type = { ...state.types[0], id: 'uses', name: 'Använder' };
   const edge = {
@@ -244,7 +244,10 @@ test('camera focus includes previous direct neighbors and preserves work through
   };
   const separation = () =>
     Math.hypot(position(alex).x - position(music).x, position(alex).y - position(music).y);
+  alex.element().focus();
+  await userEvent.keyboard('{Shift>}{F10}{/Shift}');
   await expect.element(focus).toBeDisabled();
+  await userEvent.keyboard('{Escape}');
   await alex.click();
   const initialSeparation = separation();
   await alex.dblClick();
@@ -253,6 +256,8 @@ test('camera focus includes previous direct neighbors and preserves work through
   await panel.getByRole('group', { name: 'Flytta uppgiftsfönstret för Alex', exact: true }).click();
   await userEvent.keyboard(`{Shift>}${'{ArrowLeft}'.repeat(24)}{/Shift}`);
   const panelBox = panel.element().getBoundingClientRect().toJSON();
+  alex.element().focus();
+  await userEvent.keyboard('{Shift>}{F10}{/Shift}');
   await focus.click();
   await expect.poll(separation).toBeGreaterThan(initialSeparation * 2);
   expect(panel.element().getBoundingClientRect().toJSON()).toEqual(panelBox);
@@ -266,11 +271,12 @@ test('camera focus includes previous direct neighbors and preserves work through
   }
   await expect.element(music).toHaveAttribute('aria-pressed', 'false');
   const focused = position(alex);
-  await page.getByRole('button', { name: 'Visa hela kartan', exact: true }).click();
-  await focus.click();
-  await page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }).click();
+  await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+  await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
+  await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Föregående vy', exact: true }).click();
   await expect
-    .element(page.getByRole('button', { name: 'Visa hela kartan', exact: true }))
+    .element(page.getByRole('button', { name: 'Föregående vy', exact: true }))
     .toBeVisible();
   expect(position(alex)).toEqual(focused);
   await expect.element(reading).toBeVisible();
@@ -278,9 +284,11 @@ test('camera focus includes previous direct neighbors and preserves work through
   await page.getByRole('button', { name: 'Stäng uppgifterna', exact: true }).click();
   await page.viewport(320, 250);
   await page.getByRole('button', { name: 'Visa verktygens namn', exact: true }).click();
+  alex.element().focus();
+  await userEvent.keyboard('{Shift>}{F10}{/Shift}');
   (focus.element() as HTMLElement).focus();
   await userEvent.keyboard('{Enter}');
-  await expect.element(focus).toHaveFocus();
+  await expect.element(page.getByRole('img', { name: /Rymdens bakgrund/ })).toHaveFocus();
   await expect
     .element(page.getByRole('button', { name: 'Visa verktygens namn', exact: true }))
     .toBeVisible();
@@ -746,7 +754,7 @@ test('phone editing retains text during resize and canceled loss, and confirmed 
   );
 });
 
-test('landscape display options preserve canvas height and reachable controls', async ({
+test('landscape toolbar controls preserve canvas height and reachable navigation', async ({
   onTestFinished,
 }) => {
   const session = cdp();
@@ -758,9 +766,11 @@ test('landscape display options preserve canvas height and reachable controls', 
   });
   await open(640);
   await page.viewport(640, 390);
-  await page.getByText('Visningsval', { exact: true }).click();
-  const toolbar = document.querySelector('.spatial-bottom-bar') as HTMLElement;
-  await expect.poll(() => toolbar.scrollWidth <= toolbar.clientWidth).toBe(true);
+  await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();
+  const reset = page.getByRole('button', { name: 'Återställ vy', exact: true });
+  reset.element().focus();
+  await expect.element(reset).toHaveFocus();
+  await reset.click();
   const height = () => document.querySelector('canvas')?.getBoundingClientRect().height;
   await expect.poll(height).toBeGreaterThan(200);
   await page.getByRole('button', { name: 'Välj objekt: Alex', exact: true }).click();

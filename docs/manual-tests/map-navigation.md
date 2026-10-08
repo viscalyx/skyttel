@@ -219,7 +219,8 @@ Ctrl mouse-wheel notch stays limited”.
 
 **Steg:**
 
-1. Välj **Återställ vy**. Håll pekaren över tom rymd.
+1. Börja i återställt läge. Om **Återställ vy** är aktiv, välj den.
+   Håll pekaren över tom rymd.
 2. Nyp långsamt isär med två fingrar på styrplattan. Nyp sedan långsamt
    ihop.
 3. Välj **Återställ vy**. Nyp snabbt isär med samma fingeravstånd som i

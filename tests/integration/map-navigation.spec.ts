@@ -612,7 +612,8 @@ test('NAVIGATION-05: trackpad pinch zoom follows pinch speed while a Ctrl mouse-
     const baseline = await separation();
     expect(baseline).toBeGreaterThan(20);
     const reset = async () => {
-      await space.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+      const button = page.getByRole('button', { name: 'Återställ vy', exact: true });
+      if (await button.isEnabled()) await button.click();
       await expect.poll(separation).toBeCloseTo(baseline, 0);
     };
     // Browsers send a trackpad pinch as Ctrl + wheel events with small deltas.

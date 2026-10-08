@@ -852,6 +852,8 @@ test('TAL-03: synlig markering och exakt sparåterhämtning fungerar efter röst
     ]) {
       await page.setViewportSize({ width, height });
       // Reframe the retained selection around the reader after changing viewport.
+      await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).focus();
+      await page.keyboard.press('Shift+F10');
       const focusSelection = page.getByRole('button', { name: 'Fokusera markering', exact: true });
       await focusSelection.focus();
       await focusSelection.click();

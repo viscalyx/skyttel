@@ -895,7 +895,7 @@ hits through return and table visits”.
 5. Markera cykeln och följ dess samband igen. Besök **Tabell** och
    återgå via **Karta**. Välj **Tillbaka till sökträffarna**.
 6. Kontrollera att sökningen **Alex** finns kvar. Tryck Shift+F10 på cykeln
-   och välj riktmärkesikonen **Visa i kartan**. Kontrollera cykelns markering,
+   och välj kartikonen **Visa i kartan**. Kontrollera cykelns markering,
    Bostaden i kartan, fokus på kartan samt tom sökning och återställda filter.
 
 **Förväntat resultat:**
@@ -981,7 +981,7 @@ work at 320px”.
 2. Välj **Tabell**, sök **Blå**, sortera namn Ö–A och expandera cykeln.
 3. Läs kartikonernas tooltips. Välj **Visa samband för Blå cykel i kartan**.
    Kontrollera cykelns markering och Garaget. Bostaden visas inte som
-   direkt sammanhang. Tryck Shift+F10 på cykeln och kontrollera sex ikoner,
+   direkt sammanhang. Tryck Shift+F10 på cykeln och kontrollera sju ikoner,
    med samma kartikoner som listans motsvarande åtgärder. Välj
    **Visa samband i kartan**.
    Kartans sökning **Alex** och **Bara markerade** består.

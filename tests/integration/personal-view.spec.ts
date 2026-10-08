@@ -9,6 +9,7 @@ import {
   openProfile,
   openSettings,
   openTable,
+  setAllLabels,
   signIn,
 } from '../support/client.js';
 import { editTableObject } from '../support/domain-work.js';
@@ -93,6 +94,51 @@ async function selectAndArrange(page: Page, name = 'Lampan') {
   if (!(await choices.evaluate((summary) => (summary.parentElement as HTMLDetailsElement).open)))
     await choices.click();
 }
+
+for (const width of [1440, 390])
+  test(`PLACERING-09: personal save toasts expire while preserving focus and saved choices at ${width}px`, async ({
+    page,
+  }) => {
+    const installation = await createInstallation();
+    try {
+      await page.setViewportSize({ width, height: 1000 });
+      const { read, path } = await arrange(page, installation.origin);
+      const content = await (await page.request.get(path)).json();
+      await selectAndArrange(page);
+      const move = page.getByRole('button', { name: 'Flytta Lampan: uppåt', exact: true });
+      await move.focus();
+      await page.keyboard.press('Enter');
+      const toast = space(page).locator('.personal-view-toast');
+      await expect(toast).toHaveText('Din personliga vy är sparad.');
+      await expect(toast).toBeVisible();
+      await expect(toast.locator('..')).toHaveAttribute('aria-live', 'polite');
+      await expect(move).toBeFocused();
+      const box = await toast.boundingBox();
+      expect(box?.x).toBeGreaterThanOrEqual(0);
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width);
+      await page.screenshot({ path: test.info().outputPath(`personal-save-toast-${width}.png`) });
+      await expect(toast).toHaveCount(0, { timeout: 4500 });
+      await expect(move).toBeFocused();
+      const moved = (await read()).positions;
+      expect(moved).toHaveLength(1);
+      await setAllLabels(page, true);
+      const labels = page.getByRole('button', { name: 'Alla etiketter', exact: true });
+      await expect(toast).toHaveText('Din personliga vy är sparad.');
+      await expect(labels).toBeFocused();
+      await expect(toast).toHaveCount(0, { timeout: 4500 });
+      await expect(labels).toBeFocused();
+      await expect(labels).toHaveAttribute('aria-pressed', 'true');
+      await openTable(page);
+      await openMap(page);
+      await expect(toast).toHaveCount(0);
+      const saved = await read();
+      expect(saved.settings.allLabels).toBe(true);
+      expect(saved.positions).toEqual(moved);
+      expect(await (await page.request.get(path)).json()).toEqual(content);
+    } finally {
+      await installation.close();
+    }
+  });
 
 test('PLACERING-01: mouse, height and keyboard movement persist across reload, clients and server restart', async ({
   page,
@@ -356,7 +402,7 @@ test('PLACERING-03: synthetic touch gestures handle height, interruption, finger
       });
     const resetView = async () => {
       const before = await projection();
-      await space(page).getByRole('button', { name: 'Återställ vy', exact: true }).click();
+      await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
       // Reset updates projected positions in a React effect after the click.
       await expect.poll(projection).not.toEqual(before);
       return projection();

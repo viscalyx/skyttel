@@ -229,9 +229,10 @@ and move without moving the map”.
 
 **Steg:**
 
-1. Öppna kartan och högerklicka Cykel. Läs de sex ikonernas verktygstips:
+1. Öppna kartan och högerklicka Cykel. Läs de sju ikonernas verktygstips:
    redigering, uppgifter, samband, visa objektet i kartan, visa dess direkta
-   samband i kartan och borttagning. Välj **Samband för Cykel**, läs Garage
+   samband i kartan, fokusera markeringen och borttagning. Välj **Samband för
+   Cykel**, läs Garage
    i befintliga samband och stäng sambandsdialogen.
 2. Högerklicka Cykel igen och välj **Visa uppgifter för Cykel**. Läs egna
    fält och prisets sparade och föreslagna värden. Kontrollera att fönstret

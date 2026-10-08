@@ -7,6 +7,7 @@ import {
   openDraftReview,
   openMap,
   openTable,
+  setAllLabels,
   signIn,
 } from '../support/client.js';
 import { saveReviewedConflictDraft } from '../support/conflict-special.js';
@@ -405,7 +406,7 @@ test('LIVSCYKEL-04: keyboard relationship targets expose ended status without ch
     await openMap(page);
     await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     const labels = space.locator('.spatial-labels');
     const ended = labels.getByRole('button', {
       name: 'Välj samband: Lo Exempel → Använder → Familjemusik',
@@ -515,7 +516,7 @@ test('LIVSCYKEL-05: object and relationship descriptions remain distinct for val
     await openMap(page);
     await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     const labels = space.locator('.spatial-labels');
     const edge = labels.getByRole('button', {
       name: 'Välj samband: Lo Exempel → Använder → Familjemusik',
@@ -604,7 +605,7 @@ test('LIVSCYKEL-06: current and previous relationships retain their own accessib
     await openMap(page);
     await includeEndedInMap(page);
     const space = page.getByRole('region', { name: 'Rymdkarta', exact: true });
-    await space.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     const labels = space.locator('.spatial-labels');
     const previous = labels.getByRole('button', {
       name: 'Välj tidigare samband: Lo Exempel → Använder → Familjemusik',

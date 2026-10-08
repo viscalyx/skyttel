@@ -235,7 +235,7 @@ test('the approved spatial presentation uses compact pictogram nodes, separate n
       }),
     )
     .toBeVisible();
-  await page.getByRole('checkbox', { name: 'Alla etiketter', exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   await expect.poll(() => document.querySelectorAll('.spatial-edge').length).toBe(2);
 });
 
@@ -337,7 +337,7 @@ test('a relationship reveal keeps both endpoints reachable beside a wide legend 
     minHeight: '0',
   });
   for (const control of view.container.querySelectorAll<HTMLElement>(
-    '.spatial-tools, .spatial-bottom-bar, .spatial-view-actions',
+    '.spatial-tools, .spatial-view-actions',
   ))
     control.style.display = 'none';
   view.rerender(
@@ -398,7 +398,7 @@ test('changing a relationship retains its prior route while the current route re
   expect(previous?.textContent).toContain('Lo Exempel → använder → Musikspelaren');
   expect(previous?.getAttribute('d')).toContain('Q');
   expect(getComputedStyle(previous as Element).strokeDasharray).not.toBe('none');
-  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   const priorLabel = page.getByRole('button', {
     name: 'Välj tidigare samband: Lo Exempel → använder → Musikspelaren',
     exact: true,
@@ -696,7 +696,9 @@ test('a moving height anchor restores the object and hands the stable pair to pa
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   const music = page.getByRole('button', { name: 'Välj objekt: Musikspelaren', exact: true });
   await expect.element(lo).toBeVisible();
-  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+  await expect
+    .element(page.getByRole('button', { name: 'Återställ vy', exact: true }))
+    .toHaveAttribute('aria-disabled', 'true');
   const initial = lo.element().getBoundingClientRect();
   const musicInitial = music.element().getBoundingClientRect();
   const offset = window.frameElement?.getBoundingClientRect();
@@ -776,7 +778,9 @@ test('wheel pan follows both system axes over canvas, icons and labels; Ctrl alo
   render(<MapView />);
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await expect.element(lo).toBeVisible();
-  await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
+  await expect
+    .element(page.getByRole('button', { name: 'Återställ vy', exact: true }))
+    .toHaveAttribute('aria-disabled', 'true');
   const position = () => {
     const bounds = lo.element().getBoundingClientRect();
     return { x: bounds.x, y: bounds.y };
@@ -1078,9 +1082,14 @@ test('navigation title movement, resize and cancellation preserve the camera and
 test('standalone focus controls keep direct neighbors separate from the selected rotation center', async () => {
   render(<MapView />);
   const focus = page.getByRole('button', { name: 'Fokusera markering', exact: true });
-  await expect.element(focus).toBeDisabled();
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
+  lo.element().focus();
+  await userEvent.keyboard('{Shift>}{F10}{/Shift}');
+  await expect.element(focus).toBeDisabled();
+  await userEvent.keyboard('{Escape}');
   await lo.click();
+  lo.element().focus();
+  await userEvent.keyboard('{Shift>}{F10}{/Shift}');
   await focus.click();
   await expect.element(lo).toHaveAttribute('aria-pressed', 'true');
   await expect
@@ -1092,10 +1101,10 @@ test('standalone focus controls keep direct neighbors separate from the selected
   await page.getByRole('button', { name: 'Navigera', exact: true }).click();
   await page.getByRole('button', { name: 'Rotera vänster', exact: true }).click();
   expect(position()).toBe(focused);
-  await page.getByRole('button', { name: 'Visa hela kartan', exact: true }).click();
-  await page.getByRole('button', { name: 'Återgå till föregående vy', exact: true }).click();
+  await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
+  await page.getByRole('button', { name: 'Föregående vy', exact: true }).click();
   await expect
-    .element(page.getByRole('button', { name: 'Visa hela kartan', exact: true }))
+    .element(page.getByRole('button', { name: 'Föregående vy', exact: true }))
     .toBeVisible();
   expect(position()).toBe(focused);
 });
@@ -1125,11 +1134,11 @@ test('graphics navigation and label modes expose selectable objects and directed
     await expect.element(lo).toBeInTheDocument();
   }
   await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
-  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   await expect
     .element(page.getByText('Närmare utsnitt. Panorera för att se fler etiketter.'))
     .toBeVisible();
-  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   await page.getByRole('button', { name: 'Återställ vy' }).click();
   await lo.click();
   await page
@@ -1198,12 +1207,12 @@ test('dense labels remain readable and explicit all-label mode retains access to
   await expect
     .element(
       page.getByText(
-        `${100 - document.querySelectorAll('.spatial-name').length} etiketter döljs för läsbarhet. Alla objekt och deras samband kan läsas via Tabell. Sök eller välj ett objekt och visa dess kopplingar.`,
+        `${100 - document.querySelectorAll('.spatial-name').length} etiketter döljs för läsbarhet.`,
         { exact: true },
       ),
     )
     .toBeVisible();
-  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   await expect.poll(() => document.querySelectorAll('.spatial-name').length).toBe(100);
 });
 
@@ -1270,7 +1279,7 @@ test.each(['added', 'removed', 'changed'] as const)(
         );
       })
       .toBe(true);
-    await page.getByLabelText('Alla etiketter', { exact: true }).click();
+    await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
     await expect
       .poll(() => document.querySelectorAll(`.spatial-edge.${kind}`).length)
       .toBe(edges.length);
@@ -1392,7 +1401,7 @@ test('hidden labels do not change the emphasis of unselected relationship lines'
   await expect.poll(() => document.querySelector('.label-note-count')).not.toBeNull();
   const withHiddenLabels = opacity();
   expect(withHiddenLabels).toHaveLength(3);
-  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   await expect.poll(() => document.querySelectorAll('.spatial-name').length).toBe(100);
   expect(opacity()).toEqual(withHiddenLabels);
 });
@@ -1427,7 +1436,7 @@ test('all labels only opens a closer view when needed and retains an already clo
   const lo = page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true });
   await expect.element(lo).toBeVisible();
   const location = () => (lo.element() as HTMLElement).style.cssText;
-  const toggle = page.getByLabelText('Alla etiketter', { exact: true });
+  const toggle = page.getByRole('button', { name: 'Alla etiketter', exact: true });
   await toggle.click();
   const working = location();
   await toggle.click();
@@ -1458,7 +1467,7 @@ test('direction rendering retains selectable self references and explicitly abse
     />,
   );
   // Overview labels may be culled when font metrics or the viewport leave no room.
-  await page.getByLabelText('Alla etiketter', { exact: true }).click();
+  await page.getByRole('button', { name: 'Alla etiketter', exact: true }).click();
   await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
   await page.getByRole('button', { name: 'Välj objekt: Lo Exempel', exact: true }).click();
   await page
@@ -1491,7 +1500,7 @@ test('context icons edit, focus, dismiss and remove only the chosen object', asy
   expect(actions.element().querySelector('h3')).toBeNull();
   expect(
     [...actions.element().querySelectorAll('button')].map((button) => button.textContent),
-  ).toEqual(['', '', '', '', '', '']);
+  ).toEqual(['', '', '', '', '', '', '']);
   const anchorBox = lo.element().getBoundingClientRect();
   const actionsBox = actions.element().getBoundingClientRect();
   expect(actionsBox.left).toBeCloseTo(anchorBox.right + 8, 0);

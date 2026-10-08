@@ -352,9 +352,9 @@ choices readable and operable in dark”.
 
 **Steg:**
 
-1. Använd tangentbordet på den tomma kartan för att fokusera **Återställ vy**,
-   sedan Tab till **Alla etiketter**. Fokus och hela
-   namnet ska synas för varje kontroll.
+1. Använd tangentbordet på den tomma kartan för att fokusera **Återställ vy**
+   och etikettikonen **Alla etiketter** i verktygsfältet. Kontrollera
+   synligt fokus och läsbara namn med hjälpmedel för varje kontroll.
 2. Öppna **Navigera** med tangentbordet. Rulla vid behov till
    **Visa höjdhjälp** under kameraknapparna. Hela etiketten ska synas.
    Reglaget ska vara av och inaktivt med texten
@@ -368,12 +368,12 @@ choices readable and operable in dark”.
 
 **Förväntat resultat:**
 
-- Fullständiga etiketter och fokuserade visningsval förblir synliga.
+- Fokuserade visningskontroller förblir synliga och har begripliga namn.
 - Verktygsfältets listknapp förblir användbar.
 - Ett objektförslag ändrar inte höjdhjälpsvalet.
 - Höjdhjälpens reglage finns i navigeringen och kräver ett objektval.
-- Den separata **Visningsval**-menyn i vyer som är högst 450 pixlar höga
-  behåller sitt befintliga beteende, vilket provas i KAMERA-04.
+- Etikettikonen finns i verktygsfältet även i korta vyer.
+  Växling och sparat val provas i KAMERA-06.
 
 ### YTA-09: den tomma kartan förblir användbar med röst och samtalsnotis
 
@@ -394,7 +394,7 @@ controls reachable”.
 **Steg:**
 
 1. Välj **Prata med Skyttel** och godkänn samtalsmedgivandet. Läs **Lyssnar**
-   i röstrutan. Välj
+   i röstrutan. Panorera med **Navigera**, stäng navigeringen och välj
    **Återställ vy**. Ingen beständig rutinbekräftelse ska visas i kartan.
 2. Nå verktygsfältets **Tabell** med tangentbordet. Fokus och knappen ska synas
    och vara fria från röstrutan. Kontrollera båda fönsterhöjderna.

@@ -363,13 +363,17 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   tillägg till utkastet på dator och mobil.
 - [Markering och detaljer](map-selection.md): flerval, tomrumsgester,
   textkontroller, aktiv detaljikon, flera flyttbara uppgiftsfönster och
-  högerklickets sex ikoner och uppgiftsfönstrens fem åtgärdsikoner.
+  högerklickets sju ikoner och uppgiftsfönstrens fem åtgärdsikoner.
   Oberoende fönsterflytt med pekare och tangentbord bevarar kameran och
   den personliga vyn. Vanliga formulär,
   återfokus och oförändrat utkast provas även i smala och korta fönster,
   liksom återgång från Rapporter till text och utkast.
-- [Kamerans urvalsfokus](map-camera.md): personlig rotationspunkt, direkta
-  grannar, återgångsvy, mus, tangentbord och pekskärm i smala och korta vyer;
+- [Kamerans urvalsfokus](map-camera.md): högerklickets tre kartåtgärder,
+  bevarat urval och filter, etikettikonens växling och sparade val,
+  återställning från verktygsfältet och bevarade personliga placeringar,
+  personlig rotationspunkt, direkta grannar,
+  vyhistorik steg för steg, nollställning, sammanhängande gester, mus,
+  tangentbord och pekskärm i smala och korta vyer;
   nå återkoppling och alla sex personliga flyttar utan täckta kontroller,
   återfå fokus efter flytt och bevara senare fokus eller stängd navigering
   när ett verkligt svar hålls och släpps.
@@ -383,7 +387,8 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
 - [Stora kartor](large-map.md): åtkomst till 500 objekt och 1 500 samband
   genom sidvisning, sökning och fokus, med bevarad text och placering.
 - [Personliga placeringar](personal-view.md): stjärnval i Rymdkartans
-  inställningar, minskad rörelse, flyttning med mus, pekgester
+  inställningar, sparbekräftelse som toast i tre sekunder med bevarat fokus,
+  minskad rörelse, flyttning med mus, pekgester
   och tangentbord, stabila fingerpar och kameraväxling, systemets minskade
   rörelse, visningsval, samtidighetskonflikter, bevarad text,
   beständighet och avskildhet mellan användare samt inramning vid sen

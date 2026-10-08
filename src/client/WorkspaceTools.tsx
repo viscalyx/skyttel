@@ -37,12 +37,15 @@ const paths = {
   trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
   warning: 'm12 3 10 18H2zM12 9v5M12 17h.01',
   detail: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
+  reports: 'M4 13h4v7H4zM10 9h4v11h-4zM16 4h4v16h-4z',
   edit: 'm16 3 5 5-12 12-6 1 1-6L16 3M13 6l5 5',
   relationships: 'M4 8h16m-4-4 4 4-4 4M20 16H4m4-4-4 4 4 4',
   connections:
     'M7 7l3 3M17 7l-3 3M12 15v2M8 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M22 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0M15 20a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
   focus: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
-  overview: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 12h8M12 8v8',
+  reveal: 'm3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6M9 3v15M15 6v15',
+  labels: 'M3 3h8l10 10-8 8L3 11V3M7 7h.01',
+  reset: 'M3 4v6h6M3 10a9 9 0 1 1 2 9',
   returnView: 'm9 4-5 5 5 5M4 9h10a6 6 0 0 1 0 12h-4',
 };
 
@@ -212,7 +215,6 @@ export function WorkspaceTools({
             ['galaxy', 'Karta', 'map'],
             ['list', 'Tabell', 'table'],
             ['new', 'Nytt objekt', 'new'],
-            ['detail', 'Rapporter', 'reports'],
             ['mic', 'Prata med Skyttel', 'voice'],
             ['text', textViewButtonName, 'conversation'],
             ...(hasDraft ? [['draft', 'Utkast', 'draft'] as const] : []),
@@ -268,7 +270,7 @@ export function WorkspaceTools({
               aria-pressed={
                 target === 'voice'
                   ? voiceControl?.microphone === 'on'
-                  : target === 'map' || target === 'table' || target === 'reports'
+                  : target === 'map' || target === 'table'
                     ? surface === target
                     : undefined
               }
@@ -324,14 +326,20 @@ export function WorkspaceTools({
                 </i>
               )}
             </button>
+            {target === 'map' && (
+              <>
+                <div className="workspace-camera-tools" ref={cameraMount} />
+                <hr className="workspace-tools-divider" />
+              </>
+            )}
             {target === 'table' && <hr className="workspace-tools-divider" />}
             {target === 'conversation' && voiceBox}
           </Fragment>
         ))}
-        <div className="workspace-camera-tools" ref={cameraMount} />
         <div className="workspace-tools-footer">
           {(
             [
+              ['reports', 'Rapporter', 'reports'],
               ['settings', 'Inställningar', 'settings'],
               ['profile', 'Din profil', 'profile'],
               ['info', 'Information och hjälp', 'help'],
@@ -343,8 +351,17 @@ export function WorkspaceTools({
               title={label}
               aria-label={label}
               data-secondary={target !== 'help' || undefined}
-              aria-expanded={target === 'settings' ? undefined : utility === target}
+              aria-pressed={target === 'reports' ? surface === 'reports' : undefined}
+              aria-expanded={
+                target === 'settings' || target === 'reports' ? undefined : utility === target
+              }
               onClick={(event) => {
+                if (target === 'reports') {
+                  onExpandedChange(false);
+                  setUtility(null);
+                  onOpen('reports', event.currentTarget);
+                  return;
+                }
                 returnFocus.current = event.currentTarget;
                 if (target === 'settings') onSettings?.();
                 else setUtility(utility === target ? null : target);

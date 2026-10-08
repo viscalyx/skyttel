@@ -598,25 +598,29 @@ for (const [name, width, height, place] of [
       await openMapWithDraft(page, app.origin);
       await startConversationWithVoice(page);
       await listening(page);
+      await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+      await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
+      await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
       await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
       const feedback = page.locator('.workspace-context');
       await expect(feedback).toContainText('Grönt +');
-      const row = page.locator('.spatial-bottom-bar');
+      const row = page.locator('.workspace-tools');
       const check = async () => {
         const box = await bounds(voiceBox(page));
         const margin = place === 'top' ? 24 : 12;
         expect(Math.round(width - box.right)).toBe(margin);
         if (place === 'top') expect(Math.round(box.y)).toBe(24);
         else {
-          // The box stays above the actual protected map row and feedback.
-          // Their visible placement can follow the viewport's scrolling flow.
-          expect(box.bottom).toBeLessThanOrEqual((await bounds(row)).y);
+          // The toolbar stays above the voice box on a narrow screen.
+          expect(box.y).toBeGreaterThanOrEqual((await bounds(row)).bottom);
           expect(overlaps(box, await bounds(microphoneButton(page)))).toBe(false);
           expect(box.y).toBeGreaterThanOrEqual(0);
           expect(box.bottom).toBeLessThanOrEqual(height);
         }
-        if (await row.isVisible()) {
+        if (await feedback.isVisible()) {
           expect(overlaps(box, await bounds(feedback))).toBe(false);
+        }
+        if (await row.isVisible()) {
           expect(overlaps(box, await bounds(row))).toBe(false);
         }
         for (const control of await page

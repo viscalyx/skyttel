@@ -4,6 +4,12 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "dimmad",
+    "dimmade",
+    "nypgest",
+    "tvåfingersgesten",
+    "vyhistorik",
+    "vyhistoriken",
     "detaljvy",
     "detaljvyn",
     "badgesen",

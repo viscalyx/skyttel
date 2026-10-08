@@ -305,10 +305,9 @@ for (const theme of ['light', 'dark'] as const) {
       for (const height of [900, 568, 451]) {
         await page.setViewportSize({ width: 320, height });
         const reset = page.getByRole('button', { name: 'Återställ vy', exact: true });
-        const labels = page.getByRole('checkbox', { name: 'Alla etiketter', exact: true });
+        const labels = page.getByRole('button', { name: 'Alla etiketter', exact: true });
         for (const target of [reset, labels]) {
-          if (target === reset) await reset.focus();
-          else await page.keyboard.press('Tab');
+          await target.focus();
           await expect(target).toBeFocused();
           const visible = await target.evaluate((element) => {
             const box = element.getBoundingClientRect();
@@ -406,6 +405,9 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
     await page.goto(installation.origin);
     await startConversationWithVoice(page);
     await expect(voiceBox(page)).toHaveText('Lyssnar');
+    await page.getByRole('button', { name: 'Navigera', exact: true }).click();
+    await page.getByRole('button', { name: 'Panorera höger', exact: true }).click();
+    await page.getByRole('button', { name: 'Stäng navigering', exact: true }).click();
     await page.getByRole('button', { name: 'Återställ vy', exact: true }).click();
     await expect(page.locator('.workspace-feedback')).toHaveCount(0);
     for (const disconnected of [false, true]) {
@@ -427,12 +429,9 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
               };
               const entry = bounds('.workspace-tools');
               const corner = bounds('.conversation-corner');
-              const row = bounds('.spatial-bottom-bar');
               const status = bounds('.workspace-context');
               return {
                 entryClear: entry.bottom <= corner.top,
-                cornerClear: corner.bottom <= row.top,
-                statusClear: status.bottom <= row.top || status.right <= row.left,
                 cornerStatusClear: status.bottom <= corner.top || status.right <= corner.left,
                 cornerVisible: corner.top >= 0 && corner.bottom <= innerHeight,
               };
@@ -440,8 +439,6 @@ test('YTA-09: voice and notices leave the empty map entry and lower controls rea
           )
           .toEqual({
             entryClear: true,
-            cornerClear: true,
-            statusClear: true,
             cornerStatusClear: true,
             cornerVisible: true,
           });

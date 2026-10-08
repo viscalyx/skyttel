@@ -7,6 +7,7 @@ import {
   openNewObject,
   openSettings,
   openTable,
+  setAllLabels,
   signIn,
   utilityButton,
 } from '../support/client.js';
@@ -386,7 +387,7 @@ test('PANEL-04: map selection preserves unsent relationship and type forms', asy
       ).ok(),
     ).toBe(true);
     await page.goto(installation.origin);
-    await page.getByLabel('Alla etiketter', { exact: true }).check();
+    await setAllLabels(page, true);
     await openTable(page);
     await page.getByRole('button', { name: 'Samband för Cykeln', exact: true }).click();
     const relationships = page.getByRole('dialog', { name: 'Samband för Cykeln', exact: true });
