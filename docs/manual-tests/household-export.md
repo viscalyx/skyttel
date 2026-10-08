@@ -47,6 +47,21 @@ uppgifter finns enligt förberedelsen.
 testfallet “EXPORT-01: an administrator downloads the complete household
 archive by keyboard”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-01"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Endast administratören kan hämta och webbläsaren erbjuder en ZIP-fil efter tangentbordsval"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Kontrollera som Robin att **Fullständig export** saknas i Inställningar.
@@ -59,9 +74,9 @@ archive by keyboard”.
    Vänta tills exporten är klar och kontrollera den visade sluttiden.
 4. Använd tangentbordet till **Hämta ZIP-fil** och tryck Enter. Spara
    filen i testmappen och öppna den med ett ZIP-program.
-5. Kontrollera att arkivet innehåller `manifest.json`, `content.json`
-   och `images.bin`. Öppna `content.json` och hitta det gemensamma
-   objektet, historiken, Robins privata utkast och personliga vy.
+5. Kontrollera att webbläsaren erbjuder `skyttel-hushall.zip` och att
+   sidan visar att webbläsarens nedladdning har startats.
+   Arkivinnehållet kontrolleras i separat tekniskt underlag nedan.
 
 **Förväntat resultat:**
 
@@ -89,18 +104,35 @@ att en ny export kan förberedas.
 **Användare:** Alex som administratör.
 
 **Förutsättningar:** Inställningar → Fullständig export är öppen.
+Ett eget nytt objekt ligger i Alex utkast utan gemensamt sparande.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallet “EXPORT-02: an administrator cancels an export and prepares
 another”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-02"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Avbrott erbjuder ingen fil och en ny export fungerar utan ändrat utkast"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Välj **Förbered fullständig export** och vänta tills den är klar.
 2. Välj **Avbryt export** och kontrollera beskedet.
 3. Förbered en ny export och hämta ZIP-filen. Kontrollera att samma
-   gemensamma innehåll och privata utkast finns kvar.
+   gemensamma innehåll finns kvar i Tabell. Öppna **Visa utkastet** och
+   kontrollera det egna osparade förslaget.
 
 **Förväntat resultat:**
 
@@ -123,6 +155,21 @@ nedladdning och att användaren kan försöka igen.
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallet “EXPORT-03: an interrupted download offers a new export without
 reporting success”.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-03"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Anslutningsfel visas utan nedladdning och ny export fungerar"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -153,6 +200,21 @@ administratörsroll när filen hämtas.
 testfallet “EXPORT-04: a changed administrator role blocks export and
 clears the ready download”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-04"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Ändrad roll före hämtning nekar export och bevarar medlemstillgång"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Behåll Alex färdiga export öppen i profil A.
@@ -182,11 +244,27 @@ svar om utgången export; serverns tidsgräns kontrolleras separat.
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallet “EXPORT-05: an expired export requires a new preparation”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-05"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Utgången export erbjuder ingen fil och en ny förberedelse fungerar"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Anteckna sluttiden och låt sidan vara öppen utan att hämta filen.
    Vänta tills tio minuter har gått och den visade tiden passerar.
-2. Kontrollera beskedet och vilka knappar som finns.
+2. Välj **Hämta ZIP-fil** efter sluttiden. Kontrollera beskedet och
+   att den gamla hämtknappen försvinner.
 3. Förbered och hämta en ny export.
 
 **Förväntat resultat:**
@@ -199,99 +277,138 @@ testfallet “EXPORT-05: an expired export requires a new preparation”.
 
 ### EXPORT-06: Bevara objekt, bildversioner och privat utkast
 
-**Syfte:** Kontrollera att exporten efter omstart innehåller underlaget
-för sparade bilder och senare privat arbete.
+**Syfte:** Hämta en verklig webbläsarfil efter bildförslag, historikläsning
+och omstart. Identitet och kontrollsummor har separat tekniskt underlag.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** Två sparade objekt av samma typ heter Lo Exempel.
-Anteckna båda identifierarna. Det andra har en sparad profilbild.
-Flytta båda i Alex personliga vy så att placeringarna sparas.
+**Förutsättningar:** Ett nytt isolerat hushåll med tom karta. Två små
+provbilder med olika motiv finns på datorn. Ingen röst eller AI behövs.
 
 **Integrationstest:**
-[household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts),
-testfallet “EXPORT-06: a full archive preserves object identities and saved,
-historical and private image versions”.
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+EXPORT-06.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-06"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Bildförslag och historik går att läsa efter omstart och webbläsaren erbjuder exportfilen"
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-export-content.spec.ts",
+      "title": "technical: a full archive preserves object identities and saved, historical and private image versions",
+      "purpose": "Separat arkivinnehåll och kontrollsummor"
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Välj samma provbild på det första objektet och spara bildförslaget
-   som ett vanligt sparande. Båda objekten finns kvar.
-2. Anteckna kvittot. Välj **Rapporter** och granska bildsparandets
-   historiska värden och objektens identiteter. Bilderna visar samma motiv.
-3. Välj en annan profilbild på det första objektet. Lämna
-   bildförslaget i det privata utkastet utan att spara.
-4. Starta om installationen med samma databas. Kontrollera att det
-   privata bildförslaget och bildsparandets historik finns kvar.
-5. Hämta fullständig export och öppna `content.json` i ZIP-filen.
-   Jämför objekten, kvittot och historiken med identifierarna och
-   uppgifterna du antecknar. Kontrollera även utkast, bildreferenser
-   och personliga placeringar. Kontrollera att varje bildversion har
-   en egen identifierare och ett byteintervall inom `images.bin`.
+1. Öppna Tabell. Skapa två objekt som heter **Lo Exempel**, med
+   beskrivningarna **Första objektet** och **Andra objektet**.
+   Välj den första provbilden på det andra objektet under
+   **Livscykel och utseende → Profilbild**. Lägg båda i utkastet och
+   välj **Spara hela utkastet**. Vänta på sparbekräftelsen.
+2. Redigera det första objektet. Kontrollera dess beskrivning så att samma
+   namn inte blandar ihop objekten. Välj samma provbild, lägg i utkastet
+   och spara hela utkastet. Öppna **Rapporter**, fäll ut det senaste
+   sparandets **Visa ändringarna** och kontrollera objektets namn och bild.
+3. Stäng Rapporter. Redigera det första objektet och välj den andra bilden.
+   Lägg i utkastet och lämna förslaget osparat.
+4. Låt den driftansvariga starta om samma installation och ladda om sidan.
+   Öppna **Visa utkastet** och kontrollera att bildförslaget finns kvar.
+5. Öppna **Inställningar → Fullständig export**. Välj
+   **Förbered fullständig export**, vänta på klarbeskedet och välj
+   **Hämta ZIP-fil**. Spara den erbjudna filen i den privata testmappen.
 
 **Förväntat resultat:**
 
-- Båda objektens identiteter finns i arkivet som aktuella objekt.
-  Historiken beskriver bildsparandet med samma kvitto som i Skyttel.
-- Bilden på det andra objektet, kopian på det första objektet och
-  den senare privata bildversionen finns med. Utkastet hänvisar till den
-  privata versionen. Arkivet innehåller bilddata i `images.bin`.
-- Alex personliga placeringar för båda objektens identiteter finns kvar.
-  Den privata ändringen ersätter inte det gemensamma innehållet.
+- Bildsparandets historik går att läsa och ett senare bildförslag finns
+  kvar efter omstart utan att bli gemensamt sparat.
+- Webbläsaren erbjuder en ZIP-fil och sidan visar startad nedladdning.
+  Exakta identiteter, sparkvitto, placeringar, bildintervall och kontrollsummor
+  verifieras separat av arkivtestet; de är inga UI-kontroller.
 
 ## Ändrad tillgång under hämtning
 
 ### EXPORT-07: Återkallad tillgång avbryter pågående hämtning
 
-**Syfte:** Kontrollera att ändrad roll och återkallat medlemskap stoppar
-en pågående överföring och tar bort dess tillfälliga serverkopia.
+**Syfte:** Både rolländring och återkallat medlemskap avbryter en aktiv
+webbläsarhämtning utan att erbjuda en komplett privat ZIP-fil.
 
-**Användare:** Alex som administratör i webbläsaren och Robin som
-administratör i en separat, kontrollerad HTTP-klient.
+**Användare:** Robin hämtar som administratör; Alex ändrar tillgången
+som den andra administratören i ett separat webbläsarfönster.
 
-**Förutsättningar:** Använd
-[exportförberedelsen](#controlled-export-fixture) i stället för den
-allmänna förberedelsen. Den startar en isolerad app med riktig SQLite,
-kontrollerade externa inloggningssvar och 100 syntetiska bildversioner.
-Alex och Robin får sina separata sessioner genom appens vanliga inloggning.
-Håll kontrollklienten och en andra terminal för filkontrollen öppna.
-Använd inte webbläsarens hastighetsbegränsning som bevis för aktiv server.
+**Separat förberedelse:** Starta
+[webbläsarförberedelsen](#styrd-export-i-webbläsaren).
+Den skapar de två fönstren och ett stort arkiv i en ny Linux-installation.
+Serverkällan måste ha olästa byte när terminalen skriver `paused`.
+Den tekniska HTTP-kontrollklienten nedan är ytterligare underlag.
 
 **Integrationstest:**
-[household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts),
-testfallet “EXPORT-07: revocation or demotion interrupts an active download
-and removes its private copy”.
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+EXPORT-07.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-07"
+  },
+  "reference": "Linux, två administratörer; demotion och återkallelse under aktiv verklig HTTP-ström",
+  "outcomes": [
+    "Aktiv hämtning avbryts efter både rolländring och återkallelse utan erbjuden ZIP-fil"
+  ],
+  "evidence": [
+    {
+      "kind": "technical",
+      "spec": "tests/integration/household-export-content.spec.ts",
+      "title": "technical: revocation or demotion interrupts an active download and removes its private copy",
+      "purpose": "Separat hållen HTTP-ström, ofullständiga byte och rensad privat kopia"
+    }
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
-1. Skriv `pause` i kontrollklienten. Kräv händelsen `paused` med
-   `archiveBytes > 16777216`, `receivedBytes > 0`,
-   `sourceReadBytes < archiveBytes` och `active: true`. Kontrollera den
-   privata filens storlek och rättigheter med guidens `ls`-kommandon.
-2. Skriv `inspect` och kontrollera på nytt `active: true` samt olästa byte
-   i serverns källfil. Välj omedelbart **Gör till medlem** för Robin som
-   Alex. Gör kontrollen inom en minut, före angiven `expiresAt`.
-3. Skriv `resume`. Kräv färre mottagna byte än hela arkivet,
-   `interrupted: true`, `beforeExpiry: true`, `scratchEmpty: true` och
-   `retryStatus: 403`. Kör guidens separata kontroll av
-   `.skyttel-exports`: resultatet ska vara `[]` och slutstatus noll.
-4. Gör Robin till administratör igen som Alex. Upprepa steg 1–3 med ett
-   nytt export-ID, men välj denna gång **Återkalla tillgång** och bekräfta
-   återkallelsen direkt efter `inspect`. Kontrollera åter både det
-   ofullständiga svaret, nekad ny hämtning och den tomma serverkatalogen.
-5. Skriv `quit` och kontrollera att den tillfälliga katalogen försvinner
-   enligt guidens avslutningskommando. Anteckna resultatet för båda
-   åtkomständringarna; en utgången export eller `active: false` räknas inte.
+1. Förbered exporten i Robins exportfönster. Skriv `arm-stream` i
+   terminalen. Välj **Hämta ZIP-fil** och vänta på `paused` i terminalen.
+   Kontrollera att sidan visar **Hämtar och kontrollerar ZIP-filen…**.
+2. Välj **Gör till medlem** för Robin i Alex administrationsfönster.
+   Skriv `release` i terminalen. Kontrollera Robins felbesked och att
+   ingen ZIP-fil erbjuds. Ladda om Robins sida och kontrollera att
+   administrationen nekas.
+3. Gör Robin till administratör igen genom Alex administrationssida.
+   Öppna exportadressen i Robins fönster. Upprepa steg 1, välj sedan
+   **Återkalla tillgång** och **Bekräfta återkallelse** som Alex.
+   Skriv `release`. Kontrollera felet och avsaknaden av fil igen.
+4. Ladda om Robins sida. Kontrollera att hushållstillgången nekas.
+   Avsluta förberedelsen med `quit` och radera eventuella testfiler.
 
 **Förväntat resultat:**
 
-- Både rolländring och återkallat medlemskap avbryter den aktiva hämtningen.
-  Kontrollklienten tar emot färre byte än det annonserade arkivets storlek
-  och redovisar avbrott. Ingen komplett ZIP kan återskapas från svaret.
-  Klienten skriver ingen fil; webbläsarens filerbjudande provas i EXPORT-01.
-- Den tillfälliga serverkopian tas bort och samma hämtning kan inte
-  återupptas. Redan mottagna data eller data i nätverkets buffertar kan
-  inte återkallas.
+- Båda åtkomständringarna avbryter den aktiva serveröverföringen.
+  Webbläsaren visar anslutningsfel, tar bort den gamla hämtknappen och
+  erbjuder ingen komplett ZIP-fil eller lyckad nedladdning.
+- En medlem kan inte administrera hushållet; efter återkallelse kan Robin
+  inte heller läsa kartan. EXPORT-04 skyddar den andra gränsen, där
+  åtkomsten ändras före en förberedd hämtning startar.
+- Automatiken och kontrollklienten verifierar separat ofullständiga byte,
+  nekad ny hämtning och borttagen serverkopia. Data som redan har lämnat
+  servern eller finns i nätverksbuffertar kan inte återkallas.
 
 ### EXPORT-08: Avbryt förberedelsen innan svaret kommer fram
 
@@ -300,20 +417,36 @@ borttagning av en färdig tillfällig kopia.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** Fullständig export är öppen. Använd webbläsarens
-nätverksverktyg för att fördröja svaret från förberedelsen. Integrationstestet
-håller svaret från en verklig färdig export innan webbläsaren får det.
+**Separat förberedelse:** Använd
+[webbläsarförberedelsen](#styrd-export-i-webbläsaren) och skriv `arm-ready`.
+Vänta på terminalens `held` efter steg 1; servern har då skapat arkivet
+men svaret har ännu inte nått webbläsaren.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
 testfallet “EXPORT-08: canceling preparation with an unseen ready response
 explains cleanup uncertainty”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-08"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Avbruten förberedelse visar oklar rensning och sent svar återöppnar inte exporten"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Välj **Förbered fullständig export** och kontrollera väntemeddelandet.
 2. Innan svaret kommer fram, använd tangentbordet till **Avbryt export**.
-3. Läs beskedet och återställ nätverket. Kontrollera att ingen fil erbjuds
+3. Läs beskedet och skriv `release` i terminalen. Kontrollera att ingen fil erbjuds
    från det avbrutna försöket.
 4. Förbered en ny export och hämta ZIP-filen. Kontrollera att hushållets
    karta och privata utkast finns kvar oförändrade.
@@ -333,15 +466,32 @@ utkastet utan att hushållets karta ändras. Oskickad text skyddas vid stängnin
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** Upprepa på dator, med 390 och 320 pixlars bredd samt
-i ett kort fönster på 640 × 500 pixlar, i ljust och mörkt tema. Välj
-minskad rörelse i systemet. Fördröj vid behov en förberedelse med
-webbläsarens nätverksverktyg.
+**Förutsättningar:** 1280 × 900 CSS-pixlar, ljust och mörkt tema, minskad
+rörelse. Referensen skyddar tangentbordsfokus på dator. Övriga bredder
+har egna fall EXPORT-12–14. Ett gemensamt objekt finns i kartan.
+
+**Separat förberedelse:** Använd
+[webbläsarförberedelsen](#styrd-export-i-webbläsaren). Skriv `arm-ready`
+före steg 5. Svaret ska hållas först efter serverns färdiga förberedelse.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
-testfallet “EXPORT-09: keyboard export controls retain focus and protect native
-form input at 1280px”, samma titel med “390px”, “320px” och “640px”.
+EXPORT-09 vid 1280 × 900 CSS-pixlar.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-09"
+  },
+  "reference": "1280 × 900 CSS-pixlar; båda teman för fokus och nåbarhet",
+  "outcomes": [
+    "Båda teman bevarar fokus och skyddar oskickat formulärarbete"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -358,6 +508,7 @@ form input at 1280px”, samma titel med “390px”, “320px” och “640px�
 4. Upprepa med det andra temat. Kontrollera läsbar text, synligt fokus,
    åtkomliga knappar och att sidan inte behöver rullas i sidled.
 5. Förbered igen och flytta under väntan fokus till Tillbaka till kartan.
+   Vänta på terminalens `held`, välj det nya fokuset och skriv `release`.
    Kontrollera att svaret låter ditt nya fokus vara kvar.
 6. Hämta ZIP-filen med tangentbordet. Kontrollera fokus på knappen för
    ny förberedelse och återgå sedan till kartan.
@@ -394,12 +545,26 @@ En driftansvarig ska kunna starta om testinstallationen.
 testfallet “EXPORT-10: the downloaded current-format archive restores shared,
 private and historical content after restart”.
 
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-10"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Hämtad fil återimporteras och fortsatt arbete kan sparas efter omstart"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
 **Steg:**
 
 1. Öppna Inställningar och Fullständig export. Förbered och hämta ZIP-filen.
-   Kontrollera med ett ZIP-verktyg att filen innehåller `manifest.json`,
-   `content.json` och `images.bin`. Innehållet ska sakna inloggningshemligheter
-   och medlemskap, och varje gemensamt objekt ska finnas en gång.
+   Spara filen i testmappen. Arkivformat, hemligheters frånvaro och
+   objektidentiteter verifieras separat i automatiken.
 2. Ändra ett gemensamt objektnamn och spara hela utkastet. Anteckna det nya
    namnet så att det går att skilja den nuvarande kartan från exporten.
 3. Öppna **Inställningar → Återimportera hushållet** och välj den hämtade
@@ -408,35 +573,54 @@ private and historical content after restart”.
 4. Markera bekräftelsen och välj Ersätt hushållets innehåll.
    Kontrollera beskedet om ersättning och bevarad åtkomst.
 5. Låt den driftansvariga starta om testinstallationen och ladda om sidan.
-   Återgå till kartan och jämför med anteckningarna före exporten.
+   Återgå till Tabell och kontrollera ursprungsnamnet. Öppna utkastet
+   och kontrollera det återställda privata förslaget.
+6. Skapa **Fortsatt arbete efter återimport**, lägg i utkastet och
+   granska det tillsammans med det återställda förslaget. Spara hela
+   utkastet, vänta på sparbekräftelsen och ladda om. Kontrollera båda
+   objektens namn i Tabell.
 
 **Förväntat resultat:**
 
 - Den hämtade filen går att återimportera. Ursprungliga namn, samband,
   typavsnitt, ordning, egna värden, noll, nej och dolda uppgifter består.
 - Historiken och båda bildversionerna finns kvar. Det privata förslaget
-  återkommer i utkastet och blir inte ett gemensamt objekt.
+  återkommer i utkastet och blir inte gemensamt före det nya uttryckliga
+  sparandet i steg 6.
 - Personliga placeringar och stjärnval består efter omstart. Nuvarande
   användare och roller behåller sin åtkomst.
+- Återställt och nytt arbete går att spara tillsammans och läsa efter
+  omladdning. Den tidigare gemensamma kartan finns kvar.
 
-### EXPORT-11: Lämna en färdig export eller en pågående hämtning
+### EXPORT-11: Lämna en färdig export före hämtningen
 
 **Syfte:** Kontrollera att sidbyte avbryter exporten utan att kasta
 privata förslag eller erbjuda en sen fil. Oskickad text skyddas vid stängning.
 
 **Användare:** Alex som administratör.
 
-**Förutsättningar:** Hushållet har ett sparat objekt. Använd webbläsarens
-nätverksverktyg för att fördröja filhämtningen i den andra omgången.
-Integrationstestet håller leveransen av ett verkligt färdigt ZIP-svar;
-serverns aktiva överföring och rensning provas separat i EXPORT-07.
+**Förutsättningar:** Hushållet har ett sparat objekt. Exporten lämnas
+innan filhämtningen börjar. EXPORT-15 skyddar sidbyte under svarleverans;
+EXPORT-07 skyddar aktiv serveröverföring efter ändrad tillgång.
 
 **Integrationstest:**
 [household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
-testfallen “EXPORT-11: leaving a ready export retires the copy and preserves
-private proposals after guarded form departure” och “EXPORT-11: leaving a
-downloading export retires the copy and preserves private proposals after
-guarded form departure”.
+EXPORT-11.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-11"
+  },
+  "reference": "Dator, administratör; isolerad installation med kontrollerad inloggning",
+  "outcomes": [
+    "Sidbyte före hämtning avbryter exporten utan ändrad karta"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
 
 **Steg:**
 
@@ -450,19 +634,260 @@ guarded form departure”.
    utan nedladdning.
 4. Öppna Fullständig export igen. Kontrollera att ingen tidigare hämtning
    eller resultat visas. Förbered och hämta en ny export.
-5. Upprepa steg 1–4, men starta den fördröjda hämtningen innan sidbytet.
-   Kontrollera väntemeddelandet och återgå sedan till kartan. Återställ
-   nätverket och kontrollera att ingen fil erbjuds från den lämnade exporten.
 
 **Förväntat resultat:**
 
 - Avbruten stängning bevarar oskickade värden och fokus; bekräftad
   stängning kastar endast dem. Exporten ändrar inte kartan
   eller det privata utkastet och skapar inget sparande.
-- Ingen fil erbjuds efter sidbytet, inte heller när ett sent svar kommer
-  fram. Den kända exportens avbrott bekräftas och samma kopia kan inte hämtas.
+- Ingen fil erbjuds efter sidbytet. Den kända exportens avbrott bekräftas
+  och samma kopia kan inte hämtas. EXPORT-15 kontrollerar sena ZIP-svar.
 - Återbesöket börjar med en ny förberedelse. Dess ZIP-fil innehåller det
   sparade innehållet; den oskickade redigeringen är ännu inte del av utkastet.
+
+### EXPORT-12: Tangentbord och export vid 390 × 900 CSS-pixlar
+
+**Syfte:** Skydda mobilnavigationens hopfällning och synligt fokus.
+
+**Användare:** Administratören i exportfönstret.
+
+**Förutsättningar:** Samma data och separata förberedelse som EXPORT-09.
+Ställ in 390 × 900 CSS-pixlar i webbläsarens responsiva läge.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+EXPORT-12.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-12"
+  },
+  "reference": "390 × 900 CSS-pixlar; båda teman för mobilnavigation och fokus",
+  "outcomes": [
+    "Mobilnavigation och fokus fungerar vid 390 CSS-pixlar i båda teman"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför EXPORT-09 steg 1–6 en gång vid denna storlek, inklusive båda
+   teman och den fördröjda förberedelsen. Vid steg 2, fäll ut
+   **Välj inställning** före sidvalet och kontrollera att navigationen
+   fälls ihop med exportens fokuserade rubrik fortfarande synlig.
+   Under steg 3–4 ska hämtknappen vara nåbar och sidan rymmas utan
+   sidledsrullning. Vid steg 6 ska nya objektfält vara tomma.
+
+**Förväntat resultat:**
+
+- Samma fokus, avbrott, hämtning och oförändrade karta som i EXPORT-09.
+- Mobilnavigationens hopfällning och synligt fokus fungerar i båda teman.
+  CSS-storleken är automatiserat underlag; den bevisar inte fysisk touch.
+
+### EXPORT-13: Tangentbord och export vid 320 × 900 CSS-pixlar
+
+**Syfte:** Skydda omflöde och nåbara exportknappar vid den smalaste bredden.
+
+**Användare:** Administratören i exportfönstret.
+
+**Förutsättningar:** Samma data och separata förberedelse som EXPORT-09.
+Ställ in 320 × 900 CSS-pixlar i webbläsarens responsiva läge.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+EXPORT-13.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-13"
+  },
+  "reference": "320 × 900 CSS-pixlar; båda teman för smalt omflöde",
+  "outcomes": [
+    "Omflöde och exportknappar fungerar vid 320 CSS-pixlar i båda teman"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför EXPORT-09 steg 1–6 en gång vid denna storlek, inklusive båda
+   teman och den fördröjda förberedelsen. Vid steg 2, fäll ut
+   **Välj inställning** före sidvalet och kontrollera att navigationen
+   fälls ihop med exportens fokuserade rubrik fortfarande synlig.
+   Under steg 3–4 ska hämtknappen vara nåbar och sidan rymmas utan
+   sidledsrullning. Vid steg 6 ska nya objektfält vara tomma.
+
+**Förväntat resultat:**
+
+- Samma fokus, avbrott, hämtning och oförändrade karta som i EXPORT-09.
+- Omflöde och nåbara exportknappar vid den smalaste bredden fungerar i båda teman.
+  CSS-storleken är automatiserat underlag; den bevisar inte fysisk touch.
+
+### EXPORT-14: Tangentbord och export vid 640 × 500 CSS-pixlar
+
+**Syfte:** Skydda rubrik och exportkontroller i ett kort fönster.
+
+**Användare:** Administratören i exportfönstret.
+
+**Förutsättningar:** Samma data och separata förberedelse som EXPORT-09.
+Ställ in 640 × 500 CSS-pixlar i webbläsarens responsiva läge.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+EXPORT-14.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-14"
+  },
+  "reference": "640 × 500 CSS-pixlar; båda teman för kort fönster",
+  "outcomes": [
+    "Kort fönster behåller fokus och nåbara knappar i båda teman"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför EXPORT-09 steg 1–6 en gång vid denna storlek, inklusive båda
+   teman och den fördröjda förberedelsen. Vid steg 2, fäll ut
+   **Välj inställning** före sidvalet och kontrollera att navigationen
+   fälls ihop med exportens fokuserade rubrik fortfarande synlig.
+   Under steg 3–4 ska hämtknappen vara nåbar och sidan rymmas utan
+   sidledsrullning. Vid steg 6 ska nya objektfält vara tomma.
+
+**Förväntat resultat:**
+
+- Samma fokus, avbrott, hämtning och oförändrade karta som i EXPORT-09.
+- Rubrik och exportkontroller i ett kort fönster fungerar i båda teman.
+  CSS-storleken är automatiserat underlag; den bevisar inte fysisk touch.
+
+### EXPORT-15: Lämna hämtningen innan ett färdigt svar levereras
+
+**Syfte:** Ett sent ZIP-svar ska inte erbjuda en fil efter sidbytet.
+
+**Användare:** Administratören i exportfönstret.
+
+**Förutsättningar:** Samma data som EXPORT-11.
+
+**Separat förberedelse:** Använd
+[webbläsarförberedelsen](#styrd-export-i-webbläsaren). Skriv `arm-response`
+före hämtningen i steg 3. Det verkliga ZIP-svaret buffras och leveransen
+hålls; detta är skilt från serverns aktiva ström i EXPORT-07.
+
+**Integrationstest:**
+[household-export-ui.spec.ts](../../tests/integration/household-export-ui.spec.ts),
+EXPORT-15.
+
+<!-- markdownlint-disable MD013 -->
+```manual-mapping
+{
+  "counterpart": {
+    "spec": "tests/integration/household-export-ui.spec.ts",
+    "caseId": "EXPORT-15"
+  },
+  "reference": "Dator; buffrat verkligt ZIP-svar hålls efter serverns slutförda överföring",
+  "outcomes": [
+    "Sen ZIP-leverans efter sidbyte erbjuder ingen fil och ny export fungerar"
+  ]
+}
+```
+<!-- markdownlint-enable MD013 -->
+
+**Steg:**
+
+1. Utför EXPORT-11 steg 1–4 en gång med följande kontroller under flödet.
+   Vid steg 3 väljer du först
+   **Hämta ZIP-fil**. Vänta på terminalens `held` och sidans
+   **Hämtar och kontrollerar ZIP-filen…**, och välj sedan
+   **Tillbaka till kartan**. Skriv `release` efter sidbytet,
+   före återbesöket i steg 4. Kontrollera
+   att det sena svaret inte erbjuder en fil. Fortsätt sedan steg 4 med
+   en ny förberedelse och en fungerande hämtning.
+
+**Förväntat resultat:**
+
+- Det kastade formuläret är stängt, kartan och utkastet är oförändrade.
+- Ingen fil erbjuds från den lämnade exporten, även efter det sena svaret.
+  En ny förberedelse erbjuder en fungerande ZIP-fil.
+
+## Identiteter och separat arkivunderlag
+
+EXPORT-01–11 behåller sina identiteter. EXPORT-12–14 identifierar de tre
+övriga breddfallen från EXPORT-09; EXPORT-15 identifierar svarleveransen
+från EXPORT-11. Inga exportfall eller ursprungliga kontroller tas bort.
+
+Arkivets identiteter, sparkvitto, bildversioner, byteintervall,
+kontrollsummor, privata utkast och personliga placeringar kontrolleras av
+det separat märkta tekniska testet i
+[household-export-content.spec.ts](../../tests/integration/household-export-content.spec.ts).
+Det andra tekniska testet behåller HTTP-strömmens avbrott efter både
+rolländring och återkallelse, nekad ny hämtning och tom serverkatalog.
+Det är ytterligare underlag till EXPORT-06/07, inte deras UI-motsvarigheter.
+EXPORT-10 är dessutom arkivunderlag till TEXTBREDD-05; dess egen vanliga
+motsvarighet är fortfarande EXPORT-10.
+
+## Styrd export i webbläsaren
+
+Bygg först. Kör i Linux med grafisk skrivbordsmiljö:
+
+```sh
+npm run build
+npm run test:env -- node --import tsx scripts/manual-export-browser.ts
+```
+
+`--chrome` väljer installerad Chrome; utan flaggan används Playwrights
+Chromium. `--headless` är endast till för automatisk förberedelsekontroll.
+Kontrollera förberedelsens tre styrningar och städning utan mänsklig
+observation med:
+
+```sh
+npm run test:env -- node --import tsx scripts/manual-export-browser.ts \
+  --headless --smoke
+```
+
+Kräv `smoke-passed`, `closed` och att den tryckta testkatalogen försvinner.
+Förberedelsen skapar en ny privat testkatalog, två inloggade fönster och
+100 stora syntetiska bildversioner. Inga riktiga provideranrop görs.
+Vänta på `ready`. Alex visar administrationen; Robin visar exporten.
+I EXPORT-08/09/12–15 arbetar Robin i exportfönstret som administratör i
+stället för Alex. Rollgränsen är densamma.
+
+För de fallen skapar du först ett gemensamt objekt via kartans vanliga
+**Nytt objekt → Lägg i utkastet och stäng → Spara hela utkastet**.
+Återgå till exporten. Välj en ny körning för varje fall så att inget
+tidigare utkast eller kvarvarande export används.
+
+- `arm-stream` styr nästa browserhämtning genom en riktig HTTP-ström.
+  Efter första datadelen pausas läsningen. `paused` kräver att Linux visar
+  olästa byte i serverns arkivkälla; det är ingen vanlig offlineförberedelse.
+  Ändra åtkomsten direkt, väl före exportens tio minuters giltighetstid.
+  `completed` ska visa `interrupted: true` och `beforeExpiry: true` efter
+  åtkomständringen; ett avbrott efter sluttiden är inte giltigt underlag.
+- `arm-ready` håller nästa verkliga förberedelsesvar efter serverns
+  transaktion. `held` visar att arkivet finns innan leveransen stoppas.
+- `arm-response` håller nästa färdiga ZIP-svar efter verklig serverhämtning.
+  Det simulerar sen leverans, inte olästa byte i serverns källfil.
+- `release` levererar det hållna svaret eller fortsätter strömläsningen.
+- `quit` stänger browserfönstren och raderar den tryckta testkatalogen.
+  Radera separat eventuella ZIP-filer som du sparar på datorn.
+
+Armera bara en kontroll åt gången. Om `error` visas, eller ingen `paused`
+kommer efter hämtningen, räknas det inte som en aktiv-ström-kontroll.
+Avsluta och starta en ny körning. Den äldre HTTP-förberedelsen nedan
+kan köras separat som tekniskt underlag utan ett browserresultat.
 
 ## Controlled export fixture
 
@@ -501,9 +926,14 @@ Use a fresh browser profile and **Fortsätt med Google** to enter as the
 controlled Alex. Open the printed `administrationUrl`. The HTTP reader is
 already signed in as the controlled Robin in a separate session.
 
-Use the [manual case](household-export.md#export-07-återkallad-tillgång-avbryter-pågående-hämtning)
-for the application actions. Do not start extra exports or another app on
-this fixture database. This preparation is not a manual test result.
+This is separate technical evidence for EXPORT-07. Its HTTP reader does
+not perform that case's browser download. After `pause` and `inspect`, use
+Alex's administration page to choose **Gör till medlem** for Robin, then
+use `resume` and inspect the result. Restore Robin with **Gör till
+administratör** and repeat `pause` and `inspect`, this time choosing
+**Återkalla tillgång → Bekräfta återkallelse** before `resume`.
+Do not start extra exports or another app on this fixture database.
+This preparation is not a manual test result.
 
 ### Reader controls and evidence
 

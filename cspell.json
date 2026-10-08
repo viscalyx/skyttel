@@ -4,6 +4,9 @@
   "language": "sv,en",
   "import": ["@cspell/dict-sv/cspell-ext.json"],
   "words": [
+    "webbläsarfil",
+    "provideranrop",
+    "breddfall",
     "ikonväljaren",
     "ikonidentitet",
     "historikbegäran",

@@ -10,10 +10,9 @@ import type { MapDraft, MapState, SaveReceipt } from '../../src/shared/map.js';
 import { createHousehold, signIn } from '../support/client.js';
 import { createInstallation, robin } from '../support/installation.js';
 
-test('EXPORT-07: revocation or demotion interrupts an active download and removes its private copy', async ({
-  page,
-  playwright,
-}) => {
+test('technical: revocation or demotion interrupts an active download and removes its private copy', {
+  tag: '@technical',
+}, async ({ page, playwright }) => {
   const installation = await createInstallation();
   const other = await playwright.request.newContext();
   try {
@@ -105,9 +104,9 @@ test('EXPORT-07: revocation or demotion interrupts an active download and remove
   }
 });
 
-test('EXPORT-06: a full archive preserves object identities and saved, historical and private image versions', async ({
-  page,
-}) => {
+test('technical: a full archive preserves object identities and saved, historical and private image versions', {
+  tag: '@technical',
+}, async ({ page }) => {
   const installation = await createInstallation();
   try {
     await signIn(page.request, installation.origin);
