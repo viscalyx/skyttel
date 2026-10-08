@@ -298,6 +298,11 @@ Rent läsande dialoger stängs med kryss eller Escape och återför fokus.
   tangentbordsfokus i båda teman, också på smala och korta fönster.
   Radering av en tidigare typ tar bort dess
   sista historiska bildversion utan att ta bort objektets nuvarande bild.
+  De tio fullständiga bredd- och temaflödena har egna stabila identiteter
+  i RADERING-06 och RADERING-12–20. RADERING-21 kräver faktisk zoom och
+  fysiskt tangentbord. [Separat förberedelse](household-erasure-preparation.md)
+  håller SQLite-läsning, tappar verkligt slutförda svar och blockerar
+  återhämtningsminnet med tydliga tidpunkter och återställning.
 
 - [Fullständig återimport](household-import.md): egna inställningssidor,
   bevarat oskickat arbete före innehållsbyte, uttrycklig ersättning,
